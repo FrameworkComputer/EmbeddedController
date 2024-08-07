@@ -27,6 +27,8 @@ LOG_MODULE_REGISTER(pdc_power_mgmt_api, LOG_LEVEL_INF);
 #else
 #define PDC_TEST_TIMEOUT 2000
 #endif
+/* Time needed for chipset power to stabilize */
+#define PDC_POWER_STABLE_TIMEOUT (PDC_TEST_TIMEOUT * 2)
 #define RTS5453P_NODE DT_NODELABEL(pdc_emul1)
 
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
@@ -45,6 +47,7 @@ static enum chipset_state_mask fake_chipset_state = CHIPSET_STATE_ON;
 
 static int custom_fake_chipset_in_state(int mask)
 {
+	LOG_DBG("MOCK: chipset_in_state");
 	return !!(fake_chipset_state & mask);
 }
 
@@ -53,6 +56,7 @@ static void reset_fakes(void)
 	RESET_FAKE(system_jumped_late);
 	RESET_FAKE(chipset_in_state);
 
+	fake_chipset_state = CHIPSET_STATE_ON;
 	chipset_in_state_fake.custom_fake = custom_fake_chipset_in_state;
 }
 
@@ -1166,8 +1170,9 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_suspend)
 	zassert_true(
 		TEST_WAIT_FOR(pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
 
+	fake_chipset_state = CHIPSET_STATE_SUSPEND;
 	hook_notify(HOOK_CHIPSET_SUSPEND);
-	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+	TEST_WORKING_DELAY(PDC_POWER_STABLE_TIMEOUT);
 
 	emul_pdc_disconnect(emul);
 
@@ -1190,8 +1195,9 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume_no_partner)
 {
 	enum ccom_t ccom;
 
+	fake_chipset_state = CHIPSET_STATE_ON;
 	hook_notify(HOOK_CHIPSET_RESUME);
-	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+	TEST_WORKING_DELAY(PDC_POWER_STABLE_TIMEOUT);
 
 	zassert_ok(emul_pdc_get_ccom(emul, &ccom),
 		   "Invalid CCOM value in emul");
@@ -1213,8 +1219,9 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume_drp_partner)
 	zassert_true(
 		TEST_WAIT_FOR(pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
 
+	fake_chipset_state = CHIPSET_STATE_ON;
 	hook_notify(HOOK_CHIPSET_RESUME);
-	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+	TEST_WORKING_DELAY(PDC_POWER_STABLE_TIMEOUT);
 
 	zassert_ok(emul_pdc_get_pdr(emul, &pdr), "Invalid PDR value in emul");
 	zassert_equal(pdr.swap_to_src, 1);
@@ -1241,7 +1248,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume_up_drp_partner)
 		TEST_WAIT_FOR(pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
 
 	hook_notify(HOOK_CHIPSET_RESUME);
-	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+	TEST_WORKING_DELAY(PDC_POWER_STABLE_TIMEOUT);
 
 	zassert_ok(emul_pdc_get_pdr(emul, &pdr), "Invalid PDR value in emul");
 	zassert_equal(pdr.swap_to_src, 0);
@@ -1259,8 +1266,9 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_startup)
 	zassert_true(
 		TEST_WAIT_FOR(pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
 
+	fake_chipset_state = CHIPSET_STATE_ON;
 	hook_notify(HOOK_CHIPSET_STARTUP);
-	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+	TEST_WORKING_DELAY(PDC_POWER_STABLE_TIMEOUT);
 
 	emul_pdc_disconnect(emul);
 
@@ -1291,8 +1299,9 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_shutdown)
 	zassert_true(
 		TEST_WAIT_FOR(pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
 
+	fake_chipset_state = CHIPSET_STATE_HARD_OFF;
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
-	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+	TEST_WORKING_DELAY(PDC_POWER_STABLE_TIMEOUT);
 
 	emul_pdc_disconnect(emul);
 
@@ -1822,7 +1831,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_hpd_wake)
 	/* Suspend the DUT. */
 	fake_chipset_state = CHIPSET_STATE_SUSPEND;
 	hook_notify(HOOK_CHIPSET_SUSPEND);
-	k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
+	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT * 2);
 
 	/* Clear any USB mux host event. */
 	host_clear_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_USB_MUX));
@@ -1838,6 +1847,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_hpd_wake)
 	/* Send an IRQ for the PDC power manager to update its DP Status. */
 	emul_pdc_set_connector_status(emul, &in_conn_status);
 	emul_pdc_pulse_irq(emul);
+	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT * 2);
 
 	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
 
