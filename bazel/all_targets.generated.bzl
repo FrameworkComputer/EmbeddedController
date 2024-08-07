@@ -812,6 +812,11 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "fatcat_npcx9m7f",
+        board = "fatcat_npcx9m7f",
+        extra_modules = ["cmsis"],
+    )
+    ec_target(
         name = "felwinter",
         baseboard = "brya",
         board = "felwinter",
