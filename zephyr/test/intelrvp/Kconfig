@@ -45,4 +45,9 @@ config TEST_PROJECT_INTELRVP_CHG_USB_PD_MECC
 	help
 	  Include chg_usb_pd_mecc_1_1.c into the binary and test its functions.
 
+config TEST_PROJECT_INTELRVP_DC_JACK
+	bool "Run tests for dc_jack.c"
+	help
+	  Include dc_jack.c into the binary and test its functions.
+
 source "Kconfig.zephyr"

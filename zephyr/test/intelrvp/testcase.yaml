@@ -70,3 +70,23 @@ tests:
     extra_configs:
       - CONFIG_TEST_PROJECT_MTLRVPP_NPCX=y
       - CONFIG_TEST_PROJECT_INTELRVP_CHG_USB_PD_MECC=y
+
+  intelrvp.mtlrvp_mchp.dc_jack:
+    extra_dtc_overlay_files:
+      - boards/intelrvp.dtsi
+      - boards/mtlrvp_mchp/mtlrvp_mchp.dtsi
+    extra_conf_files:
+      - boards/mtlrvp/mtlrvp.conf
+    extra_configs:
+      - CONFIG_TEST_PROJECT_MTLRVPP_MCHP=y
+      - CONFIG_TEST_PROJECT_INTELRVP_DC_JACK=y
+
+  intelrvp.mtlrvp_npcx.dc_jack:
+    extra_dtc_overlay_files:
+      - boards/intelrvp.dtsi
+      - boards/mtlrvp_npcx/mtlrvp_npcx.dtsi
+    extra_conf_files:
+      - boards/mtlrvp/mtlrvp.conf
+    extra_configs:
+      - CONFIG_TEST_PROJECT_MTLRVPP_NPCX=y
+      - CONFIG_TEST_PROJECT_INTELRVP_DC_JACK=y
