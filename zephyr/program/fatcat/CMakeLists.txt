@@ -10,3 +10,8 @@ if(DEFINED CONFIG_BOARD_FATCAT_NPCX9M7F)
 	project(fatcat_npcx9m7f)
 	add_subdirectory(fatcat_npcx9m7f)
 endif()
+
+if(DEFINED CONFIG_BOARD_FATCAT_IT82002AW)
+	project(fatcat_it82002aw)
+	add_subdirectory(fatcat_it82002aw)
+endif()

@@ -9,6 +9,13 @@ config BOARD_FATCAT_NPCX9M7F
 	  This board is for use with the Intel RVP using the
 	  MECC 2.1 connector.
 
+config BOARD_FATCAT_IT82002AW
+	bool "Google Fatcat it82002aw add-in card"
+	help
+	  Build Google ITE it82002aw based Fatcat add-in card.
+	  This board is for use with the Intel RVP using the
+	  MECC 2.1 connector.
+
 module = Fatcat
 module-str = Fatcat board-specific code
 source "subsys/logging/Kconfig.template.log_config"
