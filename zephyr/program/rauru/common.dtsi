@@ -4,11 +4,29 @@
  */
 
 #include <cros/integrated_fwid.dtsi>
+#include <dt-bindings/wake_mask_event_defines.h>
 #include <ite/it8xxx2-pinctrl-map.dtsi>
 
 / {
 	chosen {
 		zephyr,host-cmd-shi-backend = &shi0;
+	};
+
+	ec-mkbp-host-event-wakeup-mask {
+		compatible = "cros-ec,mkbp-host-event-wakeup-mask";
+		wakeup-mask = <(
+			HOST_EVENT_AC_CONNECTED |
+			HOST_EVENT_AC_DISCONNECTED |
+			HOST_EVENT_LID_OPEN |
+			HOST_EVENT_POWER_BUTTON |
+			HOST_EVENT_HANG_DETECT |
+			HOST_EVENT_MODE_CHANGE)>;
+	};
+
+	ec-mkbp-event-wakeup-mask {
+		compatible = "cros-ec,mkbp-event-wakeup-mask";
+		wakeup-mask = <(MKBP_EVENT_KEY_MATRIX |
+				MKBP_EVENT_HOST_EVENT)>;
 	};
 };
 
