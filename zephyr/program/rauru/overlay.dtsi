@@ -137,15 +137,20 @@
 			enum-name = "FW_STORAGE";
 			start = <30>;
 			size = <2>;
-			ufs {
+			ufs-40 {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_STORAGE_UFS";
+				enum-name = "FW_STORAGE_UFS_40";
 				value = <0>;
+			};
+			ufs-31 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_UFS_31";
+				value = <1>;
 			};
 			nvme {
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "FW_STORAGE_NVME";
-				value = <1>;
+				value = <2>;
 			};
 		};
 	};
