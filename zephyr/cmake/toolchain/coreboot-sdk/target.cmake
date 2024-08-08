@@ -31,7 +31,7 @@ elseif(NOT DEFINED COREBOOT_SDK_ROOT)
   endif()
 
   execute_process(
-    COMMAND bazel run "@${COREBOOT_SDK_PKG}//:get_path"
+    COMMAND bazel --project fwsdk run "@${COREBOOT_SDK_PKG}//:get_path"
     OUTPUT_VARIABLE COREBOOT_SDK_ROOT
     OUTPUT_STRIP_TRAILING_WHITESPACE
     COMMAND_ERROR_IS_FATAL ANY
