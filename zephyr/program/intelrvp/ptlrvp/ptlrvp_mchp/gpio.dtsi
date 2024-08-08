@@ -368,7 +368,7 @@
 			gpios = <MCHP_GPIO_DECODE_014 GPIO_INPUT>;
 		};
 		gpio_mic_privacy_ec: mic-privacy-ec {
-			gpios = <MCHP_GPIO_DECODE_053 GPIO_OUTPUT_LOW>;
+			gpios = <MCHP_GPIO_DECODE_053 GPIO_INPUT>;
 		};
 		ec_pch_rsmrst_l: pm-rsmrst-ec-n {
 			gpios = <MCHP_GPIO_DECODE_054 GPIO_OUTPUT>;
