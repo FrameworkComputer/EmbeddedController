@@ -88,10 +88,42 @@ def find_checkout():
     raise FileNotFoundError("Unable to locate the root of the checkout")
 
 
+def init_toolchain():
+    """Initialize coreboot-sdk.
+
+    Returns:
+        Environment variables to use for toolchain.
+    """
+    # (environment variable, bazel target)
+    toolchains = [
+        ("COREBOOT_SDK_ROOT_arm", "@coreboot-sdk-arm-eabi//:get_path"),
+        ("COREBOOT_SDK_ROOT_x86", "@coreboot-sdk-i386-elf//:get_path"),
+        ("COREBOOT_SDK_ROOT_riscv", "@coreboot-sdk-riscv-elf//:get_path"),
+        ("COREBOOT_SDK_ROOT_nds32", "@coreboot-sdk-nds32le-elf//:get_path"),
+    ]
+
+    subprocess.run(
+        ["bazel", "build", *(target for _, target in toolchains)],
+        check=True,
+    )
+
+    result = {}
+    for name, target in toolchains:
+        run_result = subprocess.run(
+            ["bazel", "run", target],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        result[name] = run_result.stdout.strip()
+
+    return result
+
+
 def build(opts):
     """Builds all Zephyr firmware targets"""
     metric_list = firmware_pb2.FwBuildMetricList()  # pylint: disable=no-member
     env = os.environ.copy()
+    env.update(init_toolchain())
     env.update(
         {
             "PYTHONPATH": str(ZEPHYR_DIR / "zmake"),
