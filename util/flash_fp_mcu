@@ -104,6 +104,7 @@ get_uartid() {
   return 1
 }
 
+# TODO(b/358420799): Replace with libgpiod (gpioget/gpioset).
 # Usage: gpio <unexport|export|in|out|0|1|get> <signal> [signal...]
 gpio() {
   local cmd="$1"
