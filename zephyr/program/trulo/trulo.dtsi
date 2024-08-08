@@ -10,6 +10,16 @@
 		gpio-wp = &gpio_ec_wp_odl;
 	};
 
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_power_button: power_button {
+			irq-pin = <&gpio_gsc_ec_pwr_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+	};
+
 	named-gpios {
 		compatible = "named-gpios";
 
