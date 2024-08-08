@@ -15,6 +15,7 @@ tests:
       - CONFIG_TEST_DISABLE_AP_PWRSEQ=y
       - CONFIG_AP_POWER_EVENTS_MOCK=y
       - CONFIG_POWER_SIGNALS_MOCK=y
+      - CONFIG_AP_EVENTS=n
   nissa.board_power.ap_pwrseq_drv:
     extra_configs:
       - CONFIG_TEST_NISSA_BOARD_POWER=y

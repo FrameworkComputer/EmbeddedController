@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "common.h"
 #include "signal_adc.h"
 #include "signal_gpio.h"
 #include "signal_vw.h"
@@ -96,14 +97,14 @@ static atomic_t power_signals, prev_power_signals;
 
 static power_signal_mask_t debug_signals;
 
-void power_set_debug(power_signal_mask_t debug)
+test_mockable void power_set_debug(power_signal_mask_t debug)
 {
 	debug_signals = debug;
 	/* Copy the current values */
 	atomic_set(&prev_power_signals, atomic_get(&power_signals));
 }
 
-power_signal_mask_t power_get_debug(void)
+test_mockable power_signal_mask_t power_get_debug(void)
 {
 	return debug_signals;
 }
@@ -126,7 +127,7 @@ static inline void check_debug(enum power_signal signal)
 #endif
 }
 
-power_signal_mask_t power_get_signals(void)
+test_mockable power_signal_mask_t power_get_signals(void)
 {
 	int value;
 
@@ -138,14 +139,14 @@ power_signal_mask_t power_get_signals(void)
 }
 
 #ifndef CONFIG_AP_PWRSEQ_DRIVER
-void power_signal_interrupt(enum power_signal signal, int value)
+test_mockable void power_signal_interrupt(enum power_signal signal, int value)
 {
 	atomic_set_bit_to(&power_signals, signal, value);
 	check_debug(signal);
 	ap_pwrseq_wake();
 }
 #else
-void power_signal_interrupt(enum power_signal signal, int value)
+test_mockable void power_signal_interrupt(enum power_signal signal, int value)
 {
 	const struct device *ap_pwrseq_dev = ap_pwrseq_get_instance();
 
@@ -157,8 +158,9 @@ void power_signal_interrupt(enum power_signal signal, int value)
 	}
 }
 #endif
-int power_wait_mask_signals_timeout(power_signal_mask_t mask,
-				    power_signal_mask_t want, int timeout)
+test_mockable int power_wait_mask_signals_timeout(power_signal_mask_t mask,
+						  power_signal_mask_t want,
+						  int timeout)
 {
 	want &= mask;
 	while (timeout-- > 0) {
@@ -170,7 +172,7 @@ int power_wait_mask_signals_timeout(power_signal_mask_t mask,
 	return -ETIMEDOUT;
 }
 
-int power_signal_get(enum power_signal signal)
+test_mockable int power_signal_get(enum power_signal signal)
 {
 	const struct ps_config *cp;
 
@@ -204,7 +206,7 @@ int power_signal_get(enum power_signal signal)
 	}
 }
 
-int power_signal_set(enum power_signal signal, int value)
+test_mockable int power_signal_set(enum power_signal signal, int value)
 {
 	const struct ps_config *cp;
 	int ret;
@@ -240,7 +242,7 @@ int power_signal_set(enum power_signal signal, int value)
 	return ret;
 }
 
-int power_signal_enable(enum power_signal signal)
+test_mockable int power_signal_enable(enum power_signal signal)
 {
 	const struct ps_config *cp;
 
@@ -267,7 +269,7 @@ int power_signal_enable(enum power_signal signal)
 	}
 }
 
-int power_signal_disable(enum power_signal signal)
+test_mockable int power_signal_disable(enum power_signal signal)
 {
 	const struct ps_config *cp;
 
@@ -290,7 +292,7 @@ int power_signal_disable(enum power_signal signal)
 	}
 }
 
-const char *power_signal_name(enum power_signal signal)
+test_mockable const char *power_signal_name(enum power_signal signal)
 {
 	if (signal < 0 || signal >= POWER_SIGNAL_COUNT) {
 		return NULL;
@@ -298,7 +300,7 @@ const char *power_signal_name(enum power_signal signal)
 	return sig_config[signal].debug_name;
 }
 
-void power_signal_init(void)
+test_mockable void power_signal_init(void)
 {
 	if (IS_ENABLED(CONFIG_AP_PWRSEQ_SIGNAL_GPIO)) {
 		power_signal_gpio_init();

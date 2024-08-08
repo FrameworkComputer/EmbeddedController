@@ -1,0 +1,38 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+choice TEST_PROJECT_TYPE
+	prompt "Select Intel RVP board variant for tests"
+	help
+	  Choose the board variant for which the tests will be compiled and run.
+
+config TEST_PROJECT_MTLRVPP_COMMON
+	bool "Enable tests for board mtlrvp common source code"
+	help
+	  Enable tests specific to the mtlrvp common source code.
+
+config TEST_PROJECT_MTLRVPP_NPCX
+	bool "Enable tests for board mtlrvp_npcx"
+	help
+	  Enable tests specific to the mtlrvp_npcx variant.
+
+config TEST_PROJECT_MTLRVPP_MCHP
+	bool "Enable tests for board mtlrvp_mchp"
+	help
+	  Enable tests specific to the mtlrvp_mchp variant.
+
+endchoice
+
+config TEST_PROJECT_MTL_BOARD_POWER
+	bool "Run tests for board_power.c"
+	help
+	  Include board_power.c into the binary and test its functions.
+
+config TEST_AP_PWRSEQ_PP5500
+        bool "Enable PP5500 rail tests"
+        default n
+        help
+          Enable PP5500 rail tests for board power.
+
+source "Kconfig.zephyr"

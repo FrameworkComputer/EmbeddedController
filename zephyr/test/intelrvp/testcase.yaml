@@ -1,0 +1,32 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+common:
+  platform_allow: native_sim
+tests:
+  intelrvp.mtlrvp_npcx.board_power:
+    extra_dtc_overlay_files:
+      - boards/intelrvp.dtsi
+      - boards/mtlrvp_npcx/mtlrvp_npcx.dtsi
+    extra_conf_files:
+      - boards/mtlrvp/mtlrvp.conf
+    extra_configs:
+      - CONFIG_TEST_PROJECT_MTLRVPP_NPCX=y
+      - CONFIG_TEST_PROJECT_MTL_BOARD_POWER=y
+      - CONFIG_AP_POWER_EVENTS_MOCK=y
+      - CONFIG_POWER_SIGNALS_MOCK=y
+      - CONFIG_AP_EVENTS=n
+
+  intelrvp.mtlrvp_mchp.board_power:
+    extra_dtc_overlay_files:
+      - boards/intelrvp.dtsi
+      - boards/mtlrvp_mchp/mtlrvp_mchp.dtsi
+    extra_conf_files:
+      - boards/mtlrvp/mtlrvp.conf
+    extra_configs:
+      - CONFIG_TEST_PROJECT_MTLRVPP_MCHP=y
+      - CONFIG_TEST_PROJECT_MTL_BOARD_POWER=y
+      - CONFIG_AP_POWER_EVENTS_MOCK=y
+      - CONFIG_POWER_SIGNALS_MOCK=y
+      - CONFIG_AP_EVENTS=n

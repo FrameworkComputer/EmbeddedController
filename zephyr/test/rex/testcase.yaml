@@ -22,6 +22,7 @@ tests:
       - CONFIG_TEST_X86_NON_DSX_PWRSEQ_MTL=y
       - CONFIG_AP_POWER_EVENTS_MOCK=y
       - CONFIG_AP_EVENTS=n
+      - CONFIG_POWER_SIGNALS_MOCK=y
 
   rex.board_power.ap_pwrseq_drv:
     extra_dtc_overlay_files:
@@ -35,6 +36,7 @@ tests:
       - CONFIG_AP_PWRSEQ_DRIVER=y
       - CONFIG_EMUL_AP_PWRSEQ_DRIVER=y
       - CONFIG_AP_EVENTS=n
+      - CONFIG_POWER_SIGNALS_MOCK=y
 
   rex.battery_present:
     extra_dtc_overlay_files:
