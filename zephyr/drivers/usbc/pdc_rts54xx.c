@@ -447,6 +447,8 @@ struct pdc_data_t {
 	struct k_event driver_event;
 	/** Port specific PDC flags */
 	atomic_t flags;
+	/* Currently running UCSI command. */
+	enum ucsi_command_t active_ucsi_cmd;
 };
 
 /**
@@ -571,8 +573,14 @@ static void print_current_state(struct pdc_data_t *data)
 	int st = get_state(data);
 
 	if (st == ST_WRITE) {
-		LOG_INF("ST%d: %s %s", cfg->connector_number, state_names[st],
-			cmd_names[data->cmd]);
+		if (data->cmd == CMD_RAW_UCSI) {
+			LOG_INF("ST%d: %s RAW:%s", cfg->connector_number,
+				state_names[st],
+				get_ucsi_command_name(data->active_ucsi_cmd));
+		} else {
+			LOG_INF("ST%d: %s %s", cfg->connector_number,
+				state_names[st], cmd_names[data->cmd]);
+		}
 	} else if (st == ST_ERROR_RECOVERY) {
 		LOG_INF("ST%d: %s %s %d", cfg->connector_number,
 			state_names[st], cmd_names[data->cmd],
@@ -984,6 +992,7 @@ static void st_idle_entry(void *o)
 	print_current_state(data);
 
 	data->cmd = CMD_NONE;
+	data->active_ucsi_cmd = 0;
 }
 
 static void st_idle_run(void *o)
@@ -1613,6 +1622,13 @@ static int rts54_post_command_with_callback(const struct device *dev,
 	data->user_buf = user_buf;
 	data->cmd = cmd;
 	data->cc_cb_tmp = callback;
+
+	/* If sending a raw UCSI command, byte[2] is the actual UCSI command
+	 * being executed.
+	 */
+	if (cmd == CMD_RAW_UCSI && buf) {
+		data->active_ucsi_cmd = data->wr_buf[2];
+	}
 
 	if (IS_ENABLED(CONFIG_USBC_PDC_TRACE_MSG)) {
 		const struct pdc_config_t *cfg = dev->config;
