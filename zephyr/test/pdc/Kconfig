@@ -17,6 +17,13 @@ config TEST_SUITE_PDC_RTS54XX
 config TEST_SUITE_PDC_TPS6699X
 	bool "Enable TPS6699x PDC tests"
 
+config TODO_B_345292002
+	bool "Disable tests that fail for TPS6699x PDC config"
+	help
+	  Enable this config for pdc.generic.tps6699x to disable tests that
+	  currently fail. As b/345292002 progresses, the amount of code
+	  protected by this config should go down.
+
 config TEST_SUITE_PDC_RETIMER_FW_UPDATE
 	bool "Enable retimer FW update tests"
 

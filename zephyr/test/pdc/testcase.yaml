@@ -13,7 +13,6 @@ tests:
     - "./boards/rts5453p.overlay"
 
   pdc.generic.tps6699x:
-    build_only: true
     timeout: 300
     extra_configs:
     - CONFIG_TEST_SUITE_PDC_GENERIC=y
@@ -21,6 +20,7 @@ tests:
     - CONFIG_USBC_PDC_TRACE_MSG=y
     - CONFIG_USB_PDC_LOG_LEVEL_DBG=y
     - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
+    - CONFIG_TODO_B_345292002=y
     extra_dtc_overlay_files:
     - "./boards/tps6699x.overlay"
 

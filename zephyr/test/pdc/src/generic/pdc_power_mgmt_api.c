@@ -74,6 +74,9 @@ static void pdc_power_mgmt_after(void *fixture)
 ZTEST_SUITE(pdc_power_mgmt_api, NULL, pdc_power_mgmt_setup,
 	    pdc_power_mgmt_before, pdc_power_mgmt_after, NULL);
 
+/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
+#ifndef CONFIG_TODO_B_345292002
+
 ZTEST_USER(pdc_power_mgmt_api, test_get_usb_pd_port_count)
 {
 	zassert_equal(CONFIG_USB_PD_PORT_MAX_COUNT,
@@ -1502,3 +1505,5 @@ ZTEST_USER(pdc_power_mgmt_api_suspended, test_get_info)
 	zassert_equal(-ENOTCONN, rv, "Expected %d (-ENOTCONN) but got %d",
 		      -ENOTCONN, rv);
 }
+
+#endif /* CONFIG_TODO_B_345292002 */
