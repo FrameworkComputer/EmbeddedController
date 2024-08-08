@@ -37,6 +37,8 @@
 #include <ap_power/ap_power_events.h>
 #include <atomic.h>
 
+#line 41
+
 #define VWIRE_PULSE_TRIGGER_TIME \
 	CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_DEFAULT_VW_WIDTH_US
 
