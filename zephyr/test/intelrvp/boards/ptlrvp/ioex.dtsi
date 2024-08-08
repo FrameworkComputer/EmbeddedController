@@ -1,0 +1,29 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* TODO: create mock cros,ioex-chip device */
+	ioex_it8801_port0: it8801_port@0 {
+		compatible = "zephyr,gpio-emul";
+		reg = <0 0x4>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	ioex_it8801_port1: it8801_port@1 {
+		compatible = "zephyr,gpio-emul";
+		reg = <1 0x4>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	ioex_it8801_port2: it8801_port@2 {
+		compatible = "zephyr,gpio-emul";
+		reg = <2 0x4>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+};

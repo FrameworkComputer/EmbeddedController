@@ -1,0 +1,84 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	CHARGER_I2C: CHARGER_I2C@700 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x700 6>;
+	};
+
+	PD_POW_I2C: PD_POW_I2C@800 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x800 6>;
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_charger: charger {
+			i2c-port = <&CHARGER_I2C>;
+			enum-names = "I2C_PORT_CHARGER",
+				"I2C_PORT_BATTERY",
+				"I2C_PORT_KB_DISCRETE",
+				"I2C_PORT_PORT80",
+				"I2C_PORT_EEPROM",
+				"I2C_PORT_RAA2250";
+		};
+		ec_pd_power: typec-aic1-power {
+			i2c-port = <&PD_POW_I2C>;
+			enum-names = "I2C_PORT_TYPEC_AIC_1";
+		};
+	};
+};
+
+/* charger */
+&CHARGER_I2C {
+	/* label is deprecated property for i2c-emul-controller */
+	/* label = "I2C_CHARGER"; */
+
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	status = "okay";
+
+	charger: raa489@9 {
+		compatible = "intersil,isl9241";
+		status = "okay";
+		reg = <0x9>;
+	};
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+	kb_discrete: ite-it8801@39 {
+		compatible = "ite,it8801","cros,i2c-mock";
+		reg = <0x39>;
+	};
+	seven_seg_display: max695x-seven-seg-display@38 {
+		compatible = "maxim,max695x","cros,i2c-mock";
+		reg = <0x38>;
+
+		/* label marked deprecated */
+		/* label = "MAX695X_SEVEN_SEG_DISPLAY"; */
+	};
+};
+
+/* typec-aic1-power */
+&PD_POW_I2C {
+	/* label is deprecated property for i2c-emul-controller */
+	/* label = "I2C_PD_POWER"; */
+	clock-frequency = <I2C_BITRATE_FAST>;
+	status = "okay";
+};
