@@ -44,6 +44,11 @@ LOG_MODULE_REGISTER(pdc_power_mgmt, CONFIG_USB_PDC_LOG_LEVEL);
 #define PDC_PUBLIC_CMD_COMPLETE_EVENT BIT(1)
 
 /**
+ * @brief Event triggered when pdc state has settled
+ */
+#define PDC_SM_SETTLED_EVENT BIT(2)
+
+/**
  * @brief Time delay before running the state machine loop
  */
 #define LOOP_DELAY_MS 25
@@ -64,6 +69,11 @@ LOG_MODULE_REGISTER(pdc_power_mgmt, CONFIG_USB_PDC_LOG_LEVEL);
  *
  */
 #define WAIT_MAX (PDC_CMD_TIMEOUT_MS / LOOP_DELAY_MS)
+
+/**
+ * @brief Maximum time to wait for PDC state to settle.
+ */
+#define PDC_SM_SETTLED_TIMEOUT_MS PDC_CMD_TIMEOUT_MS
 
 /**
  * @brief maximum number of times to try and send a command, or wait for a
@@ -293,7 +303,7 @@ enum cci_flag_t {
 	CCI_ERROR,
 	/** CCI_CMD_COMPLETED */
 	CCI_CMD_COMPLETED,
-	/** CCI_EVENT */
+	/** CCI_EVENT: Used to trigger querying connector status */
 	CCI_EVENT,
 	/** CCI_CAM_CHANGE */
 	CCI_CAM_CHANGE,
@@ -904,6 +914,11 @@ static void send_cmd_init(struct pdc_port_t *port)
  */
 static void send_pending_public_commands(struct pdc_port_t *port)
 {
+	/* If we are running public commands, policy state machine must have
+	 * finished settling.
+	 */
+	k_event_post(&port->sm_event, PDC_SM_SETTLED_EVENT);
+
 	/* Send a pending public command */
 	if (port->send_cmd.public.pending) {
 		set_pdc_state(port, PDC_SEND_CMD_START);
@@ -1357,8 +1372,9 @@ static void pdc_unattached_run(void *obj)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
 
-	/* The CCI_EVENT is set on a connector disconnect, so check the
-	 * connector status and take the appropriate action. */
+	/* The CCI_EVENT is set to re-query connector status, so check the
+	 * connector status and take the appropriate action.
+	 */
 	if (atomic_test_and_clear_bit(port->cci_flags, CCI_EVENT)) {
 		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_STATUS);
 		return;
@@ -1410,8 +1426,9 @@ static void pdc_src_attached_run(void *obj)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
 
-	/* The CCI_EVENT is set on a connector disconnect, so check the
-	 * connector status and take the appropriate action. */
+	/* The CCI_EVENT is set to re-query connector status, so check the
+	 * connector status and take the appropriate action.
+	 */
 	if (atomic_test_and_clear_bit(port->cci_flags, CCI_EVENT)) {
 		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_STATUS);
 		return;
@@ -1539,8 +1556,9 @@ static void pdc_snk_attached_run(void *obj)
 	uint32_t pdo_pwr_mw, pdo_volt_mv;
 	uint32_t flags;
 
-	/* The CCI_EVENT is set on a connector disconnect, so check the
-	 * connector status and take the appropriate action. */
+	/* The CCI_EVENT is set to re-query connector status, so check the
+	 * connector status and take the appropriate action.
+	 */
 	if (atomic_test_and_clear_bit(port->cci_flags, CCI_EVENT)) {
 		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_STATUS);
 		return;
@@ -2123,8 +2141,9 @@ static void pdc_src_typec_only_run(void *obj)
 
 	set_attached_pdc_state(port, SRC_ATTACHED_TYPEC_ONLY_STATE);
 
-	/* The CCI_EVENT is set on a connector disconnect, so check the
-	 * connector status and take the appropriate action. */
+	/* The CCI_EVENT is set to re-query connector status, so check the
+	 * connector status and take the appropriate action.
+	 */
 	if (atomic_test_and_clear_bit(port->cci_flags, CCI_EVENT)) {
 		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_STATUS);
 		return;
@@ -2190,8 +2209,9 @@ static void pdc_snk_typec_only_run(void *obj)
 
 	set_attached_pdc_state(port, SNK_ATTACHED_TYPEC_ONLY_STATE);
 
-	/* The CCI_EVENT is set on a connector disconnect, so check the
-	 * connector status and take the appropriate action. */
+	/* The CCI_EVENT is set to re-query connector status, so check the
+	 * connector status and take the appropriate action.
+	 */
 	if (atomic_test_and_clear_bit(port->cci_flags, CCI_EVENT)) {
 		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_STATUS);
 		return;
@@ -3788,6 +3808,35 @@ int pdc_power_mgmt_get_pch_data_status(int port, uint8_t *status)
 	}
 
 	memcpy(status, pdc_data[port]->port.pch_data_status, 5);
+	return 0;
+}
+
+int pdc_power_mgmt_resync_port_state_for_ppm(int port)
+{
+	struct pdc_port_t *pdc;
+	int rv;
+
+	if (!is_pdc_port_valid(port)) {
+		return -ERANGE;
+	}
+
+	pdc = &pdc_data[port]->port;
+
+	/* First clear the settle state event if it wasn't triggered for PPM. */
+	k_event_clear(&pdc->sm_event, PDC_SM_SETTLED_EVENT);
+
+	/* Trigger re-scan of connector status. */
+	atomic_set_bit(pdc->cci_flags, CCI_EVENT);
+	k_event_post(&pdc->sm_event, PDC_SM_EVENT);
+
+	rv = k_event_wait(&pdc->sm_event, PDC_SM_SETTLED_EVENT, false,
+			  K_MSEC(PDC_SM_SETTLED_TIMEOUT_MS));
+
+	if (!rv) {
+		return -ETIMEDOUT;
+	}
+
+	k_event_clear(&pdc->sm_event, rv);
 	return 0;
 }
 

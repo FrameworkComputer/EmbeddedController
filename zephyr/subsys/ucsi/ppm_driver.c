@@ -130,6 +130,53 @@ static int ucsi_get_active_port_count(const struct device *dev)
 #define SYNC_CMD_TIMEOUT_MSEC 2000
 #define RETRY_INTERVAL_MS 20
 
+static int execute_cmd_with_pdc_power_mgmt(const struct device *device,
+					   struct ucsi_control_t *control,
+					   uint8_t *lpm_data_out)
+{
+	uint8_t conn = UCSI_7BIT_PORTMASK(control->command_specific[0]);
+	uint8_t ucsi_command = control->command;
+	union set_sink_path_t set_sink_path;
+	int charge_port;
+	int rv;
+
+	/* Handled commands must return. */
+	switch (ucsi_command) {
+	case UCSI_SET_SINK_PATH:
+		/*
+		 * Intercept UCSI_SET_SINK_PATH. This command will be sent by
+		 * the ucsi kernel driver with enable set or cleared. If the
+		 * enable bit in the command is set, then use the port number
+		 * for the override port. If the enable bit is clear, then pass
+		 * OVERIDE_OFF to the charge manager, disabling any previous
+		 * override.
+		 *
+		 * If this requires a change to the charging port, then the
+		 * charge_manager will call into the PDM which in turn will
+		 * cause SET_SINK_PATH to get sent the PDC. So this command
+		 * should not be passed directly to the PDC from the PPM.
+		 */
+		set_sink_path.raw_value = control->command_specific[0];
+		conn = set_sink_path.connector_number - 1;
+		charge_port = set_sink_path.sink_path_enable ? conn :
+							       OVERRIDE_OFF;
+
+		if (charge_port == OVERRIDE_OFF ||
+		    (pdc_power_mgmt_get_power_role(charge_port) ==
+			     PD_ROLE_SINK &&
+		     pdc_power_mgmt_is_connected(charge_port))) {
+			rv = charge_manager_set_override(charge_port);
+			return rv == EC_SUCCESS ? 0 : -EINVAL;
+		} else {
+			return -EINVAL;
+		}
+	default:
+		break;
+	}
+
+	return -EINVAL;
+}
+
 static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 				     struct ucsi_control_t *control,
 				     uint8_t *lpm_data_out)
@@ -143,8 +190,6 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	uint32_t events;
 	k_timepoint_t timeout;
 	int rv;
-	int charge_port;
-	union set_sink_path_t set_sink_path;
 
 	if (ucsi_command == 0 || ucsi_command >= UCSI_CMD_MAX) {
 		LOG_ERR("Invalid command 0x%x", ucsi_command);
@@ -181,7 +226,6 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	case UCSI_GET_CONNECTOR_CAPABILITY:
 	case UCSI_GET_CAM_SUPPORTED:
 	case UCSI_GET_CURRENT_CAM:
-	case UCSI_SET_NEW_CAM:
 	case UCSI_GET_PDOS:
 	case UCSI_GET_CABLE_PROPERTY:
 	case UCSI_GET_CONNECTOR_STATUS:
@@ -189,39 +233,20 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	case UCSI_GET_PD_MESSAGE:
 	case UCSI_GET_ATTENTION_VDO:
 	case UCSI_GET_CAM_CS:
+	case UCSI_SET_CCOM:
+	case UCSI_SET_UOR:
+	case UCSI_SET_PDR:
+	case UCSI_SET_POWER_LEVEL:
+	case UCSI_SET_RETIMER_MODE:
+	case UCSI_SET_SINK_PATH:
+	case UCSI_SET_PDOS:
+	case UCSI_SET_NEW_CAM:
+	case UCSI_SET_USB:
 		conn = UCSI_7BIT_PORTMASK(control->command_specific[0]);
 		break;
 	case UCSI_GET_ALTERNATE_MODES:
 		conn = UCSI_7BIT_PORTMASK(control->command_specific[1]);
 		break;
-	case UCSI_SET_SINK_PATH:
-		/*
-		 * Intercept UCSI_SET_SINK_PATH. This command will be sent by
-		 * the ucsi kernel driver with enable set or cleared. If the
-		 * enable bit in the command is set, then use the port number
-		 * for the override port. If the enable bit is clear, then pass
-		 * OVERIDE_OFF to the charge manager, disabling any previous
-		 * override.
-		 *
-		 * If this requires a change to the charging port, then the
-		 * charge_manager will call into the PDM which in turn will
-		 * cause SET_SINK_PATH to get sent the PDC. So this command
-		 * should not be passed directly to the PDC from the PPM.
-		 */
-		set_sink_path.raw_value = control->command_specific[0];
-		conn = set_sink_path.connector_number - 1;
-		charge_port = set_sink_path.sink_path_enable ? conn :
-							       OVERRIDE_OFF;
-
-		if (charge_port == OVERRIDE_OFF ||
-		    (pdc_power_mgmt_get_power_role(charge_port) ==
-			     PD_ROLE_SINK &&
-		     pdc_power_mgmt_is_connected(charge_port))) {
-			rv = charge_manager_set_override(charge_port);
-			return rv == EC_SUCCESS ? 0 : -EINVAL;
-		} else {
-			return -EINVAL;
-		}
 	default:
 		conn = 1;
 	}
@@ -229,6 +254,15 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	if (conn == 0 || conn > NUM_PORTS) {
 		LOG_ERR("Invalid conn=%d", conn);
 		return -ERANGE;
+	}
+
+	/* Some commands should get intercepted and handled directly via the PDC
+	 * power mgmt apis.
+	 */
+	if (ucsi_command == UCSI_SET_SINK_PATH) {
+		rv = execute_cmd_with_pdc_power_mgmt(device, control,
+						     lpm_data_out);
+		goto done;
 	}
 
 	data_size = ucsi_commands[ucsi_command].command_copy_length;
@@ -272,15 +306,34 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 		rv = data->cci_event.data_len;
 	}
 
-	/* Intercept and override some values. */
-	switch (ucsi_command) {
-	case UCSI_GET_CAPABILITY:
-		/* Override the number of supported ports with what's defined in
-		 * device tree.
+done:
+	if (rv >= 0) {
+		/* Certain SET_* commands require sychronizing the pdc power
+		 * mgmt api so it can respond to subsequent calls. Do that here
+		 * and wait for it to sync.
 		 */
-		struct capability_t *caps = (struct capability_t *)lpm_data_out;
-		caps->bNumConnectors = ucsi_get_active_port_count(device);
-		break;
+		switch (ucsi_command) {
+		case UCSI_SET_CCOM:
+		case UCSI_SET_PDR:
+		case UCSI_SET_UOR:
+		case UCSI_SET_PDOS:
+		case UCSI_SET_SINK_PATH:
+			pdc_power_mgmt_resync_port_state_for_ppm(conn - 1);
+			break;
+		}
+
+		/* Intercept and override some values. */
+		switch (ucsi_command) {
+		case UCSI_GET_CAPABILITY:
+			/* Override the number of supported ports with what's
+			 * defined in device tree.
+			 */
+			struct capability_t *caps =
+				(struct capability_t *)lpm_data_out;
+			caps->bNumConnectors =
+				ucsi_get_active_port_count(device);
+			break;
+		}
 	}
 
 	return rv;

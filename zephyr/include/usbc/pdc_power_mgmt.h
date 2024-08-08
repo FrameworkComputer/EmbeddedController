@@ -574,4 +574,20 @@ int pdc_power_mgmt_get_pch_data_status(int port, uint8_t *status);
  */
 int pdc_power_mgmt_get_lpm_ppm_info(int port, struct lpm_ppm_info_t *info);
 
+/**
+ * @brief Recheck connector status on given port and wait for state to settle.
+ *
+ * Role swaps do not trigger a connector status change event when initiated by
+ * the host so manually query connector status again and wait for the state to
+ * settle.
+ *
+ * This API is intended to be used by the PPM only to make sure the power mgmt
+ * state stays in sync.
+ *
+ * @param port USB-C port number
+ *
+ * @retval 0 if successful or -ETIMEDOUT or error code
+ */
+int pdc_power_mgmt_resync_port_state_for_ppm(int port);
+
 #endif /* __CROS_EC_PDC_POWER_MGMT_H */
