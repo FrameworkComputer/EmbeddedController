@@ -113,9 +113,11 @@
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
 					odr = <(10000 | ROUND_UP_FLAG)>;
+					ec-rate = <(100 * USEC_PER_MSEC)>;
 				};
 				ec-s3 {
 					odr = <(10000 | ROUND_UP_FLAG)>;
+					ec-rate = <0>;
 				};
 			};
 		};
@@ -136,9 +138,11 @@
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
 					odr = <(10000 | ROUND_UP_FLAG)>;
+					ec-rate = <(100 * USEC_PER_MSEC)>;
 				};
 				ec-s3 {
 					odr = <(10000 | ROUND_UP_FLAG)>;
+					ec-rate = <0>;
 				};
 			};
 		};
@@ -165,7 +169,10 @@
 		 * list of GPIO interrupts that have to
 		 * be enabled at initial stage
 		 */
-		sensor-irqs = <&int_base_imu &int_lid_imu>;
+		/delete-property/ sensor-irqs;
+
+		/* list of sensors in force mode */
+		accel-force-mode-sensors = <&lid_accel &base_accel>;
 	};
 
 	/* Rotation matrix used by drivers. */
