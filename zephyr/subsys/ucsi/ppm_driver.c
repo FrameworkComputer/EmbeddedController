@@ -166,7 +166,7 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 		if (!ucsi_ppm_get_next_connector_status(data->ppm_dev, &conn,
 							&conn_status)) {
 			LOG_ERR("Cx: Found no port with CI to ack.");
-			return -ENOMSG;
+			return -EINVAL;
 		}
 		break;
 	}
@@ -196,7 +196,7 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 
 	if (conn == 0 || conn > NUM_PORTS) {
 		LOG_ERR("Invalid conn=%d", conn);
-		return -EINVAL;
+		return -ERANGE;
 	}
 
 	data_size = ucsi_commands[ucsi_command].command_copy_length;

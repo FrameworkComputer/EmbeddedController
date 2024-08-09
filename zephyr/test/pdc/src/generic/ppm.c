@@ -98,7 +98,12 @@ static bool check_cci_matches(struct ppm_test_fixture *fixture,
 		return false;
 	}
 
-	return *((uint32_t *)cci) == *((uint32_t *)&actual_cci);
+	if (cci->raw_value != actual_cci.raw_value) {
+		LOG_ERR("CCI: Actual=0x%x, Desired=0x%x", actual_cci.raw_value,
+			cci->raw_value);
+	}
+
+	return cci->raw_value == actual_cci.raw_value;
 }
 
 static void unblock_fake_driver_with_command(struct ppm_test_fixture *fixture,
@@ -299,6 +304,7 @@ static void enable_notifications_from_idle(struct ppm_test_fixture *fixture)
 
 static bool initialize_fake(struct ppm_test_fixture *fixture)
 {
+	wait_for_cmd_to_process(fixture);
 	write_ppm_reset(fixture);
 	return wait_for_cmd_to_process(fixture);
 }
@@ -1059,4 +1065,82 @@ ZTEST_USER_F(ppm_test, test_invalid_read_writes)
 	/* First write succeeds and second one responds with -EBUSY. */
 	zassert_false(write_command(fixture, &control) < 0);
 	zassert_equal(write_command(fixture, &control), -EBUSY);
+}
+
+/* Test mapping of driver errors to PPM errors. */
+ZTEST_USER_F(ppm_test, test_driver_to_ppm_error_map)
+{
+	static struct errno_map {
+		int error;
+		uint8_t ucsi_command;
+		union error_status_t status;
+	} error_map[] = {
+		{ .error = -ENOTSUP, .status = { .unrecognized_command = 1 } },
+		{ .error = -EBUSY, .status = { .ppm_policy_conflict = 1 } },
+		{ .error = -ETIMEDOUT, .status = { .ppm_policy_conflict = 1 } },
+		{ .error = -ERANGE,
+		  .status = { .non_existent_connector_number = 1 } },
+
+		{ .error = -EINVAL,
+		  .status = { .invalid_command_specific_param = 1 } },
+
+		/* -EINVAL can be different for set sink path however. */
+		{ .error = -EINVAL,
+		  .ucsi_command = UCSI_SET_SINK_PATH,
+		  .status = { .set_sink_path_rejected = 1 } },
+	};
+
+	struct ucsi_control_t cmd = {
+		.data_length = 0,
+	};
+
+	struct ucsi_control_t get_error = {
+		.command = UCSI_GET_ERROR_STATUS,
+		.data_length = 0,
+		.command_specific = { 0x1, 0, 0, 0, 0, 0 },
+	};
+
+	union error_status_t data;
+	union cci_event_t complete_with_size = cci_cmd_complete;
+	complete_with_size.data_len = sizeof(data);
+
+	initialize_fake_to_idle_notify(fixture);
+
+	for (int i = 0; i < ARRAY_SIZE(error_map); ++i) {
+		if (error_map[i].ucsi_command == UCSI_SET_SINK_PATH) {
+			cmd.command = UCSI_SET_SINK_PATH;
+		} else {
+			cmd.command = UCSI_GET_CAPABILITY;
+		}
+		queue_command_for_fake_driver(fixture, cmd.command,
+					      /*result=*/error_map[i].error,
+					      /*lpm_data=*/NULL);
+		queue_command_for_fake_driver(fixture, UCSI_ACK_CC_CI,
+					      /*result=*/0, /*lpm_data=*/NULL);
+
+		zassert_false(write_command(fixture, &cmd) < 0);
+		zassert_true(wait_for_cmd_to_process(fixture));
+		zassert_true(check_cci_matches(fixture, &cci_error));
+		zassert_false(write_ack_command(fixture,
+						/*ci_ack*/ false,
+						/*cc_ack*/ true) < 0);
+		zassert_true(wait_for_cmd_to_process(fixture));
+
+		/* Get the error and verify it matches the expected value. */
+		zassert_false(write_command(fixture, &get_error) < 0);
+		zassert_true(wait_for_cmd_to_process(fixture));
+		zassert_true(check_cci_matches(fixture, &complete_with_size));
+
+		zassert_false(read_command_result(fixture, (uint8_t *)&data,
+						  sizeof(data)) < 0);
+		zassert_equal(data.raw_value, error_map[i].status.raw_value);
+
+		/* Ack the GET_ERROR_STATUS. */
+		queue_command_for_fake_driver(fixture, UCSI_ACK_CC_CI,
+					      /*result=*/0, /*lpm_data=*/NULL);
+		zassert_false(write_ack_command(fixture,
+						/*ci_ack*/ false,
+						/*cc_ack*/ true) < 0);
+		zassert_true(wait_for_cmd_to_process(fixture));
+	}
 }

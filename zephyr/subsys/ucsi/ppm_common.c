@@ -363,15 +363,41 @@ static int ppm_common_execute_pending_cmd(struct ucsi_ppm_device *dev)
 		LOG_ERR("Error with UCSI command 0x%x. Return was %d",
 			ucsi_command, ret);
 		clear_last_error(dev);
-		if (ret == -ENOTSUP) {
-			dev->last_error = ERROR_PPM;
-			dev->ppm_error_result.unrecognized_command = 1;
-		} else if (ret == -EBUSY || ret == -ETIMEDOUT) {
-			dev->last_error = ERROR_PPM;
-			dev->ppm_error_result.ppm_policy_conflict = 1;
-		} else {
+		dev->last_error = ERROR_PPM;
+
+		union error_status_t *err_status = &dev->ppm_error_result;
+
+		/* Some errors are sent back by the PPM itself. */
+		switch (ret) {
+		case -ENOTSUP:
+			err_status->unrecognized_command = 1;
+			break;
+		case -EBUSY:
+		case -ETIMEDOUT:
+			err_status->ppm_policy_conflict = 1;
+			break;
+		case -ERANGE:
+			err_status->non_existent_connector_number = 1;
+			break;
+		case -EINVAL:
+			/* Invalid commands may have specific error conditions.
+			 */
+			switch (ucsi_command) {
+			case UCSI_SET_SINK_PATH:
+				err_status->set_sink_path_rejected = 1;
+				break;
+			default:
+				err_status->invalid_command_specific_param = 1;
+				break;
+			}
+			break;
+
+		/* All other errors are considered LPM errors. */
+		default:
 			dev->last_error = ERROR_LPM;
+			break;
 		}
+
 		set_cci_error(dev);
 		return ret;
 	}
