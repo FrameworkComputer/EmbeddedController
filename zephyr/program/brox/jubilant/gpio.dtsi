@@ -13,11 +13,11 @@
 			io-channels = <&adc0 1>;
 		};
 		adc_temp_sensor_1: temp_sensor_1 {
-			enum-name = "ADC_TEMP_SENSOR_DDR_SOC";
+			enum-name = "ADC_TEMP_SENSOR_MEMORY";
 			io-channels = <&adc0 4>;
 		};
 		adc_temp_sensor_2: temp_sensor_2 {
-			enum-name = "ADC_TEMP_SENSOR_FAN";
+			enum-name = "ADC_TEMP_SENSOR_SOC";
 			io-channels = <&adc0 5>;
 		};
 		adc_temp_sensor_3: temp_sensor_3 {
