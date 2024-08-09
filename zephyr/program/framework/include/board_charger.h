@@ -38,4 +38,14 @@ int charger_in_bypass_mode(void);
 void board_charger_lpm_control(int enable);
 #endif
 
+#ifdef CONFIG_CHARGER_DYNAMIC_ACOK_REFERENCE
+/**
+ * Control ACOK by active charger port voltage
+ *
+ * @param voltage			active port voltage
+ * @param port			    active port
+ */
+void acok_control(int voltage, int port);
+#endif /*CONFIG_CHARGER_DYNAMIC_ACOK_REFERENCE*/
+
 #endif	/* __CROS_EC_BOARD_CHARGER_H */
