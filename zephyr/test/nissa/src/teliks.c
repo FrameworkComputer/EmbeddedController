@@ -8,6 +8,7 @@
 #include "cros_cbi.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
+#include "keyboard_8042_sharedlib.h"
 #include "motionsense_sensors.h"
 #include "tablet_mode.h"
 #include "teliks.h"
@@ -284,4 +285,50 @@ ZTEST(teliks, test_battery_hw_present)
 
 	zassert_ok(gpio_emul_input_set(batt_pres_gpio, batt_pres_pin, 1));
 	zassert_equal(BP_NO, battery_hw_present());
+}
+
+ZTEST(teliks, test_get_scancode_set2)
+{
+	/* Test some special keys of the customization matrix */
+	zassert_equal(get_scancode_set2(6, 13), SCANCODE_LEFT_ALT);
+	zassert_equal(get_scancode_set2(1, 14), SCANCODE_LEFT_CTRL);
+
+	/* Test out of the matrix range */
+	zassert_equal(get_scancode_set2(8, 12), 0);
+	zassert_equal(get_scancode_set2(0, 18), 0);
+}
+
+ZTEST(teliks, test_set_scancode_set2)
+{
+	/* Set some special keys and read back */
+	zassert_equal(get_scancode_set2(1, 0), 0);
+	set_scancode_set2(1, 0, SCANCODE_LEFT_WIN);
+	zassert_equal(get_scancode_set2(1, 0), SCANCODE_LEFT_WIN);
+
+	zassert_equal(get_scancode_set2(4, 0), 0);
+	set_scancode_set2(4, 0, SCANCODE_CAPSLOCK);
+	zassert_equal(get_scancode_set2(4, 0), SCANCODE_CAPSLOCK);
+
+	zassert_equal(get_scancode_set2(0, 13), 0);
+	set_scancode_set2(0, 13, SCANCODE_F15);
+	zassert_equal(get_scancode_set2(0, 13), SCANCODE_F15);
+}
+
+ZTEST(teliks, test_get_keycap_label)
+{
+	zassert_equal(get_keycap_label(3, 0), KLLI_SEARC);
+	zassert_equal(get_keycap_label(0, 4), KLLI_F10);
+	zassert_equal(get_keycap_label(8, 12), KLLI_UNKNO);
+	zassert_equal(get_keycap_label(0, 18), KLLI_UNKNO);
+}
+
+ZTEST(teliks, test_set_keycap_label)
+{
+	zassert_equal(get_keycap_label(2, 0), KLLI_UNKNO);
+	set_keycap_label(2, 0, KLLI_SEARC);
+	zassert_equal(get_keycap_label(2, 0), KLLI_SEARC);
+
+	zassert_equal(get_keycap_label(0, 14), KLLI_UNKNO);
+	set_keycap_label(0, 14, KLLI_F15);
+	zassert_equal(get_keycap_label(0, 14), KLLI_F15);
 }

@@ -311,5 +311,6 @@ if(CONFIG_TEST_NISSA_TELIKS)
             app PRIVATE
             src/teliks.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/teliks/src/board.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/teliks/src/keyboard_customization.c
     )
 endif()
