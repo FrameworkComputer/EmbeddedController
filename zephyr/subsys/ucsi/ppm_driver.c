@@ -118,6 +118,13 @@ static struct ucsi_ppm_device *ucsi_ppm_get_ppm_dev(const struct device *device)
 	return data->ppm_dev;
 }
 
+static int ucsi_get_active_port_count(const struct device *dev)
+{
+	const struct ppm_config *cfg = (const struct ppm_config *)dev->config;
+
+	return cfg->active_port_count;
+}
+
 #define SYNC_CMD_TIMEOUT_MSEC 2000
 #define RETRY_INTERVAL_MS 20
 
@@ -233,14 +240,18 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 		rv = data->cci_event.data_len;
 	}
 
+	/* Intercept and override some values. */
+	switch (ucsi_command) {
+	case UCSI_GET_CAPABILITY:
+		/* Override the number of supported ports with what's defined in
+		 * device tree.
+		 */
+		struct capability_t *caps = (struct capability_t *)lpm_data_out;
+		caps->bNumConnectors = ucsi_get_active_port_count(device);
+		break;
+	}
+
 	return rv;
-}
-
-static int ucsi_get_active_port_count(const struct device *dev)
-{
-	const struct ppm_config *cfg = (const struct ppm_config *)dev->config;
-
-	return cfg->active_port_count;
 }
 
 /*
