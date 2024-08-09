@@ -139,6 +139,16 @@ config PLATFORM_IGNORED_TOUCHPAD_ID
 		Enable this option if Touchpad board ID not current at the build phase
 		or need test others TP for verify.
 
+config CHARGER_DYNAMIC_ACOK_REFERENCE
+	bool "Enabled to control the charger acok reference dynamically"
+	default n
+	help
+		When the mainboard connects the 15W type-c source, the charger input
+		voltage will drop to less than 4V, if we fix the acok reference to lower
+		voltage, the system battery icon will show the charging even if the adapter
+		is disconnected. Control the charger acok reference dynamically can fix this
+		issue.
+
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code
 source "subsys/logging/Kconfig.template.log_config"
