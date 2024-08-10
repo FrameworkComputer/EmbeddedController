@@ -18,11 +18,13 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
+#define BASE_DETECT_RETRY_US (500 * MSEC)
 /* Base detection debouncing */
 #define BASE_DETECT_EN_DEBOUNCE_US (350 * MSEC)
 #define BASE_DETECT_DIS_DEBOUNCE_US (20 * MSEC)
 
 K_MUTEX_DEFINE(modify_base_detection_mutex);
+static uint64_t base_detect_debounce_time;
 static bool detect_base_enabled;
 
 static void base_detect_deferred(void);
@@ -39,6 +41,11 @@ static enum base_status current_base_status;
 static void base_update(enum base_status specified_status)
 {
 	int connected = (specified_status != BASE_CONNECTED) ? false : true;
+	uint64_t time_now = get_time().val;
+
+	if (base_detect_debounce_time > time_now)
+		hook_call_deferred(&base_detect_deferred_data,
+				   base_detect_debounce_time - time_now);
 
 	if (current_base_status == specified_status)
 		return;
@@ -52,11 +59,15 @@ static void base_update(enum base_status specified_status)
 
 void base_detect_interrupt(enum gpio_signal signal)
 {
+	uint64_t time_now = get_time().val;
+
 	gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(pogo_prsnt_int));
 	hook_call_deferred(&base_detect_deferred_data,
 			   (current_base_status == BASE_CONNECTED) ?
 				   BASE_DETECT_DIS_DEBOUNCE_US :
 				   BASE_DETECT_EN_DEBOUNCE_US);
+
+	base_detect_debounce_time = time_now + BASE_DETECT_RETRY_US;
 }
 
 static inline void detect_and_update_base_status(void)
@@ -96,6 +107,7 @@ static void base_detect_enable(bool enable)
 		gpio_disable_dt_interrupt(
 			GPIO_INT_FROM_NODELABEL(pogo_prsnt_int));
 		base_update(BASE_UNKNOWN);
+		hook_call_deferred(&base_detect_deferred_data, -1);
 	}
 }
 
