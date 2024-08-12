@@ -1040,4 +1040,12 @@ config PLATFORM_EC_FEATURE_FINCH
 	  When this option is enabled, some of the experimental features
 	  (aka finch) will be enabled for CROS_EC.
 
+config PLATFORM_EC_SHARED_MEM_LIBC
+	bool "Use version of libc shared memory"
+	default y if NEWLIB_LIBC
+	help
+	  Use version of shared memory implementation for applications
+	  that use libc with malloc. Malloc uses the same memory as
+	  shared_mem which can cause collisions if it is not synchronized.
+
 endif # PLATFORM_EC
