@@ -10,6 +10,8 @@ This is the entry point for the custom firmware builder workflow recipe.
 """
 
 import argparse
+import collections
+import json
 import multiprocessing
 import os
 import pathlib
@@ -183,8 +185,10 @@ def build(opts):
                     variant.upper(),
                     metric.target_name in SPECIAL_BOARDS,
                 )
-    with open(opts.metrics, "w", encoding="utf-8") as file:
-        file.write(json_format.MessageToJson(metric_list))
+    if opts.metrics:
+        with open(opts.metrics, "w", encoding="utf-8") as file:
+            file.write(json_format.MessageToJson(metric_list))
+    return 0
 
 
 UNITS = {
@@ -253,9 +257,8 @@ def parse_buildlog(filename, metric, variant, track_on_gerrit):
 def bundle(opts):
     """Bundle the artifacts for either firmware or code coverage."""
     if opts.code_coverage:
-        bundle_coverage(opts)
-    else:
-        bundle_firmware(opts)
+        return bundle_coverage(opts)
+    return bundle_firmware(opts)
 
 
 def get_bundle_dir(opts):
@@ -311,6 +314,7 @@ def bundle_coverage(opts):
     meta.coverage_html.SetInParent()
 
     write_metadata(opts, info)
+    return 0
 
 
 def bundle_firmware(opts):
@@ -321,25 +325,33 @@ def bundle_firmware(opts):
     platform_ec = ZEPHYR_DIR.parent
     modules = zmake.modules.locate_from_checkout(find_checkout())
     projects_path = zmake.modules.default_projects_dirs(modules)
+    subprocesses = []
     for project in zmake.project.find_projects(projects_path).values():
         build_dir = (
             platform_ec / "build" / "zephyr" / project.config.project_name
         )
         artifacts_dir = build_dir / "output"
-        tarball_name = f"{project.config.project_name}.firmware.tbz2"
+        tarball_name = f"{project.config.project_name}_EC.tbz2"
         tarball_path = bundle_dir.joinpath(tarball_name)
-        cmd = ["tar", "cvfj", tarball_path, "."]
+        cmd = ["tar", "cfj", tarball_path, "."]
         log_cmd(cmd)
-        subprocess.run(
-            cmd, cwd=artifacts_dir, check=True, stdin=subprocess.DEVNULL
+        subprocesses.append(
+            subprocess.Popen(  # pylint: disable=consider-using-with
+                cmd, cwd=artifacts_dir, stdin=subprocess.DEVNULL
+            )
         )
         meta = info.objects.add()
+        meta.tarball_info.board.extend(set(project.config.inherited_from))
         meta.file_name = tarball_name
         meta.tarball_info.type = (
             firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.EC  # pylint: disable=no-member
         )
         # TODO(kmshelton): Populate the rest of metadata contents as it
         # gets defined in infra/proto/src/chromite/api/firmware.proto.
+    for proc in subprocesses:
+        proc.wait()
+        if proc.returncode != 0:
+            raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
     tokens_file = "tokens.bin"
     tokens_path = platform_ec / "build" / tokens_file
@@ -355,6 +367,7 @@ def bundle_firmware(opts):
         )
 
     write_metadata(opts, info)
+    return 0
 
 
 def test(opts):
@@ -416,8 +429,78 @@ def test(opts):
                     build_dir / (project.config.project_name + "_final.info"),
                 )
 
-    with open(opts.metrics, "w", encoding="utf-8") as file:
-        file.write(json_format.MessageToJson(metrics))  # type: ignore
+    if opts.metrics:
+        with open(opts.metrics, "w", encoding="utf-8") as file:
+            file.write(json_format.MessageToJson(metrics))  # type: ignore
+    return 0
+
+
+def check_inherits(_opts):
+    """Reads the src/project/*/*/generated/joined.jsonproto files and compares
+    the boards and zephyr_ec targets with the zephyr inherited_from values.
+    """
+
+    modules = zmake.modules.locate_from_checkout(find_checkout())
+    projects_path = zmake.modules.default_projects_dirs(modules)
+    # Ec target name -> board name -> boolean if seen in Boxster
+    ec_to_board = collections.defaultdict(dict)
+    for project in zmake.project.find_projects(projects_path).values():
+        board_dict = {}
+        for board in project.config.inherited_from:
+            board_dict[board] = False
+        ec_to_board[project.config.project_name] = board_dict
+
+    retcode = 0
+    configs = (find_checkout() / "src" / "project").glob(
+        "*/*/generated/joined.jsonproto"
+    )
+    for cfg_path in configs:
+        with open(cfg_path, "r", encoding="utf-8") as file:
+            cfg = json.load(file)
+            board_name = None
+            for design_list in cfg.get("designList", []):
+                this_board = design_list.get("programId", {}).get("value", None)
+                if this_board is not None:
+                    this_board = this_board.lower()
+                    if board_name is not None and board_name != this_board:
+                        print(
+                            f"ERROR: Found multiple boards in {cfg_path}: "
+                            f"{this_board} != {board_name}"
+                        )
+                        retcode = 1
+                    board_name = this_board
+            if board_name is None:
+                print(f"WARNING: Found no board in {cfg_path}")
+
+            for software_config in cfg.get("softwareConfigs", []):
+                zephyr_ec = (
+                    software_config.get("firmwareBuildConfig", {})
+                    .get("buildTargets", {})
+                    .get("zephyrEc", None)
+                )
+                if zephyr_ec:
+                    if zephyr_ec not in ec_to_board:
+                        print(
+                            f"ERROR: Unknown Zephyr target {zephyr_ec} in {cfg_path}"
+                        )
+                        retcode = 1
+                    elif board_name not in ec_to_board[zephyr_ec]:
+                        print(
+                            f"ERROR: Zephyr target {zephyr_ec} does not have "
+                            f"inherited_from {board_name}"
+                        )
+                        retcode = 1
+                    ec_to_board[zephyr_ec][board_name] = True
+    for zephyr_ec, boards in ec_to_board.items():
+        for board, found in boards.items():
+            if not found:
+                print(
+                    f"ERROR: Zephyr target {zephyr_ec} has unexpected "
+                    f"inherited_from of {board}"
+                )
+                retcode = 1
+
+    return retcode
 
 
 COVERAGE_RE = re.compile(
@@ -460,8 +543,7 @@ def main(args):
         return -1
 
     # Run selected sub command function
-    opts.func(opts)
-    return 0
+    return opts.func(opts)
 
 
 def parse_args(args):
@@ -477,7 +559,7 @@ def parse_args(args):
     parser.add_argument(
         "--metrics",
         dest="metrics",
-        required=True,
+        required=False,
         help="File to write the json-encoded MetricsList proto message.",
     )
 
@@ -530,6 +612,12 @@ def parse_args(args):
 
     test_cmd = sub_cmds.add_parser("test", help="Runs all firmware unit tests")
     test_cmd.set_defaults(func=test)
+
+    check_inherits_cmd = sub_cmds.add_parser(
+        "check_inherits",
+        help="Checks the inherited_from values against Boxster",
+    )
+    check_inherits_cmd.set_defaults(func=check_inherits)
 
     return parser.parse_args(args)
 
