@@ -379,6 +379,8 @@ enum policy_unattached_t {
 	UNA_POLICY_TCC,
 	/** UNA_POLICY_CC_MODE */
 	UNA_POLICY_CC_MODE,
+	/** UNA_POLICY_UPDATE_SRC_CAPS */
+	UNA_POLICY_UPDATE_SRC_CAPS,
 	/** UNA_POLICY_COUNT */
 	UNA_POLICY_COUNT,
 };
@@ -413,6 +415,8 @@ enum policy_snk_attached_t {
 	SNK_POLICY_EVAL_SWAP_TO_SRC,
 	/** Triggers an update of the allow_pr_swap bit in CMD_SET_DRP */
 	SNK_POLICY_UPDATE_ALLOW_PR_SWAP,
+	/** Sends SET_PDO to the LPM. */
+	SNK_POLICY_UPDATE_SRC_CAPS,
 	/** SNK_POLICY_COUNT */
 	SNK_POLICY_COUNT,
 };
@@ -1261,6 +1265,13 @@ static void run_unattached_policies(struct pdc_port_t *port)
 		/* Make sure new Rp value is applied */
 		atomic_set_bit(port->una_policy.flags, UNA_POLICY_CC_MODE);
 		return;
+	} else if (atomic_test_and_clear_bit(port->una_policy.flags,
+					     UNA_POLICY_UPDATE_SRC_CAPS)) {
+		/* Ensure the next time a PD capable SNK connects, we offer
+		 * a safe PDO.
+		 */
+		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
+		return;
 	}
 
 	send_pending_public_commands(port);
@@ -1341,9 +1352,33 @@ static void run_snk_policies(struct pdc_port_t *port)
 			port->snk_policy.accept_power_role_swap;
 		queue_internal_cmd(port, CMD_PDC_SET_PDR);
 		return;
+	} else if (atomic_test_and_clear_bit(port->snk_policy.flags,
+					     SNK_POLICY_UPDATE_SRC_CAPS)) {
+		/* Update the LPM with the correct SRC PDO in case there
+		 * is a power role swap.
+		 */
+		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
+		return;
 	}
 
 	send_pending_public_commands(port);
+}
+
+static void run_typec_snk_policies(struct pdc_port_t *port)
+{
+	/* Note - hard resets specifically not checked for here.
+	 * We don't expect hard resets while connected to a non-PD
+	 * partner.
+	 */
+	if (atomic_test_and_clear_bit(port->snk_policy.flags,
+				      SNK_POLICY_UPDATE_SRC_CAPS)) {
+		/* Ensure the next time a PD capable SNK connects, we offer
+		 * a safe PDO.
+		 */
+		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
+	} else {
+		send_pending_public_commands(port);
+	}
 }
 
 static void run_src_policies(struct pdc_port_t *port)
@@ -1402,6 +1437,12 @@ static void run_typec_src_policies(struct pdc_port_t *port)
 	} else if (atomic_test_and_clear_bit(port->src_policy.flags,
 					     SRC_POLICY_FORCE_SNK)) {
 		queue_internal_cmd(port, CMD_PDC_SET_CCOM);
+	} else if (atomic_test_and_clear_bit(port->src_policy.flags,
+					     SRC_POLICY_UPDATE_SRC_CAPS)) {
+		/* Ensure the next time a PD capable SNK connects, we offer
+		 * a safe PDO.
+		 */
+		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
 	} else {
 		send_pending_public_commands(port);
 	}
@@ -1621,8 +1662,16 @@ static void pdc_snk_attached_entry(void *obj)
 
 	port->send_cmd.intern.pending = false;
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
+		const struct pdc_config_t *config = port->dev->config;
+		int port_number = config->connector_num;
+
 		port->snk_attached_local_state =
 			SNK_ATTACHED_GET_CONNECTOR_CAPABILITY;
+
+		/* If we were just a SRC, tell the DPM that the
+		 * attached sink has been disconnected.
+		 */
+		pdc_dpm_remove_sink(port_number);
 	}
 }
 
@@ -2334,11 +2383,7 @@ static void pdc_snk_typec_only_run(void *obj)
 		}
 		return;
 	case SNK_TYPEC_ATTACHED_RUN:
-		/* Note - hard resets specifically not checked for here.
-		 * We don't expect hard resets while connected to a non-PD
-		 * partner.
-		 */
-		send_pending_public_commands(port);
+		run_typec_snk_policies(port);
 		break;
 	}
 }
@@ -3869,31 +3914,51 @@ int pdc_power_mgmt_set_current_limit(int port_num,
 	/* Always set the new Rp value */
 	pdc->una_policy.tcc = current;
 
-	/* Further actions depend on the port attached state and power role */
-	if (pdc->attached_state == SRC_ATTACHED_STATE) {
-		/*
-		 * Active USB-PD SRC connection. Update the LPM source cap which
-		 * will also trigger the PDC to send a new SRC_CAP message to
-		 * the port partner.
-		 */
-		pdc->set_pdos.count = 1;
-		pdc->set_pdos.type = SOURCE_PDO;
-		pdc->set_pdos.pdos[0] = current == TC_CURRENT_3_0A ?
-						pdc_src_pdo_max[0] :
-						pdc_src_pdo_nominal[0];
+	/* Always set the new SRC PDO. */
+	pdc->set_pdos.count = 1;
+	pdc->set_pdos.type = SOURCE_PDO;
+	pdc->set_pdos.pdos[0] = current == TC_CURRENT_3_0A ?
+					pdc_src_pdo_max[0] :
+					pdc_src_pdo_nominal[0];
 
-		/* Set flag to trigger SET_PDOS command to PDC */
-		atomic_set_bit(pdc->src_policy.flags,
-			       SRC_POLICY_UPDATE_SRC_CAPS);
-	} else if (pdc->attached_state == SRC_ATTACHED_TYPEC_ONLY_STATE) {
+	/* Further actions depend on the port attached state and power role */
+	switch (pdc->attached_state) {
+	case SRC_ATTACHED_TYPEC_ONLY_STATE:
 		/*
 		 * Active TypeC only SRC connection. Because the connection is
 		 * active and not a PD connection, apply the new Rp value now.
 		 */
 		atomic_set_bit(pdc->src_policy.flags, SRC_POLICY_SET_RP);
-	} else {
+		__fallthrough;
+	case SRC_ATTACHED_STATE:
+		/*
+		 * Active USB-PD SRC connection. Update the LPM source cap which
+		 * will also trigger the PDC to send a new SRC_CAP message to
+		 * the port partner.
+		 */
+
+		/* Set flag to trigger SET_PDOS command to PDC */
+		atomic_set_bit(pdc->src_policy.flags,
+			       SRC_POLICY_UPDATE_SRC_CAPS);
+		break;
+	case SNK_ATTACHED_STATE:
+		__fallthrough;
+	case SNK_ATTACHED_TYPEC_ONLY_STATE:
+		/* Even when operating as a SNK, update the SRC caps
+		 * so that the first PDO offered after a power role
+		 * swap is a safe value.
+		 */
+		atomic_set_bit(pdc->snk_policy.flags,
+			       SNK_POLICY_UPDATE_SRC_CAPS);
+		break;
+	case UNATTACHED_STATE:
 		/* Update the default Rp level */
 		atomic_set_bit(pdc->una_policy.flags, UNA_POLICY_TCC);
+
+		/* Set flag to trigger SET_PDOS command to PDC */
+		atomic_set_bit(pdc->una_policy.flags,
+			       UNA_POLICY_UPDATE_SRC_CAPS);
+		break;
 	}
 
 	return EC_SUCCESS;
