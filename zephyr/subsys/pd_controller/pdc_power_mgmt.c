@@ -2611,44 +2611,6 @@ bool pdc_power_mgmt_get_partner_unconstr_power(int port)
 		PDO_FIXED_GET_UNCONSTRAINED_PWR);
 }
 
-int pdc_power_mgmt_accept_data_swap(int port, bool val)
-{
-	/* Make sure port is connected */
-	if (!pdc_power_mgmt_is_connected(port)) {
-		return 1;
-	}
-
-	/* Set DR accept swap policy */
-	pdc_data[port]->port.uor.accept_dr_swap = val;
-
-	/* Block until command completes */
-	if (public_api_block(port, CMD_PDC_SET_UOR)) {
-		/* something went wrong */
-		return 1;
-	}
-
-	return 0;
-}
-
-int pdc_power_mgmt_accept_power_swap(int port, bool val)
-{
-	/* Make sure port is connected */
-	if (!pdc_power_mgmt_is_connected(port)) {
-		return 1;
-	}
-
-	/* Set PR accept swap policy */
-	pdc_data[port]->port.pdr.accept_pr_swap = val;
-
-	/* Block until command completes */
-	if (public_api_block(port, CMD_PDC_SET_PDR)) {
-		/* something went wrong */
-		return 1;
-	}
-
-	return EC_SUCCESS;
-}
-
 static int pdc_power_mgmt_request_data_swap_intern(int port,
 						   enum pd_data_role role)
 {
@@ -2677,16 +2639,6 @@ static int pdc_power_mgmt_request_data_swap_intern(int port,
 	}
 
 	return EC_SUCCESS;
-}
-
-void pdc_power_mgmt_request_data_swap_to_ufp(int port)
-{
-	pdc_power_mgmt_request_data_swap_intern(port, PD_ROLE_UFP);
-}
-
-void pdc_power_mgmt_request_data_swap_to_dfp(int port)
-{
-	pdc_power_mgmt_request_data_swap_intern(port, PD_ROLE_DFP);
 }
 
 test_mockable void pdc_power_mgmt_request_data_swap(int port)
@@ -3595,34 +3547,6 @@ pdc_power_mgmt_get_cable_prop(int port, union cable_property_t *cable_prop)
 	*cable_prop = pdc_data[port]->port.cable_prop;
 
 	return 0;
-}
-
-int pdc_power_mgmt_set_src_pdo(int port, const uint32_t *src_pdo,
-			       uint8_t pdo_count)
-{
-	struct pdc_port_t *pdc;
-	int i;
-	int ret;
-
-	pdc = &pdc_data[port]->port;
-
-	if (pdo_count > PDO_NUM) {
-		return -ERANGE;
-	}
-	/* Set up */
-	pdc->set_pdos.count = pdo_count;
-	pdc->set_pdos.type = SOURCE_PDO;
-	for (i = 0; i < pdo_count; i++) {
-		pdc->set_pdos.pdos[i] = src_pdo[i];
-	}
-
-	/* Block until command completes */
-	ret = public_api_block(port, CMD_PDC_SET_PDOS);
-	if (ret) {
-		return ret;
-	}
-
-	return EC_SUCCESS;
 }
 
 enum usb_typec_current_t pdc_power_mgmt_get_default_current_limit(int port)
