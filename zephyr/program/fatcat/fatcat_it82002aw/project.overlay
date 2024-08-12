@@ -11,4 +11,6 @@
 
 /* fatcat_it82002aw project DTS includes */
 
+#include "console.dtsi"
+
 /* fatcat_it82002aw overrides follow... */
