@@ -1486,6 +1486,7 @@ static void pdc_src_attached_entry(void *obj)
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
 
 	print_current_pdc_state(port);
+	set_attached_pdc_state(port, SRC_ATTACHED_STATE);
 
 	port->send_cmd.intern.pending = false;
 
@@ -1603,7 +1604,6 @@ static void pdc_src_attached_run(void *obj)
 			       SRC_POLICY_EVAL_SNK_FIXED_PDO);
 		return;
 	case SRC_ATTACHED_RUN:
-		set_attached_pdc_state(port, SRC_ATTACHED_STATE);
 		run_src_policies(port);
 		break;
 	}
@@ -1617,6 +1617,7 @@ static void pdc_snk_attached_entry(void *obj)
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
 
 	print_current_pdc_state(port);
+	set_attached_pdc_state(port, SNK_ATTACHED_STATE);
 
 	port->send_cmd.intern.pending = false;
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
@@ -1824,7 +1825,6 @@ static void pdc_snk_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
 		return;
 	case SNK_ATTACHED_RUN:
-		set_attached_pdc_state(port, SNK_ATTACHED_STATE);
 		/* Hard Reset could disable Sink FET. Re-enable it */
 		if (atomic_get(&port->hard_reset_sent)) {
 			atomic_clear(&port->hard_reset_sent);
@@ -2203,6 +2203,7 @@ static void pdc_src_typec_only_entry(void *obj)
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
 
 	print_current_pdc_state(port);
+	set_attached_pdc_state(port, SRC_ATTACHED_TYPEC_ONLY_STATE);
 
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
 		port->src_typec_attached_local_state =
@@ -2228,9 +2229,8 @@ static void pdc_src_typec_only_run(void *obj)
 
 	set_attached_pdc_state(port, SRC_ATTACHED_TYPEC_ONLY_STATE);
 
-	/* The CCI_EVENT is set to re-query connector status, so check the
-	 * connector status and take the appropriate action.
-	 */
+	/* The CCI_EVENT is set on a connector disconnect, so check the
+	 * connector status and take the appropriate action. */
 	if (atomic_test_and_clear_bit(port->cci_flags, CCI_EVENT)) {
 		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_STATUS);
 		return;
@@ -2287,6 +2287,7 @@ static void pdc_snk_typec_only_entry(void *obj)
 	}
 
 	print_current_pdc_state(port);
+	set_attached_pdc_state(port, SNK_ATTACHED_TYPEC_ONLY_STATE);
 }
 
 static void pdc_snk_typec_only_run(void *obj)
