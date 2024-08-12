@@ -49,6 +49,12 @@
 		en_pp5000_usb_a1_vbus_x: en_pp5000_usb_a1_vbus_x {
 			gpios = <&gpioa 7 GPIO_OUTPUT_LOW>;
 		};
+		gpio_tp_en: tp_en {
+			gpios = <&gpioa 6 GPIO_ODR_LOW>;
+		};
+		gpio_ap_bl_en_odl: gpio_ap_bl_en_odl{
+			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
 	};
 	unused-pins {
 		unused-gpios =
@@ -63,9 +69,7 @@
 			/* unnamed nc pins */
 			<&gpioh 2 GPIO_INPUT_PULL_DOWN>,
 			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
-			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
 			<&gpiof 1 GPIO_INPUT_PULL_DOWN>,
-			<&gpiod 7 GPIO_INPUT_PULL_DOWN>,
 			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,
 			<&gpioi 3 GPIO_INPUT_PULL_DOWN>,
 			<&gpioi 6 GPIO_INPUT_PULL_DOWN>,
@@ -98,6 +102,11 @@
 			irq-pin = <&gpio_x_ec_gpio2>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "hdmi_hpd_interrupt";
+		};
+		int_ap_bl_en: int_ap_bl_en{
+			irq-pin = <&gpio_ap_bl_en_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "ap_bl_en_interrupt";
 		};
 	};
 	usbc {
