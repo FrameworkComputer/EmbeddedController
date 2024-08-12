@@ -2756,21 +2756,28 @@ bool pdc_power_mgmt_get_partner_dual_role_power(int port)
 
 test_mockable bool pdc_power_mgmt_get_partner_data_swap_capable(int port)
 {
+	struct pdc_port_t *pdc_port;
+	uint32_t fixed_vsafe5v_pdo;
+
 	/* Make sure port is connected */
 	if (!pdc_power_mgmt_is_connected(port)) {
 		return false;
 	}
 
-	/* Make sure port partner is DRP, RP only, or RD only */
-	if (!pdc_data[port]->port.ccaps.op_mode_drp &&
-	    !pdc_data[port]->port.ccaps.op_mode_rp_only &&
-	    !pdc_data[port]->port.ccaps.op_mode_rd_only) {
-		return false;
-	}
+	pdc_port = &pdc_data[port]->port;
 
-	/* Return swap to UFP or DFP capability */
-	return pdc_data[port]->port.ccaps.swap_to_dfp ||
-	       pdc_data[port]->port.ccaps.swap_to_ufp;
+	fixed_vsafe5v_pdo =
+		get_pdc_pdos_ptr(pdc_port, &pdc_port->get_pdo)->pdos[0];
+
+	/*
+	 * Error check that first PDO is fixed, as 6.4.1 Capabilities requires
+	 * in the Power Delivery Specification.
+	 * "The vSafe5V Fixed Supply Object Shall always be the first object"
+	 */
+	if ((fixed_vsafe5v_pdo & PDO_TYPE_MASK) != PDO_TYPE_FIXED)
+		return false;
+
+	return fixed_vsafe5v_pdo & PDO_FIXED_DATA_SWAP;
 }
 
 int pdc_power_mgmt_get_vbus_voltage(int port)

@@ -452,39 +452,31 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_data_swap_capable)
 	int i;
 	union connector_status_t connector_status;
 	struct {
-		union connector_capability_t ccap;
+		enum pd_power_role power_role;
+		uint32_t pdo;
 		bool expected;
 	} test[] = {
-		{ .ccap = { .raw_value = 0 }, .expected = false },
-		{ .ccap = { .op_mode_drp = 1,
-			    .op_mode_rp_only = 0,
-			    .op_mode_rd_only = 0,
-			    .swap_to_ufp = 1 },
+		{ .power_role = PD_ROLE_SINK, .pdo = 0, .expected = false },
+		{ .power_role = PD_ROLE_SOURCE, .pdo = 0, .expected = false },
+		{ .power_role = PD_ROLE_SINK,
+		  .pdo = PDO_FIXED(5000, 3000,
+				   PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP),
 		  .expected = true },
-		{ .ccap = { .op_mode_drp = 0,
-			    .op_mode_rp_only = 1,
-			    .op_mode_rd_only = 0,
-			    .swap_to_dfp = 1 },
+		{ .power_role = PD_ROLE_SOURCE,
+		  .pdo = PDO_FIXED(5000, 3000,
+				   PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP),
 		  .expected = true },
-		{ .ccap = { .op_mode_drp = 0,
-			    .op_mode_rp_only = 0,
-			    .op_mode_rd_only = 1,
-			    .swap_to_dfp = 1 },
-		  .expected = true },
-		{ .ccap = { .op_mode_drp = 0,
-			    .op_mode_rp_only = 0,
-			    .op_mode_rd_only = 1,
-			    .swap_to_dfp = 0 },
+		{ .power_role = PD_ROLE_SINK,
+		  .pdo = PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED),
 		  .expected = false },
-		{ .ccap = { .op_mode_drp = 0,
-			    .op_mode_rp_only = 0,
-			    .op_mode_rd_only = 0,
-			    .swap_to_ufp = 1 },
+		{ .power_role = PD_ROLE_SOURCE,
+		  .pdo = PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED),
 		  .expected = false },
-		{ .ccap = { .op_mode_drp = 0,
-			    .op_mode_rp_only = 0,
-			    .op_mode_rd_only = 0,
-			    .swap_to_dfp = 1 },
+		{ .power_role = PD_ROLE_SINK,
+		  .pdo = PDO_VAR(5000, 3000, 15000),
+		  .expected = false },
+		{ .power_role = PD_ROLE_SOURCE,
+		  .pdo = PDO_VAR(5000, 3000, 15000),
 		  .expected = false },
 	};
 	uint32_t timeout = k_ms_to_cyc_ceil32(PDC_TEST_TIMEOUT);
@@ -494,8 +486,15 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_data_swap_capable)
 		pd_get_partner_data_swap_capable(CONFIG_USB_PD_PORT_MAX_COUNT));
 
 	for (i = 0; i < ARRAY_SIZE(test); i++) {
-		emul_pdc_set_connector_capability(emul, &test[i].ccap);
-		emul_pdc_configure_src(emul, &connector_status);
+		emul_pdc_set_pdos(emul,
+				  (test[i].power_role == PD_ROLE_SINK ?
+					   SOURCE_PDO :
+					   SINK_PDO),
+				  PDO_OFFSET_0, 1, PARTNER_PDO, &test[i].pdo);
+		if (test[i].power_role == PD_ROLE_SINK)
+			emul_pdc_configure_snk(emul, &connector_status);
+		else
+			emul_pdc_configure_src(emul, &connector_status);
 		emul_pdc_connect_partner(emul, &connector_status);
 
 		start = k_cycle_get_32();
@@ -511,8 +510,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_data_swap_capable)
 
 		zassert_equal(test[i].expected,
 			      pd_get_partner_data_swap_capable(TEST_PORT),
-			      "[%d] expected=%d, ccap=0x%X", i,
-			      test[i].expected, test[i].ccap);
+			      "[%d] expected=%d, pdo=0x%X", i, test[i].expected,
+			      test[i].pdo);
 
 		emul_pdc_disconnect(emul);
 		zassert_true(TEST_WAIT_FOR(!pd_is_connected(TEST_PORT),
