@@ -12,3 +12,11 @@
 /* Trulo project DTS includes*/
 
 /* Trulo overrides follow... */
+
+/ {
+	batteries {
+		default_battery: cosmx_ap20cbl-4 {
+			compatible = "cosmx,ap20cbl-4", "battery-smart";
+		};
+	};
+};
