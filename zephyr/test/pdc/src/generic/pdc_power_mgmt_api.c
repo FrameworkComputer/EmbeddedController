@@ -106,6 +106,29 @@ ZTEST_USER(pdc_power_mgmt_api, test_is_connected)
 		TEST_WAIT_FOR(pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
 }
 
+ZTEST_USER(pdc_power_mgmt_api, test_comm_is_enabled)
+{
+	union connector_status_t connector_status;
+
+	zassert_false(pd_comm_is_enabled(CONFIG_USB_PD_PORT_MAX_COUNT));
+
+	zassert_false(pd_comm_is_enabled(TEST_PORT));
+
+	emul_pdc_configure_src(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+	zassert_true(
+		TEST_WAIT_FOR(pd_comm_is_enabled(TEST_PORT), PDC_TEST_TIMEOUT));
+
+	emul_pdc_disconnect(emul);
+	zassert_true(TEST_WAIT_FOR(!pd_comm_is_enabled(TEST_PORT),
+				   PDC_TEST_TIMEOUT));
+
+	emul_pdc_configure_snk(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+	zassert_true(
+		TEST_WAIT_FOR(pd_comm_is_enabled(TEST_PORT), PDC_TEST_TIMEOUT));
+}
+
 ZTEST_USER(pdc_power_mgmt_api, test_pd_get_polarity)
 {
 	union connector_status_t connector_status;
