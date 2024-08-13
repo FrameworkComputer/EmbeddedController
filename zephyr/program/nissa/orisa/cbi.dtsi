@@ -27,67 +27,47 @@
 		};
 
 		/*
-		 * FW_CONFIG field to defined for KB TYPE.
+		 * FW_CONFIG field to defined for pdc control.
 		 */
-		kb-type {
-			enum-name = "FW_KB_TYPE";
+		pdc-control {
+			enum-name = "FW_PDC_CONTROL";
 			start = <1>;
-			size = <1>;
-
-			kb-type-default {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_KB_TYPE_DEFAULT";
-				value = <0>;
-			};
-			kb-type-ansi-canadian {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_KB_TYPE_ANSI_CANADIAN";
-				value = <1>;
-			};
-		};
-
-		/*
-		 * FW_CONFIG field to defined for SAR ID.
-		 */
-		sar-id {
-			enum-name = "FW_SAR_ID";
-			start = <2>;
-			size = <1>;
-
-			sar-id-0 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_SAR_ID_0";
-				value = <0>;
-			};
-			sar-id-1 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_SAR_ID_1";
-				value = <1>;
-			};
-		};
-
-		/*
-		 * FW_CONFIG field to defined for SUB BOARD.
-		 */
-		sub-board {
-			enum-name = "FW_SUB_BOARD";
-			start = <3>;
 			size = <2>;
 
-			sub-board-1 {
+			pdc-control-unknown {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_SUB_BOARD_1";
+				enum-name = "FW_PDC_CONTROL_UNKNOWN";
 				value = <0>;
 			};
-			sub-board-2 {
+			pdc-control-rts-bypass {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_SUB_BOARD_2";
+				enum-name = "FW_PDC_CONTROL_RTS_BYPASS";
 				value = <1>;
 			};
-			sub-board-3 {
+			pdc-control-ti-bypass {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_SUB_BOARD_3";
+				enum-name = "FW_PDC_CONTROL_TI_BYPASS";
 				value = <2>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for audio codec.
+		 */
+		audio-codec {
+			enum-name = "FW_AUDIO_CODEC";
+			start = <28>;
+			size = <1>;
+
+			amp-gpio {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_AUDIO_CODEC_AMP_GPIO";
+				value = <0>;
+			};
+			amp-alc256 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_AUDIO_CODEC_AMP_ALC256";
+				value = <1>;
 			};
 		};
 
@@ -136,5 +116,6 @@
 			};
 		};
 /delete-node/ fan;
+/delete-node/ sub-board;
 	};
 };
