@@ -8,6 +8,7 @@
 #include "../i2c.dtsi"
 #include "../power_signals.dtsi"
 #include "../trulo.dtsi"
+#include "../usb_typec.dtsi"
 
 /* Trulo project DTS includes*/
 
