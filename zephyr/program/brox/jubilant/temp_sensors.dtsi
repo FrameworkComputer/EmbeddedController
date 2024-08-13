@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 #include <cros/thermistor/thermistor.dtsi>
-#include "../temp_sensors.dtsi"
 
 / {
 	temp_memory: temp_memory {
