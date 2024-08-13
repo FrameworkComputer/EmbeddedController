@@ -411,16 +411,21 @@ static int it8801_ioex_set_flags_by_mask(int ioex, int port, int mask,
 
 	/* Select GPIO direction */
 	if (flags & GPIO_OUTPUT) {
-		/* Configure the output level */
-		if (flags & GPIO_HIGH)
-			it8801_gpio_sov[port] |= mask;
-		else
-			it8801_gpio_sov[port] &= ~mask;
+		uint8_t prev_gpio_sov = it8801_gpio_sov[port];
 
-		rv = it8801_ioex_write(ioex, IT8801_REG_GPIO_SOVR(port),
-				       it8801_gpio_sov[port]);
-		if (rv)
-			goto unlock_mutex;
+		/* Configure the output level */
+		if (flags & GPIO_HIGH) {
+			it8801_gpio_sov[port] |= mask;
+		} else if (flags & GPIO_LOW) {
+			it8801_gpio_sov[port] &= ~mask;
+		}
+
+		if (prev_gpio_sov != it8801_gpio_sov[port]) {
+			rv = it8801_ioex_write(ioex, IT8801_REG_GPIO_SOVR(port),
+					       it8801_gpio_sov[port]);
+			if (rv)
+				goto unlock_mutex;
+		}
 
 		val |= IT8801_GPIODIR;
 	} else {
