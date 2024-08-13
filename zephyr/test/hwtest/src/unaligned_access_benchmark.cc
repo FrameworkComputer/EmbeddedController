@@ -15,7 +15,7 @@ ZTEST_SUITE(unaligned_access_benchmark, NULL, NULL, NULL, NULL, NULL);
 ZTEST(unaligned_access_benchmark, test_benchmark_unaligned_access)
 {
 	int i;
-	timestamp_t t0, t1, t2, t3;
+	int64_t t0, t1, t2, t3;
 	alignas(uint32_t) volatile int8_t dst[2 * sizeof(uint32_t)];
 	volatile uint32_t *const unaligned = (volatile uint32_t *)(dst + 1);
 	volatile uint32_t *const aligned = (volatile uint32_t *)dst;
@@ -30,7 +30,7 @@ ZTEST(unaligned_access_benchmark, test_benchmark_unaligned_access)
 		dst[i] = 0;
 	}
 
-	t0 = get_time();
+	t0 = k_uptime_ticks();
 	for (i = 0; i < iteration; ++i) {
 		/* unaligned */
 		// Our little write operation is much less significant than
@@ -58,8 +58,8 @@ ZTEST(unaligned_access_benchmark, test_benchmark_unaligned_access)
 		*unaligned = 0xFEF8F387;
 		*unaligned = 0xFEF8F387;
 	}
-	t1 = get_time();
-	uint64_t unaligned_time = t1.val - t0.val;
+	t1 = k_uptime_ticks();
+	uint64_t unaligned_time = k_ticks_to_us_near64(t1 - t0);
 	LOG_INF("Unaligned took %" PRId64 "us, which is %" PRId64
 		"ns per iteration.",
 		unaligned_time,
@@ -69,7 +69,7 @@ ZTEST(unaligned_access_benchmark, test_benchmark_unaligned_access)
 		dst[i] = 0;
 	}
 
-	t2 = get_time();
+	t2 = k_uptime_ticks();
 	for (i = 0; i < iteration; ++i) {
 		/* aligned */
 		*aligned = 0xFEF8F387;
@@ -93,8 +93,8 @@ ZTEST(unaligned_access_benchmark, test_benchmark_unaligned_access)
 		*aligned = 0xFEF8F387;
 		*aligned = 0xFEF8F387;
 	}
-	t3 = get_time();
-	uint64_t aligned_time = t3.val - t2.val;
+	t3 = k_uptime_ticks();
+	uint64_t aligned_time = k_ticks_to_us_near64(t3 - t2);
 	LOG_INF("Aligned took %" PRId64 "us, which is %" PRId64
 		"ns per iteration.",
 		aligned_time,

@@ -15,15 +15,15 @@ static void test_int(int ms)
 {
 	char cmd[32];
 	unsigned long measured;
-	timestamp_t start;
-	timestamp_t end;
+	int64_t start;
+	int64_t end;
 
 	sprintf(cmd, "waitms %d", ms);
-	start = get_time();
+	start = k_uptime_ticks();
 	zassert_ok(shell_execute_cmd(get_ec_shell(), cmd),
 		   "Failed to execute 'waitms' command");
-	end = get_time();
-	measured = (end.val - start.val) / 1000;
+	end = k_uptime_ticks();
+	measured = k_ticks_to_ms_near32(end - start);
 	zassert_equal(measured, ms, "'waitms %d' failed, took %ld ms", ms,
 		      measured);
 }

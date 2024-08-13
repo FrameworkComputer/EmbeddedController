@@ -36,7 +36,7 @@
 struct mock_it83xx_cec_regs mock_it83xx_cec_regs;
 
 /* Timestamp when the timer was last started */
-static timestamp_t start_time;
+int64_t start_time;
 
 /* The capture edge we're waiting for */
 static enum cec_cap_edge expected_cap_edge;
@@ -85,7 +85,7 @@ void cec_tmr_cap_start(int port, enum cec_cap_edge edge, int timeout)
 	expected_cap_edge = edge;
 
 	if (timeout > 0) {
-		start_time = get_time();
+		start_time = k_uptime_ticks();
 		k_timer_start(&timer, K_USEC(timeout), K_NO_WAIT);
 	}
 
@@ -104,7 +104,7 @@ void cec_tmr_cap_start(int port, enum cec_cap_edge edge, int timeout)
 
 int cec_tmr_cap_get(int port)
 {
-	return get_time().val - start_time.val;
+	return k_ticks_to_us_near64(k_uptime_ticks() - start_time);
 }
 
 static int debounce_enable_calls;
@@ -146,7 +146,7 @@ static void cec_bitbang_before(void *fixture)
 	drv->set_enable(TEST_PORT, 0);
 
 	/* Reset globals */
-	start_time.val = 0;
+	start_time = 0;
 	expected_cap_edge = CEC_CAP_EDGE_NONE;
 	mock_ack = false;
 }
@@ -252,7 +252,7 @@ static void gpio_out_callback(const struct device *gpio,
 			      struct gpio_callback *const cb,
 			      gpio_port_pins_t pins)
 {
-	static timestamp_t previous_time;
+	static int64_t previous_time;
 	static int previous_val = -1;
 	int val;
 
@@ -276,9 +276,9 @@ static void gpio_out_callback(const struct device *gpio,
 	/* Record the duration of the previous state */
 	if (gpio_index > 0)
 		gpio_recordings[gpio_index - 1].duration_us =
-			get_time().val - previous_time.val;
+			k_ticks_to_us_near32(k_uptime_ticks() - previous_time);
 
-	previous_time = get_time();
+	previous_time = k_uptime_ticks();
 	previous_val = val;
 	gpio_index++;
 	zassert_true(gpio_index < MAX_GPIO_RECORDINGS);
