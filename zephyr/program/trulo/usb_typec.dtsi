@@ -17,11 +17,27 @@
 			pdc = <&pdc_power_p0>;
 			policy = <&cros_policy>;
 		};
+		usbc_port1: port0@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			pdc = <&pdc_power_p1>;
+			pd-retimer;
+			policy = <&cros_policy>;
+		};
+		ppm-driver {
+			compatible = "ucsi-ppm";
+			lpm = <&pdc_power_p0 &pdc_power_p1>;
+		};
 	};
 };
 
 &i2c2_0 {
-	pdc_power_p0: rts54-pdc@67 {
+	pdc_power_p0: rts54-pdc@66 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x66>;
+		irq-gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
+	};
+	pdc_power_p1: rts54-pdc@67 {
 		compatible = "realtek,rts54-pdc";
 		reg = <0x67>;
 		irq-gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
