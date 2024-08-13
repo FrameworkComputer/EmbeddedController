@@ -3,8 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Keyboard backlight and fan - use a prescaler for operation about 324 Hz */
-/* Keyboard */
+/* Keyboard backlight - use a prescaler for operation about 324 Hz */
 &pwm1 {
 	status = "okay";
 	prescaler-cx = <PWM_PRESCALER_C6>;
@@ -12,10 +11,10 @@
 	pinctrl-names = "default";
 };
 
-/* Fan */
+/* Fan - use a separate prescaler for Fan, b:358312912 */
 &pwm6 {
 	status = "okay";
-	prescaler-cx = <PWM_PRESCALER_C6>;
+	prescaler-cx = <PWM_PRESCALER_C7>;
 	pinctrl-0 = <&pwm6_gpa6_default>;
 	pinctrl-names = "default";
 };
