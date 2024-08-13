@@ -28,6 +28,7 @@
 #include "../usba.dtsi"
 
 /* Jubilant project DTS includes */
+#include "cbi.dtsi"
 #include "keyboard.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"

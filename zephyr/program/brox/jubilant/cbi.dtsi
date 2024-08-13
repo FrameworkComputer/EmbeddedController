@@ -1,0 +1,91 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	jubilant-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		/*
+		 * FW_CONFIG field to enable KB back light or not.
+		 */
+		kb-bl {
+			enum-name = "FW_KB_BL";
+			start = <10>;
+			size = <1>;
+
+			no-kb-bl {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_NOT_PRESENT";
+				value = <0>;
+				default;
+			};
+			kb-bl-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_PRESENT";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to select thermal solution.
+		 */
+		thermal-solution {
+			enum-name = "FW_THERMAL";
+			start = <13>;
+			size = <2>;
+
+			passive-thermal {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_passive";
+				value = <0>;
+				default;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to change scancode setting for special
+		 * keyboard type.
+		 */
+		kb-type {
+			enum-name = "FW_KB_TYPE";
+			start = <15>;
+			size = <2>;
+
+			kb-type-default {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_TYPE_DEFAULT";
+				value = <0>;
+				default;
+			};
+			kb-type-ca-fr {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_TYPE_CA_FR";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to indicate which keyboard numeric
+		 * pad should be used.
+		 */
+		kb-numeric-pad {
+			enum-name = "FW_KB_NUMERIC_PAD";
+			start = <20>;
+			size = <1>;
+
+			no-kb-numpad {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_NUMERIC_PAD_ABSENT";
+				value = <0>;
+				default;
+			};
+			kb-numpad-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_NUMERIC_PAD_PRESENT";
+				value = <1>;
+			};
+		};
+	};
+};
