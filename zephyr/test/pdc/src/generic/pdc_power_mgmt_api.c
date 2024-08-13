@@ -88,6 +88,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_is_connected)
 	union connector_status_t connector_status;
 
 	zassert_false(pd_is_connected(CONFIG_USB_PD_PORT_MAX_COUNT));
+	zassert_equal(pd_get_task_state(CONFIG_USB_PD_PORT_MAX_COUNT),
+		      PDC_UNATTACHED);
 
 	zassert_false(pd_is_connected(TEST_PORT));
 
@@ -1176,20 +1178,23 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_shutdown)
 	zassert_equal(0, pdr.swap_to_src);
 }
 
-static bool wait_state_name(int port, const char *target_name)
+static bool wait_state_name(int port, const uint8_t target_state,
+			    const char *target_name)
 {
 	const uint32_t timeout = k_ms_to_cyc_ceil32(PDC_TEST_TIMEOUT);
 	uint32_t start = k_cycle_get_32();
-	const char *state_name = pd_get_task_state_name(TEST_PORT);
+	const char *state_name = pd_get_task_state_name(port);
+	uint8_t state = pd_get_task_state(port);
 
 	while (k_cycle_get_32() - start < timeout) {
 		k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
-		state_name = pd_get_task_state_name(TEST_PORT);
+		state_name = pd_get_task_state_name(port);
+		state = pd_get_task_state(port);
 
 		if (strcmp(state_name, target_name) != 0)
 			continue;
 
-		return true;
+		return target_state == state;
 	}
 
 	return false;
@@ -1199,14 +1204,15 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_task_state_name_typec_snk_attached)
 {
 	union connector_status_t connector_status;
 
-	zassert_true(wait_state_name(TEST_PORT, "Unattached"));
+	zassert_true(wait_state_name(TEST_PORT, PDC_UNATTACHED, "Unattached"));
 
 	memset(&connector_status, 0, sizeof(connector_status));
 	emul_pdc_configure_snk(emul, &connector_status);
 	connector_status.power_operation_mode = USB_DEFAULT_OPERATION;
 	emul_pdc_connect_partner(emul, &connector_status);
 
-	zassert_true(wait_state_name(TEST_PORT, "TypeCSnkAttached"));
+	zassert_true(wait_state_name(TEST_PORT, PDC_SNK_TYPEC_ONLY,
+				     "TypeCSnkAttached"));
 
 	/* Allow for debouncing time. */
 	TEST_WORKING_DELAY(PD_T_SINK_WAIT_CAP);
@@ -1218,14 +1224,15 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_task_state_name_typec_src_attached)
 {
 	union connector_status_t connector_status;
 
-	zassert_true(wait_state_name(TEST_PORT, "Unattached"));
+	zassert_true(wait_state_name(TEST_PORT, PDC_UNATTACHED, "Unattached"));
 
 	memset(&connector_status, 0, sizeof(connector_status));
 	emul_pdc_configure_src(emul, &connector_status);
 	connector_status.power_operation_mode = USB_DEFAULT_OPERATION;
 	emul_pdc_connect_partner(emul, &connector_status);
 
-	zassert_true(wait_state_name(TEST_PORT, "TypeCSrcAttached"));
+	zassert_true(wait_state_name(TEST_PORT, PDC_SRC_TYPEC_ONLY,
+				     "TypeCSrcAttached"));
 
 	/* Allow for debouncing time. */
 	TEST_WORKING_DELAY(PD_T_SINK_WAIT_CAP);
@@ -1237,28 +1244,30 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_task_state_name_attached_snk)
 {
 	union connector_status_t connector_status;
 
-	zassert_true(wait_state_name(TEST_PORT, "Unattached"));
+	zassert_true(wait_state_name(TEST_PORT, PDC_UNATTACHED, "Unattached"));
 
 	memset(&connector_status, 0, sizeof(connector_status));
 	emul_pdc_configure_snk(emul, &connector_status);
 	connector_status.power_operation_mode = PD_OPERATION;
 	emul_pdc_connect_partner(emul, &connector_status);
 
-	zassert_true(wait_state_name(TEST_PORT, "Attached.SNK"));
+	zassert_true(
+		wait_state_name(TEST_PORT, PDC_SNK_ATTACHED, "Attached.SNK"));
 }
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_task_state_name_attached_src)
 {
 	union connector_status_t connector_status;
 
-	zassert_true(wait_state_name(TEST_PORT, "Unattached"));
+	zassert_true(wait_state_name(TEST_PORT, PDC_UNATTACHED, "Unattached"));
 
 	memset(&connector_status, 0, sizeof(connector_status));
 	emul_pdc_configure_src(emul, &connector_status);
 	connector_status.power_operation_mode = PD_OPERATION;
 	emul_pdc_connect_partner(emul, &connector_status);
 
-	zassert_true(wait_state_name(TEST_PORT, "Attached.SRC"));
+	zassert_true(
+		wait_state_name(TEST_PORT, PDC_SRC_ATTACHED, "Attached.SRC"));
 }
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_connector_status)

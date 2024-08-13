@@ -25,6 +25,33 @@ extern const int pdc_cmd_types;
 #endif
 
 /**
+ * @brief State Machine States
+ */
+enum pdc_state_t {
+	/** PDC_INIT */
+	PDC_INIT,
+	/** PDC_UNATTACHED */
+	PDC_UNATTACHED,
+	/** PDC_SNK_ATTACHED */
+	PDC_SNK_ATTACHED,
+	/** PDC_SRC_ATTACHED */
+	PDC_SRC_ATTACHED,
+	/** PDC_SEND_CMD_START */
+	PDC_SEND_CMD_START,
+	/** PDC_SEND_CMD_WAIT */
+	PDC_SEND_CMD_WAIT,
+	/** PDC_SRC_TYPEC_ONLY */
+	PDC_SRC_TYPEC_ONLY,
+	/** PDC_SNK_TYPEC_ONLY */
+	PDC_SNK_TYPEC_ONLY,
+	/** Stop operation */
+	PDC_SUSPENDED,
+
+	/** State count. Always leave as last item. */
+	PDC_STATE_COUNT,
+};
+
+/**
  * @brief Get the state of the port partner connection
  *
  * @param port USB-C port number
