@@ -1,0 +1,56 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/cbi_flash.dtsi>
+
+&binman {
+	/* The rollback entries are zero-length and can confuse binman
+	 * and cause entries to be nested under the CBI section.
+	 * Delete these unused entries.
+	 */
+	/delete-node/ rollback0;
+	/delete-node/ rollback1;
+
+	/*
+	 * To accommodate CBI flash, shift the pstate and fmap entries
+	 * to a lower address by 4 KiB.
+	 *
+	 * Note, the offsets below assume the RO region size is
+	 * 0x60000 (384 KiB).
+	 *
+	 * Effective wp-ro map:
+	 *	0x00000 - 0x5DDFF: RO binary
+	 *	0x5DC00 - 0x5DFFF: FMAP
+	 *	0x5E000 - 0x5EFFF: CBI data
+	 *	0x5F000 - 0x5FFFF: Persistent state for flash flags
+	 */
+	wp-ro {
+		/*
+		 * Delete the pstate node so that we can force it to be the
+		 * last sub-section. binman doesn't handle sub-sections with
+		 * out of order offsets.
+		 */
+		/delete-node/ pstate;
+
+		ec-ro {
+			fmap {
+				offset =  <(0x60000 - (0x1000 * 2) - 0x400)>;
+				/*
+				 * don't specify 'size = <0x400>' here so
+				 * it is auto-assigned to the fmap size.
+				 */
+			};
+		};
+		cbi {
+			offset = <(0x60000 - (0x1000 * 2))>;
+			size = <0x1000>;
+		};
+		pstate {
+			type = "section";
+			offset = <(0x60000 - (0x1000 * 1))>;
+			size = <0x1000>;
+		};
+	};
+};
