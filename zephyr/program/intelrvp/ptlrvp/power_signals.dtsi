@@ -60,11 +60,9 @@
 		output;
 	};
 	pwr-ec-pch-sys-pwrok {
-		compatible = "intel,ap-pwrseq-gpio";
+		compatible = "intel,ap-pwrseq-external";
 		dbg-label = "SYS_PWROK output to PCH";
 		enum-name = "PWR_EC_PCH_SYS_PWROK";
-		gpios = <PWR_EC_PCH_SYS_PWROK GPIO_OPEN_DRAIN>;
-		output;
 	};
 	pwr-slp-s3 {
 		compatible = "intel,ap-pwrseq-vw";
@@ -128,9 +126,6 @@
 	no-auto-init;
 };
 &ec_pch_pwrok_od {
-	no-auto-init;
-};
-&sys_pwrok_ec {
 	no-auto-init;
 };
 &all_sys_pwrgd {
