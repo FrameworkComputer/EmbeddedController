@@ -36,6 +36,8 @@ zephyr_library_sources_ifdef(CONFIG_PD_CHIP_CCG6
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TOUCHPAD_CUSTOMIZED
 	"src/ps2mouse.c")
 
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
+	"src/battery_extender.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_CHASSIS_OPEN_SWITCH
 	"src/chassis.c")
 
