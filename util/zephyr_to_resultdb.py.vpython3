@@ -11,7 +11,7 @@
 # https://chromium.googlesource.com/infra/infra/+/HEAD/doc/users/vpython.md#available-wheels
 #
 
-python_version: "3.8"
+python_version: "3.11"
 wheel: <
   name: "infra/python/wheels/requests-py2_py3"
   version: "version:2.13.0"

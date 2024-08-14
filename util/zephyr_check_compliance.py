@@ -6,7 +6,7 @@
 """Check a single commit using the Zephyr check_compliance.py script."""
 
 # [VPYTHON:BEGIN]
-# python_version: "3.8"
+# python_version: "3.11"
 # wheel: <
 #   name: "infra/python/wheels/junitparser-py2_py3"
 #   version: "version:2.8.0"
@@ -33,7 +33,7 @@
 # >
 # wheel: <
 #   name: "infra/python/wheels/lxml/${vpython_platform}"
-#   version: "version:4.6.3"
+#   version: "version:4.9.3"
 # >
 # wheel: <
 #   name: "infra/python/wheels/west-py3"
@@ -69,7 +69,7 @@
 # >
 # wheel: <
 #   name: "infra/python/wheels/ruamel_yaml_clib/${vpython_platform}"
-#   version: "version:0.2.6"
+#   version: "version:0.2.8"
 # >
 # [VPYTHON:END]
 

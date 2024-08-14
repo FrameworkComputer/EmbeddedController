@@ -6,7 +6,7 @@
 """Perform pre-submit checks on testcase.yaml files"""
 
 # [VPYTHON:BEGIN]
-# python_version: "3.8"
+# python_version: "3.11"
 # wheel: <
 #   name: "infra/python/wheels/pyyaml-py3"
 #   version: "version:5.3.1"
