@@ -431,6 +431,19 @@ int board_want_charger_change_mode(void);
 #include "charge_state.h"
 
 #ifdef CONFIG_CUSTOMIZED_DESIGN
+/**
+ * Callback for boards to return voltage value.
+ *
+ * @param voltage	battery maximum voltage
+ * @return battery extender stage voltage (stage1: 97% * voltage; stage2: 96% * voltage).
+ */
+int battery_extender_stage_voltage(uint16_t voltage);
+
+/**
+ * Callback for boards to count the battery extender timer.
+ */
+void battery_extender(void);
+
 void battery_customize(struct charge_state_data *curr_batt);
 #endif
 
