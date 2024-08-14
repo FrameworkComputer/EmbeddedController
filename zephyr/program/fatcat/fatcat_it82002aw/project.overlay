@@ -13,6 +13,7 @@
 
 #include "console.dtsi"
 
+#include "adc.dtsi"
 #include "i2c.dtsi"
 
 /* these need to be promoted to program.conf */

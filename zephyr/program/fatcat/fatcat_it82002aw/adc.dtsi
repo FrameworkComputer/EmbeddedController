@@ -1,0 +1,27 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_chrg_amon_bmon: chrg_amon_bmon {
+			enum-name = "ADC_AMON_BMON";
+			io-channels = <&adc0 1>;
+		};
+		adc_ambient_therm_in: ambient_therm_in {
+			enum-name = "ADC_TEMP_SENSOR_2_AMBIENT";
+			io-channels = <&adc0 5>;
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+
+	pinctrl-0 = <&adc0_ch1_gpi1_default
+		     &adc0_ch5_gpi5_default>;
+	pinctrl-names = "default";
+};
