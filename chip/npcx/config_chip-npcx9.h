@@ -13,6 +13,11 @@
  * @param N: 3: 320KB RAM Size, 6: 256KB RAM Size.
  * @param F: Google EC.
  * @param B/C: (Optional) Chip generation in the same series.
+ *
+ * Device-Specific Information for FPMCU
+ * Ex. NPCX9(M)(FP)
+ * @param M: 9: 144-pins package
+ * @param FP: Google finger print MCU
  */
 
 /* Chip ID for all variants */
