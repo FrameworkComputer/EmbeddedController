@@ -158,6 +158,18 @@ union rts54_request {
 		uint32_t rdo;
 	} set_rdo;
 
+	struct set_pdo_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+		struct {
+			uint8_t spr_pdo_number : 3;
+			uint8_t pdo_type : 1;
+			uint8_t epr_pdo_number : 3;
+			uint8_t reserved : 1;
+		};
+		uint32_t pdos[PDO_OFFSET_MAX];
+	} __packed set_pdo;
+
 	struct get_rdo_req {
 		struct rts54_subcommand_header header;
 		uint8_t port_num;
@@ -235,7 +247,6 @@ union rts54_request {
 			uint8_t offset : 3;
 			uint8_t num : 3;
 		};
-		uint32_t pdos[PDO_OFFSET_MAX];
 	} __packed get_pdos;
 
 	struct get_cable_property {

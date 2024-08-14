@@ -144,10 +144,6 @@ ZTEST_USER(rts54xx, test_emul_pdos)
 	zassert_ok(emul_pdc_get_pdos(emul, SINK_PDO, PDO_OFFSET_0, 1,
 				     PARTNER_PDO, pdos));
 
-	/* Test that offset zero is invalid for setting. */
-	zassert_not_ok(emul_set_src_pdos(PDO_OFFSET_0, 1, pdos));
-	zassert_not_ok(emul_set_snk_pdos(PDO_OFFSET_0, 1, pdos));
-
 	/* Test PDO overflow. */
 	zassert_not_ok(emul_set_src_pdos(PDO_OFFSET_1, 8, spr_pdos));
 	zassert_not_ok(emul_set_snk_pdos(PDO_OFFSET_1, 8, spr_pdos));

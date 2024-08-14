@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "drivers/pdc.h"
 #include "drivers/ucsi_v3.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_pdc.h"
@@ -575,11 +576,6 @@ static int set_pdos_direct(struct rts5453p_emul_pdc_data *data,
 		return -EINVAL;
 	}
 
-	if (source == LPM_PDO && pdo_offset == PDO_OFFSET_0) {
-		LOG_ERR("Attempt to set read-only PDO 0");
-		return -EINVAL;
-	}
-
 	for (uint8_t i = 0; i < num_pdos; i++) {
 		/* EPR PDOs are only supported in offsets 1-4. */
 		if (is_epr_pdo(pdos[i]) &&
@@ -592,6 +588,33 @@ static int set_pdos_direct(struct rts5453p_emul_pdc_data *data,
 	memcpy(&target_pdos[pdo_offset], pdos, sizeof(uint32_t) * num_pdos);
 
 	/* TODO b/317065172: handle renegotiation if we have a port partner. */
+	return 0;
+}
+
+static int set_pdo(struct rts5453p_emul_pdc_data *data,
+		   const union rts54_request *req)
+{
+	enum pdo_type_t pdo_type = req->set_pdo.pdo_type ? SOURCE_PDO :
+							   SINK_PDO;
+	uint8_t pdo_count;
+
+	if (req->set_pdo.spr_pdo_number > PDO_OFFSET_MAX) {
+		/* TODO - can the emulator generate an error response? */
+		LOG_ERR("SET_PDO: SPR PDO count %d greater than %d",
+			req->set_pdo.spr_pdo_number, PDO_OFFSET_MAX);
+		return -EINVAL;
+	}
+
+	pdo_count = req->set_pdo.spr_pdo_number;
+
+	LOG_INF("SET_PDO source type=%d, count=%d", pdo_type, pdo_count);
+
+	set_pdos_direct(data, pdo_type, 0, pdo_count, LPM_PDO,
+			req->set_pdo.pdos);
+
+	memset(&data->response, 0, sizeof(union rts54_response));
+	send_response(data);
+
 	return 0;
 }
 
@@ -617,16 +640,18 @@ static int get_pdos(struct rts5453p_emul_pdc_data *data,
 		    const union rts54_request *req)
 {
 	enum pdo_type_t pdo_type = req->get_pdos.src ? SOURCE_PDO : SINK_PDO;
+	enum pdo_source_t pdo_source = req->get_pdos.partner ? PARTNER_PDO :
+							       LPM_PDO;
 	enum pdo_offset_t pdo_offset = req->get_pdos.offset;
 	/* GET_PDOS stops at the end if there's a requested overflow. */
 	uint8_t pdo_count = MIN(PDO_OFFSET_MAX - pdo_offset, req->get_pdos.num);
 
-	LOG_INF("GET_PDO type=%d, offset=%d, count=%d", pdo_type, pdo_offset,
-		pdo_count);
+	LOG_INF("GET_PDO source %d, type=%d, offset=%d, count=%d", pdo_source,
+		pdo_type, pdo_offset, pdo_count);
 
 	memset(&data->response, 0, sizeof(data->response));
-	get_pdos_direct(data, pdo_type, pdo_offset, pdo_count,
-			req->get_pdos.partner, data->response.get_pdos.pdos);
+	get_pdos_direct(data, pdo_type, pdo_offset, pdo_count, pdo_source,
+			data->response.get_pdos.pdos);
 	data->response.get_pdos.byte_count = sizeof(uint32_t) * pdo_count;
 
 	send_response(data);
@@ -778,7 +803,7 @@ const struct commands sub_cmd_x01[] = {
 const struct commands sub_cmd_x08[] = {
 	{ .code = 0x00, HANDLER_DEF(tcpm_reset) },
 	{ .code = 0x01, HANDLER_DEF(set_notification_enable) },
-	{ .code = 0x03, HANDLER_DEF(unsupported) },
+	{ .code = 0x03, HANDLER_DEF(set_pdo) },
 	{ .code = 0x04, HANDLER_DEF(set_rdo) },
 	{ .code = 0x44, HANDLER_DEF(unsupported) },
 	{ .code = 0x05, HANDLER_DEF(set_tpc_rp) },
