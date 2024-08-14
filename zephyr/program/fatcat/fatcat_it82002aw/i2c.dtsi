@@ -1,0 +1,39 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_wc_usbc_pd: wc_usbc_pd {
+			i2c-port = <&i2c1>;
+			enum-names = "I2C_PORT_WC_USBC_PD";
+		};
+		i2c_smb_bs: smb_bs {
+			i2c-port = <&i2c4>;
+			enum-names = "I2C_PORT_SMB_BS";
+		};
+	};
+};
+
+&i2c1 {
+	status = "okay";
+	pinctrl-0 = <&i2c1_clk_gpc1_default
+		     &i2c1_data_gpc2_default>;
+	pinctrl-names = "default";
+
+	label = "I2C_PORT_WC_USBC_PD";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c4 {
+	status = "okay";
+	pinctrl-0 = <&i2c4_clk_gpe0_default
+		     &i2c4_data_gpe7_default>;
+	pinctrl-names = "default";
+
+	label = "I2C_PORT_SMB_BS";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};

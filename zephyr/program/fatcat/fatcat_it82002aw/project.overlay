@@ -13,6 +13,8 @@
 
 #include "console.dtsi"
 
+#include "i2c.dtsi"
+
 /* these need to be promoted to program.conf */
 
 #include "binman.dtsi"
