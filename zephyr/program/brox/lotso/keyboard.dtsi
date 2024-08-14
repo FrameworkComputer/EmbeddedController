@@ -111,7 +111,7 @@
 
 	runtime-keys {
 		compatible = "cros-ec,runtime-keys";
-		vol-up-rc = <KBD_RC(0, 11)>;
+		vol-up-rc = <KBD_RC(1, 5)>;
 		left-alt-rc = <KBD_RC(6, 13)>;
 		right-alt-rc = <KBD_RC(0, 10)>;
 		h-rc = <KBD_RC(1, 6)>;
