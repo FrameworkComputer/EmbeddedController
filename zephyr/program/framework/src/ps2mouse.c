@@ -51,7 +51,7 @@ void send_data_byte(uint8_t data)
 
 		/* sometimes the host will get behind */
 	while (aux_buffer_available() < 1 && timeout++ < AUX_BUFFER_FULL_RETRIES)
-		crec_msleep(10*MSEC);
+		crec_msleep(10);
 	send_aux_data_to_host_interrupt(data);
 }
 void send_movement_packet(void)
@@ -65,7 +65,7 @@ void send_movement_packet(void)
 	/* sometimes the host will get behind */
 	while (aux_buffer_available() < max && timeout++ < AUX_BUFFER_FULL_RETRIES &&
 			(*task_get_event_bitmap(TASK_ID_TOUCHPAD) & PS2MOUSE_EVT_AUX_DATA) == 0) {
-		crec_msleep(10*MSEC);
+		crec_msleep(10);
 	}
 
 	if (timeout == AUX_BUFFER_FULL_RETRIES ||
@@ -425,7 +425,7 @@ read_failed:
 			/* try again some other time later if the TP keeps interrupting us */
 			detected_host_packet = true;
 			inreport_retries = 0;
-			crec_msleep(10*MSEC);
+			crec_msleep(10);
 			CPRINTS("PS2M  %d Too many retries", rv);
 		} else {
 			hook_call_deferred(&retry_tp_read_evt_deferred_data, 25*MSEC);
@@ -522,7 +522,7 @@ void touchpad_task(void *p)
 				 * check to see if the soc has grabbed this out from under us
 				 */
 				for (i = 0; i < 4; i++) {
-					crec_msleep(MSEC);
+					crec_msleep(1);
 					if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL
 								(gpio_soc_tp_int_l)) == 1) {
 						CPRINTS("PS2M Detected host pkt during int");
@@ -544,7 +544,7 @@ void touchpad_task(void *p)
 				if (!ec_mode_disabled) {
 					CPRINTS("PS2M Configuring for ps2 emulation mode");
 					/*tp takes about 80 ms to come up, wait a bit*/
-					crec_msleep(200*MSEC);
+					crec_msleep(200);
 					set_power(false);
 					set_reset();
 					setup_touchpad();

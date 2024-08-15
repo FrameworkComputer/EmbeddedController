@@ -212,7 +212,7 @@ int cypd_wait_for_ack(int controller, int timeout_ms)
 	do {
 		if (gpio_pin_get_dt(intr) == 0)
 			break;
-		crec_msleep(100);
+		crec_usleep(100);
 	} while (time_since32(start) < (timeout_ms * MSEC));
 
 	/* make sure response is ok */
@@ -1864,7 +1864,7 @@ void cypd_interrupt_handler_task(void *p)
 			 * wait a bit for the pd controller to clear any pending
 			 * interrupt requests
 			 */
-			crec_msleep(50);
+			crec_usleep(50);
 		}
 		if (!ucsi_tunnel_disabled)
 			check_ucsi_event_from_host();
@@ -2133,7 +2133,7 @@ static int cmd_cypd_control(int argc, const char **argv)
 					  CCG_PORT0_INTR +
 					  CCG_PORT1_INTR +
 					  CCG_UCSI_INTR);
-			crec_msleep(50);
+			crec_usleep(50);
 			CPRINTS("Full reset PD controller %d", i);
 			/*
 			 * see if we can talk to the PD chip yet - issue a reset command
