@@ -152,6 +152,14 @@ config PLATFORM_CHASSIS_OPEN_SWITCH
 		The project should define a GPIO label named gpio_chassis_open_l, with
 		chassis_interrupt_handler configured as the handler.
 
+config PLATFORM_PRIVACY_DEVICE_CHECK
+	bool "Check the status of camera and microphone"
+	default y
+	help
+		If enabled, the privacy device which camera and microphone
+		status can be found via a host
+		command (EC_CMD_PRIVACY_SWITCHES_CHECK_MODE).
+
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code
 source "subsys/logging/Kconfig.template.log_config"
