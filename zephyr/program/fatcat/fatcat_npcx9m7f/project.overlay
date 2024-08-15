@@ -13,6 +13,7 @@
 
 #include <cros/cbi_flash.dtsi>
 
+#include "adc.dtsi"
 #include "i2c.dtsi"
 
 /* fatcat_npcx9m7f overrides follow... */
