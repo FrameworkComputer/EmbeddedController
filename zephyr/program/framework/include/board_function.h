@@ -19,9 +19,6 @@ void bios_function_detect(void);
 /* return BIOS setup AC attach bit status */
 int ac_boot_status(void);
 
-/* for host cmd clear count */
-int chassis_cmd_clear(int type);
-
 __override_proto void project_chassis_function(enum gpio_signal signal);
 
 uint32_t get_system_percentage(void);

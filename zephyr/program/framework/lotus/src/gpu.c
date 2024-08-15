@@ -182,10 +182,6 @@ void check_gpu_module(void)
 DECLARE_DEFERRED(check_gpu_module);
 DECLARE_HOOK(HOOK_INIT, check_gpu_module, HOOK_PRIO_INIT_ADC + 1);
 
-__override void project_chassis_function(enum gpio_signal signal)
-{
-}
-
 void beam_open_interrupt(enum gpio_signal signal)
 {
 	int open_state = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_f_beam_open_l));
