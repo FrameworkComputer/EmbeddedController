@@ -320,7 +320,7 @@ enum command_task {
 	/*Auto Negotiate Sink Update */
 	COMMAND_TASK_ANEG,
 	/* Clear Dead Battery Flag */
-	COMMAND_TASK_DBFG,
+	COMMAND_TASK_DBFG = 0x67664244,
 	/* Error handling for I2C3m transactions */
 	COMMAND_TASK_MUXR,
 	/* Trigger an Input GPIO Event */

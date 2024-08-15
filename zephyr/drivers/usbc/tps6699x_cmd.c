@@ -205,6 +205,12 @@ int tps_rw_port_control(const struct i2c_dt_spec *i2c,
 			    sizeof(union reg_port_control), flag);
 }
 
+int tps_rd_boot_flags(const struct i2c_dt_spec *i2c, union reg_boot_flags *buf)
+{
+	return tps_xfer_reg(i2c, REG_BOOT_FLAG, buf->raw_value,
+			    sizeof(union reg_boot_flags), I2C_MSG_READ);
+}
+
 int tps_rw_transmit_source_capabilities(
 	const struct i2c_dt_spec *i2c,
 	union reg_transmit_source_capabilities *buf, int flag)

@@ -251,6 +251,7 @@ static void cmd_get_identity_discovery(struct pdc_data_t *data);
 static void cmd_get_pdc_data_status_reg(struct pdc_data_t *data);
 static void task_gaid(struct pdc_data_t *data);
 static void task_srdy(struct pdc_data_t *data);
+static void task_dbfg(struct pdc_data_t *data);
 static void task_ucsi(struct pdc_data_t *data,
 		      enum ucsi_command_t ucsi_command);
 
@@ -1222,6 +1223,21 @@ error_recovery:
 	set_state(data, ST_ERROR_RECOVERY);
 }
 
+static void task_dbfg(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	int rv;
+
+	rv = write_task_cmd(cfg, COMMAND_TASK_DBFG, NULL);
+	if (rv) {
+		set_state(data, ST_ERROR_RECOVERY);
+		return;
+	}
+
+	set_state(data, ST_TASK_WAIT);
+	return;
+}
+
 static void task_ucsi(struct pdc_data_t *data, enum ucsi_command_t ucsi_command)
 {
 	struct pdc_config_t const *cfg = data->dev->config;
@@ -1866,6 +1882,25 @@ static int pdc_interrupt_mask_init(struct pdc_data_t *data)
 	return tps_rw_interrupt_mask(&cfg->i2c, &irq_mask, I2C_MSG_WRITE);
 }
 
+static int pdc_exit_dead_battery(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	union reg_boot_flags pdc_boot_flags;
+	int rv;
+
+	rv = tps_rd_boot_flags(&cfg->i2c, &pdc_boot_flags);
+	if (rv) {
+		LOG_ERR("Read boot flags failed");
+		set_state(data, ST_ERROR_RECOVERY);
+		return rv;
+	}
+
+	if (pdc_boot_flags.dead_battery_flag) {
+		task_dbfg(data);
+	}
+	return 0;
+}
+
 static void pdc_interrupt_callback(const struct device *dev,
 				   struct gpio_callback *cb, uint32_t pins)
 {
@@ -1935,6 +1970,11 @@ static int pdc_init(const struct device *dev)
 	rv = pdc_interrupt_mask_init(data);
 	if (rv < 0) {
 		LOG_ERR("Write interrupt mask failed");
+		return rv;
+	}
+	rv = pdc_exit_dead_battery(data);
+	if (rv < 0) {
+		LOG_ERR("Clear dead battery flag failed");
 		return rv;
 	}
 
