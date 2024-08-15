@@ -42,6 +42,7 @@ DECLARE_FAKE_VALUE_FUNC(const uint32_t *const, pdc_power_mgmt_get_src_caps,
 			int);
 DECLARE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_get_lpm_ppm_info, int,
 			struct lpm_ppm_info_t *);
+DECLARE_FAKE_VALUE_FUNC(bool, pdc_power_mgmt_check_hpd_wake, int);
 
 /**
  * @brief Reset the above set of fakes

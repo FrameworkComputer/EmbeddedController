@@ -662,6 +662,15 @@ static int get_vdo(struct rts5453p_emul_pdc_data *data,
 	LOG_INF("GET_VDO = %x", req->get_vdo.vdo_req.raw_value);
 	memset(&data->response, 0, sizeof(data->response));
 
+	if (req->get_vdo.vdo_req.num_vdos > PDC_DISC_IDENTITY_VDO_COUNT) {
+		LOG_ERR("Too many VDOs requested in GET_VDO.");
+		return -EINVAL;
+	}
+
+	for (uint8_t i = 0; i < req->get_vdo.vdo_req.num_vdos; i++) {
+		data->response.get_vdo.vdo[i] = data->vdos[i];
+	}
+
 	data->response.get_vdo.byte_count =
 		sizeof(uint32_t) * req->get_vdo.vdo_req.num_vdos;
 
@@ -1352,6 +1361,23 @@ emul_realtek_rts54xx_set_lpm_ppm_info(const struct emul *target,
 	return 0;
 }
 
+static int emul_realtek_rts54xx_set_vdo(const struct emul *target,
+					uint8_t num_vdos, uint32_t *vdos)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	if (num_vdos > PDC_DISC_IDENTITY_VDO_COUNT) {
+		return -EINVAL;
+	}
+
+	for (uint8_t i = 0; i < num_vdos; i++) {
+		data->vdos[i] = vdos[i];
+	}
+
+	return 0;
+}
+
 static int emul_realtek_rts54xx_get_pdos(const struct emul *target,
 					 enum pdo_type_t pdo_type,
 					 enum pdo_offset_t pdo_offset,
@@ -1435,6 +1461,7 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.get_pdos = emul_realtek_rts54xx_get_pdos,
 	.get_cable_property = emul_realtek_rts54xx_get_cable_property,
 	.set_cable_property = emul_realtek_rts54xx_set_cable_property,
+	.set_vdo = emul_realtek_rts54xx_set_vdo,
 	.idle_wait = emul_realtek_rts54xx_idle_wait,
 };
 

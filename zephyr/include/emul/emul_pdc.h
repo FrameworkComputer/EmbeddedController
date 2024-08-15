@@ -76,6 +76,9 @@ typedef int (*emul_pdc_get_cable_property_t)(const struct emul *target,
 typedef int (*emul_pdc_set_cable_property_t)(
 	const struct emul *target, const union cable_property_t property);
 
+typedef int (*emul_pdc_set_vdo_t)(const struct emul *target, uint8_t num_vdos,
+				  const uint32_t *vdos);
+
 typedef int (*emul_pdc_idle_wait_t)(const struct emul *target);
 
 __subsystem struct emul_pdc_api_t {
@@ -105,6 +108,7 @@ __subsystem struct emul_pdc_api_t {
 	emul_pdc_pulse_irq_t pulse_irq;
 	emul_pdc_set_cable_property_t set_cable_property;
 	emul_pdc_get_cable_property_t get_cable_property;
+	emul_pdc_set_vdo_t set_vdo;
 	emul_pdc_idle_wait_t idle_wait;
 };
 
@@ -501,6 +505,21 @@ emul_pdc_set_cable_property(const struct emul *target,
 
 	if (api->set_cable_property) {
 		return api->set_cable_property(target, property);
+	}
+	return -ENOSYS;
+}
+
+static inline int emul_pdc_set_vdo(const struct emul *target, uint8_t num_vdos,
+				   const uint32_t *vdos)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_api_t *api = target->backend_api;
+
+	if (api->set_vdo) {
+		return api->set_vdo(target, num_vdos, vdos);
 	}
 	return -ENOSYS;
 }

@@ -311,6 +311,12 @@ enum vdo_type_t {
 };
 
 /**
+ * @brief Number of VDOs used to send a discovery identity response with
+ * GET_PD_MESSAGE. This includes the VDM header and 6 Identity VDOs.
+ */
+#define PDC_DISC_IDENTITY_VDO_COUNT 7
+
+/**
  * @brief CCI - USB Type-C Command Status and Connector Change Indication
  */
 union cci_event_t {

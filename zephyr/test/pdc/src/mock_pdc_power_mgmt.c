@@ -40,6 +40,7 @@ DEFINE_FAKE_VALUE_FUNC(uint8_t, pdc_power_mgmt_get_src_cap_cnt, int);
 DEFINE_FAKE_VALUE_FUNC(const uint32_t *const, pdc_power_mgmt_get_src_caps, int);
 DEFINE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_get_lpm_ppm_info, int,
 		       struct lpm_ppm_info_t *);
+DEFINE_FAKE_VALUE_FUNC(bool, pdc_power_mgmt_check_hpd_wake, int);
 
 void helper_reset_pdc_power_mgmt_fakes(void)
 {
@@ -64,4 +65,5 @@ void helper_reset_pdc_power_mgmt_fakes(void)
 	RESET_FAKE(pdc_power_mgmt_get_src_cap_cnt);
 	RESET_FAKE(pdc_power_mgmt_get_src_caps);
 	RESET_FAKE(pdc_power_mgmt_get_lpm_ppm_info);
+	RESET_FAKE(pdc_power_mgmt_check_hpd_wake);
 }
