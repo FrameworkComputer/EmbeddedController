@@ -402,6 +402,7 @@ static enum ec_status hc_fingerprint_control(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_FP_CONTROL, hc_fingerprint_control, EC_VER_MASK(0));
 #endif /* CONFIG_BOARD_LOTUS */
 
+#ifdef CONFIG_PLATFORM_PRIVACY_DEVICE_CHECK
 static enum ec_status privacy_switches_check(struct host_cmd_handler_args *args)
 {
 	struct ec_response_privacy_switches_check *r = args->response;
@@ -422,6 +423,7 @@ static enum ec_status privacy_switches_check(struct host_cmd_handler_args *args)
 
 }
 DECLARE_HOST_COMMAND(EC_CMD_PRIVACY_SWITCHES_CHECK_MODE, privacy_switches_check, EC_VER_MASK(0));
+#endif
 
 #ifdef CONFIG_CHIPSET_INTEL
 #ifdef CONFIG_PLATFORM_EC_TOUCHPAD_CUSTOMIZED
