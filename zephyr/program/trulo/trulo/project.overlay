@@ -4,6 +4,7 @@
  */
 
 /* Trulo program common DTS includes */
+#include "../cbi.dtsi"
 #include "../generated.dtsi"
 #include "../i2c.dtsi"
 #include "../power_signals.dtsi"
