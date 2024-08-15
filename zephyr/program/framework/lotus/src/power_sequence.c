@@ -724,12 +724,12 @@ static void usb30_hub_reset(void)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 1);
 		set_gpu_gpio(GPIO_FUNC_SSD1_POWER, 1);
 		set_gpu_gpio(GPIO_FUNC_SSD2_POWER, 1);
-		crec_msleep(200 * MSEC);
+		crec_msleep(200);
 		/* do not reset the hub when the system shutdown */
 		if (!chipset_in_state(CHIPSET_STATE_ON))
 			return;
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 0);
-		crec_msleep(10 * MSEC);
+		crec_msleep(10);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 1);
 	}
 }
