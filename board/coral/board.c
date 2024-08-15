@@ -658,6 +658,18 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
  */
 void chipset_do_shutdown(void)
 {
+	/*
+	 * We want the processor to be reset before dropping the PP3300_A rail
+	 * below, otherwise the PP3300_LDO and PP3300_EC rails can be overloaded
+	 */
+	if (gpio_get_level(GPIO_PCH_SLP_S4_L)) {
+		/* assert RSMRST to PCH */
+		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
+		/* Wait SLP_S4 goes low; would rather watchdog than continue */
+		while (gpio_get_level(GPIO_PCH_SLP_S4_L))
+			;
+	}
+
 	/* Disable PMIC */
 	gpio_set_level(GPIO_PMIC_EN, 0);
 
