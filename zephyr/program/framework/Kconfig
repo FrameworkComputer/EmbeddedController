@@ -139,6 +139,19 @@ config PLATFORM_IGNORED_TOUCHPAD_ID
 		Enable this option if Touchpad board ID not current at the build phase
 		or need test others TP for verify.
 
+config PLATFORM_CHASSIS_OPEN_SWITCH
+	bool "Enable the project to support chassis open switch feature"
+	default y
+	help
+		The chassis open switch will detect the chassis open state, and perform the
+		following action:
+		1. If open, control multifunctional LED
+		2. If open, shutoff mainboard power at G3 state within 3 seconds
+		3. Record the chassis toggle counts
+
+		The project should define a GPIO label named gpio_chassis_open_l, with
+		chassis_interrupt_handler configured as the handler.
+
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code
 source "subsys/logging/Kconfig.template.log_config"

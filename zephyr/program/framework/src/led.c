@@ -420,6 +420,8 @@ static bool multifunction_leds_control(void)
 		return true;
 	}
 
+#ifdef CONFIG_PLATFORM_CHASSIS_OPEN_SWITCH
+	/* TODO: use overriable to declare the function and override for each project */
 	/* C cover detect switch open */
 	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0 &&
 		!get_standalone_mode()) {
@@ -430,6 +432,7 @@ static bool multifunction_leds_control(void)
 		customized_leds_set_color(colors, 2, 1000, EC_LED_ID_BATTERY_LED);
 		return true;
 	}
+#endif
 
 #ifdef CONFIG_BOARD_LOTUS
 	/* GPU bay cover detect switch open */

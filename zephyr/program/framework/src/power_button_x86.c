@@ -216,7 +216,14 @@ static void set_initial_pwrbtn_state(void)
 		 * If EC wake from power button and the power button already release.
 		 * check the chassis status and standalone mode status.
 		 */
-		if ((gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0) &&
+		if (
+#ifdef CONFIG_PLATFORM_CHASSIS_OPEN_SWITCH
+			/**
+			 * TODO: use overriable to declare the function and
+			 * override for each project
+			 */
+			(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0) &&
+#endif
 			(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_on_off_btn_l)) == 1) &&
 			!get_standalone_mode()) {
 			pwrbtn_state = PWRBTN_STATE_IDLE;

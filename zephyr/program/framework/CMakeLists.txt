@@ -36,6 +36,9 @@ zephyr_library_sources_ifdef(CONFIG_PD_CHIP_CCG6
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TOUCHPAD_CUSTOMIZED
 	"src/ps2mouse.c")
 
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_CHASSIS_OPEN_SWITCH
+	"src/chassis.c")
+
 if(DEFINED CONFIG_BOARD_LOTUS)
 	project(lotus)
 	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_LOTUS include)
