@@ -14,6 +14,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/kernel/thread_stack.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/types.h>
 
 #include <builtin/assert.h>
 #include <usbc/ppm.h>
@@ -69,7 +70,7 @@ struct ucsi_ppm_device {
 
 	/* Port number is 7 bits. */
 	uint8_t last_connector_changed;
-	uint8_t last_connector_alerted;
+	uint8_t alerted_connectors_map;
 
 	/* Data dedicated to UCSI operation. */
 	struct ucsi_memory_region ucsi_data;
@@ -182,7 +183,7 @@ static int ppm_common_execute_command_unlocked(struct ucsi_ppm_device *dev,
 
 static void ppm_common_handle_async_event(struct ucsi_ppm_device *dev)
 {
-	uint8_t port = 0;
+	uint8_t port;
 	union connector_status_t *port_status;
 	bool alert_port = false;
 
@@ -205,19 +206,20 @@ static void ppm_common_handle_async_event(struct ucsi_ppm_device *dev)
 	/* Read per-port status if this is a fresh async event from an
 	 * LPM alert.
 	 */
-	if (dev->last_connector_alerted != 0) {
-		LOG_DBG("Calling GET_CONNECTOR_STATUS on port %d",
-			dev->last_connector_alerted);
-
+	if (dev->alerted_connectors_map != 0) {
 		struct ucsi_control_t get_cs_cmd;
-		memset((void *)&get_cs_cmd, 0, sizeof(struct ucsi_control_t));
+		/* Gets 1-indexed lsb and subtracts 1 to get 0-indexed port. */
+		port = find_lsb_set(dev->alerted_connectors_map) - 1;
 
+		LOG_DBG("Calling GET_CONNECTOR_STATUS on port %d (alerts=0x%x)",
+			port, dev->alerted_connectors_map);
+
+		memset((void *)&get_cs_cmd, 0, sizeof(struct ucsi_control_t));
 		get_cs_cmd.command = UCSI_GET_CONNECTOR_STATUS;
 		get_cs_cmd.data_length = 0x0;
-		get_cs_cmd.command_specific[0] = dev->last_connector_alerted;
+		get_cs_cmd.command_specific[0] = port + 1;
 
 		/* Clear port status before reading. */
-		port = dev->last_connector_alerted - 1;
 		port_status = &dev->per_port_status[port];
 		memset(port_status, 0, sizeof(union connector_status_t));
 
@@ -234,22 +236,24 @@ static void ppm_common_handle_async_event(struct ucsi_ppm_device *dev)
 		 * sent notifications for but which has not yet acked.
 		 * Resend the notification.
 		 */
-		if (dev->last_connector_alerted ==
-		    dev->last_connector_changed) {
+		if (port + 1 == dev->last_connector_changed) {
 			alert_port = true;
 		}
 
-		dev->last_connector_alerted = 0;
+		dev->alerted_connectors_map &= ~BIT(port);
 	}
 
 	/* If we are not already acting on an existing connector change,
 	 * notify the OS if there are any other connector changes.
 	 */
 	if (dev->last_connector_changed == 0) {
-		/* Find the first port with any pending change. */
+		/* Find the first port with any pending change we are masked to
+		 * notify on.
+		 */
 		for (port = 0; port < dev->num_ports; ++port) {
-			if (dev->per_port_status[port]
-				    .raw_conn_status_change_bits != 0) {
+			port_status = &dev->per_port_status[port];
+			if (dev->notif_mask.raw_value &
+			    port_status->raw_conn_status_change_bits) {
 				break;
 			}
 		}
@@ -294,7 +298,7 @@ static void ppm_common_reset_data(struct ucsi_ppm_device *dev)
 {
 	clear_last_error(dev);
 	dev->last_connector_changed = 0;
-	dev->last_connector_alerted = 0;
+	dev->alerted_connectors_map = 0;
 	dev->notif_mask.raw_value = 0;
 	memset(&dev->pending, 0, sizeof(dev->pending));
 	memset(dev->per_port_status, 0,
@@ -770,7 +774,7 @@ int ucsi_ppm_init_and_wait(struct ucsi_ppm_device *dev)
 	memset(dev->per_port_status, 0,
 	       dev->num_ports * sizeof(union connector_status_t));
 	dev->last_connector_changed = 0;
-	dev->last_connector_alerted = 0;
+	dev->alerted_connectors_map = 0;
 
 	LOG_DBG("Ready to initialize PPM task!");
 
@@ -964,10 +968,10 @@ void ucsi_ppm_lpm_alert(struct ucsi_ppm_device *dev, uint8_t lpm_id)
 
 	k_mutex_lock(&dev->ppm_lock, K_FOREVER);
 
-	if (lpm_id <= dev->num_ports) {
+	if (lpm_id != 0 && lpm_id <= dev->num_ports) {
 		/* Set async event and mark port status as not read. */
 		dev->pending.async_event = 1;
-		dev->last_connector_alerted = lpm_id;
+		dev->alerted_connectors_map |= BIT(lpm_id - 1);
 
 		k_condvar_signal(&dev->ppm_condvar);
 	} else {
