@@ -311,6 +311,8 @@ enum cci_flag_t {
 	CCI_ACK,
 	/** CCI_ATTENTION */
 	CCI_ATTENTION,
+	/** CCI_PPM_EVENT */
+	CCI_PPM_EVENT,
 	/** CCI_FLAGS_COUNT */
 	CCI_FLAGS_COUNT
 };
@@ -669,6 +671,8 @@ struct pdc_port_t {
 	/** Callback */
 	struct pdc_callback cc_cb;
 	struct pdc_callback ci_cb;
+	/** Callback for PPM */
+	const struct pdc_callback *ppm_ci_cb;
 	/** Last configured dual role power state */
 	enum pd_dual_role_states dual_role_state;
 	/** Change indicator bits to clear */
@@ -679,6 +683,8 @@ struct pdc_port_t {
 	uint16_t vendor_defined_ci;
 	/** System should watch for an HPD wake */
 	bool hpd_wake_watch;
+	/** Additional change bits to report to PPM. */
+	union conn_status_change_bits_t overlay_ppm_changes;
 };
 
 /**
@@ -1008,6 +1014,22 @@ static void queue_internal_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd)
 }
 
 /**
+ * @brief Trigger a PPM change indication on a port.
+ */
+static void trigger_ppm_ci(struct pdc_port_t *port)
+{
+	const struct pdc_config_t *config = port->dev->config;
+	int port_number = config->connector_num;
+	union cci_event_t cci_event;
+
+	if (!port->ppm_ci_cb)
+		return;
+
+	cci_event.connector_change = port_number + 1;
+	port->ppm_ci_cb->handler(port->dev, port->ppm_ci_cb, cci_event);
+}
+
+/**
  * @brief Reads connector status and takes appropriate action.
  *
  * This function should only be called after the completion of the
@@ -1036,8 +1058,20 @@ static bool handle_connector_status(struct pdc_port_t *port)
 	 * change indicator bits which were just read as part of the connector
 	 * status message.
 	 */
-	port->ci.raw_value = conn_status_change_bits.raw_value;
-	atomic_set_bit(port->cci_flags, CCI_ACK);
+	if (conn_status_change_bits.raw_value) {
+		port->ci.raw_value = conn_status_change_bits.raw_value;
+		atomic_set_bit(port->cci_flags, CCI_ACK);
+	}
+
+	/* Trigger PPM CI callback if connector status change was indicated. */
+	if (atomic_test_and_clear_bit(port->cci_flags, CCI_PPM_EVENT)) {
+		/* We need to also overlay any conn status change bits because
+		 * they may disappear by the time OPM reads them.
+		 */
+		port->overlay_ppm_changes.raw_value |=
+			conn_status_change_bits.raw_value;
+		trigger_ppm_ci(port);
+	}
 
 	if (conn_status_change_bits.pd_reset_complete) {
 		LOG_INF("C%d: Reset complete indicator", port_number);
@@ -1112,6 +1146,53 @@ static bool handle_connector_status(struct pdc_port_t *port)
 	}
 
 	return true;
+}
+
+/**
+ * @brief Trigger connector status change on PPM
+ *
+ * The UCSI spec says that certain commands with side-effects (like SET_PDR) do
+ * not generate status change interrupts if the host was the one that caused the
+ * change. This can create a state de-sync between the EC and OS so we should
+ * fake some connector changes for capture these side effects.
+ *
+ */
+static void trigger_ppm_status_change(struct pdc_port_t *port)
+{
+	union conn_status_change_bits_t status = { .raw_value = 0 };
+
+	/* No status change on command error. */
+	if (!port->cmd || port->cmd->error) {
+		return;
+	}
+
+	switch (port->cmd->cmd) {
+	case CMD_PDC_SET_PDR:
+		status.pwr_direction = 1;
+		break;
+	case CMD_PDC_SET_UOR:
+		status.connector_partner = 1;
+		break;
+	case CMD_PDC_SET_PDOS:
+		status.supported_provider_caps = 1;
+		break;
+	case CMD_PDC_SET_SINK_PATH:
+		status.sink_path_status_change = 1;
+		break;
+
+	/* For all other commands, no need to trigger as there shouldn't be
+	 * side-effects to connector status.
+	 */
+	default:
+		return;
+	}
+
+	/* If trigger CI, we should also refresh the connector status. */
+	atomic_set_bit(port->cci_flags, CCI_EVENT);
+	k_event_post(&port->sm_event, PDC_SM_EVENT);
+
+	port->overlay_ppm_changes.raw_value |= status.raw_value;
+	trigger_ppm_ci(port);
 }
 
 /**
@@ -2106,6 +2187,12 @@ static void pdc_send_cmd_wait_exit(void *obj)
 						     port->src_policy.rdo);
 		}
 		break;
+	case CMD_PDC_SET_PDR:
+	case CMD_PDC_SET_UOR:
+	case CMD_PDC_SET_PDOS:
+	case CMD_PDC_SET_SINK_PATH:
+		trigger_ppm_status_change(port);
+		break;
 	default:
 		break;
 	}
@@ -2422,11 +2509,17 @@ static void pdc_ci_handler_cb(const struct device *dev,
 {
 	struct pdc_port_t *port =
 		CONTAINER_OF(callback, struct pdc_port_t, ci_cb);
+	const struct pdc_config_t *const config = port->dev->config;
 	bool post_event = false;
 
 	/* Handle generic vendor defined event from driver */
 	if (cci_event.vendor_defined_indicator) {
 		atomic_set_bit(port->cci_flags, CCI_EVENT);
+		post_event = true;
+	}
+
+	if (cci_event.connector_change == config->connector_num + 1) {
+		atomic_set_bit(port->cci_flags, CCI_PPM_EVENT);
 		post_event = true;
 	}
 
@@ -3664,6 +3757,26 @@ pdc_power_mgmt_get_connector_status(int port,
 	return 0;
 }
 
+test_mockable int pdc_power_mgmt_get_last_status_change(
+	int port, union conn_status_change_bits_t *status_change)
+{
+	struct pdc_port_t *pdc;
+
+	if (!is_pdc_port_valid(port)) {
+		return -ERANGE;
+	}
+
+	if (status_change == NULL) {
+		return -EINVAL;
+	}
+
+	pdc = &pdc_data[port]->port;
+
+	status_change->raw_value = pdc->ci.raw_value;
+
+	return 0;
+}
+
 #ifdef CONFIG_PLATFORM_EC_USB_PD_DP_MODE
 uint8_t pdc_power_mgmt_get_dp_pin_mode(int port)
 {
@@ -3838,6 +3951,62 @@ int pdc_power_mgmt_resync_port_state_for_ppm(int port)
 
 	k_event_clear(&pdc->sm_event, rv);
 	return 0;
+}
+
+int pdc_power_mgmt_ppm_ack_status_change(int port,
+					 union conn_status_change_bits_t ci)
+{
+	struct pdc_port_t *pdc;
+
+	if (!is_pdc_port_valid(port)) {
+		return -ERANGE;
+	}
+
+	pdc = &pdc_data[port]->port;
+
+	pdc->overlay_ppm_changes.raw_value &= ~(ci.raw_value);
+	pdc->connector_status.raw_conn_status_change_bits &= ~(ci.raw_value);
+
+	return 0;
+}
+
+int pdc_power_mgmt_register_ppm_callback(const struct pdc_callback *callback)
+{
+	struct pdc_port_t *pdc;
+	int port;
+
+	for (port = 0; port < pdc_power_mgmt_get_usb_pd_port_count(); ++port) {
+		pdc = &pdc_data[port]->port;
+		pdc->ppm_ci_cb = callback;
+	}
+
+	return 0;
+}
+
+int pdc_power_mgmt_get_connector_status_for_ppm(
+	int port, union connector_status_t *connector_status)
+{
+	struct pdc_port_t *pdc;
+	int rv;
+
+	if (!is_pdc_port_valid(port)) {
+		return -ERANGE;
+	}
+
+	pdc = &pdc_data[port]->port;
+
+	rv = pdc_power_mgmt_get_connector_status(port, connector_status);
+
+	/* Overlay any additional connector status change bits we would like to
+	 * add. This is necessary for the OPM to be made aware of role swaps and
+	 * other methods causing connector status changes.
+	 */
+	if (rv == 0) {
+		connector_status->raw_conn_status_change_bits |=
+			pdc->overlay_ppm_changes.raw_value;
+	}
+
+	return rv;
 }
 
 #ifdef CONFIG_ZTEST

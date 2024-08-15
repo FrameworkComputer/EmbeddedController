@@ -136,6 +136,7 @@ static int execute_cmd_with_pdc_power_mgmt(const struct device *device,
 {
 	uint8_t conn = UCSI_7BIT_PORTMASK(control->command_specific[0]);
 	uint8_t ucsi_command = control->command;
+	struct ppm_data *data = (struct ppm_data *)device->data;
 	union set_sink_path_t set_sink_path;
 	int charge_port;
 	int rv;
@@ -170,6 +171,36 @@ static int execute_cmd_with_pdc_power_mgmt(const struct device *device,
 		} else {
 			return -EINVAL;
 		}
+
+	/* We intercept both GET_CONNECTOR_STATUS and ACK_CC_CI by
+	 * forwarding it to the PDM to do caching.
+	 */
+	case UCSI_GET_CONNECTOR_STATUS:
+		int rv = pdc_power_mgmt_get_connector_status_for_ppm(
+			conn - 1, (union connector_status_t *)lpm_data_out);
+		if (rv == 0)
+			rv = sizeof(union connector_status_t);
+
+		return rv;
+	case UCSI_ACK_CC_CI:
+		union connector_status_t *conn_status;
+		union conn_status_change_bits_t ci;
+		union ack_cc_ci_t *cmd =
+			(union ack_cc_ci_t *)control->command_specific;
+
+		if (!cmd->connector_change_ack) {
+			/* This ACK is only for CC. Internally handle it. */
+			return 0;
+		}
+		/* This ACK includes only CI or both CC and CI. */
+		if (!ucsi_ppm_get_next_connector_status(data->ppm_dev, &conn,
+							&conn_status)) {
+			LOG_ERR("Cx: Found no port with CI to ack.");
+			return -EINVAL;
+		}
+
+		ci.raw_value = conn_status->raw_conn_status_change_bits;
+		return pdc_power_mgmt_ppm_ack_status_change(conn - 1, ci);
 	default:
 		break;
 	}
@@ -202,23 +233,6 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	 * bit 24 and some commands don't use a connector number at all
 	 */
 	switch (ucsi_command) {
-	case UCSI_ACK_CC_CI: {
-		union connector_status_t *conn_status;
-		union ack_cc_ci_t *cmd =
-			(union ack_cc_ci_t *)control->command_specific;
-
-		if (!cmd->connector_change_ack) {
-			/* This ACK is only for CC. Internally handle it. */
-			return 0;
-		}
-		/* This ACK includes only CI or both CC and CI. */
-		if (!ucsi_ppm_get_next_connector_status(data->ppm_dev, &conn,
-							&conn_status)) {
-			LOG_ERR("Cx: Found no port with CI to ack.");
-			return -EINVAL;
-		}
-		break;
-	}
 	case UCSI_PPM_RESET:
 	case UCSI_SET_NOTIFICATION_ENABLE:
 		return 0;
@@ -259,7 +273,10 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	/* Some commands should get intercepted and handled directly via the PDC
 	 * power mgmt apis.
 	 */
-	if (ucsi_command == UCSI_SET_SINK_PATH) {
+	switch (ucsi_command) {
+	case UCSI_GET_CONNECTOR_STATUS:
+	case UCSI_ACK_CC_CI:
+	case UCSI_SET_SINK_PATH:
 		rv = execute_cmd_with_pdc_power_mgmt(device, control,
 						     lpm_data_out);
 		goto done;
@@ -373,15 +390,14 @@ static void ppm_ci_cb(const struct device *dev,
 		      const struct pdc_callback *callback,
 		      union cci_event_t cci_event)
 {
-	const struct ppm_config *cfg = (const struct ppm_config *)dev->config;
 	struct ppm_data *data = CONTAINER_OF(callback, struct ppm_data, ci_cb);
 
 	LOG_DBG("%s: CCI=0x%08x", __func__, cci_event.raw_value);
 
 	if (cci_event.connector_change == 0 ||
-	    cci_event.connector_change > cfg->active_port_count) {
-		LOG_WRN("%s: Received CI on invalid connector = %u", __func__,
-			cci_event.connector_change);
+	    cci_event.connector_change > NUM_PORTS) {
+		LOG_WRN("%s: Received CI on invalid connector = %u (port_count=%u)",
+			__func__, cci_event.connector_change, NUM_PORTS);
 		return;
 	}
 
@@ -412,11 +428,12 @@ static int ppm_init(const struct device *device)
 
 	/*
 	 * Register connector change callback. Command completion callback will
-	 * be registered on every command execution.
+	 * be registered on every command execution. This is intercepted and
+	 * returned by the PDM.
 	 */
 	data->ci_cb.handler = ppm_ci_cb;
 	for (int i = 0; i < cfg->active_port_count; i++) {
-		int rv = pdc_add_ci_callback(cfg->lpm[i], &data->ci_cb);
+		int rv = pdc_power_mgmt_register_ppm_callback(&data->ci_cb);
 		if (rv) {
 			LOG_ERR("C%d: Failed to add CI callback (%d)", i, rv);
 			return rv;

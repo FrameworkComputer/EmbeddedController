@@ -1397,8 +1397,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_connector_status)
 				   PDC_TEST_TIMEOUT));
 
 	zassert_ok(pdc_power_mgmt_get_connector_status(TEST_PORT, &out));
-
-	out_conn_status_change_bits.raw_value = out.raw_conn_status_change_bits;
+	zassert_ok(pdc_power_mgmt_get_last_status_change(
+		TEST_PORT, &out_conn_status_change_bits));
 
 	zassert_equal(out_conn_status_change_bits.external_supply_change,
 		      in_conn_status_change_bits.external_supply_change);
