@@ -11,6 +11,9 @@ config TEST_SUITE_PDC_API_NULL_CHECK
 config TEST_SUITE_PDC_DEVICE_NOT_READY
 	bool "Enable PDC subsystem tests for device-not-ready"
 
+config TEST_SUITE_PDC_POLICY
+	bool "Enable PDC policy tests"
+
 config TEST_SUITE_PDC_RTS54XX
 	bool "Enable RTS54xx PDC tests"
 
