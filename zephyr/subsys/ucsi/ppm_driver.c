@@ -175,14 +175,15 @@ static int execute_cmd_with_pdc_power_mgmt(const struct device *device,
 	/* We intercept both GET_CONNECTOR_STATUS and ACK_CC_CI by
 	 * forwarding it to the PDM to do caching.
 	 */
-	case UCSI_GET_CONNECTOR_STATUS:
+	case UCSI_GET_CONNECTOR_STATUS: {
 		int rv = pdc_power_mgmt_get_connector_status_for_ppm(
 			conn - 1, (union connector_status_t *)lpm_data_out);
 		if (rv == 0)
 			rv = sizeof(union connector_status_t);
 
 		return rv;
-	case UCSI_ACK_CC_CI:
+	}
+	case UCSI_ACK_CC_CI: {
 		union connector_status_t *conn_status;
 		union conn_status_change_bits_t ci;
 		union ack_cc_ci_t *cmd =
@@ -201,6 +202,7 @@ static int execute_cmd_with_pdc_power_mgmt(const struct device *device,
 
 		ci.raw_value = conn_status->raw_conn_status_change_bits;
 		return pdc_power_mgmt_ppm_ack_status_change(conn - 1, ci);
+	}
 	default:
 		break;
 	}
@@ -341,7 +343,7 @@ done:
 
 		/* Intercept and override some values. */
 		switch (ucsi_command) {
-		case UCSI_GET_CAPABILITY:
+		case UCSI_GET_CAPABILITY: {
 			/* Override the number of supported ports with what's
 			 * defined in device tree.
 			 */
@@ -349,6 +351,9 @@ done:
 				(struct capability_t *)lpm_data_out;
 			caps->bNumConnectors =
 				ucsi_get_active_port_count(device);
+			break;
+		}
+		default:
 			break;
 		}
 	}
@@ -411,7 +416,7 @@ static struct ucsi_pd_driver ppm_drv = {
 	.get_active_port_count = ucsi_get_active_port_count,
 };
 
-static int ppm_init(const struct device *device)
+test_export_static int ppm_init(const struct device *device)
 {
 	const struct ppm_config *cfg =
 		(const struct ppm_config *)device->config;
