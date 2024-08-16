@@ -412,6 +412,10 @@ static void hid_tp_proc_queue(void)
 				   queue_count(&report_queue));
 		mutex_unlock(report_queue_mutex);
 		return;
+	} else if (check_usb_is_suspended()) {
+		if (!request_usb_wake()) {
+			goto next;
+		}
 	}
 
 	if (queue_is_empty(&report_queue)) {
@@ -425,6 +429,7 @@ static void hid_tp_proc_queue(void)
 		queue_advance_head(&report_queue, 1);
 	}
 
+next:
 	mutex_unlock(report_queue_mutex);
 	hook_call_deferred(&hid_tp_proc_queue_data, 1 * MSEC);
 }
