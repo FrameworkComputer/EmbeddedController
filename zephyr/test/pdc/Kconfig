@@ -33,6 +33,9 @@ config TEST_SUITE_PDC_CONSOLE
 config TEST_SUITE_PDC_HOSTCMD
 	bool "Enable PDC host command tests"
 
+config TEST_SUITE_UCSI_HOSTCMD
+	bool "Enable UCSI host command tests"
+
 config TEST_SUITE_PDC_UCSI
 	bool "Enable UCSI tests"
 

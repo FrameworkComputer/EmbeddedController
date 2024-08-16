@@ -80,6 +80,12 @@ tests:
     extra_dtc_overlay_files:
     - "./boards/rts5453p.overlay"
 
+  pdc.ucsi_hostcmd:
+    extra_configs:
+    - CONFIG_TEST_SUITE_UCSI_HOSTCMD=y
+    extra_dtc_overlay_files:
+    - "./boards/rts5453p.overlay"
+
   pdc.ucsi:
     extra_configs:
     - CONFIG_TEST_SUITE_PDC_UCSI=y

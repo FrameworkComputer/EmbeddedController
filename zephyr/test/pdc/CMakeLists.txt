@@ -54,6 +54,11 @@ if (DEFINED CONFIG_TEST_SUITE_PDC_HOSTCMD)
 	target_sources(app PRIVATE src/mock_pdc_power_mgmt.c)
 endif()
 
+if (DEFINED CONFIG_TEST_SUITE_UCSI_HOSTCMD)
+	target_sources(app PRIVATE src/generic/ucsi_host_cmd.c)
+	target_sources(app PRIVATE ${PLATFORM_EC}/zephyr/subsys/ucsi/ucsi_host_cmd.c)
+endif()
+
 if (DEFINED CONFIG_TEST_SUITE_PDC_UCSI)
 	target_sources(app PRIVATE src/ucsi/ucsi.c)
 endif()

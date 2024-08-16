@@ -319,6 +319,13 @@ config EMUL_TOUCHPAD_ELAN
 	help
 	  Enable the Elan touchpad emulator.
 
+config EMUL_PPM_DRIVER
+	bool "UCSI PPM emulator"
+	default y
+	depends on ZTEST && DT_HAS_UCSI_PPM_ENABLED
+	help
+	  Enable the UCSI PPM emulator.
+
 rsource "Kconfig.ln9310"
 rsource "Kconfig.lis2dw12"
 rsource "Kconfig.i2c_mock"
