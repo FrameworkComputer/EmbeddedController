@@ -26,3 +26,17 @@ ZTEST(libcxx, test_system_clock)
 				  .count();
 	zassert_within(elapsed_ms, 500ULL, 5ULL);
 }
+
+/*
+ * TODO(b/357798784): Sync with upstream Zephyr version that doesn't check
+ * resulting alignment matches the request:
+ * https://github.com/zephyrproject-rtos/zephyr/blob/e60da1bd640a37370870a83277142dd560f1fb8d/tests/lib/cpp/libcxx/src/main.cpp#L104
+ */
+ZTEST(libcxx, test_aligned_allocation)
+{
+	constexpr std::size_t kAlignment = 16;
+	int *aligned = new (std::align_val_t(kAlignment)) int;
+	zassert_not_null(aligned);
+	zassert_true(IS_ALIGNED(aligned, kAlignment));
+	delete aligned;
+}
