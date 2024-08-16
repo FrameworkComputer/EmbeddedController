@@ -552,44 +552,6 @@ ZTEST_USER(pdc_api, test_execute_ucsi_cmd)
 	zassert_equal(out->raw_value, in.raw_value);
 }
 
-ZTEST_USER(pdc_api, test_execute_ucsi_cmd_get_connector_status)
-{
-	struct ucsi_memory_region ucsi_data;
-	struct ucsi_control_t *control = &ucsi_data.control;
-	struct pdc_callback callback;
-	union connector_status_t in;
-	union connector_status_t *out =
-		(union connector_status_t *)ucsi_data.message_in;
-
-	memset(&ucsi_data, 0, sizeof(ucsi_data));
-	memset(in.raw_value, 0, sizeof(in.raw_value));
-	in.connect_status = 1;
-	zassert_ok(emul_pdc_set_connector_status(emul, &in));
-
-	/* Trigger IRQ to clear the cache. */
-	emul_pdc_pulse_irq(emul);
-	k_sleep(K_MSEC(SLEEP_MS));
-
-	callback.handler = test_cc_cb;
-	zassert_ok(pdc_execute_ucsi_cmd(dev, UCSI_GET_CONNECTOR_STATUS, 0,
-					control->command_specific,
-					ucsi_data.message_in, &callback));
-	k_sleep(K_MSEC(SLEEP_MS));
-	zassert_equal(out->connect_status, 1);
-
-	/*
-	 * Expect the command to ignore the emul status and return the previous
-	 * status (from the cache).
-	 */
-	in.connect_status = 0;
-	zassert_ok(emul_pdc_set_connector_status(emul, &in));
-	zassert_ok(pdc_execute_ucsi_cmd(dev, UCSI_GET_CONNECTOR_STATUS, 0,
-					control->command_specific,
-					ucsi_data.message_in, &callback));
-	k_sleep(K_MSEC(SLEEP_MS));
-	zassert_equal(out->connect_status, 1);
-}
-
 /*
  * Suspended tests - ensure API calls behave correctly when PDC communication
  * is suspended.

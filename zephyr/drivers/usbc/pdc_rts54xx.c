@@ -24,7 +24,6 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 #include "usbc/utils.h"
 
 #include <drivers/pdc.h>
-#include <usbc/ppm.h>
 
 #define DT_DRV_COMPAT realtek_rts54_pdc
 
@@ -439,10 +438,6 @@ struct pdc_data_t {
 	uint16_t error_recovery_counter;
 	/** Error Status used during initialization */
 	union error_status_t es;
-	/** Connector Status */
-	union connector_status_t conn_status;
-	/** Connector Status Cache State */
-	bool conn_status_cached;
 	/* Driver specific events to handle. */
 	struct k_event driver_event;
 	/** Port specific PDC flags */
@@ -972,7 +967,6 @@ static void handle_irqs(struct pdc_data_t *data)
 				/* Set the interrupt event */
 				pdc_int_data->cci_event
 					.vendor_defined_indicator = 1;
-				pdc_int_data->conn_status_cached = false;
 				/* Set local interrupt handling flag */
 				atomic_set_bit(&pdc_int_data->flags,
 					       PDC_HANDLING_IRQ);
@@ -1443,12 +1437,6 @@ static void st_read_run(void *o)
 					status_change_bits.raw_value;
 			}
 		}
-
-		/* Save connector status in cache. */
-		k_mutex_lock(&data->mtx, K_FOREVER);
-		memcpy(&data->conn_status, data->user_buf, len);
-		k_mutex_unlock(&data->mtx);
-		data->conn_status_cached = true;
 		break;
 	case CMD_RAW_UCSI:
 		memcpy(data->user_buf, data->rd_buf + offset, len);
@@ -2545,26 +2533,7 @@ static int rts54_execute_ucsi_cmd(const struct device *dev,
 				  struct pdc_callback *callback)
 {
 	struct pdc_data_t *data = dev->data;
-	const struct pdc_config_t *cfg = dev->config;
 	uint8_t cmd_buffer[SMBUS_MAX_BLOCK_SIZE];
-	enum cmd_t use_cmd = CMD_RAW_UCSI;
-
-	if (ucsi_command == UCSI_GET_CONNECTOR_STATUS &&
-	    data->conn_status_cached) {
-		LOG_INF("%s: Read conn status from cache", __func__);
-		k_mutex_lock(&data->mtx, K_FOREVER);
-		memcpy(lpm_data_out, &data->conn_status,
-		       sizeof(data->conn_status));
-		k_mutex_unlock(&data->mtx);
-		if (callback) {
-			union cci_event_t cci = {
-				.data_len = sizeof(data->conn_status),
-				.command_completed = 1,
-			};
-			callback->handler(dev, callback, cci);
-		}
-		return 0;
-	}
 
 	if (get_state(data) != ST_IDLE)
 		return -EBUSY;
@@ -2578,33 +2547,14 @@ static int rts54_execute_ucsi_cmd(const struct device *dev,
 	/* Convert standard UCSI command to Realtek vendor specific formats. */
 	switch (ucsi_command) {
 	case UCSI_ACK_CC_CI: {
-		union ack_cc_ci_t *cmd = (union ack_cc_ci_t *)command_specific;
-
+		/* Note: Change acknowledgements should be intercepted by the
+		 * PPM and handled by the pdc_api instead.
+		 */
 		data_size = 5;
 		memset(cmd_buffer, 0, ACK_CC_CI.len + 2);
 		cmd_buffer[0] = ACK_CC_CI.cmd;
 		cmd_buffer[1] = ACK_CC_CI.len;
 
-		if (cmd->connector_change_ack) {
-			union conn_status_change_bits_t csc = {};
-
-			/* Note there is concurrency issue here: b/343733474. */
-			if (!data->conn_status_cached) {
-				LOG_ERR("C%d: Found no conn state cache for ACK CI",
-					cfg->connector_number);
-				return -ENODATA;
-			};
-
-			k_mutex_lock(&data->mtx, K_FOREVER);
-			csc.raw_value =
-				data->conn_status.raw_conn_status_change_bits;
-			k_mutex_unlock(&data->mtx);
-
-			cmd_buffer[4] = BYTE0(csc.raw_value);
-			cmd_buffer[5] = BYTE1(csc.raw_value);
-			cmd_buffer[6] = 0xff;
-			cmd_buffer[7] = 0xff;
-		}
 		break;
 	}
 	case UCSI_GET_PD_MESSAGE: {
@@ -2648,14 +2598,11 @@ static int rts54_execute_ucsi_cmd(const struct device *dev,
 		cmd_buffer[11] = 0x06;
 		break;
 	}
-	case UCSI_GET_CONNECTOR_STATUS:
-		use_cmd = CMD_GET_CONNECTOR_STATUS;
-		break;
 	default:
 		break;
 	}
 
-	return rts54_post_command_with_callback(dev, use_cmd, cmd_buffer,
+	return rts54_post_command_with_callback(dev, CMD_RAW_UCSI, cmd_buffer,
 						data_size + 4, lpm_data_out,
 						callback);
 }
