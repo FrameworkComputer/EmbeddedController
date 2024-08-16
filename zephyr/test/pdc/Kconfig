@@ -39,8 +39,21 @@ config TEST_SUITE_PDC_HOSTCMD
 config TEST_SUITE_UCSI_HOSTCMD
 	bool "Enable UCSI host command tests"
 
+config TEST_SUITE_PPM
+	bool "Enable UCSI PPM tests"
+	help
+	  Enable tests for the PPM of the UCSI. This suite tests our PPM from
+	  the perspective of the UCSI spec. All layers use the actual code
+	  (ppm_common, ppm_driver, pdc_driver) and mocking is discouraged.
+	  Inputs to the tests are controlled through a PDC emulator.
+
 config TEST_SUITE_PPM_DRIVER
 	bool "Enable PPM driver tests"
+	help
+	  Enable tests for the lower layer (ppm_driver) of the PPM. This suite
+	  exercises the behaviors specific to the implementation. Mocking the
+	  upper layer (ppm_common) and lower layer (pdc driver) is used to cover
+	  corner cases.
 
 config TEST_SUITE_PDC_UCSI
 	bool "Enable UCSI tests"

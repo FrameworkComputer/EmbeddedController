@@ -118,6 +118,14 @@ tests:
     extra_dtc_overlay_files:
     - "./boards/rts5453p.overlay"
 
+  pdc.ppm:
+    extra_configs:
+    - CONFIG_TEST_SUITE_PPM=y
+    - CONFIG_UCSI_PPM=y
+    - CONFIG_EMUL_PPM_DRIVER=n
+    extra_dtc_overlay_files:
+    - "./boards/rts5453p.overlay"
+
   pdc.ppm_driver:
     extra_configs:
     - CONFIG_TEST_SUITE_PPM_DRIVER=y
