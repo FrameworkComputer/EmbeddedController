@@ -41,3 +41,7 @@ gpio_ec_pch_wake_odl: &gpio_ec_soc_wake_odl {
 	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
 	pinctrl-names = "default";
 };
+
+&sha0 {
+	status = "okay";
+};
