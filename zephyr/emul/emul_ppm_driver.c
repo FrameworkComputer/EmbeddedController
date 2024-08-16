@@ -29,10 +29,16 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 	     "Exactly one instance of ucsi-ppm should be defined.");
 
 static struct ucsi_ppm_device *emul_ucsi_ppm_device;
+static int ucsi_init_ppm_retval;
+
+void emul_ppm_driver_set_init_ppm_retval(int rv)
+{
+	ucsi_init_ppm_retval = rv;
+}
 
 static int ucsi_init_ppm(const struct device *device)
 {
-	return 0;
+	return ucsi_init_ppm_retval;
 }
 
 void emul_ppm_driver_set_ucsi_ppm_device(struct ucsi_ppm_device *ppm_device)

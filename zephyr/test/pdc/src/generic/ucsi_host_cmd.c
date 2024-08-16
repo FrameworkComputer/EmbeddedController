@@ -18,6 +18,7 @@ struct ucsi_ppm_device {
 
 int eppm_init(void);
 void emul_ppm_driver_set_ucsi_ppm_device(struct ucsi_ppm_device *ppm_device);
+void emul_ppm_driver_set_init_ppm_retval(int rv);
 
 FAKE_VALUE_FUNC(int, ucsi_ppm_write, struct ucsi_ppm_device *, unsigned int,
 		const void *, size_t);
@@ -27,6 +28,16 @@ FAKE_VALUE_FUNC(int, ucsi_ppm_read, struct ucsi_ppm_device *, unsigned int,
 
 FAKE_VALUE_FUNC(int, ucsi_ppm_register_notify, struct ucsi_ppm_device *,
 		ucsi_ppm_notify_cb *, void *);
+
+ZTEST_USER(ucsi_host_cmd, test_eppm_init_enodev)
+{
+	int rv;
+
+	emul_ppm_driver_set_init_ppm_retval(1);
+
+	rv = eppm_init();
+	zassert_equal(rv, -ENODEV);
+}
 
 ZTEST_USER(ucsi_host_cmd, test_get_error)
 {
@@ -138,6 +149,7 @@ static void ucsi_host_cmd_before(void *fixture)
 	RESET_FAKE(ucsi_ppm_write);
 	RESET_FAKE(ucsi_ppm_read);
 	RESET_FAKE(ucsi_ppm_register_notify);
+	emul_ppm_driver_set_init_ppm_retval(0);
 	emul_ppm_driver_set_ucsi_ppm_device(NULL);
 	eppm_init();
 }
