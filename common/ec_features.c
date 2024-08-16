@@ -37,7 +37,7 @@ uint32_t get_feature_flags0(void)
 #ifdef HAS_TASK_MOTIONSENSE
 			  | EC_FEATURE_MASK_0(EC_FEATURE_MOTION_SENSE)
 #endif
-#ifdef HAS_TASK_KEYSCAN
+#if defined(HAS_TASK_KEYSCAN) || defined(CONFIG_CROS_EC_KEYBOARD_INPUT)
 			  | EC_FEATURE_MASK_0(EC_FEATURE_KEYB)
 #endif
 #ifdef CONFIG_PSTORE
