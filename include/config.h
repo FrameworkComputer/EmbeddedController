@@ -3197,7 +3197,7 @@
 #undef CONFIG_KEYBOARD_CUSTOMIZATION
 
 /*
- * Allow support multiple keyboard matrix for speical key.
+ * Allow support multiple keyboard matrix for special key.
  */
 #undef CONFIG_KEYBOARD_MULTIPLE
 
