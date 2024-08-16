@@ -125,6 +125,17 @@ ZTEST_USER(ppm_driver, test_init_ppm)
 	zassert_equal(rv, 1);
 }
 
+ZTEST_USER(ppm_driver, test_ppm_init_fail_in_ppm_data_init)
+{
+	const struct device *pdc_dev;
+	int rv;
+
+	pdc_dev = DT_PPM_DEV;
+	ppm_data_init_fake.return_val = NULL;
+	rv = ppm_init(pdc_dev);
+	zassert_equal(rv, -ENODEV);
+}
+
 static void ppm_driver_before(void *fixture)
 {
 	RESET_FAKE(ppm_data_init);
