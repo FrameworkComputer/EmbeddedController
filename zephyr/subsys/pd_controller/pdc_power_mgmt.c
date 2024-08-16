@@ -1447,7 +1447,21 @@ static void pdc_src_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_GET_VDO);
 		return;
 	case SRC_ATTACHED_GET_PDOS:
-		port->src_attached_local_state = SRC_ATTACHED_RUN;
+		/* Request up to 4 pdos to honor USCI 6.5.15 Get PDOs - Number
+		 * of PDOs to return starting from the PDO Offset. The number of
+		 * PDOs to return is the value in this field plus 1.
+		 */
+		if (!port->get_pdo.updating) {
+			port->get_pdo.num_pdos = PDO_NUM;
+			port->get_pdo.pdo_offset = PDO_OFFSET_0;
+			port->get_pdo.updating = true;
+		}
+		if (port->get_pdo.num_pdos > 4) {
+			port->src_attached_local_state = SRC_ATTACHED_GET_PDOS;
+		} else {
+			port->src_attached_local_state = SRC_ATTACHED_RUN;
+			port->get_pdo.updating = false;
+		}
 		port->get_pdo.pdo_type = SINK_PDO;
 		port->get_pdo.pdo_source = PARTNER_PDO;
 		queue_internal_cmd(port, CMD_PDC_GET_PDOS);
@@ -1545,7 +1559,22 @@ static void pdc_snk_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_GET_VDO);
 		return;
 	case SNK_ATTACHED_GET_PDOS:
-		port->snk_attached_local_state = SNK_ATTACHED_EVALUATE_PDOS;
+		/* Request up to 4 pdos to honor USCI 6.5.15 Get PDOs - Number
+		 * of PDOs to return starting from the PDO Offset. The number of
+		 * PDOs to return is the value in this field plus 1.
+		 */
+		if (!port->get_pdo.updating) {
+			port->get_pdo.num_pdos = PDO_NUM;
+			port->get_pdo.pdo_offset = PDO_OFFSET_0;
+			port->get_pdo.updating = true;
+		}
+		if (port->get_pdo.num_pdos > 4) {
+			port->snk_attached_local_state = SNK_ATTACHED_GET_PDOS;
+		} else {
+			port->snk_attached_local_state =
+				SNK_ATTACHED_EVALUATE_PDOS;
+			port->get_pdo.updating = false;
+		}
 		port->get_pdo.pdo_type = SOURCE_PDO;
 		port->get_pdo.pdo_source = PARTNER_PDO;
 		queue_internal_cmd(port, CMD_PDC_GET_PDOS);
@@ -1713,10 +1742,17 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 		rv = pdc_set_drp_mode(port->pdc, port->drp);
 		break;
 	case CMD_PDC_GET_PDOS:
-		rv = pdc_get_pdos(port->pdc, port->get_pdo.pdo_type,
-				  PDO_OFFSET_0, PDO_NUM,
-				  port->get_pdo.pdo_source,
-				  get_pdc_pdos_ptr(port, &port->get_pdo)->pdos);
+		rv = pdc_get_pdos(
+			port->pdc, port->get_pdo.pdo_type,
+			port->get_pdo.pdo_offset,
+			port->get_pdo.num_pdos > 4 ? 4 : port->get_pdo.num_pdos,
+			port->get_pdo.pdo_source,
+			get_pdc_pdos_ptr(port, &port->get_pdo)->pdos +
+				port->get_pdo.pdo_offset);
+		if (!rv && port->get_pdo.num_pdos > 4) {
+			port->get_pdo.num_pdos -= 4;
+			port->get_pdo.pdo_offset = PDO_OFFSET_4;
+		}
 		break;
 	case CMD_PDC_GET_RDO:
 		/* RDO from LPM or port partner depending on power role */
@@ -2330,6 +2366,7 @@ static void init_port_variables(struct pdc_port_t *port)
 	atomic_clear(port->pdc_cmd_flags);
 	atomic_clear(port->cci_flags);
 	port->port_event = ATOMIC_INIT(0);
+	port->get_pdo.updating = false;
 
 	/* Can charge from port by default */
 	port->active_charge = true;
