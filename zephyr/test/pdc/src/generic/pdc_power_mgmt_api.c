@@ -667,6 +667,12 @@ ZTEST_USER(pdc_power_mgmt_api, test_request_power_swap)
 	uint32_t timeout = k_ms_to_cyc_ceil32(PDC_TEST_TIMEOUT);
 	uint32_t start;
 
+	/* Set the pdr.allow_pr_swap bit to 1 by enabling the TOGGLE_ON DRP
+	 * mode. This provides a consistent value for the pdr.accept_pr_swap
+	 * assertions below. */
+	pdc_power_mgmt_set_dual_role(TEST_PORT, PD_DRP_TOGGLE_ON);
+	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+
 	for (i = 0; i < ARRAY_SIZE(test); i++) {
 		memset(&connector_status, 0, sizeof(connector_status));
 		connector_status.conn_partner_type =
@@ -674,9 +680,10 @@ ZTEST_USER(pdc_power_mgmt_api, test_request_power_swap)
 
 		test[i].s.configure(emul, &connector_status);
 		emul_pdc_connect_partner(emul, &connector_status);
-		zassert_true(TEST_WAIT_FOR(
-			pdc_power_mgmt_test_wait_attached(TEST_PORT),
-			PDC_TEST_TIMEOUT));
+		zassert_true(TEST_WAIT_FOR(pdc_power_mgmt_test_wait_attached(
+						   TEST_PORT),
+					   PDC_TEST_TIMEOUT),
+			     "PD not connected in time (i=%d)", i);
 
 		pd_request_power_swap(TEST_PORT);
 
@@ -698,13 +705,20 @@ ZTEST_USER(pdc_power_mgmt_api, test_request_power_swap)
 			break;
 		}
 
-		zassert_equal(pdr.swap_to_src, test[i].e.pdr.swap_to_src);
-		zassert_equal(pdr.swap_to_snk, test[i].e.pdr.swap_to_snk);
-		zassert_equal(pdr.accept_pr_swap, test[i].e.pdr.accept_pr_swap);
+		zassert_equal(pdr.swap_to_src, test[i].e.pdr.swap_to_src,
+			      "Got %u, expected %u (i=%d)", pdr.swap_to_src,
+			      test[i].e.pdr.swap_to_src, i);
+		zassert_equal(pdr.swap_to_snk, test[i].e.pdr.swap_to_snk,
+			      "Got %u, expected %u (i=%d)", pdr.swap_to_snk,
+			      test[i].e.pdr.swap_to_snk, i);
+		zassert_equal(pdr.accept_pr_swap, test[i].e.pdr.accept_pr_swap,
+			      "Got %u, expected %u (i=%d)", pdr.accept_pr_swap,
+			      test[i].e.pdr.accept_pr_swap, i);
 
 		emul_pdc_disconnect(emul);
 		zassert_true(TEST_WAIT_FOR(!pd_is_connected(TEST_PORT),
-					   PDC_TEST_TIMEOUT));
+					   PDC_TEST_TIMEOUT),
+			     "PD not disconnected in time (i=%d)", i);
 	}
 }
 
@@ -928,12 +942,14 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 		struct setup_t s;
 		struct expect_t e;
 	} test[] = {
+		/* Unattached tests */
 		{ .s = { .state = PD_DRP_TOGGLE_ON, .configure = NULL },
 		  .e = { .check_cc_mode = true, .cc_mode = CCOM_DRP } },
 		{ .s = { .state = PD_DRP_TOGGLE_OFF, .configure = NULL },
 		  .e = { .check_cc_mode = true, .cc_mode = CCOM_RD } },
 		{ .s = { .state = PD_DRP_FREEZE, .configure = NULL },
 		  .e = { .check_cc_mode = true, .cc_mode = CCOM_RD } },
+		/* Freeze while a sink */
 		{ .s = { .state = PD_DRP_FREEZE,
 			 .configure = emul_pdc_configure_snk },
 		  .e = { .check_cc_mode = true, .cc_mode = CCOM_RD } },
@@ -945,16 +961,86 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 			 .configure = emul_pdc_configure_src },
 		  .e = { .check_cc_mode = true, .cc_mode = CCOM_RP } },
 #endif
+		/* Force sink while a source */
 		{ .s = { .state = PD_DRP_FORCE_SINK,
 			 .configure = emul_pdc_configure_src },
 		  .e = { .check_pdr = true,
-			 .pdr = { .swap_to_src = 0, .swap_to_snk = 1 },
+			 .pdr = { .swap_to_src = 0,
+				  .swap_to_snk = 1,
+				  /* External swaps are allowed because we are
+				   * a source wanting to become a sink */
+				  .accept_pr_swap = 1 },
 			 .check_cc_mode = true,
 			 .cc_mode = CCOM_RD } },
+		/* Force source while a sink */
 		{ .s = { .state = PD_DRP_FORCE_SOURCE,
 			 .configure = emul_pdc_configure_snk },
 		  .e = { .check_pdr = true,
-			 .pdr = { .swap_to_src = 1, .swap_to_snk = 0 } } },
+			 .pdr = { .swap_to_src = 1,
+				  .swap_to_snk = 0,
+				  /* External swaps are allowed because we are
+				   * a sink wanting to become a source */
+				  .accept_pr_swap = 1 } } },
+		/* Force sink while already a sink */
+		{ .s = { .state = PD_DRP_FORCE_SINK,
+			 .configure = emul_pdc_configure_snk },
+		  .e = { .check_pdr = true,
+			 .pdr = { .swap_to_src = 0,
+				  .swap_to_snk = 1,
+				  /* No external swaps allowed because we are
+				   * already in the desired role. */
+				  .accept_pr_swap = 0 },
+			 .check_cc_mode = true,
+			 .cc_mode = CCOM_RD } },
+		/* Force source while already a source */
+		{ .s = { .state = PD_DRP_FORCE_SOURCE,
+			 .configure = emul_pdc_configure_src },
+		  .e = { .check_pdr = true,
+			 .pdr = { .swap_to_src = 1,
+				  .swap_to_snk = 0,
+				  /* No external swaps allowed because we are
+				   * already in the desired role. */
+				  .accept_pr_swap = 0 } } },
+		/* Toggling on while a source */
+		{ .s = { .state = PD_DRP_TOGGLE_ON,
+			 .configure = emul_pdc_configure_src },
+		  .e = { .check_pdr = true,
+			 .pdr = {
+				  /* Don't initiate a swap but allow external
+				   * swaps. */
+				  .swap_to_src = 1,
+				  .swap_to_snk = 0,
+				  .accept_pr_swap = 1 } } },
+		/* Toggling on while a sink */
+		{ .s = { .state = PD_DRP_TOGGLE_ON,
+			 .configure = emul_pdc_configure_snk },
+		  .e = { .check_pdr = true,
+			 .pdr = {
+				  /* Don't initiate a swap but allow external
+				   * swaps. */
+				  .swap_to_src = 0,
+				  .swap_to_snk = 1,
+				  .accept_pr_swap = 1 } } },
+		/* Toggling off while a source */
+		{ .s = { .state = PD_DRP_TOGGLE_OFF,
+			 .configure = emul_pdc_configure_src },
+		  .e = { .check_pdr = true,
+			 .pdr = {
+				  /* Remain a source but allow a swap to
+				   * sink */
+				  .swap_to_src = 1,
+				  .swap_to_snk = 0,
+				  .accept_pr_swap = 1 } } },
+		/* Toggling off while a sink */
+		{ .s = { .state = PD_DRP_TOGGLE_OFF,
+			 .configure = emul_pdc_configure_snk },
+		  .e = { .check_pdr = true,
+			 .pdr = {
+				  /* Remain a sink and don't allow an external
+				   * swap. */
+				  .swap_to_src = 0,
+				  .swap_to_snk = 1,
+				  .accept_pr_swap = 0 } } },
 	};
 
 	union connector_status_t connector_status;
@@ -994,7 +1080,11 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 				emul_pdc_get_pdr(emul, &pdr);
 
 				if (test[i].e.pdr.swap_to_snk !=
-				    pdr.swap_to_snk)
+					    pdr.swap_to_snk ||
+				    test[i].e.pdr.swap_to_src !=
+					    pdr.swap_to_src ||
+				    test[i].e.pdr.accept_pr_swap !=
+					    pdr.accept_pr_swap)
 					continue;
 			}
 
@@ -1008,9 +1098,20 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 		}
 		if (test[i].e.check_pdr) {
 			zassert_equal(test[i].e.pdr.swap_to_snk,
-				      pdr.swap_to_snk);
+				      pdr.swap_to_snk,
+				      "Expected %u, got %u (i=%d)",
+				      test[i].e.pdr.swap_to_snk,
+				      pdr.swap_to_snk, i);
 			zassert_equal(test[i].e.pdr.swap_to_src,
-				      pdr.swap_to_src);
+				      pdr.swap_to_src,
+				      "Expected %u, got %u (i=%d)",
+				      test[i].e.pdr.swap_to_src,
+				      pdr.swap_to_src, i);
+			zassert_equal(test[i].e.pdr.accept_pr_swap,
+				      pdr.accept_pr_swap,
+				      "Expected %u, got %u (i=%d)",
+				      test[i].e.pdr.accept_pr_swap,
+				      pdr.accept_pr_swap, i);
 		}
 		emul_pdc_disconnect(emul);
 		zassert_true(TEST_WAIT_FOR(!pd_is_connected(TEST_PORT),
