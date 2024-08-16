@@ -70,6 +70,49 @@ ZTEST_USER(ppm_driver, test_execute_cmd_bad_command)
 	zassert_equal(rv, -1);
 }
 
+ZTEST_USER(ppm_driver, test_execute_cmd_nop)
+{
+	const struct device *ppm_dev;
+	const struct ucsi_pd_driver *drv;
+	struct ucsi_control_t control;
+	uint8_t out[512];
+	int rv;
+
+	ppm_dev = DT_PPM_DEV;
+	drv = ppm_dev->api;
+
+	control.command = UCSI_PPM_RESET;
+	rv = drv->execute_cmd(ppm_dev, &control, out);
+	zassert_equal(rv, 0);
+
+	control.command = UCSI_SET_NOTIFICATION_ENABLE;
+	rv = drv->execute_cmd(ppm_dev, &control, out);
+	zassert_equal(rv, 0);
+}
+
+ZTEST_USER(ppm_driver, test_execute_cmd_invalid_connector)
+{
+	const struct device *ppm_dev;
+	const struct ucsi_pd_driver *drv;
+	struct ucsi_control_t control;
+	uint8_t out[512];
+	int rv;
+
+	ppm_dev = DT_PPM_DEV;
+	drv = ppm_dev->api;
+
+	/* Invalid connector# */
+	control.command = UCSI_CONNECTOR_RESET;
+	control.command_specific[0] = 0;
+	rv = drv->execute_cmd(ppm_dev, &control, out);
+	zassert_equal(rv, -ERANGE, "rv=%d", rv);
+
+	control.command = UCSI_CONNECTOR_RESET;
+	control.command_specific[0] = NUM_PORTS + 1;
+	rv = drv->execute_cmd(ppm_dev, &control, out);
+	zassert_equal(rv, -ERANGE, "rv=%d", rv);
+}
+
 ZTEST_USER(ppm_driver, test_get_active_port_count)
 {
 	const struct device *ppm_dev;
