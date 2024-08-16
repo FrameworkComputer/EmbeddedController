@@ -108,7 +108,7 @@ static void google_i2c_read(uint8_t ep, int size, void *priv)
 			return;
 		}
 		net_buf_add_mem(buf, data, size);
-		net_buf_put(&rx_queue, buf);
+		k_fifo_put(&rx_queue, buf);
 	}
 
 	/* Start a new read transfer */
@@ -160,7 +160,7 @@ void i2c_usb__stream_written(struct consumer const *consumer, size_t count)
 		}
 
 		net_buf_add_mem(buf, data, count);
-		net_buf_put(&tx_queue, buf);
+		k_fifo_put(&tx_queue, buf);
 		queue_advance_head(consumer->queue, count);
 		count = queue_count(consumer->queue);
 	} while (count != 0);
@@ -175,7 +175,7 @@ static void google_i2c_tx_thread(void *p1, void *p2, void *p3)
 	while (true) {
 		struct net_buf *buf;
 
-		buf = net_buf_get(&tx_queue, K_FOREVER);
+		buf = k_fifo_get(&tx_queue, K_FOREVER);
 		LOG_HEXDUMP_DBG(buf->data, buf->len,
 				"Google I2C Tx(EC -> Host):");
 
@@ -196,7 +196,7 @@ static void google_i2c_rx_thread(void *p1, void *p2, void *p3)
 		struct net_buf *buf;
 		const struct queue *usb_to_i2c = i2c_usb_.producer.queue;
 
-		buf = net_buf_get(&rx_queue, K_FOREVER);
+		buf = k_fifo_get(&rx_queue, K_FOREVER);
 		if (buf->len > queue_space(usb_to_i2c)) {
 			LOG_ERR("queue is full");
 			continue;

@@ -119,7 +119,7 @@ static void google_update_read(uint8_t ep, int size, void *priv)
 			return;
 		}
 		net_buf_add_mem(buf, data, size);
-		net_buf_put(&rx_queue, buf);
+		k_fifo_put(&rx_queue, buf);
 	}
 
 	/* Start a new read transfer */
@@ -165,7 +165,7 @@ void usb_update_stream_written(struct consumer const *consumer, size_t count)
 		}
 
 		net_buf_add_mem(buf, data, count);
-		net_buf_put(&tx_queue, buf);
+		k_fifo_put(&tx_queue, buf);
 		queue_advance_head(consumer->queue, count);
 		count = queue_count(consumer->queue);
 	} while (count != 0);
@@ -188,7 +188,7 @@ static void google_update_tx_thread(void *p1, void *p2, void *p3)
 	while (true) {
 		struct net_buf *buf;
 
-		buf = net_buf_get(&tx_queue, K_FOREVER);
+		buf = k_fifo_get(&tx_queue, K_FOREVER);
 		LOG_HEXDUMP_DBG(buf->data, buf->len, "Tx:");
 
 		usb_transfer_sync(ep_cfg[IN_EP_IDX].ep_addr, buf->data,
@@ -208,7 +208,7 @@ static void google_update_rx_thread(void *p1, void *p2, void *p3)
 		struct net_buf *buf;
 		const struct queue *usb_to_update = usb_update.producer.queue;
 
-		buf = net_buf_get(&rx_queue, K_FOREVER);
+		buf = k_fifo_get(&rx_queue, K_FOREVER);
 		if (buf->len > queue_space(usb_to_update)) {
 			LOG_ERR("queue is full");
 			continue;
