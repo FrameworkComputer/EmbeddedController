@@ -51,75 +51,73 @@ FAKE_VOID_FUNC(ucsi_ppm_lpm_alert, struct ucsi_ppm_device *, uint8_t);
 
 ZTEST_USER(ppm_driver, test_execute_cmd_bad_command)
 {
-	const struct device *pdc_dev;
+	const struct device *ppm_dev;
 	const struct ucsi_pd_driver *drv;
 	uint8_t out[512];
 	struct ucsi_control_t control;
 	int rv;
 
-	pdc_dev = DT_PPM_DEV;
-	drv = pdc_dev->api;
+	ppm_dev = DT_PPM_DEV;
+	drv = ppm_dev->api;
 
 	/* UCSI command 0x00 is reserved. */
 	control.command = 0;
-	rv = drv->execute_cmd(pdc_dev, &control, out);
+	rv = drv->execute_cmd(ppm_dev, &control, out);
 	zassert_equal(rv, -1);
 
 	control.command = UCSI_CMD_MAX;
-	rv = drv->execute_cmd(pdc_dev, &control, out);
+	rv = drv->execute_cmd(ppm_dev, &control, out);
 	zassert_equal(rv, -1);
 }
 
 ZTEST_USER(ppm_driver, test_get_active_port_count)
 {
-	const struct device *pdc_dev;
+	const struct device *ppm_dev;
 	const struct ucsi_pd_driver *drv;
 	struct ppm_config *cfg;
 	int rv;
 
-	pdc_dev = DT_PPM_DEV;
-	drv = pdc_dev->api;
+	ppm_dev = DT_PPM_DEV;
+	drv = ppm_dev->api;
 
-	rv = drv->get_active_port_count(pdc_dev);
-	cfg = (struct ppm_config *)pdc_dev->config;
+	rv = drv->get_active_port_count(ppm_dev);
+	cfg = (struct ppm_config *)ppm_dev->config;
 	zassert_equal(rv, NUM_PORTS);
 }
 
 ZTEST_USER(ppm_driver, test_get_ppm_dev)
 {
-	const struct device *pdc_dev;
+	const struct device *ppm_dev;
 	const struct ucsi_pd_driver *drv;
-	struct ucsi_ppm_device *ppm_dev;
-	struct ucsi_ppm_device ppm_device;
+	struct ucsi_ppm_device ucsi_ppm_dev;
 	int rv;
 
-	pdc_dev = DT_PPM_DEV;
-	drv = pdc_dev->api;
+	ppm_dev = DT_PPM_DEV;
+	drv = ppm_dev->api;
 
-	ppm_data_init_fake.return_val = &ppm_device;
-	rv = ppm_init(pdc_dev);
+	ppm_data_init_fake.return_val = &ucsi_ppm_dev;
+	rv = ppm_init(ppm_dev);
 	zassert_equal(rv, 0);
 
-	ppm_dev = drv->get_ppm_dev(pdc_dev);
-	zassert_equal(ppm_dev, &ppm_device);
+	zassert_equal(drv->get_ppm_dev(ppm_dev), &ucsi_ppm_dev);
 }
 
 ZTEST_USER(ppm_driver, test_init_ppm)
 {
-	const struct device *pdc_dev;
+	const struct device *ppm_dev;
 	const struct ucsi_pd_driver *drv;
 	struct ppm_data *data;
 	int rv;
 
-	pdc_dev = DT_PPM_DEV;
+	ppm_dev = DT_PPM_DEV;
 
-	zassert_not_null(pdc_dev);
+	zassert_not_null(ppm_dev);
 
 	ucsi_ppm_init_and_wait_fake.return_val = 1;
-	drv = pdc_dev->api;
+	drv = ppm_dev->api;
 
-	rv = drv->init_ppm(pdc_dev);
-	data = (struct ppm_data *)pdc_dev->data;
+	rv = drv->init_ppm(ppm_dev);
+	data = (struct ppm_data *)ppm_dev->data;
 	zassert_equal(ucsi_ppm_init_and_wait_fake.call_count, 1);
 	zassert_equal(ucsi_ppm_init_and_wait_fake.arg0_val, data->ppm_dev);
 	zassert_equal(rv, 1);
@@ -127,12 +125,12 @@ ZTEST_USER(ppm_driver, test_init_ppm)
 
 ZTEST_USER(ppm_driver, test_ppm_init_fail_in_ppm_data_init)
 {
-	const struct device *pdc_dev;
+	const struct device *ppm_dev;
 	int rv;
 
-	pdc_dev = DT_PPM_DEV;
+	ppm_dev = DT_PPM_DEV;
 	ppm_data_init_fake.return_val = NULL;
-	rv = ppm_init(pdc_dev);
+	rv = ppm_init(ppm_dev);
 	zassert_equal(rv, -ENODEV);
 }
 
