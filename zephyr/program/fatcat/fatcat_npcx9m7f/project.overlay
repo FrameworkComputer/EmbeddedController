@@ -14,6 +14,7 @@
 #include <cros/cbi_flash.dtsi>
 
 #include "adc.dtsi"
+#include "gpios.dtsi"
 #include "i2c.dtsi"
 
 /* fatcat_npcx9m7f overrides follow... */
@@ -25,6 +26,13 @@
 	 */
 	offset = <0x50000>;
 	size = <0x1000>;
+};
+
+/* AP interface */
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
 };
 
 /*

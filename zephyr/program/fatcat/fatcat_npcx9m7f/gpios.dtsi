@@ -1,0 +1,25 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_smc_wake_sci_n: smc_wake_sci_n {
+			gpios = <&gpio3 2 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+	};
+};
+
+/*
+ * Aliases to common names
+ */
+gpio_ec_pch_wake_odl: &gpio_smc_wake_sci_n {};
+
+/*
+ * Local Variables:
+ * Mode: c
+ * End:
+ */
