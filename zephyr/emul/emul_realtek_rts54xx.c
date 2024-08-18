@@ -1214,6 +1214,17 @@ static int emul_realtek_rts54xx_get_pdr(const struct emul *target,
 	return 0;
 }
 
+static int emul_realtek_rts54xx_get_rdo(const struct emul *target,
+					uint32_t *rdo)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	*rdo = data->rdo;
+
+	return 0;
+}
+
 static int
 emul_realtek_rts54xx_get_requested_power_level(const struct emul *target,
 					       enum usb_typec_current_t *level)
@@ -1448,6 +1459,7 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.set_connector_status = emul_realtek_rts54xx_set_connector_status,
 	.get_uor = emul_realtek_rts54xx_get_uor,
 	.get_pdr = emul_realtek_rts54xx_get_pdr,
+	.get_rdo = emul_realtek_rts54xx_get_rdo,
 	.get_requested_power_level =
 		emul_realtek_rts54xx_get_requested_power_level,
 	.get_ccom = emul_realtek_rts54xx_get_ccom,

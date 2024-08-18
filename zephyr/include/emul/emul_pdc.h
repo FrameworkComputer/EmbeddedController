@@ -34,6 +34,7 @@ typedef int (*emul_pdc_get_supported_drp_modes_t)(const struct emul *target,
 
 typedef int (*emul_pdc_get_uor_t)(const struct emul *target, union uor_t *uor);
 typedef int (*emul_pdc_get_pdr_t)(const struct emul *target, union pdr_t *pdr);
+typedef int (*emul_pdc_get_rdo_t)(const struct emul *target, uint32_t *rdo);
 typedef int (*emul_pdc_get_sink_path_t)(const struct emul *target, bool *en);
 typedef int (*emul_pdc_set_connector_status_t)(
 	const struct emul *target,
@@ -96,6 +97,7 @@ __subsystem struct emul_pdc_api_t {
 	emul_pdc_get_supported_drp_modes_t get_supported_drp_modes;
 	emul_pdc_get_uor_t get_uor;
 	emul_pdc_get_pdr_t get_pdr;
+	emul_pdc_get_rdo_t get_rdo;
 	emul_pdc_get_sink_path_t get_sink_path;
 	emul_pdc_set_connector_status_t set_connector_status;
 	emul_pdc_set_error_status_t set_error_status;
@@ -261,6 +263,20 @@ static inline int emul_pdc_get_pdr(const struct emul *target, union pdr_t *pdr)
 
 	if (api->get_pdr) {
 		return api->get_pdr(target, pdr);
+	}
+	return -ENOSYS;
+}
+
+static inline int emul_pdc_get_rdo(const struct emul *target, uint32_t *rdo)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_api_t *api = target->backend_api;
+
+	if (api->get_rdo) {
+		return api->get_rdo(target, rdo);
 	}
 	return -ENOSYS;
 }
