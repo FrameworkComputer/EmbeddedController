@@ -1573,7 +1573,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_identity_discovery)
 			TEST_PORT, test[i].s.type);
 		zassert_equal(test[i].expected_state, actual_state,
 			      "%s: expected state %d, actual %d",
-			      test[i].description, test[i].expected_state);
+			      test[i].description, test[i].expected_state,
+			      actual_state);
 
 		emul_pdc_disconnect(emul);
 		zassert_true(
