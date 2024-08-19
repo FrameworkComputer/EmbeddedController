@@ -20,6 +20,7 @@
 			compatible = "named-usbc-port";
 			reg = <1>;
 			bc12 = <&pi3usb9201_emul1>;
+			ppc = <&ppc_syv_port1>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_c1>;
@@ -64,7 +65,7 @@
 		anx-usb-c1-rt-usb-en = &gpio_usb_c1_rt_rst_r_odl;
 		hb-usb-c1-rt-rst-odl = &gpio_usb_c1_rt_rst_r_odl;
 
-		kb-usb-c1-frs-alert = &gpio_usb_c1_frs_en;
+		kb-usb-c1-frs-alert = &gpio_usb_c1_frs_alert;
 		anx-usb-c1-frs-en = &gpio_usb_c1_frs_en;
 		hb-usb-c1-frs-en = &gpio_usb_c1_frs_en;
 	};
@@ -78,6 +79,9 @@
 		};
 		gpio_usb_c1_rt_int_odl: usb_c1_rt_int_odl {
 			gpios = <&gpio0 2 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_usb_c1_frs_alert: usb_c1_frs_alert {
+			gpios = <&gpio1 12 GPIO_INPUT>;
 		};
 
 		usb_c1_ppc_int_odl {
@@ -93,6 +97,7 @@
 	tcpc_ps8815_port1: ps8xxx@b {
 		compatible = "parade,ps8xxx", "cros,i2c-mock";
 		reg = <0x0b>;
+		rst-gpios = <&gpio0 12 (GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
 		is-alt;
 	};
 

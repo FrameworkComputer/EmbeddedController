@@ -130,6 +130,8 @@
 		tcpc_port0: nct38xx-tcpc {
 			compatible = "cros,nct38xx-emul",
 				"nuvoton,nct38xx-tcpc";
+			rst-gpios = <&gpio0 11
+				     (GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
 		};
 	};
 
