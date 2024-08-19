@@ -255,23 +255,24 @@ enum pdo_augmented_pps {
 #define PD_T_SOURCE_ACTIVITY (45 * MSEC) /* between 40ms and 50ms */
 #define PD_T_ENTER_EPR (500 * MSEC) /* between 450ms and 550ms */
 /*
- * Adjusting for TCPMv2 PD2 Compliance. In tests like TD.PD.SRC.E5 this
+ * Adjusting for TCPMv2 PD2 Compliance. In tests like TEST.PD.PROT.SRC.2 this
  * value is the duration before the Hard Reset can be sent. Setting the
- * timer value to the maximum will delay sending the HardReset until
- * after the window has closed instead of when it is desired at the
- * beginning of the window.
+ * timer value to the minimum to ensure that the TCPM actually sends any Hard
+ * Reset between tSenderResponse min and max.
  * Leaving TCPMv1 as it was as there are no current requests to adjust
- * for compliance on the old stack and making this change  breaks the
+ * for compliance on the old stack and making this change breaks the
  * usb_pd unit test.
  */
-#ifndef CONFIG_USB_PD_TCPMV2
+#ifdef CONFIG_USB_PD_TCPMV1
 #define PD_T_SENDER_RESPONSE (30 * MSEC) /* between 24ms and 30ms */
 #else
+/* PD R2.0 V1.3: between 24ms and 30ms */
+#define PD2_T_SENDER_RESPONSE (24 * MSEC)
 /*
- * In USB Power Delivery Specification Revision 3.1, Version 1.5,
- * the tSenderResponse have changed to min 26/ max 32 ms.
+ * PD R3.1 V1.5: between 26ms and 32ms
+ * PD R3.2 V1.0: between 27ms and 33ms
  */
-#define PD_T_SENDER_RESPONSE (26 * MSEC) /* between 26ms and 32ms */
+#define PD3_T_SENDER_RESPONSE (27 * MSEC)
 #endif
 #define PD_T_PS_TRANSITION (500 * MSEC) /* between 450ms and 550ms */
 /*
