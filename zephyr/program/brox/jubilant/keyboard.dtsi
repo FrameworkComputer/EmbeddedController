@@ -54,6 +54,29 @@
 				VIVALDI_KEYBD_CAP_SCRNLOCK_KEY |
 				VIVALDI_KEYBD_CAP_ASSISTANT_KEY)>;
 	};
+
+	kbd_config_1: kbd-config-1 {
+		vivaldi-codes = <
+			VIVALDI_TK_BACK             /* T1 */
+			VIVALDI_TK_REFRESH          /* T2 */
+			VIVALDI_TK_FULLSCREEN       /* T3 */
+			VIVALDI_TK_OVERVIEW         /* T4 */
+			VIVALDI_TK_SNAPSHOT         /* T5 */
+			VIVALDI_TK_BRIGHTNESS_DOWN  /* T6 */
+			VIVALDI_TK_BRIGHTNESS_UP    /* T7 */
+			VIVALDI_TK_DICTATE          /* T8 */
+			VIVALDI_TK_ACCESSIBILITY    /* T9 */
+			VIVALDI_TK_PLAY_PAUSE       /* T10 */
+			VIVALDI_TK_MICMUTE          /* T11 */
+			VIVALDI_TK_VOL_MUTE         /* T12 */
+			VIVALDI_TK_VOL_DOWN         /* T13 */
+			VIVALDI_TK_VOL_UP           /* T14 */
+		>;
+		capabilities = <(VIVALDI_KEYBD_CAP_FUNCTION_KEYS |
+				VIVALDI_KEYBD_CAP_NUMERIC_KEYPAD |
+				VIVALDI_KEYBD_CAP_SCRNLOCK_KEY |
+				VIVALDI_KEYBD_CAP_ASSISTANT_KEY)>;
+	};
 };
 
 &kbd {

@@ -3,11 +3,87 @@
  * found in the LICENSE file.
  */
 
+#include "cros_board_info.h"
+#include "cros_cbi.h"
 #include "keyboard_8042_sharedlib.h"
 
+#include <zephyr/fff.h>
 #include <zephyr/ztest.h>
 
-ZTEST_SUITE(jubilant_keyboard, NULL, NULL, NULL, NULL, NULL);
+#include <drivers/vivaldi_kbd.h>
+#include <keyboard_scan.h>
+
+void kb_init(void);
+
+static int kb_blight;
+
+FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
+		uint32_t *);
+
+FAKE_VOID_FUNC(lpc_keyboard_resume_irq);
+
+static struct {
+	uint16_t row;
+	uint16_t col;
+	int call_count;
+} vol_up_key;
+
+void set_vol_up_key(uint8_t row, uint8_t col)
+{
+	vol_up_key.row = row;
+	vol_up_key.col = col;
+	vol_up_key.call_count++;
+}
+
+struct keyboard_scan_config keyscan_config;
+
+static void test_before(void *fixture)
+{
+	RESET_FAKE(cros_cbi_get_fw_config);
+}
+ZTEST_SUITE(jubilant_keyboard, NULL, NULL, test_before, NULL, NULL);
+
+static int
+cros_cbi_get_fw_config_kb_blight(enum cbi_fw_config_field_id field_id,
+				 uint32_t *value)
+{
+	if (field_id != FW_KB_BL)
+		return -EINVAL;
+
+	switch (kb_blight) {
+	case 0:
+		*value = FW_KB_BL_PRESENT;
+		break;
+	case 1:
+		*value = FW_KB_BL_NOT_PRESENT;
+		break;
+	case -1:
+		return -EINVAL;
+	default:
+		return 0;
+	}
+	return 0;
+}
+
+ZTEST(jubilant_keyboard, test_kb_init)
+{
+	cros_cbi_get_fw_config_fake.custom_fake =
+		cros_cbi_get_fw_config_kb_blight;
+
+	kb_blight = 0;
+	kb_init();
+	zassert_equal(board_vivaldi_keybd_idx(), 0);
+
+	kb_blight = 1;
+	kb_init();
+	zassert_equal(board_vivaldi_keybd_idx(), 1);
+}
+
+ZTEST(jubilant_keyboard, test_kb_init_cbi_error)
+{
+	cros_cbi_get_fw_config_fake.return_val = EINVAL;
+	kb_init();
+}
 
 ZTEST(jubilant_keyboard, test_get_scancode_set2)
 {
