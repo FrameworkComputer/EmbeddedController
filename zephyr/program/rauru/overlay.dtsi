@@ -249,6 +249,9 @@
 		ec_flash_wp_odl {
 			gpios = <&gpioc 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
+		gpio_ap_xhci_init_done_r: ap_xhci_init_done_r {
+			gpios = <&gpioj 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
 		/* Adapt generated nodelabel to the current nodelabel. */
 		gpio_ec_pmic_en_odl: ec_pmic_en_odl_r {
 		};
