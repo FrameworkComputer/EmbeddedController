@@ -54,7 +54,30 @@
 		&kso11_default
 		&kso12_default
 	>;
-	pinctrl-names = "default";
+	pinctrl-1 = <
+		&ksi0_sleep
+		&ksi1_sleep
+		&ksi2_sleep
+		&ksi3_sleep
+		&ksi4_sleep
+		&ksi5_sleep
+		&ksi6_sleep
+		&ksi7_sleep
+		&kso0_sleep
+		&kso1_sleep
+		&kso2_sleep
+		&kso3_sleep
+		&kso4_sleep
+		&kso5_sleep
+		&kso6_sleep
+		&kso7_sleep
+		&kso8_sleep
+		&kso9_sleep
+		&kso10_sleep
+		&kso11_sleep
+		&kso12_sleep
+	>;
+	pinctrl-names = "default", "sleep";
 	row-size = <8>;
 	col-size = <13>;
 	settle-time-us = <80>;
@@ -80,5 +103,38 @@
 		right-alt-rc = <KBD_RC(6, 10)>;
 		h-rc = <KBD_RC(1, 6)>;
 		r-rc = <KBD_RC(7, 3)>;
+	};
+
+	factory-test {
+		compatible = "cros-ec,keyboard-factory-test";
+
+		pin1-gpios = <&gpioksoh 4 GPIO_ACTIVE_HIGH>;
+		pin2-gpios = <&gpioksoh 0 GPIO_ACTIVE_HIGH>;
+		pin3-gpios = <&gpioksoh 1 GPIO_ACTIVE_HIGH>;
+		pin4-gpios = <&gpioksoh 3 GPIO_ACTIVE_HIGH>;
+		pin5-gpios = <&gpioksoh 2 GPIO_ACTIVE_HIGH>;
+		/* 6 nc */
+		/* 7 nc */
+		pin8-gpios = <&gpioksol 5 GPIO_ACTIVE_HIGH>;
+		pin9-gpios = <&gpioksol 6 GPIO_ACTIVE_HIGH>;
+		/* 10 nc */
+		pin11-gpios = <&gpioksol 3 GPIO_ACTIVE_HIGH>;
+		pin12-gpios = <&gpioksol 2 GPIO_ACTIVE_HIGH>;
+		pin13-gpios = <&gpioksi 0 GPIO_ACTIVE_HIGH>;
+		pin14-gpios = <&gpioksol 1 GPIO_ACTIVE_HIGH>;
+		pin15-gpios = <&gpioksol 4 GPIO_ACTIVE_HIGH>;
+		pin16-gpios = <&gpioksi 3 GPIO_ACTIVE_HIGH>;
+		pin17-gpios = <&gpioksi 2 GPIO_ACTIVE_HIGH>;
+		pin18-gpios = <&gpioksol 0 GPIO_ACTIVE_HIGH>;
+		pin19-gpios = <&gpioksi 5 GPIO_ACTIVE_HIGH>;
+		pin20-gpios = <&gpioksi 4 GPIO_ACTIVE_HIGH>;
+		pin21-gpios = <&gpioksol 7 GPIO_ACTIVE_HIGH>;
+		pin22-gpios = <&gpioksi 6 GPIO_ACTIVE_HIGH>;
+		pin23-gpios = <&gpioksi 7 GPIO_ACTIVE_HIGH>;
+		pin24-gpios = <&gpioksi 1 GPIO_ACTIVE_HIGH>;
+		/* 25 nc */
+		pin26-gpios = <&gpioksoh 5 GPIO_ACTIVE_HIGH>;
+		/* 27 nc */
+		pin28-gpios = <&gpioksoh 6 GPIO_ACTIVE_HIGH>;
 	};
 };

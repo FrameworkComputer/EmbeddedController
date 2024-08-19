@@ -184,5 +184,37 @@
 		h-rc = <KBD_RC(1, 6)>;
 		r-rc = <KBD_RC(7, 9)>;
 	};
+	factory-test {
+		compatible = "cros-ec,keyboard-factory-test";
 
+		pin3-gpios = <&gpioksi 0 GPIO_ACTIVE_HIGH>;
+		pin4-gpios = <&gpioksi 1 GPIO_ACTIVE_HIGH>;
+		pin5-gpios = <&gpioksi 2 GPIO_ACTIVE_HIGH>;
+		pin6-gpios = <&gpioksi 3 GPIO_ACTIVE_HIGH>;
+		pin7-gpios = <&gpioksi 4 GPIO_ACTIVE_HIGH>;
+		pin8-gpios = <&gpioksi 5 GPIO_ACTIVE_HIGH>;
+		pin9-gpios = <&gpioksi 6 GPIO_ACTIVE_HIGH>;
+		pin10-gpios = <&gpioksi 7 GPIO_ACTIVE_HIGH>;
+
+		pin11-gpios = <&gpioksoh 7 GPIO_ACTIVE_HIGH>;
+		pin12-gpios = <&gpioksoh 6 GPIO_ACTIVE_HIGH>;
+		pin13-gpios = <&gpioksoh 5 GPIO_ACTIVE_HIGH>;
+		pin14-gpios = <&gpioksoh 4 GPIO_ACTIVE_HIGH>;
+		pin15-gpios = <&gpioksoh 3 GPIO_ACTIVE_HIGH>;
+		pin16-gpios = <&gpioksoh 2 GPIO_ACTIVE_HIGH>;
+		pin17-gpios = <&gpioksoh 1 GPIO_ACTIVE_HIGH>;
+		pin18-gpios = <&gpioksoh 0 GPIO_ACTIVE_HIGH>;
+
+		pin19-gpios = <&gpioksol 7 GPIO_ACTIVE_HIGH>;
+		pin20-gpios = <&gpioksol 6 GPIO_ACTIVE_HIGH>;
+		pin21-gpios = <&gpioksol 5 GPIO_ACTIVE_HIGH>;
+		pin22-gpios = <&gpioksol 4 GPIO_ACTIVE_HIGH>;
+		pin23-gpios = <&gpioksol 3 GPIO_ACTIVE_HIGH>;
+		pin24-gpios = <&gpioksol 2 GPIO_ACTIVE_HIGH>;
+		pin25-gpios = <&gpioksol 1 GPIO_ACTIVE_HIGH>;
+		pin26-gpios = <&gpioksol 0 GPIO_ACTIVE_HIGH>;
+
+		pin27-gpios = <&gpioc 5 GPIO_ACTIVE_HIGH>;
+		pin28-gpios = <&gpioc 3 GPIO_ACTIVE_HIGH>;
+	};
 };

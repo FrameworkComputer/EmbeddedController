@@ -41,7 +41,29 @@
 		&kso11_gp06 /* KSO11 PIN06 */
 		&kso12_gp05 /* KSO12 PIN05 */
 	>;
-	pinctrl-names = "default";
+	pinctrl-1 = <
+		&ksi0_gpio_gp31
+		&ksi1_gpio_gp30
+		&ksi2_gpio_gp27
+		&ksi3_gpio_gp26
+		&ksi4_gpio_gp25
+		&ksi5_gpio_gp24
+		&ksi6_gpio_gp23
+		&ksi7_gpio_gp22
+		&kso00_gpio_gp21
+		&kso01_gpio_gp20
+		&kso03_gpio_gp16
+		&kso04_gpio_gp15
+		&kso05_gpio_gp14
+		&kso06_gpio_gp13
+		&kso07_gpio_gp12
+		&kso08_gpio_gp11
+		&kso09_gpio_gp10
+		&kso10_gpio_gp07
+		&kso11_gpio_gp06
+		&kso12_gpio_gp05
+	>;
+	pinctrl-names = "default", "sleep";
 	row-size = <8>;
 	col-size = <13>;
 	settle-time-us = <80>;
@@ -67,5 +89,40 @@
 		right-alt-rc = <KBD_RC(6, 10)>;
 		h-rc = <KBD_RC(1, 6)>;
 		r-rc = <KBD_RC(7, 3)>;
+	};
+
+	factory-test {
+		compatible = "cros-ec,keyboard-factory-test";
+
+		/* 1 nc */
+		/* 2 nc */
+		/* 3 nc */
+		/* 4 nc */
+		/* 5 nc */
+		/* 6 nc */
+		pin7-gpios = <&gpio3 0 GPIO_ACTIVE_HIGH>;
+		pin8-gpios = <&gpio2 2 GPIO_ACTIVE_HIGH>;
+		pin9-gpios = <&gpio2 3 GPIO_ACTIVE_HIGH>;
+		pin10-gpios = <&gpio1 2 GPIO_ACTIVE_HIGH>;
+		pin11-gpios = <&gpio2 5 GPIO_ACTIVE_HIGH>;
+		pin12-gpios = <&gpio2 4 GPIO_ACTIVE_HIGH>;
+		pin13-gpios = <&gpio2 1 GPIO_ACTIVE_HIGH>;
+		pin14-gpios = <&gpio2 7 GPIO_ACTIVE_HIGH>;
+		pin15-gpios = <&gpio2 6 GPIO_ACTIVE_HIGH>;
+		pin16-gpios = <&gpio1 5 GPIO_ACTIVE_HIGH>;
+		pin17-gpios = <&gpio2 0 GPIO_ACTIVE_HIGH>;
+		pin18-gpios = <&gpio3 1 GPIO_ACTIVE_HIGH>;
+		pin19-gpios = <&gpio1 7 GPIO_ACTIVE_HIGH>;
+		pin20-gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;
+		/* 21 nc */
+		pin22-gpios = <&gpio1 3 GPIO_ACTIVE_HIGH>;
+		pin23-gpios = <&gpio1 4 GPIO_ACTIVE_HIGH>;
+		/* 24 nc */
+		/* 25 nc */
+		pin26-gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
+		pin27-gpios = <&gpio0 6 GPIO_ACTIVE_HIGH>;
+		pin28-gpios = <&gpio1 0 GPIO_ACTIVE_HIGH>;
+		pin29-gpios = <&gpio1 1 GPIO_ACTIVE_HIGH>;
+		pin30-gpios = <&gpio0 5 GPIO_ACTIVE_HIGH>;
 	};
 };
