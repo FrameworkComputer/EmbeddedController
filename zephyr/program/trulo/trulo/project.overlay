@@ -10,6 +10,7 @@
 #include "../power_signals.dtsi"
 #include "../trulo.dtsi"
 #include "../usb_typec.dtsi"
+#include "../usba.dtsi"
 
 /* Trulo project DTS includes*/
 
