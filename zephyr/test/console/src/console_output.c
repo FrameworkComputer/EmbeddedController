@@ -7,6 +7,7 @@
 #include "console.h"
 #include "ec_app_main.h"
 #include "zephyr/kernel.h"
+#include "zephyr/sys/util_macro.h"
 
 #include <zephyr/drivers/serial/uart_emul.h>
 #include <zephyr/drivers/uart.h>
@@ -23,6 +24,12 @@ LOG_MODULE_REGISTER(test_console_out, LOG_LEVEL_DBG);
 #define EMUL_UART_TX_FIFO_SIZE DT_PROP(EMUL_UART_NODE, tx_fifo_size)
 
 #define SAMPLE_DATA_SIZE MIN(EMUL_UART_RX_FIFO_SIZE, EMUL_UART_TX_FIFO_SIZE) - 1
+
+#ifdef CONFIG_SHELL_BACKEND_SERIAL_API_INTERRUPT_DRIVEN
+#define SHELL_SLEEP() k_sleep(K_MSEC(5))
+#else
+#define SHELL_SLEEP()
+#endif
 
 struct console_output_fixture {
 	const struct device *dev;
@@ -42,6 +49,8 @@ static void *setup(void)
 static void before(void *f)
 {
 	struct console_output_fixture *fixture = f;
+
+	uart_emul_flush_tx_data(fixture->dev);
 
 	uart_irq_tx_enable(fixture->dev);
 	uart_irq_rx_enable(fixture->dev);
@@ -66,34 +75,36 @@ ZTEST_F(console_output, test_legacy_debug_output)
 	uint8_t tx_content[SAMPLE_DATA_SIZE];
 	uint32_t tx_bytes;
 
-	/* We expect an exact match with cputs() output. */
-	uart_emul_flush_tx_data(fixture->dev);
-	memset(tx_content, 0, sizeof(tx_content));
-	cputs(CC_SYSTEM, cputs_message);
-	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
-					 sizeof(tx_content));
-	zassert_equal(tx_bytes, strlen(cputs_message));
-	zassert_mem_equal(tx_content, cputs_message, strlen(tx_content));
-
-	/* cprints() adds "[]" characters and a timestamp, so an exact
-	 * match isn't possible
+	/* All legacy output is sent to the shell backend which inserts
+	 * a prompt and other control characters.
+	 * Just look for our substring in the output.
 	 */
 	uart_emul_flush_tx_data(fixture->dev);
 	memset(tx_content, 0, sizeof(tx_content));
+	cputs(CC_SYSTEM, cputs_message);
+	SHELL_SLEEP();
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_true(tx_bytes >= strlen(cputs_message));
+	zassert_not_null(strstr((char *)tx_content, cputs_message));
+
+	uart_emul_flush_tx_data(fixture->dev);
+	memset(tx_content, 0, sizeof(tx_content));
 	cprints(CC_SYSTEM, "%s", cprints_message);
+	SHELL_SLEEP();
 	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
 					 sizeof(tx_content));
 	zassert_true(tx_bytes >= strlen(cprints_message));
 	zassert_not_null(strstr((char *)tx_content, cprints_message));
 
-	/* We expect an exact match with cprintf() output. */
 	uart_emul_flush_tx_data(fixture->dev);
 	memset(tx_content, 0, sizeof(tx_content));
 	cprintf(CC_SYSTEM, "%s", cprintf_message);
+	SHELL_SLEEP();
 	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
 					 sizeof(tx_content));
-	zassert_equal(tx_bytes, strlen(cprintf_message));
-	zassert_mem_equal(tx_content, cprintf_message, strlen(tx_content));
+	zassert_true(tx_bytes >= strlen(cprintf_message));
+	zassert_not_null(strstr((char *)tx_content, cprintf_message));
 
 	/* Filter out CC_SYSTEM, no output should be generated. */
 	uart_emul_flush_tx_data(fixture->dev);
@@ -106,6 +117,36 @@ ZTEST_F(console_output, test_legacy_debug_output)
 	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
 					 sizeof(tx_content));
 	zassert_equal(tx_bytes, 0);
+}
+
+static const char *cputs_system_message = "cputs(CC_SYSTEM) test output";
+
+/* Verify that filtering Zephyr log messages still allows legacy
+ * EC output through.
+ */
+ZTEST_F(console_output, test_legacy_output_with_log_filtered)
+{
+	uint8_t tx_content[SAMPLE_DATA_SIZE];
+	uint32_t tx_bytes;
+
+	/* Disable all legacy channels to simulate how FAFT is typically run. */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chan 0"));
+	k_sleep(K_MSEC(1));
+
+	/* Enable just the CC_SYSTEM channel. */
+	console_channel_enable("system");
+
+	uart_emul_flush_tx_data(fixture->dev);
+	memset(tx_content, 0, sizeof(tx_content));
+	cputs(CC_SYSTEM, cputs_system_message);
+	SHELL_SLEEP();
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_true(tx_bytes >= strlen(cputs_system_message));
+	zassert_not_null(strstr((char *)tx_content, cputs_system_message));
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chan restore"));
+	k_sleep(K_MSEC(1));
 }
 
 ZTEST_F(console_output, test_legacy_shell_output)
@@ -125,8 +166,7 @@ ZTEST_F(console_output, test_legacy_shell_output)
 	uart_emul_flush_tx_data(fixture->dev);
 	memset(tx_content, 0, sizeof(tx_content));
 	cputs(CC_COMMAND, cputs_message);
-	/* Shell backend needs CPU time to flush the TX buffer. */
-	k_sleep(K_MSEC(1));
+	SHELL_SLEEP();
 	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
 					 sizeof(tx_content));
 	zassert_true(tx_bytes >= strlen(cputs_message));
@@ -136,8 +176,7 @@ ZTEST_F(console_output, test_legacy_shell_output)
 	uart_emul_flush_tx_data(fixture->dev);
 	memset(tx_content, 0, sizeof(tx_content));
 	cprints(CC_COMMAND, "%s", cprints_message);
-	/* Shell backend needs CPU time to flush the TX buffer. */
-	k_sleep(K_MSEC(1));
+	SHELL_SLEEP();
 	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
 					 sizeof(tx_content));
 	zassert_true(tx_bytes >= strlen(cprints_message));
@@ -147,8 +186,7 @@ ZTEST_F(console_output, test_legacy_shell_output)
 	uart_emul_flush_tx_data(fixture->dev);
 	memset(tx_content, 0, sizeof(tx_content));
 	cprintf(CC_COMMAND, "%s", cprintf_message);
-	/* Shell backend needs CPU time to flush the TX buffer. */
-	k_sleep(K_MSEC(1));
+	SHELL_SLEEP();
 	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
 					 sizeof(tx_content));
 	zassert_true(tx_bytes >= strlen(cprintf_message));
@@ -204,7 +242,7 @@ ZTEST_F(console_output, test_log_output)
 	zassert_true(tx_bytes >= strlen(log_dbg_message));
 	zassert_not_null(strstr((char *)tx_content, log_dbg_message));
 
-	/* Filter out CC_ZEPHR_LOG, no output should be generated. */
+	/* Filter out CC_ZEPHYR_LOG, no output should be generated. */
 	console_channel_disable("zephyr_log");
 	LOG_RAW("%s", log_raw_message);
 	LOG_ERR("%s", log_err_message);
