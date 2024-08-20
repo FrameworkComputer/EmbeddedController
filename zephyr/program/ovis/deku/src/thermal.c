@@ -11,6 +11,6 @@ void board_override_fan_control(int fan, int *temp)
 {
 	if (chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND)) {
 		fan_set_rpm_mode(FAN_CH(fan), 0);
-		fan_set_duty(FAN_CH(fan), 94);
+		fan_set_duty(FAN_CH(fan), 97);
 	}
 }
