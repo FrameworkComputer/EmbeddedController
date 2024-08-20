@@ -93,6 +93,48 @@ static void tps6699x_emul_connector_reset(struct tps6699x_emul_pdc_data *data,
 	data->reset_cmd = reset_cmd;
 }
 
+static void tps699x_emul_get_capability(struct tps6699x_emul_pdc_data *data)
+{
+	data->response.result = COMMAND_RESULT_SUCCESS;
+	data->response.data.capability = data->capability;
+
+	memcpy(data->reg_val[TPS6699X_REG_DATA_I2C1], &data->response,
+	       sizeof(data->response));
+}
+
+static void
+tps699x_emul_get_connector_capability(struct tps6699x_emul_pdc_data *data)
+{
+	data->response.result = COMMAND_RESULT_SUCCESS;
+	data->response.data.connector_capability = data->connector_capability;
+
+	memcpy(data->reg_val[TPS6699X_REG_DATA_I2C1], &data->response,
+	       sizeof(data->response));
+}
+
+static void tps699x_emul_get_error_status(struct tps6699x_emul_pdc_data *data)
+{
+	data->response.result = COMMAND_RESULT_SUCCESS;
+	data->response.data.length = sizeof(data->error);
+	data->response.data.error = data->error;
+
+	memcpy(&data->reg_val[TPS6699X_REG_DATA_I2C1], &data->response,
+	       sizeof(data->response));
+}
+
+static void
+tps699x_emul_get_connector_status(struct tps6699x_emul_pdc_data *data)
+{
+	data->response.result = COMMAND_RESULT_SUCCESS;
+	data->response.data.connector_status = data->connector_status;
+
+	memcpy(data->reg_val[TPS6699X_REG_DATA_I2C1], &data->response,
+	       sizeof(data->response));
+
+	/* TPS6699x clears the connector status change on read. */
+	data->connector_status.raw_conn_status_change_bits = 0;
+}
+
 static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
 				      uint8_t *data_reg)
 {
@@ -109,17 +151,23 @@ static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
 	zassert_equal(data_len, 0);
 	/* TODO(b/345292002): Validate connector number field. */
 
+	LOG_INF("UCSI command 0x%X", cmd);
 	switch (cmd) {
+	case UCSI_GET_CAPABILITY:
+		tps699x_emul_get_capability(data);
+		break;
+	case UCSI_GET_CONNECTOR_CAPABILITY:
+		tps699x_emul_get_connector_capability(data);
+		break;
+	case UCSI_GET_ERROR_STATUS:
+		tps699x_emul_get_error_status(data);
+		break;
+	case UCSI_GET_CONNECTOR_STATUS:
+		tps699x_emul_get_connector_status(data);
+		break;
 	case UCSI_CONNECTOR_RESET:
 		tps6699x_emul_connector_reset(
 			data, (union connector_reset_t)data_reg[2]);
-		break;
-	case UCSI_GET_CONNECTOR_STATUS:
-		memcpy(&data_reg[1], &data->connector_status,
-		       sizeof(union connector_status_t));
-
-		/* TPS6699x clears the connector status change on read. */
-		data->connector_status.raw_conn_status_change_bits = 0;
 		break;
 	default:
 		LOG_WRN("tps6699x_emul: Unimplemented UCSI command %#04x", cmd);
@@ -326,6 +374,40 @@ static int emul_tps6699x_set_response_delay(const struct emul *target,
 	return 0;
 }
 
+static int emul_tps6699x_set_capability(const struct emul *target,
+					const struct capability_t *caps)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	data->capability = *caps;
+
+	return 0;
+}
+
+static int
+emul_tps6699x_set_connector_capability(const struct emul *target,
+				       const union connector_capability_t *caps)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	data->connector_capability = *caps;
+
+	return 0;
+}
+
+static int emul_tps6699x_set_error_status(const struct emul *target,
+					  const union error_status_t *es)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	data->error = *es;
+
+	return 0;
+}
+
 static int emul_tps6699x_set_connector_status(
 	const struct emul *target,
 	const union connector_status_t *connector_status)
@@ -334,6 +416,20 @@ static int emul_tps6699x_set_connector_status(
 		tps6699x_emul_get_pdc_data(target);
 
 	data->connector_status = *connector_status;
+
+	return 0;
+}
+
+static int emul_tps6699x_reset(const struct emul *target)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	/* Reset PDOs. */
+	memset(data->src_pdos, 0x0, sizeof(data->src_pdos));
+	memset(data->snk_pdos, 0x0, sizeof(data->snk_pdos));
+	memset(data->partner_src_pdos, 0x0, sizeof(data->partner_src_pdos));
+	memset(data->partner_snk_pdos, 0x0, sizeof(data->partner_snk_pdos));
 
 	return 0;
 }
@@ -350,12 +446,12 @@ static int tps6699x_emul_idle_wait(const struct emul *emul)
 }
 
 static struct emul_pdc_api_t emul_tps6699x_api = {
-	.reset = NULL,
+	.reset = emul_tps6699x_reset,
 	.set_response_delay = emul_tps6699x_set_response_delay,
 	.get_connector_reset = emul_tps6699x_get_connector_reset,
-	.set_capability = NULL,
-	.set_connector_capability = NULL,
-	.set_error_status = NULL,
+	.set_capability = emul_tps6699x_set_capability,
+	.set_connector_capability = emul_tps6699x_set_connector_capability,
+	.set_error_status = emul_tps6699x_set_error_status,
 	.set_connector_status = emul_tps6699x_set_connector_status,
 	.get_uor = NULL,
 	.get_pdr = NULL,

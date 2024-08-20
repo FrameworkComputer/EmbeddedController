@@ -1684,6 +1684,9 @@ static int tps_get_connector_status(const struct device *dev,
 static int tps_get_error_status(const struct device *dev,
 				union error_status_t *es)
 {
+	if (es == NULL) {
+		return -EINVAL;
+	}
 	return tps_post_command(dev, CMD_GET_ERROR_STATUS, es);
 }
 

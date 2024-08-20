@@ -90,9 +90,6 @@ ZTEST_USER(pdc_api, test_connector_reset)
 	zassert_equal(in.reset_type, out.reset_type);
 }
 
-/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
-
 ZTEST_USER(pdc_api, test_get_capability)
 {
 	struct capability_t in, out;
@@ -200,6 +197,8 @@ ZTEST_USER(pdc_api, test_get_connector_status)
 	zassert_equal(out.rdo, in.rdo);
 }
 
+/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
+#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_set_uor)
 {
 	union uor_t in, out;
