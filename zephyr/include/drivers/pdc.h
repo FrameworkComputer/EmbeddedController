@@ -71,6 +71,8 @@ struct pdc_info_t {
 	uint8_t running_in_flash_bank;
 	/** 12-byte program name string plus NUL terminator */
 	char project_name[USB_PD_CHIP_INFO_PROJECT_NAME_LEN + 1];
+	/** Compat string of driver */
+	char driver_name[USB_PD_CHIP_INFO_DRIVER_NAME_LEN + 1];
 	/** Extra information (optional) */
 	uint16_t extra;
 };

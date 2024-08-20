@@ -34,6 +34,7 @@ const static struct pdc_info_t info = {
 	.running_in_flash_bank = 16,
 	.project_name = "ProjectName",
 	.extra = 0xffff,
+	.driver_name = "driver_name",
 };
 
 /**
@@ -153,6 +154,46 @@ ZTEST(host_cmd_pdc, test_ec_cmd_pd_chip_info_v2)
 	zassert_equal(0, resp.fw_update_flags);
 	zassert_mem_equal(info.project_name, resp.fw_name_str,
 			  sizeof(info.project_name));
+}
+
+ZTEST(host_cmd_pdc, test_ec_cmd_pd_chip_info_v3)
+{
+	int rv;
+	struct ec_params_pd_chip_info req = {
+		.port = 0,
+		.live = false,
+	};
+	struct ec_response_pd_chip_info_v3 resp;
+
+	/* Successful path */
+	pdc_power_mgmt_get_info_fake.custom_fake =
+		custom_fake_pdc_power_mgmt_get_info;
+
+	rv = ec_cmd_pd_chip_info_v3(NULL, &req, &resp);
+
+	zassert_equal(EC_RES_SUCCESS, rv, "Got %d, expected %d", rv,
+		      EC_RES_SUCCESS);
+
+	zassert_equal(PDC_VIDPID_GET_VID(info.vid_pid), resp.vendor_id);
+	zassert_equal(PDC_VIDPID_GET_PID(info.vid_pid), resp.product_id);
+	zassert_equal(PDC_FWVER_GET_MAJOR(info.fw_version),
+		      resp.fw_version_string[2]);
+	zassert_equal(PDC_FWVER_GET_MINOR(info.fw_version),
+		      resp.fw_version_string[1]);
+	zassert_equal(PDC_FWVER_GET_PATCH(info.fw_version),
+		      resp.fw_version_string[0]);
+
+	/* Field added in V1, but not used by the PDC code */
+	zassert_equal(0, resp.min_req_fw_version_number);
+
+	/* Fields added in V2 */
+	zassert_equal(0, resp.fw_update_flags);
+	zassert_mem_equal(info.project_name, resp.fw_name_str,
+			  sizeof(info.project_name));
+
+	/* Field added in V3 */
+	zassert_ok(strncmp(info.driver_name, resp.driver_name,
+			   strlen(info.driver_name)));
 }
 
 ZTEST(host_cmd_pdc, test_ec_cmd_usb_pd_ports)

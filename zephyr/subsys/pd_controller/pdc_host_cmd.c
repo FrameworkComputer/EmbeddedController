@@ -19,7 +19,7 @@
 static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pd_chip_info *p = args->params;
-	struct ec_response_pd_chip_info_v2 resp = { 0 };
+	struct ec_response_pd_chip_info_v3 resp = { 0 };
 	struct pdc_info_t pdc_info;
 
 	/* Safety check to make sure the pdc_info_t struct and host command use
@@ -45,21 +45,18 @@ static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 	/* Look up correct response size based on version. All support the
 	 * basic fields set above.
 	 */
-	switch (args->version) {
-	case 0:
+	if (args->version == 0) {
 		args->response_size = sizeof(struct ec_response_pd_chip_info);
 
 		/* All V0 fields populated above */
-		break;
-	case 1:
+	} else if (args->version == 1) {
 		args->response_size =
 			sizeof(struct ec_response_pd_chip_info_v1);
 
 		/* PDC doesn't use the min_req_fw_version_string field added in
 		 * V1.
 		 */
-		break;
-	case 2:
+	} else if (args->version >= 2) {
 		args->response_size =
 			sizeof(struct ec_response_pd_chip_info_v2);
 
@@ -69,8 +66,16 @@ static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 		resp.fw_update_flags = 0;
 		strncpy(resp.fw_name_str, pdc_info.project_name,
 			sizeof(resp.fw_name_str));
+	}
+	if (args->version >= 3) {
+		args->response_size =
+			sizeof(struct ec_response_pd_chip_info_v3);
 
-		break;
+		/* Fill in V3-specific info. `driver_name` must be NUL-
+		 * terminated
+		 */
+		strncpy(resp.driver_name, pdc_info.driver_name,
+			sizeof(resp.driver_name));
 	}
 
 	memcpy(args->response, &resp, args->response_size);
@@ -79,7 +84,8 @@ static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 }
 
 DECLARE_HOST_COMMAND(EC_CMD_PD_CHIP_INFO, hc_remote_pd_chip_info,
-		     EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2));
+		     EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2) |
+			     EC_VER_MASK(3));
 #endif /* CONFIG_HOSTCMD_PD_CHIP_INFO */
 
 static enum ec_status hc_pd_ports(struct host_cmd_handler_args *args)

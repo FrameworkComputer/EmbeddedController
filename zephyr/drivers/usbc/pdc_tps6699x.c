@@ -1060,6 +1060,11 @@ static int cmd_get_ic_status_sync_internal(const struct i2c_dt_spec *i2c,
 			 customer_val.data[0]);
 	}
 
+	/* Fill in the chip type (driver compat string) */
+	strncpy(info->driver_name, STRINGIFY(DT_DRV_COMPAT),
+		sizeof(info->driver_name));
+	info->driver_name[sizeof(info->driver_name) - 1] = '\0';
+
 	return 0;
 }
 

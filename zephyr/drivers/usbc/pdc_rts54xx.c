@@ -1300,6 +1300,11 @@ static void st_read_run(void *o)
 				info->pd_revision);
 		}
 
+		/* Fill in the chip type (driver compat string) */
+		strncpy(info->driver_name, STRINGIFY(DT_DRV_COMPAT),
+			sizeof(info->driver_name));
+		info->driver_name[sizeof(info->driver_name) - 1] = '\0';
+
 		/* Retain a cached copy of this data */
 		data->info = *info;
 
