@@ -197,8 +197,6 @@ ZTEST_USER(pdc_api, test_get_connector_status)
 	zassert_equal(out.rdo, in.rdo);
 }
 
-/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_set_uor)
 {
 	union uor_t in, out;
@@ -208,6 +206,7 @@ ZTEST_USER(pdc_api, test_set_uor)
 
 	in.accept_dr_swap = 1;
 	in.swap_to_ufp = 1;
+	in.connector_number = 1;
 
 	zassert_ok(pdc_set_uor(dev, in), "Failed to set uor");
 
@@ -217,6 +216,8 @@ ZTEST_USER(pdc_api, test_set_uor)
 	zassert_equal(out.raw_value, in.raw_value);
 }
 
+/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
+#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_set_pdr)
 {
 	union pdr_t in, out;

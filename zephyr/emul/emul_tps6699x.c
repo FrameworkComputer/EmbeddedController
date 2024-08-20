@@ -135,6 +135,15 @@ tps699x_emul_get_connector_status(struct tps6699x_emul_pdc_data *data)
 	data->connector_status.raw_conn_status_change_bits = 0;
 }
 
+static void tps699x_emul_set_uor(struct tps6699x_emul_pdc_data *data,
+				 const union uor_t *uor)
+{
+	data->response.result = COMMAND_RESULT_SUCCESS;
+
+	data->uor = *uor;
+	LOG_INF("UOR=0x%x", data->uor.raw_value);
+}
+
 static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
 				      uint8_t *data_reg)
 {
@@ -168,6 +177,9 @@ static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
 	case UCSI_CONNECTOR_RESET:
 		tps6699x_emul_connector_reset(
 			data, (union connector_reset_t)data_reg[2]);
+		break;
+	case UCSI_SET_UOR:
+		tps699x_emul_set_uor(data, (union uor_t *)&data_reg[2]);
 		break;
 	default:
 		LOG_WRN("tps6699x_emul: Unimplemented UCSI command %#04x", cmd);
@@ -420,6 +432,16 @@ static int emul_tps6699x_set_connector_status(
 	return 0;
 }
 
+static int emul_tps6699x_get_uor(const struct emul *target, union uor_t *uor)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	*uor = data->uor;
+
+	return 0;
+}
+
 static int emul_tps6699x_reset(const struct emul *target)
 {
 	struct tps6699x_emul_pdc_data *data =
@@ -453,7 +475,7 @@ static struct emul_pdc_api_t emul_tps6699x_api = {
 	.set_connector_capability = emul_tps6699x_set_connector_capability,
 	.set_error_status = emul_tps6699x_set_error_status,
 	.set_connector_status = emul_tps6699x_set_connector_status,
-	.get_uor = NULL,
+	.get_uor = emul_tps6699x_get_uor,
 	.get_pdr = NULL,
 	.get_requested_power_level = NULL,
 	.get_ccom = NULL,

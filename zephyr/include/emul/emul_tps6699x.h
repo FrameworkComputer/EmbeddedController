@@ -46,6 +46,7 @@ struct tps6699x_emul_pdc_data {
 	union error_status_t error;
 	struct capability_t capability;
 	union connector_capability_t connector_capability;
+	union uor_t uor;
 
 	struct tps6699x_response response;
 
