@@ -377,6 +377,8 @@ _CROS_EC_C0_F_PF_RF(EC_CMD_PDC_TRACE_MSG_ENABLE, pdc_trace_msg_enable);
 _CROS_EC_C0_F_RF(EC_CMD_PDC_TRACE_MSG_GET_ENTRIES, pdc_trace_msg_get_entries);
 _CROS_EC_CV_F_P(EC_CMD_PD_CHARGE_PORT_OVERRIDE, 0, pd_charge_port_override,
 		charge_port_override);
+_CROS_EC_CV_F_P_R(EC_CMD_PD_CHIP_INFO, 3, pd_chip_info_v3, pd_chip_info,
+		  pd_chip_info_v3);
 _CROS_EC_CV_F_P_R(EC_CMD_PD_CHIP_INFO, 2, pd_chip_info_v2, pd_chip_info,
 		  pd_chip_info_v2);
 _CROS_EC_CV_F_P_R(EC_CMD_PD_CHIP_INFO, 1, pd_chip_info_v1, pd_chip_info,

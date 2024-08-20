@@ -6402,6 +6402,7 @@ struct ec_response_pd_chip_info_v1 {
  *  does NOT include a NUL-terminator.
  */
 #define USB_PD_CHIP_INFO_PROJECT_NAME_LEN 12
+
 struct ec_response_pd_chip_info_v2 {
 	uint16_t vendor_id;
 	uint16_t product_id;
@@ -6420,6 +6421,33 @@ struct ec_response_pd_chip_info_v2 {
 	 *  byte for a NUL-terminator.
 	 */
 	char fw_name_str[USB_PD_CHIP_INFO_PROJECT_NAME_LEN + 1];
+} __ec_align2;
+
+/** Maximum length of a driver/chip name reported in the pd_chip_info
+ *  response
+ */
+#define USB_PD_CHIP_INFO_DRIVER_NAME_LEN 24
+
+struct ec_response_pd_chip_info_v3 {
+	uint16_t vendor_id;
+	uint16_t product_id;
+	uint16_t device_id;
+	union {
+		uint8_t fw_version_string[8];
+		uint64_t fw_version_number;
+	} __ec_align2;
+	union {
+		uint8_t min_req_fw_version_string[8];
+		uint64_t min_req_fw_version_number;
+	} __ec_align2;
+	/** Flag to control the FW update process for this chip. */
+	uint16_t fw_update_flags;
+	/** Project name string associated with the chip's FW. Add an extra
+	 *  byte for a NUL-terminator.
+	 */
+	char fw_name_str[USB_PD_CHIP_INFO_PROJECT_NAME_LEN + 1];
+	/** Driver/chip string, plus room for a NUL-terminator */
+	char driver_name[USB_PD_CHIP_INFO_DRIVER_NAME_LEN + 1];
 } __ec_align2;
 
 /* Run RW signature verification and get status */

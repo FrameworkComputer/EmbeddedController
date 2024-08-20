@@ -11080,7 +11080,7 @@ int cmd_pd_control(int argc, char *argv[])
 int cmd_pd_chip_info(int argc, char *argv[])
 {
 	struct ec_params_pd_chip_info p;
-	struct ec_response_pd_chip_info_v2 r;
+	struct ec_response_pd_chip_info_v3 r;
 	char *e;
 	int rv;
 	int cmdver;
@@ -11147,6 +11147,12 @@ int cmd_pd_chip_info(int argc, char *argv[])
 	} else {
 		printf("fw_update_flags: UNSUPPORTED\n");
 		printf("fw_name_str: UNSUPPORTED\n");
+	}
+
+	if (cmdver >= 3) {
+		printf("driver_name: '%s'\n", r.driver_name);
+	} else {
+		printf("driver_name: UNSUPPORTED\n");
 	}
 
 	return 0;
