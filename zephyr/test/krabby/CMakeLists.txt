@@ -69,9 +69,11 @@ target_sources_ifdef(CONFIG_TEST_WUGTRIO
 	src/ppc_wugtrio.c
 	src/base_detect.c
 	src/motionsense_wugtrio.c
+	src/temp_wugtrio.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/wugtrio/src/ppc.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/wugtrio/src/base_detect.c
-	${PLATFORM_EC_PROGRAM_DIR}/corsola/wugtrio/src/alt_motionsense.c)
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/wugtrio/src/alt_motionsense.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/wugtrio/src/thermal.c)
 
 target_sources_ifdef(CONFIG_TEST_SKITTY
 	app PRIVATE
