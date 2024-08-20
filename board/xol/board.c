@@ -6,8 +6,10 @@
 #include "charger.h"
 #include "common.h"
 #include "cros_board_info.h"
+#include "driver/charger/bq257x0_regs.h"
 #include "driver/mp2964.h"
 #include "hooks.h"
+#include "i2c.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
@@ -199,3 +201,30 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 		charge_ma * (100 - CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT) /
 			100);
 }
+
+static void set_register_charge_option(void)
+{
+	int reg;
+	int rv;
+	int data;
+
+	rv = i2c_read16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+			BQ25710_REG_CHARGE_OPTION_0, &reg);
+	if (rv == EC_SUCCESS) {
+		data = reg;
+		/* if AC only, disable IDPM,
+		 * because it will cause charger keep asserting PROCHOT
+		 */
+		if (!battery_hw_present())
+			reg = SET_BQ_FIELD(BQ257X0, CHARGE_OPTION_0, EN_IDPM, 0,
+					   reg);
+		else
+			reg = SET_BQ_FIELD(BQ257X0, CHARGE_OPTION_0, EN_IDPM, 1,
+					   reg);
+
+		if (reg != data)
+			i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+				    BQ25710_REG_CHARGE_OPTION_0, reg);
+	}
+}
+DECLARE_HOOK(HOOK_TICK, set_register_charge_option, HOOK_PRIO_DEFAULT);
