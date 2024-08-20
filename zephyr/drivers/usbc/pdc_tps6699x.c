@@ -1292,7 +1292,7 @@ static void task_ucsi(struct pdc_data_t *data, enum ucsi_command_t ucsi_command)
 		/* PDO Offset: Byte 3, bits 7:0 */
 		cmd_data.data[3] = data->pdo_offset;
 		/* Number of PDOs: Byte 4, bits 1:0 */
-		cmd_data.data[4] = data->num_pdos;
+		cmd_data.data[4] = data->num_pdos - 1;
 		/* Source or Sink PDOSs: Byte 4, bits 2 */
 		cmd_data.data[4] |= (data->pdo_type << 2);
 		/* Source Capabilities Type: Byte 4, bits 4:3 */
