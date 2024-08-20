@@ -2746,15 +2746,17 @@ int pdc_power_mgmt_set_active_charge_port(int charge_port)
 	return EC_SUCCESS;
 }
 
-void pdc_power_mgmt_set_new_power_request(int port)
+int pdc_power_mgmt_set_new_power_request(int port)
 {
 	/* Make sure port is sink connected */
 	if (!pdc_power_mgmt_is_sink_connected(port)) {
-		return;
+		return -ENOTCONN;
 	}
 
 	atomic_set_bit(pdc_data[port]->port.snk_policy.flags,
 		       SNK_POLICY_NEW_POWER_REQUEST);
+
+	return EC_SUCCESS;
 }
 
 uint8_t pdc_power_mgmt_get_task_state(int port)

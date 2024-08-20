@@ -137,9 +137,10 @@ void pdc_power_mgmt_request_swap_to_dfp(int port);
  *
  * @param port USB-C port number
  *
- * @retval void
+ * @retval EC_SUCCESS if successful, or -ENOTCONN if the port is not attached in
+ * SNK role
  */
-void pdc_power_mgmt_set_new_power_request(int port);
+int pdc_power_mgmt_set_new_power_request(int port);
 
 /**
  * @brief Get current power role
