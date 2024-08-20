@@ -42,6 +42,14 @@
 		usb_a1_fault_odl: usb_a1_fault_odl {
 			gpios = <&gpioa 7 GPIO_INPUT>;
 		};
+
+		gpio_ap_bl_en_odl: gpio_ap_bl_en_odl {
+			gpios = <&gpiod 7 GPIO_INPUT>;
+		};
+
+		gpio_tp_en: gpio_tp_en {
+			gpios = <&gpioh 6 GPIO_OUTPUT_LOW>;
+		};
 	};
 
 	unused-pins {
@@ -58,9 +66,7 @@
 			<&gpioh 3 GPIO_ODR_HIGH>,
 			/* unnamed nc pins */
 			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
-			<&gpiod 7 GPIO_INPUT_PULL_DOWN>,
 			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,
-			<&gpioh 6 GPIO_INPUT_PULL_DOWN>,
 			<&gpioi 3 GPIO_INPUT_PULL_DOWN>,
 			<&gpioi 6 GPIO_INPUT_PULL_DOWN>,
 			<&gpioi 7 GPIO_INPUT_PULL_DOWN>,
@@ -87,6 +93,12 @@
 			irq-pin = <&usb_c0_ppc_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "ppc_interrupt";
+		};
+
+		int_ap_bl_en: int_ap_bl_en {
+			irq-pin = <&gpio_ap_bl_en_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "ap_bl_en_interrupt";
 		};
 	};
 
