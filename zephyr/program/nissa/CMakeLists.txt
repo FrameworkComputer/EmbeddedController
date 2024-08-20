@@ -278,6 +278,7 @@ if(DEFINED CONFIG_BOARD_RIVEN)
 			"riven/src/form_factor.c"
 			"riven/src/led.c"
 			"riven/src/touch_panel.c"
+			"riven/src/usb_mux_config.c"
 	)
 	project(riven)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "riven/src/usbc.c")

@@ -354,7 +354,7 @@
 	anx7483_mux_1: anx7483-mux-1@3e {
 		compatible = "analogix,anx7483";
 		reg = <0x3e>;
-		board-set = "anx7483_set_default_tuning";
+		board-set = "board_anx7483_c1_mux_set";
 		flags = <USB_MUX_FLAG_RESETS_IN_G3>;
 	};
 };
