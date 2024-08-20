@@ -174,6 +174,24 @@ config PLATFORM_EC_BATTERY_FUEL_GAUGE
 	  information is used to set voltage, current and temperature operating
 	  limits for the battery.
 
+config PLATFORM_EC_BATTERY_INIT_TYPE_RETRY_COUNT
+	int "Battery type read retry limit"
+	default 0
+	help
+	  Number of times to retry reading battery manufacturer or name during
+	  initialization.
+
+	  Some battery controller chips (such as BQ40Z555) will
+	  NACK I2C transactions while they perform internal housekeeping, and
+	  do not update the SBS BatteryStatus either; the EC will treat failures
+	  in these cases as evidence that the battery is disconnected, and
+	  failures of this type during battery initialization will leave the
+	  battery permanently ignored even if present. If a battery is known
+	  to exhibit this behavior, setting this option to a nonzero value will
+	  retry reading each of those fields from the battery
+	  (up to a total of COUNT + 1 attempts) after a short delay, allowing
+	  the battery time to complete its housekeeping.
+
 config PLATFORM_EC_BATTERY_HW_PRESENT_CUSTOM
 	bool "Hardware check of battery presence"
 	help
