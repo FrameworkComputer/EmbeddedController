@@ -37,13 +37,8 @@ static int eppm_init(void)
 		return -ENODEV;
 	}
 
-	drv = pdc_dev->api;
-	if (!drv) {
-		LOG_ERR("Failed to open PDC");
-		return -ENODEV;
-	}
-
 	/* Start a PPM task. */
+	drv = pdc_dev->api;
 	if (drv->init_ppm(pdc_dev)) {
 		LOG_ERR("Failed to init PPM");
 		return -ENODEV;
