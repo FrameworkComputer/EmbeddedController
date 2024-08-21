@@ -781,6 +781,15 @@ tcpci_partner_enter_usb_handler(struct tcpci_partner_data *data,
 }
 
 static enum tcpci_partner_handler_res
+tcpci_partner_revision_handler(struct tcpci_partner_data *data,
+			       const struct tcpci_emul_msg *message)
+{
+	data->rmdo = *(uint32_t *)(message->buf + TCPCI_MSG_HEADER_LEN);
+
+	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+}
+
+static enum tcpci_partner_handler_res
 tcpci_partner_common_cable_handler(struct tcpci_partner_data *data,
 				   const struct tcpci_emul_msg *message,
 				   enum tcpci_msg_type sop_type)
@@ -1126,6 +1135,8 @@ tcpci_partner_common_sop_msg_handler(struct tcpci_partner_data *data,
 			return tcpci_partner_common_vdm_handler(data, tx_msg);
 		case PD_DATA_ENTER_USB:
 			return tcpci_partner_enter_usb_handler(data, tx_msg);
+		case PD_DATA_REVISION:
+			return tcpci_partner_revision_handler(data, tx_msg);
 		default:
 			/* No other common handlers for data messages */
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;

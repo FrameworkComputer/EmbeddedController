@@ -292,6 +292,7 @@ enum usb_pe_state {
 	PE_SNK_CHUNK_RECEIVED, /* pe-st76 */
 	PE_VCS_FORCE_VCONN, /* pe-st77 */
 	PE_GET_REVISION, /* pe-st78 */
+	PE_GIVE_REVISION, /* pe-st79 */
 
 	/* EPR states */
 	PE_SNK_SEND_EPR_MODE_ENTRY,
@@ -413,6 +414,7 @@ __maybe_unused static __const_data const char *const pe_state_names[] = {
 #ifdef CONFIG_USB_PD_REV30
 	[PE_FRS_SNK_SRC_START_AMS] = "PE_FRS_SNK_SRC_Start_Ams",
 	[PE_GET_REVISION] = "PE_Get_Revision",
+	[PE_GIVE_REVISION] = "PE_Give_Revision",
 #ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
 	[PE_GIVE_BATTERY_CAP] = "PE_Give_Battery_Cap",
 	[PE_GIVE_BATTERY_STATUS] = "PE_Give_Battery_Status",
@@ -3049,6 +3051,11 @@ static void pe_src_ready_run(int port)
 				set_state_pe(port, PE_GIVE_STATUS);
 				return;
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
+#ifdef CONFIG_USB_PD_REV30
+			case PD_CTRL_GET_REVISION:
+				set_state_pe(port, PE_GIVE_REVISION);
+				return;
+#endif /* CONFIG_USB_PD_REV30 */
 				/*
 				 * Receiving an unknown or unsupported message
 				 * shall be responded to with a not supported
@@ -3984,6 +3991,11 @@ static void pe_snk_ready_run(int port)
 					port, PD_HEADER_GET_SOP(
 						      rx_emsg[port].header));
 				return;
+#ifdef CONFIG_USB_PD_REV30
+			case PD_CTRL_GET_REVISION:
+				set_state_pe(port, PE_GIVE_REVISION);
+				return;
+#endif /* CONFIG_USB_PD_REV30 */
 			/*
 			 * Receiving an unknown or unsupported message
 			 * shall be responded to with a not supported message.
@@ -8344,6 +8356,36 @@ static void pe_snk_epr_mode_exit_received_entry(int port)
 }
 #endif /* CONFIG_USB_PD_EPR */
 
+/**
+ * PE_Give_Revision
+ */
+__maybe_unused static void pe_give_revision_entry(int port)
+{
+	struct rmdo *rmdo = (void *)tx_emsg[port].buf;
+
+	tx_emsg[port].len = sizeof(struct rmdo);
+	rmdo->major_rev = 3;
+	rmdo->minor_rev = 2;
+	rmdo->major_ver = 1;
+	rmdo->minor_ver = 0;
+	rmdo->reserved = 0;
+
+	send_data_msg(port, TCPCI_MSG_SOP, PD_DATA_REVISION);
+}
+
+__maybe_unused static void pe_give_revision_run(int port)
+{
+	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+		pe_set_ready_state(port);
+	} else if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR) ||
+		   PE_CHK_FLAG(port, PE_FLAGS_MSG_DISCARDED)) {
+		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_DISCARDED);
+		pe_send_soft_reset(port, TCPCI_MSG_SOP);
+	}
+}
+
 const uint32_t *const pd_get_src_caps(int port)
 {
 	return pe[port].src_caps;
@@ -8778,6 +8820,10 @@ static __const_data const struct usb_state pe_states[] = {
 		.entry = pe_get_revision_entry,
 		.run   = pe_get_revision_run,
 		.exit  = pe_get_revision_exit,
+	},
+	[PE_GIVE_REVISION] = {
+		.entry = pe_give_revision_entry,
+		.run   = pe_give_revision_run,
 	},
 #ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
 	[PE_GIVE_BATTERY_CAP] = {

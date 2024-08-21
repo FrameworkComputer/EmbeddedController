@@ -484,3 +484,15 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, test_verify_uvdm_not_supported)
 		not_supported_seen,
 		"Sent unstructured VDM to TCPM; did not receive Not_Supported");
 }
+
+ZTEST_F(usb_attach_5v_3a_pd_source_rev3, test_give_revision)
+{
+	const uint32_t expected_rev = 0x32100000;
+
+	tcpci_partner_send_control_msg(&fixture->source_5v_3a,
+				       PD_CTRL_GET_REVISION, 0);
+	k_sleep(K_SECONDS(2));
+	zassert_equal(fixture->source_5v_3a.rmdo, expected_rev,
+		      "Expected RMDO %x, got %x", expected_rev,
+		      fixture->source_5v_3a.rmdo);
+}
