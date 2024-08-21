@@ -355,13 +355,6 @@
 	};
 };
 
-&i2c4_1 {
-	label = "I2C_USB_C1_TCPC";
-	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
-
-	status = "okay";
-};
-
 &i2c5_1 {
 	label = "I2C_USB_C1";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
