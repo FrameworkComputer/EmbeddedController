@@ -11,6 +11,7 @@
 #include "emul/emul_pdc.h"
 #include "i2c.h"
 #include "pdc_trace_msg.h"
+#include "usbc/utils.h"
 #include "zephyr/sys/util.h"
 #include "zephyr/sys/util_macro.h"
 
@@ -30,6 +31,8 @@ LOG_MODULE_REGISTER(test_pdc_api, LOG_LEVEL_INF);
 
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
 static const struct device *dev = DEVICE_DT_GET(RTS5453P_NODE);
+static const uint8_t connector_number =
+	USBC_PORT_FROM_DRIVER_NODE(RTS5453P_NODE, pdc) + 1;
 static bool test_cc_cb_called;
 static union cci_event_t test_cc_cb_cci;
 
@@ -206,7 +209,7 @@ ZTEST_USER(pdc_api, test_set_uor)
 
 	in.accept_dr_swap = 1;
 	in.swap_to_ufp = 1;
-	in.connector_number = 1;
+	in.connector_number = connector_number;
 
 	zassert_ok(pdc_set_uor(dev, in), "Failed to set uor");
 
@@ -216,8 +219,6 @@ ZTEST_USER(pdc_api, test_set_uor)
 	zassert_equal(out.raw_value, in.raw_value);
 }
 
-/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_set_pdr)
 {
 	union pdr_t in, out;
@@ -227,6 +228,7 @@ ZTEST_USER(pdc_api, test_set_pdr)
 
 	in.accept_pr_swap = 1;
 	in.swap_to_src = 1;
+	in.connector_number = connector_number;
 
 	zassert_ok(pdc_set_pdr(dev, in), "Failed to set pdr");
 
@@ -236,6 +238,8 @@ ZTEST_USER(pdc_api, test_set_pdr)
 	zassert_equal(out.raw_value, in.raw_value);
 }
 
+/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
+#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_rdo)
 {
 	uint32_t in, out = 0;
