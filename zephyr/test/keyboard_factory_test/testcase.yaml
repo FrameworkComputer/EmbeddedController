@@ -1,0 +1,4 @@
+common:
+  platform_allow: native_sim
+tests:
+  keyboard_factory_test.default: {}

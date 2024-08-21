@@ -1,0 +1,47 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_sim.dts>
+
+/ {
+        chosen {
+                cros-ec,keyboard = &fake_input_device;
+        };
+
+	fake_input_device: fake-device {
+		compatible = "vnd,keyboard-input-device";
+		col-size = <10>;
+		row-size = <11>;
+		zephyr,pm-device-runtime-auto;
+
+		kso-gpio {
+			compatible = "cros-ec,col-gpio";
+			col-num = <2>;
+			col-gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
+		};
+
+		kbd {
+			pinctrl-0 = <>;
+			pinctrl-1 = <>;
+			pinctrl-names = "default", "sleep";
+
+			factory-test {
+				compatible = "cros-ec,keyboard-factory-test";
+
+				// TODO(b/360631986) remove pin number
+				// assumptions from the test
+				pin2-gpios = <&gpio0 0 GPIO_ACTIVE_HIGH>;
+				pin3-gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
+				pin10-gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
+				pin11-gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
+			};
+		};
+
+	};
+};
+
+&gpio0 {
+        ngpios = <4>;
+};
