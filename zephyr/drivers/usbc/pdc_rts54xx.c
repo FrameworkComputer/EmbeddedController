@@ -353,6 +353,8 @@ struct pdc_config_t {
 	union notification_enable_t bits;
 	/** Create thread function */
 	void (*create_thread)(const struct device *dev);
+	/** If true, do not apply PDC FW updates to this port */
+	bool no_fw_update;
 };
 
 /**
@@ -1304,6 +1306,8 @@ static void st_read_run(void *o)
 		strncpy(info->driver_name, STRINGIFY(DT_DRV_COMPAT),
 			sizeof(info->driver_name));
 		info->driver_name[sizeof(info->driver_name) - 1] = '\0';
+
+		info->no_fw_update = cfg->no_fw_update;
 
 		/* Retain a cached copy of this data */
 		data->info = *info;
@@ -2845,6 +2849,7 @@ static void rts54xx_thread(void *dev, void *unused1, void *unused2)
 		.bits.connect_change = 1,                                     \
 		.bits.error = 1,                                              \
 		.create_thread = create_thread_##inst,                        \
+		.no_fw_update = DT_INST_PROP(inst, no_fw_update),             \
 	};                                                                    \
                                                                               \
 	DEVICE_DT_INST_DEFINE(inst, pdc_init, NULL, &pdc_data_##inst,         \

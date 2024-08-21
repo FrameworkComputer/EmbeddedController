@@ -35,6 +35,7 @@ const static struct pdc_info_t info = {
 	.project_name = "ProjectName",
 	.extra = 0xffff,
 	.driver_name = "driver_name",
+	.no_fw_update = true,
 };
 
 /**
@@ -151,9 +152,11 @@ ZTEST(host_cmd_pdc, test_ec_cmd_pd_chip_info_v2)
 	zassert_equal(0, resp.min_req_fw_version_number);
 
 	/* Fields added in V2 */
-	zassert_equal(0, resp.fw_update_flags);
 	zassert_mem_equal(info.project_name, resp.fw_name_str,
 			  sizeof(info.project_name));
+	zassert_equal(info.no_fw_update,
+		      !!(resp.fw_update_flags &
+			 USB_PD_CHIP_INFO_FWUP_FLAG_NO_UPDATE));
 }
 
 ZTEST(host_cmd_pdc, test_ec_cmd_pd_chip_info_v3)
@@ -187,9 +190,11 @@ ZTEST(host_cmd_pdc, test_ec_cmd_pd_chip_info_v3)
 	zassert_equal(0, resp.min_req_fw_version_number);
 
 	/* Fields added in V2 */
-	zassert_equal(0, resp.fw_update_flags);
 	zassert_mem_equal(info.project_name, resp.fw_name_str,
 			  sizeof(info.project_name));
+	zassert_equal(info.no_fw_update,
+		      !!(resp.fw_update_flags &
+			 USB_PD_CHIP_INFO_FWUP_FLAG_NO_UPDATE));
 
 	/* Field added in V3 */
 	zassert_ok(strncmp(info.driver_name, resp.driver_name,

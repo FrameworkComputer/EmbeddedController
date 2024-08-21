@@ -6,7 +6,7 @@ description: Realtek PDC RTS54 Power
 
 compatible: "realtek,rts54-pdc"
 
-include: ["i2c-device.yaml"]
+include: ["i2c-device.yaml", "pdc-device.yaml"]
 
 properties:
   irq-gpios:

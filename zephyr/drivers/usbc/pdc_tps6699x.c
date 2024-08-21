@@ -151,6 +151,8 @@ struct pdc_config_t {
 	union notification_enable_t bits;
 	/** Create thread function */
 	void (*create_thread)(const struct device *dev);
+	/** If true, do not apply PDC FW updates to this port */
+	bool no_fw_update;
 };
 
 /**
@@ -253,7 +255,7 @@ static void cmd_get_rdo(struct pdc_data_t *data);
 static void cmd_set_src_pdos(struct pdc_data_t *data);
 static void cmd_set_snk_pdos(struct pdc_data_t *data);
 static void cmd_get_ic_status(struct pdc_data_t *data);
-static int cmd_get_ic_status_sync_internal(const struct i2c_dt_spec *i2c,
+static int cmd_get_ic_status_sync_internal(struct pdc_config_t const *cfg,
 					   struct pdc_info_t *info);
 static void cmd_get_vbus_voltage(struct pdc_data_t *data);
 static void cmd_get_vdo(struct pdc_data_t *data);
@@ -435,7 +437,7 @@ static void st_init_run(void *o)
 	}
 
 	/* Pre-fetch PDC chip info and save it in the driver struct */
-	rv = cmd_get_ic_status_sync_internal(&cfg->i2c, &data->info);
+	rv = cmd_get_ic_status_sync_internal(cfg, &data->info);
 	if (rv) {
 		LOG_ERR("DR%d: Cannot obtain initial chip info (%d)",
 			cfg->connector_number, rv);
@@ -989,7 +991,7 @@ error_recovery:
  * @param info Output param for chip info
  * @return 0 on success or an error code
  */
-static int cmd_get_ic_status_sync_internal(const struct i2c_dt_spec *i2c,
+static int cmd_get_ic_status_sync_internal(struct pdc_config_t const *cfg,
 					   struct pdc_info_t *info)
 {
 	union reg_version version;
@@ -1002,25 +1004,25 @@ static int cmd_get_ic_status_sync_internal(const struct i2c_dt_spec *i2c,
 		return -EINVAL;
 	}
 
-	rv = tps_rd_version(i2c, &version);
+	rv = tps_rd_version(&cfg->i2c, &version);
 	if (rv) {
 		LOG_ERR("Failed to read version");
 		return rv;
 	}
 
-	rv = tps_rw_customer_use(i2c, &customer_val, I2C_MSG_READ);
+	rv = tps_rw_customer_use(&cfg->i2c, &customer_val, I2C_MSG_READ);
 	if (rv) {
 		LOG_ERR("Failed to read customer register");
 		return rv;
 	}
 
-	rv = tps_rw_tx_identity(i2c, &tx_identity, I2C_MSG_READ);
+	rv = tps_rw_tx_identity(&cfg->i2c, &tx_identity, I2C_MSG_READ);
 	if (rv) {
 		LOG_ERR("Failed to read Tx identity");
 		return rv;
 	}
 
-	rv = tps_rd_mode(i2c, &mode_reg);
+	rv = tps_rd_mode(&cfg->i2c, &mode_reg);
 	if (rv) {
 		LOG_ERR("Failed to read mode");
 		return rv;
@@ -1065,6 +1067,8 @@ static int cmd_get_ic_status_sync_internal(const struct i2c_dt_spec *i2c,
 		sizeof(info->driver_name));
 	info->driver_name[sizeof(info->driver_name) - 1] = '\0';
 
+	info->no_fw_update = cfg->no_fw_update;
+
 	return 0;
 }
 
@@ -1074,7 +1078,7 @@ static void cmd_get_ic_status(struct pdc_data_t *data)
 	struct pdc_config_t const *cfg = data->dev->config;
 	int rv;
 
-	rv = cmd_get_ic_status_sync_internal(&cfg->i2c, info);
+	rv = cmd_get_ic_status_sync_internal(cfg, info);
 	if (rv) {
 		LOG_ERR("Could not get chip info (%d)", rv);
 		goto error_recovery;
@@ -2189,6 +2193,7 @@ static void tps_thread(void *dev, void *unused1, void *unused2)
 		.bits.error = 1,                                               \
 		.bits.sink_path_status_change = 1,                             \
 		.create_thread = create_thread_##inst,                         \
+		.no_fw_update = DT_INST_PROP(inst, no_fw_update),              \
 	};                                                                     \
                                                                                \
 	DEVICE_DT_INST_DEFINE(inst, pdc_init, NULL, &pdc_data_##inst,          \

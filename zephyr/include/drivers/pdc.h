@@ -73,6 +73,8 @@ struct pdc_info_t {
 	char project_name[USB_PD_CHIP_INFO_PROJECT_NAME_LEN + 1];
 	/** Compat string of driver */
 	char driver_name[USB_PD_CHIP_INFO_DRIVER_NAME_LEN + 1];
+	/** If true, do not apply PDC FW updates to this port */
+	bool no_fw_update;
 	/** Extra information (optional) */
 	uint16_t extra;
 };

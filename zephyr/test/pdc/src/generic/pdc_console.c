@@ -611,6 +611,7 @@ static int custom_fake_pdc_power_mgmt_get_info(int port, struct pdc_info_t *out,
 		.running_in_flash_bank = 16,
 		.extra = 0xffff,
 		.driver_name = "driver_name",
+		.no_fw_update = true,
 	};
 
 	memcpy(out->project_name, get_info_project_name,
@@ -673,6 +674,7 @@ ZTEST_USER(console_cmd_pdc, test_info)
 	zassert_not_null(strstr(outbuffer, "Flash Bank: 16"));
 	zassert_not_null(strstr(outbuffer, "Project Name: 'ProjectName'"));
 	zassert_not_null(strstr(outbuffer, "Driver Name: 'driver_name'"));
+	zassert_not_null(strstr(outbuffer, "FW Update: N"));
 
 	RESET_FAKE(pdc_power_mgmt_get_info);
 

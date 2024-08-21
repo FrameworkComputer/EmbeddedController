@@ -63,7 +63,11 @@ static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 		/* Fill in V2-specific info. `fw_name_str` must be NUL-
 		 * terminated
 		 */
-		resp.fw_update_flags = 0;
+		if (pdc_info.no_fw_update) {
+			resp.fw_update_flags |=
+				USB_PD_CHIP_INFO_FWUP_FLAG_NO_UPDATE;
+		}
+
 		strncpy(resp.fw_name_str, pdc_info.project_name,
 			sizeof(resp.fw_name_str));
 	}
