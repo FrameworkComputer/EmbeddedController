@@ -463,6 +463,31 @@ static int emul_tps6699x_get_pdr(const struct emul *target, union pdr_t *pdr)
 	return 0;
 }
 
+static int
+emul_tps6699x_get_requested_power_level(const struct emul *target,
+					enum usb_typec_current_t *tcc)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+	const union reg_port_control *pdc_port_control =
+		(const union reg_port_control *)
+			data->reg_val[TPS6699X_REG_PORT_CONTROL];
+	const enum usb_typec_current_t convert[] = {
+		TC_CURRENT_USB_DEFAULT,
+		TC_CURRENT_1_5A,
+		TC_CURRENT_3_0A,
+	};
+
+	if (pdc_port_control->typec_current >= ARRAY_SIZE(convert)) {
+		return -EINVAL;
+	}
+
+	/* Convert back to EC type */
+	*tcc = convert[pdc_port_control->typec_current];
+
+	return 0;
+}
+
 static int emul_tps6699x_reset(const struct emul *target)
 {
 	struct tps6699x_emul_pdc_data *data =
@@ -498,7 +523,7 @@ static struct emul_pdc_api_t emul_tps6699x_api = {
 	.set_connector_status = emul_tps6699x_set_connector_status,
 	.get_uor = emul_tps6699x_get_uor,
 	.get_pdr = emul_tps6699x_get_pdr,
-	.get_requested_power_level = NULL,
+	.get_requested_power_level = emul_tps6699x_get_requested_power_level,
 	.get_ccom = NULL,
 	.get_drp_mode = NULL,
 	.get_sink_path = NULL,

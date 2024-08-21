@@ -1841,6 +1841,7 @@ static int rts54_set_power_level(const struct device *dev,
 
 	/* Map UCSI USB Type-C current to Realtek format */
 	switch (tcc) {
+	default:
 	case TC_CURRENT_PPM_DEFINED:
 		/* Realtek does not support this */
 		return -EINVAL;

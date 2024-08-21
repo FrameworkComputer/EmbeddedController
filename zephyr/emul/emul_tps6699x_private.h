@@ -17,6 +17,7 @@ enum tps6699x_reg_offset {
 	/* TODO(b/345292002): Fill out */
 	TPS6699X_REG_COMMAND_I2C1 = 0x8,
 	TPS6699X_REG_DATA_I2C1 = 0x9,
+	TPS6699X_REG_PORT_CONTROL = 0x29,
 	TPS6699X_NUM_REG = 0xa4,
 };
 
@@ -111,6 +112,55 @@ enum tps6699x_command_result {
 	COMMAND_RESULT_TIMEOUT = 1,
 	COMMAND_RESULT_REJECTED = 2,
 	COMMAND_RESULT_RX_LOCKED = 4,
+};
+
+union reg_port_control {
+	struct {
+		/* Bits 0 - 7 */
+		uint8_t typec_current : 2;
+		uint8_t reserved : 2;
+		uint8_t process_swap_to_sink : 1;
+		uint8_t initiate_swap_to_sink : 1;
+		uint8_t process_swap_to_source : 1;
+		uint8_t initiate_swap_to_source : 1;
+
+		/* Bits 8 - 15 */
+		uint8_t automatic_cap_request : 1;
+		uint8_t auto_alert_enable : 1;
+		uint8_t auto_pps_status_enable : 1;
+		uint8_t retimer_fw_update : 1;
+		uint8_t process_swap_to_ufp : 1;
+		uint8_t initiate_swap_to_ufp : 1;
+		uint8_t process_swap_to_dfp : 1;
+		uint8_t initiate_swap_to_dfp : 1;
+
+		/* Bits 16 - 23 */
+		uint8_t automatic_id_request : 1;
+		uint8_t am_intrusive_mode : 1;
+		uint8_t force_usb3_gen1 : 1;
+		uint8_t unconstrained_power : 1;
+		uint8_t enable_current_monitor : 1;
+		uint8_t sink_control_bit : 1;
+		uint8_t fw_swap_enabled : 1;
+		uint8_t reserved0 : 1;
+
+		/* Bits 24 - 31 */
+		uint8_t reserved2 : 5;
+		uint8_t usb_disable : 1;
+		uint8_t reserved3 : 2;
+
+		/* Bits 32 - 39 */
+		uint8_t enable_peak_current : 1;
+		uint8_t llim_threshold_hi : 4;
+		uint8_t deglitch_cnt_hi : 3;
+
+		/* Bits 40 - 47 */
+		uint8_t deglitch_cnt_lo : 3;
+		uint8_t vconn_current_limit : 2;
+		uint8_t level_shifter_direction_ctrl : 1;
+		uint8_t reserved4 : 2;
+	} __packed;
+	uint8_t raw_value[8];
 };
 
 #endif /* __EMUL_TPS6699X_PRIVATE_H_ */

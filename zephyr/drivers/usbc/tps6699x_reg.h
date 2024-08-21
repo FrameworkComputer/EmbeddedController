@@ -931,6 +931,13 @@ union reg_port_configuration {
 	uint8_t raw_value[19];
 };
 
+enum port_control_typec_current_t {
+	TI_TYPEC_DEFAULT = 0,
+	TI_1_5_A = 1,
+	TI_3_0_A = 2,
+	TI_RESERVED = 3,
+};
+
 /**
  * @brief 4.31 Port Control Register (Offset = 0x29)
  *

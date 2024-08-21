@@ -190,7 +190,7 @@ struct pdc_data_t {
 	/** PDC port control */
 	union reg_port_control pdc_port_control;
 	/** TypeC current */
-	enum usb_typec_current_t tcc;
+	enum port_control_typec_current_t tcc;
 	/** Sink FET enable */
 	bool snk_fet_en;
 	/** Connector reset type */
@@ -727,22 +727,7 @@ static void cmd_set_tpc_rp(struct pdc_data_t *data)
 		goto error_recovery;
 	}
 
-	/* Modify */
-	switch (data->tcc) {
-	case TC_CURRENT_PPM_DEFINED:
-		LOG_ERR("Unsupported type: TC_CURRENT_PPM_DEFINED");
-		set_state(data, ST_IDLE);
-		return;
-	case TC_CURRENT_3_0A:
-		pdc_port_control.typec_current = 2;
-		break;
-	case TC_CURRENT_1_5A:
-		pdc_port_control.typec_current = 1;
-		break;
-	case TC_CURRENT_USB_DEFAULT:
-		pdc_port_control.typec_current = 0;
-		break;
-	}
+	pdc_port_control.typec_current = data->tcc;
 
 	/* Write PDC port control */
 	rv = tps_rw_port_control(&cfg->i2c, &pdc_port_control, I2C_MSG_WRITE);
@@ -1649,7 +1634,22 @@ static int tps_set_power_level(const struct device *dev,
 {
 	struct pdc_data_t *data = dev->data;
 
-	data->tcc = tcc;
+	/* Sanitize and convert input */
+	switch (tcc) {
+	case TC_CURRENT_3_0A:
+		data->tcc = TI_3_0_A;
+		break;
+	case TC_CURRENT_1_5A:
+		data->tcc = TI_1_5_A;
+		break;
+	case TC_CURRENT_USB_DEFAULT:
+		data->tcc = TI_TYPEC_DEFAULT;
+		break;
+	case TC_CURRENT_PPM_DEFINED:
+	default:
+		LOG_ERR("Unsupported type: %u", tcc);
+		return -EINVAL;
+	}
 
 	return tps_post_command(dev, CMD_SET_TPC_RP, NULL);
 }
