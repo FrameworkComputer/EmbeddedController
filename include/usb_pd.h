@@ -734,6 +734,38 @@ struct rmdo {
 /* Confirm RMDO is 32 bits. */
 BUILD_ASSERT(sizeof(struct rmdo) == 4);
 
+/* Sink Capabilities Extended Data Block (SKEDB) */
+struct skedb {
+	uint16_t vid;
+	uint16_t pid;
+	uint32_t xid;
+	uint8_t fw_version;
+	uint8_t hw_version;
+	uint8_t skedb_version;
+	uint8_t load_step;
+	uint16_t sink_load_characteristics;
+	uint8_t compliance;
+	uint8_t touch_temp;
+	uint8_t battery_info;
+	uint8_t sink_modes;
+	uint8_t sink_minimum_pdp;
+	uint8_t sink_operational_pdp;
+	uint8_t sink_maximum_pdp;
+	uint8_t epr_sink_minimum_pdp;
+	uint8_t epr_sink_operational_pdp;
+	uint8_t epr_sink_maximum_pdp;
+} __packed;
+
+/* skedb.sink_modes bit field */
+#define SKEDB_SINK_PPS_CHARGING_SUPPORTED BIT(0)
+#define SKEDB_SINK_VBUS_POWERED BIT(1)
+#define SKEDB_SINK_MAINS_POWERED BIT(2)
+#define SKEDB_SINK_BATTERY_POWERED BIT(3)
+#define SKEDB_SINK_BATTERY_ESSENTIALLY_UNLIMITED BIT(4)
+#define SKEDB_SINK_AVS_SUPPORTED BIT(5)
+
+BUILD_ASSERT(sizeof(struct skedb) == 24);
+
 /*
  * Message id starts from 0 to 7. If last_msg_id is initialized to 0,
  * it will lead to repetitive message id with first received packet,

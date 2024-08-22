@@ -293,6 +293,8 @@ enum usb_pe_state {
 	PE_VCS_FORCE_VCONN, /* pe-st77 */
 	PE_GET_REVISION, /* pe-st78 */
 	PE_GIVE_REVISION, /* pe-st79 */
+	PE_SNK_GIVE_SINK_CAP_EXT, /* pe-st80 */
+	PE_DR_SRC_GIVE_SINK_CAP_EXT, /* pe-st81 */
 
 	/* EPR states */
 	PE_SNK_SEND_EPR_MODE_ENTRY,
@@ -421,6 +423,8 @@ __maybe_unused static __const_data const char *const pe_state_names[] = {
 	[PE_GIVE_STATUS] = "PE_Give_Status",
 	[PE_SEND_ALERT] = "PE_Send_Alert",
 	[PE_ALERT_RECEIVED] = "PE_Alert_Received",
+	[PE_SNK_GIVE_SINK_CAP_EXT] = "PE_SNK_Give_Sink_Cap_Ext",
+	[PE_DR_SRC_GIVE_SINK_CAP_EXT] = "PE_DR_SRC_Give_Sink_Cap_Ext",
 #else
 	[PE_SRC_CHUNK_RECEIVED] = "PE_SRC_Chunk_Received",
 	[PE_SNK_CHUNK_RECEIVED] = "PE_SNK_Chunk_Received",
@@ -3056,6 +3060,9 @@ static void pe_src_ready_run(int port)
 			case PD_CTRL_GET_STATUS:
 				set_state_pe(port, PE_GIVE_STATUS);
 				return;
+			case PD_CTRL_GET_SINK_CAP_EXT:
+				set_state_pe(port, PE_DR_SRC_GIVE_SINK_CAP_EXT);
+				return;
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 #ifdef CONFIG_USB_PD_REV30
 			case PD_CTRL_GET_REVISION:
@@ -3980,6 +3987,9 @@ static void pe_snk_ready_run(int port)
 			case PD_CTRL_GET_STATUS:
 				set_state_pe(port, PE_GIVE_STATUS);
 				return;
+			case PD_CTRL_GET_SINK_CAP_EXT:
+				set_state_pe(port, PE_SNK_GIVE_SINK_CAP_EXT);
+				return;
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 			case PD_CTRL_NOT_SUPPORTED:
 				/* Do nothing */
@@ -4711,6 +4721,65 @@ static void pe_give_status_run(int port)
 		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_DISCARDED);
 		pe_send_soft_reset(port, TCPCI_MSG_SOP);
+	}
+}
+
+/**
+ * PE_SNK_Give_Sink_Cap_Ext and
+ * PE_DR_SRC_Give_Sink_Cap_Ext
+ */
+__maybe_unused static void pe_give_sink_cap_ext_entry(int port)
+{
+	struct skedb skedb = {};
+
+	skedb.vid = USB_VID_GOOGLE;
+	skedb.pid = CONFIG_USB_PID;
+#ifdef CONFIG_ZEPHYR /* USB_PD_XID is not defined in CrosEC */
+	skedb.xid = CONFIG_USB_PD_XID;
+#endif
+	skedb.fw_version = 0;
+	skedb.hw_version = 0;
+	skedb.skedb_version = 1; /* version 1.0 */
+	skedb.load_step = 0; /* 150mA/us (default) */
+	skedb.sink_load_characteristics = 0; /* default */
+	skedb.compliance = 0;
+	skedb.touch_temp = 0; /* Not applicable */
+	skedb.sink_modes = SKEDB_SINK_VBUS_POWERED;
+#ifdef CONFIG_BATTERY
+	skedb.battery_info = 1;
+	skedb.sink_modes |= SKEDB_SINK_BATTERY_POWERED;
+#endif
+#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
+	skedb.sink_modes |= SKEDB_SINK_MAINS_POWERED;
+#endif
+	skedb.sink_minimum_pdp = DIV_ROUND_UP(PD_OPERATING_POWER_MW, 1000);
+	skedb.sink_operational_pdp = DIV_ROUND_UP(PD_OPERATING_POWER_MW, 1000);
+	skedb.sink_maximum_pdp = DIV_ROUND_UP(PD_MAX_POWER_MW, 1000);
+
+#ifdef CONFIG_USB_PD_EPR
+	skedb.epr_sink_minimum_pdp = DIV_ROUND_UP(PD_OPERATING_POWER_MW, 1000);
+	skedb.epr_sink_operational_pdp =
+		DIV_ROUND_UP(PD_OPERATING_POWER_MW, 1000);
+	skedb.epr_sink_maximum_pdp = DIV_ROUND_UP(PD_MAX_POWER_MW, 1000);
+#endif
+
+	tx_emsg[port].len = sizeof(skedb);
+
+	memcpy(tx_emsg[port].buf, &skedb, sizeof(skedb));
+
+	send_ext_data_msg(port, TCPCI_MSG_SOP, PD_EXT_SINK_CAP);
+}
+
+__maybe_unused static void pe_give_sink_cap_ext_run(int port)
+{
+	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+		pe_set_ready_state(port);
+		return;
+	}
+
+	if (pe_check_outgoing_discard(port)) {
+		return;
 	}
 }
 
@@ -8839,6 +8908,14 @@ static __const_data const struct usb_state pe_states[] = {
 	},
 	[PE_ALERT_RECEIVED] = {
 		.entry = pe_alert_received_entry,
+	},
+	[PE_SNK_GIVE_SINK_CAP_EXT] = {
+		.entry = pe_give_sink_cap_ext_entry,
+		.run   = pe_give_sink_cap_ext_run,
+	},
+	[PE_DR_SRC_GIVE_SINK_CAP_EXT] = {
+		.entry = pe_give_sink_cap_ext_entry,
+		.run   = pe_give_sink_cap_ext_run,
 	},
 #else
 	[PE_SRC_CHUNK_RECEIVED] = {

@@ -207,6 +207,9 @@ struct tcpci_partner_data {
 	 * the source or sink partner.
 	 */
 	struct tcpci_cable_data *cable;
+	/* SKEDB returned by partner in response to a Get_Sink_Cap_Extended
+	 * message */
+	struct skedb skedb;
 };
 
 struct tcpci_cable_data {
