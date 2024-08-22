@@ -2759,11 +2759,24 @@ void pdc_power_mgmt_set_new_power_request(int port)
 
 uint8_t pdc_power_mgmt_get_task_state(int port)
 {
+	enum pdc_state_t indicated_state, actual_state;
+
 	if (!is_pdc_port_valid(port)) {
 		return PDC_UNATTACHED;
 	}
 
-	return get_pdc_state(&pdc_data[port]->port);
+	actual_state = get_pdc_state(&pdc_data[port]->port);
+
+	switch (actual_state) {
+	case PDC_SEND_CMD_START:
+	case PDC_SEND_CMD_WAIT:
+		indicated_state = pdc_data[port]->port.send_cmd_return_state;
+		break;
+	default:
+		indicated_state = actual_state;
+	}
+
+	return indicated_state;
 }
 
 int pdc_power_mgmt_comm_is_enabled(int port)
@@ -3090,20 +3103,9 @@ test_mockable const uint32_t *const pdc_power_mgmt_get_src_caps(int port)
 
 test_mockable const char *pdc_power_mgmt_get_task_state_name(int port)
 {
-	enum pdc_state_t indicated_state,
-		actual_state = get_pdc_state(&pdc_data[port]->port);
+	enum pdc_state_t state = pdc_power_mgmt_get_task_state(port);
 
-	/* For a transitional state, report the return-to state instead */
-	switch (actual_state) {
-	case PDC_SEND_CMD_START:
-	case PDC_SEND_CMD_WAIT:
-		indicated_state = pdc_data[port]->port.send_cmd_return_state;
-		break;
-	default:
-		indicated_state = actual_state;
-	}
-
-	return pdc_state_names[indicated_state];
+	return pdc_state_names[state];
 }
 
 test_mockable void pdc_power_mgmt_set_dual_role(int port,
