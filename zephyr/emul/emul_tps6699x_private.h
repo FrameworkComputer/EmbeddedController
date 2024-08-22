@@ -17,6 +17,7 @@ enum tps6699x_reg_offset {
 	/* TODO(b/345292002): Fill out */
 	TPS6699X_REG_COMMAND_I2C1 = 0x8,
 	TPS6699X_REG_DATA_I2C1 = 0x9,
+	TPS6699X_REG_PORT_CONFIGURATION = 0x28,
 	TPS6699X_REG_PORT_CONTROL = 0x29,
 	TPS6699X_REG_ADC_RESULTS = 0x6a,
 	TPS6699X_NUM_REG = 0xa4,
@@ -114,6 +115,60 @@ enum tps6699x_command_result {
 	COMMAND_RESULT_REJECTED = 2,
 	COMMAND_RESULT_RX_LOCKED = 4,
 };
+
+union reg_port_configuration {
+	struct {
+		uint8_t typec_state_machine : 2;
+		uint8_t crossbar_type : 1;
+		uint8_t reserved0 : 4;
+		uint8_t pp_ext_active_low : 1;
+
+		uint8_t typec_support_options : 2;
+		uint8_t disable_pd : 1;
+		uint8_t usb_communication_capable : 1;
+		uint8_t debug_accessory_support : 1;
+		uint8_t usb3_rate : 2;
+		uint8_t crossbar_i2c_controller_enable : 1;
+
+		uint8_t vbus_ovp_usage : 2;
+		uint8_t soft_start : 2;
+		uint8_t ovp_for_pp5v : 2;
+		uint8_t crossbar_config_type1_extened : 1;
+		uint8_t remove_safe_state_between_usb3_to_dp_transition : 1;
+
+		uint8_t vbus_sink_vp_trip_hv : 3;
+		uint8_t apdo_vbus_uvp_threshold : 2;
+		uint8_t apdo_ilim_over_shoot : 2;
+		uint8_t reserved1 : 1;
+
+		uint16_t apdo_vbus_uvp_trip_point_offset : 16;
+
+		uint16_t vbus_for_valid_pps_status : 16;
+
+		uint8_t external_dcdc_type : 8;
+
+		uint8_t sink_mode_i2c_irq_config : 1;
+		uint8_t reserved2 : 7;
+
+		uint16_t greater_than_threshold_voltage : 16;
+
+		uint8_t reserved3 : 8;
+		uint8_t reserved4 : 8;
+		uint8_t reserved5 : 8;
+
+		uint8_t reserved6 : 4;
+		uint8_t enable_internal_aux_biasing : 1;
+		uint8_t enable_internal_level_shifter : 1;
+		uint8_t level_shifter_direction_cfg : 2;
+
+		uint8_t sbu_mux_debug_setting : 3;
+		uint8_t sbu_mux_default_setting : 3;
+		uint8_t sbu_mux_usage : 2;
+
+	} __packed;
+	uint8_t raw_value[17];
+};
+BUILD_ASSERT(sizeof(union reg_port_configuration) == 17);
 
 union reg_port_control {
 	struct {

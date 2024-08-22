@@ -532,6 +532,35 @@ static int emul_tps6699x_get_ccom(const struct emul *target, enum ccom_t *ccom)
 	return 0;
 }
 
+static int emul_tps6699x_get_drp_mode(const struct emul *target,
+				      enum drp_mode_t *dm)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	const union reg_port_configuration *pdc_port_cfg =
+		(const union reg_port_configuration *)
+			data->reg_val[TPS6699X_REG_PORT_CONFIGURATION];
+
+	*dm = pdc_port_cfg->typec_support_options;
+
+	return 0;
+}
+
+static int emul_tps6699x_get_supported_drp_modes(const struct emul *target,
+						 enum drp_mode_t *dm,
+						 uint8_t size, uint8_t *num)
+{
+	enum drp_mode_t supported[] = { DRP_NORMAL, DRP_TRY_SRC };
+
+	memcpy(dm, supported,
+	       sizeof(enum drp_mode_t) * MIN(size, ARRAY_SIZE(supported)));
+
+	*num = ARRAY_SIZE(supported);
+
+	return 0;
+}
+
 static int emul_tps6699x_reset(const struct emul *target)
 {
 	struct tps6699x_emul_pdc_data *data =
@@ -569,7 +598,8 @@ static struct emul_pdc_api_t emul_tps6699x_api = {
 	.get_pdr = emul_tps6699x_get_pdr,
 	.get_requested_power_level = emul_tps6699x_get_requested_power_level,
 	.get_ccom = emul_tps6699x_get_ccom,
-	.get_drp_mode = NULL,
+	.get_drp_mode = emul_tps6699x_get_drp_mode,
+	.get_supported_drp_modes = emul_tps6699x_get_supported_drp_modes,
 	.get_sink_path = NULL,
 	.get_reconnect_req = NULL,
 	.pulse_irq = NULL,

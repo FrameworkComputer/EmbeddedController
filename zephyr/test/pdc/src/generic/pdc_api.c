@@ -315,17 +315,20 @@ ZTEST_USER(pdc_api, test_set_ccom)
 	}
 }
 
-/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_set_drp_mode)
 {
 	int i;
 	enum drp_mode_t dm_in[] = { DRP_NORMAL, DRP_TRY_SRC, DRP_TRY_SNK };
+	uint8_t num_modes = ARRAY_SIZE(dm_in);
 	enum drp_mode_t dm_out;
+
+	/* Emulator may not support this so defaults above should be used. */
+	(void)emul_pdc_get_supported_drp_modes(emul, dm_in, ARRAY_SIZE(dm_in),
+					       &num_modes);
 
 	k_sleep(K_MSEC(SLEEP_MS));
 
-	for (i = 0; i < ARRAY_SIZE(dm_in); i++) {
+	for (i = 0; i < num_modes; i++) {
 		zassert_ok(pdc_set_drp_mode(dev, dm_in[i]));
 
 		k_sleep(K_MSEC(SLEEP_MS));
@@ -334,6 +337,8 @@ ZTEST_USER(pdc_api, test_set_drp_mode)
 	}
 }
 
+/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
+#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_set_sink_path)
 {
 	int i;
