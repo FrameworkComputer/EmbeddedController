@@ -4,8 +4,8 @@
  */
 /* ELAN Platform Abstraction Layer callbacks */
 
-#ifndef ELAN_SENSOR_PAL_H_
-#define ELAN_SENSOR_PAL_H_
+#ifndef __CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SENSOR_PAL_H_
+#define __CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SENSOR_PAL_H_
 
 #include "common.h"
 
@@ -178,4 +178,5 @@ int elan_set_hv_chip(bool state);
  * @return 0 on success, negative on error
  */
 __staticlib_hook int elan_usleep(unsigned int us);
-#endif
+
+#endif /* __CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SENSOR_PAL_H_ */

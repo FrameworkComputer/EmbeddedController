@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef ELAN_SETTING_H
-#define ELAN_SETTING_H
+#ifndef __CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SETTINGS_H_
+#define __CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SETTINGS_H_
 
 #include "common.h"
 #include "elan_misc.h"
@@ -118,4 +118,4 @@ __staticlib int elan_register_initialization(void);
  */
 __staticlib int elan_calibration(void);
 
-#endif /* _ELAN_SETTING_H */
+#endif /* __CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SETTINGS_H_ */
