@@ -152,6 +152,28 @@ static void tps699x_emul_set_pdr(struct tps6699x_emul_pdc_data *data,
 	data->pdr = *pdr;
 }
 
+static void tps699x_emul_set_ccom(struct tps6699x_emul_pdc_data *data,
+				  const void *in)
+{
+	const struct ti_ccom *ccom = in;
+	data->response.result = COMMAND_RESULT_SUCCESS;
+
+	switch (ccom->cc_operation_mode) {
+	case 1:
+		data->ccom = CCOM_RP;
+		break;
+	case 2:
+		data->ccom = CCOM_RD;
+		break;
+	case 4:
+		data->ccom = CCOM_DRP;
+		break;
+	default:
+		LOG_ERR("Unexpected ccom = %u", ccom->cc_operation_mode);
+		break;
+	}
+}
+
 static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
 				      uint8_t *data_reg)
 {
@@ -191,6 +213,9 @@ static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
 		break;
 	case UCSI_SET_PDR:
 		tps699x_emul_set_pdr(data, (union pdr_t *)&data_reg[2]);
+		break;
+	case UCSI_SET_CCOM:
+		tps699x_emul_set_ccom(data, &data_reg[2]);
 		break;
 	default:
 		LOG_WRN("tps6699x_emul: Unimplemented UCSI command %#04x", cmd);
@@ -497,6 +522,16 @@ emul_tps6699x_get_requested_power_level(const struct emul *target,
 	return 0;
 }
 
+static int emul_tps6699x_get_ccom(const struct emul *target, enum ccom_t *ccom)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	*ccom = data->ccom;
+
+	return 0;
+}
+
 static int emul_tps6699x_reset(const struct emul *target)
 {
 	struct tps6699x_emul_pdc_data *data =
@@ -533,7 +568,7 @@ static struct emul_pdc_api_t emul_tps6699x_api = {
 	.get_uor = emul_tps6699x_get_uor,
 	.get_pdr = emul_tps6699x_get_pdr,
 	.get_requested_power_level = emul_tps6699x_get_requested_power_level,
-	.get_ccom = NULL,
+	.get_ccom = emul_tps6699x_get_ccom,
 	.get_drp_mode = NULL,
 	.get_sink_path = NULL,
 	.get_reconnect_req = NULL,

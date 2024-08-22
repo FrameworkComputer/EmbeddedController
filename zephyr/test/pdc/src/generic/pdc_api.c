@@ -298,8 +298,6 @@ ZTEST_USER(pdc_api, test_get_bus_voltage)
 	zassert_equal(pdc_get_vbus_voltage(dev, NULL), -EINVAL);
 }
 
-/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_set_ccom)
 {
 	int i;
@@ -317,6 +315,8 @@ ZTEST_USER(pdc_api, test_set_ccom)
 	}
 }
 
+/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
+#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_set_drp_mode)
 {
 	int i;
