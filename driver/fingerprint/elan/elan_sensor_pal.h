@@ -9,6 +9,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* ELAN error codes */
 enum elan_error_code {
 	ELAN_ERROR_NONE = 0,
@@ -178,5 +182,9 @@ int elan_set_hv_chip(bool state);
  * @return 0 on success, negative on error
  */
 __staticlib_hook int elan_usleep(unsigned int us);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SENSOR_PAL_H_ */

@@ -11,6 +11,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* The hardware ID information and FW version */
 #define VID 0x04F3
 #define PID 0x0903
@@ -117,5 +121,9 @@ __staticlib int elan_register_initialization(void);
  *         negative value on error.
  */
 __staticlib int elan_calibration(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SETTINGS_H_ */
