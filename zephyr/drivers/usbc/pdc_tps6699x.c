@@ -1790,6 +1790,9 @@ static int tps_get_bus_info(const struct device *dev,
 
 static int tps_get_vbus_voltage(const struct device *dev, uint16_t *voltage)
 {
+	if (voltage == NULL) {
+		return -EINVAL;
+	}
 	return tps_post_command(dev, CMD_GET_VBUS_VOLTAGE, voltage);
 }
 

@@ -18,6 +18,7 @@ enum tps6699x_reg_offset {
 	TPS6699X_REG_COMMAND_I2C1 = 0x8,
 	TPS6699X_REG_DATA_I2C1 = 0x9,
 	TPS6699X_REG_PORT_CONTROL = 0x29,
+	TPS6699X_REG_ADC_RESULTS = 0x6a,
 	TPS6699X_NUM_REG = 0xa4,
 };
 
@@ -161,6 +162,34 @@ union reg_port_control {
 		uint8_t reserved4 : 2;
 	} __packed;
 	uint8_t raw_value[8];
+};
+
+union reg_adc_results {
+	struct {
+		uint16_t pa_vbus : 16;
+		uint16_t pa_cc1 : 16;
+		uint16_t pa_cc2 : 16;
+		uint16_t i_pa_pp5v : 16;
+		uint16_t i_pa_vbus_avg : 16;
+		uint16_t i_pa_vbus_peak : 16;
+		uint16_t reserved0 : 16;
+		uint16_t reserved1 : 16;
+		uint16_t pb_vbus : 16;
+		uint16_t pb_cc1 : 16;
+		uint16_t pb_cc2 : 16;
+		uint16_t i_pb_pp5v : 16;
+		uint16_t i_pb_vbus_avg : 16;
+		uint16_t i_pb_vbus_peak : 16;
+		uint16_t reserved2[10];
+		uint16_t ldo_3v3 : 16;
+		uint16_t adc_in : 16;
+		uint16_t p1_gpio0 : 16;
+		uint16_t p1_gpio1 : 16;
+		uint16_t p1_gpio2 : 16;
+		uint16_t band_gap_temp : 16;
+		uint16_t reserved3 : 16;
+	} __packed;
+	uint8_t raw_value[64];
 };
 
 #endif /* __EMUL_TPS6699X_PRIVATE_H_ */

@@ -437,8 +437,17 @@ static int emul_tps6699x_set_connector_status(
 {
 	struct tps6699x_emul_pdc_data *data =
 		tps6699x_emul_get_pdc_data(target);
+	union reg_adc_results *adc_results =
+		(union reg_adc_results *)data->reg_val[TPS6699X_REG_ADC_RESULTS];
+	uint16_t voltage;
 
 	data->connector_status = *connector_status;
+
+	voltage = data->connector_status.voltage_reading *
+		  data->connector_status.voltage_scale * 5;
+	LOG_INF("Setting adc_results %u", voltage);
+	adc_results->pa_vbus = voltage;
+	adc_results->pb_vbus = voltage;
 
 	return 0;
 }
