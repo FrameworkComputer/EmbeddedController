@@ -4,7 +4,6 @@
 
 """Component Manifest Engine"""
 
-import collections
 from copy import deepcopy
 import json
 import logging
@@ -14,6 +13,7 @@ from typing import List, Optional
 
 import zmake.version
 
+from scripts import chip_id
 from scripts import util
 
 
@@ -72,274 +72,18 @@ CTYPE_SUFFIXES = {
     "charger": [],  # chargers do not use suffixes
     "als": ["clear"],
     "accel": ["accel", "gyro"],
+    "mux": [],
 }
 
-# A namedtuple to store the information for each compatible
-CompatibleInfo = collections.namedtuple(
-    "CompatibleInfo", ["name", "pid_low_expect", "pid_high_expect"]
-)
-
-# A Dictionary that stores additional information that may not be stored based
-# on their compatible.
-DISAMBIGUATION_DICTIONARY = {
-    "cros-ec,bma4xx": [
-        CompatibleInfo(
-            "bosch,bma422",
-            {
-                "reg": "0x00",
-                "mask": "0xff",
-                "value": "0x12",
-            },
-            None,
-        ),
-    ],
-    "cros-ec,bma255": [
-        CompatibleInfo(
-            "bosch,bma255",
-            None,
-            None,
-        ),
-    ],
-    "cros-ec,bmi3xx": [
-        CompatibleInfo(
-            "bosch,bmi323",
-            {
-                "reg": "0x00",
-                "mask": "0xff",
-                "value": "0x43",
-            },
-            None,
-        ),
-    ],
-    "cros-ec,bmi160": [
-        CompatibleInfo(
-            "bosch,bmi160",
-            {
-                "reg": "0x00",
-                "mask": "0xff",
-                "value": "0xd1",
-            },
-            None,
-        ),
-        CompatibleInfo(
-            "bosch,bmi168",
-            {
-                "reg": "0x00",
-                "mask": "0xff",
-                "value": "0xd2",
-            },
-            None,
-        ),
-    ],
-    "cros-ec,bmi260": [
-        CompatibleInfo(
-            "bosch,bmi260",
-            {
-                "reg": "0x00",
-                "mask": "0xff",
-                "value": "0x27",
-            },
-            None,
-        ),
-        CompatibleInfo(
-            "bosch,bmi220",
-            {
-                "reg": "0x00",
-                "mask": "0xff",
-                "value": "0x26",
-            },
-            None,
-        ),
-    ],
-    "cros-ec,icm426xx": [
-        CompatibleInfo(
-            "invensense,icm42608",
-            {
-                "reg": "0x75",
-                "mask": "0xff",
-                "value": "0x39",
-            },
-            None,
-        ),
-        CompatibleInfo(
-            "invensense,icm42605",
-            {
-                "reg": "0x75",
-                "mask": "0xff",
-                "value": "0x42",
-            },
-            None,
-        ),
-    ],
-    "cros-ec,icm42607": [
-        CompatibleInfo(
-            "invensense,icm42607p",
-            {
-                "reg": "0x75",
-                "mask": "0xff",
-                "value": "0x60",
-            },
-            None,
-        ),
-        CompatibleInfo(
-            "invensense,icm42608p",
-            {
-                "reg": "0x75",
-                "mask": "0xff",
-                "value": "0x3f",
-            },
-            None,
-        ),
-    ],
-    "cros-ec,kx022": [
-        CompatibleInfo(
-            "kionix,kx022",
-            None,
-            None,
-        ),
-    ],
-    "cros-ec,lis2de": [
-        CompatibleInfo(
-            "st,lis2de",
-            None,
-            None,
-        ),
-    ],
-    "cros-ec,lis2ds": [
-        CompatibleInfo(
-            "st,lis2ds",
-            None,
-            None,
-        ),
-    ],
-    "cros-ec,lis2dw12": [
-        CompatibleInfo(
-            "st,lis2dw12",
-            None,
-            None,
-        ),
-    ],
-    "cros-ec,lsm6dsm": [
-        CompatibleInfo(
-            "st,lsm6dsm",
-            {
-                "reg": "0x0f",
-                "mask": "0xff",
-                "value": "0x6a",
-            },
-            None,
-        ),
-        CompatibleInfo(
-            "st,lsm6ds3",
-            {
-                "reg": "0x0f",
-                "mask": "0xff",
-                "value": "0x69",
-            },
-            None,
-        ),
-    ],
-    "cros-ec,lsm6dso": [
-        CompatibleInfo(
-            "st,lsm6dso",
-            None,
-            None,
-        ),
-    ],
-    "cros-ec,tcs3400": [
-        CompatibleInfo(
-            "ams,tcs3400",
-            None,
-            None,
-        ),
-    ],
-    "parade,ps8xxx": [
-        CompatibleInfo(
-            "parade,ps8705",
-            {
-                "reg": "0x02",
-                "mask": "0xff",
-                "value": "0x05",
-            },
-            {
-                "reg": "0x03",
-                "mask": "0xff",
-                "value": "0x87",
-            },
-        ),
-        CompatibleInfo(
-            "parade,ps8745",
-            {
-                "reg": "0x02",
-                "mask": "0xff",
-                "value": "0x45",
-            },
-            {
-                "reg": "0x03",
-                "mask": "0xff",
-                "value": "0x87",
-            },
-        ),
-        CompatibleInfo(
-            "parade,ps8741",
-            {
-                "reg": "0x02",
-                "mask": "0xff",
-                "value": "0x51",
-            },
-            {
-                "reg": "0x03",
-                "mask": "0xff",
-                "value": "0x87",
-            },
-        ),
-        CompatibleInfo(
-            "parade,ps8755",
-            {
-                "reg": "0x02",
-                "mask": "0xff",
-                "value": "0x55",
-            },
-            {
-                "reg": "0x03",
-                "mask": "0xff",
-                "value": "0x87",
-            },
-        ),
-        CompatibleInfo(
-            "parade,ps8805",
-            {
-                "reg": "0x02",
-                "mask": "0xff",
-                "value": "0x05",
-            },
-            {
-                "reg": "0x03",
-                "mask": "0xff",
-                "value": "0x88",
-            },
-        ),
-        CompatibleInfo(
-            "parade,ps8815",
-            {
-                "reg": "0x02",
-                "mask": "0xff",
-                "value": "0x15",
-            },
-            {
-                "reg": "0x03",
-                "mask": "0xff",
-                "value": "0x88",
-            },
-        ),
-    ],
-    "nuvoton,nct38xx": [
-        CompatibleInfo(
-            "nuvoton,nct380x",
-            None,
-            None,
-        ),
-    ],
+CTYPE_PREFFIXES = {
+    "pdc": [],
+    "ppc": [],
+    "tcpc": [],
+    "bc12": [],
+    "charger": [],
+    "als": [],
+    "accel": [],
+    "mux": ["mux", "usbc", "amd"],
 }
 
 
@@ -410,13 +154,15 @@ def disambiguify(component):
     ret = []
 
     name = component["component_name"]
-    if name in DISAMBIGUATION_DICTIONARY:
-        for comp_info in DISAMBIGUATION_DICTIONARY[name]:
+    if name in chip_id.DISAMBIGUATION_DICTIONARY:
+        for comp_info in chip_id.DISAMBIGUATION_DICTIONARY[name]:
             new_comp = deepcopy(component)
             new_comp["component_name"] = comp_info.name
 
             insert_expect("i2c", new_comp, comp_info.pid_low_expect)
             insert_expect("i2c", new_comp, comp_info.pid_high_expect)
+            insert_expect("i2c", new_comp, comp_info.did_low_expect)
+            insert_expect("i2c", new_comp, comp_info.did_high_expect)
 
             ret.append(new_comp)
     else:
@@ -649,22 +395,33 @@ def compatible_name_parser(ctype, name):
         Corrected component name
     """
 
-    compatible = name.rsplit("-", 1)
-    if len(compatible) > 1:
-        for suffix in CTYPE_SUFFIXES[ctype]:
-            if compatible[1] == suffix:
-                return compatible[0]
+    vendor, compatible = name.split(",", 1)
+
+    chip = compatible.split("-", 1)
+
+    while len(chip) > 1:
+        if chip[0] in CTYPE_PREFFIXES[ctype]:
+            compatible = chip[1]
+            chip = compatible.split("-", 1)
+        else:
+            break
+
+    chip = compatible.rsplit("-", 1)
+    if len(chip) > 1:
+        if chip[1] in CTYPE_SUFFIXES[ctype]:
+            compatible = chip[0]
 
     # TODO: add more cases for other compatibles as need arrises.
 
     # it is valid for compatibles to have a hyphen without any ctype
-    return name
+    return vendor + "," + compatible
 
 
 def insert_i2c_component(ctype, node, usbc_port, i2c_portmap, manifest):
     """Insert the I2C component to the manifest.
 
     Args:
+        ctype: type of component
         node: Devicetree node object.
         usbc_port: USB-C port number
         i2c_portmap: Dict of the mapping from I2C name to remote port number.
@@ -682,11 +439,6 @@ def insert_i2c_component(ctype, node, usbc_port, i2c_portmap, manifest):
 
     if not node_is_valid(node, i2c_node, i2c_portmap):
         return
-
-    # TODO(b/308031064): Add the probe methods if multiple components share the
-    # same compatible. These components need to be identified.
-
-    # TODO(b/308031075): Add the SSFC field.
 
     manifest.insert_component(
         ctype,
@@ -742,6 +494,14 @@ def iterate_usbc_components(edtlib, edt, i2c_portmap, manifest):
         if "pdc" in node.props:
             pdc = node.props["pdc"].val
             insert_i2c_component("pdc", pdc, port, i2c_portmap, manifest)
+
+        for mux_chain in node.children.values():
+            if "usb-muxes" in mux_chain.props:
+                muxes_list = mux_chain.props["usb-muxes"].val
+                for mux in muxes_list:
+                    insert_i2c_component(
+                        "mux", mux, port, i2c_portmap, manifest
+                    )
 
 
 def insert_motionsense_component(

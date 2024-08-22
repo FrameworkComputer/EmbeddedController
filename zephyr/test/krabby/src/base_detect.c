@@ -52,9 +52,28 @@ static void *base_detect_setup(void)
 	return NULL;
 }
 
-ZTEST_SUITE(baes_detect, NULL, base_detect_setup, NULL, NULL, NULL);
+ZTEST_SUITE(base_detect, NULL, base_detect_setup, NULL, NULL, NULL);
 
-ZTEST(baes_detect, test_base_detect_startup)
+ZTEST(base_detect, test_init_attach_detach)
+{
+	const struct device *adc_dev = DEVICE_DT_GET(DT_NODELABEL(adc0));
+	const uint8_t adc_channel =
+		DT_IO_CHANNELS_INPUT(DT_NODELABEL(adc_base_det));
+
+	zassert_ok(adc_emul_const_value_set(adc_dev, adc_channel,
+					    ATTACH_MAX_THRESHOLD_MV));
+	k_sleep(K_MSEC(1000));
+	hook_notify(HOOK_INIT);
+	zassert_true(base_get_state());
+
+	zassert_ok(adc_emul_const_value_set(adc_dev, adc_channel,
+					    UNATTACH_THRESHOLD_MV));
+	k_sleep(K_MSEC(1000));
+	hook_notify(HOOK_INIT);
+	zassert_false(base_get_state());
+}
+
+ZTEST(base_detect, test_base_detect_startup)
 {
 	const struct device *adc_dev = DEVICE_DT_GET(DT_NODELABEL(adc0));
 	const uint8_t adc_channel =
@@ -77,7 +96,7 @@ ZTEST(baes_detect, test_base_detect_startup)
 	zassert_equal(1, tablet_get_mode());
 }
 
-ZTEST(baes_detect, test_base_detect_shutdown)
+ZTEST(base_detect, test_base_detect_shutdown)
 {
 	/* Verify shutdown when keyboard is plugged in or out */
 	hook_notify(HOOK_INIT);
@@ -85,7 +104,7 @@ ZTEST(baes_detect, test_base_detect_shutdown)
 	zassert_equal(1, tablet_get_mode(), NULL);
 }
 
-ZTEST(baes_detect, test_base_detect_interrupt)
+ZTEST(base_detect, test_base_detect_interrupt)
 {
 	const struct device *adc_dev = DEVICE_DT_GET(DT_NODELABEL(adc0));
 	const uint8_t adc_channel =
@@ -98,7 +117,7 @@ ZTEST(baes_detect, test_base_detect_interrupt)
 	hook_notify(HOOK_INIT);
 	zassert_ok(adc_emul_const_value_set(adc_dev, adc_channel,
 					    ATTACH_MAX_THRESHOLD_MV));
-	k_sleep(K_MSEC(500));
+	k_sleep(K_MSEC(1000));
 	zassert_equal(0, tablet_get_mode(), NULL);
 
 	zassert_ok(adc_emul_const_value_set(adc_dev, adc_channel,

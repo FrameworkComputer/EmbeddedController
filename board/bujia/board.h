@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Bujia board configuration */
+/* Lisbon board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -28,20 +28,10 @@
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_PPC
 #define CONFIG_USB_PD_TCPM_RT1715
+#define CONFIG_USBC_RETIMER_PS8818
 #define CONFIG_USBC_PPC_SYV682X
-#define CONFIG_USBC_RETIMER_INTEL_BB
 #undef CONFIG_SYV682X_HV_ILIM
 #define CONFIG_SYV682X_HV_ILIM SYV682X_HV_ILIM_5_50
-
-/* Enabling Thunderbolt-compatible mode */
-#define CONFIG_USB_PD_TBT_COMPAT_MODE
-
-/* Enabling USB4 mode */
-#define CONFIG_USB_PD_USB4
-#define CONFIG_USB_PD_DATA_RESET_MSG
-
-/* Retimer */
-#define CONFIG_USBC_RETIMER_FW_UPDATE
 
 /* TODO: b/177608416 - measure and check these values on brya */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
@@ -96,13 +86,9 @@
 
 #define I2C_PORT_USB_C0_MUX NPCX_I2C_PORT3_0
 
-#define I2C_PORT_USB_A2_A3_RT NPCX_I2C_PORT6_1
-
 #define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
 
 #define I2C_ADDR_EEPROM_FLAGS 0x50
-
-#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR 0x58
 
 /* Thermal features */
 #define CONFIG_THERMISTOR
@@ -113,11 +99,10 @@
 /* ADC */
 #define CONFIG_ADC
 
-/*
- * TODO(b/197478860): Enable the fan control. We need
- * to check the sensor value and adjust the fan speed.
- */
+/* Fan feature */
 #define CONFIG_FANS FAN_CH_COUNT
+#define CONFIG_CUSTOM_FAN_CONTROL
+#define RPM_DEVIATION 1
 
 /* Include math_util for bitmask_uint64 used in pd_timers */
 #define CONFIG_MATH_UTIL

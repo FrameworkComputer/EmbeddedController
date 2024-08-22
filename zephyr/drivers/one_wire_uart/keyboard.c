@@ -60,19 +60,14 @@ static void ec_ec_comm_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, ec_ec_comm_init, HOOK_PRIO_DEFAULT);
 
+void one_wire_uart_keyboard_add(const uint8_t *key_matrix)
+{
+	one_wire_uart_send(one_wire_uart, ROACH_CMD_KEYBOARD_MATRIX, key_matrix,
+			   KEYBOARD_COLS_MAX);
+}
+
 void keyboard_state_changed(int row, int col, int is_pressed)
 {
-	uint8_t state[KEYBOARD_COLS_MAX];
-
-	memcpy(state, keyboard_scan_get_state(), KEYBOARD_COLS_MAX);
-	if (is_pressed) {
-		state[col] |= BIT(row);
-	} else {
-		state[col] &= ~BIT(row);
-	}
-
-	one_wire_uart_send(one_wire_uart, ROACH_CMD_KEYBOARD_MATRIX, state,
-			   KEYBOARD_COLS_MAX);
 }
 
 void set_touchpad_report(struct usb_hid_touchpad_report *report)

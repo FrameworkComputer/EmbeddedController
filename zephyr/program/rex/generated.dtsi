@@ -1,4 +1,4 @@
-/* Copyright 2023 The ChromiumOS Authors
+/* Copyright 2024 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -32,217 +32,217 @@
 		compatible = "named-gpios";
 
 		gpio_acok_od: acok_od {
-			gpios = <&gpio0 0 GPIO_INPUT>;
+			gpios = <&gpio0 0 (GPIO_INPUT)>;
 			enum-name = "GPIO_AC_PRESENT";
 		};
 		gpio_ccd_mode_odl: ccd_mode_odl {
-			gpios = <&gpioe 5 GPIO_INPUT>;
+			gpios = <&gpioe 5 (GPIO_INPUT)>;
 			enum-name = "GPIO_CCD_MODE_ODL";
 		};
 		gpio_cpu_c10_gate_l: cpu_c10_gate_l {
-			gpios = <&gpioa 7 GPIO_INPUT>;
+			gpios = <&gpioa 7 (GPIO_INPUT)>;
 		};
 		gpio_ec_accel_int_r_l: ec_accel_int_r_l {
-			gpios = <&gpio8 1 GPIO_INPUT>;
+			gpios = <&gpio8 1 (GPIO_INPUT)>;
 		};
 		gpio_ec_als_rgb_int_r_l: ec_als_rgb_int_r_l {
-			gpios = <&gpiod 4 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpiod 4 (GPIO_INPUT | GPIO_PULL_UP)>;
 		};
 		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
-			gpios = <&gpioa 3 GPIO_INPUT>;
+			gpios = <&gpioa 3 (GPIO_INPUT)>;
 			enum-name = "GPIO_BATT_PRES_ODL";
 		};
 		gpio_ec_cbi_wp: ec_cbi_wp {
-			gpios = <&gpio7 3 GPIO_OUTPUT>;
+			gpios = <&gpio7 3 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_edp_bl_en: ec_edp_bl_en {
-			gpios = <&gpiod 3 GPIO_OUTPUT>;
+			gpios = <&gpiod 3 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
 		};
 		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
-			gpios = <&gpio7 5 GPIO_OUTPUT>;
+			gpios = <&gpio7 5 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
 		gpio_ec_imu_int_r_l: ec_imu_int_r_l {
-			gpios = <&gpio5 6 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpio5 6 (GPIO_INPUT | GPIO_PULL_UP)>;
 		};
 		gpio_ec_kb_bl_en_l: ec_kb_bl_en_l {
-			gpios = <&gpio8 6 GPIO_OUTPUT>;
+			gpios = <&gpio8 6 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
 			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_mech_pwr_btn_l: ec_mech_pwr_btn_l {
-			gpios = <&gpio0 2 GPIO_INPUT>;
+			gpios = <&gpio0 2 (GPIO_INPUT)>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_ec_prochot_in_l: ec_prochot_in_l {
-			gpios = <&gpiof 0 GPIO_INPUT>;
+			gpios = <&gpiof 0 (GPIO_INPUT)>;
 		};
 		gpio_ec_prochot_odl: ec_prochot_odl {
-			gpios = <&gpio6 3 GPIO_ODR_HIGH>;
+			gpios = <&gpio6 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
 		};
 		gpio_ec_rst_r_odl: ec_rst_r_odl {
-			gpios = <&gpio7 7 GPIO_INPUT>;
+			gpios = <&gpio7 7 (GPIO_INPUT)>;
 		};
 		gpio_ec_soc_int_odl: ec_soc_int_odl {
-			gpios = <&gpio7 0 GPIO_ODR_LOW>;
+			gpios = <&gpio7 0 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 			enum-name = "GPIO_EC_INT_L";
 		};
 		gpio_ec_soc_pwr_btn_odl: ec_soc_pwr_btn_odl {
-			gpios = <&gpioc 1 GPIO_ODR_LOW>;
+			gpios = <&gpioc 1 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
-		gpio_ec_soc_rsmrst_l: ec_soc_rsmrst_l {
-			gpios = <&gpioa 6 GPIO_OUTPUT>;
+		gpio_ec_soc_rec_switch_r_odl: ec_soc_rec_switch_r_odl {
+			gpios = <&gpio9 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_ec_soc_rsmrst_l_r: ec_soc_rsmrst_l_r {
+			gpios = <&gpioa 6 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_soc_rtcrst: ec_soc_rtcrst {
-			gpios = <&gpio7 6 GPIO_ODR_HIGH>;
+			gpios = <&gpio7 6 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
 		};
 		gpio_ec_soc_wake_r_odl: ec_soc_wake_r_odl {
-			gpios = <&gpioc 0 GPIO_ODR_LOW>;
+			gpios = <&gpioc 0 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
 		gpio_ec_spare_gpio01: ec_spare_gpio01 {
-			gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpio0 1 (GPIO_INPUT | GPIO_PULL_UP)>;
 		};
 		gpio_ec_spare_gpio42: ec_spare_gpio42 {
-			gpios = <&gpio4 2 GPIO_OUTPUT>;
+			gpios = <&gpio4 2 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_spare_gpio66: ec_spare_gpio66 {
-			gpios = <&gpio6 6 GPIO_OUTPUT>;
-		};
-		gpio_ec_spare_gpio94: ec_spare_gpio94 {
-			gpios = <&gpio9 4 GPIO_OUTPUT>;
-		};
-		gpio_ec_spare_gpioa2: ec_spare_gpioa2 {
-			gpios = <&gpioa 2 GPIO_OUTPUT>;
+			gpios = <&gpio6 6 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_spare_gpioa4: ec_spare_gpioa4 {
-			gpios = <&gpioa 4 GPIO_OUTPUT>;
+			gpios = <&gpioa 4 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_spare_gpiob1: ec_spare_gpiob1 {
-			gpios = <&gpiob 1 GPIO_OUTPUT>;
+			gpios = <&gpiob 1 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_spare_gpioc7: ec_spare_gpioc7 {
-			gpios = <&gpioc 7 GPIO_OUTPUT>;
+			gpios = <&gpioc 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_spare_gpo32: ec_spare_gpo32 {
-			gpios = <&gpio3 2 GPIO_OUTPUT>;
+			gpios = <&gpio3 2 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_spare_gpo35: ec_spare_gpo35 {
-			gpios = <&gpio3 5 GPIO_OUTPUT>;
+			gpios = <&gpio3 5 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_voldn_btn_odl: ec_voldn_btn_odl {
-			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpio9 3 (GPIO_INPUT | GPIO_PULL_UP)>;
 			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
 		gpio_ec_volup_btn_odl: ec_volup_btn_odl {
-			gpios = <&gpio9 7 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpio9 7 (GPIO_INPUT | GPIO_PULL_UP)>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
 		gpio_ec_wp_l: ec_wp_l {
 			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_en_pp5000_fan: en_pp5000_fan {
-			gpios = <&gpio6 1 GPIO_OUTPUT>;
+			gpios = <&gpio6 1 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_en_pp5000_usba_r: en_pp5000_usba_r {
-			gpios = <&gpiod 7 GPIO_OUTPUT>;
+			gpios = <&gpiod 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_en_s5_rails: en_s5_rails {
-			gpios = <&gpiob 6 GPIO_ODR_HIGH>;
+			gpios = <&gpiob 6 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
 			enum-name = "GPIO_TEMP_SENSOR_POWER";
 		};
 		gpio_en_z1_rails: en_z1_rails {
-			gpios = <&gpio8 5 GPIO_OUTPUT>;
+			gpios = <&gpio8 5 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_imvp92_vrrdy_od: imvp92_vrrdy_od {
-			gpios = <&gpio4 3 GPIO_INPUT>;
+			gpios = <&gpio4 3 (GPIO_INPUT)>;
 		};
 		gpio_led_1_l: led_1_l {
-			gpios = <&gpioc 4 GPIO_OUTPUT>;
+			gpios = <&gpioc 4 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_led_2_l: led_2_l {
-			gpios = <&gpioc 3 GPIO_OUTPUT>;
+			gpios = <&gpioc 3 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_led_3_l: led_3_l {
-			gpios = <&gpioc 2 GPIO_OUTPUT>;
+			gpios = <&gpioc 2 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_led_4_l: led_4_l {
-			gpios = <&gpio6 0 GPIO_OUTPUT>;
+			gpios = <&gpio6 0 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_lid_open: lid_open {
-			gpios = <&gpiod 2 GPIO_INPUT>;
+			gpios = <&gpiod 2 (GPIO_INPUT)>;
 			enum-name = "GPIO_LID_OPEN";
 		};
 		gpio_seq_ec_all_sys_pg_od: seq_ec_all_sys_pg_od {
-			gpios = <&gpiof 4 GPIO_INPUT>;
+			gpios = <&gpiof 4 (GPIO_INPUT)>;
 		};
 		gpio_seq_ec_rsmrst_odl: seq_ec_rsmrst_odl {
-			gpios = <&gpioe 2 GPIO_INPUT>;
+			gpios = <&gpioe 2 (GPIO_INPUT)>;
 		};
 		gpio_slp_s3_ls_l: slp_s3_ls_l {
-			gpios = <&gpio4 1 GPIO_INPUT>;
+			gpios = <&gpio4 1 (GPIO_INPUT)>;
 		};
 		gpio_sochot_odl: sochot_odl {
-			gpios = <&gpio9 6 GPIO_INPUT>;
+			gpios = <&gpio9 6 (GPIO_INPUT)>;
 		};
-		gpio_soc_pwrok: soc_pwrok {
-			gpios = <&gpioa 5 GPIO_OUTPUT>;
+		gpio_soc_ec_ish_nb_mode: soc_ec_ish_nb_mode {
+			gpios = <&gpioa 2 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_soc_pwrok_r: soc_pwrok_r {
+			gpios = <&gpioa 5 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_sys_pwrok: sys_pwrok {
-			gpios = <&gpiob 0 GPIO_OUTPUT>;
+			gpios = <&gpiob 0 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_sys_rst_odl: sys_rst_odl {
-			gpios = <&gpioc 5 GPIO_INPUT>;
+			gpios = <&gpioc 5 (GPIO_INPUT)>;
 		};
 		gpio_sys_slp_s0ix_3v3_l: sys_slp_s0ix_3v3_l {
-			gpios = <&gpiod 5 GPIO_INPUT>;
+			gpios = <&gpiod 5 (GPIO_INPUT)>;
 		};
 		gpio_tablet_mode_l: tablet_mode_l {
-			gpios = <&gpio9 5 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpio9 5 (GPIO_INPUT | GPIO_PULL_UP)>;
 			enum-name = "GPIO_TABLET_MODE_L";
 		};
 		gpio_usb_c0_bc12_int_odl: usb_c0_bc12_int_odl {
-			gpios = <&gpioc 6 GPIO_INPUT>;
+			gpios = <&gpioc 6 (GPIO_INPUT)>;
 			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
 		};
 		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
-			gpios = <&gpio6 2 GPIO_INPUT>;
+			gpios = <&gpio6 2 (GPIO_INPUT)>;
 			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
 		};
 		gpio_usb_c0_rt_3p3_sx_en: usb_c0_rt_3p3_sx_en {
-			gpios = <&gpio0 3 GPIO_ODR_LOW>;
+			gpios = <&gpio0 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
 		gpio_usb_c0_rt_int_odl: usb_c0_rt_int_odl {
-			gpios = <&gpioa 0 GPIO_INPUT>;
+			gpios = <&gpioa 0 (GPIO_INPUT)>;
 		};
 		gpio_usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
 			gpios = <&gpioe 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
 		};
 		gpio_usb_c0_tcpc_rst_odl: usb_c0_tcpc_rst_odl {
-			gpios = <&gpio6 7 GPIO_ODR_HIGH>;
+			gpios = <&gpio6 7 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
 		};
 		gpio_usb_c1_bc12_int_odl: usb_c1_bc12_int_odl {
-			gpios = <&gpio5 0 GPIO_INPUT>;
+			gpios = <&gpio5 0 (GPIO_INPUT)>;
 			enum-name = "GPIO_USB_C1_BC12_INT_ODL";
 		};
 		gpio_usb_c1_frs_en: usb_c1_frs_en {
-			gpios = <&gpio8 3 GPIO_ODR_HIGH>;
+			gpios = <&gpio8 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
 		};
 		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
-			gpios = <&gpiof 5 GPIO_INPUT>;
+			gpios = <&gpiof 5 (GPIO_INPUT)>;
 			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
 		};
 		gpio_usb_c1_rst_odl: usb_c1_rst_odl {
-			gpios = <&gpio3 7 GPIO_ODR_LOW>;
+			gpios = <&gpio3 7 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
 		gpio_usb_c1_rt_int_odl: usb_c1_rt_int_odl {
-			gpios = <&gpio7 2 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpio7 2 (GPIO_INPUT | GPIO_PULL_UP)>;
 		};
 		gpio_usb_c1_rt_rst_r_odl: usb_c1_rt_rst_r_odl {
-			gpios = <&gpio7 4 GPIO_ODR_HIGH>;
+			gpios = <&gpio7 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
 		};
 		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
 			gpios = <&gpio3 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
@@ -290,38 +290,59 @@
 
 &adc0 {
 	status = "okay";
+	pinctrl-0 = <&adc0_chan0_gp45
+		&adc0_chan1_gp44
+		&adc0_chan8_gpf1
+		&adc0_chan7_gpe1>;
+	pinctrl-names = "default";
 };
 
 &i2c0_0 {
 	status = "okay";
+	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
+	pinctrl-names = "default";
 };
 
 &i2c1_0 {
 	status = "okay";
+	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
+	pinctrl-names = "default";
 };
 
 &i2c2_0 {
 	status = "okay";
+	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
+	pinctrl-names = "default";
 };
 
 &i2c3_0 {
 	status = "okay";
+	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
+	pinctrl-names = "default";
 };
 
 &i2c4_1 {
 	status = "okay";
+	pinctrl-0 = <&i2c4_1_sda_scl_gpf2_f3>;
+	pinctrl-names = "default";
 };
 
 &i2c5_0 {
 	status = "okay";
+	pinctrl-0 = <&i2c5_0_sda_scl_gp36_33>;
+	pinctrl-names = "default";
 };
 
 &i2c6_1 {
 	status = "okay";
+	pinctrl-0 = <&i2c6_1_sda_scl_gpe3_e4>;
+	pinctrl-names = "default";
 };
 
 &i2c7_0 {
 	status = "okay";
+	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
+	pinctrl-names = "default";
 };
 
 &i2c_ctrl0 {
@@ -354,4 +375,55 @@
 
 &i2c_ctrl7 {
 	status = "okay";
+};
+
+&pwm3 {
+	status = "okay";
+	pinctrl-0 = <&pwm3_gp80>;
+	pinctrl-names = "default";
+};
+
+&pwm5 {
+	status = "okay";
+	pinctrl-0 = <&pwm5_gpb7>;
+	pinctrl-names = "default";
+};
+
+&tach1 {
+	status = "okay";
+	pinctrl-0 = <&ta1_1_in_gp40>;
+	pinctrl-names = "default";
+	port = <NPCX_TACH_PORT_A>;
+	sample-clk = <NPCX_TACH_FREQ_LFCLK>;
+	pulses-per-round = <2>;
+};
+
+&cros_kb_raw {
+	status = "okay";
+	/* No KSO2 (it's inverted and implemented by GPIO) */
+	pinctrl-0 = <
+		&ksi0_gp31
+		&ksi1_gp30
+		&ksi2_gp27
+		&ksi3_gp26
+		&ksi4_gp25
+		&ksi5_gp24
+		&ksi6_gp23
+		&ksi7_gp22
+		&kso00_gp21
+		&kso01_gp20
+		&kso03_gp16
+		&kso04_gp15
+		&kso05_gp14
+		&kso06_gp13
+		&kso07_gp12
+		&kso08_gp11
+		&kso09_gp10
+		&kso10_gp07
+		&kso11_gp06
+		&kso12_gp05
+		&kso13_gp04
+		&kso14_gp82
+	>;
+	pinctrl-names = "default";
 };

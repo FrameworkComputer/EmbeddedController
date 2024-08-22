@@ -12,6 +12,20 @@
 		zephyr,console = &uart2;
 		zephyr,shell-uart = &uart2;
 	};
+
+	prochot-vcmp {
+		compatible = "cros-ec,prochot-vcmp";
+		vcmp = <&vcmp0>;
+		high-level-mv = <1050>;
+	};
+};
+
+&vcmp0 {
+	status = "okay";
+	scan-period = <IT8XXX2_VCMP_SCAN_PERIOD_5MS>;
+	comparison = <IT8XXX2_VCMP_GREATER>;
+	threshold-mv = <0>;
+	io-channels = <&adc0 0>;
 };
 
 /* UART interface is SIN1/SOUT1 pins, which ITE maps to devicetree uart2 */

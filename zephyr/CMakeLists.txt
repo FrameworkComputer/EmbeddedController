@@ -210,7 +210,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC
                                                 "${PLATFORM_EC}/common/peripheral.c"
                                                 "${PLATFORM_EC}/common/printf.c"
                                                 "${PLATFORM_EC}/common/queue.c"
-                                                "${PLATFORM_EC}/common/shared_mem.c"
                                                 "${PLATFORM_EC}/common/system.c"
                                                 "${PLATFORM_EC}/common/system_boot_time.c"
                                                 "${PLATFORM_EC}/common/uart_printf.c"
@@ -492,11 +491,19 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RWSIG_VERIFY
                                                 "${PLATFORM_EC}/common/vboot/common.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ROLLBACK
                                                 "${PLATFORM_EC}/common/rollback.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SBRK
+                                                "${PLATFORM_EC}/libc/sbrk.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SHA256_SW
                                                 "${PLATFORM_EC}/common/sha256.c")
 if (NOT DEFINED CONFIG_PLATFORM_EC_SHA256_HW_ZEPHYR)
 	zephyr_library_sources_ifdef(CONFIG_SOC_IT8XXX2_SHA256_HW_ACCELERATE
                                                 "${PLATFORM_EC}/driver/sha256/sha256_it8xxx2.c")
+endif()
+if (CONFIG_PLATFORM_EC_SHARED_MEM_LIBC)
+  zephyr_library_sources("${PLATFORM_EC}/common/shared_mem_libc.c")
+else()
+  zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC
+                                                "${PLATFORM_EC}/common/shared_mem.c")
 endif()
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SWITCH
                                                 "${PLATFORM_EC}/common/switch.c")
@@ -533,6 +540,10 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB
                                                 "${PLATFORM_EC}/common/usb_port_power_dumb.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PORT_POWER_SMART
                                                 "${PLATFORM_EC}/common/usb_port_power_smart.c")
+
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_I2C
+                                                "${PLATFORM_EC}/common/usb_i2c.c"
+                                                "${PLATFORM_EC}/common/queue_policies.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_UPDATE
                                                 "${PLATFORM_EC}/common/update_fw.c"

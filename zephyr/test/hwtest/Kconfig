@@ -10,6 +10,24 @@ config HW_TEST_ABORT
 	  The test verify if abort() call works correctly and validates panic
 	  data.
 
+config HW_TEST_AES
+	bool "AES test"
+	select ZTEST
+	help
+	  The test verifies AES functions.
+
+config HW_TEST_BENCHMARK
+	bool "Benchmark test"
+	select ZTEST
+	help
+	  The test verifies benchmark feature.
+
+config HW_TEST_BORINGSSL_CRYPTO
+	bool "Benchmark test"
+	select ZTEST
+	help
+	  The test verifies the boringssl library.
+
 config HW_TEST_CORTEXM_FPU
 	bool "Cortex-M FPU test"
 	select ZTEST
@@ -17,6 +35,10 @@ config HW_TEST_CORTEXM_FPU
 
 config HW_TEST_CRC
 	bool "CRC test"
+	select ZTEST
+
+config HW_TEST_EXCEPTION
+	bool "Exception test"
 	select ZTEST
 
 config HW_TEST_FLASH_PHYSICAL
@@ -34,6 +56,27 @@ config HW_TEST_FP_TRANSPORT
 	select ZTEST
 	depends on EC_HOST_CMD
 
+config HW_TEST_FPSENSOR_AUTH_CRYPTO_STATEFUL
+	bool "FP sensor auth crypto stateful test"
+	select ZTEST
+	select MOCK_ROLLBACK
+
+config HW_TEST_FPSENSOR_AUTH_CRYPTO_STATELESS
+	bool "FP sensor auth crypto stateless test"
+	select ZTEST
+
+config HW_TEST_FPSENSOR_CRYPTO
+	bool "FP sensor crypto test"
+	select ZTEST
+
+config HW_TEST_FPSENSOR_HW
+	bool "FP sensor hw test"
+	select ZTEST
+
+config HW_TEST_FPSENSOR_UTILS
+	bool "FP sensor utils test"
+	select ZTEST
+
 config HW_TEST_FTRAPV
 	bool "ftrapv test"
 	select ZTEST
@@ -47,6 +90,12 @@ config HW_TEST_LIBC_PRINTF
 	help
 	  Prints a hardcoded string to check by a test runner.
 
+config HW_TEST_LIBCXX
+	bool "libcxx test"
+	select ZTEST
+	help
+	  The test verifies time measurement system_clock vs udelay.
+
 config HW_TEST_MALLOC
 	bool "malloc test"
 	select ZTEST
@@ -59,6 +108,14 @@ config HW_TEST_PANIC
 	depends on ARM
 	help
 	  The test verifies panic data.
+
+config HW_TEST_PANIC_DATA
+	bool "Panic data test"
+	select ZTEST
+	select ASSERT
+	select PLATFORM_EC_DEBUG_ASSERT
+	help
+	  It verifies panic data across different reboots.
 
 config HW_TEST_PRINTF
 	bool "printf test"
@@ -79,6 +136,14 @@ config HW_TEST_RESTRICTED_CONSOLE
 	help
 	  The test verifies restricted console.
 
+config HW_TEST_RNG_BENCHMARK
+	bool "RNG benchmark test"
+	select ZTEST
+	depends on BOARD_FINGERPRINT
+	help
+	  The test measures performance of the hardware (TRNG) compared to the
+	  std::rand()
+
 config HW_TEST_ROLLBACK
 	bool "Rollback test"
 	select ZTEST
@@ -92,6 +157,13 @@ config HW_TEST_ROLLBACK_ENTROPY
 	depends on PLATFORM_EC_ROLLBACK
 	help
 	  The test verifies rollback entropy functionality.
+
+config HW_TEST_SBRK
+	bool "SBRK test"
+	select ZTEST
+	depends on NEWLIB_LIBC_SUPPORTED
+	help
+	  The test verifies sbrk return values.
 
 config HW_TEST_SHA256
 	bool "SHA256 test"
@@ -111,3 +183,60 @@ config HW_TEST_STATIC_IF
 	select ZTEST
 	help
 	  The test verifies SHA256 functions with forced unrolled config.
+
+config HW_TEST_STD_VECTOR
+	bool "std_vector test"
+	select ZTEST
+	help
+	  The test verifies std::vector and dynamic memory allocation.
+
+config HW_TEST_STDLIB
+	bool "stdlib test"
+	select ZTEST
+	help
+	  The test builtin stdlib functions used by Zephyr.
+
+config HW_TEST_TIMER
+	bool "timer test"
+	select ZTEST
+	help
+	  The test verifies some functions defined in timer.h.
+
+config HW_TEST_TPM_SEED_CLEAR
+	bool "TPM seed clear test"
+	select ZTEST
+	help
+	  The test verifies if the tpm seed is cleared after reboot.
+
+config HW_TEST_SYSTEM_IS_LOCKED
+	bool "system_is_locked test"
+	select ZTEST
+	help
+	  The test verifies system_is_locked function with wp on/off.
+
+config HW_TEST_UNALIGNED_ACCESS
+	bool "Unaligned access test"
+	select ZTEST
+	help
+	  The test verifies unaligned access works properly.
+
+config HW_TEST_UNALIGNED_ACCESS_BENCHMARK
+	bool "Unaligned access benchmark test"
+	select ZTEST
+	help
+	  The benchmark test of unaligned access.
+
+config HW_TEST_UTILS
+	bool "Utils test"
+	select ZTEST
+	help
+	  The test verifies util functions.
+
+config HW_TEST_UTILS_STR
+	bool "Utils string test"
+	select ZTEST
+	help
+	  The test verifies util string functions.
+
+config MOCK_ROLLBACK
+	bool "Mock rollback for tests"

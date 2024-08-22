@@ -15,6 +15,8 @@
 #include "test_util.h"
 #include "util.h"
 
+#include <errno.h>
+
 #include <array>
 #include <memory>
 #include <unistd.h>

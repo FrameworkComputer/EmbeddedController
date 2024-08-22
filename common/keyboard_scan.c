@@ -31,6 +31,10 @@
 #include "usb_api.h"
 #include "util.h"
 
+#ifdef CONFIG_ZEPHYR
+#include "drivers/one_wire_uart.h"
+#endif
+
 #ifdef CONFIG_KEYBOARD_MULTIPLE
 #include "keyboard_customization.h"
 #endif
@@ -722,6 +726,9 @@ static int check_keys_changed(uint8_t *state)
 
 #ifdef CONFIG_KEYBOARD_PROTOCOL_MKBP
 		mkbp_keyboard_add(state);
+#endif
+#ifdef CONFIG_PLATFORM_EC_ONE_WIRE_UART_KEYBOARD
+		one_wire_uart_keyboard_add(state);
 #endif
 	}
 

@@ -73,8 +73,10 @@ ZTEST_SUITE(button, drivers_predicate_post_main, button_setup, button_before,
 
 static inline void pass_time(uint64_t duration_ms)
 {
-	get_time_mock->val += duration_ms * 1000;
-	k_msleep(duration_ms);
+	for (uint64_t i = 0; i <= duration_ms; i += 100) {
+		get_time_mock->val += 100 * MSEC;
+		k_msleep(100);
+	}
 }
 
 ZTEST(button, test_press_one_button_no_change)
@@ -93,8 +95,8 @@ ZTEST(button, test_press_vup_vdown_too_short)
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 500"));
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vdown 500"));
 
-	/* Let the deferred calls get run (800ms) */
-	pass_time(800);
+	/* Let the deferred calls get run (300ms) */
+	pass_time(300);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_CHECK);
 
 	/* Wait for the timeout */
@@ -104,7 +106,7 @@ ZTEST(button, test_press_vup_vdown_too_short)
 
 ZTEST(button, test_fail_check_button_released_too_soon)
 {
-	/* Press both volume-up and volume-down for 0.9 seconds */
+	/* Press both volume-up and volume-down for 9 seconds */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 9000"));
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vdown 9000"));
 
@@ -112,16 +114,8 @@ ZTEST(button, test_fail_check_button_released_too_soon)
 	pass_time(800);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_CHECK);
 
-	/* Wait for the timeout, should put us in staging */
-	pass_time(11000);
-	ASSERT_DEBUG_STATE(STATE_STAGING);
-
-	/* Wait for the handler to be called and set us to ACTIVE mode */
-	pass_time(7000);
-	ASSERT_DEBUG_STATE(STATE_DEBUG_MODE_ACTIVE);
-
-	/* Wait for the deadline to pass, putting us back in NONE */
-	pass_time(11000);
+	/* Wait for the buttons to be released */
+	pass_time(9300);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_NONE);
 }
 
@@ -145,7 +139,7 @@ ZTEST(button, test_fail_check_button_stuck)
 	k_msleep(11000);
 
 	/* Now sleep and move the clock forward to timeout the debug process */
-	pass_time(11000);
+	pass_time(21000);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_NONE);
 }
 
@@ -200,17 +194,18 @@ ZTEST(button, test_activate_sysrq_path_then_timeout)
 	pass_time(800);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_CHECK);
 
-	/* Wait for the buttons to be released */
-	pass_time(11000);
+	/* Wait for total 10 seconds */
+	pass_time(9400);
 	ASSERT_DEBUG_STATE(STATE_STAGING);
 
-	/* Wait a bit and check that we activated debug mode */
-	pass_time(11000);
+	/* Wait for the buttons to be released and check that we activated debug
+	 * mode */
+	pass_time(1000);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_MODE_ACTIVE);
 
 	/* Press volume up button to put in sysrq_path */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 500"));
-	pass_time(800);
+	pass_time(200);
 	ASSERT_DEBUG_STATE(STATE_STAGING);
 
 	/* Wait for timeout and go into sysrq_path */
@@ -232,17 +227,18 @@ ZTEST(button, test_activate_sysrq_path_4_times)
 	pass_time(800);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_CHECK);
 
-	/* Wait for the buttons to be released */
-	pass_time(11000);
+	/* Wait for total 10 seconds */
+	pass_time(9400);
 	ASSERT_DEBUG_STATE(STATE_STAGING);
 
-	/* Wait a bit and check that we activated debug mode */
-	pass_time(11000);
+	/* Wait for the buttons to be released and check that we activated debug
+	 * mode */
+	pass_time(1000);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_MODE_ACTIVE);
 
 	/* Press volume up button to put in sysrq_path */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 500"));
-	pass_time(800);
+	pass_time(200);
 	ASSERT_DEBUG_STATE(STATE_STAGING);
 
 	/* Wait for timeout and go into sysrq_path */
@@ -251,18 +247,15 @@ ZTEST(button, test_activate_sysrq_path_4_times)
 
 	/* Press vup again (#2) */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 500"));
-	pass_time(800);
-	pass_time(500);
+	pass_time(1300);
 
 	/* Press vup again (#3) */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 500"));
-	pass_time(800);
-	pass_time(500);
+	pass_time(1300);
 
 	/* Press vup again (#4) */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 500"));
-	pass_time(800);
-	pass_time(500);
+	pass_time(1300);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_NONE);
 }
 
@@ -270,7 +263,7 @@ ZTEST(button, test_activate_sysrq_exec)
 {
 	uint32_t event_data = 0;
 
-	/* Press both volume-up and volume-down for 1/2 second */
+	/* Press both volume-up and volume-down for 10.5 second */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 10500"));
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vdown 10500"));
 
@@ -278,17 +271,18 @@ ZTEST(button, test_activate_sysrq_exec)
 	pass_time(800);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_CHECK);
 
-	/* Wait for the buttons to be released */
-	pass_time(11000);
+	/* Wait for total 10 seconds */
+	pass_time(9400);
 	ASSERT_DEBUG_STATE(STATE_STAGING);
 
-	/* Wait a bit and check that we activated debug mode */
-	pass_time(11000);
+	/* Wait for the buttons to be released and check that we activated debug
+	 * mode */
+	pass_time(1000);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_MODE_ACTIVE);
 
 	/* Press volume up button to put in sysrq_path */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 500"));
-	pass_time(800);
+	pass_time(200);
 	ASSERT_DEBUG_STATE(STATE_STAGING);
 
 	/* Wait for timeout and go into sysrq_path */
@@ -322,17 +316,18 @@ ZTEST(button, test_activate_warm_reset_then_timeout)
 	pass_time(800);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_CHECK);
 
-	/* Wait for the buttons to be released */
-	pass_time(11000);
+	/* Wait for total 10 seconds */
+	pass_time(9400);
 	ASSERT_DEBUG_STATE(STATE_STAGING);
 
-	/* Wait a bit and check that we activated debug mode */
-	pass_time(11000);
+	/* Wait for the buttons to be released and check that we activated debug
+	 * mode */
+	pass_time(1000);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_MODE_ACTIVE);
 
 	/* Press volume down button to put in warm_reset_path */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vdown 500"));
-	pass_time(800);
+	pass_time(200);
 	ASSERT_DEBUG_STATE(STATE_STAGING);
 
 	/* Wait for timeout and go into warm_reset_path */
@@ -354,17 +349,18 @@ ZTEST(button, test_activate_warm_reset_exec)
 	pass_time(800);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_CHECK);
 
-	/* Wait for the buttons to be released */
-	pass_time(11000);
+	/* Wait for total 10 seconds */
+	pass_time(9400);
 	ASSERT_DEBUG_STATE(STATE_STAGING);
 
-	/* Wait a bit and check that we activated debug mode */
-	pass_time(11000);
+	/* Wait for the buttons to be released and check that we activated debug
+	 * mode */
+	pass_time(1000);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_MODE_ACTIVE);
 
 	/* Press volume down button to put in warm_reset_path */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vdown 500"));
-	pass_time(800);
+	pass_time(200);
 	ASSERT_DEBUG_STATE(STATE_STAGING);
 
 	/* Wait for timeout and go into warm_reset_path */
@@ -381,7 +377,7 @@ ZTEST(button, test_activate_warm_reset_exec)
 	pass_time(11000);
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 500"));
-	pass_time(800);
+	pass_time(200);
 	ASSERT_DEBUG_STATE(STATE_STAGING);
 
 	pass_time(11000);

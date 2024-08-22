@@ -8,6 +8,23 @@ tests:
     - CONFIG_HW_TEST_ABORT=y
     extra_conf_files:
     - prj_hw_tests.conf
+  aes:
+    extra_configs:
+    - CONFIG_HW_TEST_AES=y
+    - CONFIG_ZTEST_STACK_SIZE=3072
+    extra_conf_files:
+    - prj_hw_tests.conf
+  benchmark:
+    extra_configs:
+    - CONFIG_HW_TEST_BENCHMARK=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  boringssl_crypto:
+    extra_configs:
+    - CONFIG_HW_TEST_BORINGSSL_CRYPTO=y
+    - CONFIG_ZTEST_STACK_SIZE=2048
+    extra_conf_files:
+    - prj_hw_tests.conf
   cortexm_fpu:
     extra_configs:
     - CONFIG_HW_TEST_CORTEXM_FPU=y
@@ -16,6 +33,11 @@ tests:
   crc:
     extra_configs:
     - CONFIG_HW_TEST_CRC=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  exception:
+    extra_configs:
+    - CONFIG_HW_TEST_EXCEPTION=y
     extra_conf_files:
     - prj_hw_tests.conf
   flash_physical:
@@ -37,6 +59,34 @@ tests:
     - CONFIG_PM=n
     extra_conf_files:
     - prj_hw_tests.conf
+  fpsensor_auth_crypto_stateful:
+    extra_configs:
+    - CONFIG_HW_TEST_FPSENSOR_AUTH_CRYPTO_STATEFUL=y
+    - CONFIG_ZTEST_STACK_SIZE=2048
+    extra_conf_files:
+    - prj_hw_tests.conf
+  fpsensor_auth_crypto_stateless:
+    extra_configs:
+    - CONFIG_HW_TEST_FPSENSOR_AUTH_CRYPTO_STATELESS=y
+    - CONFIG_ZTEST_STACK_SIZE=4096
+    extra_conf_files:
+    - prj_hw_tests.conf
+  fpsensor_crypto:
+    extra_configs:
+    - CONFIG_HW_TEST_FPSENSOR_CRYPTO=y
+    - CONFIG_ZTEST_STACK_SIZE=9216
+    extra_conf_files:
+    - prj_hw_tests.conf
+  fpsensor_hw:
+    extra_configs:
+    - CONFIG_HW_TEST_FPSENSOR_HW=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  fpsensor_utils:
+    extra_configs:
+    - CONFIG_HW_TEST_FPSENSOR_UTILS=y
+    extra_conf_files:
+    - prj_hw_tests.conf
   ftrapv:
     extra_configs:
     - CONFIG_HW_TEST_FTRAPV=y
@@ -45,6 +95,11 @@ tests:
   libc_printf:
     extra_configs:
     - CONFIG_HW_TEST_LIBC_PRINTF=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  libcxx:
+    extra_configs:
+    - CONFIG_HW_TEST_LIBCXX=y
     extra_conf_files:
     - prj_hw_tests.conf
   malloc:
@@ -58,6 +113,12 @@ tests:
     extra_configs:
     - CONFIG_HW_TEST_PANIC=y
     - CONFIG_PLATFORM_EC_PANIC_STRIP_GPR=n
+    extra_conf_files:
+    - prj_hw_tests.conf
+  panic_data:
+    extra_configs:
+    - CONFIG_HW_TEST_PANIC_DATA=y
+    - CONFIG_PLATFORM_EC_DEBUG_ASSERT_REBOOTS=y
     extra_conf_files:
     - prj_hw_tests.conf
   printf:
@@ -76,6 +137,11 @@ tests:
     - CONFIG_HW_TEST_RESTRICTED_CONSOLE=y
     extra_conf_files:
     - prj_hw_tests.conf
+  rng_benchmark:
+    extra_configs:
+    - CONFIG_HW_TEST_RNG_BENCHMARK=y
+    extra_conf_files:
+    - prj_hw_tests.conf
   rollback:
     extra_configs:
     - CONFIG_HW_TEST_ROLLBACK=y
@@ -84,6 +150,13 @@ tests:
   rollback_entropy:
     extra_configs:
     - CONFIG_HW_TEST_ROLLBACK_ENTROPY=y
+    # Added to reduce RO flash usage
+    - CONFIG_PM=n
+    extra_conf_files:
+    - prj_hw_tests.conf
+  sbrk:
+    extra_configs:
+    - CONFIG_HW_TEST_SBRK=y
     # Added to reduce RO flash usage
     - CONFIG_PM=n
     extra_conf_files:
@@ -101,5 +174,50 @@ tests:
   static_if:
     extra_configs:
     - CONFIG_HW_TEST_STATIC_IF=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  std_vector:
+    extra_configs:
+    - CONFIG_HW_TEST_STD_VECTOR=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  system_is_locked:
+    extra_configs:
+    - CONFIG_HW_TEST_SYSTEM_IS_LOCKED=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  timer:
+    extra_configs:
+    - CONFIG_HW_TEST_TIMER=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  tpm_seed_clear:
+    extra_configs:
+    - CONFIG_HW_TEST_TPM_SEED_CLEAR=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  unaligned_access:
+    extra_configs:
+    - CONFIG_HW_TEST_UNALIGNED_ACCESS=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  unaligned_access_benchmark:
+    extra_configs:
+    - CONFIG_HW_TEST_UNALIGNED_ACCESS_BENCHMARK=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  utils:
+    extra_configs:
+    - CONFIG_HW_TEST_UTILS=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  utils_str:
+    extra_configs:
+    - CONFIG_HW_TEST_UTILS_STR=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  stdlib:
+    extra_configs:
+    - CONFIG_HW_TEST_STDLIB=y
     extra_conf_files:
     - prj_hw_tests.conf

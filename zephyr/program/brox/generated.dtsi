@@ -10,6 +10,10 @@
 	named-adc-channels {
 		compatible = "named-adc-channels";
 
+		adc_prochot: prochot {
+			enum-name = "ADC_PROCHOT";
+			io-channels = <&adc0 0>;
+		};
 		adc_charger_amon: charger_amon {
 			enum-name = "ADC_AMON_BMON";
 			io-channels = <&adc0 1>;

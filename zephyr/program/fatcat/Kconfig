@@ -1,0 +1,23 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_FATCAT_NPCX9M7F
+	bool "Google Fatcat npcx9m7f add-in card"
+	help
+	  Build Google Nuvoton npcx9m7f based Fatcat add-in card.
+	  This board is for use with the Intel RVP using the
+	  MECC 2.1 connector.
+
+config BOARD_FATCAT_IT82002AW
+	bool "Google Fatcat it82002aw add-in card"
+	help
+	  Build Google ITE it82002aw based Fatcat add-in card.
+	  This board is for use with the Intel RVP using the
+	  MECC 2.1 connector.
+
+module = Fatcat
+module-str = Fatcat board-specific code
+source "subsys/logging/Kconfig.template.log_config"
+
+source "Kconfig.zephyr"

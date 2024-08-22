@@ -9,6 +9,7 @@
 #include "ec_commands.h"
 #include "emul/emul_power_signals.h"
 #include "host_command.h"
+#include "lpc.h"
 #include "power_signals.h"
 #include "test_mocks.h"
 #include "test_state.h"
@@ -38,6 +39,8 @@ static int power_suspend_count;
 	COND_CODE_0(                                                           \
 		AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout), (2 * MSEC_PER_SEC), \
 		(AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout) * MSEC_PER_SEC))
+
+#define TEST_SLEEP_TIMEOUT_MS 50
 
 #ifdef CONFIG_AP_PWRSEQ_DRIVER
 static void ap_pwrseq_wake(void)
@@ -193,7 +196,53 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_0)
 	verify_ap_inputs(true);
 }
 
-ZTEST(ap_pwrseq, test_ap_pwrseq_0_sleep)
+/* Sleep hang test - this assumes the test is run after the test_ap_pwrseq_0
+ * test above and that the current power state is S0.
+ * At completion the power state remains in S0.
+ */
+ZTEST(ap_pwrseq, test_ap_pwrseq_0_sleep_hang)
+{
+	host_event_t lpc_event_mask;
+	host_event_t mask = EC_HOST_EVENT_MASK(EC_HOST_EVENT_HANG_DETECT);
+
+	/* Enable the hang detect event in the LPC event mask. */
+	lpc_event_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SCI);
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, lpc_event_mask | mask);
+
+	struct ec_params_host_sleep_event_v1 host_sleep_ev_p = {
+		.sleep_event = HOST_SLEEP_EVENT_S0IX_SUSPEND,
+		.suspend_params.sleep_timeout_ms = TEST_SLEEP_TIMEOUT_MS,
+	};
+	struct ec_response_host_sleep_event_v1 host_sleep_ev_r;
+	struct host_cmd_handler_args host_sleep_ev_args = BUILD_HOST_COMMAND(
+		EC_CMD_HOST_SLEEP_EVENT, 1, host_sleep_ev_r, host_sleep_ev_p);
+
+	/* Now tell the EC that the AP is going to sleep, but don't change
+	 * any of the power signals.  This causes a sleep timeout.
+	 */
+	zassert_ok(host_command_process(&host_sleep_ev_args));
+
+	/* Purposely leave the SLP_S0 signal de-asserted to cause a timeout. */
+	k_msleep(TEST_SLEEP_TIMEOUT_MS * 2);
+
+	zassert_true(host_is_event_set(EC_HOST_EVENT_HANG_DETECT));
+
+	/* Retest, but this time set an infinite timeout.  Verify no event
+	 * is reported.
+	 */
+	host_clear_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_HANG_DETECT));
+	host_sleep_ev_p.suspend_params.sleep_timeout_ms =
+		EC_HOST_SLEEP_TIMEOUT_INFINITE;
+	zassert_ok(host_command_process(&host_sleep_ev_args));
+	k_sleep(K_SECONDS(10));
+
+	zassert_false(host_is_event_set(EC_HOST_EVENT_HANG_DETECT));
+}
+
+/* Sleep success test - this assumes the current power state is S0 and
+ * at completion the power state will be S0ix.
+ */
+ZTEST(ap_pwrseq, test_ap_pwrseq_0_sleep_success)
 {
 	struct ec_params_host_sleep_event_v1 host_sleep_ev_p = {
 		.sleep_event = HOST_SLEEP_EVENT_S0IX_SUSPEND,
@@ -236,6 +285,9 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_0_sleep)
 	zassert_equal(s0ix_cnt_ev_r.s0ix_counter, 1);
 }
 
+/* Wake from S0ix.  This test assumes the current power state is S0ix and
+ * at completion the power state is S0.
+ */
 ZTEST(ap_pwrseq, test_ap_pwrseq_0_wake)
 {
 	struct ec_params_host_sleep_event_v1 p = {

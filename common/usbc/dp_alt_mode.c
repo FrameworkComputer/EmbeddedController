@@ -862,6 +862,7 @@ static enum dp_bit_rate usb_rev30_to_dp_speed(enum usb_rev30_ss ss)
 	case USB_R30_SS_U32_U40_GEN2:
 		return DP_UHBR10;
 	case USB_R30_SS_U40_GEN3:
+	case USB_R30_SS_U40_GEN4:
 		return DP_UHBR20;
 	default:
 		return DP_HBR3;

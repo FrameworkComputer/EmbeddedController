@@ -172,7 +172,8 @@ config AP_PWRSEQ_S0IX
 
 config AP_PWRSEQ_S0IX_ERROR_RECOVERY
 	bool "Detect failure to enter or exit Sleep state"
-	depends on AP_PWRSEQ_HOST_SLEEP
+	depends on AP_PWRSEQ_S0IX
+	default y
 	help
 	  Enables detection of the AP failing to go to sleep, perhaps due to a
 	  bug in the internal SoC periodic housekeeping code.

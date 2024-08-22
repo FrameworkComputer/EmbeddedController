@@ -6,16 +6,30 @@
 #include "gpio.h"
 #include "usb_dp_alt_mode.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+enum navi_dp_port {
+	DP_PORT_NONE = -1,
+	DP_PORT_C0 = 0,
+	DP_PORT_C1,
+	DP_PORT_COUNT,
+};
 
 int svdm_get_hpd_gpio(int port)
 {
 	/* HPD is low active, inverse the result */
-	return !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_ap_dp_hpd_l));
+	if (port == DP_PORT_C1)
+		return !gpio_pin_get_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_usb_c1_dp_in_hpd_l));
+	else
+		return !gpio_pin_get_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_usb_c0_dp_in_hpd_l));
 }
 
 void svdm_set_hpd_gpio(int port, int en)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_ap_dp_hpd_l), !en);
+	if (port == DP_PORT_C1)
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_dp_in_hpd_l),
+				!en);
+	else
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_dp_in_hpd_l),
+				!en);
 }

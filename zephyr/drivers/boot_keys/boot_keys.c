@@ -22,7 +22,7 @@
 
 LOG_MODULE_REGISTER(boot_keys, LOG_LEVEL_INF);
 
-#define CROS_EC_KEYBOARD_NODE DT_CHOSEN(cros_ec_keyboard)
+#define CROS_EC_KEYBOARD_NODE DT_INST_PARENT(0)
 
 /* Give the keyboard driver enough time to do a full scan and down debouncing
  * with some headroom to make sure we detect all keys pressed at boot time.
@@ -100,7 +100,7 @@ static void process_key(uint8_t row, uint8_t col, bool pressed)
 		boot_keys_value, boot_keys_counter, row, col);
 }
 
-static void boot_keys_input_cb(struct input_event *evt)
+static void boot_keys_input_cb(struct input_event *evt, void *user_data)
 {
 	static uint8_t row;
 	static uint8_t col;
@@ -129,7 +129,8 @@ static void boot_keys_input_cb(struct input_event *evt)
 
 	process_key(row, col, pressed);
 }
-INPUT_CALLBACK_DEFINE(DEVICE_DT_GET(CROS_EC_KEYBOARD_NODE), boot_keys_input_cb);
+INPUT_CALLBACK_DEFINE(DEVICE_DT_GET(CROS_EC_KEYBOARD_NODE), boot_keys_input_cb,
+		      NULL);
 
 static void power_button_change(void)
 {

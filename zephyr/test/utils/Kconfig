@@ -7,4 +7,14 @@ config TEST_STATIC_IF
 	help
 	  STATIC_IF tests.
 
+config TEST_UTILS
+	bool "Utils tests"
+	help
+	  Utils tests.
+
+config TEST_UTILS_STR
+	bool "String utils tests"
+	help
+	  String utils tests.
+
 source "Kconfig.zephyr"

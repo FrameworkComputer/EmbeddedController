@@ -7,6 +7,7 @@
 #define ZEPHYR_INCLUDE_EMUL_PDC_H_
 
 #include "drivers/ucsi_v3.h"
+#include "usb_pd.h"
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
@@ -42,12 +43,13 @@ typedef int (*emul_pdc_set_vbus_t)(const struct emul *target,
 typedef int (*emul_pdc_get_pdos_t)(const struct emul *target,
 				   enum pdo_type_t pdo_type,
 				   enum pdo_offset_t pdo_offset,
-				   uint8_t num_pdos, bool port_partner_pdo,
+				   uint8_t num_pdos, enum pdo_source_t source,
 				   uint32_t *pdos);
 typedef int (*emul_pdc_set_pdos_t)(const struct emul *target,
 				   enum pdo_type_t pdo_type,
 				   enum pdo_offset_t pdo_offset,
-				   uint8_t num_pdos, const uint32_t *pdos);
+				   uint8_t num_pdos, enum pdo_source_t source,
+				   const uint32_t *pdos);
 typedef int (*emul_pdc_set_info_t)(const struct emul *target,
 				   const struct pdc_info_t *info);
 typedef int (*emul_pdc_set_lpm_ppm_info_t)(const struct emul *target,
@@ -302,7 +304,7 @@ static inline int emul_pdc_set_vbus(const struct emul *target,
 static inline int emul_pdc_get_pdos(const struct emul *target,
 				    enum pdo_type_t pdo_type,
 				    enum pdo_offset_t pdo_offset,
-				    uint8_t num_pdos, bool port_partner_pdo,
+				    uint8_t num_pdos, enum pdo_source_t source,
 				    uint32_t *pdos)
 {
 	if (!target || !target->backend_api) {
@@ -313,7 +315,7 @@ static inline int emul_pdc_get_pdos(const struct emul *target,
 
 	if (api->get_pdos) {
 		return api->get_pdos(target, pdo_type, pdo_offset, num_pdos,
-				     port_partner_pdo, pdos);
+				     source, pdos);
 	}
 	return -ENOSYS;
 }
@@ -321,7 +323,8 @@ static inline int emul_pdc_get_pdos(const struct emul *target,
 static inline int emul_pdc_set_pdos(const struct emul *target,
 				    enum pdo_type_t pdo_type,
 				    enum pdo_offset_t pdo_offset,
-				    uint8_t num_pdos, const uint32_t *pdos)
+				    uint8_t num_pdos, enum pdo_source_t source,
+				    const uint32_t *pdos)
 {
 	if (!target || !target->backend_api) {
 		return -ENOTSUP;
@@ -331,7 +334,7 @@ static inline int emul_pdc_set_pdos(const struct emul *target,
 
 	if (api->set_pdos) {
 		return api->set_pdos(target, pdo_type, pdo_offset, num_pdos,
-				     pdos);
+				     source, pdos);
 	}
 	return -ENOSYS;
 }
@@ -534,6 +537,12 @@ emul_pdc_connect_partner(const struct emul *target,
 static inline int emul_pdc_disconnect(const struct emul *target)
 {
 	union connector_status_t connector_status;
+	uint32_t partner_pdos[PDO_MAX_OBJECTS] = { 0 };
+
+	emul_pdc_set_pdos(target, SOURCE_PDO, PDO_OFFSET_0, PDO_MAX_OBJECTS,
+			  PARTNER_PDO, partner_pdos);
+	emul_pdc_set_pdos(target, SINK_PDO, PDO_OFFSET_0, PDO_MAX_OBJECTS,
+			  PARTNER_PDO, partner_pdos);
 
 	connector_status.connect_status = 0;
 	emul_pdc_set_connector_status(target, &connector_status);

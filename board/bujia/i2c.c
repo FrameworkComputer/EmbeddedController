@@ -34,14 +34,6 @@ const struct i2c_port_t i2c_ports[] = {
 		.sda = GPIO_EC_I2C_USB_C0_C2_RT_SDA,
 	},
 	{
-		/* I2C6 */
-		.name = "usba2_retimer, usba3_retimer",
-		.port = I2C_PORT_USB_A2_A3_RT,
-		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_A2_A3_SCL,
-		.sda = GPIO_EC_I2C_USB_A2_A3_SDA,
-	},
-	{
 		/* I2C7 */
 		.name = "eeprom",
 		.port = I2C_PORT_EEPROM,

@@ -77,33 +77,51 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-/*
- * TODO(b/180681346): update for Alder Lake/brya
- *
- * Tiger Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
- * 130 C.  However, sensor is located next to DDR, so we need to use the lower
- * DDR temperature limit (85 C)
- */
 static const struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(95),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(98),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
 	},
-	.temp_fan_off = C_TO_K(40),
-	.temp_fan_max = C_TO_K(80),
 };
 
-/*
- * TODO(b/197478860): add the thermal sensor setting
- */
-/* this should really be "const" */
+static const struct ec_thermal_config thermal_cpu_vr = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(95),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(98),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+	},
+};
+
+static const struct ec_thermal_config thermal_wifi = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(95),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(98),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+	},
+};
+
+static const struct ec_thermal_config thermal_dimm = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(95),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(98),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+	},
+};
+
+/* Update the setpoint according to thermal table v1. */
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_CPU] = thermal_cpu,
-	[TEMP_SENSOR_2_CPU_VR] = thermal_cpu,
-	[TEMP_SENSOR_3_WIFI] = thermal_cpu,
-	[TEMP_SENSOR_4_DIMM] = thermal_cpu,
+	[TEMP_SENSOR_2_CPU_VR] = thermal_cpu_vr,
+	[TEMP_SENSOR_3_WIFI] = thermal_wifi,
+	[TEMP_SENSOR_4_DIMM] = thermal_dimm,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);

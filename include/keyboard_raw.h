@@ -15,6 +15,7 @@
 #include "common.h"
 #include "gpio_signal.h"
 #include "keyboard_config.h"
+#include "keyboard_scan.h"
 
 #include <stdbool.h>
 

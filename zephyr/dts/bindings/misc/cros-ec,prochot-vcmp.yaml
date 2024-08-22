@@ -1,0 +1,49 @@
+# Copyright 2024 Google LLC
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+  PROCHOT signal detection, uses a voltage comparator device to detect
+  transitions of the PROCHOT signal and log it on the console if the AP is
+  active.
+
+  Example configuration:
+
+  prochot-vcmp {
+      compatible = "cros-ec,prochot-vcmp";
+      vcmp = <&vcmp0>;
+      high-level-mv = <1050>;
+  };
+
+  &vcmp0 {
+      status = "okay";
+      scan-period = <IT8XXX2_VCMP_SCAN_PERIOD_5MS>;
+      comparison = <IT8XXX2_VCMP_GREATER>;
+      threshold-mv = <0>;
+      io-channels = <&adc0 0>;
+  };
+
+  &adc0 {
+      pinctrl-0 = <&adc0_ch0_gpi0_default>; /* ...and other ADC signals */
+      pinctrl-names = "default";
+  };
+
+  Note: the voltage comparator initial configuration is irrelevant, the device
+  is reconfigured automatically in runtime.
+
+compatible: "cros-ec,prochot-vcmp"
+
+include: base.yaml
+
+properties:
+  vcmp:
+    description: Voltage comparator device to use.
+    type: phandle
+    required: true
+
+  high-level-mv:
+    description: |
+      Signal voltage for the high level, in millivolts, detection thresholds will
+      be set to 10% and 90% of this value.
+    type: int
+    required: true

@@ -20,8 +20,14 @@ ifeq ($(cc-name),clang)
 CFLAGS_CPU+=-Oz		# Like -Os (and thus -O2), but reduces code size further.
 # b/256193799: Reduce inline threshold to decrease code size.
 CFLAGS_CPU+=-Wl,-mllvm -Wl,-inline-threshold=-10
-# Link compiler-rt when using clang, so clang finds the builtins it provides.
-LDFLAGS_EXTRA+=-lclang_rt.builtins-armv6m
+# Explicitly specify libclang_rt.builtins so that its symbols are preferred
+# over libc's. This avoids duplicate symbol errors. See b/346309204 for details.
+clang_resource_dir:="$(shell $(CC) --print-resource-dir)"
+ifneq ($(.SHELLSTATUS),0)
+$(error Could not determine path to libclang_rt.builtins)
+endif
+LDFLAGS_EXTRA+=\
+	"$(clang_resource_dir)/lib/baremetal/libclang_rt.builtins-armv6m.a"
 else
 CFLAGS_CPU+=-Os
 CFLAGS_CPU+=-mno-sched-prolog

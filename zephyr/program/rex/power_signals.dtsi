@@ -117,12 +117,12 @@
 };
 
 /* pwr-ec-pch-rsmrst-odl */
-&gpio_ec_soc_rsmrst_l {
+&gpio_ec_soc_rsmrst_l_r {
 	no-auto-init;
 };
 
 /* pwr-pch-pwrok */
-&gpio_soc_pwrok {
+&gpio_soc_pwrok_r {
 	no-auto-init;
 };
 

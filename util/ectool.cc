@@ -12405,6 +12405,7 @@ const struct command commands[] = {
 	{ "pdcontrol", cmd_pd_control,
 	  "[suspend|resume|reset|disable|on]\n"
 	  "\tControls the PD chip." },
+	{ "pdctrace", cmd_pdc_trace, cmd_pdc_trace_usage },
 	{ "pdgetmode", cmd_pd_get_amode,
 	  "<port>\n"
 	  "\tGet All USB-PD alternate SVIDs and modes on <port>." },
@@ -12590,7 +12591,7 @@ void print_help(const char *prog, int print_cmds)
 	       " [--interface=dev|i2c|lpc] [--i2c_bus=n] [--device=vid:pid]"
 	       " --verbose",
 	       prog);
-	printf("[--name=cros_ec|cros_fp|cros_pd|cros_scp|cros_ish] [--ascii] ");
+	printf(" [--name=cros_ec|cros_fp|cros_pd|cros_scp|cros_ish] [--ascii] ");
 	printf("<command> [params]\n\n");
 	printf("  --i2c_bus=n  Specifies the number of an I2C bus to use. For\n"
 	       "               example, to use /dev/i2c-7, pass --i2c_bus=7.\n"

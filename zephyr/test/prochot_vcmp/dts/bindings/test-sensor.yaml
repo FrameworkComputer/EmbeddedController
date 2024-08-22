@@ -1,0 +1,5 @@
+description: Test sensor
+
+compatible: "test-sensor"
+
+include: sensor-device.yaml

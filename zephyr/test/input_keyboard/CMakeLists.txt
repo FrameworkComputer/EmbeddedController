@@ -6,7 +6,6 @@ cmake_minimum_required(VERSION 3.13.1)
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 project(input_keyboard)
 
-zephyr_include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_sources(app PRIVATE ../../../chip/host/lpc.c)
 
-target_sources(app PRIVATE ../../drivers/keyboard_input/keyboard_input.c)
 target_sources(app PRIVATE src/main.c)

@@ -51,6 +51,15 @@ tests:
     extra_dtc_overlay_files:
     - boards/baseboard/baseboard.overlay
 
+  brox.jubilant.keyboard:
+    extra_configs:
+    - CONFIG_TEST_BOARD_JUBILANT=y
+    - CONFIG_TEST_BOARD_JUBILANT_KEYBOARD=y
+    - CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION=y
+    - CONFIG_PLATFORM_EC_KEYBOARD_DEBUG=y
+    extra_dtc_overlay_files:
+    - boards/baseboard/baseboard.overlay
+
   brox.lotso.sensor:
     extra_configs:
     - CONFIG_TEST_BOARD_LOTSO=y

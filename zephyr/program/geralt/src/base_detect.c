@@ -26,15 +26,19 @@ static void base_update(bool attached)
 {
 	const struct gpio_dt_spec *en_cc_lid_base_pu =
 		GPIO_DT_FROM_NODELABEL(en_cc_lid_base_pu);
+#ifndef CONFIG_ZTEST
 	const static struct device *one_wire_uart =
 		DEVICE_DT_GET(DT_NODELABEL(one_wire_uart));
+#endif
 
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_ppvar_base_x), attached);
+#ifndef CONFIG_ZTEST
 	if (attached) {
 		one_wire_uart_enable(one_wire_uart);
 	} else {
 		one_wire_uart_disable(one_wire_uart);
 	}
+#endif
 
 	base_set_state(attached);
 	tablet_set_mode(!attached, TABLET_TRIGGER_BASE);
@@ -113,6 +117,8 @@ void base_init_setting(void)
 {
 	if (adc_read_channel(ADC_BASE_DET) > DETACH_MIN_THRESHOLD_MV) {
 		base_update(false);
+	} else if (adc_read_channel(ADC_BASE_DET) < ATTACH_MAX_THRESHOLD_MV) {
+		base_update(true);
 	}
 
 	/* For system jump case to enable base detect */
@@ -120,7 +126,7 @@ void base_init_setting(void)
 		base_detect_enable(true);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, base_init_setting, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, base_init_setting, HOOK_PRIO_POST_DEFAULT);
 
 void base_force_state(enum ec_set_base_state_cmd state)
 {

@@ -75,15 +75,11 @@ void usb_console_enable(int enabled, int readonly);
  */
 int usb_console_tx_blocked(void);
 
-#define usb_va_start va_start
-#define usb_va_end va_end
 #else
 #define usb_puts(x) EC_SUCCESS
 #define usb_vprintf(x, y) EC_SUCCESS
 #define usb_putc(x) EC_SUCCESS
 #define usb_getc(x) (-1)
-#define usb_va_start(x, y)
-#define usb_va_end(x)
 #define usb_console_tx_blocked() (0)
 
 #ifdef __cplusplus

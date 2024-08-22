@@ -121,6 +121,12 @@ config PLATFORM_EC_USBC_NX20P348X_RCP_5VSRC_MASK_ENABLE
 	  The NX20P3483 is a product with 5V SRC reverse current protection
 	  mask enable and disable.
 
+config PLATFORM_EC_USBC_NX20P348X_VBUS_DISCHARGE_BY_SRC_EN
+	bool "NX20P3483 VBUS Discharge control as Source Enable"
+	depends on PLATFORM_EC_USBC_PPC_NX20P3483
+	help
+	  The NX20P3483 is VBUS discharge enable control with source enable.
+
 config PLATFORM_EC_USBC_PPC_RT1739
 	bool "Richtek RT1739 Type-C Power Path Controller"
 	default y

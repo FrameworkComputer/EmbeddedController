@@ -223,7 +223,6 @@ static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 	shell_fprintf(sh, SHELL_INFO,
 		      "Live: %d\n"
 		      "FW Ver: %u.%u.%u\n"
-		      "FW Config Ver: %u\n"
 		      "PD Rev: %u\n"
 		      "PD Ver: %u\n"
 		      "VID/PID: %04x:%04x\n"
@@ -233,8 +232,8 @@ static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 		      live, PDC_FWVER_GET_MAJOR(pdc_info.fw_version),
 		      PDC_FWVER_GET_MINOR(pdc_info.fw_version),
 		      PDC_FWVER_GET_PATCH(pdc_info.fw_version),
-		      pdc_info.fw_config_version, pdc_info.pd_revision,
-		      pdc_info.pd_version, PDC_VIDPID_GET_VID(pdc_info.vid_pid),
+		      pdc_info.pd_revision, pdc_info.pd_version,
+		      PDC_VIDPID_GET_VID(pdc_info.vid_pid),
 		      PDC_VIDPID_GET_PID(pdc_info.vid_pid),
 		      pdc_info.is_running_flash_code ? 'Y' : 'N',
 		      pdc_info.running_in_flash_bank,
@@ -376,9 +375,15 @@ static int cmd_pdc_trysrc(const struct shell *sh, size_t argc, char **argv)
 {
 	int rv;
 	uint8_t enable = 0;
+	uint8_t port;
 	char *e;
 
-	enable = strtoul(argv[1], &e, 10);
+	/* Get PD port number */
+	rv = cmd_get_pd_port(sh, argv[1], &port);
+	if (rv)
+		return rv;
+
+	enable = strtoul(argv[2], &e, 10);
 	if (*e) {
 		shell_error(sh, "unable to parse TrySrc value");
 		return -EINVAL;
@@ -388,12 +393,13 @@ static int cmd_pdc_trysrc(const struct shell *sh, size_t argc, char **argv)
 		return -EINVAL;
 	}
 
-	rv = pdc_power_mgmt_set_trysrc(0, enable);
+	rv = pdc_power_mgmt_set_trysrc(port, enable);
 	if (rv) {
-		shell_error(sh, "Could not set trysrc %d", rv);
+		shell_error(sh, "Could not set trysrc: %d (port %u)", rv, port);
 		return rv;
 	}
-	shell_info(sh, "Try.SRC Forced %s", enable ? "ON" : "OFF");
+	shell_info(sh, "Try.SRC Forced %s (port %u)", enable ? "ON" : "OFF",
+		   port);
 	return EC_SUCCESS;
 }
 
@@ -602,7 +608,7 @@ static int cmd_pdc_srccaps(const struct shell *sh, size_t argc, char **argv)
 	return 0;
 }
 
-#ifdef CONFIG_USBC_PDC_TPS6699X
+#ifdef CONFIG_USBC_PDC_TPS6699X_FW_UPDATER
 /* LCOV_EXCL_START - non-shipping code */
 extern int tps_pdc_do_firmware_update(void);
 
@@ -631,7 +637,7 @@ static int cmd_pdc_fwupdate(const struct shell *sh, size_t argc, char **argv)
 	return rv;
 }
 /* LCOV_EXCL_STOP - non-shipping code */
-#endif /* defined(CONFIG_USBC_PDC_TPS6699X) */
+#endif /* defined(CONFIG_USBC_PDC_TPS6699X_FW_UPDATER) */
 
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_pdc_cmds,
@@ -662,8 +668,8 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      cmd_pdc_dualrole, 2, 1),
 	SHELL_CMD_ARG(trysrc, NULL,
 		      "Set trysrc mode\n"
-		      "Usage: pdc trysrc [0|1]",
-		      cmd_pdc_trysrc, 2, 0),
+		      "Usage: pdc trysrc <port> [0|1]",
+		      cmd_pdc_trysrc, 3, 0),
 	SHELL_CMD_ARG(conn_reset, NULL,
 		      "Trigger hard or data reset\n"
 		      "Usage: pdc conn_reset  <port> [hard|data]",
@@ -694,12 +700,12 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "Get PDC chip info via GET_LPM_PPM_INFO UCSI cmd\n"
 		      "Usage: pdc lpm_ppm_info <port>",
 		      cmd_lpm_ppm_info, 2, 0),
-#ifdef CONFIG_USBC_PDC_TPS6699X
+#ifdef CONFIG_USBC_PDC_TPS6699X_FW_UPDATER
 	SHELL_CMD_ARG(fwupdate, NULL,
 		      "Updates TPS6699x firmware\n"
 		      "Usage pdc fwupdate",
 		      cmd_pdc_fwupdate, 1, 0),
-#endif /* defined(CONFIG_USBC_PDC_TPS6699X) */
+#endif /* defined(CONFIG_USBC_PDC_TPS6699X_FW_UPDATER) */
 	SHELL_COND_CMD_ARG(IS_ENABLED(CONFIG_USBC_PDC_TRACE_MSG_CONSOLE_CMD),
 			   trace, NULL,
 			   "Dump accumulated PDC trace messages "

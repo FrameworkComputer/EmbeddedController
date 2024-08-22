@@ -136,15 +136,6 @@ __maybe_unused static int nx20p3481_vbus_sink_enable(int port, int enable)
 	int rv;
 	int control = enable ? NX20P3481_SWITCH_CONTROL_HVSNK : 0;
 
-	if (enable) {
-		/*
-		 * VBUS Discharge must be off in sink mode.
-		 */
-		rv = nx20p348x_discharge_vbus(port, 0);
-		if (rv)
-			return rv;
-	}
-
 	rv = write_reg(port, NX20P348X_SWITCH_CONTROL_REG, control);
 	if (rv)
 		return rv;
@@ -211,15 +202,6 @@ __maybe_unused static int nx20p3483_vbus_sink_enable(int port, int enable)
 
 	enable = !!enable;
 
-	if (enable) {
-		/*
-		 * VBUS Discharge must be off in sink mode.
-		 */
-		rv = nx20p348x_discharge_vbus(port, 0);
-		if (rv)
-			return rv;
-	}
-
 	/*
 	 * We cannot use an EC GPIO for EN_SNK since an EC reset
 	 * will float the GPIO thus browning out the board (without
@@ -272,6 +254,14 @@ __maybe_unused static int nx20p3483_vbus_source_enable(int port, int enable)
 	rv = tcpm_set_src_ctrl(port, enable);
 	if (rv)
 		return rv;
+
+	/* We want to control vbus discharge with source enable */
+	if (IS_ENABLED(CONFIG_USBC_NX20P348X_VBUS_DISCHARGE_BY_SRC_EN)) {
+		if (enable)
+			nx20p348x_discharge_vbus(port, 0);
+		else
+			nx20p348x_discharge_vbus(port, 1);
+	}
 
 	/*
 	 * Wait up to NX20P348X_SWITCH_STATUS_DEBOUNCE_MSEC for the status
@@ -558,6 +548,16 @@ static int nx20p348x_set_vconn(int port, int enable)
 }
 #endif
 
+static int nx20p348x_dev_is_connected(int port, enum ppc_device_role dev)
+{
+	/* VBUS Discharge must be off in sink mode. */
+	if (dev == PPC_DEV_SRC || dev == PPC_DEV_SNK)
+		return nx20p348x_discharge_vbus(port, 0);
+
+	/* PPC_DEV_DISCONNECTED and other possible cases */
+	return nx20p348x_discharge_vbus(port, 1);
+}
+
 const struct ppc_drv nx20p348x_drv = {
 	.init = &nx20p348x_init,
 	.is_sourcing_vbus = &nx20p348x_is_sourcing_vbus,
@@ -575,6 +575,7 @@ const struct ppc_drv nx20p348x_drv = {
 	.set_vbus_source_current_limit =
 		&nx20p348x_set_vbus_source_current_limit,
 	.discharge_vbus = &nx20p348x_discharge_vbus,
+	.dev_is_connected = &nx20p348x_dev_is_connected,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
 	.is_vbus_present = &nx20p348x_is_vbus_present,
 #endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */

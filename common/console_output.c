@@ -12,6 +12,8 @@
 #include "usb_console.h"
 #include "util.h"
 
+#include <stdarg.h>
+
 #ifdef CONFIG_CONSOLE_CHANNEL
 /* Default to all channels active */
 #ifndef CC_DEFAULT
@@ -92,30 +94,41 @@ int cputs(enum console_channel channel, const char *outstr)
 	return rv1 == EC_SUCCESS ? rv2 : rv1;
 }
 
-int cprintf(enum console_channel channel, const char *format, ...)
+int cvprintf(enum console_channel channel, const char *format, va_list args)
 {
 	int rv1, rv2;
-	va_list args;
+	va_list temp_args;
 
 	/* Filter out inactive channels */
 	if (console_channel_is_disabled(channel))
 		return EC_SUCCESS;
 
-	usb_va_start(args, format);
-	rv1 = usb_vprintf(format, args);
-	usb_va_end(args);
+	va_copy(temp_args, args);
+	rv1 = usb_vprintf(format, temp_args);
+	va_end(temp_args);
 
-	va_start(args, format);
-	rv2 = uart_vprintf(format, args);
-	va_end(args);
+	va_copy(temp_args, args);
+	rv2 = uart_vprintf(format, temp_args);
+	va_end(temp_args);
 
 	return rv1 == EC_SUCCESS ? rv2 : rv1;
 }
 
-int cprints(enum console_channel channel, const char *format, ...)
+int cprintf(enum console_channel channel, const char *format, ...)
+{
+	int rv;
+	va_list args;
+
+	va_start(args, format);
+	rv = cvprintf(channel, format, args);
+	va_end(args);
+
+	return rv;
+}
+
+int cvprints(enum console_channel channel, const char *format, va_list args)
 {
 	int r, rv;
-	va_list args;
 	char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 
 	/* Filter out inactive channels */
@@ -125,20 +138,23 @@ int cprints(enum console_channel channel, const char *format, ...)
 	snprintf_timestamp_now(ts_str, sizeof(ts_str));
 	rv = cprintf(channel, "[%s ", ts_str);
 
-	va_start(args, format);
-	r = uart_vprintf(format, args);
-	if (r)
-		rv = r;
-	va_end(args);
-
-	usb_va_start(args, format);
-	r = usb_vprintf(format, args);
-	if (r)
-		rv = r;
-	usb_va_end(args);
+	r = cvprintf(channel, format, args);
+	rv = r ? r : rv;
 
 	r = cputs(channel, "]\n");
 	return r ? r : rv;
+}
+
+int cprints(enum console_channel channel, const char *format, ...)
+{
+	int rv;
+	va_list args;
+
+	va_start(args, format);
+	rv = cvprints(channel, format, args);
+	va_end(args);
+
+	return rv;
 }
 #endif /* CONFIG_ZEPHYR */
 

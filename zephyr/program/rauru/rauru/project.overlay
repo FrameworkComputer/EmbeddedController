@@ -252,7 +252,7 @@
 	fans {
 		compatible = "cros-ec,fans";
 
-		fan0 {
+		fan0: fan0 {
 			pwms = <&pwm2 0 PWM_KHZ(324) PWM_POLARITY_INVERTED>;
 			tach = <&tach0>;
 			rpm_min = <1000>;

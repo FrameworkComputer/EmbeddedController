@@ -21,3 +21,5 @@ target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_SHIM app PRIVATE
 	src/fpsensor_shim.cc)
 target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_TEMPLATE app PRIVATE
 	src/fpsensor_template.cc)
+target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_UTILS app PRIVATE
+	src/fpsensor_utils.cc)

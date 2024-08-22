@@ -21,7 +21,10 @@
 
 K_MUTEX_DEFINE(modify_base_detection_mutex);
 
-#define BASE_DETECT_INTERVAL (200 * MSEC)
+#define BASE_DETECT_INTERVAL (30 * MSEC)
+#define BASE_DETECT_EN_DEBOUNCE_US (300 * MSEC)
+#define BASE_DETECT_DIS_DEBOUNCE_US (0 * MSEC)
+
 #define ATTACH_MAX_THRESHOLD_MV 300
 #define ATTACH_MIN_THRESHOLD_MV 100
 
@@ -43,28 +46,33 @@ DECLARE_DEFERRED(base_detect_tick);
 static void base_detect_tick(void)
 {
 	static bool debouncing;
+	int next_us = BASE_DETECT_INTERVAL;
+
 	int mv = adc_read_channel(ADC_BASE_DET);
-	if (mv >= ATTACH_MAX_THRESHOLD_MV && base_get_state()) {
+	if ((mv > ATTACH_MAX_THRESHOLD_MV || mv < ATTACH_MIN_THRESHOLD_MV) &&
+	    base_get_state()) {
 		if (!debouncing) {
 			debouncing = true;
+			next_us = BASE_DETECT_DIS_DEBOUNCE_US;
 		} else {
 			debouncing = false;
 			attached = false;
-			hook_call_deferred(&base_update_data, 300 * MSEC);
+			base_update();
 		}
 	} else if (mv >= ATTACH_MIN_THRESHOLD_MV &&
 		   mv <= ATTACH_MAX_THRESHOLD_MV && !base_get_state()) {
 		if (!debouncing) {
 			debouncing = true;
+			next_us = BASE_DETECT_EN_DEBOUNCE_US;
 		} else {
 			debouncing = false;
 			attached = true;
-			hook_call_deferred(&base_update_data, 300 * MSEC);
+			base_update();
 		}
 	} else {
 		debouncing = false;
 	}
-	hook_call_deferred(&base_detect_tick_data, BASE_DETECT_INTERVAL);
+	hook_call_deferred(&base_detect_tick_data, next_us);
 }
 
 static void base_detect_enable(bool enable)
@@ -113,8 +121,12 @@ SYS_INIT(base_init, APPLICATION, 1);
 
 void base_init_setting(void)
 {
-	if (adc_read_channel(ADC_BASE_DET) > ATTACH_MAX_THRESHOLD_MV) {
+	if (adc_read_channel(ADC_BASE_DET) > ATTACH_MAX_THRESHOLD_MV ||
+	    adc_read_channel(ADC_BASE_DET) < ATTACH_MIN_THRESHOLD_MV) {
 		attached = false;
+		hook_call_deferred(&base_update_data, 0);
+	} else {
+		attached = true;
 		hook_call_deferred(&base_update_data, 0);
 	}
 	base_detect_enable(true);
@@ -128,12 +140,12 @@ void base_force_state(enum ec_set_base_state_cmd state)
 	case EC_SET_BASE_STATE_ATTACH:
 		base_detect_enable(false);
 		attached = true;
-		hook_call_deferred(&base_update_data, 0);
+		base_update();
 		break;
 	case EC_SET_BASE_STATE_DETACH:
 		base_detect_enable(false);
 		attached = false;
-		hook_call_deferred(&base_update_data, 0);
+		base_update();
 		break;
 	case EC_SET_BASE_STATE_RESET:
 		base_detect_enable(true);

@@ -91,10 +91,10 @@
 			gpios = <&ioex_port2 6 GPIO_OUTPUT_LOW>;
 		};
 		gpio_led_1_odl: led_1_odl {
-			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
+			gpios = <&gpioc 4 GPIO_OUTPUT_HIGH>;
 		};
 		gpio_led_2_odl: led_2_odl {
-			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
+			gpios = <&gpioc 3 GPIO_OUTPUT_HIGH>;
 		};
 		ec-i2c-sensor-scl {
 			gpios = <&gpio9 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;

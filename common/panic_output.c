@@ -477,7 +477,10 @@ static int command_crash(int argc, const char **argv)
 
 DECLARE_CONSOLE_COMMAND(crash, command_crash,
 			"[assert | divzero | udivzero | stack"
-			" | unaligned | watchdog | hang | null]",
+#ifndef CONFIG_ALLOW_UNALIGNED_ACCESS
+			" | unaligned"
+#endif /* !CONFIG_ALLOW_UNALIGNED_ACCESS */
+			" | watchdog | hang | null]",
 			"Crash the system (for testing)."
 #ifndef CONFIG_CMD_CRASH_NESTED
 			" Repeat argument for nested crashes."

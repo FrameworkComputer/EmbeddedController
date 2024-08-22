@@ -78,13 +78,17 @@ target_sources_ifdef(CONFIG_TEST_SKITTY
 	src/fake.c
 	src/ppc_skitty.c
 	src/temp_skitty.c
+	src/led_skitty.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/skitty/src/ppc.c
-	${PLATFORM_EC_PROGRAM_DIR}/corsola/skitty/src/temp.c)
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/skitty/src/temp.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/skitty/src/led.c)
 
 target_sources_ifdef(CONFIG_TEST_VELUZA
 	app PRIVATE
 	src/fake.c
 	src/ppc_veluza.c
 	src/temp_veluza.c
+	src/sensor_veluza.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/veluza/src/ppc.c
-	${PLATFORM_EC_PROGRAM_DIR}/corsola/veluza/src/temp.c)
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/veluza/src/temp.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/veluza/src/sensor.c)

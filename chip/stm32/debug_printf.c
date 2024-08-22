@@ -57,12 +57,19 @@ void panic_puts(const char *outstr)
 	cflush();
 }
 
+int cvprintf(enum console_channel channel, const char *format, va_list args)
+{
+	vfnprintf(debug_txchar, NULL, format, args);
+
+	return 0;
+}
+
 int cprintf(enum console_channel channel, const char *format, ...)
 {
 	va_list args;
 
 	va_start(args, format);
-	vfnprintf(debug_txchar, NULL, format, args);
+	cvprintf(channel, format, args);
 	va_end(args);
 
 	return 0;
@@ -79,15 +86,21 @@ void panic_printf(const char *format, ...)
 	cflush();
 }
 
+int cvprints(enum console_channel channel, const char *format, va_list args)
+{
+	cvprintf(channel, format, args);
+	debug_printf("\n");
+
+	return 0;
+}
+
 int cprints(enum console_channel channel, const char *format, ...)
 {
 	va_list args;
 
 	va_start(args, format);
-	vfnprintf(debug_txchar, NULL, format, args);
+	cvprints(channel, format, args);
 	va_end(args);
-
-	debug_printf("\n");
 
 	return 0;
 }

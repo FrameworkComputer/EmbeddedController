@@ -1,8 +1,8 @@
 # Fingerprint Firmware Testing Instructions for Partners
 
-This document is intended to help partners (sensor vendors, MCU vendors, etc)
+This document is intended to help partners (sensor vendors, MCU vendors, etc.)
 run the ChromeOS fingerprint team's firmware tests, as part of the AVL process.
-The document assumes that you‘re using Linux to do the development; preferably a
+The document assumes that you're using Linux to do the development; preferably a
 recent version of Ubuntu or Debian. It may be possible to use a virtual machine,
 but that is not a configuration we test.
 
@@ -41,7 +41,7 @@ This document will assume you are using Servo V4.
 *   Make sure the USB cable from the host machine to Servo V4 is in data
     transfer mode (i.e. if there's an LED, it should be yellow instead of
     green).
-*   Make sure the you can ssh into the Chromebook from the chroot on the host
+*   Make sure that you can ssh into the Chromebook from the chroot on the host
     machine.
 
 ## Software Setup
@@ -60,6 +60,7 @@ This document will assume you are using Servo V4.
 # enter the chroot
 (outside chroot) $ cros_sdk
 ```
+
 ### Servod setup
 
 Follow [servod outside chroot] instructions.
@@ -70,8 +71,8 @@ Follow [servod outside chroot] instructions.
 (outside) $ start-servod --channel=release --board=$BOARD -p 9999
 ```
 
-At this point the servod daemon should be running and listening to port 9999.
-If it isn't, check the hardware connection.
+At this point the servod daemon should be running and listening to port 9999. If
+it isn't, check the hardware connection.
 
 ## Run a Single Fingerprint Firmware Test
 
@@ -85,7 +86,7 @@ Use another terminal and enter the chroot like before:
 To run a single test, use this command in your chroot:
 
 ```bash
-test_that --board=<BOARD> <IP> <test name>
+tast run <IP> <test name>
 ```
 
 For example:

@@ -216,6 +216,7 @@ static int test_sim_button_debounce_stability(void)
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
+	crec_msleep(20);
 
 	send_button_hostcmd(btn_mask, 100);
 	crec_msleep(20);

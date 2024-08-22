@@ -1,0 +1,40 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config USB_DEVICE_GOOGLE_I2C
+	bool "USB Google I2C class support"
+	depends on USB_DEVICE_STACK
+	depends on PLATFORM_EC_USB_I2C
+	select NET_BUF
+	default y
+	help
+	  Enable Google vender specific I2C class.
+
+config GOOGLE_I2C_RX_THREAD_PRIORTY
+	int "Google I2C RX thread priority"
+	depends on USB_DEVICE_GOOGLE_I2C
+	default 8
+	help
+	  Set thread priority of the Google I2C RX.
+
+config GOOGLE_I2C_RX_STACK_SIZE
+	int "Size of the Rx thread stack"
+	depends on USB_DEVICE_GOOGLE_I2C
+	default 1024
+	help
+	  Size of the Rx thread stack.
+
+config GOOGLE_I2C_TX_THREAD_PRIORTY
+	int "Google I2C TX thread priority"
+	depends on USB_DEVICE_GOOGLE_I2C
+	default 8
+	help
+	  Set thread priority of the Google I2C TX.
+
+config GOOGLE_I2C_TX_STACK_SIZE
+	int "Size of the Tx thread stack"
+	depends on USB_DEVICE_GOOGLE_I2C
+	default 1024
+	help
+	  Size of the Tx thread stack.

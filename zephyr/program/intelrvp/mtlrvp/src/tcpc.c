@@ -19,8 +19,8 @@
 #include "usbc/usb_muxes.h"
 #include "usbc_ppc.h"
 
-#define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ##args)
-#define CPRINTS(format, args...) cprints(CC_COMMAND, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 /*******************************************************************/
 /* USB-C Configuration Start */

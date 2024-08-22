@@ -104,7 +104,7 @@ int tps_rd_uid(const struct i2c_dt_spec *i2c, union reg_uid *buf)
 int tps_rw_tx_identity(const struct i2c_dt_spec *i2c,
 		       union reg_tx_identity *buf, int flag)
 {
-	return tps_xfer_reg(i2c, REG_COMMAND_FOR_I2C1, buf->raw_value,
+	return tps_xfer_reg(i2c, REG_TX_IDENTITY, buf->raw_value,
 			    sizeof(union reg_tx_identity), flag);
 }
 
@@ -203,6 +203,24 @@ int tps_rw_port_control(const struct i2c_dt_spec *i2c,
 {
 	return tps_xfer_reg(i2c, REG_PORT_CONTROL, buf->raw_value,
 			    sizeof(union reg_port_control), flag);
+}
+
+int tps_rw_transmit_source_capabilities(
+	const struct i2c_dt_spec *i2c,
+	union reg_transmit_source_capabilities *buf, int flag)
+{
+	return tps_xfer_reg(i2c, REG_TRANSMIT_SOURCE_CAPABILITES,
+			    buf->raw_value,
+			    sizeof(union reg_transmit_source_capabilities),
+			    flag);
+}
+
+int tps_rw_transmit_sink_capabilities(const struct i2c_dt_spec *i2c,
+				      union reg_transmit_sink_capabilities *buf,
+				      int flag)
+{
+	return tps_xfer_reg(i2c, REG_TRANSMIT_SINK_CAPABILITES, buf->raw_value,
+			    sizeof(union reg_transmit_sink_capabilities), flag);
 }
 
 int tps_rd_active_rdo_contract(const struct i2c_dt_spec *i2c,

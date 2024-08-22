@@ -192,8 +192,11 @@
 	};
 
 	batteries {
-		default_battery: smp_kyogre2s {
-			compatible = "smp,kyogre2s", "battery-smart";
+		default_battery: SIMPLO_CP856931 {
+			compatible = "SIMPLO,CP856931", "battery-smart";
+		};
+		SIMPLO_CP856932 {
+			compatible = "SIMPLO,CP856932", "battery-smart";
 		};
 	};
 
@@ -220,12 +223,12 @@
 
 				color-0 {
 					led-color = "LED_WHITE";
-					period-ms = <3000>;
+					period-ms = <500>;
 				};
 
 				color-1 {
 					led-color = "LED_OFF";
-					period-ms = <500>;
+					period-ms = <2500>;
 				};
 			};
 		};
@@ -243,8 +246,8 @@
 
 		bat-state1-charge {
 			charge-state = "LED_PWRS_CHARGE";
-			/* Battery display percent range (>= 0, <= 96%) */
-			batt-lvl = <BATTERY_LEVEL_EMPTY 96>;
+			/* Battery display percent range (>= 0, <= 89%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 89>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
@@ -256,8 +259,8 @@
 
 		bat-state2-charge {
 			charge-state = "LED_PWRS_CHARGE";
-			/* Battery display percent range (>= 97, <= 100) */
-			batt-lvl = <97 100>;
+			/* Battery display percent range (>= 90, <= 100) */
+			batt-lvl = <90 100>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
@@ -395,6 +398,11 @@
 		port0@0 {
 			/delete-property/ bc12;
 		};
+		port1@1{
+			/delete-property/ bc12;
+			/delete-property/ tcpc;
+			/delete-property/ ppc;
+		};
 	};
 
 	cros-keyscan {
@@ -491,4 +499,8 @@
 		&kso16_gp03
 		&kso17_gpb1
 	>;
+};
+
+&i2c2_0 {
+	clock-frequency = <I2C_BITRATE_FAST>;
 };

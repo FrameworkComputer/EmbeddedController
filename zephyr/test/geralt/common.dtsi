@@ -11,6 +11,12 @@
 		status = "disabled";
 	};
 
+	named-gpios {
+		usb_c0_frs_en: usb-c0-frs-en {
+			gpios = <&gpioa 3 GPIO_OUTPUT_LOW>;
+		};
+	};
+
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 
@@ -106,6 +112,10 @@
 			enum-name = "ADC_BOARD_ID_1";
 			io-channels = <&adc0 2>;
 		};
+		adc_base_det: adc-base-det {
+			enum-name = "ADC_BASE_DET";
+			io-channels = <&adc0 5>;
+		};
 		adc_vbus_c1 {
 			enum-name = "ADC_VBUS_C1";
 			io-channels = <&adc0 7>;
@@ -113,7 +123,7 @@
 		};
 		adc_charger: charger {
 			enum-name = "ADC_TEMP_SENSOR_CHARGER";
-			io-channels = <&adc0 5>;
+			io-channels = <&adc0 6>;
 		};
 	};
 };
@@ -162,9 +172,11 @@
 	};
 
 	ppc_port0: rt1739@70 {
-		compatible = "zephyr,rt1739-emul", "richtek,rt1739-ppc";
+		compatible = "zephyr,syv682x-emul";
 		status = "okay";
-		reg = <0x70>;
+		reg = <0x42>;
+		frs_en_gpio = <&usb_c0_frs_en>;
+		alert_gpio = <&usb_c0_ppc_bc12_int_odl>;
 	};
 
 	tusb546_mux_0: tusb546-mux-0@44 {

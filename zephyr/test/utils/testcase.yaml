@@ -4,3 +4,9 @@ tests:
   utils.static_if:
     extra_configs:
     - CONFIG_TEST_STATIC_IF=y
+  utils.utils:
+    extra_configs:
+    - CONFIG_TEST_UTILS=y
+  utils.utils_str:
+    extra_configs:
+    - CONFIG_TEST_UTILS_STR=y

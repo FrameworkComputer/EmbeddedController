@@ -24,17 +24,14 @@
 
 LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_INF);
 
-#define BAT_LED_ON 0
-#define BAT_LED_OFF 1
-
-#define BATT_LOW_BCT 10
+#define BATT_LOW_BCT 8
 
 #define LED_TICKS_PER_CYCLE 4
 #define LED_TICKS_PER_CYCLE_S3 4
 #define LED_ON_TICKS 2
 #define POWER_LED_ON_S3_TICKS 2
 
-#define PWR_LED_PWM_PERIOD_NS BOARD_LED_HZ_TO_PERIOD_NS(324)
+#define LED_PWM_PERIOD_NS BOARD_LED_HZ_TO_PERIOD_NS(324)
 
 /*
  * Due to the CSME-Lite processing, upon startup the CPU transitions through
@@ -60,8 +57,16 @@ enum led_color {
 static const struct board_led_pwm_dt_channel pwr_led =
 	BOARD_LED_PWM_DT_CHANNEL_INITIALIZER(DT_NODELABEL(pwm_power_led));
 
-static void pwr_led_pwm_set_duty(const struct board_led_pwm_dt_channel *ch,
-				 int percent)
+static const struct board_led_pwm_dt_channel battery_amber_led =
+	BOARD_LED_PWM_DT_CHANNEL_INITIALIZER(
+		DT_NODELABEL(pwm_battery_amber_led));
+
+static const struct board_led_pwm_dt_channel battery_white_led =
+	BOARD_LED_PWM_DT_CHANNEL_INITIALIZER(
+		DT_NODELABEL(pwm_battery_white_led));
+
+static void led_pwm_set_duty(const struct board_led_pwm_dt_channel *ch,
+			     int percent)
 {
 	uint32_t pulse_ns;
 	int rv;
@@ -71,41 +76,42 @@ static void pwr_led_pwm_set_duty(const struct board_led_pwm_dt_channel *ch,
 		return;
 	}
 
-	pulse_ns = DIV_ROUND_NEAREST(PWR_LED_PWM_PERIOD_NS * percent, 100);
+	pulse_ns = DIV_ROUND_NEAREST(LED_PWM_PERIOD_NS * percent, 100);
 
 	LOG_DBG("PWM LED %s set percent (%d), pulse %d", ch->dev->name, percent,
 		pulse_ns);
 
-	rv = pwm_set(ch->dev, ch->channel, PWR_LED_PWM_PERIOD_NS, pulse_ns,
+	rv = pwm_set(ch->dev, ch->channel, LED_PWM_PERIOD_NS, pulse_ns,
 		     ch->flags);
 	if (rv) {
 		LOG_ERR("pwm_set() failed %s (%d)", ch->dev->name, rv);
 	}
 }
 
-static void led_set_color_battery(enum led_color color)
+static int led_set_color_battery_duty(enum led_color color, int duty)
 {
-	const struct gpio_dt_spec *amber_led, *white_led;
-
-	amber_led = GPIO_DT_FROM_NODELABEL(gpio_battery_led_amber_l);
-	white_led = GPIO_DT_FROM_NODELABEL(gpio_battery_led_white_l);
+	/* Battery LED duty range from 0% ~ 100% */
+	if (duty < 0 || 100 < duty)
+		return EC_ERROR_UNKNOWN;
 
 	switch (color) {
 	case LED_WHITE:
-		gpio_pin_set_dt(white_led, BAT_LED_ON);
-		gpio_pin_set_dt(amber_led, BAT_LED_OFF);
+		led_pwm_set_duty(&battery_white_led, duty);
+		led_pwm_set_duty(&battery_amber_led, 0);
 		break;
 	case LED_AMBER:
-		gpio_pin_set_dt(white_led, BAT_LED_OFF);
-		gpio_pin_set_dt(amber_led, BAT_LED_ON);
+		led_pwm_set_duty(&battery_white_led, 0);
+		led_pwm_set_duty(&battery_amber_led, duty);
 		break;
 	case LED_OFF:
-		gpio_pin_set_dt(white_led, BAT_LED_OFF);
-		gpio_pin_set_dt(amber_led, BAT_LED_OFF);
+		led_pwm_set_duty(&battery_white_led, 0);
+		led_pwm_set_duty(&battery_amber_led, 0);
 		break;
 	default:
 		break;
 	}
+
+	return EC_SUCCESS;
 }
 
 static int led_set_color_power(enum led_color color, int duty)
@@ -116,10 +122,10 @@ static int led_set_color_power(enum led_color color, int duty)
 
 	switch (color) {
 	case LED_OFF:
-		pwr_led_pwm_set_duty(&pwr_led, 0);
+		led_pwm_set_duty(&pwr_led, 0);
 		break;
 	case LED_WHITE:
-		pwr_led_pwm_set_duty(&pwr_led, duty);
+		led_pwm_set_duty(&pwr_led, duty);
 		break;
 	default:
 		break;
@@ -150,11 +156,13 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	switch (led_id) {
 	case EC_LED_ID_BATTERY_LED:
 		if (brightness[EC_LED_COLOR_WHITE] != 0)
-			led_set_color_battery(LED_WHITE);
+			led_set_color_battery_duty(
+				LED_WHITE, brightness[EC_LED_COLOR_WHITE]);
 		else if (brightness[EC_LED_COLOR_AMBER] != 0)
-			led_set_color_battery(LED_AMBER);
+			led_set_color_battery_duty(
+				LED_AMBER, brightness[EC_LED_COLOR_AMBER]);
 		else
-			led_set_color_battery(LED_OFF);
+			led_set_color_battery_duty(LED_OFF, 0);
 		break;
 	case EC_LED_ID_POWER_LED:
 		if (brightness[EC_LED_COLOR_WHITE] != 0)
@@ -170,71 +178,148 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	return rv;
 }
 
+static struct {
+	uint32_t interval;
+	int duty_inc;
+	enum led_color color;
+	uint32_t on_time;
+	int duty;
+} batt_led_pulse;
+
+static void battery_set_pwm_led_tick(void);
+DECLARE_DEFERRED(battery_set_pwm_led_tick);
+
+#define BATT_LOW_LED_PULSE_MS (875 * MSEC)
+#define BATT_CRI_LED_PULSE_MS (375 * MSEC)
+#define BATT_LED_ON_TIME_MS (125 * MSEC)
+#define BATT_LED_PULSE_TICK_MS (25 * MSEC)
+
+#define BATT_LOW_LED_CONFIG_TICK(interval, color)                        \
+	batt_led_config_tick(                                            \
+		(interval),                                              \
+		DIV_ROUND_UP(100, (BATT_LOW_LED_PULSE_MS / (interval))), \
+		(color), (BATT_LED_ON_TIME_MS))
+
+#define BATT_CRI_LED_CONFIG_TICK(interval, color)                        \
+	batt_led_config_tick(                                            \
+		(interval),                                              \
+		DIV_ROUND_UP(100, (BATT_CRI_LED_PULSE_MS / (interval))), \
+		(color), (BATT_LED_ON_TIME_MS))
+
+static void batt_led_config_tick(uint32_t interval, int duty_inc,
+				 enum led_color color, uint32_t on_time)
+{
+	batt_led_pulse.interval = interval;
+	batt_led_pulse.duty_inc = duty_inc;
+	batt_led_pulse.color = color;
+	batt_led_pulse.on_time = on_time;
+	batt_led_pulse.duty = 0;
+}
+
 static void led_set_battery(void)
 {
 	static unsigned int battery_ticks;
-	static int suspend_ticks;
-
+	static bool battery_low_triggeied = 0;
+	static bool battery_critical_triggeied = 0;
 	battery_ticks++;
-
-	if (!power_led_support && chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
-	    led_pwr_get_state() != LED_PWRS_CHARGE) {
-		suspend_ticks++;
-
-		led_set_color_battery(suspend_ticks % LED_TICKS_PER_CYCLE_S3 <
-						      POWER_LED_ON_S3_TICKS ?
-					      LED_WHITE :
-					      LED_OFF);
-		return;
-	}
-
-	suspend_ticks = 0;
 
 	switch (led_pwr_get_state()) {
 	case LED_PWRS_CHARGE:
 		/* Always indicate when charging, even in suspend. */
 		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
-			led_set_color_battery(LED_AMBER);
+			led_set_color_battery_duty(LED_AMBER, 100);
 		break;
 	case LED_PWRS_DISCHARGE:
 		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
-			if (charge_get_percent() < BATT_LOW_BCT)
-				led_set_color_battery(
-					(battery_ticks % LED_TICKS_PER_CYCLE <
-					 LED_ON_TICKS) ?
-						LED_WHITE :
-						LED_OFF);
-			else
-				led_set_color_battery(LED_OFF);
+			if (charge_get_percent() <= BATTERY_LEVEL_CRITICAL &&
+			    !battery_critical_triggeied) {
+				battery_low_triggeied = 0;
+				battery_critical_triggeied = 1;
+				BATT_CRI_LED_CONFIG_TICK(BATT_LED_PULSE_TICK_MS,
+							 LED_AMBER);
+				hook_call_deferred(
+					&battery_set_pwm_led_tick_data, 0);
+			} else if (charge_get_percent() <= BATT_LOW_BCT &&
+				   charge_get_percent() >
+					   BATTERY_LEVEL_CRITICAL &&
+				   !battery_low_triggeied) {
+				battery_critical_triggeied = 0;
+				battery_low_triggeied = 1;
+				BATT_LOW_LED_CONFIG_TICK(BATT_LED_PULSE_TICK_MS,
+							 LED_AMBER);
+				hook_call_deferred(
+					&battery_set_pwm_led_tick_data, 0);
+			} else if (charge_get_percent() > BATT_LOW_BCT &&
+				   !battery_critical_triggeied &&
+				   !battery_low_triggeied) {
+				battery_low_triggeied = 0;
+				battery_critical_triggeied = 0;
+				led_set_color_battery_duty(LED_OFF, 0);
+			}
 		}
 		break;
 	case LED_PWRS_ERROR:
 		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
-			led_set_color_battery(
-				(battery_ticks & 0x1) ? LED_AMBER : LED_OFF);
+			led_set_color_battery_duty(
+				(battery_ticks & 0x1) ? LED_AMBER : LED_OFF,
+				(battery_ticks & 0x1) ? 100 : 0);
 		}
 		break;
 	case LED_PWRS_CHARGE_NEAR_FULL:
 		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
-			led_set_color_battery(LED_WHITE);
+			led_set_color_battery_duty(LED_WHITE, 100);
 		break;
 	case LED_PWRS_IDLE: /* External power connected in IDLE */
 		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
-			led_set_color_battery(LED_WHITE);
+			led_set_color_battery_duty(LED_WHITE, 100);
 		break;
 	case LED_PWRS_FORCED_IDLE:
 		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
-			led_set_color_battery(
+			led_set_color_battery_duty(
 				(battery_ticks % LED_TICKS_PER_CYCLE <
 				 LED_ON_TICKS) ?
 					LED_AMBER :
-					LED_OFF);
+					LED_OFF,
+				(battery_ticks % LED_TICKS_PER_CYCLE <
+				 LED_ON_TICKS) ?
+					100 :
+					0);
 		}
 		break;
 	default:
 		/* Other states don't alter LED behavior */
 		break;
 	}
+
+	if (led_pwr_get_state() != LED_PWRS_DISCHARGE) {
+		battery_low_triggeied = 0;
+		battery_critical_triggeied = 0;
+		hook_call_deferred(&battery_set_pwm_led_tick_data, -1);
+		return;
+	}
+}
+
+static void battery_set_pwm_led_tick(void)
+{
+	uint32_t elapsed;
+	uint32_t next = 0;
+	uint32_t start = get_time().le.lo;
+
+	if (batt_led_pulse.duty == 0) {
+		batt_led_pulse.duty = 100;
+		next = batt_led_pulse.on_time;
+	} else if ((batt_led_pulse.duty - batt_led_pulse.duty_inc) < 0)
+		batt_led_pulse.duty = 0;
+	else
+		batt_led_pulse.duty -= batt_led_pulse.duty_inc;
+
+	led_set_color_battery_duty(batt_led_pulse.color, batt_led_pulse.duty);
+
+	if (next == 0)
+		next = batt_led_pulse.interval;
+	elapsed = get_time().le.lo - start;
+	next = next > elapsed ? next - elapsed : 0;
+	hook_call_deferred(&battery_set_pwm_led_tick_data, next);
 }
 
 static void power_led_check(void)

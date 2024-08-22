@@ -25,6 +25,8 @@
 extern "C" {
 #endif
 
+extern char fake_shmem_buf[BIT(20)];
+
 /**
  * Returns the maximum amount of shared memory which can be acquired, in
  * bytes.

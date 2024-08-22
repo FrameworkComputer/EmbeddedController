@@ -6,6 +6,10 @@ set(COMPILER clang)
 set(LINKER lld)
 set(BINTOOLS llvm)
 
+if("${ARCH}" STREQUAL "posix")
+set(LINKER ld)
+endif()
+
 # Mapping of Zephyr architecture -> toolchain triple
 set(CROSS_COMPILE_TARGET_posix        x86_64-pc-linux-gnu)
 set(CROSS_COMPILE_TARGET_unit_testing x86_64-pc-linux-gnu)
@@ -31,6 +35,11 @@ if("${ARCH}" STREQUAL "arm")
     # Baseline implementation processor is used.
     set(CROSS_COMPILE_TARGET arm-none-eabi)
   endif()
+
+  # LLVM based toolchains for ARM use newlib as a libc.
+  # This variable is set AFTER all Kconfig files were processed, so it doesn't
+  # affect them, but it's still useful for filtering tests.
+  set(TOOLCHAIN_HAS_NEWLIB ON CACHE BOOL "True if toolchain supports newlib")
 endif()
 
 # CMAKE_{C, ASM, CXX}_COMPILER_TARGET is used by CMake to provide correct

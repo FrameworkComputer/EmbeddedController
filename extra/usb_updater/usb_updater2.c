@@ -1026,6 +1026,11 @@ static void read_console(struct transfer_descriptor *td)
 		ext_cmd_over_usb(&td->uep, UPDATE_EXTRA_CMD_CONSOLE_READ_INIT,
 				 NULL, 0, response, &response_size, 0);
 
+		if (response[0] != 0) {
+			printf("failed to read console, ret %d\n", response[0]);
+			return;
+		}
+
 		while (1) {
 			response_size = 64;
 			ext_cmd_over_usb(&td->uep,

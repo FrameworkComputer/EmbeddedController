@@ -1,12 +1,11 @@
+# If there is a test that breaks, you can exclude it here.
 # A scenario is the last part of the test name. I.e.
 # tests/subsys/pm/device_driver_init/pm.device_driver_init.pm_device_runtime
 # becomes pm.device_driver_init.pm_device_runtime
-- scenarios:
-    - pm.device_driver_init
-    - pm.device_driver_init.pm
-    - pm.device_driver_init.pm_device_runtime
-    - pm.power_domain
-    - pm.power_domain.device
-  platforms:
-    - native_sim
-  comment: "Doesn't build with llvm toolchain (clang)"
+# Example
+#
+# - scenarios:
+#     - pm.device_driver_init
+#   platforms:
+#     - native_sim
+#   comment: "Explain why test breaks"

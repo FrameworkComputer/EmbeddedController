@@ -85,7 +85,9 @@ class FakeJobserver(zmake.jobserver.GNUMakeJobServer):
         """Fake implementation of get_job(), which returns a real JobHandle()"""
         return zmake.jobserver.JobHandle(unittest.mock.Mock())
 
-    def popen(self, argv: List[Union[str, pathlib.PosixPath]], **kwargs):
+    def popen(
+        self, argv: List[Union[str, pathlib.PosixPath]], env=None, **kwargs
+    ):
         """Ignores the provided command and just runs 'cat' instead"""
         # Convert to a list of strings
         cmd: List[str] = [
@@ -97,8 +99,7 @@ class FakeJobserver(zmake.jobserver.GNUMakeJobServer):
                 break
         else:
             raise Exception(f'No pattern matched "{" ".join(cmd)}"')
-        kwargs["env"] = {}
-        return super().popen(new_cmd, **kwargs)
+        return super().popen(new_cmd, env=env, **kwargs)
 
     def env(self):  # pylint: disable=no-self-use
         """Runs test commands with an empty environment for simpler logs."""
@@ -188,33 +189,6 @@ class TestFilters:
             with open(
                 get_test_filepath(f"{suffix}_INFO"), encoding="utf-8"
             ) as file:
-                for line in file:
-                    expected.add(f"[fakeproject:{suffix}]{line.strip()}")
-        # This produces an easy-to-read diff if there is a difference
-        assert expected == set(recs)
-
-    @staticmethod
-    def test_filter_debug(zmake_factory_from_dir, tmp_path, monkeypatch):
-        """Test what appears on the DEBUG level"""
-        monkeypatch.setattr(
-            os, "environ", {"TOOL_PATH_ninja": "/usr/bin/ninja"}
-        )
-        recs = do_test_with_log_level(zmake_factory_from_dir, logging.DEBUG)
-        # TODO: Remove sets and figure out how to check the lines are in the
-        # right order.
-        expected = {
-            "Configuring fakeproject:rw.",
-            "Configuring fakeproject:ro.",
-            f"Building fakeproject in {tmp_path}/ec/build/zephyr/fakeproject.",
-            "Building fakeproject:ro: /usr/bin/ninja -C "
-            f"{tmp_path / 'ec/build/zephyr/fakeproject/build'}-ro",
-            f"Building fakeproject:rw: /usr/bin/ninja -C "
-            f"{tmp_path / 'ec/build/zephyr/fakeproject/build'}-rw",
-            f"Running `env -i cat {OUR_PATH}/files/sample_ro.txt`",
-            f"Running `env -i cat {OUR_PATH}/files/sample_rw.txt`",
-        }
-        for suffix in ["ro", "rw"]:
-            with open(get_test_filepath(suffix), encoding="utf-8") as file:
                 for line in file:
                     expected.add(f"[fakeproject:{suffix}]{line.strip()}")
         # This produces an easy-to-read diff if there is a difference

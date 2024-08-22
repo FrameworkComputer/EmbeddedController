@@ -24,12 +24,6 @@
 #endif
 #define KEYBOARD_ROWS 8
 
-/*
- * WARNING: Do not directly modify it. You should call keyboard_raw_set_cols,
- * instead. It checks whether you're eligible or not.
- */
-extern uint8_t keyboard_cols;
-
 #define KEYBOARD_ROW_TO_MASK(r) (1 << (r))
 
 /* Columns and masks for keys we particularly care about */

@@ -7,3 +7,8 @@ tests:
     - CONFIG_SHIMMED_TASKS=y
     extra_dtc_overlay_files:
     - geralt.default.overlay
+  geralt.ciri:
+    extra_configs:
+    - CONFIG_TEST_CIRI=y
+    extra_dtc_overlay_files:
+    - geralt.ciri.overlay

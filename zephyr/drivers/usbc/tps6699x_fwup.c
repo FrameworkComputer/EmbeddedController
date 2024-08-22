@@ -24,7 +24,7 @@ LOG_MODULE_DECLARE(tps6699x, CONFIG_USBC_LOG_LEVEL);
 /* TPS6699X_FW_ROOT is defined in this directory's CMakeLists.txt and points to
  * ${PLATFORM_EC}/zephyr/drivers/usbc
  */
-INCBIN(tps6699x_fw, STRINGIFY(TPS6699X_FW_ROOT) "/tps6699x_19.9.0.bin");
+INCBIN(tps6699x_fw, STRINGIFY(TPS6699X_FW_ROOT) "/tps6699x.bin");
 
 #define TPS_4CC_MAX_DURATION K_MSEC(1200)
 #define TPS_4CC_POLL_DELAY K_USEC(200)

@@ -1,0 +1,20 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * See CONFIG_TASK_LIST in config.h for details.
+ */
+
+#define CONFIG_TASK_LIST \
+	TASK_ALWAYS(HOOKS, hook_task, NULL, VENTI_TASK_STACK_SIZE) \
+	TASK_ALWAYS(CHARGER, charger_task, NULL, TRENTA_TASK_STACK_SIZE) \
+	TASK_NOTEST(CHIPSET, chipset_task, NULL, VENTI_TASK_STACK_SIZE) \
+	TASK_NOTEST(KEYPROTO, keyboard_protocol_task, NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_ALWAYS(HOSTCMD, host_command_task, NULL, VENTI_TASK_STACK_SIZE) \
+	TASK_ALWAYS(CONSOLE, console_task, NULL, VENTI_TASK_STACK_SIZE) \
+	TASK_ALWAYS(POWERBTN, power_button_task, NULL, ULTRA_TASK_STACK_SIZE) \
+	TASK_NOTEST(KEYSCAN, keyboard_scan_task, NULL, ULTRA_TASK_STACK_SIZE) \
+    TASK_ALWAYS(PD_C0, pd_task, NULL, TRENTA_TASK_STACK_SIZE) \
+	TASK_ALWAYS(PD_INT_C0, pd_interrupt_handler_task, 0, ULTRA_TASK_STACK_SIZE)

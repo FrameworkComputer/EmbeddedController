@@ -97,6 +97,18 @@ greenbayupoc = register_brox_project(
     ],
 )
 
+jubilant = register_brox_project(
+    project_name="jubilant",
+    kconfig_files=[
+        # Common to all projects.
+        here / "program.conf",
+        # Project-specific config
+        here / "jubilant" / "project.conf",
+        # Common sensor configs
+        here / "motionsense.conf",
+    ],
+)
+
 lotso = register_brox_project(
     project_name="lotso",
     kconfig_files=[
@@ -116,5 +128,6 @@ assert_rw_fwid_DO_NOT_EDIT(project_name="brox", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="brox-ish-ec", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="brox-tokenized", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="greenbayupoc", addr=0x60098)
+assert_rw_fwid_DO_NOT_EDIT(project_name="jubilant", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="lotso", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="brox-sku4", addr=0x70098)

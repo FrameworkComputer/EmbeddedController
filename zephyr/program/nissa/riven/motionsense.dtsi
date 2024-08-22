@@ -34,14 +34,14 @@
 	motionsense-rotation-ref {
 		compatible = "cros-ec,motionsense-rotation-ref";
 		lid_rot_bma422: lid-rotation-bma {
-			mat33 = <1 0 0
-				 0 (-1) 0
+			mat33 = <(-1) 0 0
+				 0 1 0
 				 0 0 (-1)>;
 		};
 
 		base_rot_bma422: base-rotation-bma422 {
-			mat33 = <0 (-1) 0
-				 1 0 0
+			mat33 = <(-1) 0 0
+				 0 (-1) 0
 				 0 0 1>;
 		};
 	};

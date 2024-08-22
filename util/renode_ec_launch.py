@@ -5,6 +5,8 @@
 
 """A helper utility to launch Renode with the correct configuration."""
 
+from __future__ import annotations
+
 import argparse
 import os
 import pathlib
@@ -16,6 +18,21 @@ from typing import List, Optional
 
 DEFAULT_BOARD = "bloonchipper"
 DEFAULT_PROJECT = "ec"
+
+CONSOLE_MAP: dict[str, str] = {
+    "bloonchipper": "sysbus.usart2",
+    "buccaneer": "sysbus.cr_uart1",
+    "dartmonkey": "sysbus.usart1",
+    "helipilot": "sysbus.cr_uart1",
+}
+
+GPIO_WP_MAP: dict[str, str] = {
+    "bloonchipper": "sysbus.gpioPortB.GPIO_WP",
+    "dartmonkey": "sysbus.gpioPortB.GPIO_WP",
+}
+
+GPIO_WP_ENABLE = "Release"
+GPIO_WP_DISABLE = "Press"
 
 
 def msg_run(cmd: List[str]) -> None:
@@ -46,6 +63,7 @@ def launch(opts: argparse.Namespace) -> int:
 
     board = opts.board
     project = opts.project
+    enable_write_protect = opts.enable_write_protect
 
     # Since we are going to cd later, we need to determine the absolute path
     # of EC.
@@ -88,6 +106,21 @@ def launch(opts: argparse.Namespace) -> int:
     # https://renode.readthedocs.io/en/latest/debugging/gdb.html
     # (gdb) target remote :3333
     renode_execute.append("machine StartGdbServer 3333;")
+
+    if board in GPIO_WP_MAP:
+        wp_state = GPIO_WP_ENABLE if enable_write_protect else GPIO_WP_DISABLE
+        renode_execute.append(f"{GPIO_WP_MAP[board]} {wp_state};")
+
+    if board in CONSOLE_MAP:
+        # Expose the console UART as a PTY on /tmp/renode-uart. You can connect to
+        # the PTY with minicom, screen, etc.
+        renode_execute.append(
+            'emulation CreateUartPtyTerminal "term" "/tmp/renode-uart" True;'
+        )
+        renode_execute.append(
+            "connector Connect " + CONSOLE_MAP[board] + " term;"
+        )
+
     renode_execute.append("start;")
 
     # Build the Renode command with script execution.
@@ -132,6 +165,14 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
         name for on-board test images
         """,
     )
+
+    parser.add_argument(
+        "-w",
+        "--enable-write-protect",
+        action="store_true",
+        help="Enable the hardware write protect GPIO on startup",
+    )
+
     opts = parser.parse_args(argv)
     return launch(opts)
 

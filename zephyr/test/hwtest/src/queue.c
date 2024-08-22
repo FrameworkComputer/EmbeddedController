@@ -314,11 +314,11 @@ ZTEST(queue, test_queue8_iterate_begin)
 	struct queue_iterator it;
 
 	queue_begin(q, &it);
-	zassert_equal(it.ptr, NULL, "%p");
+	zassert_equal(it.ptr, NULL);
 
 	queue_add_units(q, data, 4);
 	queue_begin(q, &it);
-	zassert_equal(*((char *)it.ptr), 0, "%d");
+	zassert_equal(*((char *)it.ptr), 0);
 }
 
 ZTEST(queue, test_queue8_iterate_next)
@@ -329,22 +329,22 @@ ZTEST(queue, test_queue8_iterate_next)
 
 	queue_add_units(q, data, 4);
 	queue_begin(q, &it);
-	zassert_equal(*((char *)it.ptr), 0, "%d");
+	zassert_equal(*((char *)it.ptr), 0);
 
 	queue_next(q, &it);
-	zassert_not_equal(it.ptr, NULL, "%p");
-	zassert_equal(*((char *)it.ptr), 1, "%d");
+	zassert_not_equal(it.ptr, NULL);
+	zassert_equal(*((char *)it.ptr), 1);
 
 	queue_next(q, &it);
-	zassert_not_equal(it.ptr, NULL, "%p");
-	zassert_equal(*((char *)it.ptr), 2, "%d");
+	zassert_not_equal(it.ptr, NULL);
+	zassert_equal(*((char *)it.ptr), 2);
 
 	queue_next(q, &it);
-	zassert_not_equal(it.ptr, NULL, "%p");
-	zassert_equal(*((char *)it.ptr), 3, "%d");
+	zassert_not_equal(it.ptr, NULL);
+	zassert_equal(*((char *)it.ptr), 3);
 
 	queue_next(q, &it);
-	zassert_equal(it.ptr, NULL, "%p");
+	zassert_equal(it.ptr, NULL);
 }
 
 ZTEST(queue, test_queue2_iterate_next_full)
@@ -355,17 +355,17 @@ ZTEST(queue, test_queue2_iterate_next_full)
 
 	queue_add_units(q, data, 2);
 	queue_begin(q, &it);
-	zassert_equal(*((int16_t *)it.ptr), 523, "%d");
+	zassert_equal(*((int16_t *)it.ptr), 523);
 
 	queue_next(q, &it);
-	zassert_not_equal(it.ptr, NULL, "%p");
-	zassert_equal(*((int16_t *)it.ptr), -788, "%d");
+	zassert_not_equal(it.ptr, NULL);
+	zassert_equal(*((int16_t *)it.ptr), -788);
 
 	queue_next(q, &it);
-	zassert_equal(it.ptr, NULL, "%p");
+	zassert_equal(it.ptr, NULL);
 
 	queue_next(q, &it);
-	zassert_equal(it.ptr, NULL, "%p");
+	zassert_equal(it.ptr, NULL);
 }
 
 ZTEST(queue, test_queue8_iterate_next_reset_on_change)
@@ -376,14 +376,14 @@ ZTEST(queue, test_queue8_iterate_next_reset_on_change)
 
 	queue_add_units(q, data, 4);
 	queue_begin(q, &it);
-	zassert_not_equal(it.ptr, NULL, "%p");
+	zassert_not_equal(it.ptr, NULL);
 	queue_add_units(q, data + 4, 4);
 	queue_next(q, &it);
-	zassert_equal(it.ptr, NULL, "%p");
+	zassert_equal(it.ptr, NULL);
 
 	queue_begin(q, &it);
-	zassert_not_equal(it.ptr, NULL, "%p");
+	zassert_not_equal(it.ptr, NULL);
 	queue_advance_head(q, 3);
 	queue_next(q, &it);
-	zassert_equal(it.ptr, NULL, "%p");
+	zassert_equal(it.ptr, NULL);
 }

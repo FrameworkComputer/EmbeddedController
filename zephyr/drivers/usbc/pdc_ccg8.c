@@ -158,7 +158,7 @@ static int ccg_get_connector_status(const struct device *dev,
 
 static int ccg_get_pdos(const struct device *dev, enum pdo_type_t pdo_type,
 			enum pdo_offset_t pdo_offset, uint8_t num_pdos,
-			bool port_partner_pdo, uint32_t *pdos)
+			enum pdo_source_t source, uint32_t *pdos)
 {
 	return 0;
 }

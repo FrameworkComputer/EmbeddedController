@@ -331,6 +331,54 @@ __no_optimization static int test_strcspn(void)
 
 static int test_memmove(void)
 {
+	const int buf_size = 16;
+	char buf[buf_size];
+
+	for (int i = 0; i < buf_size; ++i)
+		buf[i] = i & 0x7f;
+
+	/* Test small moves */
+	memmove(buf + 1, buf, 1);
+	TEST_ASSERT_ARRAY_EQ(buf + 1, buf, 1);
+	memmove(buf + 5, buf, 4);
+	memmove(buf + 1, buf, 4);
+	TEST_ASSERT_ARRAY_EQ(buf + 1, buf + 5, 4);
+
+	return EC_SUCCESS;
+}
+
+static int test_memmove_overlap(void)
+{
+	const int buf_size = 120;
+	const int len = 80;
+	char buf[buf_size];
+	char *buf_dst;
+	char cmp_buf[len];
+
+	for (int i = 0; i < len; ++i)
+		buf[i] = i & 0x7f;
+	for (int i = len; i < buf_size; ++i)
+		buf[i] = 0;
+	/* Store the original buffer. */
+	memcpy(cmp_buf, buf, len);
+
+	buf_dst = buf + (buf_size - len) - 1;
+	memmove(buf_dst, buf, len); /* unaligned */
+	TEST_ASSERT_ARRAY_EQ(buf_dst, cmp_buf, len);
+
+	for (int i = 0; i < len; ++i)
+		buf[i] = i & 0x7f;
+	for (int i = len; i < buf_size; ++i)
+		buf[i] = 0;
+	buf_dst = buf + (buf_size - len);
+	memmove(buf_dst, buf, len); /* aligned */
+	TEST_ASSERT_ARRAY_EQ(buf_dst, cmp_buf, len);
+
+	return EC_SUCCESS;
+}
+
+static int test_memmove_benchmark(void)
+{
 	int i;
 	timestamp_t t0, t1, t2, t3;
 	char *buf;
@@ -340,16 +388,13 @@ static int test_memmove(void)
 
 	TEST_ASSERT(shared_mem_acquire(buf_size, &buf) == EC_SUCCESS);
 
-	for (i = 0; i < len; ++i)
+	for (int i = 0; i < buf_size; ++i)
 		buf[i] = i & 0x7f;
-	for (i = len; i < buf_size; ++i)
-		buf[i] = 0;
 
 	t0 = get_time();
 	for (i = 0; i < iteration; ++i)
 		memmove(buf + 101, buf, len); /* unaligned */
 	t1 = get_time();
-	TEST_ASSERT_ARRAY_EQ(buf + 101, buf, len);
 	ccprintf(" (speed gain: %" PRId64 " ->", t1.val - t0.val);
 
 	t2 = get_time();
@@ -357,19 +402,11 @@ static int test_memmove(void)
 		memmove(buf + 100, buf, len); /* aligned */
 	t3 = get_time();
 	ccprintf(" %" PRId64 " us) ", t3.val - t2.val);
-	TEST_ASSERT_ARRAY_EQ(buf + 100, buf, len);
 
+	shared_mem_release(buf);
 	if (!IS_ENABLED(EMU_BUILD))
 		TEST_ASSERT((t1.val - t0.val) > (t3.val - t2.val));
 
-	/* Test small moves */
-	memmove(buf + 1, buf, 1);
-	TEST_ASSERT_ARRAY_EQ(buf + 1, buf, 1);
-	memmove(buf + 5, buf, 4);
-	memmove(buf + 1, buf, 4);
-	TEST_ASSERT_ARRAY_EQ(buf + 1, buf + 5, 4);
-
-	shared_mem_release(buf);
 	return EC_SUCCESS;
 }
 
@@ -427,7 +464,7 @@ static int test_memcpy(void)
 /* Plain memset, used as a reference to measure speed gain */
 static void *dumb_memset(void *dest, int c, int len)
 {
-	char *d = (char *)dest;
+	volatile char *d = (char *)dest;
 	while (len > 0) {
 		*(d++) = c;
 		len--;
@@ -506,6 +543,8 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_snprintf);
 	RUN_TEST(test_strcspn);
 	RUN_TEST(test_memmove);
+	RUN_TEST(test_memmove_overlap);
+	RUN_TEST(test_memmove_benchmark);
 	RUN_TEST(test_memcpy);
 	RUN_TEST(test_memset);
 	RUN_TEST(test_memchr);

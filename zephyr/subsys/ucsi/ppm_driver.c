@@ -193,7 +193,7 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	}
 
 	data_size = ucsi_commands[ucsi_command].command_copy_length;
-	LOG_INF("%s: Executing conn=%u cmd=0x%02x data_size=%d", __func__, conn,
+	LOG_DBG("%s: Executing conn=%u cmd=0x%02x data_size=%d", __func__, conn,
 		ucsi_command, data_size);
 
 	timeout = sys_timepoint_calc(K_MSEC(SYNC_CMD_TIMEOUT_MSEC));

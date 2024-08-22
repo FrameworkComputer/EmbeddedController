@@ -49,12 +49,6 @@
 		en_pp5000_usb_a1_vbus_x: en_pp5000_usb_a1_vbus_x {
 			gpios = <&gpioa 7 GPIO_OUTPUT_LOW>;
 		};
-		gpio_battery_led_amber_l: battery_led_amber_l {
-			gpios = <&gpioa 1 GPIO_OUTPUT_HIGH>;
-		};
-		gpio_battery_led_white_l: battery_led_white_l {
-			gpios = <&gpioa 2 GPIO_OUTPUT_HIGH>;
-		};
 	};
 	unused-pins {
 		unused-gpios =
@@ -165,8 +159,8 @@
 	/* Rotation matrix used by drivers. */
 	motionsense-rotation-ref {
 		lid_rot_ref_bma422: lid-rotation-ref-bma422 {
-			mat33 = <0 1 0
-				 1 0 0
+			mat33 = <0 (-1) 0
+				 (-1) 0 0
 				 0 0 (-1)>;
 		};
 
@@ -233,7 +227,7 @@
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&base_mutex>;
 			port = <&i2c_sensor>;
-			rot-standard-ref = <&base_rot_ref>;
+			rot-standard-ref = <&base_rot_ref_bmi323>;
 			drv-data = <&bmi323_data>;
 			configs {
 				compatible =
@@ -255,7 +249,7 @@
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&base_mutex>;
 			port = <&i2c_sensor>;
-			rot-standard-ref = <&base_rot_ref>;
+			rot-standard-ref = <&base_rot_ref_bmi323>;
 			drv-data = <&bmi323_data>;
 		};
 	};

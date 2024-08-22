@@ -439,14 +439,6 @@ SECTIONS
 		. = ALIGN(8);
 		*(.bss.system_stack)
 		/* Rest of .bss takes care of its own alignment */
-
-		/* Group libtpm2 data so it can be cleared on system reset */
-		__bss_libtpm2_start = .;
-		/* TPM registers should be cleared at the same time */
-		STRINGIFY(OUTDIR/common/tpm_registers.o*)(.bss)
-			*(.bss.Tpm2_common)
-		__bss_libtpm2_end = .;
-
 		*(.bss*)
 
 		/*
@@ -468,25 +460,6 @@ SECTIONS
 		. = ALIGN(4);
 		__data_start = .;
 		*(.data.tasks)
-
-		/*
-		 * Group libtpm2 data so it can be reinitialized on
-		 * system reset
-		 */
-		__data_libtpm2_start = .;
-		Tpm2_*(.data)
-		/* TPM registers should be reinitialized at the same time */
-		STRINGIFY(OUTDIR/common/tpm_registers.o*)(.data)
-		__data_libtpm2_end = .;
-
-		/*
-		 * TPM reset currently only clears BSS for the TPM library.
-		 * It does not reset any initialized variables in data.
-		 * So, make sure there aren't any.
-		 */
-		ASSERT(__data_libtpm2_start == __data_libtpm2_end,
-		       "libtpm2 .data section is nonzero");
-
 		*(.data*)
 #ifdef CONFIG_MPU
 		/*

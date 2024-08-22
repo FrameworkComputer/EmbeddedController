@@ -146,6 +146,16 @@ struct usb_i2c_config {
 
 extern struct consumer_ops const usb_i2c_consumer_ops;
 
+#ifdef CONFIG_ZEPHYR
+#define DECLARE_I2C_DEFERRED(NAME)          \
+	static void NAME##_deferred_(void); \
+	DECLARE_DEFERRED(NAME##_deferred_);
+#else
+#define DECLARE_I2C_DEFERRED(NAME)                   \
+	static void CONCAT2(NAME, _deferred_)(void); \
+	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));
+#endif /* CONFIG_ZEPHYR */
+
 /*
  * Convenience macro for defining a USB I2C bridge driver.
  *
@@ -162,8 +172,7 @@ extern struct consumer_ops const usb_i2c_consumer_ops;
  */
 #define USB_I2C_CONFIG(NAME, INTERFACE, INTERFACE_NAME, ENDPOINT)              \
 	static uint16_t CONCAT2(NAME, _buffer_)[USB_I2C_BUFFER_SIZE / 2];      \
-	static void CONCAT2(NAME, _deferred_)(void);                           \
-	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));                           \
+	DECLARE_I2C_DEFERRED(NAME);                                            \
 	static struct queue const CONCAT2(NAME, _to_usb_);                     \
 	static struct queue const CONCAT3(usb_to_, NAME, _);                   \
 	USB_STREAM_CONFIG_FULL(CONCAT2(NAME, _usb_), INTERFACE,                \

@@ -5,6 +5,12 @@
  * Parade PS8743 USB Type-C Redriving Switch for USB Host / DisplayPort.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #include "common.h"
 #include "hooks.h"
 #include "i2c.h"

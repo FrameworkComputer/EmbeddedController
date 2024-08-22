@@ -26,10 +26,6 @@ crashes and bugs found on shipping Chromebooks.
 The ChromeOS EC firmware requires that all projects based on the Zephyr RTOS
 achieve code coverage of 90% or better.
 
-A Gitlab project creates and publishes the code coverage reports for the
-Zephyr EC projects. The latest results are available on the Gitlab [Jobs page].
-Refer to the [Gitlab CI] documentation for implementation details.
-
 ## Resources for writing tests
 
 * The [Zephyr Testing] documentation in the ChromeOS EC firmware provides the
@@ -111,8 +107,6 @@ for difficult to reach code.
 [`platform/ec/board`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/board
 [`platform/ec/chip`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/chip
 [`platform/ec/zephyr/drivers`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/drivers
-[Jobs page]: https://gitlab.com/zephyr-ec/ec/-/jobs/
-[Gitlab CI]: ./gitlab.md
 [Zephyr Testing]: ./zephyr/ztest.md
 [Zephyr Test Framework]: https://docs.zephyrproject.org/latest/develop/test/ztest.html
 [Zephyr ztest code coverage]: ./code_coverage.md#Zephyr-ztest-code-coverage

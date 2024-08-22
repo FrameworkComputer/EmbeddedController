@@ -9,6 +9,7 @@ import argparse
 import concurrent
 from concurrent.futures import ThreadPoolExecutor
 import logging
+import math
 import multiprocessing
 import os
 import shutil
@@ -105,7 +106,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "banshee",
     "berknip",
     "bloog",
-    "bobba",
     "boldar",
     "brask",
     "brya",
@@ -242,6 +242,7 @@ NDS32_BOARDS = [
     "adlrvpm_ite",
     "adlrvpp_ite",
     "ampton",
+    "awasuki",
     "beadrix",
     "beetley",
     "blipper",
@@ -303,6 +304,7 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     "volteer",
     "willow",
     # Not enough flash space with CONFIG_POWER_SLEEP_FAILURE_DETECTION enabled
+    "bobba",
     "burnet",
     "coachz",
     "corori2",
@@ -329,16 +331,14 @@ BOARDS_THAT_FAIL_WITH_CLANG += NDS32_BOARDS
 BOARDS_THAT_FAIL_WITH_CLANG += RISCV_BOARDS
 
 
-def build(board_name: str) -> None:
+def build(board_name: str, max_cpus: int) -> None:
     """Build with clang for specified board."""
     logging.debug('Building board: "%s"', board_name)
-
     cmd = [
         "make",
         "BOARD=" + board_name,
-        "-j",
+        f"-j{max_cpus}",
     ]
-
     logging.debug('Running command: "%s"', " ".join(cmd))
     subprocess.run(cmd, env=dict(os.environ, CC="clang"), check=True)
 
@@ -372,6 +372,29 @@ def check_boards() -> None:
         for i in sorted(diff):
             print(i)
         sys.exit(1)
+
+
+def calculate_job_distribution(jobs_arg: int) -> typing.Tuple[int, int]:
+    """Calculates how to distribute our `-j` argument.
+
+    Returns:
+        A tuple of:
+            - The number of `make` invocations to run concurrently
+            - The number of jobs for each `make` invocation to run on its own
+    """
+    # Experimentally (see comments on crrev.com/c/5723373), splitting the job
+    # count evenly results in the fastest builds by a statistically significant
+    # margin. So have ${M} `make` jobs each with `-j${M}`
+    split_jobs = math.sqrt(jobs_arg)
+
+    # If there's a fractional part, prefer to potentially overutilize rather
+    # than always underutilize. `make -j${N}` often takes less than ${N} * 100%
+    # CPU.
+    if split_jobs % 1:
+        split_jobs += 1
+    make_threads = int(split_jobs)
+    jobs_per_make = make_threads
+    return make_threads, jobs_per_make
 
 
 def main() -> int:
@@ -417,9 +440,11 @@ def main() -> int:
     logging.debug("Building with %d threads", args.num_threads)
 
     failed_boards = []
-    with ThreadPoolExecutor(max_workers=args.num_threads) as executor:
+
+    make_threads, jobs_per_make = calculate_job_distribution(args.num_threads)
+    with ThreadPoolExecutor(max_workers=make_threads) as executor:
         future_to_board = {
-            executor.submit(build, board): board
+            executor.submit(build, board, jobs_per_make): board
             for board in BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG
         }
         for future in concurrent.futures.as_completed(future_to_board):

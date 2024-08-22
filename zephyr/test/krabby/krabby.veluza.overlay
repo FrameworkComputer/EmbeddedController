@@ -7,6 +7,8 @@
 #include "../program/corsola/ite_gpio.dtsi"
 #include "../program/corsola/ite_interrupts.dtsi"
 #include "../program/corsola/veluza/thermistor.dtsi"
+#include "../program/corsola/ite_motionsense.dtsi"
+
 
 /* remove pinctrl to avoid pull in too many unwanted dependency */
 /delete-node/ &pinctrl;
@@ -28,6 +30,117 @@
 /delete-node/ &{/unused-pins};
 
 / {
+	aliases {
+		/*
+		 * motion sense's <>_INT_EVENT is handled
+		 * by alias. Using the alias, each driver creates
+		 * its own <>_INT_EVENT.
+		 */
+		bmi3xx-int = &base_accel;
+		bma4xx-int = &lid_accel;
+	};
+	veluza-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+		/*
+		 * FW_CONFIG field to defined for STYLUS TYPE.
+		 */
+		stylus {
+			enum-name = "FW_STYLUS";
+			start = <0>;
+			size = <1>;
+
+			stylus-absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STYLUS_ABSENT";
+				value = <0>;
+			};
+			stylus-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STYLUS_PRESENT";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for FORM FACTOR TYPE.
+		 */
+		form-factor {
+			enum-name = "FW_FORM_FACTOR";
+			start = <1>;
+			size = <1>;
+
+			form-factor-clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FORM_FACTOR_CLAMSHELL";
+				value = <0>;
+			};
+			form-factor-convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FORM_FACTOR_CONVERTIBLE";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for DB TYPE.
+		 */
+		db_config: db {
+			enum-name = "DB";
+			start = <2>;
+			size = <1>;
+
+			db-type-nohdmi {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "DB_NONE";
+				value = <0>;
+			};
+			db-type-hdmi {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "DB_USBA_HDMI";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for AMP TYPE.
+		 */
+		amp {
+			enum-name = "FW_AMP";
+			start = <28>;
+			size = <2>;
+
+			amp-alc5682i {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_AMP_ALC5682I";
+				value = <0>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for STORAGE TYPE.
+		 */
+		storage {
+			enum-name = "FW_STORAGE";
+			start = <30>;
+			size = <2>;
+
+			storage-emmc {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_EMMC";
+				value = <0>;
+			};
+			storage-nvme {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_NVME";
+				value = <1>;
+			};
+			storage-ufs {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_UFS";
+				value = <2>;
+			};
+		};
+	};
 	name_temp_charger: charger {
 		compatible = "cros-ec,temp-sensor-thermistor";
 
@@ -42,25 +155,130 @@
 			sensor = <&name_temp_charger>;
 		};
 	};
+	motionsense-mutex {
+		base_mutex_bmi323: bmi323-mutex {
+		};
 
+		lid_mutex_bma422: bma422-mutex {
+		};
+	};
+	motionsense-rotation-ref {
+		lid_rot_ref_bma422: lid-rotation-ref-bma422 {
+			mat33 = <0 1 0
+				 1 0 0
+				 0 0 (-1)>;
+		};
+
+		base_rot_ref_bmi323: base-rotation-ref-bmi323 {
+			mat33 = <0 1 0
+				 (-1) 0 0
+				 0 0 1>;
+		};
+	};
+	motionsense-sensor-data {
+		bmi323_data: bmi323-drv-data {
+			compatible = "cros-ec,drvdata-bmi3xx";
+			status = "okay";
+		};
+
+		bma422_data: bma422-drv-data {
+			compatible = "cros-ec,drvdata-bma4xx";
+			status = "okay";
+		};
+	};
+	motionsense-sensor-info {
+		compatible = "cros-ec,motionsense-sensor-info";
+
+		/*
+		 * list of GPIO interrupts that have to
+		 * be enabled at initial stage
+		 */
+		sensor-irqs = <&int_base_imu &int_lid_imu>;
+	};
+	motionsense-sensor {
+		/delete-node/ lid_accel;
+		/delete-node/ base-accel;
+		/delete-node/ base-gyro;
+		lid_accel: lid-accel {
+			compatible = "cros-ec,bma4xx";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex_bma422>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref_bma422>;
+			default-range = <2>;
+			drv-data = <&bma422_data>;
+			i2c-spi-addr-flags = "BMA4_I2C_ADDR_PRIMARY";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
+		base_accel: base-accel {
+			compatible = "cros-ec,bmi3xx-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&base_rot_ref>;
+			drv-data = <&bmi323_data>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
+		base_gyro: base-gyro {
+			compatible = "cros-ec,bmi3xx-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&base_rot_ref>;
+			drv-data = <&bmi323_data>;
+		};
+	};
 	named-gpios {
 		/delete-node/ usb_c0_ppc_bc12_int_odl;
-
+		base_imu_int_l: base_imu_int_l {
+			gpios = <&gpiom 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		lid_accel_int_l: lid_accel_int_l {
+			gpios = <&gpiom 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
 		usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
 			gpios = <&gpiod 1 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
 		};
-
+		tablet_mode_l: tablet_mode_l {
+			gpios = <&gpioj 7 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
+		};
 		/delete-node/ usb_c0_ppc_frsinfo;
 
 		usb_c0_frs_en: usb_c0_frs_en {
 			gpios = <&gpiof 0 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_USB_C0_FRS_EN";
 		};
-	};
-
-	gpio-interrupts {
-		/delete-node/ usb_c0_ppc_bc12;
 	};
 
 	named-i2c-ports {
@@ -79,13 +297,26 @@
 	gpio-interrupts {
 		/delete-node/ base_imu;
 		/delete-node/ lid_imu;
-
+		int_base_imu: base_imu {
+			irq-pin = <&base_imu_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "base_sensor_interrupt";
+		};
+		int_lid_imu: lid_imu {
+			irq-pin = <&lid_accel_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lid_sensor_interrupt";
+		};
 		int_usb_c0_ppc: usb_c0_ppc {
 			irq-pin = <&usb_c0_ppc_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "ppc_interrupt";
 		};
-
+		int_tablet_mode: tablet_mode {
+			irq-pin = <&tablet_mode_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "gmr_tablet_switch_isr";
+		};
 		int_x_ec_gpio2: x_ec_gpio2 {
 			/* We have bypassed the db detection, so link
 			 * int_x_ec_gpio2 to ppc_interrupt directly.

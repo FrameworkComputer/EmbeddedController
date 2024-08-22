@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+#include "charger.h"
+#include "driver/charger/bq257x0_regs.h"
+#include "fan.h"
 #include "gpio.h"
 #include "gpio/gpio_int.h"
 #include "gpio_signal.h"
@@ -21,6 +24,15 @@ static void rauru_common_init(void)
 
 	/* TODO(yllin): move this to usb redriver/retimer configure place */
 	rauru_get_sb_type();
+
+	/* b/353712228:
+	 * Rauru's HW sets external current limit (ILIM_HIZ) to 0.9A.
+	 * FW need to disable EXTILIM on boot to allow larger current.
+	 */
+	i2c_update16(chg_chips[CHARGER_SOLO].i2c_port,
+		     chg_chips[CHARGER_SOLO].i2c_addr_flags,
+		     BQ25710_REG_CHARGE_OPTION_2,
+		     1 << BQ257X0_CHARGE_OPTION_2_EN_EXTILIM_SHIFT, 0);
 }
 DECLARE_HOOK(HOOK_INIT, rauru_common_init, HOOK_PRIO_PRE_DEFAULT);
 
@@ -65,3 +77,14 @@ __override enum pd_dual_role_states pd_get_drp_state_in_s0(void)
 		return PD_DRP_FORCE_SINK;
 	}
 }
+
+#if DT_NODE_EXISTS(DT_NODELABEL(fan0))
+static void fan_low_rpm(void)
+{
+	/* TODO(b:308941437): drop when thermal control ready */
+	fan_set_rpm_mode(0, 1);
+	fan_set_rpm_target(0, 3000);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, fan_low_rpm, HOOK_PRIO_LAST);
+DECLARE_HOOK(HOOK_INIT, fan_low_rpm, HOOK_PRIO_LAST);
+#endif

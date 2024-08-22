@@ -211,6 +211,9 @@ int ppc_dev_is_connected(int port, enum ppc_device_role dev)
 	if (ppc->drv->dev_is_connected)
 		rv = ppc->drv->dev_is_connected(port, dev);
 
+	if (rv)
+		CPRINTS("%s(%d) ppc->drv error %d!", __func__, port, rv);
+
 	return rv;
 }
 

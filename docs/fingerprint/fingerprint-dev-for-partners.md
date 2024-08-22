@@ -34,9 +34,9 @@ of the board, please request a replacement.
 ***
 <!-- mdformat on -->
 
-This FPMCU board is the Dragonclaw Rev 0.3. |
-------------------------------------------- |
-![Dragonclaw board]                         |
+This FPMCU board is the Dragonclaw Rev 4. |
+----------------------------------------- |
+![Dragonclaw board]                       |
 
 Download the [Dragonclaw schematics, layout, and BOM][dragonclaw schematics].
 
@@ -60,15 +60,15 @@ This FPMCU board is Icetower Rev 3. |
 ***
 <!-- mdformat on -->
 
-This FPMCU board is Quincy Rev 2. |
+This FPMCU board is Quincy Rev 3. |
 --------------------------------- |
 ![Quincy board]                   |
 
 <!-- mdformat off(b/139308852) -->
 *** note
-**Googlers**: You can pick up an Quincy development board at Chromestop.
+**Googlers**: You can pick up a Quincy development board at Chromestop.
 
-**Partners**: You can request an Quincy development board from Google.
+**Partners**: You can request a Quincy development board from Google.
 ***
 <!-- mdformat on -->
 
@@ -81,7 +81,7 @@ debug a running program.
 
 There are several variants of Servo and the fingerprint team uses the
 [Servo Micro](#servo-micro) for its simplicity. It lacks builtin JTAG/SWD
-support for single step debugging, but Dragonclaw v0.3 and Icetower v3 have an
+support for single step debugging, but Dragonclaw, Icetower, and Quincy have an
 [SWD connector](#servo-micro-swd) that can be used.
 
 [Servo Micro](#servo-micro) |
@@ -580,9 +580,9 @@ Make sure that this interface is disabled:
 [servo]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/README.md
 [developer mode]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/debug_buttons.md#firmware-keyboard-interface
 [hardware write protection]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/write_protection.md
-[have the prerequisites]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#Prerequisites
-[get the source]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#get-the-source
-[enter the `chroot`]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#building-chromium-os
+[have the prerequisites]: https://www.chromium.org/chromium-os/developer-library/guides/development/developer-guide/#prerequisites
+[get the source]: https://www.chromium.org/chromium-os/developer-library/guides/development/developer-guide/#get-the-source
+[enter the `chroot`]: https://www.chromium.org/chromium-os/developer-library/guides/development/developer-guide/#building-chromiumos
 [Chromium OS Contributing Guide]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/contributing.md
 [Servo Micro Info]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/docs/servo_micro.md
 [Set your editor]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#Set-your-editor
@@ -605,10 +605,10 @@ Make sure that this interface is disabled:
 
 [Servo Micro]: ../images/servo_micro.jpg
 [Servo Micro with Dragonclaw]: ../images/servomicro_dragonclaw.jpg
-[Dragonclaw board]: ../images/dragonclaw_v0.3.jpg
+[Dragonclaw board]: ../images/dragonclaw_v4.jpg
 [Dragonclaw servo fix diagram]: ../images/dragonclaw_servo_fix.jpg
 [Icetower board]: ../images/icetower_v3.jpg
-[Quincy board]: ../images/quincy_v2.jpg
+[Quincy board]: ../images/quincy_v3.jpg
 
 <!-- If you make changes to the docs below make sure to regenerate the JPEGs by
      appending "export/pdf" to the Google Drive link. -->

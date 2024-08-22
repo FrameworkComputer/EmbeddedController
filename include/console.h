@@ -17,6 +17,7 @@
 #include "common.h"
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdbool.h>
 
 #ifdef CONFIG_ZEPHYR
@@ -212,6 +213,31 @@ cprintf(enum console_channel channel, const char *format, ...);
  */
 __attribute__((__format__(__printf__, 2, 3))) int
 cprints(enum console_channel channel, const char *format, ...);
+
+/**
+ * Print formatted output to the console channel.
+ *
+ * @param channel	Output channel
+ * @param format	Format string; see printf.h for valid formatting codes
+ * @param args          Variadic arguments referenced in the format string.
+ *
+ * @return non-zero if output was truncated.
+ */
+__attribute__((__format__(__printf__, 2, 0))) int
+cvprintf(enum console_channel channel, const char *format, va_list args);
+
+/**
+ * Print formatted output with timestamp. This is like:
+ *   cprintf(channel, "[<TIMESTAMP> " + format + "]\n", ...)
+ *
+ * @param channel	Output channel
+ * @param format	Format string; see printf.h for valid formatting codes
+ * @param args          Variadic arguments referenced in the format string.
+ *
+ * @return non-zero if output was truncated.
+ */
+__attribute__((__format__(__printf__, 2, 0))) int
+cvprints(enum console_channel channel, const char *format, va_list args);
 #endif /* CONFIG_PIGWEED_LOG_TOKENIZED_LIB */
 
 /**

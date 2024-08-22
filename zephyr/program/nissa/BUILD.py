@@ -11,6 +11,7 @@
 def register_nissa_project(
     project_name,
     chip="it8xxx2/it81302bx",
+    kconfig_files=None,
 ):
     """Register a variant of nissa."""
     register_func = register_binman_project
@@ -21,15 +22,18 @@ def register_nissa_project(
         chip
     ]
 
+    if kconfig_files is None:
+        kconfig_files = [
+            here / "program.conf",
+            here / f"{chip_kconfig}_program.conf",
+            here / project_name / "project.conf",
+        ]
+
     return register_func(
         project_name=project_name,
         zephyr_board=chip,
         dts_overlays=[here / project_name / "project.overlay"],
-        kconfig_files=[
-            here / "program.conf",
-            here / f"{chip_kconfig}_program.conf",
-            here / project_name / "project.conf",
-        ],
+        kconfig_files=kconfig_files,
         inherited_from=["nissa"],
     )
 
@@ -147,6 +151,17 @@ orisa = register_nissa_project(
     project_name="orisa",
     chip="npcx9/npcx9m3f",
 )
+
+orisa_ti = register_nissa_project(
+    project_name="orisa_ti",
+    chip="npcx9/npcx9m3f",
+    kconfig_files=[
+        here / "program.conf",
+        here / "npcx_program.conf",
+        here / "orisa" / "project.conf",
+        here / "orisa_ti" / "project.conf",
+    ],
+)
 pirrha = register_nissa_project(
     project_name="pirrha",
     chip="it8xxx2/it81302bx",
@@ -176,12 +191,18 @@ domika = register_nissa_project(
     project_name="domika",
     chip="it8xxx2/it81302bx",
 )
+
+teliks = register_nissa_project(
+    project_name="teliks",
+    chip="it8xxx2/it81302bx",
+)
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release.
 assert_rw_fwid_DO_NOT_EDIT(project_name="anraggar", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="craask", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="craaskov", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="orisa", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="orisa_ti", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="gothrax", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="joxer", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="naktal", addr=0xBFFE0)
@@ -203,3 +224,4 @@ assert_rw_fwid_DO_NOT_EDIT(project_name="yavista", addr=0xAFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="sundance", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="riven", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="domika", addr=0xB7FE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="teliks", addr=0xBFFE0)

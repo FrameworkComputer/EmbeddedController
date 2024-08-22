@@ -19,6 +19,8 @@
 #include "emul/emul_realtek_rts54xx_public.h"
 #include "zephyr/kernel.h"
 
+#include <stdint.h>
+
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
@@ -229,7 +231,7 @@ union rts54_request {
 		uint8_t port_num;
 		struct {
 			uint8_t src : 1;
-			uint8_t partner : 1;
+			enum pdo_source_t partner : 1;
 			uint8_t offset : 3;
 			uint8_t num : 3;
 		};
@@ -488,6 +490,8 @@ struct rts5453p_emul_pdc_data {
 
 	uint32_t snk_pdos[PDO_OFFSET_MAX];
 	uint32_t src_pdos[PDO_OFFSET_MAX];
+	uint32_t partner_snk_pdos[PDO_OFFSET_MAX];
+	uint32_t partner_src_pdos[PDO_OFFSET_MAX];
 };
 
 /**

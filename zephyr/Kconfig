@@ -100,6 +100,7 @@ rsource "Kconfig.test"
 rsource "Kconfig.timer"
 rsource "Kconfig.throttle_ap"
 rsource "Kconfig.touchpad"
+rsource "Kconfig.usb_i2c"
 rsource "Kconfig.usb_update"
 rsource "Kconfig.usba"
 rsource "Kconfig.usbc"
@@ -153,6 +154,14 @@ config PLATFORM_EC_AP_RESET_LOG
 	help
 	  Enable logging of AP reset events. This information is provided in
 	  response to the EC_CMD_GET_UPTIME_INFO host command.
+
+config PLATFORM_EC_SBRK
+	bool "Use CrosEC implementation of the sbrk function"
+	default y if NEWLIB_LIBC
+	select NEWLIB_LIBC_CUSTOM_SBRK if NEWLIB_LIBC
+	help
+	  Enable using CrosEC version of the sbrk function. The function
+	  prevents from using the end of RAM, which stores jump data.
 
 config PLATFORM_EC_BACKLIGHT_LID
 	bool "Control the display backlight based on the lid switch"
@@ -1052,6 +1061,14 @@ config PLATFORM_EC_FEATURE_FINCH
 	help
 	  When this option is enabled, some of the experimental features
 	  (aka finch) will be enabled for CROS_EC.
+
+config PLATFORM_EC_SHARED_MEM_LIBC
+	bool "Use version of libc shared memory"
+	default y if NEWLIB_LIBC
+	help
+	  Use version of shared memory implementation for applications
+	  that use libc with malloc. Malloc uses the same memory as
+	  shared_mem which can cause collisions if it is not synchronized.
 
 endif # PLATFORM_EC
 

@@ -11,3 +11,4 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_DETACHABLE_BASE
 			"src/base_detect.c")
 
 zephyr_library_sources("src/ppc.c" "src/alt_motionsense.c")
+zephyr_library_sources("src/thermal.c")

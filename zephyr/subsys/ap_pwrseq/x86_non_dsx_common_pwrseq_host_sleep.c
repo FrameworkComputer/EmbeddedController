@@ -3,13 +3,15 @@
  * found in the LICENSE file.
  */
 
+#include <zephyr/logging/log.h>
+
 #include <ap_power_host_sleep.h>
 #include <x86_non_dsx_common_pwrseq_sm_handler.h>
 
+LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
+
 #ifdef CONFIG_AP_SLP_S0_DEBUG
 #include "util.h"
-
-LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
 static void slp_s0_debug_alarm(struct k_work *work)
 {
@@ -127,7 +129,7 @@ void power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
 	}
 #endif
 
-	ccprintf("Warning: Detected sleep hang! Waking host up!");
+	LOG_ERR("Detected sleep hang! Waking host up!");
 	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
 }
 

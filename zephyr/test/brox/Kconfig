@@ -27,6 +27,11 @@ choice TEST_BOARD_VARIANT
 		help
 		  Enable Greenbayupoc tests.
 
+	config TEST_BOARD_JUBILANT
+		bool "Enable jubilant-specific tests"
+		help
+		  Enable Jubilant tests.
+
 endchoice # TEST_BOARD_VARIANT
 
 config TEST_BOARD_NAME
@@ -54,6 +59,9 @@ config PLATFORM_EC_KEYBOARD_DEBUG
 
 config TEST_BOARD_GREENBAYUPOC_KEYBOARD
 	bool "Enable greenbayupoc keyboard tests"
+
+config TEST_BOARD_JUBILANT_KEYBOARD
+	bool "Enable jubilant keyboard tests"
 
 config TEST_BOARD_LOTSO_SENSOR
 	bool "Enable lotso sensor tests"

@@ -8,11 +8,13 @@
 #include "cros_board_info.h"
 #include "driver/mp2964.h"
 #include "hooks.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
 #include "switch.h"
 #include "throttle_ap.h"
+#include "timer.h"
 
 /* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
@@ -59,6 +61,18 @@ static void mp2964_on_startup(void)
 		CPRINTF("[mp2964] try to tune MP2964 (%d)\n", status);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, mp2964_on_startup, HOOK_PRIO_FIRST);
+
+__override struct keyboard_scan_config keyscan_config = {
+	.output_settle_us = 80,
+	.debounce_down_us = 20 * MSEC,
+	.debounce_up_us = 30 * MSEC,
+	.scan_period_us = 3 * MSEC,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = 100 * MSEC,
+	.actual_key_mask = { 0x08, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff, 0xa4,
+			     0xff, 0xfe, 0x55, 0xfe, 0xca, 0x40, 0x0a, 0x40,
+			     0xff, 0xff },
+};
 
 static const struct ec_response_keybd_config xol_kb = {
 	.num_top_row_keys = 14,

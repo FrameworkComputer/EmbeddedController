@@ -104,6 +104,7 @@ get_uartid() {
   return 1
 }
 
+# TODO(b/358420799): Replace with libgpiod (gpioget/gpioset).
 # Usage: gpio <unexport|export|in|out|0|1|get> <signal> [signal...]
 gpio() {
   local cmd="$1"
@@ -347,7 +348,7 @@ get_default_fw() {
   # one firmware file on disk.
 
   local -a fws
-  mapfile -t fws < <(find /opt/google/biod/fw -name "${board}*.bin")
+  mapfile -t fws < <(find /opt/google/biod/fw -maxdepth 1 -name "${board}*.bin")
 
   if [[ "${#fws[@]}" -ne 1 ]]; then
     return 1

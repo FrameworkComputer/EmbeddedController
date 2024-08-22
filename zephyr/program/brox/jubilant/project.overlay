@@ -1,0 +1,64 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Brox program common DTS includes */
+
+/* Arbitrage generates an incorrect node label when using alternate pins.
+ * Create a 2nd node label on I2C3 as a workaround.
+ * TODO: b/310227384 - I2C alternate selection not detected automatically.
+ */
+ i2c3ALT: &i2c3 {
+};
+
+#include <cros/cbi_flash.dtsi>
+
+#include "../binman.dtsi"
+#include "../brox.dtsi"
+#include "../fan.dtsi"
+#include "gpio.dtsi"
+#include "../i2c.dtsi"
+#include "../interrupts.dtsi"
+#include "../motionsense.dtsi"
+#include "../power_signals.dtsi"
+#include "../power_signals_gpios.dtsi"
+#include "../pwm.dtsi"
+#include "../usb_typec.dtsi"
+#include "../usba.dtsi"
+
+/* Jubilant project DTS includes */
+#include "keyboard.dtsi"
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
+#include "temp_sensors.dtsi"
+
+/* Brox overrides follow... */
+
+/{
+        batteries {
+                default_battery: smp_ap23a7l {
+                        compatible = "smp,ap23a7l", "battery-smart";
+                };
+                smp_ap23a7l_2 {
+                        compatible = "smp,ap23a7l-2", "battery-smart";
+                };
+                panasonic_ap23a5l {
+                        compatible = "panasonic,ap23a5l", "battery-smart";
+                };
+                lges-ap23a8l {
+                        compatible = "lges,ap23a8l", "battery-smart";
+                };
+                cosmx_ap23abl {
+                        compatible = "cosmx,ap23abl", "battery-smart";
+                };
+        };
+};
+
+/* These GPIOS are initialized by the PDC driver */
+&gpio_usb_pd_int_odl {
+	no-auto-init;
+};
+&gpio_ec_i2c_pmc_pd_int_odl {
+	no-auto-init;
+};

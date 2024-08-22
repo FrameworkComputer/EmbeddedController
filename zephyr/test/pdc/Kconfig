@@ -8,11 +8,21 @@ config TEST_SUITE_PDC_GENERIC
 config TEST_SUITE_PDC_API_NULL_CHECK
 	bool "Enable PDC API null-protection checks"
 
+config TEST_SUITE_PDC_DEVICE_NOT_READY
+	bool "Enable PDC subsystem tests for device-not-ready"
+
 config TEST_SUITE_PDC_RTS54XX
 	bool "Enable RTS54xx PDC tests"
 
 config TEST_SUITE_PDC_TPS6699X
 	bool "Enable TPS6699x PDC tests"
+
+config TODO_B_345292002
+	bool "Disable tests that fail for TPS6699x PDC config"
+	help
+	  Enable this config for pdc.generic.tps6699x to disable tests that
+	  currently fail. As b/345292002 progresses, the amount of code
+	  protected by this config should go down.
 
 config TEST_SUITE_PDC_RETIMER_FW_UPDATE
 	bool "Enable retimer FW update tests"
@@ -47,5 +57,11 @@ config TEST_SUITE_PDC_TRACE_MSG
 	  These tests are incompatible with TEST_PDC_MESSAGE_TRACING
 	  since that config enables an alternate implementation of the
 	  code to be tested here.
+
+config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	bool "Disable chipset_in_state inline method"
+	help
+	  This is used to not define chipset_in_state method as inline
+	  function.
 
 source "Kconfig.zephyr"

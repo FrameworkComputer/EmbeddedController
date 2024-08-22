@@ -530,13 +530,25 @@ static int read_power_level(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
-static inline uint32_t *get_pdo_data(struct rts5453p_emul_pdc_data *data,
-				     enum pdo_type_t pdo_type)
+static uint32_t *get_pdo_data(struct rts5453p_emul_pdc_data *data,
+			      enum pdo_source_t source,
+			      enum pdo_type_t pdo_type)
 {
-	return (pdo_type == SOURCE_PDO) ? data->src_pdos : data->snk_pdos;
+	if (!((source == LPM_PDO || source == PARTNER_PDO) &&
+	      (pdo_type == SOURCE_PDO || pdo_type == SINK_PDO))) {
+		return NULL;
+	}
+
+	if (source == LPM_PDO) {
+		return (pdo_type == SOURCE_PDO) ? data->src_pdos :
+						  data->snk_pdos;
+	} else {
+		return (pdo_type == SOURCE_PDO) ? data->partner_src_pdos :
+						  data->partner_snk_pdos;
+	}
 }
 
-static inline bool is_epr_pdo(uint32_t pdo)
+static bool is_epr_pdo(uint32_t pdo)
 {
 	uint32_t type = PDO_GET_TYPE(pdo);
 
@@ -549,9 +561,9 @@ static inline bool is_epr_pdo(uint32_t pdo)
 static int set_pdos_direct(struct rts5453p_emul_pdc_data *data,
 			   enum pdo_type_t pdo_type,
 			   enum pdo_offset_t pdo_offset, uint8_t num_pdos,
-			   const uint32_t *pdos)
+			   enum pdo_source_t source, const uint32_t *pdos)
 {
-	uint32_t *target_pdos = get_pdo_data(data, pdo_type);
+	uint32_t *target_pdos = get_pdo_data(data, source, pdo_type);
 
 	if (!target_pdos) {
 		return -EINVAL;
@@ -563,7 +575,7 @@ static int set_pdos_direct(struct rts5453p_emul_pdc_data *data,
 		return -EINVAL;
 	}
 
-	if (pdo_offset == PDO_OFFSET_0) {
+	if (source == LPM_PDO && pdo_offset == PDO_OFFSET_0) {
 		LOG_ERR("Attempt to set read-only PDO 0");
 		return -EINVAL;
 	}
@@ -586,18 +598,9 @@ static int set_pdos_direct(struct rts5453p_emul_pdc_data *data,
 static int get_pdos_direct(struct rts5453p_emul_pdc_data *data,
 			   enum pdo_type_t pdo_type,
 			   enum pdo_offset_t pdo_offset, uint8_t num_pdos,
-			   bool port_partner_pdo, uint32_t *pdos)
+			   enum pdo_source_t source, uint32_t *pdos)
 {
-	const uint32_t *target_pdos = get_pdo_data(data, pdo_type);
-
-	if (port_partner_pdo) {
-		/*
-		 * TODO b/317065172: Implement when we have port partner
-		 * support.
-		 */
-		LOG_ERR("GET_PDOS currently doesn't support port parnters");
-		return -EINVAL;
-	}
+	const uint32_t *target_pdos = get_pdo_data(data, source, pdo_type);
 
 	if (pdo_offset + num_pdos > PDO_OFFSET_MAX) {
 		LOG_ERR("GET PDO offset overflow at %d, num pdos: %d",
@@ -617,14 +620,13 @@ static int get_pdos(struct rts5453p_emul_pdc_data *data,
 	enum pdo_offset_t pdo_offset = req->get_pdos.offset;
 	/* GET_PDOS stops at the end if there's a requested overflow. */
 	uint8_t pdo_count = MIN(PDO_OFFSET_MAX - pdo_offset, req->get_pdos.num);
-	bool partner = req->get_pdos.partner;
 
 	LOG_INF("GET_PDO type=%d, offset=%d, count=%d", pdo_type, pdo_offset,
 		pdo_count);
 
 	memset(&data->response, 0, sizeof(data->response));
-	get_pdos_direct(data, pdo_type, pdo_offset, pdo_count, partner,
-			data->response.get_pdos.pdos);
+	get_pdos_direct(data, pdo_type, pdo_offset, pdo_count,
+			req->get_pdos.partner, data->response.get_pdos.pdos);
 	data->response.get_pdos.byte_count = sizeof(uint32_t) * pdo_count;
 
 	send_response(data);
@@ -1048,8 +1050,10 @@ static int emul_realtek_rts54xx_reset(const struct emul *target)
 		rts5453p_emul_get_pdc_data(target);
 
 	/* Reset PDOs. */
-	memset(data->src_pdos, 0xFF, sizeof(data->src_pdos));
-	memset(data->snk_pdos, 0xFF, sizeof(data->snk_pdos));
+	memset(data->src_pdos, 0x0, sizeof(data->src_pdos));
+	memset(data->snk_pdos, 0x0, sizeof(data->snk_pdos));
+	memset(data->partner_src_pdos, 0x0, sizeof(data->partner_src_pdos));
+	memset(data->partner_snk_pdos, 0x0, sizeof(data->partner_snk_pdos));
 
 	data->src_pdos[0] = RTS5453P_FIXED1_SRC;
 	data->src_pdos[1] = RTS5453P_FIXED2_SRC;
@@ -1121,6 +1125,7 @@ static int emul_realtek_rts54xx_set_response_delay(const struct emul *target,
 
 	return 0;
 }
+
 static int
 emul_realtek_rts54xx_get_connector_reset(const struct emul *target,
 					 union connector_reset_t *reset)
@@ -1351,22 +1356,26 @@ static int emul_realtek_rts54xx_get_pdos(const struct emul *target,
 					 enum pdo_type_t pdo_type,
 					 enum pdo_offset_t pdo_offset,
 					 uint8_t num_pdos,
-					 bool port_partner_pdo, uint32_t *pdos)
+					 enum pdo_source_t source,
+					 uint32_t *pdos)
 {
 	struct rts5453p_emul_pdc_data *data =
 		rts5453p_emul_get_pdc_data(target);
-	return get_pdos_direct(data, pdo_type, pdo_offset, num_pdos,
-			       port_partner_pdo, pdos);
+	return get_pdos_direct(data, pdo_type, pdo_offset, num_pdos, source,
+			       pdos);
 }
 
 static int emul_realtek_rts54xx_set_pdos(const struct emul *target,
 					 enum pdo_type_t pdo_type,
 					 enum pdo_offset_t pdo_offset,
-					 uint8_t num_pdos, const uint32_t *pdos)
+					 uint8_t num_pdos,
+					 enum pdo_source_t source,
+					 const uint32_t *pdos)
 {
 	struct rts5453p_emul_pdc_data *data =
 		rts5453p_emul_get_pdc_data(target);
-	return set_pdos_direct(data, pdo_type, pdo_offset, num_pdos, pdos);
+	return set_pdos_direct(data, pdo_type, pdo_offset, num_pdos, source,
+			       pdos);
 }
 
 static int

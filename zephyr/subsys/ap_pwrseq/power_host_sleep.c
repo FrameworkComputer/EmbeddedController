@@ -244,7 +244,7 @@ void ap_power_handle_chipset_reset(void)
 void ap_power_chipset_handle_host_sleep_event(
 	enum host_sleep_event state, struct host_sleep_event_context *ctx)
 {
-	LOG_DBG("host sleep event = %d!", state);
+	LOG_INF("host sleep event = %d", state);
 
 	g_ctx = ctx;
 

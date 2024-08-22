@@ -61,3 +61,18 @@ two mechanisms:
    Note: in all cases, accumulated messages are reported. The idea is
    that after the command executes, the FIFO is empty or contains fresh
    data.
+
+2. AP terminal: `ectool pdctrace` with options:
+
+   * `-h`        Usage help.
+   * `-p <PORT>` Enable tracing on port <PORT>. By default, tracing is
+                 requested all ports.
+                 Port `on` or `all` enables tracing on all PDC ports.
+                 Port `off` or `none` disables tracing.
+   * `-s`        Report trace messages on stdout. This is the default
+                 only when no other destinations are specified.
+   * `-w <FILE>` Write trace messages to PCAP file.
+
+   `ectool pdctrace -p none` disables tracing and exits.
+   `ectool pdctrace` continues running, performing the requested operation
+   until interrupted with `^C`.

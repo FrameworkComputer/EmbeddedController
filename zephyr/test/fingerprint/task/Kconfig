@@ -44,4 +44,10 @@ config LINK_TEST_SUITE_FINGERPRINT_TEMPLATE
 	  Link and execute fingerprint subsystem tests that focus
 	  on finger templates.
 
+config LINK_TEST_SUITE_FINGERPRINT_UTILS
+	bool "Link fingerprint utils tests"
+	help
+	  Link and execute fingerprint subsystem tests that focus
+	  on finger utils.
+
 source "Kconfig.zephyr"

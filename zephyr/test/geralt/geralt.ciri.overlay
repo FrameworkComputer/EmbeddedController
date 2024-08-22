@@ -1,0 +1,123 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "common.dtsi"
+#include "../program/geralt/gpio.dtsi"
+#include "../program/geralt/interrupts.dtsi"
+#include "../program/geralt/power_signal.dtsi"
+
+/* remove pinctrl to avoid pull in too many unwanted dependency */
+/delete-node/ &pinctrl;
+
+/delete-node/ &int_volume_up;
+/delete-node/ &int_volume_down;
+/delete-node/ &int_wp;
+/delete-node/ &int_spi0_cs;
+/delete-node/ &int_ccd_mode_odl;
+/delete-node/ &int_lid_360;
+
+/* no need to maintain the unused-pins list in test code */
+/delete-node/ &{/unused-pins};
+
+&{/aliases} {
+	/delete-property/ int-wp;
+};
+
+
+/ {
+	aliases {
+		bmi3xx-int = &lid_accel;
+		lsm6dsm-int = &lid_accel;
+	};
+
+	gpio-interrupts {
+        int_lid_imu: lid-imu {
+			irq-pin = <&lid_imu_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "motion_interrupt";
+		};
+	};
+
+	motionsense-sensor-data {
+		lsm6dsm_data_accel: lsm6dsm-accel-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dsm";
+			status = "okay";
+		};
+		lsm6dsm_data_gyro: lsm6dsm-gyro-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dsm";
+			status = "okay";
+		};
+		bmi323_data: bmi3xx-drv-data {
+			compatible = "cros-ec,drvdata-bmi3xx";
+			status = "okay";
+		};
+	};
+
+	motionsense-sensor {
+		lid_accel: lid-accel {
+			compatible = "cros-ec,bmi3xx-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0";
+			location = "MOTIONSENSE_LOC_LID";
+			drv-data = <&bmi323_data>;
+		};
+
+		lid_gyro: lid-gyro {
+			compatible = "cros-ec,bmi3xx-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0";
+			location = "MOTIONSENSE_LOC_LID";
+			drv-data = <&bmi323_data>;
+		};
+	};
+
+	motionsense-sensor-alt {
+		alt_lid_accel: alt-lid-accel {
+			compatible = "cros-ec,lsm6dsm-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0";
+			location = "MOTIONSENSE_LOC_LID";
+		};
+
+		alt_lid_gyro: alt-lid-gyro {
+			compatible = "cros-ec,lsm6dsm-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0";
+			location = "MOTIONSENSE_LOC_LID";
+		};
+	};
+
+	motionsense-sensor-info {
+		compatible = "cros-ec,motionsense-sensor-info";
+
+		sensor-irqs = <&int_lid_imu>;
+	};
+
+	ciri-ssfc {
+		compatible = "cros-ec,cbi-ssfc";
+
+		/* SSFC field to identify LID motion sensor. */
+		lid-sensor {
+			enum-name = "LID_SENSOR";
+			size = <3>;
+
+			lid_sensor_0: bmi323 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+			};
+			lid_sensor_1: lsm6dsm {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <2>;
+				default;
+			};
+		};
+	};
+};

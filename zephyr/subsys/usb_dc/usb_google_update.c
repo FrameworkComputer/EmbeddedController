@@ -22,8 +22,20 @@ LOG_MODULE_REGISTER(usb_google_update, LOG_LEVEL_INF);
 #define AUTO_EP_IN 0x80
 #define AUTO_EP_OUT 0x00
 
-NET_BUF_POOL_FIXED_DEFINE(update_rx_pool, 2, 128, USB_MAX_FS_BULK_MPS, NULL);
-NET_BUF_POOL_FIXED_DEFINE(update_tx_pool, 2, 128, USB_MAX_FS_BULK_MPS, NULL);
+#define RX_POOL_COUNT \
+	(CONFIG_PLATFORM_EC_UPDATE_PDU_SIZE / USB_MAX_FS_BULK_MPS) + 1
+
+#ifdef CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE
+#define TX_POOL_COUNT \
+	(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE_BUF_SIZE / USB_MAX_FS_BULK_MPS) + 1
+#else
+#define TX_POOL_COUNT 2
+#endif /* CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE */
+
+NET_BUF_POOL_FIXED_DEFINE(update_rx_pool, RX_POOL_COUNT, USB_MAX_FS_BULK_MPS, 0,
+			  NULL);
+NET_BUF_POOL_FIXED_DEFINE(update_tx_pool, TX_POOL_COUNT, USB_MAX_FS_BULK_MPS, 0,
+			  NULL);
 
 static K_KERNEL_STACK_DEFINE(rx_thread_stack,
 			     CONFIG_GOOGLE_UPDATE_RX_STACK_SIZE);
@@ -132,28 +144,31 @@ static void google_update_status_cb(struct usb_cfg_data *cfg,
 	}
 }
 
-void updater_stream_written(struct consumer const *consumer, size_t count)
+void usb_update_stream_written(struct consumer const *consumer, size_t count)
 {
 	static uint8_t data[USB_MAX_FS_BULK_MPS];
+	struct net_buf *buf;
 
-	while (!queue_is_empty(consumer->queue)) {
-		struct net_buf *buf;
+	if (queue_is_empty(consumer->queue)) {
+		LOG_ERR("consumer queue is empty");
+		return;
+	}
 
-		if (count > USB_MAX_FS_BULK_MPS) {
-			LOG_ERR("invaild data count");
-			return;
-		}
-
+	do {
+		count = (count > USB_MAX_FS_BULK_MPS) ? USB_MAX_FS_BULK_MPS :
+							count;
 		queue_peek_units(consumer->queue, data, 0, count);
 		buf = net_buf_alloc(&update_tx_pool, K_NO_WAIT);
 		if (!buf) {
+			LOG_ERR("failed to allocate tx memory");
 			return;
 		}
 
 		net_buf_add_mem(buf, data, count);
 		net_buf_put(&tx_queue, buf);
 		queue_advance_head(consumer->queue, count);
-	}
+		count = queue_count(consumer->queue);
+	} while (count != 0);
 }
 
 static void google_update_interface_config(struct usb_desc_header *head,
@@ -177,7 +192,7 @@ static void google_update_tx_thread(void *p1, void *p2, void *p3)
 		LOG_HEXDUMP_DBG(buf->data, buf->len, "Tx:");
 
 		usb_transfer_sync(ep_cfg[IN_EP_IDX].ep_addr, buf->data,
-				  buf->len, USB_TRANS_WRITE);
+				  buf->len, USB_TRANS_WRITE | USB_TRANS_NO_ZLP);
 
 		net_buf_unref(buf);
 	}

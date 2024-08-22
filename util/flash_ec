@@ -315,7 +315,10 @@ function dut_control_get_or_die {
 	    die "command exited $? (non-zero): dut-control --value_only $*"
 }
 
-: "${BOARD:=${FLAGS_board}}"
+if [[ -n "${FLAGS_board}" ]]; then
+	# Explicit --board flag overrides environment.
+	BOARD="${FLAGS_board}"
+fi
 
 in_array() {
 	local n=$#
@@ -434,7 +437,8 @@ esac
 
 case "${CHIP}" in
 	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"ite_i2c"|"npcx_uut"|"ite_spi"| \
-			"ite_spi_ccd_i2c"|"it8xxx2"|"mchp_int_spi")
+			"ite_spi_ccd_i2c"|"ite_uart"|"ite_uart_3m"| \
+			"it8xxx2"|"mchp_int_spi")
 		;;
 	*)
 		if [[ -n "${FLAGS_read}" ]]; then
@@ -1580,6 +1584,84 @@ function flash_it83xx() {
 	print_or_run "${ITEFLASH_ARGS[@]}" || die "${ERROR_MSG}"
 }
 
+function flash_ite_uart_common() {
+	local BAUDRATE=$1
+	local TOOL_PATH
+	local ITECOMDBGR_BIN
+	local EC_UART_PREFIX
+	local EC_UART
+	local TEMP_DIR
+
+	TOOL_PATH="${EC_DIR}/build/host/util:${PATH}"
+	ITECOMDBGR_BIN=$(PATH="${TOOL_PATH}" which itecomdbgr)
+
+	EC_UART_PREFIX="$(servo_ec_uart_prefix)"
+	EC_UART="$(servo_ec_uart)"
+
+	TEMP_DIR="$(mktemp -d --suffix="${TEMP_SUFFIX}")"
+	DELETE_LIST+=("${TEMP_DIR}")
+
+	info "Programming EC firmware using ITE UART interface"
+
+	info "ITE tool = ${ITECOMDBGR_BIN}"
+	info "EC UART = ${EC_UART}"
+
+	servo_save_add "${EC_UART_PREFIX}_baudrate"
+	servo_save_add "${EC_UART_PREFIX}_parity"
+
+	claim_pty "${EC_UART}"
+
+	# UART programming requires even partity
+	info "Using ${BAUDRATE} baudrate"
+	dut_control_or_die "${EC_UART_PREFIX}_baudrate:${BAUDRATE}"
+	dut_control_or_die "${EC_UART_PREFIX}_parity:even"
+
+	if servo_is_ccd ; then
+		servo_save_add "${EC_UART_PREFIX}_bitbang_en"
+		dut_control "${EC_UART_PREFIX}_bitbang_en:on"
+	fi
+
+	# Build the iteflash command line.
+	local ITEFLASH_ARGS=( "sudo" "--" "${ITECOMDBGR_BIN}" )
+	ITEFLASH_ARGS+=( "-d" "${EC_UART}" )
+	ITEFLASH_ARGS+=( "-b" "${BAUDRATE}" )
+
+	if [[ "${FLAGS_no_preserve}" == "${FLAGS_FALSE}" && \
+	      -z "${FLAGS_read}" ]]; then
+		local IMG_CPY
+
+		IMG_CPY="${TEMP_DIR}/ec.new.cpy.bin"
+		cat "${IMG}" > "${IMG_CPY}"
+		IMG="${IMG_CPY}"
+		preserve_sections "ite_uart" "${IMG}" "${TEMP_DIR}"    \
+			"${ITEFLASH_ARGS[@]}" || die "${MSG_PROGRAM_FAIL}"
+	fi
+
+	if [[ -n "${FLAGS_read}" ]]; then
+		ITEFLASH_ARGS+=( "-r" "${FLAGS_read}" )
+	else
+		ITEFLASH_ARGS+=( "-f" "${IMG}" )
+	fi
+
+	if [[ "${FLAGS_verify}" == "${FLAGS_FALSE}" ]]; then
+		ITEFLASH_ARGS+=( "-n" )
+	fi
+
+	print_or_run "${ITEFLASH_ARGS[@]}" || die "${ERROR_MSG}"
+}
+
+function flash_ite_uart() {
+	flash_ite_uart_common 115200
+}
+function flash_ite_uart_3m() {
+	if servo_is_ccd ; then
+		# Servo only supports 115200
+		flash_ite_uart_common 115200
+	else
+		flash_ite_uart_common 3000000
+	fi
+}
+
 # Alias for flashing ITE chips over I2C from all servo types.
 function flash_ite_i2c() {
         flash_it83xx
@@ -1890,10 +1972,12 @@ function preserve_sections() {
 		local CUR_IMG
 		local CUR_FMAP_HEADER
 
-		NEW_FMAP=$(dump_fmap "${NEW_IMG}" -e FMAP)
+		NEW_FMAP=$(dump_fmap "${NEW_IMG}" -e FMAP) || NEW_FMAP=''
 		NEW_FMAP_NFIELD=$(echo "${NEW_FMAP}" | awk '{print NF}')
 		if [ "${NEW_FMAP_NFIELD}" -ne 4 ]; then
-			die "The output of dump_fmap is not expected; try update_chroot"
+			die "The output of dump_fmap is not expected; try update_chroot" \
+			    "or flash_ec --no_preserve" \
+			    "if preserved FMAP regions are not supported."
 		fi
 
 		NEW_FMAP_OFFSET=$(echo "${NEW_FMAP}" | awk '{print $2}')
@@ -2015,6 +2099,7 @@ function read_chip_partially() {
 	local FILE_PATH
 	local SECTION
 	local CHIP_CMD_PREFIX
+	local UUT_CUR_FMAP_RD
 
 	CHIP_TYPE=${1:?"missing arg 1: Chip type"}
 	shift
@@ -2039,7 +2124,6 @@ function read_chip_partially() {
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
 					"${UUT_CUR_FMAP_RD[@]}" || die "${MSG_READ_FAIL}"
 	elif [ "${CHIP_TYPE}" == "ite_i2c" ]; then
-		local UUT_CUR_FMAP_RD
 		local ALIGNED_START SKIP_BYTES ALIGNED_SIZE RANGE ALIGNED_FILE
 
 		# ITE flash tool can start reads on a 256 byte page boundary
@@ -2076,6 +2160,17 @@ function read_chip_partially() {
 		servo_ec_hard_reset_or_die
 		# ITE DFU mode must be re-enabled after each operation
 		ite_dfu_mode
+	elif [ "${CHIP_TYPE}" == "ite_uart" ]; then
+
+		UUT_CUR_FMAP_RD=( "${CHIP_CMD_PREFIX[@]}" \
+			"-r" "${FILE_PATH}" \
+			"-R" "${OFFSET}" "${SIZE}")
+
+		info "${UUT_CUR_FMAP_RD[@]}"
+
+		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
+			"${UUT_CUR_FMAP_RD[@]}" || die "${MSG_READ_FAIL}"
+
 	elif [ "${CHIP_TYPE}" == "spi" ]; then
 		local FLASHROM_FMAP_RD
 
@@ -2114,6 +2209,11 @@ function read_chip() {
 		servo_ec_hard_reset_or_die
 		# ITE DFU mode must be re-enabled after each operation
 		ite_dfu_mode
+	elif [ "${CHIP_TYPE}" == "ite_uart" ]; then
+		UUT_CUR_RD=( "${CHIP_CMD_PREFIX[@]}" "-r" "${FILE_PATH}" )
+		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
+					"${UUT_CUR_RD[@]}" || die "${MSG_READ_FAIL}"
+
 	elif [ "${CHIP_TYPE}" == "spi" ]; then
 		FLASHROM_RD=( "sudo" "${CHIP_CMD_PREFIX[@]}" "--read=${FILE_PATH}" )
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \

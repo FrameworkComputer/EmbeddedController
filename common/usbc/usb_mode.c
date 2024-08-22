@@ -128,6 +128,23 @@ static void usb4_debug_prints(int port, enum usb4_mode_status usb4_status)
 		usb4_status);
 }
 
+static enum usb_rev30_ss
+tbt_to_usb4_speed(int port, enum tbt_compat_cable_speed tbt_speed)
+{
+	const struct pd_discovery *disc =
+		pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
+
+	if (pd_get_rev(port, TCPCI_MSG_SOP_PRIME) == PD_REV30) {
+		if (tbt_speed == TBT_SS_TBT_GEN3)
+			return disc->identity.product_t1.p_rev30.ss;
+		else
+			return USB_R30_SS_U32_U40_GEN2;
+	} else {
+		if (tbt_speed == TBT_SS_TBT_GEN3)
+			return USB_R30_SS_U40_GEN3;
+		return USB_R30_SS_U32_U40_GEN2;
+	}
+}
 bool enter_usb_entry_is_done(int port)
 {
 	return usb4_state[port] == USB4_ACTIVE ||
@@ -349,8 +366,7 @@ enum usb_rev30_ss get_usb4_cable_speed(int port)
 	 * Converting Thunderbolt-Compatible board speed to equivalent USB4
 	 * speed.
 	 */
-	max_usb4_speed = tbt_speed == TBT_SS_TBT_GEN3 ? USB_R30_SS_U40_GEN3 :
-							USB_R30_SS_U32_U40_GEN2;
+	max_usb4_speed = tbt_to_usb4_speed(port, tbt_speed);
 
 	if ((get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE) &&
 	    pd_get_rev(port, TCPCI_MSG_SOP_PRIME) == PD_REV30) {

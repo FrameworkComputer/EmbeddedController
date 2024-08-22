@@ -1,0 +1,13 @@
+common:
+  platform_allow: native_sim
+tests:
+  lib.sbrk:
+    extra_configs:
+    - CONFIG_TEST_LIB_SBRK=y
+    - CONFIG_PLATFORM_EC_SBRK=y
+  lib.stdlib:
+    extra_configs:
+    - CONFIG_TEST_LIB_STDLIB=y
+  lib.std_vector:
+    extra_configs:
+    - CONFIG_TEST_LIB_STD_VECTOR=y

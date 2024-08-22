@@ -5,6 +5,7 @@
  * Device tree for a generic Nissa device based on a NPCX EC, suitable for board
  * unit tests.
  */
+#include <dt-bindings/pwm/pwm.h>
 #include <npcx_emul.dts>
 
 #include "../program/nissa/cbi.dtsi"
@@ -220,6 +221,41 @@
 			virtual_mux_1: virtual-mux-1 {
 				compatible = "cros-ec,usbc-mux-virtual";
 			};
+		};
+	};
+	/* LEDs need to exist for testing, but aren't actually used. */
+	led-pwms {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		pwm0: pwm@0 {
+			compatible = "cros,pwm-mock";
+			reg = <0 1>;
+			#pwm-cells = <3>;
+		};
+
+		pwm1: pwm@1 {
+			compatible = "cros,pwm-mock";
+			reg = <0 1>;
+			#pwm-cells = <3>;
+		};
+
+		pwm2: pwm@2 {
+			compatible = "cros,pwm-mock";
+			reg = <0 1>;
+			#pwm-cells = <3>;
+		};
+	};
+	pwmleds {
+		compatible = "pwm-leds";
+		led_battery_red: ec_led1_odl {
+			pwms = <&pwm2 2 PWM_HZ(324) PWM_POLARITY_INVERTED>;
+		};
+		led_battery_green: ec_led2_odl {
+			pwms = <&pwm0 0 PWM_HZ(324) PWM_POLARITY_INVERTED>;
+		};
+		led_power_white: ec_led3_odl {
+			pwms = <&pwm1 1 PWM_HZ(324) PWM_POLARITY_INVERTED>;
 		};
 	};
 };

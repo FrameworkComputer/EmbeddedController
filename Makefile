@@ -345,6 +345,7 @@ ifneq ($(PBDIR),)
 include $(PBDIR)/build.mk
 endif
 include test/build.mk
+include third_party/build.mk
 include util/build.mk
 include util/lock/build.mk
 

@@ -460,7 +460,10 @@ const union cci_event_t cci_cmd_complete = { .command_completed = 1 };
 const union cci_event_t cci_busy = { .busy = 1 };
 const union cci_event_t cci_error = { .error = 1, .command_completed = 1 };
 const union cci_event_t cci_ack_command = { .acknowledge_command = 1 };
-const union cci_event_t cci_connector_change_1 = { .connector_change = 1 };
+const union cci_event_t cci_connector_change_1_with_ack = {
+	.acknowledge_command = 1,
+	.connector_change = 1
+};
 
 ZTEST_SUITE(ppm_test, /*predicate=*/NULL, ppm_test_setup, ppm_test_before,
 	    /*after=*/NULL, /*teardown=*/NULL);
@@ -587,7 +590,8 @@ ZTEST_USER_F(ppm_test,
 	zassert_true(wait_for_async_event_to_process(fixture));
 	zassert_true(wait_for_notification(fixture, ++notified_count));
 
-	union cci_event_t cci = { .connector_change = PDC_DEFAULT_CONNECTOR };
+	union cci_event_t cci = { .acknowledge_command = 1,
+				  .connector_change = PDC_DEFAULT_CONNECTOR };
 	zassert_true(check_cci_matches(fixture, &cci));
 }
 
@@ -602,6 +606,14 @@ ZTEST_USER_F(ppm_test, test_IDLENOTIFY_send_invalid_ucsi_command)
 	zassert_false(write_command(fixture, &control) < 0);
 	zassert_true(wait_for_cmd_to_process(fixture));
 	zassert_true(check_cci_matches(fixture, &cci_error));
+
+	/* Ack the error before getting the error status. */
+	queue_command_for_fake_driver(fixture, UCSI_ACK_CC_CI,
+				      /*result=*/0, /*lpm_data=*/NULL);
+	zassert_false(write_ack_command(fixture, /*connector_change_ack=*/false,
+					/*command_complete_ack=*/true) < 0);
+	zassert_true(wait_for_cmd_to_process(fixture));
+	zassert_true(check_cci_matches(fixture, &cci_ack_command));
 
 	int notified_count = fixture->notified_count;
 	control.command = UCSI_GET_ERROR_STATUS;
@@ -854,10 +866,14 @@ ZTEST_USER_F(ppm_test, test_CIACK_ack_immediately)
 	initialize_fake_to_idle_notify(fixture);
 	int notified_count = fixture->notified_count;
 
+	/* We should have an acknowledge from setting up above. */
+	zassert_true(check_cci_matches(fixture, &cci_ack_command));
+
 	trigger_expected_connector_change(fixture, PDC_DEFAULT_CONNECTOR);
 	zassert_true(wait_for_async_event_to_process(fixture));
 	zassert_true(wait_for_notification(fixture, ++notified_count));
-	zassert_true(check_cci_matches(fixture, &cci_connector_change_1));
+	zassert_true(
+		check_cci_matches(fixture, &cci_connector_change_1_with_ack));
 
 	notified_count = 0;
 	fixture->notified_count = 0;
@@ -875,7 +891,8 @@ ZTEST_USER_F(ppm_test, test_CIACK_ack_immediately)
 	trigger_expected_connector_change(fixture, PDC_DEFAULT_CONNECTOR);
 	zassert_true(wait_for_async_event_to_process(fixture));
 	zassert_true(wait_for_notification(fixture, ++notified_count));
-	zassert_true(check_cci_matches(fixture, &cci_connector_change_1));
+	zassert_true(
+		check_cci_matches(fixture, &cci_connector_change_1_with_ack));
 
 	/* Trying to do command complete in ASYNC_EV_ACK stage should fail. */
 	zassert_false(write_ack_command(fixture,
@@ -906,9 +923,9 @@ ZTEST_USER_F(ppm_test, test_CIACK_fail_if_no_active_connector_indication)
 
 /*
  * When an LPM command fails, check that the appropriate CCI bits are set, and
- * that the next command succeeds.
+ * that the next command must be ACK_CC_CI.
  */
-ZTEST_USER_F(ppm_test, test_lpm_error_accepts_new_command)
+ZTEST_USER_F(ppm_test, test_lpm_error_requires_ack)
 {
 	initialize_fake_to_idle_notify(fixture);
 	int notified_count = fixture->notified_count;
@@ -924,16 +941,26 @@ ZTEST_USER_F(ppm_test, test_lpm_error_accepts_new_command)
 	notified_count += 2;
 	zassert_true(wait_for_notification(fixture, notified_count));
 	zassert_true(check_cci_matches(fixture, &cci_error));
-	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE_NOTIFY);
-
-	/* Test acceptance of new message. */
-	queue_command_for_fake_driver(fixture, UCSI_GET_CONNECTOR_CAPABILITY,
-				      /*result=*/0, /*lpm_data=*/NULL);
-	zassert_false(write_command(fixture, &control) < 0);
-	notified_count += 2;
-	zassert_true(wait_for_notification(fixture, notified_count));
-	zassert_true(check_cci_matches(fixture, &cci_cmd_complete));
 	zassert_equal(get_ppm_state(fixture), PPM_STATE_WAITING_CC_ACK);
+
+	/* Test acceptance of new message. This should fail because it's not
+	 * ACK_CC_CI.
+	 */
+	zassert_false(write_command(fixture, &control) < 0);
+	notified_count += 1;
+	zassert_true(wait_for_notification(fixture, notified_count));
+	zassert_true(check_cci_matches(fixture, &cci_error));
+	zassert_equal(get_ppm_state(fixture), PPM_STATE_WAITING_CC_ACK);
+
+	/* ACK_CC_CI should now put this back into normal state. */
+	queue_command_for_fake_driver(fixture, UCSI_ACK_CC_CI,
+				      /*result=*/0, /*lpm_data=*/NULL);
+	zassert_false(write_ack_command(fixture, /*connector_change_ack=*/false,
+					/*command_complete_ack=*/true) < 0);
+	notified_count += 1;
+	zassert_true(wait_for_notification(fixture, notified_count));
+	zassert_true(check_cci_matches(fixture, &cci_ack_command));
+	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE_NOTIFY);
 }
 
 /* Make sure we can call PPM_RESET in all states. We already test the IDLE state

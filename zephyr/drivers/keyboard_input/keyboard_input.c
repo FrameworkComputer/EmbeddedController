@@ -3,8 +3,10 @@
  * found in the LICENSE file.
  */
 
+#include "host_command.h"
 #include "keyboard_protocol.h"
 #include "keyboard_scan.h"
+#include "system.h"
 
 #include <stdio.h>
 
@@ -49,7 +51,7 @@ void keyboard_scan_enable(int enable, enum kb_scan_disable_masks mask)
 	}
 }
 
-static void keyboard_input_cb(struct input_event *evt)
+static void keyboard_input_cb(struct input_event *evt, void *user_data)
 {
 	static int row;
 	static int col;
@@ -76,7 +78,7 @@ static void keyboard_input_cb(struct input_event *evt)
 		keyboard_state_changed(row, col, pressed);
 	}
 }
-INPUT_CALLBACK_DEFINE(kbd_dev, keyboard_input_cb);
+INPUT_CALLBACK_DEFINE(kbd_dev, keyboard_input_cb, NULL);
 
 /* referenced in common/keyboard_8042.c */
 uint8_t keyboard_cols = DT_PROP(CROS_EC_KEYBOARD_NODE, col_size);
@@ -123,3 +125,24 @@ static int cmd_kbpress(const struct shell *sh, size_t argc, char **argv)
 
 SHELL_CMD_ARG_REGISTER(kbpress, NULL, "Simulate keypress: ksstate col row 0|1",
 		       cmd_kbpress, 4, 0);
+
+static enum ec_status
+mkbp_command_simulate_key(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_mkbp_simulate_key *p = args->params;
+	const struct input_kbd_matrix_common_config *cfg = kbd_dev->config;
+
+	if (system_is_locked())
+		return EC_RES_ACCESS_DENIED;
+
+	if (p->col >= cfg->col_size || p->row >= cfg->row_size)
+		return EC_RES_INVALID_PARAM;
+
+	input_report_abs(kbd_dev, INPUT_ABS_X, p->col, false, K_FOREVER);
+	input_report_abs(kbd_dev, INPUT_ABS_Y, p->row, false, K_FOREVER);
+	input_report_key(kbd_dev, INPUT_BTN_TOUCH, p->pressed, true, K_FOREVER);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_MKBP_SIMULATE_KEY, mkbp_command_simulate_key,
+		     EC_VER_MASK(0));

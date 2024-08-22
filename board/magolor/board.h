@@ -149,6 +149,7 @@
 
 #ifdef BOARD_MAGOLOR
 #define CONFIG_ACCEL_KX022 /* Lid accel */
+#define CONFIG_ACCEL_BMA4XX /* 2nd source Lid accel */
 #define CONFIG_ACCELGYRO_ICM426XX /* Base accel second source*/
 #define CONFIG_ACCELGYRO_BMI3XX /* BMI323 Base accel/gyro */
 #endif
