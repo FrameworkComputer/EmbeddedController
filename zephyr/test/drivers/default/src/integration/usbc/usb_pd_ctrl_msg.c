@@ -146,6 +146,16 @@ ZTEST_SUITE(usb_pd_ctrl_msg_test_source, drivers_predicate_post_main,
 	    usb_pd_ctrl_msg_source_setup, usb_pd_ctrl_msg_before,
 	    usb_pd_ctrl_msg_after, NULL);
 
+/**
+ * @brief Verifies TCPM accepts Vconn swap when it is Vconn Source
+ *
+ * @details
+ *  - TCPM is configured initially as Vconn Source
+ *  - Partner requests VConn Swap
+ *
+ * Expected Results
+ *  - VCONN Swap accepted
+ */
 ZTEST_F(usb_pd_ctrl_msg_test_sink, test_verify_vconn_swap)
 {
 	struct usb_pd_ctrl_msg_test_fixture *super_fixture = &fixture->fixture;
@@ -167,6 +177,47 @@ ZTEST_F(usb_pd_ctrl_msg_test_sink, test_verify_vconn_swap)
 	snk_resp = host_cmd_typec_status(TEST_USB_PORT);
 	zassert_equal(PD_ROLE_VCONN_OFF, snk_resp.vconn_role,
 		      "SNK Returned vconn_role=%u", snk_resp.vconn_role);
+}
+
+/**
+ * @brief Verifies TCPM obeys the board policy when it is Vconn Sink
+ *
+ * @details
+ *  - TCPM is configured initially as Vconn Sink
+ *  - Partner requests VConn Swap
+ *  - Board policy rejects Vconn Swap
+ *
+ * Expected Results
+ *  - VCONN Swap rejected
+ */
+ZTEST_F(usb_pd_ctrl_msg_test_source, test_verify_vconn_swap_reject)
+{
+	struct usb_pd_ctrl_msg_test_fixture *super_fixture = &fixture->fixture;
+	struct ec_response_typec_status typec_status = { 0 };
+	int rv = 0;
+
+	/* pd_check_vconn_swap() in the test environment rejects Vconn swap in
+	 * G3 */
+	test_set_chipset_to_g3();
+	k_sleep(K_SECONDS(1));
+
+	typec_status = host_cmd_typec_status(TEST_USB_PORT);
+
+	zassert_equal(PD_ROLE_VCONN_OFF, typec_status.vconn_role,
+		      "Returned vconn_role=%u", typec_status.vconn_role);
+
+	/* Send VCONN_SWAP request, pd_check_vconn_swap() should reject
+	 * this because device is in G3 */
+	rv = tcpci_partner_send_control_msg(&super_fixture->partner_emul,
+					    PD_CTRL_VCONN_SWAP, 0);
+	zassert_ok(rv, "Failed to send VCONN_SWAP request, rv=%d", rv);
+
+	k_sleep(K_SECONDS(1));
+
+	typec_status = host_cmd_typec_status(TEST_USB_PORT);
+
+	zassert_equal(PD_ROLE_VCONN_OFF, typec_status.vconn_role,
+		      "Returned vconn_role=%u", typec_status.vconn_role);
 }
 
 ZTEST_F(usb_pd_ctrl_msg_test_sink, test_verify_pr_swap)
