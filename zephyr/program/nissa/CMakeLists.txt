@@ -54,7 +54,6 @@ if(DEFINED CONFIG_BOARD_NAKTAL)
 endif()
 if(DEFINED CONFIG_BOARD_CRAASK)
 	zephyr_library_sources(
-			"craask/src/battery.c"
 			"craask/src/fan.c"
 			"craask/src/form_factor.c"
 			"craask/src/keyboard.c"
