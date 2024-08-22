@@ -1141,12 +1141,15 @@ static int command_cc(int argc, const char **argv)
 			return EC_ERROR_PARAM2;
 	}
 
-	if (!strcasecmp(argv[2], "cc1"))
-		cc_config_new &= ~CC_POLARITY;
-	else if (!strcasecmp(argv[2], "cc2"))
-		cc_config_new |= CC_POLARITY;
-	else if (argc >= 3)
-		return EC_ERROR_PARAM3;
+	if (argc >= 3) {
+		/* Set the CC polarity */
+		if (!strcasecmp(argv[2], "cc1"))
+			cc_config_new &= ~CC_POLARITY;
+		else if (!strcasecmp(argv[2], "cc2"))
+			cc_config_new |= CC_POLARITY;
+		else
+			return EC_ERROR_PARAM3;
+	}
 
 	do_cc(cc_config_new);
 	print_cc_mode();
