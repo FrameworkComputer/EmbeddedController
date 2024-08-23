@@ -137,6 +137,22 @@ config PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 	  than the top row, and you are looking only for top row customization,
 	  then you should be looking at overriding board_vivaldi_keybd_config() instead.
 
+config PLATFORM_EC_KEYBOARD_ROW_VOL_UP
+	int "Row position of volume-up key"
+	default 0
+	range 0 7
+	depends on !PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+	help
+	  Row position of volume-up key
+
+config PLATFORM_EC_KEYBOARD_COL_VOL_UP
+	int "Column position of volume-up key"
+	default 4
+	range 0 17
+	depends on !PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+	help
+	  Column position of volume-up key
+
 choice PLATFORM_EC_KEYBOARD_PWRBTN_MODE
 	prompt "Select the impact of pressing the power button"
 	help
