@@ -24,34 +24,34 @@
 #undef shell_error
 
 #define shell_fprintf(sh, color, fmt, ...)       \
-	{                                        \
+	do {                                     \
 		(void)(sh);                      \
 		(void)(color);                   \
 		PW_LOG_INFO(fmt, ##__VA_ARGS__); \
-	}
+	} while (0)
 
 #define shell_info(_sh, _ft, ...)                \
-	{                                        \
+	do {                                     \
 		(void)(_sh);                     \
 		PW_LOG_INFO(_ft, ##__VA_ARGS__); \
-	}
+	} while (0)
 
 #define shell_print(_sh, _ft, ...)               \
-	{                                        \
+	do {                                     \
 		(void)(_sh);                     \
 		PW_LOG_INFO(_ft, ##__VA_ARGS__); \
-	}
+	} while (0)
 
 #define shell_warn(_sh, _ft, ...)                \
-	{                                        \
+	do {                                     \
 		(void)(_sh);                     \
 		PW_LOG_WARN(_ft, ##__VA_ARGS__); \
-	}
+	} while (0)
 
 #define shell_error(_sh, _ft, ...)                \
-	{                                         \
+	do {                                      \
 		(void)(_sh);                      \
 		PW_LOG_ERROR(_ft, ##__VA_ARGS__); \
-	}
+	} while (0)
 
 #endif /* __ZEPHYR_CUSTOM_SHELL_H */
