@@ -165,6 +165,7 @@
 /* Keyboard */
 #define KEYBOARD_COLS_MAX 18
 #define CONFIG_KEYBOARD_KEYPAD
+#define KEYBOARD_DEFAULT_COL_VOL_UP 12
 
 /* Remove bringup features */
 #undef CONFIG_CMD_POWERINDEBUG
