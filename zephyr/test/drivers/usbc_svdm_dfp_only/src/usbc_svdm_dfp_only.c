@@ -38,10 +38,10 @@ struct identity_response {
  * if too few PD messages are sent.
  */
 static struct identity_response
-get_identity_response(struct usbc_svdm_dfp_only_fixture *fixture)
+get_identity_response(struct usbc_svdm_dfp_only_fixture *fixture, int svid)
 {
 	uint32_t discover_identity[] = {
-		VDO(USB_SID_PD, 1,
+		VDO(svid, 1,
 		    VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0) | CMD_DISCOVER_IDENT),
 	};
 
@@ -105,7 +105,8 @@ ZTEST_F(usbc_svdm_dfp_only, test_identity)
 	connect_source_to_port(&fixture->partner, &fixture->src_emul_data, 0,
 			       fixture->tcpci_emul, fixture->charger_emul);
 
-	struct identity_response response = get_identity_response(fixture);
+	struct identity_response response =
+		get_identity_response(fixture, USB_SID_PD);
 
 	verify_response_header(response, PD_REV30);
 	zassert_equal(response.n_vdos, 5);
@@ -136,13 +137,68 @@ ZTEST_F(usbc_svdm_dfp_only, test_identity)
 		      "DFP VDO had unexpected value %#x", response.vdos[4]);
 }
 
-ZTEST_F(usbc_svdm_dfp_only, test_pd20_nak)
+ZTEST_F(usbc_svdm_dfp_only, test_identity_bad_svid)
+{
+	fixture->partner.rev = PD_REV30;
+	connect_source_to_port(&fixture->partner, &fixture->src_emul_data, 0,
+			       fixture->tcpci_emul, fixture->charger_emul);
+
+	int svid = 0xEEEE;
+	struct identity_response response =
+		get_identity_response(fixture, svid);
+
+	verify_response_header(response, PD_REV30);
+	/* In PD 2.0 DFPs are required to nack a Discover Identity request */
+	zassert_equal(response.n_vdos, 1);
+	zassert_equal(response.vdos[0],
+		      VDO(svid, 1,
+			  VDO_SVDM_VERS_MAJOR(1) | VDO_OPOS(0) |
+				  VDO_CMDT(CMDT_RSP_NAK) | CMD_DISCOVER_IDENT),
+		      "VDM Header value unexpected: %#x", response.vdos[0]);
+}
+
+ZTEST_F(usbc_svdm_dfp_only, test_pd20_ufp)
+{
+	/* Reject DR_Swap to let DUT stay at Sink/UFP */
+	tcpci_partner_set_drs_support(&fixture->partner, false, false);
+	fixture->partner.rev = PD_REV20;
+	connect_source_to_port(&fixture->partner, &fixture->src_emul_data, 0,
+			       fixture->tcpci_emul, fixture->charger_emul);
+
+	struct identity_response response =
+		get_identity_response(fixture, USB_SID_PD);
+
+	verify_response_header(response, PD_REV20);
+	zassert_equal(response.n_vdos, 4);
+
+	/* SVDM header: ACKing Discover_Identity */
+	zassert_equal(response.vdos[0],
+		      VDO(USB_SID_PD, 1,
+			  VDO_SVDM_VERS_MAJOR(0) | VDO_OPOS(0) |
+				  VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT),
+		      "VDM Header value unexpected: %#x", response.vdos[0]);
+	/* ID Header VDO per PD 3.0 */
+	zassert_equal(response.vdos[1],
+		      VDO_IDH(1 /* is a USB host */, 0 /* not a USB device */,
+			      IDH_PTYPE_UNDEF /* not a UFP */,
+			      0 /* no modes supported */, CONFIG_USB_VID));
+	/* Cert Stat VDO */
+	zassert_equal(response.vdos[2], CONFIG_USB_PD_XID,
+		      "Cert Stat VDO value unexpected: %#x", response.vdos[2]);
+	/* Product VDO */
+	zassert_equal(response.vdos[3],
+		      (CONFIG_USB_PID << 16) | CONFIG_USB_BCD_DEV,
+		      "Product VDO value unexpected: %#x", response.vdos[3]);
+}
+
+ZTEST_F(usbc_svdm_dfp_only, test_pd20_dfp_nak)
 {
 	fixture->partner.rev = PD_REV20;
 	connect_source_to_port(&fixture->partner, &fixture->src_emul_data, 0,
 			       fixture->tcpci_emul, fixture->charger_emul);
 
-	struct identity_response response = get_identity_response(fixture);
+	struct identity_response response =
+		get_identity_response(fixture, USB_SID_PD);
 
 	verify_response_header(response, PD_REV20);
 	/* In PD 2.0 DFPs are required to nack a Discover Identity request */
@@ -173,6 +229,13 @@ static void *usbc_svdm_dfp_only_setup()
 	return &fixture;
 }
 
+static void usbc_svdm_dfp_only_before(void *data)
+{
+	struct usbc_svdm_dfp_only_fixture *fixture = data;
+
+	tcpci_partner_set_drs_support(&fixture->partner, true, true);
+}
+
 static void usbc_svdm_dfp_only_after(void *data)
 {
 	struct usbc_svdm_dfp_only_fixture *fixture = data;
@@ -182,4 +245,5 @@ static void usbc_svdm_dfp_only_after(void *data)
 }
 
 ZTEST_SUITE(usbc_svdm_dfp_only, drivers_predicate_post_main,
-	    usbc_svdm_dfp_only_setup, NULL, usbc_svdm_dfp_only_after, NULL);
+	    usbc_svdm_dfp_only_setup, *usbc_svdm_dfp_only_before,
+	    usbc_svdm_dfp_only_after, NULL);

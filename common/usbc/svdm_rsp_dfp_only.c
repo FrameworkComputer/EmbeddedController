@@ -14,11 +14,9 @@
 
 static int svdm_identity(int port, uint32_t *payload)
 {
-	if (pd_get_rev(port, TCPCI_MSG_SOP) < PD_REV30) {
-		/*
-		 * PD 2 requires that DFPs nack received SVDM requests when no
-		 * modes are supported. PD 3 allows a response.
-		 */
+	/* The SVID in the Discover Identity Command request Shall be set to the
+	 * PD SID */
+	if (PD_VDO_VID(payload[VDO_INDEX_HDR]) != USB_SID_PD) {
 		return 0;
 	}
 
@@ -26,17 +24,30 @@ static int svdm_identity(int port, uint32_t *payload)
 	payload[VDO_I(PRODUCT)] =
 		VDO_PRODUCT(CONFIG_USB_PID, CONFIG_USB_BCD_DEV);
 
-	payload[VDO_I(IDH)] = VDO_IDH_REV30(1, /* USB host */
-					    0, /* Not a USB device */
-					    IDH_PTYPE_UNDEF, /* Not a UFP */
-					    0, /* No alt modes (not a UFP) */
-					    IDH_PTYPE_DFP_HOST, /* PDUSB host */
-					    USB_TYPEC_RECEPTACLE,
-					    CONFIG_USB_VID);
-	/* Single VDO for DFP product type */
-	payload[VDO_I(PRODUCT) + 1] = VDO_DFP(VDO_DFP_HOST_CAPABILITY_USB32,
-					      USB_TYPEC_RECEPTACLE, port);
-	return VDO_I(PRODUCT) + 2;
+	if (pd_get_rev(port, TCPCI_MSG_SOP) < PD_REV30) {
+		payload[VDO_I(IDH)] = VDO_IDH(1, /* USB host */
+					      0, /* Not a USB device */
+					      IDH_PTYPE_UNDEF, /* Not a UFP */
+					      0, /* No alt modes (not a UFP) */
+					      CONFIG_USB_VID);
+
+		return VDO_I(PRODUCT) + 1;
+	} else {
+		payload[VDO_I(IDH)] =
+			VDO_IDH_REV30(1, /* USB host */
+				      0, /* Not a USB device */
+				      IDH_PTYPE_UNDEF, /* Not a UFP */
+				      0, /* No alt modes (not a UFP) */
+				      IDH_PTYPE_DFP_HOST, /* PDUSB host */
+				      USB_TYPEC_RECEPTACLE, CONFIG_USB_VID);
+
+		/* Single VDO for DFP product type */
+		payload[VDO_I(PRODUCT) + 1] =
+			VDO_DFP(VDO_DFP_HOST_CAPABILITY_USB32,
+				USB_TYPEC_RECEPTACLE, port);
+
+		return VDO_I(PRODUCT) + 2;
+	}
 }
 
 __override const struct svdm_response svdm_rsp = {
