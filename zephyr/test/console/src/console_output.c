@@ -120,6 +120,8 @@ ZTEST_F(console_output, test_legacy_debug_output)
 }
 
 static const char *cputs_system_message = "cputs(CC_SYSTEM) test output";
+static const char *shell_invalid_param = "Parameter 1 invalid";
+static const char *shell_help_output = "Usage:";
 
 /* Verify that filtering Zephyr log messages still allows legacy
  * EC output through.
@@ -144,6 +146,32 @@ ZTEST_F(console_output, test_legacy_output_with_log_filtered)
 					 sizeof(tx_content));
 	zassert_true(tx_bytes >= strlen(cputs_system_message));
 	zassert_not_null(strstr((char *)tx_content, cputs_system_message));
+
+	/* Running a legacy shell command with a parameter error should still
+	 * generate output.
+	 */
+	uart_emul_flush_tx_data(fixture->dev);
+	memset(tx_content, 0, sizeof(tx_content));
+
+	zassert_equal(shell_execute_cmd(get_ec_shell(),
+					"chan not_a_valid_name"),
+		      EC_ERROR_PARAM1);
+	k_sleep(K_MSEC(1));
+
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_true(tx_bytes >= strlen(shell_invalid_param));
+	zassert_not_null(strstr((char *)tx_content, shell_invalid_param));
+
+	/* Running help on a legacy shell command should generate output. */
+	uart_emul_flush_tx_data(fixture->dev);
+	memset(tx_content, 0, sizeof(tx_content));
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chan help"));
+	k_sleep(K_MSEC(1));
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_true(tx_bytes >= strlen(shell_help_output));
+	zassert_not_null(strstr((char *)tx_content, shell_help_output));
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chan restore"));
 	k_sleep(K_MSEC(1));

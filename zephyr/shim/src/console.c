@@ -230,10 +230,14 @@ void uart_shell_start(void)
 static void print_console_help(const char *name,
 			       const struct zephyr_console_command *command)
 {
-	if (command->help)
-		printk("%s\n", command->help);
-	if (command->argdesc)
-		printk("Usage: %s %s\n", name, command->argdesc);
+	if (command->help) {
+		shell_fprintf(shell_zephyr, SHELL_NORMAL, "%s\n",
+			      command->help);
+	}
+	if (command->argdesc) {
+		shell_fprintf(shell_zephyr, SHELL_NORMAL, "Usage: %s %s\n",
+			      name, command->argdesc);
+	}
 }
 #endif
 
@@ -263,12 +267,17 @@ int zshim_run_ec_console_command(const struct zephyr_console_command *command,
 		return ret;
 
 	/* Print common parameter error conditions and help on error */
-	if (ret >= EC_ERROR_PARAM1 && ret < EC_ERROR_PARAM_COUNT)
-		printk("Parameter %d invalid\n", ret - EC_ERROR_PARAM1 + 1);
-	else if (ret == EC_ERROR_PARAM_COUNT)
-		printk("Wrong number of parameters\n");
-	else
-		printk("Command returned error: %d\n", ret);
+	if (ret >= EC_ERROR_PARAM1 && ret < EC_ERROR_PARAM_COUNT) {
+		shell_fprintf(shell_zephyr, SHELL_NORMAL,
+			      "Parameter %d invalid\n",
+			      ret - EC_ERROR_PARAM1 + 1);
+	} else if (ret == EC_ERROR_PARAM_COUNT) {
+		shell_fprintf(shell_zephyr, SHELL_NORMAL,
+			      "Wrong number of parameters\n");
+	} else {
+		shell_fprintf(shell_zephyr, SHELL_NORMAL,
+			      "Command returned error: %d\n", ret);
+	}
 
 #ifdef CONFIG_SHELL_HELP
 	print_console_help(argv[0], command);
