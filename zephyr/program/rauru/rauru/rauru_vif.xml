@@ -57,9 +57,9 @@
                 <vif:DR_Swap_To_UFP_Supported value="false" />
                 <vif:VCONN_Swap_To_On_Supported value="true" />
                 <vif:VCONN_Swap_To_Off_Supported value="true" />
-                <vif:Responds_To_Discov_SOP_UFP value="false" />
-                <vif:Responds_To_Discov_SOP_DFP value="false" />
-                <vif:Attempts_Discov_SOP value="false" />
+                <vif:Responds_To_Discov_SOP_UFP value="true" />
+                <vif:Responds_To_Discov_SOP_DFP value="true" />
+                <vif:Attempts_Discov_SOP value="true" />
                 <vif:Power_Interruption_Available value="3">AC Mains/Wall Power and DC Power</vif:Power_Interruption_Available>
                 <vif:Data_Reset_Supported value="false" />
                 <vif:Enter_USB_Supported value="true" />
@@ -124,7 +124,7 @@
                 <!-- ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; -->
                 <!-- ;PD Sink -->
                 <!-- ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; -->
-                <vif:PD_Power_As_Sink value="60000">60000 mW</vif:PD_Power_As_Sink>
+                <vif:PD_Power_As_Sink value="65000">65000 mW</vif:PD_Power_As_Sink>
                 <vif:EPR_Supported_As_Snk value="false" />
                 <vif:No_USB_Suspend_May_Be_Set value="true" />
                 <vif:GiveBack_May_Be_Set value="false" />
@@ -162,5 +162,15 @@
                 <vif:Requests_PR_Swap_As_Src value="true" />
                 <vif:Requests_PR_Swap_As_Snk value="true" />
                 <vif:FR_Swap_Supported_As_Initial_Sink value="true" />
+
+                <!-- SOP Discover ID Fields -->
+                <vif:XID_SOP value="0" />
+                <vif:Data_Capable_As_USB_Host_SOP value="true" />
+                <vif:Data_Capable_As_USB_Device_SOP value="false" />
+                <vif:Product_Type_UFP_SOP value="0">0 (Undefined)</vif:Product_Type_UFP_SOP>
+                <vif:Product_Type_DFP_SOP value="2">2 (PDUSB Host)</vif:Product_Type_DFP_SOP>
+                <vif:USB_VID_SOP value="18d1">18d1</vif:USB_VID_SOP>
+                <vif:PID_SOP value="0">0000</vif:PID_SOP>
+                <vif:bcdDevice_SOP value="0">0</vif:bcdDevice_SOP>
         </vif:Component>
 </vif:VIF>
