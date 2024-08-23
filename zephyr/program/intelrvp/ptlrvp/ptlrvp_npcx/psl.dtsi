@@ -1,0 +1,30 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * PTLRVP MECC supports following wake-up sources.
+ * PSL_IN1: AC present
+ * PSL_IN2: Power button
+ * Note: Due to hardware limitation, LID is not a wake source on PTL RVP.
+ */
+
+&psl_in1_gpd2 {
+	/* AC present */
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
+};
+
+&psl_in2_gp00 {
+	/* Power button */
+	psl-in-mode = "edge";
+	psl-in-pol = "low-falling";
+};
+
+/* Power domain device controlled by PSL (Power Switch Logic) IO pads */
+&power_ctrl_psl {
+	status = "okay";
+	pinctrl-names = "sleep";
+	pinctrl-0 = <&psl_in1_gpd2 &psl_in2_gp00>;
+};
