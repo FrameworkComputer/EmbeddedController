@@ -451,6 +451,15 @@ at Google for the exact values to use below:
 ***
 <!-- mdformat on -->
 
+#### Building Matcher Library
+
+The sensor vendor should build their matcher library in the ChromeOS SDK chroot,
+using the ChromeOS toolchain. The [Library Compiler and Flags] documentation has
+the details about the compiler version and flags used to build a static library
+for use with fingerprint.
+
+[Library Compiler and Flags]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/fingerprint/library-compiler-flags.md
+
 ### Tracking Issues and Communication
 
 Development issue tracking and communication is done through the
