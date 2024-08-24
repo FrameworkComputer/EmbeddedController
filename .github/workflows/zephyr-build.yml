@@ -49,16 +49,16 @@ jobs:
       - name: Manual checkout
         run: |
           pushd src/platform/ec
-          git fetch github-private
+          git fetch ${{ matrix.platform.remote }}
           git clean -ffdx
           # TODO: Doesn't work with on PR, only push
-          git reset --hard github-private/$GITHUB_REF_NAME
+          git reset --hard ${{ matrix.platform.remote }}/$GITHUB_REF_NAME
           popd
 
           pushd src/third_party/zephyr/main
-          git fetch github-private
+          git fetch ${{ matrix.platform.remote }}
           git clean -ffdx
-          git reset --hard github-private/${{ matrix.platform.zephyr_ref }}
+          git reset --hard ${{ matrix.platform.remote }}/${{ matrix.platform.zephyr_ref }}
           popd
 
           pushd src/third_party/zephyr/cmsis
