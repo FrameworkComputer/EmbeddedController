@@ -19,7 +19,7 @@ on:
 
 jobs:
   build:
-    runs-on: [marigold-builders]
+    runs-on: [fwk-main]
 
     strategy:
       # Only build one at a time because we have only one working directory
@@ -29,10 +29,10 @@ jobs:
           # Marigold builder uses same folder for all
           # Not official release on track-upstream branch.
           # And need to use zephyr on track-upstream as well
-          { name: marigold, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main" },
+          { name: marigold, folder: marigold2, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           # Lotus and Azalea official releases are NOT coming from this branch
-          { name: lotus, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main" },
-          { name: azalea, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main" },
+          { name: lotus, folder: marigold2, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
+          { name: azalea, folder: marigold2, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
         ]
 
 
