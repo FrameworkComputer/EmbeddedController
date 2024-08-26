@@ -234,3 +234,58 @@ ZTEST_USER_F(src_policy, test_src_policy_disconnect_3a)
 		      "LPM SOURCE_PDO current %d, but expected %d",
 		      PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port0), 1500);
 }
+
+ZTEST_USER_F(src_policy, test_src_policy_pr_swap)
+{
+	union connector_status_t connector_status;
+	union conn_status_change_bits_t change_bits;
+	uint32_t partner_snk_pdo = PDO_FIXED(5000, 3000, PDO_FIXED_DUAL_ROLE);
+	uint32_t lpm_src_pdo_actual_port0;
+
+	/* Connect port 0 */
+	emul_pdc_configure_src(fixture->emul_pdc[TEST_USBC_PORT0],
+			       &connector_status);
+	zassert_ok(emul_pdc_set_pdos(fixture->emul_pdc[TEST_USBC_PORT0],
+				     SINK_PDO, PDO_OFFSET_0, 1, PARTNER_PDO,
+				     &partner_snk_pdo));
+	zassert_ok(emul_pdc_connect_partner(fixture->emul_pdc[TEST_USBC_PORT0],
+					    &connector_status));
+
+	/* Wait for connection to settle and source policies to run. */
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_USBC_PORT0));
+
+	zassert_ok(emul_pdc_get_pdos(fixture->emul_pdc[TEST_USBC_PORT0],
+				     SOURCE_PDO, PDO_OFFSET_0, 1, LPM_PDO,
+				     &lpm_src_pdo_actual_port0));
+
+	zassert_equal(PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port0), 5000,
+		      "LPM SOURCE_PDO voltage %d, but expected %d",
+		      PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port0), 5000);
+	zassert_equal(PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port0), 3000,
+		      "LPM SOURCE_PDO current %d, but expected %d",
+		      PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port0), 5000);
+
+	/* Following a PR swap, the LPM PDO should be configured for only
+	 * 1.5A.
+	 */
+	change_bits.raw_value = connector_status.raw_conn_status_change_bits;
+	change_bits.pwr_direction = 1;
+	connector_status.power_direction = 0;
+	connector_status.raw_conn_status_change_bits = change_bits.raw_value;
+	emul_pdc_set_connector_status(fixture->emul_pdc[TEST_USBC_PORT0],
+				      &connector_status);
+	emul_pdc_pulse_irq(fixture->emul_pdc[TEST_USBC_PORT0]);
+
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_USBC_PORT0));
+
+	zassert_ok(emul_pdc_get_pdos(fixture->emul_pdc[TEST_USBC_PORT0],
+				     SOURCE_PDO, PDO_OFFSET_0, 1, LPM_PDO,
+				     &lpm_src_pdo_actual_port0));
+
+	zassert_equal(PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port0), 5000,
+		      "LPM SOURCE_PDO voltage %d, but expected %d",
+		      PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port0), 5000);
+	zassert_equal(PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port0), 1500,
+		      "LPM SOURCE_PDO current %d, but expected %d",
+		      PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port0), 1500);
+}
