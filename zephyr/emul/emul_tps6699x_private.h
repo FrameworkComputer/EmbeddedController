@@ -17,6 +17,7 @@ enum tps6699x_reg_offset {
 	/* TODO(b/345292002): Fill out */
 	TPS6699X_REG_COMMAND_I2C1 = 0x8,
 	TPS6699X_REG_DATA_I2C1 = 0x9,
+	TPS6699X_REG_POWER_PATH_STATUS = 0x26,
 	TPS6699X_REG_PORT_CONFIGURATION = 0x28,
 	TPS6699X_REG_PORT_CONTROL = 0x29,
 	TPS6699X_REG_ADC_RESULTS = 0x6a,
@@ -245,6 +246,36 @@ union reg_adc_results {
 		uint16_t reserved3 : 16;
 	} __packed;
 	uint8_t raw_value[64];
+};
+
+enum px_ext_vbus_sw {
+	EXT_VBUS_SWITCH_DISABLED = 0,
+	EXT_VBUS_SWITCH_DISABLED_FAULT = 1,
+	EXT_VBUS_SWITCH_ENABLED_OUTPUT = 2,
+	EXT_VBUS_SWITCH_ENABLED_INPUT = 3,
+};
+
+union reg_power_path_status {
+	struct {
+		uint32_t pa_vconn_sw : 2;
+		uint32_t pb_vconn_sw : 2;
+		uint32_t reserved0 : 2;
+		uint32_t pa_int_vbus_sw : 3;
+		uint32_t pb_int_vbus_sw : 3;
+		uint32_t pa_ext_vbus_sw : 3;
+		uint32_t pb_ext_vbus_sw : 3;
+		uint32_t reerved1 : 10;
+		uint32_t pa_int_vbus_sw_oc : 1;
+		uint32_t pb_int_vbus_sw_oc : 1;
+		uint32_t reserved2 : 2;
+
+		uint32_t reserved3 : 2;
+		uint32_t pa_vconn_sw_oc : 1;
+		uint32_t pb_vconn_sw_oc : 1;
+		uint32_t reserved4 : 2;
+		uint32_t power_source : 2;
+	} __packed;
+	uint8_t raw_value[5];
 };
 
 #endif /* __EMUL_TPS6699X_PRIVATE_H_ */

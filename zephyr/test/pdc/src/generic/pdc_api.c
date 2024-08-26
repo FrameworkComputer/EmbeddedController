@@ -337,8 +337,6 @@ ZTEST_USER(pdc_api, test_set_drp_mode)
 	}
 }
 
-/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_set_sink_path)
 {
 	int i;
@@ -354,6 +352,8 @@ ZTEST_USER(pdc_api, test_set_sink_path)
 	}
 }
 
+/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
+#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_reconnect)
 {
 	uint8_t expected, val;

@@ -21,6 +21,18 @@ struct ti_ccom {
 	uint16_t reserved : 6;
 } __packed;
 
+enum switch_select {
+	PP_5V1 = 0,
+	PP_5V2 = 1,
+	PP_EXT1 = 2,
+	PP_EXT2 = 3,
+};
+
+struct ti_task_srdy {
+	uint8_t switch_select : 3;
+	uint8_t reserved : 5;
+} __packed;
+
 struct tps6699x_response {
 	uint8_t result : 4;
 	uint8_t reserved : 4;

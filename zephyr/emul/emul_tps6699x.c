@@ -227,6 +227,43 @@ static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
 	data_reg[0] = COMMAND_RESULT_SUCCESS;
 }
 
+static void tps6699x_emul_handle_srdy(struct tps6699x_emul_pdc_data *data,
+				      uint8_t *data_reg)
+{
+	struct ti_task_srdy *srdy = (struct ti_task_srdy *)data_reg;
+	union reg_power_path_status *power_path_status =
+		(union reg_power_path_status *)
+			data->reg_val[TPS6699X_REG_POWER_PATH_STATUS];
+
+	LOG_INF("SRDY TASK");
+
+	switch (srdy->switch_select) {
+	case PP_EXT1:
+	case PP_EXT2:
+		power_path_status->pa_ext_vbus_sw =
+			EXT_VBUS_SWITCH_ENABLED_INPUT;
+		power_path_status->pb_ext_vbus_sw =
+			EXT_VBUS_SWITCH_ENABLED_INPUT;
+		break;
+	default:
+		break;
+	}
+	data_reg[0] = COMMAND_RESULT_SUCCESS;
+}
+
+static void tps6699x_emul_handle_sryr(struct tps6699x_emul_pdc_data *data,
+				      uint8_t *data_reg)
+{
+	union reg_power_path_status *power_path_status =
+		(union reg_power_path_status *)
+			data->reg_val[TPS6699X_REG_POWER_PATH_STATUS];
+
+	LOG_INF("SRYR TASK");
+	power_path_status->pa_ext_vbus_sw = EXT_VBUS_SWITCH_DISABLED;
+	power_path_status->pb_ext_vbus_sw = EXT_VBUS_SWITCH_DISABLED;
+	data_reg[0] = COMMAND_RESULT_SUCCESS;
+}
+
 static void tps6699x_emul_handle_command(struct tps6699x_emul_pdc_data *data,
 					 enum tps6699x_command_task task,
 					 uint8_t *data_reg)
@@ -241,10 +278,11 @@ static void tps6699x_emul_handle_command(struct tps6699x_emul_pdc_data *data,
 	case COMMAND_TASK_UCSI:
 		tps6699x_emul_handle_ucsi(data, data_reg);
 		break;
-	case COMMAND_TASK_SRYR:
 	case COMMAND_TASK_SRDY:
-		/* TODO(b/345292002) - Actually implement support for these. */
-		*data_reg = COMMAND_TASK_COMPLETE;
+		tps6699x_emul_handle_srdy(data, data_reg);
+		break;
+	case COMMAND_TASK_SRYR:
+		tps6699x_emul_handle_sryr(data, data_reg);
 		break;
 	default: {
 		char task_str[5] = {
@@ -561,6 +599,23 @@ static int emul_tps6699x_get_supported_drp_modes(const struct emul *target,
 	return 0;
 }
 
+static int emul_tps6699x_get_sink_path(const struct emul *target, bool *en)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	const union reg_power_path_status *power_path_status =
+		(const union reg_power_path_status *)
+			data->reg_val[TPS6699X_REG_POWER_PATH_STATUS];
+
+	*en = (power_path_status->pa_ext_vbus_sw ==
+		       EXT_VBUS_SWITCH_ENABLED_INPUT ||
+	       power_path_status->pb_ext_vbus_sw ==
+		       EXT_VBUS_SWITCH_ENABLED_INPUT);
+
+	return 0;
+}
+
 static int emul_tps6699x_reset(const struct emul *target)
 {
 	struct tps6699x_emul_pdc_data *data =
@@ -600,7 +655,7 @@ static struct emul_pdc_api_t emul_tps6699x_api = {
 	.get_ccom = emul_tps6699x_get_ccom,
 	.get_drp_mode = emul_tps6699x_get_drp_mode,
 	.get_supported_drp_modes = emul_tps6699x_get_supported_drp_modes,
-	.get_sink_path = NULL,
+	.get_sink_path = emul_tps6699x_get_sink_path,
 	.get_reconnect_req = NULL,
 	.pulse_irq = NULL,
 	.set_info = NULL,
