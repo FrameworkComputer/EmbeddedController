@@ -1151,8 +1151,8 @@
 		/* Real battery voltages are multiples of 4.4V. */
 		desired-charg-volt = <5000>;
 		desired-charg-cur = <1000>;
-		mf-name = "LGC";
-		dev-name = "AC17A8M";
+		mf-name = "Extremely long battery manufacr";
+		dev-name = "Extremely long battery deviceid";
 	};
 
 	battery2: sb@3a {

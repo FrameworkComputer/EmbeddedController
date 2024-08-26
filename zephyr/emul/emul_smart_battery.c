@@ -800,11 +800,12 @@ static int sbat_emul_init(const struct emul *emul, const struct device *parent)
 	return 0;
 }
 
-#define SMART_BATTERY_VALIDATE_STRING_PROPS_SIZE(n)                            \
-	BUILD_ASSERT(sizeof(DT_INST_PROP(n, dev_chem)) - 1 <= MAX_BLOCK_SIZE); \
-	BUILD_ASSERT(sizeof(DT_INST_PROP(n, mf_data)) - 1 <= MAX_BLOCK_SIZE);  \
-	BUILD_ASSERT(sizeof(DT_INST_PROP(n, mf_info)) - 1 <= MAX_BLOCK_SIZE);  \
-	BUILD_ASSERT(sizeof(DT_INST_PROP(n, mf_name)) - 1 <= MAX_BLOCK_SIZE);
+/* The strings contain a null byte, but a block contains the length.*/
+#define SMART_BATTERY_VALIDATE_STRING_PROPS_SIZE(n)                        \
+	BUILD_ASSERT(sizeof(DT_INST_PROP(n, dev_chem)) <= MAX_BLOCK_SIZE); \
+	BUILD_ASSERT(sizeof(DT_INST_PROP(n, mf_data)) <= MAX_BLOCK_SIZE);  \
+	BUILD_ASSERT(sizeof(DT_INST_PROP(n, mf_info)) <= MAX_BLOCK_SIZE);  \
+	BUILD_ASSERT(sizeof(DT_INST_PROP(n, mf_name)) <= MAX_BLOCK_SIZE);
 
 DT_INST_FOREACH_STATUS_OKAY(SMART_BATTERY_VALIDATE_STRING_PROPS_SIZE)
 
