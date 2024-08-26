@@ -28,6 +28,8 @@ LOG_MODULE_REGISTER(tps6699x, CONFIG_USBC_LOG_LEVEL);
 
 #define DT_DRV_COMPAT ti_tps6699_pdc
 
+/** @brief maximum number of PDOs */
+#define MAX_PDOS 7
 /** @brief PDC IRQ EVENT bit */
 #define PDC_IRQ_EVENT BIT(0)
 /** @brief PDC COMMAND EVENT bit */
@@ -97,6 +99,8 @@ enum cmd_t {
 	CMD_READ_POWER_LEVEL,
 	/** Get RDO */
 	CMD_GET_RDO,
+	/** Set RDO */
+	CMD_SET_RDO,
 	/** Set Sink Path */
 	CMD_SET_SINK_PATH,
 	/** Get current Partner SRC PDO */
@@ -205,6 +209,10 @@ struct pdc_data_t {
 	uint32_t *pdos;
 	/** Port Partner PDO */
 	enum pdo_source_t pdo_source;
+	/** Cached PDOS */
+	uint32_t cached_pdos[MAX_PDOS];
+	/** RDO */
+	uint32_t rdo;
 	/** CCOM */
 	enum ccom_t ccom;
 	/** PDR */
@@ -252,6 +260,7 @@ static const struct smf_state states[];
 static void cmd_set_drp_mode(struct pdc_data_t *data);
 static void cmd_set_tpc_rp(struct pdc_data_t *data);
 static void cmd_get_rdo(struct pdc_data_t *data);
+static void cmd_set_rdo(struct pdc_data_t *data);
 static void cmd_set_src_pdos(struct pdc_data_t *data);
 static void cmd_set_snk_pdos(struct pdc_data_t *data);
 static void cmd_get_ic_status(struct pdc_data_t *data);
@@ -264,6 +273,7 @@ static void cmd_get_pdc_data_status_reg(struct pdc_data_t *data);
 static void task_gaid(struct pdc_data_t *data);
 static void task_srdy(struct pdc_data_t *data);
 static void task_dbfg(struct pdc_data_t *data);
+static void task_aneg(struct pdc_data_t *data);
 static void task_ucsi(struct pdc_data_t *data,
 		      enum ucsi_command_t ucsi_command);
 static void task_raw_ucsi(struct pdc_data_t *data);
@@ -576,6 +586,9 @@ static void st_idle_run(void *o)
 		case CMD_GET_RDO:
 			cmd_get_rdo(data);
 			break;
+		case CMD_SET_RDO:
+			cmd_set_rdo(data);
+			break;
 		case CMD_SET_SINK_PATH:
 			task_srdy(data);
 			break;
@@ -863,6 +876,52 @@ static void cmd_get_rdo(struct pdc_data_t *data)
 
 	/* Transition to idle */
 	set_state(data, ST_IDLE);
+	return;
+
+error_recovery:
+	set_state(data, ST_ERROR_RECOVERY);
+}
+
+static void cmd_set_rdo(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	union reg_autonegotiate_sink an_snk;
+	int rv, max_a, max_v, min_v, min_power;
+	uint32_t pdo = data->cached_pdos[RDO_POS(data->rdo) - 1];
+
+	rv = tps_rw_autonegotiate_sink(&cfg->i2c, &an_snk, I2C_MSG_READ);
+	if (rv) {
+		LOG_ERR("Failed to read auto negotiate sink register.");
+		goto error_recovery;
+	}
+	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
+		max_v = PDO_BATT_GET_MAX_VOLT(pdo);
+		min_v = PDO_BATT_GET_MIN_VOLT(pdo);
+		max_a = CONFIG_PLATFORM_EC_PD_MAX_CURRENT_MA / 10;
+		min_power = PDO_BATT_GET_OP_POWER(pdo);
+	} else {
+		max_v = min_v = PDO_FIXED_GET_VOLT(pdo);
+		max_a = PDO_FIXED_GET_CURR(pdo);
+		min_power = max_v * max_a;
+	}
+
+	an_snk.auto_compute_sink_min_power = 0;
+	an_snk.auto_compute_sink_min_voltage = 0;
+	an_snk.auto_compute_sink_max_voltage = 0;
+	an_snk.auto_neg_max_current = max_a / 10;
+	an_snk.auto_neg_sink_min_required_power = min_power / 250;
+	an_snk.auto_neg_max_voltage = max_v / 50;
+	an_snk.auto_neg_min_voltage = min_v / 50;
+	an_snk.auto_neg_capabilities_mismach_power =
+		CONFIG_PLATFORM_EC_PD_MAX_POWER_MW / 250;
+
+	rv = tps_rw_autonegotiate_sink(&cfg->i2c, &an_snk, I2C_MSG_WRITE);
+	if (rv) {
+		LOG_ERR("Failed to write auto negotiate sink register.");
+		goto error_recovery;
+	}
+
+	task_aneg(data);
 	return;
 
 error_recovery:
@@ -1255,6 +1314,21 @@ static void task_dbfg(struct pdc_data_t *data)
 	return;
 }
 
+static void task_aneg(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	int rv;
+
+	rv = write_task_cmd(cfg, COMMAND_TASK_ANEG, NULL);
+	if (rv) {
+		set_state(data, ST_ERROR_RECOVERY);
+		return;
+	}
+
+	set_state(data, ST_TASK_WAIT);
+	return;
+}
+
 static void task_ucsi(struct pdc_data_t *data, enum ucsi_command_t ucsi_command)
 {
 	struct pdc_config_t const *cfg = data->dev->config;
@@ -1461,6 +1535,8 @@ static void st_task_wait_run(void *o)
 	case UCSI_GET_PDOS: {
 		len = cmd_data.data[1];
 		offset = 2;
+		memcpy(data->cached_pdos + data->pdo_offset,
+		       &cmd_data.data[offset], len);
 		break;
 	}
 	default:
@@ -1692,8 +1768,10 @@ static int tps_get_error_status(const struct device *dev,
 
 static int tps_set_rdo(const struct device *dev, uint32_t rdo)
 {
-	/* TODO */
-	return 0;
+	struct pdc_data_t *data = dev->data;
+
+	data->rdo = rdo;
+	return tps_post_command(dev, CMD_SET_RDO, NULL);
 }
 
 static int tps_get_rdo(const struct device *dev, uint32_t *rdo)

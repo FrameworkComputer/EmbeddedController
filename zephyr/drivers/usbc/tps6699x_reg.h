@@ -318,7 +318,7 @@ enum command_task {
 	/* Abort current task */
 	COMMAND_TASK_ABRT,
 	/*Auto Negotiate Sink Update */
-	COMMAND_TASK_ANEG,
+	COMMAND_TASK_ANEG = 0x67654E41,
 	/* Clear Dead Battery Flag */
 	COMMAND_TASK_DBFG = 0x67664244,
 	/* Error handling for I2C3m transactions */
