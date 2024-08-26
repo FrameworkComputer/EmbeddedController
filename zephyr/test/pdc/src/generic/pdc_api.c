@@ -475,8 +475,6 @@ ZTEST_USER(pdc_api, test_get_info)
 			  sizeof(info_in2.project_name));
 }
 
-/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_get_lpm_ppm_info)
 {
 	struct lpm_ppm_info_t out = { 0 };
@@ -488,6 +486,10 @@ ZTEST_USER(pdc_api, test_get_lpm_ppm_info)
 		.fw_ver_sub = 456,
 		.hw_ver = 0xa5b6c7de,
 	};
+
+	if (pdc_get_lpm_ppm_info(dev, NULL) == -ENOSYS) {
+		ztest_test_skip();
+	}
 
 	/* Test output param NULL check */
 	zassert_equal(-EINVAL, pdc_get_lpm_ppm_info(dev, NULL));
@@ -511,6 +513,8 @@ ZTEST_USER(pdc_api, test_get_lpm_ppm_info)
 		      out.hw_ver, in.hw_ver);
 }
 
+/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
+#ifndef CONFIG_TODO_B_345292002
 /* PDO0 is reserved for a fixed PDO at 5V. */
 ZTEST_USER(pdc_api, test_get_pdo)
 {
