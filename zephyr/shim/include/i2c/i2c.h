@@ -186,7 +186,10 @@ BUILD_ASSERT(I2C_PORT_COUNT != 0, "No I2C devices defined");
  * enum i2c_ports_chip above for every I2C port devicetree node.
  */
 enum i2c_ports {
+	/* clang-format off */
 	DT_FOREACH_CHILD_STATUS_OKAY(NAMED_I2C_PORTS_NODE, NAMED_I2C_PORT_COMMA)
+	NAMED_I2C_PORT_COUNT,
+	/* clang-format on */
 };
 
 /**
