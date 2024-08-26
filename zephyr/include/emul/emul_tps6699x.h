@@ -7,10 +7,27 @@
 #define __EMUL_TPS6699X_H_
 
 #include "drivers/ucsi_v3.h"
+#include "include/usb_pd.h"
 
 #include <stdint.h>
 
 #include <zephyr/drivers/gpio.h>
+
+#define TPS6699X_FIXED_PDO_COMMON_FLAGS                                       \
+	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_UNCONSTRAINED | PDO_FIXED_COMM_CAP | \
+	 PDO_FIXED_DATA_SWAP)
+
+#define TPS6699X_FIXED_SRC_FLAGS                               \
+	(TPS6699X_FIXED_PDO_COMMON_FLAGS | PDO_FIXED_SUSPEND | \
+	 PDO_FIXED_PEAK_CURR(PDO_PEAK_OVERCURR_110))
+#define TPS6699X_FIXED_SNK_FLAGS (TPS6699X_FIXED_PDO_COMMON_FLAGS)
+
+#define TPS6699X_FIXED1_SRC PDO_FIXED(12000, 5000, TPS6699X_FIXED_SRC_FLAGS)
+#define TPS6699X_FIXED2_SRC PDO_FIXED(20000, 3000, TPS6699X_FIXED_SRC_FLAGS)
+
+#define TPS6699X_FIXED_SNK PDO_FIXED(5000, 3000, TPS6699X_FIXED_SNK_FLAGS)
+#define TPS6699X_BATT_SNK PDO_BATT(5000, 20000, 45000)
+#define TPS6699X_VAR_SNK PDO_VAR(5000, 20000, 3000)
 
 #define TPS6699X_MAX_REG 0xa4
 #define TPS6699X_REG_SIZE 64
@@ -19,6 +36,16 @@ struct ti_ccom {
 	uint16_t connector_number : 7;
 	uint16_t cc_operation_mode : 3;
 	uint16_t reserved : 6;
+} __packed;
+
+struct ti_get_pdos {
+	uint8_t connector_number : 7;
+	uint8_t partner_pdo : 1;
+	uint8_t pdo_offset : 8;
+	uint8_t num_pdos : 2;
+	uint8_t source : 1;
+	uint8_t source_caps : 2;
+	uint8_t reserved : 1;
 } __packed;
 
 enum switch_select {
@@ -42,6 +69,7 @@ struct tps6699x_response {
 			union {
 				union error_status_t error;
 				struct ti_ccom ccom;
+				uint32_t pdos[4];
 			};
 		} __packed;
 		union connector_status_t connector_status;

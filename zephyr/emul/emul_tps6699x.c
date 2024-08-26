@@ -174,6 +174,64 @@ static void tps699x_emul_set_ccom(struct tps6699x_emul_pdc_data *data,
 	}
 }
 
+static uint32_t *get_pdo_data(struct tps6699x_emul_pdc_data *data,
+			      enum pdo_source_t source,
+			      enum pdo_type_t pdo_type)
+{
+	if (!((source == LPM_PDO || source == PARTNER_PDO) &&
+	      (pdo_type == SOURCE_PDO || pdo_type == SINK_PDO))) {
+		return NULL;
+	}
+
+	if (source == LPM_PDO) {
+		return (pdo_type == SOURCE_PDO) ? data->src_pdos :
+						  data->snk_pdos;
+	} else {
+		return (pdo_type == SOURCE_PDO) ? data->partner_src_pdos :
+						  data->partner_snk_pdos;
+	}
+}
+
+static int get_pdos_direct(struct tps6699x_emul_pdc_data *data,
+			   enum pdo_type_t pdo_type,
+			   enum pdo_offset_t pdo_offset, uint8_t num_pdos,
+			   enum pdo_source_t source, uint32_t *pdos)
+{
+	const uint32_t *target_pdos = get_pdo_data(data, source, pdo_type);
+
+	if (pdo_offset + num_pdos > PDO_OFFSET_MAX) {
+		LOG_ERR("GET PDO offset overflow at %d, num pdos: %d",
+			pdo_offset, num_pdos);
+		return -EINVAL;
+	}
+
+	pdo_offset = MIN(pdo_offset, PDO_OFFSET_MAX);
+	memcpy(pdos, &target_pdos[pdo_offset], num_pdos * sizeof(uint32_t));
+	return 0;
+}
+
+static void tps699x_emul_get_pdos(struct tps6699x_emul_pdc_data *data,
+				  const void *in)
+{
+	const struct ti_get_pdos *req = in;
+	enum pdo_type_t pdo_type = req->source ? SOURCE_PDO : SINK_PDO;
+	enum pdo_offset_t pdo_offset = req->pdo_offset;
+	uint8_t pdo_count =
+		MIN(PDO_OFFSET_MAX - req->pdo_offset, req->num_pdos + 1);
+
+	LOG_INF("GET_PDO type=%d, offset=%d, count=%d, partner_pdo=%d",
+		pdo_type, pdo_offset, pdo_count, req->partner_pdo);
+
+	get_pdos_direct(data, pdo_type, pdo_offset, pdo_count, req->partner_pdo,
+			data->response.data.pdos);
+
+	data->response.data.length = pdo_count * 4;
+	data->response.result = COMMAND_RESULT_SUCCESS;
+
+	memcpy(&data->reg_val[TPS6699X_REG_DATA_I2C1], &data->response,
+	       sizeof(data->response));
+}
+
 static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
 				      uint8_t *data_reg)
 {
@@ -216,6 +274,9 @@ static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
 		break;
 	case UCSI_SET_CCOM:
 		tps699x_emul_set_ccom(data, &data_reg[2]);
+		break;
+	case UCSI_GET_PDOS:
+		tps699x_emul_get_pdos(data, &data_reg[2]);
 		break;
 	default:
 		LOG_WRN("tps6699x_emul: Unimplemented UCSI command %#04x", cmd);
@@ -654,6 +715,13 @@ static int emul_tps6699x_reset(const struct emul *target)
 	memset(data->snk_pdos, 0x0, sizeof(data->snk_pdos));
 	memset(data->partner_src_pdos, 0x0, sizeof(data->partner_src_pdos));
 	memset(data->partner_snk_pdos, 0x0, sizeof(data->partner_snk_pdos));
+
+	data->src_pdos[0] = TPS6699X_FIXED1_SRC;
+	data->src_pdos[1] = TPS6699X_FIXED2_SRC;
+
+	data->snk_pdos[0] = TPS6699X_FIXED_SNK;
+	data->snk_pdos[1] = TPS6699X_BATT_SNK;
+	data->snk_pdos[2] = TPS6699X_VAR_SNK;
 
 	return 0;
 }
