@@ -6,6 +6,7 @@
 #include "chipset.h"
 #include "emul/emul_pdc.h"
 #include "test/util.h"
+#include "timer.h"
 #include "usbc/pdc_power_mgmt.h"
 #include "usbc/utils.h"
 
@@ -288,4 +289,74 @@ ZTEST_USER_F(src_policy, test_src_policy_pr_swap)
 	zassert_equal(PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port0), 1500,
 		      "LPM SOURCE_PDO current %d, but expected %d",
 		      PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port0), 1500);
+}
+
+ZTEST_USER_F(src_policy, test_src_policy_non_pd)
+{
+	union connector_status_t connector_status;
+	uint32_t partner_snk_pdo = PDO_FIXED(5000, 3000, PDO_FIXED_DUAL_ROLE);
+	uint32_t lpm_src_pdo_actual_port0;
+	enum usb_typec_current_t typec_current;
+
+	/* Connect port 0 */
+	emul_pdc_configure_src(fixture->emul_pdc[TEST_USBC_PORT0],
+			       &connector_status);
+	zassert_ok(emul_pdc_set_pdos(fixture->emul_pdc[TEST_USBC_PORT0],
+				     SINK_PDO, PDO_OFFSET_0, 1, PARTNER_PDO,
+				     &partner_snk_pdo));
+	zassert_ok(emul_pdc_connect_partner(fixture->emul_pdc[TEST_USBC_PORT0],
+					    &connector_status));
+
+	/* Wait for connection to settle and source policies to run. */
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_USBC_PORT0));
+
+	zassert_ok(emul_pdc_get_pdos(fixture->emul_pdc[TEST_USBC_PORT0],
+				     SOURCE_PDO, PDO_OFFSET_0, 1, LPM_PDO,
+				     &lpm_src_pdo_actual_port0));
+
+	zassert_equal(PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port0), 5000,
+		      "LPM SOURCE_PDO voltage %d, but expected %d",
+		      PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port0), 5000);
+	zassert_equal(PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port0), 3000,
+		      "LPM SOURCE_PDO current %d, but expected %d",
+		      PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port0), 5000);
+
+	/* Connect a non-PD sink.  The Rp should be set for 1.5A. */
+	emul_pdc_configure_src(fixture->emul_pdc[TEST_USBC_PORT1],
+			       &connector_status);
+	connector_status.power_operation_mode = USB_DEFAULT_OPERATION;
+	emul_pdc_connect_partner(fixture->emul_pdc[TEST_USBC_PORT1],
+				 &connector_status);
+
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_USBC_PORT1));
+
+	zassert_ok(emul_pdc_get_requested_power_level(
+		fixture->emul_pdc[TEST_USBC_PORT1], &typec_current));
+	zassert_equal(typec_current, TC_CURRENT_1_5A);
+
+	/* Disconnect port 0 */
+	zassert_ok(emul_pdc_disconnect(fixture->emul_pdc[TEST_USBC_PORT0]));
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_USBC_PORT0));
+
+	/* Non-PD should now be offered 3A current. */
+	zassert_ok(emul_pdc_get_requested_power_level(
+		fixture->emul_pdc[TEST_USBC_PORT1], &typec_current));
+	zassert_equal(typec_current, TC_CURRENT_3_0A);
+
+	/* Connecting a PD sink causes a downgrade of the non-PD sink. */
+	emul_pdc_configure_src(fixture->emul_pdc[TEST_USBC_PORT0],
+			       &connector_status);
+	zassert_ok(emul_pdc_set_pdos(fixture->emul_pdc[TEST_USBC_PORT0],
+				     SINK_PDO, PDO_OFFSET_0, 1, PARTNER_PDO,
+				     &partner_snk_pdo));
+	zassert_ok(emul_pdc_connect_partner(fixture->emul_pdc[TEST_USBC_PORT0],
+					    &connector_status));
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_USBC_PORT0));
+
+	k_sleep(K_USEC(PD_T_SINK_ADJ));
+
+	/* Non-PD should now be downgraded to 1.5A current. */
+	zassert_ok(emul_pdc_get_requested_power_level(
+		fixture->emul_pdc[TEST_USBC_PORT1], &typec_current));
+	zassert_equal(typec_current, TC_CURRENT_1_5A);
 }
