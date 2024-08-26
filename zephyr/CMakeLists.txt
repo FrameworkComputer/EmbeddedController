@@ -5,6 +5,18 @@
 separate_arguments(EXTRA_EC_VERSION_FLAGS_LIST UNIX_COMMAND
 		   ${EXTRA_EC_VERSION_FLAGS})
 
+# One time setup: Pigweed requires this variable to be set before any include
+# calls to pw_protobuf_compiler/proto.cmake so we add it at the top level. If
+# Pigweed isn't used, this variable won't do anything
+if("${dir_pw_third_party_nanopb}" STREQUAL "")
+  set(dir_pw_third_party_nanopb "${ZEPHYR_NANOPB_MODULE_DIR}" CACHE PATH "" FORCE)
+endif()
+
+# One time setup: Zephyr does some strange handling of nanopb by linking the
+# sources directly into Zephyr instead of creating a static library which we
+# can depend on, so we need to create a fake target to keep the linker happy.
+add_library(protobuf-nanopb INTERFACE)
+
 if(DEFINED CONFIG_PLATFORM_EC AND EXISTS "${EDT_PICKLE}")
   set(ENV{PYTHONPATH} "${PLATFORM_EC}/zephyr/:${PLATFORM_EC}/zephyr/zmake")
 
