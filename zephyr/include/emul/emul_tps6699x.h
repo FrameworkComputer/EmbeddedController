@@ -75,6 +75,7 @@ struct tps6699x_response {
 		union connector_status_t connector_status;
 		struct capability_t capability;
 		union connector_capability_t connector_capability;
+		union cable_property_t cable_property;
 	} data;
 } __packed;
 
@@ -98,6 +99,7 @@ struct tps6699x_emul_pdc_data {
 	union uor_t uor;
 	union pdr_t pdr;
 	enum ccom_t ccom;
+	union cable_property_t cable_property;
 
 	struct tps6699x_response response;
 

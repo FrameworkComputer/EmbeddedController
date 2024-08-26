@@ -232,6 +232,15 @@ static void tps699x_emul_get_pdos(struct tps6699x_emul_pdc_data *data,
 	       sizeof(data->response));
 }
 
+static void tps699x_emul_get_cable_property(struct tps6699x_emul_pdc_data *data)
+{
+	data->response.result = COMMAND_RESULT_SUCCESS;
+	data->response.data.cable_property = data->cable_property;
+
+	memcpy(&data->reg_val[TPS6699X_REG_DATA_I2C1], &data->response,
+	       sizeof(data->response));
+}
+
 static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
 				      uint8_t *data_reg)
 {
@@ -277,6 +286,9 @@ static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
 		break;
 	case UCSI_GET_PDOS:
 		tps699x_emul_get_pdos(data, &data_reg[2]);
+		break;
+	case UCSI_GET_CABLE_PROPERTY:
+		tps699x_emul_get_cable_property(data);
 		break;
 	default:
 		LOG_WRN("tps6699x_emul: Unimplemented UCSI command %#04x", cmd);
@@ -705,6 +717,25 @@ static int emul_tps6699x_set_info(const struct emul *target,
 	return 0;
 }
 
+static int emul_tps6699x_get_cable_property(const struct emul *target,
+					    union cable_property_t *property)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+	*property = data->cable_property;
+	return 0;
+}
+
+static int
+emul_tps6699x_set_cable_property(const struct emul *target,
+				 const union cable_property_t property)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+	data->cable_property = property;
+	return 0;
+}
+
 static int emul_tps6699x_reset(const struct emul *target)
 {
 	struct tps6699x_emul_pdc_data *data =
@@ -758,8 +789,8 @@ static struct emul_pdc_api_t emul_tps6699x_api = {
 	.set_lpm_ppm_info = NULL,
 	.set_pdos = NULL,
 	.get_pdos = NULL,
-	.get_cable_property = NULL,
-	.set_cable_property = NULL,
+	.get_cable_property = emul_tps6699x_get_cable_property,
+	.set_cable_property = emul_tps6699x_set_cable_property,
 	.idle_wait = tps6699x_emul_idle_wait,
 };
 

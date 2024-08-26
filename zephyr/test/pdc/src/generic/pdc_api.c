@@ -532,8 +532,6 @@ ZTEST_USER(pdc_api, test_get_pdo)
 	zassert_equal(PDO_FIXED_GET_VOLT(fixed_pdo), 5000);
 }
 
-/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_get_cable_property)
 {
 	/* Properties chosen to be spread throughout the bytes of the union. */
@@ -557,6 +555,8 @@ ZTEST_USER(pdc_api, test_get_cable_property)
 			  sizeof(union cable_property_t)));
 }
 
+/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
+#ifndef CONFIG_TODO_B_345292002
 static void test_cc_cb(const struct device *dev,
 		       const struct pdc_callback *callback,
 		       union cci_event_t cci_event)
