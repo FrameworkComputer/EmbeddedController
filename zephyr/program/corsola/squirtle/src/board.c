@@ -51,14 +51,6 @@ __override struct dps_config_t dps_config = {
 enum battery_present battery_is_present(void)
 {
 	int state;
-	struct battery_static_info *bs = &battery_static[BATT_IDX_MAIN];
-
-	/*
-	 * When the battery information is not ready, it is determined that
-	 * the battery is not present.
-	 */
-	if (!strcasecmp(bs->model_ext, ""))
-		return BP_NO;
 
 	if (gpio_get_level(GPIO_BATT_PRES_ODL))
 		return BP_NO;
