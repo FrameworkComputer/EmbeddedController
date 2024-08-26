@@ -1,0 +1,33 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_DSP_SERVICE
+	bool "Communication driver for EC"
+	default y
+	depends on DT_HAS_CROS_DSP_SERVICE_ENABLED
+	depends on NANOPB
+	depends on I2C
+	depends on I2C_TARGET
+	help
+	  Allow proto based communication between the EC and DSP core.
+
+	  If enabled, the core will enable a service which is used to
+	  serve the DSP core (this should be done on the EC).
+
+config PLATFORM_EC_DSP_SERVICE_REMOTE_LID_ANGLE
+	bool "DSP service toggles tablet/clamshell modes based on lid angle"
+	default y if !TEST
+	depends on PLATFORM_EC_DSP_SERVICE
+	help
+	  When enabled, the DSP service will call lid_angle_peripheral_enable()
+	  based on the inbound RPC message.
+
+config PLATFORM_EC_DSP_SERVICE_RESPONSE_BUFFER_SIZE
+	int "Size of the response buffer"
+	default 128
+	depends on PLATFORM_EC_DSP_SERVICE
+	help
+	  When a result is generated from the DSP service, this is the buffer
+	  that is used to store it until the client reads it. It must be big
+	  enough for the largest encoded response.

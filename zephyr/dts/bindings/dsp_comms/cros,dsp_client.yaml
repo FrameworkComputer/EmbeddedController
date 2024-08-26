@@ -1,0 +1,9 @@
+# Copyright 2024 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+description: Client binding for EC/DSP cores
+
+compatible: "cros,dsp-client"
+
+include:
+  - dsp_comms_common.yaml

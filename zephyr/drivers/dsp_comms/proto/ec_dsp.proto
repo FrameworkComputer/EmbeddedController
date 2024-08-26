@@ -1,0 +1,88 @@
+syntax = "proto3"; // Use proto3 syntax
+
+import "nanopb.proto";
+
+// Optionally specify a package name for organization
+package cros.dsp.comms;
+
+// The protocol:
+// Client sends an EcService request then wait. Once the service has a response
+// ready it will assert a GPIO and the client will read an EcServiceResponse.
+// The EcServiceResponse will tell the client how many bytes should be read as
+// a part of the final response.
+message EcService
+{
+	oneof request
+	{
+		NotifyNotebookModeChangeRequest notify_notebook_mode_change = 1;
+		GetCbiFlagsRequest get_cbi_flags = 2;
+		GetStatusRequest get_status = 3;
+	}
+}
+
+message GetStatusRequest
+{
+}
+
+message GetStatusResponse
+{
+	enum Flag {
+		LID_OPEN = 0;
+		TABLET_MODE = 1;
+		RESPONSE_READY = 2;
+		PROCESSING_ERROR = 3;
+	}
+	bytes flags_mask = 1;
+	uint32 response_length = 2;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// CBI
+///////////////////////////////////////////////////////////////////////////////
+
+// CBI flag values come from ec_commands.h as a part of the enum cbi_data_tag.
+enum CbiFlag {
+	VERSION = 0;
+	OEM = 1;
+	SKU = 2;
+	MODEL = 3;
+	FW_CONFIG = 4;
+	PCB_SUPPLIER = 5;
+	SSFC = 6;
+	REWORK = 7;
+	FACTORY_CALIBRATION_DATA = 8;
+	DRAM_PART_NUM = 9;
+	OEM_NAME = 10;
+}
+
+message GetCbiFlagsRequest
+{
+	CbiFlag which = 1;
+}
+
+// Response message for GetCbiFlags
+message GetCbiFlagsResponse
+{
+	oneof flags
+	{
+		uint64 flags_64 = 1;
+		uint32 flags_32 = 2;
+		string flags_string = 3;
+	}
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Notebook mode
+///////////////////////////////////////////////////////////////////////////////
+
+enum NotebookMode {
+	UNKNOWN_MODE = 0;
+	NOTEBOOK_MODE = 1;
+	TABLET_MODE = 2;
+}
+
+// Request message for NotifyNotebookModeChange
+message NotifyNotebookModeChangeRequest
+{
+	NotebookMode new_mode = 1;
+}

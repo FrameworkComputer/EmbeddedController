@@ -1,0 +1,26 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+rsource "Kconfig.service"
+rsource "Kconfig.client"
+
+config PLATFORM_EC_DSP_COMMS
+	bool
+	default y
+	depends on PLATFORM_EC_DSP_SERVICE || PLATFORM_EC_DSP_CLIENT
+
+if PLATFORM_EC_DSP_COMMS
+
+module = DSP_COMMS
+module-str = DSP_COMMS
+source "subsys/logging/Kconfig.template.log_config"
+
+config PLATFORM_EC_DSP_INIT_PRIORITY
+	int "Initialization priority for the DSP comms drivers"
+	default 99
+	help
+	  Initialization priority for the DSP comms drivers (service and
+	  clients).
+
+endif # PLATFORM_EC_DSP_COMMS

@@ -1,0 +1,9 @@
+# Copyright 2024 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+description: Service binding for EC/DSP cores
+
+compatible: "cros,dsp-service"
+
+include:
+  - dsp_comms_common.yaml

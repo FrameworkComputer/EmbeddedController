@@ -1,0 +1,15 @@
+# Copyright 2024 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+include:
+  - "base.yaml"
+
+properties:
+  reg:
+    required: true
+  int-gpios:
+    type: phandle-array
+    description: |
+      For the client, this will be the input GPIO used to know when the service
+      has new information for us. For the service, this will be used as an
+      output to notify the client.

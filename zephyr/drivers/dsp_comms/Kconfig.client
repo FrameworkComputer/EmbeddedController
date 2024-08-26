@@ -1,0 +1,37 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_DSP_CLIENT
+	bool "Communication driver for DSP"
+	default y
+	depends on DT_HAS_CROS_DSP_CLIENT_ENABLED
+	depends on NANOPB
+	depends on I2C
+	depends on EVENTS
+	help
+	  Allow proto based communication between the EC and DSP core.
+
+	  If enabled, the core will enable a client which is used to
+	  notify or request data from the EC (this should be done on the
+	  DSP core).
+
+config PLATFORM_EC_DSP_CLIENT_REMOTE_CBI
+	bool "DSP client implements local CBI read operations"
+	default y if !TEST
+	depends on PLATFORM_EC_DSP_CLIENT
+	help
+	  When enabled, functions such as cbi_get_board_info() will be routed
+	  to the DSP client instead of their local implementation. The
+	  Kconfig is needed to allow tests which implement both the
+	  client and the service to function.
+
+config PLATFORM_EC_DSP_CLIENT_TIMEOUT_MS
+	int "Milliseconds to timeout waiting for the service response"
+	default 300
+	depends on PLATFORM_EC_DSP_CLIENT
+	help
+	  Once a call is made to the service, we will wait for the status GPIO
+	  to assert which will signal that we can read the status. This config
+	  specifies the maximum duration (in milliseconds) to wait for that
+	  interrupt.

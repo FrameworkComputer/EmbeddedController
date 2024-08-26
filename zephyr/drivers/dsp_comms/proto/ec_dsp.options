@@ -1,0 +1,6 @@
+cros.dsp.comms.GetStatusResponse.flags_mask max_size:2
+cros.dsp.comms.GetStatusResponse.flags_mask fixed_length:True
+cros.dsp.comms.GetStatusResponse.response_length int_size:IS_8
+
+cros.dsp.comms.GetCbiFlagsResponse.flags_string max_size:80
+cros.dsp.comms.GetCbiFlagsResponse.flags_string fixed_length:True
