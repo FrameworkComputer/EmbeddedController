@@ -178,6 +178,7 @@
 #define CONFIG_BATTERY_PRESENT_GPIO GPIO_EC_BATT_PRES_L
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 #define CONFIG_BATTERY_SMART
+#define CONFIG_HOSTCMD_BATTERY_V2
 
 /*******************************************************************************
  * USB-C Configs

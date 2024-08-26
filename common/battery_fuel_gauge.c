@@ -176,6 +176,18 @@ static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 	}
 }
 
+/* The host command EC_CMD_BATTERY_GET_STATIC v0 and v1 truncate the battery
+ * strings to 7 and 11 chars respectively. Since the battery names in CBI
+ * will be set later, we don't know if 7 chars is enough for unique names in
+ * the future. Therefore, always enable V2 if BCIC is enabled.
+ */
+#if defined(CONFIG_BATTERY_CONFIG_IN_CBI)
+#if !defined(CONFIG_HOSTCMD_BATTERY_V2)
+#error CONFIG_HOSTCMD_BATTERY_V2 is required if \
+CONFIG_BATTERY_CONFIG_IN_CBI is enabled.
+#endif
+#endif
+
 void init_battery_type(void)
 {
 	int type;
