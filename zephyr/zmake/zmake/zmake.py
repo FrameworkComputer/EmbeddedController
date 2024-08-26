@@ -566,6 +566,16 @@ class Zmake:
                         ),
                         "ZEPHYR_BASE": str(self.zephyr_base),
                         "ZMAKE_INCLUDE_DIR": str(generated_include_dir),
+                        "PW_ROOT": str(
+                            self.checkout / "src" / "third_party" / "pigweed"
+                        ),
+                        "NANOPB_DIR": str(
+                            self.checkout
+                            / "src"
+                            / "third_party"
+                            / "zephyr"
+                            / "nanopb"
+                        ),
                         "Python3_EXECUTABLE": sys.executable,
                         **(
                             {
@@ -726,6 +736,26 @@ class Zmake:
                 project.config.project_name,
                 build_name,
             )
+            # Since the build needs to be hermetic, we don't want to take all
+            # the environment from the caller. Instead we just create a blank
+            # one and add any required variables to it.
+            env = {}
+
+            protoc_path = shutil.which("protoc")
+            if protoc_path:
+                # We need to tell Pigweed where to find protoc, currently,
+                # Pigweed assumes all the dependencies are added via CIPD into
+                # PW_PIGWEED_CIPD_INSTALL_DIR. This directory should contain
+                # 'bin/protoc'. So we need to:
+                # 1. Find protoc
+                # 2. Check that the parent directory is called 'bin' (this is
+                #    hard coded by Pigweed so we can't change it).
+                # 3. Get the parent.parent directory and set the environment
+                #    variable.
+                protoc_path_obj = pathlib.Path(protoc_path)
+                assert protoc_path_obj.parent.name == "bin"
+                cipd_install_dir = str(protoc_path_obj.parent.parent)
+                env["PW_PIGWEED_CIPD_INSTALL_DIR"] = cipd_install_dir
 
             kconfig_file = build_dir / f"kconfig-{build_name}.conf"
             proc = config.popen_cmake(
@@ -739,6 +769,7 @@ class Zmake:
                 stderr=subprocess.PIPE,
                 encoding="utf-8",
                 errors="replace",
+                env=env,
             )
             job_id = f"{project.config.project_name}:{build_name}"
             zmake.multiproc.LogWriter.log_output(

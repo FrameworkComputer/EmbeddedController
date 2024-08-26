@@ -613,6 +613,13 @@ def main():
             "ZEPHYR_TOOLCHAIN_VARIANT": intercepted_args.toolchain,
             "PARSETAB_DIR": parsetab_dir,
         }
+        protoc_path = shutil.which("protoc")
+        if protoc_path:
+            protoc_path_obj = Path(protoc_path)
+            assert protoc_path_obj.parent.name == "bin"
+            extra_env_vars["PW_PIGWEED_CIPD_INSTALL_DIR"] = str(
+                protoc_path_obj.parent.parent
+            )
         gcov_tool = None
         if intercepted_args.toolchain == "host":
             gcov_tool = "gcov"
