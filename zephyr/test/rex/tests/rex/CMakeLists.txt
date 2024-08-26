@@ -12,6 +12,7 @@ target_sources_ifdef(CONFIG_TEST_PROJECT_USB_MUX_CONFIG app PRIVATE
 		src/fakes.c)
 
 target_sources_ifdef(CONFIG_TEST_PROGRAM_I2C_POLICY app PRIVATE
+		${PLATFORM_EC_PROGRAM_DIR}/rex/rex/src/usb_mux_config.c
 		${PLATFORM_EC_PROGRAM_DIR}/rex/rex/src/i2c_policy.c
 		${PLATFORM_EC_PROGRAM_DIR}/rex/src/usbc_config.c
 		src/i2c_policy.c
