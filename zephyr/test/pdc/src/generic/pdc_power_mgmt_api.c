@@ -497,6 +497,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_data_swap_capable)
 			emul_pdc_configure_src(emul, &connector_status);
 		emul_pdc_connect_partner(emul, &connector_status);
 
+		zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+
 		start = k_cycle_get_32();
 		while (k_cycle_get_32() - start < timeout) {
 			k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
@@ -1797,7 +1799,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_hpd_wake)
 	/* Send an IRQ for the PDC power manager to update its DP Status. */
 	emul_pdc_set_connector_status(emul, &in_conn_status);
 	emul_pdc_pulse_irq(emul);
-	k_msleep(TEST_WAIT_FOR_INTERVAL_MS * 2);
+
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
 
 	/* Confirm that the IRQ with HPD_LVL high caused a USB mux host
 	 * event.
