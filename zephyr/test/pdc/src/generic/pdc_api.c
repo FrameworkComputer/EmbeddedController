@@ -352,7 +352,7 @@ ZTEST_USER(pdc_api, test_set_sink_path)
 	}
 }
 
-/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
+/* TODO(b/345292002): TPS6699x pdc_reconnect not implemented */
 #ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_reconnect)
 {
@@ -364,6 +364,7 @@ ZTEST_USER(pdc_api, test_reconnect)
 	zassert_ok(emul_pdc_get_reconnect_req(emul, &expected, &val));
 	zassert_equal(expected, val);
 }
+#endif
 
 /**
  * @brief Clears the cached PDC FW info struct inside the driver.
@@ -377,6 +378,23 @@ void helper_clear_cached_chip_info(void)
 	k_sleep(K_MSEC(SLEEP_MS));
 }
 
+#define ZEPHYR_USER_NODE DT_PATH(zephyr_user)
+#if DT_NODE_EXISTS(ZEPHYR_USER_NODE)
+static const struct pdc_info_t info_in1 = {
+	.fw_version = 0x001a2b3c,
+	.pd_version = DT_PROP(ZEPHYR_USER_NODE, pd_version),
+	.pd_revision = DT_PROP(ZEPHYR_USER_NODE, pd_revision),
+	.vid_pid = 0x12345678,
+	.project_name = DT_PROP(ZEPHYR_USER_NODE, project_name),
+};
+static const struct pdc_info_t info_in2 = {
+	.fw_version = 0x002a3b4c,
+	.pd_version = DT_PROP(ZEPHYR_USER_NODE, pd_version),
+	.pd_revision = DT_PROP(ZEPHYR_USER_NODE, pd_revision),
+	.vid_pid = 0x9abcdef0,
+	.project_name = DT_PROP(ZEPHYR_USER_NODE, project_name),
+};
+#else
 /* Two sets of chip info to test against */
 static const struct pdc_info_t info_in1 = {
 	.fw_version = 0x001a2b3c,
@@ -393,6 +411,7 @@ static const struct pdc_info_t info_in2 = {
 	.vid_pid = 0x9abcdef0,
 	.project_name = "MyProj",
 };
+#endif /* DT_NODE_EXISTS(ZEPHYR_USER_NODE) */
 
 ZTEST_USER(pdc_api, test_get_info)
 {
@@ -456,6 +475,8 @@ ZTEST_USER(pdc_api, test_get_info)
 			  sizeof(info_in2.project_name));
 }
 
+/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
+#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_get_lpm_ppm_info)
 {
 	struct lpm_ppm_info_t out = { 0 };

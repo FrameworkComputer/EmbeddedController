@@ -15,11 +15,15 @@
 
 enum tps6699x_reg_offset {
 	/* TODO(b/345292002): Fill out */
+	TPS6699X_REG_MODE = 0x03,
+	TPS6699X_REG_CUSTOMER_USE = 0x06,
 	TPS6699X_REG_COMMAND_I2C1 = 0x8,
 	TPS6699X_REG_DATA_I2C1 = 0x9,
+	TPS6699X_REG_VERSION = 0x0f,
 	TPS6699X_REG_POWER_PATH_STATUS = 0x26,
 	TPS6699X_REG_PORT_CONFIGURATION = 0x28,
 	TPS6699X_REG_PORT_CONTROL = 0x29,
+	TPS6699X_REG_TX_IDENTITY = 0x47,
 	TPS6699X_REG_ADC_RESULTS = 0x6a,
 	TPS6699X_NUM_REG = 0xa4,
 };
@@ -276,6 +280,68 @@ union reg_power_path_status {
 		uint32_t power_source : 2;
 	} __packed;
 	uint8_t raw_value[5];
+};
+
+union reg_version {
+	struct {
+		uint32_t version : 32;
+	} __packed;
+	uint8_t raw_value[4];
+};
+
+union reg_tx_identity {
+	struct {
+		uint8_t number_valid_vdos : 3;
+		uint8_t reserved0 : 5;
+		uint8_t vendor_id[2];
+		uint8_t reserved1 : 7;
+		uint8_t product_type_dfp_lo_bit : 1;
+		uint8_t product_type_dfp_hi_bits : 2;
+
+		uint8_t modal_operation_supported : 1;
+		uint8_t product_type_ufp : 3;
+		uint8_t usb_comms_capable_as_device : 1;
+		uint8_t usb_comms_capable_as_host : 1;
+		uint8_t certification_test_id[4];
+		uint8_t bcd_device[2];
+		uint8_t product_id[2];
+		uint8_t ufp1_vdo[4];
+		uint8_t reserved2[4];
+		uint8_t dfp1_vdo[4];
+		uint8_t reserved3[24];
+	} __packed;
+	uint8_t raw_value[49];
+};
+
+union reg_customer_use {
+	struct {
+		/**
+		 * The first byte is a version code, set using the firmware
+		 * config tool.
+		 */
+		uint8_t data[8];
+	} __packed;
+	uint8_t raw_value[8];
+};
+
+enum tps_mode {
+	/** Chip is booting */
+	REG_MODE_BOOT = 0x544f4f42,
+	/** Firmware update / both banks corrupted */
+	REG_MODE_F211 = 0x31313246,
+	/** Flash code running pre-appconfig */
+	REG_MODE_APP0 = 0x30505041,
+	/** Flash code running post-appconfig */
+	REG_MODE_APP1 = 0x31505041,
+	/** Flash code is waiting for power */
+	REG_MODE_WTPR = 0x52505457,
+};
+
+union reg_mode {
+	struct {
+		uint8_t data[4];
+	} __packed;
+	uint8_t raw_value[6];
 };
 
 #endif /* __EMUL_TPS6699X_PRIVATE_H_ */

@@ -616,6 +616,34 @@ static int emul_tps6699x_get_sink_path(const struct emul *target, bool *en)
 	return 0;
 }
 
+static int emul_tps6699x_set_info(const struct emul *target,
+				  const struct pdc_info_t *info)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	union reg_version *reg_version =
+		(union reg_version *)data->reg_val[TPS6699X_REG_VERSION];
+	union reg_tx_identity *reg_tx_identity =
+		(union reg_tx_identity *)data->reg_val[TPS6699X_REG_TX_IDENTITY];
+	union reg_customer_use *reg_customer_use =
+		(union reg_customer_use *)
+			data->reg_val[TPS6699X_REG_CUSTOMER_USE];
+	union reg_mode *reg_mode =
+		(union reg_mode *)data->reg_val[TPS6699X_REG_MODE];
+
+	reg_version->version = info->fw_version;
+	*((uint16_t *)reg_tx_identity->vendor_id) = info->vid_pid >> 16;
+	*((uint16_t *)reg_tx_identity->product_id) = info->vid_pid & 0xFFFF;
+	memset(reg_customer_use->data, 0, sizeof(reg_customer_use->data));
+	memcpy(reg_customer_use->data, info->project_name,
+	       MIN(sizeof(reg_customer_use->data), strlen(info->project_name)));
+	*((uint32_t *)reg_mode->data) =
+		(info->is_running_flash_code ? REG_MODE_APP0 : 0);
+
+	return 0;
+}
+
 static int emul_tps6699x_reset(const struct emul *target)
 {
 	struct tps6699x_emul_pdc_data *data =
@@ -658,7 +686,7 @@ static struct emul_pdc_api_t emul_tps6699x_api = {
 	.get_sink_path = emul_tps6699x_get_sink_path,
 	.get_reconnect_req = NULL,
 	.pulse_irq = NULL,
-	.set_info = NULL,
+	.set_info = emul_tps6699x_set_info,
 	.set_lpm_ppm_info = NULL,
 	.set_pdos = NULL,
 	.get_pdos = NULL,
