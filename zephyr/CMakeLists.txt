@@ -443,6 +443,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_ONOFF_STATES
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LID_ANGLE
                                                 "${PLATFORM_EC}/common/motion_lid.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE
+                                                "${PLATFORM_EC}/common/lid_angle_common.c"
                                                 "${PLATFORM_EC}/common/lid_angle.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LID_SWITCH
                                                 "${PLATFORM_EC}/common/lid_switch.c")

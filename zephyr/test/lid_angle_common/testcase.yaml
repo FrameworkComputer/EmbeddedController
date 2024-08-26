@@ -1,0 +1,13 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+tests:
+  common.lid_angle_common.default:
+    type: unit
+    extra_args:
+      - EXTRA_CFLAGS="-DCONFIG_TEST=1;-DCONFIG_ZEPHYR=1;-DCONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE;-DCONFIG_CROS_EC_KEYBOARD_INPUT"
+  common.lid_angle_common.tablet_mode:
+    type: unit
+    extra_args:
+      - EXTRA_CFLAGS="-DCONFIG_TEST=1;-DCONFIG_ZEPHYR=1;-DCONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE;-DCONFIG_CROS_EC_KEYBOARD_INPUT;-DCONFIG_TEST_TABLET_MODE=1"

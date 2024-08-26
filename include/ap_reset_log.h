@@ -6,6 +6,7 @@
 #ifndef __CROS_EC_AP_RESET_LOG_H
 #define __CROS_EC_AP_RESET_LOG_H
 
+#include "common.h"
 #include "ec_commands.h"
 #include "stddef.h"
 #include "stdint.h"
