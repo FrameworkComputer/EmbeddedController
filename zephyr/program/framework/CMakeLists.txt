@@ -98,3 +98,20 @@ if(DEFINED CONFIG_BOARD_MARIGOLD)
 	)
 
 endif()
+
+if(DEFINED CONFIG_BOARD_SUNFLOWER)
+	project(sunflower)
+	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_SUNFLOWER include)
+	zephyr_include_directories("include/sunflower")
+	zephyr_library_sources(
+			"src/battery_13.c"
+			"sunflower/src/charger.c"
+			"sunflower/src/cpu_power.c"
+			"sunflower/src/power_sequence.c"
+			"sunflower/src/project_diagnostics.c"
+			"sunflower/src/keyboard_customization.c"
+			"sunflower/src/temperature.c"
+			"sunflower/src/thermal.c"
+	)
+
+endif()

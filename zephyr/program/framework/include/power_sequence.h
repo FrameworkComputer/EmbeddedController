@@ -16,6 +16,11 @@ enum power_signal {
 	X86_PRIM_PWR,
 	X86_SLP_S4_N,
 #endif
+#ifdef CONFIG_BOARD_SUNFLOWER
+	X86_SLP_S4_N,
+	X86_SLP_SUS,
+	X86_VCCIN_AUX_VR_PG,
+#endif
 	POWER_SIGNAL_COUNT
 };
 

@@ -6,4 +6,5 @@
 (chroot) $ zmake build lotus
 (chroot) $ zmake build azalea
 (chroot) $ zmake build marigold
+(chroot) $ zmake build sunflower
 ```

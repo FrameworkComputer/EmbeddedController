@@ -31,8 +31,13 @@ marigold = register_framework_project(
     project_name="marigold",
 )
 
+sunflower = register_framework_project(
+    project_name="sunflower",
+)
+
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release.
 assert_rw_fwid_DO_NOT_EDIT(project_name="lotus", addr=0X7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="azalea", addr=0X7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="marigold", addr=0X7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="sunflower", addr=0X7FFE0)

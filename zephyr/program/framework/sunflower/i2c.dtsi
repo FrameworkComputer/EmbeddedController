@@ -1,0 +1,231 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ #include <dt-bindings/usb_pd_tcpm.h>
+
+/ {
+	aliases {
+		i2c-0 = &i2c0_0;
+		i2c-1 = &i2c1_0;
+		i2c-2 = &i2c2_0;
+		i2c-3 = &i2c3_0;
+		i2c-4 = &i2c4_1;
+		i2c-5 = &i2c5_0;
+		i2c-6 = &i2c6_1;
+		i2c-7 = &i2c7_0;
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+		i2c_hid_slave: hid_slave {
+			i2c-port = <&i2c0_0>;
+			enum-names = "I2C_PORT_HID_SLAVE";
+		};
+		i2c_cypd0: cypd0 {
+			i2c-port = <&i2c1_0>;
+			enum-names = "I2C_PORT_PD_MCU0";
+		};
+		i2c_cypd1: cypd1 {
+			i2c-port = <&i2c2_0>;
+			enum-names = "I2C_PORT_PD_MCU1";
+		};
+		i2c_battery: battery {
+			i2c-port = <&i2c3_0>;
+			enum-names = "I2C_PORT_BATTERY",
+				"I2C_PORT_CHARGER";
+		};
+		i2c_touchpad: touchpad {
+			i2c-port = <&i2c4_1>;
+			enum-names = "I2C_PORT_TOUCHPAD";
+			dynamic-speed;
+		};
+		i2c_keyboard: keyboard {
+			i2c-port = <&i2c5_0>;
+			enum-names = "I2C_PORT_KB_DISCRETE";
+		};
+		i2c_thermal_sensor: thermal_sensor {
+			i2c-port = <&i2c6_1>;
+			enum-names = "I2C_PORT_THERMAL";
+		};
+		i2c_motion_sensor: motion_sensor {
+			i2c-port = <&i2c7_0>;
+			enum-names = "I2C_PORT_MOTION_SENSOR";
+		};
+	};
+};
+
+&i2c0_0 {
+	status = "okay";
+	label = "I2C_PORT0";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
+	pinctrl-names = "default";
+
+	i2chid0: i2chid@50 {
+		compatible = "cros-ec,i2c-target-hid";
+		reg = <0x50>;
+		alert_gpios = <&gpio9 6 GPIO_OPEN_DRAIN>;
+		max_report_size = <32>;
+		hid_descriptor = "keyboard_hid_desc";
+		hid_report_descriptor = "keyboard_report_desc";
+	};
+
+	i2chid1: i2chid@51 {
+		compatible = "cros-ec,i2c-target-hid";
+		reg = <0x51>;
+		alert_gpios = <&gpio1 4 GPIO_OPEN_DRAIN>;
+		max_report_size = <32>;
+		/*TODO: use Kconfig to split HID feature*/
+		hid_descriptor = "als_hid_desc";
+		hid_report_descriptor = "als_report_desc";
+	};
+};
+
+&i2c_ctrl0 {
+	status = "okay";
+};
+
+&i2c1_0 {
+	status = "okay";
+	label = "I2C_PORT1";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
+	pinctrl-names = "default";
+
+	/* TODO: Add the device on this bus */
+};
+
+&i2c_ctrl1 {
+	status = "okay";
+};
+
+&i2c2_0 {
+	status = "okay";
+	label = "I2C_PORT2";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
+	pinctrl-names = "default";
+
+	/* TODO: Add the device on this bus */
+};
+
+&i2c_ctrl2 {
+	status = "okay";
+};
+
+&i2c3_0 {
+	status = "okay";
+	label = "I2C_PORT3";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
+	pinctrl-names = "default";
+
+	charger: isl9241@9 {
+		compatible = "intersil,isl9241";
+		status = "okay";
+		reg = <0x9>;
+	};
+
+	battery_temp: battery_temp@b {
+		compatible = "cros-ec,temp-sensor-battery";
+		reg = <0xb>;
+	};
+};
+
+&i2c_ctrl3 {
+	status = "okay";
+};
+
+&i2c4_1 {
+	status = "okay";
+	label = "I2C_PORT4";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c4_1_sda_scl_gpf2_f3>;
+	pinctrl-names = "default";
+
+	/* TODO: Add the device on this bus */
+};
+
+&i2c_ctrl4 {
+	status = "okay";
+};
+
+&i2c5_0 {
+	status = "okay";
+	label = "I2C_PORT5";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
+	pinctrl-names = "default";
+
+	kb_discrete: ite-it8801@38 {
+		compatible = "ite,it8801";
+		reg = <0x38>;
+	};
+};
+
+&i2c_ctrl5 {
+	status = "okay";
+};
+
+&i2c6_1 {
+	status = "okay";
+	label = "I2C_PORT6";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c6_1_sda_scl_gpe3_e4>;
+	pinctrl-names = "default";
+
+	/* Q56 */
+	cpu_f75303: cpu_f75303@4d {
+		compatible = "cros-ec,temp-sensor-f75303";
+		temperature-type = "F75303_IDX_REMOTE1";
+		reg = <0x4d>;
+	};
+
+	/* Q57 */
+	top_skin_f75303: top_skin_f75303@4d {
+		compatible = "cros-ec,temp-sensor-f75303";
+		temperature-type = "F75303_IDX_REMOTE2";
+		reg = <0x4d>;
+	};
+
+	/* U31 */
+	local_f75303: local_f75303@4d {
+		compatible = "cros-ec,temp-sensor-f75303";
+		temperature-type = "F75303_IDX_LOCAL";
+		reg = <0x4d>;
+	};
+};
+
+&i2c_ctrl6 {
+	status = "okay";
+};
+
+&i2c7_0 {
+	status = "okay";
+	label = "I2C_PORT7";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
+	pinctrl-names = "default";
+
+	acc_bma:acc_bma@18 {
+		compatible = "cros-ec,bma4xx";
+		status = "okay";
+		location = "MOTIONSENSE_LOC_BASE";
+		i2c-spi-addr-flags = "BMA4_I2C_ADDR_PRIMARY";
+		reg = <0x18>;
+	};
+
+	acc_module: acc_module@19 {
+		compatible = "cros-ec,bma4xx";
+		status = "okay";
+		location = "MOTIONSENSE_LOC_LID";
+		i2c-spi-addr-flags = "BMA4_I2C_ADDR_SECONDARY";
+		reg = <0x19>;
+	};
+};
+
+&i2c_ctrl7 {
+	status = "okay";
+};

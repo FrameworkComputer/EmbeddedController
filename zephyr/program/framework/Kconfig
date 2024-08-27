@@ -20,6 +20,12 @@ config BOARD_MARIGOLD
 	  Build Framework Marigold reference board. Marigold has Intel SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_SUNFLOWER
+	bool "Framework Sunflower Board"
+	help
+	  Build Framework Sunflower board. Sunflower has Intel SoC
+	  with NPCX993FA0BX EC.
+
 # Project Configuration
 config CHIPSET_INTEL
 	bool "Framework Intel project"

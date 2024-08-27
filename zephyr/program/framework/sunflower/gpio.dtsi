@@ -1,0 +1,307 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+
+	aliases {
+		gpio-mux-uart-flip = &gpio_mux_sub_uart_flip;
+
+		/* Enable peci interface */
+		peci-0 = &peci0;
+	};
+	named-gpios {
+		compatible = "named-gpios";
+
+		ec_espi_rst_l {
+			gpios = <&gpio5 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_runpwrok: runpwrok {
+			gpios = <&gpioc 6 GPIO_INPUT>; /*Monitor All S0 power rail ok*/
+		};
+		otg_en {
+			gpios = <&gpioc 5 GPIO_OUTPUT_LOW>;
+		};
+		ec_i2c0_clk0 {
+			gpios = <&gpiob 5 GPIO_INPUT>;
+		};
+		ec_i2c0_sda0 {
+			gpios = <&gpiob 4 GPIO_INPUT>;
+		};
+		ec_i2c1_clk0 {
+			gpios = <&gpio9 0 GPIO_INPUT>;
+		};
+		ec_i2c1_sda0 {
+			gpios = <&gpio8 7 GPIO_INPUT>;
+		};
+		ec_i2c2_clk0 {
+			gpios = <&gpio9 2 GPIO_INPUT>;
+		};
+		ec_i2c2_sda0 {
+			gpios = <&gpio9 1 GPIO_INPUT>;
+		};
+		ec_smb_ck3 {
+			gpios = <&gpiod 1 GPIO_INPUT>;
+		};
+		ec_smb_da3 {
+			gpios = <&gpiod 0 GPIO_INPUT>;
+		};
+		ec_i2c4_clk0 {
+			gpios = <&gpiof 3 GPIO_INPUT>;
+		};
+		ec_i2c4_sda0 {
+			gpios = <&gpiof 2 GPIO_INPUT>;
+		};
+		ec_i2c5_clk0 {
+			gpios = <&gpio3 3 GPIO_INPUT>;
+		};
+		ec_i2c5_sda0 {
+			gpios = <&gpio3 6 GPIO_INPUT>;
+		};
+		ec_smb_clk6 {
+			gpios = <&gpioe 4 GPIO_INPUT>;
+		};
+		ec_smb_sda6 {
+			gpios = <&gpioe 3 GPIO_INPUT>;
+		};
+		ec_i2c7_clk0 {
+			gpios = <&gpiob 3 GPIO_INPUT>;
+		};
+		ec_i2c7_sda0 {
+			gpios = <&gpiob 2 GPIO_INPUT>;
+		};
+		gpio_mic_sw: mic_sw {
+			gpios = <&gpioc 1 GPIO_INPUT>;
+		};
+		gpio_en_5v_pb: en_5v_pb {
+			gpios = <&gpio2 2 GPIO_OUTPUT_LOW>; /*Power button board 5V EN*/
+		};
+		gpio_soc_ec_int2_l: soc_ec_int2_l {
+			gpios = <&gpio1 4 GPIO_ODR_HIGH>; /*I2C0 use HID over I2C int#*/
+		};
+		gpio_ec_pad_mode_l: ec_pad_mode_l {
+			gpios = <&gpio0 7 GPIO_ODR_HIGH>; /*Notify SOC to enter tablet mode*/
+		};
+		gpio_ec_acc_mu_int_l: ec_acc_mu_int_l {
+			gpios = <&gpio0 4 GPIO_INPUT>; /*Camera Module G-sensor int#*/
+		};
+		gpio_ec_acc_mb_int_l: ec_acc_mb_int_l {
+			gpios = <&gpio8 2 GPIO_INPUT>; /*MB G-sensor int#*/
+		};
+		gpio_os_det_ec: os_det_ec {
+			gpios = <&gpio8 3 GPIO_INPUT>;
+		};
+		ec_rtcrst {
+			gpios = <&gpio0 3 GPIO_OUTPUT_LOW>;	/*CPU RTCRST, SRTCRST control*/
+		};
+		gpio_ec_mcu_int_l: ec_mcu_int_l {
+			gpios = <&gpiob 1 GPIO_INPUT>; /*Keyboard INT#*/
+			enum-name = "GPIO_KB_DISCRETE_INT";
+		};
+		gpio_hw_acav_in: adp_in {
+			gpios = <&gpiod 2 GPIO_INPUT>; /*PSL in1 signal, AC detect*/
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_on_off_btn_l: on_off_btn_l {
+			gpios = <&gpio0 0 GPIO_INPUT>; /*PSL in2 signal, MB power btn*/
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_chassis_open_l: chassis_open_l {
+			gpios = <&gpio0 1 GPIO_INPUT>; /*Monitor C cover open*/
+		};
+		gpio_lid_sw_l: lid_sw_l {
+			gpios = <&gpio0 2 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		gpio_cam_en: cam_en {
+			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>;
+		};
+		gpio_pch_dpwrok_ec: pch_dpwrok_ec {
+			gpios = <&gpio8 6 GPIO_OUTPUT_LOW>;
+		};
+		gpio_pch_pwr_en: pch_pwr_en {
+			gpios = <&gpiod 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_h_prochot_l: h_prochot_l {
+			gpios = <&gpioa 1 GPIO_ODR_HIGH>;
+		};
+		gpio_slp_s3_l: pm_slp_s3_l {
+			gpios = <&gpioa 3 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S3_L";
+		};
+		gpio_ec_rsmrst_l: ec_rsmrst_l {
+			gpios = <&gpio9 5 GPIO_OUTPUT_LOW>;
+		};
+		gpio_slp_sus_l: slp_sus_l {
+			gpios = <&gpio6 7 GPIO_INPUT>;
+			enum-name = "GPIO_SLP_SUS_L";
+		};
+		gpio_sys_pwrok: sys_pwrok {
+			gpios = <&gpio7 0 GPIO_OUTPUT_LOW>;
+		};
+		gpio_vr_on: vr_on {
+			gpios = <&gpio6 2 GPIO_OUTPUT_LOW>;
+		};
+		gpio_susp_l: susp_l {
+			gpios = <&gpio6 3 GPIO_OUTPUT_LOW>;
+		};
+		gpio_left_side: left_side {
+			gpios = <&gpio4 0 GPIO_OUTPUT_LOW>; /*Left side LED follow IFGA3*/
+		};
+		gpio_right_side: right_side {
+			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>; /*Right side LED follow IFGA3*/
+		};
+		gpio_syson: syson {
+			gpios = <&gpioa 6 GPIO_OUTPUT_LOW>;
+		};
+		ac_present_pd_l {
+			gpios = <&gpioc 2 GPIO_INPUT>; /*Monitor AC present from PD*/
+		};
+		ec_beep {
+			gpios = <&gpiob 7 GPIO_OUTPUT_LOW>; /*Reserved*/
+		};
+		gpio_en_3v_tp: en_3v_tp {
+			gpios = <&gpio4 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_en_5v_tp: en_5v_tp {
+			gpios = <&gpio4 3 GPIO_OUTPUT_LOW>;
+		};
+		gpio_pbtn_out: pbtn_out_l {
+			gpios = <&gpio3 4 GPIO_ODR_LOW>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		gpio_ec_vcin1_batt_temp_l: ec_vcin1_batt_temp_l {
+			gpios = <&gpiof 0 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		gpio_soc_enbkl: soc_enbkl {
+			gpios = <&gpioe 0 GPIO_INPUT>; /*Monitor CPU EDP BKLEN*/
+		};
+		gpio_sm_panel_bken_ec: ec_bkoff_l {
+			gpios = <&gpioc 7 GPIO_OUTPUT_LOW>;	/*eDP BKL Enable*/
+		};
+		gpio_ac_present_cpu: ac_present_cpu {
+			gpios = <&gpioa 2 GPIO_ODR_LOW>; /*AC present to CPU*/
+		};
+		gpio_slp_s4_l: pm_slp_s4_l {
+			gpios = <&gpioa 0 GPIO_INPUT>; /*Monitor CPU entry/leave S4*/
+			enum-name = "GPIO_PCH_SLP_S4_L";
+		};
+		gpio_soc_tp_int_l: ec_tp_int_l {
+			gpios = <&gpioa 4 GPIO_INPUT>; /*Interrupt of TP module*/
+		};
+		gpio_soc_ec_int_l: soc_ec_int_l {
+			gpios = <&gpio9 6 GPIO_ODR_HIGH>; /*I2C0 use HID over I2C int#*/
+		};
+		gpio_cam_sw: cam_sw {
+			gpios = <&gpio9 3 GPIO_INPUT>;
+		};
+		plt_rst_l {
+			gpios = <&gpioa 7 GPIO_INPUT>; /*CPU Platform Reset*/
+		};
+		gpio_spok: pwr_3v5v_pg {
+			gpios = <&gpio9 4 GPIO_INPUT>; /*Monitor 3VALW 5VALW PWR OK*/
+			enum-name = "GPIO_POWER_GOOD_3VALW";
+		};
+		gpio_vr_pwrgd: vr_pwrgd {
+			gpios = <&gpio9 7 GPIO_INPUT>;	/*CPU Core power ok*/
+			enum-name = "GPIO_POWER_GOOD_VR";
+		};
+		gpio_ec_mute_l: ec_mute_l {
+			gpios = <&gpioa 5 GPIO_ODR_HIGH>;
+		};
+		gpio_pch_pwrok: pch_pwrok {
+			gpios = <&gpiob 0 GPIO_OUTPUT_LOW>;	/*Notify All S0 power rail OK*/
+		};
+		gpio_vccin_aux_vr_pg_r: vccin_aux_vr_pg_r {
+			gpios = <&gpio6 1 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_GOOD_VCCIN_AUX_VR";
+		};
+		gpio_ec_vccst_pg_r: ec_vccst_pg_r {
+			gpios = <&gpio7 2 GPIO_ODR_LOW>; /*CPU 1.05V power good*/
+		};
+		gpio_tablet_mode_l: tablet_mode_l {
+			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>; /*Tablet mode detect*/
+		};
+		gpio_mux_sub_uart_flip: mux_sub_uart_flip {
+			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;	/*TBT SBU MUX*/
+		};
+		gpio_pd_chip1_interrupt: ec_pd_intb_l {
+			gpios = <&gpioe 2 GPIO_INPUT>;
+			enum-name = "GPIO_EC_PD_INTB_L";
+		};
+		gpio_pd_chip0_interrupt: ec_pd_inta_l {
+			gpios = <&gpioe 5 GPIO_INPUT>;
+			enum-name = "GPIO_EC_PD_INTA_L";
+		};
+		gpio_me_en: me_en {
+			/* ME flash, strap default low before PLT_PWROK*/
+			gpios = <&gpio5 0 (GPIO_OUTPUT_LOW | GPIO_VOLTAGE_1P8)>;
+		};
+
+		/* KBD IOEX configuration */
+		lock_led {
+			gpios = <&ioex_it8801_port1 2 GPIO_OUTPUT_LOW>;
+		};
+
+		/* unimplemented GPIOs */
+		entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpio0 5 0>,
+			<&gpio0 6 0>,
+			<&gpio1 0 0>,
+			<&gpio1 1 0>,
+			<&gpio1 3 0>,
+			<&gpio1 5 0>,
+			<&gpio2 3 0>,
+			<&gpio2 4 0>,
+			<&gpio2 5 0>,
+			<&gpio2 6 0>,
+			<&gpio2 7 0>,
+			<&gpio3 0 0>,
+			<&gpio3 1 0>,
+			<&gpio5 6 0>,
+			<&gpio7 6 0>,
+			<&gpiof 4 0>,
+			<&gpiof 5 0>;
+	};
+};
+
+/* PSL input pads*/
+&psl_in2_gp00 {
+	/* Power button */
+	psl-in-mode = "edge";
+	psl-in-pol = "low-falling";
+};
+
+&psl_in1_gpd2 {
+	/* ac present */
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
+};
+
+&power_ctrl_psl {
+	status = "okay";
+	pinctrl-names = "sleep";
+	pinctrl-0 = <&psl_in1_gpd2 &psl_in2_gp00>;
+};
+
+/* host interface */
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
+};
+
+/*PECI Bus*/
+&peci0 {
+	status = "okay";
+	pinctrl-0 = <&peci_dat_gp81>;
+	pinctrl-names = "default";
+};

@@ -33,6 +33,7 @@ enum battery_trip_point_state_t {
 	BATTERY_TRIP_POINT_WAIT_EVENT = BIT(3),
 };
 
+#ifndef CONFIG_PLATFORM_EC_BATTERY_PRESENT_GPIO
 enum battery_present battery_is_present(void)
 {
 	enum battery_present batt_pres;
@@ -55,6 +56,7 @@ enum battery_present battery_is_present(void)
 
 	return batt_pres;
 }
+#endif
 
 uint32_t get_system_percentage(void)
 {
