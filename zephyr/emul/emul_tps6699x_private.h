@@ -20,6 +20,7 @@ enum tps6699x_reg_offset {
 	TPS6699X_REG_COMMAND_I2C1 = 0x8,
 	TPS6699X_REG_DATA_I2C1 = 0x9,
 	TPS6699X_REG_VERSION = 0x0f,
+	TPS6699X_REG_INTERRUPT_EVENT_FOR_I2C1 = 0x14,
 	TPS6699X_REG_POWER_PATH_STATUS = 0x26,
 	TPS6699X_REG_PORT_CONFIGURATION = 0x28,
 	TPS6699X_REG_PORT_CONTROL = 0x29,
@@ -344,4 +345,111 @@ union reg_mode {
 	uint8_t raw_value[6];
 };
 
+union reg_interrupt {
+	struct {
+		/* Bits 0 - 7 */
+		uint8_t reserved0 : 1;
+		uint8_t pd_hardreset : 1;
+		uint8_t reserved1 : 1;
+		uint8_t plug_insert_or_removal : 1;
+		uint8_t power_swap_complete : 1;
+		uint8_t data_swap_complete : 1;
+		uint8_t fr_swap_complete : 1;
+		uint8_t source_cap_updated : 1;
+
+		/* Bits 8 - 15 */
+		uint8_t reserved2 : 1;
+		uint8_t overcurent : 1;
+		uint8_t attention_received : 1;
+		uint8_t vdm_received : 1;
+		uint8_t new_contract_as_consumer : 1;
+		uint8_t new_contract_as_producer : 1;
+		uint8_t source_caps_msg_received : 1;
+		uint8_t sink_caps_msg_received : 1;
+
+		/* Bits 16 - 23 */
+		uint8_t reserved3 : 1;
+		uint8_t power_swap_rquested : 1;
+		uint8_t data_swap_requested : 1;
+		uint8_t reserved4 : 1;
+		uint8_t usb_host_present : 1;
+		uint8_t usb_host_no_longer_present : 1;
+		uint8_t reserved5 : 1;
+		uint8_t power_path_switch_changed : 1;
+
+		/* Bits 24 - 31 */
+		uint8_t power_status_update : 1;
+		uint8_t data_status_update : 1;
+		uint8_t status_updated : 1;
+		uint8_t pd_status_updated : 1;
+		uint8_t reserved6 : 2;
+		uint8_t cmd1_complete : 1;
+		uint8_t cmd2_complete : 1;
+
+		/* Bits 32 - 39 */
+		uint8_t device_incompatible_error : 1;
+		uint8_t cannot_provide_voltage_or_current_error : 1;
+		uint8_t can_provide_voltage_or_current_later_error : 1;
+		uint8_t power_event_occurred_error : 1;
+		uint8_t missing_get_caps_msg_error : 1;
+		uint8_t reserved7 : 1;
+		uint8_t protocol_error : 1;
+		uint8_t reserved8 : 1;
+
+		/* Bits 40 - 47 */
+		uint8_t reserved9 : 2;
+		uint8_t sink_transition_completeed : 1;
+		uint8_t plug_early_notification : 1;
+		uint8_t prochot_notification : 1;
+		uint8_t ucsi_connector_status_change_notification : 1;
+		uint8_t unable_to_source_error : 1;
+		uint8_t reserved11 : 1;
+
+		/* Bits 48 - 55 */
+		uint8_t am_entry_fail : 1;
+		uint8_t am_entered : 1;
+		uint8_t reserved12 : 1;
+		uint8_t discover_mode_completed : 1;
+		uint8_t exit_mode_completed : 1;
+		uint8_t data_reset_start : 1;
+		uint8_t usb_status_update : 1;
+		uint8_t connection_manager_update : 1;
+
+		/* Bits 56 - 63 */
+		uint8_t usvid_mode_entered : 1;
+		uint8_t usvid_mode_exited : 1;
+		uint8_t usvid_attention_vdm_received : 1;
+		uint8_t usvid_other_vdm_received : 1;
+		uint8_t reserved13 : 1;
+		uint8_t externl_dcdc_event_received : 1;
+		uint8_t dp_sid_status_updated : 1;
+		uint8_t intel_vid_status_updated : 1;
+
+		/* Bits 64 - 71 */
+		uint8_t pd3_status_updated : 1;
+		uint8_t tx_memory_buffer_empty : 1;
+		uint8_t mbrd_bufer_ready : 1;
+		uint8_t reserved14 : 3;
+		uint8_t event_soc_ack_timeout : 1;
+		uint8_t not_supported_received : 1;
+
+		/* Bits 72 - 79 */
+		uint8_t reserved15 : 2;
+		uint8_t i2c_comm_error_with_external_PP : 1;
+		uint8_t externl_dcdc_status_change : 1;
+		uint8_t frs_signal_received : 1;
+		uint8_t chunk_response_received : 1;
+		uint8_t chunk_request_received : 1;
+		uint8_t alert_message_received : 1;
+
+		/* Bits 80 - 87 */
+		uint8_t patch_loaded : 1;
+		uint8_t ready_for_f211_image : 1;
+		uint8_t reserved16 : 2;
+		uint8_t boot_error : 1;
+		uint8_t ready_for_next_data_block : 1;
+		uint8_t reserved17 : 2;
+	} __packed;
+	uint8_t raw_value[11];
+};
 #endif /* __EMUL_TPS6699X_PRIVATE_H_ */

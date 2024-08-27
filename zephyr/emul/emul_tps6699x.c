@@ -16,6 +16,7 @@
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/logging/log.h>
@@ -25,6 +26,9 @@
 
 #define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
 LOG_MODULE_REGISTER(tps6699x_emul);
+
+/* TODO(b/349609367): Do not rely on this test-only driver function. */
+bool pdc_tps6699x_test_idle_wait(void);
 
 /* TODO(b/345292002): Implement this emulator to the point where
  * pdc.generic.tps6699x passes.
@@ -759,6 +763,21 @@ static int emul_tps6699x_reset(const struct emul *target)
 	return 0;
 }
 
+static int emul_tps6699x_pulse_irq(const struct emul *target)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+	union reg_interrupt *reg_interrupt =
+		(union reg_interrupt *)
+			data->reg_val[TPS6699X_REG_INTERRUPT_EVENT_FOR_I2C1];
+
+	reg_interrupt->plug_insert_or_removal = 1;
+	gpio_emul_input_set(data->irq_gpios.port, data->irq_gpios.pin, 1);
+	gpio_emul_input_set(data->irq_gpios.port, data->irq_gpios.pin, 0);
+
+	return 0;
+}
+
 static int tps6699x_emul_init(const struct emul *emul,
 			      const struct device *parent)
 {
@@ -767,7 +786,15 @@ static int tps6699x_emul_init(const struct emul *emul,
 
 static int tps6699x_emul_idle_wait(const struct emul *emul)
 {
-	return 0;
+	/* TODO(b/349609367): This should be handled entirely in the emulator,
+	 * not in the driver, and it should be specific to the passed-in target.
+	 */
+
+	ARG_UNUSED(emul);
+
+	if (pdc_tps6699x_test_idle_wait())
+		return 0;
+	return -ETIMEDOUT;
 }
 
 static struct emul_pdc_api_t emul_tps6699x_api = {
@@ -786,7 +813,7 @@ static struct emul_pdc_api_t emul_tps6699x_api = {
 	.get_supported_drp_modes = emul_tps6699x_get_supported_drp_modes,
 	.get_sink_path = emul_tps6699x_get_sink_path,
 	.get_reconnect_req = NULL,
-	.pulse_irq = NULL,
+	.pulse_irq = emul_tps6699x_pulse_irq,
 	.set_info = emul_tps6699x_set_info,
 	.set_lpm_ppm_info = NULL,
 	.set_pdos = NULL,

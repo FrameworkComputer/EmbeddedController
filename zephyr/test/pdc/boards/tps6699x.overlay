@@ -8,6 +8,8 @@
 /{
         /* Leverage 'zephyr,user' node for driver specific behavior */
         zephyr,user {
+                /* TODO(b/362781605): Improve TI driver response time */
+                test_timeout = <14000>;
                 /* TI PDC Info */
                 pd_version = <0>;
                 pd_revision = <0>;

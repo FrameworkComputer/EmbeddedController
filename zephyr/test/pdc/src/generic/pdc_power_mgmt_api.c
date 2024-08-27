@@ -20,7 +20,13 @@
 
 LOG_MODULE_REGISTER(pdc_power_mgmt_api, LOG_LEVEL_INF);
 
+#define ZEPHYR_USER_NODE DT_PATH(zephyr_user)
+
+#if DT_NODE_EXISTS(ZEPHYR_USER_NODE)
+#define PDC_TEST_TIMEOUT DT_PROP_OR(ZEPHYR_USER_NODE, test_timeout, 2000)
+#else
 #define PDC_TEST_TIMEOUT 2000
+#endif
 #define RTS5453P_NODE DT_NODELABEL(pdc_emul1)
 
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
@@ -75,9 +81,6 @@ static void pdc_power_mgmt_after(void *fixture)
 ZTEST_SUITE(pdc_power_mgmt_api, NULL, pdc_power_mgmt_setup,
 	    pdc_power_mgmt_before, pdc_power_mgmt_after, NULL);
 
-/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
-
 ZTEST_USER(pdc_power_mgmt_api, test_get_usb_pd_port_count)
 {
 	zassert_equal(CONFIG_USB_PD_PORT_MAX_COUNT,
@@ -109,6 +112,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_is_connected)
 		TEST_WAIT_FOR(pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
 }
 
+/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
+#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_power_mgmt_api, test_comm_is_enabled)
 {
 	union connector_status_t connector_status;
