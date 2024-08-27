@@ -1464,6 +1464,33 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_connector_status)
 				   PDC_TEST_TIMEOUT));
 }
 
+ZTEST_USER(pdc_power_mgmt_api, test_new_pd_sink_contract)
+{
+	union connector_status_t in = { 0 };
+	union conn_status_change_bits_t in_conn_status_change_bits;
+	bool sink_path_en;
+
+	/* Connect a sourcing port partner */
+	emul_pdc_configure_snk(emul, &in);
+	emul_pdc_connect_partner(emul, &in);
+
+	/* Ensure we are connected */
+	pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT);
+
+	/* Simulate the port partner changing its PDOs. The sink path is
+	 * disabled during this step */
+	in_conn_status_change_bits.supported_provider_caps = 1;
+	in.raw_conn_status_change_bits = in_conn_status_change_bits.raw_value;
+	emul_pdc_connect_partner(emul, &in);
+
+	/* Pause to allow pdc_power_mgmt to process interrupt and re-settle */
+	pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT);
+
+	/* Check that the sink path is on again */
+	zassert_ok(emul_pdc_get_sink_path(emul, &sink_path_en));
+	zassert_true(sink_path_en);
+}
+
 ZTEST_USER(pdc_power_mgmt_api, test_get_cable_prop)
 {
 	union cable_property_t in, out, exp;
