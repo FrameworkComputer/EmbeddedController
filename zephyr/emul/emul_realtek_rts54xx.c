@@ -1124,8 +1124,17 @@ static int emul_realtek_rts54xx_set_connector_status(
 {
 	struct rts5453p_emul_pdc_data *data =
 		rts5453p_emul_get_pdc_data(target);
+	union conn_status_change_bits_t change_bits;
 
 	data->connector_status = *connector_status;
+
+	change_bits.raw_value = connector_status->raw_conn_status_change_bits;
+
+	if (change_bits.supported_provider_caps) {
+		/* Turn off the sink path */
+		data->set_power_switch_data.vbsin_en_control = 0;
+		data->set_power_switch_data.vbsin_en = 0;
+	}
 
 	return 0;
 }
