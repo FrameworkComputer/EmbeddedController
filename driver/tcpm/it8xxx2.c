@@ -494,7 +494,7 @@ static int it8xxx2_tcpm_set_vconn(int port, int enable)
 			 * dropped below 3.3v (>500us) to avoid the potential
 			 * risk of voltage fed back into Vcore.
 			 */
-			crec_usleep(IT83XX_USBPD_T_VCONN_BELOW_3_3V);
+			udelay(IT83XX_USBPD_T_VCONN_BELOW_3_3V);
 			/*
 			 * Since our cc are not Vconn SRC, enable cc analog
 			 * module (ex.UP/RD/DET/Tx/Rx) and disable 5v tolerant.
@@ -669,6 +669,7 @@ static int it8xxx2_tcpm_transmit(int port, enum tcpci_msg_type type,
 				 uint16_t header, const uint32_t *data)
 {
 	int status = TCPC_TX_COMPLETE_FAILED;
+	bool pd_transmit_complete_called = false;
 
 	switch (type) {
 	case TCPCI_MSG_SOP:
@@ -677,6 +678,12 @@ static int it8xxx2_tcpm_transmit(int port, enum tcpci_msg_type type,
 	case TCPCI_MSG_SOP_DEBUG_PRIME:
 	case TCPCI_MSG_SOP_DEBUG_PRIME_PRIME:
 		status = it8xxx2_tx_data(port, type, header, data);
+		/* To improve the SendResponseTimer accuracy,
+		 * pd_transmit_complete() is call inside irq handler if the
+		 * message is successfully transmitted.
+		 */
+		pd_transmit_complete_called =
+			(status == TCPC_TX_COMPLETE_SUCCESS);
 		break;
 	case TCPCI_MSG_TX_BIST_MODE_2:
 		it8xxx2_send_bist_mode2_pattern(port);
@@ -692,7 +699,9 @@ static int it8xxx2_tcpm_transmit(int port, enum tcpci_msg_type type,
 		status = TCPC_TX_COMPLETE_FAILED;
 		break;
 	}
-	pd_transmit_complete(port, status);
+	if (!pd_transmit_complete_called) {
+		pd_transmit_complete(port, status);
+	}
 
 	return EC_SUCCESS;
 }
