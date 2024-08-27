@@ -1,0 +1,83 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_ac_present: ac_present {
+			irq-pin = <&gpio_hw_acav_in>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
+		int_powerbtn: powerbtn {
+			irq-pin = <&gpio_on_off_btn_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "board_power_button_interrupt";
+		};
+		int_slp_s3: slp_s3 {
+			irq-pin = <&gpio_slp_s3_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_slp_s4: slp_s4 {
+			irq-pin = <&gpio_slp_s4_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_3valw_pg: 3valw_pg {
+			irq-pin = <&gpio_spok>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_vr_pg: vr_pg {
+			irq-pin = <&gpio_vr_pwrgd>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_run_pwr_ok: run_pwr_ok {
+			irq-pin = <&gpio_runpwrok>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_pd_chip0_interrupt: pd_chip0_interrupt {
+			irq-pin = <&gpio_pd_chip0_interrupt>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "pd0_chip_interrupt";
+		};
+		int_pd_chip1_interrupt: pd_chip1_interrupt {
+			irq-pin = <&gpio_pd_chip1_interrupt>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "pd1_chip_interrupt";
+		};
+		int_lid_open: lid_open {
+			irq-pin = <&gpio_lid_sw_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+		int_chassis_open: chassis_open {
+			irq-pin = <&gpio_chassis_open_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "chassis_interrupt_handler";
+		};
+		int_soc_enkbl: soc_enbkl {
+			irq-pin = <&gpio_soc_enbkl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "soc_signal_interrupt";
+		};
+		int_soc_tp: soc_tp {
+			irq-pin = <&gpio_soc_tp_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "touchpad_interrupt";
+		};
+		/*disable interrupt because no module to verify*/
+		/*int_ioex_kbd_intr_n: ioex_kbd_intr_n {
+		 *	irq-pin = <&gpio_ec_mcu_int_l>;
+		 *	flags = <GPIO_INT_EDGE_FALLING>;
+		 *	handler = "io_expander_it8801_interrupt";
+		 *};
+		 */
+	};
+};

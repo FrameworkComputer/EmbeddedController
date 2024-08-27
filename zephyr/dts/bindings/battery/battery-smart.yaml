@@ -147,6 +147,7 @@ properties:
       - "sunwoda,l24d3pg1"
       - "sunwoda,l24d3pg2"
       - "sunwoda,ctgkt"
+      - "atc,framework50w"
       - "atl,framework55w"
       - "atl,framework61w"
       - "atl,framework85w"

@@ -32,6 +32,12 @@ config BOARD_SAKURA
 	  Build Framework Sakura reference board. Sakura has Intel SoC
 	  with NPCX993FA0BX EC
 
+config BOARD_SUNFLOWER
+	bool "Framework Sunflower Board"
+	help
+	  Build Framework Sunflower board. Sunflower has Intel SoC
+	  with NPCX993FA0BX EC.
+
 choice PLATFORM_EC_FRAMEWORK_FAMILY
 	prompt "Select the family design in the makefile"
 
