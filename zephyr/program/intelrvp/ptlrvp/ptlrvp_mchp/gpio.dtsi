@@ -69,11 +69,11 @@
 		kbd-bklt-ctrl {
 			gpios = <MCHP_GPIO_DECODE_153 GPIO_INPUT>;
 		};
-		ec-pm-bat-status-led2 {
-			gpios = <MCHP_GPIO_DECODE_157 GPIO_OUTPUT_HIGH>;
+		pm_bat_status_led2: ec-pm-bat-status-led2 {
+			gpios = <MCHP_GPIO_DECODE_157 GPIO_OUTPUT_LOW>;
 		};
-		ec-pm-bat-status-led1 {
-			gpios = <MCHP_GPIO_DECODE_156 GPIO_OUTPUT_HIGH>;
+		pm_bat_status_led1: ec-pm-bat-status-led1 {
+			gpios = <MCHP_GPIO_DECODE_156 GPIO_OUTPUT_LOW>;
 		};
 		/**
 		NOTE: Used for adc07, do not define.

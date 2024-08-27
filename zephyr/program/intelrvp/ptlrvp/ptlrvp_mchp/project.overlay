@@ -21,3 +21,5 @@
 #include "../power_signals.dtsi"
 #include "../temp_sensor.dts"
 #include "../usbc.dtsi"
+#include "../led_pins.dtsi"
+#include "../led_policy.dtsi"
