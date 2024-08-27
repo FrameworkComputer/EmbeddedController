@@ -8759,20 +8759,35 @@ static int cmd_battery_config_set(int argc, char *argv[], bool search_only)
 	/* Clear the dst to ensure it'll be null-terminated. */
 	memset(identifier, 0, sizeof(identifier));
 	sprintf(identifier, "%s,%s", manuf_name, device_name);
-	base::Value::Dict *root_dict = dict->FindDict(identifier);
-	if (root_dict == nullptr) {
-		fprintf(stderr,
-			"Config matching identifier=%s not found in %s.\n",
-			identifier, json_file);
+	base::Value::Dict *root_dict = nullptr;
+	int num_matches = 0;
+
+	for (const auto &identifier_in_json : *dict) {
+		if (!strncasecmp(identifier, identifier_in_json.first.c_str(),
+				 identifier_in_json.first.size())) {
+			root_dict = identifier_in_json.second.GetIfDict();
+			++num_matches;
+		}
+	}
+
+	if (num_matches == 0) {
+		fprintf(stderr, "No config found for '%s' in %s\n", identifier,
+			json_file);
+		free(json);
+		return -1;
+	} else if (num_matches > 1) {
+		fprintf(stderr, "Multiple (%d) configs found for '%s' in %s\n",
+			num_matches, identifier, json_file);
 		free(json);
 		return -1;
 	}
+
 	if (read_u8_from_json(root_dict, "struct_version", &struct_version))
 		return -1;
 
 	if (search_only) {
-		printf("Battery config with identifier: %s,%s is found at %s\n",
-		       manuf_name, device_name, json_file);
+		printf("Battery config with identifier: '%s' is found at %s\n",
+		       identifier, json_file);
 		return 0;
 	}
 
