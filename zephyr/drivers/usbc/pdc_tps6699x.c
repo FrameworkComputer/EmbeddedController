@@ -1093,11 +1093,11 @@ static int cmd_get_ic_status_sync_internal(struct pdc_config_t const *cfg,
 	/* TI PD Version (big-endian) */
 	info->pd_version = 0x0000;
 
+	memset(info->project_name, 0, sizeof(info->project_name));
 	if (memcmp(customer_val.data, "GOOG", strlen("GOOG")) == 0) {
 		/* Using the unified config identifier scheme */
 		memcpy(info->project_name, customer_val.data,
 		       sizeof(customer_val.data));
-		info->project_name[sizeof(customer_val.data)] = '\0';
 	} else {
 		/* Old scheme of incrementing an integer in the customer use
 		 * reg. Convert to an ASCII string.

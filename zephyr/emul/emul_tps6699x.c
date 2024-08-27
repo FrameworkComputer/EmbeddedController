@@ -741,6 +741,8 @@ static int emul_tps6699x_reset(const struct emul *target)
 	struct tps6699x_emul_pdc_data *data =
 		tps6699x_emul_get_pdc_data(target);
 
+	memset(data->reg_val, 0, sizeof(data->reg_val));
+
 	/* Reset PDOs. */
 	memset(data->src_pdos, 0x0, sizeof(data->src_pdos));
 	memset(data->snk_pdos, 0x0, sizeof(data->snk_pdos));

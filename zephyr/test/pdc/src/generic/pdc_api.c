@@ -62,17 +62,12 @@ ZTEST_USER(pdc_api, test_get_ucsi_version)
 	zassert_equal(version, UCSI_VERSION);
 }
 
-/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
-
 ZTEST_USER(pdc_api, test_reset)
 {
 	zassert_ok(pdc_reset(dev), "Failed to reset PDC");
 
 	k_sleep(K_MSEC(500));
 }
-
-#endif /* CONFIG_TODO_B_345292002 */
 
 ZTEST_USER(pdc_api, test_connector_reset)
 {
@@ -555,8 +550,6 @@ ZTEST_USER(pdc_api, test_get_cable_property)
 			  sizeof(union cable_property_t)));
 }
 
-/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
 static void test_cc_cb(const struct device *dev,
 		       const struct pdc_callback *callback,
 		       union cci_event_t cci_event)
@@ -654,8 +647,10 @@ ZTEST_USER(pdc_api_suspended, test_get_lpm_ppm_info)
 {
 	struct lpm_ppm_info_t out;
 
+	if (pdc_get_lpm_ppm_info(dev, NULL) == -ENOSYS) {
+		ztest_test_skip();
+	}
+
 	/* Read should return busy because comms are blocked */
 	zassert_equal(-EBUSY, pdc_get_lpm_ppm_info(dev, &out));
 }
-
-#endif /* CONFIG_TODO_B_345292002 */
