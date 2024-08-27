@@ -1118,6 +1118,22 @@ static bool handle_connector_status(struct pdc_port_t *port)
 				atomic_set_bit(port->cci_flags, CCI_ATTENTION);
 			}
 
+			if (conn_status_change_bits.battery_charging_status &&
+			    status->sink_path_status == 0 &&
+			    port->attached_state == SNK_ATTACHED_STATE &&
+			    port->snk_attached_local_state >
+				    SNK_ATTACHED_GET_PDOS) {
+				/* Source caps have changed. Set the sink-
+				 * attached state machine back to the get PDO
+				 * substate. This will cause PDOs to be re-
+				 * evaluated and the sink path to get enabled
+				 * again. */
+				atomic_set_bit(port->snk_policy.flags,
+					       SNK_POLICY_NEW_POWER_REQUEST);
+				LOG_INF("C%d: Sink path disconnected",
+					port_number);
+			}
+
 			if (status->power_direction) {
 				/* Port partner is a sink device
 				 */
@@ -1756,6 +1772,8 @@ static void pdc_snk_attached_run(void *obj)
 		 * of PDOs to return starting from the PDO Offset. The number of
 		 * PDOs to return is the value in this field plus 1.
 		 */
+		atomic_clear_bit(port->snk_policy.flags,
+				 SNK_POLICY_NEW_POWER_REQUEST);
 		if (!port->get_pdo.updating) {
 			port->get_pdo.num_pdos = PDO_NUM;
 			port->get_pdo.pdo_offset = PDO_OFFSET_0;
