@@ -9,3 +9,7 @@ target_sources_ifdef(CONFIG_TEST_BOARD_JUBILANT_KEYBOARD app PRIVATE src/keyboar
 target_sources_ifdef(CONFIG_TEST_BOARD_JUBILANT_KEYBOARD app PRIVATE
 	${PLATFORM_EC_PROGRAM_DIR}/brox/jubilant/src/keyboard.c
 	${PLATFORM_EC_PROGRAM_DIR}/brox/jubilant/src/keyboard_customization.c)
+
+target_sources_ifdef(CONFIG_TEST_BOARD_JUBILANT_FAN app PRIVATE src/fan.c)
+target_sources_ifdef(CONFIG_TEST_BOARD_JUBILANT_FAN app PRIVATE
+	${PLATFORM_EC_PROGRAM_DIR}/brox/jubilant/src/thermal.c)

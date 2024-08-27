@@ -62,7 +62,17 @@ tests:
     - CONFIG_LOG=y
     - CONFIG_LOG_MODE_MINIMAL=y
     extra_dtc_overlay_files:
-    - boards/jubilant.overlay
+    - boards/jubilant/keyboard.dtsi
+
+  brox.jubilant.fan:
+    extra_configs:
+    - CONFIG_TEST_BOARD_JUBILANT=y
+    - CONFIG_TEST_BOARD_JUBILANT_FAN=y
+    - CONFIG_PLATFORM_EC_CUSTOM_FAN_CONTROL=y
+    - CONFIG_POSIX_ARCH_CONSOLE_INIT_PRIORITY=98
+    - CONFIG_PLATFORM_EC_CONSOLE_INIT_PRIORITY=99
+    extra_dtc_overlay_files:
+    - boards/jubilant/fan.dtsi
 
   brox.lotso.sensor:
     extra_configs:

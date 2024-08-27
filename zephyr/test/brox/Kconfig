@@ -63,7 +63,18 @@ config TEST_BOARD_GREENBAYUPOC_KEYBOARD
 config TEST_BOARD_JUBILANT_KEYBOARD
 	bool "Enable jubilant keyboard tests"
 
+config TEST_BOARD_JUBILANT_FAN
+	select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	bool "Enable jubilant fan tests"
+
 config TEST_BOARD_LOTSO_SENSOR
 	bool "Enable lotso sensor tests"
+
+config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	bool "Disable chipset_in_state inline method"
+	help
+	  This is used to not define chipset_in_state method as inline
+	  function.
+
 
 source "Kconfig.zephyr"

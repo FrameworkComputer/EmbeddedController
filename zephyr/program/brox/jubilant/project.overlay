@@ -16,7 +16,7 @@
 
 #include "../binman.dtsi"
 #include "../brox.dtsi"
-#include "../fan.dtsi"
+
 #include "gpio.dtsi"
 #include "../i2c.dtsi"
 #include "../interrupts.dtsi"
@@ -29,6 +29,7 @@
 
 /* Jubilant project DTS includes */
 #include "cbi.dtsi"
+#include "fan.dtsi"
 #include "keyboard.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"

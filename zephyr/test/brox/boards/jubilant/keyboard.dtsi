@@ -3,11 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <dt-bindings/pwm/pwm.h>
 #include <cros/vivaldi_kbd_default.dtsi>
 #include <dt-bindings/kbd.h>
 
-#include "baseboard/baseboard.overlay"
+#include "../baseboard/baseboard.overlay"
 #include "../program/brox/jubilant/cbi.dtsi"
 
 / {
