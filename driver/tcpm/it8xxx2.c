@@ -15,6 +15,7 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
+#include "tcpm/tcpm.h"
 #include "timer.h"
 #include "usb_common.h"
 #include "usb_pd.h"
@@ -562,6 +563,19 @@ static enum tcpc_transmit_complete it8xxx2_tx_data(enum usbpd_port port,
 		memcpy((uint32_t *)&IT83XX_USBPD_TDO(port), buf, length * 4);
 
 	for (r = 0; r <= retry_count; r++) {
+		/*
+		 * The PRL_RX state machine should force a discard of PRL_TX any
+		 * time a new message comes in.  However, since most of the
+		 * PRL_RX runs on the TCPC, we may receive a RX interrupt
+		 * between the EC PRL_RX and PRL_TX state machines running.  In
+		 * this case, mark the message discarded and don't tell the TCPC
+		 * to transmit.
+		 */
+		if (tcpm_has_pending_message(port)) {
+			restore_sop_header_pwr_data_role(port, type);
+			return TCPC_TX_COMPLETE_DISCARDED;
+		}
+
 		/* Start Tx */
 		USBPD_KICK_TX_START(port);
 		evt = task_wait_event_mask(TASK_EVENT_PHY_TX_DONE,
