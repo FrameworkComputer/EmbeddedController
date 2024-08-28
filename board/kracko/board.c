@@ -14,6 +14,7 @@
 #include "charger.h"
 #include "cros_board_info.h"
 #include "driver/accel_bma2x2.h"
+#include "driver/accel_bma422.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/pi3usb9201.h"
@@ -282,6 +283,7 @@ static struct mutex g_base_mutex;
 
 /* Sensor Data */
 static struct accelgyro_saved_data_t g_bma253_data;
+static struct accelgyro_saved_data_t g_bma422_data;
 static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 static struct kionix_accel_data g_kx022_data;
 
@@ -294,11 +296,42 @@ static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
 					     { 0, FLOAT_TO_FP(-1), 0 },
 					     { 0, 0, FLOAT_TO_FP(-1) } };
 
+static const mat33_fp_t lid_bma422_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					   { 0, FLOAT_TO_FP(1), 0 },
+					   { 0, 0, FLOAT_TO_FP(-1) } };
+
 static const mat33_fp_t lid_kx022_ref = { { FLOAT_TO_FP(-1), 0, 0 },
 					  { 0, FLOAT_TO_FP(1), 0 },
 					  { 0, 0, FLOAT_TO_FP(-1) } };
 
 /* Drivers */
+struct motion_sensor_t bma422_lid_accel = {
+	.name = "Lid Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_BMA422,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &bma4_accel_drv,
+	.mutex = &g_lid_mutex,
+	.drv_data = &g_bma422_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = BMA4_I2C_ADDR_SECONDARY,
+	.rot_standard_ref = &lid_bma422_ref,
+	.default_range = 2,
+	.min_frequency = BMA4_ACCEL_MIN_FREQ,
+	.max_frequency = BMA4_ACCEL_MAX_FREQ,
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+		},
+		/* Sensor on in S3 */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+		},
+	},
+};
+
 struct motion_sensor_t kx022_lid_accel = {
 	.name = "Lid Accel",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
@@ -436,6 +469,9 @@ void board_init(void)
 		if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_KX022) {
 			motion_sensors[LID_ACCEL] = kx022_lid_accel;
 			ccprints("LID ACCEL is KX022");
+		} else if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_BMA422) {
+			motion_sensors[LID_ACCEL] = bma422_lid_accel;
+			ccprints("LID ACCEL is BMA422");
 		} else
 			ccprints("LID ACCEL is BMA253");
 		/* Enable Base Accel interrupt */
