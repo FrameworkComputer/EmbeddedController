@@ -10,7 +10,4 @@
 
 extern const struct ec_response_keybd_config pujjo_kb;
 
-void fan_init(void);
-void form_factor_init(void);
-
 #endif /* ZEPHYR_TEST_NISSA_INCLUDE_PUJJO_H_ */

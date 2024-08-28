@@ -109,7 +109,6 @@ if(CONFIG_TEST_NISSA_PUJJO)
     target_sources(
             app PRIVATE
             src/pujjo.c
-            ${PLATFORM_EC_PROGRAM_DIR}/nissa/pujjo/src/fan.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/pujjo/src/form_factor.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/pujjo/src/hdmi.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/pujjo/src/led.c
