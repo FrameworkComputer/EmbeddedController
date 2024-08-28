@@ -601,7 +601,9 @@ DISAMBIGUATION_DICTIONARY = {
     "realtek,rts54": [
         CompatibleInfo(
             "realtek,rts5453p",
-            None,
+            {
+                "reg": "0x3A",  # chip has variable return information.
+            },
             None,
             None,
             None,
