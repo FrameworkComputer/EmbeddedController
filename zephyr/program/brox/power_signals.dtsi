@@ -145,6 +145,7 @@
 		dbg-label = "Combined all power good";
 		enum-name = "PWR_ALL_SYS_PWRGD";
 		gpios = <&gpiob 3 0>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
 
 	ap-power {
