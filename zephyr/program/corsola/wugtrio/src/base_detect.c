@@ -25,8 +25,8 @@ K_MUTEX_DEFINE(modify_base_detection_mutex);
 #define BASE_DETECT_EN_DEBOUNCE_US (300 * MSEC)
 #define BASE_DETECT_DIS_DEBOUNCE_US (0 * MSEC)
 
-#define ATTACH_MAX_THRESHOLD_MV 300
-#define ATTACH_MIN_THRESHOLD_MV 100
+#define ATTACH_MAX_THRESHOLD_MV 500
+#define ATTACH_MIN_THRESHOLD_MV 40
 
 static bool attached;
 
