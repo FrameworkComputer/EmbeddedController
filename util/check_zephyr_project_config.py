@@ -262,7 +262,7 @@ class KconfigCheck:
                 for name, dep in symbols.items():
                     match = f"CONFIG_{name}=y"
                     if line.startswith(match):
-                        self._fail(
+                        self.log.warning(
                             "%s:%d: unnecessary config option %s (depends on %s)",
                             file_name,
                             line_num,

@@ -207,10 +207,8 @@ class TestKconfigCheck(unittest.TestCase):
     @mock.patch("check_zephyr_project_config._default_y")
     @mock.patch("kconfiglib.expr_str")
     @mock.patch("check_zephyr_project_config.KconfigCheck._kconf_from_path")
-    @mock.patch("check_zephyr_project_config.KconfigCheck._fail")
     def test_check_dt_has(
         self,
-        fail_mock,
         kconf_from_path_mock,
         expr_str_mock,
         def_y_mock,
@@ -268,27 +266,27 @@ CONFIG_DT_BUT_DEFAULT_N=y
 CONFIG_DT_BUT_EMUL=y
 """
         with mock.patch("builtins.open", mock.mock_open(read_data=data)):
-            self.kcheck._check_dt_has("the_file")
-
-        self.assertListEqual(
-            fail_mock.call_args_list,
-            [
-                mock.call(
-                    mock.ANY,
-                    "the_file",
-                    6,
-                    "CONFIG_DT=y",
-                    fake_symbol_dt.direct_dep,
-                ),
-                mock.call(
-                    mock.ANY,
-                    "the_file",
-                    7,
-                    "CONFIG_DT=y",
-                    fake_symbol_dt.direct_dep,
-                ),
-            ],
-        )
+            with mock.patch.object(self.kcheck, "log") as log_mock:
+                self.kcheck._check_dt_has("the_file")
+                self.assertEqual(log_mock.warning.call_count, 2)
+                log_mock.warning.assert_has_calls(
+                    [
+                        mock.call(
+                            "%s:%d: unnecessary config option %s (depends on %s)",
+                            "the_file",
+                            6,
+                            "CONFIG_DT=y",
+                            fake_symbol_dt.direct_dep,
+                        ),
+                        mock.call(
+                            "%s:%d: unnecessary config option %s (depends on %s)",
+                            "the_file",
+                            7,
+                            "CONFIG_DT=y",
+                            fake_symbol_dt.direct_dep,
+                        ),
+                    ]
+                )
 
     @mock.patch("check_zephyr_project_config.KconfigCheck._check_dt_has")
     @mock.patch("check_zephyr_project_config.KconfigCheck._filter_config_files")
