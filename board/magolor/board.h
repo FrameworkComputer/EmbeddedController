@@ -121,7 +121,6 @@
 #define I2C_PORT_USB_MUX I2C_PORT_USB_C0
 /* TODO(b:147440290): Need to handle multiple charger ICs */
 #define I2C_PORT_CHARGER I2C_PORT_USB_C0
-
 #define I2C_PORT_ACCEL I2C_PORT_SENSOR
 
 #define I2C_ADDR_EEPROM_FLAGS 0x50 /* 7b address */
@@ -130,6 +129,9 @@
 #define CONFIG_I2C_NACK_RETRY_COUNT 10
 #define CONFIG_SMBUS_PEC
 
+/* Battery */
+#undef CONFIG_BATTERY_INIT_TYPE_RETRY_COUNT
+#define CONFIG_BATTERY_INIT_TYPE_RETRY_COUNT 10
 /*
  * I2C pin names for baseboard
  *
