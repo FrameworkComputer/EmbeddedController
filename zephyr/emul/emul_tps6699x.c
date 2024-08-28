@@ -6,6 +6,7 @@
 #include "drivers/ucsi_v3.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_pdc.h"
+#include "emul/emul_pdc_pdo.h"
 #include "emul/emul_tps6699x.h"
 #include "emul_tps6699x_private.h"
 #include "usbc/utils.h"
@@ -178,42 +179,6 @@ static void tps699x_emul_set_ccom(struct tps6699x_emul_pdc_data *data,
 	}
 }
 
-static uint32_t *get_pdo_data(struct tps6699x_emul_pdc_data *data,
-			      enum pdo_source_t source,
-			      enum pdo_type_t pdo_type)
-{
-	if (!((source == LPM_PDO || source == PARTNER_PDO) &&
-	      (pdo_type == SOURCE_PDO || pdo_type == SINK_PDO))) {
-		return NULL;
-	}
-
-	if (source == LPM_PDO) {
-		return (pdo_type == SOURCE_PDO) ? data->src_pdos :
-						  data->snk_pdos;
-	} else {
-		return (pdo_type == SOURCE_PDO) ? data->partner_src_pdos :
-						  data->partner_snk_pdos;
-	}
-}
-
-static int get_pdos_direct(struct tps6699x_emul_pdc_data *data,
-			   enum pdo_type_t pdo_type,
-			   enum pdo_offset_t pdo_offset, uint8_t num_pdos,
-			   enum pdo_source_t source, uint32_t *pdos)
-{
-	const uint32_t *target_pdos = get_pdo_data(data, source, pdo_type);
-
-	if (pdo_offset + num_pdos > PDO_OFFSET_MAX) {
-		LOG_ERR("GET PDO offset overflow at %d, num pdos: %d",
-			pdo_offset, num_pdos);
-		return -EINVAL;
-	}
-
-	pdo_offset = MIN(pdo_offset, PDO_OFFSET_MAX);
-	memcpy(pdos, &target_pdos[pdo_offset], num_pdos * sizeof(uint32_t));
-	return 0;
-}
-
 static void tps699x_emul_get_pdos(struct tps6699x_emul_pdc_data *data,
 				  const void *in)
 {
@@ -226,8 +191,8 @@ static void tps699x_emul_get_pdos(struct tps6699x_emul_pdc_data *data,
 	LOG_INF("GET_PDO type=%d, offset=%d, count=%d, partner_pdo=%d",
 		pdo_type, pdo_offset, pdo_count, req->partner_pdo);
 
-	get_pdos_direct(data, pdo_type, pdo_offset, pdo_count, req->partner_pdo,
-			data->response.data.pdos);
+	emul_pdc_pdo_get_direct(&data->pdo, pdo_type, pdo_offset, pdo_count,
+				req->partner_pdo, data->response.data.pdos);
 
 	data->response.data.length = pdo_count * 4;
 	data->response.result = COMMAND_RESULT_SUCCESS;
@@ -577,11 +542,16 @@ static int emul_tps6699x_set_connector_status(
 {
 	struct tps6699x_emul_pdc_data *data =
 		tps6699x_emul_get_pdc_data(target);
+	union reg_interrupt *reg_interrupt =
+		(union reg_interrupt *)
+			data->reg_val[TPS6699X_REG_INTERRUPT_EVENT_FOR_I2C1];
 	union reg_adc_results *adc_results =
 		(union reg_adc_results *)data->reg_val[TPS6699X_REG_ADC_RESULTS];
 	uint16_t voltage;
 
 	data->connector_status = *connector_status;
+
+	reg_interrupt->ucsi_connector_status_change_notification = 1;
 
 	voltage = data->connector_status.voltage_reading *
 		  data->connector_status.voltage_scale * 5;
@@ -748,17 +718,7 @@ static int emul_tps6699x_reset(const struct emul *target)
 	memset(data->reg_val, 0, sizeof(data->reg_val));
 
 	/* Reset PDOs. */
-	memset(data->src_pdos, 0x0, sizeof(data->src_pdos));
-	memset(data->snk_pdos, 0x0, sizeof(data->snk_pdos));
-	memset(data->partner_src_pdos, 0x0, sizeof(data->partner_src_pdos));
-	memset(data->partner_snk_pdos, 0x0, sizeof(data->partner_snk_pdos));
-
-	data->src_pdos[0] = TPS6699X_FIXED1_SRC;
-	data->src_pdos[1] = TPS6699X_FIXED2_SRC;
-
-	data->snk_pdos[0] = TPS6699X_FIXED_SNK;
-	data->snk_pdos[1] = TPS6699X_BATT_SNK;
-	data->snk_pdos[2] = TPS6699X_VAR_SNK;
+	emul_pdc_pdo_reset(&data->pdo);
 
 	return 0;
 }
@@ -776,6 +736,30 @@ static int emul_tps6699x_pulse_irq(const struct emul *target)
 	gpio_emul_input_set(data->irq_gpios.port, data->irq_gpios.pin, 0);
 
 	return 0;
+}
+
+static int emul_tps6699x_get_pdos(const struct emul *target,
+				  enum pdo_type_t pdo_type,
+				  enum pdo_offset_t pdo_offset,
+				  uint8_t num_pdos, enum pdo_source_t source,
+				  uint32_t *pdos)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+	return emul_pdc_pdo_get_direct(&data->pdo, pdo_type, pdo_offset,
+				       num_pdos, source, pdos);
+}
+
+static int emul_tps6699x_set_pdos(const struct emul *target,
+				  enum pdo_type_t pdo_type,
+				  enum pdo_offset_t pdo_offset,
+				  uint8_t num_pdos, enum pdo_source_t source,
+				  const uint32_t *pdos)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+	return emul_pdc_pdo_set_direct(&data->pdo, pdo_type, pdo_offset,
+				       num_pdos, source, pdos);
 }
 
 static int tps6699x_emul_init(const struct emul *emul,
@@ -816,8 +800,8 @@ static struct emul_pdc_api_t emul_tps6699x_api = {
 	.pulse_irq = emul_tps6699x_pulse_irq,
 	.set_info = emul_tps6699x_set_info,
 	.set_lpm_ppm_info = NULL,
-	.set_pdos = NULL,
-	.get_pdos = NULL,
+	.set_pdos = emul_tps6699x_set_pdos,
+	.get_pdos = emul_tps6699x_get_pdos,
 	.get_cable_property = emul_tps6699x_get_cable_property,
 	.set_cable_property = emul_tps6699x_set_cable_property,
 	.idle_wait = tps6699x_emul_idle_wait,

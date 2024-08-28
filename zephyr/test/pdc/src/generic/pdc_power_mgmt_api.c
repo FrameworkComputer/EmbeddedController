@@ -456,8 +456,6 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_usb_comm_capable)
 	}
 }
 
-/* TODO(b/345292002): Implement set_pdo for TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_power_mgmt_api, test_get_partner_data_swap_capable)
 {
 	int i;
@@ -531,7 +529,6 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_data_swap_capable)
 					   PDC_TEST_TIMEOUT));
 	}
 }
-#endif
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_info)
 {
@@ -838,8 +835,6 @@ ZTEST_USER(pdc_power_mgmt_api, test_request_data_swap)
 	}
 }
 
-/* TODO(b/345292002): Implement set_pdo for TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_power_mgmt_api, test_get_partner_unconstr_power)
 {
 	union connector_status_t connector_status;
@@ -893,6 +888,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_unconstr_power)
 				   PDC_TEST_TIMEOUT));
 }
 
+/* TODO(b/345292002): Implement set_pdo for TPS6699x emulator/driver. */
+#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_power_mgmt_api, test_get_vbus_voltage)
 {
 /* Keep in line with |pdc_power_mgmt_api.c|. */
@@ -1201,8 +1198,6 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume_no_partner)
 	zassert_equal(CCOM_DRP, ccom);
 }
 
-/* TODO(b/345292002): Implement set_pdo for TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume_drp_partner)
 {
 	union connector_status_t connector_status;
@@ -1251,7 +1246,6 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume_up_drp_partner)
 	zassert_ok(emul_pdc_get_pdr(emul, &pdr), "Invalid PDR value in emul");
 	zassert_equal(pdr.swap_to_src, 0);
 }
-#endif
 
 ZTEST_USER(pdc_power_mgmt_api, test_chipset_startup)
 {

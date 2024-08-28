@@ -7,27 +7,12 @@
 #define __EMUL_TPS6699X_H_
 
 #include "drivers/ucsi_v3.h"
+#include "emul/emul_pdc_pdo.h"
 #include "include/usb_pd.h"
 
 #include <stdint.h>
 
 #include <zephyr/drivers/gpio.h>
-
-#define TPS6699X_FIXED_PDO_COMMON_FLAGS                                       \
-	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_UNCONSTRAINED | PDO_FIXED_COMM_CAP | \
-	 PDO_FIXED_DATA_SWAP)
-
-#define TPS6699X_FIXED_SRC_FLAGS                               \
-	(TPS6699X_FIXED_PDO_COMMON_FLAGS | PDO_FIXED_SUSPEND | \
-	 PDO_FIXED_PEAK_CURR(PDO_PEAK_OVERCURR_110))
-#define TPS6699X_FIXED_SNK_FLAGS (TPS6699X_FIXED_PDO_COMMON_FLAGS)
-
-#define TPS6699X_FIXED1_SRC PDO_FIXED(12000, 5000, TPS6699X_FIXED_SRC_FLAGS)
-#define TPS6699X_FIXED2_SRC PDO_FIXED(20000, 3000, TPS6699X_FIXED_SRC_FLAGS)
-
-#define TPS6699X_FIXED_SNK PDO_FIXED(5000, 3000, TPS6699X_FIXED_SNK_FLAGS)
-#define TPS6699X_BATT_SNK PDO_BATT(5000, 20000, 45000)
-#define TPS6699X_VAR_SNK PDO_VAR(5000, 20000, 3000)
 
 #define TPS6699X_MAX_REG 0xa4
 #define TPS6699X_REG_SIZE 64
@@ -103,10 +88,7 @@ struct tps6699x_emul_pdc_data {
 
 	struct tps6699x_response response;
 
-	uint32_t snk_pdos[PDO_OFFSET_MAX];
-	uint32_t src_pdos[PDO_OFFSET_MAX];
-	uint32_t partner_snk_pdos[PDO_OFFSET_MAX];
-	uint32_t partner_src_pdos[PDO_OFFSET_MAX];
+	struct emul_pdc_pdo_t pdo;
 };
 
 #endif /* __EMUL_TPS6699X_H_ */
