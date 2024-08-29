@@ -2130,7 +2130,7 @@ void perform_error_recovery(int controller)
 				battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
 
 				data[0] = PORT_TO_CONTROLLER_PORT(i);
-				cypd_write_reg_block(controller,
+				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
 									CCG_DPM_CMD_REG,
 									data, 2);
 			}
