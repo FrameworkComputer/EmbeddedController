@@ -7,10 +7,11 @@
 #include "console.h"
 #include "ec_app_main.h"
 #include "zephyr/kernel.h"
-#include "zephyr/sys/util_macro.h"
 
 #include <zephyr/drivers/serial/uart_emul.h>
 #include <zephyr/drivers/uart.h>
+#include <zephyr/interrupt_util.h>
+#include <zephyr/irq.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/shell/shell_backend.h>
@@ -311,6 +312,110 @@ ZTEST_F(console_output, test_shell_output)
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chan restore"));
 	k_sleep(K_MSEC(1));
+}
+
+#define TEST_IRQ_LINE_1 27
+#define TEST_IRQ_LINE_2 28
+#define TEST_IRQ_LINE_3 29
+
+#define TEST_IRQ_PRIO 2
+
+enum output_type {
+	OUTPUT_CPUTS,
+	OUTPUT_CPRINTS,
+	OUTPUT_CPRINTF,
+};
+
+static const char *isr_cputs = "cputs from ISR";
+static const char *isr_cprints = "cprints from ISR";
+static const char *isr_cprintf = "cprintf from ISR";
+
+static bool cputs_isr_called;
+static bool cprints_isr_called;
+static bool cprintf_isr_called;
+
+void test_isr(const void *param)
+{
+	enum output_type type = (enum output_type)param;
+
+	switch (type) {
+	case OUTPUT_CPUTS:
+		cputs_isr_called = true;
+		cputs(CC_SYSTEM, isr_cputs);
+		break;
+	case OUTPUT_CPRINTS:
+		cprints_isr_called = true;
+		cprints(CC_SYSTEM, "%s", isr_cprints);
+		break;
+	case OUTPUT_CPRINTF:
+		cprintf_isr_called = true;
+		cprintf(CC_SYSTEM, "%s", isr_cprintf);
+		break;
+	}
+}
+
+ZTEST_F(console_output, test_isr_output)
+{
+	uint8_t tx_content[SAMPLE_DATA_SIZE];
+	uint32_t tx_bytes;
+
+	IRQ_CONNECT(TEST_IRQ_LINE_1, TEST_IRQ_PRIO, test_isr,
+		    (void *)OUTPUT_CPUTS, 0);
+	IRQ_CONNECT(TEST_IRQ_LINE_2, TEST_IRQ_PRIO, test_isr,
+		    (void *)OUTPUT_CPRINTS, 0);
+	IRQ_CONNECT(TEST_IRQ_LINE_3, TEST_IRQ_PRIO, test_isr,
+		    (void *)OUTPUT_CPRINTF, 0);
+
+	irq_enable(TEST_IRQ_LINE_1);
+	irq_enable(TEST_IRQ_LINE_2);
+	irq_enable(TEST_IRQ_LINE_3);
+
+	SHELL_SLEEP();
+	uart_emul_flush_tx_data(fixture->dev);
+
+	trigger_irq(TEST_IRQ_LINE_1);
+	zassert_true(cputs_isr_called);
+	SHELL_SLEEP();
+
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_ISR_CONSOLE_OUTPUT)) {
+		zassert_true(tx_bytes >= strlen(isr_cputs));
+		zassert_not_null(strstr((char *)tx_content, isr_cputs));
+	} else {
+		zassert_true(tx_bytes == 0);
+	}
+
+	uart_emul_flush_tx_data(fixture->dev);
+	trigger_irq(TEST_IRQ_LINE_2);
+	zassert_true(cprints_isr_called);
+	SHELL_SLEEP();
+
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_ISR_CONSOLE_OUTPUT)) {
+		zassert_true(tx_bytes >= strlen(isr_cprints));
+		zassert_not_null(strstr((char *)tx_content, isr_cprints));
+	} else {
+		zassert_true(tx_bytes == 0);
+	}
+
+	uart_emul_flush_tx_data(fixture->dev);
+	trigger_irq(TEST_IRQ_LINE_3);
+	zassert_true(cprintf_isr_called);
+	SHELL_SLEEP();
+
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_ISR_CONSOLE_OUTPUT)) {
+		zassert_true(tx_bytes >= strlen(isr_cprintf));
+		zassert_not_null(strstr((char *)tx_content, isr_cprintf));
+	} else {
+		zassert_true(tx_bytes == 0);
+	}
 }
 
 void test_main(void)
