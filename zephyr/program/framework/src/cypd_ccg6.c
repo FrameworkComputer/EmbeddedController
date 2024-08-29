@@ -307,48 +307,6 @@ int board_set_active_charge_port(int charge_port)
 }
 #endif /* CONFIG_PD_COMMON_VBUS_CONTROL */
 
-#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
-/*****************************************************************
- * Error Recovery Functions
- ****************************************************************/
-
-static void perform_error_recovery(int controller)
-{
-	int i;
-	uint8_t data[2] = {0x00, CCG_PD_USER_CMD_TYPEC_ERR_RECOVERY};
-	uint32_t batt_os_percentage = get_system_percentage();
-
-	if (controller < 2)
-		for (i = 0; i < 2; i++) {
-			if (!((controller*2 + i) == get_active_charge_pd_port() &&
-				battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
-
-				data[0] = PORT_TO_CONTROLLER_PORT(i);
-				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
-									CCG_DPM_CMD_REG,
-									data, 2);
-			}
-		}
-	else {
-		/* Hard reset all ports that are not supplying power in dead battery mode */
-		for (i = 0; i < PD_PORT_COUNT; i++) {
-			if (!(i == get_active_charge_pd_port() &&
-			    battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
-
-				if ((pd_port_states[i].c_state == CCG_STATUS_SOURCE) &&
-				   (batt_os_percentage < 3) && (i == get_active_charge_pd_port()))
-					continue;
-
-				data[0] = PORT_TO_CONTROLLER_PORT(i);
-				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
-									CCG_DPM_CMD_REG,
-									data, 2);
-			}
-		}
-	}
-}
-#endif /* CONFIG_PD_CCG6_ERROR_RECOVERY */
-
 void update_system_power_state(int controller)
 {
 	enum power_state ps = power_get_state();
@@ -380,11 +338,9 @@ void update_system_power_state(int controller)
 	case POWER_S0ixS0: /* S0ix -> S0 */
 		if (pre_state != CCG_POWERSTATE_S0) {
 			cypd_set_power_state(CCG_POWERSTATE_S0, controller);
-#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
 			/* only execute the error recovery when the system power on */
 			if (pre_state != CCG_POWERSTATE_S0ix)
 				perform_error_recovery(controller);
-#endif
 		}
 		pre_state = CCG_POWERSTATE_S0;
 		break;

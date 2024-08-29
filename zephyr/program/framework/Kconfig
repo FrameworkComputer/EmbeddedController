@@ -64,14 +64,6 @@ config PD_CHIP_CCG6
 	  Framework project which uses the CCG6 PD chips.
 	  Enable CCG6 PD feature.
 
-config PD_CCG6_ERROR_RECOVERY
-	bool "Enable CCG6 customize error recovery"
-	default n
-	depends on PD_CHIP_CCG6
-	help
-		Enable Cypress CCG6 special error recovery, when bootup to S0
-		will execute reconnect port.
-
 config PD_CCG6_EC_UART_DEBUG_PORT
 	int "EC uart debug port"
 	default 0
