@@ -1991,6 +1991,42 @@ int get_pd_alt_mode_status(int port)
 	return alt_mode_status;
 }
 
+void perform_error_recovery(int controller)
+{
+	int i;
+	uint8_t data[2] = {0x00, CCG_PD_USER_CMD_TYPEC_ERR_RECOVERY};
+	uint32_t batt_os_percentage = get_system_percentage();
+
+	if (controller < 2)
+		for (i = 0; i < 2; i++) {
+			if (!((controller*2 + i) == get_active_charge_pd_port() &&
+				battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
+
+				data[0] = PORT_TO_CONTROLLER_PORT(i);
+				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
+									CCG_DPM_CMD_REG,
+									data, 2);
+			}
+		}
+	else {
+		/* Hard reset all ports that are not supplying power in dead battery mode */
+		for (i = 0; i < PD_PORT_COUNT; i++) {
+			if (!(i == get_active_charge_pd_port() &&
+			    battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
+
+				if ((pd_port_states[i].c_state == CCG_STATUS_SOURCE) &&
+				   (batt_os_percentage < 3) && (i == get_active_charge_pd_port()))
+					continue;
+
+				data[0] = PORT_TO_CONTROLLER_PORT(i);
+				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
+									CCG_DPM_CMD_REG,
+									data, 2);
+			}
+		}
+	}
+}
+
 /*****************************************************************************/
 /* Host command */
 
