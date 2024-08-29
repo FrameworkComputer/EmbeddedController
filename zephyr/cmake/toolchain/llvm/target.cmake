@@ -6,6 +6,9 @@ set(COMPILER clang)
 set(LINKER lld)
 set(BINTOOLS llvm)
 
+# Look for toolchain binaries in /usr/bin
+set(TOOLCHAIN_HOME "/usr/bin")
+
 if("${ARCH}" STREQUAL "posix")
 set(LINKER ld)
 endif()
