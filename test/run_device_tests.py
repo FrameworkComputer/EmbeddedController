@@ -45,6 +45,7 @@ import argparse
 from collections import namedtuple
 import concurrent
 from concurrent.futures.thread import ThreadPoolExecutor
+from contextlib import ExitStack
 import copy
 from dataclasses import dataclass
 from dataclasses import field
@@ -63,7 +64,6 @@ from typing import BinaryIO, Callable, Dict, List, Optional, Tuple
 
 # pylint: disable=import-error
 import colorama  # type: ignore[import]
-from contextlib2 import ExitStack
 import fmap
 import yaml
 
