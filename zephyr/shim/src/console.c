@@ -487,8 +487,8 @@ static void zephyr_print(const char *buff, size_t size)
 		if (IS_ENABLED(CONFIG_PLATFORM_EC_ISR_CONSOLE_OUTPUT) ||
 		    !in_isr) {
 			printk("!%s", buff);
-			return;
 		}
+		return;
 	}
 
 	/* Send all legacy output directly to the shell.  The shell UART
