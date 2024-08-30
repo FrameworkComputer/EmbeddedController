@@ -363,7 +363,7 @@ class AllTests:
             TestConfig(test_name="global_initialization", skip_for_zephyr=True),
             TestConfig(test_name="libcxx"),
             TestConfig(test_name="malloc", imagetype_to_use=ImageType.RO),
-            # MPU functionality is handled by Zephyr code.
+            # TODO(b/363277530): Add Zephyr MPU tests.
             TestConfig(
                 config_name="mpu_ro",
                 test_name="mpu",
