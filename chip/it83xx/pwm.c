@@ -229,7 +229,7 @@ static int pwm_ch_freq(enum pwm_channel ch)
 		if (pwm_channels[ch].flags & PWM_CONFIG_DSLEEP)
 			/*
 			 * Select 32.768KHz as PWM clock source.
-]			 *
+			 *
 			 * NOTE:
 			 * For pwm_channels[], the maximum supported pwm output
 			 * signal frequency is 324 Hz (32768/(PWM_CTRX_MIN+1)).
