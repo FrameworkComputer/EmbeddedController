@@ -547,6 +547,8 @@ static int emul_tps6699x_set_connector_status(
 			data->reg_val[TPS6699X_REG_INTERRUPT_EVENT_FOR_I2C1];
 	union reg_adc_results *adc_results =
 		(union reg_adc_results *)data->reg_val[TPS6699X_REG_ADC_RESULTS];
+
+	union reg_received_identity_data_object *received_identity_data_object;
 	uint16_t voltage;
 
 	data->connector_status = *connector_status;
@@ -559,6 +561,27 @@ static int emul_tps6699x_set_connector_status(
 	adc_results->pa_vbus = voltage;
 	adc_results->pb_vbus = voltage;
 
+	if (data->connector_status.connect_status &&
+	    data->connector_status.conn_partner_flags &
+		    CONNECTOR_PARTNER_PD_CAPABLE) {
+		received_identity_data_object =
+			(union reg_received_identity_data_object *)data->reg_val
+				[TPS6699X_REG_RECEIVED_SOP_IDENTITY_DATA_OBJECT];
+		received_identity_data_object->response_type = 1;
+		received_identity_data_object =
+			(union reg_received_identity_data_object *)data->reg_val
+				[TPS6699X_REG_RECEIVED_SOP_PRIME_IDENTITY_DATA_OBJECT];
+		received_identity_data_object->response_type = 1;
+	} else {
+		received_identity_data_object =
+			(union reg_received_identity_data_object *)data->reg_val
+				[TPS6699X_REG_RECEIVED_SOP_IDENTITY_DATA_OBJECT];
+		received_identity_data_object->response_type = 0;
+		received_identity_data_object =
+			(union reg_received_identity_data_object *)data->reg_val
+				[TPS6699X_REG_RECEIVED_SOP_PRIME_IDENTITY_DATA_OBJECT];
+		received_identity_data_object->response_type = 0;
+	}
 	return 0;
 }
 

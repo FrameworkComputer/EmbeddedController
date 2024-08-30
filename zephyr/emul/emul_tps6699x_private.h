@@ -25,6 +25,8 @@ enum tps6699x_reg_offset {
 	TPS6699X_REG_PORT_CONFIGURATION = 0x28,
 	TPS6699X_REG_PORT_CONTROL = 0x29,
 	TPS6699X_REG_TX_IDENTITY = 0x47,
+	TPS6699X_REG_RECEIVED_SOP_IDENTITY_DATA_OBJECT = 0x48,
+	TPS6699X_REG_RECEIVED_SOP_PRIME_IDENTITY_DATA_OBJECT = 0x49,
 	TPS6699X_REG_ADC_RESULTS = 0x6a,
 	TPS6699X_NUM_REG = 0xa4,
 };
@@ -452,4 +454,16 @@ union reg_interrupt {
 	} __packed;
 	uint8_t raw_value[11];
 };
+
+union reg_received_identity_data_object {
+	struct {
+		uint8_t number_valid_vdos : 3;
+		uint8_t reserved0 : 3;
+		uint8_t response_type : 2;
+
+		uint32_t vdo[6];
+	} __packed;
+	uint8_t raw_value[25];
+};
+
 #endif /* __EMUL_TPS6699X_PRIVATE_H_ */
