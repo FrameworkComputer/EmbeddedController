@@ -231,7 +231,6 @@
 			mutex = <&lid_mutex_bmi323>;
 			port = <&i2c_sensor>;
 			rot-standard-ref = <&lid_rot_ref_bmi>;
-			default-range = <2>;
 			drv-data = <&bmi323_data>;
 			configs {
 				compatible =
