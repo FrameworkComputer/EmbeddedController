@@ -1455,8 +1455,6 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_connector_status)
 				   PDC_TEST_TIMEOUT));
 }
 
-/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_power_mgmt_api, test_get_cable_prop)
 {
 	union cable_property_t in, out, exp;
@@ -1513,6 +1511,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_cable_prop)
 				   PDC_TEST_TIMEOUT));
 }
 
+/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
+#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_power_mgmt_api, test_get_identity_discovery)
 {
 	struct setup_t {

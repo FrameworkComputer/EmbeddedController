@@ -206,8 +206,8 @@ static void tps699x_emul_get_cable_property(struct tps6699x_emul_pdc_data *data)
 	data->response.result = COMMAND_RESULT_SUCCESS;
 	data->response.data.cable_property = data->cable_property;
 
-	memcpy(&data->reg_val[TPS6699X_REG_DATA_I2C1], &data->response,
-	       sizeof(data->response));
+	/* UCSI v2 cable response is 5 bytes + 1 byte TI return code */
+	memcpy(&data->reg_val[TPS6699X_REG_DATA_I2C1], &data->response, 5 + 1);
 }
 
 static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
