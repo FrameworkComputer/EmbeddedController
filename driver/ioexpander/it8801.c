@@ -134,6 +134,7 @@ void keyboard_raw_task_start(void)
 	keyboard_raw_enable_interrupt(1);
 }
 
+#ifndef CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 __overridable const uint8_t it8801_kso_mapping[] = { 0,	 1,  20, 3,  4,	 5,  6,
 						     17, 18, 16, 15, 11, 12,
 #ifdef CONFIG_KEYBOARD_KEYPAD
@@ -141,6 +142,7 @@ __overridable const uint8_t it8801_kso_mapping[] = { 0,	 1,  20, 3,  4,	 5,  6,
 #endif
 };
 BUILD_ASSERT(ARRAY_SIZE(it8801_kso_mapping) == KEYBOARD_COLS_MAX);
+#endif
 
 test_mockable void keyboard_raw_drive_column(int col)
 {
@@ -192,6 +194,11 @@ test_mockable void keyboard_raw_drive_column(int col)
 	it8801_write(IT8801_REG_KSOMCR, kso_val);
 }
 
+__overridable int it8801_ksi_mapping_transfer(int ksi_val)
+{
+	return ksi_val;
+}
+
 test_mockable int keyboard_raw_read_rows(void)
 {
 	int data = 0;
@@ -204,7 +211,7 @@ test_mockable int keyboard_raw_read_rows(void)
 	it8801_write(IT8801_REG_KSIEER, ksieer);
 
 	/* Bits are active-low, so invert returned levels */
-	return (~data) & 0xff;
+	return (~(it8801_ksi_mapping_transfer(data))) & 0xff;
 }
 
 void keyboard_raw_enable_interrupt(int enable)

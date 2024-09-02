@@ -21,6 +21,7 @@
 #include "keyboard_scan.h"
 #include "keyboard_protocol.h"
 #include "keyboard_raw.h"
+#include "keyboard_scan.h"
 #include "lpc.h"
 #include "power.h"
 #include "port80.h"
