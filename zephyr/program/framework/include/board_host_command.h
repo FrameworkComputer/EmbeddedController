@@ -117,11 +117,19 @@ struct ec_response_pwm_get_actual_fan_rpm {
 
 /*****************************************************************************/
 /*
- * This command uses to notify the EC needs to keep the pch power in s5.
+ * This command only be used for the cold-boot stress test via the ODM customized tool.
+ *
+ * When running the cold-boot stress test, the tool sends the HC:EC_CMD_SET_AP_REBOOT_DELAY
+ * to notify the EC to keep the PCH power "delay" seconds.
+ * It also sends the HC:EC_CMD_REBOOT_AP_ON_G3 to set the flag to reboot AP on G3.
  */
 #define EC_CMD_SET_AP_REBOOT_DELAY	0x3E05
 
+extern int ap_boot_delay;
+extern int stress_test_enable;
+
 struct ec_response_ap_reboot_delay {
+	/* range: 1 second ~ 180 seconds */
 	uint8_t delay;
 } __ec_align1;
 

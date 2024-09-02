@@ -46,6 +46,10 @@
 #define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ##args)
 
 static void sci_enable(void);
+
+int ap_boot_delay;
+int stress_test_enable;
+
 DECLARE_DEFERRED(sci_enable);
 
 #ifdef CONFIG_BOARD_LOTUS
@@ -515,6 +519,23 @@ static enum ec_status cmd_get_pd_port_state(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_PD_PORT_STATE, cmd_get_pd_port_state, EC_VER_MASK(0));
+
+static enum ec_status set_ap_reboot_delay(struct host_cmd_handler_args *args)
+{
+	const struct ec_response_ap_reboot_delay *p = args->params;
+
+	stress_test_enable = 1;
+	/* don't let AP send zero it will stuck power sequence at S5 */
+	if (p->delay < 181 && p->delay)
+		ap_boot_delay = p->delay;
+	else
+		return EC_ERROR_INVAL;
+
+
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_SET_AP_REBOOT_DELAY, set_ap_reboot_delay,
+			EC_VER_MASK(0));
 
 /*******************************************************************************/
 /*                       EC console command for Project                        */

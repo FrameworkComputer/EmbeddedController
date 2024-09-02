@@ -35,10 +35,8 @@
 #define IN_VR_PGOOD POWER_SIGNAL_MASK(X86_VR_PG)
 
 static int power_s5_up;		/* Chipset is sequencing up or down */
-static int ap_boot_delay = 9;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int force_shoutdown_flags;
-static int stress_test_enable;
 static int d3cold_is_entry;	/* check the d3cold status */
 
 static void inputdeck_resume(void)
@@ -402,7 +400,7 @@ enum power_state power_handle_state(enum power_state state)
 						/*
 						 * TODO: RTC reset function
 						 */
-						ap_boot_delay = 9;
+						ap_boot_delay = 0;
 						s5_exit_tries = 0;
 						stress_test_enable = 0;
 						clear_rtcwake();
@@ -742,20 +740,3 @@ static void usb30_hub_reset(void)
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, usb30_hub_reset, HOOK_PRIO_DEFAULT);
-
-static enum ec_status set_ap_reboot_delay(struct host_cmd_handler_args *args)
-{
-	const struct ec_response_ap_reboot_delay *p = args->params;
-
-	stress_test_enable = 1;
-	/* don't let AP send zero it will stuck power sequence at S5 */
-	if (p->delay < 181 && p->delay)
-		ap_boot_delay = p->delay;
-	else
-		return EC_ERROR_INVAL;
-
-
-	return EC_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_SET_AP_REBOOT_DELAY, set_ap_reboot_delay,
-			EC_VER_MASK(0));
