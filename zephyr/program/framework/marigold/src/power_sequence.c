@@ -33,10 +33,8 @@
 #define IN_VR_PGOOD POWER_SIGNAL_MASK(X86_VR_PG)
 
 static int power_s5_up;		/* Chipset is sequencing up or down */
-static int ap_boot_delay = 9;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int force_g3_flags;	/* Chipset force to g3 immediately when chipset force shutdown */
-static int stress_test_enable;
 static int me_change;
 static bool module_pwr_control;
 
@@ -322,7 +320,7 @@ enum power_state power_handle_state(enum power_state state)
 						/*
 						 * TODO: RTC reset function
 						 */
-						ap_boot_delay = 9;
+						ap_boot_delay = 0;
 						s5_exit_tries = 0;
 						stress_test_enable = 0;
 						clear_rtcwake();
@@ -578,23 +576,6 @@ void chipset_throttle_cpu(int throttle)
 	if (chipset_in_state(CHIPSET_STATE_ON))
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), !throttle);
 }
-
-static enum ec_status set_ap_reboot_delay(struct host_cmd_handler_args *args)
-{
-	const struct ec_response_ap_reboot_delay *p = args->params;
-
-	stress_test_enable = 1;
-	/* don't let AP send zero it will stuck power sequence at S5 */
-	if (p->delay < 181 && p->delay)
-		ap_boot_delay = p->delay;
-	else
-		return EC_ERROR_INVAL;
-
-
-	return EC_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_SET_AP_REBOOT_DELAY, set_ap_reboot_delay,
-			EC_VER_MASK(0));
 
 static enum ec_status me_control(struct host_cmd_handler_args *args)
 {
