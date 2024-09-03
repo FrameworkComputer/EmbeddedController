@@ -62,7 +62,7 @@
 			mutex = <&mutex_bma4xx_lid>;
 			port = <&i2c_ec_i2c_sensor>;
 			rot-standard-ref = <&lid_rot_ref>;
-			default-range = <2>;
+			default-range = <4>; /* to meet CDD 7.3.1/C-1-4 reqs. */
 			drv-data = <&lid_data>;
 			i2c-spi-addr-flags = "BMA4_I2C_ADDR_PRIMARY";
 			configs {
