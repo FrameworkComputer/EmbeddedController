@@ -168,6 +168,14 @@
 /************************************************/
 /*          POWER STATE DEFINITION              */
 /************************************************/
+#define CCG_POWERSTAT_EXT_POWER_PRESENT	BIT(1)
+#define CCG_POWERSTAT_EXT_POWER_TYPE	BIT(2)
+#define CCG_POWERSTAT_BATT_PRESENT		BIT(3)
+#define CCG_POWERSTAT_INTERNAL_POWER	BIT(4)
+
+/************************************************/
+/*        SYSTEM POWER STATE DEFINITION         */
+/************************************************/
 #define CCG_POWERSTATE_S0	0x00
 #define CCG_POWERSTATE_S3	0x01
 #define CCG_POWERSTATE_S4	0x02
