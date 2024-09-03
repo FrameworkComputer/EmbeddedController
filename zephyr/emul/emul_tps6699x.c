@@ -80,12 +80,13 @@ static bool register_is_valid(const struct tps6699x_emul_pdc_data *data,
  *  @param bytes Offset within register of current byte; for writes, this is 1
  *               less than the offset within the message body, because byte 0 is
  *               the write length.
- *  @return True if register access is valid
+ *  @return False if register access is invalid, or intentionally fail the
+ * access controlled by cmd_error flag to test error recovery path.
  */
 static bool register_access_is_valid(const struct tps6699x_emul_pdc_data *data,
 				     int reg, int bytes)
 {
-	return register_is_valid(data, reg) &&
+	return !data->cmd_error && register_is_valid(data, reg) &&
 	       bytes <= sizeof(*data->reg_val) &&
 	       bytes <= data->transaction_bytes;
 }
@@ -315,6 +316,13 @@ static void tps6699x_emul_handle_aneg(struct tps6699x_emul_pdc_data *data,
 	data_reg[0] = TASK_COMPLETED_SUCCESSFULLY;
 }
 
+static void tps6699x_emul_handle_disc(struct tps6699x_emul_pdc_data *data,
+				      uint8_t *data_reg)
+{
+	LOG_INF("DISC TASK");
+	data_reg[0] = TASK_COMPLETED_SUCCESSFULLY;
+}
+
 static void delayable_work_handler(struct k_work *w)
 {
 	struct k_work_delayable *dwork = k_work_delayable_from_work(w);
@@ -347,6 +355,9 @@ static void tps6699x_emul_handle_command(struct tps6699x_emul_pdc_data *data,
 		break;
 	case COMMAND_TASK_ANEG:
 		tps6699x_emul_handle_aneg(data, data_reg);
+		break;
+	case COMMAND_TASK_DISC:
+		tps6699x_emul_handle_disc(data, data_reg);
 		break;
 	default: {
 		char task_str[5] = {
@@ -710,6 +721,18 @@ static int emul_tps6699x_get_sink_path(const struct emul *target, bool *en)
 	return 0;
 }
 
+static int emul_tps6699x_get_reconnect_req(const struct emul *target,
+					   uint8_t *expected, uint8_t *val)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	*expected = 0x00;
+	*val = data->reg_val[REG_COMMAND_FOR_I2C1][0];
+
+	return 0;
+}
+
 static int emul_tps6699x_set_info(const struct emul *target,
 				  const struct pdc_info_t *info)
 {
@@ -838,6 +861,54 @@ static int tps6699x_emul_idle_wait(const struct emul *emul)
 	return -ETIMEDOUT;
 }
 
+static int tps6699x_emul_set_current_pdo(const struct emul *emul, uint32_t pdo)
+{
+	struct tps6699x_emul_pdc_data *data = tps6699x_emul_get_pdc_data(emul);
+	union reg_active_pdo_contract *active_pdo =
+		(union reg_active_pdo_contract *)&data
+			->reg_val[REG_ACTIVE_PDO_CONTRACT];
+	active_pdo->active_pdo = pdo;
+
+	return 0;
+}
+
+static int tps6699x_emul_set_current_flash_bank(const struct emul *emul,
+						uint8_t bank)
+{
+	struct tps6699x_emul_pdc_data *data = tps6699x_emul_get_pdc_data(emul);
+	union reg_boot_flags *boot_flags =
+		(union reg_boot_flags *)&data->reg_val[REG_BOOT_FLAG];
+	boot_flags->active_bank = bank;
+
+	return 0;
+}
+
+static int tps6699x_emul_set_vconn_sourcing(const struct emul *emul,
+					    bool enabled)
+{
+	struct tps6699x_emul_pdc_data *data = tps6699x_emul_get_pdc_data(emul);
+	union reg_power_path_status *power_path_status =
+		(union reg_power_path_status *)&data
+			->reg_val[REG_POWER_PATH_STATUS];
+	if (enabled) {
+		power_path_status->pa_vconn_sw = 0x2;
+		power_path_status->pb_vconn_sw = 0x2;
+	} else {
+		power_path_status->pa_vconn_sw = 0x0;
+		power_path_status->pb_vconn_sw = 0x0;
+	}
+
+	return 0;
+}
+
+static int tps6699x_emul_set_cmd_error(const struct emul *emul, bool enabled)
+{
+	struct tps6699x_emul_pdc_data *data = tps6699x_emul_get_pdc_data(emul);
+	data->cmd_error = enabled;
+
+	return 0;
+}
+
 static struct emul_pdc_api_t emul_tps6699x_api = {
 	.reset = emul_tps6699x_reset,
 	.set_response_delay = emul_tps6699x_set_response_delay,
@@ -853,7 +924,7 @@ static struct emul_pdc_api_t emul_tps6699x_api = {
 	.get_drp_mode = emul_tps6699x_get_drp_mode,
 	.get_supported_drp_modes = emul_tps6699x_get_supported_drp_modes,
 	.get_sink_path = emul_tps6699x_get_sink_path,
-	.get_reconnect_req = NULL,
+	.get_reconnect_req = emul_tps6699x_get_reconnect_req,
 	.pulse_irq = emul_tps6699x_pulse_irq,
 	.set_info = emul_tps6699x_set_info,
 	.set_lpm_ppm_info = NULL,
@@ -862,6 +933,10 @@ static struct emul_pdc_api_t emul_tps6699x_api = {
 	.get_cable_property = emul_tps6699x_get_cable_property,
 	.set_cable_property = emul_tps6699x_set_cable_property,
 	.idle_wait = tps6699x_emul_idle_wait,
+	.set_current_pdo = tps6699x_emul_set_current_pdo,
+	.set_current_flash_bank = tps6699x_emul_set_current_flash_bank,
+	.set_vconn_sourcing = tps6699x_emul_set_vconn_sourcing,
+	.set_cmd_error = tps6699x_emul_set_cmd_error,
 };
 
 /* clang-format off */

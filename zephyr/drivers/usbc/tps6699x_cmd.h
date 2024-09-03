@@ -208,6 +208,17 @@ int tps_rd_active_rdo_contract(const struct i2c_dt_spec *i2c,
 			       union reg_active_rdo_contract *buf);
 
 /**
+ * @brief Read Active PDO Contract
+ *
+ * @param i2c device pointer to i2c device
+ * @param buf pointer where data is stored
+ *
+ * @return 0 on success, else -EIO
+ */
+int tps_rd_active_pdo_contract(const struct i2c_dt_spec *i2c,
+			       union reg_active_pdo_contract *buf);
+
+/**
  * @brief Read or Write Port Configuration
  *
  * @param i2c device pointer to i2c device

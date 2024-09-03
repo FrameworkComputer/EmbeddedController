@@ -90,6 +90,7 @@ struct tps6699x_emul_pdc_data {
 	struct tps6699x_response response;
 
 	struct emul_pdc_pdo_t pdo;
+	bool cmd_error;
 };
 
 #endif /* __EMUL_TPS6699X_H_ */

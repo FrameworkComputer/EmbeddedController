@@ -30,7 +30,6 @@ LOG_MODULE_REGISTER(tps6699x, CONFIG_USBC_LOG_LEVEL);
 
 /** @brief maximum number of PDOs */
 #define MAX_PDOS 7
-
 /** @brief PDC IRQ EVENT bit */
 #define PDC_IRQ_EVENT BIT(0)
 /** @brief PDC COMMAND EVENT bit */
@@ -131,6 +130,14 @@ enum cmd_t {
 	CMD_GET_PCH_DATA_STATUS,
 	/** CMD_SET_DRP_MODE */
 	CMD_SET_DRP_MODE,
+	/** CMD_UPDATE_RETIMER */
+	CMD_UPDATE_RETIMER,
+	/** CMD_RECONNECT */
+	CMD_RECONNECT,
+	/** CMD_GET_CURRENT_PDO */
+	CMD_GET_CURRENT_PDO,
+	/** CMD_IS_VCONN_SOURCING */
+	CMD_IS_VCONN_SOURCING,
 	/** CMD_RAW_UCSI */
 	CMD_RAW_UCSI,
 };
@@ -209,6 +216,8 @@ struct pdc_data_t {
 	enum port_control_typec_current_t tcc;
 	/** Sink FET enable */
 	bool snk_fet_en;
+	/** Update retimer enable */
+	bool retimer_update_en;
 	/** Connector reset type */
 	union connector_reset_t connector_reset;
 	/** PDO Type */
@@ -286,10 +295,14 @@ static void cmd_get_vbus_voltage(struct pdc_data_t *data);
 static void cmd_get_vdo(struct pdc_data_t *data);
 static void cmd_get_identity_discovery(struct pdc_data_t *data);
 static void cmd_get_pdc_data_status_reg(struct pdc_data_t *data);
+static void cmd_update_retimer(struct pdc_data_t *data);
+static void cmd_get_current_pdo(struct pdc_data_t *data);
+static void cmd_is_vconn_sourcing(struct pdc_data_t *data);
 static void task_gaid(struct pdc_data_t *data);
 static void task_srdy(struct pdc_data_t *data);
 static void task_dbfg(struct pdc_data_t *data);
 static void task_aneg(struct pdc_data_t *data);
+static void task_disc(struct pdc_data_t *data);
 static void task_ucsi(struct pdc_data_t *data,
 		      enum ucsi_command_t ucsi_command);
 static void task_raw_ucsi(struct pdc_data_t *data);
@@ -642,6 +655,18 @@ static void st_idle_run(void *o)
 		case CMD_GET_PCH_DATA_STATUS:
 			cmd_get_pdc_data_status_reg(data);
 			break;
+		case CMD_UPDATE_RETIMER:
+			cmd_update_retimer(data);
+			break;
+		case CMD_RECONNECT:
+			task_disc(data);
+			break;
+		case CMD_GET_CURRENT_PDO:
+			cmd_get_current_pdo(data);
+			break;
+		case CMD_IS_VCONN_SOURCING:
+			cmd_is_vconn_sourcing(data);
+			break;
 		case CMD_RAW_UCSI:
 			task_raw_ucsi(data);
 		}
@@ -898,6 +923,104 @@ static void cmd_get_rdo(struct pdc_data_t *data)
 
 	/* TODO(b/345783692): Put command-completed logic in common code. */
 	/* Command has completed */
+	data->cci_event.command_completed = 1;
+	/* Inform the system of the event */
+	call_cci_event_cb(data);
+
+	/* Transition to idle */
+	set_state(data, ST_IDLE);
+	return;
+
+error_recovery:
+	set_state(data, ST_ERROR_RECOVERY);
+}
+
+static void cmd_get_current_pdo(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	union reg_active_pdo_contract active_pdo_contract;
+	uint32_t *pdo = (uint32_t *)data->user_buf;
+	int rv;
+
+	if (data->user_buf == NULL) {
+		LOG_ERR("Null buffer; can't read PDO");
+		goto error_recovery;
+	}
+
+	rv = tps_rd_active_pdo_contract(&cfg->i2c, &active_pdo_contract);
+	if (rv) {
+		LOG_ERR("Failed to read active PDO");
+		goto error_recovery;
+	}
+
+	*pdo = active_pdo_contract.active_pdo;
+
+	data->cci_event.command_completed = 1;
+	/* Inform the system of the event */
+	call_cci_event_cb(data);
+
+	/* Transition to idle */
+	set_state(data, ST_IDLE);
+	return;
+
+error_recovery:
+	set_state(data, ST_ERROR_RECOVERY);
+}
+
+static void cmd_update_retimer(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	union reg_port_control pdc_port_control;
+	int rv;
+
+	/* Read PDC port control */
+	rv = tps_rw_port_control(&cfg->i2c, &pdc_port_control, I2C_MSG_READ);
+	if (rv) {
+		LOG_ERR("Read port control failed");
+		goto error_recovery;
+	}
+
+	pdc_port_control.retimer_fw_update = data->retimer_update_en;
+
+	/* Write PDC port control */
+	rv = tps_rw_port_control(&cfg->i2c, &pdc_port_control, I2C_MSG_WRITE);
+	if (rv) {
+		LOG_ERR("Write port control failed");
+		goto error_recovery;
+	}
+
+	/* Command has completed */
+	data->cci_event.command_completed = 1;
+	/* Inform the system of the event */
+	call_cci_event_cb(data);
+
+	/* Transition to idle state */
+	set_state(data, ST_IDLE);
+	return;
+
+error_recovery:
+	set_state(data, ST_ERROR_RECOVERY);
+}
+
+static void cmd_is_vconn_sourcing(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	union reg_power_path_status pdc_power_path_status;
+	int rv;
+	bool *is_vconn_sourcing = (bool *)data->user_buf;
+	uint32_t ext_vconn_sw;
+
+	rv = tps_rd_power_path_status(&cfg->i2c, &pdc_power_path_status);
+	if (rv) {
+		LOG_ERR("Failed to power path status");
+		goto error_recovery;
+	}
+	ext_vconn_sw = cfg->connector_number == 0 ?
+			       pdc_power_path_status.pa_vconn_sw :
+			       pdc_power_path_status.pb_vconn_sw;
+
+	*is_vconn_sourcing = (ext_vconn_sw & 0x2) != 0;
+
 	data->cci_event.command_completed = 1;
 	/* Inform the system of the event */
 	call_cci_event_cb(data);
@@ -1357,6 +1480,24 @@ static void task_aneg(struct pdc_data_t *data)
 	return;
 }
 
+static void task_disc(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	union reg_data cmd_data;
+	int rv;
+
+	/* Disconnect for 3 seconds then reconnect, adjustable. */
+	cmd_data.data[0] = 3;
+	rv = write_task_cmd(cfg, COMMAND_TASK_DISC, &cmd_data);
+	if (rv) {
+		set_state(data, ST_ERROR_RECOVERY);
+		return;
+	}
+
+	set_state(data, ST_TASK_WAIT);
+	return;
+}
+
 static void task_ucsi(struct pdc_data_t *data, enum ucsi_command_t ucsi_command)
 {
 	struct pdc_config_t const *cfg = data->dev->config;
@@ -1729,8 +1870,7 @@ static int tps_read_power_level(const struct device *dev)
 
 static int tps_reconnect(const struct device *dev)
 {
-	/* TODO */
-	return 0;
+	return tps_post_command(dev, CMD_RECONNECT, NULL);
 }
 
 static int tps_pdc_reset(const struct device *dev)
@@ -1953,9 +2093,40 @@ static int tps_set_drp_mode(const struct device *dev, enum drp_mode_t dm)
 	return tps_post_command(dev, CMD_SET_DRP_MODE, NULL);
 }
 
+static int tps_update_retimer_mode(const struct device *dev, bool enable)
+{
+	struct pdc_data_t *data = dev->data;
+
+	data->retimer_update_en = enable;
+
+	return tps_post_command(dev, CMD_UPDATE_RETIMER, NULL);
+}
+
 static int tps_get_current_pdo(const struct device *dev, uint32_t *pdo)
 {
-	/* TODO */
+	return tps_post_command(dev, CMD_GET_CURRENT_PDO, pdo);
+}
+
+static int tps_is_vconn_sourcing(const struct device *dev, bool *vconn_sourcing)
+{
+	return tps_post_command(dev, CMD_IS_VCONN_SOURCING, vconn_sourcing);
+}
+
+static int tps_get_current_flash_bank(const struct device *dev, uint8_t *bank)
+{
+	const struct pdc_config_t *cfg =
+		(const struct pdc_config_t *)dev->config;
+	union reg_boot_flags pdc_boot_flags;
+	int rv;
+
+	rv = tps_rd_boot_flags(&cfg->i2c, &pdc_boot_flags);
+	if (rv) {
+		LOG_ERR("Read boot flags failed");
+		*bank = 0xff;
+		return rv;
+	}
+
+	*bank = pdc_boot_flags.active_bank;
 	return 0;
 }
 
@@ -2122,6 +2293,9 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.ack_cc_ci = tps_ack_cc_ci,
 	.set_comms_state = tps_set_comms_state,
 	.get_pch_data_status = tps_get_pch_data_status,
+	.is_vconn_sourcing = tps_is_vconn_sourcing,
+	.get_current_flash_bank = tps_get_current_flash_bank,
+	.update_retimer = tps_update_retimer_mode,
 	.execute_ucsi_cmd = tps_execute_ucsi_cmd,
 };
 

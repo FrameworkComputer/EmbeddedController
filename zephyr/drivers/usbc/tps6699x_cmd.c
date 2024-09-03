@@ -211,6 +211,14 @@ int tps_rd_active_rdo_contract(const struct i2c_dt_spec *i2c,
 			    I2C_MSG_READ);
 }
 
+int tps_rd_active_pdo_contract(const struct i2c_dt_spec *i2c,
+			       union reg_active_pdo_contract *buf)
+{
+	return tps_xfer_reg(i2c, REG_ACTIVE_PDO_CONTRACT, buf->raw_value,
+			    sizeof(union reg_active_pdo_contract),
+			    I2C_MSG_READ);
+}
+
 int tps_rd_adc_results(const struct i2c_dt_spec *i2c,
 		       union reg_adc_results *buf)
 {

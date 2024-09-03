@@ -510,6 +510,7 @@ struct rts5453p_emul_pdc_data {
 	uint32_t vdos[PDC_DISC_IDENTITY_VDO_COUNT];
 	bool frs_configured;
 	bool frs_enabled;
+	bool vconn_sourcing;
 };
 
 /**

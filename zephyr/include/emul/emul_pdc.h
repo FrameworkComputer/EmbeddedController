@@ -62,8 +62,8 @@ typedef int (*emul_pdc_set_lpm_ppm_info_t)(const struct emul *target,
 					   const struct lpm_ppm_info_t *info);
 typedef int (*emul_pdc_set_current_pdo_t)(const struct emul *target,
 					  uint32_t pdo);
-typedef int (*emul_pdc_get_current_flash_bank_t)(const struct emul *target,
-						 uint8_t *bank);
+typedef int (*emul_pdc_set_current_flash_bank_t)(const struct emul *target,
+						 uint8_t bank);
 typedef int (*emul_pdc_get_retimer_fw_t)(const struct emul *target,
 					 bool *enable);
 
@@ -89,6 +89,12 @@ typedef int (*emul_pdc_get_frs_t)(const struct emul *target, bool *enabled);
 
 typedef int (*emul_pdc_idle_wait_t)(const struct emul *target);
 
+typedef int (*emul_pdc_set_vconn_sourcing_t)(const struct emul *target,
+					     bool enabled);
+
+typedef int (*emul_pdc_set_cmd_error_t)(const struct emul *target,
+					bool enabled);
+
 __subsystem struct emul_pdc_api_t {
 	emul_pdc_set_response_delay_t set_response_delay;
 	emul_pdc_set_ucsi_version_t set_ucsi_version;
@@ -112,7 +118,7 @@ __subsystem struct emul_pdc_api_t {
 	emul_pdc_set_pdos_t set_pdos;
 	emul_pdc_set_info_t set_info;
 	emul_pdc_set_lpm_ppm_info_t set_lpm_ppm_info;
-	emul_pdc_get_current_flash_bank_t get_current_flash_bank;
+	emul_pdc_set_current_flash_bank_t set_current_flash_bank;
 	emul_pdc_get_retimer_fw_t get_retimer;
 	emul_pdc_get_requested_power_level_t get_requested_power_level;
 	emul_pdc_get_reconnect_req_t get_reconnect_req;
@@ -122,6 +128,8 @@ __subsystem struct emul_pdc_api_t {
 	emul_pdc_set_vdo_t set_vdo;
 	emul_pdc_get_frs_t get_frs;
 	emul_pdc_idle_wait_t idle_wait;
+	emul_pdc_set_vconn_sourcing_t set_vconn_sourcing;
+	emul_pdc_set_cmd_error_t set_cmd_error;
 };
 
 static inline int emul_pdc_set_ucsi_version(const struct emul *target,
@@ -452,8 +460,8 @@ static inline int emul_pdc_set_current_pdo(const struct emul *target,
 	return -ENOSYS;
 }
 
-static inline int emul_pdc_get_current_flash_bank(const struct emul *target,
-						  uint8_t *bank)
+static inline int emul_pdc_set_current_flash_bank(const struct emul *target,
+						  uint8_t bank)
 {
 	if (!target || !target->backend_api) {
 		return -ENOTSUP;
@@ -461,8 +469,8 @@ static inline int emul_pdc_get_current_flash_bank(const struct emul *target,
 
 	const struct emul_pdc_api_t *api = target->backend_api;
 
-	if (api->get_current_flash_bank) {
-		return api->get_current_flash_bank(target, bank);
+	if (api->set_current_flash_bank) {
+		return api->set_current_flash_bank(target, bank);
 	}
 	return -ENOSYS;
 }
@@ -659,6 +667,36 @@ static inline int emul_pdc_idle_wait(const struct emul *target)
 
 	if (api->idle_wait) {
 		return api->idle_wait(target);
+	}
+	return -ENOSYS;
+}
+
+static inline int emul_pdc_set_vconn_sourcing(const struct emul *target,
+					      bool enabled)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_api_t *api = target->backend_api;
+
+	if (api->set_vconn_sourcing) {
+		return api->set_vconn_sourcing(target, enabled);
+	}
+	return -ENOSYS;
+}
+
+static inline int emul_pdc_set_cmd_error(const struct emul *target,
+					 bool enabled)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_api_t *api = target->backend_api;
+
+	if (api->set_cmd_error) {
+		return api->set_cmd_error(target, enabled);
 	}
 	return -ENOSYS;
 }

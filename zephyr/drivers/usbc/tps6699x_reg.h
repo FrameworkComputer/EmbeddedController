@@ -1113,7 +1113,7 @@ union reg_active_pdo_contract {
 		uint32_t active_pdo : 32;
 		/* NOTE: The upper 7 bits should be ignored */
 		uint16_t first_pdo_control_bits;
-	} _packed;
+	} __packed;
 	uint8_t raw_value[8];
 };
 
