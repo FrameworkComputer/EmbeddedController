@@ -188,6 +188,7 @@ aes-y=aes.o
 # always_memset during high levels of optimization.
 %/test/always_memset.o: CFLAGS += -O3
 always_memset-y=always_memset.o
+assert_builtin-y=assert_builtin.o
 base32-y=base32.o
 battery_config-y=battery_config.o
 battery_get_params_smart-y=battery_get_params_smart.o

@@ -23,6 +23,7 @@ test-list-y = \
        abort \
        aes \
        always_memset \
+       assert_builtin \
        benchmark \
        boringssl_crypto \
        compile_time_macros \
