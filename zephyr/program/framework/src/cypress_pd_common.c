@@ -1161,10 +1161,10 @@ static int cypd_update_power_status(int controller)
 
 	if (controller < PD_CHIP_COUNT) {
 		if (battery_can_discharge)
-			power_stat |= BIT(3);
+			power_stat |= CCG_POWERSTAT_BATT_PRESENT;
 		if ((extpower_is_present() && battery_can_discharge) ||
 			(extpower_is_present() && controller != pd_controller_is_sink && prev_charge_port >=0))
-			power_stat |= BIT(1) + BIT(2);
+			power_stat |= CCG_POWERSTAT_EXT_POWER_PRESENT + CCG_POWERSTAT_EXT_POWER_TYPE;
 
 		CPRINTS("%s:%d=0x%x", __func__,controller, power_stat);
 		rv = cypd_write_reg8_wait_ack(controller, CCG_POWER_STAT, power_stat);
@@ -1172,10 +1172,10 @@ static int cypd_update_power_status(int controller)
 		for (i = 0; i < PD_CHIP_COUNT; i++) {
 			power_stat = 0;
 			if (battery_can_discharge)
-				power_stat |= BIT(3);
+				power_stat |= CCG_POWERSTAT_BATT_PRESENT;
 			if ((extpower_is_present() && battery_can_discharge) ||
 				(extpower_is_present() && i != pd_controller_is_sink && prev_charge_port >=0))
-				power_stat |= BIT(1) + BIT(2);
+				power_stat |= CCG_POWERSTAT_EXT_POWER_PRESENT + CCG_POWERSTAT_EXT_POWER_TYPE;
 			CPRINTS("%s:%d=0x%x", __func__,i, power_stat);
 			rv = cypd_write_reg8_wait_ack(i, CCG_POWER_STAT, power_stat);
 			if (rv != EC_SUCCESS)
