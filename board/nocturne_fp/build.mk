@@ -25,6 +25,7 @@ test-list-y=\
        aes \
        always_memset \
        assert_builtin \
+       assert_stdlib \
        benchmark \
        boringssl_crypto \
        compile_time_macros \
