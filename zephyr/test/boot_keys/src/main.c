@@ -69,6 +69,17 @@ ZTEST(boot_keys, test_recovery_normal)
 	zassert_equal(host_set_single_event_fake.call_count, 1);
 	zassert_equal(tablet_disable_fake.call_count, 1);
 	zassert_equal(keyboard_scan_get_boot_keys(), RECOVERY_NORMAL_MASK);
+
+	/* check key release */
+	power_button_is_pressed_fake.return_val = 0;
+	test_power_button_change();
+
+	zassert_equal(keyboard_scan_get_boot_keys(), POWER_RELEASED_MASK);
+
+	report_fake(ESC_ROW, ESC_COL, false);
+	report_fake(REFRESH_ROW, REFRESH_COL, false);
+
+	zassert_equal(keyboard_scan_get_boot_keys(), 0);
 }
 
 ZTEST(boot_keys, test_recovery_release_power_early)
@@ -110,7 +121,8 @@ ZTEST(boot_keys, test_recovery_stray_keys)
 	zassert_equal(test_dwork_pending(), false);
 	zassert_equal(host_set_single_event_fake.call_count, 0);
 	zassert_equal(tablet_disable_fake.call_count, 0);
-	zassert_equal(keyboard_scan_get_boot_keys(), 0);
+	/* keys are still tracked */
+	zassert_equal(keyboard_scan_get_boot_keys(), RECOVERY_NORMAL_MASK);
 }
 
 ZTEST(boot_keys, test_recovery_retraining)
@@ -157,7 +169,9 @@ ZTEST(boot_keys, test_ignore_keys)
 			      RECOVERY_NORMAL_MASK);
 	} else {
 		zassert_equal(host_set_single_event_fake.call_count, 0);
-		zassert_equal(keyboard_scan_get_boot_keys(), 0);
+		/* keys are still tracked */
+		zassert_equal(keyboard_scan_get_boot_keys(),
+			      RECOVERY_NORMAL_MASK);
 	}
 }
 
@@ -169,16 +183,6 @@ ZTEST(boot_keys, test_normal_boot)
 	test_reinit();
 
 	zassert_equal(test_dwork_pending(), false);
-	zassert_equal(host_set_single_event_fake.call_count, 0);
-	zassert_equal(tablet_disable_fake.call_count, 0);
-	zassert_equal(keyboard_scan_get_boot_keys(), 0);
-
-	/* no change after the timeout */
-	power_button_is_pressed_fake.return_val = 1;
-	test_power_button_change();
-	report_fake(ESC_ROW, ESC_COL, true);
-	report_fake(REFRESH_ROW, REFRESH_COL, true);
-
 	zassert_equal(host_set_single_event_fake.call_count, 0);
 	zassert_equal(tablet_disable_fake.call_count, 0);
 	zassert_equal(keyboard_scan_get_boot_keys(), 0);

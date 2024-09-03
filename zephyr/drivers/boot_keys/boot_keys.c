@@ -31,7 +31,6 @@ LOG_MODULE_REGISTER(boot_keys, LOG_LEVEL_INF);
 	(DT_PROP(CROS_EC_KEYBOARD_NODE, debounce_down_ms) * 2)
 
 static uint32_t boot_keys_value;
-static uint32_t boot_keys_value_external;
 static uint32_t boot_keys_counter;
 struct k_work_delayable boot_keys_timeout_dwork;
 
@@ -143,7 +142,7 @@ DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, power_button_change, HOOK_PRIO_DEFAULT);
 
 uint32_t keyboard_scan_get_boot_keys(void)
 {
-	return boot_keys_value_external;
+	return boot_keys_value;
 }
 
 static void boot_keys_timeout_handler(struct k_work *work)
@@ -154,8 +153,6 @@ static void boot_keys_timeout_handler(struct k_work *work)
 	}
 
 	LOG_INF("boot_keys: boot_keys_value=0x%08x", boot_keys_value);
-
-	boot_keys_value_external = boot_keys_value;
 
 	if (boot_keys_value & BIT(BOOT_KEY_ESC)) {
 		LOG_WRN("boot_keys: recovery");
@@ -208,7 +205,6 @@ void test_power_button_change(void)
 void test_reset(void)
 {
 	boot_keys_value = 0;
-	boot_keys_value_external = 0;
 	boot_keys_counter = 0;
 }
 
