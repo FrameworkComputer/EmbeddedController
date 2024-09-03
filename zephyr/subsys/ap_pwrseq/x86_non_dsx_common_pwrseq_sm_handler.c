@@ -852,6 +852,13 @@ static int x86_non_dsx_s5_run(void *data)
 			return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S4);
 		}
 	}
+#ifdef CONFIG_AP_PWRSEQ_DEBUG_MODE_COMMAND
+	/* This prevents force shutdown if debug mode is enabled */
+	if (in_debug_mode) {
+		LOG_WRN("debug_mode is enabled, preventing G3 transition");
+		return 0;
+	}
+#endif /* CONFIG_AP_PWRSEQ_DEBUG_MODE_COMMAND */
 	/* S5 inactivity timeout, go to G3 */
 	if (AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout) == 0) {
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_G3);
