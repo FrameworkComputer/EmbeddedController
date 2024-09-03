@@ -892,8 +892,6 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_unconstr_power)
 				   PDC_TEST_TIMEOUT));
 }
 
-/* TODO(b/345292002): Implement set_pdo for TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_power_mgmt_api, test_get_vbus_voltage)
 {
 /* Keep in line with |pdc_power_mgmt_api.c|. */
@@ -938,6 +936,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_vbus_voltage)
 	zassert_equal(expected_voltage_mv,
 		      pdc_power_mgmt_get_vbus_voltage(TEST_PORT));
 
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
 	zassert_true(TEST_WAIT_FOR(
 		next_expected_voltage_mv ==
 			pdc_power_mgmt_get_vbus_voltage(TEST_PORT),
@@ -955,6 +954,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_vbus_voltage)
 	emul_pdc_pulse_irq(emul);
 	k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
 
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
 	zassert_equal(next_expected_voltage_mv,
 		      pdc_power_mgmt_get_vbus_voltage(TEST_PORT));
 
@@ -962,7 +962,6 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_vbus_voltage)
 	zassert_true(
 		TEST_WAIT_FOR(!pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
 }
-#endif
 
 ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 {
