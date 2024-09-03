@@ -20,7 +20,6 @@
 #include "gpio.dtsi"
 #include "../i2c.dtsi"
 #include "../interrupts.dtsi"
-#include "../motionsense.dtsi"
 #include "../power_signals.dtsi"
 #include "../power_signals_gpios.dtsi"
 #include "../pwm.dtsi"
@@ -64,3 +63,5 @@
 &gpio_ec_i2c_pmc_pd_int_odl {
 	no-auto-init;
 };
+
+/delete-node/ &int_lid_imu;
