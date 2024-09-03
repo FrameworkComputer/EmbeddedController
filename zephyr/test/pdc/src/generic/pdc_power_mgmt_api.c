@@ -432,12 +432,15 @@ ZTEST_USER(pdc_power_mgmt_api_connectionless, test_set_trysrc)
 
 ZTEST_USER(pdc_power_mgmt_api_connectionless, test_get_lpm_ppm_info)
 {
-#ifndef CONFIG_TODO_B_345292002
 	struct lpm_ppm_info_t lpm_ppm_info;
+	int rv;
 
 	LOG_INF("Sending GET LPM PPM INFO");
-	zassert_ok(pdc_power_mgmt_get_lpm_ppm_info(TEST_PORT, &lpm_ppm_info));
-#endif
+	rv = pdc_power_mgmt_get_lpm_ppm_info(TEST_PORT, &lpm_ppm_info);
+	if (rv == -ENOSYS) {
+		ztest_test_skip();
+	}
+	zassert_ok(rv, "rv=%d", rv);
 }
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_partner_usb_comm_capable)
@@ -639,8 +642,6 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_info)
 		TEST_WAIT_FOR(!pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
 }
 
-/* TODO(b/345292002): Implement set_pdo for TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_power_mgmt_api, test_get_lpm_ppm_info)
 {
 	struct lpm_ppm_info_t out = { 0 };
@@ -658,6 +659,10 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_lpm_ppm_info)
 				       CONFIG_USB_PD_PORT_MAX_COUNT, &out));
 	zassert_equal(-EINVAL,
 		      pdc_power_mgmt_get_lpm_ppm_info(TEST_PORT, NULL));
+
+	if (pdc_power_mgmt_get_lpm_ppm_info(TEST_PORT, &out) == -ENOSYS) {
+		ztest_test_skip();
+	}
 
 	/* Successful */
 	emul_pdc_set_lpm_ppm_info(emul, &in);
@@ -677,7 +682,6 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_lpm_ppm_info)
 	zassert_equal(in.hw_ver, out.hw_ver, "Got %08x, expected $%08x",
 		      out.hw_ver, in.hw_ver);
 }
-#endif
 
 ZTEST_USER(pdc_power_mgmt_api, test_request_power_swap)
 {

@@ -187,8 +187,8 @@ struct cmd_t {
 	enum pdc_cmd_t cmd;
 	/** True if command is pending */
 	bool pending;
-	/** True if command failed to send */
-	bool error;
+	/** != 0 if command failed to send */
+	int8_t error;
 };
 
 /**
@@ -915,10 +915,10 @@ static void set_attached_pdc_state(struct pdc_port_t *port,
 static void send_cmd_init(struct pdc_port_t *port)
 {
 	port->send_cmd.public.cmd = CMD_PDC_NONE;
-	port->send_cmd.public.error = false;
+	port->send_cmd.public.error = 0;
 	port->send_cmd.public.pending = false;
 	port->send_cmd.intern.cmd = CMD_PDC_NONE;
-	port->send_cmd.intern.error = false;
+	port->send_cmd.intern.error = 0;
 	port->send_cmd.intern.pending = false;
 	port->send_cmd.local_state = SEND_CMD_START_ENTRY;
 }
@@ -998,7 +998,7 @@ static int queue_public_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd)
 
 	k_mutex_lock(&port->mtx, K_FOREVER);
 	port->send_cmd.public.cmd = pdc_cmd;
-	port->send_cmd.public.error = false;
+	port->send_cmd.public.error = 0;
 	port->send_cmd.public.pending = true;
 	k_mutex_unlock(&port->mtx);
 	k_event_post(&port->sm_event, PDC_SM_EVENT);
@@ -1013,7 +1013,7 @@ static void queue_internal_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd)
 {
 	k_mutex_lock(&port->mtx, K_FOREVER);
 	port->send_cmd.intern.cmd = pdc_cmd;
-	port->send_cmd.intern.error = false;
+	port->send_cmd.intern.error = 0;
 	port->send_cmd.intern.pending = true;
 	k_mutex_unlock(&port->mtx);
 	k_event_post(&port->sm_event, PDC_SM_EVENT);
@@ -2050,8 +2050,8 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 	}
 
 	if (rv) {
-		LOG_DBG("Unable to send command: %s",
-			pdc_cmd_names[port->cmd->cmd]);
+		LOG_DBG("Unable to send command: %s rv=%d",
+			pdc_cmd_names[port->cmd->cmd], rv);
 	}
 
 	return rv;
@@ -2064,8 +2064,8 @@ static void pdc_send_cmd_start_run(void *obj)
 
 	rv = send_pdc_cmd(port);
 	if (rv) {
-		LOG_DBG("Unable to send command: %s",
-			pdc_cmd_names[port->cmd->cmd]);
+		LOG_DBG("Unable to send command: %s, rv=%d",
+			pdc_cmd_names[port->cmd->cmd], rv);
 	}
 
 	/*
@@ -2079,15 +2079,24 @@ static void pdc_send_cmd_start_run(void *obj)
 	atomic_clear_bit(port->cci_flags, CCI_CMD_COMPLETED);
 	atomic_clear_bit(port->cci_flags, CCI_ERROR);
 
+	/* Command not implemented, no need to retry, return immediately */
+	if (rv == -ENOSYS) {
+		LOG_INF("Command (%s) not implemented",
+			pdc_cmd_names[port->cmd->cmd]);
+		port->cmd->error = -ENOSYS;
+		port->cmd->pending = false;
+		set_pdc_state(port, port->send_cmd_return_state);
+		return;
+	}
 	/* Test if command was successful. If not, try again until max
 	 * retries is reached */
-	if (rv) {
+	else if (rv) {
 		port->send_cmd.wait_counter++;
 		if (port->send_cmd.wait_counter > WAIT_MAX) {
 			/* Could not send command: TODO handle error */
 			LOG_INF("Command (%s) retry timeout",
 				pdc_cmd_names[port->cmd->cmd]);
-			port->cmd->error = true;
+			port->cmd->error = rv;
 			port->cmd->pending = false;
 			set_pdc_state(port, port->send_cmd_return_state);
 		}
@@ -2119,7 +2128,7 @@ static void pdc_send_cmd_wait_run(void *obj)
 	 */
 	if (port->cmd->cmd == CMD_PDC_RESET) {
 		if (pdc_is_init_done(port->pdc)) {
-			port->cmd->error = false;
+			port->cmd->error = 0;
 			set_pdc_state(port, port->send_cmd_return_state);
 			return;
 		}
@@ -2152,7 +2161,7 @@ static void pdc_send_cmd_wait_run(void *obj)
 		} else {
 			LOG_ERR("%s resend attempts exceeded!",
 				pdc_cmd_names[port->cmd->cmd]);
-			port->cmd->error = true;
+			port->cmd->error = -EBUSY;
 			set_pdc_state(port, port->send_cmd_return_state);
 			return;
 		}
@@ -2182,7 +2191,7 @@ static void pdc_send_cmd_wait_run(void *obj)
 		/* No response: Wait until timeout. */
 		port->send_cmd.wait_counter++;
 		if (port->send_cmd.wait_counter > WAIT_MAX) {
-			port->cmd->error = true;
+			port->cmd->error = -EBUSY;
 			if (port->cmd->cmd == CMD_PDC_GET_CONNECTOR_STATUS) {
 				/*
 				 * Can't get connector status. Enter unattached
@@ -2824,9 +2833,10 @@ static int public_api_block(int port, enum pdc_cmd_t pdc_cmd)
 		}
 	}
 
-	if (pdc_data[port]->port.send_cmd.public.error) {
-		LOG_ERR("Public API command not sent");
-		return -EIO;
+	if (public_cmd->error) {
+		LOG_ERR("Public API command %s not sent, err=%d",
+			pdc_cmd_names[public_cmd->cmd], public_cmd->error);
+		return public_cmd->error;
 	}
 
 	return 0;
