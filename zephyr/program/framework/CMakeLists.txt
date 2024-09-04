@@ -38,6 +38,9 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TOUCHPAD_CUSTOMIZED
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
 	"src/battery_extender.c")
 
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
+	"src/charge_limit_control.c")
+
 if(DEFINED CONFIG_BOARD_LOTUS)
 	project(lotus)
 	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_LOTUS include)
