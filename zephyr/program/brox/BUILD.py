@@ -114,10 +114,10 @@ lotso = register_brox_project(
     kconfig_files=[
         # Common to all projects.
         here / "program.conf",
-        # Project-specific config
-        here / "lotso" / "project.conf",
         # Common sensor configs
         here / "motionsense.conf",
+        # Project-specific config
+        here / "lotso" / "project.conf",
     ],
 )
 

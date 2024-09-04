@@ -175,6 +175,7 @@
 		};
 		gpio_tablet_mode_l: tablet_mode_l {
 			gpios = <&gpiod 1 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
 		};
 		gpio_usb_pd_int_odl: usb_pd_int_odl {
 			gpios = <&gpiof 5 GPIO_INPUT>;
