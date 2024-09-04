@@ -322,6 +322,9 @@ static void run_toggle_test(union connector_status_t *connector_status)
 	struct k_thread test_thread_data;
 	int ret;
 
+	/* Slow down driver response to give -EBUSY response */
+	emul_pdc_set_response_delay(emul, 20);
+
 	LOG_INF("Emul PDC disconnect partner");
 	emul_pdc_disconnect(emul);
 	zassert_false(TEST_WAIT_FOR(pd_capable(TEST_PORT), PDC_TEST_TIMEOUT));

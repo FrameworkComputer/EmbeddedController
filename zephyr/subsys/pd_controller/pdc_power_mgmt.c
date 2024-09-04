@@ -73,8 +73,7 @@ LOG_MODULE_REGISTER(pdc_power_mgmt, CONFIG_USB_PDC_LOG_LEVEL);
 /**
  * @brief Maximum time to wait for PDC state to settle.
  */
-/* TODO(b/362781605): Improve TI driver response time */
-#define PDC_SM_SETTLED_TIMEOUT_MS (PDC_CMD_TIMEOUT_MS * 10)
+#define PDC_SM_SETTLED_TIMEOUT_MS (PDC_CMD_TIMEOUT_MS)
 
 /** @brief Delay to wait for stable power state before running hooks */
 #define PDC_POWER_STATE_DEBOUNCE_S (K_SECONDS(2))
@@ -2456,7 +2455,7 @@ static void pdc_init_entry(void *obj)
  */
 static void enforce_pd_chipset_resume_policy_1(int port)
 {
-	LOG_DBG("Chipset Resume Policy 1");
+	LOG_DBG("C%d: Chipset Resume Policy 1", port);
 
 	/* If we're in a sink role, run a check to determine if we'd prefer a
 	 * source role.

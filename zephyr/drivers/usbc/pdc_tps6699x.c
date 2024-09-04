@@ -30,12 +30,24 @@ LOG_MODULE_REGISTER(tps6699x, CONFIG_USBC_LOG_LEVEL);
 
 /** @brief maximum number of PDOs */
 #define MAX_PDOS 7
+
 /** @brief PDC IRQ EVENT bit */
 #define PDC_IRQ_EVENT BIT(0)
 /** @brief PDC COMMAND EVENT bit */
 #define PDC_CMD_EVENT BIT(1)
 /** @brief Requests the driver to enter the suspended state */
 #define PDC_CMD_SUSPEND_REQUEST_EVENT BIT(2)
+/** @brief Trigger internal event to wake up (or keep awake) thread to handle
+ *         requests */
+#define PDC_INTERNAL_EVENT BIT(3)
+/** @brief Trigger thread to send command complete back to
+ *         PDC Power Mgmt thread */
+#define PDC_CMD_COMPLETE_EVENT BIT(4)
+/** @brief Bit mask of all PDC events */
+#define PDC_ALL_EVENTS BIT_MASK(5)
+
+/** @brief Time between checking TI CMDx register for data ready */
+#define PDC_TI_DATA_READY_TIME_MS (10)
 
 /**
  * @brief All raw_value data uses byte-0 for contains the register data was
@@ -235,6 +247,10 @@ struct pdc_data_t {
 	union get_vdo_t vdo_req;
 	/* PDC event: Interrupt or Command */
 	struct k_event pdc_event;
+	/* Events to be processed */
+	uint32_t events;
+	/* Deferred handler to trigger event to check if data is ready */
+	struct k_work_delayable data_ready;
 	/* Should use cached connector status change bits */
 	bool use_cached_conn_status_change;
 	/* Cached connector status for this connector. */
@@ -290,6 +306,19 @@ static enum state_t get_state(struct pdc_data_t *data)
 
 static void set_state(struct pdc_data_t *data, const enum state_t next_state)
 {
+	/* Make sure the run functions are executed for these states
+	 * on transitions.
+	 */
+	switch (next_state) {
+	case ST_TASK_WAIT:
+	case ST_ERROR_RECOVERY:
+	case ST_IRQ:
+	case ST_SUSPENDED:
+		k_event_post(&data->pdc_event, PDC_INTERNAL_EVENT);
+		break;
+	default:
+		break;
+	}
 	smf_set_state(SMF_CTX(data), &states[next_state]);
 }
 
@@ -498,13 +527,7 @@ static void st_idle_entry(void *o)
 static void st_idle_run(void *o)
 {
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
-	uint32_t events;
-
-	/* Wait for interrupt or a command to send */
-	events = k_event_wait(&data->pdc_event,
-			      (PDC_IRQ_EVENT | PDC_CMD_EVENT |
-			       PDC_CMD_SUSPEND_REQUEST_EVENT),
-			      false, K_FOREVER);
+	uint32_t events = data->events;
 
 	if (check_comms_suspended()) {
 		/* Do not start executing commands or processing IRQs if
@@ -514,8 +537,11 @@ static void st_idle_run(void *o)
 		set_state(data, ST_SUSPENDED);
 		return;
 	}
-
-	if (events & PDC_IRQ_EVENT) {
+	if (events & PDC_CMD_COMPLETE_EVENT) {
+		k_event_clear(&data->pdc_event, PDC_CMD_COMPLETE_EVENT);
+		data->cci_event.command_completed = 1;
+		call_cci_event_cb(data);
+	} else if (events & PDC_IRQ_EVENT) {
 		k_event_clear(&data->pdc_event, PDC_IRQ_EVENT);
 		/* Handle interrupt */
 		set_state(data, ST_IRQ);
@@ -1433,6 +1459,15 @@ static void st_task_wait_entry(void *o)
 	print_current_state(data);
 }
 
+static void tps_check_data_ready(struct k_work *work)
+{
+	struct k_work_delayable *dwork = k_work_delayable_from_work(work);
+	struct pdc_data_t *data =
+		CONTAINER_OF(dwork, struct pdc_data_t, data_ready);
+
+	k_event_post(&data->pdc_event, PDC_INTERNAL_EVENT);
+}
+
 static void st_task_wait_run(void *o)
 {
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
@@ -1457,6 +1492,10 @@ static void st_task_wait_run(void *o)
 	 *  2) command is set to "!CMD" for unknown command
 	 */
 	if (cmd.command && cmd.command != COMMAND_TASK_NO_COMMAND) {
+		LOG_INF("Data not ready, check again in %d ms",
+			PDC_TI_DATA_READY_TIME_MS);
+		k_work_reschedule(&data->data_ready,
+				  K_MSEC(PDC_TI_DATA_READY_TIME_MS));
 		return;
 	}
 
@@ -1656,6 +1695,8 @@ static int tps_ack_cc_ci(const struct device *dev,
 		data->cached_conn_status.raw_conn_status_change_bits &=
 			~(ci.raw_value);
 	}
+
+	k_event_post(&data->pdc_event, PDC_CMD_COMPLETE_EVENT);
 
 	return 0;
 }
@@ -1967,6 +2008,7 @@ static int tps_set_comms_state(const struct device *dev, bool comms_active)
 		 * PDC driver is a no-op)
 		 */
 		enable_comms();
+		k_event_post(&data->pdc_event, PDC_IRQ_EVENT);
 
 	} else {
 		/** Allow 3 seconds for the driver to suspend itself. */
@@ -2151,6 +2193,7 @@ static int pdc_init(const struct device *dev)
 
 	k_event_init(&data->pdc_event);
 	k_mutex_init(&data->mtx);
+	k_work_init_delayable(&data->data_ready, tps_check_data_ready);
 
 	data->cmd = CMD_NONE;
 	data->dev = dev;
@@ -2224,13 +2267,18 @@ int tps_pdc_do_firmware_update(void)
 static void tps_thread(void *dev, void *unused1, void *unused2)
 {
 	struct pdc_data_t *data = ((const struct device *)dev)->data;
+	const struct pdc_config_t *cfg = ((const struct device *)dev)->config;
 
 	while (1) {
 		smf_run_state(SMF_CTX(data));
-		/* TODO(b/345783692): Consider waiting for an event with a
-		 * timeout to avoid high interrupt-handling latency.
-		 */
-		k_sleep(K_MSEC(50));
+
+		/* Wait for event to handle */
+		data->events = k_event_wait(&data->pdc_event, PDC_ALL_EVENTS,
+					    false, K_FOREVER);
+		LOG_INF("tps_thread[%d]: events=0x%X", cfg->connector_number,
+			data->events);
+
+		k_event_clear(&data->pdc_event, PDC_INTERNAL_EVENT);
 	}
 }
 
