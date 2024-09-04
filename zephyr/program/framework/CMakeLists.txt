@@ -46,6 +46,9 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_CHASSIS_OPEN_SWITCH
 	"src/chassis.c")
 
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
+	"src/charge_limit_control.c")
+
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
 	"src/diagnostics_minipc.c")
 zephyr_library_sources_ifndef(CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC

@@ -70,6 +70,15 @@ uint32_t get_system_percentage(void)
 		return pre_os_percentage;
 }
 
+enum battery_present board_batt_is_present(void)
+{
+	/*
+	 * Due to adc_read_channel() will clear the task event,
+	 * we should get the battery status without read adc channel again.
+	 */
+	return batt_pres_prev;
+}
+
 void battery_trip_point(struct charge_state_data *curr_batt)
 {
 	int curr_btp = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_BATT_TRIP_POINT) +
