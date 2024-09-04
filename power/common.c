@@ -1035,7 +1035,7 @@ host_command_hibernation_delay(struct host_cmd_handler_args *args)
 	else
 		r->time_g3 = 0;
 
-	if ((time_g3 != 0) && (time_g3 > hibernate_delay))
+	if ((r->time_g3 != 0) && (r->time_g3 > hibernate_delay))
 		r->time_remaining = 0;
 	else
 		r->time_remaining = hibernate_delay - time_g3;
