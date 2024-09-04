@@ -387,40 +387,57 @@ ZTEST_USER(pdc_power_mgmt_api, test_unattached_public_cmd)
 	run_toggle_test(&connector_status);
 }
 
-ZTEST_USER(pdc_power_mgmt_api, test_connectionless_cmds)
+static void pdc_power_mgmt_connectionless_before(void *fixture)
 {
-	struct pdc_info_t pdc_info;
-#ifndef CONFIG_TODO_B_345292002
-	struct lpm_ppm_info_t lpm_ppm_info;
-#endif
-	union data_status_reg status;
-
-	LOG_INF("Emul PDC disconnect partner");
-	emul_pdc_disconnect(emul);
+	pdc_power_mgmt_before(fixture);
 	zassert_false(TEST_WAIT_FOR(pd_capable(TEST_PORT), PDC_TEST_TIMEOUT));
+}
 
+ZTEST_SUITE(pdc_power_mgmt_api_connectionless, NULL, pdc_power_mgmt_setup,
+	    pdc_power_mgmt_connectionless_before, pdc_power_mgmt_after, NULL);
+
+ZTEST_USER(pdc_power_mgmt_api_connectionless, test_reset)
+{
 	/* These commands are expected to succeed without a connection. */
 	LOG_INF("Sending PDC RESET");
 	zassert_ok(pdc_power_mgmt_reset(TEST_PORT));
 
 	emul_pdc_disconnect(emul);
 	zassert_false(TEST_WAIT_FOR(pd_capable(TEST_PORT), PDC_TEST_TIMEOUT));
+}
+
+ZTEST_USER(pdc_power_mgmt_api_connectionless, test_get_info)
+{
+	struct pdc_info_t pdc_info;
 
 	LOG_INF("Sending GET INFO");
 	zassert_ok(pdc_power_mgmt_get_info(TEST_PORT, &pdc_info, true));
+}
+
+ZTEST_USER(pdc_power_mgmt_api_connectionless, test_get_pch_data_status)
+{
+	union data_status_reg status;
 
 	LOG_INF("Sending GET PCH DATA_STATUS");
 	zassert_ok(pdc_power_mgmt_get_pch_data_status(TEST_PORT,
 						      status.raw_value));
+}
 
-#ifndef CONFIG_TODO_B_345292002
-	LOG_INF("Sending GET LPM PPM INFO");
-	zassert_ok(pdc_power_mgmt_get_lpm_ppm_info(TEST_PORT, &lpm_ppm_info));
-#endif
-
+ZTEST_USER(pdc_power_mgmt_api_connectionless, test_set_trysrc)
+{
 	/* Send a command that requires a connection. It should fail. */
 	LOG_INF("Sending SET DRP");
 	zassert_equal(-EIO, pdc_power_mgmt_set_trysrc(TEST_PORT, true));
+}
+
+ZTEST_USER(pdc_power_mgmt_api_connectionless, test_get_lpm_ppm_info)
+{
+#ifndef CONFIG_TODO_B_345292002
+	struct lpm_ppm_info_t lpm_ppm_info;
+
+	LOG_INF("Sending GET LPM PPM INFO");
+	zassert_ok(pdc_power_mgmt_get_lpm_ppm_info(TEST_PORT, &lpm_ppm_info));
+#endif
 }
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_partner_usb_comm_capable)
