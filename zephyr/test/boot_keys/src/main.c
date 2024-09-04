@@ -80,6 +80,14 @@ ZTEST(boot_keys, test_recovery_normal)
 	report_fake(REFRESH_ROW, REFRESH_COL, false);
 
 	zassert_equal(keyboard_scan_get_boot_keys(), 0);
+
+	/* new press don not change the value */
+	power_button_is_pressed_fake.return_val = 1;
+	test_power_button_change();
+	report_fake(ESC_ROW, ESC_COL, true);
+	report_fake(REFRESH_ROW, REFRESH_COL, true);
+
+	zassert_equal(keyboard_scan_get_boot_keys(), 0);
 }
 
 ZTEST(boot_keys, test_recovery_release_power_early)
