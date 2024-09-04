@@ -38,14 +38,23 @@ DEVICE_DT_DEFINE(VND_KEYBOARD_NODE, NULL, PM_DEVICE_DT_GET(VND_KEYBOARD_NODE),
 
 static const struct device *gpio_dev = DEVICE_DT_GET(DT_NODELABEL(gpio0));
 
+#define FACTORY_TEST_NODE \
+	DT_COMPAT_GET_ANY_STATUS_OKAY(cros_ec_keyboard_factory_test)
+#define P2_GPIO_NUM DT_GPIO_PIN(FACTORY_TEST_NODE, pin2_gpios)
+#define P3_GPIO_NUM DT_GPIO_PIN(FACTORY_TEST_NODE, pin3_gpios)
+#define P10_GPIO_NUM DT_GPIO_PIN(FACTORY_TEST_NODE, pin10_gpios)
+#define P11_GPIO_NUM DT_GPIO_PIN(FACTORY_TEST_NODE, pin11_gpios)
+
+#define COL_GPIO_NODE DT_COMPAT_GET_ANY_STATUS_OKAY(cros_ec_col_gpio)
+#define COL_GPIO_NUM DT_GPIO_PIN(COL_GPIO_NODE, col_gpios)
+
 static bool simulate_short_p3_p11;
 
-// TODO(b/360631986) get rid of magic numbers from here
 static void gpio_emul_cb_handler(const struct device *dev,
 				 struct gpio_callback *gpio_cb, uint32_t pins)
 {
-	if (simulate_short_p3_p11 && pins == 0x02) {
-		gpio_emul_input_set(gpio_dev, 3, 0);
+	if (simulate_short_p3_p11 && pins == BIT(P3_GPIO_NUM)) {
+		gpio_emul_input_set(gpio_dev, P11_GPIO_NUM, 0);
 	}
 }
 
@@ -62,10 +71,10 @@ ZTEST(keyboard_factory_test, test_factory_test_hc)
 	zassert_equal(resp.shorted, 0);
 	zassert_equal(pinctrl_configure_pins_fake.call_count, 2);
 
-	gpio_emul_flags_get(gpio_dev, 2, &flags);
+	gpio_emul_flags_get(gpio_dev, P10_GPIO_NUM, &flags);
 	zassert_equal(flags, GPIO_INPUT | GPIO_PULL_UP);
 
-	gpio_emul_flags_get(gpio_dev, 3, &flags);
+	gpio_emul_flags_get(gpio_dev, COL_GPIO_NUM, &flags);
 	zassert_equal(flags, GPIO_OUTPUT_LOW);
 }
 
@@ -148,7 +157,8 @@ static void reset(void *fixture)
 static void *keyboard_factory_test_setup(void)
 {
 	gpio_init_callback(&gpio_emul_cb, gpio_emul_cb_handler,
-			   BIT(0) | BIT(1) | BIT(2) | BIT(3));
+			   BIT(P2_GPIO_NUM) | BIT(P3_GPIO_NUM) |
+				   BIT(P10_GPIO_NUM) | BIT(P11_GPIO_NUM));
 
 	gpio_add_callback(gpio_dev, &gpio_emul_cb);
 
