@@ -343,8 +343,6 @@ int cmd_hibdelay(int argc, char *argv[])
 	}
 
 	printf("Hibernation delay: %u s\n", r.hibernate_delay);
-	printf("Time G3: %u s\n", r.time_g3);
-	printf("Time left: %u s\n", r.time_remaining);
 	return 0;
 }
 
