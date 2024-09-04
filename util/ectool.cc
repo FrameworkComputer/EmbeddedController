@@ -11128,6 +11128,15 @@ int cmd_pd_chip_info(int argc, char *argv[])
 	if (rv)
 		return rv;
 
+	/* Protect against the EC supporting a higher HC version than ectool.
+	 * This should be incremented as ectool support for newer versions is
+	 * implemented (specific response struct type and decoding logic below)
+	 */
+	const int highest_supported_version = 3;
+	if (cmdver > highest_supported_version) {
+		cmdver = highest_supported_version;
+	}
+
 	rv = ec_command(EC_CMD_PD_CHIP_INFO, cmdver, &p, sizeof(p), &r,
 			sizeof(r));
 	if (rv < 0)
