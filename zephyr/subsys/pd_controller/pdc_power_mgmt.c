@@ -740,7 +740,6 @@ static int queue_public_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd);
 static void init_port_variables(struct pdc_port_t *port);
 static int pdc_power_mgmt_request_power_swap_intern(int port,
 						    enum pd_power_role role);
-static bool pdc_power_mgmt_is_sink_connected(int port);
 static void pd_chipset_startup(void);
 static void pd_chipset_resume(void);
 static void pd_chipset_suspend(void);
@@ -1117,17 +1116,6 @@ static bool handle_connector_status(struct pdc_port_t *port)
 
 			if (conn_status_change_bits.attention) {
 				atomic_set_bit(port->cci_flags, CCI_ATTENTION);
-			}
-
-			if (conn_status_change_bits.supported_provider_caps &&
-			    pdc_power_mgmt_is_sink_connected(port_number)) {
-				/* Source caps have changed. Set the sink-
-				 * attached state machine back to the get PDO
-				 * substate. This will cause PDOs to be re-
-				 * evaluated and the sink path to get enabled
-				 * again. */
-				atomic_set_bit(port->snk_policy.flags,
-					       SNK_POLICY_NEW_POWER_REQUEST);
 			}
 
 			if (status->power_direction) {
@@ -1768,8 +1756,6 @@ static void pdc_snk_attached_run(void *obj)
 		 * of PDOs to return starting from the PDO Offset. The number of
 		 * PDOs to return is the value in this field plus 1.
 		 */
-		atomic_clear_bit(port->snk_policy.flags,
-				 SNK_POLICY_NEW_POWER_REQUEST);
 		if (!port->get_pdo.updating) {
 			port->get_pdo.num_pdos = PDO_NUM;
 			port->get_pdo.pdo_offset = PDO_OFFSET_0;
