@@ -14,8 +14,10 @@
 #include <keyboard_scan.h>
 
 void kb_init(void);
+void keyboard_matrix_init(void);
 
 static int kb_blight;
+static int kb_numpad;
 
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
@@ -65,6 +67,28 @@ cros_cbi_get_fw_config_kb_blight(enum cbi_fw_config_field_id field_id,
 	return 0;
 }
 
+static int
+cros_cbi_get_fw_config_kb_numpad(enum cbi_fw_config_field_id field_id,
+				 uint32_t *value)
+{
+	if (field_id != FW_KB_NUMERIC_PAD)
+		return -EINVAL;
+
+	switch (kb_numpad) {
+	case 0:
+		*value = FW_KB_NUMERIC_PAD_ABSENT;
+		break;
+	case 1:
+		*value = FW_KB_NUMERIC_PAD_PRESENT;
+		break;
+	case -1:
+		return -EINVAL;
+	default:
+		return 0;
+	}
+	return 0;
+}
+
 ZTEST(jubilant_keyboard, test_kb_init)
 {
 	cros_cbi_get_fw_config_fake.custom_fake =
@@ -79,10 +103,43 @@ ZTEST(jubilant_keyboard, test_kb_init)
 	zassert_equal(board_vivaldi_keybd_idx(), 1);
 }
 
+ZTEST(jubilant_keyboard, test_keyboard_matrix_init)
+{
+	uint16_t fn_key = 0x0037;
+	uint16_t forwardslash_pipe_key = 0x0061;
+
+	cros_cbi_get_fw_config_fake.custom_fake =
+		cros_cbi_get_fw_config_kb_numpad;
+
+	kb_numpad = 0;
+	keyboard_matrix_init();
+
+	zassert_equal(get_scancode_set2(0, 16), fn_key);
+	zassert_equal(get_scancode_set2(7, 17), forwardslash_pipe_key);
+	kb_numpad = 1;
+	keyboard_matrix_init();
+
+	zassert_equal(get_scancode_set2(4, 10), fn_key);
+	zassert_equal(get_scancode_set2(2, 7), forwardslash_pipe_key);
+}
+
 ZTEST(jubilant_keyboard, test_kb_init_cbi_error)
 {
 	cros_cbi_get_fw_config_fake.return_val = EINVAL;
 	kb_init();
+}
+
+ZTEST(jubilant_keyboard, test_keyboard_matrix_cbi_error)
+{
+	uint16_t fn_key = 0x0037;
+	uint16_t forwardslash_pipe_key = 0x0061;
+
+	cros_cbi_get_fw_config_fake.return_val = EINVAL;
+	kb_numpad = -1;
+	keyboard_matrix_init();
+
+	zassert_equal(get_scancode_set2(4, 10), fn_key);
+	zassert_equal(get_scancode_set2(2, 7), forwardslash_pipe_key);
 }
 
 ZTEST(jubilant_keyboard, test_get_scancode_set2)
