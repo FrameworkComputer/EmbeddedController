@@ -1,0 +1,29 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: LED policy parent node
+
+compatible: "cros-ec,fwk-led-policy"
+
+include: cros-ec,led-policy.yaml
+
+child-binding:
+  properties:
+    standalone-mode:
+      description: |
+        If the LED color depends on standalone mode, use this property
+        to describe the LED behavior in standalone mode.
+        e.g.
+        standalone-mode-s0 {
+          chipset-state = "POWER_S0";
+          charge-state = "LED_PWRS_CHARGE";
+          standalone-mode;
+          led-0 {
+            led-id = "EC_LED_ID_BATTERY_LED";
+            color-0 {
+              led-color = "LED_WHITE";
+            };
+          };
+        };
+      type: boolean
