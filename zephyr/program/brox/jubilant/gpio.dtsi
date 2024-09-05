@@ -8,6 +8,10 @@
 	named-adc-channels {
 		compatible = "named-adc-channels";
 
+		adc_prochot: prochot {
+			enum-name = "ADC_PROCHOT";
+			io-channels = <&adc0 0>;
+		};
 		adc_charger_amon: charger_amon {
 			enum-name = "ADC_AMON_BMON";
 			io-channels = <&adc0 1>;
@@ -230,7 +234,8 @@
 };
 
 &adc0 {
-	pinctrl-0 = <&adc0_ch1_gpi1_default
+	pinctrl-0 = <&adc0_ch0_gpi0_default
+		     &adc0_ch1_gpi1_default
 		     &adc0_ch4_gpi4_default
 		     &adc0_ch5_gpi5_default
 		     &adc0_ch7_gpi7_default>;
