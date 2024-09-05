@@ -37,6 +37,8 @@
 #endif
 #endif
 
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
+
 int rx_en[IT83XX_USBPD_PHY_PORT_COUNT];
 STATIC_IF(CONFIG_USB_PD_DECODE_SOP)
 bool sop_prime_en[IT83XX_USBPD_PHY_PORT_COUNT];
@@ -175,75 +177,6 @@ static int it83xx_tcpm_get_message_raw(int port, uint32_t *buf, int *head)
 	IT83XX_USBPD_MRSR(port) = USBPD_REG_MASK_RX_MSG_VALID;
 
 	return EC_SUCCESS;
-}
-
-static enum tcpc_transmit_complete it83xx_tx_data(enum usbpd_port port,
-						  enum tcpci_msg_type type,
-						  uint16_t header,
-						  const uint32_t *buf)
-{
-	int r;
-	uint32_t evt;
-	uint8_t length = PD_HEADER_CNT(header);
-
-	/* set message header */
-	IT83XX_USBPD_TMHLR(port) = (uint8_t)header;
-	IT83XX_USBPD_TMHHR(port) = (header >> 8);
-
-	/*
-	 * SOP type bit[6~4]:
-	 * on bx version and before:
-	 * x00b=SOP, x01b=SOP', x10b=SOP", bit[6] is reserved.
-	 * on dx version:
-	 * 000b=SOP, 001b=SOP', 010b=SOP", 011b=Debug SOP', 100b=Debug SOP''.
-	 */
-	IT83XX_USBPD_MTSR1(port) = (IT83XX_USBPD_MTSR1(port) & ~0x70) |
-				   ((type & 0x7) << 4);
-	/* bit7: transmit message is send to cable or not */
-	if (type == TCPCI_MSG_SOP)
-		IT83XX_USBPD_MTSR0(port) &= ~USBPD_REG_MASK_CABLE_ENABLE;
-	else
-		IT83XX_USBPD_MTSR0(port) |= USBPD_REG_MASK_CABLE_ENABLE;
-	/* clear msg length */
-	IT83XX_USBPD_MTSR1(port) &= (~0x7);
-	/* Limited by PD_HEADER_CNT() */
-	ASSERT(length <= 0x7);
-
-	if (length) {
-		/* set data bit */
-		IT83XX_USBPD_MTSR0(port) |= BIT(4);
-		/* set data length setting */
-		IT83XX_USBPD_MTSR1(port) |= length;
-		/* set data */
-		memcpy((uint32_t *)&IT83XX_USBPD_TDO(port), buf, length * 4);
-	}
-
-	for (r = 0; r <= CONFIG_PD_RETRY_COUNT; r++) {
-		/* Start TX */
-		USBPD_KICK_TX_START(port);
-		evt = task_wait_event_mask(TASK_EVENT_PHY_TX_DONE,
-					   PD_T_TCPC_TX_TIMEOUT);
-		/* check TX status */
-		if (USBPD_IS_TX_ERR(port) || (evt & TASK_EVENT_TIMER)) {
-			/*
-			 * If discard, means HW doesn't send the msg and resend.
-			 */
-			if (USBPD_IS_TX_DISCARD(port))
-				continue;
-			/*
-			 * Or port partner doesn't respond GoodCRC
-			 */
-			else
-				return TCPC_TX_COMPLETE_FAILED;
-		} else {
-			break;
-		}
-	}
-
-	if (r > CONFIG_PD_RETRY_COUNT)
-		return TCPC_TX_COMPLETE_DISCARDED;
-
-	return TCPC_TX_COMPLETE_SUCCESS;
 }
 
 static enum tcpc_transmit_complete
@@ -666,6 +599,100 @@ static int it83xx_tcpm_set_msg_header(int port, int power_role, int data_role)
 	it83xx_set_data_role(port, data_role);
 
 	return EC_SUCCESS;
+}
+
+static void restore_sop_header_pwr_data_role(enum usbpd_port port,
+					     enum tcpci_msg_type type)
+{
+	if (type != TCPCI_MSG_SOP) {
+		it83xx_tcpm_set_msg_header(port, pd_get_power_role(port),
+					   pd_get_data_role(port));
+	}
+}
+
+static enum tcpc_transmit_complete it83xx_tx_data(enum usbpd_port port,
+						  enum tcpci_msg_type type,
+						  uint16_t header,
+						  const uint32_t *buf)
+{
+	int r;
+	uint32_t evt;
+	uint8_t length = PD_HEADER_CNT(header);
+
+	/* set message header */
+	IT83XX_USBPD_TMHLR(port) = (uint8_t)header;
+	IT83XX_USBPD_TMHHR(port) = (header >> 8);
+
+	/*
+	 * SOP type bit[6~4]:
+	 * on bx version and before:
+	 * x00b=SOP, x01b=SOP', x10b=SOP", bit[6] is reserved.
+	 * on dx version:
+	 * 000b=SOP, 001b=SOP', 010b=SOP", 011b=Debug SOP', 100b=Debug SOP''.
+	 */
+	IT83XX_USBPD_MTSR1(port) = (IT83XX_USBPD_MTSR1(port) & ~0x70) |
+				   ((type & 0x7) << 4);
+	/* bit7: transmit message is send to cable or not */
+	if (type == TCPCI_MSG_SOP)
+		IT83XX_USBPD_MTSR0(port) &= ~USBPD_REG_MASK_CABLE_ENABLE;
+	else
+		IT83XX_USBPD_MTSR0(port) |= USBPD_REG_MASK_CABLE_ENABLE;
+	/* clear msg length */
+	IT83XX_USBPD_MTSR1(port) &= (~0x7);
+	/* Limited by PD_HEADER_CNT() */
+	ASSERT(length <= 0x7);
+
+	if (length) {
+		/* set data bit */
+		IT83XX_USBPD_MTSR0(port) |= BIT(4);
+		/* set data length setting */
+		IT83XX_USBPD_MTSR1(port) |= length;
+		/* set data */
+		memcpy((uint32_t *)&IT83XX_USBPD_TDO(port), buf, length * 4);
+	}
+
+	for (r = 0; r <= CONFIG_PD_RETRY_COUNT; r++) {
+		/* Start TX */
+		USBPD_KICK_TX_START(port);
+		evt = task_wait_event_mask(TASK_EVENT_PHY_TX_DONE,
+					   PD_T_TCPC_TX_TIMEOUT);
+		/* check TX status */
+		if (USBPD_IS_TX_ERR(port) || (evt & TASK_EVENT_TIMER)) {
+			/*
+			 * If discard, means HW doesn't send the msg and resend.
+			 */
+			if (USBPD_IS_TX_DISCARD(port)) {
+				CPRINTS("p%d TxErr: Discard and resend", port);
+				continue;
+			} else {
+				/*
+				 * Or port partner doesn't respond GoodCRC
+				 */
+				/*
+				 * The power role and data role bits in the
+				 * message header are only set for SOP messages.
+				 * If an SOP'/SOP'' message fails, restore the
+				 * power role and data role bits.
+				 */
+				restore_sop_header_pwr_data_role(port, type);
+				return TCPC_TX_COMPLETE_FAILED;
+			}
+		} else {
+			/*
+			 * Restored power and data role in the MHSR registers
+			 * when SOP'/SOP'' message is successfully transmitted.
+			 */
+			restore_sop_header_pwr_data_role(port, type);
+			break;
+		}
+	}
+
+	if (r > CONFIG_PD_RETRY_COUNT) {
+		restore_sop_header_pwr_data_role(port, type);
+		return TCPC_TX_COMPLETE_DISCARDED;
+	}
+
+	return TCPC_TX_COMPLETE_SUCCESS;
 }
 
 static int it83xx_tcpm_set_rx_enable(int port, int enable)
