@@ -297,10 +297,10 @@ static void it8xxx2_set_power_role(enum usbpd_port port, int power_role)
 		/*
 		 * Bit[0:6] BMC Rx threshold setting
 		 * 000 1000b: power neutral
-		 * 010 0000b: sinking power =>
+		 * 010 0000b: sourcing power =>
 		 *      High to low Y3Rx threshold = 0.38,
 		 *      Low to high Y3Rx threshold = 0.54.
-		 * 000 0010b: sourcing power =>
+		 * 000 0010b: sinking power =>
 		 *      High to low Y3Rx threshold = 0.64,
 		 *      Low to high Y3Rx threshold = 0.79.
 		 */
@@ -313,10 +313,10 @@ static void it8xxx2_set_power_role(enum usbpd_port port, int power_role)
 		/*
 		 * Bit[0:6] BMC Rx threshold setting
 		 * 000 1000b: power neutral
-		 * 010 0000b: sinking power =>
+		 * 010 0000b: sourcing power =>
 		 *      High to low Y3Rx threshold = 0.38,
 		 *      Low to high Y3Rx threshold = 0.54.
-		 * 000 0010b: sourcing power =>
+		 * 000 0010b: sinking power =>
 		 *      High to low Y3Rx threshold = 0.64,
 		 *      Low to high Y3Rx threshold = 0.79.
 		 */
@@ -606,7 +606,7 @@ static enum tcpc_transmit_complete it8xxx2_tx_data(enum usbpd_port port,
 				continue;
 			} else if (tx_error_status[port] &
 				   USBPD_REG_MASK_TX_NO_RESPONSE_STAT) {
-				/* HW had automatically resent message twice */
+				/* HW had automatically resent nRetry times */
 				tx_error_status[port] &=
 					~USBPD_REG_MASK_TX_NO_RESPONSE_STAT;
 				/*
