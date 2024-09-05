@@ -18,6 +18,17 @@
 /delete-node/ &gpio_tablet_mode_l;
 /delete-node/ &i2c_ec_i2c_sensor;
 
+/ {
+	named-gpios {
+		/delete-node/ sen_mode_ec_pch_int_odl;
+	};
+
+	tabletmode_interrupt: tabletmode-interrupt {
+		compatible = "cros,tabletmode-interrupt";
+		irq-gpios = <&gpioa 3 GPIO_ACTIVE_LOW>;
+	};
+};
+
 &i2c1_0 {
 	status = "disabled";
 };
