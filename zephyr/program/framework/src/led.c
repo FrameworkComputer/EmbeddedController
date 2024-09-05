@@ -5,7 +5,7 @@
  * Power and battery LED control.
  */
 
-#define DT_DRV_COMPAT cros_ec_led_policy
+#define DT_DRV_COMPAT cros_ec_fwk_led_policy
 #include <stdint.h>
 
 #include "battery.h"
@@ -42,7 +42,7 @@
 LOG_MODULE_REGISTER(led, LOG_LEVEL_ERR);
 
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
-	     "Exactly one instance of cros-ec,led-policy should be defined.");
+	     "Exactly one instance of cros-ec,fwk-led-policy should be defined.");
 
 #define DECLARE_PINS_NODE(id) extern struct led_pins_node_t PINS_NODE(id);
 #define BOARD_LED_PWM_PERIOD_NS BOARD_LED_HZ_TO_PERIOD_NS(324)
@@ -92,6 +92,7 @@ struct node_prop_t {
 	struct led_pattern_node_t *led_patterns;
 	uint8_t num_patterns;
 	bool state_active;
+	bool standalone_mode;
 };
 
 #define PATTERN_NODE_ARRAY(id) DT_CAT(PATTERN_ARRAY_, id)
@@ -123,6 +124,9 @@ DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, GEN_PATTERN_NODE_ARRAY,
 		.charge_port =                                                \
 			COND_CODE_1(DT_NODE_HAS_PROP(state_id, charge_port),  \
 				    (DT_PROP(state_id, charge_port)), (-1)),  \
+		.standalone_mode =                                                 \
+			COND_CODE_1(DT_NODE_HAS_PROP(state_id, standalone_mode),   \
+				    (DT_PROP(state_id, standalone_mode)), (false)),   \
 		.led_patterns = PATTERN_NODE_ARRAY(state_id),                 \
 		.num_patterns = 0 fn(state_id, PLUS_ONE),                     \
 		.state_active = false,                                        \
@@ -328,6 +332,16 @@ static int match_node(int node_idx)
 
 		if ((curr_batt_lvl < node_array[node_idx].batt_lvl[0]) ||
 		    (curr_batt_lvl > node_array[node_idx].batt_lvl[1])) {
+			node_array[node_idx].state_active = false;
+			return -1;
+		}
+	}
+
+	/* Check if this node depends on standalone mode */
+	if (node_array[node_idx].standalone_mode) {
+		int curr_standalone_mode = get_standalone_mode();
+
+		if (node_array[node_idx].standalone_mode != curr_standalone_mode) {
 			node_array[node_idx].state_active = false;
 			return -1;
 		}
