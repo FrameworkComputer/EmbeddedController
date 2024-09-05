@@ -12,6 +12,8 @@
 #include "extpower.h"
 #include "timer.h"
 #include "util.h"
+#include "hooks.h"
+
 
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
@@ -32,202 +34,134 @@ enum battery_extender_stage_t {
 };
 
 static bool batt_extender_disable;
-static bool batt_extender_timer_is_reset;
-static bool reset_timer_is_reset;
-static bool manual_test_enable;
-static uint64_t battery_extender_days = 5;
-static uint64_t battery_extender_reset_minutes = 30;
+static uint64_t battery_extender_trigger = 5*DAY;
+static uint64_t battery_extender_reset = 30*MINUTE;
 static int stage;
 static timestamp_t batt_extender_deadline;
+static timestamp_t batt_extender_deadline_stage2;
+
 static timestamp_t reset_deadline;
 
-static bool check_battery_extender_reset_timer(void)
+
+static void extender_init(void)
 {
-	static bool timer_initial, pre_manual_test, pre_batt_extender_disable;
-	static uint64_t pre_batt_extender_days, pre_batt_extender_reset;
-	timestamp_t battery_extender_reset_timer;
-
-	/* Initial the timer */
-	if (!timer_initial) {
-		timer_initial = true;
-		reset_timer_is_reset = false;
-		pre_manual_test = manual_test_enable;
-		pre_batt_extender_disable = batt_extender_disable;
-		pre_batt_extender_days = battery_extender_days;
-		pre_batt_extender_reset = battery_extender_reset_minutes;
-		return true;
-	}
-
-	/* Reload the timer if the manual test status is changed */
-	if (pre_manual_test != manual_test_enable) {
-		reset_timer_is_reset = false;
-		pre_manual_test = manual_test_enable;
-		return true;
-	}
-
-	/* Reload the timer if the battery extender days is changed */
-	if (pre_batt_extender_days != battery_extender_days) {
-		reset_timer_is_reset = false;
-		pre_batt_extender_days = battery_extender_days;
-
-		/* Don't need to reset the timer when battery extender is on */
-		if (stage == BATT_EXTENDER_STAGE_0)
-			return true;
-		else
-			return false;
-	}
-
-	/* Reload the timer if the battery extender status is changed */
-	if (pre_batt_extender_disable != batt_extender_disable) {
-		reset_timer_is_reset = false;
-		pre_batt_extender_disable = batt_extender_disable;
-		return true;
-	}
-
-	/* Reload the reset timer if the battery extender reset minutes is changed */
-	if (pre_batt_extender_reset != battery_extender_reset_minutes) {
-		reset_timer_is_reset = false;
-		pre_batt_extender_reset = battery_extender_reset_minutes;
-	}
-
-	/* Do not run the reset timer when battery extender feature is disabled */
-	if (batt_extender_disable)
-		return false;
-
-	/**
-	 * Only reset the timer when the adapter is disconnect and system runs
-	 * at the S0/S0ix state
-	 */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) || extpower_is_present()) {
-		reset_timer_is_reset = false;
-		return false;
-	}
-
-	/* Set deadline once time */
-	if (!reset_timer_is_reset) {
-		if (manual_test_enable) {
-			reset_deadline.val =
-				get_time().val + battery_extender_reset_minutes * SECOND;
-		} else {
-			reset_deadline.val =
-				get_time().val + battery_extender_reset_minutes * MINUTE;
-		}
-		reset_timer_is_reset = true;
-	}
-
-	battery_extender_reset_timer = get_time();
-	if (timestamp_expired(reset_deadline, &battery_extender_reset_timer))
-		return true;
-	else
-		return false;
+	timestamp_t now = get_time();
+	batt_extender_deadline.val =
+			now.val + battery_extender_trigger;
+	batt_extender_deadline_stage2.val =
+			now.val + battery_extender_trigger + 2*DAY;
+	reset_deadline.val = 0; /* not active */
 }
+DECLARE_HOOK(HOOK_INIT, extender_init, HOOK_PRIO_DEFAULT);
+
 
 void battery_extender(void)
 {
-	timestamp_t battery_extender_timer = get_time();
-
-	batt_extender_timer_is_reset = check_battery_extender_reset_timer();
+	timestamp_t now = get_time();
 
 	if (batt_extender_disable) {
 		stage = BATT_EXTENDER_STAGE_0;
+		reset_deadline.val = 0;
+		batt_extender_deadline.val = 0;
+		batt_extender_deadline_stage2.val = 0;
 		return;
 	}
 
-	if (!batt_extender_timer_is_reset &&
-		timestamp_expired(batt_extender_deadline, &battery_extender_timer)) {
-		if (stage == BATT_EXTENDER_STAGE_0) {
-			stage = BATT_EXTENDER_STAGE_1;
-			CPRINTS("Battery extender in stage 1");
-			if (manual_test_enable)
-				batt_extender_deadline.val = get_time().val + 2 * MINUTE;
-			else
-				batt_extender_deadline.val = get_time().val + 2 * DAY;
-		} else if (stage == BATT_EXTENDER_STAGE_1) {
-			stage = BATT_EXTENDER_STAGE_2;
-			CPRINTS("Battery extender in stage 2");
-		}
-	} else if (batt_extender_timer_is_reset) {
+	if (extpower_is_present()) {
+		/* just keep pushing the reset timer into the future if we are on AC */
+		reset_deadline.val = now.val + battery_extender_reset;
+	}
+
+	if (reset_deadline.val &&
+			timestamp_expired(reset_deadline, &now)) {
+		reset_deadline.val = 0;
+
 		stage = BATT_EXTENDER_STAGE_0;
-		if (manual_test_enable) {
-			batt_extender_deadline.val =
-				get_time().val + battery_extender_days * MINUTE;
-		} else {
-			batt_extender_deadline.val =
-				get_time().val + battery_extender_days * DAY;
-		}
+		batt_extender_deadline.val =
+			now.val + battery_extender_trigger;
+		batt_extender_deadline_stage2.val =
+				now.val + battery_extender_trigger + 2*DAY;
+		battery_sustainer_set(-1, -1);
+	}
+
+	if (batt_extender_deadline_stage2.val &&
+			timestamp_expired(batt_extender_deadline_stage2, &now)) {
+		batt_extender_deadline_stage2.val = 0;
+		stage = BATT_EXTENDER_STAGE_2;
+		battery_sustainer_set(85, 87);
+	}
+
+	else if (batt_extender_deadline.val &&
+			timestamp_expired(batt_extender_deadline, &now)) {
+		batt_extender_deadline.val = 0;
+		stage = BATT_EXTENDER_STAGE_1;
+		battery_sustainer_set(90, 95);
 	}
 }
+DECLARE_HOOK(HOOK_SECOND, battery_extender, HOOK_PRIO_DEFAULT);
 
-int battery_extender_stage_voltage(uint16_t volatge)
-{
-	if (stage == BATT_EXTENDER_STAGE_1)
-		return BATTERY_EXTENDER_STAGE1_VOLTAGE(volatge);
-	else if (stage == BATT_EXTENDER_STAGE_2)
-		return BATTERY_EXTENDER_STAGE2_VOLTAGE(volatge);
-	else
-		return 0;
-}
 
 /* Host command for battery extender feature */
 static enum ec_status battery_extender_hc(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_battery_extender *p = args->params;
 	struct ec_response_battery_extender *r = args->response;
-	uint64_t timestamps, temp;
+	timestamp_t now = get_time();
 
 	if (p->cmd == BATT_EXTENDER_WRITE_CMD) {
-		if (p->disable != batt_extender_disable)
+
+		if ((p->trigger_days != TIMES2DAYS(battery_extender_trigger)) &&
+			(p->trigger_days >= 1 && p->trigger_days <= 99)) {
+			battery_extender_trigger = p->trigger_days * DAY;
+			if (battery_extender_trigger != 0) {
+				batt_extender_deadline.val =
+						now.val + battery_extender_trigger;
+				batt_extender_deadline_stage2.val =
+						now.val + battery_extender_trigger + 2*DAY;
+			} else {
+				batt_extender_deadline.val = 0;
+				batt_extender_deadline_stage2.val = 0;
+			}
+		}
+
+		if ((p->reset_minutes != TIMES2MINUTES(battery_extender_reset)) &&
+			(p->reset_minutes >= 1 && p->reset_minutes <= 9999)) {
+			battery_extender_reset = p->reset_minutes * MINUTE;
+			if (battery_extender_reset) {
+				reset_deadline.val =
+					now.val + battery_extender_reset;
+			} else {
+				reset_deadline.val = 0;
+			}
+		}
+
+		if (batt_extender_disable != p->disable) {
 			batt_extender_disable = p->disable;
-
-		if (p->manual != manual_test_enable)
-			manual_test_enable = p->manual;
-
-		if ((p->days != battery_extender_days) &&
-			(p->days >= 1 && p->days <= 99))
-			battery_extender_days = p->days;
-
-		if ((p->minutes != battery_extender_reset_minutes) &&
-			(p->minutes >= 1 && p->minutes <= 9999))
-			battery_extender_reset_minutes = p->minutes;
-
+			if (batt_extender_disable) {
+				battery_sustainer_set(-1, -1);
+				stage = BATT_EXTENDER_STAGE_0;
+			}
+		}
 		return EC_SUCCESS;
 	} else if (p->cmd == BATT_EXTENDER_READ_CMD) {
 		/* return the current stage for debugging */
 		r->current_stage = stage;
+		r->disable = batt_extender_disable;
 
-		if (!batt_extender_timer_is_reset && !batt_extender_disable) {
-			if (manual_test_enable) {
-				timestamps =
-				  batt_extender_deadline.val - (battery_extender_days * MINUTE);
-				if (stage >= BATT_EXTENDER_STAGE_1)
-					timestamps -= 2 * MINUTE;
-				temp = TIMES2MINUTES((get_time().val - timestamps));
-			} else {
-				timestamps =
-				  batt_extender_deadline.val - (battery_extender_days * DAY);
-				if (stage >= BATT_EXTENDER_STAGE_1)
-					timestamps -= 2 * DAY;
-				temp = TIMES2DAYS((get_time().val - timestamps));
-			}
-
-			r->days = (uint16_t)temp;
+		if (!timestamp_expired(batt_extender_deadline, &now)) {
+			r->trigger_timedelta = batt_extender_deadline.val - now.val;
 		} else
-			r->days = 0;
+			r->trigger_timedelta = 0;
 
-		if (reset_timer_is_reset) {
-			if (manual_test_enable) {
-				timestamps =
-				  reset_deadline.val - (battery_extender_reset_minutes * SECOND);
-				temp = TIMES2SECOND((get_time().val - timestamps));
-			} else {
-				timestamps =
-				  reset_deadline.val - (battery_extender_reset_minutes * MINUTE);
-				temp = TIMES2MINUTES((get_time().val - timestamps));
-			}
+		r->trigger_days = (uint16_t)(battery_extender_trigger/DAY);
 
-			r->minutes = (uint16_t)temp;
+
+		if (!timestamp_expired(reset_deadline, &now)) {
+			r->reset_timedelta = reset_deadline.val - now.val;
 		} else
-			r->minutes = 0;
+			r->reset_timedelta = 0;
+
+		r->reset_minutes = (uint16_t)(battery_extender_reset/MINUTE);
 
 		args->response_size = sizeof(*r);
 		return EC_SUCCESS;
@@ -236,14 +170,51 @@ static enum ec_status battery_extender_hc(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_BATTERY_EXTENDER, battery_extender_hc, EC_VER_MASK(0));
 
+static uint64_t cmd_parse_timestamp(int argc, const char **argv)
+{
+	uint64_t time_val = 0;
+	char *e;
+
+	if (argc >= 3) {
+		time_val = strtoi(argv[2], &e, 0);
+		if (!strncmp(argv[3], "s", 1)) {
+			time_val *= SECOND;
+		} else	if (!strncmp(argv[3], "m", 1)) {
+			time_val *= MINUTE;
+		} else	if (!strncmp(argv[3], "h", 1)) {
+			time_val *= HOUR;
+		} else if (!strncmp(argv[3], "d", 1)) {
+			time_val *= DAY;
+		} else {
+			CPRINTF("invalid option for time scale: %s. Valid options: [s,h,d]\n", argv[3]);
+			return EC_ERROR_PARAM3;
+		}
+		return time_val;
+	} else {
+		CPRINTF("invalid parameters:\n");
+		return 0;
+	}
+}
+
+static void print_time_offset(uint64_t t_end, uint64_t t_start)
+{
+	uint64_t t = t_end - t_start;
+	uint64_t d = TIMES2DAYS(t);
+	uint64_t h = (t % DAY)/ HOUR;
+	uint64_t m = (t % HOUR)/ MINUTE;
+	uint64_t s = (t % MINUTE)/ SECOND;
+	if (t_end < t_start) {
+		CPRINTF("Expired\n");
+	} else {
+		CPRINTF("%lldD:%lldH:%lldM:%lldS\n", d, h, m, s);
+	}
+}
+
 /* Console command for battery extender manual control */
 static int cmd_batt_extender(int argc, const char **argv)
 {
-	char *e;
-	int disable, days, minutes;
-	uint64_t timestamps = battery_extender_days * (manual_test_enable ? MINUTE : DAY);
-	uint64_t reset_timestamps =
-		battery_extender_reset_minutes * (manual_test_enable ? SECOND : MINUTE);
+	int disable;
+	timestamp_t now = get_time();
 
 	if (argc >= 2) {
 		if (!strncmp(argv[1], "en", 2) || !strncmp(argv[1], "dis", 3)) {
@@ -252,55 +223,66 @@ static int cmd_batt_extender(int argc, const char **argv)
 
 			batt_extender_disable = !disable;
 			CPRINTS("battery extender %s",
-				disable ? "enables" : "disables");
-		} else if (!strncmp(argv[1], "manual", 6)) {
+				disable ? "enabled" : "disabled");
+			if (batt_extender_disable) {
+				battery_sustainer_set(-1, -1);
+				stage = BATT_EXTENDER_STAGE_0;
+			} else {
+				if (battery_extender_reset) {
+				reset_deadline.val =
+					now.val + battery_extender_reset;
+				}
+				if (battery_extender_trigger != 0) {
+					batt_extender_deadline.val =
+							now.val + battery_extender_trigger;
+					batt_extender_deadline_stage2.val =
+							now.val + battery_extender_trigger + 2*DAY;
+				}
+			}
+		} else if (!strncmp(argv[1], "timeext2", 8)) {
+			batt_extender_deadline_stage2.val = now.val + cmd_parse_timestamp(argc, argv);
+		} else if (!strncmp(argv[1], "timeext", 7)) {
+			batt_extender_deadline.val = now.val + cmd_parse_timestamp(argc, argv);
+		} else if (!strncmp(argv[1], "timerst", 7)) {
+			reset_deadline.val = now.val + cmd_parse_timestamp(argc, argv);
+		} else if (!strncmp(argv[1], "trigger", 7)) {
 			if (argc < 3)
 				return EC_ERROR_PARAM2;
 
-			manual_test_enable = strtoi(argv[2], &e, 0);
-			CPRINTS("manual test %s",
-				manual_test_enable ? "enables" : "disables");
-		} else if (!strncmp(argv[1], "days", 4)) {
-			if (argc < 3)
-				return EC_ERROR_PARAM2;
-
-			days = strtoi(argv[2], &e, 0);
-			if (days < 1 || days > 99)
-				return EC_ERROR_PARAM2;
-
-			battery_extender_days = days;
-			CPRINTS("update battery extender days %lld",
-				battery_extender_days);
+			battery_extender_trigger = cmd_parse_timestamp(argc, argv);
+			CPRINTF("update battery extender trigger ");
+			print_time_offset(battery_extender_trigger, 0);
 		} else if (!strncmp(argv[1], "reset", 5)) {
 			if (argc < 3)
 				return EC_ERROR_PARAM2;
 
-			minutes = strtoi(argv[2], &e, 0);
-			if (minutes < 1 || minutes > 9999)
-				return EC_ERROR_PARAM2;
-
-			battery_extender_reset_minutes = minutes;
-			CPRINTS("update battery extender reset minutes %lld",
-				battery_extender_reset_minutes);
+			battery_extender_reset =  cmd_parse_timestamp(argc, argv);
+			CPRINTF("update battery extender reset ");
+			print_time_offset(battery_extender_reset, 0);
 		} else
 			return EC_ERROR_PARAM_COUNT;
 	} else {
-		CPRINTS("Battery extender %sable", batt_extender_disable ? "dis" : "en");
-		CPRINTS("\tCurrent stage:%d", stage);
-		CPRINTS("\tManual %sable", manual_test_enable ? "en" : "dis");
-		CPRINTS("\tBattery extender timer %sable",
-			(batt_extender_timer_is_reset || batt_extender_disable) ? "dis" : "en");
-		if (!batt_extender_timer_is_reset && !batt_extender_disable) {
-			if (stage >= BATT_EXTENDER_STAGE_1)
-				timestamps += 2 * (manual_test_enable ? MINUTE : DAY);
-			CPRINTS("\t - Timer:%lld usec",
-				get_time().val - (batt_extender_deadline.val - timestamps));
+		CPRINTF("Battery extender %sabled\n", batt_extender_disable ? "dis" : "en");
+		CPRINTF("\tTrigger:");
+		print_time_offset(battery_extender_trigger, 0);
+		CPRINTF("\tReset:");
+		print_time_offset(battery_extender_reset, 0);
+
+		CPRINTF("\tCurrent stage:%d\n", stage);
+		CPRINTF("\tBattery extender timer\n");
+		if (batt_extender_deadline.val) {
+			CPRINTF("\t - Stage 1 expires in: ");
+			print_time_offset(batt_extender_deadline.val, now.val);
 		}
-		CPRINTS("\tBattery extender reset timer %sable",
-			reset_timer_is_reset ? "en" : "dis");
-		if (reset_timer_is_reset) {
-			CPRINTS("\t - Timer:%lld usec",
-				get_time().val - (reset_deadline.val - reset_timestamps));
+		if (batt_extender_deadline_stage2.val) {
+			CPRINTF("\t - Stage 2 expires in: ");
+			print_time_offset(batt_extender_deadline_stage2.val, now.val);
+		}
+		CPRINTF("\tBattery extender reset timer %sable\n",
+			reset_deadline.val ? "en" : "dis");
+		if (reset_deadline.val) {
+			CPRINTF("\t - expires in: ");
+			print_time_offset(reset_deadline.val, now.val);
 		}
 	}
 

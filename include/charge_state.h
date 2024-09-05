@@ -389,20 +389,20 @@ int board_should_charger_bypass(void);
 int board_want_charger_change_mode(void);
 #endif
 
-#ifdef CONFIG_CUSTOMIZED_DESIGN
 /**
- * Callback for boards to return voltage value.
+ * Set the battery sustainer mode.
  *
- * @param voltage	battery maximum voltage
- * @return battery extender stage voltage (stage1: 97% * voltage; stage2: 96% * voltage).
+ * @param lower: lower battery soc charge limit [1-100%] or -1 to disable
+ * @param upper: upper battery soc charge limit [1-100%] or -1 to disable
+ * 
+ * @return EC_SUCCESS or EC_ERROR_INVAL
  */
-int battery_extender_stage_voltage(uint16_t voltage);
+int battery_sustainer_set(int8_t lower, int8_t upper);
 
-/**
- * Callback for boards to count the battery extender timer.
- */
-void battery_extender(void);
+/* Config Charger */
+#include "charge_state.h"
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
 void battery_customize(struct charge_state_data *curr_batt);
 #endif
 
