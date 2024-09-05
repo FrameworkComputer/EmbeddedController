@@ -217,7 +217,7 @@ test_export_static bool battery_sustainer_enabled(void)
 	return sustain_soc.lower != -1 && sustain_soc.upper != -1;
 }
 
-static int battery_sustainer_set(int8_t lower, int8_t upper)
+int battery_sustainer_set(int8_t lower, int8_t upper)
 {
 	if (lower == -1 || upper == -1) {
 		if (battery_sustainer_enabled()) {
@@ -490,12 +490,6 @@ int charge_request(bool use_curr, bool is_full)
 		voltage = current = 0;
 #endif
 	}
-
-#ifdef CONFIG_CUSTOMIZED_DESIGN
-	/* Override the voltage if the battery extender is on */
-	if (battery_extender_stage_voltage(battery_get_info()->voltage_max))
-		voltage = battery_extender_stage_voltage(battery_get_info()->voltage_max);
-#endif
 
 	if (curr.ac) {
 		if (prev_volt != voltage || prev_curr != current)
@@ -1718,15 +1712,6 @@ void charger_task(void *u)
 		check_battery_change_soc(is_full, prev_full);
 
 		prev_full = is_full;
-
-#ifdef CONFIG_CUSTOMIZED_DESIGN
-		/**
-		 * Run the battery extender function to check the timer,
-		 * if the timer expired, will override the voltage in the
-		 * charge_request() function.
-		 */
-		battery_extender();
-#endif
 
 		adjust_requested_vi(info, is_full);
 

@@ -543,16 +543,19 @@ struct ec_response_get_pd_port_state {
 
 struct ec_params_battery_extender {
 	uint8_t disable;
-	uint8_t days;
-	uint16_t minutes;
+	uint8_t trigger_days;
+	uint16_t reset_minutes;
 	uint8_t cmd;
 	uint8_t manual;
 } __ec_align1;
 
 struct ec_response_battery_extender {
 	uint8_t current_stage;
-	uint16_t days;
-	uint16_t minutes;
+	uint16_t trigger_days;
+	uint16_t reset_minutes;
+	uint8_t disable;
+	uint64_t trigger_timedelta;
+	uint64_t reset_timedelta;
 } __ec_align1;
 
 enum battery_extender_cmd {
