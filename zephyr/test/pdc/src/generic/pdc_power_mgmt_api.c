@@ -27,8 +27,10 @@ LOG_MODULE_REGISTER(pdc_power_mgmt_api, LOG_LEVEL_INF);
 #else
 #define PDC_TEST_TIMEOUT 2000
 #endif
-/* Time needed for chipset power to stabilize */
-#define PDC_POWER_STABLE_TIMEOUT (PDC_TEST_TIMEOUT * 2)
+/* Time needed for chipset power to stabilize
+ * (PDC_POWER_STATE_DEBOUNCE_S * 2) defined in pdc_power_mgmt.c
+ */
+#define PDC_POWER_STABLE_TIMEOUT (4000)
 #define RTS5453P_NODE DT_NODELABEL(pdc_emul1)
 
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
