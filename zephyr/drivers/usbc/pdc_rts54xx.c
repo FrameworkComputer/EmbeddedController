@@ -174,6 +174,7 @@ static const struct smbus_cmd_t GET_RDO = { 0x08, 0x02, 0x84 };
 static const struct smbus_cmd_t GET_VDO = { 0x08, 0x03, 0x9A };
 static const struct smbus_cmd_t GET_CURRENT_PARTNER_SRC_PDO = { 0x08, 0x02,
 								0xA7 };
+static const struct smbus_cmd_t RTS_SET_FRS_FUNCTION = { 0x08, 0x03, 0xE1 };
 static const struct smbus_cmd_t GET_RTK_STATUS = { 0x09, 0x03 };
 static const struct smbus_cmd_t RTS_UCSI_PPM_RESET = { 0x0E, 0x02, 0x01 };
 static const struct smbus_cmd_t RTS_UCSI_CONNECTOR_RESET = { 0x0E, 0x03, 0x03 };
@@ -327,6 +328,8 @@ enum cmd_t {
 	CMD_SET_SINK_PATH,
 	/** Get current Partner SRC PDO */
 	CMD_GET_CURRENT_PARTNER_SRC_PDO,
+	/** Set the Fast Role Swap */
+	CMD_SET_FRS_FUNCTION,
 	/** Set the Rp TypeC current */
 	CMD_SET_TPC_RP,
 	/** TypeC reconnect */
@@ -474,6 +477,7 @@ static const char *const cmd_names[] = {
 	[CMD_SET_TPC_RECONNECT] = "SET_TPC_RECONNECT",
 	[CMD_SET_RDO] = "SET_RDO",
 	[CMD_GET_CURRENT_PARTNER_SRC_PDO] = "GET_CURRENT_PARTNER_SRC_PDO",
+	[CMD_SET_FRS_FUNCTION] = "SET_FRS_FUNCTION",
 	[CMD_SET_RETIMER_FW_UPDATE_MODE] = "SET_RETIMER_FW_UPDATE_MODE",
 	[CMD_GET_CABLE_PROPERTY] = "GET_CABLE_PROPERTY",
 	[CMD_GET_VDO] = "GET VDO",
@@ -2351,6 +2355,26 @@ static int rts54_get_current_pdo(const struct device *dev, uint32_t *pdo)
 				  ARRAY_SIZE(payload), (uint8_t *)pdo);
 }
 
+static int rts54_set_frs(const struct device *dev, bool enable)
+{
+	struct pdc_data_t *data = dev->data;
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	uint8_t payload[] = {
+		[0] = RTS_SET_FRS_FUNCTION.cmd,
+		[1] = RTS_SET_FRS_FUNCTION.len,
+		[2] = RTS_SET_FRS_FUNCTION.sub,
+		[3] = 0x00,
+		[4] = enable,
+	};
+
+	return rts54_post_command(dev, CMD_SET_FRS_FUNCTION, payload,
+				  ARRAY_SIZE(payload), NULL);
+}
+
 static int rts54_get_identity_discovery(const struct device *dev,
 					bool *disc_state)
 {
@@ -2698,6 +2722,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.manage_callback = rts54_manage_callback,
 	.ack_cc_ci = rts54_ack_cc_ci,
 	.get_lpm_ppm_info = rts54_get_lpm_ppm_info,
+	.set_frs = rts54_set_frs,
 };
 
 static void pdc_interrupt_callback(const struct device *dev,

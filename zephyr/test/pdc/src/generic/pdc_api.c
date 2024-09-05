@@ -347,6 +347,24 @@ ZTEST_USER(pdc_api, test_set_sink_path)
 	}
 }
 
+/* TODO(b/345292002): TPS6699x set_frs not implemented */
+#ifndef CONFIG_TODO_B_345292002
+ZTEST_USER(pdc_api, test_set_frs)
+{
+	bool frs_state[] = { true, false }, out;
+
+	for (int i = 0; i < ARRAY_SIZE(frs_state); i++) {
+		zassert_ok(pdc_set_frs(dev, frs_state[i]));
+
+		k_sleep(K_MSEC(SLEEP_MS));
+		zassert_ok(emul_pdc_get_frs(emul, &out));
+
+		zassert_equal(frs_state[i], out, "Got %d, expected %d (i=%d)",
+			      out, frs_state[i], i);
+	}
+}
+#endif
+
 /* TODO(b/345292002): TPS6699x pdc_reconnect not implemented */
 #ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_reconnect)

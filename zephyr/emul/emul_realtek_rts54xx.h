@@ -287,6 +287,12 @@ union rts54_request {
 			uint8_t rsvd : 7;
 		};
 	} __packed ack_cc_ci;
+
+	struct set_frs_function_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+		uint8_t enable;
+	} set_frs_function;
 };
 
 union rts54_response {
@@ -503,6 +509,7 @@ struct rts5453p_emul_pdc_data {
 	struct emul_pdc_pdo_t pdo;
 
 	uint32_t vdos[PDC_DISC_IDENTITY_VDO_COUNT];
+	bool frs_enabled;
 };
 
 /**

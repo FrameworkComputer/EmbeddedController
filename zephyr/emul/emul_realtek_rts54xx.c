@@ -674,6 +674,19 @@ static int get_pch_data_status(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int set_frs_function(struct rts5453p_emul_pdc_data *data,
+			    const union rts54_request *req)
+{
+	LOG_INF("SET_FRST_FUNCTION port=%d, setting %d",
+		req->set_frs_function.port_num, req->set_frs_function.enable);
+
+	data->frs_enabled = req->set_frs_function.enable;
+	send_response(data);
+
+	memset(&data->response, 0, sizeof(union rts54_response));
+	return 0;
+}
+
 static bool send_response(struct rts5453p_emul_pdc_data *data)
 {
 	if (data->delay_ms > 0) {
@@ -756,6 +769,7 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0xA9, HANDLER_DEF(unsupported) },
 	{ .code = 0xAA, HANDLER_DEF(unsupported) },
 	{ .code = 0xE0, HANDLER_DEF(get_pch_data_status) },
+	{ .code = 0xE1, HANDLER_DEF(set_frs_function) },
 };
 
 const struct commands sub_cmd_x0E[] = {
@@ -1336,6 +1350,17 @@ static int emul_realtek_rts54xx_set_vdo(const struct emul *target,
 	return 0;
 }
 
+static int emul_realtek_rts54xx_get_frs(const struct emul *target,
+					bool *enabled)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	*enabled = data->frs_enabled;
+
+	return 0;
+}
+
 static int emul_realtek_rts54xx_get_pdos(const struct emul *target,
 					 enum pdo_type_t pdo_type,
 					 enum pdo_offset_t pdo_offset,
@@ -1421,6 +1446,7 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.get_cable_property = emul_realtek_rts54xx_get_cable_property,
 	.set_cable_property = emul_realtek_rts54xx_set_cable_property,
 	.set_vdo = emul_realtek_rts54xx_set_vdo,
+	.get_frs = emul_realtek_rts54xx_get_frs,
 	.idle_wait = emul_realtek_rts54xx_idle_wait,
 };
 

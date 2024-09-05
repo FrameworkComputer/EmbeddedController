@@ -195,6 +195,7 @@ typedef int (*pdc_ack_cc_ci_t)(const struct device *dev,
 			       uint16_t vendor_defined);
 typedef int (*pdc_get_lpm_ppm_info_t)(const struct device *dev,
 				      struct lpm_ppm_info_t *info);
+typedef int (*pdc_set_frs_t)(const struct device *dev, bool enable);
 
 /**
  * @cond INTERNAL_HIDDEN
@@ -239,6 +240,7 @@ __subsystem struct pdc_driver_api_t {
 	pdc_manage_callback_t manage_callback;
 	pdc_ack_cc_ci_t ack_cc_ci;
 	pdc_get_lpm_ppm_info_t get_lpm_ppm_info;
+	pdc_set_frs_t set_frs;
 };
 /**
  * @endcond
@@ -1293,6 +1295,25 @@ static inline void pdc_fire_callbacks(sys_slist_t *list,
 		__ASSERT(cb->handler, "No callback handler!");
 		cb->handler(dev, cb, cci_event);
 	}
+}
+
+/**
+ * @brief Enable or disable fast role swap (FRS).
+ *
+ * @param dev Pointer to the PDC device instance
+ * @param enable Set to true to enable FRS, set to false to disable FRS
+ * @return 0 on success, negative errno otherwise
+ */
+static inline int pdc_set_frs(const struct device *dev, bool enable)
+{
+	const struct pdc_driver_api_t *api =
+		(const struct pdc_driver_api_t *)dev->api;
+
+	if (api->set_frs == NULL) {
+		return -ENOSYS;
+	}
+
+	return api->set_frs(dev, enable);
 }
 
 #ifdef __cplusplus

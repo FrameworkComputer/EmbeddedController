@@ -83,6 +83,8 @@ typedef int (*emul_pdc_set_cable_property_t)(
 typedef int (*emul_pdc_set_vdo_t)(const struct emul *target, uint8_t num_vdos,
 				  const uint32_t *vdos);
 
+typedef int (*emul_pdc_get_frs_t)(const struct emul *target, bool *enabled);
+
 typedef int (*emul_pdc_idle_wait_t)(const struct emul *target);
 
 __subsystem struct emul_pdc_api_t {
@@ -115,6 +117,7 @@ __subsystem struct emul_pdc_api_t {
 	emul_pdc_set_cable_property_t set_cable_property;
 	emul_pdc_get_cable_property_t get_cable_property;
 	emul_pdc_set_vdo_t set_vdo;
+	emul_pdc_get_frs_t get_frs;
 	emul_pdc_idle_wait_t idle_wait;
 };
 
@@ -604,6 +607,21 @@ static inline int emul_pdc_disconnect(const struct emul *target)
 	emul_pdc_pulse_irq(target);
 
 	return 0;
+}
+
+static inline int emul_pdc_get_frs(const struct emul *target, bool *enabled)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_api_t *api = target->backend_api;
+
+	if (api->get_frs) {
+		return api->get_frs(target, enabled);
+	}
+
+	return -ENOSYS;
 }
 
 static inline int emul_pdc_idle_wait(const struct emul *target)
