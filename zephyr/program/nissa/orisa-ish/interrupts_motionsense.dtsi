@@ -17,6 +17,11 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "bma4xx_interrupt";
 		};
+		int_tablet_mode: ec_tablet_mode {
+			irq-pin = <&gpio_tablet_mode_int_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "gmr_tablet_switch_isr";
+		};
 	};
 };
 
