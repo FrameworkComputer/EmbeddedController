@@ -140,6 +140,7 @@
 
 		standalone-mode-s0 {
 			chipset-state = "POWER_S0";
+			charge-state = "LED_PWRS_CHARGE";
 			standalone-mode;
 
 			battery_led {
@@ -152,6 +153,7 @@
 
 		standalone-mode-s3 {
 			chipset-state = "POWER_S3";
+			charge-state = "LED_PWRS_CHARGE";
 			standalone-mode;
 
 			battery_led {
@@ -187,6 +189,7 @@
 
 		standalone-mode-s5 {
 			chipset-state = "POWER_S5";
+			charge-state = "LED_PWRS_CHARGE";
 			standalone-mode;
 
 			battery_led {
