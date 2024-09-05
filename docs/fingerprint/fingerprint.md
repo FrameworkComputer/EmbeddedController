@@ -32,7 +32,7 @@ MCU                      | Sensor     | Firmware (EC "board")                   
 ------------------------ | ---------- | ---------------------------------------------- | ------------------------------------------ | ------------
 [STM32H743] \(Cortex-M7) | [FPC 1145] | `dartmonkey`<br>(aka `nocturne_fp`, `nami_fp`) | [Icetower v3] <br>(Previously Dragontalon) | [Nucleo H743ZI2]
 [STM32F412] \(Cortex-M4) | [FPC 1025] | `bloonchipper`<br>(aka `hatch_fp`)             | [Dragonclaw v4]                            | [Nucleo F412ZG]
-NPCX99FP \(Cortex-M4)    | [FPC 1025] | `helipilot`                                    | [Quincy v3]                                | N/A
+[NPCX99FP] \(Cortex-M4)  | [FPC 1025] | `helipilot`                                    | [Quincy v3]                                | N/A
 
 RAM and Flash details for each board are in the [Fingerprint MCU RAM and Flash]
 document.
@@ -585,6 +585,7 @@ that are connected via UART use [`cros_ec_uart.c`].
 [`flashrom`]: https://chromium.googlesource.com/chromiumos/third_party/flashrom/
 [STM32F412]: https://www.st.com/resource/en/reference_manual/dm00180369.pdf
 [STM32H743]: https://www.st.com/resource/en/reference_manual/dm00314099.pdf
+[NPCX99FP]: http://go/cros-fp-npcx99fp-ref-manual
 [`board/nocturne_fp/dev_key.pem`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/board/nocturne_fp/dev_key.pem
 [`timberslide`]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/timberslide
 [cros_ec_debugfs]: https://chromium.googlesource.com/chromiumos/third_party/kernel/+/9db44685934a2e4bc9180ea2de87a6c429672395/drivers/platform/chrome/cros_ec_debugfs.c
