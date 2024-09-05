@@ -259,6 +259,8 @@ static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
 	case UCSI_GET_CABLE_PROPERTY:
 		tps699x_emul_get_cable_property(data);
 		break;
+	case UCSI_READ_POWER_LEVEL:
+		break;
 	default:
 		LOG_WRN("tps6699x_emul: Unimplemented UCSI command %#04x", cmd);
 	};
@@ -306,6 +308,25 @@ static void tps6699x_emul_handle_sryr(struct tps6699x_emul_pdc_data *data,
 	data_reg[0] = COMMAND_RESULT_SUCCESS;
 }
 
+static void tps6699x_emul_handle_aneg(struct tps6699x_emul_pdc_data *data,
+				      uint8_t *data_reg)
+{
+	LOG_INF("ANEg TASK");
+	data_reg[0] = COMMAND_RESULT_SUCCESS;
+}
+
+static void delayable_work_handler(struct k_work *w)
+{
+	struct k_work_delayable *dwork = k_work_delayable_from_work(w);
+	struct tps6699x_emul_pdc_data *data =
+		CONTAINER_OF(dwork, struct tps6699x_emul_pdc_data, delay_work);
+	enum tps6699x_command_task *cmd_reg =
+		(enum tps6699x_command_task *)&data
+			->reg_val[TPS6699X_REG_COMMAND_I2C1];
+
+	*cmd_reg = COMMAND_TASK_COMPLETE;
+}
+
 static void tps6699x_emul_handle_command(struct tps6699x_emul_pdc_data *data,
 					 enum tps6699x_command_task task,
 					 uint8_t *data_reg)
@@ -326,6 +347,9 @@ static void tps6699x_emul_handle_command(struct tps6699x_emul_pdc_data *data,
 	case COMMAND_TASK_SRYR:
 		tps6699x_emul_handle_sryr(data, data_reg);
 		break;
+	case COMMAND_TASK_ANEG:
+		tps6699x_emul_handle_aneg(data, data_reg);
+		break;
 	default: {
 		char task_str[5] = {
 			((char *)&task)[0],
@@ -341,8 +365,11 @@ static void tps6699x_emul_handle_command(struct tps6699x_emul_pdc_data *data,
 		return;
 	}
 	}
-
-	*cmd_reg = COMMAND_TASK_COMPLETE;
+	if (data->delay_ms > 0) {
+		k_work_schedule(&data->delay_work, K_MSEC(data->delay_ms));
+	} else {
+		*cmd_reg = COMMAND_TASK_COMPLETE;
+	}
 }
 
 static void tps6699x_emul_handle_write(struct tps6699x_emul_pdc_data *data,
@@ -788,6 +815,18 @@ static int emul_tps6699x_set_pdos(const struct emul *target,
 static int tps6699x_emul_init(const struct emul *emul,
 			      const struct device *parent)
 {
+	struct tps6699x_emul_data *data = emul->data;
+	const struct i2c_common_emul_cfg *cfg = emul->cfg;
+
+	LOG_INF("TPS669X emul init");
+
+	data->common.i2c = parent;
+	data->common.cfg = cfg;
+
+	i2c_common_emul_init(&data->common);
+	k_work_init_delayable(&data->pdc_data.delay_work,
+			      delayable_work_handler);
+
 	return 0;
 }
 

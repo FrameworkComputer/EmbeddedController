@@ -67,6 +67,7 @@ struct tps6699x_response {
 struct tps6699x_emul_pdc_data {
 	struct gpio_dt_spec irq_gpios;
 	uint32_t delay_ms;
+	struct k_work_delayable delay_work;
 	/* The register address currently being read or written. */
 	uint8_t reg_addr;
 	/* The stated length of the current read or write. */
