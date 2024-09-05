@@ -673,6 +673,8 @@ static void st_suspended_run(void *o)
 {
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
 
+	k_event_clear(&data->pdc_event, PDC_CMD_SUSPEND_REQUEST_EVENT);
+
 	/* Stay here while suspended */
 	if (check_comms_suspended()) {
 		return;
