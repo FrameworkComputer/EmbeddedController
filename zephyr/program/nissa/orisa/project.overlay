@@ -13,14 +13,13 @@
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
 
-/ {
-	named-gpios {
-		/delete-node/ gpio_acc_int_l;
-		/delete-node/ gpio_imu_int_l;
-		/delete-node/ gpio_tablet_mode_l;
-		/delete-node/ i2c1_0;
-		/delete-node/ i2c_ec_i2c_sensor;
-	};
+/delete-node/ &gpio_acc_int_l;
+/delete-node/ &gpio_imu_int_l;
+/delete-node/ &gpio_tablet_mode_l;
+/delete-node/ &i2c_ec_i2c_sensor;
+
+&i2c1_0 {
+	status = "disabled";
 };
 
 /* These GPIOS are initialized by the PDC driver */
