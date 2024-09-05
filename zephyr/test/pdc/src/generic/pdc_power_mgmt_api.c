@@ -1294,7 +1294,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume_up_drp_partner)
 	zassert_equal(pdr.swap_to_src, 0);
 }
 
-ZTEST_USER(pdc_power_mgmt_api, test_chipset_startup)
+ZTEST_USER(pdc_power_mgmt_api, test_chipset_on)
 {
 	union connector_status_t connector_status;
 	enum ccom_t ccom;
@@ -1308,6 +1308,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_startup)
 
 	fake_chipset_state = CHIPSET_STATE_ON;
 	hook_notify(HOOK_CHIPSET_STARTUP);
+	hook_notify(HOOK_CHIPSET_RESUME);
 	TEST_WORKING_DELAY(PDC_POWER_STABLE_TIMEOUT);
 
 	emul_pdc_disconnect(emul);
@@ -1318,13 +1319,13 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_startup)
 		zassert_ok(emul_pdc_get_ccom(emul, &ccom),
 			   "Invalid CCOM value in emul");
 
-		if (ccom != CCOM_RD)
+		if (ccom != CCOM_DRP)
 			continue;
 
 		break;
 	}
 
-	zassert_equal(CCOM_RD, ccom);
+	zassert_equal(CCOM_DRP, ccom);
 }
 
 ZTEST_USER(pdc_power_mgmt_api, test_chipset_shutdown)
