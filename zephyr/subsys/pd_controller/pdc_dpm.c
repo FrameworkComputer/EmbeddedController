@@ -203,7 +203,7 @@ void pdc_dpm_eval_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo)
 	} else {
 		int frs_current = vsafe5v_pdo & PDO_FIXED_FRS_CURR_MASK;
 
-		if (!IS_ENABLED(CONFIG_USB_PD_FRS))
+		if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS))
 			return;
 
 		/* FRS is only supported in PD 3.0 and higher */
@@ -290,7 +290,7 @@ void pdc_dpm_remove_source(int port)
 	if (CONFIG_PLATFORM_EC_CONFIG_USB_PD_3A_PORTS == 0)
 		return;
 
-	if (!IS_ENABLED(CONFIG_USB_PD_FRS))
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS))
 		return;
 
 	if (!(BIT(port) & (uint32_t)source_frs_max_requested))
