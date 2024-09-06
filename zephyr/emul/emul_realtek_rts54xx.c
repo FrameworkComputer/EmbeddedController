@@ -680,6 +680,7 @@ static int set_frs_function(struct rts5453p_emul_pdc_data *data,
 	LOG_INF("SET_FRST_FUNCTION port=%d, setting %d",
 		req->set_frs_function.port_num, req->set_frs_function.enable);
 
+	data->frs_configured = true;
 	data->frs_enabled = req->set_frs_function.enable;
 	send_response(data);
 
@@ -1023,6 +1024,8 @@ static int emul_realtek_rts54xx_reset(const struct emul *target)
 	/* Reset PDOs. */
 	emul_pdc_pdo_reset(&data->pdo);
 
+	data->frs_configured = false;
+
 	return 0;
 }
 
@@ -1355,6 +1358,10 @@ static int emul_realtek_rts54xx_get_frs(const struct emul *target,
 {
 	struct rts5453p_emul_pdc_data *data =
 		rts5453p_emul_get_pdc_data(target);
+
+	if (!data->frs_configured) {
+		return -EIO;
+	}
 
 	*enabled = data->frs_enabled;
 

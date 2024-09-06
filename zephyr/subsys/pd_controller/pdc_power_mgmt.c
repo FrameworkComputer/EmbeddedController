@@ -159,6 +159,8 @@ enum pdc_cmd_t {
 	CMD_PDC_GET_LPM_PPM_INFO,
 	/** CMD_PDC_GET_PD_VDO_DP_STATUS */
 	CMD_PDC_GET_PD_VDO_DP_STATUS,
+	/** CMD_PDC_SET_FRS */
+	CMD_PDC_SET_FRS,
 	/** CMD_PDC_COUNT */
 	CMD_PDC_COUNT
 };
@@ -219,6 +221,8 @@ enum snk_attached_local_state_t {
 	SNK_ATTACHED_SET_DR_SWAP_POLICY,
 	/** SNK_ATTACHED_SET_PR_SWAP_POLICY */
 	SNK_ATTACHED_SET_PR_SWAP_POLICY,
+	/** SNK_ATTACHED_DISABLE_FRS */
+	SNK_ATTACHED_DISABLE_FRS,
 	/** SNK_ATTACHED_GET_PDOS */
 	SNK_ATTACHED_GET_PDOS,
 	/** SNK_ATTACHED_GET_VDO */
@@ -352,6 +356,7 @@ test_export_static const char *const pdc_cmd_names[] = {
 	[CMD_PDC_ACK_CC_CI] = "PDC_ACK_CC_CI",
 	[CMD_PDC_GET_LPM_PPM_INFO] = "PDC_GET_LPM_PPM_INFO",
 	[CMD_PDC_GET_PD_VDO_DP_STATUS] = "PDC_GET_PD_VDO_DP_STATUS",
+	[CMD_PDC_SET_FRS] = "PDC_SET_FRS",
 };
 const int pdc_cmd_types = CMD_PDC_COUNT;
 
@@ -693,6 +698,8 @@ struct pdc_port_t {
 	bool hpd_wake_watch;
 	/** Additional change bits to report to PPM. */
 	union conn_status_change_bits_t overlay_ppm_changes;
+	/** LPM should enable FRS. */
+	bool frs_enable;
 };
 
 /**
@@ -1751,7 +1758,7 @@ static void pdc_snk_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_SET_UOR);
 		return;
 	case SNK_ATTACHED_SET_PR_SWAP_POLICY:
-		port->snk_attached_local_state = SNK_ATTACHED_GET_VDO;
+		port->snk_attached_local_state = SNK_ATTACHED_DISABLE_FRS;
 		/* TODO: read from DT */
 		port->pdr = (union pdr_t){
 			.accept_pr_swap =
@@ -1762,6 +1769,14 @@ static void pdc_snk_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_SET_PDR);
 		atomic_clear_bit(port->snk_policy.flags,
 				 SNK_POLICY_UPDATE_ALLOW_PR_SWAP);
+		return;
+	case SNK_ATTACHED_DISABLE_FRS:
+		/* Always disable FRS by default. The source policy manager
+		 * is responsible for enabling FRS is the power budget allows.
+		 */
+		port->snk_attached_local_state = SNK_ATTACHED_GET_VDO;
+		port->frs_enable = false;
+		queue_internal_cmd(port, CMD_PDC_SET_FRS);
 		return;
 	case SNK_ATTACHED_GET_VDO:
 		port->snk_attached_local_state = SNK_ATTACHED_GET_PDOS;
@@ -2050,6 +2065,9 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 	case CMD_PDC_SET_PDOS:
 		rv = pdc_set_pdos(port->pdc, port->set_pdos.type,
 				  port->set_pdos.pdos, port->set_pdos.count);
+		break;
+	case CMD_PDC_SET_FRS:
+		rv = pdc_set_frs(port->pdc, port->frs_enable);
 		break;
 	case CMD_PDC_GET_PCH_DATA_STATUS:
 		rv = pdc_get_pch_data_status(port->pdc, config->connector_num,
