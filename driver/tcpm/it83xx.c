@@ -341,12 +341,7 @@ static void it83xx_init(enum usbpd_port port, int role)
 	/* reset and disable HW auto generate message header */
 	IT83XX_USBPD_GCR(port) = BIT(5);
 	USBPD_SW_RESET(port);
-	/*
-	 * According PD version set the total number of HW attempts
-	 * (= retry count + 1)
-	 */
-	IT83XX_USBPD_BMCSR(port) = (IT83XX_USBPD_BMCSR(port) & ~0x70) |
-				   ((CONFIG_PD_RETRY_COUNT + 1) << 4);
+
 	/* Disable Rx decode */
 	it83xx_tcpm_set_rx_enable(port, 0);
 	if (IS_ENABLED(CONFIG_USB_PD_TCPMV1)) {
@@ -618,6 +613,7 @@ static enum tcpc_transmit_complete it83xx_tx_data(enum usbpd_port port,
 	int r;
 	uint32_t evt;
 	uint8_t length = PD_HEADER_CNT(header);
+	uint8_t retry_count = pd_get_retry_count(port, type);
 
 	/* set message header */
 	IT83XX_USBPD_TMHLR(port) = (uint8_t)header;
@@ -637,6 +633,11 @@ static enum tcpc_transmit_complete it83xx_tx_data(enum usbpd_port port,
 		IT83XX_USBPD_MTSR0(port) &= ~USBPD_REG_MASK_CABLE_ENABLE;
 	else
 		IT83XX_USBPD_MTSR0(port) |= USBPD_REG_MASK_CABLE_ENABLE;
+
+	/* According PD version set HW auto retry count */
+	IT83XX_USBPD_BMCSR(port) = (IT83XX_USBPD_BMCSR(port) & ~0x70) |
+				   ((retry_count + 1) << 4);
+
 	/* clear msg length */
 	IT83XX_USBPD_MTSR1(port) &= (~0x7);
 	/* Limited by PD_HEADER_CNT() */
@@ -651,7 +652,7 @@ static enum tcpc_transmit_complete it83xx_tx_data(enum usbpd_port port,
 		memcpy((uint32_t *)&IT83XX_USBPD_TDO(port), buf, length * 4);
 	}
 
-	for (r = 0; r <= CONFIG_PD_RETRY_COUNT; r++) {
+	for (r = 0; r <= retry_count; r++) {
 		/* Start TX */
 		USBPD_KICK_TX_START(port);
 		evt = task_wait_event_mask(TASK_EVENT_PHY_TX_DONE,
@@ -687,7 +688,7 @@ static enum tcpc_transmit_complete it83xx_tx_data(enum usbpd_port port,
 		}
 	}
 
-	if (r > CONFIG_PD_RETRY_COUNT) {
+	if (r > retry_count) {
 		restore_sop_header_pwr_data_role(port, type);
 		return TCPC_TX_COMPLETE_DISCARDED;
 	}
