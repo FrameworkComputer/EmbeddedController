@@ -6,6 +6,7 @@ add_subdirectory("retimer")
 add_subdirectory("tcpc")
 
 cros_ec_library_include_directories(include)
+zephyr_include_directories("${PLATFORM_EC}/zephyr/drivers/usbc")
 
 zephyr_library_sources_ifdef(CONFIG_EMUL_ANX7452	emul_anx7452.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_KB8010		emul_kb8010.c)
