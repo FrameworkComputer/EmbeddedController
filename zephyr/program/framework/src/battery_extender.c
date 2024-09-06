@@ -46,6 +46,7 @@ static timestamp_t reset_deadline;
 static void extender_init(void)
 {
 	timestamp_t now = get_time();
+
 	batt_extender_deadline.val =
 			now.val + battery_extender_trigger;
 	batt_extender_deadline_stage2.val =
@@ -82,6 +83,7 @@ void battery_extender(void)
 		batt_extender_deadline_stage2.val =
 				now.val + battery_extender_trigger + 2*DAY;
 		battery_sustainer_set(-1, -1);
+		set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
 	}
 
 	if (batt_extender_deadline_stage2.val &&
@@ -139,6 +141,7 @@ static enum ec_status battery_extender_hc(struct host_cmd_handler_args *args)
 			batt_extender_disable = p->disable;
 			if (batt_extender_disable) {
 				battery_sustainer_set(-1, -1);
+				set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
 				stage = BATT_EXTENDER_STAGE_0;
 			}
 		}
@@ -186,23 +189,25 @@ static uint64_t cmd_parse_timestamp(int argc, const char **argv)
 		} else if (!strncmp(argv[3], "d", 1)) {
 			time_val *= DAY;
 		} else {
-			CPRINTF("invalid option for time scale: %s. Valid options: [s,h,d]\n", argv[3]);
+			CPRINTF("invalid option for time scale: %s. Valid options: [s,h,d]\n",
+				argv[3]);
 			return EC_ERROR_PARAM3;
 		}
 		return time_val;
-	} else {
-		CPRINTF("invalid parameters:\n");
-		return 0;
 	}
+
+	CPRINTF("invalid parameters:\n");
+	return 0;
 }
 
 static void print_time_offset(uint64_t t_end, uint64_t t_start)
 {
 	uint64_t t = t_end - t_start;
 	uint64_t d = TIMES2DAYS(t);
-	uint64_t h = (t % DAY)/ HOUR;
-	uint64_t m = (t % HOUR)/ MINUTE;
-	uint64_t s = (t % MINUTE)/ SECOND;
+	uint64_t h = (t % DAY) / HOUR;
+	uint64_t m = (t % HOUR) / MINUTE;
+	uint64_t s = (t % MINUTE) / SECOND;
+
 	if (t_end < t_start) {
 		CPRINTF("Expired\n");
 	} else {
@@ -226,11 +231,12 @@ static int cmd_batt_extender(int argc, const char **argv)
 				disable ? "enabled" : "disabled");
 			if (batt_extender_disable) {
 				battery_sustainer_set(-1, -1);
+				set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
 				stage = BATT_EXTENDER_STAGE_0;
 			} else {
 				if (battery_extender_reset) {
-				reset_deadline.val =
-					now.val + battery_extender_reset;
+					reset_deadline.val =
+						now.val + battery_extender_reset;
 				}
 				if (battery_extender_trigger != 0) {
 					batt_extender_deadline.val =
@@ -240,7 +246,8 @@ static int cmd_batt_extender(int argc, const char **argv)
 				}
 			}
 		} else if (!strncmp(argv[1], "timeext2", 8)) {
-			batt_extender_deadline_stage2.val = now.val + cmd_parse_timestamp(argc, argv);
+			batt_extender_deadline_stage2.val =
+				now.val + cmd_parse_timestamp(argc, argv);
 		} else if (!strncmp(argv[1], "timeext", 7)) {
 			batt_extender_deadline.val = now.val + cmd_parse_timestamp(argc, argv);
 		} else if (!strncmp(argv[1], "timerst", 7)) {
