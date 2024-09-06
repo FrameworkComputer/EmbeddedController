@@ -23,6 +23,7 @@ enum fw_config_db {
 	DB_1C_1A_LTE,
 	DB_1C,
 	DB_1A_HDMI_LTE,
+	DB_LTE,
 };
 #define FW_CONFIG_DB_OFFSET 0
 #define FW_CONFIG_DB_MASK GENMASK(3, 0)
