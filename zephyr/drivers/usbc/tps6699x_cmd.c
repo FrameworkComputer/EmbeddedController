@@ -24,50 +24,78 @@ LOG_MODULE_DECLARE(tps6699x, CONFIG_USBC_LOG_LEVEL);
 
 #include <drivers/pdc.h>
 
+static int tps_read_reg(const struct i2c_dt_spec *i2c, enum tps6699x_reg reg,
+			uint8_t *buf, uint8_t len)
+{
+	uint8_t byte_cnt;
+
+	/* TPS Read Protocol
+	 *   1. Write of register to be read
+	 *   2. Read byte count
+	 *   3. Read register contents
+	 */
+	struct i2c_msg msg[] = {
+		{
+			.buf = (uint8_t *)&reg,
+			.len = 1,
+			.flags = I2C_MSG_WRITE,
+		},
+		{
+			.buf = &byte_cnt,
+			.len = 1,
+			.flags = I2C_MSG_READ | I2C_MSG_RESTART,
+		},
+		{
+			.buf = buf,
+			.len = len,
+			.flags = I2C_MSG_READ | I2C_MSG_STOP,
+		},
+	};
+
+	return i2c_transfer_dt(i2c, msg, ARRAY_SIZE(msg));
+}
+
+static int tps_write_reg(const struct i2c_dt_spec *i2c, enum tps6699x_reg reg,
+			 uint8_t *buf, uint8_t len)
+{
+	/* TPS Write Protocol
+	 *   1. Write Register
+	 *   2. Write Byte Count
+	 *   3. Write data
+	 */
+	struct i2c_msg msg[] = {
+		{
+			.buf = (uint8_t *)&reg,
+			.len = 1,
+			.flags = I2C_MSG_WRITE,
+		},
+		{
+			.buf = &len,
+			.len = 1,
+			.flags = I2C_MSG_WRITE,
+		},
+		{
+			.buf = buf,
+			.len = len,
+			.flags = I2C_MSG_WRITE | I2C_MSG_STOP,
+		},
+	};
+
+	return i2c_transfer_dt(i2c, msg, ARRAY_SIZE(msg));
+}
+
 static int tps_xfer_reg(const struct i2c_dt_spec *i2c, enum tps6699x_reg reg,
 			uint8_t *buf, uint8_t len, int flag)
 {
-	struct i2c_msg msg[2];
-	int msg_len;
-
 	if (!i2c || !buf || (len == 0)) {
 		return -EINVAL;
 	}
 
 	if (flag == I2C_MSG_READ) {
-		msg[0].buf = (uint8_t *)&reg;
-		msg[0].len = 1;
-		msg[0].flags = I2C_MSG_WRITE;
-
-		/* Skip reg value in buf[0], and and decrement
-		 * length by 1. The PDC returns the number of bytes
-		 * read in buf[1]. */
-		msg[1].buf = &buf[1];
-		msg[1].len = len - 1;
-		msg[1].flags = I2C_MSG_READ | I2C_MSG_STOP | I2C_MSG_RESTART;
-
-		/* 2 messages to send */
-		msg_len = 2;
+		return tps_read_reg(i2c, reg, buf, len);
 	} else {
-		/* Set register to write */
-		buf[0] = reg;
-		/* Set number of bytes to write */
-		buf[1] = len - 2;
-
-		msg[0].buf = buf;
-		msg[0].len = len;
-		msg[0].flags = I2C_MSG_WRITE | I2C_MSG_STOP;
-
-		/* msg[1] is not used */
-		msg[1].buf = NULL;
-		msg[1].len = 0;
-		msg[1].flags = 0;
-
-		/* 1 message to send */
-		msg_len = 1;
+		return tps_write_reg(i2c, reg, buf, len);
 	}
-
-	return i2c_transfer_dt(i2c, &msg[0], msg_len);
 }
 
 int tps_rd_vendor_id(const struct i2c_dt_spec *i2c, union reg_vendor_id *buf)
