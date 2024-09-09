@@ -180,10 +180,15 @@
 				enum-name = "FW_STORAGE_UFS_31";
 				value = <1>;
 			};
+			ufs-40-hs-lss {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_UFS_40_HS_LSS";
+				value = <2>;
+			};
 			nvme {
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "FW_STORAGE_NVME";
-				value = <2>;
+				value = <3>;
 			};
 		};
 	};
