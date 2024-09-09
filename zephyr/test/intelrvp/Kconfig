@@ -22,6 +22,11 @@ config TEST_PROJECT_MTLRVPP_MCHP
 	help
 	  Enable tests specific to the mtlrvp_mchp variant.
 
+config TEST_PROJECT_PTLRVP_MCHP
+	bool "Enable ptlrvp_mchp-specific tests"
+	help
+	  Enable tests specific to the ptlrvp_mchp variant.
+
 endchoice
 
 config TEST_PROJECT_MTL_BOARD_POWER
@@ -59,8 +64,14 @@ config TEST_PROJECT_INTELRVP_BOARD_ID_VAL
 	int "Value to be used for board ID test"
 	depends on TEST_PROJECT_INTELRVP_BOARD_ID
 	default 1051 if TEST_PROJECT_MTLRVPP_COMMON
-	default 1078 if TEST_PROJECT_PTLRVPP_MCHP
+	default 1078 if TEST_PROJECT_PTLRVP_MCHP
 	help
 	  Value to be used for board ID test.
+
+config TEST_PROJECT_PTL_BOARD_POWER
+	bool "Run tests for board_power.c"
+	depends on TEST_PROJECT_PTLRVP_MCHP
+	help
+	  Include board_power.c into the binary and test its functions.
 
 source "Kconfig.zephyr"

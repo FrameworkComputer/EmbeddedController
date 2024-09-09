@@ -182,6 +182,12 @@ static int chipset_ap_power_action_g3_run(void *data)
 
 AP_POWER_CHIPSET_STATE_DEFINE(AP_POWER_STATE_G3, NULL,
 			      chipset_ap_power_action_g3_run, NULL);
+
+#if CONFIG_AP_PWRSEQ_S0IX
+AP_POWER_CHIPSET_SUB_STATE_DEFINE(AP_POWER_STATE_S0IX, NULL,
+				  x86_non_dsx_mtl_s0ix_run, NULL,
+				  AP_POWER_STATE_S0);
+#endif /* CONFIG_AP_PWRSEQ_S0IX */
 #endif
 
 static void board_power_before(void *fixture)
@@ -246,6 +252,8 @@ ZTEST_USER(board_power, test_board_ap_power_action_g3_run_0)
 		mock_power_signal_get_ap_power_action_g3_run_0;
 
 	ap_pwrseq_post_event(dev, AP_PWRSEQ_EVENT_POWER_SIGNAL);
+	/* Buffer time to process event */
+	k_msleep(5);
 	zassert_equal(0, chipset_run_count);
 }
 
@@ -259,6 +267,8 @@ ZTEST_USER(board_power, test_board_ap_power_action_g3_run_1)
 		mock_power_signal_get_ap_power_action_g3_run_0;
 
 	ap_pwrseq_post_event(dev, AP_PWRSEQ_EVENT_POWER_STARTUP);
+	/* Buffer time to process event */
+	k_msleep(5);
 	zassert_equal(0, chipset_run_count);
 }
 
@@ -272,6 +282,8 @@ ZTEST_USER(board_power, test_board_ap_power_action_g3_run_2)
 		mock_power_signal_get_ap_power_action_g3_run_1;
 
 	ap_pwrseq_post_event(dev, AP_PWRSEQ_EVENT_POWER_STARTUP);
+	/* Buffer time to process event */
+	k_msleep(5);
 	zassert_equal(1, chipset_run_count);
 }
 #else

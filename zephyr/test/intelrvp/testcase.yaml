@@ -100,3 +100,24 @@ tests:
     extra_configs:
       - CONFIG_TEST_PROJECT_MTLRVPP_COMMON=y
       - CONFIG_TEST_PROJECT_INTELRVP_BOARD_ID=y
+
+  intelrvp.ptlrvp_mchp.board_power:
+    extra_dtc_overlay_files:
+      - boards/intelrvp.dtsi
+      - boards/ptlrvp/ptlrvp_mchp/ptlrvp_mchp.dtsi
+    extra_conf_files:
+      - boards/ptlrvp/program.conf
+      - boards/ptlrvp/pd.conf
+      - boards/ptlrvp/ptlrvp.conf
+    extra_configs:
+      - CONFIG_TEST_PROJECT_PTLRVP_MCHP=y
+      - CONFIG_TEST_PROJECT_MTL_BOARD_POWER=y
+      - CONFIG_X86_NON_DSX_PWRSEQ_MTL=n
+      - CONFIG_AP_PWRSEQ=y
+      - CONFIG_AP_PWRSEQ_DRIVER=y
+      - CONFIG_EMUL_AP_PWRSEQ_DRIVER=n
+      - CONFIG_AP_POWER_EVENTS_MOCK=y
+      - CONFIG_POWER_SIGNALS_MOCK=y
+      - CONFIG_CHIPSET_API_MOCK=y
+      - CONFIG_AP_EVENTS=n
+      - CONFIG_TEST_AP_PWRSEQ_PP5500=y

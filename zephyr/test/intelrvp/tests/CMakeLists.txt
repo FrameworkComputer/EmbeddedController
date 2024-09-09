@@ -14,12 +14,12 @@ zephyr_include_directories(${PLATFORM_EC}/driver/ppc)
 zephyr_include_directories(${PLATFORM_EC}/driver/usb_mux)
 zephyr_include_directories(${PLATFORM_EC}/driver/tcpm)
 zephyr_include_directories(${PLATFORM_EC}/driver/ioexpander)
+target_sources(app PRIVATE "${PLATFORM_EC_PROGRAM_DIR}/intelrvp/src/dc_jack.c")
+target_sources(app PRIVATE "${PLATFORM_EC_PROGRAM_DIR}/intelrvp/src/intel_rvp_board_id.c")
 
 if((CONFIG_TEST_PROJECT_MTLRVPP_NPCX) OR (CONFIG_TEST_PROJECT_MTLRVPP_MCHP) OR (CONFIG_TEST_PROJECT_MTLRVPP_COMMON))
 
 #Add sources for MTLRVP boards.
-target_sources(app PRIVATE "${PLATFORM_EC_PROGRAM_DIR}/intelrvp/src/intel_rvp_board_id.c")
-target_sources(app PRIVATE "${PLATFORM_EC_PROGRAM_DIR}/intelrvp/src/dc_jack.c")
 target_sources(app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/intelrvp/mtlrvp/src/board_power.c)
 target_sources(app PRIVATE "${PLATFORM_EC_PROGRAM_DIR}/intelrvp/src/chg_usb_pd_mecc_1_1.c")
 target_sources(app PRIVATE "${PLATFORM_EC_PROGRAM_DIR}/intelrvp/src/usb_pd_policy_mecc_1_1.c")
@@ -32,6 +32,13 @@ target_sources_ifndef(CONFIG_TEST_PROJECT_INTELRVP_CHG_USB_PD_MECC app PRIVATE "
 
 # Common fake funtions
 target_sources_ifndef(CONFIG_TEST_PROJECT_INTELRVP_TCPC app PRIVATE intelrvp/src/fakes.c)
+endif()
+
+if(CONFIG_TEST_PROJECT_PTLRVP_MCHP)
+target_sources(app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/intelrvp/ptlrvp/src/board_id.c)
+target_sources(app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/intelrvp/ptlrvp/src/board_power.c)
+target_sources(app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/intelrvp/ptlrvp/src/board_kbd.c)
+target_sources(app PRIVATE intelrvp/src/fakes.c)
 endif()
 
 target_sources_ifdef(CONFIG_TEST_PROJECT_MTL_BOARD_POWER app PRIVATE power/board_power.c)
