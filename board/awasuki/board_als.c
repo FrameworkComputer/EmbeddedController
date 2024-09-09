@@ -136,5 +136,4 @@ static void check_als(void)
 		hook_call_deferred(&als_change_deferred_data, 0);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, check_als, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_SECOND, check_als, HOOK_PRIO_DEFAULT);
