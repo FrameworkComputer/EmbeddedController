@@ -437,7 +437,7 @@ esac
 
 case "${CHIP}" in
 	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"ite_i2c"|"npcx_uut"|"ite_spi"| \
-			"ite_spi_ccd_i2c"|"ite_uart"|"ite_uart_3m"| \
+			"ite_spi_ccd_i2c"|"ite_spi_ccd_uart"|"ite_uart_3m"| \
 			"it8xxx2"|"mchp_int_spi")
 		;;
 	*)
@@ -1148,6 +1148,7 @@ function flash_flashrom() {
 			SPI_VOLTAGE="pp1800"
 		elif [[ "${CHIP}" == "ite_spi" ||
 		        "${CHIP}" == "ite_spi_ccd_i2c" ||
+		        "${CHIP}" == "ite_spi_ccd_uart" ||
 			"${CHIP}" == "it8xxx2" ]]; then
 			SPI_VOLTAGE="pp1800"
 		else
@@ -1181,6 +1182,7 @@ function flash_flashrom() {
 		# Enable SPI programming mode.
 		if [[ "${CHIP}" == "ite_spi" ||
 			"${CHIP}" == "ite_spi_ccd_i2c" ||
+			"${CHIP}" == "ite_spi_ccd_uart" ||
 			"${CHIP}" == "it8xxx2" ]]; then
 					# Set hardware strap pin (GPG6) of SPI
 					# programming as low then start ec
@@ -1249,6 +1251,7 @@ function flash_flashrom() {
 
 		if [[ "${CHIP}" =~ ^npcx(|_int)_spi$ ]] || \
 		   [[ "${CHIP}" =~ "ite_spi_ccd_i2c" ]] ||
+		   [[ "${CHIP}" =~ "ite_spi_ccd_uart" ]] ||
 		   [[ "${CHIP}" =~ "it8xxx2" ]] ||
 		   [[ "${CHIP}" =~ "ite_spi" ]] ; then
 		{	# Patch temp image up to SPI_SIZE
@@ -1680,6 +1683,17 @@ function flash_ite_spi_ccd_i2c() {
 		flash_flashrom
 	else
 		flash_it83xx
+	fi
+}
+
+# Flash ITE chips over SPI when using the servod debug connector
+# and over uart whn using CCD.
+function flash_ite_spi_ccd_uart() {
+	if [[ "${SERVO_TYPE}" =~ "servo_micro" || \
+	      "${SERVO_TYPE}" =~ "servo_v2" ]] ; then
+		flash_flashrom
+	else
+		flash_ite_uart_3m
 	fi
 }
 
