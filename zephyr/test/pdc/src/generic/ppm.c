@@ -566,7 +566,12 @@ ZTEST_USER_F(ppm_test, test_IDLENOTIFY_full_command_loop)
 	struct ucsi_control_t control = { .command = UCSI_GET_ALTERNATE_MODES,
 					  .data_length = 0 };
 	zassert_false(write_command(fixture, &control) < 0);
-	zassert_true(wait_for_notification(fixture, ++notified_count));
+
+	/* Wait for state machine to handle the command before checking CCI.
+	 * We will block for at least CMD_WAIT_TIMEOUT in the processing state
+	 * so the sleep is an arbitrary value less than that.
+	 */
+	k_msleep(50);
 	zassert_true(check_cci_matches(fixture, &cci_busy));
 
 	/* Send a fake response from the PD driver, and expect a notification to
@@ -634,7 +639,7 @@ ZTEST_USER_F(ppm_test, test_IDLENOTIFY_send_invalid_ucsi_command)
 	control.command = UCSI_GET_ERROR_STATUS;
 	zassert_false(write_command(fixture, &control) < 0);
 	zassert_true(wait_for_cmd_to_process(fixture));
-	notified_count += 2;
+	notified_count++;
 	zassert_true(wait_for_notification(fixture, notified_count));
 
 	union error_status_t data;
@@ -688,8 +693,8 @@ ZTEST_USER_F(ppm_test, test_CCACK_error_if_not_command_complete)
 	zassert_true(wait_for_cmd_to_process(fixture));
 	zassert_equal(get_ppm_state(fixture), PPM_STATE_WAITING_CC_ACK);
 
-	/* one notification each for busy and command complete. */
-	notified_count += 2;
+	/* one notification command complete. */
+	notified_count++;
 	zassert_equal(notified_count, fixture->notified_count);
 
 	/* Resend the previous command instead of a CC Ack. */
@@ -725,8 +730,7 @@ ZTEST_USER_F(ppm_test, test_CCACK_support_simultaneous_ack_CC_and_CI)
 	queue_command_for_fake_driver(fixture, UCSI_GET_CONNECTOR_CAPABILITY,
 				      /*result=*/0, /*lpm_data=*/NULL);
 	zassert_false(write_command(fixture, &control) < 0);
-	/* Wait for both busy + complete. */
-	notified_count += 2;
+	notified_count++;
 	zassert_true(wait_for_notification(fixture, notified_count));
 	zassert_true(check_cci_matches(fixture, &cci_cmd_complete));
 
@@ -772,8 +776,7 @@ ZTEST_USER_F(ppm_test, test_CCACK_ignore_async_event_processing)
 	zassert_false(write_command(fixture, &control) < 0);
 	zassert_true(wait_for_cmd_to_process(fixture));
 	zassert_equal(get_ppm_state(fixture), PPM_STATE_WAITING_CC_ACK);
-	/* Wait for both busy + complete. */
-	notified_count += 2;
+	notified_count++;
 	zassert_true(wait_for_notification(fixture, notified_count));
 
 	/* The next expected command is ACK_CC_CI. Do this before triggering the
@@ -799,7 +802,7 @@ ZTEST_USER_F(ppm_test, test_CCACK_ignore_async_event_processing)
 	/* After handling the command loop, we will see the pending command and
 	 * go into the WAITING_ASYNC_EV_ACK state.
 	 */
-	notified_count += 2;
+	notified_count++;
 	zassert_true(wait_for_notification(fixture, notified_count));
 	zassert_equal(get_ppm_state(fixture), PPM_STATE_WAITING_ASYNC_EV_ACK);
 }
@@ -827,7 +830,7 @@ ZTEST_USER_F(ppm_test, test_CCACK_fail_if_send_ci_ack)
 				      /*result=*/0,
 				      /*lpm_data=*/NULL);
 	zassert_false(write_command(fixture, &control) < 0);
-	notified_count += 2;
+	notified_count++;
 	zassert_true(wait_for_notification(fixture, notified_count));
 	zassert_true(check_cci_matches(fixture, &cci_cmd_complete));
 	zassert_equal(get_ppm_state(fixture), PPM_STATE_WAITING_CC_ACK);
@@ -859,7 +862,7 @@ ZTEST_USER_F(ppm_test, test_CCACK_fail_if_no_ack)
 				      /*lpm_data=*/NULL);
 
 	zassert_false(write_command(fixture, &control) < 0);
-	notified_count += 2;
+	notified_count++;
 	zassert_true(wait_for_notification(fixture, notified_count));
 	zassert_true(check_cci_matches(fixture, &cci_cmd_complete));
 	zassert_equal(get_ppm_state(fixture), PPM_STATE_WAITING_CC_ACK);
@@ -953,7 +956,7 @@ ZTEST_USER_F(ppm_test, test_lpm_error_requires_ack)
 	queue_command_for_fake_driver(fixture, UCSI_GET_CONNECTOR_CAPABILITY,
 				      /*result=*/-EBUSY, /*lpm_data=*/NULL);
 	zassert_false(write_command(fixture, &control) < 0);
-	notified_count += 2;
+	notified_count++;
 	zassert_true(wait_for_notification(fixture, notified_count));
 	zassert_true(check_cci_matches(fixture, &cci_error));
 	zassert_equal(get_ppm_state(fixture), PPM_STATE_WAITING_CC_ACK);

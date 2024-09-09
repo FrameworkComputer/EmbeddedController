@@ -517,7 +517,6 @@ static void ppm_common_handle_pending_command(struct ucsi_ppm_device *dev)
 		dev->ppm_state = PPM_STATE_PROCESSING_COMMAND;
 		clear_cci(dev);
 		dev->ucsi_data.cci.busy = 1;
-		ppm_common_opm_notify(dev);
 		/* Intentional fallthrough since we are now processing.
 		 */
 		__attribute__((fallthrough));
