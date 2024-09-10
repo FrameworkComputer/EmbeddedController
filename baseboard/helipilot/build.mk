@@ -39,6 +39,7 @@ test-list-y = \
        fpsensor_auth_crypto_stateful_otp \
        fpsensor_auth_crypto_stateless \
        fpsensor_crypto \
+       fpsensor_debug \
        fpsensor_hw \
        fpsensor_utils \
        ftrapv \

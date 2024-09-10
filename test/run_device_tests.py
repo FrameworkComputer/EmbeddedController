@@ -365,6 +365,7 @@ class AllTests:
             ),
             TestConfig(test_name="fpsensor_auth_crypto_stateless"),
             TestConfig(test_name="fpsensor_crypto"),
+            TestConfig(test_name="fpsensor_debug"),
             TestConfig(
                 test_name="fpsensor_hw", pre_test_callback=fp_sensor_sel
             ),
