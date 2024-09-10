@@ -677,14 +677,14 @@ static int get_pch_data_status(struct rts5453p_emul_pdc_data *data,
 static int set_frs_function(struct rts5453p_emul_pdc_data *data,
 			    const union rts54_request *req)
 {
-	LOG_INF("SET_FRST_FUNCTION port=%d, setting %d",
+	LOG_INF("SET_FRS_FUNCTION port=%d, setting %d",
 		req->set_frs_function.port_num, req->set_frs_function.enable);
 
 	data->frs_configured = true;
 	data->frs_enabled = req->set_frs_function.enable;
-	send_response(data);
 
 	memset(&data->response, 0, sizeof(union rts54_response));
+	send_response(data);
 	return 0;
 }
 
