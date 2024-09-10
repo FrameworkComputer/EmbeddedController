@@ -325,6 +325,7 @@ class AllTests:
             TestConfig(test_name="cortexm_fpu"),
             TestConfig(test_name="crc"),
             TestConfig(test_name="exception"),
+            TestConfig(test_name="exit"),
             TestConfig(
                 test_name="flash_physical",
                 imagetype_to_use=ImageType.RO,

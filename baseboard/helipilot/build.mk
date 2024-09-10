@@ -32,6 +32,7 @@ test-list-y = \
        crc \
        debug \
        exception \
+       exit \
        flash_physical \
        flash_write_protect \
        fp_transport \

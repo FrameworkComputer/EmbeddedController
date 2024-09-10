@@ -214,6 +214,7 @@ debug-y=debug.o
 debug_unimplemented-y=debug_unimplemented.o
 entropy-y=entropy.o
 exception-y=exception.o
+exit-y=exit.o
 extpwr_gpio-y=extpwr_gpio.o
 fan-y=fan.o
 flash-y=flash.o
