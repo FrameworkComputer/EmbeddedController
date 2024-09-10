@@ -20,6 +20,8 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio/gpio_nct38xx.h>
 #include <zephyr/drivers/mfd/nct38xx.h>
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(nct38xx, LOG_LEVEL_INF);
 #endif
 
 #if defined(CONFIG_ZEPHYR) && defined(CONFIG_IO_EXPANDER_NCT38XX)
@@ -381,6 +383,20 @@ __maybe_unused test_export_static int nct38xx_set_frs_enable(int port,
  */
 static void nct38xx_lock(int port, int lock)
 {
+	__ASSERT(mfd_lock[port] != NULL,
+		 "mfd_lock not yet initialized (port %d)", port);
+	if (mfd_lock[port] == NULL) {
+		LOG_WRN("%s: mfd_lock %d not yet initialized (init ordering is probably \
+		wrong)",
+			__func__, port);
+		if (!IS_ENABLED(CONFIG_USB_PD_TCPC_RUNTIME_CONFIG)) {
+			mfd_lock[port] = mfd_nct38xx_get_lock_reference(
+				tcpc_config[port].mfd_parent);
+		}
+		if (mfd_lock[port] == NULL) {
+			k_oops();
+		}
+	}
 	if (lock) {
 		k_sem_take(mfd_lock[port], K_FOREVER);
 	} else {
