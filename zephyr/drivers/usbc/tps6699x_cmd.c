@@ -98,35 +98,10 @@ static int tps_xfer_reg(const struct i2c_dt_spec *i2c, enum tps6699x_reg reg,
 	}
 }
 
-int tps_rd_vendor_id(const struct i2c_dt_spec *i2c, union reg_vendor_id *buf)
-{
-	return tps_xfer_reg(i2c, REG_VENDOR_ID, buf->raw_value,
-			    sizeof(union reg_vendor_id), I2C_MSG_READ);
-}
-
-int tps_rd_device_id(const struct i2c_dt_spec *i2c, union reg_device_id *buf)
-{
-	return tps_xfer_reg(i2c, REG_DEVICE_ID, buf->raw_value,
-			    sizeof(union reg_device_id), I2C_MSG_READ);
-}
-
-int tps_rd_protocol_version(const struct i2c_dt_spec *i2c,
-			    union reg_protocol_version *buf)
-{
-	return tps_xfer_reg(i2c, REG_PROTOCOL_VERSION, buf->raw_value,
-			    sizeof(union reg_protocol_version), I2C_MSG_READ);
-}
-
 int tps_rd_mode(const struct i2c_dt_spec *i2c, union reg_mode *buf)
 {
 	return tps_xfer_reg(i2c, REG_MODE, buf->raw_value,
 			    sizeof(union reg_mode), I2C_MSG_READ);
-}
-
-int tps_rd_uid(const struct i2c_dt_spec *i2c, union reg_uid *buf)
-{
-	return tps_xfer_reg(i2c, REG_UID, buf->raw_value, sizeof(union reg_uid),
-			    I2C_MSG_READ);
 }
 
 int tps_rw_tx_identity(const struct i2c_dt_spec *i2c,
@@ -155,28 +130,6 @@ int tps_rw_data_for_cmd1(const struct i2c_dt_spec *i2c, union reg_data *buf,
 {
 	return tps_xfer_reg(i2c, REG_DATA_FOR_CMD1, buf->raw_value,
 			    sizeof(union reg_data), flag);
-}
-
-int tps_rw_command_for_i2c2(const struct i2c_dt_spec *i2c,
-			    union reg_command *buf, int flag)
-{
-	return tps_xfer_reg(i2c, REG_COMMAND_FOR_I2C2, buf->raw_value,
-			    sizeof(union reg_command), flag);
-}
-
-int tps_rw_data_for_cmd2(const struct i2c_dt_spec *i2c, union reg_data *buf,
-			 int flag)
-{
-	return tps_xfer_reg(i2c, REG_DATA_FOR_CMD2, buf->raw_value,
-			    sizeof(union reg_data), flag);
-}
-
-int tps_rd_device_capabilities(const struct i2c_dt_spec *i2c,
-			       union reg_device_capabilities *buf)
-{
-	return tps_xfer_reg(i2c, REG_DEVICE_CAPABILITIES, buf->raw_value,
-			    sizeof(union reg_device_capabilities),
-			    I2C_MSG_READ);
 }
 
 int tps_rd_version(const struct i2c_dt_spec *i2c, union reg_version *buf)
@@ -210,13 +163,6 @@ int tps_rd_status(const struct i2c_dt_spec *i2c, union reg_status *buf)
 {
 	return tps_xfer_reg(i2c, REG_STATUS, buf->raw_value,
 			    sizeof(union reg_status), I2C_MSG_READ);
-}
-
-int tps_rd_discovered_svids(const struct i2c_dt_spec *i2c,
-			    union reg_discovered_svids *buf)
-{
-	return tps_xfer_reg(i2c, REG_DISCOVERED_SVIDS, buf->raw_value,
-			    sizeof(union reg_discovered_svids), I2C_MSG_READ);
 }
 
 int tps_rw_port_configuration(const struct i2c_dt_spec *i2c,
@@ -272,37 +218,11 @@ int tps_rd_adc_results(const struct i2c_dt_spec *i2c,
 			    sizeof(union reg_adc_results), I2C_MSG_READ);
 }
 
-int tps_rd_pd_status(const struct i2c_dt_spec *i2c, union reg_pd_status *buf)
-{
-	return tps_xfer_reg(i2c, REG_PD_STATUS, buf->raw_value,
-			    sizeof(union reg_pd_status), I2C_MSG_READ);
-}
-
-int tps_rd_received_source_capabilities(
-	const struct i2c_dt_spec *i2c,
-	union reg_received_source_capabilities *buf)
-{
-	return tps_xfer_reg(i2c, REG_RECEIVED_SOURCE_CAPABILITIES,
-			    buf->raw_value,
-			    sizeof(union reg_received_source_capabilities),
-			    I2C_MSG_READ);
-}
-
 int tps_rw_autonegotiate_sink(const struct i2c_dt_spec *i2c,
 			      union reg_autonegotiate_sink *buf, int flag)
 {
 	return tps_xfer_reg(i2c, REG_AUTONEGOTIATE_SINK, buf->raw_value,
 			    sizeof(union reg_autonegotiate_sink), flag);
-}
-
-int tps_rw_global_system_configuration(
-	const struct i2c_dt_spec *i2c,
-	union reg_global_system_configuration *buf, int flag)
-{
-	return tps_xfer_reg(i2c, REG_GLOBAL_SYSTEM_CONFIGURATION,
-			    buf->raw_value,
-			    sizeof(union reg_global_system_configuration),
-			    flag);
 }
 
 int tps_rd_power_path_status(const struct i2c_dt_spec *i2c,
@@ -329,22 +249,6 @@ int tps_rd_received_sop_prime_identity_data_object(
 	return tps_xfer_reg(i2c, REG_RECEIVED_SOP_PRIME_IDENTITY_DATA_OBJECT,
 			    buf->raw_value,
 			    sizeof(union reg_received_identity_data_object),
-			    I2C_MSG_READ);
-}
-
-int tps_rw_connection_manager_control(const struct i2c_dt_spec *i2c,
-				      union reg_connection_manager_control *buf,
-				      int flag)
-{
-	return tps_xfer_reg(i2c, REG_CONNECTION_MANAGER_CONTROL, buf->raw_value,
-			    sizeof(union reg_connection_manager_control), flag);
-}
-
-int tps_rd_connection_manager_status(const struct i2c_dt_spec *i2c,
-				     union reg_connection_manager_status *buf)
-{
-	return tps_xfer_reg(i2c, REG_CONNECTION_MANAGER_STATUS, buf->raw_value,
-			    sizeof(union reg_connection_manager_status),
 			    I2C_MSG_READ);
 }
 
