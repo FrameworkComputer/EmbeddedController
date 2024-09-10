@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "fpsensor/fpsensor.h"
 #include "fpsensor/fpsensor_utils.h"
 #include "rollback.h"
 #include "test_util.h"
@@ -88,6 +89,21 @@ test_static int test_is_raw_capture()
 	return EC_SUCCESS;
 }
 
+test_static int test_fourcc_to_string()
+{
+	TEST_ASSERT_ARRAY_EQ(
+		fourcc_to_string(FOURCC('F', 'P', 'C', ' ')).c_str(), "FPC ",
+		5);
+	TEST_ASSERT_ARRAY_EQ(
+		fourcc_to_string(FOURCC('\0', '*', ' ', '.')).c_str(), ".* .",
+		5);
+	TEST_ASSERT_ARRAY_EQ(
+		fourcc_to_string(FOURCC(128, 129, 130, 131)).c_str(), "....",
+		5);
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_validate_fp_buffer_offset_success);
@@ -96,6 +112,8 @@ void run_test(int argc, const char **argv)
 
 	RUN_TEST(test_is_test_capture);
 	RUN_TEST(test_is_raw_capture);
+
+	RUN_TEST(test_fourcc_to_string);
 
 	test_print_result();
 }

@@ -11,6 +11,7 @@
 #include "common.h"
 
 #include <cstdint>
+#include <string>
 
 /**
  * Test that size+offset does not exceed buffer_size
@@ -42,5 +43,13 @@ bool is_test_capture(uint32_t mode);
  * These modes correspond to using the ectool fpframe "raw" modifier.
  */
 bool is_raw_capture(uint32_t mode);
+
+/**
+ * Format an unsigned int FOURCC value as a printable string.
+ *
+ * If the character is unprintable, we will print '.', instead.
+ * This is similar to hexdump's behavior.
+ */
+const std::string fourcc_to_string(uint32_t value);
 
 #endif /* __CROS_EC_FPSENSOR_FPSENSOR_UTILS_H */
