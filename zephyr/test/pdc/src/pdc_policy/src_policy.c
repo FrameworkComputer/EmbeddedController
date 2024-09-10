@@ -1,6 +1,9 @@
 /* Copyright 2024 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
+ *
+ * This file tests the sourcing policies on type-C ports.  See the diagram
+ * under "ChromeOS as Source - Policy for Type-C" in the usb_power.md.
  */
 
 #include "chipset.h"
@@ -423,6 +426,134 @@ ZTEST_USER_F(src_policy, test_src_policy_frs_3a)
 				     &frs_partner_snk_pdo));
 	zassert_ok(emul_pdc_connect_partner(fixture->emul_pdc[TEST_USBC_PORT1],
 					    &frs_partner_connector_status));
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_USBC_PORT1));
+
+	/* FRS should be enabled. */
+	zassert_ok(emul_pdc_get_frs(fixture->emul_pdc[TEST_USBC_PORT1],
+				    &frs_enabled));
+	zassert_true(frs_enabled);
+
+	/* The source PDO should also be configured for 3.0A prior to
+	 * the swap.
+	 */
+	zassert_ok(emul_pdc_get_pdos(fixture->emul_pdc[TEST_USBC_PORT1],
+				     SOURCE_PDO, PDO_OFFSET_0, 1, LPM_PDO,
+				     &lpm_src_pdo_actual_port1));
+	zassert_equal(PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port1), 5000,
+		      "LPM SOURCE_PDO voltage %d, but expected %d",
+		      PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port1), 5000);
+	zassert_equal(PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port1), 3000,
+		      "LPM SOURCE_PDO current %d, but expected %d",
+		      PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port1), 3000);
+}
+
+/* Verify inserting a PD sink downgrades an FRS partner. */
+ZTEST_USER_F(src_policy, test_src_policy_fsr_downgrade_for_pd)
+{
+	union connector_status_t snk_partner_connector_status;
+	union connector_status_t frs_partner_connector_status;
+	uint32_t snk_partner_snk_pdo =
+		PDO_FIXED(5000, 3000, PDO_FIXED_DUAL_ROLE);
+	uint32_t frs_partner_src_pdo =
+		PDO_FIXED(5000, 3000, PDO_FIXED_DUAL_ROLE);
+	uint32_t frs_partner_snk_pdo = PDO_FIXED(
+		5000, 3000, PDO_FIXED_DUAL_ROLE | PDO_FIXED_FRS_CURR_3A0_AT_5V);
+	uint32_t lpm_src_pdo_actual_port0;
+	uint32_t lpm_src_pdo_actual_port1;
+	union connector_capability_t frs_ccaps = {
+		.partner_pd_revision = 3,
+	};
+	bool frs_enabled;
+
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS)) {
+		ztest_test_skip();
+	}
+
+	/* Connect an FRS source that supports 3.0A on port 1. */
+	zassert_ok(emul_pdc_set_connector_capability(
+		fixture->emul_pdc[TEST_USBC_PORT1], &frs_ccaps));
+	emul_pdc_configure_snk(fixture->emul_pdc[TEST_USBC_PORT1],
+			       &frs_partner_connector_status);
+	zassert_ok(emul_pdc_set_pdos(fixture->emul_pdc[TEST_USBC_PORT1],
+				     SOURCE_PDO, PDO_OFFSET_0, 1, PARTNER_PDO,
+				     &frs_partner_src_pdo));
+	zassert_ok(emul_pdc_set_pdos(fixture->emul_pdc[TEST_USBC_PORT1],
+				     SINK_PDO, PDO_OFFSET_0, 1, PARTNER_PDO,
+				     &frs_partner_snk_pdo));
+	zassert_ok(emul_pdc_connect_partner(fixture->emul_pdc[TEST_USBC_PORT1],
+					    &frs_partner_connector_status));
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_USBC_PORT1));
+
+	/* FRS should be enabled. */
+	zassert_ok(emul_pdc_get_frs(fixture->emul_pdc[TEST_USBC_PORT1],
+				    &frs_enabled));
+	zassert_true(frs_enabled);
+
+	/* The source PDO should also be configured for 3.0A prior to
+	 * the swap.
+	 */
+	zassert_ok(emul_pdc_get_pdos(fixture->emul_pdc[TEST_USBC_PORT1],
+				     SOURCE_PDO, PDO_OFFSET_0, 1, LPM_PDO,
+				     &lpm_src_pdo_actual_port1));
+	zassert_equal(PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port1), 5000,
+		      "LPM SOURCE_PDO voltage %d, but expected %d",
+		      PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port1), 5000);
+	zassert_equal(PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port1), 3000,
+		      "LPM SOURCE_PDO current %d, but expected %d",
+		      PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port1), 3000);
+
+	/* Connecting a PD sink that needs 3.0A on port 0.
+	 * This should downgrade the FRS source, disabling FRS and changing
+	 * the current limit.
+	 */
+	emul_pdc_configure_src(fixture->emul_pdc[TEST_USBC_PORT0],
+			       &snk_partner_connector_status);
+	zassert_ok(emul_pdc_set_pdos(fixture->emul_pdc[TEST_USBC_PORT0],
+				     SINK_PDO, PDO_OFFSET_0, 1, PARTNER_PDO,
+				     &snk_partner_snk_pdo));
+	zassert_ok(emul_pdc_connect_partner(fixture->emul_pdc[TEST_USBC_PORT0],
+					    &snk_partner_connector_status));
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_USBC_PORT0));
+
+	/* Allow for policies to run on port 1. */
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_USBC_PORT1));
+
+	/* TODO - validate that the FRS port is degraded before the sink
+	 * port is offered 3.0A.
+	 */
+
+	/* FRS should be disabled. */
+	zassert_ok(emul_pdc_get_frs(fixture->emul_pdc[TEST_USBC_PORT1],
+				    &frs_enabled));
+	zassert_false(frs_enabled);
+
+	/* LPM source PDO offered should only be 1.5A to the FRS port. */
+	zassert_ok(emul_pdc_get_pdos(fixture->emul_pdc[TEST_USBC_PORT1],
+				     SOURCE_PDO, PDO_OFFSET_0, 1, LPM_PDO,
+				     &lpm_src_pdo_actual_port1));
+	zassert_equal(PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port1), 5000,
+		      "LPM SOURCE_PDO voltage %d, but expected %d",
+		      PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port1), 5000);
+	zassert_equal(PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port1), 1500,
+		      "LPM SOURCE_PDO current %d, but expected %d",
+		      PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port1), 1500);
+
+	/* PD sink should be offered 3.0A. */
+	zassert_ok(emul_pdc_get_pdos(fixture->emul_pdc[TEST_USBC_PORT0],
+				     SOURCE_PDO, PDO_OFFSET_0, 1, LPM_PDO,
+				     &lpm_src_pdo_actual_port0));
+	zassert_equal(PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port0), 5000,
+		      "LPM SOURCE_PDO voltage %d, but expected %d",
+		      PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port0), 5000);
+	zassert_equal(PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port0), 3000,
+		      "LPM SOURCE_PDO current %d, but expected %d",
+		      PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port0), 3000);
+
+	/* Disconnecting the PD sink on port 0 should re-enable FRS. */
+	zassert_ok(emul_pdc_disconnect(fixture->emul_pdc[TEST_USBC_PORT0]));
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_USBC_PORT0));
+
+	/* Allow for policies to run on port 1. */
 	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_USBC_PORT1));
 
 	/* FRS should be enabled. */
