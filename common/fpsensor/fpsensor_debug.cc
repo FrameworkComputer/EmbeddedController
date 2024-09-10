@@ -273,6 +273,9 @@ static int command_fpinfo(int argc, const char **argv)
 
 	ccprintf("%*s: 0x%X\n", align, "Error State", info.errors);
 
+	ccprintf("%*s: %s\n", align, "Sensor Strap",
+		 fp_sensor_type_to_str(fpsensor_detect_get_type()));
+
 	return EC_SUCCESS;
 }
 DECLARE_SAFE_CONSOLE_COMMAND(fpinfo, command_fpinfo, NULL,
