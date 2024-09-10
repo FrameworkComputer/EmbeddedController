@@ -77,7 +77,7 @@ Icetower v3 with 20-pin SWD (0.05" / 1.27mm) on `CORESIGHT20 DB CONN`. |
 ---------------------------------------------------------------------- |
 ![Icetower with 20-pin SWD]                                            |
 
-### Quincy v3
+### Quincy v3 {#quincy}
 
 The connector for SWD is `J4`. It is labeled with `CORESIGHT20`.
 
@@ -185,6 +185,14 @@ Icetower:
 
 Quincy:
 
+<!-- mdformat off(b/139308852) -->
+*** note
+**NOTE**: Make sure [correct switches are set](#quincy) and
+[`CONFIG_ENABLE_JTAG_SELECTION`] is enabled for the board
+([Example][config jtag example]).
+***
+<!-- mdformat on -->
+
 ```bash
 (chroot) $ JLinkGDBServerCLExe -select USB -device NPCX9mnx -endian little -if SWD -speed 4000 -noir -noLocalhostOnly
 ```
@@ -275,6 +283,7 @@ STM32F412 package that does not have the synchronous trace pins, but the
 [fingerprint hardware]: ./fingerprint.md#hardware
 [`flash_jlink.py`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/util/flash_jlink.py
 [`CONFIG_ENABLE_JTAG_SELECTION`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/include/config.h;l=3084-3091;drc=a8b8b850ccc36b704f823094b62339662f6a7077
+[config jtag example]: https://crrev.com/c/5852491
 
 <!-- Images -->
 
