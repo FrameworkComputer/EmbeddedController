@@ -204,6 +204,13 @@ config PLATFORM_EC_WAKE_ON_LAN
 	  User can enable/disable the wake on lan feature in the
 	  setup menu.
 
+config SHORT_HIBERNATE_TIMER
+	int "The timer to enter hibernate when the C cover is open"
+	default 2
+	help
+		When the laptop C cover is opened, we need to turn off the power as soon as
+		possible. The default value is 2 seconds.
+
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code
 source "subsys/logging/Kconfig.template.log_config"

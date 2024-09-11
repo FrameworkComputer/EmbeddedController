@@ -31,7 +31,11 @@ static uint8_t chassis_open_count;
 static uint8_t chassis_press_counter;
 /* make sure only trigger once */
 static uint8_t chassis_once_flag;
+
 static uint64_t chassis_open_hibernate_time;
+static uint64_t short_hibernate =
+	CONFIG_PLATFORM_EC_HIBERNATE_DELAY_SEC - CONFIG_SHORT_HIBERNATE_TIMER;
+
 static uint8_t init = 1;
 
 #define CPRINTS(format, args...) cprints(CC_GPIO, format, ##args)
@@ -115,11 +119,15 @@ __override enum critical_shutdown
 board_system_is_idle(uint64_t last_shutdown_time, uint64_t *target,
 		     uint64_t now)
 {
-	/* update the chassis open target time = 30s - 28s*/
-	chassis_open_hibernate_time = *target - 28000000;
+	/* update the chassis open target time */
+	chassis_open_hibernate_time = *target - (short_hibernate * SECOND);
 
-	/* After setting the chassis open hibernate timer, delay 2.5s to check the chassis status */
-	hook_call_deferred(&chassis_open_hibernate_data, 2500 * MSEC);
+	/**
+	 * After setting the chassis open hibernate timer,
+	 * delay (short timer + 500ms) to check the chassis status.
+	 */
+	hook_call_deferred(&chassis_open_hibernate_data,
+					(CONFIG_SHORT_HIBERNATE_TIMER * SECOND) + (500 * MSEC));
 
 	if (now < *target)
 		return CRITICAL_SHUTDOWN_IGNORE;
