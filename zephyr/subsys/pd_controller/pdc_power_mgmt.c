@@ -2340,7 +2340,8 @@ static void pdc_send_cmd_wait_exit(void *obj)
 		 * pdo_count. */
 		/* TODO This is temporary until APDOs can be handled  */
 		for (int i = 0; i < PDO_NUM; i++) {
-			if (pdc_pdos->pdos[i] & PDO_TYPE_AUGMENTED) {
+			if ((pdc_pdos->pdos[i] & PDO_TYPE_MASK) ==
+			    PDO_TYPE_AUGMENTED) {
 				pdc_pdos->pdos[i] = 0;
 			} else {
 				pdc_pdos->pdo_count++;
