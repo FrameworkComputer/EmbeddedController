@@ -9,6 +9,8 @@
  * @brief PDC PDO helper functions
  */
 
+#include "drivers/pdc.h"
+#include "drivers/ucsi_v3.h"
 #include "emul/emul_pdc_pdo.h"
 #include "include/usb_pd.h"
 
@@ -122,6 +124,14 @@ int emul_pdc_pdo_set_direct(struct emul_pdc_pdo_t *data,
 	}
 
 	memcpy(&target_pdos[pdo_offset], pdos, sizeof(uint32_t) * num_pdos);
+
+	/* By default, if the test sets the partner sink PDOs, also update
+	 * the partner RDO to match the fixed PDO.
+	 */
+	if (pdo_offset == 0 && source == PARTNER_PDO && pdo_type == SINK_PDO) {
+		int max_curr = PDO_FIXED_GET_CURR(target_pdos[0]);
+		data->partner_rdo = RDO_FIXED(1, max_curr, 500, 0);
+	}
 
 	/* TODO b/317065172: handle renegotiation if we have a port partner. */
 	return 0;

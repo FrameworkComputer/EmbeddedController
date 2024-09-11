@@ -169,6 +169,68 @@ ZTEST_USER_F(src_policy, test_src_policy_one_3a)
 		      PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port1), 1500);
 }
 
+/* Verify that if a partner's sink PDO indicates support for 5V/3A, but
+ * the sink partner requests 1.5A or less when we send new source caps.
+ *
+ * For this test, the partner will be offered a 3A contract, but we should
+ * automatically downgrade it to 1.5A if the partner didn't request it.
+ */
+ZTEST_USER_F(src_policy, test_src_policy_pd_3a_rdo_1a5)
+{
+	union connector_status_t connector_status_port0;
+	union connector_status_t connector_status_port1;
+	uint32_t partner_snk_pdo = PDO_FIXED(5000, 3000, 0);
+	uint32_t lpm_src_pdo_actual_port0;
+	uint32_t lpm_src_pdo_actual_port1;
+	uint32_t partner_rdo = RDO_FIXED(1, 1500, 500, 0);
+
+	emul_pdc_configure_src(fixture->emul_pdc[TEST_USBC_PORT0],
+			       &connector_status_port0);
+	zassert_ok(emul_pdc_set_pdos(fixture->emul_pdc[TEST_USBC_PORT0],
+				     SINK_PDO, PDO_OFFSET_0, 1, PARTNER_PDO,
+				     &partner_snk_pdo));
+	zassert_ok(emul_pdc_set_partner_rdo(fixture->emul_pdc[TEST_USBC_PORT0],
+					    partner_rdo));
+
+	zassert_ok(emul_pdc_connect_partner(fixture->emul_pdc[TEST_USBC_PORT0],
+					    &connector_status_port0));
+
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_USBC_PORT0));
+
+	/* Verify that if the partner RDO only asked for 1.5A, that we
+	 * only offer 1.5A.
+	 */
+	zassert_ok(emul_pdc_get_pdos(fixture->emul_pdc[TEST_USBC_PORT0],
+				     SOURCE_PDO, PDO_OFFSET_0, 1, LPM_PDO,
+				     &lpm_src_pdo_actual_port0));
+	zassert_equal(PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port0), 5000,
+		      "LPM SOURCE_PDO voltage %d, but expected %d",
+		      PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port0), 5000);
+	zassert_equal(PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port0), 1500,
+		      "LPM SOURCE_PDO current %d, but expected %d",
+		      PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port0), 1500);
+
+	/* Validate that connecting another device gets 3A. */
+	emul_pdc_configure_src(fixture->emul_pdc[TEST_USBC_PORT1],
+			       &connector_status_port1);
+	zassert_ok(emul_pdc_set_pdos(fixture->emul_pdc[TEST_USBC_PORT1],
+				     SINK_PDO, PDO_OFFSET_0, 1, PARTNER_PDO,
+				     &partner_snk_pdo));
+	zassert_ok(emul_pdc_connect_partner(fixture->emul_pdc[TEST_USBC_PORT1],
+					    &connector_status_port1));
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_USBC_PORT1));
+
+	zassert_ok(emul_pdc_get_pdos(fixture->emul_pdc[TEST_USBC_PORT1],
+				     SOURCE_PDO, PDO_OFFSET_0, 1, LPM_PDO,
+				     &lpm_src_pdo_actual_port1));
+	zassert_equal(PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port1), 5000,
+		      "LPM SOURCE_PDO voltage %d, but expected %d",
+		      PDO_FIXED_GET_VOLT(lpm_src_pdo_actual_port1), 5000);
+	zassert_equal(PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port1), 3000,
+		      "LPM SOURCE_PDO current %d, but expected %d",
+		      PDO_FIXED_GET_CURR(lpm_src_pdo_actual_port1), 3000);
+}
+
 /* Verify 3A contract switches port when first port disconnected. */
 ZTEST_USER_F(src_policy, test_src_policy_disconnect_3a)
 {

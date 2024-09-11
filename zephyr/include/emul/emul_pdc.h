@@ -35,6 +35,8 @@ typedef int (*emul_pdc_get_supported_drp_modes_t)(const struct emul *target,
 typedef int (*emul_pdc_get_uor_t)(const struct emul *target, union uor_t *uor);
 typedef int (*emul_pdc_get_pdr_t)(const struct emul *target, union pdr_t *pdr);
 typedef int (*emul_pdc_get_rdo_t)(const struct emul *target, uint32_t *rdo);
+typedef int (*emul_pdc_set_partner_rdo_t)(const struct emul *target,
+					  uint32_t rdo);
 typedef int (*emul_pdc_get_sink_path_t)(const struct emul *target, bool *en);
 typedef int (*emul_pdc_set_connector_status_t)(
 	const struct emul *target,
@@ -100,6 +102,7 @@ __subsystem struct emul_pdc_api_t {
 	emul_pdc_get_uor_t get_uor;
 	emul_pdc_get_pdr_t get_pdr;
 	emul_pdc_get_rdo_t get_rdo;
+	emul_pdc_set_partner_rdo_t set_partner_rdo;
 	emul_pdc_get_sink_path_t get_sink_path;
 	emul_pdc_set_connector_status_t set_connector_status;
 	emul_pdc_set_error_status_t set_error_status;
@@ -284,6 +287,21 @@ static inline int emul_pdc_get_rdo(const struct emul *target, uint32_t *rdo)
 	return -ENOSYS;
 }
 
+static inline int emul_pdc_set_partner_rdo(const struct emul *target,
+					   uint32_t rdo)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_api_t *api = target->backend_api;
+
+	if (api->set_partner_rdo) {
+		return api->set_partner_rdo(target, rdo);
+	}
+	return -ENOSYS;
+}
+
 static inline int emul_pdc_get_sink_path(const struct emul *target, bool *en)
 {
 	if (!target || !target->backend_api) {
@@ -363,6 +381,13 @@ static inline int emul_pdc_get_pdos(const struct emul *target,
 	return -ENOSYS;
 }
 
+/*
+ * Set the PDOs of the LPM or the partner.
+ *
+ * When setting the partner sink PDO, this function automatically sets
+ * the partner RDO to match the fixed PDO provided.  To change the partner
+ * RDO, call emul_pdc_set_partner_rdo() after this function.
+ */
 static inline int emul_pdc_set_pdos(const struct emul *target,
 				    enum pdo_type_t pdo_type,
 				    enum pdo_offset_t pdo_offset,

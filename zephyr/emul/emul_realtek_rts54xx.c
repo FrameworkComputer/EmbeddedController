@@ -432,7 +432,17 @@ static int set_rdo(struct rts5453p_emul_pdc_data *data,
 	LOG_INF("SET_RDO port=%d, rdo=0x%X", req->set_rdo.port_num,
 		req->set_rdo.rdo);
 
-	data->rdo = req->set_rdo.rdo;
+	/* The SET_RDO command triggers a Request Object to be sent
+	 * to the port partner when the LPM is a sink.
+	 * The command is only valid when acting as a sink.
+	 */
+	if (data->connector_status.power_direction == 1) {
+		/* We are a provider. Generate an error. */
+		set_ping_status(data, CMD_ERROR, 0);
+		return -EIO;
+	}
+
+	data->pdo.rdo = req->set_rdo.rdo;
 
 	memset(&data->response, 0, sizeof(union rts54_response));
 	send_response(data);
@@ -446,7 +456,16 @@ static int get_rdo(struct rts5453p_emul_pdc_data *data,
 	LOG_INF("GET_RDO port=%d", req->set_rdo.port_num);
 
 	data->response.get_rdo.byte_count = sizeof(struct get_rdo_response) - 1;
-	data->response.get_rdo.rdo = data->rdo;
+
+	if (data->connector_status.power_direction == 1) {
+		/* We are the provider, return the RDO set by the partner.
+		 */
+		data->response.get_rdo.rdo = data->pdo.partner_rdo;
+	} else {
+		/* We are the consumer, return the RDO set using SET_RDO */
+		data->response.get_rdo.rdo = data->pdo.rdo;
+	}
+
 	send_response(data);
 
 	return 0;
@@ -1185,7 +1204,21 @@ static int emul_realtek_rts54xx_get_rdo(const struct emul *target,
 	struct rts5453p_emul_pdc_data *data =
 		rts5453p_emul_get_pdc_data(target);
 
-	*rdo = data->rdo;
+	/* Always return the RDO configured using SET_RDO or
+	 * pdc_power_mgmt_set_new_power_request().
+	 */
+	*rdo = data->pdo.rdo;
+
+	return 0;
+}
+
+static int emul_realtek_rts54xx_set_partner_rdo(const struct emul *target,
+						uint32_t rdo)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	data->pdo.partner_rdo = rdo;
 
 	return 0;
 }
@@ -1440,6 +1473,7 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.get_uor = emul_realtek_rts54xx_get_uor,
 	.get_pdr = emul_realtek_rts54xx_get_pdr,
 	.get_rdo = emul_realtek_rts54xx_get_rdo,
+	.set_partner_rdo = emul_realtek_rts54xx_set_partner_rdo,
 	.get_requested_power_level =
 		emul_realtek_rts54xx_get_requested_power_level,
 	.get_ccom = emul_realtek_rts54xx_get_ccom,

@@ -16,10 +16,14 @@
 #include "drivers/ucsi_v3.h"
 
 struct emul_pdc_pdo_t {
+	/* PDOs and RDO of the LPM */
 	uint32_t snk_pdos[PDO_OFFSET_MAX];
 	uint32_t src_pdos[PDO_OFFSET_MAX];
+	uint32_t rdo;
+	/* PDOs and RDO of the partner */
 	uint32_t partner_snk_pdos[PDO_OFFSET_MAX];
 	uint32_t partner_src_pdos[PDO_OFFSET_MAX];
+	uint32_t partner_rdo;
 };
 
 /**

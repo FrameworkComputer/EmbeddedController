@@ -483,7 +483,6 @@ struct rts5453p_emul_pdc_data {
 	union uor_t uor;
 	union pdr_t pdr;
 	union error_status_t error;
-	uint32_t rdo;
 	union tpc_rp_t tpc_rp;
 	union csd_op_mode_t csd_op_mode;
 	union port_and_ccom_t set_ccom_mode;
