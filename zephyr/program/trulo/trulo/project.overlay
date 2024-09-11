@@ -11,13 +11,13 @@
 #include "../i2c.dtsi"
 #include "../power_signals.dtsi"
 #include "../trulo.dtsi"
-#include "../usb_typec.dtsi"
 #include "../usba.dtsi"
 
 /* Trulo project DTS includes*/
 #include "cbi.dtsi"
 #include "gpio.dtsi"
 #include "i2c.dtsi"
+#include "usb_typec.dtsi"
 
 /* Trulo overrides follow... */
 
