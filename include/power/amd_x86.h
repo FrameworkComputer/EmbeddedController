@@ -10,7 +10,7 @@
  * In legacy EC-OS, the power signals are defined as part of
  * the board include headers, but with Zephyr, this is common.
  */
-#if defined(CONFIG_ZEPHYR) && defined(CONFIG_AP_X86_AMD)
+#if defined(CONFIG_ZEPHYR) && defined(CONFIG_AP_X86_AMD) && !defined(CONFIG_CUSTOMIZED_DESIGN)
 
 /* Power input signals */
 enum power_signal {

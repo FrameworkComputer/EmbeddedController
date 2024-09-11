@@ -38,6 +38,13 @@ config AP_X86_AMD
 	help
 	  The application processor is a product of AMD.
 
+config AP_X86_INTEL_CUSTOM
+	bool "AP is an Intel chipset"
+	select AP_X86
+	help
+	  The application processor is Intel chipset but sequence is designed
+	  in program layer.
+
 config AP_X86_INTEL_MTL
 	bool "AP is MTL chipset"
 	select AP_X86_INTEL
