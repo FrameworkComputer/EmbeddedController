@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <cros/cbi_flash.dtsi>
+
 /* Trulo program common DTS includes */
 #include "../cbi.dtsi"
 #include "../generated.dtsi"
@@ -13,7 +15,9 @@
 #include "../usba.dtsi"
 
 /* Trulo project DTS includes*/
+#include "cbi.dtsi"
 #include "gpio.dtsi"
+#include "i2c.dtsi"
 
 /* Trulo overrides follow... */
 
@@ -23,4 +27,14 @@
 			compatible = "cosmx,ap20cbl-4", "battery-smart";
 		};
 	};
+};
+
+&cbi_flash {
+	/*
+	 * CBI section size is 0x1000 bytes, the CBI portion lies at the end of
+	 * EC_RO section. WP_RO section size is 0x40000 bytes, EC_RO will be
+	 * trimmed down to 0x3e000 and CBI will be added at 0x3e000.
+	 */
+	offset = <0x3e000>;
+	size = <0x1000>;
 };

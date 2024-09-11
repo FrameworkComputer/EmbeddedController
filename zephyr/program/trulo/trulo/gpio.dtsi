@@ -4,6 +4,10 @@
  */
 
  / {
+	aliases {
+		gpio-cbi-wp = &gpio_ec_cbi_wp;
+	};
+
 	named-gpios {
 		/delete-node/ acok_od;
 		/delete-node/ amp_mute_l;
@@ -53,6 +57,9 @@
 		};
 		gpio_soc_enbkl: soc_enbkl {
 			gpios = <&gpioc 7 GPIO_INPUT>;
+		};
+		gpio_ec_cbi_wp: ec_cbi_wp {
+			gpios = <&gpio7 4 GPIO_OUTPUT>;
 		};
 	};
 
