@@ -94,7 +94,7 @@ config PLATFORM_EC_POWERSEQ_FAKE_CONTROL
 
 menuconfig PLATFORM_EC_POWERSEQ_CUSTOMER
 	bool "AMD power sequencing"
-	depends on AP_X86_AMD || AP_X86_INTEL
+	depends on AP_X86_AMD || AP_X86_INTEL || AP_X86_INTEL_CUSTOM
 	select HAS_TASK_POWERBTN_CUSTOMER
 	default n
 	help

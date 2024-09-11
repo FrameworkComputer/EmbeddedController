@@ -26,6 +26,11 @@
 #include "timer.h"
 #include "util.h"
 
+/* For customized power signal list */
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+#include "power_sequence.h"
+#endif
+
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
