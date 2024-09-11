@@ -98,8 +98,9 @@ void keyboard_raw_init(void)
 		return;
 	}
 
-	/* KSO alternate function switching(KSO[21:20, 18]). */
+	/* KSO alternate function switching(KSO[21:19, 18]). */
 	it8801_write(IT8801_REG_GPIO01_KSO18, IT8801_REG_MASK_GPIOAFS_FUNC2);
+	it8801_write(IT8801_REG_GPIO00_KSO19, IT8801_REG_MASK_GPIOAFS_FUNC2);
 	it8801_write(IT8801_REG_GPIO22_KSO21, IT8801_REG_MASK_GPIOAFS_FUNC2);
 	it8801_write(IT8801_REG_GPIO23_KSO20, IT8801_REG_MASK_GPIOAFS_FUNC2);
 
