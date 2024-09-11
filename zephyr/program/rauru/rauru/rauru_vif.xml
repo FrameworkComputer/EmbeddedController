@@ -62,7 +62,7 @@
                 <vif:Attempts_Discov_SOP value="true" />
                 <vif:Power_Interruption_Available value="3">AC Mains/Wall Power and DC Power</vif:Power_Interruption_Available>
                 <vif:Data_Reset_Supported value="false" />
-                <vif:Enter_USB_Supported value="true" />
+                <vif:Enter_USB_Supported value="false" />
                 <!-- ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; -->
                 <!-- ;USB Type-C® -->
                 <!-- ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; -->
@@ -78,7 +78,7 @@
                 <vif:Type_C_Port_On_Hub value="false" />
                 <vif:Type_C_Power_Source value="2">Both</vif:Type_C_Power_Source>
                 <vif:Type_C_Sources_VCONN value="true" />
-                <vif:Type_C_Is_Alt_Mode_Controller value="false" />
+                <vif:Type_C_Is_Alt_Mode_Controller value="true" />
                 <vif:Type_C_Is_Alt_Mode_Adapter value="false" />
                 <!-- ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; -->
                 <!-- ;Product Power -->
