@@ -15,3 +15,5 @@ add_subdirectory_ifdef(CONFIG_TEST_PROJECT_REX tests/rex)
 add_subdirectory_ifdef(CONFIG_TEST_PROJECT_SCREEBO tests/screebo)
 add_subdirectory_ifdef(CONFIG_TEST_PROJECT_KARIS tests/karis)
 add_subdirectory_ifdef(CONFIG_TEST_PROJECT_REX_ISH tests/rex_ish)
+
+set_compiler_property(APPEND PROPERTY coverage -O0)
