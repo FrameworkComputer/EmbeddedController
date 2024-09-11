@@ -127,6 +127,7 @@ enum kb_scan_disable_masks {
 	KB_SCAN_DISABLE_POWER_BUTTON = (1 << 1),
 	KB_SCAN_DISABLE_LID_ANGLE = (1 << 2),
 	KB_SCAN_DISABLE_USB_SUSPENDED = (1 << 3),
+	KB_SCAN_DISABLE_DISCONNECT = (1 << 4),
 };
 
 #if defined(HAS_TASK_KEYSCAN) || defined(CONFIG_CROS_EC_KEYBOARD_INPUT)

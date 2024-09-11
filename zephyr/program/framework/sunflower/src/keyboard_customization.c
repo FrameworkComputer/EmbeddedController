@@ -4,11 +4,23 @@
  */
 
 #include "keyboard_raw.h"
+#include "keyboard_scan.h"
+#include "hooks.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_KEYBOARD, outstr)
 #define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_KEYBOARD, format, ## args)
+
+static void disable_keyscan(void)
+{
+	/**
+	 * We don't want to read the keyboard before turning on the power.
+	 * Disable the keyboard scan function to avoid the watchdog.
+	 */
+	keyboard_scan_enable(0, KB_SCAN_DISABLE_DISCONNECT);
+}
+DECLARE_HOOK(HOOK_INIT_EARLY, disable_keyscan, HOOK_PRIO_DEFAULT);
 
 void board_caps_led_control(int data)
 {

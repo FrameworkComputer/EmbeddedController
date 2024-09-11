@@ -18,12 +18,15 @@
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "keyboard_8042_sharedlib.h"
+#include "keyboard_scan.h"
 #include "keyboard_protocol.h"
+#include "keyboard_raw.h"
 #include "lpc.h"
 #include "power.h"
 #include "port80.h"
 #include "power_sequence.h"
 #include "task.h"
+#include "timer.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
@@ -38,6 +41,7 @@ static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts *
 static int force_shoutdown_flags;
 static int stress_test_enable;
 static int me_change;
+static bool module_pwr_control;
 
 /* Power Signal Input List */
 const struct power_signal_info power_signal_list[] = {
@@ -272,6 +276,68 @@ enum power_state power_chipset_init(void)
 	return POWER_G3;
 }
 
+static void keyboard_scan_enable_deferred(void)
+{
+	keyboard_scan_enable(1, KB_SCAN_DISABLE_DISCONNECT);
+	keyboard_scan_init();
+
+	/* After init, we need to enable the interrupt */
+	keyboard_raw_enable_interrupt(1);
+	keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
+}
+DECLARE_DEFERRED(keyboard_scan_enable_deferred);
+
+static void keyboard_scan_disable(void)
+{
+	/* Disable keyscan when the module power is off */
+	hook_call_deferred(&keyboard_scan_enable_deferred_data, -1);
+	keyboard_scan_enable(0, KB_SCAN_DISABLE_DISCONNECT);
+}
+
+/* detect module hot plug */
+static void control_module_power(void)
+{
+	static int pre_touchpad;
+	int touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
+	bool enable = (touchpad >= BOARD_VERSION_1 && touchpad <= BOARD_VERSION_13);
+
+	if (!module_pwr_control) {
+		/* reset pre_touchpad when the system shutdown */
+		pre_touchpad = 0;
+		return;
+	}
+
+	if (pre_touchpad != touchpad) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_3v_tp), enable);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_tp), enable);
+		pre_touchpad = touchpad;
+
+		if (enable)
+			/**
+			 * Add the delay to wait module to stable and then enable the keyboard scan
+			 * and re-init the keyboard scan.
+			 */
+			hook_call_deferred(&keyboard_scan_enable_deferred_data, 300 * MSEC);
+		else
+			keyboard_scan_disable();
+	}
+}
+DECLARE_HOOK(HOOK_TICK, control_module_power, HOOK_PRIO_DEFAULT);
+
+static void module_pwr_control_enable(bool state)
+{
+	module_pwr_control = state;
+
+	/* enable module power control to check the module is present */
+	if (module_pwr_control)
+		control_module_power();
+	else {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_3v_tp), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_tp), 0);
+		keyboard_scan_disable();
+	}
+}
+
 void me_gpio_change(uint32_t flags)
 {
 	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_me_en), flags);
@@ -406,6 +472,8 @@ enum power_state power_handle_state(enum power_state state)
 		cypd_set_power_active();
 
 		clear_rtcwake();
+
+		module_pwr_control_enable(true);
 
 		return POWER_S0;
 
@@ -546,8 +614,6 @@ static void peripheral_power_startup(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_pb), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_3v_tp), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_tp), 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, peripheral_power_startup, HOOK_PRIO_DEFAULT);
 
@@ -562,8 +628,7 @@ static void peripheral_power_shutdown(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_pb), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_3v_tp), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_tp), 0);
+	module_pwr_control_enable(false);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, peripheral_power_shutdown, HOOK_PRIO_DEFAULT);
 
