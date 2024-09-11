@@ -32,6 +32,16 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
+		int_aux_vr_pg: aux_vr_pg {
+			irq-pin = <&gpio_vccin_aux_vr_pg_r>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_slp_sus: slp_sus {
+			irq-pin = <&gpio_slp_sus_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
 		int_vr_pg: vr_pg {
 			irq-pin = <&gpio_vr_pwrgd>;
 			flags = <GPIO_INT_EDGE_BOTH>;
