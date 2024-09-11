@@ -13,6 +13,7 @@
 #include "../usba.dtsi"
 
 /* Trulo project DTS includes*/
+#include "gpio.dtsi"
 
 /* Trulo overrides follow... */
 
