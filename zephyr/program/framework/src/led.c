@@ -474,10 +474,12 @@ static bool fingerprint_led_control(void)
 		return false;
 
 	/* Turn off fingerprint LED when lid is closed */
+	/*
 	if (!lid_is_open()) {
 		led_set_color(LED_OFF, EC_LED_ID_POWER_LED);
 		return true;
 	}
+	*/
 
 	if (chipset_in_state(CHIPSET_STATE_ON) && (charge_get_percent() < 3) &&
 		!extpower_is_present()) {

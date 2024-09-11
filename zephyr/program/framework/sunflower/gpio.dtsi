@@ -110,10 +110,12 @@
 		gpio_chassis_open_l: chassis_open_l {
 			gpios = <&gpio0 1 GPIO_INPUT>; /*Monitor C cover open*/
 		};
-		gpio_lid_sw_l: lid_sw_l {
+		/* Disable lid function to avoid the system hang */
+		/* gpio_lid_sw_l: lid_sw_l {
 			gpios = <&gpio0 2 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
 		};
+		*/
 		gpio_cam_en: cam_en {
 			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>;
 		};
