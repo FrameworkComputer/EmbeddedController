@@ -1479,6 +1479,7 @@ static void run_src_policies(struct pdc_port_t *port)
 					     SRC_POLICY_GET_RDO)) {
 		/* Get the RDO from the port partner */
 		queue_internal_cmd(port, CMD_PDC_GET_RDO);
+		return;
 	} else if (atomic_test_and_clear_bit(port->src_policy.flags,
 					     SRC_POLICY_UPDATE_ALLOW_PR_SWAP)) {
 		port->pdr.accept_pr_swap =
