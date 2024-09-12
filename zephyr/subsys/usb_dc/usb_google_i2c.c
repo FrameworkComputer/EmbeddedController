@@ -11,7 +11,7 @@
 
 #include <zephyr/init.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/net/buf.h>
+#include <zephyr/net_buf.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/usb/usb_device.h>
 
