@@ -1024,6 +1024,7 @@ static int emul_realtek_rts54xx_reset(const struct emul *target)
 	/* Reset PDOs. */
 	emul_pdc_pdo_reset(&data->pdo);
 
+	data->set_ccom_mode.ccom = BIT(2); /* Realtek DRP bit 2 */
 	data->frs_configured = false;
 
 	return 0;
@@ -1256,13 +1257,13 @@ static int emul_realtek_rts54xx_get_ccom(const struct emul *target,
 		rts5453p_emul_get_pdc_data(target);
 
 	switch (data->set_ccom_mode.ccom) {
-	case 0x1:
+	case BIT(0):
 		*ccom = CCOM_RP;
 		break;
-	case 0x2:
+	case BIT(1):
 		*ccom = CCOM_RD;
 		break;
-	case 0x4:
+	case BIT(2):
 		*ccom = CCOM_DRP;
 		break;
 	default:

@@ -1037,14 +1037,9 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 		{ .s = { .state = PD_DRP_FREEZE,
 			 .configure = emul_pdc_configure_snk },
 		  .e = { .check_cc_mode = true, .cc_mode = CCOM_RD } },
-#ifdef TODO_B_323589615
-		/* TODO(b/323589615) - una_policy is not applied in attached
-		 * states
-		 */
 		{ .s = { .state = PD_DRP_FREEZE,
 			 .configure = emul_pdc_configure_src },
 		  .e = { .check_cc_mode = true, .cc_mode = CCOM_RP } },
-#endif
 		/* Force sink while a source */
 		{ .s = { .state = PD_DRP_FORCE_SINK,
 			 .configure = emul_pdc_configure_src },
@@ -1134,6 +1129,9 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 	uint32_t start;
 
 	for (i = 0; i < ARRAY_SIZE(test); i++) {
+		/* Reset CCOM in emulator to defaults */
+		zassert_ok(emul_pdc_reset(emul));
+
 		memset(&connector_status, 0, sizeof(connector_status));
 		if (test[i].s.configure) {
 			test[i].s.configure(emul, &connector_status);
@@ -1174,13 +1172,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 
 			break;
 		}
-
-		if (test[i].e.check_cc_mode) {
-			zassert_equal(test[i].e.cc_mode, ccom,
-				      "[%d] expected=%d, received=%d", i,
-				      test[i].e.cc_mode, ccom);
-		}
 		if (test[i].e.check_pdr) {
+			zassert_ok(emul_pdc_get_pdr(emul, &pdr));
 			zassert_equal(test[i].e.pdr.swap_to_snk,
 				      pdr.swap_to_snk,
 				      "Expected %u, got %u (i=%d)",
@@ -1197,9 +1190,18 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 				      test[i].e.pdr.accept_pr_swap,
 				      pdr.accept_pr_swap, i);
 		}
+
 		emul_pdc_disconnect(emul);
-		zassert_true(TEST_WAIT_FOR(!pd_is_connected(TEST_PORT),
-					   PDC_TEST_TIMEOUT));
+
+		zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+
+		if (test[i].e.check_cc_mode) {
+			zassert_ok(emul_pdc_get_ccom(emul, &ccom),
+				   "Invalid CCOM value in emul");
+			zassert_equal(test[i].e.cc_mode, ccom,
+				      "[%d] expected=%d, received=%d", i,
+				      test[i].e.cc_mode, ccom);
+		}
 	}
 }
 
