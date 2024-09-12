@@ -141,6 +141,13 @@ int sb_read_mfgacc(int cmd, int block, uint8_t *data, int len)
 	if (len < 3)
 		return EC_ERROR_INVAL;
 
+	/*
+	 * Ship mode command need to set continuously, can't be interfered
+	 * by another command.
+	 */
+	if (sb_cutoff_or_in_progress())
+		return EC_ERROR_ACCESS_DENIED;
+
 	/* Send manufacturer access command */
 	rv = sb_write(SB_MANUFACTURER_ACCESS, cmd);
 	if (rv)
