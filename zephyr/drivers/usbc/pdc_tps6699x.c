@@ -2165,12 +2165,9 @@ static int pdc_exit_dead_battery(struct pdc_data_t *data)
 static void pdc_interrupt_callback(const struct device *dev,
 				   struct gpio_callback *cb, uint32_t pins)
 {
-	/* All ports share a common interrupt, so post a PDC_IRQ_EVENT to all
-	 * drivers. The driver IRQ state will determine if it has a pending
-	 * interrupt */
-	for (int i = 0; i < NUM_PDC_TPS6699X_PORTS; i++) {
-		k_event_post(&pdc_data[i]->pdc_event, PDC_IRQ_EVENT);
-	}
+	struct pdc_data_t *data = CONTAINER_OF(cb, struct pdc_data_t, gpio_cb);
+
+	k_event_post(&data->pdc_event, PDC_IRQ_EVENT);
 }
 
 static int pdc_init(const struct device *dev)
