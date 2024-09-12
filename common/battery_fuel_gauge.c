@@ -237,8 +237,7 @@ void init_battery_type(void)
 
 	BCFGPRT("Battery says %s,%s", batt_manuf_name, batt_device_name);
 
-	if (IS_ENABLED(CONFIG_BATTERY_CONFIG_IN_CBI) &&
-	    board_batt_conf_enabled()) {
+	if (IS_ENABLED(CONFIG_BATTERY_CONFIG_IN_CBI)) {
 		BCFGPRT("Searching in CBI");
 		if (bcfg_search_in_cbi(&battery_conf_cache) == EC_SUCCESS) {
 			battery_conf = &battery_conf_cache;
@@ -274,11 +273,6 @@ test_export_static const struct board_batt_params *get_batt_params(void)
 const struct battery_info *battery_get_info(void)
 {
 	return &get_batt_params()->batt_info;
-}
-
-__overridable bool board_batt_conf_enabled(void)
-{
-	return true;
 }
 
 #ifndef CONFIG_FUEL_GAUGE
