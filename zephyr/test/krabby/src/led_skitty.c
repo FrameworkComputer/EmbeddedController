@@ -56,8 +56,8 @@ ZTEST(skitty_led, test_led_control)
 	zassert_equal(0, ztest_duty_amber);
 
 	led_get_brightness_range(EC_LED_ID_BATTERY_LED, brightness);
-	zassert_equal(brightness[EC_LED_COLOR_WHITE], 1);
-	zassert_equal(brightness[EC_LED_COLOR_AMBER], 1);
+	zassert_equal(brightness[EC_LED_COLOR_WHITE], 100);
+	zassert_equal(brightness[EC_LED_COLOR_AMBER], 100);
 
 	led_get_brightness_range(EC_LED_ID_POWER_LED, brightness);
 
