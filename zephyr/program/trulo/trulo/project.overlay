@@ -14,20 +14,13 @@
 #include "../usba.dtsi"
 
 /* Trulo project DTS includes*/
+#include "battery.dtsi"
 #include "cbi.dtsi"
 #include "gpio.dtsi"
 #include "i2c.dtsi"
 #include "usb_typec.dtsi"
 
 /* Trulo overrides follow... */
-
-/ {
-	batteries {
-		default_battery: cosmx_ap20cbl-4 {
-			compatible = "cosmx,ap20cbl-4", "battery-smart";
-		};
-	};
-};
 
 &cbi_flash {
 	/*
@@ -38,3 +31,4 @@
 	offset = <0x3e000>;
 	size = <0x1000>;
 };
+
