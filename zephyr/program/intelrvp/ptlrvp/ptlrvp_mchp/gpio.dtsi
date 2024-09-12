@@ -225,8 +225,8 @@
 			gpios = <MCHP_GPIO_DECODE_140 GPIO_INPUT>;
 		};
 		**/
-		ec-cse-early-sw {
-			gpios = <MCHP_GPIO_DECODE_064 GPIO_INPUT>;
+		cse_early_rec_sw: ec-cse-early-sw {
+			gpios = <MCHP_GPIO_DECODE_064 GPIO_ODR_LOW>;
 		};
 		pwrbtn: pwrbtn-ec-in-n {
 			gpios = <MCHP_GPIO_DECODE_106 GPIO_INPUT>;

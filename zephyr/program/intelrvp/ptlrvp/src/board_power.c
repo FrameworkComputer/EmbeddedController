@@ -5,6 +5,7 @@
 
 #include "gpio.h"
 #include "gpio_signal.h"
+#include "include/system.h"
 #include "system_boot_time.h"
 
 #include <zephyr/drivers/gpio.h>
@@ -54,6 +55,16 @@ static int board_ap_power_action_g3_run(void *data)
 		power_signal_set(PWR_EN_PP5000_A, 1);
 		/* Turn on the PP3300_PRIM rail. */
 		power_signal_set(PWR_EN_PP3300_A, 1);
+
+		/* Indication to soc on recovery boot */
+		if (system_is_manual_recovery()) {
+			gpio_pin_set_dt(
+				GPIO_DT_FROM_NODELABEL(cse_early_rec_sw), 1);
+		} else {
+			gpio_pin_set_dt(
+				GPIO_DT_FROM_NODELABEL(cse_early_rec_sw), 0);
+		}
+
 		update_ap_boot_time(ARAIL);
 	}
 
