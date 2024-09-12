@@ -487,10 +487,18 @@ static void invalid_ack_notify(struct ucsi_ppm_device *dev)
 {
 	union ack_cc_ci_t *cmd =
 		(union ack_cc_ci_t *)dev->ucsi_data.control.command_specific;
-	LOG_ERR("Invalid ack usage (CI=%d CC=%d last_connector_changed=%d) in "
-		"state %d",
-		cmd->connector_change_ack, cmd->command_complete_ack,
-		dev->last_connector_changed, dev->ppm_state);
+
+	if (match_pending_command(dev, UCSI_ACK_CC_CI)) {
+		LOG_ERR("Invalid ack usage (CI=%d CC=%d "
+			"last_connector_changed=%d) in state %d",
+			cmd->connector_change_ack, cmd->command_complete_ack,
+			dev->last_connector_changed, dev->ppm_state);
+	} else {
+		LOG_ERR("Invalid cmd (0x%x) %s when ACK was expected in state %d",
+			dev->ucsi_data.control.command,
+			get_ucsi_command_name(dev->ucsi_data.control.command),
+			dev->ppm_state);
+	}
 
 	clear_last_error(dev);
 	dev->last_error = ERROR_PPM;
