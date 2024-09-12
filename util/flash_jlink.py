@@ -31,6 +31,7 @@ DEFAULT_SEGGER_REMOTE_PORT = 19020
 JLINK_COMMANDS = """
 exitonerror 1
 r
+{FLASH_VERIFICATION}
 loadfile {FIRMWARE} {FLASH_ADDRESS}
 r
 go
@@ -41,11 +42,12 @@ exit
 class BoardConfig:
     """Board configuration."""
 
-    def __init__(self, interface, device, speed, flash_address):
+    def __init__(self, interface, device, speed, flash_address, verify_flash):
         self.interface = interface
         self.device = device
         self.speed = speed
         self.flash_address = flash_address
+        self.verify_flash = verify_flash
 
 
 SWD_INTERFACE = "SWD"
@@ -53,23 +55,27 @@ INTERFACE_SPEED_AUTO = "auto"
 INTERFACE_SPEED_4_MHZ = "4000"
 STM32_DEFAULT_FLASH_ADDRESS = "0x8000000"
 NPCX_DEFAULT_FLASH_ADDRESS = "0x64000000"
+VERIFY_FLASH_DEFAULT = True
 DRAGONCLAW_CONFIG = BoardConfig(
     interface=SWD_INTERFACE,
     device="STM32F412CG",
     speed=INTERFACE_SPEED_AUTO,
     flash_address=STM32_DEFAULT_FLASH_ADDRESS,
+    verify_flash=VERIFY_FLASH_DEFAULT,
 )
 ICETOWER_CONFIG = BoardConfig(
     interface=SWD_INTERFACE,
     device="STM32H743ZI",
     speed=INTERFACE_SPEED_AUTO,
     flash_address=STM32_DEFAULT_FLASH_ADDRESS,
+    verify_flash=VERIFY_FLASH_DEFAULT,
 )
 HELIPILOT_CONFIG = BoardConfig(
     interface=SWD_INTERFACE,
     device="NPCX998F",
     speed=INTERFACE_SPEED_4_MHZ,
     flash_address=NPCX_DEFAULT_FLASH_ADDRESS,
+    verify_flash=False,
 )
 
 BOARD_CONFIGS = {
@@ -115,7 +121,12 @@ def create_jlink_command_file(firmware_file, config):
     tmp = tempfile.NamedTemporaryFile()  # pylint:disable=consider-using-with
     tmp.write(
         JLINK_COMMANDS.format(
-            FIRMWARE=firmware_file, FLASH_ADDRESS=config.flash_address
+            FIRMWARE=firmware_file,
+            FLASH_ADDRESS=config.flash_address,
+            # https://wiki.segger.com/J-Link_Command_Strings#SetVerifyDownload
+            FLASH_VERIFICATION="exec SetVerifyDownload = 0"
+            if not config.verify_flash
+            else "",
         ).encode("utf-8")
     )
     tmp.flush()
