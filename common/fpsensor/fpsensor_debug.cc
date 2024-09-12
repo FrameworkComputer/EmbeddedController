@@ -270,6 +270,9 @@ DECLARE_SAFE_CONSOLE_COMMAND(fpinfo, command_fpinfo, NULL,
 
 static int command_fpmatch(int argc, const char **argv)
 {
+	if (system_is_locked())
+		return EC_ERROR_ACCESS_DENIED;
+
 	enum ec_error_list rc = fp_console_action(FP_MODE_MATCH);
 	uint32_t event = atomic_clear(&global_context.fp_events);
 
