@@ -1382,6 +1382,23 @@ static int cmd_ada_srccaps(int argc, const char *argv[])
 DECLARE_CONSOLE_COMMAND(ada_srccaps, cmd_ada_srccaps, "",
 			"Print adapter SrcCap");
 
+static int cmd_dut_srccaps(int argc, const char *argv[])
+{
+	int i;
+	const uint32_t *const dut_srccaps = pd_get_src_caps(DUT);
+
+	for (i = 0; i < pd_get_src_cap_cnt(DUT); ++i) {
+		uint32_t max_ma, max_mv, unused;
+
+		pd_extract_pdo_power(dut_srccaps[i], &max_ma, &max_mv, &unused);
+
+		ccprintf("%d: %dmV/%dmA\n", i, max_mv, max_ma);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(dut_srccaps, cmd_dut_srccaps, "", "Print DUT SrcCap");
+
 static int cmd_dp_action(int argc, const char *argv[])
 {
 	int i;
