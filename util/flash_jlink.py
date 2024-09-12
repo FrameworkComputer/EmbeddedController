@@ -67,7 +67,7 @@ ICETOWER_CONFIG = BoardConfig(
 )
 HELIPILOT_CONFIG = BoardConfig(
     interface=SWD_INTERFACE,
-    device="NPCX9mnx",
+    device="NPCX998F",
     speed=INTERFACE_SPEED_4_MHZ,
     flash_address=NPCX_DEFAULT_FLASH_ADDRESS,
 )
