@@ -104,9 +104,13 @@ const char *ppm_state_to_string(int state)
 	return ppm_state_strings[state];
 }
 
-static void clear_cci(struct ucsi_ppm_device *dev)
+/* We always keep the connector change bit active until an explicit ack arrives
+ * to reset |last_connector_changed| to zero.
+ */
+static void clear_cci_except_connector(struct ucsi_ppm_device *dev)
 {
 	memset(&dev->ucsi_data.cci, 0, sizeof(union cci_event_t));
+	dev->ucsi_data.cci.connector_change = dev->last_connector_changed;
 }
 
 static void clear_last_error(struct ucsi_ppm_device *dev)
@@ -115,9 +119,18 @@ static void clear_last_error(struct ucsi_ppm_device *dev)
 	memset(&dev->ppm_error_result, 0, sizeof(union error_status_t));
 }
 
+/* When the busy bit is set, all other bits must be set to 0 according to the
+ * spec.
+ */
+inline static void set_cci_busy(struct ucsi_ppm_device *dev)
+{
+	memset(&dev->ucsi_data.cci, 0, sizeof(union cci_event_t));
+	dev->ucsi_data.cci.busy = 1;
+}
+
 inline static void set_cci_error(struct ucsi_ppm_device *dev)
 {
-	clear_cci(dev);
+	clear_cci_except_connector(dev);
 	dev->ucsi_data.cci.error = 1;
 	dev->ucsi_data.cci.command_completed = 1;
 }
@@ -409,7 +422,6 @@ static int ppm_common_execute_pending_cmd(struct ucsi_ppm_device *dev)
 success:
 	LOG_DBG("Completed UCSI command 0x%x (%s). Read %d bytes.",
 		ucsi_command, get_ucsi_command_name(ucsi_command), ret);
-	clear_cci(dev);
 
 	if (ret > 0) {
 		LOG_DBG("Command 0x%x (%s) response", ucsi_command,
@@ -429,6 +441,8 @@ success:
 		 */
 		dev->pending.async_event = 1;
 	}
+
+	clear_cci_except_connector(dev);
 
 	/* If we reset, we only surface up the reset completed event after busy.
 	 */
@@ -515,8 +529,7 @@ static void ppm_common_handle_pending_command(struct ucsi_ppm_device *dev)
 		 * notify OPM and then continue.
 		 */
 		dev->ppm_state = PPM_STATE_PROCESSING_COMMAND;
-		clear_cci(dev);
-		dev->ucsi_data.cci.busy = 1;
+		set_cci_busy(dev);
 		/* Intentional fallthrough since we are now processing.
 		 */
 		__attribute__((fallthrough));
@@ -550,7 +563,7 @@ static void ppm_common_handle_pending_command(struct ucsi_ppm_device *dev)
 			 */
 			dev->ppm_state = PPM_STATE_IDLE_NOTIFY;
 
-			clear_cci(dev);
+			clear_cci_except_connector(dev);
 			dev->ucsi_data.cci.acknowledge_command = 1;
 		} else {
 			dev->ppm_state = PPM_STATE_WAITING_CC_ACK;
@@ -575,7 +588,7 @@ static void ppm_common_handle_pending_command(struct ucsi_ppm_device *dev)
 		} else if (ret >= 0) {
 			dev->ppm_state = PPM_STATE_IDLE_NOTIFY;
 
-			clear_cci(dev);
+			clear_cci_except_connector(dev);
 			dev->ucsi_data.cci.acknowledge_command = 1;
 		}
 

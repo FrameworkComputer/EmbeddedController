@@ -20,6 +20,7 @@ LOG_MODULE_REGISTER(ppm_test, LOG_LEVEL_DBG);
 #define PDC_ALTERNATE_CONNECTOR PDC_NUM_PORTS
 #define PDC_INVALID_CONNECTOR (PDC_NUM_PORTS + 1)
 #define PDC_DEFAULT_CONNECTOR_STATUS_CHANGE (1u << 14)
+#define CCI_CONNECTOR_CHANGE_RAW(cc) ((uint32_t)(cc) << 1)
 #define PDC_WAIT_FOR_ITERATIONS 3
 
 #define CMD_WAIT_TIMEOUT K_MSEC(200)
@@ -713,6 +714,7 @@ ZTEST_USER_F(ppm_test, test_CCACK_support_simultaneous_ack_CC_and_CI)
 {
 	initialize_fake_to_idle_notify(fixture);
 	int notified_count = fixture->notified_count;
+	union cci_event_t cci;
 
 	trigger_expected_connector_change(fixture, PDC_DEFAULT_CONNECTOR);
 	zassert_true(wait_for_async_event_to_process(fixture));
@@ -732,7 +734,9 @@ ZTEST_USER_F(ppm_test, test_CCACK_support_simultaneous_ack_CC_and_CI)
 	zassert_false(write_command(fixture, &control) < 0);
 	notified_count++;
 	zassert_true(wait_for_notification(fixture, notified_count));
-	zassert_true(check_cci_matches(fixture, &cci_cmd_complete));
+	cci.raw_value = cci_cmd_complete.raw_value |
+			CCI_CONNECTOR_CHANGE_RAW(PDC_DEFAULT_CONNECTOR);
+	zassert_true(check_cci_matches(fixture, &cci));
 
 	uint8_t changed_port_num;
 	union connector_status_t *status;
@@ -883,6 +887,7 @@ ZTEST_USER_F(ppm_test, test_CIACK_ack_immediately)
 {
 	initialize_fake_to_idle_notify(fixture);
 	int notified_count = fixture->notified_count;
+	union cci_event_t cci;
 
 	/* We should have an acknowledge from setting up above. */
 	zassert_true(check_cci_matches(fixture, &cci_ack_command));
@@ -917,7 +922,9 @@ ZTEST_USER_F(ppm_test, test_CIACK_ack_immediately)
 					/*connector_change_ack=*/false,
 					/*command_complete_ack=*/true) < 0);
 	zassert_true(wait_for_notification(fixture, ++notified_count));
-	zassert_true(check_cci_matches(fixture, &cci_error));
+	cci.raw_value = cci_error.raw_value |
+			CCI_CONNECTOR_CHANGE_RAW(PDC_DEFAULT_CONNECTOR);
+	zassert_true(check_cci_matches(fixture, &cci));
 }
 
 /* If we get an ACK_CC_CI when there is no active connector indication, we
