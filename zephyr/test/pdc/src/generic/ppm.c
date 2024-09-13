@@ -475,6 +475,8 @@ static void ppm_test_before(void *f)
 const union cci_event_t cci_cmd_complete = { .command_completed = 1 };
 const union cci_event_t cci_busy = { .busy = 1 };
 const union cci_event_t cci_error = { .error = 1, .command_completed = 1 };
+const union cci_event_t cci_not_supported_command = { .not_supported = 1,
+						      .command_completed = 1 };
 const union cci_event_t cci_ack_command = { .acknowledge_command = 1 };
 const union cci_event_t cci_connector_change_1_with_ack = {
 	.acknowledge_command = 1,
@@ -626,31 +628,15 @@ ZTEST_USER_F(ppm_test, test_IDLENOTIFY_send_invalid_ucsi_command)
 
 	zassert_false(write_command(fixture, &control) < 0);
 	zassert_true(wait_for_cmd_to_process(fixture));
-	zassert_true(check_cci_matches(fixture, &cci_error));
+	zassert_true(check_cci_matches(fixture, &cci_not_supported_command));
 
-	/* Ack the error before getting the error status. */
+	/* Not supported commands also require Ack. */
 	queue_command_for_fake_driver(fixture, UCSI_ACK_CC_CI,
 				      /*result=*/0, /*lpm_data=*/NULL);
 	zassert_false(write_ack_command(fixture, /*connector_change_ack=*/false,
 					/*command_complete_ack=*/true) < 0);
 	zassert_true(wait_for_cmd_to_process(fixture));
 	zassert_true(check_cci_matches(fixture, &cci_ack_command));
-
-	int notified_count = fixture->notified_count;
-	control.command = UCSI_GET_ERROR_STATUS;
-	zassert_false(write_command(fixture, &control) < 0);
-	zassert_true(wait_for_cmd_to_process(fixture));
-	notified_count++;
-	zassert_true(wait_for_notification(fixture, notified_count));
-
-	union error_status_t data;
-	union cci_event_t complete_with_size = cci_cmd_complete;
-	complete_with_size.data_len = sizeof(data);
-
-	zassert_true(check_cci_matches(fixture, &complete_with_size));
-	zassert_false(read_command_result(fixture, (uint8_t *)&data,
-					  sizeof(data)) < 0);
-	zassert_true(data.unrecognized_command);
 }
 
 /*

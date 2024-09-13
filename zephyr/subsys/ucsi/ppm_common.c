@@ -135,6 +135,13 @@ inline static void set_cci_error(struct ucsi_ppm_device *dev)
 	dev->ucsi_data.cci.command_completed = 1;
 }
 
+inline static void set_cci_not_supported(struct ucsi_ppm_device *dev)
+{
+	clear_cci_except_connector(dev);
+	dev->ucsi_data.cci.not_supported = 1;
+	dev->ucsi_data.cci.command_completed = 1;
+}
+
 static bool is_pending_async_event(struct ucsi_ppm_device *dev)
 {
 	return dev->pending.async_event;
@@ -331,11 +338,8 @@ static int ppm_common_execute_pending_cmd(struct ucsi_ppm_device *dev)
 	if (control->command == 0 || control->command >= UCSI_CMD_MAX) {
 		LOG_ERR("Invalid command 0x%x", control->command);
 
-		/* Set error condition to invalid command. */
-		clear_last_error(dev);
-		dev->last_error = ERROR_PPM;
-		dev->ppm_error_result.unrecognized_command = 1;
-		set_cci_error(dev);
+		/* Set cci to not supported command. */
+		set_cci_not_supported(dev);
 		return -1;
 	}
 
