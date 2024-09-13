@@ -100,16 +100,6 @@ struct pdc_bus_info_t {
 };
 
 /**
- * @brief PDO Source: PDC or Port Partner
- */
-enum pdo_source_t {
-	/** LPM */
-	LPM_PDO,
-	/** Port Partner PDO */
-	PARTNER_PDO,
-};
-
-/**
  * @brief Used for building CMD_PDC_GET_PDOS
  */
 struct get_pdo_t {
@@ -673,6 +663,10 @@ static inline int pdc_get_pdos(const struct device *dev,
 	if (api->get_pdos == NULL) {
 		return -ENOSYS;
 	}
+
+	__ASSERT(num_pdos <= GET_PDOS_MAX_NUM,
+		 "GET_PDOS supports a maximum count of " STRINGIFY(
+			 GET_PDOS_MAX_NUM) " PDOs");
 
 	return api->get_pdos(dev, pdo_type, pdo_offset, num_pdos, source, pdos);
 }

@@ -581,20 +581,20 @@ static int set_pdo(struct rts5453p_emul_pdc_data *data,
 static int get_pdos(struct rts5453p_emul_pdc_data *data,
 		    const union rts54_request *req)
 {
-	enum pdo_type_t pdo_type = req->get_pdos.src ? SOURCE_PDO : SINK_PDO;
-	enum pdo_source_t pdo_source = req->get_pdos.partner ? PARTNER_PDO :
-							       LPM_PDO;
-	enum pdo_offset_t pdo_offset = req->get_pdos.offset;
+	enum pdo_type_t pdo_type = req->get_pdos.ucsi.pdo_type;
+	enum pdo_source_t pdo_source = req->get_pdos.ucsi.pdo_source;
+	enum pdo_offset_t pdo_offset = req->get_pdos.ucsi.pdo_offset;
+	uint8_t pdo_count = req->get_pdos.ucsi.number_of_pdos + 1;
+
 	/* GET_PDOS stops at the end if there's a requested overflow. */
-	uint8_t pdo_count = MIN(PDO_OFFSET_MAX - pdo_offset, req->get_pdos.num);
+	pdo_count = MIN(PDO_OFFSET_MAX - pdo_offset, pdo_count);
 
 	LOG_INF("GET_PDO source %d, type=%d, offset=%d, count=%d", pdo_source,
 		pdo_type, pdo_offset, pdo_count);
 
 	memset(&data->response, 0, sizeof(data->response));
 	emul_pdc_pdo_get_direct(&data->pdo, pdo_type, pdo_offset, pdo_count,
-				req->get_pdos.partner,
-				data->response.get_pdos.pdos);
+				pdo_source, data->response.get_pdos.pdos);
 	data->response.get_pdos.byte_count = sizeof(uint32_t) * pdo_count;
 
 	send_response(data);
@@ -776,7 +776,7 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0x27, HANDLER_DEF(unsupported) },
 	{ .code = 0x28, HANDLER_DEF(unsupported) },
 	{ .code = 0x2B, HANDLER_DEF(unsupported) },
-	{ .code = 0x83, HANDLER_DEF(get_pdos) },
+	{ .code = 0x83, HANDLER_DEF(unsupported) },
 	{ .code = 0x84, HANDLER_DEF(get_rdo) },
 	{ .code = 0x85, HANDLER_DEF(unsupported) },
 	{ .code = 0x99, HANDLER_DEF(unsupported) },
@@ -805,7 +805,7 @@ const struct commands sub_cmd_x0E[] = {
 	{ .code = 0x0D, HANDLER_DEF(unsupported) },
 	{ .code = 0x0E, HANDLER_DEF(unsupported) },
 	{ .code = 0x0F, HANDLER_DEF(unsupported) },
-	{ .code = 0x10, HANDLER_DEF(unsupported) },
+	{ .code = 0x10, HANDLER_DEF(get_pdos) },
 	{ .code = 0x11, HANDLER_DEF(get_cable_property) },
 	{ .code = 0x12, HANDLER_DEF(get_connector_status) },
 	{ .code = 0x13, HANDLER_DEF(get_error_status) },

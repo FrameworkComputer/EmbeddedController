@@ -169,7 +169,6 @@ static const struct smbus_cmd_t SET_TPC_CSD_OPERATION_MODE = { 0x08, 0x03,
 							       0x1D };
 static const struct smbus_cmd_t SET_TPC_RECONNECT = { 0x08, 0x03, 0x1F };
 static const struct smbus_cmd_t FORCE_SET_POWER_SWITCH = { 0x08, 0x03, 0x21 };
-static const struct smbus_cmd_t GET_PDOS = { 0x08, 0x03, 0x83 };
 static const struct smbus_cmd_t GET_RDO = { 0x08, 0x02, 0x84 };
 static const struct smbus_cmd_t GET_VDO = { 0x08, 0x03, 0x9A };
 static const struct smbus_cmd_t GET_CURRENT_PARTNER_SRC_PDO = { 0x08, 0x02,
@@ -184,6 +183,9 @@ static const struct smbus_cmd_t RTS_UCSI_GET_CONNECTOR_CAPABILITY = { 0x0E,
 								      0x07 };
 static const struct smbus_cmd_t RTS_UCSI_SET_UOR = { 0x0E, 0x04, 0x09 };
 static const struct smbus_cmd_t RTS_UCSI_SET_PDR = { 0x0E, 0x04, 0x0B };
+static const struct smbus_cmd_t RTS_UCSI_GET_PDOS = { .cmd = 0x0E,
+						      .len = 0x05,
+						      .sub = 0x10 };
 static const struct smbus_cmd_t RTS_UCSI_GET_CONNECTOR_STATUS = { 0x0E, 0x3,
 								  0x12 };
 static const struct smbus_cmd_t RTS_UCSI_GET_ERROR_STATUS = { 0x0E, 0x03,
@@ -2106,8 +2108,9 @@ static int rts54_get_pdos(const struct device *dev, enum pdo_type_t pdo_type,
 			  enum pdo_offset_t pdo_offset, uint8_t num_pdos,
 			  enum pdo_source_t source, uint32_t *pdos)
 {
+	const struct pdc_config_t *cfg = dev->config;
 	struct pdc_data_t *data = dev->data;
-	uint8_t byte4;
+	union get_pdos_t *get_pdo;
 
 	if (get_state(data) != ST_IDLE) {
 		return -EBUSY;
@@ -2117,13 +2120,36 @@ static int rts54_get_pdos(const struct device *dev, enum pdo_type_t pdo_type,
 		return -EINVAL;
 	}
 
-	byte4 = (num_pdos << 5) | (pdo_offset << 2) | (source << 1) | pdo_type;
-
+	/* b/366470065 - The vendor specific GET_PDO command fails to generate
+	 * the appropriate PD message if the requested PDO type has not
+	 * been received.
+	 *
+	 * Use the UCSI version which has the correct behavior.
+	 */
 	memset((uint8_t *)pdos, 0, sizeof(uint32_t) * num_pdos);
 
 	uint8_t payload[] = {
-		GET_PDOS.cmd, GET_PDOS.len, GET_PDOS.sub, 0x00, byte4,
+		RTS_UCSI_GET_PDOS.cmd,
+		RTS_UCSI_GET_PDOS.len,
+		RTS_UCSI_GET_PDOS.sub,
+		0x00, /* data length - must be zero */
+		0x00,
+		0x00,
+		0x00,
 	};
+
+	BUILD_ASSERT(ARRAY_SIZE(payload) == sizeof(RTS_UCSI_GET_PDOS) +
+						    /* length byte */ 1 +
+						    sizeof(union get_pdos_t));
+
+	get_pdo = (union get_pdos_t *)&payload[4];
+	get_pdo->connector_number = cfg->connector_number + 1;
+	get_pdo->pdo_source = source;
+	get_pdo->pdo_offset = pdo_offset;
+	get_pdo->number_of_pdos = num_pdos - 1;
+	get_pdo->pdo_type = pdo_type;
+	get_pdo->source_caps = CURRENT_SUPPORTED_SOURCE_CAPS;
+	get_pdo->range = SPR_RANGE;
 
 	return rts54_post_command(dev, CMD_GET_PDOS, payload,
 				  ARRAY_SIZE(payload), (uint8_t *)pdos);

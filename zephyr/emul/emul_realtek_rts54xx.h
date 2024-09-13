@@ -241,13 +241,8 @@ union rts54_request {
 
 	struct get_pdo {
 		struct rts54_subcommand_header header;
-		uint8_t port_num;
-		struct {
-			uint8_t src : 1;
-			enum pdo_source_t partner : 1;
-			uint8_t offset : 3;
-			uint8_t num : 3;
-		};
+		uint8_t data_length;
+		union get_pdos_t ucsi;
 	} __packed get_pdos;
 
 	struct get_cable_property {

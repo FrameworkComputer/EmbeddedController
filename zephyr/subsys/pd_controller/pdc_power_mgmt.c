@@ -1692,7 +1692,7 @@ static void pdc_src_attached_run(void *obj)
 			port->get_pdo.pdo_offset = PDO_OFFSET_0;
 			port->get_pdo.updating = true;
 		}
-		if (port->get_pdo.num_pdos > 4) {
+		if (port->get_pdo.num_pdos > GET_PDOS_MAX_NUM) {
 			port->src_attached_local_state = SRC_ATTACHED_GET_PDOS;
 		} else {
 			port->src_attached_local_state = SRC_ATTACHED_RUN;
@@ -1828,7 +1828,7 @@ static void pdc_snk_attached_run(void *obj)
 			port->get_pdo.pdo_offset = PDO_OFFSET_0;
 			port->get_pdo.updating = true;
 		}
-		if (port->get_pdo.num_pdos > 4) {
+		if (port->get_pdo.num_pdos > GET_PDOS_MAX_NUM) {
 			port->snk_attached_local_state = SNK_ATTACHED_GET_PDOS;
 		} else {
 			port->snk_attached_local_state =
@@ -2032,15 +2032,14 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 		rv = pdc_set_drp_mode(port->pdc, port->drp);
 		break;
 	case CMD_PDC_GET_PDOS:
-		rv = pdc_get_pdos(
-			port->pdc, port->get_pdo.pdo_type,
-			port->get_pdo.pdo_offset,
-			port->get_pdo.num_pdos > 4 ? 4 : port->get_pdo.num_pdos,
-			port->get_pdo.pdo_source,
-			get_pdc_pdos_ptr(port, &port->get_pdo)->pdos +
-				port->get_pdo.pdo_offset);
-		if (!rv && port->get_pdo.num_pdos > 4) {
-			port->get_pdo.num_pdos -= 4;
+		rv = pdc_get_pdos(port->pdc, port->get_pdo.pdo_type,
+				  port->get_pdo.pdo_offset,
+				  MIN(port->get_pdo.num_pdos, GET_PDOS_MAX_NUM),
+				  port->get_pdo.pdo_source,
+				  get_pdc_pdos_ptr(port, &port->get_pdo)->pdos +
+					  port->get_pdo.pdo_offset);
+		if (!rv && port->get_pdo.num_pdos > GET_PDOS_MAX_NUM) {
+			port->get_pdo.num_pdos -= GET_PDOS_MAX_NUM;
 			port->get_pdo.pdo_offset = PDO_OFFSET_4;
 		}
 		break;
