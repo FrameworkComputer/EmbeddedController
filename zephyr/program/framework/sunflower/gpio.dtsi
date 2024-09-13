@@ -222,7 +222,8 @@
 			gpios = <&gpio7 2 GPIO_ODR_LOW>; /*CPU 1.05V power good*/
 		};
 		gpio_tablet_mode_l: tablet_mode_l {
-			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>; /*Tablet mode detect*/
+			gpios = <&gpio7 4 GPIO_INPUT>; /*Tablet mode detect*/
+			enum-name = "GPIO_TABLET_MODE_L";
 		};
 		gpio_mux_sub_uart_flip: mux_sub_uart_flip {
 			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;	/*TBT SBU MUX*/
