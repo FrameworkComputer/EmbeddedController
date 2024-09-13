@@ -72,15 +72,14 @@ static void pdc_power_mgmt_before(void *fixture)
 {
 	emul_pdc_set_response_delay(emul, 0);
 	emul_pdc_disconnect(emul);
-	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
 
-	zassert_ok(emul_pdc_idle_wait(emul));
-
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
 	reset_fakes();
 }
 
 static void pdc_power_mgmt_after(void *fixture)
 {
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
 	reset_fakes();
 }
 
@@ -471,7 +470,7 @@ ZTEST_USER(pdc_power_mgmt_api_connectionless, test_get_lpm_ppm_info)
 ZTEST_USER(pdc_power_mgmt_api, test_get_partner_usb_comm_capable)
 {
 	int i;
-	union connector_status_t connector_status;
+	union connector_status_t connector_status = { 0 };
 	struct {
 		union connector_capability_t ccap;
 		bool expected;
@@ -494,14 +493,14 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_usb_comm_capable)
 		emul_pdc_set_connector_capability(emul, &test[i].ccap);
 		emul_pdc_configure_src(emul, &connector_status);
 		emul_pdc_connect_partner(emul, &connector_status);
-		zassert_true(TEST_WAIT_FOR(
+		zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+		zassert_true(
 			test[i].expected ==
-				pd_get_partner_usb_comm_capable(TEST_PORT),
-			PDC_TEST_TIMEOUT));
+				pd_get_partner_usb_comm_capable(TEST_PORT), );
 
 		emul_pdc_disconnect(emul);
-		zassert_true(TEST_WAIT_FOR(!pd_is_connected(TEST_PORT),
-					   PDC_TEST_TIMEOUT));
+		zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+		zassert_true(!pd_is_connected(TEST_PORT));
 	}
 }
 
