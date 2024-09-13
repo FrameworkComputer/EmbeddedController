@@ -473,6 +473,8 @@ static void ppm_test_before(void *f)
 }
 
 const union cci_event_t cci_cmd_complete = { .command_completed = 1 };
+const union cci_event_t cci_cancel_complete = { .cancel_completed = 1,
+						.command_completed = 1 };
 const union cci_event_t cci_busy = { .busy = 1 };
 const union cci_event_t cci_error = { .error = 1, .command_completed = 1 };
 const union cci_event_t cci_not_supported_command = { .not_supported = 1,
@@ -501,12 +503,12 @@ ZTEST_USER_F(ppm_test, test_IDLE_drops_unexpected_commands)
 {
 	zassert_true(initialize_fake(fixture));
 
-	/* Try all commands except PPM_RESET and SET_NOTIFICATION_ENABLE.
+	/* Try all commands except PPM_RESET, SET_NOTIFICATION_ENABLE & CANCEL.
 	 * They should result in no change to the state.
 	 */
 	for (uint8_t cmd = UCSI_PPM_RESET; cmd <= UCSI_CMD_MAX; cmd++) {
 		if (cmd == UCSI_PPM_RESET ||
-		    cmd == UCSI_SET_NOTIFICATION_ENABLE) {
+		    cmd == UCSI_SET_NOTIFICATION_ENABLE || cmd == UCSI_CANCEL) {
 			continue;
 		}
 
@@ -640,14 +642,18 @@ ZTEST_USER_F(ppm_test, test_IDLENOTIFY_send_invalid_ucsi_command)
 }
 
 /*
- * While in the processing command state, the PPM is busy and should reject any
- * new commands that are sent.
+ * PPM should reject new commands sent while the current system is busy handling
+ * a pending command.
  */
-ZTEST_EXPECT_SKIP(ppm_test, test_PROCESSING_busy_rejects_commands);
-ZTEST_USER_F(ppm_test, test_PROCESSING_busy_rejects_commands)
+ZTEST_USER_F(ppm_test, test_busy_rejects_commands)
 {
-	/* TODO(b/340895744) - Not yet implemented. */
-	ztest_test_skip();
+	/* Writing while busy should result in failure. */
+	struct ucsi_control_t control = {
+		.command = UCSI_GET_CONNECTOR_CAPABILITY, .data_length = 0
+	};
+	/* First write succeeds and second one responds with -EBUSY. */
+	zassert_false(write_command(fixture, &control) < 0);
+	zassert_equal(write_command(fixture, &control), -EBUSY);
 }
 
 /*
@@ -655,11 +661,28 @@ ZTEST_USER_F(ppm_test, test_PROCESSING_busy_rejects_commands)
  * be sent WHILE a command is in progress. If a command is cancellable, it will
  * replace the current command.
  */
-ZTEST_EXPECT_SKIP(ppm_test, test_PROCESSING_busy_allows_cancel_command);
 ZTEST_USER_F(ppm_test, test_PROCESSING_busy_allows_cancel_command)
 {
-	/* TODO(b/340895744) - Cancel is not yet implemented. */
-	ztest_test_skip();
+	initialize_fake_to_idle_notify(fixture);
+
+	struct ucsi_control_t control = {
+		.command = UCSI_GET_CONNECTOR_CAPABILITY, .data_length = 0
+	};
+	struct ucsi_control_t cancel = { .command = UCSI_CANCEL,
+					 .data_length = 0 };
+
+	/* First write succeeds and second one responds with -EBUSY. */
+	zassert_false(write_command(fixture, &control) < 0);
+	zassert_equal(write_command(fixture, &control), -EBUSY);
+	/* Cancel while busy should succeed. */
+	zassert_false(write_command(fixture, &cancel) < 0);
+
+	/* Once command completes, we should see cancel_completed in CCI. */
+	zassert_true(wait_for_cmd_to_process(fixture));
+	zassert_true(check_cci_matches(fixture, &cci_cancel_complete));
+
+	/* Trying to cancel while not busy should also result in an error. */
+	zassert_equal(write_command(fixture, &cancel), -EINVAL);
 }
 
 /*
@@ -1062,14 +1085,6 @@ ZTEST_USER_F(ppm_test, test_invalid_read_writes)
 	zassert_equal(raw_ppm_write(fixture, UCSI_CONTROL_OFFSET, buf,
 				    sizeof(struct ucsi_control_t) + 1),
 		      -EINVAL);
-
-	/* Writing while busy should result in failure. */
-	struct ucsi_control_t control = {
-		.command = UCSI_GET_CONNECTOR_CAPABILITY, .data_length = 0
-	};
-	/* First write succeeds and second one responds with -EBUSY. */
-	zassert_false(write_command(fixture, &control) < 0);
-	zassert_equal(write_command(fixture, &control), -EBUSY);
 }
 
 /* Test mapping of driver errors to PPM errors. */

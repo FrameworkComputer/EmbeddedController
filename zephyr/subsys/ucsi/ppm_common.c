@@ -370,6 +370,8 @@ static int ppm_common_execute_pending_cmd(struct ucsi_ppm_device *dev)
 		       sizeof(dev->notif_mask));
 		ret = 0;
 		goto success;
+	case UCSI_CANCEL:
+		goto success;
 	default:
 		break;
 	}
@@ -449,9 +451,14 @@ success:
 	clear_cci_except_connector(dev);
 
 	/* If we reset, we only surface up the reset completed event after busy.
+	 * If the current executing command was replaced with UCSI_CANCEL, we
+	 * should also set the cancel completed bit.
 	 */
 	if (ucsi_command == UCSI_PPM_RESET) {
 		cci->reset_completed = 1;
+	} else if (dev->ucsi_data.control.command == UCSI_CANCEL) {
+		cci->command_completed = 1;
+		cci->cancel_completed = 1;
 	} else {
 		cci->data_len = ret & 0xFF;
 		cci->command_completed = 1;
@@ -862,7 +869,7 @@ int ucsi_ppm_read(struct ucsi_ppm_device *dev, unsigned int offset, void *buf,
 static int ppm_common_handle_control_message(struct ucsi_ppm_device *dev,
 					     const void *buf, size_t length)
 {
-	const uint8_t *cmd = (const uint8_t *)buf;
+	const struct ucsi_control_t *cmd = (const struct ucsi_control_t *)buf;
 	uint8_t prev_cmd;
 	uint8_t busy = 0;
 
@@ -873,7 +880,8 @@ static int ppm_common_handle_control_message(struct ucsi_ppm_device *dev,
 	}
 
 	/* If we're currently sending a command, we should immediately discard
-	 * this call.
+	 * this call. The exception is if this is a cancel command, which should
+	 * replace the current command.
 	 */
 	{
 		k_mutex_lock(&dev->ppm_lock, K_FOREVER);
@@ -881,28 +889,32 @@ static int ppm_common_handle_control_message(struct ucsi_ppm_device *dev,
 		prev_cmd = dev->ucsi_data.control.command;
 		k_mutex_unlock(&dev->ppm_lock);
 	}
-	if (busy) {
+
+	if (busy && cmd->command != UCSI_CANCEL) {
 		LOG_ERR("Tried to send control message (cmd=0x%x) when one "
 			"is already pending (cmd=0x%x).",
-			cmd[0], prev_cmd);
+			cmd->command, prev_cmd);
 		return -EBUSY;
+	} else if (!busy && cmd->command == UCSI_CANCEL) {
+		LOG_ERR("Tried to cancel a command when not busy");
+		return -EINVAL;
 	}
 
-	/* If we didn't get a full CONTROL message, zero the region before
-	 * copying.
-	 */
-	if (length != sizeof(struct ucsi_control_t)) {
-		memset(&dev->ucsi_data.control, 0,
-		       sizeof(struct ucsi_control_t));
-	}
-	memcpy(&dev->ucsi_data.control, cmd, length);
-
-	LOG_DBG("Got valid control message: 0x%x (%s)", cmd[0],
-		get_ucsi_command_name(cmd[0]));
+	LOG_DBG("Got valid control message: 0x%x (%s)", cmd->command,
+		get_ucsi_command_name(cmd->command));
 
 	/* Schedule command send. */
 	{
 		k_mutex_lock(&dev->ppm_lock, K_FOREVER);
+
+		/* If we didn't get a full CONTROL message, zero the region
+		 * before copying.
+		 */
+		if (length != sizeof(struct ucsi_control_t)) {
+			memset(&dev->ucsi_data.control, 0,
+			       sizeof(struct ucsi_control_t));
+		}
+		memcpy(&dev->ucsi_data.control, cmd, length);
 
 		/* Mark command pending. */
 		dev->pending.command = 1;
