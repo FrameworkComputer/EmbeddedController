@@ -169,7 +169,7 @@ Start the JLink gdbserver for the appropriate MCU type and interface speed:
 
 *   Dragonclaw / [Nucleo STM32F412ZG]: `STM32F412CG`
 *   Icetower / [Nucleo STM32H743ZI]: `STM32H743ZI`
-*   Quincy / NPCX99FP: `NPCX9mnx`
+*   Quincy / NPCX99FP: `NPCX998F`
 
 Dragonclaw:
 
@@ -194,7 +194,7 @@ Quincy:
 <!-- mdformat on -->
 
 ```bash
-(chroot) $ JLinkGDBServerCLExe -select USB -device NPCX9mnx -endian little -if SWD -speed 4000 -noir -noLocalhostOnly
+(chroot) $ JLinkGDBServerCLExe -select USB -device NPCX998F -endian little -if SWD -speed 4000 -noir -noLocalhostOnly
 ```
 
 You should see the port that `gdbserver` is running on in the output:
