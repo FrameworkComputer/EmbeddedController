@@ -76,6 +76,7 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 			"src/battery_13.c"
 			"azalea/src/charger.c"
 			"azalea/src/cpu_power.c"
+			"azalea/src/input_module.c"
 			"azalea/src/power_sequence.c"
 			"src/keyboard_customization_13.c"
 			"azalea/src/project_diagnostics.c"

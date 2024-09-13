@@ -15,6 +15,7 @@
 #include "gpio_signal.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
+#include "input_module.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_protocol.h"
 #include "lpc.h"
@@ -240,6 +241,7 @@ DECLARE_DEFERRED(system_hang_detect);
 
 static void chipset_force_g3(void)
 {
+	input_c_deck_powerdown();
 	hook_call_deferred(&system_hang_detect_data, -1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
@@ -609,8 +611,6 @@ static void peripheral_power_startup(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wlan_en), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wl_rst_l), 1);
-	/* TODO: follow lilac mainboard ERS to control the c deck power */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on), 1);
 	/* TODO: Enable fingerprint LED as soon as possible after button press, don't wait for CPU to start up */
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_fp_en), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 1);
