@@ -440,7 +440,8 @@ ZTEST_USER_F(src_policy, test_src_policy_frs_1a5)
 	uint32_t lpm_src_pdo_actual_port0;
 	uint32_t lpm_src_pdo_actual_port1;
 	union connector_capability_t frs_ccaps = {
-		.partner_pd_revision = 3,
+		.op_mode_drp = 1,
+		.partner_pd_revision = PD_REV30,
 	};
 	bool frs_enabled;
 
@@ -518,7 +519,8 @@ ZTEST_USER_F(src_policy, test_src_policy_frs_3a)
 	uint32_t lpm_src_pdo_actual_port0;
 	uint32_t lpm_src_pdo_actual_port1;
 	union connector_capability_t frs_ccaps = {
-		.partner_pd_revision = 3,
+		.op_mode_drp = 1,
+		.partner_pd_revision = PD_REV30,
 	};
 	bool frs_enabled;
 
@@ -601,7 +603,8 @@ ZTEST_USER_F(src_policy, test_src_policy_fsr_downgrade_for_pd)
 	uint32_t lpm_src_pdo_actual_port0;
 	uint32_t lpm_src_pdo_actual_port1;
 	union connector_capability_t frs_ccaps = {
-		.partner_pd_revision = 3,
+		.op_mode_drp = 1,
+		.partner_pd_revision = PD_REV30,
 	};
 	bool frs_enabled;
 
@@ -726,7 +729,8 @@ ZTEST_USER_F(src_policy, test_src_policy_non_pd_downgrade_for_frs)
 		5000, 3000, PDO_FIXED_DUAL_ROLE | PDO_FIXED_FRS_CURR_3A0_AT_5V);
 	uint32_t lpm_src_pdo_actual_port1;
 	union connector_capability_t frs_ccaps = {
-		.partner_pd_revision = 3,
+		.op_mode_drp = 1,
+		.partner_pd_revision = PD_REV30,
 	};
 	bool frs_enabled;
 	enum usb_typec_current_t typec_current;
@@ -839,7 +843,7 @@ ZTEST_USER_F(src_policy, test_src_policy_frs_sink_pdo_errors)
 	/* FRS only offered for PD rev 3.0 and above */
 	frs_partner_snk_pdo = PDO_FIXED(
 		5000, 3000, PDO_FIXED_DUAL_ROLE | PDO_FIXED_FRS_CURR_1A5_AT_5V);
-	frs_ccaps.partner_pd_revision = 2;
+	frs_ccaps.partner_pd_revision = PD_REV20;
 	/* Connect an FRS source that supports 3.0A on port 1. */
 	zassert_ok(emul_pdc_set_connector_capability(
 		fixture->emul_pdc[TEST_USBC_PORT0], &frs_ccaps));

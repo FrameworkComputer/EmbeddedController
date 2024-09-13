@@ -505,8 +505,6 @@ struct pdc_snk_attached_policy_t {
 	uint32_t rdo_to_send;
 	/** If true, accept a power role swap request from port partner */
 	bool accept_power_role_swap;
-	/** If true, partner is DRP capable */
-	bool partner_is_drp;
 };
 
 /**
@@ -1928,11 +1926,9 @@ static void pdc_snk_attached_run(void *obj)
 		    (max_mw >= PD_DRP_CHARGE_POWER_MIN)) {
 			charge_manager_update_dualrole(config->connector_num,
 						       CAP_DEDICATED);
-			port->snk_policy.partner_is_drp = false;
 		} else {
 			charge_manager_update_dualrole(config->connector_num,
 						       CAP_DUALROLE);
-			port->snk_policy.partner_is_drp = true;
 		}
 
 		port->snk_attached_local_state = SNK_ATTACHED_GET_RDO;
@@ -1943,7 +1939,7 @@ static void pdc_snk_attached_run(void *obj)
 		return;
 	case SNK_ATTACHED_SET_SINK_PATH:
 		if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS) &&
-		    port->snk_policy.partner_is_drp) {
+		    port->ccaps.op_mode_drp) {
 			port->snk_attached_local_state =
 				SNK_ATTACHED_GET_SINK_PDO;
 		} else {
@@ -3633,10 +3629,10 @@ int pdc_power_mgmt_get_rev(int port, enum tcpci_msg_type type)
 
 	switch (type) {
 	case TCPCI_MSG_SOP:
-		rev = pdc_data[port]->port.ccaps.partner_pd_revision - 1;
+		rev = pdc_data[port]->port.ccaps.partner_pd_revision;
 		break;
 	case TCPCI_MSG_SOP_PRIME:
-		rev = pdc_data[port]->port.cable_prop.cable_pd_revision - 1;
+		rev = pdc_data[port]->port.cable_prop.cable_pd_revision;
 		break;
 	default:
 		rev = 0;
