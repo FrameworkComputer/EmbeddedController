@@ -108,6 +108,7 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 			"src/battery_present_adc.c"
 			"azalea/src/charger.c"
 			"azalea/src/cpu_power.c"
+			"azalea/src/input_module.c"
 			"azalea/src/power_sequence.c"
 			"azalea/src/project_diagnostics.c"
 			"src/usbc_4port_config.c"
