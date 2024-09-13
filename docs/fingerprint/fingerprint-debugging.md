@@ -32,7 +32,7 @@ used for JTAG and SWD for ARM devices.
     is the only software required for flashing.
 *   In order to perform breakpoint debugging, you will need a tool that supports
     connecting `gdbserver`. This document will assume [CLion] \(Googlers see
-    [CLion for ChromeOS]) and was tested with `JLink v6.94a`. Alternatively, you
+    [CLion for ChromeOS]) and was tested with `JLink v7.98h`. Alternatively, you
     can use [Ozone], a standalone debugger from Segger.
 
 ## JLink Software {#software}
@@ -131,14 +131,14 @@ sensor runs at 1.8V. The pin is also not connected on the current designs.
 You should see the following:
 
 ```bash
-SEGGER J-Link Remote Server V6.94a
-Compiled Jan 14 2021 11:52:48
+SEGGER J-Link Remote Server V7.98h
+Compiled Sep 11 2024 14:27:52
 
 'q' to quit '?' for help
 
-Connected to J-Link with S/N 123456
-
-Waiting for client connections...
+2024-09-13 18:07:20 - Remote Server started
+2024-09-13 18:07:20 - Connected to J-Link with S/N 123456
+2024-09-13 18:07:20 - Waiting for client connections...
 ```
 
 *   Build the FPMCU image:
