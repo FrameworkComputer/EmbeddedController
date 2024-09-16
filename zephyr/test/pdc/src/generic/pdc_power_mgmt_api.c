@@ -92,6 +92,29 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_usb_pd_port_count)
 		      pdc_power_mgmt_get_usb_pd_port_count());
 }
 
+ZTEST_USER(pdc_power_mgmt_api, test_connector_reset)
+{
+	union connector_status_t connector_status;
+
+	zassert_equal(-ERANGE,
+		      pdc_power_mgmt_connector_reset(
+			      CONFIG_USB_PD_PORT_MAX_COUNT, PD_HARD_RESET));
+
+	zassert_ok(pdc_power_mgmt_connector_reset(TEST_PORT, PD_HARD_RESET));
+	zassert_ok(pdc_power_mgmt_connector_reset(TEST_PORT, PD_DATA_RESET));
+
+	emul_pdc_configure_src(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+
+	zassert_ok(pdc_power_mgmt_connector_reset(TEST_PORT, PD_HARD_RESET));
+
+	emul_pdc_configure_src(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+	zassert_ok(pdc_power_mgmt_connector_reset(TEST_PORT, PD_DATA_RESET));
+}
+
 ZTEST_USER(pdc_power_mgmt_api, test_is_connected)
 {
 	union connector_status_t connector_status;
