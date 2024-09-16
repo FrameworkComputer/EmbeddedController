@@ -14,12 +14,11 @@ void *sys_alloc(size_t count, size_t size)
 
 	rc = shared_mem_acquire(size, &addr);
 
-	if (rc == EC_SUCCESS)
-		return addr;
-	else {
+	if (rc != EC_SUCCESS) {
 		CPRINTS("Error - %s of size %u failed.", __func__, size);
 		return NULL;
 	}
+	return addr;
 }
 
 void sys_free(void *ptr)
