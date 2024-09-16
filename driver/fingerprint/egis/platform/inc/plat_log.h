@@ -25,12 +25,6 @@ typedef enum {
 	LOG_ASSERT = 7,
 } LOG_LEVEL;
 
-#ifdef _MSC_VER
-#ifndef __func__
-#define __func__ __FUNCTION__
-#endif
-#endif
-
 #define EGIS_LOG_ENTRY() egislog_d("Start %s", __func__)
 #define EGIS_LOG_EXIT(x) egislog_i("Exit %s, ret=%d", __func__, x)
 
