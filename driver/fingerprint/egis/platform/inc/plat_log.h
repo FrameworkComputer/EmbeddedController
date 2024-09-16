@@ -9,13 +9,6 @@
 
 #include <string.h>
 
-#if defined(TZ_MODE) && defined(__TRUSTONIC__)
-#define malloc malloc_NOT_SUPPORTED
-#define sprintf sprintf_NOT_SUPPORTED
-#define vsnprintf vsnprintf_NOT_SUPPORTED
-#define snprintf snprintf_NOT_SUPPORTED
-#endif
-
 typedef enum {
 	LOG_VERBOSE = 2,
 	LOG_DEBUG = 3,
