@@ -58,21 +58,12 @@ void set_debug_log_callback(event_callback_t event_callback);
 }
 #endif
 
-#ifdef _WINDOWS
-#define egislog_e(format, ...) egislog(LOG_ERROR, format, ##__VA_ARGS__)
-#define egislog_d(format, ...) egislog(LOG_DEBUG, format, ##__VA_ARGS__)
-#define egislog_i(format, ...) egislog(LOG_INFO, format, ##__VA_ARGS__)
-#define egislog_v(format, ...) egislog(LOG_VERBOSE, format, ##__VA_ARGS__)
-#define CPRINTF(format, ...) cprintf(CC_FP, format, ##__VA_ARGS__)
-#define CPRINTS(format, ...) cprints(CC_FP, format, ##__VA_ARGS__)
-#else
 #define egislog_e(format, args...) egislog(LOG_ERROR, format, ##args)
 #define egislog_d(format, args...) egislog(LOG_DEBUG, format, ##args)
 #define egislog_i(format, args...) egislog(LOG_INFO, format, ##args)
 #define egislog_v(format, args...) egislog(LOG_VERBOSE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_FP, format, ##args)
-#endif
 
 #define RBS_CHECK_IF_NULL(x, errorcode)               \
 	if (x == NULL) {                              \
