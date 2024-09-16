@@ -1065,8 +1065,14 @@ static int handle_pending_reboot(struct ec_params_reboot_ec *p)
 		system_set_bbram(SYSTEM_BBRAM_IDX_SYSTEM_JUMP_RW_SUCCESS, 0);
 #endif
 
-		if (IS_ENABLED(CONFIG_AP_X86_INTEL))
+		/* Framework Workaround: On EVT board	can't reboot EC if ec_rsmrst_l is high,
+		 * need to power off SoC befor EC reboot. */
+		if (IS_ENABLED(CONFIG_AP_X86_INTEL) || IS_ENABLED(CONFIG_AP_X86_INTEL_CUSTOM)) {
 			chipset_force_shutdown(CHIPSET_SHUTDOWN_G3);
+
+			/* wait system shut down to g3 state */
+			crec_msleep(150);
+		}
 
 		/*
 		 * Reboot the PD chip(s) as well, but first suspend the ports
