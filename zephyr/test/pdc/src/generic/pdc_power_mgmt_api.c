@@ -1867,6 +1867,83 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_new_power_request)
 	LOG_DBG("RDO position after new power request: %d",
 		get_obj_pos_from_rdo());
 }
+
+ZTEST_USER(pdc_power_mgmt_api, test_request_source_voltage)
+{
+	uint32_t partner_src_pdos[] = {
+		PDO_FIXED(5000, 3000, 0),
+		PDO_FIXED(12000, 3000, 0),
+		PDO_FIXED(20000, 5000, 0),
+	};
+	uint32_t rdo = 0;
+	union connector_status_t connector_status = { 0 };
+	int prev_mv = pdc_power_mgmt_get_max_voltage();
+	int source_mv = 5000;
+
+	zassert_ok(emul_pdc_set_pdos(emul, SOURCE_PDO, PDO_OFFSET_0,
+				     ARRAY_SIZE(partner_src_pdos), PARTNER_PDO,
+				     partner_src_pdos));
+	/* Setup    - Configure as SNK and request 5v
+	 * Validate - Confirm 5v PDO selected
+	 */
+	pdc_power_mgmt_request_source_voltage(TEST_PORT, source_mv);
+	emul_pdc_configure_snk(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+
+	zassert_ok(emul_pdc_get_rdo(emul, &rdo));
+	/* Confirm 5v PDO selected */
+	zassert_equal(1, RDO_POS(rdo));
+	zassert_equal(source_mv, pdc_power_mgmt_get_max_voltage());
+
+	/* Setup    - Configure as SNK and request 12v
+	 * Validate - Confirm 12v PDO selected
+	 */
+	source_mv = 12000;
+	pdc_power_mgmt_request_source_voltage(TEST_PORT, source_mv);
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+
+	zassert_ok(emul_pdc_get_rdo(emul, &rdo));
+	/* Confirm 12v PDO selected */
+	zassert_equal(2, RDO_POS(rdo));
+	zassert_equal(source_mv, pdc_power_mgmt_get_max_voltage());
+
+	emul_pdc_disconnect(emul);
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+
+	/* Setup    - Configure as DRP SRC and request 5v
+	 * Validate - Confirm 5v PDO selected and switched to SINK
+	 */
+	memset(&connector_status, 0, sizeof(connector_status));
+
+	pdc_power_mgmt_request_source_voltage(TEST_PORT, prev_mv);
+	emul_pdc_reset(emul);
+	zassert_ok(emul_pdc_set_pdos(emul, SOURCE_PDO, PDO_OFFSET_0,
+				     ARRAY_SIZE(partner_src_pdos), PARTNER_PDO,
+				     partner_src_pdos));
+	source_mv = 5000;
+	emul_pdc_configure_src(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+	zassert_equal(PD_ROLE_SOURCE, pd_get_power_role(TEST_PORT));
+
+	pdc_power_mgmt_request_source_voltage(TEST_PORT, source_mv);
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+	zassert_equal(source_mv, pdc_power_mgmt_get_max_voltage());
+
+	/* Confirm 5v PDO selected */
+	zassert_ok(emul_pdc_get_rdo(emul, &rdo));
+	zassert_equal(1, RDO_POS(rdo));
+
+	/* Confirm Power role is SINK */
+	zassert_equal(PD_ROLE_SINK, pd_get_power_role(TEST_PORT));
+
+	emul_pdc_disconnect(emul);
+
+	/* Restore source voltage */
+	pdc_power_mgmt_request_source_voltage(TEST_PORT, prev_mv);
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+}
 #endif /* CONFIG_TODO_B_345292002 */
 
 /**
