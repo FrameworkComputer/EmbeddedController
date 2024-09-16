@@ -61,7 +61,6 @@ void fp_sensor_low_power(void)
 int fp_sensor_init(void)
 {
 	return egis_sensor_init();
-	;
 }
 
 /* Deinitialize the sensor IC */
