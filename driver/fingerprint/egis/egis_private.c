@@ -79,11 +79,6 @@ __overridable int fp_finger_match(void *templ, uint32_t templ_count,
 {
 	int rc = EC_SUCCESS;
 	egislog_i("");
-	// rc = bio_template_image_match_list(templ, templ_count, image,
-	// 				   match_index, update_bitmap);
-	// if (rc < 0)
-	// 	CPRINTS("Error: bio_template_image_match_list() failed,
-	// result=%d", 		rc);
 
 	return rc;
 }
@@ -98,13 +93,8 @@ __overridable int fp_enrollment_begin(void)
 __overridable int fp_enrollment_finish(void *templ)
 {
 	int rc = EC_SUCCESS;
-	// bio_enrollment_t bio_enroll = enroll_ctx;
-	// bio_template_t bio_templ = templ;
-
-	// rc = bio_enrollment_finish(bio_enroll, templ ? &bio_templ : NULL);
-	// if (rc < 0)
-	// 	CPRINTS("Error: bio_enrollment_finish() failed, result=%d", rc);
 	egislog_i("");
+
 	return rc;
 }
 
@@ -112,16 +102,6 @@ __overridable int fp_finger_enroll(uint8_t *image, int *completion)
 {
 	int rc = EC_SUCCESS;
 	egislog_i("");
-	// bio_enrollment_t bio_enroll = enroll_ctx;
-
-	// rc = bio_enrollment_add_image(bio_enroll, image);
-	// if (rc < 0) {
-	// 	CPRINTS("Error: bio_enrollment_add_image() failed, result=%d",
-	// 		rc);
-	// 	return rc;
-	// }
-
-	// *completion = bio_enrollment_get_percent_complete(bio_enroll);
 
 	return rc;
 }
