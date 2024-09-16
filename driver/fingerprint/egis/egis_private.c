@@ -13,11 +13,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #define LOG_TAG "RBS-rapwer"
-// static uint8_t
-// 	enroll_ctx[28] __aligned(4) = { 0 };
-
-// /* Recorded error flags */
-// static uint16_t errors;
 
 /* Lock to access the sensor */
 static K_MUTEX_DEFINE(sensor_lock);
