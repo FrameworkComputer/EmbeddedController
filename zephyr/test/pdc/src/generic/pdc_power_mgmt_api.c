@@ -1973,6 +1973,29 @@ ZTEST_USER(pdc_power_mgmt_api, test_pdc_power_mgmt_set_active_charge_port)
 	zassert_true(TEST_WAIT_FOR(is_sink_path_enabled(), PDC_TEST_TIMEOUT));
 }
 
+ZTEST_USER(pdc_power_mgmt_api, test_get_vconn_state)
+{
+	union connector_status_t connector_status = { 0 };
+
+	if (emul_pdc_set_vconn_sourcing(emul, false) == -ENOSYS) {
+		ztest_test_skip();
+	}
+
+	zassert_false(pdc_power_mgmt_get_vconn_state(TEST_PORT));
+
+	emul_pdc_configure_src(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+
+	emul_pdc_set_vconn_sourcing(emul, false);
+	zassert_false(pdc_power_mgmt_get_vconn_state(TEST_PORT));
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+
+	emul_pdc_set_vconn_sourcing(emul, true);
+	zassert_true(pdc_power_mgmt_get_vconn_state(TEST_PORT));
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+}
+
 /* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
 #ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_power_mgmt_api, test_hpd_wake)
