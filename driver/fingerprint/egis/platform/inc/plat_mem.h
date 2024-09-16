@@ -12,8 +12,13 @@
 
 void *sys_alloc(size_t count, size_t size);
 void sys_free(void *data);
+
+static inline void plat_free(void *x)
+{
+	sys_free(x);
+}
+
 #define plat_alloc(fmt) sys_alloc(1, fmt)
-#define plat_free(x) sys_free(x)
 #define PLAT_FREE(x)          \
 	if (x != NULL) {      \
 		plat_free(x); \
