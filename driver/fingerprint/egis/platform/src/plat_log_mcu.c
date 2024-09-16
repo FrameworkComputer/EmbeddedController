@@ -17,7 +17,7 @@ LOG_LEVEL g_log_level = LOG_DEBUG;
 LOG_LEVEL g_log_level = LOG_INFO;
 #endif
 
-char printf_buffer[256]; // emflibrary debug buffer
+static char printf_buffer[256]; // emflibrary debug buffer
 
 void set_debug_level(LOG_LEVEL level)
 {
