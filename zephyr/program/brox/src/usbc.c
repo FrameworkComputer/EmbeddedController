@@ -13,9 +13,9 @@ enum ec_pd_port_location board_get_pd_port_location(int port)
 {
 	switch (port) {
 	case 0:
-		return EC_PD_PORT_LOCATION_LEFT_BACK;
-	case 1:
 		return EC_PD_PORT_LOCATION_LEFT_FRONT;
+	case 1:
+		return EC_PD_PORT_LOCATION_LEFT_BACK;
 	}
 	return EC_PD_PORT_LOCATION_UNKNOWN;
 }
