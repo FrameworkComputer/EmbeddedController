@@ -2,8 +2,9 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#ifndef __PLAT_MEM_H__
-#define __PLAT_MEM_H__
+
+#ifndef __CROS_EC_DRIVER_FINGERPRINT_EGIS_PLATFORM_INC_PLAT_MEM_H_
+#define __CROS_EC_DRIVER_FINGERPRINT_EGIS_PLATFORM_INC_PLAT_MEM_H_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -18,4 +19,5 @@ void sys_free(void *data);
 		plat_free(x); \
 		x = NULL;     \
 	}
-#endif
+
+#endif /* __CROS_EC_DRIVER_FINGERPRINT_EGIS_PLATFORM_INC_PLAT_MEM_H_ */

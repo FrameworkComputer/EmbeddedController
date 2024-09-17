@@ -2,8 +2,9 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#ifndef __PLAT_LOG_H_
-#define __PLAT_LOG_H_
+
+#ifndef __CROS_EC_DRIVER_FINGERPRINT_EGIS_PLATFORM_INC_PLAT_LOG_H_
+#define __CROS_EC_DRIVER_FINGERPRINT_EGIS_PLATFORM_INC_PLAT_LOG_H_
 
 #include "console.h"
 
@@ -70,4 +71,4 @@ void set_debug_log_callback(event_callback_t event_callback);
 		LOGE("%s, " #x " is NULL", __func__); \
 		return errorcode;                     \
 	}
-#endif
+#endif /* __CROS_EC_DRIVER_FINGERPRINT_EGIS_PLATFORM_INC_PLAT_LOG_H_ */

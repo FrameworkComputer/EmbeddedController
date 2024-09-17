@@ -2,8 +2,9 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#ifndef __PLAT_TIME_H__
-#define __PLAT_TIME_H__
+
+#ifndef __CROS_EC_DRIVER_FINGERPRINT_EGIS_PLATFORM_INC_PLAT_TIME_H_
+#define __CROS_EC_DRIVER_FINGERPRINT_EGIS_PLATFORM_INC_PLAT_TIME_H_
 
 unsigned long long plat_get_time(void);
 unsigned long plat_get_diff_time(unsigned long long begin);
@@ -36,4 +37,4 @@ void plat_sleep_time(unsigned long timeInMs);
 #define TIME_MEASURE_RESET(name)
 #endif
 
-#endif // __PLAT_TIME_H__
+#endif /* __CROS_EC_DRIVER_FINGERPRINT_EGIS_PLATFORM_INC_PLAT_TIME_H_ */
