@@ -248,6 +248,84 @@ class Platform(ABC):
         """Flash specified test to specified board."""
 
 
+class Hardware(Platform):
+    """Platform implementation for running on development boards."""
+
+    def get_console(self, board_config: BoardConfig) -> Optional[str]:
+        cmd = [
+            "dut-control",
+            board_config.servo_uart_name,
+        ]
+        logging.debug('Running command: "%s"', " ".join(cmd))
+
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE) as proc:
+            for line in io.TextIOWrapper(proc.stdout):  # type: ignore[arg-type]
+                logging.debug(line)
+                pty = line.split(":")
+                if len(pty) == 2 and pty[0] == board_config.servo_uart_name:
+                    return pty[1].strip()
+
+        return None
+
+    def hw_write_protect(self, enable: bool) -> None:
+        if enable:
+            state = "force_on"
+        else:
+            state = "force_off"
+
+        cmd = [
+            "dut-control",
+            "fw_wp_state:" + state,
+        ]
+        logging.debug('Running command: "%s"', " ".join(cmd))
+        subprocess.run(cmd, check=False).check_returncode()
+
+    def power(self, board_config: BoardConfig, power_on: bool) -> None:
+        if power_on:
+            state = "pp3300"
+        else:
+            state = "off"
+
+        cmd = [
+            "dut-control",
+            board_config.servo_power_enable + ":" + state,
+        ]
+        logging.debug('Running command: "%s"', " ".join(cmd))
+        subprocess.run(cmd, check=False).check_returncode()
+
+    def flash(
+        self,
+        image_path: str,
+        board: str,
+        flasher: str,
+        remote_ip: str,
+        remote_port: int,
+    ) -> bool:
+        logging.info("Flashing test")
+
+        cmd = []
+        if flasher == JTRACE:
+            cmd.append(JTRACE_FLASH_SCRIPT)
+            if remote_ip:
+                cmd.extend(["--remote", remote_ip + ":" + str(remote_port)])
+        elif flasher == SERVO_MICRO:
+            cmd.append(SERVO_MICRO_FLASH_SCRIPT)
+        else:
+            logging.error('Unknown flasher: "%s"', flasher)
+            return False
+        cmd.extend(
+            [
+                "--board",
+                board,
+                "--image",
+                image_path,
+            ]
+        )
+        logging.debug('Running command: "%s"', " ".join(cmd))
+        completed_process = subprocess.run(cmd, check=False)
+        return completed_process.returncode == 0
+
+
 @dataclass
 class TestConfig:
     """Configuration for a given test."""
@@ -304,13 +382,16 @@ class AllTests:
 
     @staticmethod
     def get(
-        board_config: BoardConfig, with_private: str, zephyr: bool
+        platform: Platform,
+        board_config: BoardConfig,
+        with_private: str,
+        zephyr: bool,
     ) -> List[TestConfig]:
         """Return public and private test configs for the specified board."""
         public_tests = (
             []
             if with_private == PRIVATE_ONLY
-            else AllTests.get_public_tests(board_config)
+            else AllTests.get_public_tests(platform, board_config)
         )
         private_tests = (
             [] if with_private == PRIVATE_NO else AllTests.get_private_tests()
@@ -331,7 +412,9 @@ class AllTests:
         return board_tests
 
     @staticmethod
-    def get_public_tests(board_config: BoardConfig) -> List[TestConfig]:
+    def get_public_tests(
+        platform: Platform, board_config: BoardConfig
+    ) -> List[TestConfig]:
         """Return public test configs for the specified board."""
         tests = [
             TestConfig(
@@ -526,7 +609,7 @@ class AllTests:
                 apptype_to_use=ApplicationType.PRODUCTION,
                 toggle_power=True,
                 pre_test_callback=lambda config: power_pre_test(
-                    board_config=config, enter_sleep=False
+                    platform=platform, board_config=config, enter_sleep=False
                 ),
                 post_test_callback=verify_idle_power_utilization,
                 finish_regexes=[RW_IMAGE_BOOTED_REGEX],
@@ -537,7 +620,7 @@ class AllTests:
                 apptype_to_use=ApplicationType.PRODUCTION,
                 toggle_power=True,
                 pre_test_callback=lambda config: power_pre_test(
-                    board_config=config, enter_sleep=True
+                    platform=platform, board_config=config, enter_sleep=True
                 ),
                 post_test_callback=verify_sleep_power_utilization,
                 finish_regexes=[RW_IMAGE_BOOTED_REGEX],
@@ -825,24 +908,6 @@ def replace_ro(image: bytearray, ro_section: bytes):
     write_section(ro_pubkey, image, "KEY_RO")
 
 
-def get_console(board_config: BoardConfig) -> Optional[str]:
-    """Get the name of the console for a given board."""
-    cmd = [
-        "dut-control",
-        board_config.servo_uart_name,
-    ]
-    logging.debug('Running command: "%s"', " ".join(cmd))
-
-    with subprocess.Popen(cmd, stdout=subprocess.PIPE) as proc:
-        for line in io.TextIOWrapper(proc.stdout):  # type: ignore[arg-type]
-            logging.debug(line)
-            pty = line.split(":")
-            if len(pty) == 2 and pty[0] == board_config.servo_uart_name:
-                return pty[1].strip()
-
-    return None
-
-
 def set_sleep_mode(enter_sleep: bool) -> bool:
     """Enters or exists sleep mode based on enter_sleep parameter"""
     sleep_mode = "on" if enter_sleep else "off"
@@ -856,32 +921,19 @@ def set_sleep_mode(enter_sleep: bool) -> bool:
     return proc.returncode == 0
 
 
-def power(board_config: BoardConfig, power_on: bool) -> None:
-    """Turn power to board on/off."""
-    if power_on:
-        state = "pp3300"
-    else:
-        state = "off"
-
-    cmd = [
-        "dut-control",
-        board_config.servo_power_enable + ":" + state,
-    ]
-    logging.debug('Running command: "%s"', " ".join(cmd))
-    subprocess.run(cmd, check=False).check_returncode()
-
-
-def power_cycle(board_config: BoardConfig) -> None:
+def power_cycle(platform: Platform, board_config: BoardConfig) -> None:
     """power_cycle the boards."""
     logging.debug("power_cycling board")
-    power(board_config, power_on=False)
+    platform.power(board_config, power_on=False)
     time.sleep(board_config.reboot_timeout)
-    power(board_config, power_on=True)
+    platform.power(board_config, power_on=True)
     time.sleep(board_config.reboot_timeout)
 
 
 def fp_sensor_sel(
-    board_config: BoardConfig, sensor_type: Optional[FPSensorType] = None
+    platform: Platform,
+    board_config: BoardConfig,
+    sensor_type: Optional[FPSensorType] = None,
 ) -> bool:
     """
     Explicitly select the appropriate fingerprint sensor.
@@ -904,13 +956,15 @@ def fp_sensor_sel(
 
     if proc.returncode == 0:
         # power cycle after setting sensor type to ensure detection
-        power_cycle(board_config)
+        power_cycle(platform, board_config)
         return True
 
     return False
 
 
-def power_pre_test(board_config: BoardConfig, enter_sleep: bool) -> bool:
+def power_pre_test(
+    platform: Platform, board_config: BoardConfig, enter_sleep: bool
+) -> bool:
     """
     Prepare a board for a power_utilization test
     """
@@ -918,22 +972,7 @@ def power_pre_test(board_config: BoardConfig, enter_sleep: bool) -> bool:
     if not set_sleep_mode(enter_sleep):
         return False
 
-    return fp_sensor_sel(board_config)
-
-
-def hw_write_protect(enable: bool) -> None:
-    """Enable/disable hardware write protect."""
-    if enable:
-        state = "force_on"
-    else:
-        state = "force_off"
-
-    cmd = [
-        "dut-control",
-        "fw_wp_state:" + state,
-    ]
-    logging.debug('Running command: "%s"', " ".join(cmd))
-    subprocess.run(cmd, check=False).check_returncode()
+    return fp_sensor_sel(platform, board_config)
 
 
 def build_ec(
@@ -1039,35 +1078,6 @@ def build(
 
     logging.debug('Running command: "%s"', " ".join(cmd))
     subprocess.run(cmd, check=False).check_returncode()
-
-
-def flash(
-    image_path: str, board: str, flasher: str, remote_ip: str, remote_port: int
-) -> bool:
-    """Flash specified test to specified board."""
-    logging.info("Flashing test")
-
-    cmd = []
-    if flasher == JTRACE:
-        cmd.append(JTRACE_FLASH_SCRIPT)
-        if remote_ip:
-            cmd.extend(["--remote", remote_ip + ":" + str(remote_port)])
-    elif flasher == SERVO_MICRO:
-        cmd.append(SERVO_MICRO_FLASH_SCRIPT)
-    else:
-        logging.error('Unknown flasher: "%s"', flasher)
-        return False
-    cmd.extend(
-        [
-            "--board",
-            board,
-            "--image",
-            image_path,
-        ]
-    )
-    logging.debug('Running command: "%s"', " ".join(cmd))
-    completed_process = subprocess.run(cmd, check=False)
-    return completed_process.returncode == 0
 
 
 def patch_image(test: TestConfig, image_path: str):
@@ -1225,11 +1235,15 @@ def run_test(
 
 
 def get_test_list(
-    config: BoardConfig, test_args, with_private: str, zephyr: bool
+    platform: Platform,
+    config: BoardConfig,
+    test_args,
+    with_private: str,
+    zephyr: bool,
 ) -> List[TestConfig]:
     """Get a list of tests to run."""
     if test_args == "all":
-        return AllTests.get(config, with_private, zephyr)
+        return AllTests.get(platform, config, with_private, zephyr)
 
     test_list = []
     for test in test_args:
@@ -1237,7 +1251,7 @@ def get_test_list(
         test_regex = re.compile(test)
         tests = [
             test
-            for test in AllTests.get(config, with_private, zephyr)
+            for test in AllTests.get(platform, config, with_private, zephyr)
             if test_regex.fullmatch(test.config_name)
         ]
         if not tests:
@@ -1295,6 +1309,7 @@ def get_image_path(test: TestConfig, build_board: str, zephyr: bool):
 
 def flash_and_run_test(
     test: TestConfig,
+    platform: Platform,
     board_config: BoardConfig,
     args: argparse.Namespace,
     executor,
@@ -1334,7 +1349,7 @@ def flash_and_run_test(
             return False
 
     # Get the console file before flashing to listen ASAP after flashing.
-    console_pty = get_console(board_config)
+    console_pty = platform.get_console(board_config)
 
     # flash test binary
     # TODO(b/158327221): First attempt to flash fails after
@@ -1342,8 +1357,12 @@ def flash_and_run_test(
     flash_succeeded = False
     for i in range(0, test.num_flash_attempts):
         logging.debug("Flash attempt %d", i + 1)
-        if flash(
-            image_path, args.board, args.flasher, args.remote, args.jlink_port
+        if platform.flash(
+            image_path,
+            args.board,
+            args.flasher,
+            args.remote,
+            args.jlink_port,
         ):
             flash_succeeded = True
             break
@@ -1367,13 +1386,13 @@ def flash_and_run_test(
             console_file = open(console_pty, "wb+", buffering=0)
             console = stack.enter_context(console_file)
 
-        hw_write_protect(test.enable_hw_write_protect)
+        platform.hw_write_protect(test.enable_hw_write_protect)
 
         if test.toggle_power:
-            power_cycle(board_config)
+            power_cycle(platform, board_config)
         else:
             # In some cases flash_ec leaves the board off, so just ensure it is on
-            power(board_config, power_on=True)
+            platform.power(board_config, power_on=True)
 
         # run the test
         logging.info('Running test: "%s"', test.config_name)
@@ -1515,8 +1534,10 @@ def main():
         board_config.expected_fp_power = board_config.expected_fp_power_zephyr
         board_config.expected_mcu_power = board_config.expected_mcu_power_zephyr
 
+    platform = Hardware()
+
     test_list = get_test_list(
-        board_config, args.tests, args.with_private, args.zephyr
+        platform, board_config, args.tests, args.with_private, args.zephyr
     )
     logging.debug("Running tests: %s", [test.config_name for test in test_list])
 
@@ -1524,7 +1545,9 @@ def main():
         for test in test_list:
             if test.skip_for_zephyr and args.zephyr:
                 continue
-            test.passed = flash_and_run_test(test, board_config, args, executor)
+            test.passed = flash_and_run_test(
+                test, platform, board_config, args, executor
+            )
 
         colorama.init()
         exit_code = 0
