@@ -10,8 +10,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-
-#if (defined(CONFIG_FP_SENSOR_EC630))
+#if (defined(CONFIG_FP_SENSOR_EGIS630))
 #define FP_SENSOR_RES_X_EGIS 80
 #define FP_SENSOR_RES_Y_EGIS 64
 #define FP_SENSOR_IMAGE_SIZE_EGIS (FP_SENSOR_RES_X_EGIS * FP_SENSOR_RES_Y_EGIS)

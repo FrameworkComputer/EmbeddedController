@@ -6,7 +6,7 @@
 
 _egis_cur_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
 
-ifneq (,$(filter rw,$(CONFIG_FP_SENSOR_EC630)))
+ifneq (,$(filter rw,$(CONFIG_FP_SENSOR_EGIS630)))
 
 # Make sure output directory is created (in build directory)
 dirs-y+="$(_egis_cur_dir)"
