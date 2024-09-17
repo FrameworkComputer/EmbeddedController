@@ -42,6 +42,7 @@ Run the script on the remote machine:
 # TODO(b/267803007): refactor into multiple modules
 # pylint: disable=too-many-lines
 
+from abc import ABC, abstractmethod
 import argparse
 from collections import namedtuple
 import concurrent
@@ -218,6 +219,33 @@ class BoardConfig:
     expected_fp_power_zephyr: PowerUtilization = None
     expected_mcu_power_zephyr: PowerUtilization = None
     zephyr_board_name: str = None
+
+
+class Platform(ABC):
+    """Platform-specific methods."""
+
+    @abstractmethod
+    def get_console(self, board_config: BoardConfig) -> Optional[str]:
+        """Get the name of the console for a given board."""
+
+    @abstractmethod
+    def hw_write_protect(self, enable: bool) -> None:
+        """Enable/disable hardware write protect."""
+
+    @abstractmethod
+    def power(self, board_config: BoardConfig, power_on: bool) -> None:
+        """Turn power to board on/off."""
+
+    @abstractmethod
+    def flash(
+        self,
+        image_path: str,
+        board: str,
+        flasher: str,
+        remote_ip: str,
+        remote_port: int,
+    ) -> bool:
+        """Flash specified test to specified board."""
 
 
 @dataclass
