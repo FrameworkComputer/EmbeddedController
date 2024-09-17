@@ -25,7 +25,8 @@ static void console_cmd_pdc_setup(void)
 		.fw_version = 0x001a2b3c,
 		.pd_version = 0xabcd,
 		.pd_revision = 0x1234,
-		.vid_pid = 0x12345678,
+		.vid = 0x1234,
+		.pid = 0x5678,
 	};
 
 	/* Set a FW version in the emulator for `test_info` */
@@ -606,7 +607,8 @@ static int custom_fake_pdc_power_mgmt_get_info(int port, struct pdc_info_t *out,
 		.pd_revision = 123,
 		.pd_version = 456,
 		/* VID:PID = 7890:3456 */
-		.vid_pid = (0x7890 << 16) | (0x3456 << 0),
+		.vid = 0x7890,
+		.pid = 0x3456,
 		.is_running_flash_code = 1,
 		.running_in_flash_bank = 16,
 		.extra = 0xffff,

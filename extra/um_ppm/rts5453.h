@@ -24,7 +24,8 @@ struct rts5453_ic_status {
 	uint16_t reserved_1;
 
 	uint8_t pd_typec_status;
-	uint8_t vid_pid[4];
+	uint8_t vid[2];
+	uint8_t pid[2];
 	uint8_t reserved_2;
 
 	uint8_t flash_bank;

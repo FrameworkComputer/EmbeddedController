@@ -1292,12 +1292,13 @@ static void st_read_run(void *o)
 				<< 8 |
 			data->rd_buf[RTS54XX_GET_IC_STATUS_FWVER_PATCH_OFFSET];
 
-		/* Realtek VID PID: Data Byte9..12 (little-endian) */
-		info->vid_pid =
-			data->rd_buf[RTS54XX_GET_IC_STATUS_VID_H] << 24 |
-			data->rd_buf[RTS54XX_GET_IC_STATUS_VID_L] << 16 |
-			data->rd_buf[RTS54XX_GET_IC_STATUS_PID_H] << 8 |
-			data->rd_buf[RTS54XX_GET_IC_STATUS_PID_L];
+		/* Realtek VID: Data Byte9..10 (little-endian) */
+		info->vid = data->rd_buf[RTS54XX_GET_IC_STATUS_VID_H] << 8 |
+			    data->rd_buf[RTS54XX_GET_IC_STATUS_VID_L];
+
+		/* Realtek PID: Data Byte11..12 (little-endian) */
+		info->pid = data->rd_buf[RTS54XX_GET_IC_STATUS_PID_H] << 8 |
+			    data->rd_buf[RTS54XX_GET_IC_STATUS_PID_L];
 
 		/* Realtek Running flash bank offset: Data Byte14 */
 		info->running_in_flash_bank =
@@ -2159,7 +2160,8 @@ static int rts54_get_info(const struct device *dev, struct pdc_info_t *info,
 		 * we have a resident value.
 		 */
 		if (data->info.fw_version == PDC_FWVER_INVALID ||
-		    data->info.vid_pid == PDC_VIDPID_INVALID) {
+		    data->info.vid == PDC_VID_INVALID ||
+		    data->info.pid == PDC_PID_INVALID) {
 			k_mutex_unlock(&data->mtx);
 
 			/* No cached value. Caller should request a live read */

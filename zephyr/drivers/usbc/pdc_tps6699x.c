@@ -1235,9 +1235,11 @@ static int cmd_get_ic_status_sync_internal(struct pdc_config_t const *cfg,
 	/* TI FW main version */
 	info->fw_version = version.version;
 
-	/* TI VID PID (little-endian) */
-	info->vid_pid = (*(uint16_t *)tx_identity.vendor_id) << 16 |
-			*(uint16_t *)tx_identity.product_id;
+	/* TI VID (little-endian) */
+	info->vid = *(uint16_t *)tx_identity.vendor_id;
+
+	/* TI PID (little-endian) */
+	info->pid = *(uint16_t *)tx_identity.product_id;
 
 	/* TI Running flash bank offset */
 	info->running_in_flash_bank = 0;

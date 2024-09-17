@@ -760,8 +760,8 @@ static int emul_tps6699x_set_info(const struct emul *target,
 	union reg_mode *reg_mode = (union reg_mode *)data->reg_val[REG_MODE];
 
 	reg_version->version = info->fw_version;
-	*((uint16_t *)reg_tx_identity->vendor_id) = info->vid_pid >> 16;
-	*((uint16_t *)reg_tx_identity->product_id) = info->vid_pid & 0xFFFF;
+	*((uint16_t *)reg_tx_identity->vendor_id) = info->vid;
+	*((uint16_t *)reg_tx_identity->product_id) = info->pid;
 	memset(reg_customer_use->data, 0, sizeof(reg_customer_use->data));
 	memcpy(reg_customer_use->data, info->project_name,
 	       MIN(sizeof(reg_customer_use->data), strlen(info->project_name)));

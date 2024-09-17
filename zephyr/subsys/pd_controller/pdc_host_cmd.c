@@ -32,8 +32,8 @@ static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 		return EC_RES_ERROR;
 	}
 
-	resp.vendor_id = PDC_VIDPID_GET_VID(pdc_info.vid_pid);
-	resp.product_id = PDC_VIDPID_GET_PID(pdc_info.vid_pid);
+	resp.vendor_id = pdc_info.vid;
+	resp.product_id = pdc_info.pid;
 
 	/* Ver output is 3 bytes right-aligned in a 32-bit container. Map into
 	 * the first three bytes of fw_version_string.

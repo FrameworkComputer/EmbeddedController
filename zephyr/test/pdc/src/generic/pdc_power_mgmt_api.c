@@ -608,14 +608,16 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_info)
 		.fw_version = 0x001a2b3c,
 		.pd_version = DT_PROP(ZEPHYR_USER_NODE, pd_version),
 		.pd_revision = DT_PROP(ZEPHYR_USER_NODE, pd_revision),
-		.vid_pid = 0x12345678,
+		.vid = 0x1234,
+		.pid = 0x5678,
 		.project_name = DT_PROP(ZEPHYR_USER_NODE, project_name),
 	};
 	static const struct pdc_info_t in2 = {
 		.fw_version = 0x002a3b4c,
 		.pd_version = DT_PROP(ZEPHYR_USER_NODE, pd_version),
 		.pd_revision = DT_PROP(ZEPHYR_USER_NODE, pd_revision),
-		.vid_pid = 0x9abcdef0,
+		.vid = 0x9abc,
+		.pid = 0xdef0,
 		.project_name = DT_PROP(ZEPHYR_USER_NODE, project_name),
 	};
 #else
@@ -623,14 +625,16 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_info)
 		.fw_version = 0x001a2b3c,
 		.pd_version = 0xabcd,
 		.pd_revision = 0x1234,
-		.vid_pid = 0x12345678,
+		.vid = 0x1234,
+		.pid = 0x5678,
 		.project_name = "ProjectName",
 	};
 	struct pdc_info_t in2 = {
 		.fw_version = 0x002a3b4c,
 		.pd_version = 0xef01,
 		.pd_revision = 0x5678,
-		.vid_pid = 0x9abcdef0,
+		.vid = 0x9abc,
+		.pid = 0xdef0,
 		.project_name = "MyProj",
 	};
 #endif
@@ -654,8 +658,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_info)
 		      in1.fw_version, out.fw_version);
 	zassert_equal(in1.pd_version, out.pd_version);
 	zassert_equal(in1.pd_revision, out.pd_revision);
-	zassert_equal(in1.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
-		      in1.vid_pid, out.vid_pid);
+	zassert_equal(in1.vid, out.vid, "in=0x%X, out=0x%X", in1.vid, out.vid);
+	zassert_equal(in1.pid, out.pid, "in=0x%X, out=0x%X", in1.pid, out.pid);
 	zassert_mem_equal(in1.project_name, out.project_name,
 			  sizeof(in1.project_name));
 
@@ -668,8 +672,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_info)
 		      in1.fw_version, out.fw_version);
 	zassert_equal(in1.pd_version, out.pd_version);
 	zassert_equal(in1.pd_revision, out.pd_revision);
-	zassert_equal(in1.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
-		      in1.vid_pid, out.vid_pid);
+	zassert_equal(in1.vid, out.vid, "in=0x%X, out=0x%X", in1.vid, out.vid);
+	zassert_equal(in1.pid, out.pid, "in=0x%X, out=0x%X", in1.pid, out.pid);
 	zassert_mem_equal(in1.project_name, out.project_name,
 			  sizeof(in1.project_name));
 
@@ -679,8 +683,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_info)
 		      in2.fw_version, out.fw_version);
 	zassert_equal(in2.pd_version, out.pd_version);
 	zassert_equal(in2.pd_revision, out.pd_revision);
-	zassert_equal(in2.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
-		      in2.vid_pid, out.vid_pid);
+	zassert_equal(in2.vid, out.vid, "in=0x%X, out=0x%X", in2.vid, out.vid);
+	zassert_equal(in2.pid, out.pid, "in=0x%X, out=0x%X", in2.pid, out.pid);
 	zassert_mem_equal(in2.project_name, out.project_name,
 			  sizeof(in2.project_name));
 

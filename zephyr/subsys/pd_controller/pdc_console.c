@@ -234,10 +234,8 @@ static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 		      live, PDC_FWVER_GET_MAJOR(pdc_info.fw_version),
 		      PDC_FWVER_GET_MINOR(pdc_info.fw_version),
 		      PDC_FWVER_GET_PATCH(pdc_info.fw_version),
-		      pdc_info.pd_revision, pdc_info.pd_version,
-		      PDC_VIDPID_GET_VID(pdc_info.vid_pid),
-		      PDC_VIDPID_GET_PID(pdc_info.vid_pid),
-		      pdc_info.is_running_flash_code ? 'Y' : 'N',
+		      pdc_info.pd_revision, pdc_info.pd_version, pdc_info.vid,
+		      pdc_info.pid, pdc_info.is_running_flash_code ? 'Y' : 'N',
 		      pdc_info.running_in_flash_bank,
 		      has_proj_name ? pdc_info.project_name : "<None>",
 		      pdc_info.driver_name, pdc_info.no_fw_update ? 'N' : 'Y');

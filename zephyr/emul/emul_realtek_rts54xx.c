@@ -131,13 +131,10 @@ static int get_ic_status(struct rts5453p_emul_pdc_data *data,
 						 BIT_MASK(8);
 	data->response.ic_status.pd_version[1] = data->info.pd_version &
 						 BIT_MASK(8);
-
-	data->response.ic_status.vid[1] = data->info.vid_pid >> 24 &
-					  BIT_MASK(8);
-	data->response.ic_status.vid[0] = data->info.vid_pid >> 16 &
-					  BIT_MASK(8);
-	data->response.ic_status.pid[1] = data->info.vid_pid >> 8 & BIT_MASK(8);
-	data->response.ic_status.pid[0] = data->info.vid_pid & BIT_MASK(8);
+	data->response.ic_status.vid[1] = data->info.vid >> 8;
+	data->response.ic_status.vid[0] = data->info.vid;
+	data->response.ic_status.pid[1] = data->info.pid >> 8;
+	data->response.ic_status.pid[0] = data->info.pid;
 
 	data->response.ic_status.is_flash_code =
 		data->info.is_running_flash_code;
