@@ -417,9 +417,21 @@ static int set_uor(struct rts5453p_emul_pdc_data *data,
 static int set_pdr(struct rts5453p_emul_pdc_data *data,
 		   const union rts54_request *req)
 {
-	LOG_INF("SET_PDR port=%d", req->set_pdr.pdr.connector_number);
+	LOG_INF("SET_PDR port=%d, swap_to_src=%d, swap_to_snk=%d, accept_pr_swap=%d}",
+		req->set_pdr.pdr.connector_number, req->set_pdr.pdr.swap_to_src,
+		req->set_pdr.pdr.swap_to_snk, req->set_pdr.pdr.accept_pr_swap);
 
 	data->pdr = req->set_pdr.pdr;
+
+	if (data->connector_status.power_operation_mode == PD_OPERATION &&
+	    data->connector_status.connect_status &&
+	    data->set_ccom_mode.ccom == BIT(2)) {
+		if (data->pdr.swap_to_snk) {
+			data->connector_status.power_direction = 0;
+		} else if (data->pdr.swap_to_src) {
+			data->connector_status.power_direction = 1;
+		}
+	}
 
 	memset(&data->response, 0, sizeof(union rts54_response));
 	send_response(data);

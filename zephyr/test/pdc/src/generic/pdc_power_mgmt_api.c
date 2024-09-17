@@ -1065,23 +1065,19 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 		/* Force sink while a source */
 		{ .s = { .state = PD_DRP_FORCE_SINK,
 			 .configure = emul_pdc_configure_src },
-		  .e = { .check_pdr = true,
+		  .e = { .check_pdr = true, /* Validate PDR as SNK */
 			 .pdr = { .swap_to_src = 0,
 				  .swap_to_snk = 1,
-				  /* External swaps are allowed because we are
-				   * a source wanting to become a sink */
-				  .accept_pr_swap = 1 },
+				  .accept_pr_swap = 0 },
 			 .check_cc_mode = true,
 			 .cc_mode = CCOM_RD } },
 		/* Force source while a sink */
 		{ .s = { .state = PD_DRP_FORCE_SOURCE,
 			 .configure = emul_pdc_configure_snk },
-		  .e = { .check_pdr = true,
+		  .e = { .check_pdr = true, /* Validate PDR as SRC */
 			 .pdr = { .swap_to_src = 1,
 				  .swap_to_snk = 0,
-				  /* External swaps are allowed because we are
-				   * a sink wanting to become a source */
-				  .accept_pr_swap = 1 } } },
+				  .accept_pr_swap = 0 } } },
 		/* Force sink while already a sink */
 		{ .s = { .state = PD_DRP_FORCE_SINK,
 			 .configure = emul_pdc_configure_snk },
@@ -1151,6 +1147,16 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 	uint32_t start;
 
 	for (i = 0; i < ARRAY_SIZE(test); i++) {
+		char *pd_config = "UNA";
+		if ((void *)test[i].s.configure ==
+		    (void *)emul_pdc_configure_src) {
+			pd_config = "SRC";
+		} else if ((void *)test[i].s.configure ==
+			   (void *)emul_pdc_configure_snk) {
+			pd_config = "SNK";
+		}
+		LOG_INF("Testing [%d]: DRP=%d PD=%s", i, test[i].s.state,
+			pd_config);
 		/* Reset CCOM in emulator to defaults */
 		zassert_ok(emul_pdc_reset(emul));
 
@@ -1861,7 +1867,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_new_power_request)
 	LOG_DBG("RDO position after new power request: %d",
 		get_obj_pos_from_rdo());
 }
-#endif
+#endif /* CONFIG_TODO_B_345292002 */
 
 /**
  * @brief Helper function for polling sink path status
