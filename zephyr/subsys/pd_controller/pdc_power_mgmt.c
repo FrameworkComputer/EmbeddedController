@@ -434,6 +434,8 @@ enum policy_snk_attached_t {
 	SNK_POLICY_EVAL_SNK_FIXED_PDO,
 	/** Enables/disables FRS on the LPM. */
 	SNK_POLICY_UPDATE_FRS,
+	/** TypeC sink only */
+	SNK_POLICY_UPDATE_TYPEC_CURRENT,
 	/** SNK_POLICY_COUNT */
 	SNK_POLICY_COUNT,
 };
@@ -1179,6 +1181,10 @@ static bool handle_connector_status(struct pdc_port_t *port)
 			return true;
 		} else {
 			/* Port partner is a Typec Source device */
+			if (conn_status_change_bits.pwr_operation_mode) {
+				atomic_set_bit(port->snk_policy.flags,
+					       SNK_POLICY_UPDATE_TYPEC_CURRENT);
+			}
 			set_pdc_state(port, PDC_SNK_TYPEC_ONLY);
 			return true;
 		}
@@ -1427,7 +1433,9 @@ static void run_snk_policies(struct pdc_port_t *port)
 
 static void run_typec_snk_policies(struct pdc_port_t *port)
 {
+	const struct pdc_config_t *config = port->dev->config;
 	/* Note - hard resets specifically not checked for here.
+
 	 * We don't expect hard resets while connected to a non-PD
 	 * partner.
 	 */
@@ -1437,6 +1445,13 @@ static void run_typec_snk_policies(struct pdc_port_t *port)
 		 * a safe PDO.
 		 */
 		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
+	} else if (atomic_test_and_clear_bit(port->snk_policy.flags,
+					     SNK_POLICY_UPDATE_TYPEC_CURRENT)) {
+		typec_set_input_current_limit(config->connector_num,
+					      port->typec_current_ma, 5000);
+
+		charge_manager_update_dualrole(config->connector_num,
+					       CAP_DEDICATED);
 	} else {
 		send_pending_public_commands(port);
 	}
@@ -2482,6 +2497,14 @@ static void pdc_snk_typec_only_run(void *obj)
 	case SNK_TYPEC_ATTACHED_SET_CHARGE_CURRENT:
 		port->snk_typec_attached_local_state =
 			SNK_TYPEC_ATTACHED_SET_SINK_PATH_ON;
+
+		/* Once we're updating the charger with the new current limit,
+		 * it's safe to clear the policy bit.  If the PDC reports
+		 * a new change to power operation mode, this but will be
+		 * set again.
+		 */
+		atomic_clear_bit(port->snk_policy.flags,
+				 SNK_POLICY_UPDATE_TYPEC_CURRENT);
 
 		typec_set_input_current_limit(config->connector_num,
 					      port->typec_current_ma, 5000);
