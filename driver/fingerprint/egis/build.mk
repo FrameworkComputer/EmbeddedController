@@ -16,5 +16,5 @@ all-obj-rw+=$(_egis_cur_dir)platform/src/plat_log_mcu.o
 all-obj-rw+=$(_egis_cur_dir)platform/src/plat_time_mcu.o
 all-obj-rw+=$(_egis_cur_dir)platform/src/plat_mem_mcu.o
 all-obj-rw+=$(_egis_cur_dir)platform/src/plat_reset_mcu.o
-# CFLAGS += -DEGIS_DBG
+
 endif
