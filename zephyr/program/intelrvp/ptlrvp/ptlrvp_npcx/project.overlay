@@ -5,6 +5,8 @@
 
 #include "include/board.h"
 
+#include <cros/integrated_fwid.dtsi>
+
 #include "adc.dtsi"
 #include "fan.dtsi"
 #include "gpio.dtsi"
