@@ -9,8 +9,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_BUFLEN 256
-
 #ifdef EGIS_DBG
 LOG_LEVEL g_log_level = LOG_DEBUG;
 #else
@@ -35,7 +33,6 @@ void output_log(LOG_LEVEL level, const char *tag, const char *file_path,
 
 	va_list vl;
 	va_start(vl, format);
-	// vsnprintf(buffer, MAX_BUFLEN, format, vl);
 	int n = snprintf(printf_buffer, sizeof(printf_buffer), "%s<%s:%d> ",
 			 level == LOG_ERROR ? "Error~! " : "", func, line);
 	n += vsnprintf(printf_buffer + n, sizeof(printf_buffer) - n, format,
