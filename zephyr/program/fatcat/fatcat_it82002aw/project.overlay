@@ -7,8 +7,6 @@
 
 #include <cros/integrated_fwid.dtsi>
 
-#include "../fatcat_stub.dts"
-
 /* fatcat_it82002aw project DTS includes */
 
 /* TODO(b/358612639)
@@ -18,13 +16,31 @@
 i2c3ALT: &i2c3 {
 };
 
-#include "console.dtsi"
+#include "generated.dtsi"
 
 #include "adc.dtsi"
+#include "console.dtsi"
 #include "i2c.dtsi"
+#include "keyboard.dtsi"
+#include "pwm.dtsi"
 
 /* these need to be promoted to program.conf */
 
 #include "binman.dtsi"
 
 /* fatcat_it82002aw overrides follow... */
+
+/ {
+	aliases {
+		gpio-wp = &gpio_c_ec_wp_odl_r;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		/* The legacy system code requires GPIO_ENTERING_RW symbol */
+		entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+};

@@ -7,33 +7,45 @@
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 
-		i2c_wc_usbc_pd: wc_usbc_pd {
-			i2c-port = <&i2c1>;
+		bga_pina5 {
+			enum-names = "I2C_PORT_SMB_PCH";
+		};
+		wc_usbc_pd_clk_aic1_r {
 			enum-names = "I2C_PORT_WC_USBC_PD";
 		};
-		i2c_smb_bs: smb_bs {
-			i2c-port = <&i2c4>;
+		wc_usbc_pd_clk_aic2_r {
+			enum-names = "I2C_PORT_AIC2";
+		};
+		smb_bs_clk_r {
 			enum-names = "I2C_PORT_SMB_BS";
+		};
+		c_ish_ec_clk_r {
+			enum-names = "I2C_PORT_ISH_EC";
 		};
 	};
 };
 
-&i2c1 {
-	status = "okay";
-	pinctrl-0 = <&i2c1_clk_gpc1_default
-		     &i2c1_data_gpc2_default>;
-	pinctrl-names = "default";
+&i2c0 {
+	label = "I2C_PORT_SMB_PCH";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
 
+&i2c1 {
 	label = "I2C_PORT_WC_USBC_PD";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 };
 
-&i2c4 {
-	status = "okay";
-	pinctrl-0 = <&i2c4_clk_gpe0_default
-		     &i2c4_data_gpe7_default>;
-	pinctrl-names = "default";
+&i2c3 {
+	label = "I2C_PORT_AIC2";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
 
+&i2c4 {
 	label = "I2C_PORT_SMB_BS";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c5 {
+	label = "I2C_PORT_ISH_EC";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 };
