@@ -1542,7 +1542,13 @@ ZTEST_USER(pdc_power_mgmt_api, test_new_pd_sink_contract)
 	union conn_status_change_bits_t in_conn_status_change_bits;
 	bool sink_path_en;
 
+	const uint32_t pdos[] = {
+		PDO_FIXED(5000, 3000, PDO_FIXED_DUAL_ROLE),
+		PDO_FIXED(15000, 3000, PDO_FIXED_DUAL_ROLE),
+	};
+
 	/* Connect a sourcing port partner */
+	emul_pdc_set_pdos(emul, SOURCE_PDO, PDO_OFFSET_0, 1, PARTNER_PDO, pdos);
 	emul_pdc_configure_snk(emul, &in);
 	emul_pdc_connect_partner(emul, &in);
 
@@ -1551,6 +1557,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_new_pd_sink_contract)
 
 	/* Simulate the port partner changing its PDOs. The sink path is
 	 * disabled during this step */
+	emul_pdc_set_pdos(emul, SOURCE_PDO, PDO_OFFSET_0, ARRAY_SIZE(pdos),
+			  PARTNER_PDO, pdos);
 	in_conn_status_change_bits.battery_charging_status = 1;
 	in.raw_conn_status_change_bits = in_conn_status_change_bits.raw_value;
 	emul_pdc_connect_partner(emul, &in);
