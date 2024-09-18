@@ -106,6 +106,10 @@
 	(0x200C0000 -   \
 	 (__TOTAL_DATA_RAM_SIZE_BYTES - __DEFAULT_TOTAL_DATA_RAM_SIZE_BYTES))
 
+/**
+ * CONFIG_DATA_RAM_SIZE exists to remove execute permission for data-only RAM.
+ * See cortex-m/mpu.c.
+ */
 #undef CONFIG_DATA_RAM_SIZE
 #define CONFIG_DATA_RAM_SIZE __TOTAL_DATA_RAM_SIZE_BYTES
 
@@ -121,6 +125,10 @@
 #define CONFIG_RO_STORAGE_OFF 64
 #define CONFIG_RO_SIZE (128 * 1024 - 0x1000)
 
+/**
+ * CONFIG_CODE_RAM_SIZE exists to make the executable code RAM read-only.
+ * See cortex-m/mpu.c.
+ */
 #undef CONFIG_CODE_RAM_SIZE
 #define CONFIG_CODE_RAM_SIZE NPCX_PROGRAM_MEMORY_SIZE
 
