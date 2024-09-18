@@ -71,9 +71,14 @@
 		gpio_0p75_1p8valw_pwren: 0p75_1p8valw_pwren {
 			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>;
 		};
-		gpio_ps_on: ps_on {
-			gpios = <&gpio8 5 GPIO_OUTPUT_LOW>;
-		};
+		/**
+		 * Workaound: enable npcx PSL to keep gpio85 always high
+		 * will change the GPIO next phase.
+		 *
+		 * gpio_ps_on: ps_on {
+		 *	gpios = <&gpio8 5 GPIO_OUTPUT_LOW>;
+		 *};
+		 */
 		gpio_1p2valw_pwren: 1p2valw_pwren {
 			gpios = <&gpio8 6 GPIO_OUTPUT_LOW>;
 		};
@@ -227,6 +232,22 @@
 			<&gpioa 4 0>;
 	};
 };
+
+/* PSL input pads*/
+&psl_in1_gpd2 {
+	/* Power button */
+	psl-in-mode = "edge";
+	psl-in-pol = "low-falling";
+};
+
+/* Power domain device controlled by PSL (Power Switch Logic) IO pads */
+/* Ignored the PSL in 2 (chassis open) at proto phase */
+&power_ctrl_psl {
+	status = "okay";
+	pinctrl-names = "sleep";
+	pinctrl-0 = <&psl_in1_gpd2>;
+};
+
 
 /* host interface */
 &espi0 {
