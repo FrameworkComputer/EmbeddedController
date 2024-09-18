@@ -194,6 +194,7 @@ class BoardConfig:
     """Board-specific configuration."""
 
     name: str
+    sensor_type: FPSensorType
     servo_uart_name: str
     servo_power_enable: str
     rollback_region0_regex: object
@@ -441,7 +442,7 @@ class AllTests:
             # Covered by Zephyr drivers.counter.basic_api.stm32_subsec test
             TestConfig(
                 test_name="rtc_stm32f4",
-                exclude_boards=[DARTMONKEY, HELIPILOT],
+                exclude_boards=[DARTMONKEY, HELIPILOT, BUCCANEER],
                 skip_for_zephyr=True,
             ),
             TestConfig(test_name="sbrk", imagetype_to_use=ImageType.RO),
@@ -613,6 +614,7 @@ class AllTests:
 
 BLOONCHIPPER_CONFIG = BoardConfig(
     name=BLOONCHIPPER,
+    sensor_type=FPSensorType.FPC,
     servo_uart_name="raw_fpmcu_console_uart_pty",
     servo_power_enable="fpmcu_pp3300",
     reboot_timeout=1.0,
@@ -646,6 +648,7 @@ BLOONCHIPPER_CONFIG = BoardConfig(
 
 DARTMONKEY_CONFIG = BoardConfig(
     name=DARTMONKEY,
+    sensor_type=FPSensorType.FPC,
     servo_uart_name="raw_fpmcu_console_uart_pty",
     servo_power_enable="fpmcu_pp3300",
     reboot_timeout=1.0,
@@ -677,6 +680,7 @@ DARTMONKEY_CONFIG = BoardConfig(
 
 HELIPILOT_CONFIG = BoardConfig(
     name=HELIPILOT,
+    sensor_type=FPSensorType.FPC,
     servo_uart_name="raw_fpmcu_console_uart_pty",
     servo_power_enable="fpmcu_pp3300",
     reboot_timeout=1.5,
@@ -698,6 +702,7 @@ HELIPILOT_CONFIG = BoardConfig(
 
 BUCCANEER_CONFIG = copy.deepcopy(HELIPILOT_CONFIG)
 BUCCANEER_CONFIG.name = BUCCANEER
+BUCCANEER_CONFIG.sensor_type = FPSensorType.ELAN
 # TODO(b/336640151): Add buccaneer variants once RO is created
 
 BOARD_CONFIGS = {
@@ -833,7 +838,7 @@ def power_cycle(board_config: BoardConfig) -> None:
 
 
 def fp_sensor_sel(
-    board_config: BoardConfig, sensor_type: FPSensorType = FPSensorType.FPC
+    board_config: BoardConfig, sensor_type: Optional[FPSensorType] = None
 ) -> bool:
     """
     Explicitly select the appropriate fingerprint sensor.
@@ -842,6 +847,9 @@ def fp_sensor_sel(
     older development boards. This should not result in any failures but also
     may have not actually changed the selected sensor.
     """
+
+    if sensor_type is None:
+        sensor_type = board_config.sensor_type
 
     cmd = [
         "dut-control",
