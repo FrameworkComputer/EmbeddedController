@@ -109,6 +109,11 @@ tests:
     - CONFIG_PLATFORM_EC_USBC=n
     - CONFIG_TEST_BOARD_USB_MUX_CONFIG_CUSTOM=y
 
+  skyrim.markarth.keyboard:
+    extra_configs:
+    - CONFIG_TEST_BOARD_MARKARTH=y
+    - CONFIG_TEST_BOARD_KEYBOARD=y
+
   # Skyrim tests
   skyrim.skyrim:
     extra_configs:

@@ -23,9 +23,9 @@ test_export_static void kb_init(void)
 	uint32_t val;
 
 	ret = cros_cbi_get_fw_config(FW_KB_TYPE, &val);
-
 	if (ret != 0) {
 		LOG_ERR("Error retrieving CBI FW_CONFIG field %d", FW_KB_TYPE);
+		return;
 	}
 
 	if (val == FW_KB_TYPE_CA_FR) {

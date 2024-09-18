@@ -677,6 +677,23 @@
 				value = <1>;
 			};
 		};
+
+		keyboard {
+			enum-name = "FW_KB_LAYOUT";
+			start = <13>;
+			size = <2>;
+
+			keyboard-default {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "KEYBOARD_DEFAULT";
+				value = <0>;
+			};
+			keyboard-ansi {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "KEYBOARD_ANSI";
+				value = <1>;
+			};
+		};
 	};
 
 	usbc {

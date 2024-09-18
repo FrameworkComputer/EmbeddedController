@@ -127,9 +127,11 @@ test_export_static void setup_mux(void)
 {
 	uint32_t val;
 
-	if (cros_cbi_get_fw_config(FW_IO_DB, &val) != 0)
-		CPRINTSUSB("Error finding FW_DB_IO in CBI FW_CONFIG");
-	/* Val will have our dts default on error, so continue setup */
+	if (cros_cbi_get_fw_config(FW_IO_DB, &val) != 0) {
+		CPRINTSUSB("Error finding FW_DB_IO in CBI FW_CONFIG, "
+			   "default to FW_IO_DB_NONE_ANX7483");
+		val = FW_IO_DB_NONE_ANX7483;
+	}
 
 	if (val == FW_IO_DB_PS8811_PS8818) {
 		CPRINTSUSB("C1: Setting PS8818 mux");

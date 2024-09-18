@@ -37,10 +37,11 @@ test_export_static void kb_init(void)
 	uint32_t val;
 
 	ret = cros_cbi_get_fw_config(FW_KB_NUMERIC_PAD, &val);
-
 	if (ret != 0) {
-		LOG_ERR("Error retrieving CBI FW_CONFIG field %d",
+		LOG_ERR("Error retrieving CBI FW_CONFIG field %d, "
+			"assuming FW_KB_NUMERIC_PAD_ABSENT",
 			FW_KB_NUMERIC_PAD);
+		val = FW_KB_NUMERIC_PAD_ABSENT;
 	}
 
 	if (val == FW_KB_NUMERIC_PAD_ABSENT) {
@@ -57,9 +58,11 @@ test_export_static void kb_init(void)
 	}
 
 	ret = cros_cbi_get_fw_config(FW_KB_TYPE, &val);
-
 	if (ret != 0) {
-		LOG_ERR("Error retrieving CBI FW_CONFIG field %d", FW_KB_TYPE);
+		LOG_ERR("Error retrieving CBI FW_CONFIG field %d, "
+			"assuming FW_KB_TYPE_DEFAULT",
+			FW_KB_TYPE);
+		val = FW_KB_TYPE_DEFAULT;
 	}
 
 	if (val == FW_KB_TYPE_CA_FR) {
