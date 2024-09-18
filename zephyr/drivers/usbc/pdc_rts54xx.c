@@ -63,9 +63,9 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 #define N_INIT_RETRY_ATTEMPT_MAX 2
 
 /**
- * @brief VBUS Voltage Scale Factor is 50mV
+ * @brief Connector Status VBUS Voltage Scale Factor is 5mV
  */
-#define VOLTAGE_SCALE_FACTOR 50
+#define VOLTAGE_SCALE_FACTOR 5
 
 /**
  * @brief FORCE_SET_POWER_SWITCH enable
@@ -1347,17 +1347,14 @@ static void st_read_run(void *o)
 
 		break;
 	}
-	case CMD_GET_VBUS_VOLTAGE:
-		/*
-		 * Realtek Voltage reading is on Byte18 and Byte19, but
-		 * the READ_RTK_STATUS command was issued with reading
-		 * 2-bytes from offset 18, so the data is read from
-		 * rd_buf at Byte1 and Byte2.
-		 */
-		*(uint16_t *)data->user_buf =
-			((data->rd_buf[2] << 8) | data->rd_buf[1]) *
-			VOLTAGE_SCALE_FACTOR;
+	case CMD_GET_VBUS_VOLTAGE: {
+		union connector_status_t *status =
+			(union connector_status_t *)(data->rd_buf + offset);
+		*(uint16_t *)data->user_buf = status->voltage_reading *
+					      status->voltage_scale *
+					      VOLTAGE_SCALE_FACTOR;
 		break;
+	}
 	case CMD_GET_ERROR_STATUS: {
 		/* Map Realtek GET_ERROR_STATUS bits to UCSI GET_ERROR_STATUS */
 		union error_status_t *es =
@@ -2238,8 +2235,16 @@ static int rts54_get_vbus_voltage(const struct device *dev, uint16_t *voltage)
 		return -EINVAL;
 	}
 
-	return rts54_get_rtk_status(dev, 17, 2, CMD_GET_VBUS_VOLTAGE,
-				    (uint8_t *)voltage);
+	uint8_t payload[] = {
+		RTS_UCSI_GET_CONNECTOR_STATUS.cmd,
+		RTS_UCSI_GET_CONNECTOR_STATUS.len,
+		RTS_UCSI_GET_CONNECTOR_STATUS.sub,
+		0x00, /* Data Length --> set to 0x00 */
+		0x00, /* Connector number --> don't care for Realtek */
+	};
+
+	return rts54_post_command(dev, CMD_GET_VBUS_VOLTAGE, payload,
+				  ARRAY_SIZE(payload), (uint8_t *)voltage);
 }
 
 static int rts54_set_ccom(const struct device *dev, enum ccom_t ccom)
