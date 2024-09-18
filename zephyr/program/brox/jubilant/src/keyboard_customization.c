@@ -92,18 +92,25 @@ test_export_static void keyboard_matrix_init(void)
 	uint32_t val;
 
 	ret = cros_cbi_get_fw_config(FW_KB_NUMERIC_PAD, &val);
-
 	if (ret != 0) {
-		LOG_ERR("Error retrieving CBI FW_CONFIG field %d",
+		LOG_ERR("Error retrieving CBI FW_CONFIG field %d, "
+			"assuming FW_KB_NUMERIC_PAD_PRESENT",
 			FW_KB_NUMERIC_PAD);
+		val = FW_KB_NUMERIC_PAD_PRESENT;
 	}
 
-	if (val == FW_KB_NUMERIC_PAD_ABSENT) {
-		scancode_set2 = jubilant_scancode_set2;
-		LOG_INF("jubilant keyboard matrix");
-	} else {
+	switch (val) {
+	case FW_KB_NUMERIC_PAD_PRESENT:
 		scancode_set2 = jubileum_scancode_set2;
 		LOG_INF("jubileum keyboard matrix");
+		break;
+	case FW_KB_NUMERIC_PAD_ABSENT:
+		scancode_set2 = jubilant_scancode_set2;
+		LOG_INF("jubilant keyboard matrix");
+		break;
+	default:
+		LOG_WRN("invalid cbi value: %x", val);
+		return;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, keyboard_matrix_init, HOOK_PRIO_POST_FIRST);

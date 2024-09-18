@@ -81,6 +81,9 @@ cros_cbi_get_fw_config_kb_numpad(enum cbi_fw_config_field_id field_id,
 	case 1:
 		*value = FW_KB_NUMERIC_PAD_PRESENT;
 		break;
+	case 2:
+		*value = 1234; /* invalid */
+		break;
 	case -1:
 		return -EINVAL;
 	default:
@@ -140,6 +143,13 @@ ZTEST(jubilant_keyboard, test_keyboard_matrix_cbi_error)
 
 	zassert_equal(get_scancode_set2(4, 10), fn_key);
 	zassert_equal(get_scancode_set2(2, 7), forwardslash_pipe_key);
+}
+
+ZTEST(jubilant_keyboard, test_keyboard_matrix_cbi_invalid)
+{
+	/* just to exercise the "invalid value" code path */
+	kb_numpad = 2;
+	keyboard_matrix_init();
 }
 
 ZTEST(jubilant_keyboard, test_get_scancode_set2)
