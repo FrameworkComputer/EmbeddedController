@@ -10,6 +10,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void *sys_alloc(size_t count, size_t size);
 void sys_free(void *data);
 
@@ -28,5 +32,9 @@ static inline void *plat_alloc(size_t size)
 		plat_free(x); \
 		x = NULL;     \
 	}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_DRIVER_FINGERPRINT_EGIS_PLATFORM_INC_PLAT_MEM_H_ */

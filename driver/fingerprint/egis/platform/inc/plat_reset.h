@@ -6,6 +6,14 @@
 #ifndef __CROS_EC_DRIVER_FINGERPRINT_EGIS_PLATFORM_INC_PLAT_RESET_H_
 #define __CROS_EC_DRIVER_FINGERPRINT_EGIS_PLATFORM_INC_PLAT_RESET_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void egis_fp_reset_sensor(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_DRIVER_FINGERPRINT_EGIS_PLATFORM_INC_PLAT_RESET_H_ */

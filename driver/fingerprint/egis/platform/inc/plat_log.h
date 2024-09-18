@@ -10,6 +10,10 @@
 
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
 	LOG_VERBOSE = 2,
 	LOG_DEBUG = 3,
@@ -43,9 +47,6 @@ typedef enum {
 		   ##__VA_ARGS__)
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 void output_log(LOG_LEVEL level, const char *tag, const char *file_name,
 		const char *func, int line, const char *format, ...);
 
@@ -53,10 +54,6 @@ void set_debug_level(LOG_LEVEL level);
 #if defined(SDK_EVTOOL_DEBUG) || defined(SDK_ALGO_MODULE_MODE)
 #include "common_definition.h"
 void set_debug_log_callback(event_callback_t event_callback);
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #define egislog_e(format, args...) egislog(LOG_ERROR, format, ##args)
@@ -71,4 +68,9 @@ void set_debug_log_callback(event_callback_t event_callback);
 		LOGE("%s, " #x " is NULL", __func__); \
 		return errorcode;                     \
 	}
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CROS_EC_DRIVER_FINGERPRINT_EGIS_PLATFORM_INC_PLAT_LOG_H_ */

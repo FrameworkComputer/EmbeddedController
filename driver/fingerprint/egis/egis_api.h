@@ -11,6 +11,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if (defined(CONFIG_FP_SENSOR_EGIS630))
 #define FP_SENSOR_HWID_EGIS 630
 #define FP_SENSOR_RES_X_EGIS 80
@@ -65,5 +69,9 @@ int egis_get_image_with_mode(uint8_t *image_data, int mode);
 int egis_get_image(uint8_t *image_data);
 void egis_set_detect_mode(void);
 int egis_check_int_status(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_DRIVER_FINGERPRINT_EGIS_EGIS_API_H_ */
