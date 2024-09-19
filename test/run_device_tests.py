@@ -124,6 +124,16 @@ DATA_ACCESS_VIOLATION_64030000_REGEX = re.compile(
 DATA_ACCESS_VIOLATION_200B0000_REGEX = re.compile(
     r"Data access violation, mfar = 200b0000\r\n"
 )
+"""Helipilot's data RAM starting address."""
+DATA_ACCESS_VIOLATION_200A8000_REGEX = re.compile(
+    r"Data access violation, mfar = 200a8000\r\n"
+)
+"""Buccaneer's data RAM starting address.
+
+This is 32K less than Helipilot's start address (0x200B0000). This corresponds
+to HELIPILOT_DATA_RAM_SIZE_BYTES being increased from 156KiB to 188KiB.
+"""
+
 
 # \r is added twice by Zephyr code.
 PRINTF_CALLED_REGEX = re.compile(r"printf called(\r){1,2}\n")
@@ -703,6 +713,7 @@ HELIPILOT_CONFIG = BoardConfig(
 BUCCANEER_CONFIG = copy.deepcopy(HELIPILOT_CONFIG)
 BUCCANEER_CONFIG.name = BUCCANEER
 BUCCANEER_CONFIG.sensor_type = FPSensorType.ELAN
+BUCCANEER_CONFIG.mpu_regex = DATA_ACCESS_VIOLATION_200A8000_REGEX
 # TODO(b/336640151): Add buccaneer variants once RO is created
 
 BOARD_CONFIGS = {
