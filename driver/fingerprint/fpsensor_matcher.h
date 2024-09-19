@@ -28,6 +28,12 @@
 #define FP_MAX_FINGER_COUNT (FP_MAX_FINGER_COUNT_FPC)
 #endif /* FP_SENSOR_FPC1025 || FP_SENSOR_FPC1035 || FP_SENSOR_FPC1145 */
 
+#if defined(CONFIG_FP_SENSOR_EGIS630)
+#include "egis/egis_api.h"
+#define FP_ALGORITHM_TEMPLATE_SIZE (FP_ALGORITHM_TEMPLATE_SIZE_EGIS)
+#define FP_MAX_FINGER_COUNT (FP_MAX_FINGER_COUNT_EGIS)
+#endif /* CONFIG_FP_SENSOR_EGIS630 */
+
 #endif /* HAVE_PRIVATE && !EMU_BUILD */
 
 /* These values are used for public or host (emulator) tests. */
