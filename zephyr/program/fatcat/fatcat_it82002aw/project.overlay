@@ -11,6 +11,13 @@
 
 /* fatcat_it82002aw project DTS includes */
 
+/* TODO(b/358612639)
+ * Arbitrage generates an incorrect node label when using alternate pins.
+ * Create a 2nd node label on I2C3 as a workaround.
+ */
+i2c3ALT: &i2c3 {
+};
+
 #include "console.dtsi"
 
 #include "adc.dtsi"
