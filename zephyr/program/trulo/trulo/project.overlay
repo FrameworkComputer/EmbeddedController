@@ -18,6 +18,7 @@
 #include "cbi.dtsi"
 #include "gpio.dtsi"
 #include "i2c.dtsi"
+#include "keyboard.dtsi"
 #include "usb_typec.dtsi"
 
 /* Trulo overrides follow... */
