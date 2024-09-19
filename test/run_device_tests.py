@@ -415,7 +415,6 @@ class TestConfig:
     fail_regexes: List = None
     toggle_power: bool = False
     test_args: List[str] = field(default_factory=list)
-    num_flash_attempts: int = 2
     timeout_secs: int = 10
     enable_hw_write_protect: bool = False
     ro_image: str = None
@@ -1440,29 +1439,17 @@ def flash_and_run_test(
     console_pty = platform.get_console(board_config)
 
     # flash test binary
-    # TODO(b/158327221): First attempt to flash fails after
-    #  flash_write_protect test is run; works after second attempt.
-    flash_succeeded = False
-    for i in range(0, test.num_flash_attempts):
-        logging.debug("Flash attempt %d", i + 1)
-        if platform.flash(
-            image_path,
-            args.board,
-            args.flasher,
-            args.remote,
-            args.jlink_port,
-            build_board,
-            test.test_name,
-            test.enable_hw_write_protect,
-        ):
-            flash_succeeded = True
-            break
-        time.sleep(board_config.reboot_timeout)
-
-    if not flash_succeeded:
-        logging.debug(
-            "Flashing failed after max attempts: %d", test.num_flash_attempts
-        )
+    if not platform.flash(
+        image_path,
+        args.board,
+        args.flasher,
+        args.remote,
+        args.jlink_port,
+        build_board,
+        test.test_name,
+        test.enable_hw_write_protect,
+    ):
+        logging.debug("Flashing failed")
         return False
 
     with ExitStack() as stack:
