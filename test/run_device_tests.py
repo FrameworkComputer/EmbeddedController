@@ -212,6 +212,7 @@ class BoardConfig:
     rollback_region1_regex: object
     mpu_regex: object
     reboot_timeout: float
+    fp_power_supply: str
     mcu_power_supply: str
     expected_fp_power: PowerUtilization
     expected_mcu_power: PowerUtilization
@@ -796,6 +797,7 @@ BLOONCHIPPER_CONFIG = BoardConfig(
     rollback_region0_regex=DATA_ACCESS_VIOLATION_8020000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_8040000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_20000000_REGEX,
+    fp_power_supply="ppvar_fp_mw",
     mcu_power_supply="ppvar_mcu_mw",
     expected_fp_power=PowerUtilization(
         idle=RangedValue(0.71, 0.53), sleep=RangedValue(0.69, 0.51)
@@ -830,6 +832,7 @@ DARTMONKEY_CONFIG = BoardConfig(
     rollback_region0_regex=DATA_ACCESS_VIOLATION_80C0000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_80E0000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_24000000_REGEX,
+    fp_power_supply="ppvar_fp_mw",
     mcu_power_supply="ppvar_mcu_mw",
     expected_fp_power=PowerUtilization(
         idle=RangedValue(0.03, 0.05), sleep=RangedValue(0.03, 0.05)
@@ -862,6 +865,7 @@ HELIPILOT_CONFIG = BoardConfig(
     rollback_region0_regex=DATA_ACCESS_VIOLATION_64020000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_64030000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_200B0000_REGEX,
+    fp_power_supply="ppvar_fp_mw",
     mcu_power_supply="pp3300_mcu_mw",
     # The original power utilization numbers were experimentally derived via
     # onboard ADCs and verified with a DMM on one dev board. However, we have
@@ -883,6 +887,15 @@ BUCCANEER_CONFIG = copy.deepcopy(HELIPILOT_CONFIG)
 BUCCANEER_CONFIG.name = BUCCANEER
 BUCCANEER_CONFIG.sensor_type = FPSensorType.ELAN
 BUCCANEER_CONFIG.mpu_regex = DATA_ACCESS_VIOLATION_200A8000_REGEX
+# The Elan 80SG is said to have the following power profile:
+# - power down mode current draw is less than 12 uA (0.0396 mW)
+# - finger detection with 40ms scan rate current draw less than 20 uA (0.066 mW)
+# - fingerprint sensing current draw less than 8.11 mA (26.763 mW)
+BUCCANEER_CONFIG.fp_power_supply = "pp3300_fp_mw"
+# 0.25 mW is roughly 76 uA @ 3.3V.
+BUCCANEER_CONFIG.expected_fp_power = PowerUtilization(
+    idle=RangedValue(0.25, 0.1), sleep=RangedValue(0.25, 0.1)
+)
 # TODO(b/336640151): Add buccaneer variants once RO is created
 
 BOARD_CONFIGS = {
@@ -1640,7 +1653,7 @@ def get_power_utilization(
     board_config: BoardConfig,
 ) -> Tuple[Optional[float], Optional[float]]:
     """Retrieve board power utilization data"""
-    fp_power_signal = "ppvar_fp_mw"
+    fp_power_signal = board_config.fp_power_supply
     mcu_power_signal = board_config.mcu_power_supply
     cmd = [
         "dut-control",
