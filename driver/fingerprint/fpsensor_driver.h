@@ -27,6 +27,15 @@
 #define FP_SENSOR_HWID (FP_SENSOR_HWID_FPC)
 #endif /* CONFIG_FP_SENSOR_FPC1025 || CONFIG_FP_SENSOR_FPC1145 */
 
+#if defined(CONFIG_FP_SENSOR_EGIS630)
+#include "egis/egis_api.h"
+#define FP_SENSOR_IMAGE_OFFSET (FP_SENSOR_IMAGE_OFFSET_EGIS)
+#define FP_SENSOR_IMAGE_SIZE (FP_SENSOR_IMAGE_SIZE_EGIS)
+#define FP_SENSOR_RES_X (FP_SENSOR_RES_X_EGIS)
+#define FP_SENSOR_RES_Y (FP_SENSOR_RES_Y_EGIS)
+#define FP_SENSOR_HWID (FP_SENSOR_HWID_EGIS)
+#endif /* CONFIG_FP_SENSOR_EGIS630 */
+
 #endif /* HAVE_PRIVATE && !EMU_BUILD */
 
 /* These values are used for public or host (emulator) tests. */
