@@ -95,7 +95,7 @@ static void charger_chips_init(void)
 	 */
 	if (value == -1) {
 		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_MAX_SYSTEM_VOLTAGE, 15400))
+			ISL9241_REG_MAX_SYSTEM_VOLTAGE, bi->voltage_normal))
 			goto init_fail;
 	} else {
 		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
