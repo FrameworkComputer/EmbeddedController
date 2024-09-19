@@ -7,7 +7,7 @@ set(COMPILER gcc)
 set(LINKER ld)
 set(BINTOOLS gnu)
 
-# Mapping of Zephyr architecture -> coreboot-sdk toolchain
+# Mapping of Zephyr architecture -> ec-coreboot-sdk toolchain
 set(CROSS_COMPILE_TARGET_arm    arm-eabi)
 set(CROSS_COMPILE_TARGET_riscv  riscv64-elf)
 set(CROSS_COMPILE_TARGET_x86    i386-elf)
@@ -23,11 +23,11 @@ endif()
 if(DEFINED COREBOOT_SDK_ROOT_${ARCH})
   set(COREBOOT_SDK_ROOT "${COREBOOT_SDK_ROOT_${ARCH}}")
 elseif(NOT DEFINED COREBOOT_SDK_ROOT)
-  set(COREBOOT_SDK_PKG "coreboot-sdk-${CROSS_COMPILE_TARGET}")
+  set(COREBOOT_SDK_PKG "ec-coreboot-sdk-${CROSS_COMPILE_TARGET}")
 
   # Package for riscv64-elf is riscv-elf.
   if("${ARCH}" STREQUAL "riscv")
-    set(COREBOOT_SDK_PKG "coreboot-sdk-riscv-elf")
+    set(COREBOOT_SDK_PKG "ec-coreboot-sdk-riscv-elf")
   endif()
 
   execute_process(

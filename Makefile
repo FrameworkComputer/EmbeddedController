@@ -162,7 +162,7 @@ CROSS_COMPILE:=$(COREBOOT_SDK_ROOT_$(COREBOOT_TOOLCHAIN))/bin/$(CROSS_COREBOOT)-
 else
 ifneq (,$(USE_COREBOOT_SDK))
 CROSS_COMPILE:=$(shell bazel --project fwsdk run \
-	@coreboot-sdk-$(CROSS_COMPILE_TOOLCHAIN)//:get_path)/bin/$(CROSS_COREBOOT)-
+	@ec-coreboot-sdk-$(CROSS_COMPILE_TOOLCHAIN)//:get_path)/bin/$(CROSS_COREBOOT)-
 endif
 endif
 
