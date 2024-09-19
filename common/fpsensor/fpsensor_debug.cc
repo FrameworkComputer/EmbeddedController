@@ -164,7 +164,7 @@ DECLARE_CONSOLE_COMMAND_FLAGS(fpcapture, command_fpcapture, NULL,
 static int command_fpupload(int argc, const char **argv)
 {
 	if (argc != 3)
-		return EC_ERROR_PARAM1;
+		return EC_ERROR_PARAM_COUNT;
 	if (system_is_locked())
 		return EC_ERROR_ACCESS_DENIED;
 	int offset = atoi(argv[1]);
