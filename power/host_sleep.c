@@ -17,6 +17,7 @@
 #include "lpc.h"
 #include "power.h"
 #include "system.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 
@@ -319,10 +320,14 @@ static void sleep_increment_transition(void)
 		sleep_signal_transitions += 1;
 }
 
+K_MUTEX_DEFINE(sleep_transition_timeout_lock);
+
 void sleep_suspend_transition(void)
 {
 	sleep_increment_transition();
+	mutex_lock(&sleep_transition_timeout_lock);
 	hook_call_deferred(&sleep_transition_timeout_data, -1);
+	mutex_unlock(&sleep_transition_timeout_lock);
 }
 
 void sleep_resume_transition(void)
@@ -336,11 +341,13 @@ void sleep_resume_transition(void)
 	 * internal periodic housekeeping code might result in a situation
 	 * like this.
 	 */
+	mutex_lock(&sleep_transition_timeout_lock);
 	if (sleep_signal_timeout) {
 		timeout_hang_type = SLEEP_HANG_S0IX_RESUME;
 		hook_call_deferred(&sleep_transition_timeout_data,
 				   (uint32_t)sleep_signal_timeout * 1000);
 	}
+	mutex_unlock(&sleep_transition_timeout_lock);
 }
 
 static void sleep_transition_timeout(void)
@@ -379,10 +386,12 @@ void sleep_start_suspend(struct host_sleep_event_context *ctx)
 		return;
 	}
 
+	mutex_lock(&sleep_transition_timeout_lock);
 	sleep_signal_timeout = timeout;
 	timeout_hang_type = SLEEP_HANG_S0IX_SUSPEND;
 	hook_call_deferred(&sleep_transition_timeout_data,
 			   (uint32_t)timeout * 1000);
+	mutex_unlock(&sleep_transition_timeout_lock);
 }
 
 void sleep_complete_resume(struct host_sleep_event_context *ctx)
@@ -392,9 +401,11 @@ void sleep_complete_resume(struct host_sleep_event_context *ctx)
 	 * if the the HOST_SLEEP_EVENT_S0IX_RESUME message arrives before
 	 * the CHIPSET task transitions to the POWER_S0ixS0 state.
 	 */
+	mutex_lock(&sleep_transition_timeout_lock);
 	sleep_signal_timeout = 0;
 	hook_call_deferred(&sleep_transition_timeout_data, -1);
 	ctx->sleep_transitions = sleep_signal_transitions;
+	mutex_unlock(&sleep_transition_timeout_lock);
 }
 
 void sleep_reset_tracking(void)
