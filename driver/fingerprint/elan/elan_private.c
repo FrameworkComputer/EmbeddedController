@@ -93,6 +93,10 @@ int fp_sensor_init(void)
 		elan_set_hv_chip(1);
 
 	errors |= elan_check_hwid();
+	if (errors) {
+		return EC_SUCCESS;
+	}
+
 	if (elan_execute_calibration() < 0)
 		errors |= FP_ERROR_INIT_FAIL;
 	if (elan_woe_mode() != 0)
