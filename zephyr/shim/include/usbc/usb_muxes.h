@@ -9,6 +9,7 @@
 #include "usb_mux.h"
 #include "usbc/amd_fp6_usb_mux.h"
 #include "usbc/amd_fp8_usb_mux.h"
+#include "usbc/anx3443_usb_mux.h"
 #include "usbc/anx7447_usb_mux.h"
 #include "usbc/anx7452_usb_mux.h"
 #include "usbc/anx7483_usb_mux.h"
@@ -40,6 +41,7 @@ extern "C" {
 #define USB_MUX_DRIVERS                                         \
 	(AMD_FP6_USB_MUX_COMPAT, USB_MUX_CONFIG_AMD_FP6),       \
 	(AMD_FP8_USB_MUX_COMPAT, USB_MUX_CONFIG_AMD_FP8),       \
+	(ANX3443_USB_MUX_COMPAT, USB_MUX_CONFIG_ANX3443),       \
 	(ANX7447_USB_MUX_COMPAT, USB_MUX_CONFIG_ANX7447),       \
 	(ANX7452_USB_MUX_COMPAT, USB_MUX_CONFIG_ANX7452),       \
 	(ANX7483_USB_MUX_COMPAT, USB_MUX_CONFIG_ANX7483),       \
