@@ -13,7 +13,7 @@
 #define PWR_EC_PCH_RSMRST &gpio9 5
 #define PWR_SLP_S0 &gpioe 1
 #define PWR_PCH_PWROK &gpio6 1
-#define PWR_EC_PCH_SYS_PWROK &gpiod 0
+#define PWR_EC_PCH_SYS_PWROK &gpio6 4
 #define PWR_ALL_SYS_PWRGD &gpio6 3
 
 /* I2C Ports */

@@ -72,8 +72,8 @@
 		nb-cpu-c10-gate {
 			gpios = <&gpiod 1 GPIO_INPUT>;
 		};
-		dt-sys-pwrok-ec {
-			gpios = <&gpiod 0 GPIO_INPUT>;
+		cse_early_rec_sw: ec-cse-early-sw {
+			gpios = <&gpiod 0 GPIO_ODR_LOW>;
 		};
 		ec-pg3-wake {
 			gpios = <&gpiof 3 GPIO_INPUT>;
