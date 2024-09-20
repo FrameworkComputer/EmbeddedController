@@ -445,7 +445,7 @@ esac
 
 case "${CHIP}" in
 	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"ite_i2c"|"npcx_uut"|"ite_spi"| \
-			"ite_spi_ccd_i2c"|"ite_spi_ccd_uart"|"ite_uart_3m"| \
+			"ite_spi_ccd_i2c"|"ite_spi_ccd_uart"|"ite_uart"|"ite_uart_3m"| \
 			"it8xxx2"|"mchp_int_spi")
 		;;
 	*)
