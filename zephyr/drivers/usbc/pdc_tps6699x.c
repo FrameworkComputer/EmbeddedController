@@ -418,9 +418,8 @@ static void st_irq_run(void *o)
 	 * written too, or read from, and byte-1 contains the length of said
 	 * data. The actual data starts at index 2. */
 	LOG_DBG("IRQ PORT %d", cfg->connector_number);
-	for (i = RV_DATA_START; i < sizeof(union reg_interrupt); i++) {
-		LOG_DBG("Byte%d: %02x", i - RV_DATA_START,
-			pdc_interrupt.raw_value[i]);
+	for (i = 0; i < sizeof(union reg_interrupt); i++) {
+		LOG_DBG("Byte%d: %02x", i, pdc_interrupt.raw_value[i]);
 		if (pdc_interrupt.raw_value[i]) {
 			interrupt_pending = true;
 		}
