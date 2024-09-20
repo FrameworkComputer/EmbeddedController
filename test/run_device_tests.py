@@ -255,6 +255,10 @@ class Platform(ABC):
     def cleanup(self) -> None:
         """Clean up after a test run."""
 
+    @abstractmethod
+    def skip_test(self, test_name: str) -> bool:
+        """Returns true if the given test should be skipped."""
+
 
 class Hardware(Platform):
     """Platform implementation for running on development boards."""
@@ -339,6 +343,9 @@ class Hardware(Platform):
     def cleanup(self) -> None:
         pass
 
+    def skip_test(self, test_name: str) -> bool:
+        return False
+
 
 class Renode(Platform):
     """Platform implementation for running on Renode emulator."""
@@ -379,6 +386,21 @@ class Renode(Platform):
 
     def cleanup(self) -> None:
         self.process.kill()
+
+    def skip_test(self, test_name: str) -> bool:
+        # TODO(b/356476313): Remove these when Renode is fixed.
+        if test_name in [
+            "production_app_test",
+            "benchmark",
+            "fpsensor_hw",
+            "libcxx",
+            "mpu",
+            "power_utilization",
+            "rtc_stm32f4",
+            "std_vector",
+        ]:
+            return True
+        return False
 
 
 @dataclass
@@ -1623,7 +1645,9 @@ def main():
 
     with ThreadPoolExecutor(max_workers=1) as executor:
         for test in test_list:
-            if test.skip_for_zephyr and args.zephyr:
+            if (test.skip_for_zephyr and args.zephyr) or platform.skip_test(
+                test.test_name
+            ):
                 continue
             test.passed = flash_and_run_test(
                 test, platform, board_config, args, executor
@@ -1634,7 +1658,9 @@ def main():
         for test in test_list:
             # print results
             print('Test "' + test.config_name + '": ', end="")
-            if test.skip_for_zephyr and args.zephyr:
+            if (test.skip_for_zephyr and args.zephyr) or platform.skip_test(
+                test.test_name
+            ):
                 print(colorama.Fore.YELLOW + "SKIPPED")
             else:
                 if test.passed:
