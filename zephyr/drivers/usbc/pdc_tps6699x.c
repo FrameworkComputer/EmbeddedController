@@ -323,6 +323,7 @@ static void set_state(struct pdc_data_t *data, const enum state_t next_state)
 	 * on transitions.
 	 */
 	switch (next_state) {
+	case ST_INIT:
 	case ST_TASK_WAIT:
 	case ST_ERROR_RECOVERY:
 	case ST_IRQ:
@@ -723,7 +724,14 @@ static void st_suspended_run(void *o)
 {
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
 
-	k_event_clear(&data->pdc_event, PDC_CMD_SUSPEND_REQUEST_EVENT);
+	if (data->events & PDC_IRQ_EVENT) {
+		LOG_INF("IRQ in suspend state");
+		k_event_clear(&data->pdc_event, PDC_IRQ_EVENT);
+	}
+
+	if (data->events & PDC_CMD_SUSPEND_REQUEST_EVENT) {
+		k_event_clear(&data->pdc_event, PDC_CMD_SUSPEND_REQUEST_EVENT);
+	}
 
 	/* Stay here while suspended */
 	if (check_comms_suspended()) {
@@ -2445,7 +2453,8 @@ static void tps_thread(void *dev, void *unused1, void *unused2)
 		/* Wait for event to handle */
 		data->events = k_event_wait(&data->pdc_event, PDC_ALL_EVENTS,
 					    false, K_FOREVER);
-		LOG_INF("tps_thread[%d]: events=0x%X", cfg->connector_number,
+		LOG_INF("tps_thread[%d][%s]: events=0x%X",
+			cfg->connector_number, state_names[get_state(data)],
 			data->events);
 
 		k_event_clear(&data->pdc_event, PDC_INTERNAL_EVENT);
