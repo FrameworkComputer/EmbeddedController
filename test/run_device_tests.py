@@ -545,7 +545,10 @@ class AllTests:
             TestConfig(test_name="fpsensor_crypto"),
             TestConfig(test_name="fpsensor_debug"),
             TestConfig(
-                test_name="fpsensor_hw", pre_test_callback=fp_sensor_sel
+                test_name="fpsensor_hw",
+                pre_test_callback=lambda config: fp_sensor_sel(
+                    platform=platform, board_config=config
+                ),
             ),
             TestConfig(test_name="fpsensor_utils"),
             TestConfig(test_name="ftrapv"),
