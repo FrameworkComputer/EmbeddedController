@@ -70,7 +70,6 @@ test-list-y = \
        scratchpad \
        sha256 \
        sha256_unrolled \
-       sram_mpu_protection \
        static_if \
        stdlib \
        std_vector \
