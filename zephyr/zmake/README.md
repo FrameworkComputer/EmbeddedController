@@ -16,7 +16,7 @@ Chromium OS's meta-build tool for Zephyr
 |---|---|
 | `subcommand` | Subcommand to run |
 
-#### Optional Arguments
+#### Options
 
 |   |   |
 |---|---|
@@ -36,7 +36,7 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake configure
 
-**Usage:** `zmake configure [-h] [--bringup] [--clobber] [-v VERSION] [--static] [--save-temps] [--allow-warnings] [--cmake-trace] [-B BUILD_DIR] [-c] [--delete-intermediates] [-D CMAKE_DEFS] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
+**Usage:** `zmake configure [-h] [--bringup] [--clobber] [-v VERSION] [--static] [--save-temps] [--allow-warnings] [--cmake-trace] [-B BUILD_DIR] [-c] [--delete-intermediates] [-D CMAKE_DEFS] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name ...)`
 
 #### Positional Arguments
 
@@ -44,7 +44,7 @@ Chromium OS's meta-build tool for Zephyr
 |---|---|
 | `project_name` | Name(s) of the project(s) to build |
 
-#### Optional Arguments
+#### Options
 
 |   |   |
 |---|---|
@@ -66,7 +66,7 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake build
 
-**Usage:** `zmake build [-h] [--bringup] [--clobber] [-v VERSION] [--static] [--save-temps] [--allow-warnings] [--cmake-trace] [-B BUILD_DIR] [-c] [--delete-intermediates] [-D CMAKE_DEFS] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
+**Usage:** `zmake build [-h] [--bringup] [--clobber] [-v VERSION] [--static] [--save-temps] [--allow-warnings] [--cmake-trace] [-B BUILD_DIR] [-c] [--delete-intermediates] [-D CMAKE_DEFS] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name ...)`
 
 #### Positional Arguments
 
@@ -74,7 +74,7 @@ Chromium OS's meta-build tool for Zephyr
 |---|---|
 | `project_name` | Name(s) of the project(s) to build |
 
-#### Optional Arguments
+#### Options
 
 |   |   |
 |---|---|
@@ -96,7 +96,7 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake compare-builds
 
-**Usage:** `zmake compare-builds [-h] [--ref1 REF1] [--ref2 REF2] [-k] [-n] [-b] [-d] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
+**Usage:** `zmake compare-builds [-h] [--ref1 REF1] [--ref2 REF2] [-k] [-n] [-b] [-d] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name ...)`
 
 #### Positional Arguments
 
@@ -104,7 +104,7 @@ Chromium OS's meta-build tool for Zephyr
 |---|---|
 | `project_name` | Name(s) of the project(s) to build |
 
-#### Optional Arguments
+#### Options
 
 |   |   |
 |---|---|
@@ -123,7 +123,7 @@ Chromium OS's meta-build tool for Zephyr
 
 **Usage:** `zmake list-projects [-h] [--format FMT]`
 
-#### Optional Arguments
+#### Options
 
 |   |   |
 |---|---|
@@ -134,7 +134,7 @@ Chromium OS's meta-build tool for Zephyr
 
 **Usage:** `zmake generate-readme [-h] [-o OUTPUT_FILE] [--diff]`
 
-#### Optional Arguments
+#### Options
 
 |   |   |
 |---|---|
