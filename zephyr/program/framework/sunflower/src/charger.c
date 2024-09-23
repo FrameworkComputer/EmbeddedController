@@ -159,9 +159,9 @@ void charger_update(void)
 		pre_dc_state != battery_is_present()) {
 		CPRINTS("update charger!!");
 
-		/*set dc prochot 7.680A(1E00)*/
+		/*set dc prochot 4.864A(1300)*/
 		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-				ISL9241_REG_DC_PROCHOT, 0x1E00))
+				ISL9241_REG_DC_PROCHOT, 0x1300))
 			CPRINTS("Update DC prochot fail");
 
 		pre_ac_state = extpower_is_present();
