@@ -158,7 +158,7 @@ ZTEST(fpsernsor_crypto, test_hkdf_expand)
 	}
 
 	/* OKM size too big. */
-	std::array<uint8_t, 256 * SHA256_DIGEST_SIZE> unused_output{};
+	std::vector<uint8_t> unused_output(256 * SHA256_DIGEST_SIZE);
 	const auto &test_vector = test_vector1;
 	zassert_false(hkdf_sha256(unused_output, test_vector.ikm,
 				  test_vector.salt, test_vector.info));
