@@ -3828,7 +3828,7 @@ uint8_t pdc_power_mgmt_get_product_type(int port)
 	}
 
 	if (pdc->vdo[IDENTITY_PTYPE_VDO_IDX]) {
-		ptype = PD_IDH_VID(pdc->vdo[IDENTITY_PTYPE_VDO_IDX]);
+		ptype = PD_IDH_PTYPE(pdc->vdo[IDENTITY_PTYPE_VDO_IDX]);
 	}
 
 	return ptype;

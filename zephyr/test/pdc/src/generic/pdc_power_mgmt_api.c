@@ -1730,6 +1730,79 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_identity_discovery)
 		      PD_DISC_NEEDED);
 };
 
+ZTEST_USER(pdc_power_mgmt_api, test_get_identity_vid)
+{
+	uint32_t vid = VDO_IDH(
+		/* USB host */ false, /* USB device */ true, IDH_PTYPE_HUB,
+		/* modal operation */ true, USB_VID_GOOGLE);
+	uint32_t product = VDO_PRODUCT(0xBEAD, 0x1001);
+	uint32_t vdo[] = { vid, product };
+	union connector_status_t conn_status;
+
+	zassert_equal(0, pdc_power_mgmt_get_identity_vid(
+				 CONFIG_USB_PD_PORT_MAX_COUNT));
+
+	if (-ENOSYS == emul_pdc_set_vdo(emul, 2, vdo)) {
+		ztest_test_skip();
+	}
+
+	emul_pdc_configure_snk(emul, &conn_status);
+	emul_pdc_connect_partner(emul, &conn_status);
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+
+	zassert_equal(USB_VID_GOOGLE,
+		      pdc_power_mgmt_get_identity_vid(TEST_PORT));
+}
+
+ZTEST_USER(pdc_power_mgmt_api, test_get_identity_pid)
+{
+	uint32_t vid = VDO_IDH(
+		/* USB host */ false, /* USB device */ true, IDH_PTYPE_HUB,
+		/* modal operation */ true, USB_VID_GOOGLE);
+	uint32_t product = VDO_PRODUCT(0xBEAD, 0x1001);
+	uint32_t vdo[] = { vid, product };
+	union connector_status_t conn_status;
+
+	zassert_equal(0, pdc_power_mgmt_get_identity_pid(
+				 CONFIG_USB_PD_PORT_MAX_COUNT));
+
+	if (-ENOSYS == emul_pdc_set_vdo(emul, 2, vdo)) {
+		ztest_test_skip();
+	}
+
+	emul_pdc_configure_snk(emul, &conn_status);
+	emul_pdc_connect_partner(emul, &conn_status);
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+
+	zassert_equal(0xBEAD, pdc_power_mgmt_get_identity_pid(TEST_PORT));
+	zassert_equal(IDH_PTYPE_HUB,
+		      pdc_power_mgmt_get_product_type(TEST_PORT));
+}
+
+ZTEST_USER(pdc_power_mgmt_api, test_get_product_type)
+{
+	uint32_t vid = VDO_IDH(
+		/* USB host */ false, /* USB device */ true, IDH_PTYPE_HUB,
+		/* modal operation */ true, USB_VID_GOOGLE);
+	uint32_t product = VDO_PRODUCT(0xBEAD, 0x1001);
+	uint32_t vdo[] = { vid, product };
+	union connector_status_t conn_status;
+
+	zassert_equal(0, pdc_power_mgmt_get_product_type(
+				 CONFIG_USB_PD_PORT_MAX_COUNT));
+
+	if (-ENOSYS == emul_pdc_set_vdo(emul, 2, vdo)) {
+		ztest_test_skip();
+	}
+
+	emul_pdc_configure_snk(emul, &conn_status);
+	emul_pdc_connect_partner(emul, &conn_status);
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+
+	zassert_equal(IDH_PTYPE_HUB,
+		      pdc_power_mgmt_get_product_type(TEST_PORT));
+}
+
 /*
  * Validate that all possible PDC power management states have a name
  * assigned.  This could possibly be done with some macrobatics, but
