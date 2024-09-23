@@ -1,0 +1,19 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "../native_sim.overlay"
+#include "../../../../program/rex/kanix/cbi.dtsi"
+
+/ {
+	aliases {
+		gpio-wp = &gpio_ec_wp_l;
+	};
+
+	named-gpios {
+		gpio_ec_wp_l: ec_wp_l {
+			gpios = <&gpio1 13 GPIO_OUTPUT>;
+		};
+	};
+};

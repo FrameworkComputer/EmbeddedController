@@ -1,0 +1,217 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/cbi_flash.dtsi>
+
+/* Rex program common DTSI includes */
+#include "../fan.dtsi"
+#include "../generated.dtsi"
+#include "../interrupts.dtsi"
+#include "../keyboard.dtsi"
+#include "../power_signals.dtsi"
+#include "../rex.dtsi"
+#include "../usbc.dtsi"
+
+/* Kanix project DTS includes */
+#include "battery.dtsi"
+#include "cbi.dtsi"
+#include "i2c.dtsi"
+#include "keyboard.dtsi"
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
+#include "motionsense.dtsi"
+#include "temp_sensors.dtsi"
+
+/ {
+	named-gpios {
+		/delete-node/ ec_spare_gpio42;
+		/delete-node/ ec_spare_gpioc7;
+		/delete-node/ ec_spare_gpioa4;
+		/delete-node/ ec_spare_gpiob1;
+		/delete-node/ usb_c1_rst_odl;
+		/delete-node/ usb_c0_rt_rst_ls_l;
+		/delete-node/ led_3_l;
+		/delete-node/ led_4_l;
+		/delete-node/ usb_c0_sbu_fault_odl;
+		/delete-node/ usb_c0_bc12_int_odl;
+		/delete-node/ usb_c1_bc12_int_odl;
+
+		gpio_usb_c0_frs_en: usb_c0_frs_en {
+			gpios = <&gpio4 2 GPIO_OUTPUT_LOW>;
+		};
+		gpio_usb_c0_rt_rst_odl: usb_c0_rt_rst_odl {
+			gpios = <&gpio3 7 GPIO_OUTPUT>;
+		};
+		/*
+		 * Kanix moves usb_c1_rst_odl form GPIO37 to GPIOC7
+		 * and rename to usb_c1_rt_3p3_sx_en
+		 */
+		gpio_usb_c1_rst_odl: usb_c1_rt_3p3_sx_en {
+			gpios = <&gpioc 7 GPIO_ODR_LOW>;
+		};
+		/*
+		 * Kanix moves usb_c1_rt_rst_r_odl form GPIO72 to
+		 * GPIOA4 for the RST PIN should be 1.8V
+		 */
+		gpio_usb_c1_rt_rst_r_odl: usb_c1_rt_rst_r_odl {
+			gpios = <&gpioa 4 GPIO_ODR_HIGH>;
+		};
+		gpio_ec_spare_gpio74: gpio_ec_spare_gpio74 {
+			gpios = <&gpio7 4 GPIO_OUTPUT>;
+		};
+		gpio_en_pp5000_usba_r: en_pp5000_usba_r {
+			gpios = <&gpiod 7 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_kso_02_inv: ec_kso_02_inv {
+			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
+			enum-name = "GPIO_KBD_KSO2";
+		};
+		/*
+		 * touch panel enable and soc backlight enable
+		 * to control the touch enable timing
+		 */
+		gpio_ec_touch_en: ec_touch_en {
+			gpios = <&gpiob 1 GPIO_OUTPUT_LOW>;
+		};
+		gpio_soc_3v3_edp_bl_en: soc_3v3_edp_bl_en {
+			gpios = <&gpioc 6 GPIO_INPUT_PULL_DOWN>;
+		};
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpioc 2 0>, /* led_3_l */
+			<&gpio6 0 0>; /* led_4_l */
+	};
+
+	aliases {
+		hbr-usb-c1-rt-pwr-en = &gpio_usb_c1_rst_odl;
+		hbr-usb-c1-rt-int-odl = &gpio_usb_c1_rt_int_odl;
+		hbr-usb-c1-rt-rst-odl = &gpio_usb_c1_rt_rst_r_odl;
+		syv-usb-c1-frs-en = &gpio_usb_c1_frs_en;
+	};
+
+	gpio-interrupts {
+		/delete-node/ ec_als_rgb;
+		/delete-node/ c0_sbu_fault;
+		/delete-node/ usb_c0_bc12;
+		/delete-node/ usb_c1_bc12;
+
+		int_imu: ec_imu {
+			irq-pin = <&gpio_ec_imu_int_r_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bma4xx_interrupt";
+		};
+		int_soc_edp_bl_en: soc_edp_bl_en {
+			irq-pin = <&gpio_soc_3v3_edp_bl_en>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "soc_edp_bl_interrupt";
+		};
+		int_accel: ec_accel {
+			irq-pin = <&gpio_ec_accel_int_r_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bma4xx_interrupt";
+		};
+	};
+};
+
+&i2c1_0 {
+	/delete-node/ nct38xx@70;
+
+	tcpc_rt1716_port0: rt1716@4e {
+		compatible = "richtek,rt1715-tcpc";
+		reg = <0x4e>;
+		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
+		/* a duplicate of the <&gpio_usb_c0_tcpc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
+		is-alt;
+	};
+};
+
+&ppc_port0_syv {
+	frs_en_gpio = <&gpio_usb_c0_frs_en>;
+};
+
+&i2c2_0 {
+	/delete-node/ pi3usb9201@5f;
+};
+
+&i2c3_0 {
+	usb_c1_hb_retimer: jhl9040r-c1@55 {
+		compatible = "intel,jhl9040r";
+		reg = <0x55>;
+		ls-en-pin = <&gpio_usb_c1_rst_odl>; /* usb_c1_rt_3p3_sx_en */
+		int-pin = <&gpio_usb_c1_rt_int_odl>;
+		reset-pin = <&gpio_usb_c1_rt_rst_r_odl>;
+	};
+};
+
+&usb_c0_hb_retimer {
+	reset-pin = <&gpio_usb_c0_rt_rst_odl>;
+};
+
+&i2c6_1 {
+	/delete-node/ pi3usb9201@5f;
+	/delete-node/ usb-c1-hb-retimer@56;
+};
+
+&usbc_port0 {
+	/delete-property/ bc12;
+
+	tcpc = <&tcpc_rt1716_port0>;
+};
+
+&usbc_port1 {
+	/delete-property/ bc12;
+};
+
+&fan0 {
+	pwms = <&pwm5 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+	rpm_min = <2500>;
+	rpm_start = <2500>;
+	rpm_max = <6000>;
+};
+
+&cbi_flash {
+	/*
+	 * CBI section size is 0x1000 bytes, the CBI portion lies at the end of
+	 * EC_RO section. EC_RO section ends at 0x50000 byte which is the offset
+	 */
+	offset = <0x50000>;
+	size = <0x1000>;
+};
+
+&cros_kb_raw {
+	pinctrl-1 = <
+		&ksi0_gpio_gp31
+		&ksi1_gpio_gp30
+		&ksi2_gpio_gp27
+		&ksi3_gpio_gp26
+		&ksi4_gpio_gp25
+		&ksi5_gpio_gp24
+		&ksi6_gpio_gp23
+		&ksi7_gpio_gp22
+		&kso00_gpio_gp21
+		&kso01_gpio_gp20
+		&kso03_gpio_gp16
+		&kso04_gpio_gp15
+		&kso05_gpio_gp14
+		&kso06_gpio_gp13
+		&kso07_gpio_gp12
+		&kso08_gpio_gp11
+		&kso09_gpio_gp10
+		&kso10_gpio_gp07
+		&kso11_gpio_gp06
+		&kso12_gpio_gp05
+		&kso13_gpio_gp04
+		&kso14_gpio_gp82
+	>;
+	pinctrl-names = "default", "sleep";
+};

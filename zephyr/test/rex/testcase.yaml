@@ -186,6 +186,62 @@ tests:
       - CONFIG_TEST_PROJECT_TOUCH_PANEL=y
       - CONFIG_PLATFORM_EC_LID_SWITCH=y
 
+  # Kanix project tests
+  rex.kanix:
+    extra_configs:
+      - CONFIG_TEST_PROJECT_KANIX=y
+
+  rex.kanix.usb_config:
+    extra_dtc_overlay_files:
+      - boards/kanix/kanix.dtsi
+      - boards/kanix/usbc.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROJECT_KANIX=y
+      - CONFIG_TEST_PROJECT_USB_CONFIG=y
+      - CONFIG_PLATFORM_EC_USBC=y
+      - CONFIG_PLATFORM_EC_USBC_PPC=y
+      - CONFIG_PLATFORM_EC_USBC_PPC_SYV682C=y
+      - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE_PPC=y
+      - CONFIG_PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG=y
+      - CONFIG_ESPI=y
+  rex.kanix.keyboard:
+    extra_dtc_overlay_files:
+      - boards/kanix/kanix.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROJECT_KANIX=y
+      - CONFIG_TEST_PROJECT_KEYBOARD=y
+  rex.kanix.charger:
+    extra_dtc_overlay_files:
+      - boards/kanix/kanix.dtsi
+      - boards/kanix/chargers.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROJECT_KANIX=y
+      - CONFIG_TEST_PROJECT_CHARGER=y
+      - CONFIG_PLATFORM_EC_BACKLIGHT_LID=n
+      - CONFIG_PLATFORM_EC_BATTERY_FUEL_GAUGE=y
+      - CONFIG_PLATFORM_EC_CHARGER_ISL9241=y
+      - CONFIG_PLATFORM_EC_CHARGER_SENSE_RESISTOR=10
+      - CONFIG_PLATFORM_EC_CHARGER_SENSE_RESISTOR_AC=20
+      - CONFIG_PLATFORM_EC_HOSTCMD=y
+      - CONFIG_PLATFORM_EC_CHARGER=y
+      - CONFIG_PLATFORM_EC_USB_PD_VBUS_MEASURE_NOT_PRESENT=y
+      - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE=n
+      - CONFIG_PLATFORM_EC_VBOOT_HASH=n
+  rex.kanix.i2c_policy:
+    extra_configs:
+      - CONFIG_TEST_PROJECT_KANIX=y
+      - CONFIG_TEST_PROGRAM_I2C_POLICY=y
+      - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
+
+  rex.kanix.touch_panel:
+    extra_dtc_overlay_files:
+      - boards/kanix/kanix.dtsi
+      - boards/kanix/touch.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROJECT_KANIX=y
+      - CONFIG_TEST_PROJECT_TOUCH_PANEL=y
+      - CONFIG_PLATFORM_EC_LID_SWITCH=y
+
   # ISH project tests
   rex.ish:
     extra_dtc_overlay_files:

@@ -1,0 +1,71 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	rex-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		/*
+		 * FW_CONFIG field to enable USB DB.
+		 */
+		usb-db {
+			enum-name = "FW_USB_DB";
+			start = <0>;
+			size = <2>;
+
+			io-db-unknown {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_USB_DB_NOT_CONNECTED";
+				value = <0>;
+			};
+			io-db-usb4-hayden {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_USB_DB_USB4_HB";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to change scancode for different type
+		 * keyboard.
+		 */
+		keyboard-type {
+			enum-name = "FW_KB_TYPE";
+			start = <12>;
+			size = <1>;
+
+			kb-default {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_DEFAULT";
+				value = <0>;
+			};
+			kb-ca-fr {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_CA_FR";
+				value = <1>;
+			};
+		};
+		/*
+		 * FW_CONFIG field to enable touch panel power sequence
+		 * control or not.
+		 */
+		touch-en {
+			enum-name = "FW_TOUCH_EN";
+			start = <14>;
+			size = <1>;
+
+			touch-en-disable {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TOUCH_EN_DISABLE";
+				value = <0>;
+			};
+			touch-en-enable {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TOUCH_EN_ENABLE";
+				value = <1>;
+			};
+		};
+	};
+};
