@@ -40,6 +40,13 @@ config CROS_SHI_NPCX_ENHANCED_BUF_MODE
 	   single-byte output buffer can be selected/switched to generate a
 	   response to simultaneous Read/Write transactions.
 
+config CROS_SHI_NPCX_CS_DETECT_WORKAROUND
+	bool
+	default y if SOC_NPCX9M7FB
+	help
+	  Workaround the issue "CSnFE and CSnRE bits of EVSTATS2 Register (SHI)"
+	  in the npcx9m7fb SoC errata.
+
 config CROS_SHI_NPCX_DEBUG
 	bool "Enable SHI debug"
 	help
