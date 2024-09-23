@@ -20,8 +20,8 @@ extern "C" {
 #define FP_SENSOR_RES_X_EGIS 80
 #define FP_SENSOR_RES_Y_EGIS 64
 #define FP_SENSOR_IMAGE_SIZE_EGIS (FP_SENSOR_RES_X_EGIS * FP_SENSOR_RES_Y_EGIS)
-#define FP_ALGORITHM_TEMPLATE_SIZE_EGIS (10 * 1024)
-#define FP_MAX_FINGER_COUNT_EGIS 1
+#define FP_ALGORITHM_TEMPLATE_SIZE_EGIS (16 * 1024)
+#define FP_MAX_FINGER_COUNT_EGIS 3
 #else
 #define FP_SENSOR_HWID_EGIS 600
 #define FP_SENSOR_RES_X_EGIS 0
@@ -69,6 +69,12 @@ int egis_get_image_with_mode(uint8_t *image_data, int mode);
 int egis_get_image(uint8_t *image_data);
 void egis_set_detect_mode(void);
 int egis_check_int_status(void);
+
+int egis_finger_match(void *templ, uint32_t templ_count, uint8_t *image,
+		      int32_t *match_index, uint32_t *update_bitmap);
+int egis_enrollment_begin(void);
+int egis_enrollment_finish(void *templ);
+int egis_finger_enroll(uint8_t *image, int *completion);
 
 #ifdef __cplusplus
 }

@@ -77,33 +77,39 @@ __overridable int fp_finger_match(void *templ, uint32_t templ_count,
 				  uint8_t *image, int32_t *match_index,
 				  uint32_t *update_bitmap)
 {
-	int rc = EC_SUCCESS;
-	egislog_i("");
+	int ret = EGIS_API_OK;
+	ret = egis_finger_match(templ, templ_count, image, match_index,
+				update_bitmap);
+	egislog_i("ret %d", ret);
 
-	return rc;
+	return ret;
 }
 
 __overridable int fp_enrollment_begin(void)
 {
-	int rc = EC_SUCCESS;
-	egislog_i("");
-	return rc;
+	int ret = EGIS_API_OK;
+	ret = egis_enrollment_begin();
+	egislog_i("ret %d", ret);
+
+	return EC_SUCCESS;
 }
 
 __overridable int fp_enrollment_finish(void *templ)
 {
-	int rc = EC_SUCCESS;
-	egislog_i("");
+	int ret = EGIS_API_OK;
+	ret = egis_enrollment_finish(templ);
+	egislog_i("ret %d", ret);
 
-	return rc;
+	return EC_SUCCESS;
 }
 
 __overridable int fp_finger_enroll(uint8_t *image, int *completion)
 {
-	int rc = EC_SUCCESS;
-	egislog_i("");
+	int ret = EGIS_API_OK;
+	ret = egis_finger_enroll(image, completion);
+	egislog_i("ret %d", ret);
 
-	return rc;
+	return ret;
 }
 
 int fp_maintenance(void)
