@@ -60,7 +60,7 @@ endif
 
 ifeq ($(BOARD), host)
 USE_BUILTIN_STDLIB:=0
-ifeq ($(COVERAGE),)
+ifeq ($(TEST_COVERAGE),)
 CROSS_COMPILE_CC_NAME=clang
 endif
 endif
