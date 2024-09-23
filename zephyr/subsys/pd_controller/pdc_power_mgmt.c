@@ -222,6 +222,7 @@ enum snk_attached_local_state_t {
 	SNK_ATTACHED_SET_DR_SWAP_POLICY,
 	/** SNK_ATTACHED_SET_PR_SWAP_POLICY */
 	SNK_ATTACHED_SET_PR_SWAP_POLICY,
+	SNK_ATTACHED_READ_POWER_LEVEL,
 	/** SNK_ATTACHED_DISABLE_FRS */
 	SNK_ATTACHED_DISABLE_FRS,
 	/** SNK_ATTACHED_GET_PDOS */
@@ -1792,7 +1793,7 @@ static void pdc_snk_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_SET_UOR);
 		return;
 	case SNK_ATTACHED_SET_PR_SWAP_POLICY:
-		port->snk_attached_local_state = SNK_ATTACHED_DISABLE_FRS;
+		port->snk_attached_local_state = SNK_ATTACHED_READ_POWER_LEVEL;
 		/* TODO: read from DT */
 		port->pdr = (union pdr_t){
 			.accept_pr_swap =
@@ -1803,6 +1804,10 @@ static void pdc_snk_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_SET_PDR);
 		atomic_clear_bit(port->snk_policy.flags,
 				 SNK_POLICY_UPDATE_ALLOW_PR_SWAP);
+		return;
+	case SNK_ATTACHED_READ_POWER_LEVEL:
+		port->snk_attached_local_state = SNK_ATTACHED_DISABLE_FRS;
+		queue_internal_cmd(port, CMD_PDC_READ_POWER_LEVEL);
 		return;
 	case SNK_ATTACHED_DISABLE_FRS:
 		/* Always disable FRS by default. The source policy manager
