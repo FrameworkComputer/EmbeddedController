@@ -114,7 +114,7 @@ enum ec_error_list derive_positive_match_secret(
 	std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed)
 {
 	CleanseWrapper<std::array<uint8_t, IKM_SIZE_BYTES> > ikm;
-	static const char info_prefix[] = "positive_match_secret for user ";
+	static constexpr char info_prefix[] = "positive_match_secret for user ";
 	uint8_t info[sizeof(info_prefix) - 1 + user_id.size_bytes()];
 
 	if (bytes_are_trivial(input_positive_match_salt.data(),
