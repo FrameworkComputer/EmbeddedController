@@ -298,7 +298,7 @@ extern "C" void fp_task(void)
 						global_context.sensor_mode &=
 							~FP_MODE_ENROLL_SESSION;
 				} else {
-					fp_enrollment_finish(NULL);
+					fp_enrollment_finish(nullptr);
 				}
 				enroll_session = global_context.sensor_mode &
 						 FP_MODE_ENROLL_SESSION;
