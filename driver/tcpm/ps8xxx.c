@@ -1013,7 +1013,10 @@ static int ps8xxx_tcpm_set_vconn(int port, int enable)
 	if (!enable)
 		crec_msleep(PS8XXX_VCONN_TURN_OFF_DELAY_US);
 
-	return tcpci_tcpm_set_vconn(port, enable);
+	if (tcpc_config[port].flags & TCPC_FLAGS_SET_VCONN_IN_SYNC)
+		return true;
+	else
+		return tcpci_tcpm_set_vconn(port, enable);
 }
 
 const struct tcpm_drv ps8xxx_tcpm_drv = {

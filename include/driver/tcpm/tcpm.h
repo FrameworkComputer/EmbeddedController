@@ -248,7 +248,8 @@ static inline int tcpm_sop_prime_enable(int port, bool enable)
 static inline int tcpm_set_vconn(int port, int enable)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_TCPC_VCONN) ||
-	    tcpc_config[port].flags & TCPC_FLAGS_CONTROL_VCONN) {
+	    tcpc_config[port].flags &
+		    (TCPC_FLAGS_CONTROL_VCONN | TCPC_FLAGS_SET_VCONN_IN_SYNC)) {
 		int rv;
 
 		rv = tcpc_config[port].drv->set_vconn(port, enable);
