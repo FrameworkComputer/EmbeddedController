@@ -246,7 +246,7 @@
 			/delete-node/  usb-mux-chain-1 ;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&ps8802_mux_0 &virtual_mux_1>;
+				usb-muxes = <&ps8802_mux_1 &virtual_mux_1>;
 			};
 		};
 	};
@@ -322,6 +322,12 @@
 		compatible = "parade,ps8802";
 		status = "okay";
 		reg = <0x8>;
+	};
+
+	ps8802_mux_1: ps8802-mx-1@18 {
+		compatible = "parade,ps8802";
+		status = "okay";
+		reg = <0x18>;
 	};
 
 	/delete-node/ syv682x@40;
