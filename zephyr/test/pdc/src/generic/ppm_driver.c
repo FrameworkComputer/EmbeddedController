@@ -4,6 +4,7 @@
  */
 
 #include "drivers/intel_altmode.h"
+#include "drivers/ucsi_v3.h"
 #include "ec_commands.h"
 #include "host_command.h"
 
@@ -175,6 +176,24 @@ ZTEST_USER(ppm_driver, test_ppm_init_fail_in_ppm_data_init)
 	ppm_data_init_fake.return_val = NULL;
 	rv = ppm_init(ppm_dev);
 	zassert_equal(rv, -ENODEV);
+}
+
+ZTEST_USER(ppm_driver, test_ppm_ci_cb)
+{
+	const struct device *ppm_dev = DT_PPM_DEV;
+	struct ppm_data *ppm_data = ppm_dev->data;
+	union cci_event_t cci_event = {};
+
+	/*
+	 * Test CI call back rejects invalid connectors.
+	 */
+	cci_event.connector_change = 0;
+	ppm_data->ci_cb.handler(ppm_dev, &ppm_data->ci_cb, cci_event);
+	zassert_equal(ucsi_ppm_lpm_alert_fake.call_count, 0);
+
+	cci_event.connector_change = NUM_PORTS + 1;
+	ppm_data->ci_cb.handler(ppm_dev, &ppm_data->ci_cb, cci_event);
+	zassert_equal(ucsi_ppm_lpm_alert_fake.call_count, 0);
 }
 
 static void ppm_driver_before(void *fixture)
