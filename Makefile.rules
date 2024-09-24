@@ -294,13 +294,6 @@ quiet_cmd_check_undef = CHECK_UNDEF
 # Print any important notices at the end of the build.
 .PHONY: notice
 notice: $(config)
-ifeq ($(CONFIG_EXPERIMENTAL_CONSOLE),y)
-ifeq ($(TEST_BUILD),)
-	@echo "*** NOTE: The experimental console is ENABLED. ***"
-	@echo "You will need to run the EC-3PO interactive console in the util"
-	@echo "directory!  Otherwise, you won't be able to enter any commands."
-endif # not a TEST_BUILD
-endif # CONFIG_EXPERIMENTAL_CONSOLE=y
 	$(call quiet,check_allowed)
 
 proj-%: | $(FAILED_BOARDS_DIR)
