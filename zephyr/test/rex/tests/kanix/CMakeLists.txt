@@ -13,6 +13,11 @@ target_sources_ifdef(CONFIG_TEST_PROJECT_KEYBOARD app PRIVATE src/keyboard.c)
 target_sources_ifdef(CONFIG_TEST_PROJECT_KEYBOARD app PRIVATE
 	${PLATFORM_EC_PROGRAM_DIR}/rex/kanix/src/keyboard.c)
 
+target_sources_ifdef(CONFIG_TEST_PROJECT_KEYBOARD_CUSTOMIZATION app PRIVATE
+	src/keyboard_customization.c)
+target_sources_ifdef(CONFIG_TEST_PROJECT_KEYBOARD_CUSTOMIZATION app PRIVATE
+	${PLATFORM_EC_PROGRAM_DIR}/rex/kanix/src/keyboard_customization.c)
+
 target_sources_ifdef(CONFIG_TEST_PROJECT_CHARGER app PRIVATE src/charger.c)
 target_sources_ifdef(CONFIG_TEST_PROJECT_CHARGER app PRIVATE
 	${PLATFORM_EC_PROGRAM_DIR}/rex/kanix/src/charger.c)

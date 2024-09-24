@@ -3,17 +3,56 @@
  * found in the LICENSE file.
  */
 
-&kbd_config_0 {
-	vivaldi-codes = <
-		VIVALDI_TK_BACK              /* T1 */
-		VIVALDI_TK_REFRESH           /* T2 */
-		VIVALDI_TK_FULLSCREEN        /* T3 */
-		VIVALDI_TK_OVERVIEW          /* T4 */
-		VIVALDI_TK_SNAPSHOT          /* T5 */
-		VIVALDI_TK_BRIGHTNESS_DOWN   /* T6 */
-		VIVALDI_TK_BRIGHTNESS_UP     /* T7 */
-		VIVALDI_TK_VOL_MUTE          /* T8 */
-		VIVALDI_TK_VOL_DOWN          /* T9 */
-		VIVALDI_TK_VOL_UP            /* T10 */
+/ {
+	chosen {
+		cros-ec,keyboard = &kbd;
+	};
+
+	kblight: kblight {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm3 0 PWM_HZ(2400) PWM_POLARITY_NORMAL>;
+	};
+};
+
+&vivaldi_kbd {
+	vivaldi-keys = <
+		KBD_RC(0, 2)   /* T1 */
+		KBD_RC(3, 2)   /* T2 */
+		KBD_RC(2, 2)   /* T3 */
+		KBD_RC(1, 2)   /* T4 */
+		KBD_RC(4, 4)   /* T5 */
+		KBD_RC(2, 4)   /* T6 */
+		KBD_RC(1, 4)   /* T7 */
+		KBD_RC(2, 11)  /* T8 */
+		KBD_RC(1, 9)   /* T9 */
+		KBD_RC(0, 4)   /* T10 */
+		KBD_RC(0, 1)   /* T11 */
+		KBD_RC(1, 5)   /* T12 */
+		KBD_RC(3, 5)   /* T13 */
+		KBD_RC(0, 11)  /* T14 */
 	>;
+
+	// with backlight
+	kbd_config_0: kbd-config-0 {
+		vivaldi-codes = <
+			VIVALDI_TK_BACK               /* T1 */
+			VIVALDI_TK_REFRESH            /* T2 */
+			VIVALDI_TK_FULLSCREEN         /* T3 */
+			VIVALDI_TK_OVERVIEW           /* T4 */
+			VIVALDI_TK_SNAPSHOT           /* T5 */
+			VIVALDI_TK_BRIGHTNESS_DOWN    /* T6 */
+			VIVALDI_TK_BRIGHTNESS_UP      /* T7 */
+			VIVALDI_TK_KBD_BKLIGHT_TOGGLE /* T8 */
+			VIVALDI_TK_DICTATE            /* T9 */
+			VIVALDI_TK_ACCESSIBILITY      /* T10 */
+			VIVALDI_TK_MICMUTE            /* T11 */
+			VIVALDI_TK_VOL_MUTE           /* T12 */
+			VIVALDI_TK_VOL_DOWN           /* T13 */
+			VIVALDI_TK_VOL_UP             /* T14 */
+		>;
+		capabilities = <(VIVALDI_KEYBD_CAP_FUNCTION_KEYS |
+				VIVALDI_KEYBD_CAP_NUMERIC_KEYPAD |
+				VIVALDI_KEYBD_CAP_SCRNLOCK_KEY |
+				VIVALDI_KEYBD_CAP_ASSISTANT_KEY)>;
+	};
 };

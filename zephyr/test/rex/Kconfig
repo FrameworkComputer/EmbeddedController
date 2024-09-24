@@ -57,6 +57,19 @@ config TEST_PROJECT_KEYBOARD
 	  Include project specific keyboard.c into the binary and test
 	  their functions.
 
+config TEST_PROJECT_KEYBOARD_CUSTOMIZATION
+	bool "Run the tests intended for keyboard_customization.c"
+	help
+	  Include project specific keyboard_customization.c into the
+	  binary and test their functions.
+
+config PLATFORM_EC_KEYBOARD_DEBUG
+	  bool "Enable keyboard debug prints"
+	  help
+	    Enable keyboard debug prints to show up in early bringup, for example
+	    if the board is currently headless and keyboard functionality is being
+	    checked.
+
 config TEST_PROJECT_BOARD
 	bool "Run the tests intended for board.c"
 	help

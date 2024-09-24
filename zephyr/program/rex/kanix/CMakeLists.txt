@@ -8,3 +8,6 @@ zephyr_library_sources("src/charger.c" "src/usb_mux_config.c" "src/keyboard.c")
 zephyr_library_sources("src/i2c_policy.c")
 zephyr_library_sources("src/touch_panel.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/usbc_config.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+        "src/keyboard_customization.c"
+)

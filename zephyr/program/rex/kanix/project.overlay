@@ -37,6 +37,9 @@
 		/delete-node/ usb_c0_sbu_fault_odl;
 		/delete-node/ usb_c0_bc12_int_odl;
 		/delete-node/ usb_c1_bc12_int_odl;
+		/delete-node/ usb_c1_frs_en;
+		/delete-node/ usb_c0_rt_3p3_sx_en;
+		/delete-node/ usb_c1_bc12_int_odl;
 
 		gpio_usb_c0_frs_en: usb_c0_frs_en {
 			gpios = <&gpio4 2 GPIO_OUTPUT_LOW>;
@@ -58,9 +61,6 @@
 		gpio_usb_c1_rt_rst_r_odl: usb_c1_rt_rst_r_odl {
 			gpios = <&gpioa 4 GPIO_ODR_HIGH>;
 		};
-		gpio_ec_spare_gpio74: gpio_ec_spare_gpio74 {
-			gpios = <&gpio7 4 GPIO_OUTPUT>;
-		};
 		gpio_en_pp5000_usba_r: en_pp5000_usba_r {
 			gpios = <&gpiod 7 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
 		};
@@ -73,18 +73,25 @@
 		 * to control the touch enable timing
 		 */
 		gpio_ec_touch_en: ec_touch_en {
-			gpios = <&gpiob 1 GPIO_OUTPUT_LOW>;
+			gpios = <&gpioc 2 GPIO_OUTPUT_LOW>;
 		};
 		gpio_soc_3v3_edp_bl_en: soc_3v3_edp_bl_en {
 			gpios = <&gpioc 6 GPIO_INPUT_PULL_DOWN>;
+		};
+
+		gpio_usb_c1_frs_en: usb_c1_frs_en {
+			gpios = <&gpio7 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+
+		gpio_usb_c0_rt_3p3_sx_en: usb_c0_rt_3p3_sx_en {
+			gpios = <&gpio6 0 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
 	};
 
 	unused-pins {
 		compatible = "unused-gpios";
 		unused-gpios =
-			<&gpioc 2 0>, /* led_3_l */
-			<&gpio6 0 0>; /* led_4_l */
+			<&gpio5 0 0>; /* usb_c1_bc12_int_odl */
 	};
 
 	aliases {
@@ -212,6 +219,9 @@
 		&kso12_gpio_gp05
 		&kso13_gpio_gp04
 		&kso14_gpio_gp82
+		&kso15_gpio_gp83
+		&kso16_gpio_gp03
+		&kso17_gpio_gpb1
 	>;
 	pinctrl-names = "default", "sleep";
 };
