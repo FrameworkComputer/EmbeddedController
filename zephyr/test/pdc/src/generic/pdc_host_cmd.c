@@ -4,6 +4,7 @@
  */
 
 #include "common.h"
+#include "drivers/intel_altmode.h"
 #include "drivers/ucsi_v3.h"
 #include "ec_commands.h"
 #include "emul/emul_pdc.h"
@@ -38,6 +39,12 @@ const static struct pdc_info_t info = {
 	.no_fw_update = true,
 };
 
+const static union data_status_reg data_status = {
+	/* 0x71 0x85 0x00 0x00 0x00 */
+	.data_conn = 1, .usb2 = 1,   .usb3_2 = 1,  .usb3_2_speed = 1,
+	.dp = 1,	.dp_pin = 1, .hpd_lvl = 1,
+};
+
 /**
  * @brief Custom fake for pdc_power_mgmt_get_info that outputs some test PDC
  *        chip info.
@@ -48,6 +55,23 @@ static int custom_fake_pdc_power_mgmt_get_info(int port, struct pdc_info_t *out,
 	zassert_not_null(out);
 
 	*out = info;
+
+	return 0;
+}
+
+/**
+ * @brief Custom fake for pdc_power_mgmt_get_pch_data_status that outputs some
+ * test PDC data status.
+ */
+static int custom_fake_pdc_power_mgmt_get_pch_data_status(int port,
+							  uint8_t *out)
+{
+	zassert_not_null(out);
+
+	if (port < 0 || port > CONFIG_USB_PD_PORT_MAX_COUNT)
+		return -ERANGE;
+
+	memcpy(out, data_status.raw_value, sizeof(data_status));
 
 	return 0;
 }
@@ -211,4 +235,22 @@ ZTEST(host_cmd_pdc, test_ec_cmd_usb_pd_ports)
 	zassert_equal(EC_RES_SUCCESS, rv, "Got %d, expected %d", rv,
 		      EC_RES_SUCCESS);
 	zassert_equal(CONFIG_USB_PD_PORT_MAX_COUNT, resp.num_ports);
+}
+
+ZTEST(host_cmd_pdc, test_ec_cmd_usb_pd_mux_info)
+{
+	int expect = (USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED |
+		      USB_PD_MUX_HPD_LVL);
+	struct ec_params_usb_pd_mux_info param;
+	struct ec_response_usb_pd_mux_info resp;
+
+	pdc_power_mgmt_get_pch_data_status_fake.custom_fake =
+		custom_fake_pdc_power_mgmt_get_pch_data_status;
+
+	param.port = -1;
+	zassert_not_ok(ec_cmd_usb_pd_mux_info(NULL, &param, &resp));
+
+	param.port = 0;
+	zassert_ok(ec_cmd_usb_pd_mux_info(NULL, &param, &resp));
+	zassert_equal(resp.flags, expect);
 }

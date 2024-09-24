@@ -4128,7 +4128,7 @@ int pdc_power_mgmt_frs_enable(int port_num, bool enable)
 	return EC_SUCCESS;
 }
 
-int pdc_power_mgmt_get_pch_data_status(int port, uint8_t *status)
+test_mockable int pdc_power_mgmt_get_pch_data_status(int port, uint8_t *status)
 {
 	if (!is_pdc_port_valid(port)) {
 		return -ERANGE;

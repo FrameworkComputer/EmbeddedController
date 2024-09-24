@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "drivers/intel_altmode.h"
 #include "ec_commands.h"
 #include "usb_pd.h"
 #include "usbc/pdc_power_mgmt.h"
@@ -102,6 +103,33 @@ static enum ec_status hc_pd_ports(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_PORTS, hc_pd_ports, EC_VER_MASK(0));
+
+static enum ec_status hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_usb_pd_mux_info *p = args->params;
+	struct ec_response_usb_pd_mux_info *r = args->response;
+	int port = p->port, rv;
+	union data_status_reg status;
+
+	rv = pdc_power_mgmt_get_pch_data_status(port, status.raw_value);
+	if (rv) {
+		return rv;
+	}
+
+	r->flags =
+		((status.usb2 || status.usb3_2) ? USB_PD_MUX_USB_ENABLED : 0) |
+		(status.dp ? USB_PD_MUX_DP_ENABLED : 0) |
+		(status.conn_ori ? USB_PD_MUX_POLARITY_INVERTED : 0) |
+		(status.dp_irq ? USB_PD_MUX_HPD_IRQ : 0) |
+		(status.hpd_lvl ? USB_PD_MUX_HPD_LVL : 0) |
+		(status.tbt ? USB_PD_MUX_TBT_COMPAT_ENABLED : 0) |
+		(status.usb4 ? USB_PD_MUX_USB4_ENABLED : 0);
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_MUX_INFO, hc_usb_pd_mux_info,
+		     EC_VER_MASK(0));
 
 #if !defined(CONFIG_USB_PD_ALTMODE_INTEL)
 uint8_t get_pd_control_flags(int port)
