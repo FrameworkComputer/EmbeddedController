@@ -76,10 +76,6 @@ uint16_t scancode_set2[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 	{0x0000, 0x0000, 0x007D, 0x0000, 0x0000, 0x0000, 0x005D, 0x0061},
 };
 
-void board_caps_led_control(int data)
-{
-}
-
 /* KSO mapping for discrete keyboard */
 __override const uint8_t it8801_kso_mapping[] = {
 	21, 20, 5, 19, 18, 17, 11, 14, 13, 15, 16, 12, 0, 2, 1, 3, 6, 4,
@@ -169,6 +165,41 @@ void set_keycap_label(uint8_t row, uint8_t col, uint8_t val)
 		keycap_label[col][row] = val;
 }
 #endif
+
+#define SCROLL_LED BIT(0)
+#define NUM_LED BIT(1)
+#define CAPS_LED BIT(2)
+static uint8_t caps_led_status;
+
+int caps_status_check(void)
+{
+	return caps_led_status;
+}
+
+void board_caps_led_control(int data)
+{
+	if (data & CAPS_LED) {
+		caps_led_status = 1;
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_lock_led), 1);
+	} else {
+		caps_led_status = 0;
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_lock_led), 0);
+	}
+}
+
+void caps_suspend(void)
+{
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_lock_led), 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, caps_suspend, HOOK_PRIO_DEFAULT);
+
+void caps_resume(void)
+{
+	if (caps_status_check())
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_lock_led), 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, caps_resume, HOOK_PRIO_DEFAULT);
+
 
 #define FN_PRESSED BIT(0)
 #define FN_LOCKED BIT(1)

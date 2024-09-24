@@ -242,8 +242,9 @@
 		};
 
 		/* KBD IOEX configuration */
-		lock_led {
+		gpio_lock_led: lock_led {
 			gpios = <&ioex_it8801_port1 2 GPIO_OUTPUT_LOW>;
+			no-auto-init;
 		};
 
 		/* unimplemented GPIOs */
