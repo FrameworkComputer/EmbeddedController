@@ -251,7 +251,7 @@ test_export_static enum ec_error_list handle_command(char *input)
 		ccprintf("Parameter %d invalid\n", rv - EC_ERROR_PARAM1 + 1);
 	else if (rv == EC_ERROR_PARAM_COUNT)
 		ccputs("Wrong number of params\n");
-	else if (rv != EC_SUCCESS)
+	else
 		ccprintf("Command returned error %d\n", rv);
 
 #ifdef CONFIG_CONSOLE_CMDHELP
