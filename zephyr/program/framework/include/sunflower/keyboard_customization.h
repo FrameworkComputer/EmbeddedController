@@ -100,4 +100,9 @@ enum kb_fn_table {
 	KB_FN_SPACE = BIT(22),
 };
 
+/**
+ * Check caps-led status and set caps-led
+ */
+void caps_resume(void);
+
 #endif /* __KEYBOARD_CUSTOMIZATION_H */

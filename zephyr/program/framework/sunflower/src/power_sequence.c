@@ -21,7 +21,7 @@
 #include "keyboard_scan.h"
 #include "keyboard_protocol.h"
 #include "keyboard_raw.h"
-#include "keyboard_scan.h"
+#include "keyboard_customization.h"
 #include "lpc.h"
 #include "power.h"
 #include "port80.h"
@@ -285,6 +285,9 @@ static void keyboard_scan_enable_deferred(void)
 	/* After init, we need to enable the interrupt */
 	keyboard_raw_enable_interrupt(1);
 	keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
+	/* enable lock led */
+	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_lock_led), GPIO_OUTPUT);
+	caps_resume();
 }
 DECLARE_DEFERRED(keyboard_scan_enable_deferred);
 
