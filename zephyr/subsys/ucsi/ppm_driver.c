@@ -438,11 +438,7 @@ test_export_static int ppm_init(const struct device *device)
 	 */
 	data->ci_cb.handler = ppm_ci_cb;
 	for (int i = 0; i < cfg->active_port_count; i++) {
-		int rv = pdc_power_mgmt_register_ppm_callback(&data->ci_cb);
-		if (rv) {
-			LOG_ERR("C%d: Failed to add CI callback (%d)", i, rv);
-			return rv;
-		}
+		pdc_power_mgmt_register_ppm_callback(&data->ci_cb);
 	}
 
 	data->cc_cb.handler = ppm_cc_cb;
