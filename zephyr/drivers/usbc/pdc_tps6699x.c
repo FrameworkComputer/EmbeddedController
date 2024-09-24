@@ -1317,12 +1317,7 @@ static void cmd_get_pdc_data_status_reg(struct pdc_data_t *data)
 		goto error_recovery;
 	}
 
-	/* Copy over the 5 status bytes, skipping the reg and length bytes */
-	data->user_buf[0] = data_status.raw_value[2];
-	data->user_buf[1] = data_status.raw_value[3];
-	data->user_buf[2] = data_status.raw_value[4];
-	data->user_buf[3] = data_status.raw_value[5];
-	data->user_buf[4] = data_status.raw_value[6];
+	memcpy(data->user_buf, data_status.raw_value, sizeof(data_status));
 
 	/* Command has completed */
 	data->cci_event.command_completed = 1;
