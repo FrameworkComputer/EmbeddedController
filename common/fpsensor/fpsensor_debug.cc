@@ -102,7 +102,7 @@ static enum ec_error_list fp_console_action(uint32_t mode)
 	while (tries--) {
 		if (!(global_context.sensor_mode & FP_MODE_ANY_CAPTURE)) {
 			CPRINTS("done (events:%x)",
-				(int)global_context.fp_events);
+				static_cast<int>(global_context.fp_events));
 			return EC_SUCCESS;
 		}
 		crec_usleep(100 * MSEC);
