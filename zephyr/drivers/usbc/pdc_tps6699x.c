@@ -118,6 +118,8 @@ enum cmd_t {
 	CMD_GET_CURRENT_PARTNER_SRC_PDO,
 	/** Set the Rp TypeC current */
 	CMD_SET_TPC_RP,
+	/** Set Fast Role Swap */
+	CMD_SET_FRS,
 	/** set Retimer into FW Update Mode */
 	CMD_SET_RETIMER_FW_UPDATE_MODE,
 	/** Get the cable properties */
@@ -214,6 +216,8 @@ struct pdc_data_t {
 	union reg_port_control pdc_port_control;
 	/** TypeC current */
 	enum port_control_typec_current_t tcc;
+	/** Fast Role Swap flag */
+	bool fast_role_swap;
 	/** Sink FET enable */
 	bool snk_fet_en;
 	/** Update retimer enable */
@@ -284,6 +288,7 @@ static const struct smf_state states[];
 
 static void cmd_set_drp_mode(struct pdc_data_t *data);
 static void cmd_set_tpc_rp(struct pdc_data_t *data);
+static void cmd_set_frs(struct pdc_data_t *data);
 static void cmd_get_rdo(struct pdc_data_t *data);
 static void cmd_set_rdo(struct pdc_data_t *data);
 static void cmd_set_src_pdos(struct pdc_data_t *data);
@@ -634,6 +639,9 @@ static void st_idle_run(void *o)
 		case CMD_SET_TPC_RP:
 			cmd_set_tpc_rp(data);
 			break;
+		case CMD_SET_FRS:
+			cmd_set_frs(data);
+			break;
 		case CMD_SET_DRP_MODE:
 			cmd_set_drp_mode(data);
 			break;
@@ -798,6 +806,42 @@ static void cmd_set_tpc_rp(struct pdc_data_t *data)
 	}
 
 	pdc_port_control.typec_current = data->tcc;
+
+	/* Write PDC port control */
+	rv = tps_rw_port_control(&cfg->i2c, &pdc_port_control, I2C_MSG_WRITE);
+	if (rv) {
+		LOG_ERR("Write port control failed");
+		goto error_recovery;
+	}
+
+	/* Command has completed */
+	data->cci_event.command_completed = 1;
+	/* Inform the system of the event */
+	call_cci_event_cb(data);
+
+	/* Transition to idle state */
+	set_state(data, ST_IDLE);
+	return;
+
+error_recovery:
+	set_state(data, ST_ERROR_RECOVERY);
+}
+
+static void cmd_set_frs(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	union reg_port_control pdc_port_control;
+	int rv;
+
+	/* Read PDC port control */
+	rv = tps_rw_port_control(&cfg->i2c, &pdc_port_control, I2C_MSG_READ);
+	if (rv) {
+		LOG_ERR("Read port control failed");
+		goto error_recovery;
+	}
+
+	LOG_INF("SET FRS %d", data->fast_role_swap);
+	pdc_port_control.fr_swap_enabled = data->fast_role_swap;
 
 	/* Write PDC port control */
 	rv = tps_rw_port_control(&cfg->i2c, &pdc_port_control, I2C_MSG_WRITE);
@@ -1887,6 +1931,15 @@ static int tps_set_power_level(const struct device *dev,
 	return tps_post_command(dev, CMD_SET_TPC_RP, NULL);
 }
 
+static int tps_set_fast_role_swap(const struct device *dev, bool enable)
+{
+	struct pdc_data_t *data = dev->data;
+
+	data->fast_role_swap = enable;
+
+	return tps_post_command(dev, CMD_SET_FRS, NULL);
+}
+
 static int tps_set_sink_path(const struct device *dev, bool en)
 {
 	struct pdc_data_t *data = dev->data;
@@ -2271,6 +2324,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.get_current_flash_bank = tps_get_current_flash_bank,
 	.update_retimer = tps_update_retimer_mode,
 	.execute_ucsi_cmd = tps_execute_ucsi_cmd,
+	.set_frs = tps_set_fast_role_swap,
 };
 
 static int pdc_interrupt_mask_init(struct pdc_data_t *data)

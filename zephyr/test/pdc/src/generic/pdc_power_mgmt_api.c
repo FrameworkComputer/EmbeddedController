@@ -122,13 +122,9 @@ ZTEST_USER(pdc_power_mgmt_api, test_is_connected)
 
 	/* Verify that the emulator tracks whether FRS enable/disable
 	 * has been configured.
-	 *
-	 *  TODO(b/345292002): FRS not supported by TPS6699x driver
 	 */
-	if (!IS_ENABLED(CONFIG_TODO_B_345292002)) {
-		zassert_ok(emul_pdc_reset(emul));
-		zassert_equal(emul_pdc_get_frs(emul, &frs_enabled), -EIO);
-	}
+	zassert_ok(emul_pdc_reset(emul));
+	zassert_equal(emul_pdc_get_frs(emul, &frs_enabled), -EIO);
 
 	zassert_false(pd_is_connected(CONFIG_USB_PD_PORT_MAX_COUNT));
 	zassert_equal(pd_get_task_state(CONFIG_USB_PD_PORT_MAX_COUNT),
@@ -152,9 +148,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_is_connected)
 	zassert_true(
 		TEST_WAIT_FOR(pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
 
-	/* TODO(b/345292002): FRS not supported by TPS6699x driver */
-	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS) &&
-	    !IS_ENABLED(CONFIG_TODO_B_345292002)) {
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS)) {
 		/* FRS should be disabled after connecting a partner source. */
 		zassert_ok(emul_pdc_get_frs(emul, &frs_enabled));
 	}

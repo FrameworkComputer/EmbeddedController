@@ -9,6 +9,7 @@
 #include "drivers/ucsi_v3.h"
 #include "emul/emul_pdc_pdo.h"
 #include "include/usb_pd.h"
+#include "tps6699x_reg.h"
 
 #include <stdint.h>
 
@@ -86,6 +87,8 @@ struct tps6699x_emul_pdc_data {
 	union pdr_t pdr;
 	enum ccom_t ccom;
 	union cable_property_t cable_property;
+	union reg_port_control port_control;
+	bool frs_configured;
 
 	struct tps6699x_response response;
 

@@ -393,6 +393,17 @@ static void tps6699x_emul_handle_command(struct tps6699x_emul_pdc_data *data,
 	}
 }
 
+static void
+tps6699x_emul_handle_port_control(struct tps6699x_emul_pdc_data *data,
+				  const union reg_port_control *pc)
+{
+	if (data->port_control.fr_swap_enabled != pc->fr_swap_enabled) {
+		data->frs_configured = true;
+	}
+
+	data->port_control = *pc;
+}
+
 static void tps6699x_emul_handle_write(struct tps6699x_emul_pdc_data *data,
 				       int reg)
 {
@@ -404,6 +415,11 @@ static void tps6699x_emul_handle_write(struct tps6699x_emul_pdc_data *data,
 			*(enum command_task *)
 				 data->reg_val[REG_COMMAND_FOR_I2C1],
 			data->reg_val[REG_DATA_FOR_CMD1]);
+		break;
+	case REG_PORT_CONTROL:
+		tps6699x_emul_handle_port_control(
+			data, (const union reg_port_control *)
+				      data->reg_val[REG_PORT_CONTROL]);
 		break;
 	default:
 		/* No action on write */
@@ -790,10 +806,59 @@ emul_tps6699x_set_cable_property(const struct emul *target,
 	return 0;
 }
 
+/* Defaults for Port Control per Section 4.30 Table 4-32 */
+static void emul_tps6699x_default_port_control(union reg_port_control *pc)
+{
+	/* Bits 0 - 7 */
+	pc->typec_current = 1;
+	pc->process_swap_to_sink = 1;
+	pc->initiate_swap_to_sink = 0;
+	pc->process_swap_to_source = 1;
+	pc->initiate_swap_to_source = 0;
+
+	/* Bits 8 - 15 */
+	pc->automatic_cap_request = 1;
+	pc->auto_alert_enable = 1;
+	pc->auto_pps_status_enable = 0;
+	pc->retimer_fw_update = 0;
+	pc->process_swap_to_ufp = 0;
+	pc->initiate_swap_to_ufp = 0;
+	pc->process_swap_to_dfp = 1;
+	pc->initiate_swap_to_dfp = 1;
+
+	/* Bits 16 - 23 */
+	pc->automatic_id_request = 1;
+	pc->am_intrusive_mode = 0;
+	pc->force_usb3_gen1 = 0;
+	pc->unconstrained_power = 0;
+	pc->enable_current_monitor = 0;
+	pc->sink_control_bit = 0;
+	pc->fr_swap_enabled = 1;
+	pc->reserved0 = 0;
+
+	/* Bits 24 - 31 */
+	pc->reserved2 = 0;
+	pc->usb_disable = 0;
+	pc->reserved3 = 0;
+
+	/* Bits 32 - 39 */
+	pc->enable_peak_current = 0;
+	pc->llim_threshold_hi = 0;
+	pc->deglitch_cnt_hi = 0;
+
+	/* Bits 40 - 47 */
+	pc->deglitch_cnt_lo = 6;
+	pc->vconn_current_limit = 0;
+	pc->level_shifter_direction_ctrl = 0;
+	pc->reserved4 = 0;
+}
+
 static int emul_tps6699x_reset(const struct emul *target)
 {
 	struct tps6699x_emul_pdc_data *data =
 		tps6699x_emul_get_pdc_data(target);
+	const union reg_port_control *pdc_port_control =
+		(const union reg_port_control *)data->reg_val[REG_PORT_CONTROL];
 
 	memset(data->reg_val, 0, sizeof(data->reg_val));
 
@@ -802,6 +867,12 @@ static int emul_tps6699x_reset(const struct emul *target)
 
 	/* Default DRP enabled */
 	data->ccom = BIT(2);
+
+	emul_tps6699x_default_port_control(
+		(union reg_port_control *)data->reg_val[REG_PORT_CONTROL]);
+
+	data->frs_configured = false;
+	data->port_control = *pdc_port_control;
 
 	return 0;
 }
@@ -924,6 +995,23 @@ static int tps6699x_emul_set_cmd_error(const struct emul *emul, bool enabled)
 	return 0;
 }
 
+static int tps6699x_emul_get_frs(const struct emul *target, bool *enabled)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	const union reg_port_control *pdc_port_control =
+		(const union reg_port_control *)data->reg_val[REG_PORT_CONTROL];
+
+	if (!data->frs_configured) {
+		return -EIO;
+	}
+
+	*enabled = pdc_port_control->fr_swap_enabled;
+
+	return 0;
+}
+
 static struct emul_pdc_api_t emul_tps6699x_api = {
 	.reset = emul_tps6699x_reset,
 	.set_response_delay = emul_tps6699x_set_response_delay,
@@ -952,6 +1040,7 @@ static struct emul_pdc_api_t emul_tps6699x_api = {
 	.set_current_flash_bank = tps6699x_emul_set_current_flash_bank,
 	.set_vconn_sourcing = tps6699x_emul_set_vconn_sourcing,
 	.set_cmd_error = tps6699x_emul_set_cmd_error,
+	.get_frs = tps6699x_emul_get_frs,
 };
 
 /* clang-format off */
