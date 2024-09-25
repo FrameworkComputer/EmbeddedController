@@ -248,6 +248,21 @@ __override_proto enum critical_shutdown
 board_system_is_idle(uint64_t last_shutdown_time, uint64_t *target,
 		     uint64_t now);
 
+/**
+ * Check if chipset is in low power mode
+ *
+ * Newer AMD SoCs support modern standby as well as the AMD version of runtime
+ * low power states. To coordinate these runtime low-power states with EC, the
+ * APU communicates the transition through the eSPI virtual wires. On transition
+ * to the low power state, APU transmits the corresponding virtual wire to EC.
+ * Any downstream transaction to EC or assertion of ESPI_ALERT# is treated as exit
+ * from the low power state.
+ * Sequence for all low power state (modern standby/SLP_MSC, Z8/9/10) are identical.
+ *
+ * @return non-zero if the chipset is in low power mode
+ */
+__override_proto int chipset_in_low_power_mode(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -111,7 +111,7 @@ int sb_rmi_mailbox_xfer(int cmd, uint32_t msg_in, uint32_t *msg_out_ptr)
 	const int ap_comm_failure_threshold = 2;
 	static int ap_comm_failure_count;
 
-	if (!chipset_in_state(CHIPSET_STATE_ON))
+	if (!chipset_in_state(CHIPSET_STATE_ON) || chipset_in_low_power_mode())
 		return EC_ERROR_NOT_POWERED;
 
 	/**
@@ -270,7 +270,7 @@ int sb_rmi_mailbox_xfer(int cmd, uint32_t msg_in, uint32_t *msg_out_ptr)
 	const int ap_comm_failure_threshold = 2;
 	static int ap_comm_failure_count;
 
-	if (!chipset_in_state(CHIPSET_STATE_ON))
+	if (!chipset_in_state(CHIPSET_STATE_ON) || chipset_in_low_power_mode())
 		return EC_ERROR_NOT_POWERED;
 
 	mutex_lock(&sb_rmi_mutex);

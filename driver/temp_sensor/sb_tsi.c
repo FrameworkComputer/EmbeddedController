@@ -30,7 +30,7 @@ int sb_tsi_get_val(int idx, int *temp_ptr)
 	if (idx != 0)
 		return EC_ERROR_PARAM1;
 	/* FT4 SB-TSI sensor only powered in S0 */
-	if (!chipset_in_state(CHIPSET_STATE_ON))
+	if (!chipset_in_state(CHIPSET_STATE_ON) || chipset_in_low_power_mode())
 		return EC_ERROR_NOT_POWERED;
 	/* Read the value over I2C */
 	ret = raw_read8(SB_TSI_TEMP_H, temp_ptr);
