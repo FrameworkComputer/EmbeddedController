@@ -112,10 +112,8 @@ static enum ec_error_list fp_console_action(uint32_t mode)
 
 static int command_fpcapture(int argc, const char **argv)
 {
-#ifdef CONFIG_ZEPHYR
 	if (system_is_locked())
 		return EC_ERROR_ACCESS_DENIED;
-#endif
 
 	int capture_type = FP_CAPTURE_SIMPLE_IMAGE;
 
@@ -136,9 +134,8 @@ static int command_fpcapture(int argc, const char **argv)
 
 	return rc;
 }
-DECLARE_CONSOLE_COMMAND_FLAGS(fpcapture, command_fpcapture, NULL,
-			      "Capture fingerprint in PGM format",
-			      CMD_FLAG_RESTRICTED);
+DECLARE_CONSOLE_COMMAND(fpcapture, command_fpcapture, NULL,
+			"Capture fingerprint in PGM format");
 
 /* Transfer a chunk of the image from the host to the FPMCU
  *
