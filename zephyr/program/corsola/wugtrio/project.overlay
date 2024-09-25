@@ -599,6 +599,7 @@
 	charger_bc12_port1: rt9490@53{
 		compatible = "richtek,rt9490";
 		thermistor = <&thermistor_rt9490>;
+		eoc-current = <120>;
 		/delete-property/ irq;
 	};
 };
