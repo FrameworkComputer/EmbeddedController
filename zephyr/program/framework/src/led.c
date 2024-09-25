@@ -474,7 +474,7 @@ static bool fingerprint_led_control(void)
 		return false;
 
 	/* Turn off fingerprint LED when lid is closed */
-	if (!lid_is_open()) {
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_TABLET_MODE) && !lid_is_open()) {
 		led_set_color(LED_OFF, EC_LED_ID_POWER_LED);
 		return true;
 	}
