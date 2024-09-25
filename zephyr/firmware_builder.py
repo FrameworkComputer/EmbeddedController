@@ -157,9 +157,28 @@ def build(opts):
         env=env,
     )
 
-    cmd = ["zmake", "-D", "build", "-a"]
+    cmd = ["zmake", "-D", "build", "-a", "--static"]
     if opts.code_coverage:
         cmd.append("--coverage")
+    if opts.bcs_version:
+        cmd.extend(["-v", opts.bcs_version])
+    else:
+        version_file = (
+            find_checkout()
+            / "src/third_party/chromiumos-overlay/chromeos/config/chromeos_version.sh"
+        )
+        if version_file.exists():
+            version = subprocess.run(
+                f"source {shlex.quote(str(version_file))} >/dev/null && "
+                "echo -n $CHROMEOS_VERSION_STRING",
+                shell=True,
+                check=True,
+                text=True,
+                stdout=subprocess.PIPE,
+            ).stdout
+            if version:
+                cmd.extend(["-v", version])
+
     log_cmd(cmd)
     subprocess.run(
         cmd,
@@ -331,7 +350,13 @@ def bundle_firmware(opts):
             platform_ec / "build" / "zephyr" / project.config.project_name
         )
         artifacts_dir = build_dir / "output"
-        tarball_name = f"{project.config.project_name}_EC.tbz2"
+        # karis.EC.15709.192.0.tar.bz2
+        if opts.bcs_version:
+            tarball_name = (
+                f"{project.config.project_name}.EC.{opts.bcs_version}.tar.bz2"
+            )
+        else:
+            tarball_name = f"{project.config.project_name}.EC.tar.bz2"
         tarball_path = bundle_dir.joinpath(tarball_name)
         cmd = ["tar", "cfj", tarball_path, "."]
         log_cmd(cmd)
@@ -537,6 +562,14 @@ def _extract_lcov_summary(name, metrics, filename):
 def main(args):
     """Builds and tests all of the Zephyr targets and reports build metrics"""
     opts = parse_args(args)
+
+    # Convert the full version strings (R130-16032.8.0-1) to the short form (16032.8.0).
+    if opts.bcs_version:
+        match = re.compile(r"R\d+-(\d+\.\d+\.\d+)(-\d+)?").fullmatch(
+            opts.bcs_version
+        )
+        if match:
+            opts.bcs_version = match[1]
 
     if not hasattr(opts, "func"):
         print("Must select a valid sub command!")
