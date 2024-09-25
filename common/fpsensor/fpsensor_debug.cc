@@ -201,10 +201,8 @@ static int command_fpenroll(int argc, const char **argv)
 	static const char *const enroll_str[] = { "OK", "Low Quality",
 						  "Immobile", "Low Coverage" };
 
-#ifdef CONFIG_ZEPHYR
 	if (system_is_locked())
 		return EC_ERROR_ACCESS_DENIED;
-#endif
 
 	do {
 		int tries = 1000;
@@ -230,8 +228,8 @@ static int command_fpenroll(int argc, const char **argv)
 
 	return rc;
 }
-DECLARE_CONSOLE_COMMAND_FLAGS(fpenroll, command_fpenroll, NULL,
-			      "Enroll a new fingerprint", CMD_FLAG_RESTRICTED);
+DECLARE_CONSOLE_COMMAND(fpenroll, command_fpenroll, NULL,
+			"Enroll a new fingerprint");
 
 static int command_fpinfo(int argc, const char **argv)
 {
