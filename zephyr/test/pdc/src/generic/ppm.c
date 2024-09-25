@@ -392,3 +392,36 @@ ZTEST(ucsi_ppm, test_pdc_busy)
 	zassert_ok(write_ack_command(false, true));
 	zassert_true(wait_for_cmd_to_process());
 }
+
+ZTEST(ucsi_ppm, test_get_alternate_modes_fail)
+{
+	struct ucsi_control_t ctrl = {};
+	union cci_event_t cci;
+	union connector_status_t csts = {};
+
+	zassert_true(reset_to_idle_notify());
+
+	/*
+	 * Test GET_ALTERNATE_MODES
+	 */
+	emul_pdc_configure_snk(emul, &csts);
+	emul_pdc_connect_partner(emul, &csts);
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(PDC_EMUL_PORT));
+
+	LOG_INF("Sending GET_ALTERNATE_MODES as a sink");
+	ctrl.command = UCSI_GET_ALTERNATE_MODES;
+	/* GET_ALTERNATE_MODES takes conn# in the 2nd byte. */
+	ctrl.command_specific[1] = PPM_CONNECTOR_NUM;
+	zassert_ok(write_command(&ctrl));
+	zassert_true(wait_for_cmd_to_process());
+
+	zassert_true(read_cci(&cci));
+	zassert_true(cci.command_completed);
+	/* Expect error. The emulator doesn't support GET_ALTERNATE_MODES.*/
+	zassert_true(cci.error);
+	zassert_equal(cci.data_len, 0);
+
+	LOG_INF("Acking GET_ALTERNATE_MODES");
+	zassert_ok(write_ack_command(false, true));
+	zassert_true(wait_for_cmd_to_process());
+}
