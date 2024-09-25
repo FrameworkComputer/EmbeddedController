@@ -1155,6 +1155,11 @@ static void preserve_enable_5v_state(void)
 DECLARE_HOOK(HOOK_SYSJUMP, preserve_enable_5v_state, HOOK_PRIO_DEFAULT);
 #endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
 
+__overridable int chipset_in_low_power_mode(void)
+{
+	return false;
+}
+
 #ifdef CONFIG_POWERSEQ_FAKE_CONTROL
 static int command_power_fake(int argc, const char **argv)
 {
