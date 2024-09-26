@@ -1194,8 +1194,8 @@
                 "end position": 13,
                 "name": "Output Enable",
                 "start position": 13,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 14,
@@ -2139,8 +2139,8 @@
                 "end position": 399,
                 "name": "GPIO 13 Mux",
                 "start position": 392,
-                "value (EDITABLE)": "0x0",
-                "value description": "Not connected"
+                "value (EDITABLE)": "0x1",
+                "value description": "GPIO function"
               },
               {
                 "end position": 407,
@@ -2832,8 +2832,8 @@
                 "end position": 13,
                 "name": "Invert Polarity",
                 "start position": 13,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 14,
@@ -3021,8 +3021,8 @@
                 "end position": 159,
                 "name": "GPIOP0 13 Mapped Event",
                 "start position": 152,
-                "value (EDITABLE)": "0x0",
-                "value description": "Disable"
+                "value (EDITABLE)": "0x33",
+                "value description": "debug_accessory_mode_event_port2 (51)"
               },
               {
                 "end position": 167,
@@ -3140,8 +3140,8 @@
                 "end position": 63,
                 "name": "Customer Use Word 2",
                 "start position": 32,
-                "value (EDITABLE)": "0x30363230",
-                "value description": "0x30363230"
+                "value (EDITABLE)": "0x30373230",
+                "value description": "0x30373230"
               }
             ],
             "length in bytes": "8",
@@ -8535,8 +8535,8 @@
                 "end position": 63,
                 "name": "Customer Use Word 2",
                 "start position": 32,
-                "value (EDITABLE)": "0x30363230",
-                "value description": "0x30363230"
+                "value (EDITABLE)": "0x30373230",
+                "value description": "0x30373230"
               }
             ],
             "length in bytes": "8",
@@ -9816,8 +9816,8 @@
                 "end position": 133,
                 "name": "SbuMuxDefaultSetting",
                 "start position": 131,
-                "value (EDITABLE)": "0x0",
-                "value description": "Don't change the default setting after booting"
+                "value (EDITABLE)": "0x2",
+                "value description": "Enable the Px_SBU mux to Px_DBG after booting"
               },
               {
                 "end position": 135,
@@ -9837,8 +9837,8 @@
                 "end position": 138,
                 "name": "FlipCrossbarDBGSetting",
                 "start position": 138,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 139,
@@ -13926,7 +13926,7 @@
     "mode": "config",
     "noOfConnectedDevices": "1",
     "sharedSettings": true,
-    "timeStamp": "8-7-2024_21-53-48"
+    "timeStamp": "10-3-2024_8-58-37"
   },
   "miscellaneous": {
     "configuration mapping": {
