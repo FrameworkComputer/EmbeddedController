@@ -147,7 +147,7 @@ static void charger_chips_init(void)
 init_fail:
 	CPRINTF("ISL9241 customer init failed!");
 }
-DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_POST_I2C);
+DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_BATTERY_INIT + 1);
 #endif
 
 void charger_update(void)
