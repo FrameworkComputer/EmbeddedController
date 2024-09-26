@@ -14,3 +14,4 @@
 #include "overlay.dtsi"
 #include "ioex.dtsi"
 #include "keyboard.dtsi"
+#include "motionsense.dtsi"
