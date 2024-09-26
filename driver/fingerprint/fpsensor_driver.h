@@ -6,6 +6,16 @@
 #ifndef __CROS_EC_DRIVER_FINGERPRINT_FPSENSOR_DRIVER_H_
 #define __CROS_EC_DRIVER_FINGERPRINT_FPSENSOR_DRIVER_H_
 
+/* FP_SENSOR_IMAGE_SIZE: is the maximum size of the image */
+/*
+ * FP_SENSOR_IMAGE_OFFSET: is the offset into that buffer that contains the
+ * actual image data. For FPC, they have some additional data right before the
+ * captured image.
+ */
+/* FP_SENSOR_RES_X: Width of a fingerprint image */
+/* FP_SENSOR_RES_Y: Height of a fingerprint image */
+/* FP_SENSOR_HWID: Fingerprint sensor hardware ID */
+
 #if defined(HAVE_PRIVATE) && !defined(EMU_BUILD)
 #define HAVE_FP_PRIVATE_DRIVER
 #if defined(CONFIG_FP_SENSOR_ELAN80) || defined(CONFIG_FP_SENSOR_ELAN515) || \
