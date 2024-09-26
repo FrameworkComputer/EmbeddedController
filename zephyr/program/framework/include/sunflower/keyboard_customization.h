@@ -101,8 +101,9 @@ enum kb_fn_table {
 };
 
 /**
- * Check caps-led status and set caps-led
+ * Enable/disable caps-led control by keyboard connection status
  */
-void caps_resume(void);
+void caps_led_keyboard_connect(void);
+void caps_led_keyboard_disconnect(void);
 
 #endif /* __KEYBOARD_CUSTOMIZATION_H */
