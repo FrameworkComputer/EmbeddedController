@@ -60,6 +60,10 @@ int cypd_write_reg_block(int controller, int reg, void *data, int len)
 	if (controller >= PD_CHIP_COUNT)
 		return EC_ERROR_PARAM1;
 
+	/* EC shouldn't communicate with PD chip during it is updating */
+	if (cypd_fw_update_in_progress())
+		return EC_ERROR_ACCESS_DENIED;
+
 	rv = i2c_write_offset16_block(i2c_port, addr_flags, reg, data, len);
 	if (rv != EC_SUCCESS)
 		CPRINTS("%s failed: ctrl=0x%x, reg=0x%02x", __func__, controller, reg);
@@ -74,6 +78,10 @@ int cypd_write_reg16(int controller, int reg, int data)
 
 	if (controller >= PD_CHIP_COUNT)
 		return EC_ERROR_PARAM1;
+
+	/* EC shouldn't communicate with PD chip during it is updating */
+	if (cypd_fw_update_in_progress())
+		return EC_ERROR_ACCESS_DENIED;
 
 	rv = i2c_write_offset16(i2c_port, addr_flags, reg, data, 2);
 	if (rv != EC_SUCCESS)
@@ -90,6 +98,10 @@ int cypd_write_reg8(int controller, int reg, int data)
 	if (controller >= PD_CHIP_COUNT)
 		return EC_ERROR_PARAM1;
 
+	/* EC shouldn't communicate with PD chip during it is updating */
+	if (cypd_fw_update_in_progress())
+		return EC_ERROR_ACCESS_DENIED;
+
 	rv = i2c_write_offset16(i2c_port, addr_flags, reg, data, 1);
 	if (rv != EC_SUCCESS)
 		CPRINTS("%s failed: ctrl=0x%x, reg=0x%02x", __func__, controller, reg);
@@ -104,6 +116,10 @@ int cypd_read_reg_block(int controller, int reg, void *data, int len)
 
 	if (controller >= PD_CHIP_COUNT)
 		return EC_ERROR_PARAM1;
+
+	/* EC shouldn't communicate with PD chip during it is updating */
+	if (cypd_fw_update_in_progress())
+		return EC_ERROR_ACCESS_DENIED;
 
 	rv = i2c_read_offset16_block(i2c_port, addr_flags, reg, data, len);
 	if (rv != EC_SUCCESS)
@@ -120,6 +136,10 @@ int cypd_read_reg16(int controller, int reg, int *data)
 	if (controller >= PD_CHIP_COUNT)
 		return EC_ERROR_PARAM1;
 
+	/* EC shouldn't communicate with PD chip during it is updating */
+	if (cypd_fw_update_in_progress())
+		return EC_ERROR_ACCESS_DENIED;
+
 	rv = i2c_read_offset16(i2c_port, addr_flags, reg, data, 2);
 	if (rv != EC_SUCCESS)
 		CPRINTS("%s failed: ctrl=0x%x, reg=0x%02x", __func__, controller, reg);
@@ -134,6 +154,10 @@ int cypd_read_reg8(int controller, int reg, int *data)
 
 	if (controller >= PD_CHIP_COUNT)
 		return EC_ERROR_PARAM1;
+
+	/* EC shouldn't communicate with PD chip during it is updating */
+	if (cypd_fw_update_in_progress())
+		return EC_ERROR_ACCESS_DENIED;
 
 	rv = i2c_read_offset16(i2c_port, addr_flags, reg, data, 1);
 	if (rv != EC_SUCCESS)
@@ -2046,6 +2070,11 @@ void update_active_charge_pd_port(int update_charger_port)
 void set_pd_fw_update(bool is_update)
 {
 	firmware_update = is_update;
+}
+
+bool cypd_fw_update_in_progress(void)
+{
+	return firmware_update;
 }
 
 void cypd_reinitialize(void)
