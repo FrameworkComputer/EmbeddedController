@@ -208,22 +208,6 @@
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
 	pinctrl-names = "default";
-
-	acc_bma:acc_bma@18 {
-		compatible = "cros-ec,bma4xx";
-		status = "okay";
-		location = "MOTIONSENSE_LOC_BASE";
-		i2c-spi-addr-flags = "BMA4_I2C_ADDR_PRIMARY";
-		reg = <0x18>;
-	};
-
-	acc_module: acc_module@19 {
-		compatible = "cros-ec,bma4xx";
-		status = "okay";
-		location = "MOTIONSENSE_LOC_LID";
-		i2c-spi-addr-flags = "BMA4_I2C_ADDR_SECONDARY";
-		reg = <0x19>;
-	};
 };
 
 &i2c_ctrl7 {
