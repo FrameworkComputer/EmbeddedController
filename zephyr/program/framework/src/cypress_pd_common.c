@@ -1930,6 +1930,11 @@ void set_pd_fw_update(bool is_update)
 	firmware_update = is_update;
 }
 
+bool get_pd_fw_update_status(void)
+{
+	return firmware_update;
+}
+
 void cypd_reinitialize(void)
 {
 	int i;

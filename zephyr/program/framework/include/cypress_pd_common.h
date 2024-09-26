@@ -737,6 +737,11 @@ void update_system_power_state(int controller);
 void set_pd_fw_update(bool is_update);
 
 /**
+ * @param updating return true when firmware is updating
+ */
+bool get_pd_fw_update_status(void);
+
+/**
  * After PD chip firmware update complete, need to reinitialize the PD chip
  */
 void cypd_reinitialize(void);

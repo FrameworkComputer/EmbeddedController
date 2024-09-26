@@ -565,6 +565,10 @@ void cypd_customize_battery_status(void)
 		return;
 	}
 
+	/* we shouldn't update the battery status during pd chip is updating */
+	if (get_pd_fw_update_status())
+		return;
+
 	/* only update data when soc change */
 	if (batt.state_of_charge == pd_batt_soc)
 		return;
