@@ -44,6 +44,40 @@ config PDC_POWER_MGMT_STACK_SIZE
 	help
 	  Stack size of thread created for each instance.
 
+choice PDC_POWER_MGMT_SRC_PDO_PEAK_OCP
+	prompt "Peak overcurrent capability advertised in the source PDO"
+	default PDC_POWER_MGMT_SRC_PDO_PEAK_OCP_100
+	help
+	  Set the allowable peak overcurrent as a percentage of the normal
+	  current limit. See USB-PD Spec, ver 3.2, Table 6.10 for a full
+	  explanation of the settings.
+
+config PDC_POWER_MGMT_SRC_PDO_PEAK_OCP_100
+	bool "Peak overcurrent of 100%"
+	help
+	  The PDC does not support any peak current beyond normal operating
+	  levels
+
+config PDC_POWER_MGMT_SRC_PDO_PEAK_OCP_110
+	bool "Peak overcurrent of 110%"
+	help
+	  The PDC supports 110% for 10ms, 125% for 2ms, 150% for 1ms (relative
+	  to normal operating current)
+
+config PDC_POWER_MGMT_SRC_PDO_PEAK_OCP_125
+	bool "Peak overcurrent of 125%"
+	help
+	  The PDC supports 125% for 10ms, 150% for 2ms, 200% for 1ms (relative
+	  to normal operating current)
+
+config PDC_POWER_MGMT_SRC_PDO_PEAK_OCP_150
+	bool "Peak overcurrent of 150%"
+	help
+	  The PDC supports 150% for 10ms, 175% for 2ms, 200% for 1ms (relative
+	  to normal operating current)
+
+endchoice # PDC_POWER_MGMT_SRC_PDO_PEAK_OCP
+
 module = USB_PDC
 module-str = USB PDC
 source "subsys/logging/Kconfig.template.log_config"

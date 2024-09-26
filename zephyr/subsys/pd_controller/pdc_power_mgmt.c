@@ -737,8 +737,21 @@ struct pdc_config_t {
 	void (*create_thread)(const struct device *dev);
 };
 
+#if defined(CONFIG_PDC_POWER_MGMT_SRC_PDO_PEAK_OCP_100)
+#define PDO_PEAK_OCP PDO_PEAK_OVERCURR_100
+#elif defined(CONFIG_PDC_POWER_MGMT_SRC_PDO_PEAK_OCP_110)
+#define PDO_PEAK_OCP PDO_PEAK_OVERCURR_110
+#elif defined(CONFIG_PDC_POWER_MGMT_SRC_PDO_PEAK_OCP_125)
+#define PDO_PEAK_OCP PDO_PEAK_OVERCURR_125
+#elif defined(CONFIG_PDC_POWER_MGMT_SRC_PDO_PEAK_OCP_150)
+#define PDO_PEAK_OCP PDO_PEAK_OVERCURR_150
+#else
+#error Invalid peak overcurrent setting
+#endif
+
 static const uint32_t pdo_fixed_flags =
-	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP | PDO_FIXED_COMM_CAP);
+	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP | PDO_FIXED_COMM_CAP |
+	 PDO_FIXED_PEAK_CURR(PDO_PEAK_OCP));
 
 static const uint32_t pdc_src_pdo_nominal[] = {
 	PDO_FIXED(5000, 1500, pdo_fixed_flags),
