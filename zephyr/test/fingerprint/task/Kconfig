@@ -50,4 +50,10 @@ config LINK_TEST_SUITE_FINGERPRINT_UTILS
 	  Link and execute fingerprint subsystem tests that focus
 	  on finger utils.
 
+config LINK_TEST_SUITE_FINGERPRINT_DEBUG
+	bool "Link fingerprint debug tests"
+	help
+	  Link and execute fingerprint subsystem tests that focus
+	  on finger debug.
+
 source "Kconfig.zephyr"

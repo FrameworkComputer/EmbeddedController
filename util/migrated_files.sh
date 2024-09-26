@@ -24,6 +24,7 @@ test/fp_transport.c
 test/fpsensor_auth_crypto_stateful.cc
 test/fpsensor_auth_crypto_stateless.cc
 test/fpsensor_crypto.cc
+test/fpsensor_debug.cc
 test/fpsensor_hw.cc
 test/fpsensor_utils.cc
 test/ftrapv.c
