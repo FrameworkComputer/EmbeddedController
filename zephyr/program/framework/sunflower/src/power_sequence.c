@@ -287,7 +287,7 @@ static void keyboard_scan_enable_deferred(void)
 	keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
 	/* enable lock led */
 	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_lock_led), GPIO_OUTPUT);
-	caps_resume();
+	caps_led_keyboard_connect();
 }
 DECLARE_DEFERRED(keyboard_scan_enable_deferred);
 
@@ -296,6 +296,7 @@ static void keyboard_scan_disable(void)
 	/* Disable keyscan when the module power is off */
 	hook_call_deferred(&keyboard_scan_enable_deferred_data, -1);
 	keyboard_scan_enable(0, KB_SCAN_DISABLE_DISCONNECT);
+	caps_led_keyboard_disconnect();
 }
 
 /* detect module hot plug */

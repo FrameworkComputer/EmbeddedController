@@ -24,6 +24,9 @@
 #include "system.h"
 #include "hid_device.h"
 #include "driver/ioexpander/it8801.h"
+#include "lid_switch.h"
+#include "chipset.h"
+#include "tablet_mode.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_KEYBOARD, outstr)
@@ -169,37 +172,84 @@ void set_keycap_label(uint8_t row, uint8_t col, uint8_t val)
 #define SCROLL_LED BIT(0)
 #define NUM_LED BIT(1)
 #define CAPS_LED BIT(2)
-static uint8_t caps_led_status;
 
-int caps_status_check(void)
+static uint8_t caps_led_off;
+#define CAPS_LID_CLOSE BIT(0)
+#define CAPS_TABLET_MODE BIT(1)
+#define CAPS_SUSPEND BIT(2)
+#define CAPS_KEY_DISABLE BIT(3)
+#define CAPS_KEYBOAD_DISCONNECT BIT(4)
+
+void caps_led_control(void)
 {
-	return caps_led_status;
+	static bool pre_status;
+
+	if ((caps_led_off && 0xf) != pre_status) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_lock_led), !caps_led_off);
+		pre_status = (caps_led_off && 0xf);
+	}
 }
 
 void board_caps_led_control(int data)
 {
-	if (data & CAPS_LED) {
-		caps_led_status = 1;
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_lock_led), 1);
-	} else {
-		caps_led_status = 0;
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_lock_led), 0);
-	}
+	if (data & CAPS_LED)
+		caps_led_off &= ~CAPS_KEY_DISABLE;
+	else
+		caps_led_off |= CAPS_KEY_DISABLE;
+
+	caps_led_control();
 }
+
+void caps_lid_change(void)
+{
+	if (lid_is_open())
+		caps_led_off &= ~CAPS_LID_CLOSE;
+	else
+		caps_led_off |= CAPS_LID_CLOSE;
+
+	caps_led_control();
+}
+DECLARE_HOOK(HOOK_LID_CHANGE, caps_lid_change, HOOK_PRIO_DEFAULT);
+
+void caps_tablet_change(void)
+{
+	if (tablet_get_mode())
+		caps_led_off |= CAPS_TABLET_MODE;
+	else
+		caps_led_off &= ~CAPS_TABLET_MODE;
+
+	caps_led_control();
+}
+DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, caps_tablet_change, HOOK_PRIO_DEFAULT);
 
 void caps_suspend(void)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_lock_led), 0);
+	caps_led_off |= CAPS_SUSPEND;
+	caps_led_control();
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, caps_suspend, HOOK_PRIO_DEFAULT);
 
 void caps_resume(void)
 {
-	if (caps_status_check())
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_lock_led), 1);
+	caps_led_off &= ~CAPS_SUSPEND;
+	caps_led_control();
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, caps_resume, HOOK_PRIO_DEFAULT);
 
+void caps_led_keyboard_connect(void)
+{
+	caps_led_off &= ~CAPS_KEYBOAD_DISCONNECT;
+	caps_led_control();
+}
+
+void caps_led_keyboard_disconnect(void)
+{
+	if (caps_led_off & CAPS_KEYBOAD_DISCONNECT)
+		return;
+
+	caps_led_off |= CAPS_KEYBOAD_DISCONNECT;
+	caps_led_control();
+}
 
 #define FN_PRESSED BIT(0)
 #define FN_LOCKED BIT(1)
