@@ -1,0 +1,49 @@
+/* Copyright 2024 The Chromium OS Authors. All rights reserved
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	gsc-ioex-gpio {
+		compatible = "cros,ioex-chip";
+		i2c-port = <&i2c_smb_bs>;
+		i2c-addr = <0x39>;
+		/*
+		 * Note: The it8801 driver
+		 * depends on I2C_PORT_KB_DISCRETE
+		 */
+		drv = "it8801_ioexpander_drv";
+		flags = <0x00>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		ioex_it8801_port0: it8801_port@0 {
+			compatible = "cros,ioex-port";
+			reg = <0>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+		};
+		ioex_it8801_port1: it8801_port@1 {
+			compatible = "cros,ioex-port";
+			reg = <1>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+		};
+		ioex_it8801_port2: it8801_port@2 {
+			compatible = "cros,ioex-port";
+			reg = <2>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+		};
+	};
+
+	named-gpios {
+		ec-gsc-packet-mode {
+			gpios = <&ioex_it8801_port0 4 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_PACKET_MODE_EN";
+		};
+	};
+};

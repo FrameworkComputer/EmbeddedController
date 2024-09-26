@@ -18,10 +18,18 @@ i2c3ALT: &i2c3 {
 
 #include "generated.dtsi"
 
+#define CHARGER_I2C i2c4
+#define PD_POW_I2C i2c1
+
+#include "../../intelrvp/ptlrvp/i2c.dtsi"
+#include "../../intelrvp/ptlrvp/keyboard.dtsi"
+
 #include "adc.dtsi"
 #include "console.dtsi"
 #include "gpios.dtsi"
+#include "gsc_board.dtsi"
 #include "i2c.dtsi"
+#include "interrupts.dtsi"
 #include "keyboard.dtsi"
 #include "pwm.dtsi"
 
@@ -42,6 +50,9 @@ i2c3ALT: &i2c3 {
 		/* The legacy system code requires GPIO_ENTERING_RW symbol */
 		entering-rw {
 			enum-name = "GPIO_ENTERING_RW";
+		};
+		c_ioex_kbd_intr_r {
+			enum-name = "GPIO_KB_DISCRETE_INT";
 		};
 	};
 };

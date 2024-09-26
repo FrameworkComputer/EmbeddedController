@@ -16,7 +16,7 @@
 		wc_usbc_pd_clk_aic2_r {
 			enum-names = "I2C_PORT_AIC2";
 		};
-		smb_bs_clk_r {
+		i2c_smb_bs: smb_bs_clk_r {
 			enum-names = "I2C_PORT_SMB_BS";
 		};
 		c_ish_ec_clk_r {
