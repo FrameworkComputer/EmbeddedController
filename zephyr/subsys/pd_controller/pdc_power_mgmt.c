@@ -226,6 +226,8 @@ enum snk_attached_local_state_t {
 	SNK_ATTACHED_READ_POWER_LEVEL,
 	/** SNK_ATTACHED_DISABLE_FRS */
 	SNK_ATTACHED_DISABLE_FRS,
+	/** SNK_ATTACHED_SET_SINK_PDO */
+	SNK_ATTACHED_SET_SINK_PDO,
 	/** SNK_ATTACHED_GET_PDOS */
 	SNK_ATTACHED_GET_PDOS,
 	/** SNK_ATTACHED_GET_VDO */
@@ -741,6 +743,8 @@ struct pdc_config_t {
 	void (*create_thread)(const struct device *dev);
 };
 
+/* Source PDO(s) */
+
 #if defined(CONFIG_PDC_POWER_MGMT_SRC_PDO_PEAK_OCP_100)
 #define PDO_PEAK_OCP PDO_PEAK_OVERCURR_100
 #elif defined(CONFIG_PDC_POWER_MGMT_SRC_PDO_PEAK_OCP_110)
@@ -753,14 +757,23 @@ struct pdc_config_t {
 #error Invalid peak overcurrent setting
 #endif
 
-static const uint32_t pdo_fixed_flags =
+static const uint32_t pdo_src_fixed_flags =
 	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP | PDO_FIXED_COMM_CAP |
 	 PDO_FIXED_PEAK_CURR(PDO_PEAK_OCP));
 
 static const uint32_t pdc_src_pdo_nominal =
-	PDO_FIXED(5000, 1500, pdo_fixed_flags);
+	PDO_FIXED(5000, 1500, pdo_src_fixed_flags);
 
-static const uint32_t pdc_src_pdo_max = PDO_FIXED(5000, 3000, pdo_fixed_flags);
+static const uint32_t pdc_src_pdo_max =
+	PDO_FIXED(5000, 3000, pdo_src_fixed_flags);
+
+/* Sink PDO(s) */
+static const uint32_t pdo_snk_fixed_flags =
+	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP | PDO_FIXED_COMM_CAP);
+
+static const uint32_t pdc_snk_pdo_max =
+	PDO_FIXED(CONFIG_PLATFORM_EC_PD_MAX_VOLTAGE_MV,
+		  CONFIG_PLATFORM_EC_PD_MAX_CURRENT_MA, pdo_snk_fixed_flags);
 
 static const struct smf_state pdc_states[];
 static enum pdc_state_t get_pdc_state(struct pdc_port_t *port);
@@ -1885,8 +1898,21 @@ static void pdc_snk_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_SET_FRS);
 		return;
 	case SNK_ATTACHED_GET_VDO:
-		port->snk_attached_local_state = SNK_ATTACHED_GET_PDOS;
+		port->snk_attached_local_state = SNK_ATTACHED_SET_SINK_PDO;
 		queue_internal_cmd(port, CMD_PDC_GET_VDO);
+		return;
+	case SNK_ATTACHED_SET_SINK_PDO:
+		port->snk_attached_local_state = SNK_ATTACHED_GET_PDOS;
+
+		/* Set a sink PDO that reflects this board's max voltage and
+		 * current */
+		port->set_pdos = (struct set_pdos_t){
+			.type = SINK_PDO,
+			.count = 1,
+			.pdos[0] = pdc_snk_pdo_max,
+		};
+
+		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
 		return;
 	case SNK_ATTACHED_GET_PDOS:
 		/* Request up to 4 pdos to honor USCI 6.5.15 Get PDOs - Number
