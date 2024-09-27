@@ -72,12 +72,16 @@ static void mp2964_write_vec16(const struct mp2964_reg_val *init_list,
 	for (i = 0; i < count; ++i, ++reg_val) {
 		mp2964_read16(reg_val->reg, &outval);
 		if (outval == reg_val->val) {
+#ifdef CONFIG_PLATFORM_EC_BRINGUP
 			CPRINTF("mp2964: reg 0x%02x already 0x%04x\n",
 				reg_val->reg, outval);
+#endif /* CONFIG_PLATFORM_EC_BRINGUP */
 			continue;
 		}
+#ifdef CONFIG_PLATFORM_EC_BRINGUP
 		CPRINTF("mp2964: tuning reg 0x%02x from 0x%04x to 0x%04x\n",
 			reg_val->reg, outval, reg_val->val);
+#endif /* CONFIG_PLATFORM_EC_BRINGUP */
 		mp2964_write16(reg_val->reg, reg_val->val);
 		*delta += 1;
 	}
