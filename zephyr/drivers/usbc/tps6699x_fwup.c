@@ -134,7 +134,8 @@ static int get_and_print_device_info(const struct i2c_dt_spec *i2c)
 static void command_task_to_string(enum command_task task, char str_out[5])
 {
 	if (task == 0) {
-		strncpy(str_out, "0000", sizeof(*str_out));
+		const char no_task[5] = "0000";
+		strncpy(str_out, no_task, strlen(no_task));
 		return;
 	}
 

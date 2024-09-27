@@ -53,7 +53,7 @@ register_brox_project(
     ],
 )
 
-register_brox_project(
+brox_sku4 = register_brox_project(
     project_name="brox-sku4",
     kconfig_files=[
         # Common to all projects.
@@ -69,6 +69,14 @@ register_brox_project(
 
 brox.variant(
     project_name="brox-tokenized",
+    kconfig_files=[
+        here / "brox-tokenized" / "project.conf",
+    ],
+    modules=["picolibc", "ec", "pigweed"],
+)
+
+brox_sku4.variant(
+    project_name="brox-sku4-tokenized",
     kconfig_files=[
         here / "brox-tokenized" / "project.conf",
     ],
@@ -131,3 +139,4 @@ assert_rw_fwid_DO_NOT_EDIT(project_name="greenbayupoc", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="jubilant", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="lotso", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="brox-sku4", addr=0x70098)
+assert_rw_fwid_DO_NOT_EDIT(project_name="brox-sku4-tokenized", addr=0x70098)
