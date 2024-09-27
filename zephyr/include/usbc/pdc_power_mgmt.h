@@ -268,6 +268,15 @@ const uint32_t *const pdc_power_mgmt_get_src_caps(int port);
 uint8_t pdc_power_mgmt_get_src_cap_cnt(int port);
 
 /**
+ * @brief Get the sent RDO while in sink mode
+ *
+ * @param port USB-C port number
+ * @param rdo Output parameter for RDO object
+ * @retval 0 on success, -EINVAL if \p rdo is NULL, -ENODATA if not sinking.
+ */
+int pdc_power_mgmt_get_rdo(int port, uint32_t *rdo);
+
+/**
  * @brief Set dual role state, from among enum pd_dual_role_states
  *
  * @param port USB-C port number

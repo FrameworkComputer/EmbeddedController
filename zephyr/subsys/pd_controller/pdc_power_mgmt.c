@@ -3393,6 +3393,23 @@ test_mockable const uint32_t *const pdc_power_mgmt_get_src_caps(int port)
 	return (const uint32_t *const)pdc_data[port]->port.snk_policy.src.pdos;
 }
 
+test_mockable int pdc_power_mgmt_get_rdo(int port, uint32_t *rdo)
+{
+	if (rdo == NULL) {
+		return -EINVAL;
+	}
+
+	/* Make sure port is sink connected and in the run sub-state */
+	if (!(pdc_data[port]->port.attached_state == SNK_ATTACHED_STATE &&
+	      pdc_data[port]->port.snk_attached_local_state ==
+		      SNK_ATTACHED_RUN)) {
+		return -ENODATA;
+	}
+
+	*rdo = pdc_data[port]->port.snk_policy.rdo;
+	return 0;
+}
+
 test_mockable const char *pdc_power_mgmt_get_task_state_name(int port)
 {
 	enum pdc_state_t state = pdc_power_mgmt_get_task_state(port);

@@ -1970,7 +1970,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_request_source_voltage)
 	emul_pdc_connect_partner(emul, &connector_status);
 	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
 
-	zassert_ok(emul_pdc_get_rdo(emul, &rdo));
+	zassert_ok(pdc_power_mgmt_get_rdo(TEST_PORT, &rdo));
 	/* Confirm 5v PDO selected */
 	zassert_equal(1, RDO_POS(rdo));
 	zassert_equal(source_mv, pdc_power_mgmt_get_max_voltage());
@@ -1982,7 +1982,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_request_source_voltage)
 	pdc_power_mgmt_request_source_voltage(TEST_PORT, source_mv);
 	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
 
-	zassert_ok(emul_pdc_get_rdo(emul, &rdo));
+	zassert_ok(pdc_power_mgmt_get_rdo(TEST_PORT, &rdo));
 	/* Confirm 12v PDO selected */
 	zassert_equal(2, RDO_POS(rdo));
 	zassert_equal(source_mv, pdc_power_mgmt_get_max_voltage());
@@ -2011,7 +2011,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_request_source_voltage)
 	zassert_equal(source_mv, pdc_power_mgmt_get_max_voltage());
 
 	/* Confirm 5v PDO selected */
-	zassert_ok(emul_pdc_get_rdo(emul, &rdo));
+	zassert_ok(pdc_power_mgmt_get_rdo(TEST_PORT, &rdo));
 	zassert_equal(1, RDO_POS(rdo));
 
 	/* Confirm Power role is SINK */
@@ -2137,6 +2137,18 @@ ZTEST_USER(pdc_power_mgmt_api, test_hpd_wake)
 	 * event.
 	 */
 	zassert_true(host_is_event_set(EC_HOST_EVENT_USB_MUX));
+}
+
+ZTEST_USER(pdc_power_mgmt_api, test_get_rdo_errors)
+{
+	/* The normal code path for pdc_power_mgmt_get_rdo() is tested in
+	 * test_request_source_voltage. This test covers its error paths.
+	 */
+
+	uint32_t rdo;
+
+	zassert_equal(-EINVAL, pdc_power_mgmt_get_rdo(TEST_PORT, NULL));
+	zassert_equal(-ENODATA, pdc_power_mgmt_get_rdo(TEST_PORT, &rdo));
 }
 #endif
 
