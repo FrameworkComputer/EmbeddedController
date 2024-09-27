@@ -14,6 +14,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/kernel/thread_stack.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/byteorder.h>
 #include <zephyr/types.h>
 
 #include <builtin/assert.h>
@@ -79,8 +80,8 @@ struct ucsi_ppm_device {
 	enum last_error_type last_error;
 	union error_status_t ppm_error_result;
 
-	/** Notification mask */
-	union notification_enable_t notif_mask;
+	/** Connection status change mask */
+	union conn_status_change_bits_t change_mask;
 };
 
 const char *ppm_state_strings[] = {
@@ -268,26 +269,20 @@ static void ppm_common_handle_async_event(struct ucsi_ppm_device *dev)
 	 */
 	if (dev->last_connector_changed == 0) {
 		/* Find the first port with any pending change we are masked to
-		 * notify on.
+		 * notify on. Handle events in order by setting CCI and
+		 * notifying OPM.
 		 */
 		for (port = 0; port < dev->num_ports; ++port) {
 			port_status = &dev->per_port_status[port];
-			if (dev->notif_mask.raw_value &
+			if (dev->change_mask.raw_value &
 			    port_status->raw_conn_status_change_bits) {
+				port_status = &dev->per_port_status[port];
+				alert_port = true;
 				break;
 			}
 		}
 
-		/* Handle events in order by setting CCI and notifying
-		 * OPM.
-		 */
-		if (port < dev->num_ports) {
-			/* Let through only enabled notifications. */
-			port_status = &dev->per_port_status[port];
-			if (dev->notif_mask.raw_value &
-			    port_status->raw_conn_status_change_bits)
-				alert_port = true;
-		} else {
+		if (port >= dev->num_ports) {
 			LOG_DBG("No more ports needing OPM alerting");
 		}
 	}
@@ -319,7 +314,7 @@ static void ppm_common_reset_data(struct ucsi_ppm_device *dev)
 	clear_last_error(dev);
 	dev->last_connector_changed = 0;
 	dev->alerted_connectors_map = 0;
-	dev->notif_mask.raw_value = 0;
+	dev->change_mask.raw_value = 0;
 	memset(&dev->pending, 0, sizeof(dev->pending));
 	memset(dev->per_port_status, 0,
 	       sizeof(union connector_status_t) * dev->num_ports);
@@ -332,6 +327,7 @@ static int ppm_common_execute_pending_cmd(struct ucsi_ppm_device *dev)
 	uint8_t *message_in = (uint8_t *)&dev->ucsi_data.message_in;
 	uint8_t ucsi_command = control->command;
 	union ack_cc_ci_t *ack_cmd;
+	union notification_enable_t notify;
 	int ret = -1;
 	bool ack_ci = false;
 
@@ -365,9 +361,12 @@ static int ppm_common_execute_pending_cmd(struct ucsi_ppm_device *dev)
 		ret = 0;
 		goto success;
 	case UCSI_SET_NOTIFICATION_ENABLE:
-		/* Save the notification mask. */
-		memcpy(&dev->notif_mask, control->command_specific,
-		       sizeof(dev->notif_mask));
+		/* Save the notification as a connection status change mask.
+		 * Read via sys api since this is unaligned read of uint32_t.
+		 */
+		notify.raw_value = sys_get_le32(
+			(const uint8_t *)control->command_specific);
+		dev->change_mask = conn_status_mask_from_notification(notify);
 		ret = 0;
 		goto success;
 	case UCSI_CANCEL:

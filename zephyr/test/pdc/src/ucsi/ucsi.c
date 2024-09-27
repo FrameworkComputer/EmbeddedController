@@ -38,3 +38,34 @@ ZTEST_USER(ucsi, test_ucsi_command_names)
 
 	zassert_equal(get_ucsi_command_name(UCSI_CMD_MAX), ucsi_invalid_name);
 }
+
+/* Test mapping of notification bits to connection status change bits. */
+ZTEST_USER(ucsi, test_notification_bit_mapping)
+{
+	union notification_enable_t notify;
+	union conn_status_change_bits_t status;
+
+	struct notify_status_map {
+		uint32_t notify;
+		uint16_t status;
+	} notify_to_status_tests[] = {
+		/* All bits except sink path are set. */
+		{ .notify = 0x0000FFFF, .status = 0xDBEE },
+
+		/* Set sink path only. */
+		{ .notify = 0x00010000, .status = 0x2000 },
+
+		/* Re-timer mode bit in notify overlaps with sink path in
+		 * status.
+		 */
+		{ .notify = 0x00012000, .status = 0x2000 },
+	};
+
+	for (int i = 0; i < ARRAY_SIZE(notify_to_status_tests); ++i) {
+		notify.raw_value = notify_to_status_tests[i].notify;
+		status = conn_status_mask_from_notification(notify);
+
+		zassert_equal(status.raw_value,
+			      notify_to_status_tests[i].status);
+	}
+}

@@ -731,6 +731,23 @@ union conn_status_change_bits_t {
 	uint16_t raw_value;
 };
 
+static inline union conn_status_change_bits_t
+conn_status_mask_from_notification(union notification_enable_t notification)
+{
+	union conn_status_change_bits_t status;
+	/* Mask of bits that match between notification and status change in the
+	 * first 16 bits.
+	 */
+	uint32_t exact_copy_mask = 0x0000DBEE;
+
+	status.raw_value = (notification.raw_value & exact_copy_mask);
+	if (notification.sink_path_status_change) {
+		status.sink_path_status_change = 1;
+	}
+
+	return status;
+}
+
 #define CONNECTOR_PARTNER_FLAG_USB BIT(0)
 #define CONNECTOR_PARTNER_FLAG_ALTERNATE_MODE BIT(1)
 #define CONNECTOR_PARTNER_FLAG_USB4_GEN3 BIT(2)
