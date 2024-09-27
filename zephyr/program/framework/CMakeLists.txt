@@ -118,6 +118,7 @@ if(DEFINED CONFIG_BOARD_SUNFLOWER)
 			"sunflower/src/keyboard_customization.c"
 			"sunflower/src/temperature.c"
 			"sunflower/src/thermal.c"
+			"sunflower/src/motionsense.c"
 	)
 
 endif()
