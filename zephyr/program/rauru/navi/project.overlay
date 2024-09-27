@@ -21,6 +21,27 @@
 		tcs3400-int = &als_clear;
 	};
 
+	rauru-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		touch {
+			enum-name = "FW_TOUCH";
+			start = <0>;
+			size = <2>;
+			touch-not-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TOUCH_NOT_PRESENT";
+				value = <0>;
+			};
+			touch-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TOUCH_PRESENT";
+				value = <1>;
+				default;
+			};
+		};
+	};
+
 	named-adc-channels {
 			adc_temp_sensor_3: temp_sensor_2 {
 			enum-name = "ADC_TEMP_SENSOR_2";
@@ -109,7 +130,71 @@
 			};
 		};
 
+		tcs_clear_nt_data: tcs3400-clear-nt-drv-data {
+			compatible = "cros-ec,drvdata-tcs3400-clear";
+			status = "okay";
+
+			als-drv-data {
+				compatible = "cros-ec,accelgyro-als-drv-data";
+				als-cal {
+					scale = <1>;
+					uscale = <0>;
+					offset = <0>;
+					als-channel-scale {
+					compatible =
+					"cros-ec,accelgyro-als-channel-scale";
+						k-channel-scale = <1>;
+						cover-scale = <1>;
+					};
+				};
+			};
+		};
+
 		tcs_rgb_data: tcs3400-rgb-drv-data {
+			compatible = "cros-ec,drvdata-tcs3400-rgb";
+			status = "okay";
+
+			/* node for rgb_calibration_t defined in accelgyro.h */
+			rgb_calibration {
+				compatible =
+					"cros-ec,accelgyro-rgb-calibration";
+
+				irt = <1>;
+
+				rgb-cal-x {
+					offset = <0>;
+					coeff = <0 0 0 1>;
+					als-channel-scale {
+					compatible =
+					"cros-ec,accelgyro-als-channel-scale";
+						k-channel-scale = <1>;
+						cover-scale = <1>;
+					};
+				};
+				rgb-cal-y {
+					offset = <0>;
+					coeff = <0 0 0 1>;
+					als-channel-scale {
+					compatible =
+					"cros-ec,accelgyro-als-channel-scale";
+						k-channel-scale = <1>;
+						cover-scale = <1>;
+					};
+				};
+				rgb-cal-z {
+					offset = <0>;
+					coeff = <0 0 0 1>;
+					als-channel-scale {
+					compatible =
+					"cros-ec,accelgyro-als-channel-scale";
+						k-channel-scale = <1>;
+						cover-scale = <1>;
+					};
+				};
+			};
+		};
+
+		tcs_rgb_nt_data: tcs3400-rgb-nt-drv-data {
 			compatible = "cros-ec,drvdata-tcs3400-rgb";
 			status = "okay";
 
@@ -187,7 +272,7 @@
 			};
 		};
 
-		base-als-rgb {
+		als_rgb: base-als-rgb {
 			compatible = "cros-ec,tcs3400-rgb";
 			status = "okay";
 
@@ -195,6 +280,44 @@
 			location = "MOTIONSENSE_LOC_LID";
 			default-range = <0x10000>; /* scale = 1x, uscale = 0 */
 			drv-data = <&tcs_rgb_data>;
+		};
+	};
+
+	motionsense-sensor-alt {
+		/delete-node/ lid-accel;
+		/delete-node/ base-accel;
+		/delete-node/ base-gyro;
+
+		alt_als_clear: alt-base-als-clear {
+			compatible = "cros-ec,tcs3400-clear";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0";
+			location = "MOTIONSENSE_LOC_LID";
+			port = <&i2c_ec_i2c_sensor_scl_1v8>;
+			default-range = <0x10000>;
+			drv-data = <&tcs_clear_nt_data>;
+			alternate-for = <&als_clear>;
+			i2c-spi-addr-flags = "TCS3400_I2C_ADDR_FLAGS";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					/* Run ALS sensor in S0 */
+					odr = <1000>;
+				};
+			};
+		};
+
+		alt_als_rgb: alt-base-als-rgb {
+			compatible = "cros-ec,tcs3400-rgb";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0";
+			location = "MOTIONSENSE_LOC_LID";
+			default-range = <0x10000>; /* scale = 1x, uscale = 0 */
+			drv-data = <&tcs_rgb_nt_data>;
+			alternate-for = <&als_rgb>;
 		};
 	};
 
