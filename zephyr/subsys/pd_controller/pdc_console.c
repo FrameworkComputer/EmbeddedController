@@ -546,6 +546,7 @@ static int cmd_pdc_srccaps(const struct shell *sh, size_t argc, char **argv)
 {
 	int rv;
 	uint8_t port;
+	uint32_t rdo = 0;
 
 	/* Get PD port number */
 	rv = cmd_get_pd_port(sh, argv[1], &port);
@@ -561,12 +562,23 @@ static int cmd_pdc_srccaps(const struct shell *sh, size_t argc, char **argv)
 		return 0;
 	}
 
+	if (pdc_power_mgmt_get_rdo(port, &rdo) != 0) {
+		shell_fprintf(sh, SHELL_INFO, "No active RDO on port %u\n",
+			      port);
+	} else {
+		shell_fprintf(sh, SHELL_INFO,
+			      "RDO: 0x%08x (index=%u, I_op=%umA, I_max=%umA)\n",
+			      rdo, RDO_POS(rdo), RDO_FIXED_GET_VAR_OP_CURR(rdo),
+			      RDO_FIXED_GET_VAR_MAX_CURR(rdo));
+	}
+
 	for (uint8_t i = 0; i < src_caps_count; i++) {
 		uint32_t src_cap = src_caps[i];
 		uint32_t max_ma = 0, max_mv = 0, min_mv = 0;
 		const char *type_str;
 
-		pd_extract_pdo_power(src_cap, &max_ma, &max_mv, &min_mv);
+		pd_extract_pdo_power_unclamped(src_cap, &max_ma, &max_mv,
+					       &min_mv);
 
 		switch (src_cap & PDO_TYPE_MASK) {
 		case PDO_TYPE_FIXED:
@@ -574,9 +586,10 @@ static int cmd_pdc_srccaps(const struct shell *sh, size_t argc, char **argv)
 			/* Fixed PDOs have flags and a single voltage */
 			shell_fprintf(
 				sh, SHELL_INFO,
-				"Src %02u: %08x %s %13umV, %5umA "
+				"%cSrc %u: %08x %s %13umV, %5umA "
 				"[%s %s %s %s %s]\n",
-				i, src_cap, type_str, max_mv, max_ma,
+				(RDO_POS(rdo) == i + 1 ? '*' : ' '), i, src_cap,
+				type_str, max_mv, max_ma,
 				src_cap & PDO_FIXED_DUAL_ROLE ? "DRP" : "   ",
 				src_cap & PDO_FIXED_UNCONSTRAINED ? "UP" : "  ",
 				src_cap & PDO_FIXED_COMM_CAP ? "USB" : "   ",
@@ -599,11 +612,9 @@ static int cmd_pdc_srccaps(const struct shell *sh, size_t argc, char **argv)
 		 * ranges but no flags.
 		 */
 		shell_fprintf(sh, SHELL_INFO,
-			      "Src %02u: %08x %s %5umV-%5umV, %5um%c\n", i,
-			      src_cap, type_str, min_mv, max_mv, max_ma,
-			      (((src_cap & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) ?
-				       'W' :
-				       'A'));
+			      "%cSrc %u: %08x %s %5umV-%5umV, %5umA\n",
+			      (RDO_POS(rdo) == i + 1 ? '*' : ' '), i, src_cap,
+			      type_str, min_mv, max_mv, max_ma);
 	}
 
 	return 0;

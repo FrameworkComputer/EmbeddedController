@@ -204,6 +204,9 @@ enum pdo_augmented_pps {
 	(RDO_OBJ_POS(n) | (flags) | RDO_BATT_OP_POWER(op_mw) | \
 	 RDO_BATT_MAX_POWER(max_mw))
 
+#define RDO_FIXED_GET_VAR_OP_CURR(rdo) ((((rdo) >> 10) & 0x3FF) * 10)
+#define RDO_FIXED_GET_VAR_MAX_CURR(rdo) ((((rdo) >> 0) & 0x3FF) * 10)
+
 /* BDO : BIST Data Object
  * 31:28 BIST Mode
  *       In PD 3.0, all but Carrier Mode 2 (as Carrier Mode) and Test Data are

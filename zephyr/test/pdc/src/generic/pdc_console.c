@@ -848,6 +848,13 @@ static const uint32_t *const custom_fake_pdc_power_mgmt_get_src_caps(int port)
 	return (const uint32_t *const)&source_caps;
 }
 
+static int custom_fake_pdc_power_mgmt_get_rdo(int port, uint32_t *rdo)
+{
+	*rdo = RDO_OBJ_POS(3) | RDO_FIXED_VAR_OP_CURR(3000) |
+	       RDO_FIXED_VAR_MAX_CURR(4000);
+	return 0;
+}
+
 ZTEST_USER(console_cmd_pdc, test_srccaps)
 {
 	int rv;
@@ -861,6 +868,7 @@ ZTEST_USER(console_cmd_pdc, test_srccaps)
 	/* No source caps present */
 	pdc_power_mgmt_get_src_cap_cnt_fake.return_val = 0;
 
+	shell_backend_dummy_clear_output(get_ec_shell());
 	rv = shell_execute_cmd(get_ec_shell(), "pdc srccaps 0");
 	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
 		      rv);
@@ -874,15 +882,41 @@ ZTEST_USER(console_cmd_pdc, test_srccaps)
 	zassert_true(buffer_size > 0, NULL);
 	zassert_not_null(strstr(outbuffer, "No source caps for port"));
 
+	/* Source caps but no RDO */
 	RESET_FAKE(pdc_power_mgmt_get_src_caps);
 	RESET_FAKE(pdc_power_mgmt_get_src_cap_cnt);
 
-	/* Successful path w/ source caps */
 	pdc_power_mgmt_get_src_caps_fake.custom_fake =
 		&custom_fake_pdc_power_mgmt_get_src_caps;
 	pdc_power_mgmt_get_src_cap_cnt_fake.return_val =
 		ARRAY_SIZE(source_caps);
+	pdc_power_mgmt_get_rdo_fake.return_val = -ENODATA;
 
+	shell_backend_dummy_clear_output(get_ec_shell());
+	rv = shell_execute_cmd(get_ec_shell(), "pdc srccaps 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	zassert_equal(1, pdc_power_mgmt_get_src_caps_fake.call_count);
+	zassert_equal(1, pdc_power_mgmt_get_src_cap_cnt_fake.call_count);
+
+	zassert_not_null(strstr(outbuffer, "No active RDO on port"), "``%s``",
+			 outbuffer);
+
+	RESET_FAKE(pdc_power_mgmt_get_src_caps);
+	RESET_FAKE(pdc_power_mgmt_get_src_cap_cnt);
+	RESET_FAKE(pdc_power_mgmt_get_rdo);
+
+	/* Successful path w/ source caps and RDO */
+
+	pdc_power_mgmt_get_src_caps_fake.custom_fake =
+		&custom_fake_pdc_power_mgmt_get_src_caps;
+	pdc_power_mgmt_get_src_cap_cnt_fake.return_val =
+		ARRAY_SIZE(source_caps);
+	pdc_power_mgmt_get_rdo_fake.custom_fake =
+		&custom_fake_pdc_power_mgmt_get_rdo;
+
+	shell_backend_dummy_clear_output(get_ec_shell());
 	rv = shell_execute_cmd(get_ec_shell(), "pdc srccaps 0");
 	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
 		      rv);
@@ -898,37 +932,43 @@ ZTEST_USER(console_cmd_pdc, test_srccaps)
 	/*
 	 * Sample output:
 	 *
-	 * Src 00: 2001912c FIX          5000mV,  3000mA [DRP               ]
-	 * Src 01: 0801912c FIX          5000mV,  3000mA [    UP            ]
-	 * Src 02: 0401912c FIX          5000mV,  3000mA [       USB        ]
-	 * Src 03: 0201912c FIX          5000mV,  3000mA [           DRD    ]
-	 * Src 04: 0181912c FIX          5000mV,  3000mA [               FRS]
-	 * Src 05: 99019096 VAR  5000mV-20000mV,  1500mA
-	 * Src 06: 590190c8 BAT  5000mV-20000mV,  3000mW
-	 * Src 07: c12c5a28 AUG  9000mV-15000mV,  2000mA
+	 * RDO: 0x3004b190 (index=3, I_op=3000mA, I_max=4000mA)
+	 *  Src 0: 2001912c FIX          5000mV,  3000mA [DRP               ]
+	 *  Src 1: 0801912c FIX          5000mV,  3000mA [    UP            ]
+	 * *Src 2: 0401912c FIX          5000mV,  3000mA [       USB        ]
+	 *  Src 3: 0201912c FIX          5000mV,  3000mA [           DRD    ]
+	 *  Src 4: 0181912c FIX          5000mV,  3000mA [               FRS]
+	 *  Src 5: 99019096 VAR  5000mV-20000mV,  1500mA
+	 *  Src 6: 590190c8 BAT  5000mV-20000mV, 10000mA
+	 *  Src 7: c12c5a28 AUG  9000mV-15000mV,  2000mA
 	 */
 
+	zassert_not_null(
+		strstr(outbuffer,
+		       "RDO: 0x3004b190 (index=3, I_op=3000mA, I_max=4000mA)"));
 	zassert_not_null(strstr(outbuffer,
-				"Src 00: 2001912c FIX          5000mV,  3000mA "
+				"Src 0: 2001912c FIX          5000mV,  3000mA "
 				"[DRP               ]"));
 	zassert_not_null(strstr(outbuffer,
-				"Src 01: 0801912c FIX          5000mV,  3000mA "
+				"Src 1: 0801912c FIX          5000mV,  3000mA "
 				"[    UP            ]"));
 	zassert_not_null(strstr(outbuffer,
-				"Src 02: 0401912c FIX          5000mV,  3000mA "
+				"*Src 2: 0401912c FIX          5000mV,  3000mA "
 				"[       USB        ]"));
 	zassert_not_null(strstr(outbuffer,
-				"Src 03: 0201912c FIX          5000mV,  3000mA "
+				"Src 3: 0201912c FIX          5000mV,  3000mA "
 				"[           DRD    ]"));
 	zassert_not_null(strstr(outbuffer,
-				"Src 04: 0181912c FIX          5000mV,  3000mA "
+				"Src 4: 0181912c FIX          5000mV,  3000mA "
 				"[               FRS]"));
 	zassert_not_null(strstr(
-		outbuffer, "Src 05: 99019096 VAR  5000mV-20000mV,  1500mA"));
+		outbuffer, "Src 5: 99019096 VAR  5000mV-20000mV,  1500mA"));
+
+	/* Exceeds board current limit but will be reported anyways */
 	zassert_not_null(strstr(
-		outbuffer, "Src 06: 590190c8 BAT  5000mV-20000mV,  3000mW"));
+		outbuffer, "Src 6: 590190c8 BAT  5000mV-20000mV, 10000mA"));
 	zassert_not_null(strstr(
-		outbuffer, "Src 07: c12c5a28 AUG  9000mV-15000mV,  2000mA"));
+		outbuffer, "Src 7: c12c5a28 AUG  9000mV-15000mV,  2000mA"));
 }
 
 /**
