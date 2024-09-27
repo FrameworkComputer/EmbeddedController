@@ -11,15 +11,13 @@
 
 #include <stdint.h>
 
-#if defined(PD_MAX_POWER_MW) && defined(PD_MAX_CURRENT_MA)
-
 /* The macro is used to prevent a DBZ exception while decoding PDOs. */
 #define PROCESS_ZERO_DIVISOR(x) ((x) == 0 ? 1 : (x))
 
-void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *max_mv,
-			  uint32_t *min_mv)
+static void extract_pdo_helper(uint32_t pdo, uint32_t *ma, uint32_t *max_mv,
+			       uint32_t *min_mv)
 {
-	int max_ma, mw;
+	int mw;
 
 	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_FIXED) {
 		*max_mv = PDO_FIXED_VOLTAGE(pdo);
@@ -42,17 +40,38 @@ void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *max_mv,
 	}
 
 	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_FIXED) {
-		max_ma = PDO_FIXED_CURRENT(pdo);
+		*ma = PDO_FIXED_CURRENT(pdo);
 	} else if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_AUGMENTED) {
-		max_ma = PDO_AUG_MAX_CURRENT(pdo);
+		*ma = PDO_AUG_MAX_CURRENT(pdo);
 	} else if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_VARIABLE) {
-		max_ma = PDO_VAR_MAX_CURRENT(pdo);
+		*ma = PDO_VAR_MAX_CURRENT(pdo);
 	} else {
 		mw = PDO_BATT_MAX_POWER(pdo);
-		max_ma = 1000 * mw / PROCESS_ZERO_DIVISOR(*min_mv);
+		*ma = 1000 * mw / PROCESS_ZERO_DIVISOR(*min_mv);
 	}
-	max_ma = MIN(max_ma,
-		     PD_MAX_POWER_MW * 1000 / PROCESS_ZERO_DIVISOR(*min_mv));
-	*ma = MIN(max_ma, PD_MAX_CURRENT_MA);
 }
+
+void pd_extract_pdo_power_unclamped(uint32_t pdo, uint32_t *ma,
+				    uint32_t *max_mv, uint32_t *min_mv)
+{
+	extract_pdo_helper(pdo, ma, max_mv, min_mv);
+}
+
+#if defined(PD_MAX_POWER_MW) && defined(PD_MAX_CURRENT_MA)
+
+void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *max_mv,
+			  uint32_t *min_mv)
+{
+	extract_pdo_helper(pdo, ma, max_mv, min_mv);
+
+	if (*max_mv) {
+		/* Clamp current to board limits for non-zero-volt PDOs */
+		uint32_t board_limit_ma = MIN(
+			PD_MAX_CURRENT_MA,
+			PD_MAX_POWER_MW * 1000 / PROCESS_ZERO_DIVISOR(*min_mv));
+
+		*ma = MIN(*ma, board_limit_ma);
+	}
+}
+
 #endif
