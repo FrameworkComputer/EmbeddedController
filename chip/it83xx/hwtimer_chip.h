@@ -67,9 +67,9 @@ enum ext_timer_sel {
 	EXT_TIMER_5,
 	/* timer 6 for event timer */
 	EXT_TIMER_6,
-	/* For WDT capture important state information before being reset */
-	EXT_TIMER_7,
 	/* HW timer for low power mode */
+	EXT_TIMER_7,
+	/* For WDT capture important state information before being reset */
 	EXT_TIMER_8,
 	EXT_TIMER_COUNT,
 };
