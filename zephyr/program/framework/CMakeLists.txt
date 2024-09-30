@@ -119,6 +119,7 @@ if(DEFINED CONFIG_BOARD_SUNFLOWER)
 			"sunflower/src/temperature.c"
 			"sunflower/src/thermal.c"
 			"sunflower/src/motionsense.c"
+			"sunflower/src/board_tablet_mode.c"
 	)
 
 endif()
