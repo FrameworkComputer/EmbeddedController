@@ -80,8 +80,8 @@
 		gpio_soc_ec_int2_l: soc_ec_int2_l {
 			gpios = <&gpio1 4 GPIO_ODR_HIGH>; /*I2C0 use HID over I2C int#*/
 		};
-		gpio_ec_pad_mode_l: ec_pad_mode_l {
-			gpios = <&gpio0 7 GPIO_ODR_HIGH>; /*Notify SOC to enter tablet mode*/
+		gpio_ec_pad_mode: ec_pad_mode {
+			gpios = <&gpio0 7 GPIO_ODR_LOW>; /*Notify SOC to enter tablet mode*/
 		};
 		gpio_ec_acc_mu_int_l: ec_acc_mu_int_l {
 			gpios = <&gpio0 4 GPIO_INPUT>; /*Camera Module G-sensor int#*/
