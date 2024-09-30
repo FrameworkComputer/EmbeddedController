@@ -51,3 +51,23 @@ ZTEST(fpsensor_debug, test_command_fpupload)
 	rv = shell_execute_cmd(get_ec_shell(), console_input2);
 	zassert_equal(rv, EC_ERROR_ACCESS_DENIED);
 }
+
+ZTEST(fpsensor_debug, test_command_fpcapture)
+{
+	/* System is locked. */
+	is_locked = 1;
+
+	char console_input[] = "fpcapture";
+	int rv = shell_execute_cmd(get_ec_shell(), console_input);
+	zassert_equal(rv, EC_ERROR_ACCESS_DENIED);
+}
+
+ZTEST(fpsensor_debug, test_command_fpenroll)
+{
+	/* System is locked. */
+	is_locked = 1;
+
+	char console_input[] = "fpenroll";
+	int rv = shell_execute_cmd(get_ec_shell(), console_input);
+	zassert_equal(rv, EC_ERROR_ACCESS_DENIED);
+}
