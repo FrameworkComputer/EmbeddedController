@@ -125,7 +125,7 @@ set(double_promotion -Wdouble-promotion)
 
 if(${double_promotion} IN_LIST warning_base_override)
   list(REMOVE_ITEM warning_base_override ${double_promotion})
-  set_compiler_property(PROPERTY warning_base ${warning_base_override})
+  check_set_compiler_property(PROPERTY warning_base ${warning_base_override})
   print(warning_base_override)
 endif()
 
