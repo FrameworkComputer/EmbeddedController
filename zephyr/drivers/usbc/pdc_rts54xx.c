@@ -1910,7 +1910,8 @@ static int rts54_set_notification_enable(const struct device *dev,
 		0x00,
 		BYTE0(bits.raw_value),
 		BYTE1(bits.raw_value),
-		BYTE0(ext_bits),
+		/* Bit 16 of UCSI notification enable overlaps with RTK bits. */
+		(BYTE0(ext_bits) & 0xE) | (BYTE2(bits.raw_value) & 0x1),
 		BYTE1(ext_bits),
 	};
 
@@ -2864,6 +2865,7 @@ static void rts54xx_thread(void *dev, void *unused1, void *unused2)
 		.bits.set_retimer_mode = 0,                                   \
 		.bits.connect_change = 1,                                     \
 		.bits.error = 1,                                              \
+		.bits.sink_path_status_change = 1,                            \
 		.create_thread = create_thread_##inst,                        \
 		.no_fw_update = DT_INST_PROP(inst, no_fw_update),             \
 	};                                                                    \
