@@ -348,9 +348,14 @@ class Zmake:
             result = self.executor.wait()
             if result:
                 return result
-            _db = list(build_dir.glob("*/build-r?/database.bin"))
+            _db = list(
+                os.path.abspath(db)
+                for db in build_dir.glob("*/build-r?/database.bin")
+            )
             if len(_db) > 0:
-                univeral_db = build_dir.parent.joinpath("tokens.bin")
+                univeral_db = os.path.abspath(
+                    build_dir.parent.joinpath("tokens.bin")
+                )
                 util.merge_token_databases(_db, univeral_db)
 
         if coverage and build_after_configure:

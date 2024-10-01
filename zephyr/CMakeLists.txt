@@ -759,7 +759,7 @@ zephyr_include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
 if (DEFINED CONFIG_PIGWEED_LOG_TOKENIZED_LIB)
   set_property(GLOBAL APPEND PROPERTY extra_post_build_commands
     COMMAND
-      vpython3 -vpython-spec ${PLATFORM_EC}/zephyr/pigweed-vpython3
+      /usr/bin/python3.11
       ${ZEPHYR_PIGWEED_MODULE_DIR}/pw_tokenizer/py/pw_tokenizer/database.py
       create
       --force
