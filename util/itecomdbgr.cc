@@ -541,13 +541,15 @@ static int spi_sr1_wel(struct itecomdbgr_config *conf)
 	return FAIL;
 }
 
-static int erase_4k(struct itecomdbgr_config *conf)
+static int erase_flash(struct itecomdbgr_config *conf)
 {
 	int i = 0;
 	int result = SUCCESS;
 	unsigned long start_addr = conf->update_start_addr;
 	unsigned long end_addr = conf->update_end_addr;
-	int total_size = (end_addr - start_addr) / conf->sector_size;
+	int total_sectors = (end_addr - start_addr) / conf->sector_size;
+	int prev_percent = -1;
+	int progress_percent;
 
 	/* [3] mapping to spi erase command ,*/
 	/* [7][11][15] mapping to Address A2 A1 A0 */
@@ -576,26 +578,19 @@ static int erase_4k(struct itecomdbgr_config *conf)
 			result = FAIL;
 			goto out;
 		}
-
 		start_addr += conf->sector_size;
-		printf("\rEraseing...     : %d%%",
-		       (++i * 100) / (total_size - 1));
-		fflush(stdout);
+
+		progress_percent = (++i * 100) / total_sectors;
+		if (progress_percent != prev_percent) {
+			printf("\rErasing...       : %3d%%", progress_percent);
+			prev_percent = progress_percent;
+			fflush(stdout);
+		}
 	}
 out:
 	write_com(conf, disable_follow_mode, sizeof(disable_follow_mode));
-	return result;
-}
-
-static int erase_flash(struct itecomdbgr_config *conf)
-{
-	int result = SUCCESS;
-
-	if (erase_4k(conf)) {
-		printf("check_flash : error\n\r");
-		result = FAIL;
-	}
-	printf("\n\r");
+	if (result == SUCCESS)
+		printf("\n");
 	return result;
 }
 
@@ -720,7 +715,7 @@ static int page_program_burst_v2(struct itecomdbgr_config *conf,
 	unsigned long start_addr = conf->update_start_addr;
 	unsigned long end_addr = conf->update_end_addr;
 	int write_count;
-	int total_size = (end_addr - start_addr) / conf->page_size;
+	int total_pages = (end_addr - start_addr) / conf->page_size;
 	uint8_t pp_buf[20] = {
 		W_CMD_PORT, DBUS_DATA,	    W_DATA_PORT,       SPI_PP,
 		W_CMD_PORT, DBUS_DATA,	    W_DATA_PORT,       0x00,
@@ -728,6 +723,8 @@ static int page_program_burst_v2(struct itecomdbgr_config *conf,
 		W_CMD_PORT, DBUS_DATA,	    W_DATA_PORT,       0x00,
 		W_CMD_PORT, DBUS_256W_DATA, W_BURST_DATA_PORT, 0xFF
 	};
+	int prev_percent = -1;
+	int progress_percent;
 
 	write_com(conf, enable_follow_mode, sizeof(enable_follow_mode));
 	while (start_addr < end_addr) {
@@ -757,11 +754,14 @@ static int page_program_burst_v2(struct itecomdbgr_config *conf,
 			result = FAIL;
 			goto out;
 		}
-
 		start_addr += conf->page_size;
-		printf("\rPrograming...   : %d%%",
-		       (++j * 100) / (total_size - 1));
-		fflush(stdout);
+
+		progress_percent = (++j * 100) / total_pages;
+		if (progress_percent != prev_percent) {
+			printf("\rProgramming...   : %3d%%", progress_percent);
+			prev_percent = progress_percent;
+			fflush(stdout);
+		}
 	}
 out:
 	write_com(conf, disable_follow_mode, sizeof(disable_follow_mode));
