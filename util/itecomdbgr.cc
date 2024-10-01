@@ -77,6 +77,11 @@
 /* SPI Read ID command*/
 #define SPI_RDID 0x9F
 
+/* Retries to set SPI SR1 WEL */
+#define SPI_SR1_WEL_RETRIES 10
+/* Bits in SPI SR1 */
+#define SPI_SR1_WEL 0x02
+
 #define STEPS_EXIT 0x00
 #define STEPS_NORMAL 0x01
 #define STEPS_TEST 0xEE
@@ -520,6 +525,22 @@ static int read_id_2(struct itecomdbgr_config *conf)
 	return result;
 }
 
+static int spi_sr1_wel(struct itecomdbgr_config *conf)
+{
+	for (int i = 0; i < SPI_SR1_WEL_RETRIES; ++i) {
+		write_com(conf, spi_write_enable, sizeof(spi_write_enable));
+		if (check_status(conf, SPI_SR1_WEL, 1) == 0) {
+			if (i > 0) {
+				printf("%s: SUCCESS on try %d\n", __func__,
+				       i + 1);
+			}
+			return SUCCESS;
+		}
+	}
+
+	return FAIL;
+}
+
 static int erase_4k(struct itecomdbgr_config *conf)
 {
 	int i = 0;
@@ -539,8 +560,7 @@ static int erase_4k(struct itecomdbgr_config *conf)
 
 	write_com(conf, enable_follow_mode, sizeof(enable_follow_mode));
 	while (start_addr < end_addr) {
-		write_com(conf, spi_write_enable, sizeof(spi_write_enable));
-		if (check_status(conf, 0x02, 1) < 0) {
+		if (spi_sr1_wel(conf) != SUCCESS) {
 			printf("erase_4k:check_status error 1\n\r");
 			result = FAIL;
 			goto out;
