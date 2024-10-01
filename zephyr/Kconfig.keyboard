@@ -294,6 +294,11 @@ config PLATFORM_EC_KEYBOARD_STRICT_DEBOUNCE
 	  debounce_down_us and debounce_up_us to an equal value. This guarantees
 	  key events are registered in the order the keys are pressed.
 
+config PLATFORM_EC_KEYBOARD_STRAUSS
+	bool "Enable Strauss keyboard"
+	help
+	  Enable Strauss keyboard.
+
 endif # PLATFORM_EC_KEYBOARD
 
 config PLATFORM_EC_KEYBOARD_BOOT_KEYS

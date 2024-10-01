@@ -999,7 +999,7 @@ test_static int test_vivaldi_top_keys(void)
 
 	/* Test ACCESSIBILITY key */
 	WRITE_CMD_BYTE(READ_CMD_BYTE() | I8042_XLATE);
-	if (IS_ENABLED(CONFIG_FINCH))
+	if (IS_ENABLED(CONFIG_KEYBOARD_STRAUSS))
 		press_key(11, 0, 1); /* Press T14 */
 	else
 		press_key(9, 0, 1); /* Press T14 */
@@ -1007,7 +1007,7 @@ test_static int test_vivaldi_top_keys(void)
 
 	/* Test DICTATE key */
 	WRITE_CMD_BYTE(READ_CMD_BYTE() | I8042_XLATE);
-	if (IS_ENABLED(CONFIG_FINCH))
+	if (IS_ENABLED(CONFIG_KEYBOARD_STRAUSS))
 		press_key(12, 0, 1); /* Press T15 */
 	else
 		press_key(11, 0, 1); /* Press T15 */

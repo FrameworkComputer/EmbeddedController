@@ -116,7 +116,7 @@ static uint8_t keymask_strauss[] = { 0x08, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
 BUILD_ASSERT(sizeof(keymask_strauss) == KEYBOARD_COLS_STRAUSS);
 BUILD_ASSERT(sizeof(keymask_strauss) <= sizeof(keyscan_config.actual_key_mask));
 
-__overridable uint8_t board_get_finch_version(void)
+__overridable uint8_t board_get_strauss_version(void)
 {
 	return 0x30;
 }
@@ -124,9 +124,9 @@ __overridable uint8_t board_get_finch_version(void)
 static void strauss_init(void)
 {
 	scancode_set2_t *sc;
-	uint8_t ver = board_get_finch_version();
+	uint8_t ver = board_get_strauss_version();
 
-	CPRINTS("Finch version 0x%02x", ver);
+	CPRINTS("Strauss version 0x%02x", ver);
 
 	switch (ver) {
 	case 0x23:
@@ -137,7 +137,7 @@ static void strauss_init(void)
 		sc = &scancode_strauss_v30;
 		break;
 	default:
-		CPRINTS("WARN: Invalid Finch version 0x%02x", ver);
+		CPRINTS("WARN: Invalid Strauss version 0x%02x", ver);
 		return;
 	}
 

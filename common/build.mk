@@ -118,6 +118,7 @@ common-$(CONFIG_KEYBOARD_PROTOCOL_MKBP)+=keyboard_mkbp.o mkbp_fifo.o \
 	mkbp_info.o
 common-$(CONFIG_KEYBOARD_TEST)+=keyboard_test.o
 common-$(CONFIG_KEYBOARD_VIVALDI)+=keyboard_vivaldi.o
+common-$(CONFIG_KEYBOARD_STRAUSS)+=keyboard_strauss.o
 common-$(CONFIG_MKBP_INPUT_DEVICES)+=mkbp_input_devices.o mkbp_fifo.o \
 	mkbp_info.o
 common-$(CONFIG_LED_COMMON)+=led_common.o

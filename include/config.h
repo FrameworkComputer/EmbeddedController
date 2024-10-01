@@ -3243,6 +3243,11 @@
 #undef CONFIG_KEYBOARD_STRICT_DEBOUNCE
 
 /*
+ * Enable Strauss keyboard.
+ */
+#undef CONFIG_KEYBOARD_STRAUSS
+
+/*
  * Enable the 8042 AUX port. This is typically used for PS/2 mouse devices.
  * You will need to implement send_aux_data_to_device and lpc_aux_put_char.
  */
