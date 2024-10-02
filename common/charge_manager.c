@@ -3,12 +3,6 @@
  * found in the LICENSE file.
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 11
-
 #include "adc.h"
 #include "atomic.h"
 #include "battery.h"
@@ -39,8 +33,6 @@
 #ifdef HAS_MOCK_CHARGE_MANAGER
 #error Mock defined HAS_MOCK_CHARGE_MANAGER
 #endif
-
-#line 44
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 

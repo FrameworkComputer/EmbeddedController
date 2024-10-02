@@ -4,12 +4,6 @@
  */
 
 /*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 11
-
-/*
  * Thunderbolt alternate mode support
  * Refer to USB Type-C Cable and Connector Specification Release 2.0 Section F
  */
@@ -29,8 +23,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-
-#line 34
 
 /*
  * Enter/Exit TBT mode with active cable

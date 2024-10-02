@@ -5,12 +5,6 @@
 
 /* I2C cross-platform code for Chrome EC */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #include "builtin/assert.h"
 #include "console.h"
 #include "crc8.h"

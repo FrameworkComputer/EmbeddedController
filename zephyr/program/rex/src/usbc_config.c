@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 
-#line 7
 #include "battery_fuel_gauge.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"

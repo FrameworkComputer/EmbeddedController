@@ -5,12 +5,6 @@
  * Host commands for TCPMv2 USB PD module
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #include "console.h"
 #include "ec_commands.h"
 #include "host_command.h"
@@ -22,7 +16,6 @@
 
 #include <string.h>
 
-#line 26
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 

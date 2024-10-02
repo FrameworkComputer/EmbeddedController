@@ -5,31 +5,16 @@
 
 /* USB charging control module for Chrome EC */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
 #include "chipset.h"
-#line 15
 #include "common.h"
-#line 17
 #include "console.h"
-#line 19
 #include "gpio.h"
-#line 21
 #include "gpio_signal.h"
-#line 23
 #include "hooks.h"
-#line 25
 #include "host_command.h"
-#line 27
 #include "system.h"
-#line 29
 #include "usb_charge.h"
-#line 31
 #include "util.h"
-#line 33
 
 #define CPUTS(outstr) cputs(CC_USBCHARGE, outstr)
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)

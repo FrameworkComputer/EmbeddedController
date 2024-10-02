@@ -5,17 +5,10 @@
 
 /* Lid switch module for Chrome EC */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #include "common.h"
 #include "config.h"
 #include "console.h"
 #include "gpio.h"
-#line 19
 #include "hooks.h"
 #include "host_command.h"
 #include "keyboard_scan.h"

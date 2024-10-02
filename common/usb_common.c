@@ -35,12 +35,6 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 43
-
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)

@@ -8,12 +8,6 @@
  * Refer to USB PD 3.0 spec, version 2.0, sections 8.2 and 8.3
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 16
-
 #ifndef __CROS_EC_USB_DPM_H
 #define __CROS_EC_USB_DPM_H
 

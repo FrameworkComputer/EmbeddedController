@@ -31,10 +31,9 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
             for linenum, line in line_iter:
                 line = line.rstrip("\n")
                 match = LINE_RE.search(line)
-                if match and int(match.group(1)) != linenum + 1:
+                if match:
                     print(
-                        "error: Invalid #line directive "
-                        f"(got {match.group(1)} expected {linenum + 1})"
+                        "error: Remove all #line directive "
                         f"\n{filename}:{linenum}: {line}",
                         file=sys.stderr,
                     )

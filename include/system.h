@@ -5,12 +5,6 @@
 
 /* System module for Chrome EC */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #ifndef __CROS_EC_SYSTEM_H
 #define __CROS_EC_SYSTEM_H
 
@@ -24,12 +18,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 33
 
 #ifdef CONFIG_ZEPHYR
 #ifdef CONFIG_CPU_CORTEX_M

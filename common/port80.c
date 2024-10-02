@@ -5,16 +5,9 @@
 
 /* Port 80 module for Chrome EC */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #include "common.h"
 #include "console.h"
 #include "display_7seg.h"
-#line 18
 #include "hooks.h"
 #include "host_command.h"
 #include "port80.h"

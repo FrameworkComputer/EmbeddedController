@@ -3,12 +3,6 @@
  * found in the LICENSE file.
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 11
-
 #include "battery.h"
 #include "battery_smart.h"
 #include "builtin/assert.h"
@@ -38,12 +32,6 @@
 #include "usb_tc_sm.h"
 #include "usbc_ppc.h"
 #include "util.h"
-
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 47
 
 #define USBC_EVENT_TIMEOUT (5 * MSEC)
 #define USBC_MIN_EVENT_TIMEOUT (1 * MSEC)

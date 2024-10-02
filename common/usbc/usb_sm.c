@@ -3,17 +3,10 @@
  * found in the LICENSE file.
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 11
-
 #include "common.h"
 #include "console.h"
 #include "stdbool.h"
 #include "task.h"
-#line 17
 #include "usb_pd.h"
 #include "usb_sm.h"
 #include "util.h"

@@ -3,12 +3,6 @@
  * found in the LICENSE file.
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 11
-
 #include "bbram.h"
 #include "common.h"
 #include "console.h"
@@ -21,12 +15,6 @@
 #include <zephyr/logging/log.h>
 
 #include <drivers/cros_system.h>
-
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 30
 
 /* 2 second delay for waiting the H1 reset */
 #define WAIT_RESET_TIME                                     \

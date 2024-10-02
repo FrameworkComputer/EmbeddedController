@@ -3,22 +3,10 @@
  * found in the LICENSE file.
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 11
-
 #include "bbram.h"
 #include "gpio/gpio_int.h"
 #include "system.h"
 #include "system_chip.h"
-
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 22
 
 #include <zephyr/drivers/interrupt_controller/intc_mchp_xec_ecia.h>
 #include <zephyr/drivers/watchdog.h>

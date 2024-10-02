@@ -3,12 +3,6 @@
  * found in the LICENSE file.
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 11
-
 #include "emul/emul_common_i2c.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "tcpm/tcpci.h"
@@ -21,7 +15,6 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/byteorder.h>
 
-#line 25
 LOG_MODULE_REGISTER(tcpci_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
 /**

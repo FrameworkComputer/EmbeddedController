@@ -5,12 +5,6 @@
 
 /* Type-C port manager */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #include "anx74xx.h"
 #include "atomic.h"
 #include "compile_time_macros.h"
@@ -31,8 +25,6 @@
 #include "usb_pd_tcpc.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
-
-#line 36
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
