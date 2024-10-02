@@ -7,6 +7,7 @@
 
 def register_npcx9_project(
     project_name,
+    extra_kconfig_files=(),
 ):
     """Register an npcx9 based variant of fatcat."""
     register_npcx_project(
@@ -20,12 +21,15 @@ def register_npcx9_project(
             here / "program.conf",
             # Project-specific KConfig customization.
             here / project_name / "project.conf",
+            # Additional project-specific KConfig customization.
+            *extra_kconfig_files,
         ],
     )
 
 
 def register_it8xxx2_project(
     project_name,
+    extra_kconfig_files=(),
 ):
     """Register an it8xxx2 based variant of fatcat."""
     register_binman_project(
@@ -39,6 +43,8 @@ def register_it8xxx2_project(
             here / "program.conf",
             # Project-specific KConfig customization.
             here / project_name / "project.conf",
+            # Additional project-specific KConfig customization.
+            *extra_kconfig_files,
         ],
     )
 
