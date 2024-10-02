@@ -162,10 +162,12 @@ __maybe_unused static void wdt_warning_handler(const struct device *wdt_dev,
 					       int channel_id)
 {
 	const char *thread_name = k_thread_name_get(k_current_get());
+	uint32_t exception_address = 0;
 
 #ifdef CONFIG_RISCV
+	exception_address = csr_read(mepc);
 	printk("WDT pre-warning MEPC:%p THREAD_NAME:%s\n",
-	       (void *)csr_read(mepc), thread_name);
+	       (void *)exception_address, thread_name);
 #else
 	/* TODO(b/176523207): watchdog warning message */
 	printk("Watchdog deadline is close! THREAD_NAME:%s\n", thread_name);
@@ -184,7 +186,8 @@ __maybe_unused static void wdt_warning_handler(const struct device *wdt_dev,
 	 * PANIC_SW_WATCHDOG in system_common_pre_init if a watchdog reset
 	 * occurs.
 	 */
-	panic_set_reason(PANIC_SW_WATCHDOG_WARN, 0, task_get_current());
+	panic_set_reason(PANIC_SW_WATCHDOG_WARN, exception_address,
+			 task_get_current());
 }
 
 __maybe_unused static void
