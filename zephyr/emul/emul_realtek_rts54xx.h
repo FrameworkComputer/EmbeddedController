@@ -288,6 +288,11 @@ union rts54_request {
 		uint8_t port_num;
 		uint8_t enable;
 	} set_frs_function;
+
+	struct get_attention_vdo_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+	} get_attention_vdo;
 };
 
 union rts54_response {
@@ -444,6 +449,11 @@ union rts54_response {
 		uint8_t byte_count;
 		uint8_t pch_data_status[5];
 	} __packed get_pch_data_status;
+
+	struct get_attention_vdo_response {
+		uint8_t byte_count;
+		union get_attention_vdo_t attention_vdo;
+	} __packed get_attention_vdo;
 };
 
 enum cmd_sts_t {
@@ -506,6 +516,7 @@ struct rts5453p_emul_pdc_data {
 	bool frs_configured;
 	bool frs_enabled;
 	bool vconn_sourcing;
+	union get_attention_vdo_t attention_vdo;
 };
 
 /**

@@ -305,6 +305,14 @@ ZTEST(pdc_api_null_check, test_pdc_set_frs)
 		      -ENOSYS);
 }
 
+ZTEST(pdc_api_null_check, test_pdc_get_attention_vdo)
+{
+	int rv = pdc_get_attention_vdo(&fake_pdc, false);
+
+	zassert_equal(-ENOSYS, rv, "Got %d, expected -ENOSYS (%d)", rv,
+		      -ENOSYS);
+}
+
 ZTEST(pdc_api_null_check, test_completeness)
 {
 	/* Count the number of PDC API methods supported */

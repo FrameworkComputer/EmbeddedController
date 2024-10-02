@@ -158,10 +158,10 @@ enum pdc_cmd_t {
 	CMD_PDC_ACK_CC_CI,
 	/** CMD_PDC_GET_LPM_PPM_INFO */
 	CMD_PDC_GET_LPM_PPM_INFO,
-	/** CMD_PDC_GET_PD_VDO_DP_STATUS */
-	CMD_PDC_GET_PD_VDO_DP_STATUS,
 	/** CMD_PDC_SET_FRS */
 	CMD_PDC_SET_FRS,
+	/** CMD_PDC_GET_ATTENTION_VDO */
+	CMD_PDC_GET_ATTENTION_VDO,
 	/** CMD_PDC_COUNT */
 	CMD_PDC_COUNT
 };
@@ -357,8 +357,8 @@ test_export_static const char *const pdc_cmd_names[] = {
 	[CMD_PDC_GET_PCH_DATA_STATUS] = "PDC_GET_PCH_DATA_STATUS",
 	[CMD_PDC_ACK_CC_CI] = "PDC_ACK_CC_CI",
 	[CMD_PDC_GET_LPM_PPM_INFO] = "PDC_GET_LPM_PPM_INFO",
-	[CMD_PDC_GET_PD_VDO_DP_STATUS] = "PDC_GET_PD_VDO_DP_STATUS",
 	[CMD_PDC_SET_FRS] = "PDC_SET_FRS",
+	[CMD_PDC_GET_ATTENTION_VDO] = "PDC_GET_ATTENTION_VDO",
 };
 const int pdc_cmd_types = CMD_PDC_COUNT;
 
@@ -668,8 +668,6 @@ struct pdc_port_t {
 	uint32_t vdo[VDO_NUM];
 	/** Store the VDO returned for the PD_VDO_DP_CFG */
 	uint32_t vdo_dp_cfg;
-	/** Store the VDO returned for the PD_VDO_DP_STATUS */
-	uint32_t vdo_dp_status;
 	/** CONNECTOR_RESET temp variable used with CMD_PDC_CONNECTOR_RESET */
 	union connector_reset_t connector_reset;
 	/** PD Port Partner discovery state: True if discovery is complete, else
@@ -708,6 +706,8 @@ struct pdc_port_t {
 	union conn_status_change_bits_t overlay_ppm_changes;
 	/** LPM should enable FRS. */
 	bool frs_enable;
+	/** Store response to the GET_ATTENTION_VDO command */
+	union get_attention_vdo_t attention_vdo;
 };
 
 /**
@@ -1273,8 +1273,8 @@ static void discovery_info_init(struct pdc_port_t *port)
 
 	/* Clear the DP Config VDO, which stores the DP pin assignment */
 	port->vdo_dp_cfg = 0;
-	/* Clear DP Status */
-	port->vdo_dp_status = 0;
+	/* Clear attention VDO which contains DP status */
+	memset(&port->attention_vdo, 0, sizeof(port->attention_vdo));
 }
 
 /**
@@ -1356,16 +1356,19 @@ static bool should_swap_to_source(struct pdc_port_t *port)
 	return true;
 }
 
-static void handle_dp_status(struct pdc_port_t *port)
+static void handle_attention_vdo(struct pdc_port_t *port)
 {
 	/* Check for an HPD wake on DP Status. The conditions are...
 	 *  a) Device is suspended.
-	 *  b) Port entered suspend in DP Alt Mode with HPD_LVL low.
-	 *  c) Updated DP Status has HPD_LVL high.
+	 *  b) Port is currently using an alternate mode.
+	 *  c) Port entered suspend in DP Alt Mode with HPD_LVL low.
+	 *  d) Updated DP Status has HPD_LVL high.
 	 */
-
 	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
-	    port->hpd_wake_watch && PD_VDO_DPSTS_HPD_LVL(port->vdo_dp_status)) {
+	    (port->connector_status.conn_partner_flags &
+	     CONNECTOR_PARTNER_FLAG_ALTERNATE_MODE) &&
+	    port->hpd_wake_watch &&
+	    PD_VDO_DPSTS_HPD_LVL(port->attention_vdo.vdo)) {
 		host_set_single_event(EC_HOST_EVENT_USB_MUX);
 	}
 }
@@ -1660,7 +1663,7 @@ static void pdc_src_attached_run(void *obj)
 	}
 
 	if (atomic_test_and_clear_bit(port->cci_flags, CCI_ATTENTION)) {
-		queue_internal_cmd(port, CMD_PDC_GET_PD_VDO_DP_STATUS);
+		queue_internal_cmd(port, CMD_PDC_GET_ATTENTION_VDO);
 		return;
 	}
 
@@ -1798,7 +1801,7 @@ static void pdc_snk_attached_run(void *obj)
 	}
 
 	if (atomic_test_and_clear_bit(port->cci_flags, CCI_ATTENTION)) {
-		queue_internal_cmd(port, CMD_PDC_GET_PD_VDO_DP_STATUS);
+		queue_internal_cmd(port, CMD_PDC_GET_ATTENTION_VDO);
 		return;
 	}
 
@@ -2133,18 +2136,8 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 				 &port->vdo_dp_cfg);
 		break;
 	}
-	case CMD_PDC_GET_PD_VDO_DP_STATUS: {
-		union get_vdo_t vdo_req;
-		uint8_t vdo_type;
-
-		vdo_req.raw_value = 0;
-		vdo_req.num_vdos = 1;
-		vdo_req.vdo_origin = VDO_ORIGIN_SOP;
-
-		vdo_type = VDO_PD_DP_STATUS;
-
-		rv = pdc_get_vdo(port->pdc, vdo_req, &vdo_type,
-				 &port->vdo_dp_status);
+	case CMD_PDC_GET_ATTENTION_VDO: {
+		rv = pdc_get_attention_vdo(port->pdc, &port->attention_vdo);
 		break;
 	}
 	case CMD_PDC_CONNECTOR_RESET:
@@ -2308,8 +2301,8 @@ static void pdc_send_cmd_wait_run(void *obj)
 				return;
 			}
 		} else {
-			if (port->cmd->cmd == CMD_PDC_GET_PD_VDO_DP_STATUS) {
-				handle_dp_status(port);
+			if (port->cmd->cmd == CMD_PDC_GET_ATTENTION_VDO) {
+				handle_attention_vdo(port);
 			}
 
 			set_pdc_state(port, port->send_cmd_return_state);
@@ -3530,7 +3523,7 @@ static void set_hpd_wake_watch(int port)
 	if (!pdc_power_mgmt_pd_capable(port) ||
 	    !(port_data->connector_status.conn_partner_flags &
 	      CONNECTOR_PARTNER_FLAG_ALTERNATE_MODE) ||
-	    PD_VDO_DPSTS_HPD_LVL(port_data->vdo_dp_status)) {
+	    PD_VDO_DPSTS_HPD_LVL(port_data->attention_vdo.vdo)) {
 		return;
 	}
 

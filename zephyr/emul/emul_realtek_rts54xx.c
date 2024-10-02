@@ -717,6 +717,20 @@ static int set_frs_function(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int get_attention_vdo(struct rts5453p_emul_pdc_data *data,
+			     const union rts54_request *req)
+{
+	LOG_INF("GET_ATTENTION_VDO = %x", req->get_attention_vdo.port_num);
+	memset(&data->response, 0, sizeof(data->response));
+
+	data->response.get_attention_vdo.byte_count =
+		sizeof(union get_attention_vdo_t);
+	data->response.get_attention_vdo.attention_vdo = data->attention_vdo;
+
+	send_response(data);
+	return 0;
+}
+
 static bool send_response(struct rts5453p_emul_pdc_data *data)
 {
 	if (data->delay_ms > 0) {
@@ -818,6 +832,7 @@ const struct commands sub_cmd_x0E[] = {
 	{ .code = 0x11, HANDLER_DEF(get_cable_property) },
 	{ .code = 0x12, HANDLER_DEF(get_connector_status) },
 	{ .code = 0x13, HANDLER_DEF(get_error_status) },
+	{ .code = 0x16, HANDLER_DEF(get_attention_vdo) },
 	{ .code = 0x1E, HANDLER_DEF(read_power_level) },
 	{ .code = 0x22, HANDLER_DEF(get_lpm_ppm_info) },
 };
@@ -1480,6 +1495,17 @@ static int emul_realtek_rts54xx_set_vconn_sourcing(const struct emul *target,
 	return 0;
 }
 
+static int
+emul_realtek_rts54xx_set_attention_vdo(const struct emul *target,
+				       union get_attention_vdo_t attention_vdo)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	data->attention_vdo = attention_vdo;
+	return 0;
+}
+
 struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.reset = emul_realtek_rts54xx_reset,
 	.set_response_delay = emul_realtek_rts54xx_set_response_delay,
@@ -1510,6 +1536,7 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.get_frs = emul_realtek_rts54xx_get_frs,
 	.idle_wait = emul_realtek_rts54xx_idle_wait,
 	.set_vconn_sourcing = emul_realtek_rts54xx_set_vconn_sourcing,
+	.set_attention_vdo = emul_realtek_rts54xx_set_attention_vdo,
 };
 
 #define RTS5453P_EMUL_DEFINE(n)                                             \

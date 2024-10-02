@@ -1421,6 +1421,19 @@ struct lpm_ppm_info_t {
 	uint32_t hw_ver;
 } __packed;
 
+union get_attention_vdo_t {
+	struct {
+		uint32_t alt_mode_index : 16;
+		uint32_t num_vdos : 3;
+		uint32_t reserved : 2;
+		uint32_t sequence_number : 3;
+		uint32_t vdm_heade;
+		uint32_t vdo;
+	} __packed;
+
+	uint8_t raw_value[11];
+};
+
 /* Byte offsets to UCSI data for OPM-PPM communication. */
 #define UCSI_VERSION_OFFSET 0
 #define UCSI_CCI_OFFSET 4

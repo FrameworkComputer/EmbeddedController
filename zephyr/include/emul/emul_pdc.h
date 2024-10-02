@@ -94,6 +94,8 @@ typedef int (*emul_pdc_set_vconn_sourcing_t)(const struct emul *target,
 
 typedef int (*emul_pdc_set_cmd_error_t)(const struct emul *target,
 					bool enabled);
+typedef int (*emul_pdc_set_attention_vdo_t)(const struct emul *target,
+					    union get_attention_vdo_t);
 
 __subsystem struct emul_pdc_api_t {
 	emul_pdc_set_response_delay_t set_response_delay;
@@ -130,6 +132,7 @@ __subsystem struct emul_pdc_api_t {
 	emul_pdc_idle_wait_t idle_wait;
 	emul_pdc_set_vconn_sourcing_t set_vconn_sourcing;
 	emul_pdc_set_cmd_error_t set_cmd_error;
+	emul_pdc_set_attention_vdo_t set_attention_vdo;
 };
 
 static inline int emul_pdc_set_ucsi_version(const struct emul *target,
@@ -697,6 +700,21 @@ static inline int emul_pdc_set_cmd_error(const struct emul *target,
 
 	if (api->set_cmd_error) {
 		return api->set_cmd_error(target, enabled);
+	}
+	return -ENOSYS;
+}
+
+static inline int
+emul_pdc_set_attention_vdo(const struct emul *target,
+			   union get_attention_vdo_t attention_vdo)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_api_t *api = target->backend_api;
+	if (api->set_attention_vdo) {
+		return api->set_attention_vdo(target, attention_vdo);
 	}
 	return -ENOSYS;
 }

@@ -2079,7 +2079,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_vconn_state)
 #ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_power_mgmt_api, test_hpd_wake)
 {
-	uint32_t dp_status_vdo;
+	union get_attention_vdo_t attention_vdo;
 	union connector_status_t in_conn_status;
 	union conn_status_change_bits_t in_conn_status_change_bits;
 
@@ -2095,11 +2095,11 @@ ZTEST_USER(pdc_power_mgmt_api, test_hpd_wake)
 	zassert_true(TEST_WAIT_FOR(pdc_power_mgmt_is_connected(TEST_PORT),
 				   PDC_TEST_TIMEOUT));
 
-	/* Configure PDC emulator to respond to GET_VDO with DP Status VDO with
-	 * HPD_LVL low.
+	/* Configure PDC emulator to respond to GET_ATTENTION_VDO with HPD_LVL
+	 * low.
 	 */
-	dp_status_vdo = 0x01;
-	emul_pdc_set_vdo(emul, 1, &dp_status_vdo);
+	attention_vdo.vdo = 0x01;
+	emul_pdc_set_attention_vdo(emul, attention_vdo);
 	k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
 
 	/* Send an attention IRQ for the PDC power manager to update its DP
@@ -2122,8 +2122,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_hpd_wake)
 	/* Configure PDC emulator to respond to GET_VDO with DP Status VDO with
 	 * HPD_LVL high.
 	 */
-	dp_status_vdo = 0x81;
-	emul_pdc_set_vdo(emul, 1, &dp_status_vdo);
+	attention_vdo.vdo = 0x81;
+	emul_pdc_set_attention_vdo(emul, attention_vdo);
 	k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
 
 	/* Send an IRQ for the PDC power manager to update its DP Status. */
