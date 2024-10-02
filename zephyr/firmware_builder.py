@@ -30,6 +30,11 @@ from chromite.api.gen_sdk.chromite.api import firmware_pb2
 ZEPHYR_DIR = pathlib.Path(__file__).parent.resolve()
 sys.path.insert(1, str(ZEPHYR_DIR / "zmake"))
 
+# Add the util directory to the search path
+sys.path.append(str(ZEPHYR_DIR / "../util"))
+
+# pylint: disable=wrong-import-position, import-error
+from coreboot_sdk import init_toolchain
 import zmake.modules  # pylint: disable=wrong-import-position
 import zmake.project  # pylint: disable=wrong-import-position
 
@@ -88,43 +93,6 @@ def find_checkout():
         if (path / ".repo").is_dir():
             return path
     raise FileNotFoundError("Unable to locate the root of the checkout")
-
-
-def init_toolchain():
-    """Initialize coreboot-sdk.
-
-    Returns:
-        Environment variables to use for toolchain.
-    """
-    # (environment variable, bazel target)
-    toolchains = [
-        ("COREBOOT_SDK_ROOT_arm", "@ec-coreboot-sdk-arm-eabi//:get_path"),
-        ("COREBOOT_SDK_ROOT_x86", "@ec-coreboot-sdk-i386-elf//:get_path"),
-        ("COREBOOT_SDK_ROOT_riscv", "@ec-coreboot-sdk-riscv-elf//:get_path"),
-        ("COREBOOT_SDK_ROOT_nds32", "@ec-coreboot-sdk-nds32le-elf//:get_path"),
-    ]
-
-    subprocess.run(
-        [
-            "bazel",
-            "--project",
-            "fwsdk",
-            "build",
-            *(target for _, target in toolchains),
-        ],
-        check=True,
-    )
-
-    result = {}
-    for name, target in toolchains:
-        run_result = subprocess.run(
-            ["bazel", "--project", "fwsdk", "run", target],
-            check=True,
-            stdout=subprocess.PIPE,
-        )
-        result[name] = run_result.stdout.strip()
-
-    return result
 
 
 def build(opts):
