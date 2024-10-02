@@ -2102,8 +2102,10 @@ ZTEST_USER(pdc_power_mgmt_api, test_hpd_wake)
 	emul_pdc_set_vdo(emul, 1, &dp_status_vdo);
 	k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
 
-	/* Send an IRQ for the PDC power manager to update its DP Status. */
-	in_conn_status.raw_conn_status_change_bits = 0x0;
+	/* Send an attention IRQ for the PDC power manager to update its DP
+	 * Status.
+	 */
+	in_conn_status.raw_conn_status_change_bits = 0x8;
 	emul_pdc_set_connector_status(emul, &in_conn_status);
 	emul_pdc_pulse_irq(emul);
 	k_msleep(TEST_WAIT_FOR_INTERVAL_MS * 2);
