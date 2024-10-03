@@ -10,6 +10,10 @@
 extern "C" {
 #endif
 
+/**
+ * @brief Reset the sensor IC.
+ *
+ */
 void egis_fp_reset_sensor(void);
 
 #ifdef __cplusplus
