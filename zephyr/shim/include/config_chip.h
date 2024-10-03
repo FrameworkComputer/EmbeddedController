@@ -569,8 +569,7 @@ extern "C" {
 #endif
 
 #if DT_HAS_CHOSEN(zephyr_flash)
-#define CONFIG_PROGRAM_MEMORY_BASE \
-	_CONCAT(DT_REG_ADDR(DT_CHOSEN(zephyr_flash)), U)
+#define CONFIG_PROGRAM_MEMORY_BASE DT_REG_ADDR(DT_CHOSEN(zephyr_flash))
 #else
 #error "A zephyr,flash device must be chosen in the device tree"
 #endif

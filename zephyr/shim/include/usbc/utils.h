@@ -20,14 +20,14 @@
  *
  * @param id: node id
  */
-#define USBC_PORT(id) DT_REG_ADDR(DT_PARENT(id))
+#define USBC_PORT(id) DT_REG_ADDR_RAW(DT_PARENT(id))
 
 /*
  * Get the port number from a `named-usbc-port` node.
  *
  * @param id: `named-usbc-port` node id
  */
-#define USBC_PORT_NEW(id) DT_REG_ADDR(id)
+#define USBC_PORT_NEW(id) DT_REG_ADDR_RAW(id)
 
 /*
  * Get the port number from a child of `named-usbc-port` node.
