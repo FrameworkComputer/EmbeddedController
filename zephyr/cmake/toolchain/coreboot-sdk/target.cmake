@@ -40,7 +40,7 @@ endif()
 
 set(CC gcc)
 set(C++ g++)
-set(TOOLCHAIN_HOME "${COREBOOT_SDK_ROOT}/bin/")
+set(TOOLCHAIN_HOME "${COREBOOT_SDK_ROOT}/bin")
 set(CROSS_COMPILE "${CROSS_COMPILE_TARGET}-")
 
 set(CMAKE_AR         "${TOOLCHAIN_HOME}/${CROSS_COMPILE}ar")
@@ -49,6 +49,7 @@ set(CMAKE_OBJCOPY    "${TOOLCHAIN_HOME}/${CROSS_COMPILE}objcopy")
 set(CMAKE_OBJDUMP    "${TOOLCHAIN_HOME}/${CROSS_COMPILE}objdump")
 set(CMAKE_RANLIB     "${TOOLCHAIN_HOME}/${CROSS_COMPILE}ranlib")
 set(CMAKE_READELF    "${TOOLCHAIN_HOME}/${CROSS_COMPILE}readelf")
+set(CMAKE_GCOV       "${TOOLCHAIN_HOME}/${CROSS_COMPILE}gcov")
 
 # On ARM, we don't use libgcc: It's built against a fixed target (e.g.
 # used instruction set, ABI, ISA extensions) and doesn't adapt when
