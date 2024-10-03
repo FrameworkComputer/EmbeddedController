@@ -172,6 +172,12 @@ BLOONCHIPPER_V4277_IMAGE_PATH = os.path.join(
 BLOONCHIPPER_V5938_IMAGE_PATH = os.path.join(
     TEST_ASSETS_BUCKET, "bloonchipper_v2.0.5938-197506c1.bin"
 )
+BUCCANEER_IMAGE_PATH = os.path.join(
+    TEST_ASSETS_BUCKET, "buccaneer_v2.0.26328-821504380b.bin"
+)
+HELIPILOT_IMAGE_PATH = os.path.join(
+    TEST_ASSETS_BUCKET, "helipilot_v2.0.24337-2726e9f149.bin"
+)
 
 RangedValue = namedtuple("RangedValue", "nominal range")
 PowerUtilization = namedtuple("PowerUtilization", "idle sleep")
@@ -908,8 +914,13 @@ HELIPILOT_CONFIG = BoardConfig(
     expected_mcu_power=PowerUtilization(
         idle=RangedValue(34.8, 7.0), sleep=RangedValue(2.7, 2.5)
     ),
-    # TODO(b/336640650): Add helipilot variants once RO is uploaded
-    variants={},
+    variants={
+        "helipilot_v2.0.24337": {"ro_image_path": HELIPILOT_IMAGE_PATH},
+        "buccaneer_v2.0.26328": {
+            "ro_image_path": BUCCANEER_IMAGE_PATH,
+            "build_board": "buccaneer",
+        },
+    },
     zephyr_board_name="google_quincy",
 )
 
@@ -926,7 +937,6 @@ BUCCANEER_CONFIG.fp_power_supply = "pp3300_fp_mw"
 BUCCANEER_CONFIG.expected_fp_power = PowerUtilization(
     idle=RangedValue(0.25, 0.3), sleep=RangedValue(0.25, 0.3)
 )
-# TODO(b/336640151): Add buccaneer variants once RO is created
 
 BOARD_CONFIGS = {
     "bloonchipper": BLOONCHIPPER_CONFIG,
