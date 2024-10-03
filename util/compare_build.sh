@@ -119,6 +119,7 @@ parse-boards() {
     dartmonkey
     bloonchipper
     buccaneer
+    gwendolin
     helipilot
     nucleo-dartmonkey
     nucleo-h743zi
