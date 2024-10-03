@@ -15,7 +15,7 @@ enum rauru_dp_port {
 };
 
 int rauru_is_dp_muxable(enum rauru_dp_port port);
-void rauru_set_dp_path(int port);
+void rauru_set_dp_path(enum rauru_dp_port port);
 enum rauru_dp_port rauru_get_dp_path(void);
 bool rauru_is_hpd_high(enum rauru_dp_port port);
 bool rauru_has_hdmi_port(void);
