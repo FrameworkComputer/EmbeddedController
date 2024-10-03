@@ -46,6 +46,7 @@ config CROS_EC_KEYBOARD_INPUT
 	bool "Input subsystem based Keyboard"
 	depends on $(dt_chosen_enabled,$(CHOSEN_CROS_EC_KEYBOARD))
 	depends on INPUT
+	select PM_DEVICE_RUNTIME if !BOARD_NATIVE_SIM
 	help
 	  Input subsystem based Keyboard implementation, requires a
 	  `cros-ec,keyboard` chosen property pointing at the desired input
