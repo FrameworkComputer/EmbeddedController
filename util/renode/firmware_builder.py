@@ -22,8 +22,17 @@ from google.protobuf import json_format
 from chromite.api.gen_sdk.chromite.api import firmware_pb2
 
 
-def build(_opts):
-    """No-op."""
+def build(opts):
+    """Build all the EC unit tests."""
+
+    working_dir = Path(__file__).parents[2].resolve()
+    cmd = [
+        "make",
+        "BOARD=bloonchipper",
+        "tests",
+        f"-j{opts.cpus}",
+    ]
+    subprocess.run(cmd, cwd=working_dir, check=True)
 
 
 def bundle(opts):
