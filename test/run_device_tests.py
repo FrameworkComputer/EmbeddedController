@@ -42,6 +42,8 @@ Run the script on the remote machine:
 # TODO(b/267803007): refactor into multiple modules
 # pylint: disable=too-many-lines
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 import argparse
 from collections import namedtuple
@@ -62,7 +64,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from typing import BinaryIO, Callable, Dict, List, Optional, Tuple
+from typing import BinaryIO, Callable, Optional
 
 # pylint: disable=import-error
 import colorama  # type: ignore[import]
@@ -208,18 +210,18 @@ class BoardConfig:
     sensor_type: FPSensorType
     servo_uart_name: str
     servo_power_enable: str
-    rollback_region0_regex: object
-    rollback_region1_regex: object
-    mpu_regex: object
+    rollback_region0_regex: re.Pattern[str]
+    rollback_region1_regex: re.Pattern[str]
+    mpu_regex: re.Pattern[str]
     reboot_timeout: float
     fp_power_supply: str
     mcu_power_supply: str
     expected_fp_power: PowerUtilization
     expected_mcu_power: PowerUtilization
-    variants: Dict
-    expected_fp_power_zephyr: PowerUtilization = None
-    expected_mcu_power_zephyr: PowerUtilization = None
-    zephyr_board_name: str = None
+    variants: dict[str, dict[str, str]]
+    expected_fp_power_zephyr: Optional[PowerUtilization] = None
+    expected_mcu_power_zephyr: Optional[PowerUtilization] = None
+    zephyr_board_name: Optional[str] = None
 
 
 class Platform(ABC):
@@ -411,22 +413,22 @@ class TestConfig:
     test_name: str
     imagetype_to_use: ImageType = ImageType.RW
     apptype_to_use: ApplicationType = ApplicationType.TEST
-    finish_regexes: List = None
-    fail_regexes: List = None
+    finish_regexes: Optional[list[re.Pattern[str]]] = None
+    fail_regexes: Optional[list[re.Pattern[str]]] = None
     toggle_power: bool = False
-    test_args: List[str] = field(default_factory=list)
+    test_args: list[str] = field(default_factory=list)
     timeout_secs: int = 10
     enable_hw_write_protect: bool = False
-    ro_image: str = None
-    build_board: str = None
-    config_name: str = None
-    exclude_boards: List = field(default_factory=list)
-    logs: List = field(init=False, default_factory=list)
+    ro_image: Optional[str] = None
+    build_board: Optional[str] = None
+    config_name: Optional[str] = None
+    exclude_boards: list = field(default_factory=list)
+    logs: list = field(init=False, default_factory=list)
     passed: bool = field(init=False, default=False)
     num_passes: int = field(init=False, default=0)
     num_fails: int = field(init=False, default=0)
     skip_for_zephyr: bool = False
-    zephyr_name: str = None
+    zephyr_name: Optional[str] = None
 
     # The callbacks below are called before and after a test is executed and
     # may be used for additional test setup, post test activities, or other tasks
@@ -462,7 +464,7 @@ class AllTests:
         board_config: BoardConfig,
         with_private: str,
         zephyr: bool,
-    ) -> List[TestConfig]:
+    ) -> list[TestConfig]:
         """Return public and private test configs for the specified board."""
         public_tests = (
             []
@@ -490,7 +492,7 @@ class AllTests:
     @staticmethod
     def get_public_tests(
         platform: Platform, board_config: BoardConfig
-    ) -> List[TestConfig]:
+    ) -> list[TestConfig]:
         """Return public test configs for the specified board."""
         tests = [
             TestConfig(
@@ -735,7 +737,7 @@ class AllTests:
         return tests
 
     @staticmethod
-    def get_private_tests() -> List[TestConfig]:
+    def get_private_tests() -> list[TestConfig]:
         """Return private test configs for the specified board, if available."""
         tests = []
         try:
@@ -761,7 +763,7 @@ class AllTests:
         return tests
 
     @staticmethod
-    def get_zephyr_tests() -> List[TestConfig]:
+    def get_zephyr_tests() -> list[TestConfig]:
         """Return Zephyr upstream test configs."""
         # Make sure proper paths are added in the twister script, see ZEPHYR_TEST_PATHS
         tests = [
@@ -937,7 +939,7 @@ def read_file_gsutil(path: str) -> bytes:
     return gsutil.stdout
 
 
-def find_section_offset_size(section: str, image: bytes) -> Tuple[int, int]:
+def find_section_offset_size(section: str, image: bytes) -> tuple[int, int]:
     """Get offset and size of the section in image"""
     areas = fmap.fmap_decode(image)["areas"]
     area = next(area for area in areas if area["name"] == section)
@@ -1067,7 +1069,7 @@ def build_ec(
     board_name: str,
     compiler: str,
     app_type: ApplicationType,
-) -> List[str]:
+) -> list[str]:
     """Prepare a command to build test using CrosEC"""
     cmd = ["make"]
     if compiler == CLANG:
@@ -1085,7 +1087,7 @@ def build_ec(
     return cmd
 
 
-def build_zephyr_upstream(test_name: str, board_name: str) -> List[str]:
+def build_zephyr_upstream(test_name: str, board_name: str) -> list[str]:
     """Prepare a command to build Zephyr test"""
     # Build only with Zephyr and clobber a previous build
     cmd = [ZEPHYR_TWISTER] + ["-b"] + ["-c"]
@@ -1097,7 +1099,7 @@ def build_zephyr_upstream(test_name: str, board_name: str) -> List[str]:
     return cmd
 
 
-def build_zephyr(test: TestConfig, board_name: str) -> List[str]:
+def build_zephyr(test: TestConfig, board_name: str) -> list[str]:
     """Prepare a command to build test using Zephyr"""
     if test.zephyr_name is not None:
         return build_zephyr_upstream(test.zephyr_name, board_name)
@@ -1191,9 +1193,9 @@ def readline(
 
 def readlines_until_timeout(
     executor, file: BinaryIO, timeout_secs: int
-) -> List[bytes]:
+) -> list[bytes]:
     """Continuously read lines for timeout_secs."""
-    lines: List[bytes] = []
+    lines: list[bytes] = []
     while True:
         line = readline(executor, file, timeout_secs)
         if not line:
@@ -1327,7 +1329,7 @@ def get_test_list(
     test_args,
     with_private: str,
     zephyr: bool,
-) -> List[TestConfig]:
+) -> list[TestConfig]:
     """Get a list of tests to run."""
     if test_args == "all":
         return AllTests.get(platform, config, with_private, zephyr)
@@ -1665,7 +1667,7 @@ def main():
 
 def get_power_utilization(
     board_config: BoardConfig,
-) -> Tuple[Optional[float], Optional[float]]:
+) -> tuple[Optional[float], Optional[float]]:
     """Retrieve board power utilization data"""
     fp_power_signal = board_config.fp_power_supply
     mcu_power_signal = board_config.mcu_power_supply
