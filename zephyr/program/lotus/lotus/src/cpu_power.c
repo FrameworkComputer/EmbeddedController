@@ -201,7 +201,7 @@ static void update_thermal_power_limit(int battery_percent, int active_mpower,
 					thermal_stt_table = 28;
 				}
 			}
-		} else if (active_mpower >= 100000) {
+		} else if (active_mpower >= 96000) {
 			if (with_dc) {
 				if (mode == EC_AC_BEST_PERFORMANCE) {
 					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 85000;
@@ -235,7 +235,7 @@ static void update_thermal_power_limit(int battery_percent, int active_mpower,
 					thermal_stt_table = 30;
 				}
 			}
-		} else if ((active_mpower < 100000) && (active_mpower > 0)) {
+		} else if ((active_mpower < 96000) && (active_mpower > 0)) {
 			if (with_dc) {
 				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 60000;
 				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 60000;
@@ -274,7 +274,7 @@ static void update_thermal_power_limit(int battery_percent, int active_mpower,
 				power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
 			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
 			thermal_stt_table = slider_stt_table;
-		} else if (active_mpower >= 100000) {
+		} else if (active_mpower >= 96000) {
 			if (mode == EC_AC_BEST_PERFORMANCE) {
 				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 45000;
 				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 54000;
