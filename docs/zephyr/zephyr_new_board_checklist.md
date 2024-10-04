@@ -69,5 +69,6 @@ EC Feature                                                                  | Ne
 [Configure BC1.2 Charger Detector (TODO)](./zephyr_template.md)             | no
 [Configure ADC](./zephyr_adc.md)                                            | no
 [Configure Temperature Sensors](./zephyr_temperature_sensor.md)             | no
+[Configure Keyboard](./zephyr_keyboard.md)                                  | no
 
 [Zephyr Introduction to Devicetree]: https://docs.zephyrproject.org/latest/build/dts/intro.html
