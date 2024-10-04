@@ -182,13 +182,13 @@ if (DEFINED CONFIG_PLATFORM_EC)
 endif()
 
 if (ZEPHYR_PIGWEED_MODULE_DIR)
-  include("${ZEPHYR_PIGWEED_MODULE_DIR}/pw_build/pigweed.cmake")
   if (DEFINED CONFIG_PIGWEED_LOG_TOKENIZED_LIB)
+    zephyr_include_directories("${PLATFORM_EC}/zephyr/include/pigweed")
+    include("${ZEPHYR_PIGWEED_MODULE_DIR}/pw_build/pigweed.cmake")
     add_library(log_tokenized_config INTERFACE)
     target_compile_options(log_tokenized_config INTERFACE -include
                            ${PLATFORM_EC}/zephyr/include/pigweed/pw_zephyr_tokenized_custom_log.h)
     pw_set_module_config(pw_log_tokenized_CONFIG log_tokenized_config)
-    zephyr_include_directories("${PLATFORM_EC}/zephyr/include/pigweed")
   endif()
 endif()
 
