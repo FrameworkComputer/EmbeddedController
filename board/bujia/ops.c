@@ -20,6 +20,15 @@
 
 #define LONG_PRESS_MS 3000
 #define SHORT_PRESS_MS 200
+#define RESUME_DELAY_MS 1000
+
+static void ps_on_translate_to_shutdown_deferred(void)
+{
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		/* long press power button to power off the device */
+		power_button_simulate_press(LONG_PRESS_MS);
+}
+DECLARE_DEFERRED(ps_on_translate_to_shutdown_deferred);
 
 static void ps_on_irq_deferred(void)
 {
@@ -29,7 +38,7 @@ static void ps_on_irq_deferred(void)
 
 	/*
 	 * PS_ON# is asserted. If device is off, power on the device.
-	 * If device is in suspend, wake up or power off the device
+	 * If device is in suspend, wake up then power off the device.
 	 * If device is on and not in suspend, power off the device.
 	 */
 	if (!ps_on) {
@@ -38,10 +47,15 @@ static void ps_on_irq_deferred(void)
 			power_button_simulate_press(SHORT_PRESS_MS);
 		} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
 			/*
-			 * TODO (b/335586781): Need to clarify the expected
-			 * action when PS_ON# is toggled when system is in
-			 * suspsned.
+			 * short press power button to wake up device from
+			 * suspend, wait for 1 second to make sure the device is
+			 * resumed, long press power button to power off the
+			 * device.
 			 */
+			power_button_simulate_press(SHORT_PRESS_MS);
+			hook_call_deferred(
+				&ps_on_translate_to_shutdown_deferred_data,
+				RESUME_DELAY_MS * MSEC);
 		} else {
 			/* long press power button to power off the device */
 			power_button_simulate_press(LONG_PRESS_MS);
