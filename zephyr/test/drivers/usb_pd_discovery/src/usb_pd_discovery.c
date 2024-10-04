@@ -69,7 +69,7 @@ ZTEST_SUITE(usb_pd_discovery, drivers_predicate_post_main,
 	    usb_pd_discovery_after, NULL);
 
 /* First up: Plain and correct DP response */
-ZTEST_F(usb_pd_discovery, test_verify_discovery)
+ZTEST_F(usb_pd_discovery, test_discovery)
 {
 	struct tcpci_partner_data *partner = &fixture->partner;
 	uint8_t response_buffer[EC_LPC_HOST_PACKET_SIZE];
@@ -132,7 +132,7 @@ ZTEST_F(usb_pd_discovery, test_verify_discovery)
 }
 
 /* Now: Duplicate the DP SID */
-ZTEST_F(usb_pd_discovery, test_verify_svid_duplicate)
+ZTEST_F(usb_pd_discovery, test_svid_duplicate)
 {
 	struct tcpci_partner_data *partner = &fixture->partner;
 	uint8_t response_buffer[EC_LPC_HOST_PACKET_SIZE];
@@ -188,7 +188,7 @@ ZTEST_F(usb_pd_discovery, test_verify_svid_duplicate)
 }
 
 /* Forget to 0 terminate the SVIDs */
-ZTEST_F(usb_pd_discovery, test_verify_bad_termination)
+ZTEST_F(usb_pd_discovery, test_bad_termination)
 {
 	struct tcpci_partner_data *partner = &fixture->partner;
 	uint8_t response_buffer[EC_LPC_HOST_PACKET_SIZE];
@@ -244,7 +244,7 @@ ZTEST_F(usb_pd_discovery, test_verify_bad_termination)
 }
 
 /* Reply with a NAK to DiscoverModes */
-ZTEST_F(usb_pd_discovery, test_verify_modes_nak)
+ZTEST_F(usb_pd_discovery, test_modes_nak)
 {
 	struct tcpci_partner_data *partner = &fixture->partner;
 	uint8_t response_buffer[EC_LPC_HOST_PACKET_SIZE];
@@ -294,7 +294,7 @@ ZTEST_F(usb_pd_discovery, test_verify_modes_nak)
 }
 
 /* Reply with the wrong SVID to DiscoverModes */
-ZTEST_F(usb_pd_discovery, test_verify_bad_mode)
+ZTEST_F(usb_pd_discovery, test_bad_mode)
 {
 	struct tcpci_partner_data *partner = &fixture->partner;
 	uint8_t response_buffer[EC_LPC_HOST_PACKET_SIZE];
@@ -347,7 +347,7 @@ ZTEST_F(usb_pd_discovery, test_verify_bad_mode)
 }
 
 /* Reply without required mode VDO */
-ZTEST_F(usb_pd_discovery, test_verify_modes_missing)
+ZTEST_F(usb_pd_discovery, test_modes_missing)
 {
 	struct tcpci_partner_data *partner = &fixture->partner;
 	uint8_t response_buffer[EC_LPC_HOST_PACKET_SIZE];
