@@ -606,6 +606,14 @@ class AllTests:
                 exclude_boards=[BLOONCHIPPER, DARTMONKEY],
             ),
             TestConfig(test_name="panic"),
+            TestConfig(
+                config_name="panic_data",
+                test_name="panic_data",
+                fail_regexes=[
+                    SINGLE_CHECK_FAILED_REGEX,
+                    ALL_TESTS_FAILED_REGEX,
+                ],
+            ),
             # Task synchronization covered by Zephyr tests and shim layer by unit tests.
             # task_wait_event is implemented based on k_poll_event and it is verified by
             # the kernel.poll test.
