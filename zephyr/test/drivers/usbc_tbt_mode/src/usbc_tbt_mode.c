@@ -20,6 +20,7 @@
 
 #include <zephyr/kernel.h>
 #include <zephyr/sys/byteorder.h>
+#include <zephyr/sys/slist.h>
 #include <zephyr/ztest.h>
 
 #define TEST_PORT USBC_PORT_C0
