@@ -34,6 +34,9 @@ ZTEST(fpsensor_debug, test_console_fpinfo)
 	zassert_equal(rv, EC_SUCCESS);
 }
 
+/* TODO(b/371647536): Add other tests of commands in fpsensor_debug to verify
+ * entire handlers.
+ */
 ZTEST(fpsensor_debug, test_command_fpupload)
 {
 	/* System is unlocked. */
@@ -52,6 +55,9 @@ ZTEST(fpsensor_debug, test_command_fpupload)
 	zassert_equal(rv, EC_ERROR_ACCESS_DENIED);
 }
 
+/* TODO(b/371647536): Add other tests of commands in fpsensor_debug to verify
+ * entire handlers.
+ */
 ZTEST(fpsensor_debug, test_command_fpcapture)
 {
 	/* System is locked. */
@@ -62,6 +68,9 @@ ZTEST(fpsensor_debug, test_command_fpcapture)
 	zassert_equal(rv, EC_ERROR_ACCESS_DENIED);
 }
 
+/* TODO(b/371647536): Add other tests of commands in fpsensor_debug to verify
+ * entire handlers.
+ */
 ZTEST(fpsensor_debug, test_command_fpenroll)
 {
 	/* System is locked. */
