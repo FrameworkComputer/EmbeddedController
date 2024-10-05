@@ -28,3 +28,17 @@ __override void lid_angle_peripheral_enable(int enable)
 	/* EC needs to control the keyboard scan with non-ChromeOS systems */
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
+
+static int cmd_lidangle(int argc, const char **argv)
+{
+	int angle = motion_lid_get_angle();
+
+	if (angle == LID_ANGLE_UNRELIABLE)
+		CPRINTS("Lid angle unreliable");
+	else
+		CPRINTS("Lid angle: %d", angle);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(lidangle, cmd_lidangle,
+			"[lidangle]", "print lid angle");
