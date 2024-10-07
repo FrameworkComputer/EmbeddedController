@@ -273,8 +273,6 @@ enum src_attached_local_state_t {
 enum snk_typec_attached_local_state_t {
 	/** SNK_TYPEC_ATTACHED_SET_CHARGE_CURRENT */
 	SNK_TYPEC_ATTACHED_SET_CHARGE_CURRENT,
-	/** SNK_TYPEC_ATTACHED_SET_SINK_PATH_ON */
-	SNK_TYPEC_ATTACHED_SET_SINK_PATH_ON,
 	/** SNK_TYPEC_ATTACHED_DEBOUNCE */
 	SNK_TYPEC_ATTACHED_DEBOUNCE,
 	/** SNK_TYPEC_ATTACHED_RUN */
@@ -1453,7 +1451,11 @@ static void run_typec_snk_policies(struct pdc_port_t *port)
 	 * partner.
 	 */
 	if (atomic_test_and_clear_bit(port->snk_policy.flags,
-				      SNK_POLICY_UPDATE_SRC_CAPS)) {
+				      SNK_POLICY_SET_ACTIVE_CHARGE_PORT)) {
+		port->sink_path_en = port->active_charge;
+		queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
+	} else if (atomic_test_and_clear_bit(port->snk_policy.flags,
+					     SNK_POLICY_UPDATE_SRC_CAPS)) {
 		/* Ensure the next time a PD capable SNK connects, we offer
 		 * a safe PDO.
 		 */
@@ -2469,7 +2471,7 @@ static void pdc_snk_typec_only_entry(void *obj)
 	port->send_cmd.intern.pending = false;
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
 		port->snk_typec_attached_local_state =
-			SNK_TYPEC_ATTACHED_SET_CHARGE_CURRENT;
+			SNK_TYPEC_ATTACHED_DEBOUNCE;
 
 		/* Start one shot typec only timer. This timer is used to
 		 * differentiate between a port partner that supports USB PD or
@@ -2507,9 +2509,14 @@ static void pdc_snk_typec_only_run(void *obj)
 	}
 
 	switch (port->snk_typec_attached_local_state) {
+	case SNK_TYPEC_ATTACHED_DEBOUNCE:
+		if (k_timer_status_get(&port->typec_only_timer) > 0) {
+			port->snk_typec_attached_local_state =
+				SNK_TYPEC_ATTACHED_SET_CHARGE_CURRENT;
+		}
+		return;
 	case SNK_TYPEC_ATTACHED_SET_CHARGE_CURRENT:
-		port->snk_typec_attached_local_state =
-			SNK_TYPEC_ATTACHED_SET_SINK_PATH_ON;
+		port->snk_typec_attached_local_state = SNK_TYPEC_ATTACHED_RUN;
 
 		/* Once we're updating the charger with the new current limit,
 		 * it's safe to clear the policy bit.  If the PDC reports
@@ -2525,18 +2532,6 @@ static void pdc_snk_typec_only_run(void *obj)
 		charge_manager_update_dualrole(config->connector_num,
 					       CAP_DEDICATED);
 		break;
-	case SNK_TYPEC_ATTACHED_SET_SINK_PATH_ON:
-		port->snk_typec_attached_local_state =
-			SNK_TYPEC_ATTACHED_DEBOUNCE;
-		port->sink_path_en = true;
-		queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
-		return;
-	case SNK_TYPEC_ATTACHED_DEBOUNCE:
-		if (k_timer_status_get(&port->typec_only_timer) > 0) {
-			port->snk_typec_attached_local_state =
-				SNK_TYPEC_ATTACHED_RUN;
-		}
-		return;
 	case SNK_TYPEC_ATTACHED_RUN:
 		run_typec_snk_policies(port);
 		break;
