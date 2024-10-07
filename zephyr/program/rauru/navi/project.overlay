@@ -16,6 +16,8 @@
 #include "../power_signal.dtsi"
 #include "keyboard.dtsi"
 
+#include <cros/thermistor/thermistor.dtsi>
+
 / {
 	aliases {
 		tcs3400-int = &als_clear;
@@ -43,13 +45,44 @@
 	};
 
 	named-adc-channels {
-			adc_temp_sensor_3: temp_sensor_2 {
+			adc_temp_sensor2: temp_sensor2 {
 			enum-name = "ADC_TEMP_SENSOR_2";
 			io-channels = <&adc0 5>;
 		};
-			adc_temp_sensor_4: temp_sensor_3 {
+			adc_temp_sensor3: temp_sensor3 {
 			enum-name = "ADC_TEMP_SENSOR_3";
 			io-channels = <&adc0 6>;
+		};
+	};
+
+	temp_sensor1_thermistor: sensor-temp1-thermistor {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&adc_temp_sensor1>;
+	};
+
+	temp_sensor2_thermistor: sensor-temp2-thermistor {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&adc_temp_sensor2>;
+	};
+
+	temp_sensor3_thermistor: sensor-temp3-thermistor {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&adc_temp_sensor3>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_sensor_1 {
+			sensor = <&temp_sensor1_thermistor>;
+		};
+		temp_sensor_2 {
+			sensor = <&temp_sensor2_thermistor>;
+		};
+		temp_sensor_3 {
+			sensor = <&temp_sensor3_thermistor>;
 		};
 	};
 
@@ -466,4 +499,8 @@
 &i2c5ALT {
 	/delete-property/ pinctrl-0;
 	/delete-property/ pinctrl-names;
+};
+
+&thermistor_3V3_100K_100K_4250B {
+	status = "okay";
 };
