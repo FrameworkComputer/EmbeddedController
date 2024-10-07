@@ -2308,6 +2308,7 @@
 #undef CONFIG_FP_SENSOR_ELAN80
 #undef CONFIG_FP_SENSOR_ELAN80SG
 #undef CONFIG_FP_SENSOR_ELAN515
+#undef CONFIG_FP_SENSOR_INT_ACTIVE_LOW
 
 /*****************************************************************************/
 
