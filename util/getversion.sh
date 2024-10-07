@@ -145,6 +145,12 @@ main() {
         dir_list+=( ../fingerprint/elan )
       fi
       ;;
+    gwendolin*)
+      dir_list+=( "${fp_common_dir_list[@]}" )
+      if [[ -d ../fingerprint/egis ]]; then
+        dir_list+=( ../fingerprint/egis )
+      fi
+      ;;
     *_scp)
       if [[ -d ../private-mt-scp ]]; then
         dir_list+=( ../private-mt-scp )
