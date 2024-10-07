@@ -20,6 +20,7 @@ i2c3ALT: &i2c3 {
 
 #include "adc.dtsi"
 #include "console.dtsi"
+#include "gpios.dtsi"
 #include "i2c.dtsi"
 #include "keyboard.dtsi"
 #include "pwm.dtsi"
@@ -43,4 +44,13 @@ i2c3ALT: &i2c3 {
 			enum-name = "GPIO_ENTERING_RW";
 		};
 	};
+};
+
+/* AP interface */
+&espi0 {
+	status = "okay";
+};
+
+&sha0 {
+	status = "okay";
 };
