@@ -25,6 +25,7 @@
 };
 
 &i2c3_0 {
+	label = "I2C_PORT_PD";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 
 	pdc_power_p0: rts54-pdc@67 {
