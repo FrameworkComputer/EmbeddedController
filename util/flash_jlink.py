@@ -201,7 +201,7 @@ def main(argv: list):
     """Main function."""
     parser = argparse.ArgumentParser()
 
-    default_jlink = "./JLink_Linux_V798h_x86_64/JLinkExe"
+    default_jlink = "./JLink_Linux_V810a_x86_64/JLinkExe"
     if shutil.which(default_jlink) is None:
         default_jlink = "JLinkExe"
     parser.add_argument(
