@@ -130,6 +130,7 @@ void panic_data_print(const struct panic_data *pdata)
 static void copy_esf_to_panic_data(const struct arch_esf *esf,
 				   struct panic_data *pdata)
 {
+	memset(pdata, 0, CONFIG_PANIC_DATA_SIZE);
 	pdata->arch = PANIC_ARCH;
 	pdata->struct_version = 2;
 	pdata->flags = (PANIC_ARCH == PANIC_ARCH_CORTEX_M) ?
