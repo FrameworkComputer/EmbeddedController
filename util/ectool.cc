@@ -11780,7 +11780,7 @@ int cmd_wait_event(int argc, char *argv[])
 	static const char *const host_event_text[] = HOST_EVENT_TEXT;
 
 	int rv, i;
-	struct ec_response_get_next_event_v1 buffer;
+	ec_response_get_next_event_v1 buffer = { 0 };
 	long timeout = 5000;
 	long event_type;
 	char *e;
