@@ -400,12 +400,19 @@ class Renode(Platform):
         if test_name in [
             "production_app_test",
             "benchmark",
+            "exception",
             "fpsensor_hw",
             "libcxx",
             "mpu",
+            "panic_data",
+            "panic_data_nami_fp_v2.2.144",
+            "panic_data_nocturne_fp_v2.2.64",
             "power_utilization",
             "rtc_stm32f4",
             "std_vector",
+            "unaligned_access",
+            "unaligned_access_nami_fp_v2.2.144",
+            "unaligned_access_nocturne_fp_v2.2.64",
         ]:
             return True
         return False
