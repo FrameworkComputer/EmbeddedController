@@ -75,7 +75,8 @@ LOG_MODULE_REGISTER(pdc_power_mgmt, CONFIG_USB_PDC_LOG_LEVEL);
 /**
  * @brief Maximum time to wait for PDC state to settle.
  */
-#define PDC_SM_SETTLED_TIMEOUT_MS (PDC_CMD_TIMEOUT_MS)
+#define PDC_SM_SETTLED_TIMEOUT_MS \
+	CONFIG_PDC_POWER_MGMT_STATE_MACHINE_SETTLED_TIMEOUT_MS
 
 /** @brief Delay to wait for stable power state before running hooks */
 #define PDC_POWER_STATE_DEBOUNCE_S (K_SECONDS(2))
