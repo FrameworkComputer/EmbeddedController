@@ -42,6 +42,7 @@
 #include <libec/fingerprint/fp_encryption_status_command.h>
 #include <libec/fingerprint/fp_frame_command.h>
 #include <libec/flash_protect_command.h>
+#include <libec/mkbp_event.h>
 #include <libec/rand_num_command.h>
 #include <libec/versions_command.h>
 #include <memory>
@@ -106,6 +107,8 @@ int ascii_mode;
 
 /* Message verbosity */
 static int verbose = 0;
+
+const command *commands_find(const char *name);
 
 /* Check SBS numerical value range */
 int is_battery_range(int val)
@@ -11799,7 +11802,9 @@ int cmd_wait_event(int argc, char *argv[])
 	}
 
 	if (argc < 2) {
-		fprintf(stderr, "Usage: %s <type> [<timeout>]\n", argv[0]);
+		fprintf(stderr,
+			"Usage: %s <type> [timeout [cmd [cmd_args...]]]\n",
+			argv[0]);
 		fprintf(stderr, "\n");
 		fprintf(stderr, "type: MKBP event number or name.\n");
 		for (int i = 0; i < ARRAY_SIZE(mkbp_event_text); i++) {
@@ -11809,6 +11814,21 @@ int cmd_wait_event(int argc, char *argv[])
 				fprintf(stderr, "      %s or %d\n", name, i);
 			}
 		}
+		fprintf(stderr, "timeout: "
+				"Timeout in milliseconds (default 5000).\n");
+		fprintf(stderr,
+			"cmd: "
+			"Optional ectool command to run while waiting for events.\n");
+		fprintf(stderr, "cmd_args: "
+				"Optional arguments for the ectool command.\n");
+		fprintf(stderr, "\n");
+		fprintf(stderr,
+			"The waitevent command is designed to simply wait for an MKBP event and\n"
+			"print out the event details.\n"
+			"Optionally, you can provide another ectool command with arguments that\n"
+			"will be invoked, while waiting for this MKBP event. This has the\n"
+			"effect of running the ectool command and waiting for it's resultant\n"
+			"MKBP event.\n");
 
 		return -1;
 	}
@@ -11827,7 +11847,28 @@ int cmd_wait_event(int argc, char *argv[])
 		}
 	}
 
-	rv = wait_event(event_type, &buffer, sizeof(buffer), timeout);
+	auto events = ec::MkbpEvent(
+		comm_get_fd(), static_cast<enum ec_mkbp_event>(event_type));
+	events.Enable();
+
+	if (argc >= 4) {
+		const command *cmd = commands_find(argv[3]);
+		if (cmd == nullptr) {
+			fprintf(stderr, "Unknown command '%s'\n\n", argv[3]);
+			return -2;
+		}
+		rv = cmd->handler(argc - 3, argv + 3);
+	}
+
+	rv = events.Wait(timeout);
+	if (rv == 0) {
+		fprintf(stderr, "Timeout waiting for MKBP event\n");
+		return -ETIMEDOUT;
+	} else if (rv < 0) {
+		perror("Error polling for MKBP event\n");
+		return -EIO;
+	}
+	rv = read(comm_get_fd(), &buffer, sizeof(buffer));
 	if (rv < 0)
 		return rv;
 
@@ -12605,13 +12646,32 @@ const struct command commands[] = {
 	  "\tGet USB PD power information." },
 	{ "version", cmd_version, "\n\tPrints EC version." },
 	{ "waitevent", cmd_wait_event,
-	  "<type> [<timeout>]\n"
-	  "\tWait for the MKBP event of type and display it." },
+	  "<type> [timeout [command [command_args...]]]\n"
+	  "\tWait for the MKBP event of type and display it.\n"
+	  "\tOptionaly, run the command and wait for the mkbp event.\n"
+	  "\tRun with no arguments for more information." },
 	{ "wireless", cmd_wireless,
 	  "<flags> [<mask> [<suspend_flags> <suspend_mask>]]\n"
 	  "\tEnable/disable WLAN/Bluetooth radio." },
 	{ NULL, NULL }
 };
+
+/**
+ * Find the command entry by name.
+ *
+ * @param name The name of the command to search for.
+ * @returns The command struct entry or nullptr if not found.
+ */
+const command *commands_find(const char *name)
+{
+	const command *cmd;
+	for (cmd = commands; cmd->name; cmd++) {
+		if (!strcasecmp(name, cmd->name)) {
+			return cmd;
+		}
+	}
+	return nullptr;
+}
 
 void print_help(const char *prog, int print_cmds)
 {
@@ -12780,16 +12840,13 @@ int main(int argc, char *argv[])
 	}
 
 	/* Handle commands */
-	for (cmd = commands; cmd->name; cmd++) {
-		if (!strcasecmp(argv[optind], cmd->name)) {
-			rv = cmd->handler(argc - optind, argv + optind);
-			goto out;
-		}
+	cmd = commands_find(argv[optind]);
+	if (cmd == nullptr) {
+		fprintf(stderr, "Unknown command '%s'\n\n", argv[optind]);
+		print_help(argv[0], 0);
+		goto out;
 	}
-
-	/* If we're still here, command was unknown */
-	fprintf(stderr, "Unknown command '%s'\n\n", argv[optind]);
-	print_help(argv[0], 0);
+	rv = cmd->handler(argc - optind, argv + optind);
 
 out:
 	release_gec_lock();
