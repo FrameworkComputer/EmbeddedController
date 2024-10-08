@@ -264,7 +264,7 @@ class Platform(ABC):
         """Clean up after a test run."""
 
     @abstractmethod
-    def skip_test(self, test_name: str) -> bool:
+    def skip_test(self, test_name: str, board_config: BoardConfig) -> bool:
         """Returns true if the given test should be skipped."""
 
 
@@ -351,7 +351,7 @@ class Hardware(Platform):
     def cleanup(self) -> None:
         pass
 
-    def skip_test(self, test_name: str) -> bool:
+    def skip_test(self, test_name: str, board_config: BoardConfig) -> bool:
         return False
 
 
@@ -395,26 +395,28 @@ class Renode(Platform):
     def cleanup(self) -> None:
         self.process.kill()
 
-    def skip_test(self, test_name: str) -> bool:
-        # TODO(b/356476313): Remove these when Renode is fixed.
-        if test_name in [
-            "production_app_test",
-            "benchmark",
-            "exception",
-            "fpsensor_hw",
-            "libcxx",
-            "mpu",
-            "panic_data",
-            "panic_data_nami_fp_v2.2.144",
-            "panic_data_nocturne_fp_v2.2.64",
-            "power_utilization",
-            "rtc_stm32f4",
-            "std_vector",
-            "unaligned_access",
-            "unaligned_access_nami_fp_v2.2.144",
-            "unaligned_access_nocturne_fp_v2.2.64",
-        ]:
-            return True
+    def skip_test(self, test_name: str, board_config: BoardConfig) -> bool:
+        if board_config.name in [BLOONCHIPPER, DARTMONKEY]:
+            # TODO(b/356476313): Remove these when Renode is fixed.
+            if test_name in [
+                "production_app_test",
+                "benchmark",
+                "exception",
+                "fpsensor_hw",
+                "libcxx",
+                "mpu",
+                "panic_data",
+                "panic_data_nami_fp_v2.2.144",
+                "panic_data_nocturne_fp_v2.2.64",
+                "power_utilization",
+                "rtc_stm32f4",
+                "std_vector",
+                "unaligned_access",
+                "unaligned_access_nami_fp_v2.2.144",
+                "unaligned_access_nocturne_fp_v2.2.64",
+            ]:
+                return True
+
         return False
 
 
@@ -1660,7 +1662,7 @@ def main():
     with ThreadPoolExecutor(max_workers=1) as executor:
         for test in test_list:
             if (test.skip_for_zephyr and args.zephyr) or platform.skip_test(
-                test.test_name
+                test.test_name, board_config
             ):
                 continue
             test.passed = flash_and_run_test(
@@ -1673,7 +1675,7 @@ def main():
             # print results
             print('Test "' + test.config_name + '": ', end="")
             if (test.skip_for_zephyr and args.zephyr) or platform.skip_test(
-                test.test_name
+                test.test_name, board_config
             ):
                 print(colorama.Fore.YELLOW + "SKIPPED")
             else:
