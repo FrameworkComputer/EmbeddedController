@@ -782,7 +782,8 @@ static int pdc_subsys_init(const struct device *dev);
 static void send_cmd_init(struct pdc_port_t *port);
 static void queue_internal_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd);
 static int queue_public_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd);
-static void init_port_variables(struct pdc_port_t *port);
+static void init_port_variables(struct pdc_port_t *port,
+				bool reset_charge_manager);
 static int pdc_power_mgmt_request_power_swap_intern(int port,
 						    enum pd_power_role role);
 static void pd_chipset_startup(void);
@@ -1003,16 +1004,26 @@ void pdc_power_mgmt_clear_event(int port, atomic_t event_mask)
 /**
  * @brief Limits the charge current to zero and invalidates and received Source
  * PDOS. This function also seeds the charger.
+ *
+ * @param port PDC port instance
+ * @param reset_charger If true, reset the charge manager.  Should be false
+ * during system initialization and true otherwise.  System initialization
+ * should bypass charge manager reset so that the charger manager is seeded
+ * only after the PDC power management thread initializes the PDC state.
  */
-static void invalidate_charger_settings(struct pdc_port_t *port)
+static void invalidate_charger_settings(struct pdc_port_t *port,
+					bool reset_charge_manager)
 {
 	const struct pdc_config_t *const config = port->dev->config;
 
-	typec_set_input_current_limit(config->connector_num, 0, 0);
-	pd_set_input_current_limit(config->connector_num, 0, 0);
-	charge_manager_set_ceil(config->connector_num, CEIL_REQUESTOR_PD,
-				CHARGE_CEIL_NONE);
-	charge_manager_update_dualrole(config->connector_num, CAP_UNKNOWN);
+	if (reset_charge_manager) {
+		typec_set_input_current_limit(config->connector_num, 0, 0);
+		pd_set_input_current_limit(config->connector_num, 0, 0);
+		charge_manager_set_ceil(config->connector_num,
+					CEIL_REQUESTOR_PD, CHARGE_CEIL_NONE);
+		charge_manager_update_dualrole(config->connector_num,
+					       CAP_UNKNOWN);
+	}
 
 	/* Invalidate PDOS */
 	port->snk_policy.pdo = 0;
@@ -1500,6 +1511,7 @@ static void run_typec_snk_policies(struct pdc_port_t *port)
 		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
 	} else if (atomic_test_and_clear_bit(port->snk_policy.flags,
 					     SNK_POLICY_UPDATE_TYPEC_CURRENT)) {
+		pd_set_input_current_limit(config->connector_num, 0, 0);
 		typec_set_input_current_limit(config->connector_num,
 					      port->typec_current_ma, 5000);
 
@@ -1615,7 +1627,7 @@ static void pdc_unattached_entry(void *obj)
 	port->vbus_expired = sys_timepoint_calc(K_NO_WAIT);
 
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
-		invalidate_charger_settings(port);
+		invalidate_charger_settings(port, true);
 		port->unattached_local_state = UNATTACHED_SET_SINK_PATH_OFF;
 		/* Update source current limit policy */
 		pdc_dpm_remove_sink(port_number);
@@ -1674,7 +1686,7 @@ static void pdc_src_attached_entry(void *obj)
 	port->send_cmd.intern.pending = false;
 
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
-		invalidate_charger_settings(port);
+		invalidate_charger_settings(port, true);
 		port->src_attached_local_state = SRC_ATTACHED_SET_SINK_PATH_OFF;
 	}
 
@@ -2012,6 +2024,7 @@ static void pdc_snk_attached_run(void *obj)
 		LOG_INF("C: %d", max_ma);
 		LOG_INF("P: %d", max_mw);
 
+		typec_set_input_current_limit(config->connector_num, 0, 0);
 		pd_set_input_current_limit(config->connector_num, max_ma,
 					   max_mv);
 		charge_manager_set_ceil(config->connector_num,
@@ -2579,6 +2592,7 @@ static void pdc_snk_typec_only_run(void *obj)
 		atomic_clear_bit(port->snk_policy.flags,
 				 SNK_POLICY_UPDATE_TYPEC_CURRENT);
 
+		pd_set_input_current_limit(config->connector_num, 0, 0);
 		typec_set_input_current_limit(config->connector_num,
 					      port->typec_current_ma, 5000);
 
@@ -2786,7 +2800,7 @@ static void pdc_suspended_run(void *obj)
 	}
 
 	/* No longer suspended. Do a full reset. */
-	init_port_variables(port);
+	init_port_variables(port, true);
 	set_pdc_state(port, PDC_INIT);
 }
 
@@ -2876,10 +2890,11 @@ static void pdc_ci_handler_cb(const struct device *dev,
 		k_event_post(&port->sm_event, PDC_SM_EVENT);
 }
 
-static void init_port_variables(struct pdc_port_t *port)
+static void init_port_variables(struct pdc_port_t *port,
+				bool reset_charge_manager)
 {
-	/* This also seeds the Charge Manager */
-	invalidate_charger_settings(port);
+	/* This optionally seeds the Charge Manager */
+	invalidate_charger_settings(port, reset_charge_manager);
 
 	/* Init port variables */
 
@@ -2913,7 +2928,7 @@ static int pdc_subsys_init(const struct device *dev)
 		return -ENODEV;
 	}
 
-	init_port_variables(port);
+	init_port_variables(port, false);
 
 	/* Set cc call back */
 	port->cc_cb.handler = pdc_cc_handler_cb;
