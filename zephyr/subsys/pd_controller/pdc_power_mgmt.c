@@ -547,6 +547,11 @@ struct pdc_src_attached_policy_t {
 	struct pdc_pdos_t src;
 	/** Request RDO from port partner */
 	uint32_t rdo;
+	/** Stores our desired LPM source PDO. This is sent to the PDC when the
+	 *  {UNA|SNK|SRC}_POLICY_UPDATE_SRC_CAPS policy flags are triggered.
+	 *  PDC Power Management chooses this value based on policy.
+	 */
+	uint32_t lpm_src_pdo;
 	/** If true, accept a power role swap request from port partner */
 	bool accept_power_role_swap;
 };
@@ -752,12 +757,10 @@ static const uint32_t pdo_fixed_flags =
 	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP | PDO_FIXED_COMM_CAP |
 	 PDO_FIXED_PEAK_CURR(PDO_PEAK_OCP));
 
-static const uint32_t pdc_src_pdo_nominal[] = {
-	PDO_FIXED(5000, 1500, pdo_fixed_flags),
-};
-static const uint32_t pdc_src_pdo_max[] = {
-	PDO_FIXED(5000, 3000, pdo_fixed_flags),
-};
+static const uint32_t pdc_src_pdo_nominal =
+	PDO_FIXED(5000, 1500, pdo_fixed_flags);
+
+static const uint32_t pdc_src_pdo_max = PDO_FIXED(5000, 3000, pdo_fixed_flags);
 
 static const struct smf_state pdc_states[];
 static enum pdc_state_t get_pdc_state(struct pdc_port_t *port);
@@ -1323,6 +1326,12 @@ static void run_unattached_policies(struct pdc_port_t *port)
 		/* Ensure the next time a PD capable SNK connects, we offer
 		 * a safe PDO.
 		 */
+		port->set_pdos = (struct set_pdos_t){
+			.count = 1,
+			.type = SOURCE_PDO,
+			.pdos = { port->src_policy.lpm_src_pdo },
+		};
+
 		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
 		return;
 	}
@@ -1413,6 +1422,12 @@ static void run_snk_policies(struct pdc_port_t *port)
 		/* Update the LPM with the correct SRC PDO in case there
 		 * is a power role swap.
 		 */
+		port->set_pdos = (struct set_pdos_t){
+			.count = 1,
+			.type = SOURCE_PDO,
+			.pdos = { port->src_policy.lpm_src_pdo },
+		};
+
 		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
 		return;
 	}
@@ -1463,6 +1478,12 @@ static void run_typec_snk_policies(struct pdc_port_t *port)
 		/* Ensure the next time a PD capable SNK connects, we offer
 		 * a safe PDO.
 		 */
+		port->set_pdos = (struct set_pdos_t){
+			.count = 1,
+			.type = SOURCE_PDO,
+			.pdos = { port->src_policy.lpm_src_pdo },
+		};
+
 		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
 	} else if (atomic_test_and_clear_bit(port->snk_policy.flags,
 					     SNK_POLICY_UPDATE_TYPEC_CURRENT)) {
@@ -1501,6 +1522,12 @@ static void run_src_policies(struct pdc_port_t *port)
 	} else if (atomic_test_and_clear_bit(port->src_policy.flags,
 					     SRC_POLICY_UPDATE_SRC_CAPS)) {
 		/* Update the PDC SRC_CAP message */
+		port->set_pdos = (struct set_pdos_t){
+			.count = 1,
+			.type = SOURCE_PDO,
+			.pdos = { port->src_policy.lpm_src_pdo },
+		};
+
 		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
 		/*
 		 * After sending new SRC_CAP message, get the RDO from the port
@@ -1538,6 +1565,12 @@ static void run_typec_src_policies(struct pdc_port_t *port)
 		/* Ensure the next time a PD capable SNK connects, we offer
 		 * a safe PDO.
 		 */
+		port->set_pdos = (struct set_pdos_t){
+			.count = 1,
+			.type = SOURCE_PDO,
+			.pdos = { port->src_policy.lpm_src_pdo },
+		};
+
 		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
 	} else {
 		send_pending_public_commands(port);
@@ -4099,11 +4132,9 @@ int pdc_power_mgmt_set_current_limit(int port_num,
 	pdc->una_policy.tcc = current;
 
 	/* Always set the new SRC PDO. */
-	pdc->set_pdos.count = 1;
-	pdc->set_pdos.type = SOURCE_PDO;
-	pdc->set_pdos.pdos[0] = current == TC_CURRENT_3_0A ?
-					pdc_src_pdo_max[0] :
-					pdc_src_pdo_nominal[0];
+	pdc->src_policy.lpm_src_pdo = current == TC_CURRENT_3_0A ?
+					      pdc_src_pdo_max :
+					      pdc_src_pdo_nominal;
 
 	LOG_INF("C%d: set current limit %s", port_num,
 		(current == TC_CURRENT_3_0A) ? "3.0A" : "1.5A");
