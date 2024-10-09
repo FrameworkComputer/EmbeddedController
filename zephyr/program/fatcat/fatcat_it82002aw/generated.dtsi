@@ -41,6 +41,7 @@
 		};
 		gpio_bga_pinb4: bga_pinb4 {
 			gpios = <&gpioe 4 (GPIO_INPUT)>;
+			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_bga_pinc1: bga_pinc1 {
 			gpios = <&gpiof 7 (GPIO_INPUT)>;
@@ -130,16 +131,17 @@
 			gpios = <&gpioc 5 (GPIO_INPUT)>;
 		};
 		gpio_pch_pwrok_ec_r: pch_pwrok_ec_r {
-			gpios = <&gpioj 1 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
+			gpios = <&gpioj 1 (GPIO_INPUT)>;
 		};
 		gpio_pch_slp_s0_n_r: pch_slp_s0_n_r {
 			gpios = <&gpioj 5 (GPIO_INPUT)>;
 		};
 		gpio_pm_pwrbtn_n_r: pm_pwrbtn_n_r {
 			gpios = <&gpioe 3 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		gpio_pm_rsmrst_n_r: pm_rsmrst_n_r {
-			gpios = <&gpiob 2 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpiob 2 (GPIO_INPUT)>;
 		};
 		gpio_pm_slp_s3_n_r: pm_slp_s3_n_r {
 			gpios = <&gpioh 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
@@ -151,7 +153,7 @@
 			gpios = <&gpioi 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_rsmrst_pwrgd_n_r: rsmrst_pwrgd_n_r {
-			gpios = <&gpiof 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpiof 0 (GPIO_INPUT)>;
 		};
 		gpio_rst_push_n_d_r: rst_push_n_d_r {
 			gpios = <&gpioj 7 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
@@ -163,7 +165,7 @@
 			gpios = <&gpiod 3 (GPIO_INPUT)>;
 		};
 		gpio_smc_wake_sci_n_r: smc_wake_sci_n_r {
-			gpios = <&gpiob 6 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpiob 6 (GPIO_INPUT)>;
 		};
 		gpio_std_adpt_cntrl_gpio_r: std_adpt_cntrl_gpio_r {
 			gpios = <&gpioa 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
@@ -172,7 +174,7 @@
 			gpios = <&gpioa 6 (GPIO_INPUT)>;
 		};
 		gpio_sys_pwrok_ec_r: sys_pwrok_ec_r {
-			gpios = <&gpiof 1 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
+			gpios = <&gpiof 1 (GPIO_INPUT)>;
 		};
 		gpio_virtual_battery_r: virtual_battery_r {
 			gpios = <&gpiod 7 (GPIO_INPUT)>;
@@ -188,6 +190,9 @@
 		};
 		gpio_wc_usbc_pd_alrt_aic2_r: wc_usbc_pd_alrt_aic2_r {
 			gpios = <&gpioj 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_x00085: x00085 {
+			gpios = <&gpioj 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
 		};
 	};
 
