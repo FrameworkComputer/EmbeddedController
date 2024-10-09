@@ -7,3 +7,4 @@
  * Aliases to common names
  */
 gpio_ec_pch_wake_odl: &gpio_smc_wake_sci_n_r {};
+cse_early_rec_sw: &gpio_x00085 {};
