@@ -159,7 +159,7 @@ values of the individual pixels do not deviate from the median.
 Use `ectool` to capture the first checkerboard pattern image:
 
 ```bash
-(dut) $ ectool --name=cros_fp fpmode capture pattern0; ectool --name=cros_fp waitevent 5 500
+(dut) $ ectool --name=cros_fp waitevent FINGERPRINT 500 fpmode capture pattern0
 FP mode: (0x20000008) capture
 MKBP event 5 data: 00 00 00 80
 ```
@@ -173,7 +173,7 @@ Copy the first checkerboard image to a file:
 Use `ectool` to capture the second checkerboard pattern image:
 
 ```bash
-(dut) $ ectool --name=cros_fp fpmode capture pattern1; ectool --name=cros_fp waitevent 5 500
+(dut) $ ectool --name=cros_fp waitevent FINGERPRINT 500 fpmode capture pattern1
 FP mode: (0x30000008) capture
 MKBP event 5 data: 00 00 00 80
 ```
@@ -273,7 +273,7 @@ does this in [`fingerprint_mcu.py`][ProcessResetPixelImage].
 Switch to correct capture mode and wait:
 
 ```bash
-(dut) $ ectool --name=cros_fp fpmode capture test_reset; ectool --name=cros_fp waitevent 5 500
+(dut) $ ectool --name=cros_fp waitevent FINGERPRINT 500 fpmode capture test_reset
 FP mode: (0x50000008) capture
 MKBP event 5 data: 00 00 00 80
 ```
@@ -305,20 +305,12 @@ encouraged to perform it.
 Ensure that nothing is on the fingerprint sensor and then run the following:
 
 ```bash
-(dut) $ ectool --name=cros_fp fpmode capture qual
-(dut) $ ectool --name=cros_fp waitevent FINGERPRINT 10000
+(dut) $ ectool --name=cros_fp waitevent FINGERPRINT 10000 fpmode capture qual
 ```
-
-*This only works when you can guarantee that the sensor touch only occurs after
-calling the second command.*
 
 Touch the rubber stamp to the fingerprint sensor within 10 seconds of the last
-command, otherwise a timeout will occur. If done successfully, the following
-message should be printed:
-
-```
-MKBP event 5 data: 00 00 00 80
-```
+command, otherwise a timeout will occur. If done successfully, a message similar
+to `MKBP event 5 data: 00 00 00 80` will be printed.
 
 To retrieve the fingerprint frame from the MCU, run the following command:
 
@@ -447,20 +439,12 @@ Tool version:  v2.0.2144-1524c164f 2019-09-09 06:50:36 @chromeos-ci-legacy-us-ce
 Ensure that nothing is on the fingerprint sensor and then run the following:
 
 ```bash
-(dut) $ ectool --name=cros_fp fpmode capture vendor
-(dut) $ ectool --name=cros_fp waitevent FINGERPRINT 10000
+(dut) $ ectool --name=cros_fp waitevent FINGERPRINT 10000 fpmode capture vendor
 ```
-
-*This only works when you can guarantee that the sensor touch only occurs after
-calling the second command.*
 
 Touch sensor once and remove within 10 seconds of the last command, otherwise a
-timeout will occur. If done successfully, the following message should be
-printed:
-
-```
-MKBP event 5 data: 00 00 00 80
-```
+timeout will occur. If done successfully, a message similar to `MKBP event 5
+data: 00 00 00 80` will be printed.
 
 To retrieve the fingerprint frame from the MCU, run the following command:
 
