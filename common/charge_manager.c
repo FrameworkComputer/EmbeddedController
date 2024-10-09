@@ -1297,7 +1297,6 @@ void charge_manager_leave_safe_mode(void)
 	 */
 	crec_msleep(board_get_leave_safe_mode_delay_ms());
 	CPRINTS("%s()", __func__);
-	cflush();
 	left_safe_mode = 1;
 	if (charge_manager_is_seeded())
 		hook_call_deferred(&charge_manager_refresh_data, 0);
