@@ -10,6 +10,7 @@ Initialize the coreboot-sdk subtools and provide environment variables
 to the caller to indicate the extracted location.
 """
 
+import os
 import subprocess
 
 
@@ -19,6 +20,10 @@ def init_toolchain():
     Returns:
         Environment variables to use for toolchain.
     """
+    if os.environ.get("COREBOOT_SDK_ROOT") is not None:
+        print("COREBOOT_SDK_ROOT already set by environment, returning")
+        return {}
+
     # (environment variable, bazel target)
     toolchains = [
         ("COREBOOT_SDK_ROOT_arm", "@ec-coreboot-sdk-arm-eabi//:get_path"),

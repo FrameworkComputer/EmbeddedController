@@ -16,6 +16,16 @@ from zmake import multiproc
 import zmake.zmake as zm
 
 
+# Add the Util dir early in the python search path
+EC_DIR = pathlib.Path(__file__).parent.parent.parent.parent.resolve()
+
+# Add the util directory to the search path
+sys.path.append(str(EC_DIR / "util"))
+
+# pylint: disable=import-error, wrong-import-position
+from coreboot_sdk import init_toolchain
+
+
 def maybe_reexec(argv):
     """Re-exec zmake from the EC source tree, if possible and desired.
 
@@ -383,6 +393,10 @@ def main(argv=None):
 
     parser, _ = get_argparser()
     opts = parser.parse_args(argv)
+
+    env_vars = init_toolchain()
+    if env_vars:
+        os.environ.update({k: v.decode("utf-8") for k, v in env_vars.items()})
 
     # Default logging
     log_label = False
