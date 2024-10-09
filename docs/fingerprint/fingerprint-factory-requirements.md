@@ -302,21 +302,25 @@ encouraged to perform it.
 
 ##### Implementation
 
-Capture the image when the rubber stamp is applied:
+Ensure that nothing is on the fingerprint sensor and then run the following:
 
 ```bash
 (dut) $ ectool --name=cros_fp fpmode capture qual
-FP mode: (0x40000008) capture
+(dut) $ ectool --name=cros_fp waitevent FINGERPRINT 10000
 ```
 
-Wait for the capture to be finished, timeout after 10s:
+*This only works when you can guarantee that the sensor touch only occurs after
+calling the second command.*
 
-```bash
-(dut) $ ectool --name=cros_fp waitevent 5 10000
+Touch the rubber stamp to the fingerprint sensor within 10 seconds of the last
+command, otherwise a timeout will occur. If done successfully, the following
+message should be printed:
+
+```
 MKBP event 5 data: 00 00 00 80
 ```
 
-Copy the raw captured from to the AP:
+To retrieve the fingerprint frame from the MCU, run the following command:
 
 ```bash
 (dut) $ ectool --name=cros_fp fpframe raw > /tmp/fp.raw
@@ -440,21 +444,25 @@ Tool version:  v2.0.2144-1524c164f 2019-09-09 06:50:36 @chromeos-ci-legacy-us-ce
 
 ### Capture Raw Images
 
-Put your finger on the sensor, then run:
+Ensure that nothing is on the fingerprint sensor and then run the following:
 
 ```bash
 (dut) $ ectool --name=cros_fp fpmode capture vendor
+(dut) $ ectool --name=cros_fp waitevent FINGERPRINT 10000
 ```
 
-Wait for the capture to be finished, timeout after 10s:
+*This only works when you can guarantee that the sensor touch only occurs after
+calling the second command.*
 
-```bash
-(dut) $ ectool --name=cros_fp waitevent 5 10000
+Touch sensor once and remove within 10 seconds of the last command, otherwise a
+timeout will occur. If done successfully, the following message should be
+printed:
+
+```
 MKBP event 5 data: 00 00 00 80
 ```
 
-Remove the finger from the sensor, then start the retrieval of the frame from
-the MCU to the AP:
+To retrieve the fingerprint frame from the MCU, run the following command:
 
 ```bash
 (dut) $ ectool --name=cros_fp fpframe raw > /tmp/fp.raw
