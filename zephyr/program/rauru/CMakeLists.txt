@@ -25,4 +25,8 @@ if(DEFINED CONFIG_BOARD_RAURU)
 elseif(DEFINED CONFIG_BOARD_NAVI)
 	project(navi)
 	add_subdirectory(navi)
+
+elseif(DEFINED CONFIG_BOARD_HYLIA)
+	project(hylia)
+	add_subdirectory(hylia)
 endif()

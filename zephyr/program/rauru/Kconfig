@@ -34,6 +34,12 @@ config BOARD_NAVI
 	  Build Google Navi board. Navi has MediaTek SoC
 	  with ITE it82202-ax EC.
 
+config BOARD_HYLIA
+	bool "Google Hylia Board"
+	help
+	  Build Google Hylia board. Hylia has MediaTek SoC
+	  with ITE it82202-ax EC.
+
 module = RAURU
 module-str = Rauru board-specific code
 source "subsys/logging/Kconfig.template.log_config"
