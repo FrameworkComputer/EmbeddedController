@@ -83,15 +83,15 @@ void watchdog_warning_irq(void)
 		     get_mepc(), ira, task_get_current());
 #endif
 
-	if (IS_ENABLED(CONFIG_PANIC_ON_WATCHDOG_WARNING))
-		software_panic(PANIC_SW_WATCHDOG, task_get_current());
-
-	if (!wdt_warning_fired++)
+	if (!wdt_warning_fired++) {
+		if (IS_ENABLED(CONFIG_PANIC_ON_WATCHDOG_WARNING))
+			software_panic(PANIC_SW_WATCHDOG, task_get_current());
 		/*
 		 * Reduce interval of warning timer, so we can print more
 		 * warning messages during critical period.
 		 */
 		watchdog_set_warning_timer(ITE83XX_WATCHDOG_CRITICAL_MS, 0);
+	}
 }
 
 void watchdog_reload(void)
