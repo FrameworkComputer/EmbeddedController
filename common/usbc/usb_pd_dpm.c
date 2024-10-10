@@ -1127,9 +1127,10 @@ static uint8_t get_status_power_state_change(void)
 int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len)
 {
 	struct pd_sdb sdb;
-	struct rmdo partner_rmdo;
 
 	/* TODO(b/227236917): Fill in fields of Status message */
+
+	/* See USB PD r3.1 ss 6.5.2 Status Message */
 
 	/* Internal Temp */
 	sdb.internal_temp = get_status_internal_temp();
@@ -1149,17 +1150,18 @@ int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len)
 	/* Power Status */
 	sdb.power_status = 0x0;
 
-	partner_rmdo = pd_get_partner_rmdo(port);
-	if ((partner_rmdo.major_rev == 3 && partner_rmdo.minor_rev >= 1) ||
-	    partner_rmdo.major_rev > 3) {
-		/* USB PD Rev 3.1: 6.5.2 Status Message */
-		sdb.power_state_change = get_status_power_state_change();
-		*len = 7;
-	} else {
-		/* USB PD Rev 3.0: 6.5.2 Status Message */
-		sdb.power_state_change = 0;
-		*len = 6;
-	}
+	/* Power State Change */
+	sdb.power_state_change = get_status_power_state_change();
+
+	/* PD r3.1 added the Power State Change byte to SDB and also added the
+	 * requirement that, "Additional bytes that might be added to existing
+	 * Messages in [a] future revision of this specification Shall be
+	 * Ignored." Plausibly, a PD 3.0 implementation could react poorly to
+	 * receiving this 7th byte. However, the PD r3.1 CTS (2024 Q1),
+	 * COMMON.CHECK.PD3.10 Check Extended Message Header requires that the
+	 * SDB be 7 bytes long. Always send a 7-byte Status. See b/366241394.
+	 */
+	*len = 7;
 
 	memcpy(msg, &sdb, *len);
 	return EC_SUCCESS;

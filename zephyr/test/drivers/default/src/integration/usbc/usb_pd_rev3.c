@@ -538,3 +538,66 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, test_give_revision)
 		      "Expected RMDO %x, got %x", expected_rev,
 		      fixture->source_5v_3a.rmdo);
 }
+
+uint8_t get_status_data_size(sys_slist_t *msg_log)
+{
+	struct tcpci_partner_log_msg *msg;
+	uint8_t data_size = 0;
+
+	SYS_SLIST_FOR_EACH_CONTAINER(msg_log, msg, node)
+	{
+		uint16_t header = sys_get_le16(msg->buf);
+		if (msg->sender != TCPCI_PARTNER_SENDER_TCPM ||
+		    !PD_HEADER_EXT(header) ||
+		    PD_HEADER_TYPE(header) != PD_EXT_STATUS) {
+			continue;
+		}
+
+		uint16_t ext_header = sys_get_le16(msg->buf + sizeof(uint16_t));
+		data_size = PD_EXT_HEADER_DATA_SIZE(ext_header);
+		break;
+	}
+
+	return data_size;
+}
+
+/* The TCPM should respond to Get_Status with a 7-byte Status as defined in PD
+ * r3.1 and newer, regardless of the partner's response (or non-response) to
+ * Get_Revision. Test two cases to verify this. See b/366241394 for details.
+ */
+ZTEST_F(usb_attach_5v_3a_pd_source_rev3, test_get_status_response_pd31)
+{
+	tcpci_partner_common_enable_pd_logging(&fixture->source_5v_3a, true);
+	tcpci_partner_send_control_msg(&fixture->source_5v_3a,
+				       PD_CTRL_GET_STATUS, 0);
+	k_sleep(K_SECONDS(2));
+	tcpci_partner_common_enable_pd_logging(&fixture->source_5v_3a, false);
+
+	/* When a partner supplies a Revision of PD r3.1 or greater, the TCPM
+	 * should respond to Get_Status with a 7-byte Status Data Block, as
+	 * defined in PD r3.1.
+	 */
+	zassert_equal(get_status_data_size(&fixture->source_5v_3a.msg_log), 7);
+}
+
+ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
+	test_get_status_response_pd_no_revision)
+{
+	disconnect_source_from_port(fixture->tcpci_emul, fixture->charger_emul);
+	/* Set the partner to respond to Get_Revision with Not_Supported */
+	fixture->source_5v_3a.rmdo = 0x0;
+	connect_source_to_port(&fixture->source_5v_3a, &fixture->src_ext, 1,
+			       fixture->tcpci_emul, fixture->charger_emul);
+
+	tcpci_partner_common_enable_pd_logging(&fixture->source_5v_3a, true);
+	tcpci_partner_send_control_msg(&fixture->source_5v_3a,
+				       PD_CTRL_GET_STATUS, 0);
+	k_sleep(K_SECONDS(2));
+	tcpci_partner_common_enable_pd_logging(&fixture->source_5v_3a, false);
+
+	/* When a partner does not supply a Revision message, the TCPM should
+	 * respond to Get_Status with a 7-byte Status Data Block, as defined in
+	 * PD r3.1.
+	 */
+	zassert_equal(get_status_data_size(&fixture->source_5v_3a.msg_log), 7);
+}
