@@ -1509,8 +1509,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_connector_status)
 
 	emul_pdc_configure_snk(emul, &in);
 	emul_pdc_connect_partner(emul, &in);
-	zassert_true(TEST_WAIT_FOR(pdc_power_mgmt_is_pd_attached(TEST_PORT),
-				   PDC_TEST_TIMEOUT));
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
 
 	zassert_ok(pdc_power_mgmt_get_connector_status(TEST_PORT, &out));
 	zassert_ok(pdc_power_mgmt_get_last_status_change(
@@ -1597,8 +1596,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_cable_prop)
 
 	emul_pdc_configure_snk(emul, &in_conn_status);
 	emul_pdc_connect_partner(emul, &in_conn_status);
-	zassert_true(TEST_WAIT_FOR(pdc_power_mgmt_is_pd_attached(TEST_PORT),
-				   PDC_TEST_TIMEOUT));
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
 
 	zassert_ok(pdc_power_mgmt_get_connector_status(TEST_PORT,
 						       &out_conn_status));
