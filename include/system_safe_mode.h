@@ -57,9 +57,9 @@ void handle_system_safe_mode_timeout(void);
 
 #ifdef TEST_BUILD
 /**
- * Directly set safe mode flag. Only used in tests.
+ * Reset safe mode flags. Only used in tests.
  */
-void set_system_safe_mode(bool mode);
+void reset_system_safe_mode(void);
 #endif
 
 #ifdef __cplusplus
