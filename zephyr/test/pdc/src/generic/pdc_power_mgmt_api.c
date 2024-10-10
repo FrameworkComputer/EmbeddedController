@@ -2042,14 +2042,14 @@ ZTEST_USER(pdc_power_mgmt_api, test_pdc_power_mgmt_set_active_charge_port)
 	zassert_ok(board_set_active_charge_port(CHARGE_PORT_NONE));
 	emul_pdc_configure_snk(emul, &connector_status);
 	emul_pdc_connect_partner(emul, &connector_status);
-	zassert_true(
-		TEST_WAIT_FOR(pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
 	/* Sink path should be disabled because it's not active charge port */
 	zassert_false(is_sink_path_enabled());
 
 	zassert_ok(board_set_active_charge_port(TEST_PORT));
 	/* Sink path should be enabled after activating TEST_PORT */
-	zassert_true(TEST_WAIT_FOR(is_sink_path_enabled(), PDC_TEST_TIMEOUT));
+	zassert_ok(pdc_power_mgmt_resync_port_state_for_ppm(TEST_PORT));
+	zassert_true(is_sink_path_enabled());
 }
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_vconn_state)
