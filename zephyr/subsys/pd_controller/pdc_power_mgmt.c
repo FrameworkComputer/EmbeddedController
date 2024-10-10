@@ -1117,6 +1117,12 @@ static bool handle_connector_status(struct pdc_port_t *port)
 	LOG_DBG("C%d: Connector Change: 0x%04x", port_number,
 		conn_status_change_bits.raw_value);
 
+	if (port->sink_path_en != status->sink_path_status) {
+		LOG_DBG("C%d: Sink path status change: %d", port_number,
+			status->sink_path_status);
+		port->sink_path_en = status->sink_path_status;
+	}
+
 	/*
 	 * Set CCI_ACK flag to trigger sending ACK_CC_CI to clear the connector
 	 * change indicator bits which were just read as part of the connector
@@ -1511,6 +1517,11 @@ static void run_typec_snk_policies(struct pdc_port_t *port)
 		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
 	} else if (atomic_test_and_clear_bit(port->snk_policy.flags,
 					     SNK_POLICY_UPDATE_TYPEC_CURRENT)) {
+		if (port->sink_path_en) {
+			charge_manager_set_supplier(config->connector_num,
+						    CHARGE_SUPPLIER_TYPEC);
+		}
+
 		pd_set_input_current_limit(config->connector_num, 0, 0);
 		typec_set_input_current_limit(config->connector_num,
 					      port->typec_current_ma, 5000);
@@ -2023,6 +2034,11 @@ static void pdc_snk_attached_run(void *obj)
 		LOG_INF("V: %d", max_mv);
 		LOG_INF("C: %d", max_ma);
 		LOG_INF("P: %d", max_mw);
+
+		if (port->sink_path_en) {
+			charge_manager_set_supplier(config->connector_num,
+						    CHARGE_SUPPLIER_PD);
+		}
 
 		typec_set_input_current_limit(config->connector_num, 0, 0);
 		pd_set_input_current_limit(config->connector_num, max_ma,
@@ -2591,6 +2607,11 @@ static void pdc_snk_typec_only_run(void *obj)
 		 */
 		atomic_clear_bit(port->snk_policy.flags,
 				 SNK_POLICY_UPDATE_TYPEC_CURRENT);
+
+		if (port->sink_path_en) {
+			charge_manager_set_supplier(config->connector_num,
+						    CHARGE_SUPPLIER_TYPEC);
+		}
 
 		pd_set_input_current_limit(config->connector_num, 0, 0);
 		typec_set_input_current_limit(config->connector_num,

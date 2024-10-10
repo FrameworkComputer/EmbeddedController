@@ -250,6 +250,21 @@ int charge_manager_get_charger_voltage(void);
 enum charge_supplier charge_manager_get_supplier(void);
 
 /**
+ * Set the initial charge port and supplier during initialization.
+ *
+ * This is used by the PDC support to indicate which port is currently
+ * supplying power to the system.  In a batteryless configuration, we can't
+ * switch the charge supplier.
+ *
+ * If the charge manager has already selected a port and supplier, this
+ * routine is a no-op.
+ *
+ * @param port - Port supplying power at boot.
+ * @param supplier - Supplier type at boot.
+ */
+void charge_manager_set_supplier(int port, enum charge_supplier supplier);
+
+/**
  * Get the current VBUS voltage.
  *
  * @param port The USB-C port to query

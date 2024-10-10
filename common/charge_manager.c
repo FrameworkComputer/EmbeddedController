@@ -1423,6 +1423,20 @@ enum charge_supplier charge_manager_get_supplier(void)
 	return charge_supplier;
 }
 
+void charge_manager_set_supplier(int port, enum charge_supplier supplier)
+{
+	if (charge_supplier != CHARGE_SUPPLIER_NONE ||
+	    charge_port != CHARGE_PORT_NONE) {
+		return;
+	}
+
+	CPRINTS("Seeding initial charge supplier, port %d, supplier %d", port,
+		supplier);
+
+	charge_port = port;
+	charge_supplier = supplier;
+}
+
 int charge_manager_get_power_limit_uw(void)
 {
 	int current_ma = charge_current;
