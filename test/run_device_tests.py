@@ -422,7 +422,6 @@ class Renode(Platform):
                 "libcxx",
                 "power_utilization",
                 "std_vector",
-                "flash_physical",
                 "fpsensor_auth_crypto_stateless",
                 "unaligned_access_benchmark",
             ]:
