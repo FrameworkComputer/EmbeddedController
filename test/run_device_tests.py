@@ -425,7 +425,6 @@ class Renode(Platform):
                 "flash_physical",
                 "flash_write_protect",
                 "fpsensor_auth_crypto_stateless",
-                "system_is_locked_wp_off",
                 "unaligned_access_benchmark",
             ]:
                 return True
