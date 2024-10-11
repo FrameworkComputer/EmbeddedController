@@ -19,16 +19,24 @@ from typing import List, Optional
 DEFAULT_BOARD = "bloonchipper"
 DEFAULT_PROJECT = "ec"
 
+DARTMONKEY_CONSOLE = "sysbus.usart1"
+
 CONSOLE_MAP: dict[str, str] = {
     "bloonchipper": "sysbus.usart2",
     "buccaneer": "sysbus.cr_uart1",
-    "dartmonkey": "sysbus.usart1",
+    "dartmonkey": DARTMONKEY_CONSOLE,
     "helipilot": "sysbus.cr_uart1",
+    "nami_fp": DARTMONKEY_CONSOLE,
+    "nocturne_fp": DARTMONKEY_CONSOLE,
 }
+
+DARTMONKEY_GPIO_WP = "sysbus.gpioPortB.GPIO_WP"
 
 GPIO_WP_MAP: dict[str, str] = {
     "bloonchipper": "sysbus.gpioPortB.GPIO_WP",
-    "dartmonkey": "sysbus.gpioPortB.GPIO_WP",
+    "dartmonkey": DARTMONKEY_GPIO_WP,
+    "nami_fp": DARTMONKEY_GPIO_WP,
+    "nocturne_fp": DARTMONKEY_GPIO_WP,
 }
 
 GPIO_WP_ENABLE = "Release"
