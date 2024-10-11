@@ -59,6 +59,7 @@ config CROS_SHI_IT8XXX2
 	default y
 	depends on !EC_HOST_CMD
 	depends on DT_HAS_ITE_IT8XXX2_SHI_ENABLED
+	select PINCTRL
 	help
 	  This option enables spi host interface driver which is required to
 	  communicate with the EC when the CPU is the ARM processor.
