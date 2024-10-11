@@ -47,9 +47,6 @@ static void *usb_attach_5v_3a_pd_source_setup(void)
 	test_fixture.src_ext.pdo[1] =
 		PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
 
-	/* Set the partner's USB PD Revision to 3.1 */
-	test_fixture.source_5v_3a.rmdo = 0x31000000;
-
 	return &test_fixture;
 }
 
@@ -62,6 +59,9 @@ static void usb_attach_5v_3a_pd_source_before(void *data)
 
 	/* TODO(b/214401892): Check why need to give time TCPM to spin */
 	k_sleep(K_SECONDS(1));
+
+	/* Set the partner's USB PD Revision to 3.1 */
+	fixture->source_5v_3a.rmdo = 0x31000000;
 
 	connect_source_to_port(&fixture->source_5v_3a, &fixture->src_ext, 1,
 			       fixture->tcpci_emul, fixture->charger_emul);
