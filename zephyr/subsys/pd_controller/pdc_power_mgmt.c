@@ -278,6 +278,8 @@ enum snk_typec_attached_local_state_t {
 	SNK_TYPEC_ATTACHED_SET_CHARGE_CURRENT,
 	/** SNK_TYPEC_ATTACHED_DEBOUNCE */
 	SNK_TYPEC_ATTACHED_DEBOUNCE,
+	/** SNK_TYPEC_READ_POWER_LEVEL */
+	SNK_TYPEC_READ_POWER_LEVEL,
 	/** SNK_TYPEC_ATTACHED_RUN */
 	SNK_TYPEC_ATTACHED_RUN,
 };
@@ -292,6 +294,8 @@ enum src_typec_attached_local_state_t {
 	SRC_TYPEC_ATTACHED_DEBOUNCE,
 	/** SRC_TYPEC_ATTACHED_ADD_SINK */
 	SRC_TYPEC_ATTACHED_ADD_SINK,
+	/** SRC_TYPEC_READ_POWER_LEVEL */
+	SRC_TYPEC_READ_POWER_LEVEL,
 	/** SRC_TYPEC_ATTACHED_RUN */
 	SRC_TYPEC_ATTACHED_RUN,
 };
@@ -2536,10 +2540,15 @@ static void pdc_src_typec_only_run(void *obj)
 		}
 		return;
 	case SRC_TYPEC_ATTACHED_ADD_SINK:
-		port->src_typec_attached_local_state = SRC_TYPEC_ATTACHED_RUN;
+		port->src_typec_attached_local_state =
+			SRC_TYPEC_READ_POWER_LEVEL;
 		/* Notify DPM that a type-c only port partner is attached */
 		pdc_dpm_add_non_pd_sink(port_number);
 		return;
+	case SRC_TYPEC_READ_POWER_LEVEL:
+		port->src_typec_attached_local_state = SRC_TYPEC_ATTACHED_RUN;
+		queue_internal_cmd(port, CMD_PDC_READ_POWER_LEVEL);
+		break;
 	case SRC_TYPEC_ATTACHED_RUN:
 		run_typec_src_policies(port);
 		break;
@@ -2598,7 +2607,8 @@ static void pdc_snk_typec_only_run(void *obj)
 		}
 		return;
 	case SNK_TYPEC_ATTACHED_SET_CHARGE_CURRENT:
-		port->snk_typec_attached_local_state = SNK_TYPEC_ATTACHED_RUN;
+		port->snk_typec_attached_local_state =
+			SNK_TYPEC_READ_POWER_LEVEL;
 
 		/* Once we're updating the charger with the new current limit,
 		 * it's safe to clear the policy bit.  If the PDC reports
@@ -2619,6 +2629,10 @@ static void pdc_snk_typec_only_run(void *obj)
 
 		charge_manager_update_dualrole(config->connector_num,
 					       CAP_DEDICATED);
+		break;
+	case SNK_TYPEC_READ_POWER_LEVEL:
+		port->snk_typec_attached_local_state = SNK_TYPEC_ATTACHED_RUN;
+		queue_internal_cmd(port, CMD_PDC_READ_POWER_LEVEL);
 		break;
 	case SNK_TYPEC_ATTACHED_RUN:
 		run_typec_snk_policies(port);
