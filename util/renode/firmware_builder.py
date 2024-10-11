@@ -64,7 +64,7 @@ def test(_opts):
     cipd_renode_version = (
         "ebuild_source:"
         + "app-crypt/mit-krb5-1.21.3,"
-        + "app-emulation/renode-1.15.1_p20240714-r1,"
+        + "app-emulation/renode-1.15.3_p20241010,"
         + "dev-lang/mono-6.12.0.122,"
         + "sys-fs/e2fsprogs-1.47.0-r4,"
         + "sys-libs/glibc-2.37-r9"

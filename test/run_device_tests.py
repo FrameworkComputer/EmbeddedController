@@ -397,6 +397,11 @@ class Renode(Platform):
 
     def skip_test(self, test_name: str, board_config: BoardConfig) -> bool:
         if board_config.name in [BLOONCHIPPER, DARTMONKEY]:
+            if board_config.name == BLOONCHIPPER:
+                if test_name in [
+                    "timer",  # TODO(b/372968708)
+                ]:
+                    return True
             # TODO(b/356476313): Remove these when Renode is fixed.
             if test_name in [
                 "production_app_test",
