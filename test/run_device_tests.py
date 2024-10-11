@@ -423,7 +423,6 @@ class Renode(Platform):
                 "power_utilization",
                 "std_vector",
                 "flash_physical",
-                "flash_write_protect",
                 "fpsensor_auth_crypto_stateless",
                 "unaligned_access_benchmark",
             ]:
@@ -563,6 +562,7 @@ class AllTests:
                 imagetype_to_use=ImageType.RO,
                 toggle_power=True,
                 enable_hw_write_protect=True,
+                timeout_secs=20,
             ),
             TestConfig(
                 config_name="fp_transport_spi_ro",
