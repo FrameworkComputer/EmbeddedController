@@ -365,9 +365,10 @@ def main(args):
 
     Additionally, the tool reports build metrics.
     """
-    opts = zephyr.scripts.firmware_builder_lib.parse_args(
-        args, build, bundle, test
+    parser, _ = zephyr.scripts.firmware_builder_lib.create_arg_parser(
+        build, bundle, test
     )
+    opts = parser.parse_args(args)
 
     if not hasattr(opts, "func"):
         print("Must select a valid sub command!")

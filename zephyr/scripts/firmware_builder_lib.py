@@ -8,7 +8,7 @@ import argparse
 import multiprocessing
 
 
-def parse_args(args, build, bundle, test):
+def create_arg_parser(build, bundle, test):
     """Parse all command line args and return opts dict."""
     parser = argparse.ArgumentParser(description=__doc__)
 
@@ -68,4 +68,4 @@ def parse_args(args, build, bundle, test):
     test_cmd = sub_cmds.add_parser("test", help="Runs all firmware unit tests")
     test_cmd.set_defaults(func=test)
 
-    return parser.parse_args(args)
+    return parser, sub_cmds
