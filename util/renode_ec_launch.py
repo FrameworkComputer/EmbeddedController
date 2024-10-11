@@ -31,10 +31,13 @@ CONSOLE_MAP: dict[str, str] = {
 }
 
 DARTMONKEY_GPIO_WP = "sysbus.gpioPortB.GPIO_WP"
+HELIPILOT_GPIO_WP = "sysbus.gpioa.GPIO_WP"
 
 GPIO_WP_MAP: dict[str, str] = {
     "bloonchipper": "sysbus.gpioPortB.GPIO_WP",
+    "buccaneer": HELIPILOT_GPIO_WP,
     "dartmonkey": DARTMONKEY_GPIO_WP,
+    "helipilot": HELIPILOT_GPIO_WP,
     "nami_fp": DARTMONKEY_GPIO_WP,
     "nocturne_fp": DARTMONKEY_GPIO_WP,
 }
