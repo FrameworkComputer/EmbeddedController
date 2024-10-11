@@ -422,8 +422,8 @@ class Renode(Platform):
                 "libcxx",
                 "power_utilization",
                 "std_vector",
-                "fpsensor_auth_crypto_stateless",
-                "unaligned_access_benchmark",
+                "fpsensor_auth_crypto_stateless",  # TODO(b/372969110)
+                "unaligned_access_benchmark",  # TODO(372969629)
             ]:
                 return True
 
