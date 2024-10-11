@@ -427,7 +427,6 @@ class Renode(Platform):
                 "flash_physical",
                 "flash_write_protect",
                 "fpsensor_auth_crypto_stateless",
-                "ftrapv",
                 "malloc",
                 "rollback_region0",
                 "rollback_region1",
@@ -609,7 +608,7 @@ class AllTests:
                 ),
             ),
             TestConfig(test_name="fpsensor_utils"),
-            TestConfig(test_name="ftrapv"),
+            TestConfig(test_name="ftrapv", timeout_secs=60),
             TestConfig(
                 test_name="libc_printf",
                 finish_regexes=[PRINTF_CALLED_REGEX],
