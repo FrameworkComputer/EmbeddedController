@@ -212,7 +212,7 @@ static void usbc_tbt_mode_after(void *data)
 	tcpci_partner_common_clear_logged_msgs(&fix->partner);
 }
 
-ZTEST_F(usbc_tbt_mode, test_verify_discovery)
+ZTEST_F(usbc_tbt_mode, test_discovery)
 {
 	uint8_t response_buffer[EC_LPC_HOST_PACKET_SIZE];
 	struct ec_response_typec_discovery *discovery =
@@ -248,7 +248,7 @@ ZTEST_F(usbc_tbt_mode, test_verify_discovery)
 }
 
 /* Without an e-marked cable, TBT mode cannot be entered */
-ZTEST_F(usbc_tbt_mode, test_verify_tbt_entry_fail)
+ZTEST_F(usbc_tbt_mode, test_tbt_entry_fail)
 {
 	struct ec_response_typec_status status;
 
@@ -286,7 +286,7 @@ ZTEST_F(usbc_tbt_mode, test_verify_tbt_entry_fail)
 }
 
 /* With passive e-marked cable, TBT mode can be entered on SOP only */
-ZTEST_F(usbc_tbt_mode, test_verify_tbt_passive_entry_exit)
+ZTEST_F(usbc_tbt_mode, test_tbt_passive_entry_exit)
 {
 	struct ec_response_typec_status status;
 

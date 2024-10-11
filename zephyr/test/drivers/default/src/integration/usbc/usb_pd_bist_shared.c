@@ -80,7 +80,7 @@ ZTEST_SUITE(usb_pd_bist_shared, drivers_predicate_post_main,
 	    usb_pd_bist_shared_setup, usb_pd_bist_shared_before,
 	    usb_pd_bist_shared_after, NULL);
 
-ZTEST_F(usb_pd_bist_shared, test_verify_bist_shared_mode)
+ZTEST_F(usb_pd_bist_shared, test_bist_shared_mode)
 {
 	uint32_t bist_data;
 	uint32_t f5v_cap;
@@ -135,7 +135,7 @@ ZTEST_F(usb_pd_bist_shared, test_verify_bist_shared_mode)
 		      "PDO current didn't decrease after BIST exit");
 }
 
-ZTEST_F(usb_pd_bist_shared, test_verify_bist_shared_no_snk_entry)
+ZTEST_F(usb_pd_bist_shared, test_bist_shared_no_snk_entry)
 {
 	uint32_t bist_data;
 	uint32_t f5v_cap;
@@ -169,7 +169,7 @@ ZTEST_F(usb_pd_bist_shared, test_verify_bist_shared_no_snk_entry)
 		      "PDO current incorrect after bad BIST entry");
 }
 
-ZTEST_F(usb_pd_bist_shared, test_verify_bist_shared_exit_no_action)
+ZTEST_F(usb_pd_bist_shared, test_bist_shared_exit_no_action)
 {
 	uint32_t bist_data;
 	uint32_t f5v_cap;
@@ -193,7 +193,7 @@ ZTEST_F(usb_pd_bist_shared, test_verify_bist_shared_exit_no_action)
 	zassert_equal(f5v_cap, 0, "Received unexpected source cap");
 }
 
-ZTEST_F(usb_pd_bist_shared, test_verify_control_bist_shared_mode)
+ZTEST_F(usb_pd_bist_shared, test_control_bist_shared_mode)
 {
 	uint32_t f5v_cap;
 

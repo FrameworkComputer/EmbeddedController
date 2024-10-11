@@ -15,7 +15,7 @@
 
 /* Tests that require CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY enabled */
 
-ZTEST_F(usbc_alt_mode, test_verify_displayport_mode_reentry)
+ZTEST_F(usbc_alt_mode, test_displayport_mode_reentry)
 {
 	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
 		ztest_test_skip();
@@ -53,7 +53,7 @@ ZTEST_F(usbc_alt_mode, test_verify_displayport_mode_reentry)
 		      USB_PD_MUX_DP_ENABLED, "Failed to see DP mux set");
 }
 
-ZTEST_F(usbc_alt_mode, test_verify_mode_exit_via_pd_host_cmd)
+ZTEST_F(usbc_alt_mode, test_mode_exit_via_pd_host_cmd)
 {
 	const struct gpio_dt_spec *gpio =
 		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
@@ -102,7 +102,7 @@ ZTEST_F(usbc_alt_mode, test_verify_mode_exit_via_pd_host_cmd)
 	zassert_equal((status.mux_state & USB_PD_MUX_DP_ENABLED), 0);
 }
 
-ZTEST_F(usbc_alt_mode, test_verify_early_status_hpd_set)
+ZTEST_F(usbc_alt_mode, test_early_status_hpd_set)
 {
 	const struct gpio_dt_spec *gpio =
 		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);

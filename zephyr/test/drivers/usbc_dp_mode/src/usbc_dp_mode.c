@@ -493,7 +493,7 @@ static void usbc_dp_mode_after(void *data)
 ZTEST_SUITE(usbc_dp_mode, drivers_predicate_post_main, usbc_dp_mode_setup,
 	    usbc_dp_mode_before, usbc_dp_mode_after, NULL);
 
-ZTEST_F(usbc_dp_mode, test_verify_discovery)
+ZTEST_F(usbc_dp_mode, test_discovery)
 {
 	setup_passive_cable(&fixture->partner);
 	/* But with DP mode response and modal operation set to true */

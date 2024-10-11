@@ -224,7 +224,7 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_power_info)
  * Expected Results
  *  - Sink completes Goto Min PD negotiation
  */
-ZTEST_F(usb_attach_5v_3a_pd_sink, test_verify_goto_min)
+ZTEST_F(usb_attach_5v_3a_pd_sink, test_goto_min)
 {
 	pd_dpm_request(0, DPM_REQUEST_GOTO_MIN);
 	k_sleep(K_SECONDS(1));
@@ -243,7 +243,7 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_verify_goto_min)
  * Expected Results
  *  - Sink received ping message
  */
-ZTEST_F(usb_attach_5v_3a_pd_sink, test_verify_ping_msg)
+ZTEST_F(usb_attach_5v_3a_pd_sink, test_ping_msg)
 {
 	tcpci_snk_emul_clear_ping_received(&fixture->snk_ext);
 
