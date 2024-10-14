@@ -53,3 +53,19 @@ const char *const get_ucsi_command_name(enum ucsi_command_t cmd)
 		return ucsi_command_names[cmd];
 	}
 }
+
+static const char *drp_mode_names[] = {
+	"NORMAL",
+	"TRY_SRC",
+	"TRY_SNK",
+};
+BUILD_ASSERT(ARRAY_SIZE(drp_mode_names) == DRP_MAX_ENUM);
+
+const char *get_drp_mode_name(enum drp_mode_t mode)
+{
+	if (mode < DRP_INVALID) {
+		return drp_mode_names[mode];
+	} else {
+		return "INVALID DRP MODE";
+	}
+}

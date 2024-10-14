@@ -1038,3 +1038,47 @@ ZTEST_USER(console_cmd_pdc, test_lpm_ppm_info)
 	zassert_not_null(strstr(outbuffer, "FW Ver: 123.456"));
 	zassert_not_null(strstr(outbuffer, "HW Ver: a5b6c7de"));
 }
+
+static int custom_fake_pdc_power_mgmt_get_drp_mode(int port,
+						   enum drp_mode_t *drp_mode)
+{
+	zassert_not_null(drp_mode);
+
+	*drp_mode = DRP_TRY_SRC;
+
+	return 0;
+}
+
+ZTEST_USER(console_cmd_pdc, test_drp)
+{
+	int rv;
+	const char *outbuffer;
+	size_t buffer_size;
+
+	/* Invalid port number */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc drp 99");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* API call fails */
+	pdc_power_mgmt_get_drp_mode_fake.return_val = 1;
+	rv = shell_execute_cmd(get_ec_shell(), "pdc drp 0");
+	zassert_equal(rv, pdc_power_mgmt_get_drp_mode_fake.return_val,
+		      "Expected %d, but got %d",
+		      pdc_power_mgmt_get_drp_mode_fake.return_val, rv);
+
+	RESET_FAKE(pdc_power_mgmt_get_drp_mode);
+
+	/* Successful */
+	pdc_power_mgmt_get_drp_mode_fake.custom_fake =
+		custom_fake_pdc_power_mgmt_get_drp_mode;
+	rv = shell_execute_cmd(get_ec_shell(), "pdc drp 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	zassert_equal(1, pdc_power_mgmt_get_drp_mode_fake.call_count);
+
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_true(buffer_size > 0, NULL);
+	zassert_not_null(strstr(outbuffer, "DRP mode on port 0 is TRY_SRC"));
+}

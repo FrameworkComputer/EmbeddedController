@@ -7,6 +7,8 @@
  * Realtek RTS545x Power Delivery Controller Driver
  */
 
+#include "drivers/ucsi_v3.h"
+
 #include <assert.h>
 #include <string.h>
 
@@ -179,6 +181,8 @@ static const struct smbus_cmd_t GET_VDO = { 0x08, 0x03, 0x9A };
 static const struct smbus_cmd_t GET_CURRENT_PARTNER_SRC_PDO = { 0x08, 0x02,
 								0xA7 };
 static const struct smbus_cmd_t RTS_SET_FRS_FUNCTION = { 0x08, 0x03, 0xE1 };
+static const struct smbus_cmd_t GET_TPC_CSD_OPERATION_MODE = { 0x08, 0x02,
+							       0x9D };
 static const struct smbus_cmd_t GET_RTK_STATUS = { 0x09, 0x03 };
 static const struct smbus_cmd_t RTS_UCSI_PPM_RESET = { 0x0E, 0x02, 0x01 };
 static const struct smbus_cmd_t RTS_UCSI_CONNECTOR_RESET = { 0x0E, 0x03, 0x03 };
@@ -317,6 +321,8 @@ enum cmd_t {
 	CMD_SET_CCOM,
 	/** Set DRP_MODE */
 	CMD_SET_DRP_MODE,
+	/** Get DRP_MODE */
+	CMD_GET_DRP_MODE,
 	/** Read Power Level */
 	CMD_READ_POWER_LEVEL,
 	/** Get RDO */
@@ -469,6 +475,7 @@ static const char *const cmd_names[] = {
 	[CMD_GET_IC_STATUS] = "GET_IC_STATUS",
 	[CMD_SET_CCOM] = "SET_CCOM",
 	[CMD_SET_DRP_MODE] = "SET_DRP_MODE",
+	[CMD_GET_DRP_MODE] = "GET_DRP_MODE",
 	[CMD_SET_SINK_PATH] = "SET_SINK_PATH",
 	[CMD_READ_POWER_LEVEL] = "READ_POWER_LEVEL",
 	[CMD_GET_RDO] = "GET_RDO",
@@ -1408,6 +1415,22 @@ static void st_read_run(void *o)
 		*vconn_sourcing = (data->rd_buf[11] & 0x20);
 		break;
 	}
+	case CMD_GET_DRP_MODE: {
+		enum drp_mode_t *drp_mode = (enum drp_mode_t *)data->user_buf;
+
+		switch ((data->rd_buf[1] & GENMASK(5, 3)) >> 3) {
+		case 0x0:
+			*drp_mode = DRP_NORMAL;
+			break;
+		case 0x1:
+			*drp_mode = DRP_TRY_SRC;
+			break;
+		case 0x2:
+			*drp_mode = DRP_TRY_SNK;
+			break;
+		}
+		break;
+	}
 	default:
 		/* No preprocessing needed for the user data */
 		memcpy(data->user_buf, data->rd_buf + offset, len);
@@ -2283,6 +2306,24 @@ static int rts54_set_drp_mode(const struct device *dev, enum drp_mode_t dm)
 				  ARRAY_SIZE(payload), NULL);
 }
 
+static int rts54_get_drp_mode(const struct device *dev, enum drp_mode_t *dm)
+{
+	struct pdc_data_t *data = dev->data;
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	uint8_t payload[] = {
+		GET_TPC_CSD_OPERATION_MODE.cmd,
+		GET_TPC_CSD_OPERATION_MODE.len,
+		GET_TPC_CSD_OPERATION_MODE.sub,
+		0x00,
+	};
+	return rts54_post_command(dev, CMD_GET_DRP_MODE, payload,
+				  ARRAY_SIZE(payload), (uint8_t *)dm);
+}
+
 static int rts54_set_uor(const struct device *dev, union uor_t uor)
 {
 	struct pdc_data_t *data = dev->data;
@@ -2667,6 +2708,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.get_connector_capability = rts54_get_connector_capability,
 	.set_ccom = rts54_set_ccom,
 	.set_drp_mode = rts54_set_drp_mode,
+	.get_drp_mode = rts54_get_drp_mode,
 	.set_uor = rts54_set_uor,
 	.set_pdr = rts54_set_pdr,
 	.set_sink_path = rts54_set_sink_path,

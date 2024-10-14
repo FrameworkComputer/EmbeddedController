@@ -242,7 +242,10 @@ enum drp_mode_t {
 	DRP_TRY_SNK,
 	/** DRP Invalid */
 	DRP_INVALID,
+	DRP_MAX_ENUM = DRP_INVALID,
 };
+
+const char *get_drp_mode_name(enum drp_mode_t mode);
 
 /**
  * @brief PDO Source: PDC or Port Partner

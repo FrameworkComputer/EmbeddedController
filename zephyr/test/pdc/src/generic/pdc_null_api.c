@@ -313,6 +313,15 @@ ZTEST(pdc_api_null_check, test_pdc_get_attention_vdo)
 		      -ENOSYS);
 }
 
+ZTEST(pdc_api_null_check, test_pdc_get_drp_mode)
+{
+	enum drp_mode_t drp_mode;
+	int rv = pdc_get_drp_mode(&fake_pdc, &drp_mode);
+
+	zassert_equal(-ENOSYS, rv, "Got %d, expected -ENOSYS (%d)", rv,
+		      -ENOSYS);
+}
+
 ZTEST(pdc_api_null_check, test_completeness)
 {
 	/* Count the number of PDC API methods supported */

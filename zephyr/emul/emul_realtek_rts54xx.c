@@ -509,6 +509,22 @@ static int set_tpc_csd_operation_mode(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int get_tpc_csd_operation_mode(struct rts5453p_emul_pdc_data *data,
+				      const union rts54_request *req)
+{
+	LOG_INF("GET_TPC_CSD_OPERATION_MODE port=%d",
+		req->get_tpc_csd_operartion_mode.port_num);
+
+	memset(&data->response, 0, sizeof(data->response));
+
+	data->response.get_tpc_csd_operation_mode.byte_count =
+		sizeof(union csd_op_mode_t);
+	data->response.get_tpc_csd_operation_mode.op_mode = data->csd_op_mode;
+	send_response(data);
+
+	return 0;
+}
+
 static int set_ccom(struct rts5453p_emul_pdc_data *data,
 		    const union rts54_request *req)
 {
@@ -804,7 +820,7 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0x85, HANDLER_DEF(unsupported) },
 	{ .code = 0x99, HANDLER_DEF(unsupported) },
 	{ .code = 0x9A, HANDLER_DEF(get_vdo) },
-	{ .code = 0x9D, HANDLER_DEF(unsupported) },
+	{ .code = 0x9D, HANDLER_DEF(get_tpc_csd_operation_mode) },
 	{ .code = 0xA2, HANDLER_DEF(unsupported) },
 	{ .code = 0xF0, HANDLER_DEF(unsupported) },
 	{ .code = 0xA6, HANDLER_DEF(unsupported) },

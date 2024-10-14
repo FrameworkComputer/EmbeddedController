@@ -119,6 +119,8 @@ enum pdc_cmd_t {
 	CMD_PDC_SET_CCOM,
 	/** CMD_PDC_SET_DRP */
 	CMD_PDC_SET_DRP,
+	/** CMD_PDC_GET_DRP */
+	CMD_PDC_GET_DRP,
 	/** CMD_PDC_GET_PDOS */
 	CMD_PDC_GET_PDOS,
 	/** CMD_PDC_GET_RDO */
@@ -345,6 +347,7 @@ test_export_static const char *const pdc_cmd_names[] = {
 	[CMD_PDC_SET_POWER_LEVEL] = "PDC_SET_POWER_LEVEL",
 	[CMD_PDC_SET_CCOM] = "PDC_SET_CCOM",
 	[CMD_PDC_SET_DRP] = "PDC_SET_DRP",
+	[CMD_PDC_GET_DRP] = "PDC_GET_DRP",
 	[CMD_PDC_GET_PDOS] = "PDC_GET_PDOS",
 	[CMD_PDC_GET_RDO] = "PDC_GET_RDO",
 	[CMD_PDC_SET_RDO] = "PDC_SET_RDO",
@@ -701,6 +704,7 @@ struct pdc_port_t {
 	uint8_t pch_data_status[5];
 	/** SET_DRP variable used with CMD_SET_DRP */
 	enum drp_mode_t drp;
+	enum drp_mode_t drp_read;
 	/** Callback */
 	struct pdc_callback cc_cb;
 	struct pdc_callback ci_cb;
@@ -2177,6 +2181,9 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 	case CMD_PDC_SET_DRP:
 		rv = pdc_set_drp_mode(port->pdc, port->drp);
 		break;
+	case CMD_PDC_GET_DRP:
+		rv = pdc_get_drp_mode(port->pdc, &port->drp_read);
+		break;
 	case CMD_PDC_GET_PDOS:
 		rv = pdc_get_pdos(port->pdc, port->get_pdo.pdo_type,
 				  port->get_pdo.pdo_offset,
@@ -3023,6 +3030,8 @@ static bool is_connectionless_cmd(enum pdc_cmd_t pdc_cmd)
 		__fallthrough;
 	case CMD_PDC_SET_DRP:
 		__fallthrough;
+	case CMD_PDC_GET_DRP:
+		__fallthrough;
 	case CMD_PDC_GET_LPM_PPM_INFO:
 		return true;
 	default:
@@ -3726,6 +3735,29 @@ static void pd_chipset_shutdown(void)
 	LOG_INF("PD:S3->S5");
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pd_chipset_shutdown, HOOK_PRIO_DEFAULT);
+
+test_mockable int pdc_power_mgmt_get_drp_mode(int port,
+					      enum drp_mode_t *drp_mode)
+{
+	int ret;
+
+	/* Make sure port is in range and that an output buffer is provided */
+	if (!is_pdc_port_valid(port)) {
+		return -ERANGE;
+	}
+
+	if (drp_mode == NULL) {
+		return -EINVAL;
+	}
+
+	ret = public_api_block(port, CMD_PDC_GET_DRP);
+	if (ret) {
+		return ret;
+	}
+
+	*drp_mode = pdc_data[port]->port.drp_read;
+	return 0;
+}
 
 test_mockable int pdc_power_mgmt_get_info(int port, struct pdc_info_t *pdc_info,
 					  bool live)

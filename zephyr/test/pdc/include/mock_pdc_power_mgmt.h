@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "drivers/ucsi_v3.h"
 #include "usbc/pdc_power_mgmt.h"
 
 #include <zephyr/fff.h>
@@ -46,7 +47,8 @@ DECLARE_FAKE_VALUE_FUNC(bool, pdc_power_mgmt_check_hpd_wake, int);
 DECLARE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_get_pch_data_status, int,
 			uint8_t *);
 DECLARE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_get_rdo, int, uint32_t *);
-
+DECLARE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_get_drp_mode, int,
+			enum drp_mode_t *);
 /**
  * @brief Reset the above set of fakes
  */

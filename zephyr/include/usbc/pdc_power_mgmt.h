@@ -574,6 +574,7 @@ int pdc_power_mgmt_frs_enable(int port_num, bool enable);
  * @retval 0 if successful or error code
  */
 int pdc_power_mgmt_set_trysrc(int port, bool enable);
+int pdc_power_mgmt_get_drp_mode(int port, enum drp_mode_t *drp_mode);
 
 /*
  * @brief Return PCH DATA STATUS register for PMC Debug

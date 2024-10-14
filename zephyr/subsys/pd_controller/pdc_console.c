@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "drivers/ucsi_v3.h"
 #include "uart.h"
 #include "usb_common.h"
 
@@ -372,6 +373,30 @@ static int cmd_pdc_dualrole(const struct shell *sh, size_t argc, char **argv)
 	return EC_SUCCESS;
 }
 
+static int cmd_pdc_get_drp_mode(const struct shell *sh, size_t argc,
+				char **argv)
+{
+	int rv;
+	uint8_t port;
+	enum drp_mode_t drp_mode;
+
+	/* Get PD port number */
+	rv = cmd_get_pd_port(sh, argv[1], &port);
+	if (rv)
+		return rv;
+
+	rv = pdc_power_mgmt_get_drp_mode(port, &drp_mode);
+	if (rv) {
+		shell_error(sh, "Could not get DRP mode: %d (port %u)", rv,
+			    port);
+		return rv;
+	}
+
+	shell_info(sh, "DRP mode on port %d is %s", port,
+		   get_drp_mode_name(drp_mode));
+	return EC_SUCCESS;
+}
+
 static int cmd_pdc_trysrc(const struct shell *sh, size_t argc, char **argv)
 {
 	int rv;
@@ -682,6 +707,10 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "Set trysrc mode\n"
 		      "Usage: pdc trysrc <port> [0|1]",
 		      cmd_pdc_trysrc, 3, 0),
+	SHELL_CMD_ARG(drp, NULL,
+		      "Get DRP mode\n"
+		      "Usage: pdc drp <port>",
+		      cmd_pdc_get_drp_mode, 2, 0),
 	SHELL_CMD_ARG(conn_reset, NULL,
 		      "Trigger hard or data reset\n"
 		      "Usage: pdc conn_reset  <port> [hard|data]",
