@@ -717,7 +717,9 @@ class AllTests:
             # hardcoded. The task synchronization functions are covered by
             # Zephyr tests. task_wait_event is implemented based on k_poll_event
             # and it is verified by the kernel.poll test.
-            TestConfig(test_name="timer_dos", skip_for_zephyr=True),
+            TestConfig(
+                test_name="timer_dos", timeout_secs=20, skip_for_zephyr=True
+            ),
             TestConfig(test_name="tpm_seed_clear"),
             # UART buffering is not used with Zephyr.
             TestConfig(test_name="uart", skip_for_zephyr=True),
