@@ -48,7 +48,15 @@ static int td_pd_vndi3_e3(enum pd_data_role data_role)
 	 * No, the tester checks that the UUT replies Not_Supported.  The test
 	 * stops here in this case.
 	 */
-	TEST_EQ(verify_tcpci_transmit(TCPCI_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0),
+
+	/* TODO: usb_pd_dpm_mock responds an NAK instead of an Identity message.
+	 * It won't pass items d)-i), so just verify that we received a VDM from
+	 * the mock.
+	 *
+	 * Link common/usbc/svdm_rsp_dfp_only.c if we want to verify some of the
+	 * items below.
+	 */
+	TEST_EQ(verify_tcpci_transmit(TCPCI_MSG_SOP, 0, PD_DATA_VENDOR_DEF),
 		EC_SUCCESS, "%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 

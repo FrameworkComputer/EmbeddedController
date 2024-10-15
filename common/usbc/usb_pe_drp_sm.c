@@ -2959,6 +2959,12 @@ static void pe_src_ready_run(int port)
 			case PD_DATA_SINK_CAP:
 				break;
 			case PD_DATA_VENDOR_DEF:
+				/* The code here assumes that the implementation
+				 * supports at least some SVDM.
+				 *
+				 * Send Not Supported here if we have a device
+				 * that does not support SVDM at all.
+				 */
 				if (PD_VDO_SVDM(*payload))
 					set_state_pe(port, PE_VDM_RESPONSE);
 				/* The TCPM does not support any unstructured
@@ -6667,17 +6673,6 @@ static void pe_vdm_response_entry(int port)
 			vdo_len = 1;
 		}
 	} else {
-		/*
-		 * Received at VDM command which is not supported.  PD 2.0 may
-		 * NAK or ignore the message (see TD.PD.VNDI.E1. VDM Identity
-		 * steps), but PD 3.0 must send Not_Supported (PD 3.0 Ver 2.0 +
-		 * ECNs 2020-12-10 Table 6-64 Response to an incoming
-		 * VDM or TD.PD.VNDI3.E3 VDM Identity steps)
-		 */
-		if (prl_get_rev(port, TCPCI_MSG_SOP) == PD_REV30) {
-			set_state_pe(port, PE_SEND_NOT_SUPPORTED);
-			return;
-		}
 		tx_payload[0] |= VDO_CMDT(CMDT_RSP_NAK);
 		vdo_len = 1;
 	}
