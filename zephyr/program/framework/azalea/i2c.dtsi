@@ -149,17 +149,17 @@
 	pinctrl-names = "default";
 
 
-	/* Qth1 */
+	/* QN2 */
 	cpu_f75303: cpu_f75303@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
-		temperature-type = "F75303_IDX_REMOTE1";
+		temperature-type = "F75303_IDX_REMOTE2";
 		reg = <0x4d>;
 	};
 
-	/* Qth2 */
+	/* QN1 */
 	ddr_f75303: ddr_f75303@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
-		temperature-type = "F75303_IDX_REMOTE2";
+		temperature-type = "F75303_IDX_REMOTE1";
 		reg = <0x4d>;
 	};
 
