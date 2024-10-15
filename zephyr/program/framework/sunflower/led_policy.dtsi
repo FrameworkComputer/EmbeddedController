@@ -142,7 +142,7 @@
 			power_led {
 				led-id = "EC_LED_ID_POWER_LED";
 				color-0 {
-					led-color = "LED_OFF";
+					led-color = "LED_WHITE";
 				};
 			};
 		};
