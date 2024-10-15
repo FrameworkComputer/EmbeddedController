@@ -89,7 +89,7 @@
                 <!-- ;USB Host -->
                 <!-- ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; -->
                 <vif:Host_Supports_USB_Data value="true" />
-                <vif:Host_Speed value="2">USB 3.2 Gen 2x1</vif:Host_Speed>
+                <vif:Host_Speed value="1">USB 3.2 Gen 1x1</vif:Host_Speed>
                 <vif:Host_Contains_Captive_Retimer value="false" />
                 <vif:Host_Truncates_DP_For_tDHPResponse value="false" />
                 <vif:Host_Is_Embedded value="false" />
