@@ -227,6 +227,13 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	return 1;
 }
 
+static void notify_power_change(void)
+{
+	/* Notify host of power info change. */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+}
+DECLARE_DEFERRED(notify_power_change);
+
 void pd_power_supply_reset(int port)
 {
 	int prev_en;
@@ -241,8 +248,7 @@ void pd_power_supply_reset(int port)
 		pd_set_vbus_discharge(port, 1);
 	}
 
-	/* Notify host of power info change. */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+	hook_call_deferred(&notify_power_change_data, 0);
 }
 
 int pd_set_power_supply_ready(int port)
@@ -254,8 +260,7 @@ int pd_set_power_supply_ready(int port)
 
 	RETURN_ERROR(ppc_vbus_source_enable(port, 1));
 
-	/* Notify host of power info change. */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+	hook_call_deferred(&notify_power_change_data, 0);
 
 	return EC_SUCCESS;
 }
