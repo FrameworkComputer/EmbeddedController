@@ -9,9 +9,14 @@
 #define SB_RMI_WRITE_SUSTAINED_POWER_LIMIT_CMD  0x30
 #define SB_RMI_WRITE_FAST_PPT_LIMIT_CMD 0x31
 #define SB_RMI_WRITE_SLOW_PPT_LIMIT_CMD 0x32
-#define SB_RMI_WRITE_SLOW_PPT_LIMIT_CMD 0x32
+#define SB_RMI_WRITE_VRM_VDD_CURRENT_LIMIT	0x35
+#define SB_RMI_WRITE_VRM_VDD_MAX_CURRENT_LIMIT	0x36
+#define SB_RMI_WRITE_VRM_SOC_CURRENT_LIMIT	0x37
+#define SB_RMI_WRITE_VRM_SOC_MAX_CURRENT_LIMIT	0x38
 #define SB_RMI_WRITE_APU_ONLY_SPPT_CMD 0x3B
 #define SB_RMI_WRITE_P3T_LIMIT_CMD 0x3C
+#define SB_RMI_WRITE_VRM_VDD_CCD_CURRENT_LIMIT	0x3D
+#define SB_RMI_WRITE_VRM_VDD_CCD_MAX_CURRENT_LIMIT	0x3E
 
 enum power_limit_type {
 	TYPE_SPL = 0,
@@ -68,5 +73,19 @@ void update_pmf_events(uint8_t pd_event, int enable);
 #endif
 
 extern bool thermal_warn_trigger(void);
+
+
+/**
+ * update amd vrm_vdd_* parameters
+ *
+ * @param current soc vrm_vdd_* current limit
+ * @return none-zero if error
+ */
+int update_vrm_vdd_current_limit(uint32_t current);
+int update_vrm_vdd_max_current_limit(uint32_t current);
+int update_vrm_vdd_ccd_current_limit(uint32_t current);
+int update_vrm_vdd_ccd_max_current_limit(uint32_t current);
+int update_vrm_soc_current_limit(uint32_t current);
+int update_vrm_soc_max_current_limit(uint32_t current);
 
 #endif /* __CROS_EC_AMD_CPU_POWER_INTERFACE_H */

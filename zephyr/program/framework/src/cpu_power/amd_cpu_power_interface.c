@@ -69,6 +69,66 @@ static int update_peak_package_power_limit(uint32_t mwatt)
 	return sb_rmi_mailbox_xfer(SB_RMI_WRITE_P3T_LIMIT_CMD, msgIn, &msgOut);
 }
 
+int update_vrm_vdd_current_limit(uint32_t current)
+{
+	uint32_t msgIn = 0;
+	uint32_t msgOut;
+
+	msgIn = current;
+
+	return sb_rmi_mailbox_xfer(SB_RMI_WRITE_VRM_VDD_CURRENT_LIMIT, msgIn, &msgOut);
+}
+
+int update_vrm_vdd_max_current_limit(uint32_t current)
+{
+	uint32_t msgIn = 0;
+	uint32_t msgOut;
+
+	msgIn = current;
+
+	return sb_rmi_mailbox_xfer(SB_RMI_WRITE_VRM_VDD_MAX_CURRENT_LIMIT, msgIn, &msgOut);
+}
+
+int update_vrm_vdd_ccd_current_limit(uint32_t current)
+{
+	uint32_t msgIn = 0;
+	uint32_t msgOut;
+
+	msgIn = current;
+
+	return sb_rmi_mailbox_xfer(SB_RMI_WRITE_VRM_VDD_CCD_CURRENT_LIMIT, msgIn, &msgOut);
+}
+
+int update_vrm_vdd_ccd_max_current_limit(uint32_t current)
+{
+	uint32_t msgIn = 0;
+	uint32_t msgOut;
+
+	msgIn = current;
+
+	return sb_rmi_mailbox_xfer(SB_RMI_WRITE_VRM_VDD_CCD_MAX_CURRENT_LIMIT, msgIn, &msgOut);
+}
+
+int update_vrm_soc_current_limit(uint32_t current)
+{
+	uint32_t msgIn = 0;
+	uint32_t msgOut;
+
+	msgIn = current;
+
+	return sb_rmi_mailbox_xfer(SB_RMI_WRITE_VRM_SOC_CURRENT_LIMIT, msgIn, &msgOut);
+}
+
+int update_vrm_soc_max_current_limit(uint32_t current)
+{
+	uint32_t msgIn = 0;
+	uint32_t msgOut;
+
+	msgIn = current;
+
+	return sb_rmi_mailbox_xfer(SB_RMI_WRITE_VRM_SOC_MAX_CURRENT_LIMIT, msgIn, &msgOut);
+}
+
 void update_apu_ready(int status)
 {
 	apu_ready = status;
