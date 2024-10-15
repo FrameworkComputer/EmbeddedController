@@ -17,8 +17,8 @@
 			temp_host_warn = <80>;
 			temp_host_high = <90>;
 			temp_host_halt = <120>;
-			temp_host_release_warn = <70>;
-			temp_host_release_high = <75>;
+			temp_host_release_warn = <73>;
+			temp_host_release_high = <83>;
 			temp_host_release_halt = <115>;
 			temp_fan_off = <50>;
 			temp_fan_max = <70>;
@@ -26,14 +26,14 @@
 			sensor = <&local_f75303>;
 		};
 		cpu-f75303 {
-			temp_host_warn = <80>;
-			temp_host_high = <90>;
+			temp_host_warn = <86>;
+			temp_host_high = <98>;
 			temp_host_halt = <120>;
-			temp_host_release_warn = <70>;
-			temp_host_release_high = <75>;
+			temp_host_release_warn = <79>;
+			temp_host_release_high = <91>;
 			temp_host_release_halt = <115>;
 			temp_fan_off = <50>;
-			temp_fan_max = <68>;
+			temp_fan_max = <72>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&cpu_f75303>;
 		};
@@ -42,7 +42,7 @@
 			temp_host_high = <80>;
 			temp_host_halt = <120>;
 			temp_host_release_warn = <63>;
-			temp_host_release_high = <65>;
+			temp_host_release_high = <73>;
 			temp_host_release_halt = <115>;
 			temp_fan_off = <46>;
 			temp_fan_max = <60>;
