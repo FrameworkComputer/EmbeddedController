@@ -381,6 +381,9 @@ enum power_state power_handle_state(enum power_state state)
 		k_msleep(50);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 1);
 
+		/* enable the power button led */
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_pb), 1);
+
 		power_s5_up_control(1);
 		return POWER_S5;
 
@@ -619,7 +622,6 @@ DECLARE_HOOK(HOOK_INIT, peripheral_interrupt_init, HOOK_PRIO_DEFAULT);
 
 static void peripheral_power_startup(void)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_pb), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 1);
 }
