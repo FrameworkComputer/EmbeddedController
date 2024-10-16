@@ -571,4 +571,19 @@ enum battery_extender_cmd {
 	BATT_EXTENDER_READ_CMD,
 };
 
+/*****************************************************************************/
+/*
+ * Host command to enable/disable wake on lan function
+ */
+#define EC_CMD_WAKE_ON_LAN	0x3E25
+
+struct ec_params_wake_on_lan_control {
+	uint8_t enable;
+} __ec_align1;
+
+
+struct ec_response_wake_on_lan_control {
+	uint8_t enable;
+} __ec_align1;
+
 #endif /* __BOARD_HOST_COMMAND_H */

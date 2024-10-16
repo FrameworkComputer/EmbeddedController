@@ -195,6 +195,17 @@ config PLATFORM_EC_HID
 	  EC is an i2c slave device and report the data (e.g ALS sensor value)
 	  to the host via hid over i2c protocaol.
 
+
+# Driver configuration
+config PLATFORM_EC_WAKE_ON_LAN
+	bool "system can be waked on lan"
+	default y
+	depends on DT_HAS_CROS_EC_WAKE_ON_LAN_ENABLED
+	help
+	  Enable the wake on lan feature.
+	  User can enable/disable the wake on lan feature in the
+	  setup menu.
+
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code
 source "subsys/logging/Kconfig.template.log_config"
