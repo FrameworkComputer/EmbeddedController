@@ -1144,12 +1144,10 @@ static void trigger_ppm_ci(struct pdc_port_t *port)
  * GET_CONNECTOR_STATUS command. It reads the connect_status,
  * power_operation_mode, and power_direction bit to determine which state should
  * be entered.
- * Note: The caller should return after this call if it changed state (returned
- * true).
  *
- * @return true if state changed, false otherwise
+ * Note: The caller should return after this call.
  */
-static bool handle_connector_status(struct pdc_port_t *port)
+static void handle_connector_status(struct pdc_port_t *port)
 {
 	union connector_status_t *status = &port->connector_status;
 	const struct pdc_config_t *config = port->dev->config;
@@ -1205,81 +1203,78 @@ static bool handle_connector_status(struct pdc_port_t *port)
 	if (!status->connect_status) {
 		/* Port is not connected */
 		set_pdc_state(port, PDC_UNATTACHED);
-	} else {
-		switch (status->power_operation_mode) {
-		case USB_DEFAULT_OPERATION:
-			port->typec_current_ma = 500;
-			break;
-		case BC_OPERATION:
-			port->typec_current_ma = 500;
-			break;
-		case PD_OPERATION:
-			port->typec_current_ma = 0;
-			if (conn_status_change_bits.supported_cam) {
-				atomic_set_bit(port->cci_flags, CCI_CAM_CHANGE);
-				LOG_INF("C%d: CAM change", port_number);
-			}
-
-			if (conn_status_change_bits.attention) {
-				atomic_set_bit(port->cci_flags, CCI_ATTENTION);
-			}
-
-			if (conn_status_change_bits.battery_charging_status &&
-			    status->sink_path_status == 0 &&
-			    port->attached_state == SNK_ATTACHED_STATE &&
-			    port->snk_attached_local_state >
-				    SNK_ATTACHED_GET_PDOS) {
-				/* Source caps have changed. Set the sink-
-				 * attached state machine back to the get PDO
-				 * substate. This will cause PDOs to be re-
-				 * evaluated and the sink path to get enabled
-				 * again. */
-				atomic_set_bit(port->snk_policy.flags,
-					       SNK_POLICY_NEW_POWER_REQUEST);
-				LOG_INF("C%d: Sink path disconnected",
-					port_number);
-			}
-
-			if (status->power_direction) {
-				/* Port partner is a sink device
-				 */
-				set_pdc_state(port, PDC_SRC_ATTACHED);
-				return true;
-			} else {
-				/* Port partner is a source
-				 * device */
-				set_pdc_state(port, PDC_SNK_ATTACHED);
-				return true;
-			}
-			break;
-		case USB_TC_CURRENT_1_5A:
-			port->typec_current_ma = 1500;
-			break;
-		case USB_TC_CURRENT_3A:
-			port->typec_current_ma = 3000;
-			break;
-		case USB_TC_CURRENT_5A:
-			port->typec_current_ma = 5000;
-			break;
-		}
-
-		/* TypeC only connection */
-		if (status->power_direction) {
-			/* Port partner is a Typec Sink device */
-			set_pdc_state(port, PDC_SRC_TYPEC_ONLY);
-			return true;
-		} else {
-			/* Port partner is a Typec Source device */
-			if (conn_status_change_bits.pwr_operation_mode) {
-				atomic_set_bit(port->snk_policy.flags,
-					       SNK_POLICY_UPDATE_TYPEC_CURRENT);
-			}
-			set_pdc_state(port, PDC_SNK_TYPEC_ONLY);
-			return true;
-		}
+		return;
 	}
 
-	return true;
+	switch (status->power_operation_mode) {
+	case USB_DEFAULT_OPERATION:
+		port->typec_current_ma = 500;
+		break;
+	case BC_OPERATION:
+		port->typec_current_ma = 500;
+		break;
+	case PD_OPERATION:
+		port->typec_current_ma = 0;
+		if (conn_status_change_bits.supported_cam) {
+			atomic_set_bit(port->cci_flags, CCI_CAM_CHANGE);
+			LOG_INF("C%d: CAM change", port_number);
+		}
+
+		if (conn_status_change_bits.attention) {
+			atomic_set_bit(port->cci_flags, CCI_ATTENTION);
+		}
+
+		if (conn_status_change_bits.battery_charging_status &&
+		    status->sink_path_status == 0 &&
+		    port->attached_state == SNK_ATTACHED_STATE &&
+		    port->snk_attached_local_state > SNK_ATTACHED_GET_PDOS) {
+			/* Source caps have changed. Set the sink-
+			 * attached state machine back to the get PDO
+			 * substate. This will cause PDOs to be re-
+			 * evaluated and the sink path to get enabled
+			 * again. */
+			atomic_set_bit(port->snk_policy.flags,
+				       SNK_POLICY_NEW_POWER_REQUEST);
+			LOG_INF("C%d: Sink path disconnected", port_number);
+		}
+
+		if (status->power_direction) {
+			/* Port partner is a sink device
+			 */
+			set_pdc_state(port, PDC_SRC_ATTACHED);
+			return;
+		} else {
+			/* Port partner is a source
+			 * device */
+			set_pdc_state(port, PDC_SNK_ATTACHED);
+			return;
+		}
+		break;
+	case USB_TC_CURRENT_1_5A:
+		port->typec_current_ma = 1500;
+		break;
+	case USB_TC_CURRENT_3A:
+		port->typec_current_ma = 3000;
+		break;
+	case USB_TC_CURRENT_5A:
+		port->typec_current_ma = 5000;
+		break;
+	}
+
+	/* TypeC only connection */
+	if (status->power_direction) {
+		/* Port partner is a Typec Sink device */
+		set_pdc_state(port, PDC_SRC_TYPEC_ONLY);
+		return;
+	} else {
+		/* Port partner is a Typec Source device */
+		if (conn_status_change_bits.pwr_operation_mode) {
+			atomic_set_bit(port->snk_policy.flags,
+				       SNK_POLICY_UPDATE_TYPEC_CURRENT);
+		}
+		set_pdc_state(port, PDC_SNK_TYPEC_ONLY);
+		return;
+	}
 }
 
 /**
@@ -2427,9 +2422,8 @@ static void pdc_send_cmd_wait_run(void *obj)
 					     CCI_CMD_COMPLETED)) {
 		LOG_DBG("CCI_CMD_COMPLETED");
 		if (port->cmd->cmd == CMD_PDC_GET_CONNECTOR_STATUS) {
-			if (handle_connector_status(port)) {
-				return;
-			}
+			handle_connector_status(port);
+			return;
 		} else {
 			if (port->cmd->cmd == CMD_PDC_GET_ATTENTION_VDO) {
 				handle_attention_vdo(port);
