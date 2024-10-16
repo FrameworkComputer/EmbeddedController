@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  EC can monitor the wake on lan signal to power on the
+  system.
+
+compatible: "cros-ec,wake-on-lan"
+
+
+properties:
+
+  enable-pin:
+    required: true
+    type: phandle
+    description:
+      GPIO used to enable the LAN power.
+
+  wake-signal:
+    required: true
+    type: phandle
+    description:
+      Wake on lan signal status.
+
+  wake-signal-irq:
+    required: true
+    type: phandle
+    description:
+      GPIO to use to handle the wake on lan signal to power
+      on the system.
