@@ -2012,6 +2012,14 @@ static int tps_set_pdos(const struct device *dev, enum pdo_type_t type,
 {
 	struct pdc_data_t *data = dev->data;
 
+	if (pdo == NULL) {
+		return -EINVAL;
+	}
+
+	if (count < 1 || count > 7) {
+		return -ERANGE;
+	}
+
 	data->pdo_type = type;
 	data->pdos = pdo;
 	data->num_pdos = count;
