@@ -16,6 +16,12 @@ config BOARD_FATCAT_IT82002AW
 	  This board is for use with the Intel RVP using the
 	  MECC 2.1 connector.
 
+config BOARD_FRANCKA
+	bool "Google francka"
+	help
+	  Build Google Francka board. Francka has Intel PTL SoC
+	  with NPCX993FA0BX EC.
+
 module = Fatcat
 module-str = Fatcat board-specific code
 source "subsys/logging/Kconfig.template.log_config"
