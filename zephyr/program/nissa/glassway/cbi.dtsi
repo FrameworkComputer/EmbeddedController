@@ -50,6 +50,11 @@
 				value = <3>;
 				default;
 			};
+			sub-board-4 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_4";
+				value = <4>;
+			};
 		};
 		/*
 		 * FW_CONFIG field to enable TypeC BC1.2.

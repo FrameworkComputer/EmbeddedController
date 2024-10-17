@@ -467,6 +467,13 @@ ZTEST(glassway, test_db_with_c)
 	init_gpios(NULL);
 	hook_notify(HOOK_INIT);
 
+	/* Set the sub-board, reported configuration is correct. */
+	set_sb_config(FW_SUB_BOARD_4);
+	zassert_equal(glassway_get_sb_type(), GLASSWAY_SB_1C_LTE);
+	zassert_equal(board_get_usb_pd_port_count(), 2);
+
+	init_gpios(NULL);
+
 	ASSERT_GPIO_FLAGS(GPIO_DT_FROM_NODELABEL(gpio_sb_1),
 			  GPIO_PULL_UP | GPIO_INPUT | GPIO_INT_EDGE_FALLING);
 }

@@ -78,6 +78,11 @@ enum glassway_sub_board_type glassway_get_sb_type(void)
 		glassway_cached_sub_board = GLASSWAY_SB_1C_1A;
 		LOG_INF("SB: USB type C, USB type A");
 		break;
+
+	case FW_SUB_BOARD_4:
+		glassway_cached_sub_board = GLASSWAY_SB_1C_LTE;
+		LOG_INF("SB: USB type C, LTE");
+		break;
 	}
 	return glassway_cached_sub_board;
 }
@@ -95,6 +100,7 @@ test_export_static void board_usb_pd_count_init(void)
 
 	case GLASSWAY_SB_1C_1A:
 	case GLASSWAY_SB_1C:
+	case GLASSWAY_SB_1C_LTE:
 		cached_usb_pd_port_count = 2;
 		break;
 	}
@@ -123,7 +129,8 @@ static void glassway_subboard_config(void)
 	 * if this port is not present. VBUS enable must be configured if
 	 * needed and is controlled by the usba-port-enable-pins driver.
 	 */
-	if (sb == GLASSWAY_SB_1C_1A || sb == GLASSWAY_SB_1A) {
+	if (sb == GLASSWAY_SB_1C_1A || sb == GLASSWAY_SB_1A ||
+	    sb == GLASSWAY_SB_1C_LTE) {
 		/*
 		 * Configure VBUS enable, retaining current value.
 		 * SB_NONE indicates missing fw_config; it's safe to enable VBUS
@@ -146,7 +153,8 @@ static void glassway_subboard_config(void)
 	 * but the interrupt line needs to be configured.
 	 */
 #if CONFIG_USB_PD_PORT_MAX_COUNT > 1
-	if (sb == GLASSWAY_SB_1C_1A || sb == GLASSWAY_SB_1C) {
+	if (sb == GLASSWAY_SB_1C_1A || sb == GLASSWAY_SB_1C ||
+	    sb == GLASSWAY_SB_1C_LTE) {
 		/* Configure interrupt input */
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl),
 				      GPIO_INPUT | GPIO_PULL_UP);
