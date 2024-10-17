@@ -624,6 +624,48 @@ ZTEST_USER(pdc_api, test_get_pdo)
 	zassert_equal(PDO_FIXED_GET_VOLT(fixed_pdo), 5000);
 }
 
+ZTEST_USER(pdc_api, test_set_pdos)
+{
+	/* Arbitrary set of test PDOs */
+	static uint32_t pdos_in[] = {
+		PDO_FIXED(9000, 3000, 0),
+		PDO_FIXED(15000, 3000, 0),
+		PDO_FIXED(20000, 5000, 0),
+	};
+
+	uint32_t pdos_out[ARRAY_SIZE(pdos_in)] = { 0 };
+
+	/* Error case - bad count */
+	zassert_equal(-ERANGE, pdc_set_pdos(dev, SINK_PDO, pdos_in, 8));
+	zassert_equal(-ERANGE, pdc_set_pdos(dev, SINK_PDO, pdos_in, 0));
+	zassert_equal(-ERANGE, pdc_set_pdos(dev, SINK_PDO, pdos_in, -1));
+
+	/* Error case - PDO array is NULL */
+	zassert_equal(-EINVAL, pdc_set_pdos(dev, SINK_PDO, NULL, 1));
+
+	/* Set PDOs */
+	zassert_ok(pdc_set_pdos(dev, SINK_PDO, pdos_in, ARRAY_SIZE(pdos_in)));
+	k_sleep(K_MSEC(SLEEP_MS));
+
+	/* Read back PDOs */
+	zassert_ok(pdc_get_pdos(dev, SINK_PDO, PDO_OFFSET_0,
+				ARRAY_SIZE(pdos_out), false, pdos_out));
+	k_sleep(K_MSEC(SLEEP_MS));
+
+/* TODO(b/345292002): Incorrect PDOs returned by TI driver or emulator. */
+#ifndef CONFIG_TODO_B_345292002
+	zassert_equal(pdos_in[0], pdos_out[0],
+		      "PDO_0 mismatch. Got %08x, expected %08x", pdos_out[0],
+		      pdos_in[0]);
+	zassert_equal(pdos_in[1], pdos_out[1],
+		      "PDO_1 mismatch. Got %08x, expected %08x", pdos_out[1],
+		      pdos_in[1]);
+	zassert_equal(pdos_in[2], pdos_out[2],
+		      "PDO_2 mismatch. Got %08x, expected %08x", pdos_out[2],
+		      pdos_in[2]);
+#endif /* !defined(CONFIG_TODO_B_345292002) */
+}
+
 ZTEST_USER(pdc_api, test_get_cable_property)
 {
 	/* Properties chosen to be spread throughout the bytes of the union. */

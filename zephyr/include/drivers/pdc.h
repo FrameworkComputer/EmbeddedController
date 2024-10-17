@@ -1022,6 +1022,8 @@ static inline int pdc_set_comms_state(const struct device *dev,
  *
  * @retval 0 on success
  * @retval -EBUSY if not ready to execute the command
+ * @retval -ERANGE if the count is not supported
+ * @retval -EINVAL if \p pdo is NULL
  */
 static inline int pdc_set_pdos(const struct device *dev, enum pdo_type_t type,
 			       uint32_t *pdo, int count)

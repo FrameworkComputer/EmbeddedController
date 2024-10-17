@@ -102,6 +102,17 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 #define RTS54XX_GET_IC_STATUS_PROG_NAME_STR 27
 #define RTS54XX_GET_IC_STATUS_PROG_NAME_STR_LEN 12
 
+/*
+ * Constants for SET_PDO
+ */
+#define RTS54XX_SET_PDO_MAX_PDO_COUNT 7
+/* Length of command header and other fields up to the first PDO */
+#define RTS54XX_SET_PDO_CMD_BASE_LENGTH 5
+/* Maximum length of the SET_PDO command */
+#define RTS54XX_SET_PD_CMD_MAX_LENGTH      \
+	(RTS54XX_SET_PDO_CMD_BASE_LENGTH + \
+	 sizeof(uint32_t) * RTS54XX_SET_PDO_MAX_PDO_COUNT)
+
 /* FW project name length should not exceed the max length supported in struct
  * pdc_info_t
  */
@@ -2498,31 +2509,37 @@ static int rts54_set_pdo(const struct device *dev, enum pdo_type_t type,
 	struct pdc_data_t *data = dev->data;
 	uint8_t pdo_info;
 
+	if (pdo == NULL) {
+		return -EINVAL;
+	}
+
+	if (count < 1 || count > RTS54XX_SET_PDO_MAX_PDO_COUNT) {
+		/* Count == 0 is reserved per RTK manual */
+		return -ERANGE;
+	}
+
 	if (get_state(data) != ST_IDLE) {
 		return -EBUSY;
 	}
 
-	/*
-	 * TODO(b/319643480): Current implementation only supports setting the
-	 * first SNK or SRC CAP.
-	 */
-	if (count != 1) {
-		count = 1;
-		LOG_WRN("rts54xx: set_pdos only sets the first PDO passed in");
-	}
-
 	pdo_info = (count & 0x7) | (type << 3);
 
-	uint8_t payload[] = {
-		SET_PDO.cmd,   SET_PDO.len + sizeof(uint32_t) * count,
-		SET_PDO.sub,   0x00,
-		pdo_info,      BYTE0(pdo[0]),
-		BYTE1(pdo[0]), BYTE2(pdo[0]),
-		BYTE3(pdo[0]),
+	/* Load command header and fields up to the first PDO field */
+	uint8_t payload[RTS54XX_SET_PD_CMD_MAX_LENGTH] = {
+		SET_PDO.cmd, SET_PDO.len + sizeof(uint32_t) * count,
+		SET_PDO.sub, 0x00,
+		pdo_info,
 	};
 
-	return rts54_post_command(dev, CMD_SET_PDO, payload,
-				  ARRAY_SIZE(payload), NULL);
+	/* Compute actual length given number of PDOs being set */
+	uint8_t payload_len =
+		RTS54XX_SET_PDO_CMD_BASE_LENGTH + sizeof(uint32_t) * count;
+
+	/* Copy PDOs into payload buffer */
+	memcpy(&payload[RTS54XX_SET_PDO_CMD_BASE_LENGTH], pdo,
+	       sizeof(uint32_t) * count);
+
+	return rts54_post_command(dev, CMD_SET_PDO, payload, payload_len, NULL);
 }
 
 #define SMBUS_MAX_BLOCK_SIZE 32
