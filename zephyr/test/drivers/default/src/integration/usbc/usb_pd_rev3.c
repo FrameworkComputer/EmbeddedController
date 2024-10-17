@@ -19,9 +19,12 @@
 #include "usb_pd.h"
 #include "util.h"
 
+#include <zephyr/logging/log.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/sys/slist.h>
 #include <zephyr/ztest.h>
+
+LOG_MODULE_REGISTER(test_drivers_integration_usb_pd_rev3, LOG_LEVEL_INF);
 
 #define TEST_PORT 0
 
@@ -257,12 +260,13 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
 	 * This test only checks the first 3 messages.
 	 */
 	int i = 0;
-	bool header_mismatch = false;
 	enum tcpci_partner_msg_sender expected_senders[3] = {
 		TCPCI_PARTNER_SENDER_PARTNER, TCPCI_PARTNER_SENDER_TCPM,
 		TCPCI_PARTNER_SENDER_TCPM
 	};
 	uint16_t expected_headers[3] = { 0x0012, 0xb002, 0x1006 };
+	enum tcpci_partner_msg_sender actual_senders[3];
+	uint16_t actual_headers[3] = { 0, 0, 0 };
 	struct tcpci_partner_log_msg *msg;
 
 	SYS_SLIST_FOR_EACH_CONTAINER(&fixture->source_5v_3a.msg_log, msg, node)
@@ -272,23 +276,62 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
 		if (i >= 3)
 			break;
 
-		if (msg->sender != expected_senders[i] ||
-		    PD_HEADER_EXT(header) !=
-			    PD_HEADER_EXT(expected_headers[i]) ||
-		    PD_HEADER_CNT(header) !=
-			    PD_HEADER_CNT(expected_headers[i]) ||
-		    PD_HEADER_TYPE(header) !=
-			    PD_HEADER_TYPE(expected_headers[i])) {
-			header_mismatch = true;
-			break;
-		}
+		actual_senders[i] = msg->sender;
+		actual_headers[i] = header;
 
 		i++;
 	}
+	zassert_true(i >= 3, "Expected 3 messages but recorded only %i", i);
 
-	zassert_false(header_mismatch);
-	zassert_true(fixture->src_ext.alert_received);
-	zassert_true(fixture->src_ext.status_received);
+	LOG_DBG("Checking expected Get_Status message");
+	zexpect_equal(actual_senders[0], expected_senders[0],
+		      "Expected message 0 sent from partner, got %u",
+		      actual_senders[0]);
+	uint16_t header = actual_headers[0];
+	uint16_t exp_header = expected_headers[0];
+	zexpect_equal(PD_HEADER_EXT(header), PD_HEADER_EXT(exp_header),
+		      "Expected message 0 not extended, got header 0x%04x",
+		      header);
+	zexpect_equal(PD_HEADER_CNT(header), PD_HEADER_CNT(exp_header),
+		      "Expected message 0 count %u, got header 0x%04x",
+		      PD_HEADER_CNT(exp_header), header);
+	zexpect_equal(PD_HEADER_TYPE(header), PD_HEADER_TYPE(exp_header),
+		      "Expected message 0 type %u, got header 0x%04x",
+		      PD_HEADER_TYPE(exp_header), header);
+
+	LOG_DBG("Checking expected Status message");
+	zexpect_equal(actual_senders[1], expected_senders[1],
+		      "Expected message 1 sent from TCPM, got %u",
+		      actual_senders[1]);
+	header = actual_headers[1];
+	exp_header = expected_headers[1];
+	zexpect_equal(PD_HEADER_EXT(header), PD_HEADER_EXT(exp_header),
+		      "Expected message 1 extended, got header 0x%04x", header);
+	zexpect_equal(PD_HEADER_CNT(header), PD_HEADER_CNT(exp_header),
+		      "Expected message 1 count %u, got header 0x%04x",
+		      PD_HEADER_CNT(exp_header), header);
+	zexpect_equal(PD_HEADER_TYPE(header), PD_HEADER_TYPE(exp_header),
+		      "Expected message 1 type %u, got header 0x%04x",
+		      PD_HEADER_TYPE(exp_header), header);
+
+	LOG_DBG("Checking expected Alert message");
+	zexpect_equal(actual_senders[2], expected_senders[2],
+		      "Expected message 2 sent from TCPM, got %u",
+		      actual_senders[2]);
+	header = actual_headers[2];
+	exp_header = expected_headers[2];
+	zexpect_equal(PD_HEADER_EXT(header), PD_HEADER_EXT(exp_header),
+		      "Expected message 2 not extended, got header 0x%04x",
+		      header);
+	zexpect_equal(PD_HEADER_CNT(header), PD_HEADER_CNT(exp_header),
+		      "Expected message 2 count %u, got header 0x%04x",
+		      PD_HEADER_CNT(exp_header), header);
+	zexpect_equal(PD_HEADER_TYPE(header), PD_HEADER_TYPE(exp_header),
+		      "Expected message 2 type %u, got header 0x%04x",
+		      PD_HEADER_TYPE(exp_header), header);
+
+	zexpect_true(fixture->src_ext.alert_received);
+	zexpect_true(fixture->src_ext.status_received);
 }
 
 ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
