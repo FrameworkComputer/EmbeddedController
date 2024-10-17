@@ -117,7 +117,6 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 		/* TODO: should refactor this for each prjects */
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_lid_open));
 #endif
-
 		for (controller = 0; controller < PD_CHIP_COUNT; controller++)
 			cypd_enable_interrupt(controller, true);
 
