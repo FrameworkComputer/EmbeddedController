@@ -232,6 +232,9 @@
 /************************************************/
 #define PORT_TO_CONTROLLER(x) ((x) >> 1)
 #define PORT_TO_CONTROLLER_PORT(x) ((x) & 0x01)
+#define PORTS_PER_CONTROLLER 2
+#define CONTROLLER_PORT_TO_CHARGE_PORT(controller, port) \
+	(controller * PORTS_PER_CONTROLLER + port)
 
 /************************************************/
 /*  CCG6 special setting                        */
@@ -488,18 +491,18 @@ enum pd_port_role {
 	PORT_DUALROLE
 };
 
+#define PD_CHIP_COUNT CONFIG_PLATFORM_EC_PD_CHIP_MAX_COUNT
 enum pd_chip {
 	PD_CHIP_0,
 	PD_CHIP_1,
-	PD_CHIP_COUNT
 };
 
+#define PD_PORT_COUNT CONFIG_USB_PD_PORT_MAX_COUNT
 enum pd_port {
 	PD_PORT_0,
 	PD_PORT_1,
 	PD_PORT_2,
 	PD_PORT_3,
-	PD_PORT_COUNT
 };
 
 enum pd_progress {
@@ -926,5 +929,13 @@ int get_pd_alt_mode_status(int port);
  * @param controller The PD chip for which to perform the error recovery
  */
 void perform_error_recovery(int controller);
+
+/**
+ * CYPD interrupt pin control.
+ *
+ * @param controller The port number for which to retrieve the state.
+ * @param enable_ndisable enable/disable interrupt.
+ */
+void cypd_enable_interrupt(int controller, int enable_ndisable);
 
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

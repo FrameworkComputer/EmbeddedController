@@ -193,6 +193,8 @@ void update_system_power_state(int controller)
 {
 	enum power_state ps = power_get_state();
 
+	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
 	switch (ps) {
 	case POWER_G3:
 	case POWER_S5G3:
@@ -399,6 +401,8 @@ void cypd_update_epr_state(int controller, int port, int response_len)
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
 	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
 	int port_idx = (controller << 1) + port;
+
+	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
 	rv = i2c_read_offset16_block(i2c_port, addr_flags,
 		CCG_READ_DATA_MEMORY_REG(port, 0), data, MIN(response_len, 16));

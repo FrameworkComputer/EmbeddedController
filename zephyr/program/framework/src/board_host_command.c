@@ -87,6 +87,7 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 {
 
 	const struct ec_params_flash_notified *p = args->params;
+	int controller;
 
 	switch (p->flags & 0x03) {
 	case FLASH_FIRMWARE_START:
@@ -97,8 +98,9 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 		gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_lid_open));
 #endif
 		if ((p->flags & FLASH_FLAG_PD) == FLASH_FLAG_PD) {
-			gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pd_chip0_interrupt));
-			gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pd_chip1_interrupt));
+			for (controller = 0; controller < PD_CHIP_COUNT; controller++)
+				cypd_enable_interrupt(controller, false);
+
 			set_pd_fw_update(true);
 		}
 	case FLASH_ACCESS_SPI:
@@ -107,12 +109,13 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 	case FLASH_FIRMWARE_DONE:
 		CPRINTS("Flash done, flags:0x%02x", p->flags);
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_powerbtn));
-		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pd_chip0_interrupt));
-		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pd_chip1_interrupt));
 #if DT_NODE_EXISTS(DT_NODELABEL(gpio_lid_sw_l))
 		/* TODO: should refactor this for each prjects */
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_lid_open));
 #endif
+
+		for (controller = 0; controller < PD_CHIP_COUNT; controller++)
+			cypd_enable_interrupt(controller, true);
 
 		set_pd_fw_update(false);
 		/* resetup PD controllers */
@@ -421,6 +424,9 @@ static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
 
 	r->status = 0;
 	args->response_size = sizeof(*r);
+
+	if (p->controller >= PD_CHIP_COUNT)
+		return EC_RES_INVALID_PARAM;
 
 	switch (p->modes) {
 	case BB_ENTRY_FW_UPDATE_MODE:

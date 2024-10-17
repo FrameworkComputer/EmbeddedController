@@ -96,6 +96,13 @@ config PD_CCG6_CUSTOMIZE_BATT_MESSAGE
 	    Enable customize battery response for GRL test, EC will write specific
 		register 0x4f to PD for GET_BATTERY_CAP and GET_BATTERY_STATUS.
 
+config PLATFORM_EC_PD_CHIP_MAX_COUNT
+	int "The maximum PD chips"
+	default 2
+	help
+		We would like to design the PD function more flexible.
+		Use this configuration to set the maximum PD chip with mainboard design.
+
 config PD_COMMON_VBUS_CONTROL
 	bool "Enable CCG common vbus control"
 	help

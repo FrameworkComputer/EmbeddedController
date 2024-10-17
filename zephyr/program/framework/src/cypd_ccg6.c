@@ -43,6 +43,8 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	int expected_ack_mask = 0;
 	const struct gpio_dt_spec *intr = gpio_get_dt_spec(pd_chip_config[controller].gpio);
 
+	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
 	if (reg < 0x1000) {
 		expected_ack_mask = CCG_DEV_INTR;
 		cmd_port = -1;
@@ -178,6 +180,8 @@ int cypd_setup(int controller)
 	};
 	BUILD_ASSERT(ARRAY_SIZE(cypd_setup_cmds) == CYPD_SETUP_CMDS_LEN);
 
+	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
 	/* Make sure the interrupt is not asserted before we start */
 	if (gpio_pin_get_dt(intr) == 0) {
 		rv = cypd_get_int(controller, &data);
@@ -212,9 +216,24 @@ int cypd_setup(int controller)
 void cypd_update_ac_status(int controller)
 {
 	CPRINTS("Check C%d AC status!", controller);
+
+	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
 	if (cypd_write_reg8_wait_ack(controller,
 		CCG_CUST_C_CTRL_CONTROL_REG, CCG6_AC_AT_PORT))
 		CPRINTS("CYPD Read AC status fail");
+}
+
+__maybe_unused static bool are_cypd_chips_ready(void)
+{
+	int controller;
+
+	for (controller = 0; controller < PD_CHIP_COUNT; controller++) {
+		if (pd_chip_config[controller].state != CCG_STATE_READY)
+			return EC_ERROR_BUSY;
+	}
+
+	return EC_SUCCESS;
 }
 
 __override void cypd_customize_app_setup(int controller)
@@ -233,8 +252,7 @@ int check_power_on_port(void)
 {
 	int port;
 	/* only read CYPD when it ready */
-	if (!(pd_chip_config[0].state == CCG_STATE_READY &&
-		pd_chip_config[1].state == CCG_STATE_READY)) {
+	if (!are_cypd_chips_ready()) {
 		CPRINTS("CYPD not ready, just delay 100ms to wait");
 		crec_msleep(100);
 	}
@@ -313,6 +331,8 @@ void update_system_power_state(int controller)
 	/* CCG6 does not support power state G3, just for initial state */
 	static uint8_t pre_state = CCG_POWERSTATE_G3;
 
+	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
 	switch (ps) {
 	case POWER_G3:
 	case POWER_S5G3:
@@ -366,6 +386,8 @@ void enable_compliance_mode(int controller)
 	uint32_t debug_register = 0xD0000000;
 	int debug_ctl = 0x0100;
 
+	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
 	/* Write 0xD0000000 to address 0x0048 */
 	rv = cypd_write_reg_block(controller, CCG_ICL_BB_RETIMER_DAT_REG,
 			(void *) &debug_register, 4);
@@ -383,6 +405,8 @@ void disable_compliance_mode(int controller)
 	int rv;
 	uint32_t debug_register = 0x00000000;
 	int debug_ctl = 0x0000;
+
+	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
 	/* Write 0x00000000 to address 0x0048 */
 	rv = cypd_write_reg_block(controller, CCG_ICL_BB_RETIMER_DAT_REG,
@@ -402,6 +426,8 @@ void entry_tbt_mode(int controller)
 	uint8_t force_tbt_mode = 0x01;
 	int debug_ctl = 0x0100;
 
+	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
 	/* Write 0x0100 to address 0x0046 */
 	rv = cypd_write_reg16(controller, CCG_ICL_BB_RETIMER_CMD_REG, debug_ctl);
 	if (rv != EC_SUCCESS)
@@ -419,6 +445,8 @@ void exit_tbt_mode(int controller)
 	uint8_t force_tbt_mode = 0x00;
 	int debug_ctl = 0x0000;
 
+	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
 	/* Write 0x00 to address 0x0040 */
 	rv = cypd_write_reg8(controller, CCG_ICL_CTRL_REG, force_tbt_mode);
 	if (rv != EC_SUCCESS)
@@ -434,6 +462,8 @@ int check_tbt_mode(int controller)
 {
 	int rv;
 	int data;
+
+	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
 	rv = cypd_read_reg8(controller, CCG_ICL_STS_REG, &data);
 	if (rv != EC_SUCCESS)
@@ -460,10 +490,8 @@ void cypd_customize_battery_cap(void)
 		battery_get_disconnect_state();
 
 	/* only send status when PD ready */
-	if (!(pd_chip_config[0].state == CCG_STATE_READY &&
-		pd_chip_config[1].state == CCG_STATE_READY)) {
+	if (!are_cypd_chips_ready())
 		return;
-	}
 
 	if (!battery_can_discharge) {
 		cypd_batt_update = false;
@@ -516,10 +544,8 @@ void cypd_customize_battery_status(void)
 	battery_get_params(&batt);
 
 	/* only send status when PD ready */
-	if (!(pd_chip_config[0].state == CCG_STATE_READY &&
-		pd_chip_config[1].state == CCG_STATE_READY)) {
+	if (!are_cypd_chips_ready())
 		return;
-	}
 
 	/* only update data when soc change */
 	if (batt.state_of_charge == pd_batt_soc)
