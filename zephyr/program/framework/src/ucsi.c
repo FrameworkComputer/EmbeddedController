@@ -32,15 +32,6 @@
 #define CCI_ERROR_FLAG BIT(30)
 #define CCI_COMPLETE_FLAG BIT(31)
 
-struct pd_chip_ucsi_info_t pd_chip_ucsi_info[] = {
-	[PD_CHIP_0] = {
-
-	},
-	[PD_CHIP_1] = {
-
-	}
-};
-
 static int ucsi_debug_enable;
 static uint8_t s0ix_connector_change_indicator;
 static bool read_complete;
