@@ -62,10 +62,8 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 			"lotus/src/thermal.c"
 			"lotus/src/gpu_configuration.c"
 			"lotus/src/gpu_f75303.c"
+			"src/usbc_4port_config.c"
 			"src/temperature_filter.c"
-
-
-
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
 	"lotus/src/stt.c")
@@ -81,8 +79,9 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 			"azalea/src/charger.c"
 			"azalea/src/cpu_power.c"
 			"azalea/src/power_sequence.c"
-			"src/keyboard_customization_13.c"
 			"azalea/src/project_diagnostics.c"
+			"src/usbc_4port_config.c"
+			"src/keyboard_customization_13.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
 	"azalea/src/stt.c")
@@ -102,6 +101,8 @@ if(DEFINED CONFIG_BOARD_MARIGOLD)
 			"marigold/src/project_diagnostics.c"
 			"marigold/src/temperature.c"
 			"marigold/src/thermal.c"
+			"marigold/src/usbc.c"
+			"src/usbc_4port_config.c"
 	)
 
 endif()
