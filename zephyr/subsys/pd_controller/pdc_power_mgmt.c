@@ -1239,6 +1239,17 @@ static void handle_connector_status(struct pdc_port_t *port)
 		}
 
 		if (status->power_direction) {
+			if (conn_status_change_bits.negotiated_power_level) {
+				/*
+				 * When we are a source, if the partner sends
+				 * a new Request, the PDC sets the negotiated
+				 * power level change. Request sink caps again.
+				 * This flow is atypical for most sink devices,
+				 * but it is behavior PD testers exercise.
+				 */
+				atomic_set_bit(port->src_policy.flags,
+					       SRC_POLICY_GET_SINK_CAPS);
+			}
 			/* Port partner is a sink device
 			 */
 			set_pdc_state(port, PDC_SRC_ATTACHED);
