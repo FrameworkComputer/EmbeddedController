@@ -97,7 +97,7 @@ void power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
 {
 #ifdef CONFIG_AP_SLP_S0_DEBUG
 	LOG_ERR("Detected sleep hang cancel the slp_s0_debug_alarm"
-		"and don't trigger EC_HOST_EVENT_HANG_DETECT\n");
+		" and don't trigger EC_HOST_EVENT_HANG_DETECT\n");
 	k_work_cancel_delayable(&slp_s0_debug_alarm_data);
 	return;
 #endif /* CONFIG_AP_SLP_S0_DEBUG */
