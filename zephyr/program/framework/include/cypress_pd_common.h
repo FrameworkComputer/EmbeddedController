@@ -581,6 +581,7 @@ struct pd_battery_status_t {
  */
 extern struct pd_chip_config_t pd_chip_config[];
 extern struct pd_port_current_state_t pd_port_states[];
+extern struct pd_chip_ucsi_info_t pd_chip_ucsi_info[];
 
 /**
  * cypress i2c write functions
