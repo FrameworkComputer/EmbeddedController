@@ -19,6 +19,8 @@
 #include "usbc/pdc_dpm.h"
 #include "usbc/pdc_power_mgmt.h"
 
+#include <string.h>
+
 #include <zephyr/devicetree.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -775,9 +777,21 @@ static const uint32_t pdc_src_pdo_max =
 static const uint32_t pdo_snk_fixed_flags =
 	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP | PDO_FIXED_COMM_CAP);
 
-static const uint32_t pdc_snk_pdo_max =
-	PDO_FIXED(CONFIG_PLATFORM_EC_PD_MAX_VOLTAGE_MV,
-		  CONFIG_PLATFORM_EC_PD_MAX_CURRENT_MA, pdo_snk_fixed_flags);
+static const uint32_t pdc_snk_pdos[] = {
+	/* Mandatory fixed 5V PDO */
+	PDO_FIXED(5000,
+		  MIN((CONFIG_PLATFORM_EC_PD_OPERATING_POWER_MW / 5),
+		      CONFIG_PLATFORM_EC_PD_MAX_CURRENT_MA),
+		  pdo_snk_fixed_flags),
+	/* Battery PDO covering 5V-5% to the board maximum voltage and current
+	 */
+	PDO_BATT(4750, CONFIG_PLATFORM_EC_PD_MAX_VOLTAGE_MV,
+		 CONFIG_PLATFORM_EC_PD_OPERATING_POWER_MW),
+	/* Variable PDO covering 5V-5% to the board maximum voltage and current
+	 */
+	PDO_VAR(4750, CONFIG_PLATFORM_EC_PD_MAX_VOLTAGE_MV,
+		CONFIG_PLATFORM_EC_PD_MAX_CURRENT_MA),
+};
 
 static const struct smf_state pdc_states[];
 static enum pdc_state_t get_pdc_state(struct pdc_port_t *port);
@@ -1931,13 +1945,14 @@ static void pdc_snk_attached_run(void *obj)
 	case SNK_ATTACHED_SET_SINK_PDO:
 		port->snk_attached_local_state = SNK_ATTACHED_GET_PDOS;
 
-		/* Set a sink PDO that reflects this board's max voltage and
+		/* Set sink PDO(s) that reflects this board's max voltage and
 		 * current */
 		port->set_pdos = (struct set_pdos_t){
 			.type = SINK_PDO,
-			.count = 1,
-			.pdos[0] = pdc_snk_pdo_max,
+			.count = ARRAY_SIZE(pdc_snk_pdos),
 		};
+
+		memcpy(port->set_pdos.pdos, pdc_snk_pdos, sizeof(pdc_snk_pdos));
 
 		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
 		return;
