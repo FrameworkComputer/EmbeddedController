@@ -37,44 +37,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#undef CCG_INIT_STATE
-#ifdef CONFIG_PD_CHIP_CCG6
-#define CCG_INIT_STATE CCG_STATE_WAIT_STABLE
-#else
-#define CCG_INIT_STATE CCG_STATE_POWER_ON
-#endif
-
-struct pd_chip_config_t pd_chip_config[] = {
-	[PD_CHIP_0] = {
-		.i2c_port = I2C_PORT_PD_MCU0,
-		.addr_flags = CCG_I2C_CHIP0 | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
-		.state = CCG_INIT_STATE,
-		.gpio = GPIO_EC_PD_INTA_L,
-	},
-	[PD_CHIP_1] = {
-		.i2c_port = I2C_PORT_PD_MCU1,
-		.addr_flags = CCG_I2C_CHIP1 | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
-		.state = CCG_INIT_STATE,
-		.gpio = GPIO_EC_PD_INTB_L,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pd_chip_config) == PD_CHIP_COUNT);
-
-struct pd_port_current_state_t pd_port_states[] = {
-	[PD_PORT_0] = {
-
-	},
-	[PD_PORT_1] = {
-
-	},
-	[PD_PORT_2] = {
-
-	},
-	[PD_PORT_3] = {
-
-	}
-};
-
 static int prev_charge_port = -1;
 static bool verbose_msg_logging;
 static bool firmware_update;
