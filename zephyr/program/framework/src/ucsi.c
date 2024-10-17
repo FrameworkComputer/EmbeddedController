@@ -32,7 +32,7 @@
 #define CCI_ERROR_FLAG BIT(30)
 #define CCI_COMPLETE_FLAG BIT(31)
 
-static struct pd_chip_ucsi_info_t pd_chip_ucsi_info[] = {
+struct pd_chip_ucsi_info_t pd_chip_ucsi_info[] = {
 	[PD_CHIP_0] = {
 
 	},
@@ -109,8 +109,8 @@ int ucsi_write_tunnel(void)
 		CPRINTS("UCSI PPM_RESET");
 	}
 
-	pd_chip_ucsi_info[0].read_tunnel_complete = 0;
-	pd_chip_ucsi_info[1].read_tunnel_complete = 0;
+	for (i = 0; i < PD_CHIP_COUNT; i++)
+		pd_chip_ucsi_info[i].read_tunnel_complete = 0;
 
 	switch (*command) {
 	case UCSI_CMD_GET_CONNECTOR_STATUS:
@@ -210,6 +210,8 @@ void record_ucsi_connector_change_event(int controller, int port)
 {
 	int cci_port = (controller << 1) + port + 1;
 
+	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
 	if (!chipset_in_state(CHIPSET_STATE_ON) && !chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		s0ix_connector_change_indicator |= BIT(cci_port);
 }
@@ -273,6 +275,41 @@ static void resend_ucsi_connector_change_event(void)
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, resend_ucsi_connector_change_event, HOOK_PRIO_DEFAULT);
+
+#define OPERATOR_AND 1
+#define OPERATOR_OR  0
+
+static int ucsi_check_all_pd_status(int operator)
+{
+	int controller;
+
+	/* or operator = 0; and operator = 1 */
+	if (operator) {
+		for (controller = 0; controller < PD_CHIP_COUNT; controller++) {
+			/**
+			 * In the and operator condition,
+			 * if one pd chip does not complete the read tunnel, return false
+			 */
+			if (!pd_chip_ucsi_info[controller].read_tunnel_complete)
+				return false;
+		}
+
+		/* If all pd chips have completed the read tunnel, return true */
+		return true;
+	}
+
+	for (controller = 0; controller < PD_CHIP_COUNT; controller++) {
+		/**
+		 * In the or operator condition,
+		 * if one pd chip has completed the read tunnel, return true
+		 */
+		if (!pd_chip_ucsi_info[controller].read_tunnel_complete)
+			return true;
+	}
+
+	/* If all pd chips have not completed the read tunnel, return false */
+	return false;
+}
 
 int ucsi_read_tunnel(int controller)
 {
@@ -354,15 +391,13 @@ int ucsi_read_tunnel(int controller)
 	case UCSI_CMD_GET_CAPABILITY:
 	case UCSI_CMD_GET_ERROR_STATUS:
 		/* Those command need to wait two pd chip to response completed */
-		if (pd_chip_ucsi_info[0].read_tunnel_complete &&
-		    pd_chip_ucsi_info[1].read_tunnel_complete)
+		if (ucsi_check_all_pd_status(OPERATOR_AND))
 			read_complete = 1;
 		else
 			read_complete = 0;
 		break;
 	case UCSI_CMD_ACK_CC_CI:
-		if (pd_chip_ucsi_info[0].read_tunnel_complete &&
-		    pd_chip_ucsi_info[1].read_tunnel_complete) {
+		if (ucsi_check_all_pd_status(OPERATOR_AND)) {
 			read_complete = 1;
 
 			/* workaround for linux driver */
@@ -373,8 +408,7 @@ int ucsi_read_tunnel(int controller)
 			read_complete = 0;
 		break;
 	default:
-		if (pd_chip_ucsi_info[0].read_tunnel_complete ||
-		    pd_chip_ucsi_info[1].read_tunnel_complete)
+		if (ucsi_check_all_pd_status(OPERATOR_OR))
 			read_complete = 1;
 		else
 			read_complete = 0;
@@ -467,14 +501,12 @@ void check_ucsi_event_from_host(void)
 			CPRINTS("%s Complete",
 				command_names(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND)));
 		}
-		if (pd_chip_ucsi_info[0].read_tunnel_complete) {
-			message_in = pd_chip_ucsi_info[0].message_in;
-			cci = &pd_chip_ucsi_info[0].cci;
-		}
 
-		if (pd_chip_ucsi_info[1].read_tunnel_complete) {
-			message_in = pd_chip_ucsi_info[1].message_in;
-			cci = &pd_chip_ucsi_info[1].cci;
+		for (i = 0; i < PD_CHIP_COUNT; i++) {
+			if (pd_chip_ucsi_info[i].read_tunnel_complete) {
+				message_in = pd_chip_ucsi_info[i].message_in;
+				cci = &pd_chip_ucsi_info[i].cci;
+			}
 		}
 		read_complete = false;
 
@@ -485,14 +517,13 @@ void check_ucsi_event_from_host(void)
 		 * so choose this response as a priority when we get an ack from
 		 * both controllers
 		 */
-		if (pd_chip_ucsi_info[1].read_tunnel_complete &&
-			pd_chip_ucsi_info[0].read_tunnel_complete) {
-			if (pd_chip_ucsi_info[0].cci & 0xFE) {
-				message_in = pd_chip_ucsi_info[0].message_in;
-				cci = &pd_chip_ucsi_info[0].cci;
-			} else if (pd_chip_ucsi_info[1].cci & 0xFE) {
-				message_in = pd_chip_ucsi_info[1].message_in;
-				cci = &pd_chip_ucsi_info[1].cci;
+		if (ucsi_check_all_pd_status(OPERATOR_AND)) {
+			for (i = 0; i < PD_CHIP_COUNT; i++) {
+				if (pd_chip_ucsi_info[i].cci & 0xFE) {
+					message_in = pd_chip_ucsi_info[i].message_in;
+					cci = &pd_chip_ucsi_info[i].cci;
+					break;
+				}
 			}
 		}
 
@@ -517,8 +548,8 @@ void check_ucsi_event_from_host(void)
 		if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND) == UCSI_CMD_GET_CAPABILITY)
 			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_MESSAGE_IN + 4) = PD_PORT_COUNT;
 
-		pd_chip_ucsi_info[0].read_tunnel_complete = 0;
-		pd_chip_ucsi_info[1].read_tunnel_complete = 0;
+		for (i = 0; i < PD_CHIP_COUNT; i++)
+			pd_chip_ucsi_info[i].read_tunnel_complete = 0;
 
 		/* clear the UCSI command if busy flag is not set */
 		if (0 == (*cci & CCI_BUSY_FLAG)) {
