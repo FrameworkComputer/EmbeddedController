@@ -10,6 +10,7 @@
 #include "chipset.h"
 #include "config.h"
 #include "console.h"
+#include "common.h"
 #include "customized_shared_memory.h"
 #include "cypress_pd_common.h"
 #include "diagnostics.h"
@@ -39,32 +40,6 @@ static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts *
 static int force_shoutdown_flags;
 static int stress_test_enable;
 static int d3cold_is_entry;	/* check the d3cold status */
-
-/* Power Signal Input List */
-const struct power_signal_info power_signal_list[] = {
-	[X86_3VALW_PG] = {
-		.gpio = GPIO_POWER_GOOD_3VALW,
-		.flags = POWER_SIGNAL_ACTIVE_HIGH,
-		.name = "3VALW_PG_DEASSERTED",
-	},
-	[X86_SLP_S3_N] = {
-		.gpio = GPIO_PCH_SLP_S3_L,
-		.flags = POWER_SIGNAL_ACTIVE_HIGH,
-		.name = "SLP_S3_DEASSERTED",
-	},
-	[X86_SLP_S5_N] = {
-		.gpio = GPIO_PCH_SLP_S5_L,
-		.flags = POWER_SIGNAL_ACTIVE_HIGH,
-		.name = "SLP_S5_DEASSERTED",
-	},
-	[X86_VR_PG] = {
-		.gpio = GPIO_POWER_GOOD_VR,
-		.flags = POWER_SIGNAL_ACTIVE_HIGH,
-		.name = "VR_PG_DEASSERTED",
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
-
 
 static void inputdeck_resume(void)
 {
