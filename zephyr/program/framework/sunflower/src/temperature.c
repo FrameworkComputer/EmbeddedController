@@ -21,7 +21,7 @@ __override void board_update_temperature_mk(enum temp_sensor_id id)
 	switch (id) {
 	case 0:
 		/* Q56, cpu-f75303 */
-		f75303_get_val_mk(F75303_SENSOR_ID(DT_NODELABEL(local_f75303)),
+		f75303_get_val_mk(F75303_SENSOR_ID(DT_NODELABEL(cpu_f75303)),
 				 &temp_mk_ptr);
 		temp_mk_ptr = temp_mk_ptr / 100;
 		break;
