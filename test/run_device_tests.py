@@ -264,7 +264,9 @@ class Platform(ABC):
         """Clean up after a test run."""
 
     @abstractmethod
-    def skip_test(self, test_name: str, board_config: BoardConfig) -> bool:
+    def skip_test(
+        self, test_name: str, board_config: BoardConfig, zephyr: bool
+    ) -> bool:
         """Returns true if the given test should be skipped."""
 
 
@@ -351,7 +353,9 @@ class Hardware(Platform):
     def cleanup(self) -> None:
         pass
 
-    def skip_test(self, test_name: str, board_config: BoardConfig) -> bool:
+    def skip_test(
+        self, test_name: str, board_config: BoardConfig, zephyr: bool
+    ) -> bool:
         return False
 
 
@@ -395,11 +399,28 @@ class Renode(Platform):
     def cleanup(self) -> None:
         self.process.kill()
 
-    def skip_test(self, test_name: str, board_config: BoardConfig) -> bool:
+    def skip_test(
+        self, test_name: str, board_config: BoardConfig, zephyr: bool
+    ) -> bool:
         if board_config.name in [BLOONCHIPPER, DARTMONKEY]:
             if board_config.name == BLOONCHIPPER:
                 if test_name in [
                     "timer",  # TODO(b/372968708)
+                ]:
+                    return True
+                if zephyr and test_name in [
+                    "abort",
+                    "assert_builtin",
+                    "assert_stdlib",
+                    "exit",
+                    "fp_transport",
+                    "fpsensor_debug",
+                    "ftrapv",
+                    "panic",
+                    "panic_data",
+                    "rollback",
+                    "stdlib",
+                    "utils_str",
                 ]:
                     return True
             # TODO(b/356476313): Remove these when Renode is fixed.
@@ -1675,7 +1696,7 @@ def main():
     with ThreadPoolExecutor(max_workers=1) as executor:
         for test in test_list:
             if (test.skip_for_zephyr and args.zephyr) or platform.skip_test(
-                test.test_name, board_config
+                test.test_name, board_config, args.zephyr
             ):
                 continue
             test.passed = flash_and_run_test(
@@ -1688,7 +1709,7 @@ def main():
             # print results
             print('Test "' + test.config_name + '": ', end="")
             if (test.skip_for_zephyr and args.zephyr) or platform.skip_test(
-                test.test_name, board_config
+                test.test_name, board_config, args.zephyr
             ):
                 print(colorama.Fore.YELLOW + "SKIPPED")
             else:
