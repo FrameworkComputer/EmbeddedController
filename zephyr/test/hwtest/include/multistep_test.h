@@ -78,7 +78,7 @@
 				       (step < (TEST_STEP_ZERO(steps) +      \
 						ARRAY_SIZE(steps)))) {       \
 					   ztest_run_test_suite(name, false, \
-								1, 1);       \
+								1, 1, NULL); \
 				   }                                         \
 			   }                                                 \
                                                                              \
