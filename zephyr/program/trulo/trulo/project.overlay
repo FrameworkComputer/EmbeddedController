@@ -11,7 +11,6 @@
 #include "../i2c.dtsi"
 #include "../power_signals.dtsi"
 #include "../trulo.dtsi"
-#include "../usba.dtsi"
 
 /* Trulo project DTS includes*/
 #include "battery.dtsi"
@@ -24,6 +23,7 @@
 #include "led_policy.dtsi"
 #include "temp_sensors.dtsi"
 #include "usb_typec.dtsi"
+#include "usba.dtsi"
 
 /* Trulo overrides follow... */
 

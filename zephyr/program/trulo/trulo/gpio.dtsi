@@ -61,6 +61,9 @@
 		gpio_ec_cbi_wp: ec_cbi_wp {
 			gpios = <&gpio7 4 GPIO_OUTPUT>;
 		};
+		gpio_en_usb_a0_vbus: en_usb_a0_vbus {
+			gpios = <&gpio9 1 GPIO_OUTPUT>;
+		};
 	};
 
 	unused-pins {
