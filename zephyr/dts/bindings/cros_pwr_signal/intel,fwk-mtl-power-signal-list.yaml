@@ -1,0 +1,22 @@
+# Copyright 2024 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+description: Intel-MTL, Power Signal List
+compatible: "intel,fwk-mtl-power-signal-list"
+
+include: power-signal-list.yaml
+
+properties:
+  power-signals-required:
+    default: 6
+
+child-binding:
+  properties:
+    power-enum-name:
+      enum:
+        - X86_3VALW_PG
+        - X86_SLP_S3_N
+        - X86_SLP_S5_N
+        - X86_VR_PG
+        - X86_PRIM_PWR
+        - X86_SLP_S4_N
