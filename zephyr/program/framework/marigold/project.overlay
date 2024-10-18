@@ -13,3 +13,4 @@
 #include "led_policy.dtsi"
 #include "overlay.dtsi"
 #include "keyboard.dtsi"
+#include "power_signal.dtsi"
