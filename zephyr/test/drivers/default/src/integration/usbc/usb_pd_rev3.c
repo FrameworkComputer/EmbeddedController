@@ -69,11 +69,12 @@ static void usb_attach_5v_3a_pd_source_before(void *data)
 	connect_source_to_port(&fixture->source_5v_3a, &fixture->src_ext, 1,
 			       fixture->tcpci_emul, fixture->charger_emul);
 
-	/* Clear Alert and Status receive checks */
+	/* Clear Alert and Status receive checks; clear message log */
 	tcpci_src_emul_clear_alert_received(&fixture->src_ext);
 	tcpci_src_emul_clear_status_received(&fixture->src_ext);
 	zassert_false(fixture->src_ext.alert_received);
 	zassert_false(fixture->src_ext.status_received);
+	tcpci_partner_common_clear_logged_msgs(&fixture->source_5v_3a);
 
 	/* Initial check on power state */
 	zassert_true(chipset_in_state(CHIPSET_STATE_ON));
