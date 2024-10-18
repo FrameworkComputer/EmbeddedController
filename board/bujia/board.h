@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Lisbon board configuration */
+/* Bujia board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -12,6 +12,8 @@
 
 /* Baseboard features */
 #include "baseboard.h"
+
+#undef CONFIG_CMD_POWERINDEBUG
 
 /* Barrel Jack */
 #define DEDICATED_CHARGE_PORT 1
