@@ -33,6 +33,10 @@ LOG_MODULE_REGISTER(pdc_power_mgmt_api, LOG_LEVEL_INF);
 #define PDC_POWER_STABLE_TIMEOUT (4000)
 #define RTS5453P_NODE DT_NODELABEL(pdc_emul1)
 
+#define USBC0_NODE DT_NODELABEL(usbc0)
+#define USBC0_UNA_DRP_MODE \
+	DT_STRING_TOKEN(DT_PROP(USBC0_NODE, policy), unattached_try)
+
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
 #define TEST_PORT 0
 
@@ -422,10 +426,18 @@ ZTEST_USER(pdc_power_mgmt_api, test_pd_src_public_cmd)
 ZTEST_USER(pdc_power_mgmt_api, test_unattached_public_cmd)
 {
 	union connector_status_t connector_status;
+	const enum drp_mode_t expected = USBC0_UNA_DRP_MODE;
+	enum drp_mode_t drp_mode = DRP_INVALID;
+	int rv;
 
 	memset(&connector_status, 0, sizeof(union connector_status_t));
 
 	run_toggle_test(&connector_status);
+
+	rv = pdc_power_mgmt_get_drp_mode(TEST_PORT, &drp_mode);
+	if (rv == EC_SUCCESS) {
+		zassert_equal(drp_mode, expected);
+	}
 }
 
 static void pdc_power_mgmt_connectionless_before(void *fixture)

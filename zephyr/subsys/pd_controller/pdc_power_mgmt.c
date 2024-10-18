@@ -402,6 +402,8 @@ enum policy_unattached_t {
 	UNA_POLICY_TCC,
 	/** UNA_POLICY_CC_MODE */
 	UNA_POLICY_CC_MODE,
+	/** UNA_POLICY_DRP_MODE */
+	UNA_POLICY_DRP_MODE,
 	/** UNA_POLICY_UPDATE_SRC_CAPS */
 	UNA_POLICY_UPDATE_SRC_CAPS,
 	/** UNA_POLICY_COUNT */
@@ -418,6 +420,8 @@ struct pdc_unattached_policy_t {
 	enum usb_typec_current_t tcc;
 	/** CC Operation Mode */
 	enum ccom_t cc_mode;
+	/** DRP Mode */
+	enum drp_mode_t drp_mode;
 };
 
 /**
@@ -911,6 +915,8 @@ static ALWAYS_INLINE void pdc_thread(void *pdc_dev, void *unused1,
 			DT_INST_PROP(inst, policy), unattached_rp_value),    \
 		.port.una_policy.cc_mode = DT_STRING_TOKEN(                  \
 			DT_INST_PROP(inst, policy), unattached_cc_mode),     \
+		.port.una_policy.drp_mode = DT_STRING_TOKEN(                 \
+			DT_INST_PROP(inst, policy), unattached_try),         \
 		.port.suspend = ATOMIC_INIT(0),                              \
 		.port.dual_role_state = PD_DRP_TOGGLE_ON,                    \
 	};                                                                   \
@@ -1365,6 +1371,13 @@ static void run_unattached_policies(struct pdc_port_t *port)
 				      UNA_POLICY_CC_MODE)) {
 		/* Set CC PULL Resistor and TrySrc or TrySnk */
 		queue_internal_cmd(port, CMD_PDC_SET_CCOM);
+		atomic_set_bit(port->una_policy.flags, UNA_POLICY_DRP_MODE);
+		return;
+	} else if (atomic_test_and_clear_bit(port->una_policy.flags,
+					     UNA_POLICY_DRP_MODE)) {
+		/* Set DRP current policy */
+		port->drp = port->una_policy.drp_mode;
+		queue_internal_cmd(port, CMD_PDC_SET_DRP);
 		return;
 	} else if (atomic_test_and_clear_bit(port->una_policy.flags,
 					     UNA_POLICY_TCC)) {
