@@ -20,22 +20,21 @@
 	 * measurement types.
 	 */
 
-	/* Rotation matrix used by drivers. */
+	/* Rotation matrix used by drivers to account for the orientation
+	 * in which the sensors are mounted in the system.
+	 * Both need to be rotated by 90 degrees counterclockwise around the Z-Axis.
+	 * This is equivalent to swapping X and X axes, then reversing the X-Axis.
+	 */
 	motionsense-rotation-ref {
 		compatible = "cros-ec,motionsense-rotation-ref";
-		/*
-		 * Swap X and Y axes, and also reverse X axis. This accounts for the
-		 * orientation in which the sensor is mounted in the system.
-		 */
 		lid_rot_ref: lid-rotation-ref {
 			mat33 = <0 1 0
 				 (-1) 0 0
 				 0 0 1>;
 		};
-		/* No rotation */
 		base_rot_ref: base-rotation-ref {
-			mat33 = <1 0 0
-				 0 1 0
+			mat33 = <0 1 0
+				 (-1) 0 0
 				 0 0 1>;
 		};
 	};
