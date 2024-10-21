@@ -13,11 +13,16 @@ extern "C" {
 #endif
 
 struct event_log_entry {
-	uint32_t timestamp; /* relative timestamp in milliseconds */
-	uint8_t type; /* event type, caller-defined */
-	uint8_t size; /* [7:5] caller-def'd [4:0] payload size in bytes */
-	uint16_t data; /* type-defined data payload */
-	uint8_t payload[0]; /* optional additional data payload: 0..16 bytes */
+	/* Store absolute timestamp in ms in RAM; return relative for hostcmd */
+	uint32_t timestamp;
+	/* Event type, caller-defined */
+	uint8_t type;
+	/* [7:5] caller-def'd [4:0] payload size in bytes */
+	uint8_t size;
+	/* Type-defined data payload */
+	uint16_t data;
+	/* Optional additional data payload: 0..31 bytes */
+	uint8_t payload[0];
 } __packed;
 
 #define EVENT_LOG_SIZE_MASK 0x1f
