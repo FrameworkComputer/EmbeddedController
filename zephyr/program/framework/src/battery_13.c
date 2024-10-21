@@ -23,39 +23,12 @@
 
 #define CACHE_INVALIDATION_TIME_US (3 * SECOND)
 
-static enum battery_present batt_pres_prev = BP_NOT_SURE;
-
 enum battery_trip_point_state_t {
 	BATTERY_TRIP_POINT_DISCHARGE  = BIT(0),
 	BATTERY_TRIP_POINT_CHARGE     = BIT(1),
 	BATTERY_TRIP_POINT_FULL       = BIT(2),
 	BATTERY_TRIP_POINT_WAIT_EVENT = BIT(3),
 };
-
-#ifndef CONFIG_PLATFORM_EC_BATTERY_PRESENT_GPIO
-enum battery_present battery_is_present(void)
-{
-	enum battery_present batt_pres;
-	int mv;
-
-	mv = adc_read_channel(ADC_VCIN1_BATT_TEMP);
-	batt_pres = (mv < 2200 ? BP_YES : BP_NO);
-
-	if (mv == ADC_READ_ERROR)
-		return BP_NO;
-
-	/*
-	 * If the battery is present now and was present last time we checked,
-	 * return early.
-	 */
-	if (batt_pres == BP_YES && batt_pres_prev == batt_pres)
-		return batt_pres;
-
-	batt_pres_prev = batt_pres;
-
-	return batt_pres;
-}
-#endif
 
 uint32_t get_system_percentage(void)
 {
@@ -70,15 +43,6 @@ uint32_t get_system_percentage(void)
 		return os_percentage;
 	} else
 		return pre_os_percentage;
-}
-
-enum battery_present board_batt_is_present(void)
-{
-	/*
-	 * Due to adc_read_channel() will clear the task event,
-	 * we should get the battery status without read adc channel again.
-	 */
-	return batt_pres_prev;
 }
 
 void battery_trip_point(struct charge_state_data *curr_batt)
