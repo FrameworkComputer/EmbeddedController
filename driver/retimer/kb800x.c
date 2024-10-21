@@ -5,6 +5,7 @@
  * Driver for Kandou KB800x USB-C 40 Gb/s multiprotocol switch.
  */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -197,6 +198,12 @@ static bool kb800x_phy_ss_lane_is_rx(enum kb800x_phy_lane phy_lane,
 	case KB800X_RX1:
 		rx = true;
 		break;
+	/* LCOV_EXCL_START */
+	default:
+		/* Unreachable. */
+		ASSERT(false);
+		break;
+		/* LCOV_EXCL_STOP */
 	}
 	/* invert for C/D (host side), since it is receiving the TX signal*/
 	if (!KB800X_PHY_IS_AB(phy_lane))
