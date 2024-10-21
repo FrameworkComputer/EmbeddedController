@@ -81,13 +81,21 @@ def launch(opts: argparse.Namespace) -> int:
     script_path = pathlib.Path(__file__).parent.resolve()
     ec_dir = script_path.parent
 
-    out_dir = ec_dir / "build" / board
-    if project != "ec":
-        out_dir /= project
+    if project == "zephyr":
+        out_dir = ec_dir / "build" / "zephyr" / board / "output"
+    else:
+        out_dir = ec_dir / "build" / board
+        if project != "ec":
+            out_dir /= project
 
-    bin_file = out_dir / f"{project}.bin"
-    elf_ro_file = out_dir / "RO" / f"{project}.RO.elf"
-    elf_rw_file = out_dir / "RW" / f"{project}.RW.elf"
+    if project == "zephyr":
+        bin_file = out_dir / "ec.bin"
+        elf_ro_file = out_dir / "zephyr.ro.elf"
+        elf_rw_file = out_dir / "zephyr.rw.elf"
+    else:
+        bin_file = out_dir / f"{project}.bin"
+        elf_ro_file = out_dir / "RO" / f"{project}.RO.elf"
+        elf_rw_file = out_dir / "RW" / f"{project}.RW.elf"
 
     if not bin_file.exists():
         print(f"Error - The bin file '{bin_file}' does not exist.")
@@ -172,8 +180,8 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
         nargs="?",
         default=os.environ.get("PROJECT", DEFAULT_PROJECT),
         help="""
-        Name of the EC project. This is normally just 'ec', but could be a test
-        name for on-board test images
+        Name of the EC project. This is normally just 'ec' or 'zephyr', but
+        could be a test name for on-board test images.
         """,
     )
 
