@@ -16,11 +16,8 @@ from zmake import multiproc
 import zmake.zmake as zm
 
 
-# Add the Util dir early in the python search path
-EC_DIR = pathlib.Path(__file__).parent.parent.parent.parent.resolve()
-
 # Add the util directory to the search path
-sys.path.append(str(EC_DIR / "util"))
+sys.path.append(str("/mnt/host/source/src/platform/ec/util"))
 
 # pylint: disable=import-error, wrong-import-position
 from coreboot_sdk import init_toolchain
