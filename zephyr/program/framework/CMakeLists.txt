@@ -101,6 +101,7 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 	zephyr_library_sources(
 			"src/battery_13.c"
 			"src/ucsi_port_13.c"
+			"src/battery_present_adc.c"
 			"azalea/src/charger.c"
 			"azalea/src/cpu_power.c"
 			"azalea/src/power_sequence.c"
@@ -120,6 +121,7 @@ if(DEFINED CONFIG_BOARD_MARIGOLD)
 	zephyr_library_sources(
 			"src/battery_13.c"
 			"src/ucsi_port_13.c"
+			"src/battery_present_adc.c"
 			"marigold/src/charger.c"
 			"marigold/src/cpu_power.c"
 			"marigold/src/power_sequence.c"
