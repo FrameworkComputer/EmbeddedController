@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#line 7
 #define DT_DRV_COMPAT ite_it8xxx2_shi
 
 #include "chipset.h"
