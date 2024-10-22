@@ -313,6 +313,19 @@ if(DEFINED CONFIG_BOARD_TELIKS)
 			"teliks/src/keyboard_customization.c"
 	)
 endif()
+if(DEFINED CONFIG_BOARD_RULL)
+	project(rull)
+	zephyr_include_directories("rull/include")
+	zephyr_library_sources(
+			"rull/src/board.c"
+			"rull/src/sub_board.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "rull/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "rull/src/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+			"rull/src/keyboard_customization.c"
+	)
+endif()
 if(DEFINED CONFIG_BOARD_INTEL_ISH_5_4_1)
 	project(orisa-ish)
 	add_subdirectory(orisa-ish)
