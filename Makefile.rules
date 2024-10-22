@@ -204,7 +204,7 @@ FAILED_BOARDS_DIR = .failedboards
 # buildall -j" failed. To make it more obvious, we'll do one level of recursion
 # here.
 .PHONY: try_build_boards
-try_build_boards: $(foreach b, $(BOARDS), proj-$(b))
+try_build_boards: get_sdk $(foreach b, $(BOARDS), proj-$(b))
 
 .PHONY: build_boards
 build_boards: | $(FAILED_BOARDS_DIR)
@@ -236,7 +236,7 @@ buildall: buildall_only
 	 done
 
 .PHONY: try_build_tests
-try_build_tests: $(foreach b, $(BOARDS), tests-$(b))
+try_build_tests: get_sdk $(foreach b, $(BOARDS), tests-$(b))
 
 .PHONY: buildalltests
 buildalltests: | $(FAILED_BOARDS_DIR)
@@ -819,7 +819,7 @@ print-includes:
 
 .PHONY: clean
 clean:
-	-rm -rf $(out)
+	-rm -rf $(out) build/Makefile.sdk
 
 .PHONY: clobber
 clobber:
@@ -1000,3 +1000,12 @@ include Makefile.ide
 .SECONDARY:
 
 -include $(deps)
+
+.PHONY: get_sdk
+get_sdk:
+	declare -A toolchain_dict=($(shell ./util/coreboot_sdk.py)) ; \
+	rm -rf build/Makefile.sdk ; \
+	for key in "$${!toolchain_dict[@]}"; do \
+		echo "export $${key} := $${toolchain_dict[$${key}]}" >> build/Makefile.sdk ; \
+	done
+	sync

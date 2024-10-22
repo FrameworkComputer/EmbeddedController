@@ -145,6 +145,8 @@ include chip/$(CHIP)/build.mk
 # CHIP build file.
 include core/$(CORE)/toolchain.mk
 
+-include build/Makefile.sdk
+
 CROSS_COMPILE_TARGET_arm:=arm-eabi
 CROSS_COMPILE_TARGET_riscv:=riscv64-elf
 CROSS_COMPILE_TARGET_x86:=i386-elf
