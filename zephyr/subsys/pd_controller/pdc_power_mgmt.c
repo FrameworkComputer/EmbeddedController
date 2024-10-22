@@ -230,8 +230,6 @@ enum snk_attached_local_state_t {
 	SNK_ATTACHED_READ_POWER_LEVEL,
 	/** SNK_ATTACHED_DISABLE_FRS */
 	SNK_ATTACHED_DISABLE_FRS,
-	/** SNK_ATTACHED_SET_SINK_PDO */
-	SNK_ATTACHED_SET_SINK_PDO,
 	/** SNK_ATTACHED_GET_PDOS */
 	SNK_ATTACHED_GET_PDOS,
 	/** SNK_ATTACHED_GET_VDO */
@@ -312,6 +310,28 @@ enum unattached_local_state_t {
 	UNATTACHED_SET_SINK_PATH_OFF,
 	/** UNATTACHED_RUN */
 	UNATTACHED_RUN,
+};
+
+/**
+ * @brief Initialization local states. Carry out these steps upon subsystem
+ *        startup. INIT_GET_CONNECTOR_STATUS must be the final step, as this
+ *        calls the GET_CONNECTOR_STATUS PDC command and will directly
+ *        transition to the appropriate unattached or attached state.
+ */
+enum init_local_state_t {
+	/** INIT_WAIT_FOR_READY - Wait until the underlying PDC driver is
+	 *  initialized.
+	 */
+	INIT_WAIT_FOR_READY,
+	/** INIT_SET_SINK_PDOS - Set the sink PDOs (sink capabilities) on the
+	 *  PDC based on product configuration data.
+	 */
+	INIT_SET_SINK_PDOS,
+	/** INIT_GET_CONNECTOR_STATUS - Get current status. This state does not
+	 *  return; the state machine will transition to the unattached or one
+	 *  of the attached run states after handling the response.
+	 */
+	INIT_GET_CONNECTOR_STATUS,
 };
 
 /**
@@ -611,22 +631,18 @@ struct pdc_port_t {
 	/** Flag to notify that a Hard Reset was sent */
 	atomic_t hard_reset_sent;
 
+	/** Init local state variable */
+	enum init_local_state_t init_local_state;
 	/** Source TypeC attached local state variable */
 	enum src_typec_attached_local_state_t src_typec_attached_local_state;
 	/** Sink TypeC attached local state variable */
 	enum snk_typec_attached_local_state_t snk_typec_attached_local_state;
 	/** Unattached local state variable */
 	enum unattached_local_state_t unattached_local_state;
-	/** Last unattached local state variable */
-	enum unattached_local_state_t unattached_last_state;
 	/** Sink attached local state variable */
 	enum snk_attached_local_state_t snk_attached_local_state;
-	/** Last Sink attached local state variable */
-	enum snk_attached_local_state_t snk_attached_last_state;
 	/** Source attached local state variable */
 	enum src_attached_local_state_t src_attached_local_state;
-	/** Last Source attached local state variable */
-	enum src_attached_local_state_t src_attached_last_state;
 	/** State machine run event */
 	struct k_event sm_event;
 
@@ -1956,22 +1972,8 @@ static void pdc_snk_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_SET_FRS);
 		return;
 	case SNK_ATTACHED_GET_VDO:
-		port->snk_attached_local_state = SNK_ATTACHED_SET_SINK_PDO;
-		queue_internal_cmd(port, CMD_PDC_GET_VDO);
-		return;
-	case SNK_ATTACHED_SET_SINK_PDO:
 		port->snk_attached_local_state = SNK_ATTACHED_GET_PDOS;
-
-		/* Set sink PDO(s) that reflects this board's max voltage and
-		 * current */
-		port->set_pdos = (struct set_pdos_t){
-			.type = SINK_PDO,
-			.count = ARRAY_SIZE(pdc_snk_pdos),
-		};
-
-		memcpy(port->set_pdos.pdos, pdc_snk_pdos, sizeof(pdc_snk_pdos));
-
-		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
+		queue_internal_cmd(port, CMD_PDC_GET_VDO);
 		return;
 	case SNK_ATTACHED_GET_PDOS:
 		/* Request up to 4 pdos to honor USCI 6.5.15 Get PDOs - Number
@@ -2681,10 +2683,20 @@ static void pdc_init_entry(void *obj)
 
 	print_current_pdc_state(port);
 
-	/* Initialize Send Command data */
-	send_cmd_init(port);
-	/* Set up GET_VDO command data */
-	discovery_info_init(port);
+	if (get_pdc_state(port) != port->send_cmd_return_state) {
+		/* True if entering the init state for the first time, as
+		 * opposed to returning from a completed command called by one
+		 * of the local states (sub-steps)
+		 */
+
+		/* Initialize Send Command data */
+		send_cmd_init(port);
+		/* Set up GET_VDO command data */
+		discovery_info_init(port);
+
+		port->init_local_state = INIT_WAIT_FOR_READY;
+		port->public_api_buff = NULL;
+	}
 }
 
 /**
@@ -2829,9 +2841,15 @@ static void pdc_init_run(void *obj)
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
 	const struct pdc_config_t *const config = port->dev->config;
 
-	/* Wait until PDC driver is initialized */
-	if (pdc_is_init_done(port->pdc)) {
+	switch (port->init_local_state) {
+	case INIT_WAIT_FOR_READY:
+		if (!pdc_is_init_done(port->pdc)) {
+			/* Still waiting on driver to be ready */
+			return;
+		}
+
 		LOG_INF("C%d: PDC Subsystem Started", config->connector_num);
+
 		/* Apply policy in case of a late sysjump since we won't receive
 		 * the usual hook calls upon AP power state changes. Only called
 		 * once, after all port drivers are ready.
@@ -2842,14 +2860,32 @@ static void pdc_init_run(void *obj)
 				&pdc_apply_power_state_policy_work.work);
 		}
 
+		port->init_local_state = INIT_SET_SINK_PDOS;
+
+		/* Proceed directly to next sub-state */
+		__fallthrough;
+
+	case INIT_SET_SINK_PDOS:
+		port->init_local_state = INIT_GET_CONNECTOR_STATUS;
+
+		/* Set sink PDO(s) that reflects this board's max voltage and
+		 * current */
+		port->set_pdos = (struct set_pdos_t){
+			.type = SINK_PDO,
+			.count = ARRAY_SIZE(pdc_snk_pdos),
+		};
+
+		memcpy(port->set_pdos.pdos, pdc_snk_pdos, sizeof(pdc_snk_pdos));
+
+		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
+		break;
+
+	case INIT_GET_CONNECTOR_STATUS:
 		/* Send the connector status command to determine which state to
 		 * enter
 		 */
-		port->send_cmd.intern.cmd = CMD_PDC_GET_CONNECTOR_STATUS;
-		port->send_cmd.intern.pending = true;
-		port->public_api_buff = NULL;
-		set_pdc_state(port, PDC_SEND_CMD_START);
-		return;
+		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_STATUS);
+		break;
 	}
 }
 
