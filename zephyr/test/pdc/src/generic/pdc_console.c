@@ -1082,3 +1082,60 @@ ZTEST_USER(console_cmd_pdc, test_drp)
 	zassert_true(buffer_size > 0, NULL);
 	zassert_not_null(strstr(outbuffer, "DRP mode on port 0 is TRY_SRC"));
 }
+
+ZTEST_USER(console_cmd_pdc, test_vconn)
+{
+	int rv;
+	const char *outbuffer;
+	size_t buffer_size;
+
+	/* Invalid port number */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc vconn 99");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/*
+	 * pdc_power_mgmt_get_vconn_state() returns false
+	 */
+
+	pdc_power_mgmt_get_vconn_state_fake.return_val = false;
+	rv = shell_execute_cmd(get_ec_shell(), "pdc vconn 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	zassert_equal(1, pdc_power_mgmt_get_vconn_state_fake.call_count);
+
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+
+	/* Sample output:
+	 *
+	 * Vconn state: 0 (not sourcing)
+	 */
+
+	zassert_true(buffer_size > 0, NULL);
+	zassert_not_null(strstr(outbuffer, "Vconn state: 0 (not sourcing)"));
+
+	RESET_FAKE(pdc_power_mgmt_get_vconn_state);
+
+	/*
+	 * pdc_power_mgmt_get_vconn_state() returns true
+	 */
+
+	pdc_power_mgmt_get_vconn_state_fake.return_val = true;
+	rv = shell_execute_cmd(get_ec_shell(), "pdc vconn 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	zassert_equal(1, pdc_power_mgmt_get_vconn_state_fake.call_count);
+
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+
+	/* Sample output:
+	 *
+	 * Vconn state: 1 (sourcing)
+	 */
+
+	zassert_true(buffer_size > 0, NULL);
+	zassert_not_null(strstr(outbuffer, "Vconn state: 1 (sourcing)"));
+}

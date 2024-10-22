@@ -273,6 +273,25 @@ static int cmd_lpm_ppm_info(const struct shell *sh, size_t argc, char **argv)
 	return 0;
 }
 
+static int cmd_vconn_state(const struct shell *sh, size_t argc, char **argv)
+{
+	bool vconn_state;
+	uint8_t port;
+	int rv;
+
+	/* Get PD port number */
+	rv = cmd_get_pd_port(sh, argv[1], &port);
+	if (rv)
+		return rv;
+
+	vconn_state = pd_get_vconn_state(port);
+
+	shell_fprintf(sh, SHELL_INFO, "Vconn state: %d (%s)\n", vconn_state,
+		      vconn_state ? "sourcing" : "not sourcing");
+
+	return 0;
+}
+
 static int cmd_pdc_prs(const struct shell *sh, size_t argc, char **argv)
 {
 	int rv;
@@ -741,6 +760,10 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "Get PDC chip info via GET_LPM_PPM_INFO UCSI cmd\n"
 		      "Usage: pdc lpm_ppm_info <port>",
 		      cmd_lpm_ppm_info, 2, 0),
+	SHELL_CMD_ARG(vconn, NULL,
+		      "Get Vconn state for a port\n"
+		      "Usage: pdc vconn <port>",
+		      cmd_vconn_state, 2, 0),
 #ifdef CONFIG_USBC_PDC_TPS6699X_FW_UPDATER
 	SHELL_CMD_ARG(fwupdate, NULL,
 		      "Updates TPS6699x firmware\n"
