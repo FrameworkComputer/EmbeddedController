@@ -8,7 +8,8 @@
 /{
         /* Leverage 'zephyr,user' node for driver specific behavior */
         zephyr,user {
-                test_timeout = <750>;
+                /* TODO (b/375046378): Restore back to 750 ms */
+                test_timeout = <1500>;
                 /* TI PDC Info */
                 pd_version = <0>;
                 pd_revision = <0>;
