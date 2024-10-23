@@ -929,12 +929,9 @@ ZTEST_USER(pdc_power_mgmt_api, test_request_data_swap)
 	}
 }
 
-ZTEST_USER(pdc_power_mgmt_api, test_get_partner_unconstr_power)
+ZTEST_USER(pdc_power_mgmt_api, test_get_partner_unconstr_power_src)
 {
 	union connector_status_t connector_status;
-	const uint32_t pdos_no_up[] = {
-		PDO_FIXED(5000, 3000, PDO_FIXED_DUAL_ROLE),
-	};
 	const uint32_t pdos_up[] = {
 		PDO_FIXED(5000, 3000,
 			  PDO_FIXED_DUAL_ROLE |
@@ -954,14 +951,15 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_unconstr_power)
 
 	zassert_false(TEST_WAIT_FOR(pd_get_partner_unconstr_power(TEST_PORT),
 				    PDC_TEST_TIMEOUT));
+}
 
-	emul_pdc_disconnect(emul);
-	zassert_true(
-		TEST_WAIT_FOR(!pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
+ZTEST_USER(pdc_power_mgmt_api, test_get_partner_unconstr_power_snk_no_up)
+{
+	union connector_status_t connector_status;
+	const uint32_t pdos_no_up[] = {
+		PDO_FIXED(5000, 3000, PDO_FIXED_DUAL_ROLE),
+	};
 
-	/* If the port is in Attached.SNK, unconstrained power should be the
-	 * partner's advertised capability.
-	 */
 	emul_pdc_set_pdos(emul, SOURCE_PDO, PDO_OFFSET_0, 1, PARTNER_PDO,
 			  pdos_no_up);
 	emul_pdc_configure_snk(emul, &connector_status);
@@ -969,11 +967,20 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_unconstr_power)
 
 	zassert_false(TEST_WAIT_FOR(pd_get_partner_unconstr_power(TEST_PORT),
 				    PDC_TEST_TIMEOUT));
+}
 
-	emul_pdc_disconnect(emul);
-	zassert_true(
-		TEST_WAIT_FOR(!pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
+ZTEST_USER(pdc_power_mgmt_api, test_get_partner_unconstr_power_snk_up)
+{
+	union connector_status_t connector_status;
+	const uint32_t pdos_up[] = {
+		PDO_FIXED(5000, 3000,
+			  PDO_FIXED_DUAL_ROLE |
+				  PDO_FIXED_GET_UNCONSTRAINED_PWR),
+	};
 
+	/* If the port is in Attached.SNK, unconstrained power should be the
+	 * partner's advertised capability.
+	 */
 	emul_pdc_set_pdos(emul, SOURCE_PDO, PDO_OFFSET_0, 1, PARTNER_PDO,
 			  pdos_up);
 	emul_pdc_configure_snk(emul, &connector_status);
