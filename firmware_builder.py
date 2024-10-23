@@ -83,6 +83,7 @@ def build(opts):
         "--check",
         "--gitignore",
         "--dont-follow-links",
+        f"-j{opts.cpus}",
         ".",
     ]
     print(f"# Running {' '.join(cmd)}.")
