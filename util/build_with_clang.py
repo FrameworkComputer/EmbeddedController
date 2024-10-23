@@ -235,7 +235,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "arcada_ish",
     "drallion_ish",
     "tglrvp_ish",
-    "volteer_ish",
 ]
 
 NDS32_BOARDS = [
