@@ -166,7 +166,7 @@
     <vif:Accepts_PR_Swap_As_Src value="true" />
     <vif:Accepts_PR_Swap_As_Snk value="true" />
     <vif:Requests_PR_Swap_As_Src value="true" />
-    <vif:Requests_PR_Swap_As_Snk value="false" />
+    <vif:Requests_PR_Swap_As_Snk value="true" />
     <vif:FR_Swap_Supported_As_Initial_Sink value="false" />
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;SOP Discover ID-->
@@ -332,7 +332,7 @@
     <vif:Accepts_PR_Swap_As_Src value="true" />
     <vif:Accepts_PR_Swap_As_Snk value="true" />
     <vif:Requests_PR_Swap_As_Src value="true" />
-    <vif:Requests_PR_Swap_As_Snk value="false" />
+    <vif:Requests_PR_Swap_As_Snk value="true" />
     <vif:FR_Swap_Supported_As_Initial_Sink value="true" />
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;SOP Discover ID-->
