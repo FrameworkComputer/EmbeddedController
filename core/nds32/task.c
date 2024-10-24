@@ -242,8 +242,8 @@ inline bool is_interrupt_enabled(void)
 
 	asm volatile("mfsr %0, $INT_MASK" : "=r"(val));
 
-	/* Interrupts are enabled if any of HW2 ~ HW15 is enabled */
-	return val & 0xFFFC;
+	/* Interrupts are enabled if any of HW2, HW4 ~ HW15 is enabled */
+	return val & 0xFFF4;
 }
 
 inline bool in_interrupt_context(void)
