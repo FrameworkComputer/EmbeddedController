@@ -82,13 +82,11 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "soc_signal_interrupt";
 		};
-		/* disable interrupt because the i2c sighal does not connect to EC */
-		/*int_soc_tp: soc_tp {
-		 *	irq-pin = <&gpio_soc_tp_int_l>;
-		 *	flags = <GPIO_INT_EDGE_FALLING>;
-		 *	handler = "touchpad_interrupt";
-		 *};
-		 */
+		int_soc_tp: soc_tp {
+			irq-pin = <&gpio_soc_tp_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "touchpad_interrupt";
+		};
 		int_ioex_kbd_intr_n: ioex_kbd_intr_n {
 			irq-pin = <&gpio_ec_mcu_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
