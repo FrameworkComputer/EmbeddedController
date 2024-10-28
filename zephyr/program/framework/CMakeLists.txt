@@ -164,14 +164,14 @@ if(DEFINED CONFIG_BOARD_SUNFLOWER)
 	zephyr_include_directories("include/sunflower")
 	zephyr_library_sources(
 			"src/battery_13.c"
+			"sunflower/src/battery_present.c"
 			"sunflower/src/charger.c"
 			"sunflower/src/cpu_power.c"
 			"sunflower/src/power_sequence.c"
 			"sunflower/src/project_diagnostics.c"
 			"sunflower/src/keyboard_customization.c"
-			"sunflower/src/temperature.c"
-			"sunflower/src/thermal.c"
 			"sunflower/src/motionsense.c"
+			"sunflower/src/temperature.c"
 			"sunflower/src/board_tablet_mode.c"
 	)
 
