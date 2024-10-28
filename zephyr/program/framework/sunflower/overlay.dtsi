@@ -25,21 +25,21 @@
 		};
 		/* Q57 sensor on top skin close to H16 */
 		temp_sensor_top_skin: top-skin-f75303 {
-			temp_host_high = <78>;
-			temp_host_halt = <83>;
-			temp_host_release_high = <75>;
-			temp_fan_off = <50>;
-			temp_fan_max = <63>;
+			temp_host_high = <68>;
+			temp_host_halt = <73>;
+			temp_host_release_high = <65>;
+			temp_fan_off = <43>;
+			temp_fan_max = <53>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&top_skin_f75303>;
 		};
 		/* U31 sensor.*/
 		temp_sensor_local: local-f75303 {
-			temp_host_high = <66>;
-			temp_host_halt = <71>;
-			temp_host_release_high = <64>;
-			temp_fan_off = <40>;
-			temp_fan_max = <55>;
+			temp_host_high = <64>;
+			temp_host_halt = <69>;
+			temp_host_release_high = <61>;
+			temp_fan_off = <41>;
+			temp_fan_max = <49>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&local_f75303>;
 		};
@@ -54,8 +54,8 @@
 		};
 		temp_sensor_soc: soc-temp {
 			/* just read, no protection */
-			temp_fan_off = <103>;
-			temp_fan_max = <105>;
+			temp_fan_off = <125>;
+			temp_fan_max = <127>;
 			temp_host_warn = <115>;
 			temp_host_high = <120>;
 			temp_host_halt = <127>;
