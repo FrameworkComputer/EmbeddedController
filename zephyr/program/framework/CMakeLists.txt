@@ -119,9 +119,8 @@ if(DEFINED CONFIG_BOARD_SUNFLOWER)
 			"sunflower/src/power_sequence.c"
 			"sunflower/src/project_diagnostics.c"
 			"sunflower/src/keyboard_customization.c"
-			"sunflower/src/temperature.c"
-			"sunflower/src/thermal.c"
 			"sunflower/src/motionsense.c"
+			"sunflower/src/temperature.c"
 			"sunflower/src/board_tablet_mode.c"
 	)
 
