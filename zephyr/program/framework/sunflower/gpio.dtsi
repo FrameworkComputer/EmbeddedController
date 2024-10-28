@@ -247,6 +247,17 @@
 			no-auto-init;
 		};
 
+		/**
+		 * Host does not receive the SCI event via eSPI VM when the system
+		 * at S0ix state.
+		 *
+		 * This is a workaround to use the GPIO to notify the SCI event.
+		 * This GPIO was added in DVT1 and is not present in EVT.
+		 */
+		gpio_ec_sci_l: ec_sci_l {
+			gpios = <&gpio7 6 GPIO_ODR_LOW>;
+		};
+
 		/* unimplemented GPIOs */
 		entering-rw {
 			enum-name = "GPIO_ENTERING_RW";
@@ -269,7 +280,6 @@
 			<&gpio3 0 0>,
 			<&gpio3 1 0>,
 			<&gpio5 6 0>,
-			<&gpio7 6 0>,
 			<&gpiof 4 0>,
 			<&gpiof 5 0>;
 	};
