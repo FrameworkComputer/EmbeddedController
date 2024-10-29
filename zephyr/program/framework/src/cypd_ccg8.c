@@ -212,7 +212,7 @@ void update_system_power_state(int controller)
 	case POWER_S0ixS3: /* S0ix -> S3 */
 		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
 		if (pd_prev_power_state < POWER_S3) {
-			perform_error_recovery(controller);
+			task_set_event(TASK_ID_CYPD, CCG_EVT_PERFORM_ERROR_RECOVERY);
 			pd_prev_power_state = ps;
 		}
 		break;
@@ -221,7 +221,7 @@ void update_system_power_state(int controller)
 	case POWER_S0ixS0: /* S0ix -> S0 */
 		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
 		if (pd_prev_power_state < POWER_S3) {
-			perform_error_recovery(controller);
+			task_set_event(TASK_ID_CYPD, CCG_EVT_PERFORM_ERROR_RECOVERY);
 			pd_prev_power_state = ps;
 		}
 		break;

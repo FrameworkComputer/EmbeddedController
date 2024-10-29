@@ -340,7 +340,7 @@ void update_system_power_state(int controller)
 			cypd_set_power_state(CCG_POWERSTATE_S0, controller);
 			/* only execute the error recovery when the system power on */
 			if (pre_state != CCG_POWERSTATE_S0ix)
-				perform_error_recovery(controller);
+				task_set_event(TASK_ID_CYPD, CCG_EVT_PERFORM_ERROR_RECOVERY);
 		}
 		pre_state = CCG_POWERSTATE_S0;
 		break;
