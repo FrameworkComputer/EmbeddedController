@@ -1867,6 +1867,9 @@ void cypd_interrupt_handler_task(void *p)
 		if (evt & CCG_EVT_UPDATE_PWRSTAT)
 			cypd_update_power_status(2);
 
+		if (evt & CCG_EVT_PERFORM_ERROR_RECOVERY)
+			perform_error_recovery(2);
+
 
 		if (evt & (CCG_EVT_INT_CTRL_0 | CCG_EVT_INT_CTRL_1 |
 					CCG_EVT_STATE_CTRL_0 | CCG_EVT_STATE_CTRL_1)) {

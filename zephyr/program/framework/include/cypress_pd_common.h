@@ -299,7 +299,8 @@ enum pd_task_evt {
 	CCG_EVT_PDO_C0P1 = BIT(20),
 	CCG_EVT_PDO_C1P0 = BIT(21),
 	CCG_EVT_PDO_C1P1 = BIT(22),
-	CCG_EVT_PDO_RESET = BIT(23),
+	CCG_EVT_PERFORM_ERROR_RECOVERY = BIT(23),
+	CCG_EVT_PDO_RESET = BIT(24),
 };
 
 /************************************************
