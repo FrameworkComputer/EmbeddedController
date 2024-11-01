@@ -12,6 +12,8 @@
 
 bool gpu_power_enable(void);
 
+bool gpu_is_working(void);
+
 bool gpu_module_fault(void);
 
 void gpu_fan_control(int enable);
