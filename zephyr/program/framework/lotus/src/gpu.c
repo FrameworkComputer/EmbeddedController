@@ -46,6 +46,14 @@ bool gpu_power_enable(void)
 		return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_dgpu_pwr_en));
 }
 
+bool gpu_is_working(void)
+{
+	if (gpu_present() && gpu_power_enable())
+		return true;
+
+	return false;
+}
+
 bool gpu_module_fault(void)
 {
 	return module_fault;

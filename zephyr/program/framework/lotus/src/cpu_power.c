@@ -46,38 +46,38 @@ static void update_os_power_slider(int mode, bool with_dc, int active_mpower)
 	switch (mode) {
 	case EC_DC_BEST_PERFORMANCE:
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] =
-			(gpu_present() ? 60000 : 40000);
+			(gpu_is_working() ? 60000 : 40000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] =
-			(gpu_present() ? 60000 : 48000);
+			(gpu_is_working() ? 60000 : 48000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
-			(gpu_present() ? 60000 : 58000);
+			(gpu_is_working() ? 60000 : 58000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT] =
-			(gpu_present() ? 30000 : 0);
-		slider_stt_table = (gpu_present() ? 21 : 23);
+			(gpu_is_working() ? 30000 : 0);
+		slider_stt_table = (gpu_is_working() ? 21 : 23);
 		CPRINTS("DC BEST PERFORMANCE");
 		break;
 	case EC_DC_BALANCED:
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] =
-			(gpu_present() ? 50000 : 30000);
+			(gpu_is_working() ? 50000 : 30000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] =
-			(gpu_present() ? 50000 : 36000);
+			(gpu_is_working() ? 50000 : 36000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
-			(gpu_present() ? 50000 : 44000);
+			(gpu_is_working() ? 50000 : 44000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT] =
-			(gpu_present() ? 20000 : 0);
-		slider_stt_table = (gpu_present() ? 22 : 24);
+			(gpu_is_working() ? 20000 : 0);
+		slider_stt_table = (gpu_is_working() ? 22 : 24);
 		CPRINTS("DC BALANCED");
 		break;
 	case EC_DC_BEST_EFFICIENCY:
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] =
-			(gpu_present() ? 50000 : 20000);
+			(gpu_is_working() ? 50000 : 20000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] =
-			(gpu_present() ? 50000 : 24000);
+			(gpu_is_working() ? 50000 : 24000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
-			(gpu_present() ? 50000 : 29000);
+			(gpu_is_working() ? 50000 : 29000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT] =
-			(gpu_present() ? 20000 : 0);
-		slider_stt_table = (gpu_present() ? 22 : 25);
+			(gpu_is_working() ? 20000 : 0);
+		slider_stt_table = (gpu_is_working() ? 22 : 25);
 		CPRINTS("DC BEST EFFICIENCY");
 		break;
 	case EC_DC_BATTERY_SAVER:
@@ -85,44 +85,44 @@ static void update_os_power_slider(int mode, bool with_dc, int active_mpower)
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] = 20000;
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] = 20000;
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT] =
-			(gpu_present() ? 20000 : 0);
-		slider_stt_table = (gpu_present() ? 7 : 14);
+			(gpu_is_working() ? 20000 : 0);
+		slider_stt_table = (gpu_is_working() ? 7 : 14);
 		CPRINTS("DC BATTERY SAVER");
 		break;
 	case EC_AC_BEST_PERFORMANCE:
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] =
-			(gpu_present() ? 145000 : 45000);
+			(gpu_is_working() ? 145000 : 45000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] =
-			(gpu_present() ? 145000 : 54000);
+			(gpu_is_working() ? 145000 : 54000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
-			(gpu_present() ? 145000 : 65000);
+			(gpu_is_working() ? 145000 : 65000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT] =
-			(gpu_present() ? 54000 : 0);
-		slider_stt_table = (gpu_present() ? 1 : 8);
+			(gpu_is_working() ? 54000 : 0);
+		slider_stt_table = (gpu_is_working() ? 1 : 8);
 		CPRINTS("AC BEST PERFORMANCE");
 		break;
 	case EC_AC_BALANCED:
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] =
-			(gpu_present() ? 120000 : 40000);
+			(gpu_is_working() ? 120000 : 40000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] =
-			(gpu_present() ? 120000 : 48000);
+			(gpu_is_working() ? 120000 : 48000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
-			(gpu_present() ? 120000 : 58000);
+			(gpu_is_working() ? 120000 : 58000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT] =
-			(gpu_present() ? 50000 : 0);
-		slider_stt_table = (gpu_present() ? 32 : 9);
+			(gpu_is_working() ? 50000 : 0);
+		slider_stt_table = (gpu_is_working() ? 32 : 9);
 		CPRINTS("AC BALANCED");
 		break;
 	case EC_AC_BEST_EFFICIENCY:
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] =
-			(gpu_present() ? 85000 : 30000);
+			(gpu_is_working() ? 85000 : 30000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] =
-			(gpu_present() ? 85000 : 36000);
+			(gpu_is_working() ? 85000 : 36000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
-			(gpu_present() ? 85000 : 44000);
+			(gpu_is_working() ? 85000 : 44000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT] =
-			(gpu_present() ? 40000 : 0);
-		slider_stt_table = (gpu_present() ? 3 : 10);
+			(gpu_is_working() ? 40000 : 0);
+		slider_stt_table = (gpu_is_working() ? 3 : 10);
 		CPRINTS("AC BEST EFFICIENCY");
 		break;
 	default:
@@ -135,7 +135,7 @@ static void update_os_power_slider(int mode, bool with_dc, int active_mpower)
 static void update_thermal_power_limit(int battery_percent, int active_mpower,
 				       bool with_dc, int mode)
 {
-	if (gpu_present()) {
+	if (gpu_is_working()) {
 		if ((active_mpower >= 240000) && with_dc) {
 			/* limited by update_os_power_slider */
 			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] =
@@ -359,7 +359,7 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 {
 	static int new_index;
 
-	if (gpu_present()) {
+	if (gpu_is_working()) {
 		if (with_dc) {
 			if (active_mpower >= 240000) {
 				new_index =
@@ -759,7 +759,7 @@ static void tune_PLs(int delta)
 		= MAX(power_limit[FUNCTION_SAFETY].mwatt[TYPE_FPPT] + delta, 20000);
 	power_limit[FUNCTION_SAFETY].mwatt[TYPE_P3T]
 		= MAX(power_limit[FUNCTION_SAFETY].mwatt[TYPE_P3T] + delta, 20000);
-	if (gpu_present())
+	if (gpu_is_working())
 		power_limit[FUNCTION_SAFETY].mwatt[TYPE_APU_ONLY_SPPT]
 			= MAX(power_limit[FUNCTION_SAFETY].mwatt[TYPE_APU_ONLY_SPPT]
 					+ delta, 20000);
@@ -804,7 +804,7 @@ static void update_safety_power_limit(int active_mpower)
 			= power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
 		power_limit[FUNCTION_SAFETY].mwatt[TYPE_P3T]
 			= power_limit[FUNCTION_POWER].mwatt[TYPE_P3T];
-		if (gpu_present())
+		if (gpu_is_working())
 			power_limit[FUNCTION_SAFETY].mwatt[TYPE_APU_ONLY_SPPT]
 				= power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT];
 		else
@@ -826,7 +826,7 @@ static void update_safety_power_limit(int active_mpower)
 		break;
 	case LEVEL_TUNE_PLS:
 		/* tuning CPU and GPU PLs */
-		if (gpu_present()) {
+		if (gpu_is_working()) {
 			delta = 10000;
 			if (level_increase) {
 				tune_PLs((-1) * delta);
@@ -872,7 +872,7 @@ static void update_safety_power_limit(int active_mpower)
 		break;
 	case LEVEL_DISABLE_GPU:
 		/* disable GPU and tune CPU PLs */
-		if (gpu_present()) {
+		if (gpu_is_working()) {
 			if (level_increase) {
 				tune_PLs(-10000);
 				if (power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL] <= 20000)
@@ -896,12 +896,12 @@ static void update_safety_power_limit(int active_mpower)
 		/* prochot */
 		if (level_increase) {
 			throttle_ap(THROTTLE_ON, THROTTLE_HARD, THROTTLE_SRC_BAT_DISCHG_CURRENT);
-			thermal_stt_table = (gpu_present() ? 7 : 14);
+			thermal_stt_table = (gpu_is_working() ? 7 : 14);
 			safety_stt = 1;
 			safety_level++;
 		} else {
 			throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_BAT_DISCHG_CURRENT);
-			thermal_stt_table = (gpu_present() ? 7 : 14);
+			thermal_stt_table = (gpu_is_working() ? 7 : 14);
 			safety_stt = 1;
 			safety_level--;
 		}
@@ -927,7 +927,7 @@ static void update_safety_power_limit(int active_mpower)
 		}
 		break;
 	case LEVEL_COUNT:
-		thermal_stt_table = (gpu_present() ? 7 : 14);
+		thermal_stt_table = (gpu_is_working() ? 7 : 14);
 		if (!level_increase)
 			safety_level--;
 		break;
@@ -1082,7 +1082,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	}
 
 	/* when trigger thermal warm, reduce TYPE_APU_ONLY_SPPT to 45W */
-	if (gpu_present()) {
+	if (gpu_is_working()) {
 		if (thermal_warn_trigger())
 			power_limit[FUNCTION_THERMAL].mwatt[TYPE_APU_ONLY_SPPT] = 45000;
 		else
