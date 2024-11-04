@@ -14,6 +14,7 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
+#include "diagnostics.h"
 #include "ec_commands.h"
 #include "extpower.h"
 #include "hooks.h"
@@ -24,16 +25,6 @@
 #include "power_sequence.h"
 #include "system.h"
 #include "util.h"
-
-#include "board_function.h"
-#include "cypress_pd_common.h"
-#include "diagnostics.h"
-#include "lid_switch.h"
-
-#ifdef CONFIG_BOARD_LOTUS
-#include "gpu.h"
-#include "input_module.h"
-#endif
 
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
@@ -132,11 +123,6 @@ static struct node_prop_t node_array[] = {
 	DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, SET_LED_VALUES,
 						DT_FOREACH_CHILD)
 };
-
-const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED,
-					     EC_LED_ID_POWER_LED };
-
-const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 static int led_tick_time = 200;
 static bool pre_multifunction_led_state;
@@ -370,7 +356,7 @@ static void board_led_set_color(void)
 		LOG_ERR("Node with matching prop not found");
 }
 
-static void customized_leds_set_color(int *colors, int num_color,
+void customized_leds_set_color(int *colors, int num_color,
 			int period, enum ec_led_id id)
 {
 	static uint32_t ticks;
@@ -389,117 +375,12 @@ static void customized_leds_set_color(int *colors, int num_color,
 	led_set_color(colors[idx], id);
 }
 
-static bool multifunction_leds_control(void)
-{
-	int colors[3] = {LED_OFF, LED_OFF, LED_OFF};
-
-	/* In facotry mode, don't control led */
-	if (!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
-		return false;
-
-	/* Debug Active */
-	if (diagnostics_tick())
-		return true;
-
-	/* Battery disconnect active signal */
-	if (battery_is_cut_off()) {
-		colors[0] = LED_RED;
-		colors[1] = LED_BLUE;
-		colors[2] = LED_OFF;
-		customized_leds_set_color(colors, 2, CONFIG_PLATFORM_MULTI_LED_FREQ,
-			EC_LED_ID_BATTERY_LED);
-		return true;
-	}
-
-	/* Battery is not present, ignored if in standalone mode */
-	if ((battery_is_present() != BP_YES) && !get_standalone_mode()) {
-		colors[0] = LED_RED;
-		colors[1] = LED_BLUE;
-		colors[2] = LED_OFF;
-		customized_leds_set_color(colors, 2, CONFIG_PLATFORM_MULTI_LED_FREQ,
-			EC_LED_ID_BATTERY_LED);
-		return true;
-	}
-
-#ifdef CONFIG_PLATFORM_CHASSIS_OPEN_SWITCH
-	/* TODO: use overriable to declare the function and override for each project */
-	/* C cover detect switch open */
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0 &&
-		!get_standalone_mode()) {
-
-		colors[0] = LED_RED;
-		colors[1] = LED_OFF;
-		colors[2] = LED_OFF;
-		customized_leds_set_color(colors, 2, 1000, EC_LED_ID_BATTERY_LED);
-		return true;
-	}
-#endif
-
-#ifdef CONFIG_BOARD_LOTUS
-	/* GPU bay cover detect switch open */
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_f_beam_open_l)) == 0 &&
-		!get_standalone_mode()) {
-		colors[0] = LED_RED;
-		colors[1] = LED_AMBER;
-		colors[2] = LED_OFF;
-		customized_leds_set_color(colors, 3, 1000, EC_LED_ID_BATTERY_LED);
-		return true;
-	}
-
-	/* GPU Bay Module Fault */
-	if (gpu_module_fault() && extpower_is_present()) {
-		colors[0] = LED_RED;
-		colors[1] = LED_AMBER;
-		colors[2] = LED_OFF;
-		customized_leds_set_color(colors, 3, 1000, EC_LED_ID_BATTERY_LED);
-		return true;
-	}
-
-	/* Input Deck not fully populated */
-	if (!input_deck_is_fully_populated() && !get_standalone_mode() &&
-		!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		colors[0] = LED_RED;
-		colors[1] = LED_BLUE;
-		colors[2] = LED_OFF;
-		customized_leds_set_color(colors, 3, 500, EC_LED_ID_BATTERY_LED);
-		return true;
-	}
-#endif
-
-	return false;
-}
-
-static bool fingerprint_led_control(void)
-{
-	int colors[3] = {LED_OFF, LED_OFF, LED_OFF};
-
-	/* In facotry mode, don't control led */
-	if (!led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
-		return false;
-
-	/* Turn off fingerprint LED when lid is closed */
-	if (!lid_is_open()) {
-		led_set_color(LED_OFF, EC_LED_ID_POWER_LED);
-		return true;
-	}
-
-	if (chipset_in_state(CHIPSET_STATE_ON) && (charge_get_percent() < 3) &&
-		!extpower_is_present()) {
-		colors[0] = LED_WHITE;
-		colors[1] = LED_OFF;
-		colors[2] = LED_OFF;
-		customized_leds_set_color(colors, 2, 500, EC_LED_ID_POWER_LED);
-		return true;
-	}
-
-	return false;
-}
-
 /* Called by hook task every HOOK_TICK_INTERVAL_MS */
 static void led_tick(void);
 DECLARE_DEFERRED(led_tick);
 static void led_tick(void)
 {
+#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_DESKTOP
 	int enable;
 
 	/* If multifunction leds is enabled, disable the battery led auto control */
@@ -508,7 +389,7 @@ static void led_tick(void)
 		pre_multifunction_led_state = enable;
 
 	/* If multifunction leds is enabled, disable the power led auto control */
-	enable = fingerprint_led_control();
+	enable = power_button_led_control();
 	if (pre_fingerprint_led_state != enable)
 		pre_fingerprint_led_state = enable;
 
@@ -518,6 +399,7 @@ static void led_tick(void)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 1);
 	}
+#endif
 
 	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
 		led_tick_time = 10;
