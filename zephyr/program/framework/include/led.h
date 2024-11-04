@@ -170,6 +170,34 @@ void board_led_apply_color(void);
 
 void update_pwr_led_level(void);
 
+/**
+ * Control the led behavior which cannot be implemented with led_policy.dtsi
+ *
+ * @param *colors	led array
+ * @param num_color	the count of the leds
+ * @param period	the period of each color
+ * @param id		led id
+ */
+void customized_leds_set_color(int *colors, int num_color,
+			int period, enum ec_led_id id);
+
+#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_DESKTOP
+/**
+ * Control the multifunction led feature for Laptop projects
+ * [1] C cover is opened - LEDs blink red/off
+ * [2] Battery is disconnected - LEDs blink blue/red/off
+ * [3] GPU bay is opened - LEDs blink red/amber/off
+ */
+extern bool multifunction_leds_control(void);
+
+/**
+ * Control the power button led feature for Laptop projects
+ * [1] Close lid - turn off the power button led (13 inch-project)
+ * [2] Battery low percentage - LED blinks white/off
+ */
+extern bool power_button_led_control(void);
+#endif
+
 #ifdef TEST_BUILD
 const struct led_pins_node_t *led_get_node(enum led_color color,
 					   enum ec_led_id led_id);

@@ -49,6 +49,10 @@ zephyr_library_sources_ifndef(CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_WAKE_ON_LAN
 	"src/wol.c")
 
+if (NOT DEFINED CONFIG_PLATFORM_EC_FRAMEWORK_DESKTOP)
+	zephyr_library_sources("src/laptop_led.c")
+endif ()
+
 if(DEFINED CONFIG_BOARD_LOTUS OR DEFINED CONFIG_BOARD_TULIP)
 	if(DEFINED CONFIG_BOARD_LOTUS)
 		project(lotus)
