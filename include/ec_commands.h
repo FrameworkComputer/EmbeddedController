@@ -2696,6 +2696,11 @@ enum ec_led_id {
 	EC_LED_ID_RECOVERY_HW_REINIT_LED,
 	/* LED to indicate sysrq debug mode. */
 	EC_LED_ID_SYSRQ_DEBUG_LED,
+	/**
+	 * LED to indicate system power state (on or in suspend).
+	 * May be on mainboard.
+	 */
+	EC_LED_ID_SECOND_POWER_LED,
 
 	EC_LED_ID_COUNT,
 };

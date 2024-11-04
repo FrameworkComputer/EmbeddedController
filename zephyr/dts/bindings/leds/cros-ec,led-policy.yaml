@@ -22,6 +22,7 @@ properties:
       - EC_LED_ID_RIGHT_LED
       - EC_LED_ID_RECOVERY_HW_REINIT_LED
       - EC_LED_ID_SYSRQ_DEBUG_LED
+      - EC_LED_ID_SECOND_POWER_LED
   sysrq-led-control-color:
     description: |
       Specify what color to display when `led_control` makes the LED
