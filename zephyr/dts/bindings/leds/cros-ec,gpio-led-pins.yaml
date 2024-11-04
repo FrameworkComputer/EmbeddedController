@@ -32,6 +32,7 @@ child-binding:
         - EC_LED_ID_RIGHT_LED
         - EC_LED_ID_RECOVERY_HW_REINIT_LED
         - EC_LED_ID_SYSRQ_DEBUG_LED
+        - EC_LED_ID_SECOND_POWER_LED
     led-pins:
       type: phandles
       required: true
