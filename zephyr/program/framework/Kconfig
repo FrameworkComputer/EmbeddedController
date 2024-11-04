@@ -26,6 +26,21 @@ config BOARD_DOGWOOD
 	  Build Framework Dogwood board. Dogwood is a desktop that has AMD
 	  SoC with NPCX993FA0BX EC.
 
+choice PLATFORM_EC_FRAMEWORK_FAMILY
+	prompt "Select the family design in the makefile"
+
+config PLATFORM_EC_FRAMEWORK_LAPTOP_13
+	bool "Framework Laptop 13-inch family"
+	help
+	  Framework Laptop 13-inch family
+
+config PLATFORM_EC_FRAMEWORK_LAPTOP_16
+	bool "Framework Laptop 16-inch family"
+	help
+	  Framework Laptop 16-inch family support gpu and fully customizable input design.
+
+endchoice
+
 # Project Configuration
 config CHIPSET_INTEL
 	bool "Framework Intel project"
