@@ -14,6 +14,21 @@ config BOARD_AZALEA
 	  Build Framework Azalea reference board. Azalea has AMD SoC
 	  with NPCX993FA0BX EC.
 
+choice PLATFORM_EC_FRAMEWORK_FAMILY
+	prompt "Select the family design in the makefile"
+
+config PLATFORM_EC_FRAMEWORK_LAPTOP_13
+	bool "Framework Laptop 13-inch family"
+	help
+	  Framework Laptop 13-inch family
+
+config PLATFORM_EC_FRAMEWORK_LAPTOP_16
+	bool "Framework Laptop 16-inch family"
+	help
+	  Framework Laptop 16-inch family support gpu and fully customizable input design.
+
+endchoice
+
 module = FRAMEWORK
 module-str = Framework board-specific code
 source "subsys/logging/Kconfig.template.log_config"
