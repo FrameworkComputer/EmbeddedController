@@ -39,6 +39,11 @@ config PLATFORM_EC_FRAMEWORK_LAPTOP_16
 	help
 	  Framework Laptop 16-inch family support gpu and fully customizable input design.
 
+config PLATFORM_EC_FRAMEWORK_MINI_PC
+	bool "Framework mini-PC family"
+	help
+	  Framework mini-PC family
+
 endchoice
 
 # Project Configuration
