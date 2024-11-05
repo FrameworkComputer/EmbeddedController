@@ -13,6 +13,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "power.h"
 #include "printf.h"
 #include "system.h"
 #include "util.h"
@@ -645,6 +646,17 @@ static void pwm_fan_stop(void)
 	 *
 	 * Thermal control may be already disabled if DPTF is used.
 	 */
+
+	/*
+	 * Allow the fan to run in S0ix as we have unknown user reports
+	 * of systems getting warm in this state. Possibly due to windows
+	 * continuing to run CPU heavy tasks for value added features
+	 * causing excessive heat.
+	 */
+	if (power_get_state() == POWER_S0ix ||
+		power_get_state() == POWER_S0S0ix)
+		return;
+
 	pwm_fan_control(0); /* crosbug.com/p/8097 */
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pwm_fan_stop, HOOK_PRIO_DEFAULT);
