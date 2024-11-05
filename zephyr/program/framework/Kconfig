@@ -23,6 +23,11 @@ config BOARD_MARIGOLD
 choice PLATFORM_EC_FRAMEWORK_FAMILY
 	prompt "Select the family design in the makefile"
 
+config PLATFORM_EC_FRAMEWORK_LAPTOP_12
+	bool "Framework Laptop 12-inch family"
+	help
+	  Framework Laptop 12-inch family support tablet mode design.
+
 config PLATFORM_EC_FRAMEWORK_LAPTOP_13
 	bool "Framework Laptop 13-inch family"
 	help
