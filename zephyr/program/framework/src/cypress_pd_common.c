@@ -1201,6 +1201,14 @@ void cypd_set_power_active(void)
 	task_set_event(TASK_ID_CYPD, CCG_EVT_S_CHANGE);
 }
 
+void cypd_update_chips_state(enum ccg_pd_state state)
+{
+	int controller;
+
+	for (controller = 0; controller < PD_CHIP_COUNT; controller++)
+		pd_chip_config[controller].state = state;
+}
+
 __overridable void cypd_customize_app_setup(int controller)
 {
 	/*
@@ -1292,6 +1300,9 @@ static void cypd_handle_state(int controller)
 
 			CPRINTS("CYPD %d Ready!", controller);
 			pd_chip_config[controller].state = CCG_STATE_READY;
+		break;
+	case CCG_STATE_NO_POWER:
+		CPRINTS("CYPD %d no power!", controller);
 		break;
 	default:
 		CPRINTS("PD handle_state but in 0x%02x state!", pd_chip_config[controller].state);
@@ -1871,7 +1882,10 @@ void cypd_interrupt_handler_task(void *p)
 
 		for (i = 0; i < PD_CHIP_COUNT; i++) {
 			const struct gpio_dt_spec *intr = gpio_get_dt_spec(pd_chip_config[i].gpio);
-			if (gpio_pin_get_dt(intr) == 0) {
+
+			/* Don't no read the interrupt until the PD chips power on */
+			if ((pd_chip_config[i].state != CCG_STATE_NO_POWER) &&
+				(gpio_pin_get_dt(intr) == 0)) {
 				task_set_event(TASK_ID_CYPD, 1<<i);
 			}
 		}
@@ -1996,7 +2010,7 @@ static int cmd_cypd_get_status(int argc, const char **argv)
 		"Unsupported", "Invalid"
 	};
 	static const char * const state[] = {
-		"ERR", "POWER_ON", "APP_SETUP", "READY", "BOOTLOADER"
+		"ERR", "NO_POWER", "WAIT_STABLE", "POWER_ON", "APP_SETUP", "READY", "BOOTLOADER"
 	};
 	const struct gpio_dt_spec *intr;
 
