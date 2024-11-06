@@ -1,0 +1,21 @@
+# Copyright 2024 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+description: AMD Strix Halo FP11, Power Signal List
+compatible: "amd,fwk-strix-halo-fp11-power-signal-list.yaml"
+
+include: power-signal-list.yaml
+
+properties:
+  power-signals-required:
+    default: 5
+
+child-binding:
+  properties:
+    power-enum-name:
+      enum:
+        - X86_3VALW_PG
+        - X86_SLP_S3_N
+        - X86_SLP_S5_N
+        - X86_VR_PG
+        - X86_VS_POWER
