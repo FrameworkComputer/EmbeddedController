@@ -14,12 +14,13 @@ zephyr_library_sources("src/factory.c")
 zephyr_library_sources("src/uefi_app_mode.c")
 zephyr_library_sources("src/diagnostics.c")
 zephyr_library_sources("src/ucsi.c")
-zephyr_library_sources("src/hid_device.c")
 zephyr_library_sources("src/temperature_filter.c")
 zephyr_library_sources("src/power_button_x86.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_DEDICATED_ALS
 	"src/als.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HID
+	"src/hid_device.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led_pwm.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
