@@ -282,16 +282,20 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t fn, int8_t pressed)
 			*key_code = SCANCODE_NEXT_TRACK;
 		break;
 	case SCANCODE_F7:  /* DIM_SCREEN */
+#ifdef CONFIG_PLATFORM_EC_HID
 		if (fn_table_media_set(pressed, KB_FN_F7)) {
 			hid_consumer(BUTTON_ID_BRIGHTNESS_DECREMENT, pressed);
 			return EC_ERROR_UNIMPLEMENTED;
 		}
+#endif
 		break;
 	case SCANCODE_F8:  /* BRIGHTEN_SCREEN */
+#ifdef CONFIG_PLATFORM_EC_HID
 		if (fn_table_media_set(pressed, KB_FN_F8)) {
 			hid_consumer(BUTTON_ID_BRIGHTNESS_INCREMENT, pressed);
 			return EC_ERROR_UNIMPLEMENTED;
 		}
+#endif
 		break;
 	case SCANCODE_F9:  /* EXTERNAL_DISPLAY */
 		if (fn_table_media_set(pressed, KB_FN_F9)) {
@@ -306,10 +310,12 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t fn, int8_t pressed)
 		}
 		break;
 	case SCANCODE_F10:  /* FLIGHT_MODE */
+#ifdef CONFIG_PLATFORM_EC_HID
 		if (fn_table_media_set(pressed, KB_FN_F10)) {
 			hid_airplane(pressed);
 			return EC_ERROR_UNIMPLEMENTED;
 		}
+#endif
 		break;
 	case SCANCODE_F11:
 			/*

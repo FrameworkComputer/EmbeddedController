@@ -160,6 +160,15 @@ config PLATFORM_PRIVACY_DEVICE_CHECK
 		status can be found via a host
 		command (EC_CMD_PRIVACY_SWITCHES_CHECK_MODE).
 
+config PLATFORM_EC_HID
+	bool "Generic hid driver for the framework project"
+	depends on DT_HAS_CROS_EC_I2C_TARGET_HID_ENABLED
+	default y
+	help
+	  This option enables the hid driver.
+	  EC is an i2c slave device and report the data (e.g ALS sensor value)
+	  to the host via hid over i2c protocaol.
+
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code
 source "subsys/logging/Kconfig.template.log_config"
