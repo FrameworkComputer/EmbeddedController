@@ -1047,16 +1047,20 @@ void cypd_update_port_state(int controller, int port)
 	 */
 
 	if (pd_port_states[port_idx].c_state == CCG_STATUS_SOURCE) {
-		typec_set_input_current_limit(port_idx, type_c_current, TYPE_C_VOLTAGE);
-		charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
-							type_c_current);
+		if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER)) {
+			typec_set_input_current_limit(port_idx, type_c_current, TYPE_C_VOLTAGE);
+			charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
+								type_c_current);
+		}
 		pd_port_states[port_idx].current = type_c_current;
 		pd_port_states[port_idx].voltage = TYPE_C_VOLTAGE;
 	} else {
-		typec_set_input_current_limit(port_idx, 0, 0);
-		charge_manager_set_ceil(port,
-			CEIL_REQUESTOR_PD,
-			CHARGE_CEIL_NONE);
+		if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER)) {
+			typec_set_input_current_limit(port_idx, 0, 0);
+			charge_manager_set_ceil(port,
+				CEIL_REQUESTOR_PD,
+				CHARGE_CEIL_NONE);
+		}
 	}
 	if (pd_port_states[port_idx].c_state == CCG_STATUS_SINK) {
 		pd_port_states[port_idx].current = type_c_current;
@@ -1070,19 +1074,25 @@ void cypd_update_port_state(int controller, int port)
 
 	if (pd_port_states[port_idx].pd_state) {
 		if (pd_port_states[port_idx].power_role == PD_ROLE_SINK) {
-			pd_set_input_current_limit(port_idx, pd_current, pd_voltage);
-			charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD, pd_current);
+			if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER)) {
+				pd_set_input_current_limit(port_idx, pd_current, pd_voltage);
+				charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD, pd_current);
+			}
 			pd_port_states[port_idx].current = pd_current;
 			pd_port_states[port_idx].voltage = pd_voltage;
 		} else {
-			pd_set_input_current_limit(port_idx, 0, 0);
+			if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER)) {
+				pd_set_input_current_limit(port_idx, 0, 0);
+			}
 			/*Source*/
 			pd_port_states[port_idx].current = rdo_max_current;
 			pd_port_states[port_idx].voltage = TYPE_C_VOLTAGE;
 
 		}
 	} else {
-		pd_set_input_current_limit(port_idx, 0, 0);
+		if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER)) {
+			pd_set_input_current_limit(port_idx, 0, 0);
+		}
 	}
 #if DT_NODE_EXISTS(DT_ALIAS(gpio_mux_uart_flip))
 	if (pd_port_states[CONFIG_PD_CCG6_EC_UART_DEBUG_PORT].c_state == CCG_STATUS_DEBUG ||
@@ -1135,11 +1145,13 @@ static void cypd_update_power_status(int controller)
 {
 	int rv = EC_SUCCESS;
 	int power_status = 0;
+
+	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
+#ifdef CONFIG_PLATFORM_EC_BATTERY
 	int pd_controller_is_sink = (prev_charge_port & 0x02) >> 1;
 	bool battery_can_discharge = (battery_is_present() == BP_YES) &
 		battery_get_disconnect_state();
-
-	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
 	if (battery_can_discharge)
 		power_status |= CCG_POWERSTAT_BATT_PRESENT;
@@ -1148,6 +1160,9 @@ static void cypd_update_power_status(int controller)
 		(extpower_is_present() && controller != pd_controller_is_sink &&
 		prev_charge_port >= 0))
 		power_status |= CCG_POWERSTAT_EXT_POWER_PRESENT + CCG_POWERSTAT_EXT_POWER_TYPE;
+#endif
+
+	power_status = CCG_POWERSTAT_INTERNAL_POWER;
 
 	rv = cypd_write_reg8_wait_ack(controller, CCG_POWER_STAT, power_status);
 	if (rv != EC_SUCCESS) {
@@ -1634,8 +1649,9 @@ void cypd_port_int(int controller, int port)
 			pd_port_states[port_idx].epr_support = 1;
 			CPRINTS("P%d EPR mode capable", port_idx);
 		}
-
+#ifdef CONFIG_PLATFORM_EC_BATTERY_CUT_OFF
 		if (!battery_is_cut_off() && !battery_cutoff_in_progress())
+#endif
 			snk_transition_flags = 1;
 
 		break;
@@ -1649,7 +1665,8 @@ void cypd_port_int(int controller, int port)
 	case CCG_RESPONSE_ACCEPT_MSG_RX:
 		CPRINTS("CCG_RESPONSE_ACCEPT_MSG_RX %d", port_idx);
 		if (snk_transition_flags) {
-			charge_manager_force_ceil(port_idx, 500);
+			if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER))
+				charge_manager_force_ceil(port_idx, 500);
 			snk_transition_flags = 0;
 		}
 		break;
@@ -1763,9 +1780,11 @@ void cypd_interrupt_handler_task(void *p)
 	int i, j, evt;
 
 	/* Initialize all charge suppliers to 0 */
-	for (i = 0; i < CHARGE_PORT_COUNT; i++) {
-		for (j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
-			charge_manager_update_charge(j, i, NULL);
+	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
+		for (i = 0; i < CHARGE_PORT_COUNT; i++) {
+			for (j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
+				charge_manager_update_charge(j, i, NULL);
+		}
 	}
 
 	/* trigger the handle_state to start setup in task */
@@ -1995,7 +2014,6 @@ void perform_error_recovery(int controller)
 {
 	int port;
 	uint8_t data[2] = {0x00, CCG_PD_USER_CMD_TYPEC_ERR_RECOVERY};
-	uint32_t batt_os_percentage = get_system_percentage() / 10;
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
@@ -2005,12 +2023,13 @@ void perform_error_recovery(int controller)
 	 * battery percentage less than 1%.
 	 */
 	for (port = 0; port < PORTS_PER_CONTROLLER; port++) {
+#ifdef CONFIG_PLATFORM_EC_BATTERY
 		if (CONTROLLER_PORT_TO_CHARGE_PORT(controller, port) ==
 			get_active_charge_pd_port() &&
 		    (battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED ||
-		    batt_os_percentage < 1))
+		    (get_system_percentage() / 10) < 1))
 			continue;
-
+#endif
 		data[0] = port;
 		cypd_write_reg_block(controller, CCG_DPM_CMD_REG, data, 2);
 	}
