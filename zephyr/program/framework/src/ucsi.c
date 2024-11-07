@@ -294,7 +294,7 @@ static int ucsi_check_all_pd_status(int operator)
 		 * In the or operator condition,
 		 * if one pd chip has completed the read tunnel, return true
 		 */
-		if (!pd_chip_ucsi_info[controller].read_tunnel_complete)
+		if (pd_chip_ucsi_info[controller].read_tunnel_complete)
 			return true;
 	}
 
