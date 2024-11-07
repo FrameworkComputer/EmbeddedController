@@ -92,6 +92,7 @@ config PD_CCG6_CUSTOMIZE_BATT_MESSAGE
 	bool "Enable CCG6 Customize battery response"
 	default n
 	depends on PD_CHIP_CCG6
+	depends on PLATFORM_EC_BATTERY
 	help
 	    Enable customize battery response for GRL test, EC will write specific
 		register 0x4f to PD for GET_BATTERY_CAP and GET_BATTERY_STATUS.
