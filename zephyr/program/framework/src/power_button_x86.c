@@ -210,6 +210,7 @@ static void set_initial_pwrbtn_state(void)
 	if (reset_flags == EC_RESET_FLAG_HARD) {
 		pwrbtn_state = PWRBTN_STATE_INIT_ON;
 		CPRINTS("PB init-on after updating firmware");
+#ifdef CONFIG_PLATFORM_EC_EXTPOWER_GPIO
 	} else if (((reset_flags & EC_RESET_FLAG_HIBERNATE) == EC_RESET_FLAG_HIBERNATE) &&
 		(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) == 0)) {
 		/**
@@ -241,6 +242,7 @@ static void set_initial_pwrbtn_state(void)
 		/* BIOS setup AC attach power on */
 		pwrbtn_state = PWRBTN_STATE_INIT_ON;
 		CPRINTS("PB init AC attach on");
+#endif
 	} else {
 		pwrbtn_state = PWRBTN_STATE_IDLE;
 		CPRINTS("PB idle");
@@ -250,6 +252,7 @@ static void set_initial_pwrbtn_state(void)
 /**
  * auto power on system when AC plug-in
  */
+#ifdef CONFIG_PLATFORM_EC_EXTPOWER_GPIO
 static void board_extpower(void)
 {
 	/* AC present to CPU */
@@ -263,6 +266,7 @@ static void board_extpower(void)
 	}
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
+#endif
 
 /**
  * Power button state machine.
