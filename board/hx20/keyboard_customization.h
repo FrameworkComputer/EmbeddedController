@@ -72,7 +72,7 @@ extern uint8_t keyboard_cols;
 #define KEYBOARD_ROW_LEFT_SHIFT 5
 #define KEYBOARD_MASK_LEFT_SHIFT KEYBOARD_ROW_TO_MASK(KEYBOARD_ROW_LEFT_SHIFT)
 
-enum kb_fn_table {
+enum kb_fn_table_media {
 	KB_FN_F1 = BIT(0),
 	KB_FN_F2 = BIT(1),
 	KB_FN_F3 = BIT(2),
@@ -85,6 +85,21 @@ enum kb_fn_table {
 	KB_FN_F10 = BIT(9),
 	KB_FN_F11 = BIT(10),
 	KB_FN_F12 = BIT(11),
+};
+
+enum kb_fn_table {
+	KB_FN_GRAVE = BIT(0),
+	KB_FN_1 = BIT(1),
+	KB_FN_2 = BIT(2),
+	KB_FN_3 = BIT(3),
+	KB_FN_4 =  BIT(4),
+	KB_FN_5 = BIT(5),
+	KB_FN_6 = BIT(6),
+	KB_FN_7 = BIT(7),
+	KB_FN_8 = BIT(8),
+	KB_FN_9 = BIT(9),
+	KB_FN_0 = BIT(10),
+	KB_FN_HYPHEN = BIT(11),
 	KB_FN_DELETE = BIT(12),
 	KB_FN_K = BIT(13),
 	KB_FN_S = BIT(14),
@@ -96,6 +111,7 @@ enum kb_fn_table {
 	KB_FN_B = BIT(20),
 	KB_FN_P = BIT(21),
 	KB_FN_SPACE = BIT(22),
+	KB_FN_EQUALS = BIT(27),
 };
 
 #ifdef CONFIG_KEYBOARD_BACKLIGHT

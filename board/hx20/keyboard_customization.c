@@ -376,6 +376,58 @@ int hotkey_special_key(uint16_t *key_code, int8_t pressed)
 		if (fn_table_set(pressed, KB_FN_DELETE))
 			*key_code = 0xe070;
 		break;
+	case 0x000E:  /* ` -> F13 */
+		if (fn_table_set(pressed, KB_FN_GRAVE))
+			*key_code = 0x0008;
+		break;
+	case 0x0016:  /* 1 -> F14 */
+		if (fn_table_set(pressed, KB_FN_1))
+			*key_code = 0x0010;
+		break;
+	case 0x001E:  /* 2 -> F15 */
+		if (fn_table_set(pressed, KB_FN_2))
+			*key_code = 0x0018;
+		break;
+	case 0x0026:  /* 3 -> F16 */
+		if (fn_table_set(pressed, KB_FN_3))
+			*key_code = 0x0020;
+		break;
+	case 0x0025:  /* 4 -> F17 */
+		if (fn_table_set(pressed, KB_FN_4))
+			*key_code = 0x0028;
+		break;
+	case 0x002E:  /* 5 -> F18 */
+		if (fn_table_set(pressed, KB_FN_5))
+			*key_code = 0x0030;
+		break;
+	case 0x0036:  /* 6 -> F19 */
+		if (fn_table_set(pressed, KB_FN_6))
+			*key_code = 0x0038;
+		break;
+	case 0x003D:  /* 7 -> F20 */
+		if (fn_table_set(pressed, KB_FN_7))
+			*key_code = 0x0040;
+		break;
+	case 0x003E:  /* 8 -> F21 */
+		if (fn_table_set(pressed, KB_FN_8))
+			*key_code = 0x0048;
+		break;
+	case 0x0046:  /* 9 -> F22 */
+		if (fn_table_set(pressed, KB_FN_9))
+			*key_code = 0x0050;
+		break;
+	case 0x0045:  /* 0 -> F23 */
+		if (fn_table_set(pressed, KB_FN_0))
+			*key_code = 0x0057;
+		break;
+	case 0x004E:  /* - -> F24 */
+		if (fn_table_set(pressed, KB_FN_HYPHEN))
+			*key_code = 0x005F;
+		break;
+	case 0x0055:  /* = -> YEN */
+		if (fn_table_set(pressed, KB_FN_EQUALS))
+			*key_code = 0x006A;
+		break;
 	case SCANCODE_K:  /* TODO: SCROLL_LOCK */
 		if (fn_table_set(pressed, KB_FN_K))
 			*key_code = SCANCODE_SCROLL_LOCK;
