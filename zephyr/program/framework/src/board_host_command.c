@@ -92,8 +92,10 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 	case FLASH_FIRMWARE_START:
 		CPRINTS("Start flashing firmware, flags:0x%02x", p->flags);
 		gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_powerbtn));
+#if DT_NODE_EXISTS(DT_NODELABEL(gpio_lid_sw_l))
+		/* TODO: should refactor this for each prjects */
 		gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_lid_open));
-
+#endif
 		if ((p->flags & FLASH_FLAG_PD) == FLASH_FLAG_PD) {
 			gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pd_chip0_interrupt));
 			gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pd_chip1_interrupt));
@@ -107,7 +109,10 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_powerbtn));
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pd_chip0_interrupt));
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pd_chip1_interrupt));
+#if DT_NODE_EXISTS(DT_NODELABEL(gpio_lid_sw_l))
+		/* TODO: should refactor this for each prjects */
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_lid_open));
+#endif
 
 		set_pd_fw_update(false);
 		/* resetup PD controllers */
