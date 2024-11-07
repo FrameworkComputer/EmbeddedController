@@ -70,6 +70,7 @@ properties:
       - GPIO_PCH_SLP_S5_L
       - GPIO_PCH_SLP_SUS_L
       - GPIO_PCH_SYS_PWROK
+      - GPIO_PG_0_75VS
       - GPIO_PG_EC_ALL_SYS_PWRGD
       - GPIO_PG_EC_DSW_PWROK
       - GPIO_PG_EC_RSMRST_ODL

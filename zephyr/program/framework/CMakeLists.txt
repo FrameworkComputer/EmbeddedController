@@ -106,3 +106,16 @@ if(DEFINED CONFIG_BOARD_MARIGOLD)
 	)
 
 endif()
+
+if(DEFINED CONFIG_BOARD_DOGWOOD)
+	project(dogwood)
+	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_DOGWOOD include)
+	zephyr_include_directories("include/dogwood")
+	zephyr_library_sources(
+			"dogwood/src/power_sequence.c"
+			"dogwood/src/cpu_power.c"
+			"dogwood/src/usbc.c"
+			"dogwood/src/project_diagnostics.c"
+	)
+
+endif()

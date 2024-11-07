@@ -1,0 +1,236 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	aliases {
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_ec_soc_rsmrst_l: ec_soc_rsmrst_l { /* EC_RSMRST# */
+			gpios = <&gpio5 6 (GPIO_OUTPUT_LOW | GPIO_VOLTAGE_1P8)>;
+		};
+		ec_espi_rst_l {
+			gpios = <&gpio5 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_ec_sci_l: ec_sci_l {
+			gpios = <&gpio7 6 GPIO_ODR_HIGH>;   /* EC_SCI# */
+		};
+		ec_smb_ck0 {
+			gpios = <&gpiob 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec_smb_da0 {
+			gpios = <&gpiob 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec_smb_ck1 {
+			gpios = <&gpio9 0 GPIO_INPUT>;
+		};
+		ec_smb_da1 {
+			gpios = <&gpio8 7 GPIO_INPUT>;
+		};
+		gpio_wlan_en: wlan_en {
+			gpios = <&gpio9 2 GPIO_OUTPUT_LOW>;
+		};
+		ec_smb_ck3 {
+			gpios = <&gpiod 1 GPIO_INPUT>;
+		};
+		ec_smb_da3 {
+			gpios = <&gpiod 0 GPIO_INPUT>;
+		};
+		gpio_ssd2_pwr_en: ssd2_pwr_en {
+			gpios = <&gpiof 5 GPIO_OUTPUT_LOW>; /* control JSSD2 PWR */
+		};
+		ec_smb_ck7 {
+			gpios = <&gpiob 3 GPIO_INPUT>;
+		};
+		ec_smb_da7 {
+			gpios = <&gpiob 2 GPIO_INPUT>;
+		};
+		gpio_ec_mute_l: ec_mute_l {
+			gpios = <&gpio2 7 GPIO_ODR_LOW>;
+		};
+		gpio_apu_ec_int2_l: apu_ec_int2_l {
+			gpios = <&gpio1 5 GPIO_ODR_HIGH>;	/* reserved for HID interrupt */
+		};
+		gpio_apu_ec_int_l: apu_ec_int_l {
+			gpios = <&gpio1 4 GPIO_ODR_HIGH>;	/* reserved for HID interrupt */
+		};
+		gpio_argb_dir: argb_dir {
+			gpios = <&gpio3 5 GPIO_OUTPUT_LOW>;	/* ARGB_DIR */
+		};
+		gpio_on_off_btn_l: on_off_btn_l {
+			gpios = <&gpiod 2 GPIO_INPUT>;		/* power button */
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_ec_on: ec_on {
+			gpios = <&gpio0 0 GPIO_OUTPUT_LOW>; /* Reserved */
+		};
+		gpio_0p75_1p8valw_pwren: 0p75_1p8valw_pwren {
+			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ps_on: ps_on {
+			gpios = <&gpio8 5 GPIO_OUTPUT_LOW>;
+		};
+		gpio_1p2valw_pwren: 1p2valw_pwren {
+			gpios = <&gpio8 6 GPIO_OUTPUT_LOW>;
+		};
+		gpio_pch_pwr_en: pch_pwr_en {
+			gpios = <&gpiod 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_h_prochot_l: h_prochot_l {
+			gpios = <&gpioa 1 GPIO_ODR_HIGH>;
+		};
+		gpio_sys_pwrgd_ec: sys_pwrgd_ec {
+			gpios = <&gpio7 0 GPIO_OUTPUT_LOW>;
+		};
+		gpio_vr_on: vr_on {
+			gpios = <&gpio6 2 GPIO_OUTPUT_LOW>;
+		};
+		gpio_susp_l: susp_l {
+			gpios = <&gpio6 3 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_cec_in: ec_cec_in {
+			gpios = <&gpio4 0 GPIO_INPUT>;
+		};
+		gpio_syson: syson {
+			gpios = <&gpioa 6 GPIO_OUTPUT_LOW>;
+		};
+		gpio_slp_s3_l: slp_s3_l {
+			gpios = <&gpioc 0 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S3_L";
+		};
+		gpio_slp_s5_l: slp_s5_l {
+			gpios = <&gpio6 0 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S5_L";
+		};
+		gpio_led1_drv: led1_drv {
+			gpios = <&gpio4 4 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_led2_drv: led2_drv {
+			gpios = <&gpio4 3 GPIO_OUTPUT_LOW>;
+		};
+		gpio_led4_drv: led4_drv {
+			gpios = <&gpio4 1 GPIO_OUTPUT_LOW>;
+		};
+		gpio_hubc_rst_l: hubc_rst_l {
+			gpios = <&gpio3 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_aux_on: aux_on {
+			gpios = <&gpioe 0 GPIO_OUTPUT_LOW>; /* Enable pin for LAN power rail */
+		};
+		gpio_pcieslot_rst_l: pcieslot_rst_l {
+			gpios = <&gpioc 7 GPIO_OUTPUT_LOW>;
+		};
+		gpio_pg_0p75vs_pwr_en: pg_0p75vs_pwr_en {
+			gpios = <&gpioa 2 GPIO_INPUT>;
+			enum-name = "GPIO_PG_0_75VS";
+		};
+		gpio_apu_aud_pwr_en: apu_aud_pwr_en {
+			gpios = <&gpioa 0 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_cec_out: ec_cec_out {
+			gpios = <&gpio9 6 GPIO_OUTPUT_LOW>;
+		};
+		gpio_mux_sbu_uart_flip_2: mux_sbu_uart_flip_2 {
+			gpios = <&gpio9 3 GPIO_OUTPUT_LOW>; /* For SOC UART */
+		};
+		gpio_pok_l: pok_l {
+			gpios = <&gpio9 4 GPIO_INPUT>;		/* Monitor 3VALW PWR OK */
+			enum-name = "GPIO_POWER_GOOD_3VALW";
+		};
+		gpio_vr_pwrgd: vr_pwrgd {
+			gpios = <&gpio9 7 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_GOOD_VR";
+		};
+		gpio_lan_wake: lan_wake {
+			gpios = <&gpioa 5 GPIO_INPUT>;
+		};
+		gpio_usbc_hub_en: usbc_hub_en {
+			gpios = <&gpiob 0 GPIO_OUTPUT_LOW>;
+		};
+		gpio_wl_rst_l: wl_rst_l {
+			gpios = <&gpio6 1 GPIO_OUTPUT_LOW>;
+		};
+		gpio_usba_hub_en: usba_hub_en {
+			gpios = <&gpio7 2 GPIO_OUTPUT_LOW>;
+		};
+		gpio_lan_rst_l: lan_rst_l {
+			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_huba_rst_l: huba_rst_l {
+			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;
+		};
+		gpio_mux_sbu_uart_flip: mux_sbu_uart_flip {
+			gpios = <&gpioe 2 GPIO_OUTPUT_LOW>; /* For EC UART */
+		};
+		gpio_pd_chip0_interrupt: pd_i2c_int_ec_l {
+			gpios = <&gpioe 5 GPIO_INPUT>;
+			enum-name = "GPIO_EC_PD_INTA_L";
+		};
+		gpio_pbtn_out: pbtn_out_l {
+			gpios = <&gpio5 0 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		thermtrip {
+			gpios = <&gpio8 1 GPIO_INPUT>;
+		};
+		/* unimplemented GPIOs */
+		entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpioc 6 0>,
+			<&gpioc 5 0>,
+			<&gpio9 1 0>,
+			<&gpiof 3 0>,
+			<&gpiof 2 0>,
+			<&gpio3 3 0>,
+			<&gpio3 6 0>,
+			<&gpiof 4 0>,
+			<&gpioe 4 0>,
+			<&gpioe 3 0>,
+			<&gpioc 1 0>,
+			<&gpio3 1 0>,
+			<&gpio3 0 0>,
+			<&gpio2 6 0>,
+			<&gpio2 5 0>,
+			<&gpio2 4 0>,
+			<&gpio2 3 0>,
+			<&gpio2 2 0>,
+			<&gpio1 3 0>,
+			<&gpio1 1 0>,
+			<&gpio1 0 0>,
+			<&gpio0 7 0>,
+			<&gpio0 6 0>,
+			<&gpio0 5 0>,
+			<&gpio0 4 0>,
+			<&gpio8 2 0>,
+			<&gpio8 3 0>,
+			<&gpio0 3 0>,
+			<&gpiob 1 0>,
+			<&gpio0 1 0>,
+			<&gpio0 2 0>,
+			<&gpio7 5 0>,
+			<&gpio6 7 0>,
+			<&gpioc 4 0>,
+			<&gpio4 2 0>,
+			<&gpio3 7 0>,
+			<&gpioe 1 0>,
+			<&gpiof 1 0>,
+			<&gpiof 0 0>,
+			<&gpioa 4 0>;
+	};
+};
+
+/* host interface */
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
+};

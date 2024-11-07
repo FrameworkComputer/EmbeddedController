@@ -1,0 +1,59 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		/* Uth1 */
+		apu-f75303 {
+			temp_host_warn = <90>;
+			temp_host_high = <90>;
+			temp_host_halt = <105>;
+			temp_host_release_warn = <60>;
+			temp_host_release_high = <60>;
+			temp_host_release_halt = <0>;
+			temp_fan_off = <38>;
+			temp_fan_max = <49>;
+			power-good-pin = <&gpio_slp_s3_l>;
+			sensor = <&apu_f75303>;
+		};
+		/* Qth1 */
+		memory-f75303 {
+			temp_host_warn = <90>;
+			temp_host_high = <90>;
+			temp_host_halt = <105>;
+			temp_host_release_warn = <60>;
+			temp_host_release_high = <60>;
+			temp_host_release_halt = <0>;
+			temp_fan_off = <40>;
+			temp_fan_max = <49>;
+			power-good-pin = <&gpio_slp_s3_l>;
+			sensor = <&memory_f75303>;
+		};
+		/* Qth2 */
+		ambient-f75303 {
+			temp_host_warn = <90>;
+			temp_host_high = <90>;
+			temp_host_halt = <105>;
+			temp_host_release_warn = <60>;
+			temp_host_release_high = <60>;
+			temp_host_release_halt = <0>;
+			temp_fan_off = <40>;
+			temp_fan_max = <49>;
+			power-good-pin = <&gpio_slp_s3_l>;
+			sensor = <&ambient_f75303>;
+		};
+		amd-apu {
+			temp_host_warn = <108>;
+			temp_host_high = <108>;
+			temp_host_halt = <127>;
+			temp_host_release_warn = <60>;
+			temp_host_release_high = <60>;
+			temp_host_release_halt = <0>;
+			power-good-pin = <&gpio_slp_s3_l>;
+			sensor = <&temp_cpu>;
+		};
+	};
+};

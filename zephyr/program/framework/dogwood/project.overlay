@@ -1,0 +1,16 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "adc.dtsi"
+#include "bbram.dtsi"
+#include "fan.dtsi"
+#include "gpio.dtsi"
+#include "i2c.dtsi"
+#include "interrupts.dtsi"
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
+#include "thermal.dtsi"
+#include "usbc.dtsi"
+#include "power_signal.dtsi"

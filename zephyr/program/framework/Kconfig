@@ -20,6 +20,12 @@ config BOARD_MARIGOLD
 	  Build Framework Marigold reference board. Marigold has Intel SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_DOGWOOD
+	bool "Framework Dogwood Board"
+	help
+	  Build Framework Dogwood board. Dogwood is a desktop that has AMD
+	  SoC with NPCX993FA0BX EC.
+
 # Project Configuration
 config CHIPSET_INTEL
 	bool "Framework Intel project"

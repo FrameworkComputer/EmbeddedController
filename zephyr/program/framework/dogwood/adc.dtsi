@@ -1,0 +1,23 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+
+/ {
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_main_boardid: main-boardid {
+		enum-name = "ADC_MAIN_BOARD_ID"; /* ADC0 MAIN_B_ID */
+		io-channels = <&adc0 0>;
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_chan0_gp45>;
+	pinctrl-names = "default";
+};

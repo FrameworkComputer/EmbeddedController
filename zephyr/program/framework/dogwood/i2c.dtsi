@@ -1,0 +1,138 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/usb_pd_tcpm.h>
+
+/ {
+	aliases {
+		i2c-0 = &i2c0_0;
+		i2c-1 = &i2c1_0;
+		i2c-3 = &i2c3_0;
+		i2c-7 = &i2c7_0;
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+		i2c_hid_slave: hid_slave {
+			i2c-port = <&i2c0_0>;
+			enum-names = "I2C_PORT_HID_SLAVE";
+		};
+		i2c_cypd: cypd {
+			i2c-port = <&i2c1_0>;
+			enum-names = "I2C_PORT_PD_MCU0";
+		};
+		i2c_measure_power: measure_power{
+			i2c-port = <&i2c3_0>;
+			/**
+			 * TODO:
+			 * (https://github.com/FrameworkComputer/ec/pull/1183)
+			 * Eventually change this to I2C_PORT_INA2XX.
+			 */
+
+			enum-names = "I2C_PORT_MASTER";
+		};
+		i2c_sensor: sensor {
+			i2c-port = <&i2c7_0>;
+			enum-names = "I2C_PORT_THERMAL_AP";
+		};
+	};
+};
+
+&i2c0_0 {
+	status = "okay";
+	label = "I2C_PORT0";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
+	pinctrl-names = "default";
+
+	/**
+	 * i2c1 bus is reserved to HID communication.
+	 *
+	 * -------- Important --------
+	 * Can not delete this node
+	 * ODM flash PD tool fix the PD i2c port index to 1 and 2.
+	 * If we delete this node, the index in host command 0x009e will be wrong
+	 * and cause flashing PD fail.
+	 */
+};
+
+&i2c_ctrl0 {
+	status = "okay";
+};
+
+&i2c1_0 {
+	status = "okay";
+	label = "I2C_PORT1";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
+	pinctrl-names = "default";
+
+	/**
+	 * i2c1 bus is used to communicate with PD chip
+	 *
+	 * Note: cypd pd chips does not yet support binding to the device tree
+	 * entry, so this won't do anything
+	 */
+};
+
+&i2c_ctrl1 {
+	status = "okay";
+};
+
+&i2c3_0 {
+	status = "okay";
+	label = "I2C_PORT3";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
+	pinctrl-names = "default";
+
+	/**
+	 * i2c3 bus is used to communicate with power meter INA236
+	 *
+	 * Note: ina2xx driver does not support binding to the device tree
+	 * entry, so this won't do anything
+	 */};
+
+&i2c_ctrl3 {
+	status = "okay";
+};
+
+&i2c7_0 {
+	status = "okay";
+	label = "I2C_PORT7";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
+	pinctrl-names = "default";
+
+	/* Qth1 */
+	memory_f75303: memory_f75303@4d {
+		compatible = "cros-ec,temp-sensor-f75303";
+		temperature-type = "F75303_IDX_REMOTE1";
+		reg = <0x4d>;
+	};
+
+	/* Qth2 */
+	ambient_f75303: ambient_f75303@4d {
+		compatible = "cros-ec,temp-sensor-f75303";
+		temperature-type = "F75303_IDX_REMOTE2";
+		reg = <0x4d>;
+	};
+
+	/* Uth1 */
+	apu_f75303: apu_f75303@4d {
+		compatible = "cros-ec,temp-sensor-f75303";
+		temperature-type = "F75303_IDX_LOCAL";
+		reg = <0x4d>;
+	};
+
+	temp_cpu: cpu@4c {
+		compatible = "cros-ec,temp-sensor-sb-tsi";
+		reg = <0x4c>;
+	};
+};
+
+&i2c_ctrl7 {
+	status = "okay";
+};

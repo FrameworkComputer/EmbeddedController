@@ -1,0 +1,110 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	led-colors {
+		compatible = "cros-ec,led-policy";
+
+		power-state-s0 {
+			chipset-state = "POWER_S0";
+
+			power_led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+
+			chassis_led3 {
+				led-id = "EC_LED_ID_SECOND_POWER_LED";
+				color-0 {
+					led-color = "LED_AMBER";
+				};
+			};
+		};
+
+		power-state-s3 {
+			chipset-state = "POWER_S3";
+
+			power_led {
+				led-id = "EC_LED_ID_POWER_LED";
+				transition = "LED_TRANSITION_LINEAR";
+
+				/* period-ms =
+				 *	target time * tick time (200ms) / deferred time (10ms)
+				 */
+
+				/* Fade time target 600ms (In, low to high) */
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <12000>;
+				};
+				/* Duration time target 900ms */
+				color-1 {
+					led-color = "LED_WHITE";
+					period-ms = <18000>;
+				};
+				/* Fade time target 600ms (Out, high to low) */
+				color-2 {
+					led-color = "LED_OFF";
+					period-ms = <12000>;
+				};
+				/* Interval time target 1900ms */
+				color-3 {
+					led-color = "LED_OFF";
+					period-ms = <37000>;
+				};
+			};
+
+			chassis_led3 {
+				led-id = "EC_LED_ID_SECOND_POWER_LED";
+				transition = "LED_TRANSITION_LINEAR";
+
+				/* period-ms =
+				 *	target time * tick time (200ms) / deferred time (10ms)
+				 */
+
+				/* Fade time target 600ms (In, low to high) */
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <12000>;
+				};
+				/* Duration time target 900ms */
+				color-1 {
+					led-color = "LED_AMBER";
+					period-ms = <18000>;
+				};
+				/* Fade time target 600ms (Out, high to low) */
+				color-2 {
+					led-color = "LED_OFF";
+					period-ms = <12000>;
+				};
+				/* Interval time target 1900ms */
+				color-3 {
+					led-color = "LED_OFF";
+					period-ms = <37000>;
+				};
+			};
+		};
+
+		power-state-s5 {
+			chipset-state = "POWER_S5";
+
+			power_led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+
+			chassis_led3 {
+				led-id = "EC_LED_ID_SECOND_POWER_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+	};
+};
