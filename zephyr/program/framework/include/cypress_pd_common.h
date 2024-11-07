@@ -930,4 +930,11 @@ void perform_error_recovery(int controller);
  */
 void cypd_enable_interrupt(int controller, int enable_ndisable);
 
+/**
+ * Update the PD chips state
+ *
+ * @param controller The PD chip for which to update the chip state
+ */
+void cypd_update_chips_state(enum ccg_pd_state state);
+
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */
