@@ -937,4 +937,11 @@ void cypd_enable_interrupt(int controller, int enable_ndisable);
  */
 void cypd_update_chips_state(enum ccg_pd_state state);
 
+/**
+ * CCD mode control
+ *
+ * Check the type-c port status and control the ccd mode, called by projects
+ */
+void cypd_ccd_mode_control(void);
+
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */
