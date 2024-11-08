@@ -21,3 +21,13 @@ static void board_change_cypd_init_state(void)
 		pd_chip_config[controller].state = CCG_STATE_WAIT_STABLE;
 }
 DECLARE_HOOK(HOOK_INIT, board_change_cypd_init_state, HOOK_PRIO_DEFAULT);
+
+void cypd_ccd_mode_control(void)
+{
+	if (pd_port_states[CONFIG_PD_CCG6_EC_UART_DEBUG_PORT].c_state == CCG_STATUS_DEBUG ||
+		pd_port_states[CONFIG_PD_CCG6_SOC_UART_DEBUG_PORT].c_state == CCG_STATUS_DEBUG) {
+		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_mux_uart_flip), 1);
+	} else {
+		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_mux_uart_flip), 0);
+	}
+}

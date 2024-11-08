@@ -1094,14 +1094,7 @@ void cypd_update_port_state(int controller, int port)
 			pd_set_input_current_limit(port_idx, 0, 0);
 		}
 	}
-#if DT_NODE_EXISTS(DT_ALIAS(gpio_mux_uart_flip))
-	if (pd_port_states[CONFIG_PD_CCG6_EC_UART_DEBUG_PORT].c_state == CCG_STATUS_DEBUG ||
-		pd_port_states[CONFIG_PD_CCG6_SOC_UART_DEBUG_PORT].c_state == CCG_STATUS_DEBUG) {
-		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_mux_uart_flip), 1);
-	} else {
-		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_mux_uart_flip), 0);
-	}
-#endif /* CONFIG_PD_CHIP_CCG6 */
+
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER)) {
 		charge_manager_update_dualrole(port_idx, CAP_DEDICATED);
 	}
@@ -1125,6 +1118,14 @@ void cypd_update_port_state(int controller, int port)
 		charger_set_input_current_limit(0, (int)calculate_ma);
 		clear_erp_progress_mask();
 	}
+#endif
+
+#ifdef CONFIG_PD_CHIP_CCG6
+	/**
+	 * CCG6 use the external mux to switch the SUB and UART signal.
+	 * Call from project to check the type-c port status to enable/disable ccd mode
+	 */
+	cypd_ccd_mode_control();
 #endif
 }
 
