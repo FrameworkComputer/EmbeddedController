@@ -143,8 +143,8 @@ int cypd_setup(int controller)
 		int status_reg;
 	} const cypd_setup_cmds[] = {
 		/* Set the port event mask */
-		{ CCG_EVENT_MASK_REG(0), 0x27ffff, 4, CCG_PORT0_INTR},
-		{ CCG_EVENT_MASK_REG(1), 0x27ffff, 4, CCG_PORT1_INTR },
+		{ CCG_EVENT_MASK_REG(0), 0x2fffff, 4, CCG_PORT0_INTR},
+		{ CCG_EVENT_MASK_REG(1), 0x2fffff, 4, CCG_PORT1_INTR },
 	};
 	BUILD_ASSERT(ARRAY_SIZE(cypd_setup_cmds) == CYPD_SETUP_CMDS_LEN);
 
