@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_UCSI_H
 #define __CROS_EC_UCSI_H
 
+#include "common.h"
 
 /************************************************/
 /*	UCSI CONTROL DEFINITION                 */
@@ -41,6 +42,21 @@ enum ucsi_command {
 	UCSI_CMD_GET_CONNECTOR_STATUS,
 	UCSI_CMD_GET_ERROR_STATUS,
 };
+
+/**
+ * PD chip indicates to the UCSI change connector, only return 1(port0)/2(port1)
+ */
+enum pd_chip_ucsi_connector {
+	PD_CHIP_UCSI_CONNECTOR_1 = 1,
+	PD_CHIP_UCSI_CONNECTOR_2,
+};
+
+struct ucsi_to_pd_port_map {
+	int pd_controller;
+	int pd_controller_port;
+};
+
+extern struct ucsi_to_pd_port_map ucsi_pd_port_map[];
 
 int ucsi_write_tunnel(void);
 int ucsi_read_tunnel(int controller);
