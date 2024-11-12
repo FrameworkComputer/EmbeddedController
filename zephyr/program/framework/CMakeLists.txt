@@ -116,6 +116,7 @@ if(DEFINED CONFIG_BOARD_SUNFLOWER)
 	zephyr_include_directories("include/sunflower")
 	zephyr_library_sources(
 			"src/battery_13.c"
+			"src/ucsi_port_12.c"
 			"sunflower/src/battery_present.c"
 			"sunflower/src/charger.c"
 			"sunflower/src/cpu_power.c"
