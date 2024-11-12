@@ -63,6 +63,7 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 			"lotus/src/gpu_configuration.c"
 			"lotus/src/gpu_f75303.c"
 			"src/usbc_4port_config.c"
+			"src/ucsi_port_13_16.c"
 			"src/temperature_filter.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
@@ -76,6 +77,7 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 	zephyr_include_directories("include/azalea")
 	zephyr_library_sources(
 			"src/battery_13.c"
+			"src/ucsi_port_13_16.c"
 			"azalea/src/charger.c"
 			"azalea/src/cpu_power.c"
 			"azalea/src/power_sequence.c"
@@ -94,6 +96,7 @@ if(DEFINED CONFIG_BOARD_MARIGOLD)
 	zephyr_include_directories("include/marigold")
 	zephyr_library_sources(
 			"src/battery_13.c"
+			"src/ucsi_port_13_16.c"
 			"marigold/src/charger.c"
 			"marigold/src/cpu_power.c"
 			"marigold/src/power_sequence.c"

@@ -35,6 +35,7 @@
 static int ucsi_debug_enable;
 static uint8_t s0ix_connector_change_indicator;
 static bool read_complete;
+static int pd_ucsi_port_map[PD_PORT_COUNT];
 
 void ucsi_set_debug(bool enable)
 {
@@ -85,7 +86,7 @@ int ucsi_write_tunnel(void)
 	uint8_t *message_out = host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_MESSAGE_OUT);
 	uint8_t *command = host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND);
 	uint8_t change_connector_indicator = 0;
-	int i;
+	int controller;
 	int offset = 0;
 	int rv = EC_SUCCESS;
 
@@ -100,7 +101,7 @@ int ucsi_write_tunnel(void)
 		CPRINTS("UCSI PPM_RESET");
 	}
 
-	for (i = 0; i < PD_CHIP_COUNT; i++)
+	for (int i = 0; i < PD_CHIP_COUNT; i++)
 		pd_chip_ucsi_info[i].read_tunnel_complete = 0;
 
 	switch (*command) {
@@ -134,24 +135,19 @@ int ucsi_write_tunnel(void)
 		change_connector_indicator =
 			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset) & 0x7f;
 
-		if (change_connector_indicator > 0x02) {
-			/*
-			 * Port 3 (b011) should be controller 1 UCSI port 1
-			 * Port 4 (b100) should be controller 1 UCSI port 2
-			 */
+		if (change_connector_indicator > 0 && change_connector_indicator !=
+				ucsi_pd_port_map[change_connector_indicator-1].pd_controller_port) {
 			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset) =
-				((*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset)
-				& 0x80) | (change_connector_indicator >> 1));
-			i = 1;
-		} else
-			i = 0;
+				ucsi_pd_port_map[change_connector_indicator-1].pd_controller_port;
+		}
+		controller = ucsi_pd_port_map[change_connector_indicator-1].pd_controller;
 
-		pd_chip_ucsi_info[i].wait_ack = 1;
-		rv = cypd_write_reg_block(i, CCG_MESSAGE_OUT_REG, message_out, 16);
-		rv = cypd_write_reg_block(i, CCG_CONTROL_REG, command, 8);
+		pd_chip_ucsi_info[controller].wait_ack = 1;
+		rv = cypd_write_reg_block(controller, CCG_MESSAGE_OUT_REG, message_out, 16);
+		rv = cypd_write_reg_block(controller, CCG_CONTROL_REG, command, 8);
 		break;
 	default:
-		for (i = 0; i < PD_CHIP_COUNT; i++) {
+		for (int i = 0; i < PD_CHIP_COUNT; i++) {
 
 			/**
 			 * If the controller does not needs to respond ACK,
@@ -317,13 +313,11 @@ int ucsi_read_tunnel(int controller)
 	if (rv != EC_SUCCESS)
 		CPRINTS("CCI_REG failed");
 	/* we need to offset the pd connector number to correct number */
-	if (controller == 1 && (pd_chip_ucsi_info[controller].cci & 0xFE))
-		/*
-		 * Port 3 (b011) should be controller 1 UCSI port 1 (b001)
-		 * Port 4 (b100) should be controller 1 UCSI port 2 (b010)
-		 * CCI connector change indicate offset bit 1, so need to add 0x04 (0x2 << 1)
-		 */
-		pd_chip_ucsi_info[controller].cci += 0x04;
+	if (pd_chip_ucsi_info[controller].cci & 0xFE) {
+		pd_chip_ucsi_info[controller].cci = (pd_chip_ucsi_info[controller].cci & 0xFFFFFF01)
+		| (pd_ucsi_port_map[controller*2+((pd_chip_ucsi_info[controller].cci & 0xFE)>>1)-1]
+		<< 1);
+	}
 
 	/* If data length is non zero, then get data */
 	if (pd_chip_ucsi_info[controller].cci & 0xFF00) {
@@ -550,3 +544,19 @@ void check_ucsi_event_from_host(void)
 		host_set_single_event(EC_HOST_EVENT_UCSI);
 	}
 }
+
+/**
+ * Map the UCSI port to the PD port, so that we can use the PD port_id
+ * to find the UCSI port number
+ */
+static void ucsi_pd_port_mapping(void)
+{
+	int port_idx;
+
+	for (int i = 0; i < PD_PORT_COUNT; i++) {
+		port_idx = (ucsi_pd_port_map[i].pd_controller * 2) +
+			ucsi_pd_port_map[i].pd_controller_port;
+		pd_ucsi_port_map[port_idx-1] = i+1;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, ucsi_pd_port_mapping, HOOK_PRIO_DEFAULT);
