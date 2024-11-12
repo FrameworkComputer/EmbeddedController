@@ -5,18 +5,32 @@
 def register_framework_project(
     project_name,
     chip="npcx9/npcx9m3f",
+    # set the default to laptop
+    product_family="laptop",
 ):
-    """Register a variant of lotus."""
+    """Register a variant of framework."""
     register_func = register_npcx_project
+
+    if product_family != "desktop":
+        kconfig_files = [
+            # Common to all laptop projects
+            here / "program.conf",
+            # Project-specific KConfig customization
+            here / project_name / "project.conf",
+        ]
+    else:
+        kconfig_files = [
+            # Common to all laptop projects
+            here / "desktop_program.conf",
+            # Project-specific KConfig customization
+            here / project_name / "project.conf",
+        ]
 
     return register_func(
         project_name=project_name,
         zephyr_board=chip,
         dts_overlays=[here / project_name / "project.overlay"],
-        kconfig_files=[
-            here / "program.conf",
-            here / project_name / "project.conf",
-        ],
+        kconfig_files=kconfig_files,
     )
 
 lotus = register_framework_project(
