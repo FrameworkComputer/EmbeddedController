@@ -1441,6 +1441,19 @@ int cypd_device_int(int controller)
 		case CCG_RESPONSE_MESSAGE_QUEUE_OVERFLOW:
 			CPRINTS("PD%d Message Overflow", controller);
 			break;
+#ifdef CONFIG_CHIPSET_AMD
+		case CCG_RESPONSE_AMD_CROSSBAR_READY:
+			/**
+			 * Vendor requests EC to do the error recovery after
+			 * AMD Crossbar is ready.
+			 *
+			 * They add the specific response code 0x38 to notify EC
+			 * and then EC performs the typec error recovery
+			 */
+			CPRINTS("AMD Crossbar is ready");
+			perform_error_recovery(controller);
+			break;
+#endif
 		default:
 			/* reduce the EC logs without debugging */
 			if (verbose_msg_logging)
