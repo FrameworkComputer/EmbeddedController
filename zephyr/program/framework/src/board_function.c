@@ -61,7 +61,7 @@ int ac_boot_status(void)
 
 void bios_function_detect(void)
 {
-	system_set_bbram(SYSTEM_BBRAM_IDX_BIOS_FUNCTION, ac_boot_status());
+	flash_storage_update(FLASH_FLAGS_ACPOWERON, ac_boot_status());
 
 	flash_storage_update(FLASH_FLAGS_STANDALONE, get_standalone_mode() ? 1 : 0);
 #ifdef CONFIG_BOARD_LOTUS
@@ -115,9 +115,9 @@ void board_power_button_interrupt(enum gpio_signal signal)
 
 static void bios_function_init(void)
 {
-	if (!ac_boot_status())
-		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_BIOS_SETUP_FUNC) =
-			bios_function_status(TYPE_BBRAM, SYSTEM_BBRAM_IDX_BIOS_FUNCTION, 0);
+	/* restore the bios setup menu setting */
+	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_BIOS_SETUP_FUNC) =
+		flash_storage_get(FLASH_FLAGS_ACPOWERON);
 
 	if (flash_storage_get(FLASH_FLAGS_STANDALONE))
 		set_standalone_mode(1);
