@@ -231,6 +231,16 @@ static void set_initial_pwrbtn_state(void)
 		CPRINTS("PB init power on");
 	} else if (ac_boot_status() &&
 		(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) == 1)) {
+
+		/**
+		 * Only the developer will trigger the reset pin or soft flags.
+		 * We don't want the system to power automatically if we reset
+		 * the EC during development.
+		 */
+		if (!!(reset_flags & EC_RESET_FLAG_SOFT) ||
+			!!(reset_flags & EC_RESET_FLAG_RESET_PIN))
+			return;
+
 		/* BIOS setup AC attach power on */
 		pwrbtn_state = PWRBTN_STATE_INIT_ON;
 		CPRINTS("PB init AC attach on");
