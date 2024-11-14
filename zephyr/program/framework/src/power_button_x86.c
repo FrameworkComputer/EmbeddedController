@@ -201,6 +201,27 @@ static void power_button_released(uint64_t tnow)
 }
 
 /**
+ * Handle debounce when power button press form hibernate.
+ */
+static void power_button_debounce_deferred(void)
+{
+	if ((gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_on_off_btn_l)) == 1)) {
+		/**
+		 * Power button already release ignore PB signal
+		 */
+		pwrbtn_state = PWRBTN_STATE_IDLE;
+		CPRINTS("PB debounce ignore signal");
+	} else {
+		/**
+		 * Power button is still pressed, power on the system
+		 */
+		pwrbtn_state = PWRBTN_STATE_INIT_ON;
+		CPRINTS("PB init-on after PB debounce");
+	}
+}
+DECLARE_DEFERRED(power_button_debounce_deferred);
+
+/**
  * Set initial power button state.
  */
 static void set_initial_pwrbtn_state(void)
@@ -233,10 +254,24 @@ static void set_initial_pwrbtn_state(void)
 		}
 
 		/**
-		 * EC needs to auto power on after exiting the hibernate mode w/o external power
+		 * Check the power button debounce time when the system presses
+		 * the power button from hibernate (current_ms is for code init)
 		 */
-		pwrbtn_state = PWRBTN_STATE_INIT_ON;
-		CPRINTS("PB init power on");
+		int64_t current_ms = k_uptime_get();
+
+		if (CONFIG_BUTTON_DEBOUNCE > (current_ms * MSEC)) {
+			pwrbtn_state = PWRBTN_STATE_IDLE;
+			hook_call_deferred(&power_button_debounce_deferred_data,
+				(CONFIG_BUTTON_DEBOUNCE - (current_ms * MSEC)));
+		} else {
+			/**
+			 * EC needs to auto power on after exiting the hibernate mode
+			 * w/o external power
+			 */
+			pwrbtn_state = PWRBTN_STATE_INIT_ON;
+			CPRINTS("PB init power on");
+		}
+
 	} else if (ac_boot_status() &&
 		(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) == 1)) {
 
