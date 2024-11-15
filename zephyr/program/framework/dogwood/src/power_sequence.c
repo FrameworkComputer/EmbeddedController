@@ -17,6 +17,7 @@
 #include "gpio_signal.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
+#include "driver/ina2xx.h"
 #include "lpc.h"
 #include "power.h"
 #include "power_sequence.h"
@@ -341,6 +342,21 @@ static int chipset_prepare_S3(int enable)
 	return true;
 }
 
+static void power_check_12vb_apu(void)
+{
+	int voltage = ina2xx_get_voltage(0); /* Unit: mV */
+	bool psu_is_off = !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ps_on));
+
+	/**
+	 * EC read the ina236 bus voltage register to monitor the
+	 * 12VB_APU is present or not to control the debug led2.
+	 */
+	if (voltage < 5000 || psu_is_off)
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), 0);
+	else
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), 1);
+}
+
 enum power_state power_handle_state(enum power_state state)
 {
 	int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
@@ -359,6 +375,7 @@ enum power_state power_handle_state(enum power_state state)
 			chipset_force_g3();
 			return POWER_G3;
 		}
+
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75_1p8valw_pwren), 1);
 		k_msleep(10);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_1p2valw_pwren), 1);
@@ -381,6 +398,9 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* Exit SOC G3 */
 		CPRINTS("Exit SOC G3");
+		/* check the 12vb_apu signal after turn on the PSU (ps_on = high) */
+		power_check_12vb_apu();
+
 		power_s5_up_control(1);
 		return POWER_S5;
 
@@ -638,6 +658,9 @@ enum power_state power_handle_state(enum power_state state)
 
 		cypd_update_chips_state(CCG_STATE_NO_POWER);
 
+		/* check the 12vb_apu signal after turn off the PSU (ps_on = low) */
+		power_check_12vb_apu();
+
 		return POWER_G3;
 	default:
 		break;
@@ -655,15 +678,6 @@ void system_check_ssd_status(void)
 	}
 }
 DECLARE_HOOK(HOOK_TICK, system_check_ssd_status, HOOK_PRIO_DEFAULT);
-
-void led_check_state(void)
-{
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_pwrgd)) == 1)
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), 1);
-	else
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), 0);
-}
-DECLARE_HOOK(HOOK_TICK, led_check_state, HOOK_PRIO_DEFAULT);
 
 void chipset_throttle_cpu(int throttle)
 {
