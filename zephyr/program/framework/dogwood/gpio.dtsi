@@ -71,14 +71,9 @@
 		gpio_0p75_1p8valw_pwren: 0p75_1p8valw_pwren {
 			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>;
 		};
-		/**
-		 * Workaound: enable npcx PSL to keep gpio85 always high
-		 * will change the GPIO next phase.
-		 *
-		 * gpio_ps_on: ps_on {
-		 *	gpios = <&gpio8 5 GPIO_OUTPUT_LOW>;
-		 *};
-		 */
+		gpio_ps_on: ps_on {
+			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;
+		};
 		gpio_1p2valw_pwren: 1p2valw_pwren {
 			gpios = <&gpio8 6 GPIO_OUTPUT_LOW>;
 		};
@@ -166,7 +161,7 @@
 			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>;
 		};
 		gpio_huba_rst_l: huba_rst_l {
-			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;
+			gpios = <&gpiof 0 GPIO_OUTPUT_LOW>;
 		};
 		gpio_mux_sbu_uart_flip: mux_sbu_uart_flip {
 			gpios = <&gpioe 2 GPIO_OUTPUT_LOW>; /* For EC UART */
@@ -228,7 +223,6 @@
 			<&gpio3 7 0>,
 			<&gpioe 1 0>,
 			<&gpiof 1 0>,
-			<&gpiof 0 0>,
 			<&gpioa 4 0>;
 	};
 };

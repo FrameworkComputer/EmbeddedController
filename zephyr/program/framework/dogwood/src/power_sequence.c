@@ -35,6 +35,33 @@ static bool power_s5_up;		/* Chipset is sequencing up or down */
 static int force_shutdown_flags;
 static int d3cold_is_entry;	/* check the d3cold status */
 
+static void power_enable_psu(bool enable)
+{
+	int board_version = board_get_version();
+
+	/* EC cannot control the ps_on pin on EVT mainboard */
+	if (board_version <= BOARD_VERSION_4)
+		return;
+
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ps_on), enable);
+}
+
+static void power_usb_huba_reset(bool enable)
+{
+	int board_version = board_get_version();
+
+	/**
+	 * huba_rst pin connects to GPIOD5 at EVT phase and connects to GPIOF0
+	 * at DVT version.
+	 * Use board_version to control the huba_rst pin to ensure we don't let
+	 * EVT mainboard be broken.
+	 */
+	if (board_version <= BOARD_VERSION_4)
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ps_on), enable);
+	else
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_huba_rst_l), enable);
+}
+
 static void peripheral_power_startup(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wlan_en), 1);
@@ -44,7 +71,7 @@ static void peripheral_power_startup(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usbc_hub_en), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usba_hub_en), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_lan_rst_l), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_huba_rst_l), 1);
+	power_usb_huba_reset(1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, peripheral_power_startup, HOOK_PRIO_DEFAULT);
 
@@ -62,7 +89,7 @@ static void peripheral_power_shutdown(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usbc_hub_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usba_hub_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_lan_rst_l), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_huba_rst_l), 0);
+	power_usb_huba_reset(0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, peripheral_power_shutdown, HOOK_PRIO_DEFAULT);
 
@@ -323,6 +350,9 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_G3S5:
+
+		k_msleep(10);
+		power_enable_psu(1);
 
 		if (power_wait_signals(X86_3VALW_PG)) {
 			/* something wrong, turn off power and force to g3 */
@@ -596,6 +626,9 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75_1p8valw_pwren), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_1p2valw_pwren), 0);
+
+		k_msleep(5);
+		power_enable_psu(0);
 
 		/* clear suspend flag when system shutdown */
 		power_state_clear(EC_PS_ENTER_S0ix |
