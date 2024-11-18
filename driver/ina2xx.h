@@ -97,6 +97,12 @@ enum ina2xx_conv_time {
 /* Power LSB: mW per current LSB */
 #define INA2XX_POW_MW(reg) ((reg)*25 * 1 /*Current mA/LSB*/)
 
+/* In INA236 specification table 7-1 describe the address pins and target addtess */
+#define INA236_INDEX_ADD_PIN_GND 0
+#define INA236_INDEX_ADD_PIN_VS 1
+#define INA236_INDEX_ADD_PIN_SDA 2
+#define INA236_INDEX_ADD_PIN_SCL 3
+
 #endif
 
 /* Read INA2XX register. */
