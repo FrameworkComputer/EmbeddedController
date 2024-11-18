@@ -57,7 +57,7 @@ void ina236_alert_current(int voltage, int current)
 	else
 		value = current * 4;
 
-	rv = ina2xx_write(0, INA2XX_REG_ALERT, value);
+	rv = ina2xx_write(INA236_INDEX_ADD_PIN_VS, INA2XX_REG_ALERT, value);
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("ina236 write alert fail");
@@ -70,22 +70,22 @@ static void board_ina236_init(void)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_ina236_alert));
 
 	/* TODO(crosbug.com/p/29730): assume 1mA/LSB, revisit later */
-	rv = ina2xx_write(0, INA2XX_REG_CALIB, 0x0831);
+	rv = ina2xx_write(INA236_INDEX_ADD_PIN_VS, INA2XX_REG_CALIB, 0x0831);
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("ina236 write calib fail");
 
-	rv = ina2xx_write(0, INA2XX_REG_CONFIG, 0x4027);
+	rv = ina2xx_write(INA236_INDEX_ADD_PIN_VS, INA2XX_REG_CONFIG, 0x4027);
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("ina236 write config fail");
 
-	rv = ina2xx_write(0, INA2XX_REG_ALERT, 0x5DC0);
+	rv = ina2xx_write(INA236_INDEX_ADD_PIN_VS, INA2XX_REG_ALERT, 0x5DC0);
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("ina236 write alert fail");
 
-	rv = ina2xx_write(0, INA2XX_REG_MASK, 0x8009);
+	rv = ina2xx_write(INA236_INDEX_ADD_PIN_VS, INA2XX_REG_MASK, 0x8009);
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("ina236 write mask fail");
@@ -96,7 +96,7 @@ static void ina236_alert_release(void)
 {
 	int rv;
 
-	rv = ina2xx_read(0, INA2XX_REG_MASK);
+	rv = ina2xx_read(INA236_INDEX_ADD_PIN_VS, INA2XX_REG_MASK);
 
 	if (rv == 0x0bad)
 		CPRINTS("ina236 read mask fail");
@@ -457,7 +457,7 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 bool log_ina236;
 void board_check_current(void)
 {
-	int16_t sv = ina2xx_read(0, INA2XX_REG_SHUNT_VOLT);
+	int16_t sv = ina2xx_read(INA236_INDEX_ADD_PIN_VS, INA2XX_REG_SHUNT_VOLT);
 	static int curr_status = EC_DEASSERTED_PROCHOT;
 	static int pre_status = EC_DEASSERTED_PROCHOT;
 	static int active_port;
@@ -487,7 +487,8 @@ void board_check_current(void)
 
 	if (log_ina236) {
 		CPRINTS("INA236 %d mA %d mV", INA2XX_SHUNT_UV(sv) / shunt_register,
-				INA2XX_BUS_MV((int)ina2xx_read(0, INA2XX_REG_BUS_VOLT)));
+				INA2XX_BUS_MV((int)ina2xx_read(INA236_INDEX_ADD_PIN_VS,
+				INA2XX_REG_BUS_VOLT)));
 	}
 
 	if (ABS(INA2XX_SHUNT_UV(sv) / shunt_register) > (active_current * 120 / 100) &&
