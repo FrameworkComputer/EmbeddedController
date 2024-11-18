@@ -31,57 +31,77 @@ static void update_os_power_slider(int mode)
 		CPRINTS("AC BALANCED");
 		break;
 	default:
-		/* no mode, run power table */
 		break;
 	}
 }
 
+static int update_soc_vrm_current_limit(void)
+{
+	/* Follow the AMD specification to set the maximum value (unit:mA) */
+
+	RETURN_ERROR(update_vrm_vdd_current_limit(160000));
+	RETURN_ERROR(update_vrm_vdd_max_current_limit(224000));
+	RETURN_ERROR(update_vrm_vdd_ccd_current_limit(80000));
+	RETURN_ERROR(update_vrm_vdd_ccd_max_current_limit(125000));
+	RETURN_ERROR(update_vrm_soc_current_limit(40000));
+	RETURN_ERROR(update_vrm_soc_max_current_limit(55000));
+	return EC_SUCCESS;
+}
+
 void update_soc_power_limit(bool force_update, bool force_no_adapter)
 {
-	static uint32_t old_sustain_power_limit;
-	static uint32_t old_fast_ppt_limit;
-	static uint32_t old_slow_ppt_limit;
-	static uint32_t old_p3t_limit;
+	int slider_mode = *host_get_memmap(EC_MEMMAP_POWER_SLIDE);
 	static int old_slider_mode;
-	static int set_pl_limit;
-	int mode = *host_get_memmap(EC_MEMMAP_POWER_SLIDE);
+	static bool soc_pmf_has_updated, soc_current_limit_has_updated;
 
-	if (!chipset_in_state(CHIPSET_STATE_ON) || !get_apu_ready())
+	/* Needs to update the PMF and curent limit when the system power on*/
+	if (!chipset_in_state(CHIPSET_STATE_ON) || !get_apu_ready()) {
+		soc_current_limit_has_updated = false;
+		soc_pmf_has_updated = false;
+		old_slider_mode = EC_AC_BALANCED;
 		return;
-
-	if (mode_ctl)
-		mode = mode_ctl;
-
-	if (old_slider_mode != mode) {
-		old_slider_mode = mode;
-		if (func_ctl & 0x1)
-			update_os_power_slider(mode);
 	}
 
-	if (power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] != old_sustain_power_limit
-		|| power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] != old_fast_ppt_limit
-		|| power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] != old_slow_ppt_limit
-		|| power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T] != old_p3t_limit
-		|| set_pl_limit || force_update) {
-		/* only set PL when it is changed */
-		old_sustain_power_limit = power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
-		old_slow_ppt_limit = power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT];
-		old_fast_ppt_limit = power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
-		old_p3t_limit = power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T];
+	/* System power mode change, update the PMF */
+	if (slider_mode != old_slider_mode && slider_mode != 0) {
+		update_os_power_slider(slider_mode);
+		old_slider_mode = slider_mode;
+		soc_pmf_has_updated = false;
+	}
 
-		CPRINTF("Change SOC Power Limit: SPL %dmW, sPPT %dmW, fPPT %dmW, p3T %dmW\n",
-			old_sustain_power_limit, old_slow_ppt_limit,
-			old_fast_ppt_limit, old_p3t_limit);
-		set_pl_limit = set_pl_limits(old_sustain_power_limit, old_fast_ppt_limit,
-			old_slow_ppt_limit, old_p3t_limit);
+	/* force update the SoC PMF and current limit */
+	if (force_update) {
+		soc_current_limit_has_updated = false;
+		soc_pmf_has_updated = false;
+	}
+
+	if (!soc_pmf_has_updated) {
+		uint32_t soc_pmf_spl, soc_pmf_sppt, soc_pmf_fppt, soc_pmf_p3t;
+
+		soc_pmf_spl = power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
+		soc_pmf_sppt = power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT];
+		soc_pmf_fppt = power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
+		soc_pmf_p3t = power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T];
+
+		if (set_pl_limits(soc_pmf_spl, soc_pmf_sppt,
+				soc_pmf_fppt, soc_pmf_p3t) == EC_SUCCESS) {
+			CPRINTS("Update SoC PFM: SPL %dmW, sPPT %dmW, fPPT %dmW, p3T %dmW",
+			soc_pmf_spl, soc_pmf_sppt, soc_pmf_fppt, soc_pmf_p3t);
+			soc_pmf_has_updated = true;
+		} else
+			return;
+	}
+
+	if (!soc_current_limit_has_updated) {
+		if (update_soc_vrm_current_limit() == EC_SUCCESS) {
+			CPRINTS("Update soc vrm current limit success");
+			soc_current_limit_has_updated = true;
+		}
 	}
 }
 
 static void initial_soc_power_limit(void)
 {
-	power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 100000;
-	power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] = 100000;
-	power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] = 115000;
-	power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T] = 400000;
+	update_os_power_slider(EC_AC_BALANCED);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, initial_soc_power_limit, HOOK_PRIO_DEFAULT);
