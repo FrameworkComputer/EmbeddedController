@@ -543,6 +543,12 @@ struct pd_chip_ucsi_info_t {
 	int wait_ack;
 };
 
+struct alert_msg_t {
+	uint16_t header;	/* message header */
+	uint16_t reserved;
+	uint32_t ado;		/* alert data object */
+};
+
 #ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
 
 /**
