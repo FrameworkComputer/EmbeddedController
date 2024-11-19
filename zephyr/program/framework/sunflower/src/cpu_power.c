@@ -19,7 +19,7 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define ROP 6
+#define ROP 15   /*Intel Rest Of Platform(ROP)*/
 #define batt_rating 50
 
 void update_soc_power_limit(bool force_update, bool force_no_adapter)
