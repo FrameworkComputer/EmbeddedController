@@ -20,6 +20,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "power.h"
+#include "power_button.h"
 #include "task.h"
 #include "ucsi.h"
 #include "usb_pd.h"
@@ -89,10 +90,12 @@ struct pd_port_current_state_t pd_port_states[] = {
 
 struct extended_msg rx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 struct extended_msg tx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
+struct alert_msg_t alert_rx[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int prev_charge_port = -1;
 static bool verbose_msg_logging;
 static bool firmware_update;
+static bool alert_press;
 
 /*****************************************************************************/
 /* Internal functions */
@@ -1549,6 +1552,57 @@ void cypd_handle_vdm(int controller, int port, uint8_t *data, int len)
 
 }
 
+int cypd_handle_alert_msg(int controller, int port, int len)
+{
+	int rv;
+	int port_idx = (controller << 1) + port;
+	uint8_t pd_status_reg[4];
+
+	if (len > 8) {
+		CPRINTS("Alert Massage Too Long");
+		return EC_ERROR_INVAL;
+	}
+
+	/* Read the extended message packet */
+	rv = cypd_read_reg_block(controller,
+		CCG_READ_DATA_MEMORY_REG(port, 0), (void *)&(alert_rx[port_idx]), len);
+
+	/* Read the pd port partner status */
+	rv = cypd_read_reg_block(controller, CCG_PD_STATUS_REG(port), pd_status_reg, 4);
+
+	pd_port_states[port_idx].data_role =
+			pd_status_reg[0] & BIT(6) ? PD_ROLE_DFP : PD_ROLE_UFP;
+
+	/* Extended Alert */
+	if (alert_rx[port_idx].ado & ADO_EXTENDED_ALERT_EVENT) {
+		if (pd_port_states[port_idx].data_role == PD_ROLE_DFP &&
+		    (ADO_EXTENDED_ALERT_EVENT_TYPE & alert_rx[port_idx].ado) ==
+			    ADO_POWER_BUTTON_PRESS) {
+			/**
+			 * follow Framework UI ERS Power Button Behavior
+			 * 1. <4 Seconds - Normal power event (Power on, Wake from
+			 * suspend, send event to PCH) for OS defined behavior.
+			 * 2. >8 seconds, < 12 seconds - Force CPU to G3(chipset_force_shutdown)
+			 * 3. >12 Seconds - Forced reset of system(system_reset).
+			 *
+			 * Set the maximum timer(>12s doing EC reset) to run all PB state machine.
+			 */
+			power_button_simulate_press(13000);
+			alert_press = 1;
+		} else if (pd_port_states[port_idx].data_role == PD_ROLE_DFP &&
+			   (ADO_EXTENDED_ALERT_EVENT_TYPE & alert_rx[port_idx].ado) ==
+				   ADO_POWER_BUTTON_RELEASE) {
+			/**
+			 * Re-schedule to a minimal(1) to release the power button when
+			 * received the ADO_POWER_BUTTON_RELEASE event.
+			 */
+			power_button_simulate_press(1);
+			alert_press = 0;
+		}
+	}
+	return rv;
+}
+
 void cypd_port_int(int controller, int port)
 {
 	int i, rv, response_len;
@@ -1572,6 +1626,11 @@ void cypd_port_int(int controller, int port)
 	case CCG_RESPONSE_PORT_DISCONNECT:
 		record_ucsi_connector_change_event(controller, port);
 		cypd_release_port(controller, port);
+		/* release the button if device disconnect and not sent release ado */
+		if (alert_press) {
+			power_button_simulate_press(1);
+			alert_press = 0;
+		}
 		CPRINTS("PORT_DISCONNECT");
 		__fallthrough;
 	case CCG_RESPONSE_HARD_RESET_RX:
@@ -1661,6 +1720,10 @@ void cypd_port_int(int controller, int port)
 		break;
 	case CCG_RESPONSE_OVER_CURRENT:
 		CPRINTS("CCG_RESPONSE_OVER_CURRENT %d", port_idx);
+		break;
+	case CCG_RESPONSE_ALERT_RX:
+		cypd_handle_alert_msg(controller, port, response_len);
+		CPRINTS("CCG_RESPONSE_ALERT_RX");
 		break;
 	case CCG_RESPONSE_VDM_RX:
 		i2c_read_offset16_block(i2c_port, addr_flags,
