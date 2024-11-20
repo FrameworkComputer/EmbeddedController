@@ -218,6 +218,17 @@ config PLATFORM_EC_CHARGER_BQ25720
 	  wide range of input power sources are supported such as high
 	  voltage USB-C power delivery.
 
+config PLATFORM_EC_CHARGER_BQ25770
+	bool "Use the BQ25770 charger"
+	depends on PLATFORM_EC_I2C
+	select PLATFORM_EC_CHARGER_NARROW_VDC
+	help
+	  Enables the driver for the TI BQ25770 battery charger
+	  controller. This is a synchronous narrow voltage DC buck-boost
+	  battery charger for two to five battery cell applications. A
+	  wide range of input power sources are supported such as high
+	  voltage USB-C power delivery.
+
 config PLATFORM_EC_CHARGER_RAA489000
 	bool "Use the RAA489000 charger"
 	depends on PLATFORM_EC_I2C
@@ -318,7 +329,9 @@ endif # PLATFORM_EC_CHARGER_DISCHARGE_ON_AC
 config PLATFORM_EC_CHARGER_BQ25710_PSYS_SENSING
 	bool "Charger monitors PSYS"
 	default n
-	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25710 || \
+	  PLATFORM_EC_CHARGER_BQ25720 || \
+	  PLATFORM_EC_CHARGER_BQ25770
 	help
 	  This enables the PSYS sensing circuit on the BQ25710 and
 	  BQ25720 chargers. This is used for system power monitoring on
@@ -338,7 +351,9 @@ config PLATFORM_EC_CHARGER_BQ25710_CMP_REF_1P2
 config PLATFORM_EC_CHARGER_BQ25710_CMP_POL_EXTERNAL
 	bool "independent comparator output polarity"
 	default n
-	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25710 || \
+	  PLATFORM_EC_CHARGER_BQ25720 || \
+	  PLATFORM_EC_CHARGER_BQ25770
 	help
 	  Set the CMP_POL register. When CMPIN is above internal threshold,
 	  CMPOUT is LOW setting value is 0. When CMPIN is below internal threshold,
@@ -347,7 +362,9 @@ config PLATFORM_EC_CHARGER_BQ25710_CMP_POL_EXTERNAL
 config PLATFORM_EC_CHARGER_BQ25710_PKPWR_TOVLD_DEG_CUSTOM
 	bool "PKPWR_TOVLD_DEG override"
 	default n
-	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25710 || \
+	  PLATFORM_EC_CHARGER_BQ25720 || \
+	  PLATFORM_EC_CHARGER_BQ25770
 	help
 	  Enable customizing the charger's PKPWR_TOVLD_DEG period.
 
@@ -355,18 +372,22 @@ config PLATFORM_EC_CHARGER_BQ25710_PKPWR_TOVLD_DEG
 	int "PKPWR_TOVLD_DEG period"
 	range 0 3
 	default 0
-	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25710 || \
+	  PLATFORM_EC_CHARGER_BQ25720 || \
+	  PLATFORM_EC_CHARGER_BQ25770
 	help
 	  Sets the input overload time when in peak power mode
 	  (PKPWR_TOVLD_DEG). This limits how long the charger can draw
 	  ILIM2 from the adapter. This is a 2 bit field. On the bq25710
-	  1 ms to 20 ms can be encoded. On the bq25720 1 ms to 10 ms can
+	  1 ms to 20 ms can be encoded. On the bq25720,bq25770 1 ms to 10 ms can
 	  be encoded.
 
 config PLATFORM_EC_CHARGER_BQ25710_EN_ACOC
 	bool "Enable AC over-current protection"
 	default n
-	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25710 || \
+	  PLATFORM_EC_CHARGER_BQ25720 || \
+	  PLATFORM_EC_CHARGER_BQ25770
 	help
 	  This enables the charger's AC over-current protection. The
 	  converter turns off when the OC threshold is reached. The
@@ -375,26 +396,34 @@ config PLATFORM_EC_CHARGER_BQ25710_EN_ACOC
 config PLATFORM_EC_CHARGER_BQ25710_ACOC_VTH_1P33
 	bool "Set ACOC threshold to 133% of ILIM2"
 	default n
-	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25710 || \
+	  PLATFORM_EC_CHARGER_BQ25720 || \
+	  PLATFORM_EC_CHARGER_BQ25770
 	help
-          This selects which ACOC protection threshold is used with
+	  This selects which ACOC protection threshold is used with
 	  EN_ACOC. Enabling this option selects 133% of
 	  ILIM2. Otherwise, the default is 200% of ILIM2.
 
 config PLATFORM_EC_CHARGER_BQ25710_BATOC_VTH_MINIMUM
 	bool "Select the minimum BATOC threshold"
 	default n
-	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25710 || \
+	  PLATFORM_EC_CHARGER_BQ25720 || \
+	  PLATFORM_EC_CHARGER_BQ25770
 	help
           This selects the minimum BATOC protection threshold to be used
           with EN_BATOC. The minimum threshold is 150% of PROCHOT IDCHG
           on the bq25710 and 133% of PROCHOT IDCHG_TH2 on the
           bq25720. The default threshold is 200% on both chips.
+          The minimum threshold is 200% of PROCHOT IDCHG on the bq25770.
+          The default threshold is 300% on this chip.
 
 config PLATFORM_EC_CHARGER_BQ25710_PP_COMP
 	bool "Enable independent comparator PROCHOT"
 	default n
-	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25710 || \
+	  PLATFORM_EC_CHARGER_BQ25720 || \
+	  PLATFORM_EC_CHARGER_BQ25770
 	help
 	  Sets the PP_COMP in Prochot Option 1 register. When in low power
 	  mode(Battery only), this bit will lose controllability to independent
@@ -404,7 +433,9 @@ config PLATFORM_EC_CHARGER_BQ25710_PP_COMP
 config PLATFORM_EC_CHARGER_BQ25710_PP_INOM
 	bool "Enable PROCHOT on adapter current exceeding INOM"
 	default n
-	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25710 || \
+	  PLATFORM_EC_CHARGER_BQ25720 || \
+	  PLATFORM_EC_CHARGER_BQ25770
 	help
 	  Sets the PP_INOM bit in Prochot Option 1 register. This causes
 	  PROCHOT to be pulsed when the nominal adapter current
@@ -414,7 +445,9 @@ config PLATFORM_EC_CHARGER_BQ25710_PP_INOM
 config PLATFORM_EC_CHARGER_BQ25710_PP_BATPRES
 	bool "Enable PROCHOT on battery removal"
 	default n
-	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25710 || \
+	  PLATFORM_EC_CHARGER_BQ25720 || \
+	  PLATFORM_EC_CHARGER_BQ25770
 	help
 	  Sets the PP_BATPRES bit in Prochot Option 1 register. This
 	  causes PROCHOT to be pulsed when the battery is removed.
@@ -422,7 +455,9 @@ config PLATFORM_EC_CHARGER_BQ25710_PP_BATPRES
 config PLATFORM_EC_CHARGER_BQ25710_PP_ACOK
 	bool "Enable PROCHOT on AC removal"
 	default n
-	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25710 || \
+	  PLATFORM_EC_CHARGER_BQ25720 || \
+	  PLATFORM_EC_CHARGER_BQ25770
 	help
 	  Sets the PP_ACOK in Prochot Option 1 register. This causes
 	  PROCHOT to be pulsed when the AC adapter is removed.
@@ -430,7 +465,7 @@ config PLATFORM_EC_CHARGER_BQ25710_PP_ACOK
 config PLATFORM_EC_CHARGER_BQ25720_PP_IDCHG2
 	bool "Enable PROCHOT on battery current exceeding IDCHG_TH2"
 	default n
-	depends on PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25720 || PLATFORM_EC_CHARGER_BQ25770
 	help
 	  Sets the PP_IDCHG2 bit in Charge Option 4 register. This
 	  causes PROCHOT to be pulsed when the battery discharge current
@@ -439,7 +474,9 @@ config PLATFORM_EC_CHARGER_BQ25720_PP_IDCHG2
 config PLATFORM_EC_CHARGER_BQ25710_SENSE_RESISTOR
 	int "Value of the charge sense-resistor, in mOhms"
 	default 10
-	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25710 || \
+	  PLATFORM_EC_CHARGER_BQ25720 || \
+	  PLATFORM_EC_CHARGER_BQ25770
 	help
 	  The charge sense-resistor is used to detect the charge current to the
 	  battery. Its value must be known for the calculation to be correct.
@@ -448,7 +485,9 @@ config PLATFORM_EC_CHARGER_BQ25710_SENSE_RESISTOR
 config PLATFORM_EC_CHARGER_BQ25710_SENSE_RESISTOR_AC
 	int "Value of the input sense-resistor, in mOhms"
 	default 10
-	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25710 || \
+	  PLATFORM_EC_CHARGER_BQ25720 || \
+	  PLATFORM_EC_CHARGER_BQ25770
 	help
 	  The input sense-resistor is used to detect the input current from the
 	  external AC power supply. Its value must be known for the calculation
@@ -456,7 +495,9 @@ config PLATFORM_EC_CHARGER_BQ25710_SENSE_RESISTOR_AC
 
 config PLATFORM_EC_CHARGER_BQ257X0_ILIM2_VTH_CUSTOM
 	bool "ILIM2_VTH override"
-	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25710 || \
+	  PLATFORM_EC_CHARGER_BQ25720 || \
+	  PLATFORM_EC_CHARGER_BQ25770
 	help
 	  Enable customizing the charhger's ILIM2_VTH threshold
 
@@ -475,7 +516,7 @@ config PLATFORM_EC_CHARGER_BQ257X0_ILIM2_VTH
 
 config PLATFORM_EC_CHARGER_BQ25720_VSYS_TH2_CUSTOM
 	bool "VSYS_TH2 override"
-	depends on PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25720 || PLATFORM_EC_CHARGER_BQ25770
 	help
 	  Enable customizing the charger's VSYS_TH2 threshold.
 
@@ -497,7 +538,7 @@ config PLATFORM_EC_CHARGER_BQ25720_VSYS_TH2_DV
 
 config PLATFORM_EC_CHARGER_BQ25720_VSYS_UVP_CUSTOM
        	bool "VSYS_UVP override"
-	depends on PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25720 || PLATFORM_EC_CHARGER_BQ25770
 	help
 	  Enable customizing the charger's VSYS_UVP threshold.
 
@@ -514,7 +555,7 @@ config PLATFORM_EC_CHARGER_BQ25720_VSYS_UVP
 
 config PLATFORM_EC_CHARGER_BQ25720_IDCHG_DEG2_CUSTOM
 	bool "IDCHG_TH2 deglitch time override"
-	depends on PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25720 || PLATFORM_EC_CHARGER_BQ25770
 	help
 	  Enable customizing the charger's 2nd battery discharge current
 	  limit (IDCHG_TH2) deglitch time (IDCHG_DEG2).
@@ -528,11 +569,12 @@ config PLATFORM_EC_CHARGER_BQ25720_IDCHG_DEG2
 	  Sets the 2nd battery discharge current limit (IDCHG_TH2)
 	  deglitch time (IDCHG_DEG2). This is a 2 bit field with default
 	  value 1 (1.6 ms). The encoded value ranges from 100 us to 12
-	  ms.
+	  ms on the bq25720. The encoded value ranges from 81 us to 10.4
+	  ms on the bq25770.
 
 config PLATFORM_EC_CHARGER_BQ25720_IDCHG_TH2_CUSTOM
 	bool "IDCHG_TH2 override"
-	depends on PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25720 || PLATFORM_EC_CHARGER_BQ25770
 	help
 	  Enable customizing the charger's 2nd battery discharge current
 	  limit (IDCHG_TH2).
@@ -550,7 +592,9 @@ config PLATFORM_EC_CHARGER_BQ25720_IDCHG_TH2
 
 config PLATFORM_EC_CHARGER_BQ25710_VSYS_MIN_VOLTAGE_CUSTOM
 	bool "Enable minimum system voltage override"
-	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	depends on PLATFORM_EC_CHARGER_BQ25710 || \
+	  PLATFORM_EC_CHARGER_BQ25720 || \
+	  PLATFORM_EC_CHARGER_BQ25770
 	help
 	  Enable customizing the charger's 2nd battery discharge current
 	  limit (IDCHG_TH2).
@@ -564,7 +608,9 @@ config PLATFORM_EC_CHARGER_BQ25710_VSYS_MIN_VOLTAGE_MV
 	  uses 6 bits of resolution and can be configured from 1.024 V
 	  to 16.128 V in 256 mV increments. The bq25720 uses 8 bits of
 	  resolution and can be set from 1.0 V to 19.2 V in 100 mV
-	  increments. The default value depends on configured number of
+	  increments. The bq25770 uses 13 bits of resolution and can
+	  be configured from 5 V to 21 V in 5 mV increments.
+	  The default value depends on configured number of
 	  battery cells connected in series using the CELL_BATPRESZ
 	  strap.
 

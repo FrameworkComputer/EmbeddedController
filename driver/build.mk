@@ -72,6 +72,7 @@ driver-$(CONFIG_CHARGER_BQ24770)+=charger/bq24773.o
 driver-$(CONFIG_CHARGER_BQ24773)+=charger/bq24773.o
 driver-$(CONFIG_CHARGER_BQ25710)+=charger/bq25710.o
 driver-$(CONFIG_CHARGER_BQ25720)+=charger/bq25710.o
+driver-$(CONFIG_CHARGER_BQ25770)+=charger/bq25710.o
 driver-$(CONFIG_CHARGER_ISL9237)+=charger/isl923x.o
 driver-$(CONFIG_CHARGER_ISL9238)+=charger/isl923x.o
 driver-$(CONFIG_CHARGER_ISL9238C)+=charger/isl923x.o
