@@ -33,7 +33,7 @@
 			temp_host_release_high = <91>;
 			temp_host_release_halt = <115>;
 			temp_fan_off = <50>;
-			temp_fan_max = <72>;
+			temp_fan_max = <69>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&cpu_f75303>;
 		};
