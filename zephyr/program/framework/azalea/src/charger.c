@@ -22,6 +22,9 @@
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
+#define DC_PROCHOT_7P168A 0x1C00 /* 7.168A for 55W */
+#define DC_PROCHOT_7P680A 0x1E00 /* 7.680A for 61W */
+
 static bool charger_psys_enable_flag;
 
 #ifdef CONFIG_PLATFORM_EC_CHARGER_INIT_CUSTOM
@@ -113,13 +116,13 @@ static void charger_chips_init(void)
 	/*
 	 * Set control2 register to
 	 * [15:13]: Trickle Charging Current (011 128mA default)
-	 * [10:9]: Prochot# Debounce time (01 100μs)
+	 * [10:9]: Prochot# Debounce time (11 1ms)
 	 * [3]: General Purpose Comparator (1 Disable)
 	 */
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL2,
 		ISL9241_CONTROL2_TRICKLE_CHG_CURR(128) |
-		ISL9241_CONTROL2_PROCHOT_DEBOUNCE_100 |
+		ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000 |
 		ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR))
 		goto init_fail;
 
@@ -164,10 +167,10 @@ void charger_update(void)
 
 		if (bi->voltage_max == 17600) {
 			rv |= i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_DC_PROCHOT, 0x1C00);
+			ISL9241_REG_DC_PROCHOT, DC_PROCHOT_7P168A);
 		} else {
 			rv |= i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_DC_PROCHOT, 0x1E00);
+			ISL9241_REG_DC_PROCHOT, DC_PROCHOT_7P680A);
 		}
 		if (rv)
 			CPRINTS("Update DC prochot fail");
