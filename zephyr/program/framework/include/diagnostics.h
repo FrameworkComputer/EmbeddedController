@@ -6,7 +6,11 @@
 #ifndef __CROS_EC_DIAGNOSTICS_H
 #define __CROS_EC_DIAGNOSTICS_H
 
+#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
 #include "diagnostics_laptop.h"
+#else
+#include "diagnostics_minipc.h"
+#endif
 
 /*
  * If there is an error with this diagnostic, then set error=true
