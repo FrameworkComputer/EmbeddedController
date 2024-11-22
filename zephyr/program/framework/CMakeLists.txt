@@ -12,7 +12,6 @@ zephyr_library_sources("src/cypress_pd_common.c")
 zephyr_library_sources("src/flash_storage.c")
 zephyr_library_sources("src/factory.c")
 zephyr_library_sources("src/uefi_app_mode.c")
-zephyr_library_sources("src/diagnostics_laptop.c")
 zephyr_library_sources("src/ucsi.c")
 zephyr_library_sources("src/temperature_filter.c")
 zephyr_library_sources("src/power_button_x86.c")
@@ -42,6 +41,11 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
 	"src/battery_extender.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_CHASSIS_OPEN_SWITCH
 	"src/chassis.c")
+
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
+	"src/diagnostics_minipc.c")
+zephyr_library_sources_ifndef(CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
+	"src/diagnostics_laptop.c")
 
 if(DEFINED CONFIG_BOARD_LOTUS)
 	project(lotus)
