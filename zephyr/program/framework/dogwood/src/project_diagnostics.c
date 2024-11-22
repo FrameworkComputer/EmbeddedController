@@ -3,14 +3,56 @@
  * found in the LICENSE file.
  */
 
-#include "console.h"
+#include "board_host_command.h"
 #include "diagnostics.h"
+#include "dptf.h"
+#include "driver/temp_sensor/f75303.h"
+#include "fan.h"
+#include "hooks.h"
+#include "i2c.h"
+#include "port80.h"
+#include "temp_sensor/temp_sensor.h"
+#include "timer.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
+#define F75303_I2C_ADDR_FLAGS_4D 0x4D
+#define F75303_PRODUCT_ID_REGISTER 0xFD
+#define F75303_ID 0x21
+
+void start_fan_deferred(void)
+{
+	/* force turn on the fan for diagnostic */
+	dptf_set_fan_duty_target(20);
+}
+DECLARE_DEFERRED(start_fan_deferred);
+
+void check_device_deferred(void)
+{
+	int product_id;
+
+	i2c_read8(I2C_PORT_THERMAL_AP, F75303_I2C_ADDR_FLAGS_4D, F75303_PRODUCT_ID_REGISTER,
+		&product_id);
+
+	if (product_id != F75303_ID)
+		set_diagnostic(DIAGNOSTICS_THERMAL_SENSOR, true);
+
+	if (!(fan_get_rpm_actual(0) > 100))
+		set_diagnostic(DIAGNOSTICS_NOFAN, true);
+
+	/* Exit the duty mode and let thermal to control the fan */
+	dptf_set_fan_duty_target(-1);
+
+	if (amd_ddr_initialized_check())
+		set_bios_diagnostic(CODE_DDR_FAIL);
+
+	set_device_complete(true);
+}
+DECLARE_DEFERRED(check_device_deferred);
+
 void project_diagnostics(void)
 {
-	/* TODO: implement the diagnostics feature */
-	CPRINTS("Project diagnostics does not implement");
+	hook_call_deferred(&start_fan_deferred_data, 500 * MSEC);
+	hook_call_deferred(&check_device_deferred_data, 2000 * MSEC);
 }

@@ -5,6 +5,7 @@
 
 / {
 	aliases {
+		gpio-diagnostic-led4 = &gpio_led4_drv;
 	};
 
 	named-gpios {

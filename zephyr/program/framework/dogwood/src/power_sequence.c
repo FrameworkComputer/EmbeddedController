@@ -353,15 +353,26 @@ static void power_check_12vb_apu(void)
 	 * EC read the ina236 bus voltage register to monitor the
 	 * 12VB_APU is present or not to control the debug led2.
 	 */
-	if (voltage < 5000 || psu_is_off)
+	if (voltage < 5000 || psu_is_off) {
+		set_diagnostic(DIAGNOSTICS_12V_OK, 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), 0);
-	else
+	} else
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), 1);
+}
+
+static void diagnostic_power_glitch_detect(void)
+{
+	if ((hw_diagnostics & (1 << DIAGNOSTICS_PSU_POK)) == 0 &&
+		power_has_signals(IN_VALW_PGOOD) == 0)
+		set_diagnostic(DIAGNOSTICS_POWER_GLITCH, 1);
 }
 
 enum power_state power_handle_state(enum power_state state)
 {
 	int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
+
+	if (run_diagnostics == 1)
+		diagnostic_power_glitch_detect();
 
 	switch (state) {
 	case POWER_G3:
@@ -377,6 +388,8 @@ enum power_state power_handle_state(enum power_state state)
 			chipset_force_g3();
 			return POWER_G3;
 		}
+		/* If pok_l is on make psu pok pass */
+		set_diagnostic(DIAGNOSTICS_PSU_POK, 0);
 
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75_1p8valw_pwren), 1);
 		k_msleep(10);
@@ -425,6 +438,7 @@ enum power_state power_handle_state(enum power_state state)
 						s5_exit_tries = 0;
 						stress_test_enable = 0;
 						clear_rtcwake();
+						set_diagnostic(DIAGNOSTICS_SLP_S5, 1);
 						set_diagnostic(DIAGNOSTICS_SLP_S4, 1);
 						/* SLP_S5 asserted, power down to G3S5 state */
 						return POWER_S5G3;
@@ -506,7 +520,6 @@ enum power_state power_handle_state(enum power_state state)
 		/* wait VS power good */
 		if (power_wait_signals(IN_VS_POWER)) {
 			/* something wrong, turn off power and force to g3 */
-			set_diagnostic(DIAGNOSTICS_HW_PGOOD_VR, 1);
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
 			force_shutdown_flags = 1;
 			return POWER_S3;
