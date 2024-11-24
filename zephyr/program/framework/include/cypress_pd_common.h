@@ -350,7 +350,7 @@ enum ccg_usermux_configuration {
 
 /************************************************
  *	RESPONSE DEFINITION
- * See 001-97863_0N_V.pdf from cypress for the HPI
+ * See HPISpecRevT.pdf from cypress for the HPI
  * Definition. Specifically Pages around 22
  * Chapter 4.1.1 HPI Interfaces response codes
  ************************************************/
@@ -377,6 +377,10 @@ enum ccg_response {
 	CCG_RESPONSE_DISCOVER_MODE_RESPONSE = 0x1A,
 	CCG_RESPONSE_CABLE_COMM_NOT_ALLOWED = 0x1B,
 	CCG_RESPONSE_EXT_SNK_CAP = 0x1C,
+	CCG_RESPONSE_I2C_REG = 0x1D,
+	CCG_RESPONSE_GENERIC_DATA_READ = 0x1E,
+	CCG_RESPONSE_EPR_MIN_MAX_CURRENT = 0x1F,
+	/* 0x20 to 0x2F reserved for user customized commands */
 #ifdef CONFIG_PD_CHIP_CCG6
 	CCG6_RESPONSE_AC_AT_P0 = 0x33,
 	CCG6_RESPONSE_AC_AT_P1 = 0x34,
@@ -446,8 +450,15 @@ enum ccg_response {
 	CCG_RESPONSE_REVERSE_CURRENT_ERROR = 0xBD,
 	CCG_RESPONSE_SINK_STANDBY = 0xBE,
 	CCG_RESPONSE_ACK_TIMEOUT_EVENT = 0xC0,
+	CCG_RESPONSE_SRC_RP_REMOVED = 0xC1,
+	CCG_RESPONSE_PR_SWAP_ACCEPTED = 0xC2,
+	CCG_RESPONSE_SNK_POWER_REDUCED = 0xC3,
 	CCG_RESPONSE_BC12_EVENT = 0xC4,
-	CCG_RESPONSE_EPR_EVENT = 0xD9
+	CCG_RESPONSE_COLLECTED_CHUNKED_MSG = 0xD4,
+	CCG_RESPONSE_SRC_INFO_RECEIVED = 0xD7,
+	CCG_RESPONSE_REVISION_RECEIVED = 0xD8,
+	CCG_RESPONSE_EPR_EVENT = 0xD9,
+	CCG_RESPONSE_PORT_DISABLED_EVENT = 0xDA
 };
 
 enum ccg_pd_state {
