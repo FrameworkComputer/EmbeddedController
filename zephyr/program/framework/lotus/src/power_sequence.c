@@ -313,6 +313,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 		report_ap_reset(reason);
 		force_shoutdown_flags = 1;
 		task_wake(TASK_ID_CHIPSET);
+		clear_rtcwake();
 	}
 }
 
