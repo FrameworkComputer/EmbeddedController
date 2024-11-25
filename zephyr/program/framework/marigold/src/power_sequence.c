@@ -226,6 +226,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 		report_ap_reset(reason);
 		force_g3_flags = 1;
 		chipset_force_g3();
+		clear_rtcwake();
 	}
 }
 
