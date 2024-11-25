@@ -96,68 +96,60 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 		power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 15000;
 		power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
 		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = active_mpower * 95 / 100;
-		/* CPB enable */
-		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT) &= ~CPB_DISABLE;
 		CPRINTS("DRAIN BATTERY");
 		return;
 	}
 
 	if ((!with_dc) && (active_mpower >= 100000)) {
 		/* AC (Without Battery) (ADP >= 100W) */
+		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 80000;
 		switch (mode) {
 		case EC_AC_BEST_PERFORMANCE:
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 35000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 53000;
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 80000;
 			break;
 		case EC_AC_BALANCED:
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 25000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 33000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 51000;
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 80000;
 			break;
 		case EC_AC_BEST_EFFICIENCY:
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 15000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 25000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 80000;
 			break;
 		default:
 			/* no mode, run power table */
 			break;
 		}
-		/* CPB enable */
-		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT) &= ~CPB_DISABLE;
 	} else if ((!with_dc) && (active_mpower >= 60000)) {
 		/* AC (Without Battery) (60W <= ADP < 100W) */
+		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = active_mpower * 95 / 100;
 		switch (mode) {
 		case EC_AC_BEST_PERFORMANCE:
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 33000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 35000;
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = active_mpower * 95 / 100;
 			break;
 		case EC_AC_BALANCED:
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 25000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 33000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 35000;
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = active_mpower * 95 / 100;
 			break;
 		case EC_AC_BEST_EFFICIENCY:
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 15000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 25000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = active_mpower * 95 / 100;
 			break;
 		default:
 			/* no mode, run power table */
 			break;
 		}
-		/* CPB disable */
-		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT) &= ~CPB_DISABLE;
 	} else if ((battery_percent < 30) && (active_mpower >= 55000)) {
 		/* AC (With Battery) (Battery Capacity < 30%, ADP >= 55W) */
+		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+				(active_mpower * 95 / 100) - 15000 + battery_mwatt_type;
 		switch (mode) {
 		case EC_AC_BEST_PERFORMANCE:
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
@@ -165,8 +157,6 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 				MIN(35000, (active_mpower * 85 / 100) - 20000);
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] =
 				MIN(53000, (active_mpower * 85 / 100) - 15000);
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-				(active_mpower * 95 / 100) - 15000 + battery_mwatt_type;
 			break;
 		case EC_AC_BALANCED:
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 25000;
@@ -174,87 +164,73 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 				MIN(33000, (active_mpower * 85 / 100) - 20000);
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] =
 				MIN(51000, (active_mpower * 85 / 100) - 15000);
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-				(active_mpower * 95 / 100) - 15000 + battery_mwatt_type;
 			break;
 		case EC_AC_BEST_EFFICIENCY:
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 15000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 25000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-				(active_mpower * 95 / 100) - 15000 + battery_mwatt_type;
 			break;
 		default:
 			/* no mode, run power table */
 			break;
 		}
-		/* CPB enable */
-		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT) &= ~CPB_DISABLE;
 	} else if ((battery_percent >= 30) && (active_mpower >= 45000)) {
 		/* AC (With Battery) (Battery Capacity >= 30%, ADP >= 45W) */
+		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+				(active_mpower * 95 / 100) - 15000 + battery_mwatt_type;
 		switch (mode) {
 		case EC_AC_BEST_PERFORMANCE:
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 35000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 53000;
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-				(active_mpower * 95 / 100) - 15000 + battery_mwatt_type;
 			break;
 		case EC_AC_BALANCED:
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 25000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 33000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 51000;
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-				(active_mpower * 95 / 100) - 15000 + battery_mwatt_type;
 			break;
 		case EC_AC_BEST_EFFICIENCY:
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 15000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 25000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-				(active_mpower * 95 / 100) - 15000 + battery_mwatt_type;
 			break;
 		default:
 			/* no mode, run power table */
 			break;
 		}
-		/* CPB enable */
-		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT) &= ~CPB_DISABLE;
 	} else {
+		/* DC */
+		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+			(mode == EC_DC_BATTERY_SAVER) ? battery_mwatt_type : 80000;
 		switch (mode) {
 		case EC_DC_BEST_PERFORMANCE:
-		/* otherwise, take as DC only case */
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 35000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = battery_mwatt_type - 15000;
-			/* DC mode p3t should follow os_power_slider */
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 80000;
 			break;
 		case EC_DC_BALANCED:
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 25000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 33000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = battery_mwatt_type - 15000;
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 80000;
 			break;
 		case EC_DC_BEST_EFFICIENCY:
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 15000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 25000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 80000;
 			break;
 		case EC_DC_BATTERY_SAVER:
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 15000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 15000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = battery_mwatt_type;
 			break;
 		default:
 			/* no mode, run power table */
 			break;
 		}
-		/* CPB enable */
-		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT) &= ~CPB_DISABLE;
 	}
+
+	/* CPB enable */
+	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT) &= ~CPB_DISABLE;
 }
 
 static void update_dc_safety_power_limit(void)
@@ -342,7 +318,6 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	static uint32_t old_slow_ppt_limit;
 	static uint32_t old_p3t_limit;
 	static int old_slider_mode;
-	static int old_power_mode;
 	static int set_pl_limit;
 	int mode = *host_get_memmap(EC_MEMMAP_POWER_SLIDE);
 	int active_mpower = charge_manager_get_power_limit_uw() / 1000;
@@ -365,11 +340,8 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 			update_os_power_slider(mode, active_mpower);
 	}
 
-	if (old_power_mode != mode) {
-		old_power_mode = mode;
-		if (func_ctl & 0x2)
-			update_adapter_power_limit(battery_percent, active_mpower, with_dc, mode);
-	}
+	if (func_ctl & 0x2)
+		update_adapter_power_limit(battery_percent, active_mpower, with_dc, mode);
 
 	if (active_mpower == 0) {
 		if (func_ctl & 0x4)
