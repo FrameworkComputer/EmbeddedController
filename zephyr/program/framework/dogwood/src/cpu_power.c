@@ -40,7 +40,7 @@ static int update_soc_vrm_current_limit(void)
 	/* Follow the AMD specification to set the maximum value (unit:mA) */
 
 	RETURN_ERROR(update_vrm_vdd_current_limit(160000));
-	RETURN_ERROR(update_vrm_vdd_max_current_limit(224000));
+	RETURN_ERROR(update_vrm_vdd_max_current_limit(270000));
 	RETURN_ERROR(update_vrm_vdd_ccd_current_limit(80000));
 	RETURN_ERROR(update_vrm_vdd_ccd_max_current_limit(125000));
 	RETURN_ERROR(update_vrm_soc_current_limit(40000));
