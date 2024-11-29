@@ -31,6 +31,7 @@
 
 #define IN_VR_PGOOD POWER_SIGNAL_MASK(X86_VR_PG)
 #define IN_VS_POWER POWER_SIGNAL_MASK(X86_VS_POWER)
+#define IN_VALW_PGOOD POWER_SIGNAL_MASK(X86_3VALW_PG)
 
 static bool power_s5_up;		/* Chipset is sequencing up or down */
 static int force_shutdown_flags;
@@ -371,7 +372,7 @@ enum power_state power_handle_state(enum power_state state)
 		k_msleep(10);
 		power_enable_psu(1);
 
-		if (power_wait_signals(X86_3VALW_PG)) {
+		if (power_wait_signals(IN_VALW_PGOOD)) {
 			/* something wrong, turn off power and force to g3 */
 			chipset_force_g3();
 			return POWER_G3;
