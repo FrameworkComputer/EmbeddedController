@@ -291,6 +291,7 @@ static enum ec_status read_pd_versoin(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_READ_PD_VERSION, read_pd_versoin, EC_VER_MASK(0));
 
+#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
 static enum ec_status standalone_mode(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_standalone_mode *p = args->params;
@@ -300,6 +301,7 @@ static enum ec_status standalone_mode(struct host_cmd_handler_args *args)
 
 }
 DECLARE_HOST_COMMAND(EC_CMD_STANDALONE_MODE, standalone_mode, EC_VER_MASK(0));
+#endif
 
 static enum ec_status  host_command_get_simple_version(struct host_cmd_handler_args *args)
 {
