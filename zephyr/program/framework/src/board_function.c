@@ -63,7 +63,9 @@ void bios_function_detect(void)
 {
 	system_set_bbram(SYSTEM_BBRAM_IDX_BIOS_FUNCTION, ac_boot_status());
 
+#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
 	flash_storage_update(FLASH_FLAGS_STANDALONE, get_standalone_mode() ? 1 : 0);
+#endif
 #ifdef CONFIG_BOARD_LOTUS
 	flash_storage_update(FLASH_FLAGS_INPUT_MODULE_POWER, get_detect_mode());
 #endif
@@ -119,8 +121,10 @@ static void bios_function_init(void)
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_BIOS_SETUP_FUNC) =
 			bios_function_status(TYPE_BBRAM, SYSTEM_BBRAM_IDX_BIOS_FUNCTION, 0);
 
+#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
 	if (flash_storage_get(FLASH_FLAGS_STANDALONE))
 		set_standalone_mode(1);
+#endif
 #ifdef CONFIG_BOARD_LOTUS
 	set_detect_mode(flash_storage_get(FLASH_FLAGS_INPUT_MODULE_POWER));
 #endif
