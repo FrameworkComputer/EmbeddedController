@@ -88,7 +88,7 @@
 			gpios = <&gpio3 6 GPIO_INPUT>;
 		};
 		cse_early_rec_sw: c-mecc-cse-early-sw {
-			gpios = <&gpiof 5 GPIO_INPUT>;
+			gpios = <&gpiof 5 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
 		gpiof4 {
 			gpios = <&gpiof 4 GPIO_INPUT>;
