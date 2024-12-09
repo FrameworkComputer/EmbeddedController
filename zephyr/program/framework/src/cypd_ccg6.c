@@ -4,6 +4,7 @@
 
 #include "battery.h"
 #include "board_function.h"
+#include "board_host_command.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "console.h"
@@ -13,6 +14,7 @@
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "i2c.h"
 #include "power.h"
 #include "task.h"
@@ -606,3 +608,39 @@ void cypd_customize_battery_status(void)
 DECLARE_HOOK(HOOK_AC_CHANGE, cypd_customize_battery_status, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, cypd_customize_battery_status, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
+
+static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_bb_retimer_control_mode *p = args->params;
+	struct ec_response_bb_retimer_control_mode *r = args->response;
+
+	r->status = 0;
+	args->response_size = sizeof(*r);
+
+	if (p->controller >= PD_CHIP_COUNT)
+		return EC_RES_INVALID_PARAM;
+
+	switch (p->modes) {
+	case BB_ENTRY_FW_UPDATE_MODE:
+		entry_tbt_mode(p->controller);
+		break;
+	case BB_EXIT_FW_UPDATE_MODE:
+		exit_tbt_mode(p->controller);
+		break;
+	case BB_ENABLE_COMPLIANCE_MODE:
+		enable_compliance_mode(p->controller);
+		break;
+	case BB_DISABLE_COMPLIANCE_MODE:
+		disable_compliance_mode(p->controller);
+		break;
+	case BB_CHECK_STATUS:
+		r->status = check_tbt_mode(p->controller);
+		args->response_size = sizeof(*r);
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_BB_RETIMER_CONTROL, bb_retimer_control, EC_VER_MASK(0));
