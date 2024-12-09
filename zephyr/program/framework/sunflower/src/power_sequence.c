@@ -266,6 +266,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 		CPRINTS("%s(%d)", __func__, reason);
 		report_ap_reset(reason);
 		force_shoutdown_flags = 1;
+		clear_rtcwake();
 		task_wake(TASK_ID_CHIPSET);
 	}
 }
