@@ -6468,6 +6468,20 @@ int cmd_intrusion(int argc, char *argv[])
 	return rv;
 }
 
+int cmd_apthrottle(int argc, char *argv[])
+{
+	struct ec_response_get_ap_throttle_status r;
+
+	int rv = ec_command(EC_CMD_GET_AP_THROTTLE_STATUS, 0, NULL, 0, &r, sizeof(r));
+
+	if (rv > 0) {
+		printf("Soft AP Throttle: %d\n", r.soft_ap_throttle);
+		printf("Hard AP Throttle: %d\n", r.hard_ap_throttle);
+	}
+
+	return rv;
+}
+
 static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
 {
 	switch (r->role) {
@@ -12739,6 +12753,7 @@ const struct command commands[] = {
 	{ "simpleversion", cmd_simpleversion, "\n\tPrints a simple version string of the EC firmware." },
 	{ "privswitches", cmd_privswitches, "\n\tPrints the status of the camera/microphone privacy switches." },
 	{ "intrusion", cmd_intrusion, "\n\tPrints the status and history of the intrusion switch." },
+	{ "apthrottle", cmd_apthrottle, "\n\tPrints the AP throttle status." },
 	{ NULL, NULL }
 };
 
