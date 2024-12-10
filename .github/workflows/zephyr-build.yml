@@ -69,6 +69,12 @@ jobs:
           git reset --hard ${{ matrix.platform.cmsis_ref }}
           popd
 
+      - name: Build ${{ matrix.platform.name }} ectool
+        if: ${{ matrix.platform.zephyr_ref == 'framework-main' }}
+        run: |
+          cros_sdk bash -c 'pushd ../platform/ec; BOARD=host make clean'
+          cros_sdk bash -c 'pushd ../platform/ec; BOARD=host make utils'
+
       # Note:
       # By default cros_sdk changes into src/scripts folder.
       # But that will make zmake pick up the scripts git commit SHA
