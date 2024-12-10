@@ -52,6 +52,7 @@ SENSOR_I2C_ADDRESSES = {
     "LSM6DSO_ADDR0_FLAGS": "0x6a",
     "LSM6DSO_ADDR1_FLAGS": "0x6b",
     "TCS3400_I2C_ADDR_FLAGS": "0x39",
+    "CM36781_I2C_ADDR_FLAGS": "0x51",
 }
 
 # A list of all ALS listed under the motionsense compatible.

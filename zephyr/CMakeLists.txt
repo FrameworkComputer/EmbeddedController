@@ -265,6 +265,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ALS_VEML3328
                                                 "${PLATFORM_EC}/driver/als_veml3328.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ALS_CM32183
                                                 "${PLATFORM_EC}/driver/als_cm32183.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ALS_CM36781
+                                                "${PLATFORM_EC}/driver/als_cm36781.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACPI
                                                 "${PLATFORM_EC}/common/acpi.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_SB_RMI

@@ -1,0 +1,32 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: CM36781 CLEAR driver data
+
+compatible: "cros-ec,drvdata-cm36781"
+
+include: drvdata-base.yaml
+
+#
+# examples:
+#
+# cm36781_data: cm36781-drv-data {
+#        compatible = "cros-ec,drvdata-cm36781";
+#        status = "okay";
+#
+#        als-drv-data {
+#                compatible = "cros-ec,accelgyro-als-drv-data";
+#                als-cal {
+#                        scale = <1>;
+#                        uscale = <0>;
+#                        offset = <0>;
+#                        als-channel-scale {
+#                                compatible = "cros-ec,accelgyro-als-channel-scale";
+#                                k-channel-scale = <1>;
+#                                cover-scale = <1>;
+#                        };
+#                };
+#        };
+# };
+#

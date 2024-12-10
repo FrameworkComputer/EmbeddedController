@@ -102,6 +102,12 @@ config PLATFORM_EC_ALS_CM32183
 	  The driver supports CM32183 which provides ambient
 	  light sensing.
 
+config PLATFORM_EC_ALS_CM36781
+	bool "CM36781 Ambient Light Sensor Driver"
+	help
+	  The driver supports CM36781 which provides ambient
+	  light sensing.
+
 config PLATFORM_EC_ALS_VEML3328
 	bool "VEML3328 Ambient Light Sensor Driver"
 	help

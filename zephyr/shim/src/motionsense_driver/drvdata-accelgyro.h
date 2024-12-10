@@ -76,7 +76,7 @@
 		.coeff[3] =                                                   \
 			FLOAT_TO_FP(DT_STRING_UNQUOTED_BY_IDX(id, coeff, 3)), \
 		RGB_CAL_RGB_SET_SCALE(DT_CHILD(id, als_channel_scale))        \
-	},
+	}
 
 /*
  * compatible = "cros-ec,accelgyro-rgb-calibration"
@@ -117,13 +117,12 @@
  *	};
  * };
  */
-#define ACCELGYRO_RGB_CALIBRATION(id)                                        \
-	{                                                                    \
-		RGB_CAL_RGB_SET_ONE(DT_CHILD(id, rgb_cal_x), X)              \
-			RGB_CAL_RGB_SET_ONE(DT_CHILD(id, rgb_cal_y), Y)      \
-				RGB_CAL_RGB_SET_ONE(DT_CHILD(id, rgb_cal_z), \
-						    Z)                       \
-					.irt = INT_TO_FP(DT_PROP(id, irt)),  \
+#define ACCELGYRO_RGB_CALIBRATION(id)                            \
+	{                                                        \
+		RGB_CAL_RGB_SET_ONE(DT_CHILD(id, rgb_cal_x), X), \
+		RGB_CAL_RGB_SET_ONE(DT_CHILD(id, rgb_cal_y), Y), \
+		RGB_CAL_RGB_SET_ONE(DT_CHILD(id, rgb_cal_z), Z), \
+		.irt = INT_TO_FP(DT_PROP(id, irt)),              \
 	}
 
 #endif /* __ZEPHYR_SHIM_SRC_MOTIONSENSE_DRIVER_DRVDATA_ACCELGYRO_H */
