@@ -6323,6 +6323,33 @@ int cmd_usb_pd_dps(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_fpled(int argc, char *argv[])
+{
+	struct ec_params_fp_led_control p;
+	struct ec_response_fp_led_level r;
+	int rsize = 0;
+
+	p.get_led_level = 0;
+	if (argc == 2 && !strcmp(argv[1], "high")) {
+		p.set_led_level = 0;
+	} else if (argc == 2 && !strcmp(argv[1], "medium")) {
+		p.set_led_level = 1;
+	} else if (argc == 2 && !strcmp(argv[1], "low")) {
+		p.set_led_level = 2;
+	} else {
+		p.get_led_level = 1;
+		rsize = sizeof(r);
+	}
+
+	int rv = ec_command(EC_CMD_FP_LED_LEVEL_CONTROL, 0, &p, sizeof(p), &r, rsize);
+
+	if (rv > 0) {
+		printf("Level:  %d%%\n", r.level);
+	}
+
+	return rv;
+}
+
 static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
 {
 	switch (r->role) {
@@ -12583,6 +12610,10 @@ const struct command commands[] = {
 	{ "wireless", cmd_wireless,
 	  "<flags> [<mask> [<suspend_flags> <suspend_mask>]]\n"
 	  "\tEnable/disable WLAN/Bluetooth radio." },
+	// Framework specific host commands
+	{ "fpled", cmd_fpled,
+		"[low | medium | high]\n"
+		"\tGet or set fingerprint LED brightness." },
 	{ NULL, NULL }
 };
 
