@@ -6397,6 +6397,19 @@ int cmd_ps2_emu(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_chassis_open_check(int argc, char *argv[])
+{
+	struct ec_response_chassis_open_check r;
+
+	int rv = ec_command(EC_CMD_CHASSIS_OPEN_CHECK, 0, NULL, 0, &r,
+			sizeof(r));
+
+	if (rv > 0)
+		printf("Chassis %s\n", r.status ? "open" : "closed");
+
+	return rv;
+}
+
 static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
 {
 	switch (r->role) {
@@ -12664,6 +12677,7 @@ const struct command commands[] = {
 	{ "ps2emu", cmd_ps2_emu,
 	  "[enable | disable]\n"
 	  "\tEnable or disable PS2 mouse emulation." },
+	{ "chassisopen", cmd_chassis_open_check, "\n\tPrints whether or not the chassis is currently open." },
 	{ NULL, NULL }
 };
 
