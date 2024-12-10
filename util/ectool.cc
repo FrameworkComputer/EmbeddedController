@@ -6428,6 +6428,21 @@ int cmd_simpleversion(int argc, char *argv[])
 	return rv;
 }
 
+int cmd_privswitches(int argc, char *argv[])
+{
+	struct ec_response_privacy_switches_check r;
+
+	int rv = ec_command(EC_CMD_PRIVACY_SWITCHES_CHECK_MODE, 0, NULL, 0, &r,
+			sizeof(r));
+
+	if (rv > 0) {
+		printf("Microphone: %s\n", r.microphone ? "Connected" : "Disconnected");
+		printf("Camera:     %s\n", r.camera ? "Connected" : "Disconnected");
+	}
+
+	return rv;
+}
+
 static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
 {
 	switch (r->role) {
@@ -12697,6 +12712,7 @@ const struct command commands[] = {
 	  "\tEnable or disable PS2 mouse emulation." },
 	{ "chassisopen", cmd_chassis_open_check, "\n\tPrints whether or not the chassis is currently open." },
 	{ "simpleversion", cmd_simpleversion, "\n\tPrints a simple version string of the EC firmware." },
+	{ "privswitches", cmd_privswitches, "\n\tPrints the status of the camera/microphone privacy switches." },
 	{ NULL, NULL }
 };
 
