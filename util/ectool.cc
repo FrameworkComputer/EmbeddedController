@@ -6443,6 +6443,31 @@ int cmd_privswitches(int argc, char *argv[])
 	return rv;
 }
 
+int cmd_intrusion(int argc, char *argv[])
+{
+	struct ec_params_chassis_intrusion_control p;
+	struct ec_response_chassis_intrusion_control r;
+	int rsize = 0;
+
+	// Don't implement clear of everything else, shouldn't be needed
+	if (argc == 2 || !strcmp(argv[2], "clear")) {
+		p.clear_chassis_status = 1;
+	} else {
+		rsize = sizeof(r);
+	}
+
+	int rv = ec_command(EC_CMD_CHASSIS_INTRUSION, 0, NULL, 0, &r, rsize);
+
+	if (rv > 0) {
+		printf("Coin Cell Ever Removed: %s\n", r.coin_batt_ever_remove ? "Yes" : "No");
+		printf("Chassis Ever Opened:    %s\n", r.chassis_ever_opened ? "Connected" : "Disconnected");
+		printf("Total open count:       %d\n", r.total_open_count);
+		printf("VTR open count:         %d\n", r.vtr_open_count);
+	}
+
+	return rv;
+}
+
 static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
 {
 	switch (r->role) {
@@ -12713,6 +12738,7 @@ const struct command commands[] = {
 	{ "chassisopen", cmd_chassis_open_check, "\n\tPrints whether or not the chassis is currently open." },
 	{ "simpleversion", cmd_simpleversion, "\n\tPrints a simple version string of the EC firmware." },
 	{ "privswitches", cmd_privswitches, "\n\tPrints the status of the camera/microphone privacy switches." },
+	{ "intrusion", cmd_intrusion, "\n\tPrints the status and history of the intrusion switch." },
 	{ NULL, NULL }
 };
 
