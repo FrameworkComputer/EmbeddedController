@@ -20,6 +20,7 @@
 #include "panic.h"
 #include "tablet_mode.h"
 #include "usb_pd.h"
+#include "zephyr/program/framework/include/board_host_command.h"
 
 #include <assert.h>
 #include <ctype.h>
