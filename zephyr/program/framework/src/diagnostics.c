@@ -133,12 +133,20 @@ void print_diag_details(void)
 	CPRINTS("    No eDP:                 %s", YES_NO_BIT(DIAGNOSTICS_NO_EDP));
 	CPRINTS("    No Battery:             %s", YES_NO_BIT(DIAGNOSTICS_HW_NO_BATTERY));
 
-#ifdef CONFIG_BOARD_LOTUS
+#if defined(CONFIG_BOARD_LOTUS)
 	CPRINTS("  Required Removables");
 	CPRINTS("    Input Module Fault:     %s", YES_NO_BIT(DIAGNOSTICS_INPUT_MODULE_FAULT));
 	CPRINTS("    No Right Fan:           %s", YES_NO_BIT(DIAGNOSTICS_NO_LEFT_FAN));
 	CPRINTS("    No Left Fan:            %s", YES_NO_BIT(DIAGNOSTICS_NO_RIGHT_FAN));
 	CPRINTS("    GPU Module Fault:       %s", YES_NO_BIT(DIAGNOSTICS_GPU_MODULE_FAULT));
+#elif defined(CONFIG_BOARD_SUNFLOWER)
+	CPRINTS("    No Input Cover:         %s", YES_NO_BIT(DIAGNOSTICS_INPUT_COVER));
+	CPRINTS("  Required Removables");
+	CPRINTS("    No Audio Board:         %s", YES_NO_BIT(DIAGNOSTICS_AUDIO_DAUGHTERBOARD));
+	CPRINTS("    No Fan:                 %s", YES_NO_BIT(DIAGNOSTICS_NOFAN));
+
+	/* It's not removable, if Yes probably I2C config wrong */
+	CPRINTS("    No Thermal Sensor:      %s", YES_NO_BIT(DIAGNOSTICS_THERMAL_SENSOR));
 #else
 	CPRINTS("    No Touchpad:            %s", YES_NO_BIT(DIAGNOSTICS_TOUCHPAD));
 	CPRINTS("  Required Removables");

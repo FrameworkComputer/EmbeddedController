@@ -45,7 +45,7 @@ static const struct it8801_vendor_id_t it8801_vendor_id_verify[] = {
 	{ 0x83, IT8801_REG_LBVIDR },
 };
 
-static int it8801_check_vendor_id(void)
+int it8801_check_vendor_id(void)
 {
 	int i, ret, val;
 
