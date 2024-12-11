@@ -144,9 +144,7 @@ void print_diag_details(void)
 	CPRINTS("  Required Removables");
 	CPRINTS("    No Audio Board:         %s", YES_NO_BIT(DIAGNOSTICS_AUDIO_DAUGHTERBOARD));
 	CPRINTS("    No Fan:                 %s", YES_NO_BIT(DIAGNOSTICS_NOFAN));
-
-	/* It's not removable, if Yes probably I2C config wrong */
-	CPRINTS("    No Thermal Sensor:      %s", YES_NO_BIT(DIAGNOSTICS_THERMAL_SENSOR));
+	CPRINTS("    No Camera Module:       %s", YES_NO_BIT(DIAGNOSTICS_CAMERA_MODULE));
 #else
 	CPRINTS("    No Touchpad:            %s", YES_NO_BIT(DIAGNOSTICS_TOUCHPAD));
 	CPRINTS("  Required Removables");
