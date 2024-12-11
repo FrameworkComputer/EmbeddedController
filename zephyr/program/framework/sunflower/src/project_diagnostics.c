@@ -10,6 +10,7 @@
 #include "diagnostics.h"
 #include "dptf.h"
 #include "driver/temp_sensor/f75303.h"
+#include "driver/ioexpander/it8801.h"
 #include "fan.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -47,7 +48,15 @@ void check_device_deferred(void)
 
 	if ((touchpad < BOARD_VERSION_1 || touchpad >= BOARD_VERSION_14) &&
 		!get_standalone_mode())
-		set_diagnostic(DIAGNOSTICS_TOUCHPAD, true);
+		set_diagnostic(DIAGNOSTICS_INPUT_COVER, true);
+
+	/* Check whether the keyboard controller responds.
+	 * Board ID pin might be connected, but there are 20 pogo pins, which might
+	 * not make proper contact. So it's best to also check if I2C communication
+	 * is working
+	 */
+	if (it8801_check_vendor_id() != EC_SUCCESS && !get_standalone_mode())
+		set_diagnostic(DIAGNOSTICS_INPUT_COVER, true);
 
 	if ((audio <= BOARD_VERSION_1 || audio >= BOARD_VERSION_14) &&
 		!get_standalone_mode())

@@ -93,6 +93,8 @@ extern const struct ioexpander_drv it8801_ioexpander_drv;
 /* ISR for IT8801's SMB_INT# */
 void io_expander_it8801_interrupt(enum gpio_signal signal);
 
+int it8801_check_vendor_id(void);
+
 #ifdef CONFIG_IO_EXPANDER_IT8801_PWM
 
 /* Mapping PWM_CH_LED_* to it8801 channel */
