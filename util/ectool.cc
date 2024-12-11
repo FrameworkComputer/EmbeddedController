@@ -98,7 +98,7 @@ BUILD_ASSERT(ARRAY_SIZE(led_color_names) == EC_LED_COLOR_COUNT);
 static const char *const led_names[] = { "battery",    "power",
 					 "adapter",    "left",
 					 "right",      "recovery_hwreinit",
-					 "sysrq debug" };
+					 "sysrq debug","second_power" };
 BUILD_ASSERT(ARRAY_SIZE(led_names) == EC_LED_ID_COUNT);
 
 /* ASCII mode for printing, default off */
