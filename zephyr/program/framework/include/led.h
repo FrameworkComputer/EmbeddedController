@@ -28,6 +28,7 @@
 #define FP_LED_HIGH 55
 #define FP_LED_MEDIUM 40
 #define FP_LED_LOW 15
+#define FP_LED_ULTRA_LOW 8
 
 enum led_color {
 	LED_OFF,
@@ -44,6 +45,7 @@ enum fp_led_brightness_level {
 	FP_LED_BRIGHTNESS_HIGH = 0,
 	FP_LED_BRIGHTNESS_MEDIUM = 1,
 	FP_LED_BRIGHTNESS_LOW = 2,
+	FP_LED_BRIGHTNESS_ULTRA_LOW = 3,
 };
 
 /* EC_LED_COLOR maps to LED_COLOR - 1 */
