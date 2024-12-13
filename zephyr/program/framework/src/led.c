@@ -471,24 +471,38 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 	struct ec_response_fp_led_level *r = args->response;
 	uint8_t led_level = FP_LED_HIGH;
 
+	/* Returns percentage in HC v0 and v1 */
 	if (p->get_led_level) {
 		system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &r->level);
 		args->response_size = sizeof(*r);
 		return EC_RES_SUCCESS;
 	}
 
-	switch (p->set_led_level) {
-	case FP_LED_BRIGHTNESS_HIGH:
-		led_level = FP_LED_HIGH;
+	switch (args->version) {
+	case 0:
+		/* HC v0 only allows setting 3 discrete levels */
+		switch (p->set_led_level) {
+		case FP_LED_BRIGHTNESS_HIGH:
+			led_level = FP_LED_HIGH;
+			break;
+		case FP_LED_BRIGHTNESS_MEDIUM:
+			led_level = FP_LED_MEDIUM;
+			break;
+		case FP_LED_BRIGHTNESS_LOW:
+			led_level = FP_LED_LOW;
+			break;
+		case FP_LED_BRIGHTNESS_ULTRA_LOW:
+			led_level = FP_LED_ULTRA_LOW;
+			break;
+		default:
+			return EC_RES_INVALID_PARAM;
+		}
 		break;
-	case FP_LED_BRIGHTNESS_MEDIUM:
-		led_level = FP_LED_MEDIUM;
-		break;
-	case FP_LED_BRIGHTNESS_LOW:
-		led_level = FP_LED_LOW;
-		break;
-	case FP_LED_BRIGHTNESS_ULTRA_LOW:
-		led_level = FP_LED_ULTRA_LOW;
+	case 1:
+		/* HC v1 allows setting 1-100 percentage */
+		if (p->set_led_level == 0 || p->set_led_level > 100)
+			return EC_RES_INVALID_PARAM;
+		led_level = p->set_led_level;
 		break;
 	default:
 		return EC_RES_INVALID_PARAM;
@@ -499,4 +513,5 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_FP_LED_LEVEL_CONTROL, fp_led_level_control, EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_FP_LED_LEVEL_CONTROL, fp_led_level_control,
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
