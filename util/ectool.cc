@@ -6336,6 +6336,8 @@ int cmd_fpled(int argc, char *argv[])
 		p.set_led_level = 1;
 	} else if (argc == 2 && !strcmp(argv[1], "low")) {
 		p.set_led_level = 2;
+	} else if (argc == 2 && !strcmp(argv[1], "ultra-low")) {
+		p.set_led_level = 3;
 	} else {
 		p.get_led_level = 1;
 		rsize = sizeof(r);
@@ -12612,7 +12614,7 @@ const struct command commands[] = {
 	  "\tEnable/disable WLAN/Bluetooth radio." },
 	// Framework specific host commands
 	{ "fpled", cmd_fpled,
-		"[low | medium | high]\n"
+		"[ultra-low | low | medium | high]\n"
 		"\tGet or set fingerprint LED brightness." },
 	{ NULL, NULL }
 };
