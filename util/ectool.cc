@@ -6328,6 +6328,8 @@ int cmd_fpled(int argc, char *argv[])
 	struct ec_params_fp_led_control p;
 	struct ec_response_fp_led_level r;
 	int rsize = 0;
+	int cmd_ver = 0;
+	char *endptr;
 
 	p.get_led_level = 0;
 	if (argc == 2 && !strcmp(argv[1], "high")) {
@@ -6338,12 +6340,19 @@ int cmd_fpled(int argc, char *argv[])
 		p.set_led_level = 2;
 	} else if (argc == 2 && !strcmp(argv[1], "ultra-low")) {
 		p.set_led_level = 3;
+	} else if (argc == 2) {
+		p.set_led_level = strtol(argv[1], &endptr, 0);
+		if (endptr && *endptr && (p.set_led_level == 0 || p.set_led_level > 100)) {
+			fprintf(stderr, "Invalid percentage. Must be between 1-100.\n");
+			return -1;
+		}
+		cmd_ver = 1;
 	} else {
 		p.get_led_level = 1;
 		rsize = sizeof(r);
 	}
 
-	int rv = ec_command(EC_CMD_FP_LED_LEVEL_CONTROL, 0, &p, sizeof(p), &r, rsize);
+	int rv = ec_command(EC_CMD_FP_LED_LEVEL_CONTROL, cmd_ver, &p, sizeof(p), &r, rsize);
 
 	if (rv > 0) {
 		printf("Level:  %d%%\n", r.level);
@@ -12614,7 +12623,7 @@ const struct command commands[] = {
 	  "\tEnable/disable WLAN/Bluetooth radio." },
 	// Framework specific host commands
 	{ "fpled", cmd_fpled,
-		"[ultra-low | low | medium | high]\n"
+		"[<percentage> | ultra-low | low | medium | high]\n"
 		"\tGet or set fingerprint LED brightness." },
 	{ NULL, NULL }
 };
