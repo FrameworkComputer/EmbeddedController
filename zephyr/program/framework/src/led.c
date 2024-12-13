@@ -605,6 +605,9 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 	case FP_LED_BRIGHTNESS_LOW:
 		led_level = FP_LED_LOW;
 		break;
+	case FP_LED_BRIGHTNESS_ULTRA_LOW:
+		led_level = FP_LED_ULTRA_LOW;
+		break;
 	default:
 		return EC_RES_INVALID_PARAM;
 	}
