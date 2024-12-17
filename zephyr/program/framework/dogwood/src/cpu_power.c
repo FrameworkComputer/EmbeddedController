@@ -83,8 +83,8 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		soc_pmf_fppt = power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
 		soc_pmf_p3t = power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T];
 
-		if (set_pl_limits(soc_pmf_spl, soc_pmf_sppt,
-				soc_pmf_fppt, soc_pmf_p3t) == EC_SUCCESS) {
+		if (set_pl_limits(soc_pmf_spl, soc_pmf_fppt,
+				soc_pmf_sppt, soc_pmf_p3t) == EC_SUCCESS) {
 			CPRINTS("Update SoC PFM: SPL %dmW, sPPT %dmW, fPPT %dmW, p3T %dmW",
 			soc_pmf_spl, soc_pmf_sppt, soc_pmf_fppt, soc_pmf_p3t);
 			soc_pmf_has_updated = true;
