@@ -23,6 +23,8 @@
 
 #define CACHE_INVALIDATION_TIME_US (3 * SECOND)
 
+static int battery_current_array[4];
+
 enum battery_trip_point_state_t {
 	BATTERY_TRIP_POINT_DISCHARGE  = BIT(0),
 	BATTERY_TRIP_POINT_CHARGE     = BIT(1),
@@ -122,6 +124,17 @@ void battery_trip_point(struct charge_state_data *curr_batt)
 	}
 }
 
+int get_average_battery_current(void)
+{
+	int idx;
+	int average_battery_current = 0;
+
+	for (idx = 0; idx < 4; idx++)
+		average_battery_current += battery_current_array[idx];
+
+	return (average_battery_current / 4);
+}
+
 void battery_customize(struct charge_state_data *curr_batt)
 {
 	char text[32];
@@ -133,6 +146,7 @@ void battery_customize(struct charge_state_data *curr_batt)
 	int year = 0;
 	static int batt_state;
 	static int read_manuf_date;
+	static int idx;
 
 	/* manufacture date is static data */
 	if (!read_manuf_date && battery_is_present() == BP_YES) {
@@ -188,6 +202,11 @@ void battery_customize(struct charge_state_data *curr_batt)
 		host_set_single_event(EC_HOST_EVENT_BATTERY);
 		batt_state = curr_batt->batt.is_present;
 	}
+
+	/* Put the battery current in the array for safety funciton */
+	battery_current_array[idx++] = curr_batt->batt.current;
+	if (idx >= 4)
+		idx = 0;
 }
 
 static void fix_single_param(int flag, int *cached, int *curr)
