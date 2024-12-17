@@ -202,7 +202,11 @@ enum scancode_values {
 	SCANCODE_P = 0x004D,
 	SCANCODE_S = 0x001B,
 	SCANCODE_SPACE = 0x0029,
+	SCANCODE_LEFT_SHIFT = 0x0012,
+	SCANCODE_F23 = 0x0057,
 
+	/* Replace the copilot key scand code with an unused key scan code*/
+	SCANCODE_FAKE_COPILOT = 0xffff,
 	SCANCODE_FAKE_FN = 0xe016,
 	SCANCODE_FAKE_POWER = 0xe025,
 	SCANCODE_UNASSIGNED = 0x0040,
