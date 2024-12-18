@@ -246,6 +246,10 @@
 			gpios = <&ioex_it8801_port1 2 GPIO_OUTPUT_LOW>;
 			no-auto-init;
 		};
+		gpio_tp_en: tp_en {
+			gpios = <&ioex_it8801_port1 0 GPIO_OUTPUT_LOW>;
+			no-auto-init;
+		};
 
 		/**
 		 * Host does not receive the SCI event via eSPI VM when the system
