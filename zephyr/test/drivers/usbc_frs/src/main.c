@@ -185,3 +185,59 @@ ZTEST_USER_F(usbc_frs, test_frs_got_signal_frs_delay_disable_fail)
 				      &power_control));
 	zassert_equal(power_control & TCPC_REG_POWER_CTRL_FRS_ENABLE, 0);
 }
+
+ZTEST_USER_F(usbc_frs, test_frs_reject_fail)
+{
+	struct common_fixture *common = &fixture->common;
+	uint16_t power_control;
+	struct tcpci_faulty_ext_action reject_frs = {
+		.action_mask = TCPCI_FAULTY_EXT_REJECT_FR_SWAP,
+		.count = 1,
+	};
+
+	tcpci_faulty_ext_append_action(&common->faulty_ext, &reject_frs);
+
+	/* FRS should be enabled */
+	zassert_ok(tcpci_emul_get_reg(common->tcpci_emul, TCPC_REG_POWER_CTRL,
+				      &power_control));
+	zassert_equal(power_control & TCPC_REG_POWER_CTRL_FRS_ENABLE,
+		      TCPC_REG_POWER_CTRL_FRS_ENABLE);
+
+	/* Signal FRS */
+	tcpci_drp_emul_signal_frs(&common->partner);
+
+	k_sleep(K_MSEC(100));
+
+	/* FRS failed, FRS disabled */
+	zassert_ok(tcpci_emul_get_reg(common->tcpci_emul, TCPC_REG_POWER_CTRL,
+				      &power_control));
+	zassert_equal(power_control & TCPC_REG_POWER_CTRL_FRS_ENABLE, 0);
+}
+
+ZTEST_USER_F(usbc_frs, test_frs_sender_response_timeout_fail)
+{
+	struct common_fixture *common = &fixture->common;
+	uint16_t power_control;
+	struct tcpci_faulty_ext_action timeout_frs = {
+		.action_mask = TCPCI_FAULTY_EXT_ACCEPT_FR_SWAP_TIMEOUT,
+		.count = 1,
+	};
+
+	tcpci_faulty_ext_append_action(&common->faulty_ext, &timeout_frs);
+
+	/* FRS should be enabled */
+	zassert_ok(tcpci_emul_get_reg(common->tcpci_emul, TCPC_REG_POWER_CTRL,
+				      &power_control));
+	zassert_equal(power_control & TCPC_REG_POWER_CTRL_FRS_ENABLE,
+		      TCPC_REG_POWER_CTRL_FRS_ENABLE);
+
+	/* Signal FRS */
+	tcpci_drp_emul_signal_frs(&common->partner);
+
+	k_sleep(K_MSEC(100));
+
+	/* FRS failed, FRS disabled */
+	zassert_ok(tcpci_emul_get_reg(common->tcpci_emul, TCPC_REG_POWER_CTRL,
+				      &power_control));
+	zassert_equal(power_control & TCPC_REG_POWER_CTRL_FRS_ENABLE, 0);
+}

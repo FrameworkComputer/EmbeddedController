@@ -1947,7 +1947,7 @@ static void print_current_state(const int port)
 {
 	const char *mode = "";
 
-	if (IS_ENABLED(CONFIG_USB_PD_REV30) && pe_in_frs_mode(port))
+	if (pe_in_frs_mode(port))
 		mode = " FRS-MODE";
 
 	if (IS_ENABLED(USB_PD_DEBUG_LABELS))
@@ -5391,7 +5391,7 @@ static void pe_prs_snk_src_transition_to_off_entry(int port)
 {
 	print_current_state(port);
 
-	if (!IS_ENABLED(CONFIG_USB_PD_REV30) || !pe_in_frs_mode(port))
+	if (!pe_in_frs_mode(port))
 		tc_snk_power_off(port);
 
 	pd_timer_enable(port, PE_TIMER_PS_SOURCE, PD_T_PS_SOURCE_OFF);
@@ -5458,7 +5458,7 @@ static void pe_prs_snk_src_assert_rp_run(int port)
 {
 	/* Wait until TypeC is in the Attached.SRC state */
 	if (tc_is_attached_src(port)) {
-		if (!IS_ENABLED(CONFIG_USB_PD_REV30) || !pe_in_frs_mode(port)) {
+		if (!pe_in_frs_mode(port)) {
 			/* Contract is invalid now */
 			pe_invalidate_explicit_contract(port);
 		}
@@ -5541,13 +5541,8 @@ static void pe_prs_snk_src_send_swap_entry(int port)
 	 *     bringing Vbus to vSafe5.
 	 *     Request the Protocol Layer to send a FR_Swap Message.
 	 */
-	if (IS_ENABLED(CONFIG_USB_PD_REV30)) {
-		send_ctrl_msg(port, TCPCI_MSG_SOP,
-			      pe_in_frs_mode(port) ? PD_CTRL_FR_SWAP :
-						     PD_CTRL_PR_SWAP);
-	} else {
-		send_ctrl_msg(port, TCPCI_MSG_SOP, PD_CTRL_PR_SWAP);
-	}
+	send_ctrl_msg(port, TCPCI_MSG_SOP,
+		      pe_in_frs_mode(port) ? PD_CTRL_FR_SWAP : PD_CTRL_PR_SWAP);
 	pe_sender_response_msg_entry(port);
 }
 
@@ -5597,14 +5592,11 @@ static void pe_prs_snk_src_send_swap_run(int port)
 					     PE_PRS_SNK_SRC_TRANSITION_TO_OFF);
 			} else if ((type == PD_CTRL_REJECT) ||
 				   (type == PD_CTRL_WAIT)) {
-				if (IS_ENABLED(CONFIG_USB_PD_REV30))
-					set_state_pe(
-						port,
-						pe_in_frs_mode(port) ?
-							PE_WAIT_FOR_ERROR_RECOVERY :
-							PE_SNK_READY);
-				else
-					set_state_pe(port, PE_SNK_READY);
+				set_state_pe(
+					port,
+					pe_in_frs_mode(port) ?
+						PE_WAIT_FOR_ERROR_RECOVERY :
+						PE_SNK_READY);
 			}
 			return;
 		}
@@ -5616,12 +5608,9 @@ static void pe_prs_snk_src_send_swap_run(int port)
 	 *   1) The SenderResponseTimer times out.
 	 */
 	if (pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE)) {
-		if (IS_ENABLED(CONFIG_USB_PD_REV30))
-			set_state_pe(port, pe_in_frs_mode(port) ?
-						   PE_WAIT_FOR_ERROR_RECOVERY :
-						   PE_SNK_READY);
-		else
-			set_state_pe(port, PE_SNK_READY);
+		set_state_pe(port, pe_in_frs_mode(port) ?
+					   PE_WAIT_FOR_ERROR_RECOVERY :
+					   PE_SNK_READY);
 		return;
 	}
 	/*
@@ -5630,7 +5619,7 @@ static void pe_prs_snk_src_send_swap_run(int port)
 	 *      has not been received). A soft reset Shall Not be initiated in
 	 *      this case.
 	 */
-	if (IS_ENABLED(CONFIG_USB_PD_REV30) && pe_in_frs_mode(port) &&
+	if (pe_in_frs_mode(port) &&
 	    PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
 		set_state_pe(port, PE_WAIT_FOR_ERROR_RECOVERY);

@@ -52,6 +52,10 @@ enum tcpci_faulty_ext_action_type {
 	TCPCI_FAULTY_EXT_DISCARD_SRC_CAP = BIT(2),
 	/** Ignore FR_Swap message and do not respond */
 	TCPCI_FAULTY_EXT_IGNORE_FR_SWAP = BIT(3),
+	/** Reject FR_Swap message */
+	TCPCI_FAULTY_EXT_REJECT_FR_SWAP = BIT(4),
+	/** Accept FR_Swap message but violate tSenderResponse */
+	TCPCI_FAULTY_EXT_ACCEPT_FR_SWAP_TIMEOUT = BIT(5),
 };
 
 /** Structure to put in malfunctioning emulator action list */
