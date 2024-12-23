@@ -216,13 +216,15 @@ enum gpu_vendor {
 	GPU_FAN_ONLY = 1,
 	GPU_AMD_R23M = 2,
 	GPU_SSD = 3,
-	GPU_PCIE_ACCESSORY = 4
+	GPU_PCIE_ACCESSORY = 4,
+	GPU_NV_GN22 = 5,
 } __packed;
 BUILD_ASSERT(sizeof(enum gpu_vendor) == sizeof(uint8_t));
 
 enum gpu_pd {
 	PD_TYPE_INVALID = 0,
 	PD_TYPE_ETRON_EJ889I = 1,
+	PD_TYPE_CCG8S = 2,
 	PD_TYPE_MAX = 0xFF
 } __packed;
 struct gpu_subsys_pd {
