@@ -491,6 +491,26 @@ int functional_hotkey(uint16_t *key_code, int8_t pressed)
 	return EC_SUCCESS;
 }
 
+enum ec_error_list copiloy_key(uint16_t *key_code, int8_t pressed)
+{
+	const uint16_t prss_key = *key_code;
+
+	if (prss_key == SCANCODE_FAKE_COPILOT) {
+		if (pressed) {
+			simulate_keyboard(SCANCODE_LEFT_WIN, 1);
+			simulate_keyboard(SCANCODE_LEFT_SHIFT, 1);
+			simulate_keyboard(SCANCODE_F23, 1);
+		} else {
+			simulate_keyboard(SCANCODE_LEFT_WIN, 0);
+			simulate_keyboard(SCANCODE_LEFT_SHIFT, 0);
+			simulate_keyboard(SCANCODE_F23, 0);
+		}
+		/* Not send SCANCODE_FAKE_COPILOT, reset the value to 0 */
+		*key_code = 0x0000;
+	}
+	return EC_SUCCESS;
+}
+
 enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 					      int8_t pressed)
 {
@@ -515,6 +535,10 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 	 */
 	if (!*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & BIT(0))
 		return EC_SUCCESS;
+
+	r = copiloy_key(make_code, pressed);
+	if (r != EC_SUCCESS)
+		return r;
 
 	r = hotkey_F1_F12(make_code, Fn_key, pressed);
 	if (r != EC_SUCCESS)
