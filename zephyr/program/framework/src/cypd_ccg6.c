@@ -30,7 +30,8 @@
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 
-int cypd_write_reg8_wait_ack(int controller, int reg, int data)
+
+int cypd_write_wait_ack(int controller, int reg, int data)
 {
 	int rv = EC_SUCCESS;
 	int intr_status;
@@ -38,7 +39,6 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	int cmd_port = -1;
 	int ack_mask = 0;
 	int expected_ack_mask = 0;
-	const struct gpio_dt_spec *intr = gpio_get_dt_spec(pd_chip_config[controller].gpio);
 
 	if (reg < 0x1000) {
 		expected_ack_mask = CCG_DEV_INTR;
@@ -49,26 +49,6 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	} else {
 		expected_ack_mask = CCG_PORT1_INTR;
 		cmd_port = 1;
-	}
-
-	if (gpio_pin_get_dt(intr) == 0) {
-		/* we may have a pending interrupt */
-		rv = cypd_get_int(controller, &intr_status);
-		CPRINTS("%s pre 0x%x ", __func__, intr_status);
-		if (intr_status & CCG_DEV_INTR) {
-			rv = cypd_read_reg16(controller, CCG_RESPONSE_REG, &event);
-			if (event < 0x80) {
-				cypd_clear_int(controller, CCG_DEV_INTR);
-			}
-			crec_usleep(50);
-		}
-	}
-
-
-	rv = cypd_write_reg8(controller, reg, data);
-	if (rv != EC_SUCCESS) {
-		CPRINTS("Write Reg8 0x%x fail!", reg);
-		return EC_ERROR_INVAL;
 	}
 
 	if (cypd_wait_for_ack(controller, 100) != EC_SUCCESS) {
@@ -138,6 +118,37 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	}
 
 	crec_usleep(50);
+	return rv;
+}
+
+
+int cypd_write_reg8_wait_ack(int controller, int reg, int data)
+{
+	int rv = EC_SUCCESS;
+	int intr_status;
+	int event;
+	const struct gpio_dt_spec *intr = gpio_get_dt_spec(pd_chip_config[controller].gpio);
+
+	if (gpio_pin_get_dt(intr) == 0) {
+		/* we may have a pending interrupt */
+		rv = cypd_get_int(controller, &intr_status);
+		CPRINTS("%s pre 0x%x ", __func__, intr_status);
+		if (intr_status & CCG_DEV_INTR) {
+			rv = cypd_read_reg16(controller, CCG_RESPONSE_REG, &event);
+			if (event < 0x80) {
+				cypd_clear_int(controller, CCG_DEV_INTR);
+			}
+			crec_usleep(50);
+		}
+	}
+
+	rv = cypd_write_reg8(controller, reg, data);
+	if (rv != EC_SUCCESS) {
+		CPRINTS("Write Reg8 0x%x fail!", reg);
+		return EC_ERROR_INVAL;
+	}
+
+	rv = cypd_write_wait_ack(controller, reg, data);
 	return rv;
 }
 
@@ -311,7 +322,7 @@ int board_set_active_charge_port(int charge_port)
 
 static void perform_error_recovery(int controller)
 {
-	int i;
+	int i, pend_event;
 	uint8_t data[2] = {0x00, CCG_PD_USER_CMD_TYPEC_ERR_RECOVERY};
 	uint32_t batt_os_percentage = get_system_percentage();
 
@@ -320,10 +331,21 @@ static void perform_error_recovery(int controller)
 			if (!((controller*2 + i) == get_active_charge_pd_port() &&
 				battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
 
+				/* clear pending interrupt event before do error recovery */
+				if (gpio_pin_get_dt(
+						gpio_get_dt_spec(pd_chip_config
+							[PORT_TO_CONTROLLER(i)].gpio)) == 0) {
+					cypd_get_int(PORT_TO_CONTROLLER(i), &pend_event);
+					CPRINTS(" Int pending 0x%04x", pend_event);
+					cypd_clear_int(PORT_TO_CONTROLLER(i), pend_event);
+				}
+
 				data[0] = PORT_TO_CONTROLLER_PORT(i);
 				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
 									CCG_DPM_CMD_REG,
 									data, 2);
+
+				cypd_write_wait_ack(PORT_TO_CONTROLLER(i), CCG_DPM_CMD_REG, 0);
 			}
 		}
 	else {
@@ -336,10 +358,21 @@ static void perform_error_recovery(int controller)
 				   (batt_os_percentage < 3) && (i == get_active_charge_pd_port()))
 					continue;
 
+				/* clear pending interrupt event before do error recovery */
+				if (gpio_pin_get_dt(
+						gpio_get_dt_spec(pd_chip_config
+							[PORT_TO_CONTROLLER(i)].gpio)) == 0) {
+					cypd_get_int(PORT_TO_CONTROLLER(i), &pend_event);
+					CPRINTS(" Int pending 0x%04x", pend_event);
+					cypd_clear_int(PORT_TO_CONTROLLER(i), pend_event);
+				}
+
 				data[0] = PORT_TO_CONTROLLER_PORT(i);
 				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
 									CCG_DPM_CMD_REG,
 									data, 2);
+
+				cypd_write_wait_ack(PORT_TO_CONTROLLER(i), CCG_DPM_CMD_REG, 0);
 			}
 		}
 	}
