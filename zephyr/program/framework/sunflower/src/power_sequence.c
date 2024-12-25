@@ -22,10 +22,12 @@
 #include "keyboard_protocol.h"
 #include "keyboard_raw.h"
 #include "keyboard_customization.h"
+#include "lid_switch.h"
 #include "lpc.h"
 #include "power.h"
 #include "port80.h"
 #include "power_sequence.h"
+#include "tablet_mode.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -289,6 +291,10 @@ static void keyboard_scan_enable_deferred(void)
 	/* enable lock led */
 	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_lock_led), GPIO_OUTPUT);
 	caps_led_keyboard_connect();
+	/* enable gpio_tp_en */
+	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_tp_en), GPIO_OUTPUT);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_tp_en),
+					!tablet_get_mode() && lid_is_open());
 }
 DECLARE_DEFERRED(keyboard_scan_enable_deferred);
 
