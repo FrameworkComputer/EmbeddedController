@@ -255,6 +255,7 @@ void touchpad_interrupt(enum gpio_signal signal)
 			if (unprocessed_tp_int_count++ > TOUCHPAD_I2C_RETRY_COUNT_TO_RENABLE) {
 				detected_host_packet = false;
 				unprocessed_tp_int_count = 0;
+				gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_tp));
 				task_set_event(TASK_ID_TOUCHPAD, PS2MOUSE_EVT_REENABLE);
 			}
 		} else {
