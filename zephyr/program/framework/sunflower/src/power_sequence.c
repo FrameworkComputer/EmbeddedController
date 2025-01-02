@@ -44,7 +44,8 @@ static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts *
 static int force_shoutdown_flags;
 static int stress_test_enable;
 static int me_change;
-static bool module_pwr_control;
+static bool tp_module_pwr_control;
+static bool pb_module_pwr_control;
 
 /* Power Signal Input List */
 const struct power_signal_info power_signal_list[] = {
@@ -306,25 +307,24 @@ static void keyboard_scan_disable(void)
 	caps_led_keyboard_disconnect();
 }
 
-/* detect module hot plug */
-static void control_module_power(void)
+static void touchpad_module_power_control(void)
 {
 	static int pre_touchpad;
 	int touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
-	bool enable = (touchpad >= BOARD_VERSION_1 && touchpad <= BOARD_VERSION_13);
+	bool tp_enable = (touchpad >= BOARD_VERSION_1 && touchpad <= BOARD_VERSION_13);
 
-	if (!module_pwr_control) {
+	if (!tp_module_pwr_control) {
 		/* reset pre_touchpad when the system shutdown */
 		pre_touchpad = 0;
 		return;
 	}
 
 	if (pre_touchpad != touchpad) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_3v_tp), enable);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_tp), enable);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_3v_tp), tp_enable);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_tp), tp_enable);
 		pre_touchpad = touchpad;
 
-		if (enable)
+		if (tp_enable)
 			/**
 			 * Add the delay to wait module to stable and then enable the keyboard scan
 			 * and re-init the keyboard scan.
@@ -334,19 +334,56 @@ static void control_module_power(void)
 			keyboard_scan_disable();
 	}
 }
+
+static void power_button_module_power_control(void)
+{
+	static int pre_powerbtn;
+	int powerbtn = get_hardware_id(ADC_POWER_BUTTON_BOARD_ID);
+	bool pb_enable = (powerbtn >= BOARD_VERSION_1 && powerbtn <= BOARD_VERSION_13);
+
+	if (!pb_module_pwr_control) {
+		/* reset pre_powerbtn when the system shutdown */
+		pre_powerbtn = 0;
+		return;
+	}
+
+	if (pre_powerbtn != powerbtn) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_pb), pb_enable);
+		pre_powerbtn = powerbtn;
+	}
+}
+
+/* detect module hot plug */
+static void control_module_power(void)
+{
+	power_button_module_power_control();
+	touchpad_module_power_control();
+}
 DECLARE_HOOK(HOOK_TICK, control_module_power, HOOK_PRIO_DEFAULT);
 
-static void module_pwr_control_enable(bool state)
+static void tp_module_pwr_control_enable(bool state)
 {
-	module_pwr_control = state;
+	tp_module_pwr_control = state;
 
 	/* enable module power control to check the module is present */
-	if (module_pwr_control)
-		control_module_power();
+	if (tp_module_pwr_control)
+		touchpad_module_power_control();
 	else {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_3v_tp), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_tp), 0);
 		keyboard_scan_disable();
+	}
+}
+
+static void pb_module_pwr_control_enable(bool state)
+{
+	pb_module_pwr_control = state;
+
+	/* enable module power control to check the module is present */
+	if (pb_module_pwr_control)
+		power_button_module_power_control();
+	else {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_pb), 0);
 	}
 }
 
@@ -388,8 +425,8 @@ enum power_state power_handle_state(enum power_state state)
 		k_msleep(50);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 1);
 
-		/* enable the power button led */
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_pb), 1);
+		/* enable the power button led as soon as power on*/
+		pb_module_pwr_control_enable(true);
 
 		power_s5_up_control(1);
 		return POWER_S5;
@@ -488,7 +525,7 @@ enum power_state power_handle_state(enum power_state state)
 
 		clear_rtcwake();
 
-		module_pwr_control_enable(true);
+		tp_module_pwr_control_enable(true);
 
 		return POWER_S0;
 
@@ -629,7 +666,8 @@ DECLARE_HOOK(HOOK_INIT, peripheral_interrupt_init, HOOK_PRIO_DEFAULT);
 
 static void peripheral_power_startup(void)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_pb), 1);
+	/* enable the power button led as soon as power on*/
+	pb_module_pwr_control_enable(true);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 1);
 }
@@ -643,10 +681,10 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, peripheral_power_resume, HOOK_PRIO_DEFAULT);
 
 static void peripheral_power_shutdown(void)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_pb), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 0);
-	module_pwr_control_enable(false);
+	tp_module_pwr_control_enable(false);
+	pb_module_pwr_control_enable(false);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, peripheral_power_shutdown, HOOK_PRIO_DEFAULT);
 
