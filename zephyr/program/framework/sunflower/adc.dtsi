@@ -13,6 +13,10 @@
 			enum-name = "ADC_MAIN_BOARD_ID";
 			io-channels = <&adc0 0>;
 		};
+		adc_pb_board_id: pb_board_id {
+			enum-name = "ADC_POWER_BUTTON_BOARD_ID";
+			io-channels = <&adc0 3>;
+		};
 		adc_i_sys: i-sys {
 			enum-name = "ADC_PSYS";
 			io-channels = <&adc0 4>;
@@ -35,6 +39,7 @@
 &adc0 {
 	status = "okay";
 	pinctrl-0 = <&adc0_chan0_gp45
+			 &adc0_chan3_gp42
 		     &adc0_chan4_gp41
 		     &adc0_chan5_gp37
 		     &adc0_chan7_gpe1
