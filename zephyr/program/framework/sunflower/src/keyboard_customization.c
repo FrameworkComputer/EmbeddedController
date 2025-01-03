@@ -501,9 +501,9 @@ enum ec_error_list copiloy_key(uint16_t *key_code, int8_t pressed)
 			simulate_keyboard(SCANCODE_LEFT_SHIFT, 1);
 			simulate_keyboard(SCANCODE_F23, 1);
 		} else {
-			simulate_keyboard(SCANCODE_LEFT_WIN, 0);
-			simulate_keyboard(SCANCODE_LEFT_SHIFT, 0);
 			simulate_keyboard(SCANCODE_F23, 0);
+			simulate_keyboard(SCANCODE_LEFT_SHIFT, 0);
+			simulate_keyboard(SCANCODE_LEFT_WIN, 0);
 		}
 		/* Not send SCANCODE_FAKE_COPILOT, reset the value to 0 */
 		*key_code = 0x0000;
