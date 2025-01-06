@@ -34,7 +34,7 @@
 
 
 #define SUPPORTED_DESCRIPTOR_MAJOR 0
-#define SUPPORTED_DESCRIPTOR_MINOR 1
+#define SUPPORTED_DESCRIPTOR_MINOR 2
 
 /**
  * The type of the CRC values.
@@ -441,6 +441,8 @@ const char * gpu_gpio_fn_to_name(enum gpu_gpio_purpose p)
 		return "VADP_EN";
 	case GPIO_FUNC_GPU_PWR:
 		return "GPUPWR";
+	case GPIO_FUNC_IS_THROTTLING:
+		return "THROTTLING";
 	default: 
 		return "UNKNOWN IDX";
 	}
@@ -450,10 +452,11 @@ const char * gpu_gpio_fn_to_name(enum gpu_gpio_purpose p)
 bool gpu_present(void)
 {
 	switch (gpu_vendor) {
-		case GPU_AMD_R23M:
-			return true;
-		default:
-			return false;
+	case GPU_AMD_R23M:
+	case GPU_NV_GN22:
+		return true;
+	default:
+		return false;
 	}
 }
 
