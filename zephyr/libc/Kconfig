@@ -1,0 +1,12 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config LIBC_EXIT
+	bool "Use CrosEC implementation of the exit function"
+	default y if NEWLIB_LIBC
+	help
+	  Override the default Zephyr exit function when using newlib so
+	  that exit() terminates the currently running thread, which can
+	  result in a system reboot. The default zephyr behavior respresents
+	  an infinite / busy-wait loop.
