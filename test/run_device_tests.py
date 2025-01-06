@@ -603,11 +603,7 @@ class AllTests:
             TestConfig(test_name="cortexm_fpu"),
             TestConfig(test_name="crc"),
             TestConfig(test_name="exception"),
-            TestConfig(
-                test_name="exit",
-                # TODO(b/365628799): Need to port to Zephyr.
-                skip_for_zephyr=True,
-            ),
+            TestConfig(test_name="exit"),
             TestConfig(
                 test_name="flash_physical",
                 imagetype_to_use=ImageType.RO,
