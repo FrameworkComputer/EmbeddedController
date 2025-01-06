@@ -40,6 +40,12 @@ tests:
     - CONFIG_HW_TEST_EXCEPTION=y
     extra_conf_files:
     - prj_hw_tests.conf
+  exit:
+    extra_configs:
+    - CONFIG_HW_TEST_EXIT=y
+    - CONFIG_ZTEST_FATAL_HOOK=y
+    extra_conf_files:
+    - prj_hw_tests.conf
   flash_physical:
     extra_configs:
     - CONFIG_HW_TEST_FLASH_PHYSICAL=y

@@ -12,6 +12,7 @@ zephyr_library_sources_ifdef(CONFIG_HW_TEST_BORINGSSL_CRYPTO src/boringssl_crypt
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_CORTEXM_FPU src/cortexm_fpu.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_CRC ${PLATFORM_EC}/zephyr/test/crc/main.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_EXCEPTION src/exception.cc)
+zephyr_library_sources_ifdef(CONFIG_HW_TEST_EXIT ${PLATFORM_EC}/zephyr/test/lib/src/exit.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_FLASH_PHYSICAL src/flash_physical.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_FLASH_WRITE_PROTECT src/flash_write_protect.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_FP_TRANSPORT src/fp_transport.c)

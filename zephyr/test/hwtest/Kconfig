@@ -41,6 +41,13 @@ config HW_TEST_EXCEPTION
 	bool "Exception test"
 	select ZTEST
 
+config HW_TEST_EXIT
+	bool "Exit test"
+	select ZTEST
+	help
+	  The test verifies if the exit() call works correctly and validates panic
+	  data.
+
 config HW_TEST_FLASH_PHYSICAL
 	bool "Flash physical test"
 	select ZTEST
