@@ -30,7 +30,7 @@
 #include "diagnostics.h"
 #include "lid_switch.h"
 
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 #include "gpu.h"
 #include "input_module.h"
 #endif
@@ -449,7 +449,7 @@ static bool multifunction_leds_control(void)
 	}
 #endif
 
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 	/* GPU bay cover detect switch open */
 	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_f_beam_open_l)) == 0 &&
 		!get_standalone_mode()) {

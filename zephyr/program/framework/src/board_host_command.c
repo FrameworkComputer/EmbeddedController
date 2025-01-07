@@ -32,7 +32,7 @@
 #include "zephyr_console_shim.h"
 #include "throttle_ap.h"
 
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 #include "gpu.h"
 #include "input_module.h"
 #endif
@@ -52,7 +52,7 @@ int stress_test_enable;
 
 DECLARE_DEFERRED(sci_enable);
 
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 static void gpu_typec_detect(void)
 {
 	set_host_dp_ready(1);
@@ -66,7 +66,7 @@ static void sci_enable(void)
 		/* when host set EC driver ready flag, EC need to enable SCI */
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
 		bios_function_detect();
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 		/* hook_call_deferred(&gpu_typec_detect_data, 500 * MSEC); */
 		gpu_typec_detect();
 #endif
@@ -77,7 +77,7 @@ static void sci_enable(void)
 static void sci_disable(void)
 {
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 	set_host_dp_ready(0);
 #endif
 }
@@ -268,7 +268,7 @@ static enum ec_status enter_acpi_mode(struct host_cmd_handler_args *args)
 {
 	hook_call_deferred(&sci_enable_data, 250 * MSEC);
 
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 	/* Need to cleanly enumerate keyboard in OS, otherwise NKRO won't work without hotplug */
 	/* So we reset the input modules right on entry to OS */
 	input_modules_reset();
@@ -341,7 +341,7 @@ static enum ec_status get_active_charge_pd_chip(struct host_cmd_handler_args *ar
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_ACTIVE_CHARGE_PD_CHIP, get_active_charge_pd_chip, EC_VER_MASK(0));
 
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 static enum ec_status host_command_uefi_app_mode(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_uefi_app_mode *p = args->params;
@@ -381,7 +381,7 @@ static enum ec_status hc_fingerprint_control(struct host_cmd_handler_args *args)
 	return EC_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_CONTROL, hc_fingerprint_control, EC_VER_MASK(0));
-#endif /* CONFIG_BOARD_LOTUS */
+#endif /* CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16 */
 
 #ifdef CONFIG_PLATFORM_PRIVACY_DEVICE_CHECK
 static enum ec_status privacy_switches_check(struct host_cmd_handler_args *args)

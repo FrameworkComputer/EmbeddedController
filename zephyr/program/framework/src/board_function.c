@@ -24,7 +24,7 @@
 #include "util.h"
 #include "zephyr_console_shim.h"
 
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 #include "input_module.h"
 #endif
 
@@ -66,7 +66,7 @@ void bios_function_detect(void)
 #ifndef CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
 	flash_storage_update(FLASH_FLAGS_STANDALONE, get_standalone_mode() ? 1 : 0);
 #endif
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 	flash_storage_update(FLASH_FLAGS_INPUT_MODULE_POWER, get_detect_mode());
 #endif
 	flash_storage_commit();
@@ -125,7 +125,7 @@ static void bios_function_init(void)
 	if (flash_storage_get(FLASH_FLAGS_STANDALONE))
 		set_standalone_mode(1);
 #endif
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 	set_detect_mode(flash_storage_get(FLASH_FLAGS_INPUT_MODULE_POWER));
 #endif
 }

@@ -33,7 +33,7 @@
 #include "math_util.h"
 
 
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 #include "touchpad_descriptor.h"
 #endif
 
@@ -151,7 +151,7 @@ struct als_feature_report {
 } __packed;
 
 
-#ifndef CONFIG_BOARD_LOTUS
+#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 
 static struct radio_report radio_button;
 static struct consumer_button_report consumer_button;
@@ -410,7 +410,7 @@ struct i2c_hid_target_config {
 
 
 };
-#ifndef CONFIG_BOARD_LOTUS
+#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 void irq_keyboard(void)
 {
 	const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(i2chid0));
@@ -611,7 +611,7 @@ static int hid_target_process_write(struct i2c_target_config *config)
 		break;
 	case I2C_HID_CMD_GET_REPORT:
 		data->report_id = report_id;
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 		if (data->descriptor->wCommandRegister == I2C_TOUCHPAD_HID_COMMAND_REGISTER) {
 			switch (report_id) {
 			case 2:
@@ -623,10 +623,10 @@ static int hid_target_process_write(struct i2c_target_config *config)
 				break;
 			}
 		} else
-#endif /* CONFIG_BOARD_LOTUS */
+#endif /* CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16 */
 		{
 			switch (report_id) {
-	#ifndef CONFIG_BOARD_LOTUS
+	#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 			case REPORT_ID_RADIO:
 					response_size = fill_report(data->buffer, report_id,
 							&radio_button,
@@ -712,7 +712,7 @@ static int hid_target_read_processed(struct i2c_target_config *config,
 	}
 
 	switch (target_register) {
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 	case I2C_TOUCHPAD_HID_DESC_REGISTER:
 #endif
 	case I2C_HID_MEDIAKEYS_HID_DESC_REGISTER:
@@ -722,7 +722,7 @@ static int hid_target_read_processed(struct i2c_target_config *config,
 			ret = -ENOBUFS;
 		}
 		break;
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 	case I2C_TOUCHPAD_HID_REPORT_DESC_REGISTER:
 #endif
 	case I2C_HID_REPORT_DESC_REGISTER:
@@ -768,7 +768,7 @@ static int hid_target_read_requested(struct i2c_target_config *config,
 	}
 
 	if (target_register == I2C_HID_COMMAND_REGISTER
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 		|| target_register == I2C_TOUCHPAD_HID_COMMAND_REGISTER
 #endif
 		)
@@ -780,7 +780,7 @@ static int hid_target_read_requested(struct i2c_target_config *config,
 	} else if (target_register == I2C_HID_INPUT_REPORT_REGISTER) {
 		/* Common input report requests. */
 		switch (data->report_id) {
-#ifndef CONFIG_BOARD_LOTUS
+#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 		case REPORT_ID_RADIO:
 			fill_report(data->buffer, REPORT_ID_RADIO,
 					&radio_button,
@@ -847,7 +847,7 @@ static int hid_target_stop(struct i2c_target_config *config)
 	gpio_pin_set_dt(data->alert_gpio, 1);
 
 	if (data->target_register == I2C_HID_COMMAND_REGISTER
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 		|| data->target_register == I2C_TOUCHPAD_HID_COMMAND_REGISTER
 #endif
 	) {

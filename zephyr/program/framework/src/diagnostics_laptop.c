@@ -56,7 +56,7 @@ int get_standalone_mode(void)
 void reset_diagnostics(void)
 {
 	/* Diagnostic always reset at G3/S5 */
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 	hw_diagnostics =
 		BIT(DIAGNOSTICS_NO_RIGHT_FAN) | BIT(DIAGNOSTICS_NO_LEFT_FAN) |
 		BIT(DIAGNOSTICS_NO_S0) | BIT(DIAGNOSTICS_HW_NO_BATTERY);
@@ -133,7 +133,7 @@ void print_diag_details(void)
 	CPRINTS("    No eDP:                 %s", YES_NO_BIT(DIAGNOSTICS_NO_EDP));
 	CPRINTS("    No Battery:             %s", YES_NO_BIT(DIAGNOSTICS_HW_NO_BATTERY));
 
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 	CPRINTS("  Required Removables");
 	CPRINTS("    Input Module Fault:     %s", YES_NO_BIT(DIAGNOSTICS_INPUT_MODULE_FAULT));
 	CPRINTS("    No Right Fan:           %s", YES_NO_BIT(DIAGNOSTICS_NO_LEFT_FAN));

@@ -18,7 +18,7 @@ enum power_limit_type {
 	TYPE_SPPT,
 	TYPE_FPPT,
 	TYPE_P3T,
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 	TYPE_APU_ONLY_SPPT,
 #endif
 	TYPE_COUNT,
@@ -61,7 +61,7 @@ void update_apu_ready(int status);
 
 int get_apu_ready(void);
 
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 int update_apu_only_sppt_limit(uint32_t mwatt);
 
 void update_pmf_events(uint8_t pd_event, int enable);

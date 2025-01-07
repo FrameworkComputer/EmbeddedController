@@ -30,7 +30,7 @@
 #include "throttle_ap.h"
 #include "zephyr_console_shim.h"
 
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 #include "gpu.h"
 #include "cpu_power.h"
 #endif
@@ -625,7 +625,7 @@ void cypd_set_typec_profile(int controller, int port)
 	if (pd_port_states[port_idx].power_role == PD_ROLE_SOURCE) {
 		if (pd_port_states[port_idx].pd_state) {
 
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 			/*
 			 * If safety level(LEVEL_TYPEC_1_5A) is triggered,
 			 * force 1.5A pdo to device.
@@ -1708,7 +1708,7 @@ void cypd_port_int(int controller, int port)
 		if (data2[0] == CCG_RESPONSE_HARD_RESET_SENT)
 			CPRINTS("CCG_RESPONSE_HARD_RESET_SENT");
 
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 		/* Assert prochot until the PMF is updated (Only sink role needs to do this) */
 		if (pd_port_states[(controller << 1) + port].power_role == PD_ROLE_SINK &&
 		   (prev_charge_port == (controller << 1) + port)) {
@@ -1720,7 +1720,7 @@ void cypd_port_int(int controller, int port)
 #endif /* CONFIG_PD_CCG8_EPR */
 			set_gpu_gpio(GPIO_FUNC_ACDC, 0);
 		}
-#endif /* CONFIG_BOARD_LOTUS */
+#endif /* CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16 */
 
 		cypd_update_port_state(controller, port);
 		/* make sure the type-c state is cleared */
