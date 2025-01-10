@@ -49,13 +49,17 @@ zephyr_library_sources_ifndef(CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_WAKE_ON_LAN
 	"src/wol.c")
 
-if(DEFINED CONFIG_BOARD_LOTUS)
-	project(lotus)
-	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_LOTUS include)
+if(DEFINED CONFIG_BOARD_LOTUS OR DEFINED CONFIG_BOARD_TULIP)
+	if(DEFINED CONFIG_BOARD_LOTUS)
+		project(lotus)
+		cros_ec_library_include_directories_ifdef(CONFIG_BOARD_LOTUS include)
+	elseif(DEFINED CONFIG_BOARD_TULIP)
+		project(tulip)
+		cros_ec_library_include_directories_ifdef(CONFIG_BOARD_TULIP include)
+	endif()
 	zephyr_include_directories("include/lotus")
 	zephyr_library_sources(
 			"lotus/src/battery.c"
-			"lotus/src/charger.c"
 			"lotus/src/cpu_power.c"
 			"lotus/src/input_module.c"
 			"lotus/src/gpu.c"
@@ -75,6 +79,11 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
 	"lotus/src/stt.c")
 
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_ISL9241
+	"lotus/src/charger.c")
+
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_BQ25770
+	"tulip/src/charger.c")
 endif()
 
 if(DEFINED CONFIG_BOARD_AZALEA)

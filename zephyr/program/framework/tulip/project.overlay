@@ -1,0 +1,69 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "../lotus/adc.dtsi"
+#include "../lotus/gpio.dtsi"
+#include "../lotus/i2c.dtsi"
+#include "../lotus/battery.dtsi"
+#include "../lotus/fan.dtsi"
+#include "../lotus/interrupts.dtsi"
+#include "../lotus/led_pins.dtsi"
+#include "../lotus/led_policy.dtsi"
+#include "../lotus/overlay.dtsi"
+#include "../lotus/power_signal.dtsi"
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+		/delete-node/ edp_mux_pwm_sw;
+		/delete-node/ usb3_ec_p2_cc1;
+		/delete-node/ usb3_ec_p2_cc2;
+		/delete-node/ ec_disen2;
+		/delete-node/ dgpu_pwr_en;
+
+		gpio_dgpu_pwr_en: dgpu_pwr_en {
+			gpios = <&gpioc 6 GPIO_INPUT>;
+		};
+		gpio_apu_ec_int2: apu_ec_int2_l {
+			gpios = <&gpio2 5 GPIO_ODR_HIGH>;   /* EC notify host HID interrupt 2*/
+		};
+		gpio_ssd1_pwr_en: ssd1_pwr_en {
+			gpios = <&gpio2 4 GPIO_OUTPUT_LOW>;	/* control JSSD1 PWR */
+		};
+		gpio_edp_mux_pwm_sw: edp_mux_pwm_sw {
+			gpios = <&gpio1 3 GPIO_OUTPUT_LOW>;
+		};
+	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_i_sys: i-sys {
+			enum-name = "ADC_PSYS";
+			io-channels = <&adc0 11>;
+		};
+    };
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_chan0_gp45
+		     &adc0_chan1_gp44
+		     &adc0_chan2_gp43
+		     &adc0_chan3_gp42
+		     &adc0_chan5_gp37
+		     &adc0_chan11_gpc7>;
+	pinctrl-names = "default";
+};
+
+&i2c3_0 {
+	/delete-node/ isl9241@9;
+    /* TODO: Need to change bq25770 */
+	charger: isl9241@9 {
+		compatible = "intersil,isl9241";
+		status = "okay";
+		reg = <0x9>;
+	};
+};
