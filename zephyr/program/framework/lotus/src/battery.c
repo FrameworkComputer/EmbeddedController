@@ -27,6 +27,8 @@
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
 
 #define CACHE_INVALIDATION_TIME_US (3 * SECOND)
+/* Shutdown mode parameter to write to manufacturer access register */
+#define SB_SHUTDOWN_DATA 0x0010
 
 static int battery_current_array[4];
 static int old_btp;
@@ -335,7 +337,9 @@ void board_cut_off(void)
 		return;
 	}
 
-	rv = board_cut_off_battery();
+	/* Ship mode command requires writing 2 data values */
+	rv = sb_write(SB_MANUFACTURER_ACCESS, SB_SHUTDOWN_DATA);
+	rv |= sb_write(SB_MANUFACTURER_ACCESS, SB_SHUTDOWN_DATA);
 
 	if (rv == EC_RES_SUCCESS) {
 		CPRINTS("Battery cutoff is successful");
