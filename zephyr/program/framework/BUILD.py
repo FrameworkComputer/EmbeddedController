@@ -26,6 +26,9 @@ lotus = register_framework_project(
 azalea = register_framework_project(
     project_name="azalea",
 )
+lilac = azalea.variant(
+    project_name="lilac",
+)
 
 marigold = register_framework_project(
     project_name="marigold",
@@ -35,4 +38,5 @@ marigold = register_framework_project(
 # must not change after the first RO release.
 assert_rw_fwid_DO_NOT_EDIT(project_name="lotus", addr=0X7EFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="azalea", addr=0X7EFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="lilac", addr=0X7EFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="marigold", addr=0X7FFE0)
