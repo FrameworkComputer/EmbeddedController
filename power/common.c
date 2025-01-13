@@ -602,7 +602,7 @@ int chipset_in_state(int state_mask)
 #ifdef CONFIG_CUSTOMIZED_DESIGN
 	case POWER_S0ixS3:
 	case POWER_S3S0ix:
-		need_mask = CHIPSET_STATE_ON | CHIPSET_STATE_STANDBY;
+		need_mask = CHIPSET_STATE_SUSPEND | CHIPSET_STATE_STANDBY;
 		break;
 #endif
 	case POWER_S0ixS0:
