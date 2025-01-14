@@ -33,7 +33,6 @@ jobs:
           { name: lotus, folder: lotus, ver: "4.0.3", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           # Just for reference, not releasing from this branch
           { name: lilac, folder: lotus, ver: "2.0.2", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
-          { name: azalea, folder: lotus, ver: "0.0.0", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           { name: marigold, folder: lotus, ver: "0.0.0", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           
         ]
