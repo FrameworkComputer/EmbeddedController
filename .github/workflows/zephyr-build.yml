@@ -27,7 +27,6 @@ jobs:
       matrix:
         platform: [
           { name: lilac, folder: marigold2, ver: "2.0.2", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
-          { name: azalea, folder: marigold2, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           { name: marigold, folder: marigold2, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           { name: lotus, folder: marigold2, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
         ]
