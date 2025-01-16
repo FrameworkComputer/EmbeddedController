@@ -86,7 +86,7 @@ int ucsi_write_tunnel(void)
 	uint8_t *message_out = host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_MESSAGE_OUT);
 	uint8_t *command = host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND);
 	uint8_t change_connector_indicator = 0;
-	int controller;
+	int controller = 0;
 	int offset = 0;
 	int rv = EC_SUCCESS;
 
@@ -135,12 +135,17 @@ int ucsi_write_tunnel(void)
 		change_connector_indicator =
 			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset) & 0x7f;
 
-		if (change_connector_indicator > 0 && change_connector_indicator !=
-				ucsi_pd_port_map[change_connector_indicator-1].pd_controller_port) {
+		if (change_connector_indicator > PD_PORT_COUNT ||
+			change_connector_indicator == 0) {
+			/* Print the invalid port for debugging */
+			if (ucsi_debug_enable && change_connector_indicator > PD_PORT_COUNT)
+				CPRINTS("UCSI write invalid type-c port:%d",
+					change_connector_indicator);
+		} else {
 			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset) =
-				ucsi_pd_port_map[change_connector_indicator-1].pd_controller_port;
+				  ucsi_pd_port_map[change_connector_indicator-1].pd_controller_port;
+			controller = ucsi_pd_port_map[change_connector_indicator-1].pd_controller;
 		}
-		controller = ucsi_pd_port_map[change_connector_indicator-1].pd_controller;
 
 		pd_chip_ucsi_info[controller].wait_ack = 1;
 		rv = cypd_write_reg_block(controller, CCG_MESSAGE_OUT_REG, message_out, 16);
@@ -300,7 +305,7 @@ static int ucsi_check_all_pd_status(int operator)
 
 int ucsi_read_tunnel(int controller)
 {
-	int rv;
+	int rv, port_indicator;
 
 	if (ucsi_debug_enable && pd_chip_ucsi_info[controller].read_tunnel_complete == 1 &&
 		(pd_chip_ucsi_info[controller].cci & CCI_BUSY_FLAG) == 0) {
@@ -313,10 +318,14 @@ int ucsi_read_tunnel(int controller)
 	if (rv != EC_SUCCESS)
 		CPRINTS("CCI_REG failed");
 	/* we need to offset the pd connector number to correct number */
-	if (pd_chip_ucsi_info[controller].cci & 0xFE) {
+	port_indicator = (pd_chip_ucsi_info[controller].cci & 0xFE)>>1;
+	if (port_indicator <= 0 || port_indicator > PORTS_PER_CONTROLLER) {
+		/* Print the invalid port for debugging */
+		if (ucsi_debug_enable && port_indicator > PORTS_PER_CONTROLLER)
+			CPRINTS("UCSI read invalid type-c port:%d", port_indicator);
+	} else {
 		pd_chip_ucsi_info[controller].cci = (pd_chip_ucsi_info[controller].cci & 0xFFFFFF01)
-		| (pd_ucsi_port_map[controller*2+((pd_chip_ucsi_info[controller].cci & 0xFE)>>1)-1]
-		<< 1);
+		| (pd_ucsi_port_map[controller*2+port_indicator-1] << 1);
 	}
 
 	/* If data length is non zero, then get data */
