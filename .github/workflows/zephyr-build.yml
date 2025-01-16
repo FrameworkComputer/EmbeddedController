@@ -31,7 +31,7 @@ jobs:
           # Not official release on track-upstream branch.
           # And need to use zephyr on track-upstream as well
           { name: marigold, folder: marigold2, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
-          { name: dogwood, folder: marigold2, ver: "0.0.10", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
+          { name: dogwood, folder: marigold2, ver: "1.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           # Lotus and Azalea official releases are NOT coming from this branch
           { name: lotus, folder: marigold2, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           { name: azalea, folder: marigold2, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
