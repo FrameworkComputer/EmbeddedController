@@ -43,8 +43,12 @@ K_MUTEX_DEFINE(sb_rmi_mutex);
  */
 static int sb_rmi_write(const int reg, int data)
 {
-	return i2c_write8(I2C_PORT_THERMAL_AP, SB_RMI_I2C_ADDR_FLAGS0, reg,
-			  data);
+	if (chipset_in_low_power_mode()) {
+		return EC_ERROR_NOT_POWERED;
+	} else {
+		return i2c_write8(I2C_PORT_THERMAL_AP, SB_RMI_I2C_ADDR_FLAGS0, reg,
+			   data);
+	}
 }
 
 /**
@@ -52,8 +56,12 @@ static int sb_rmi_write(const int reg, int data)
  */
 static int sb_rmi_read(const int reg, int *data)
 {
-	return i2c_read8(I2C_PORT_THERMAL_AP, SB_RMI_I2C_ADDR_FLAGS0, reg,
-			 data);
+	if (chipset_in_low_power_mode()) {
+		return EC_ERROR_NOT_POWERED;
+	} else {
+		return i2c_read8(I2C_PORT_THERMAL_AP, SB_RMI_I2C_ADDR_FLAGS0, reg,
+			   data);
+	}
 }
 
 /**
@@ -310,8 +318,8 @@ int sb_rmi_mailbox_xfer(int cmd, uint32_t msg_in, uint32_t *msg_out_ptr)
 	alerted = false;
 	start = get_time();
 	do {
-		if (sb_rmi_read(SB_RMI_STATUS_REG, &val))
-			break;
+		CLEAR_MUTEX_RETURN_ERROR(sb_rmi_read(SB_RMI_STATUS_REG, &val));
+
 		if (val & 0x02) {
 			alerted = true;
 			break;
