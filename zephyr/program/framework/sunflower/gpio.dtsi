@@ -74,6 +74,14 @@
 		gpio_mic_sw: mic_sw {
 			gpios = <&gpioc 1 GPIO_INPUT>;
 		};
+		gpio_os_det_cam_ec: os_det_cam_ec {
+			/* Camera module OS detection function. */
+			/* Not connected to camera, just testpoint TP56 */
+			gpios = <&gpio3 0 GPIO_ODR_HIGH>;
+		};
+		gpio_stylus_sw_r: stylus_sw_r {
+			gpios = <&gpio2 7 GPIO_ODR_HIGH>; /*Touch panel stylus protocol switch */
+		};
 		gpio_en_5v_pb: en_5v_pb {
 			gpios = <&gpio2 2 GPIO_OUTPUT_LOW>; /*Power button board 5V EN*/
 		};
@@ -280,8 +288,6 @@
 			<&gpio2 4 0>,
 			<&gpio2 5 0>,
 			<&gpio2 6 0>,
-			<&gpio2 7 0>,
-			<&gpio3 0 0>,
 			<&gpio3 1 0>,
 			<&gpio5 6 0>,
 			<&gpiof 4 0>,
