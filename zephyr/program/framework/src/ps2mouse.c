@@ -435,6 +435,13 @@ read_failed:
 	} else {
 		inreport_retries = 0;
 	}
+
+	if (need_reset) {
+		CPRINTS("PS2M Unexpected Report ID %d reconfiguring", data[2]);
+		setup_touchpad();
+		need_reset = 0;
+	}
+
 	i2c_lock(I2C_PORT_TOUCHPAD, 0);
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_tp));
 
@@ -482,12 +489,6 @@ read_failed:
 		current_pos[1] = x;
 		current_pos[2] = y;
 		send_movement_packet();
-	}
-
-	if (need_reset) {
-		CPRINTS("PS2M Unexpected Report ID %d reconfiguring", data[2]);
-		setup_touchpad();
-		need_reset = 0;
 	}
 }
 /*
