@@ -111,8 +111,7 @@ static int should_stay_powered_on(void)
 {
 	int wake_source = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT);
 
-	/* This feature only use on the ODM stress test tool */
-	if (wake_source & RTCWAKE)
+	if (wake_source & (RTCWAKE | USBWAKE))
 		return true;
 	else
 		return false;
@@ -164,10 +163,10 @@ static void lpc_s0ix_resume_restore_masks(void)
 	backup_sci_mask = 0;
 }
 
-/* BIOS clear event in open or shutdon, to check EC necessary rtcwake */
-static void clear_rtcwake(void)
+/* BIOS clear event in open or shutdon, to check EC necessary wake events */
+static void power_clear_wake_event(uint8_t wake_events)
 {
-	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) &= ~BIT(0);
+	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) &= ~wake_events;
 }
 
 void power_state_clear(int state)
@@ -287,7 +286,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 		report_ap_reset(reason);
 		force_shutdown_flags = 1;
 		task_wake(TASK_ID_CHIPSET);
-		clear_rtcwake();
+		power_clear_wake_event(RTCWAKE | USBWAKE);
 	}
 }
 
@@ -439,7 +438,7 @@ enum power_state power_handle_state(enum power_state state)
 						ap_boot_delay = 9;
 						s5_exit_tries = 0;
 						stress_test_enable = 0;
-						clear_rtcwake();
+						power_clear_wake_event(RTCWAKE | USBWAKE);
 						set_diagnostic(DIAGNOSTICS_SLP_S5, 1);
 						set_diagnostic(DIAGNOSTICS_SLP_S4, 1);
 						/* SLP_S5 asserted, power down to G3S5 state */
@@ -500,6 +499,7 @@ enum power_state power_handle_state(enum power_state state)
 			/* power loss, don't communicate with PD chip */
 			if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pok_l)) == 0) {
 				cypd_update_chips_state(CCG_STATE_NO_POWER);
+				power_clear_wake_event(RTCWAKE | USBWAKE);
 				return POWER_G3;
 			}
 
@@ -557,7 +557,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* set the PD chip system power state "S0" */
 		cypd_set_power_active();
 
-		clear_rtcwake();
+		power_clear_wake_event(RTCWAKE | USBWAKE);
 
 		return POWER_S0;
 
@@ -569,6 +569,7 @@ enum power_state power_handle_state(enum power_state state)
 			/* power loss, don't communicate with PD chip */
 			if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pok_l)) == 0) {
 				cypd_update_chips_state(CCG_STATE_NO_POWER);
+				power_clear_wake_event(RTCWAKE | USBWAKE);
 				return POWER_G3;
 			}
 
