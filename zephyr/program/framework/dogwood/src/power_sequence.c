@@ -391,6 +391,8 @@ enum power_state power_handle_state(enum power_state state)
 		/* If pok_l is on make psu pok pass */
 		set_diagnostic(DIAGNOSTICS_PSU_POK, 0);
 
+		cypd_update_chips_state(CCG_STATE_POWER_ON);
+
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75_1p8valw_pwren), 1);
 		k_msleep(10);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_1p2valw_pwren), 1);
@@ -495,6 +497,12 @@ enum power_state power_handle_state(enum power_state state)
 				return POWER_S0;
 			}
 
+			/* power loss, don't communicate with PD chip */
+			if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pok_l)) == 0) {
+				cypd_update_chips_state(CCG_STATE_NO_POWER);
+				return POWER_G3;
+			}
+
 			/* disable the ssd2 power when the system shutdown to S5 */
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 0);
 			k_msleep(55);
@@ -557,6 +565,13 @@ enum power_state power_handle_state(enum power_state state)
 
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 0 ||
 			force_shutdown_flags) {
+
+			/* power loss, don't communicate with PD chip */
+			if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pok_l)) == 0) {
+				cypd_update_chips_state(CCG_STATE_NO_POWER);
+				return POWER_G3;
+			}
+
 			/* Power down to next state */
 			k_msleep(5);
 			return POWER_S0S3;
@@ -663,7 +678,6 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_1p2valw_pwren), 0);
 
 		k_msleep(5);
-		power_enable_psu(0);
 
 		/* clear suspend flag when system shutdown */
 		power_state_clear(EC_PS_ENTER_S0ix |
@@ -672,6 +686,8 @@ enum power_state power_handle_state(enum power_state state)
 		cypd_set_power_active();
 
 		cypd_update_chips_state(CCG_STATE_NO_POWER);
+
+		power_enable_psu(0);
 
 		/* check the 12vb_apu signal after turn off the PSU (ps_on = low) */
 		power_check_12vb_apu();
