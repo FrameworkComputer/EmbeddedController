@@ -1728,6 +1728,9 @@ void cypd_interrupt(int controller)
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
+	if (pd_chip_config[controller].state == CCG_STATE_NO_POWER)
+		return;
+
 	rv = cypd_get_int(controller, &data);
 	if (rv != EC_SUCCESS) {
 		return;
