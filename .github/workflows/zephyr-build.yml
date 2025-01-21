@@ -30,7 +30,7 @@ jobs:
           # Marigold builder uses same folder for all
           # Not official release on track-upstream branch.
           # And need to use zephyr on track-upstream as well
-          { name: sunflower, folder: marigold1, ver: "1.0.4", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main" },
+          { name: sunflower, folder: marigold1, ver: "2.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main" },
           { name: marigold, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main" },
           # Lotus and Azalea official releases are NOT coming from this branch
           { name: lotus, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main" },
