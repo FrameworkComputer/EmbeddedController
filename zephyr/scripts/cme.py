@@ -13,7 +13,8 @@ from typing import List, Optional
 
 import zmake.version
 
-from scripts import chip_id
+from scripts import cme_additional_id
+from scripts import cme_chip_id
 from scripts import util
 
 
@@ -154,8 +155,8 @@ def disambiguify(component):
     ret = []
 
     name = component["component_name"]
-    if name in chip_id.DISAMBIGUATION_DICTIONARY:
-        for comp_info in chip_id.DISAMBIGUATION_DICTIONARY[name]:
+    if name in cme_chip_id.DISAMBIGUATION_DICTIONARY:
+        for comp_info in cme_chip_id.DISAMBIGUATION_DICTIONARY[name]:
             new_comp = deepcopy(component)
             new_comp["component_name"] = comp_info.name
 
@@ -167,6 +168,25 @@ def disambiguify(component):
             ret.append(new_comp)
     else:
         ret.append(component)
+
+    # Additional components do not replace the original component
+    if name in cme_additional_id.ADDITIONAL_DICTIONARY:
+        for additional_info in cme_additional_id.ADDITIONAL_DICTIONARY[name]:
+            if (
+                additional_info.port is not None
+                and additional_info.port is not component["usbc"]["port"]
+            ):
+                continue
+
+            new_comp = deepcopy(component)
+            new_comp["component_name"] = additional_info.name
+            new_comp["component_type"] = additional_info.ctype
+            new_comp["probe"] = "indirect"
+
+            insert_expect("i2c", new_comp, additional_info.command_1)
+            insert_expect("i2c", new_comp, additional_info.command_2)
+
+            ret.append(new_comp)
 
     return ret
 
