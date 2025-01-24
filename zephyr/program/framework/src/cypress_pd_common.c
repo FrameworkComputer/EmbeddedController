@@ -26,6 +26,7 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "usb_tc_sm.h"
+#include "usb_emsg.h"
 #include "util.h"
 #include "throttle_ap.h"
 #include "zephyr_console_shim.h"
@@ -39,6 +40,7 @@
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 struct alert_msg_t alert_rx[CONFIG_USB_PD_PORT_MAX_COUNT];
+struct extended_msg rx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int prev_charge_port = -1;
 static bool verbose_msg_logging;
@@ -709,7 +711,6 @@ static void cypd_ppm_port_clear(void)
 	hook_call_deferred(&pdo_init_deferred_data, 1);
 }
 
-#ifdef CONFIG_PD_COMMON_EXTENDED_MESSAGE
 /*
  * send a message using DM_CONTROL to port partner
  * pd_header is using chromium PD header with upper bits defining SOP type
@@ -770,149 +771,6 @@ void cypd_send_msg(int controller, int port, uint32_t pd_header, uint16_t ext_hd
 	cypd_write_reg16(controller, CCG_DM_CONTROL_REG(port), dm_control_data);
 }
 
-
-void cypd_response_get_battery_capability(int controller, int port,
-	uint32_t pd_header, enum tcpci_msg_type sop_type)
-{
-	int port_idx = (controller << 1) + port;
-	int ext_header = 0;
-	bool chunked = PD_EXT_HEADER_CHUNKED(rx_emsg[port_idx].header);
-	uint16_t msg[5] = {0, 0, 0, 0, 0};
-	uint32_t header = PD_EXT_BATTERY_CAP + PD_HEADER_SOP(sop_type);
-
-	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
-
-	ext_header = 9;
-	/* Set extended header */
-	if (chunked) {
-		ext_header |= BIT(15);
-	}
-	/* Set VID */
-	msg[0] = VENDOR_ID;
-
-	/* Set PID */
-	msg[1] = PRODUCT_ID;
-
-	if (battery_is_present() == BP_YES) {
-		/*
-		 * We only have one fixed battery,
-		 * so make sure batt cap ref is 0.
-		 */
-		if (rx_emsg[port_idx].buf[0] != 0) {
-			/* Invalid battery reference */
-			msg[4] = 1;
-		} else {
-			uint32_t v;
-			uint32_t c;
-
-			/*
-			 * The Battery Design Capacity field shall return the
-			 * Battery’s design capacity in tenths of Wh. If the
-			 * Battery is Hot Swappable and is not present, the
-			 * Battery Design Capacity field shall be set to 0. If
-			 * the Battery is unable to report its Design Capacity,
-			 * it shall return 0xFFFF
-			 */
-			msg[2] = 0xffff;
-
-			/*
-			 * The Battery Last Full Charge Capacity field shall
-			 * return the Battery’s last full charge capacity in
-			 * tenths of Wh. If the Battery is Hot Swappable and
-			 * is not present, the Battery Last Full Charge Capacity
-			 * field shall be set to 0. If the Battery is unable to
-			 * report its Design Capacity, the Battery Last Full
-			 * Charge Capacity field shall be set to 0xFFFF.
-			 */
-			msg[3] = 0xffff;
-
-			if (battery_design_voltage(&v) == 0) {
-				if (battery_design_capacity(&c) == 0) {
-					/*
-					 * Wh = (c * v) / 1000000
-					 * 10th of a Wh = Wh * 10
-					 */
-					msg[2] = DIV_ROUND_NEAREST((c * v),
-								100000);
-				}
-
-				if (battery_full_charge_capacity(&c) == 0) {
-					/*
-					 * Wh = (c * v) / 1000000
-					 * 10th of a Wh = Wh * 10
-					 */
-					msg[3] = DIV_ROUND_NEAREST((c * v),
-								100000);
-				}
-			}
-		}
-	}
-	cypd_send_msg(controller, port, header, ext_header,  false, false,
-		(void *)msg, ARRAY_SIZE(msg)*sizeof(uint16_t));
-
-}
-
-int cypd_response_get_battery_status(int controller, int port,
-	uint32_t pd_header, enum tcpci_msg_type sop_type)
-{
-	int rv = 0;
-	uint32_t msg = 0;
-	uint32_t header = PD_DATA_BATTERY_STATUS + PD_HEADER_SOP(sop_type);
-	int port_idx = (controller << 1) + port;
-
-	if (battery_is_present() == BP_YES) {
-		/*
-		 * We only have one fixed battery,
-		 * so make sure batt cap ref is 0.
-		 */
-		if (rx_emsg[port_idx].buf[0] != 0) {
-			/* Invalid battery reference */
-			msg |= BSDO_INVALID;
-		} else {
-			uint32_t v;
-			uint32_t c;
-
-			if (battery_design_voltage(&v) != 0 ||
-					battery_remaining_capacity(&c) != 0) {
-				msg |= BSDO_CAP(BSDO_CAP_UNKNOWN);
-			} else {
-				/*
-				 * Wh = (c * v) / 1000000
-				 * 10th of a Wh = Wh * 10
-				 */
-				msg |= BSDO_CAP(DIV_ROUND_NEAREST((c * v),
-								100000));
-			}
-
-			/* Battery is present */
-			msg |= BSDO_PRESENT;
-
-			/*
-			 * For drivers that are not smart battery compliant,
-			 * battery_status() returns EC_ERROR_UNIMPLEMENTED and
-			 * the battery is assumed to be idle.
-			 */
-			if (battery_status(&c) != 0) {
-				msg |= BSDO_IDLE; /* assume idle */
-			} else {
-				if (c & STATUS_FULLY_CHARGED)
-					/* Fully charged */
-					msg |= BSDO_IDLE;
-				else if (c & STATUS_DISCHARGING)
-					/* Discharging */
-					msg |= BSDO_DISCHARGING;
-				/* else battery is charging.*/
-			}
-		}
-	} else {
-		msg = BSDO_CAP(BSDO_CAP_UNKNOWN);
-	}
-
-	cypd_send_msg(controller, port, header, 0,  true, false, &msg, 4);
-
-	return rv;
-}
-
 int cypd_handle_extend_msg(int controller, int port, int len, enum tcpci_msg_type sop_type)
 {
 	/**
@@ -951,12 +809,6 @@ int cypd_handle_extend_msg(int controller, int port, int len, enum tcpci_msg_typ
 	type = PD_HEADER_TYPE(pd_header);
 
 	switch (type) {
-	case PD_EXT_GET_BATTERY_CAP:
-		cypd_response_get_battery_capability(controller, port, pd_header, sop_type);
-		break;
-	case PD_EXT_GET_BATTERY_STATUS:
-		rv = cypd_response_get_battery_status(controller, port, pd_header, sop_type);
-		break;
 	default:
 		CPRINTF("Port:%d Unknown data type: 0x%02x Hdr:0x%04x ExtHdr:0x%04x Data:0x",
 				port_idx, type, pd_header, rx_emsg[port_idx].header);
@@ -970,7 +822,6 @@ int cypd_handle_extend_msg(int controller, int port, int len, enum tcpci_msg_typ
 
 	return rv;
 }
-#endif
 
 static void clear_port_state(int controller, int port)
 {
@@ -1784,10 +1635,10 @@ void cypd_port_int(int controller, int port)
 			sop_type = TCPCI_MSG_SOP_PRIME;
 		else if (data2[0] == CCG_RESPONSE_EXT_MSG_SOP_RX)
 			sop_type = TCPCI_MSG_SOP_PRIME_PRIME;
-#ifdef CONFIG_PD_COMMON_EXTENDED_MESSAGE
+
 		cypd_handle_extend_msg(controller, port, response_len, sop_type);
-		CPRINTS("CYP_RESPONSE_RX_EXT_MSG");
-#endif /* CONFIG_PD_COMMON_EXTENDED_MESSAGE */
+		if (verbose_msg_logging)
+			CPRINTS("CYP_RESPONSE_RX_EXT_MSG");
 		break;
 	case CCG_RESPONSE_OVER_CURRENT:
 		CPRINTS("CCG_RESPONSE_OVER_CURRENT %d", port_idx);
