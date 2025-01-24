@@ -809,6 +809,16 @@ int cypd_handle_extend_msg(int controller, int port, int len, enum tcpci_msg_typ
 	type = PD_HEADER_TYPE(pd_header);
 
 	switch (type) {
+	case PD_EXT_CONTROL:
+		/*
+		 * Workaround to handle the message type is EPR KeepAlive.
+		 * Note on the new PD firmware, it will pass the EPR keepalive messages
+		 * to the EC right now. To avoid spamming the ec log until we figure out
+		 * how to disable this.
+		 */
+		if (rx_emsg[port_idx].buf[0] == PD_EXT_CTRL_EPR_KEEPALIVE_ACK)
+			break;
+		__fallthrough;
 	default:
 		CPRINTF("Port:%d Unknown data type: 0x%02x Hdr:0x%04x ExtHdr:0x%04x Data:0x",
 				port_idx, type, pd_header, rx_emsg[port_idx].header);
