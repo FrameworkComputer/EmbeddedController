@@ -12,22 +12,11 @@ on:
 jobs:
   build:
     name: Build lotus/azalea
-    runs-on: [lotus-azalea-builders]
-
-    strategy:
-      # Only build one at a time because we have only one working directory
-      max-parallel: 1
-      matrix:
-        platform: [
-          {name: lotus, folder: lotus },
-          {name: azalea, folder: lotus },
-        ]
-
-
+    runs-on: ubuntu-20.04
     # Build not in $GITHUB_HOME but in the chroot env
     defaults:
       run:
-        working-directory: /${{ matrix.platform.folder }}/ec_home/chromiumos
+        working-directory: /lotus/ec_home/chromiumos
 
     steps:
       # Need to use git
@@ -46,28 +35,34 @@ jobs:
       # actions/checkout@v4 complains:
       # Error: Repository path '/lotus/ec_home/chromiumos/src/platform/ec' is not under '/data/ec_home/actions-runner/_work/ec/ec'
       # See: https://github.com/actions/checkout/issues/197
-      - name: Manual checkout
-        run: |
-          pushd src/platform/ec
-          git fetch github-private
-          git clean -ffdx
-          # TODO: Doesn't work with on PR, only push
-          git reset --hard github-private/$GITHUB_REF_NAME
-          popd
+      # - name: Manual checkout
+      #   run: |
+      #     pushd src/platform/ec
+      #     git fetch github-private
+      #     git clean -ffdx
+      #     # TODO: Doesn't work with on PR, only push
+      #     git reset --hard github-private/$GITHUB_REF_NAME
+      #     popd
 
-          pushd src/third_party/zephyr/main
-          git fetch github-private
-          git clean -ffdx
-          git reset --hard github-private/lotus-zephyr
-          popd
+      #     pushd src/third_party/zephyr/main
+      #     git fetch github-private
+      #     git clean -ffdx
+      #     git reset --hard github-private/lotus-zephyr
+      #     popd
+      - name: install toolchain
+        run: sudo apt install gcc-arm-none-eabi libftdi1-dev
+      # Checks out a copy of your repository on the ubuntu-latest machine
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Build ${{ matrix.platform.name }}
+        
+      - name: Build azalea
         run: |
-          cros_sdk zmake build ${{ matrix.platform.name }}
-          echo Built ${{ matrix.platform.name }} EC
+          cros_sdk zmake build azalea
+          echo Built azalea EC
 
       - name: File sha256
-        run: sha256sum src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output/ec.bin
+        run: sha256sum src/platform/ec/build/zephyr/azalea/output/ec.bin
 
       - name: Generate artifact version
         run: |
@@ -75,5 +70,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.platform.name }}.${{ env.VERSIONINFO }}
-          path: /${{ matrix.platform.folder }}/ec_home/chromiumos/src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output
+          name: azalea.${{ env.VERSIONINFO }}
+          path: /lotus/ec_home/chromiumos/src/platform/ec/build/zephyr/azalea/output
