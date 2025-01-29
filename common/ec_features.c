@@ -82,7 +82,7 @@ uint32_t get_feature_flags0(void)
 #ifdef CONFIG_HOSTCMD_PD
 			  | EC_FEATURE_MASK_0(EC_FEATURE_SUB_MCU)
 #endif
-#ifdef CONFIG_CHARGE_MANAGER
+#if defined(CONFIG_CHARGE_MANAGER) && defined(CONFIG_USB_POWER_DELIVERY)
 			  | EC_FEATURE_MASK_0(EC_FEATURE_USB_PD)
 #endif
 #ifdef CONFIG_ACCEL_FIFO
