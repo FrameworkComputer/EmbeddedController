@@ -419,6 +419,41 @@ static void call_cci_event_cb(struct pdc_data_t *data)
 	data->cci_event.raw_value = 0;
 }
 
+static void tps_set_data_role_prefence(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	union reg_port_control pdc_port_control;
+	int rv;
+
+	/* Read PDC port control */
+	rv = tps_rw_port_control(&cfg->i2c, &pdc_port_control, I2C_MSG_READ);
+	if (rv) {
+		LOG_ERR("Read port control failed");
+		goto error_recovery;
+	}
+
+	/* swap_to_dfp and swap_to_ufp should not both be set */
+	if (data->uor.swap_to_dfp) {
+		pdc_port_control.initiate_swap_to_dfp = data->uor.swap_to_dfp;
+		pdc_port_control.initiate_swap_to_ufp = 0;
+	} else {
+		pdc_port_control.initiate_swap_to_ufp = data->uor.swap_to_ufp;
+		pdc_port_control.initiate_swap_to_dfp = 0;
+	}
+
+	/* Write PDC port control */
+	rv = tps_rw_port_control(&cfg->i2c, &pdc_port_control, I2C_MSG_WRITE);
+	if (rv) {
+		LOG_ERR("Write port control failed");
+		goto error_recovery;
+	}
+
+	return;
+
+error_recovery:
+	set_state(data, ST_ERROR_RECOVERY);
+}
+
 static void st_irq_entry(void *o)
 {
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
@@ -692,6 +727,7 @@ static void st_idle_run(void *o)
 			task_ucsi(data, UCSI_GET_CONNECTOR_CAPABILITY);
 			break;
 		case CMD_SET_UOR:
+			tps_set_data_role_prefence(data);
 			task_ucsi(data, UCSI_SET_UOR);
 			break;
 		case CMD_SET_PDR:

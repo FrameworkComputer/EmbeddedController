@@ -1096,6 +1096,22 @@ static int tps6699x_emul_get_frs(const struct emul *target, bool *enabled)
 	return 0;
 }
 
+static int tps6699x_emul_get_data_role_preference(const struct emul *target,
+						  int *swap_to_dfp,
+						  int *swap_to_ufp)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	const union reg_port_control *pdc_port_control =
+		(const union reg_port_control *)data->reg_val[REG_PORT_CONTROL];
+
+	*swap_to_dfp = pdc_port_control->initiate_swap_to_dfp;
+	*swap_to_ufp = pdc_port_control->initiate_swap_to_ufp;
+
+	return 0;
+}
+
 static DEVICE_API(emul_pdc, emul_tps6699x_api) = {
 	.reset = emul_tps6699x_reset,
 	.set_response_delay = emul_tps6699x_set_response_delay,
@@ -1125,6 +1141,7 @@ static DEVICE_API(emul_pdc, emul_tps6699x_api) = {
 	.set_vconn_sourcing = tps6699x_emul_set_vconn_sourcing,
 	.set_cmd_error = tps6699x_emul_set_cmd_error,
 	.get_frs = tps6699x_emul_get_frs,
+	.get_data_role_preference = tps6699x_emul_get_data_role_preference,
 };
 
 /* clang-format off */

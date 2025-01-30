@@ -84,8 +84,9 @@ static int tps_write_reg(const struct i2c_dt_spec *i2c, enum tps6699x_reg reg,
 	return i2c_transfer_dt(i2c, msg, ARRAY_SIZE(msg));
 }
 
-static int tps_xfer_reg(const struct i2c_dt_spec *i2c, enum tps6699x_reg reg,
-			uint8_t *buf, uint8_t len, int flag)
+test_mockable_static int tps_xfer_reg(const struct i2c_dt_spec *i2c,
+				      enum tps6699x_reg reg, uint8_t *buf,
+				      uint8_t len, int flag)
 {
 	if (!i2c || !buf || (len == 0)) {
 		return -EINVAL;
@@ -172,8 +173,8 @@ int tps_rw_port_configuration(const struct i2c_dt_spec *i2c,
 			    sizeof(union reg_port_configuration), flag);
 }
 
-int tps_rw_port_control(const struct i2c_dt_spec *i2c,
-			union reg_port_control *buf, int flag)
+test_mockable int tps_rw_port_control(const struct i2c_dt_spec *i2c,
+				      union reg_port_control *buf, int flag)
 {
 	return tps_xfer_reg(i2c, REG_PORT_CONTROL, buf->raw_value,
 			    sizeof(union reg_port_control), flag);

@@ -96,6 +96,9 @@ typedef int (*emul_pdc_set_cmd_error_t)(const struct emul *target,
 					bool enabled);
 typedef int (*emul_pdc_set_attention_vdo_t)(const struct emul *target,
 					    union get_attention_vdo_t);
+typedef int (*emul_pdc_get_data_role_preference_t)(const struct emul *target,
+						   int *swap_to_dfp,
+						   int *swap_to_ufp);
 
 __subsystem struct emul_pdc_driver_api {
 	emul_pdc_set_response_delay_t set_response_delay;
@@ -133,6 +136,7 @@ __subsystem struct emul_pdc_driver_api {
 	emul_pdc_set_vconn_sourcing_t set_vconn_sourcing;
 	emul_pdc_set_cmd_error_t set_cmd_error;
 	emul_pdc_set_attention_vdo_t set_attention_vdo;
+	emul_pdc_get_data_role_preference_t get_data_role_preference;
 };
 
 static inline int emul_pdc_set_ucsi_version(const struct emul *target,
@@ -671,6 +675,24 @@ static inline int emul_pdc_get_frs(const struct emul *target, bool *enabled)
 
 	if (api->get_frs) {
 		return api->get_frs(target, enabled);
+	}
+
+	return -ENOSYS;
+}
+
+static inline int emul_pdc_get_data_role_preference(const struct emul *target,
+						    int *swap_to_dfp,
+						    int *swap_to_ufp)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_driver_api *api = target->backend_api;
+
+	if (api->get_data_role_preference) {
+		return api->get_data_role_preference(target, swap_to_dfp,
+						     swap_to_ufp);
 	}
 
 	return -ENOSYS;
