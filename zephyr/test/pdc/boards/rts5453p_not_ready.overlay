@@ -5,10 +5,10 @@
 
 #include "native_sim.overlay"
 
-/* The realtek,rts54-pdc nodes are deferred-init to cause device_is_ready() to
- * return false and named-usbc-port init to fail. The named-usbc-port nodes are
- * deferred init to allow a test to initialize these devices directly and
- * inspect the results.
+/* In this overlay, two RTK PDC nodes are active, but one of them (pdc_emul2,
+ * port C1) is marked deferred-init, so it will not start up automatically.
+ * This replicates a scenario where a PDC driver fails to initialize
+ * successfully for some other reason.
  */
 
 &i2c0 {
@@ -17,7 +17,6 @@
 		status = "okay";
 		reg = <0x66>;
 		irq-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
-		zephyr,deferred-init;
 	};
 
 	pdc_emul2: rts5453p@67 {
@@ -27,12 +26,4 @@
 		irq-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
 		zephyr,deferred-init;
 	};
-};
-
-&usbc0 {
-	zephyr,deferred-init;
-};
-
-&usbc1 {
-	zephyr,deferred-init;
 };

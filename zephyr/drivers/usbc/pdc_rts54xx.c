@@ -962,6 +962,13 @@ static void handle_irqs(struct pdc_data_t *data)
 		for (int j = 0; j < pdc_power_mgmt_get_usb_pd_port_count();
 		     j++) {
 			struct pdc_data_t *pdc_int_data = pdc_data[j];
+
+			if (pdc_int_data == NULL ||
+			    !device_is_ready(pdc_int_data->dev)) {
+				/* This PDC is not initialized. Ignore it. */
+				continue;
+			}
+
 			const struct pdc_config_t *cfg =
 				pdc_int_data->dev->config;
 

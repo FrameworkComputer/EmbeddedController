@@ -45,8 +45,10 @@ enum pdc_state_t {
 	PDC_SRC_TYPEC_ONLY,
 	/** PDC_SNK_TYPEC_ONLY */
 	PDC_SNK_TYPEC_ONLY,
-	/** Stop operation */
+	/** Pause operation temporarily (e.g. during FW update) */
 	PDC_SUSPENDED,
+	/** Permanently disabled (e.g. PDC driver not present) */
+	PDC_DISABLED,
 
 	/** Initial value, a placeholder state before entering init state */
 	PDC_INVALID,

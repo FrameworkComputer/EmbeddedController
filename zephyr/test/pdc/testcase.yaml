@@ -63,11 +63,8 @@ tests:
     timeout: 30
     extra_configs:
     - CONFIG_TEST_SUITE_PDC_DEVICE_NOT_READY=y
-    - CONFIG_ASSERT_TEST=y
-    - CONFIG_ZTEST_FATAL_HOOK=y
-    - CONFIG_TEST_SKIP_EC_APP_MAIN=y
     extra_dtc_overlay_files:
-    - "./boards/rts5453p_deferred.overlay"
+    - "./boards/rts5453p_not_ready.overlay"
 
   pdc.policy:
     timeout: 300

@@ -219,6 +219,7 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	const struct ppm_config *cfg =
 		(const struct ppm_config *)device->config;
 	struct ppm_data *data = (struct ppm_data *)device->data;
+	const struct device *lpm;
 	uint8_t ucsi_command = control->command;
 	uint8_t conn; /* 1:port=0, 2:port=1, ... */
 	uint8_t data_size;
@@ -274,6 +275,16 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 		return -ERANGE;
 	}
 
+	lpm = cfg->lpm[conn - 1];
+
+	/* Ensure the PDC for this port is fully initialized. */
+	if (!device_is_ready(lpm) || !pdc_is_init_done(lpm)) {
+		LOG_ERR("Cannot execute UCSI command 0x%02x: PDC not active (conn=%d)",
+			ucsi_command, conn);
+
+		return -ENOTCONN;
+	}
+
 	/* Some commands should get intercepted and handled directly via the PDC
 	 * power mgmt apis.
 	 */
@@ -293,8 +304,8 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	timeout = sys_timepoint_calc(K_MSEC(SYNC_CMD_TIMEOUT_MSEC));
 	k_event_clear(&ppm_event, PPM_EVENT_ALL);
 	do {
-		rv = pdc_execute_ucsi_cmd(cfg->lpm[conn - 1], ucsi_command,
-					  data_size, control->command_specific,
+		rv = pdc_execute_ucsi_cmd(lpm, ucsi_command, data_size,
+					  control->command_specific,
 					  lpm_data_out, &data->cc_cb);
 
 		if (rv == 0) {
@@ -424,6 +435,24 @@ test_export_static int ppm_init(const struct device *device)
 		(const struct ppm_config *)device->config;
 	struct ppm_data *data = (struct ppm_data *)device->data;
 	const struct ucsi_pd_driver *drv = device->api;
+
+	/* Check that referenced PDC (LPM) drivers are ready. If none are ready,
+	 * fail initialization of this driver. The PPM can continue to function
+	 * if only a subset of the PDC drivers are ready.
+	 */
+	int num_ready_pdcs = 0;
+	for (int i = 0; i < NUM_PORTS; i++) {
+		if (device_is_ready(cfg->lpm[i])) {
+			num_ready_pdcs++;
+			continue;
+		}
+		LOG_WRN("PDC driver for port %d is not ready", i);
+	}
+
+	if (num_ready_pdcs == 0) {
+		LOG_ERR("No PDC drivers are ready. Cannot initialize PPM.");
+		return -ENODEV;
+	}
 
 	/* Initialize the PPM. */
 	data->ppm_dev = ppm_data_init(drv, device, data->port_status,

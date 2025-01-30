@@ -3,27 +3,24 @@
  * found in the LICENSE file.
  */
 
+#include "usbc/pdc_power_mgmt.h"
+
 #include <stdbool.h>
 
 #include <zephyr/device.h>
-#include <zephyr/init.h>
-#include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
-#include <zephyr/ztest_error_hook.h>
-
-void ztest_post_fatal_error_hook(unsigned int reason,
-				 const struct arch_esf *pEsf)
-{
-	/* check if expected error */
-	zassert_equal(reason, K_ERR_KERNEL_OOPS);
-}
 
 ZTEST_SUITE(pdc_device_not_ready, NULL, NULL, NULL, NULL, NULL);
 
 ZTEST_USER(pdc_device_not_ready, test_pdc_device_not_ready)
 {
-	const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(usbc0));
+	/* Expect that PDC subsys port 0 is functional. */
+	zassert_ok(pdc_power_mgmt_wait_for_sync(0, -1));
+	zassert_equal(pdc_power_mgmt_get_task_state(0), PDC_UNATTACHED);
 
-	ztest_set_fault_valid(true);
-	device_init(dev);
-} /* LCOV_EXCL_LINE device_init will crash, so this function will not return. */
+	/* PDC emul on port 1 is marked as deferred-init, So the PDC driver
+	 * and pdc_power_mgmt driver should be in the disabled state.
+	 */
+	zassert_equal(pdc_power_mgmt_wait_for_sync(1, -1), -ERANGE);
+	zassert_equal(pdc_power_mgmt_get_task_state(1), PDC_DISABLED);
+}

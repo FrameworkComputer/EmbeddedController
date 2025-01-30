@@ -421,6 +421,7 @@ static const char *const pdc_state_names[] = {
 	[PDC_SRC_TYPEC_ONLY] = "TypeCSrcAttached",
 	[PDC_SNK_TYPEC_ONLY] = "TypeCSnkAttached",
 	[PDC_SUSPENDED] = "Suspended",
+	[PDC_DISABLED] = "Disabled",
 	[PDC_INVALID] = "PDC Invalid",
 };
 
@@ -885,6 +886,7 @@ static bool should_suspend(struct pdc_port_t *port)
 
 	/* No need to transition */
 	case PDC_SUSPENDED:
+	case PDC_DISABLED:
 		return false;
 
 	case PDC_INVALID:
@@ -1133,7 +1135,7 @@ static int queue_public_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd)
 	/* Don't send if still in init state */
 	enum pdc_state_t s = get_pdc_state(port);
 
-	if (s == PDC_INIT || s == PDC_SUSPENDED) {
+	if (s == PDC_INIT || s == PDC_SUSPENDED || s == PDC_DISABLED) {
 		return -ENOTCONN;
 	}
 
@@ -3119,7 +3121,20 @@ static const struct smf_state pdc_states[] = {
 						NULL, NULL),
 	[PDC_SUSPENDED] = SMF_CREATE_STATE(pdc_suspended_entry,
 					   pdc_suspended_run, NULL, NULL, NULL),
+	[PDC_DISABLED] = SMF_CREATE_STATE(NULL, NULL, NULL, NULL, NULL),
 };
+
+/**
+ * @brief Used to validate port numbers passed into the public API functions
+ *
+ *        Do not use for internal checks since port counts are not known until
+ *        all pdc_power_mgmt devices initialize.
+ */
+static bool is_pdc_port_valid(int port)
+{
+	return (port >= 0) && (port < pdc_power_mgmt_get_usb_pd_port_count()) &&
+	       (get_pdc_state(&pdc_data[port]->port) != PDC_DISABLED);
+}
 
 /**
  * @brief CCI event handler call back
@@ -3206,11 +3221,16 @@ static int pdc_subsys_init(const struct device *dev)
 	const struct pdc_config_t *const config = dev->config;
 	int rv;
 
-	/* Make sure PD Controller is ready */
+	/* Make sure underlying PDC driver is ready */
 	if (!device_is_ready(port->pdc)) {
-		LOG_ERR("PDC not ready");
-		k_oops();
-		/* Unreachable */
+		LOG_ERR("PDC not ready. Cannot init pdc_power_mgmt for port %d",
+			config->connector_num);
+
+		/* Prevent sending public API commands. Note: we never create a
+		 * driver thread in this code path, so nothing will happen for
+		 * this port. */
+		smf_set_initial(&port->ctx, &pdc_states[PDC_DISABLED]);
+
 		return -ENODEV;
 	}
 
@@ -3253,6 +3273,11 @@ static int pdc_subsys_init(const struct device *dev)
 void pdc_subsys_start(void)
 {
 	for (int port = 0; port < ARRAY_SIZE(pdc_data); port++) {
+		if (!is_pdc_port_valid(port)) {
+			/* Skip over inactive ports */
+			continue;
+		}
+
 		/* Start the PDC driver threads */
 		pdc_start_thread(pdc_data[port]->port.pdc);
 
@@ -3358,17 +3383,6 @@ static int public_api_block(int port, enum pdc_cmd_t pdc_cmd)
 	}
 
 	return 0;
-}
-
-/**
- * @brief Used to validate port numbers passed into the public API functions
- *
- *        Do not use for internal checks since port counts are not known until
- *        all pdc_power_mgmt devices initialize.
- */
-static bool is_pdc_port_valid(int port)
-{
-	return (port >= 0) && (port < pdc_power_mgmt_get_usb_pd_port_count());
 }
 
 /**
@@ -4344,6 +4358,11 @@ test_mockable int pdc_power_mgmt_set_comms_state(bool enable_comms)
 
 		/* Resume and reset the driver layer */
 		for (int p = 0; p < port_count; p++) {
+			if (get_pdc_state(&pdc_data[p]->port) == PDC_DISABLED) {
+				/* Ignore disabled ports */
+				continue;
+			}
+
 			ret = pdc_set_comms_state(pdc_data[p]->port.pdc, true);
 			if (ret) {
 				LOG_ERR("Cannot resume port C%d driver: %d", p,
@@ -4380,6 +4399,11 @@ test_mockable int pdc_power_mgmt_set_comms_state(bool enable_comms)
 
 		/* Wait for each PDC state machine to enter suspended state */
 		for (int p = 0; p < port_count; p++) {
+			if (get_pdc_state(&pdc_data[p]->port) == PDC_DISABLED) {
+				/* Ignore disabled ports */
+				continue;
+			}
+
 			ret = WAIT_FOR(get_pdc_state(&pdc_data[p]->port) ==
 					       PDC_SUSPENDED,
 				       SUSPEND_TIMEOUT_USEC,
@@ -4394,6 +4418,11 @@ test_mockable int pdc_power_mgmt_set_comms_state(bool enable_comms)
 
 		/* Suspend the driver layer */
 		for (int p = 0; p < port_count; p++) {
+			if (get_pdc_state(&pdc_data[p]->port) == PDC_DISABLED) {
+				/* Ignore disabled ports */
+				continue;
+			}
+
 			ret = pdc_set_comms_state(pdc_data[p]->port.pdc, false);
 
 			if (ret) {
