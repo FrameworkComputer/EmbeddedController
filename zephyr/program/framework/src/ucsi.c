@@ -111,7 +111,7 @@ int ucsi_write_tunnel(void)
 	case UCSI_CMD_GET_CONNECTOR_STATUS:
 	case UCSI_CMD_GET_CONNECTOR_CAPABILITY:
 	case UCSI_CMD_CONNECTOR_RESET:
-	case UCSI_CMD_SET_UOM:
+	case UCSI_CMD_SET_CCOM:
 	case UCSI_CMD_SET_UOR:
 	case UCSI_CMD_SET_PDR:
 	case UCSI_CMD_GET_CAM_SUPPORTED:
@@ -120,9 +120,11 @@ int ucsi_write_tunnel(void)
 	case UCSI_CMD_GET_CABLE_PROPERTY:
 	case UCSI_CMD_GET_ALTERNATE_MODES:
 	case UCSI_CMD_GET_CURRENT_CAM:
+	case UCSI_CMD_GET_CAM_CS:
 	case UCSI_CMD_SET_POWER_LEVEL:
 	case UCSI_CMD_GET_PD_MESSAGE:
 	case UCSI_CMD_GET_ERROR_STATUS:
+	case UCSI_CMD_GET_ATTENTION_VDO:
 
 		if (*command == UCSI_CMD_GET_ALTERNATE_MODES) {
 			offset = 1;
@@ -316,6 +318,8 @@ int ucsi_read_tunnel(int controller)
 	int rv, port_indicator;
 	int new_port = 0;
 	int support_max_port = pd_chip_config[controller].support_max_port;
+	int message_in_max_length;
+	uint16_t *version = (uint16_t *)host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_VERSION);
 
 	if (ucsi_debug_enable && pd_chip_ucsi_info[controller].read_tunnel_complete == 1 &&
 		(pd_chip_ucsi_info[controller].cci & CCI_BUSY_FLAG) == 0) {
@@ -340,15 +344,18 @@ int ucsi_read_tunnel(int controller)
 			& 0xFFFFFF01) | (new_port << 1);
 		}
 	}
+
+	message_in_max_length = (*version < 0x0200) ? 16 : 34;
+
 	/* If data length is non zero, then get data */
 	if (pd_chip_ucsi_info[controller].cci & 0xFF00) {
 		rv = cypd_read_reg_block(controller, CCG_MESSAGE_IN_REG,
-			pd_chip_ucsi_info[controller].message_in, 16);
+			pd_chip_ucsi_info[controller].message_in, message_in_max_length);
 
 		if (rv != EC_SUCCESS)
 			CPRINTS("MESSAGE_IN_REG failed");
 	} else {
-		memset(pd_chip_ucsi_info[controller].message_in, 0, 16);
+		memset(pd_chip_ucsi_info[controller].message_in, 0, message_in_max_length);
 	}
 
 	if (ucsi_debug_enable) {
@@ -367,7 +374,8 @@ int ucsi_read_tunnel(int controller)
 			cci_reg & CCI_COMPLETE_FLAG ? "Complete " : ""
 			);
 		if (cci_reg & 0xFF00) {
-			cypd_print_buff("Message ", pd_chip_ucsi_info[controller].message_in, 16);
+			cypd_print_buff("Message ", pd_chip_ucsi_info[controller].message_in,
+						message_in_max_length);
 		}
 	}
 
@@ -472,6 +480,9 @@ void check_ucsi_event_from_host(void)
 {
 	void *message_in;
 	uint32_t *cci;
+	uint16_t *version = (uint16_t *)host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_VERSION);
+	int message_in_length;
+	int message_in_offset;
 	int i;
 	int rv;
 
@@ -549,8 +560,15 @@ void check_ucsi_event_from_host(void)
 		}
 
 		crec_msleep(2);
+		if (*version < 0x0200) {
+			message_in_offset = EC_CUSTOMIZED_MEMMAP_UCSI_MESSAGE_IN_V1;
+			message_in_length = 16;
+		} else {
+			message_in_offset = EC_CUSTOMIZED_MEMMAP_UCSI_MESSAGE_IN_V2;
+			message_in_length = 34;
+		}
 
-		memcpy(host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_MESSAGE_IN), message_in, 16);
+		memcpy(host_get_memmap(message_in_offset), message_in, message_in_length);
 		memcpy(host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CONN_CHANGE), cci, 4);
 
 		/**
@@ -559,8 +577,7 @@ void check_ucsi_event_from_host(void)
 
 		/* override bNumConnectors to the total number of connectors on the system */
 		if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND) == UCSI_CMD_GET_CAPABILITY)
-			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_MESSAGE_IN + 4) =
-				valid_ucsi_port_count;
+			*host_get_memmap(message_in_offset + 4) = valid_ucsi_port_count;
 
 		for (i = 0; i < active_pd_chip_count; i++)
 			pd_chip_ucsi_info[i].read_tunnel_complete = 0;
