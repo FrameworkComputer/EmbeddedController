@@ -331,9 +331,13 @@ const struct gpio_dt_spec * gpu_gpio_to_dt(enum gpu_gpio_idx gpio_idx)
 	case GPU_EDP_MUX_SEL:
 		return GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw);
 	case GPU_PCIE_MUX_SEL: /* select between EDP AUX or SSD PCIE2 CLK*/
+#ifdef CONFIG_BOARD_LOTUS
 		if (board_get_version() >= BOARD_VERSION_7)
 			return GPIO_DT_FROM_NODELABEL(gpio_ssd_gpu_sel);
 		return NULL;
+#else
+		return GPIO_DT_FROM_NODELABEL(gpio_ssd_gpu_sel);
+#endif
 	case GPU_VSYS_EN:
 		return GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_en);
 	case GPU_VADP_EN:
@@ -341,9 +345,13 @@ const struct gpio_dt_spec * gpu_gpio_to_dt(enum gpu_gpio_idx gpio_idx)
 	case GPU_3V_5V_EN:
 		return GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en);
 	case GPU_FAN_EN:
+#ifdef CONFIG_BOARD_LOTUS
 		if (board_get_version() >= BOARD_VERSION_8)
 			return GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en);
 		__fallthrough;
+#else
+		return GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en);
+#endif
 	/* the following GPIOs cannot be controlled directly */
 	case GPU_1F3_MUX1:
 	case GPU_1G3_MUX2:
@@ -916,10 +924,15 @@ void gpu_module_gpio_safe(void)
 	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), GPIO_INPUT);
 	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio03_ec), GPIO_INPUT);
 
+#ifdef CONFIG_BOARD_LOTUS
 	if (board_get_version() >= BOARD_VERSION_7)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_gpu_sel), 0);
 	if (board_get_version() >= BOARD_VERSION_8)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en), 0);
+#else
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_gpu_sel), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en), 0);
+#endif
 
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);

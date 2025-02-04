@@ -48,6 +48,7 @@ enum battery_present battery_is_present(void)
 		return BP_NO;
 	}
 
+#ifdef CONFIG_BOARD_LOTUS
 	/* check the battery present pin first */
 	if (board_get_version() >= BOARD_VERSION_7) {
 		if (board_get_version() == BOARD_VERSION_7) {
@@ -65,6 +66,13 @@ enum battery_present battery_is_present(void)
 			}
 		}
 	}
+#else
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_battery_present)) == 0) {
+		k_timer_stop(&check_battery_timer);
+		power_on_check_batt = 0;
+		return BP_YES;
+	}
+#endif
 
 	/* try to read the battery information */
 	if (battery_device_name(text, sizeof(text))) {

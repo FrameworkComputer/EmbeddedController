@@ -78,21 +78,29 @@ void update_gpu_ac_mode_deferred(int times)
 /* After GPU detect, update the thermal configuration */
 void init_gpu_latch(void)
 {
+#ifdef CONFIG_BOARD_LOTUS
 	if (board_get_version() >= BOARD_VERSION_7) {
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_beam_open));
 	} else {
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_chassis_open));
 	}
+#else
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_beam_open));
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, init_gpu_latch, HOOK_PRIO_DEFAULT + 2);
 
 int get_gpu_latch(void)
 {
+#ifdef CONFIG_BOARD_LOTUS
 	if (board_get_version() >= BOARD_VERSION_7) {
 		return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_f_beam_open_l));
 	} else {
 		return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l));
 	}
+#else
+	return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_f_beam_open_l));
+#endif
 }
 
 void gpu_interposer_toggle_deferred(void)
@@ -152,9 +160,13 @@ void check_gpu_module(void)
 		LOG_DBG("No gpu module detected %d %d", gpu_id_0, gpu_id_1);
 		module_present = 0;
 		module_fault = 0;
+#ifdef CONFIG_BOARD_LOTUS
 		if (board_get_version() < BOARD_VERSION_8) {
 			fan_present = 1;
 		}
+#else
+		fan_present = 1;
+#endif
 		break;
 	default:
 		LOG_DBG("GPU module Fault");
@@ -186,9 +198,11 @@ void beam_open_interrupt(enum gpio_signal signal)
 {
 	int open_state = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_f_beam_open_l));
 
+#ifdef CONFIG_BOARD_LOTUS
 	/* The dGPU SW is SW4 at DVT phase */
 	if (board_get_version() < BOARD_VERSION_7)
 		return;
+#endif
 
 	if (!open_state) {
 		/* Make sure the module is off as fast as possible! */
