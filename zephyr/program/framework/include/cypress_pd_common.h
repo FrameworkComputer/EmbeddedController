@@ -537,8 +537,9 @@ struct pd_chip_ucsi_info_t {
 		uint8_t data_len;
 		uint8_t data[6];
 	} control;
-	uint8_t message_in[16];
+	uint8_t message_in[34];
 	uint8_t message_out[16];
+	int message_in_length;
 	int read_tunnel_complete;
 	int write_tunnel_complete;
 	int wait_ack;
