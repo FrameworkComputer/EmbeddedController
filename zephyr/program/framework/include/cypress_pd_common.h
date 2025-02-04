@@ -70,6 +70,7 @@
 #define CCG_CONTROL_REG			0xF008
 #define CCG_MESSAGE_IN_REG		0xF010
 #define CCG_MESSAGE_OUT_REG		0xF020
+#define CCG_MESSAGE_OUT_REG_V2	0xF110
 
 
 /************************************************/

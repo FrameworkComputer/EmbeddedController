@@ -83,6 +83,21 @@ const char *command_names(uint8_t command)
 	return "";
 }
 
+int ucsi_message_out_offset(void)
+{
+	uint16_t *version = (uint16_t *)host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_VERSION);
+
+	/*
+	 * version format JJ.M.N
+	 * e.g version 2.1.3 is respresented with value 0x0213
+	 */
+
+	if (*version < 0x0200)
+		return CCG_MESSAGE_OUT_REG;
+	else
+		return CCG_MESSAGE_OUT_REG_V2;
+}
+
 int ucsi_write_tunnel(void)
 {
 	uint8_t *message_out = host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_MESSAGE_OUT);
@@ -155,7 +170,7 @@ int ucsi_write_tunnel(void)
 		}
 
 		pd_chip_ucsi_info[controller].wait_ack = 1;
-		rv = cypd_write_reg_block(controller, CCG_MESSAGE_OUT_REG, message_out, 16);
+		rv = cypd_write_reg_block(controller, ucsi_message_out_offset(), message_out, 16);
 		rv = cypd_write_reg_block(controller, CCG_CONTROL_REG, command, 8);
 		break;
 	default:
@@ -172,7 +187,7 @@ int ucsi_write_tunnel(void)
 				continue;
 			}
 
-			rv = cypd_write_reg_block(i, CCG_MESSAGE_OUT_REG, message_out, 16);
+			rv = cypd_write_reg_block(i, ucsi_message_out_offset(), message_out, 16);
 			if (rv != EC_SUCCESS)
 				break;
 
