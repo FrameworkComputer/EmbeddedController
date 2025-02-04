@@ -2277,14 +2277,14 @@ static int cmd_cypd_get_status(int argc, const char **argv)
 			}
 			CPRINTS("=====UCSI======");
 			cypd_read_reg16(i, CCG_VERSION_REG, &data);
-			CPRINTS(" Version: 0x%02x", data);
+			CPRINTS(" Version: 0x%04x", data);
 			cypd_read_reg_block(i, CCG_CCI_REG, data16, 4);
 			cypd_print_buff("     CCI:", data16, 4);
 			cypd_read_reg_block(i, CCG_CONTROL_REG, data16, 8);
 			cypd_print_buff(" Control:", data16, 8);
 			cypd_read_reg_block(i, CCG_MESSAGE_IN_REG, data16, 16);
 			cypd_print_buff(" Msg  In:", data16, 16);
-			cypd_read_reg_block(i, CCG_MESSAGE_OUT_REG, data16, 16);
+			cypd_read_reg_block(i, ucsi_message_out_offset(), data16, 16);
 			cypd_print_buff(" Msg Out:", data16, 16);
 		}
 
