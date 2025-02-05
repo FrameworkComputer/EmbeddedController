@@ -127,12 +127,6 @@ int ucsi_write_tunnel(void)
 	case UCSI_CMD_GET_CURRENT_CAM:
 
 		if (*command == UCSI_CMD_GET_ALTERNATE_MODES) {
-			/**
-			 * Workaround: PD chip cannot process the SOP/SOP'/SOP'' alternate mode
-			 * event, ignore the recipient field.
-			 */
-			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC) =
-				(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC) & 0xFC);
 			offset = 1;
 		}
 
