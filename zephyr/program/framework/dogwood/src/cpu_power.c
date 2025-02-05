@@ -17,7 +17,7 @@ static void update_os_power_slider(int mode)
 {
 	switch (mode) {
 	case EC_AC_BEST_PERFORMANCE:
-		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 140000;
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 120000;
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] = 140000;
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] = 160000;
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T] = 400000;
