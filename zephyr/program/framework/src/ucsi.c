@@ -117,6 +117,8 @@ int ucsi_write_tunnel(void)
 	case UCSI_CMD_GET_CABLE_PROPERTY:
 	case UCSI_CMD_GET_ALTERNATE_MODES:
 	case UCSI_CMD_GET_CURRENT_CAM:
+	case UCSI_CMD_SET_POWER_LEVEL:
+	case UCSI_CMD_GET_PD_MESSAGE:
 
 		if (*command == UCSI_CMD_GET_ALTERNATE_MODES) {
 			offset = 1;
