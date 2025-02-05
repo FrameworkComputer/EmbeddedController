@@ -42,5 +42,10 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "pd0_chip_interrupt";
 		};
+		int_wake_on_lan: wake_on_lan {
+			irq-pin = <&gpio_lan_wake>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "wake_on_lan_interrupt";
+		};
 	};
 };

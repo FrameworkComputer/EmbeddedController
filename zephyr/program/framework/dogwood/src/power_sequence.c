@@ -25,6 +25,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "wol.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ##args)
@@ -98,7 +99,11 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, peripheral_power_shutdown, HOOK_PRIO_DEFAULT
 static void peripheral_power_suspend(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_aux_on), 0);
+
+	/* should not turn off the WoL signal if WoL is enabled */
+	if (!wake_on_lan_is_enabled())
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_aux_on), 0);
+
 }
 
 /*

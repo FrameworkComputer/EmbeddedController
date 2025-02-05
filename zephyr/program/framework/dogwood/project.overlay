@@ -14,3 +14,4 @@
 #include "thermal.dtsi"
 #include "usbc.dtsi"
 #include "power_signal.dtsi"
+#include "wol.dtsi"

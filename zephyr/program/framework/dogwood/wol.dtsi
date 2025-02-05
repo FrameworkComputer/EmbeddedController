@@ -1,0 +1,13 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	wake-on-lan {
+		compatible = "cros-ec,wake-on-lan";
+		enable-pin = <&gpio_aux_on>;
+		wake-signal = <&gpio_lan_wake>;
+		wake-signal-irq = <&int_wake_on_lan>;
+	};
+};
