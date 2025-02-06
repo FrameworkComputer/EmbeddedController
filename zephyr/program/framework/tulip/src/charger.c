@@ -16,7 +16,7 @@
 #include "common_cpu_power.h"
 #include "console.h"
 #include "cypress_pd_common.h"
-#include "driver/charger/isl9241.h"
+#include "driver/charger/bq25710.h"
 #include "driver/ina2xx.h"
 #include "extpower.h"
 #include "gpu.h"
@@ -33,8 +33,10 @@
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
-static int last_extpower_present;
+#define RAA489300_ADDR_FLAGS 0x4a
 
+static int last_extpower_present;
+static int raa489300_charge_mv;
 
 #ifdef CONFIG_PLATFORM_EC_CHARGER_INIT_CUSTOM
 static void charger_chips_init(void);
@@ -110,111 +112,18 @@ void ina236_alert_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&ina236_alert_release_data, 6 * MSEC);
 }
 
-static void charge_gate_onoff(bool status)
-{
-	if (status) {
-		/* Clear Control0 register bit 12; NGATE on */
-		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL0,
-			ISL9241_CONTROL0_NGATE_OFF, MASK_CLR);
-
-		/* Clear Control1 register bit 6; BGATE on */
-		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL1,
-			ISL9241_CONTROL1_BGATE_OFF, MASK_CLR);
-
-	} else {
-		/* Set Control0 register bit 12; NGATE off */
-		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL0,
-			ISL9241_CONTROL0_NGATE_OFF, MASK_SET);
-
-		/* Set Control1 register bit 6; BGATE off */
-		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL1,
-			ISL9241_CONTROL1_BGATE_OFF, MASK_SET);
-	}
-}
-
-static  void charger_psys_enable(bool status)
-{
-	if (status) {
-
-		i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4000));
-
-		/* Clear Control1 register bit 5; Enable IMON */
-		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL1,
-			ISL9241_CONTROL1_IMON, MASK_CLR);
-
-		/* Clear Control4 register bit 12; Enable all mode */
-		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL4,
-			ISL9241_CONTROL4_GP_COMPARATOR, MASK_CLR);
-
-	} else {
-
-		i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(0));
-
-		/* Set Control1 register bit 5; Disable IMON */
-		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL1,
-			ISL9241_CONTROL1_IMON, MASK_SET);
-
-		/* Set Control4 register bit 12; Disable for battery only mode */
-		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL4,
-			ISL9241_CONTROL4_GP_COMPARATOR, MASK_SET);
-	}
-}
-
-void charger_input_current_limit_control(void)
-{
-	int acin = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in));
-
-	if (battery_cutoff_in_progress() || battery_is_cut_off())
-		return;
-
-	if (acin && (battery_is_present() != BP_YES)) {
-		/* Set Control3 register bit 5; */
-		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL3,
-			ISL9241_CONTROL3_INPUT_CURRENT_LIMIT, MASK_SET);
-	} else {
-		/* Clear Control3 register bit 5; */
-		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL3,
-			ISL9241_CONTROL3_INPUT_CURRENT_LIMIT, MASK_CLR);
-	}
-}
-
-void board_charger_lpm_control(int enable)
-{
-	if (battery_cutoff_in_progress() || battery_is_cut_off())
-		return;
-
-	charger_psys_enable(enable);
-}
-
 __override void board_hibernate(void)
 {
 	/* for i2c analyze, re-write again */
-	board_charger_lpm_control(0);
-	charge_gate_onoff(false);
-
 }
 
 int update_charger_in_cutoff_mode(void)
 {
-	/* Turn off the charger NGATE */
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_CONTROL0, (ISL9241_CONTROL0_NGATE_OFF |
-			ISL9241_CONTROL0_BGATE_FORCE_ON)))
-		return EC_ERROR_UNKNOWN;
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_CONTROL3, (ISL9241_CONTROL3_ACLIM_RELOAD |
-			ISL9241_CONTROL3_BATGONE)))
-		return EC_ERROR_UNKNOWN;
-
 	return EC_SUCCESS;
 }
 
 static void charger_chips_init(void)
 {
-	uint16_t val = 0x0000; /* default ac setting */
 	uint32_t data = 0;
 	int value;
 
@@ -224,30 +133,63 @@ static void charger_chips_init(void)
 	 * In our case the EC can boot before the charger has power so
 	 * check if the charger is responsive before we try to init it
 	 */
-	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_ACOK_REFERENCE, &data) != EC_SUCCESS) {
+	if (i2c_read16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+		BQ25770_REG_CHARGER_STATUS_0, &data) != EC_SUCCESS) {
 		CPRINTS("Retry Charger init");
 		hook_call_deferred(&charger_chips_init_retry_data, 100*MSEC);
 		return;
 	}
 
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL4, ISL9241_CONTROL4_WOCP_FUNCTION |
-		ISL9241_CONTROL4_VSYS_SHORT_CHECK |
-		ISL9241_CONTROL4_ACOK_BATGONE_DEBOUNCE_25US))
+	/* TODO: Need to be replaced with charger api and macro */
+	/* 0x14 */
+	charger_set_current(CHARGER_SOLO, 4000);
+
+	/* 0x15 */
+	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+		BQ25710_REG_MAX_CHARGE_VOLTAGE, bi->voltage_max))
 		goto init_fail;
 
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL3,
-		(ISL9241_CONTROL3_ACLIM_RELOAD | ISL9241_CONTROL3_BATGONE)))
+	/* 0x18 */
+	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+		BQ25770_REG_GATEDRIVE, 0x4C4C))
 		goto init_fail;
 
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_OTG_VOLTAGE, 0x0000))
+	/* 0x1A */
+	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+		BQ25770_REG_AUTO_CHARGE, 0x1DC3))
 		goto init_fail;
 
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_OTG_CURRENT, 0x0000))
+	/* 0x33 */
+	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+		BQ25710_REG_PROCHOT_OPTION_0, 0x4A38))
+		goto init_fail;
+
+	/* 0x34 */
+	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+		BQ25710_REG_PROCHOT_OPTION_1, 0x4120))
+		goto init_fail;
+
+	/* 0x3D */
+	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+		BQ25710_REG_INPUT_VOLTAGE, 0x0280))
+		goto init_fail;
+
+	/* 0x3E */
+	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+		BQ25710_REG_MIN_SYSTEM_VOLTAGE, 0x0A50))
+		goto init_fail;
+
+	/* 0x3F*/
+	charger_set_input_current_limit(CHARGER_SOLO, 8000);
+
+	/* 0x61 */
+	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+		BQ25770_REG_AUTOTUNE_FORCE, 0xD2D2))
+		goto init_fail;
+
+	/* 0x62 */
+	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+		BQ25770_REG_GM_ADJUST_FORCE, 0xCACB))
 		goto init_fail;
 
 	value = battery_is_charge_fet_disabled();
@@ -256,51 +198,9 @@ static void charger_chips_init(void)
 	if (value != -1)
 		value = !value;
 
-	/* According to Power team suggest, Set ACOK reference to 4.500V */
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4500)))
-		goto init_fail;
-
-	/*
-	 * Set the MaxSystemVoltage to battery maximum,
-	 * 0x00=disables switching charger states
-	 */
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_MAX_SYSTEM_VOLTAGE, bi->voltage_max))
-		goto init_fail;
-
-	/*
-	 * Set the MinSystemVoltage to battery minimum,
-	 * 0x00=disables all battery charging
-	 */
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_MIN_SYSTEM_VOLTAGE, bi->voltage_min))
-		goto init_fail;
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL2,
-		ISL9241_CONTROL2_TRICKLE_CHG_CURR(bi->precharge_current) |
-		ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR |
-		ISL9241_CONTROL2_PROCHOT_DEBOUNCE_500))
-		goto init_fail;
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL0, 0x0000))
-		goto init_fail;
-
-	val = ISL9241_CONTROL1_PROCHOT_REF_6000;
-	val |= ((ISL9241_CONTROL1_SWITCHING_FREQ_656KHZ << 7) &
-			ISL9241_CONTROL1_SWITCHING_FREQ_MASK);
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL1, val))
-		goto init_fail;
-
-	board_charger_lpm_control(0);
-
 	/* TODO: should we need to talk to PD chip after initial complete ? */
 	hook_call_deferred(&board_check_current_data, 10*MSEC);
-	CPRINTS("ISL9241 customized initial complete!");
+	CPRINTS("BQ25770 customized initial complete!");
 
 	/* Initial the INA236 */
 	board_ina236_init();
@@ -308,104 +208,161 @@ static void charger_chips_init(void)
 	return;
 
 init_fail:
-	CPRINTF("ISL9241 customized initial failed!");
+	CPRINTF("BQ25770 customer init failed!");
+
 }
 DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_POST_I2C + 1);
 #endif
 
+static void charger_spr(void);
+DECLARE_DEFERRED(charger_spr);
+
+static void charger_spr(void)
+{
+	int val = 0x0000;
+
+	if (i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+		0x3A, &val) != EC_SUCCESS) {
+		CPRINTS("3Level-Buck not ready");
+		hook_call_deferred(&charger_spr_data, 500 * MSEC);
+		return;
+	}
+
+	if (((val >> 8) & 0xF) == 0)
+		crec_msleep(150);
+	/* TODO: Need to be replaced with 3level-buck function and macro */
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x14, 0x157C);
+	crec_msleep(10);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3F, 0x157C);
+	crec_msleep(10);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x4F, 0x0801);
+	crec_msleep(10);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3D, 0x0B00);
+	crec_msleep(10);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x4E, 0x0140);
+	crec_msleep(10);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x4C, 0x1001);
+	crec_msleep(10);
+
+	/* TODO: Need to be replaced with 3level-buck function and macro */
+	if (raa489300_charge_mv <= 20000) {
+		i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3C, 0x80A0);
+		crec_msleep(10);
+		i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x15, 0x3410);
+	} else if (raa489300_charge_mv == 36000) {
+		i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3C, 0x80A8);
+		crec_msleep(10);
+		i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x15, 0x5DC0);
+	}
+	crec_msleep(10);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x39, 0x1003);
+	crec_msleep(10);
+
+	if (i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3A, &val)) {
+		CPRINTS("read raa489300 info1 reg fail");
+	}
+
+	if (((val >> 8) & 0x3F) == 0x26) {
+		CPRINTS("level buck spr success");
+		return;
+	}
+	hook_call_deferred(&charger_spr_data, 500 * MSEC);
+}
+
+static void charger_epr(void);
+DECLARE_DEFERRED(charger_epr);
+
+static void charger_epr(void)
+{
+	int val = 0x0000;
+
+	if (i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+		0x3A, &val) != EC_SUCCESS) {
+		CPRINTS("3Level-Buck not ready");
+		hook_call_deferred(&charger_epr_data, 500 * MSEC);
+		return;
+	}
+
+	if (((val >> 8) & 0xF) == 0)
+		crec_msleep(150);
+	/* TODO: Need to be replaced with 3level-buck function and macro */
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x14, 0x1B58);
+	crec_msleep(10);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3F, 0x157C);
+	crec_msleep(10);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x15, 0x2EE0);
+	crec_msleep(10);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x4F, 0x0001);
+	crec_msleep(10);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3D, 0x0B00);
+	crec_msleep(10);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3C, 0x80A8);
+	crec_msleep(10);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x4E, 0x0140);
+	crec_msleep(10);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x4C, 0x1001);
+	crec_msleep(10);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x39, 0x1001);
+	crec_msleep(10);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x15, 0x5DC0);
+	crec_msleep(10);
+
+	if (i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3A, &val)) {
+		CPRINTS("read raa489300 info1 reg fail");
+	}
+
+	if (((val >> 8) & 0x3F) == 0x35) {
+		CPRINTS("level buck epr success");
+		return;
+	}
+	hook_call_deferred(&charger_epr_data, 500 * MSEC);
+}
+
 void charger_update(void)
 {
-	static int pre_ac_state;
-	static int pre_dc_state;
+	static int pre_power_uw;
+	int power_uw = cypd_get_ac_power();
 
-	if (pre_ac_state != extpower_is_present() ||
-		pre_dc_state != battery_is_present()) {
-		CPRINTS("update charger!!");
+	raa489300_charge_mv = cypd_get_active_port_voltage();
 
-		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL1,
-				(ISL9241_CONTROL1_SWITCHING_FREQ_656KHZ << 7), MASK_SET);
+	if (extpower_is_present()) {
+		if (pre_power_uw != power_uw) {
+			CPRINTS("charger update ! V:%dmV,W:%dmW", raa489300_charge_mv, power_uw);
+			if (raa489300_charge_mv <= 36000) {
+				charger_spr();
+			} else if (raa489300_charge_mv == 48000) {
+				charger_epr();
+			}
+			/* TODO: Need to be replaced with 3level-buck function and macro */
+			if (power_uw == 65000 || power_uw == 100000 ||
+				power_uw == 130000 || power_uw == 210000) {
+				i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x40, 0x3800);
+				i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x4B, 0x3800);
+			} else if (power_uw == 165000) {
+				i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x40, 0x4F00);
+				i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x4B, 0x4F00);
+			} else if (power_uw == 180000) {
+				i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x40, 0x6500);
+				i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x4B, 0x6500);
+			} else if (power_uw == 240000 || power_uw == 280000 || power_uw == 315000) {
+				i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x40, 0x8700);
+				i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x4B, 0x8700);
+			}
 
-		/**
-		 * Update the DC prochot current limit
-		 * EVT: DC prochot value = 6820 mA / (10 / 3) = 2130 mA (0x800)
-		 * DVT: DC prochot value = 13000 mA / (10 / 5) = 6500 mA (0x1d00)
-		 */
-		if (isl9241_set_dc_prochot(0,
-			(board_get_version() < BOARD_VERSION_7) ? 0x800 : 0x1d00))
-			CPRINTS("Update DC prochot fail");
-
-		pre_ac_state = extpower_is_present();
-		pre_dc_state = battery_is_present();
-
-		charger_input_current_limit_control();
+			pre_power_uw = power_uw;
+		}
 	}
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, charger_update, HOOK_PRIO_POST_I2C + 1);
 
-static bool bypass_force_en;
-static bool bypass_force_disable;
-__override int board_should_charger_bypass(void)
-{
-	int power_uw = charge_manager_get_power_limit_uw();
-	int voltage_mv = charge_manager_get_charger_voltage();
-	int curr_batt = battery_is_present();
-
-	if (bypass_force_en)
-		return true;
-
-	if (bypass_force_disable)
-		return false;
-
-	if (curr_batt == BP_YES) {
-		if (power_uw > 100000000)
-			return true;
-		else
-			return false;
-	} else {
-		if (voltage_mv > 20000)
-			return true;
-		else
-			return false;
-	}
-}
-
-int board_want_change_mode(void)
-{
-	static int pre_batt = BP_YES;
-	int curr_batt = battery_is_present();
-
-	if (pre_batt != curr_batt) {
-		pre_batt = curr_batt;
-		return true;
-	} else
-		return false;
-}
-
-int charger_in_bypass_mode(void)
-{
-	int reg;
-	int rv;
-
-	rv = i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL0, &reg);
-
-	/* read register fail */
-	if (rv)
-		return 0;
-
-	/* charer not enter bypass mode */
-	if ((reg & ISL9241_CONTROL0_EN_BYPASS_GATE) != ISL9241_CONTROL0_EN_BYPASS_GATE)
-		return 0;
-
-	return 1;
-}
 
 int board_discharge_on_ac(int enable)
 {
 	int chgnum;
 	int rv = EC_SUCCESS;
 
-	bypass_force_disable = enable;
 	/*
 	 * When discharge on AC is selected, cycle through all chargers to
 	 * enable or disable this feature.
@@ -419,7 +376,6 @@ int board_discharge_on_ac(int enable)
 __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
-	int prochot_ma;
 	int64_t calculate_ma;
 
 	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT) {
@@ -438,21 +394,9 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 
 	CPRINTS("Updating charger with EPR correction: ma %d", (int16_t)calculate_ma);
 
-	prochot_ma = (DIV_ROUND_UP(((int)calculate_ma * 200 / 100), 855) * 855);
-
-	if ((prochot_ma - (int)calculate_ma) < 853) {
-		/* We need prochot to be at least 1 LSB above
-		 * the input current limit. This is not ideal
-		 * due to the low accuracy on prochot.
-		 */
-		prochot_ma += 853;
-	}
-
 	ina236_alert_current(charge_mv, charge_ma);
 
 	charge_set_input_current_limit((int)calculate_ma, charge_mv);
-	/* sync-up ac prochot with current change */
-	isl9241_set_ac_prochot(0, prochot_ma);
 }
 
 bool log_ina236;
@@ -594,24 +538,28 @@ static int ina236_cmd(int argc, const char **argv)
 DECLARE_CONSOLE_COMMAND(ina236, ina236_cmd, "[en/dis]",
 			"Enable or disable ina236 logging");
 
-/* EC console command */
-static int chgbypass_cmd(int argc, const char **argv)
+static int raa489300_cmd(int argc, const char **argv)
 {
 	if (argc >= 2) {
-		if (!strncmp(argv[1], "en", 2)) {
-			bypass_force_en = true;
-			bypass_force_disable = false;
-		} else if (!strncmp(argv[1], "dis", 3)) {
-			bypass_force_en = false;
-			bypass_force_disable = true;
-		} else if (!strncmp(argv[1], "auto", 4)) {
-			bypass_force_en = false;
-			bypass_force_disable = false;
-		} else {
-			return EC_ERROR_PARAM1;
+		if (!strncmp(argv[1], "get", 3)) {
+			int i;
+			int val;
+
+			/* Dump all readable registers*/
+			static const uint8_t regs[] = {
+				0x14, 0x15, 0x39, 0x3a, 0x3c, 0x3d, 0x3f, 0x40, 0x43,
+				0x49, 0x4b, 0x4c, 0x4e, 0x4f,
+			};
+
+			for (i = 0; i < ARRAY_SIZE(regs); ++i) {
+				if (i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+					regs[i], &val))
+					continue;
+				ccprintf("raa489300 REG 0x%02x:  0x%04x\n", regs[i], val);
+			}
 		}
 	}
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(chargerbypass, chgbypass_cmd, "[en/dis/auto]",
-			"Force charger bypass enabled");
+DECLARE_CONSOLE_COMMAND(raa489300, raa489300_cmd, "[get]",
+			"Get raa489300 register");

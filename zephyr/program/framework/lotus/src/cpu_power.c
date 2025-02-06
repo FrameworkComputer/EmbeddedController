@@ -1009,8 +1009,13 @@ void clear_prochot(enum clear_reasons reason)
 {
 	if (events & BIT(PD_PROGRESS_ENTER_EPR_MODE) && (cypd_get_ac_power() > 100000)) {
 		/* wait charger to entry the bypass mode */
+#ifdef CONFIG_BOARD_LOTUS
 		if (charger_in_bypass_mode())
 			update_pmf_events(BIT(PD_PROGRESS_ENTER_EPR_MODE), 0);
+#else
+		update_pmf_events(BIT(PD_PROGRESS_ENTER_EPR_MODE), 0);
+#endif
+
 	}
 
 	if (events & BIT(PD_PROGRESS_EXIT_EPR_MODE))
@@ -1049,7 +1054,9 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 #ifdef CONFIG_BOARD_LOTUS
 	if (force_update && charger_in_bypass_mode() && !get_gpu_gpio(GPIO_FUNC_ACDC))
 		set_gpu_gpio(GPIO_FUNC_ACDC, 1);
-
+#else
+	if (force_update && !get_gpu_gpio(GPIO_FUNC_ACDC))
+		set_gpu_gpio(GPIO_FUNC_ACDC, 1);
 #endif
 
 	if (mode_ctl)

@@ -33,7 +33,7 @@ enum ec_prochot_status {
 
 int update_charger_in_cutoff_mode(void);
 
-#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
+#ifdef CONFIG_BOARD_LOTUS
 int charger_in_bypass_mode(void);
 void board_charger_lpm_control(int enable);
 #endif

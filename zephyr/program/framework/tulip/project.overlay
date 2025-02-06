@@ -60,9 +60,9 @@
 
 &i2c3_0 {
 	/delete-node/ isl9241@9;
-    /* TODO: Need to change bq25770 */
-	charger: isl9241@9 {
-		compatible = "intersil,isl9241";
+
+	charger: bq25770@9 {
+		compatible = "ti,bq25710";
 		status = "okay";
 		reg = <0x9>;
 	};

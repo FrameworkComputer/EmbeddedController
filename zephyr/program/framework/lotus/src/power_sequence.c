@@ -432,7 +432,9 @@ enum power_state power_handle_state(enum power_state state)
 		hook_call_deferred(&system_hang_detect_data, 3 * SECOND);
 
 		/* enable the psys to resume from low power mode */
+#ifdef CONFIG_BOARD_LOTUS
 		board_charger_lpm_control(1);
+#endif
 		hook_notify(HOOK_CHIPSET_STARTUP);
 		return POWER_S3;
 
@@ -686,7 +688,9 @@ enum power_state power_handle_state(enum power_state state)
 		cypd_set_power_active();
 
 		/* disable psys to let charger enter low power mode*/
+#ifdef CONFIG_BOARD_LOTUS
 		board_charger_lpm_control(0);
+#endif
 		return POWER_G3;
 	default:
 		break;
