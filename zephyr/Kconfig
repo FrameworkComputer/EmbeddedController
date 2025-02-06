@@ -682,7 +682,7 @@ config PLATFORM_EC_MKBP_HOST_EVENT_WAKEUP_MASK
 config PLATFORM_EC_NOINIT_END_OF_RAM_SECTION
 	bool "Enable noinit_end_of_ram memory section"
 	default y
-	depends on CROS_EC_RW || !CROS_EC_RO
+	depends on CROS_EC_RW || !CROS_EC_RO || ZTEST
 	help
 	  noinit_end_of_ram is a memory section placed at the very end
 	  of used ram, where it is least likely to overlap with RO ram.
@@ -756,6 +756,17 @@ config PLATFORM_EC_BUTTON_DEBOUNCE
 	default 30000
 	help
 	  Configure the button debounce time in us per project requirement.
+
+config PLATFORM_EC_PRESERVED_RING_BUF
+	bool "Preserved ring buffer"
+	default n
+	select PLATFORM_EC_NOINIT_END_OF_RAM_SECTION
+	help
+	  Preserved ring buffers exist in noinit memory at the end of used ram.
+	  Preserved ring buffer designed to be preserved across reboots and sysjumps,
+	  but curruption may occur for various reasons. Preserved ring buffers are
+	  designed to be low overhead and fast, especially for writes. This makes
+	  these ring buffers well suited for tracing and logging use cases.
 
 config PLATFORM_EC_PSE_LTC4291
 	bool "power sourcing equipment (PSE)  support"
