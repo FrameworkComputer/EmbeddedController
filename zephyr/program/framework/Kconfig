@@ -104,6 +104,14 @@ config PD_CCG6_CUSTOMIZE_BATT_MESSAGE
 	    Enable customize battery response for GRL test, EC will write specific
 		register 0x4f to PD for GET_BATTERY_CAP and GET_BATTERY_STATUS.
 
+config PD_CCG8_CUSTOMIZE_BATT_MESSAGE
+	bool "Enable CCG8 Customize battery response"
+	default n
+	depends on PD_CHIP_CCG8
+	help
+	    Enable customize battery response for GRL test, EC will write specific
+		register 0x4f to PD for GET_BATTERY_CAP and GET_BATTERY_STATUS.
+
 config PD_COMMON_VBUS_CONTROL
 	bool "Enable CCG common vbus control"
 	help

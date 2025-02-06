@@ -232,14 +232,11 @@
 #ifdef CONFIG_PD_CHIP_CCG6
 #define CCG6_AC_AT_PORT				0xC4
 #define CCG_ICL_CTRL_REG	0x0040
-
-#ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
-#define CCG6_BATT_IS_PRESENT		BIT(1)
-#define CCG6_BATT_IS_DISCHARGING	BIT(2)
-#define CCG6_BATT_IS_IDLE			BIT(3)
-#endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
-
 #endif
+
+#define BSDO_BATT_IS_PRESENT		BIT(1)
+#define BSDO_BATT_IS_DISCHARGING	BIT(2)
+#define BSDO_BATT_IS_IDLE		BIT(3)
 
 /************************************************/
 /*  CCG8 special setting                        */
@@ -317,6 +314,7 @@ enum ccg_pd_command {
 	CCG_PD_CMD_PORT_DISABLE = 0x11,
 	CCG_PD_CMD_CHANGE_PD_PORT_PARAMS = 0x14,
 	CCG_PD_CMD_READ_SRC_PDO = 0x20,
+	CCG_PD_CMD_RW_PD_RESPONSE_DATA = 0x3D,
 	CCG_PD_CMD_INITIATE_EPR_ENTRY = 0x47,
 	CCG_PD_CMD_INITIATE_EPR_EXIT = 0x48,
 };
@@ -555,6 +553,7 @@ struct alert_msg_t {
  */
 struct pd_battery_cap_t {
 	uint8_t  reg;
+	/* USB BCDO */
 	uint16_t vid;
 	uint16_t pid;
 	uint16_t design_cap;
@@ -564,11 +563,54 @@ struct pd_battery_cap_t {
 
 struct pd_battery_status_t {
 	uint8_t reg;
+	/* USB BSDO */
 	uint8_t reserved;
 	uint8_t battery_info;
 	uint16_t batt_present_cap;
 } __packed;
 #endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
+
+#ifdef CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE
+
+/**
+ * follow CCG6 vendor Format
+ * byte[0] - reg, 0x0 = batt_cap, 0x01 = batt_status.
+ * ohters byte follow PD Spec format
+ */
+struct pd_battery_cap_t {
+	/* Header */
+	uint8_t  type; /* set to 0x02 */
+	uint8_t  command; /* set to 0x04 for all ports B0:1 command = 0 for write */
+	uint8_t  size; /* set to 13 */
+	uint8_t  reserved;
+	/* payload */
+	uint8_t battery_slot_id; /* should always be set to 0 for first battery */
+	uint8_t invalid_ref_flag; /* should always be set to 0 for first battery */
+	uint16_t reserved_hdr;
+	/* USB BCDO */
+	uint16_t vid;
+	uint16_t pid;
+	uint16_t design_cap;
+	uint16_t last_full_cap;
+	uint8_t	 battery_type;
+} __packed;
+
+struct pd_battery_status_t {
+	/* Header */
+	uint8_t  type; /* set to 0x01 */
+	uint8_t  command; /* set to 0x04 for all ports B0:1 command = 0 for write */
+	uint8_t  size; /* set to 8 */
+	uint8_t  reserved;
+	/* payload */
+	uint8_t battery_slot_id; /* should always be set to 0 for first battery */
+	uint8_t invalid_ref_flag; /* should always be set to 0 for first battery */
+	uint16_t reserved_hdr;
+	/* USB BSDO */
+	uint8_t reserved_bsdo;
+	uint8_t battery_info;
+	uint16_t batt_present_cap;
+} __packed;
+#endif /* CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE */
 
 /**
  * extern struct for ccg6 or ccg8 use.
@@ -699,8 +741,9 @@ void exit_tbt_mode(int controller);
  * @return int
  */
 int check_tbt_mode(int controller);
+#endif /* CONFIG_PD_CHIP_CCG6 */
 
-#ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
+#if defined(CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE) || defined(CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE)
 /**
  * Set battery_cap info to PD
  */
@@ -711,8 +754,6 @@ void cypd_customize_battery_cap(void);
  */
 void cypd_customize_battery_status(void);
 #endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
-
-#endif /* CONFIG_PD_CHIP_CCG6 */
 
 /**
  * Project can customize app_setup behavior
