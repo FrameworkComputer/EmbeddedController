@@ -1476,6 +1476,7 @@ DECLARE_HOOK(HOOK_AC_CHANGE, pd_batt_init_deferred, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, pd_batt_init_deferred, HOOK_PRIO_DEFAULT);
 
 
+
 static void cypd_handle_state(int controller)
 {
 	int data;
