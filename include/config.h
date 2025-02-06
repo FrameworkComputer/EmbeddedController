@@ -1855,6 +1855,22 @@
  */
 #define CONFIG_CMD_CRASH_NESTED
 
+/**
+ * Panic log captures a copy of the console log in uninitialized
+ * preserved ram. After a panic, the panic_log is frozen until it is
+ * dumped by the OS. Preserving the log is best effort. Integrity checks
+ * ensure corruption is detected and the log is discarded. The implementation
+ * is designed to be low overhead.
+ */
+#undef CONFIG_PANIC_LOG
+/* Size of panic log in bytes. Must be a power of 2. */
+#define CONFIG_PANIC_LOG_SIZE 2048
+/**
+ * Enables panic log debug features,
+ * including the `paniclog` console command.
+ */
+#undef CONFIG_PANIC_LOG_DEBUG
+
 /*
  * noinit_end_of_ram is a memory section placed at the very end
  * of used ram, where it is least likely to overlap with RO ram.

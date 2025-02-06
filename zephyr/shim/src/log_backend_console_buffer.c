@@ -4,6 +4,7 @@
  */
 
 #include "console.h"
+#include "panic_log.h"
 
 #include <zephyr/logging/log_backend.h>
 #include <zephyr/logging/log_backend_std.h>
@@ -14,6 +15,8 @@ static uint8_t
 
 static int char_out(uint8_t *data, size_t length, void *ctx)
 {
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_PANIC_LOG))
+		panic_log_write_str(data, length);
 	/*
 	 * console_buf_notify_chars uses a mutex, which may not be
 	 * locked in ISRs.

@@ -6,6 +6,9 @@
 #ifndef ZEPHYR_TEST_UART_PRINTF_INCLUDE_COMMON_H_
 #define ZEPHYR_TEST_UART_PRINTF_INCLUDE_COMMON_H_
 
+/* util_macro.h needed for IS_ENABLED macro */
+#include <zephyr/sys/util_macro.h>
+
 #define EC_SUCCESS 0
 #define EC_ERROR_OVERFLOW -1
 

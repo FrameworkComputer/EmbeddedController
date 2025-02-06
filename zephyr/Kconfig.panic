@@ -59,4 +59,29 @@ config PLATFORM_EC_PANIC_STRIP_GPR
 	help
 	  Don't save General Purpose Registers during panic.
 
+config PLATFORM_EC_PANIC_LOG
+	bool "Enable EC panic log"
+	default n
+	select PLATFORM_EC_PRESERVED_RING_BUF
+	help
+	  When enabled, a copy of the console log is kept in
+	  preserved uninitialized ram. The log can be dumped
+	  after a panic for debugging.
+
+config PLATFORM_EC_PANIC_LOG_SIZE
+	int "Size of EC panic log in bytes"
+	default 2048
+	depends on PLATFORM_EC_PANIC_LOG
+	help
+	  Size of the EC panic log in bytes.
+	  Must be a power of 2.
+
+config PLATFORM_EC_PANIC_LOG_DEBUG
+	bool "Enables panic log debug features"
+	default n
+	depends on PLATFORM_EC_PANIC_LOG
+	help
+	  Enables panic log debug features, including
+	  the `paniclog` console command.
+
 endif # PLATFORM_EC_PANIC

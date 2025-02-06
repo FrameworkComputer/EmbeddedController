@@ -163,6 +163,9 @@ config LINK_TEST_SUITE_PANIC_OUTPUT
 config LINK_TEST_SUITE_PANIC_REASON
 	bool "Link and test the panic_reason tests"
 
+config LINK_TEST_SUITE_PANIC_LOG
+	bool "Link and test the panic log tests"
+
 config LINK_TEST_SUITE_PRESERVED_RING_BUF
 	bool "Link and test the preserved ring buf tests"
 

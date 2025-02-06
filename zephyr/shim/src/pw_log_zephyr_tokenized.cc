@@ -13,6 +13,7 @@
 
 extern "C" {
 #include "console.h"
+#include "panic_log.h"
 #include "zephyr_console_shim.h"
 }
 
@@ -55,6 +56,11 @@ extern "C" void pw_log_tokenized_HandleLog(uint32_t metadata,
 
 	if (base64_string.empty()) {
 		return;
+	}
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_PANIC_LOG)) {
+		panic_log_write_str(base64_string.c_str(),
+				    base64_string.size());
 	}
 
 	// On DUT, timberslide doesn't receive console raw text, okay to send

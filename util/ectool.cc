@@ -6828,6 +6828,139 @@ int cmd_keyboard_get_config(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_panic_log(int argc, char *argv[])
+{
+	int rv;
+	struct ec_params_panic_log_info info_params = { 0 };
+	struct ec_response_panic_log_info info_response;
+
+	if (argc != 2) {
+		goto usage;
+	}
+
+	if (!ec_cmd_version_supported(EC_CMD_PANIC_LOG_INFO, 0)) {
+		fprintf(stderr, "Panic log not supported\n");
+		return -1;
+	}
+
+	if (!strcmp(argv[1], "info")) {
+		rv = ec_command(EC_CMD_PANIC_LOG_INFO, 0, &info_params,
+				sizeof(info_params), &info_response,
+				sizeof(info_response));
+		if (rv < 0) {
+			fprintf(stderr, "Error getting panic log info\n");
+			return rv;
+		}
+		printf("Valid: %d\n", info_response.valid);
+		printf("Frozen: %d\n", info_response.frozen);
+		printf("Length: %d\n", info_response.length);
+		printf("Capacity: %d\n", info_response.capacity);
+		printf("Version: %d\n", info_response.version);
+	} else if (!strcmp(argv[1], "freeze")) {
+		info_params.freeze = 1;
+		rv = ec_command(EC_CMD_PANIC_LOG_INFO, 0, &info_params,
+				sizeof(info_params), &info_response,
+				sizeof(info_response));
+		if (rv < 0) {
+			fprintf(stderr, "Error freezing panic log\n");
+			return rv;
+		}
+		if (info_response.frozen)
+			printf("Panic log already frozen\n");
+		else
+			printf("Panic log frozen\n");
+	} else if (!strcmp(argv[1], "unfreeze")) {
+		info_params.unfreeze = 1;
+		rv = ec_command(EC_CMD_PANIC_LOG_INFO, 0, &info_params,
+				sizeof(info_params), &info_response,
+				sizeof(info_response));
+		if (rv < 0) {
+			fprintf(stderr, "Error unfreezing panic log\n");
+			return rv;
+		}
+		if (!info_response.frozen)
+			printf("Panic log already unfrozen\n");
+		else
+			printf("Panic log unfrozen\n");
+	} else if (!strcmp(argv[1], "reset")) {
+		info_params.reset = 1;
+		rv = ec_command(EC_CMD_PANIC_LOG_INFO, 0, &info_params,
+				sizeof(info_params), &info_response,
+				sizeof(info_response));
+		if (rv < 0) {
+			fprintf(stderr, "Error resetting panic log\n");
+			return rv;
+		}
+		printf("Panic log reset\n");
+	} else if (!strcmp(argv[1], "dump")) {
+		char *response = (char *)ec_inbuf;
+		int response_max;
+		struct ec_params_panic_log_read read_params;
+		struct ec_response_get_protocol_info protocol_info_response;
+
+		/* Determine the max response packet size */
+		rv = ec_command(EC_CMD_GET_PROTOCOL_INFO, 0, NULL, 0,
+				&protocol_info_response,
+				sizeof(protocol_info_response));
+		if (rv < 0) {
+			fprintf(stderr, "Error getting protocol info\n");
+			return rv;
+		}
+		response_max = protocol_info_response.max_response_packet_size;
+
+		info_params.freeze = 1;
+		rv = ec_command(EC_CMD_PANIC_LOG_INFO, 0, &info_params,
+				sizeof(info_params), &info_response,
+				sizeof(info_response));
+		if (rv < 0) {
+			fprintf(stderr, "Error getting panic log info\n");
+			return rv;
+		}
+		while (read_params.offset < info_response.length) {
+			/* Limit response size by one byte for null terminator
+			 */
+			int response_size =
+				ec_command(EC_CMD_PANIC_LOG_READ, 0,
+					   &read_params, sizeof(read_params),
+					   response, response_max - 1);
+			if (response_size < 0) {
+				fprintf(stderr, "Error reading panic log\n");
+				return rv;
+			}
+			if (response_size == 0)
+				break;
+			/* Ensure null terminated */
+			response[response_size] = '\0';
+			fputs(response, stdout);
+			read_params.offset += response_size;
+		}
+		fputs("\n", stdout);
+		/* Restore frozen state */
+		if (!info_response.frozen) {
+			info_params = { 0 };
+			info_params.unfreeze = 1;
+			rv = ec_command(EC_CMD_PANIC_LOG_INFO, 0, &info_params,
+					sizeof(info_params), &info_response,
+					sizeof(info_response));
+			if (rv < 0) {
+				fprintf(stderr,
+					"Error unfreezing panic log after dumping\n");
+				return rv;
+			}
+		}
+
+	} else {
+		goto usage;
+	}
+
+	return 0;
+
+usage:
+	fprintf(stderr, "Usage: %s [info | dump | freeze | unfreeze | reset]\n",
+		argv[0]);
+	return -1;
+}
+
 int cmd_panic_info(int argc, char *argv[])
 {
 	int rv;
@@ -12687,6 +12820,7 @@ const struct command commands[] = {
 	  "[CMDS]\n"
 	  "\tVarious motion sense control commands." },
 	{ "nextevent", cmd_next_event, "\n\tGet the next pending MKBP event." },
+	{ "paniclog", cmd_panic_log, "\n\tPrints saved panic log." },
 	{ "panicinfo", cmd_panic_info, "\n\tPrints saved panic info." },
 	{ "pause_in_s5", cmd_s5,
 	  "[on|off]\n"
