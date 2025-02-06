@@ -1243,6 +1243,16 @@ static void pd_batt_init_deferred(void)
 DECLARE_DEFERRED(pd_batt_init_deferred);
 #endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
 
+
+#ifdef CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE
+static void pd_batt_init_deferred(void)
+{
+	cypd_customize_battery_cap();
+	cypd_customize_battery_status();
+}
+DECLARE_DEFERRED(pd_batt_init_deferred);
+#endif /* CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE */
+
 static void cypd_handle_state(int controller)
 {
 	int data;
@@ -1317,9 +1327,9 @@ static void cypd_handle_state(int controller)
 
 		/* Update PDO format after init complete */
 		if (controller) {
-#ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
+#if defined(CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE) || defined(CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE)
 			hook_call_deferred(&pd_batt_init_deferred_data, 100 * MSEC);
-#endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
+#endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE || CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE */
 			hook_call_deferred(&pdo_init_deferred_data, 25 * MSEC);
 		}
 

@@ -610,13 +610,13 @@ void cypd_customize_battery_status(void)
 		} else {
 			if (c & STATUS_FULLY_CHARGED)
 				/* Fully charged */
-				batt_info = CCG6_BATT_IS_IDLE | CCG6_BATT_IS_PRESENT;
+				batt_info = BSDO_BATT_IS_IDLE | BSDO_BATT_IS_PRESENT;
 			else if (c & STATUS_DISCHARGING)
 				/* Discharging */
-				batt_info = CCG6_BATT_IS_DISCHARGING | CCG6_BATT_IS_PRESENT;
+				batt_info = BSDO_BATT_IS_DISCHARGING | BSDO_BATT_IS_PRESENT;
 			else
 				/* else battery is charging.*/
-				batt_info = CCG6_BATT_IS_PRESENT;
+				batt_info = BSDO_BATT_IS_PRESENT;
 		}
 
 		pd_battery_status.reg = 0x1;
