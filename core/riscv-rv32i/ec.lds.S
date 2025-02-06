@@ -373,12 +373,17 @@ SECTIONS
 		. = ALIGN(4);
 		__bss_end = .;
 
-		/*
-		 * Shared memory buffer must be at the end of preallocated RAM,
-		 * so it can expand to use all the remaining RAM.
-		 */
-		__shared_mem_buf = .;
 	} > IRAM
+
+	#include "noinit_end_of_ram.inc"
+
+	/*
+	 * Shared memory buffer must be at the end of preallocated
+	 * RAM, so it can expand to use all the remaining RAM.
+	 */
+	__shared_mem_buf = .;
+
+	/* NO RAM ALLOCATIONS MAY GO AFTER THIS! */
 
 	ASSERT((__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE) <=
 	       (CONFIG_RAM_BASE + CONFIG_RAM_SIZE),

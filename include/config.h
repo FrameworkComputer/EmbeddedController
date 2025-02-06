@@ -1856,6 +1856,26 @@
 #define CONFIG_CMD_CRASH_NESTED
 
 /*
+ * noinit_end_of_ram is a memory section placed at the very end
+ * of used ram, where it is least likely to overlap with RO ram.
+ * The section is useful for preserving data across reboots.
+ * May not be enabled in RO.
+ */
+#ifndef SECTION_IS_RO
+#define CONFIG_NOINIT_END_OF_RAM_SECTION
+#else
+#undef CONFIG_NOINIT_END_OF_RAM_SECTION
+#endif
+
+/*
+ * Offset noinit_end_of_ram section. Only adjust in the rare case that
+ * RO ram overlaps with RW noinit_end_of_ram section.
+ */
+#ifndef CONFIG_NOINIT_END_OF_RAM_SECTION_OFFSET
+#define CONFIG_NOINIT_END_OF_RAM_SECTION_OFFSET 0
+#endif
+
+/*
  * Provide the default GPIO abstraction layer.
  * You want this unless you are doing a really tiny firmware.
  */

@@ -679,6 +679,23 @@ config PLATFORM_EC_MKBP_HOST_EVENT_WAKEUP_MASK
                           HOST_EVENT_AC_CONNECTED)>;
       The host events are defined in dt-bindings/wake_mask_event_defines.h
 
+config PLATFORM_EC_NOINIT_END_OF_RAM_SECTION
+	bool "Enable noinit_end_of_ram memory section"
+	default y
+	depends on CROS_EC_RW || !CROS_EC_RO
+	help
+	  noinit_end_of_ram is a memory section placed at the very end
+	  of used ram, where it is least likely to overlap with RO ram.
+	  The section is useful for preserving data across reboots.
+
+config PLATFORM_EC_NOINIT_END_OF_RAM_SECTION_OFFSET
+	int "Offset noinit_end_of_ram section"
+	default 0
+	depends on PLATFORM_EC_NOINIT_END_OF_RAM_SECTION
+	help
+	   Offset noinit_end_of_ram section. Only adjust in the rare case that
+	   RO ram overlaps with RW noinit_end_of_ram section.
+
 config PLATFORM_EC_PANIC
 	bool "Panic output"
 	default y
