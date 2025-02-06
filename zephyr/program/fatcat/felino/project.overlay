@@ -30,9 +30,11 @@
 
 #include "adc.dtsi"
 #include "console.dtsi"
+#include "fan.dtsi"
 #include "i2c.dtsi"
 #include "interrupts.dtsi"
 #include "power_signals.dtsi"
+#include "temp_sensors.dtsi"
 #include "usb_typec.dtsi"
 
 /* these need to be promoted to program.conf */

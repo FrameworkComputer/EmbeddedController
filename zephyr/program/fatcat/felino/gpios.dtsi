@@ -193,11 +193,3 @@ cse_early_rec_sw: &gpio_ec_soc_rec_switch_odl {};
 		gpio-voltage = "1v8";
 	};
 };
-
-&tach0 {
-	status = "okay";
-	pinctrl-0 = <&tach0a_gpd6_default>;
-	pinctrl-names = "default";
-	channel = <IT8XXX2_TACH_CHANNEL_A>;
-	pulses-per-round = <2>;
-};

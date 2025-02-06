@@ -1,0 +1,59 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	fans {
+		compatible = "cros-ec,fans";
+
+		fan_0 {
+			pwms = <&pwm6 PWM_CHANNEL_6 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+			tach = <&tach0>;
+			rpm_min = <1100>;
+			rpm_start = <1100>;
+			rpm_max = <4000>;
+			rpm_deviation = <1>;
+			pgood_gpio = <&gpio_vccprim_io_pgood>;
+		};
+		fan_1 {
+			pwms = <&pwm3 PWM_CHANNEL_3 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+			tach = <&tach1>;
+			rpm_min = <1100>;
+			rpm_start = <1100>;
+			rpm_max = <4000>;
+			rpm_deviation = <1>;
+			pgood_gpio = <&gpio_vccprim_io_pgood>;
+		};
+	};
+};
+
+&pwm3 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C6>;
+	pinctrl-0 = <&pwm3_gpa3_default>;
+	pinctrl-names = "default";
+};
+
+&pwm6 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C6>;
+	pinctrl-0 = <&pwm6_gpa6_default>;
+	pinctrl-names = "default";
+};
+
+&tach0 {
+	status = "okay";
+	pinctrl-0 = <&tach0a_gpd6_default>;
+	pinctrl-names = "default";
+	channel = <IT8XXX2_TACH_CHANNEL_A>;
+	pulses-per-round = <2>;
+};
+
+&tach1 {
+	status = "okay";
+	pinctrl-0 = <&tach1a_gpd7_default>;
+	pinctrl-names = "default";
+	channel = <IT8XXX2_TACH_CHANNEL_A>;
+	pulses-per-round = <2>;
+};
