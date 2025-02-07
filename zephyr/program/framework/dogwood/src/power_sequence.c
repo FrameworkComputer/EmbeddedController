@@ -34,6 +34,8 @@
 #define IN_VS_POWER POWER_SIGNAL_MASK(X86_VS_POWER)
 #define IN_VALW_PGOOD POWER_SIGNAL_MASK(X86_3VALW_PG)
 
+#define NPCX_ESPI_VWEVSM_ADDR ((volatile uint32_t *)0x4000a160)
+
 static bool power_s5_up;		/* Chipset is sequencing up or down */
 static int force_shutdown_flags;
 static int d3cold_is_entry;	/* check the d3cold status */
@@ -743,3 +745,19 @@ static void peripheral_device_reset(void)
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, peripheral_device_reset, HOOK_PRIO_DEFAULT);
+
+__override int chipset_in_low_power_mode(void)
+{
+	volatile uint32_t *address;
+	uint32_t val;
+	bool in_low_power_mode = false;
+
+	address = NPCX_ESPI_VWEVSM_ADDR;
+	/* Get Wire field */
+	val = *address & 0x0F;
+
+	if (val != 0)
+		in_low_power_mode = true;
+
+	return in_low_power_mode;
+}
