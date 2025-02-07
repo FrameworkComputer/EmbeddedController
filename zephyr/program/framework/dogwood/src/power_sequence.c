@@ -373,7 +373,7 @@ static void diagnostic_power_glitch_detect(void)
 
 enum power_state power_handle_state(enum power_state state)
 {
-	int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
+	int s5_exit_tries = 0;	/* For global reset to wait SLP_S5 signal de-asserts */
 
 	if (run_diagnostics == 1)
 		diagnostic_power_glitch_detect();
