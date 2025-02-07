@@ -119,6 +119,7 @@ int ucsi_write_tunnel(void)
 	case UCSI_CMD_GET_CURRENT_CAM:
 	case UCSI_CMD_SET_POWER_LEVEL:
 	case UCSI_CMD_GET_PD_MESSAGE:
+	case UCSI_CMD_GET_ERROR_STATUS:
 
 		if (*command == UCSI_CMD_GET_ALTERNATE_MODES) {
 			offset = 1;
@@ -379,12 +380,19 @@ int ucsi_read_tunnel(int controller)
 	case UCSI_CMD_CANCEL:
 	case UCSI_CMD_SET_NOTIFICATION_ENABLE:
 	case UCSI_CMD_GET_CAPABILITY:
-	case UCSI_CMD_GET_ERROR_STATUS:
 		/* Those command need to wait two pd chip to response completed */
 		if (ucsi_check_all_pd_status(OPERATOR_AND))
 			read_complete = 1;
 		else
 			read_complete = 0;
+		break;
+	case UCSI_CMD_GET_ERROR_STATUS:
+		/* If data length is non zero, then read data */
+		if (pd_chip_ucsi_info[controller].cci & 0xFF00)
+			read_complete = 1;
+		else
+			pd_chip_ucsi_info[controller].read_tunnel_complete = 0;
+
 		break;
 	case UCSI_CMD_ACK_CC_CI:
 		if (ucsi_check_all_pd_status(OPERATOR_AND)) {
