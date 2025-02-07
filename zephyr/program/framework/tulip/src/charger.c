@@ -17,7 +17,6 @@
 #include "console.h"
 #include "cypress_pd_common.h"
 #include "driver/charger/bq25710.h"
-#include "driver/ina2xx.h"
 #include "extpower.h"
 #include "gpu.h"
 #include "gpio.h"
@@ -45,72 +44,6 @@ static void charger_chips_init_retry(void)
 	charger_chips_init();
 }
 DECLARE_DEFERRED(charger_chips_init_retry);
-
-static void board_check_current(void);
-DECLARE_DEFERRED(board_check_current);
-
-void ina236_alert_current(int voltage, int current)
-{
-	int value, rv, watt;
-
-	watt = (int64_t)current * (int64_t)voltage / 1000000;
-
-	if (watt == 180)
-		value = current * 4 * 12 / 10;
-	else
-		value = current * 4;
-
-	rv = ina2xx_write(INA236_INDEX_ADD_PIN_VS, INA2XX_REG_ALERT, value);
-
-	if (rv != EC_SUCCESS)
-		CPRINTS("ina236 write alert fail");
-}
-
-static void board_ina236_init(void)
-{
-	int rv;
-
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_ina236_alert));
-
-	/* TODO(crosbug.com/p/29730): assume 1mA/LSB, revisit later */
-	rv = ina2xx_write(INA236_INDEX_ADD_PIN_VS, INA2XX_REG_CALIB, 0x0831);
-
-	if (rv != EC_SUCCESS)
-		CPRINTS("ina236 write calib fail");
-
-	rv = ina2xx_write(INA236_INDEX_ADD_PIN_VS, INA2XX_REG_CONFIG, 0x4027);
-
-	if (rv != EC_SUCCESS)
-		CPRINTS("ina236 write config fail");
-
-	rv = ina2xx_write(INA236_INDEX_ADD_PIN_VS, INA2XX_REG_ALERT, 0x5DC0);
-
-	if (rv != EC_SUCCESS)
-		CPRINTS("ina236 write alert fail");
-
-	rv = ina2xx_write(INA236_INDEX_ADD_PIN_VS, INA2XX_REG_MASK, 0x8009);
-
-	if (rv != EC_SUCCESS)
-		CPRINTS("ina236 write mask fail");
-
-}
-
-static void ina236_alert_release(void)
-{
-	int rv;
-
-	rv = ina2xx_read(INA236_INDEX_ADD_PIN_VS, INA2XX_REG_MASK);
-
-	if (rv == 0x0bad)
-		CPRINTS("ina236 read mask fail");
-
-}
-DECLARE_DEFERRED(ina236_alert_release);
-
-void ina236_alert_interrupt(enum gpio_signal signal)
-{
-	hook_call_deferred(&ina236_alert_release_data, 6 * MSEC);
-}
 
 __override void board_hibernate(void)
 {
@@ -199,11 +132,7 @@ static void charger_chips_init(void)
 		value = !value;
 
 	/* TODO: should we need to talk to PD chip after initial complete ? */
-	hook_call_deferred(&board_check_current_data, 10*MSEC);
 	CPRINTS("BQ25770 customized initial complete!");
-
-	/* Initial the INA236 */
-	board_ina236_init();
 
 	return;
 
@@ -221,6 +150,10 @@ static void charger_spr(void)
 {
 	int val = 0x0000;
 
+	if ((!extpower_is_present()) || (raa489300_charge_mv > 36000)) {
+		return;
+	}
+
 	if (i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
 		0x3A, &val) != EC_SUCCESS) {
 		CPRINTS("3Level-Buck not ready");
@@ -231,7 +164,7 @@ static void charger_spr(void)
 	if (((val >> 8) & 0xF) == 0)
 		crec_msleep(150);
 	/* TODO: Need to be replaced with 3level-buck function and macro */
-	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x14, 0x157C);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x14, 0x1580);
 	crec_msleep(10);
 	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3F, 0x157C);
 	crec_msleep(10);
@@ -249,7 +182,7 @@ static void charger_spr(void)
 		i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3C, 0x80A0);
 		crec_msleep(10);
 		i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x15, 0x3410);
-	} else if (raa489300_charge_mv == 36000) {
+	} else if (raa489300_charge_mv <= 36000) {
 		i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3C, 0x80A8);
 		crec_msleep(10);
 		i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x15, 0x5DC0);
@@ -263,10 +196,11 @@ static void charger_spr(void)
 	}
 
 	if (((val >> 8) & 0x3F) == 0x26) {
-		CPRINTS("level buck spr success");
+		CPRINTS("3-lv buck Success SPR----");
 		return;
 	}
-	hook_call_deferred(&charger_spr_data, 500 * MSEC);
+
+	hook_call_deferred(&charger_spr_data, 100 * MSEC);
 }
 
 static void charger_epr(void);
@@ -275,6 +209,10 @@ DECLARE_DEFERRED(charger_epr);
 static void charger_epr(void)
 {
 	int val = 0x0000;
+
+	if ((!extpower_is_present()) || (raa489300_charge_mv != 48000)) {
+		return;
+	}
 
 	if (i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
 		0x3A, &val) != EC_SUCCESS) {
@@ -296,7 +234,7 @@ static void charger_epr(void)
 	crec_msleep(10);
 	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3D, 0x0B00);
 	crec_msleep(10);
-	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3C, 0x80A8);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3C, 0x80A4);
 	crec_msleep(10);
 	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x4E, 0x0140);
 	crec_msleep(10);
@@ -304,7 +242,9 @@ static void charger_epr(void)
 	crec_msleep(10);
 	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x39, 0x1001);
 	crec_msleep(10);
-	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x15, 0x5DC0);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3F, 0x1B58);
+	crec_msleep(10);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x15, 0x5358);
 	crec_msleep(10);
 
 	if (i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x3A, &val)) {
@@ -312,10 +252,11 @@ static void charger_epr(void)
 	}
 
 	if (((val >> 8) & 0x3F) == 0x35) {
-		CPRINTS("level buck epr success");
+		CPRINTS("3-lv buck Success EPR----");
 		return;
 	}
-	hook_call_deferred(&charger_epr_data, 500 * MSEC);
+
+	hook_call_deferred(&charger_epr_data, 100 * MSEC);
 }
 
 void charger_update(void)
@@ -327,7 +268,7 @@ void charger_update(void)
 
 	if (extpower_is_present()) {
 		if (pre_power_uw != power_uw) {
-			CPRINTS("charger update ! V:%dmV,W:%dmW", raa489300_charge_mv, power_uw);
+			CPRINTS("3lv-buck update ! V:%dmV,W:%dmW", raa489300_charge_mv, power_uw);
 			if (raa489300_charge_mv <= 36000) {
 				charger_spr();
 			} else if (raa489300_charge_mv == 48000) {
@@ -341,22 +282,18 @@ void charger_update(void)
 			} else if (power_uw == 165000) {
 				i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x40, 0x4F00);
 				i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x4B, 0x4F00);
-			} else if (power_uw == 180000) {
+			} else if (power_uw >= 180000) {
 				i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x40, 0x6500);
 				i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x4B, 0x6500);
-			} else if (power_uw == 240000 || power_uw == 280000 || power_uw == 315000) {
-				i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x40, 0x8700);
-				i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, 0x4B, 0x8700);
 			}
 
 			pre_power_uw = power_uw;
 		}
 	}
 }
+DECLARE_HOOK(HOOK_POWER_SUPPLY_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_AC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_INIT, charger_update, HOOK_PRIO_POST_I2C + 1);
-
 
 int board_discharge_on_ac(int enable)
 {
@@ -394,72 +331,7 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 
 	CPRINTS("Updating charger with EPR correction: ma %d", (int16_t)calculate_ma);
 
-	ina236_alert_current(charge_mv, charge_ma);
-
 	charge_set_input_current_limit((int)calculate_ma, charge_mv);
-}
-
-bool log_ina236;
-void board_check_current(void)
-{
-	int16_t sv = ina2xx_read(INA236_INDEX_ADD_PIN_VS, INA2XX_REG_SHUNT_VOLT);
-	static int curr_status = EC_DEASSERTED_PROCHOT;
-	static int pre_status = EC_DEASSERTED_PROCHOT;
-	static int active_port;
-	static int active_current;
-	static int pre_active_port;
-	static int shunt_register;
-
-	active_port = charge_manager_get_active_charge_port();
-	active_current = pd_get_active_current(active_port);
-
-	if (active_port == CHARGE_PORT_NONE || !extpower_is_present()) {
-		if (pre_active_port != active_port) {
-			curr_status = EC_DEASSERTED_PROCHOT;
-			throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_AC);
-
-			pre_status = curr_status;
-			pre_active_port = active_port;
-		}
-		hook_call_deferred(&board_check_current_data, 100 * MSEC);
-		return;
-	}
-
-	if (board_get_version() >= BOARD_VERSION_7)
-		shunt_register = 10;
-	else
-		shunt_register = 5;
-
-	if (log_ina236) {
-		CPRINTS("INA236 %d mA %d mV", INA2XX_SHUNT_UV(sv) / shunt_register,
-				INA2XX_BUS_MV((int)ina2xx_read(INA236_INDEX_ADD_PIN_VS,
-				INA2XX_REG_BUS_VOLT)));
-	}
-
-	if (ABS(INA2XX_SHUNT_UV(sv) / shunt_register) > (active_current * 120 / 100) &&
-		(INA2XX_SHUNT_UV(sv) > 0) && (active_current != 0)) {
-		curr_status = EC_ASSERTED_PROCHOT;
-		hook_call_deferred(&board_check_current_data, 10 * MSEC);
-	} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		/* Don't need to de-assert the prochot when system in S5/G3 */
-		curr_status = EC_DEASSERTED_PROCHOT;
-		hook_call_deferred(&board_check_current_data, 100 * MSEC);
-	} else {
-		curr_status = EC_DEASSERTED_PROCHOT;
-		hook_call_deferred(&board_check_current_data, 10 * MSEC);
-	}
-
-	if ((curr_status != pre_status) && !chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		CPRINTS("EC %sassert prochot!! INA236 current=%d mA",
-			curr_status == EC_DEASSERTED_PROCHOT ? "de-" : "",
-			(INA2XX_SHUNT_UV(sv) / shunt_register));
-
-		throttle_ap((curr_status == EC_ASSERTED_PROCHOT) ? THROTTLE_ON : THROTTLE_OFF,
-				THROTTLE_HARD, THROTTLE_SRC_AC);
-	}
-
-	pre_status = curr_status;
-	pre_active_port = active_port;
 }
 
 __overridable int extpower_is_present(void)
@@ -520,23 +392,6 @@ __override void board_check_extpower(void)
 
 	pre_active_port = pd_active_port;
 }
-
-/* EC console command */
-static int ina236_cmd(int argc, const char **argv)
-{
-	if (argc >= 2) {
-		if (!strncmp(argv[1], "en", 2)) {
-			log_ina236 = true;
-		} else if (!strncmp(argv[1], "dis", 3)) {
-			log_ina236 = false;
-		} else {
-			return EC_ERROR_PARAM1;
-		}
-	}
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(ina236, ina236_cmd, "[en/dis]",
-			"Enable or disable ina236 logging");
 
 static int raa489300_cmd(int argc, const char **argv)
 {

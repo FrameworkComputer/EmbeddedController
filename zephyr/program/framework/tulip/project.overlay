@@ -45,6 +45,10 @@
 			io-channels = <&adc0 11>;
 		};
     };
+
+	gpio-interrupts {
+		/delete-node/ ina236_alert;
+	};
 };
 
 &adc0 {
