@@ -6,6 +6,9 @@ CC=gcc
 CFLAGS=-O2 -Isrc -I../../include
 CFLAGS+= -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
 
+CFLAGS+= -I. -DTEST_BUILD -DBOARD_TASKFILE=ec.tasklist
+CFLAGS+= -DTEST_TASKFILE=genvif_test.tasklist
+
 genvif: ../../util/genvif.c src/helper.c
 	@$(CC) -o $@ $^ $(CFLAGS)
 
