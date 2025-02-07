@@ -373,7 +373,7 @@ static_if_error-y=static_if_error.o.cmd
 run-genvif_test:
 	@echo "  TEST    genvif_test"
 	$(MAKE) -C test/genvif clean
-	$(MAKE) -C test/genvif test
+	$(MAKE) -C test/genvif test test_over
 
 # This test requires C++ exceptions to be enabled.
 $(out)/RW/test/exception.o: CXXFLAGS+=-fexceptions
