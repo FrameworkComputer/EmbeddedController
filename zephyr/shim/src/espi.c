@@ -750,6 +750,8 @@ int lpc_keyboard_input_pending(void)
 	return status;
 }
 
+#define PORT80_FROM_ESPI 1
+
 static void espi_peripheral_handler(const struct device *dev,
 				    struct espi_callback *cb,
 				    struct espi_event event)
@@ -758,7 +760,7 @@ static void espi_peripheral_handler(const struct device *dev,
 
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_PORT80) &&
 	    event_type == ESPI_PERIPHERAL_DEBUG_PORT80) {
-		port_80_write(event.evt_data);
+		port_80_write(PORT80_FROM_ESPI, event.evt_data);
 	}
 
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_ACPI) &&

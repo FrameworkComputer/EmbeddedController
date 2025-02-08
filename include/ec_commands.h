@@ -3492,13 +3492,13 @@ struct ec_response_port80_read {
 			uint32_t last_boot;
 		} get_info;
 		struct __ec_todo_unpacked {
-			uint16_t codes[EC_PORT80_SIZE_MAX];
+			uint32_t codes[EC_PORT80_SIZE_MAX];
 		} data;
 	};
 } __ec_todo_packed;
 
 struct ec_response_port80_last_boot {
-	uint16_t code;
+	uint32_t code;
 } __ec_align2;
 
 /*****************************************************************************/
@@ -8113,6 +8113,21 @@ struct ec_response_get_boot_time {
  */
 #define EC_CMD_BOARD_SPECIFIC_BASE 0x3E00
 #define EC_CMD_BOARD_SPECIFIC_LAST 0x3FFF
+
+#define EC_CMD_CHAN    0x3E80  // Added by JCD
+struct ec_params_chan_set {
+        uint32_t version;
+        uint32_t chan_debug_value;
+} __ec_align4;
+
+struct ec_response_chan_info {
+        int32_t version;
+        int32_t chan_debug_value;
+        char names[240]; // Contains a list of names, separated by \0
+} __ec_align4;
+
+
+
 
 /*
  * Given the private host command offset, calculate the true private host

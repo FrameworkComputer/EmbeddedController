@@ -21,7 +21,7 @@ enum port_80_event {
  *
  * @param data		Data written to port 80.
  */
-void port_80_write(int data);
+void port_80_write(uint8_t source, uint32_t data);
 
 /**
  * Chip specific function to read from port 80.
@@ -37,7 +37,7 @@ int port_80_read(void);
  *
  * @return Last port 80 code from boot
  */
-int port_80_last(void);
+uint32_t port_80_last(void);
 
 /**
  * return amd initialized check result

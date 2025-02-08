@@ -16,6 +16,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "watchdog.h"
 
 #define CPRINTF(format, args...) cprintf(CC_PORT80, format, ##args)
 
@@ -24,7 +25,14 @@ typedef uint32_t port80_code_t;
 #else
 typedef uint16_t port80_code_t;
 #endif
-static port80_code_t history[CONFIG_PORT80_HISTORY_LEN];
+struct port80_s {
+	port80_code_t port80_code;
+	//uint16_t counter;
+	//uint8_t source;
+	//uint8_t pad1;
+};
+
+static struct port80_s history[CONFIG_PORT80_HISTORY_LEN];
 static int writes; /* Number of port 80 writes so far */
 static uint16_t last_boot; /* Last code from previous boot */
 static int scroll;
@@ -43,9 +51,9 @@ DECLARE_DEFERRED(port80_dump_buffer);
 static int ddr_initialized_fail;
 static int has_port_80_data;
 
-int port_80_last(void)
+uint32_t port_80_last(void)
 {
-	return (uint16_t)history[(writes-1) % ARRAY_SIZE(history)];
+	return (uint32_t)history[(writes-1) % ARRAY_SIZE(history)].port80_code;
 }
 
 int amd_ddr_initialized_check(void)
@@ -59,14 +67,31 @@ DECLARE_DEFERRED(port_80_read_customized);
 void port_80_read_customized(int index)
 {
 	if (has_port_80_data) {
-		CPRINTF("PORT80: %04X\n", (history[(writes-1) % ARRAY_SIZE(history)] & 0xFFFF));
+		CPRINTF("PORT80: %08x:%08x\n",
+				writes - 1,
+				history[(writes-1) % ARRAY_SIZE(history)].port80_code);
+		//CPRINTF("PORT80: %04X:%02X:%08X\n",
+		//	       	history[(writes-1) % ARRAY_SIZE(history)].counter,
+		//	       	history[(writes-1) % ARRAY_SIZE(history)].source,
+		//	       	history[(writes-1) % ARRAY_SIZE(history)].port80_code);
 		has_port_80_data = 0;
 	}
 }
 #endif
+static int port_80_debug_counter1 = 0;
+static int port_80_debug_counter2 = 0;
 
-void port_80_write(int data)
+void port_80_write(uint8_t source, uint32_t data)
 {
+	port_80_debug_counter1++;
+	port_80_debug_counter2++;
+	if (port_80_debug_counter1 != 1) {
+		CPRINTF("port_80_write re-entry detected counter1=%d\n", port_80_debug_counter1);
+	}
+	if (port_80_debug_counter2 == 0x1000) {
+		CPRINTF("port_80_write trace detected counter2=%d\n", port_80_debug_counter2);
+	}
+
 #ifndef CONFIG_CUSTOMIZED_DESIGN
 	char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 
@@ -107,7 +132,7 @@ void port_80_write(int data)
 	/* Save current port80 code if system is resetting */
 	if (data == PORT_80_EVENT_RESET && writes) {
 		port80_code_t prev =
-			history[(writes - 1) % ARRAY_SIZE(history)];
+			history[(writes - 1) % ARRAY_SIZE(history)].port80_code;
 
 		/*
 		 * last_boot only reports 8-bit codes.
@@ -117,8 +142,11 @@ void port_80_write(int data)
 			last_boot = prev;
 	}
 
-	history[writes % ARRAY_SIZE(history)] = data;
+	history[writes % ARRAY_SIZE(history)].port80_code = data;
+	//history[writes % ARRAY_SIZE(history)].counter = (uint16_t) writes & 0xffff;
+	//history[writes % ARRAY_SIZE(history)].source = source;
 	writes++;
+	port_80_debug_counter1--;
 }
 
 static void port80_dump_buffer(void)
@@ -126,7 +154,7 @@ static void port80_dump_buffer(void)
 	int printed = 0;
 	int i;
 	int head, tail;
-	int last_e = 0;
+	uint32_t last_e = 0;
 
 	/*
 	 * Print the port 80 writes so far, clipped to the length of our
@@ -142,9 +170,12 @@ static void port80_dump_buffer(void)
 	else
 		tail = 0;
 
+	ccprintf("writes: 0x%x\n", writes);
 	ccputs("Port 80 writes:");
 	for (i = tail; i < head; i++) {
-		int e = history[i % ARRAY_SIZE(history)];
+		uint32_t e = history[i % ARRAY_SIZE(history)].port80_code;
+		//uint16_t counter = history[i % ARRAY_SIZE(history)].counter;
+		//uint16_t source = history[i % ARRAY_SIZE(history)].source;
 		switch (e) {
 		case PORT_80_EVENT_RESUME:
 			ccprintf("\n(S3->S0)");
@@ -155,11 +186,15 @@ static void port80_dump_buffer(void)
 			printed = 0;
 			break;
 		default:
-			if (!(printed++ % 20)) {
+			if (!(printed % 0x80)) {
+				watchdog_reload();
+			}
+			if (!(printed++ % 0x08)) {
 				ccputs("\n ");
 				cflush();
 			}
-			ccprintf(" %02x", e);
+			ccprintf(" %08x:%08x", i, e);
+			//ccprintf(" %04x:%02x:%08x", counter, source, e);
 			last_e = e;
 		}
 	}
@@ -236,12 +271,12 @@ static enum ec_status port80_command_read(struct host_cmd_handler_args *args)
 			return EC_RES_INVALID_PARAM;
 
 		for (i = 0; i < entries; i++) {
-			uint16_t e =
-				history[(i + offset) % ARRAY_SIZE(history)];
+			uint32_t e =
+				history[(i + offset) % ARRAY_SIZE(history)].port80_code;
 			rsp->data.codes[i] = e;
 		}
 
-		args->response_size = entries * sizeof(uint16_t);
+		args->response_size = entries * sizeof(uint32_t);
 		return EC_RES_SUCCESS;
 	}
 
@@ -250,9 +285,11 @@ static enum ec_status port80_command_read(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_PORT80_READ, port80_command_read,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
+#define PORT80_FROM_LOG_RESUME 2
+
 static void port80_log_resume(void)
 {
 	/* Store port 80 event so we know where resume happened */
-	port_80_write(PORT_80_EVENT_RESUME);
+	port_80_write(PORT80_FROM_LOG_RESUME, PORT_80_EVENT_RESUME);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, port80_log_resume, HOOK_PRIO_DEFAULT);
