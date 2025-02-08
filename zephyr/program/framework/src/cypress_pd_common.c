@@ -2303,6 +2303,10 @@ static int cmd_cypd_get_status(int argc, const char **argv)
 		CPRINTS("PD%d INT value: %d", i, gpio_pin_get_dt(intr));
 	}
 
+	if (argc != 2) {
+		return EC_ERROR_PARAM_COUNT;
+	}
+
 	/* If a signal is specified, print only that one */
 	if (argc == 2) {
 		i = strtoi(argv[1], &e, 0);
@@ -2519,6 +2523,9 @@ static int cmd_pdwrite(int argc, const char **argv)
 	int controller, addr, data, rv;
 	char *e;
 
+	if (argc != 4) {
+		return EC_ERROR_PARAM_COUNT;
+	}
 	controller = strtoi(argv[1], &e, 0);
 	addr = strtoi(argv[2], &e, 0);
 	data = strtoi(argv[3], &e, 0);
@@ -2543,6 +2550,9 @@ static int cmd_pdread(int argc, const char **argv)
 	int controller, addr, data, rv;
 	char *e;
 
+	if (argc != 3) {
+		return EC_ERROR_PARAM_COUNT;
+	}
 	controller = strtoi(argv[1], &e, 0);
 	addr = strtoi(argv[2], &e, 0);
 

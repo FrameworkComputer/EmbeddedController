@@ -473,6 +473,8 @@ static int cmd_bbram(int argc, const char **argv)
 		ram_addr = strtoi(argv[1], &e, 0);
 		system_get_bbram(ram_addr, &bbram);
 		CPRINTF("BBram%d: %d", ram_addr, bbram);
+	} else {
+		return EC_ERROR_PARAM_COUNT;
 	}
 
 	return EC_SUCCESS;
@@ -487,6 +489,9 @@ static int cmd_memmap(int argc, const char **argv)
 	int offset;
 	char *e;
 
+	if (argc < 3) {
+		return EC_ERROR_PARAM_COUNT;
+	}
 	if (argc > 3) {
 		offset = strtoi(argv[2], &e, 0);
 		data = strtoi(argv[3], &e, 0);
