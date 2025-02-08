@@ -33,6 +33,7 @@
 #include "fan.dtsi"
 #include "i2c.dtsi"
 #include "interrupts.dtsi"
+#include "keyboard.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
 #include "power_signals.dtsi"

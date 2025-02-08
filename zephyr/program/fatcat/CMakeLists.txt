@@ -33,4 +33,7 @@ endif()
 if(DEFINED CONFIG_BOARD_FELINO)
 	project(felino)
 	add_subdirectory(felino)
+	zephyr_include_directories("felino/include")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+					"felino/src/keyboard_customization.c")
 endif()
