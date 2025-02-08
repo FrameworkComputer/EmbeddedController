@@ -10,6 +10,7 @@
 #include "uart.h"
 #include "usb_console.h"
 #include "util.h"
+#include "host_command.h"
 
 #ifdef CONFIG_CONSOLE_CHANNEL
 /* Default to all channels active */
@@ -203,4 +204,39 @@ static int command_ch(int argc, const char **argv)
 DECLARE_SAFE_CONSOLE_COMMAND(chan, command_ch,
 			     "[ save | restore | <mask> | <name> ]",
 			     "Save, restore, get or set console channel mask");
+
+static enum ec_status host_command_chan(struct host_cmd_handler_args *args)
+{
+        struct ec_response_chan_info *r = args->response;
+	struct ec_params_chan_set const *set = args->params;
+	if (r && args->params_size == 0) {
+		r->version = 1;
+		r->chan_debug_value = channel_mask;
+		int index = 0;
+		for (int i = 0; i < CC_CHANNEL_COUNT; i++) {
+			for (int n = 0; n < strnlen(channel_names[i], 32); n++) {
+				r->names[index] = channel_names[i][n];
+				index++;
+				if (index >= (sizeof(r->names) - 2)) {
+					break;
+				}
+			}
+			r->names[index] = 0;
+			index++;
+			if (index >= (sizeof(r->names) - 1)) {
+				break;
+			}
+		}
+		args->response_size = sizeof(*r);
+		return EC_RES_SUCCESS;
+	} else if (args->params_size > 0) {
+		channel_mask = set->chan_debug_value;
+		return EC_RES_SUCCESS;
+	}
+	return EC_RES_INVALID_PARAM;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_CHAN, host_command_chan,
+                     EC_VER_MASK(0));
+
 #endif /* CONFIG_CONSOLE_CHANNEL */

@@ -383,6 +383,7 @@ _CROS_EC_CV_F_P(EC_CMD_SWITCH_ENABLE_WIRELESS, 0, switch_enable_wireless,
 		switch_enable_wireless_v0);
 _CROS_EC_C1_F_PF_RF(EC_CMD_SWITCH_ENABLE_WIRELESS, switch_enable_wireless);
 _CROS_EC_C0_F_RF(EC_CMD_SYSINFO, sysinfo);
+_CROS_EC_C0_F_RF(EC_CMD_CHAN, chan);
 _CROS_EC_C0_F_PF_RF(EC_CMD_TEMP_SENSOR_GET_INFO, temp_sensor_get_info);
 _CROS_EC_C0_F_PF_RF(EC_CMD_TEST_PROTOCOL, test_protocol);
 _CROS_EC_C0_F(EC_CMD_THERMAL_AUTO_FAN_CTRL, thermal_auto_fan_ctrl);

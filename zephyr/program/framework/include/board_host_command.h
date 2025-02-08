@@ -458,4 +458,6 @@ enum battery_extender_cmd {
 	BATT_EXTENDER_READ_CMD,
 };
 
+#define EC_CMD_CHAN	0x3E80  // Added by JCD
+
 #endif /* __BOARD_HOST_COMMAND_H */
