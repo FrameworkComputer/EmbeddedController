@@ -24,6 +24,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led_pwm.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_WS2812_NPCX_BITBANG
+	"src/ws2812_npcx_bitbang.c")
 zephyr_library_sources_ifdef(CONFIG_CHIPSET_AMD
 	"src/cpu_power/amd_cpu_power_interface.c")
 zephyr_library_sources_ifdef(CONFIG_PECI_NPCX

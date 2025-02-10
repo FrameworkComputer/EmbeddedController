@@ -186,6 +186,13 @@ config PLATFORM_PRIVACY_DEVICE_CHECK
 		status can be found via a host
 		command (EC_CMD_PRIVACY_SWITCHES_CHECK_MODE).
 
+config PLATFORM_EC_LED_WS2812_NPCX_BITBANG
+	bool "Enable WS2812 npcx bitbanging driver"
+	default n
+	help
+		WS2812 NPCX based gpio bitbanging driver, console command and
+		EC_CMD_RGBKBD_SET_COLOR host command to send data to RGB leds.
+
 config PLATFORM_EC_HID
 	bool "Generic hid driver for the framework project"
 	depends on DT_HAS_CROS_EC_I2C_TARGET_HID_ENABLED
