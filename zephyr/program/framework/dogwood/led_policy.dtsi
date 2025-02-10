@@ -65,22 +65,22 @@
 				/* Fade time target 600ms (In, low to high) */
 				color-0 {
 					led-color = "LED_AMBER";
-					period-ms = <12000>;
+					period-ms = <600>;
 				};
 				/* Duration time target 900ms */
 				color-1 {
 					led-color = "LED_AMBER";
-					period-ms = <18000>;
+					period-ms = <900>;
 				};
 				/* Fade time target 600ms (Out, high to low) */
 				color-2 {
 					led-color = "LED_OFF";
-					period-ms = <12000>;
+					period-ms = <600>;
 				};
 				/* Interval time target 1900ms */
 				color-3 {
 					led-color = "LED_OFF";
-					period-ms = <37000>;
+					period-ms = <1900>;
 				};
 			};
 		};

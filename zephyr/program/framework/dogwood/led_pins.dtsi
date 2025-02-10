@@ -32,7 +32,7 @@
 			color_power_white: color-power-white {
 				led-color = "LED_WHITE";
 				/* maximum duty */
-				led-values = <55>;
+				led-values = <100>;
 			};
 		};
 
@@ -49,7 +49,7 @@
 			color_led3_amber: color-led3-amber {
 				led-color = "LED_AMBER";
 				/* maximum duty */
-				led-values = <55>;
+				led-values = <100>;
 			};
 		};
 	};
