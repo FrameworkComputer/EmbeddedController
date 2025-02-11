@@ -2,6 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config TEST_LIB_EXIT
+	bool "exit tests"
+	help
+	  exit tests.
+
 config TEST_LIB_SBRK
 	bool "sbrk tests"
 	help
