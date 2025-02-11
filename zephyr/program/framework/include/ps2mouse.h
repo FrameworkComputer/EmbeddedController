@@ -79,6 +79,9 @@ enum ps2_mouse_report_mode {
 
 #define AUX_BUFFER_FULL_RETRIES 25
 
+#define TOUCHPAD_REPORT_ID_PTP_MODE 0x01
+#define TOUCHPAD_REPORT_ID_MOUSE_MODE 0x02
+
 enum pixart_pct3854_regs {
 	PCT3854_DESCRIPTOR	= 0x0020,
 	PCT3854_REPORT_DESC	= 0x0021,

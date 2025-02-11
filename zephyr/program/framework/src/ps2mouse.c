@@ -454,7 +454,7 @@ read_failed:
 	 * 3rd byte is report ID
 	 * rest of the packet is the input report
 	 */
-	if (rv == EC_SUCCESS && data[2] == 0x02) {
+	if (rv == EC_SUCCESS && data[2] == TOUCHPAD_REPORT_ID_MOUSE_MODE) {
 		/* 0x0800 02 04 feff 0000
 		 * 0x0800 02 04 fdff ffff
 		 */
@@ -489,6 +489,12 @@ read_failed:
 		current_pos[1] = x;
 		current_pos[2] = y;
 		send_movement_packet();
+	} else if (rv == EC_SUCCESS && data[2] == TOUCHPAD_REPORT_ID_PTP_MODE) {
+		/* If touchpad in PTP mode, need reset to mouse mode. */
+		CPRINTS("Touchpad in PTP mode reset to mouse mode");
+		gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_tp));
+		setup_touchpad();
+		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_tp));
 	}
 }
 /*
