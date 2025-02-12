@@ -120,7 +120,6 @@ bool log_thermal;
 void board_override_fan_control(int fan, int *temp)
 {
 	int actual_rpm, new_rpm;
-	int apu_temp_mk = 0;
 
 	int apu_pct = 0;
 	int pct = 0;
@@ -151,7 +150,6 @@ void board_override_fan_control(int fan, int *temp)
 		if (fan == 0) {
 			thermal_filter_update(&apu_filtered, temp[TEMP_APU]);
 		}
-		/*f75303_get_val_mk(TEMP_CPU_F, &apu_temp_mk); */
 
 		apu_filtered_temp = thermal_filter_get(&apu_filtered);
 
@@ -188,8 +186,8 @@ void board_override_fan_control(int fan, int *temp)
 			 * unless the system has cooled 0.5C below the fan turn on temperature
 			 */
 			if (thermal_params[TEMP_APU].temp_fan_off &&
-				apu_temp_mk > (thermal_params[TEMP_APU].temp_fan_off
-					* 1000 - 500)) {
+				C_TO_K(apu_filtered_temp)*1000 >
+				(thermal_params[TEMP_APU].temp_fan_off * 1000 - 500)) {
 				deadline.val = get_time().val + FAN_STOP_DELAY_S;
 			}
 			if (!timestamp_expired(deadline, &now))
