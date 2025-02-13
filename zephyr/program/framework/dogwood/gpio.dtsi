@@ -60,7 +60,17 @@
 			gpios = <&gpio1 4 GPIO_ODR_HIGH>;	/* reserved for HID interrupt */
 		};
 		gpio_argb_dir: argb_dir {
-			gpios = <&gpio3 5 GPIO_OUTPUT_LOW>;	/* ARGB_DIR */
+			gpios = <&gpio3 5 GPIO_OUTPUT_HIGH>;	/* ARGB_DIR */
+			// aka uart4_sout_gp35
+			// EC = A, Connector = B
+			// DIR HIGH = output (A -> B)
+			// DIR LOW = input (B -> A)
+		};
+		gpio_rgb_out: rgb_out { /* aka spip_mosi */
+			gpios = <&gpioa 3 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_rgb_in: rgb_in { /* aka spip_miso */
+			gpios = <&gpio9 5 GPIO_INPUT>;
 		};
 		gpio_on_off_btn_l: on_off_btn_l {
 			gpios = <&gpiod 2 GPIO_INPUT>;		/* power button */
