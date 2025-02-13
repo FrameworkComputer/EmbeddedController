@@ -3791,6 +3791,12 @@ static void pe_snk_transition_sink_run(int port)
 					charge_manager_set_ceil(
 						port, CEIL_REQUESTOR_PD,
 						CHARGE_CEIL_NONE);
+
+#ifdef CONFIG_USB_CHARGER
+					charge_manager_update_charge(
+						CHARGE_SUPPLIER_VBUS, port,
+						NULL);
+#endif
 				}
 			} else {
 				/*
