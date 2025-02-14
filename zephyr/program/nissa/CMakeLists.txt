@@ -410,3 +410,14 @@ if(DEFINED CONFIG_BOARD_DIRKS)
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "dirks/src/usbc.c")
 endif()
+if(DEFINED CONFIG_BOARD_MELIKS)
+	project(meliks)
+	zephyr_include_directories("meliks/include")
+	zephyr_library_sources(
+			"meliks/src/led.c"
+			"meliks/src/board.c"
+			"meliks/src/battery.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "meliks/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "meliks/src/charger.c")
+endif()

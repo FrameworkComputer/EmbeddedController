@@ -216,6 +216,12 @@ config BOARD_GUREN
 	  Build Google GUREN reference board. Nivviks has Intel TWL SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_MELIKS
+	bool "Google Meliks Board"
+	help
+	  Build Google Meliks board. Meliks has Intel TWL SoC
+	  with NPCX993FA0BX EC.
+
 module = NISSA
 module-str = Nissa board-specific code
 source "subsys/logging/Kconfig.template.log_config"
