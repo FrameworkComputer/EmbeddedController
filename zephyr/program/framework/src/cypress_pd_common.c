@@ -1775,6 +1775,19 @@ void cypd_port_int(int controller, int port)
 		cypd_handle_alert_msg(controller, port, response_len);
 		CPRINTS("CCG_RESPONSE_ALERT_RX");
 		break;
+#ifdef CONFIG_CHIPSET_AMD
+	case CCG_RESPONSE_AMD_CROSSBAR_READY:
+		/**
+		 * Vendor requests EC to do the error recovery after
+		 * AMD Crossbar is ready.
+		 *
+		 * They add the specific response code 0x38 to notify EC
+		 * and then EC performs the typec error recovery
+		 */
+		CPRINTS("AMD Crossbar is ready");
+		perform_error_recovery(controller);
+		break;
+#endif
 	case CCG_RESPONSE_VDM_RX:
 		i2c_read_offset16_block(i2c_port, addr_flags,
 			CCG_READ_DATA_MEMORY_REG(port, 0), data2, MIN(response_len, 32));
