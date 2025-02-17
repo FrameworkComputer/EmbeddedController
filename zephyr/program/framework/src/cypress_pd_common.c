@@ -1287,6 +1287,11 @@ static void cypd_handle_state(int controller)
 
 }
 
+__overridable int board_perform_error_recovery_port(int port)
+{
+	return port;
+}
+
 
 #ifdef CONFIG_PD_COMMON_VBUS_CONTROL
 static uint8_t pd_c_fet_active_port;

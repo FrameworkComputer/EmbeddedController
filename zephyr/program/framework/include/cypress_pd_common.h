@@ -922,4 +922,10 @@ struct pd_port_current_state_t *get_pd_port_states_array(void);
  */
 int get_pd_alt_mode_status(int port);
 
+/**
+ * This function allow the project to change the pd port's order to
+ * perform the error recovery.
+ */
+__override_proto int board_perform_error_recovery_port(int port);
+
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

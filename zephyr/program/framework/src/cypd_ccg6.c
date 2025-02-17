@@ -322,57 +322,55 @@ int board_set_active_charge_port(int charge_port)
 
 static void perform_error_recovery(int controller)
 {
-	int i, pend_event;
+	int pd_port, pend_event;
 	uint8_t data[2] = {0x00, CCG_PD_USER_CMD_TYPEC_ERR_RECOVERY};
 	uint32_t batt_os_percentage = get_system_percentage();
 
 	if (controller < 2)
-		for (i = 0; i < 2; i++) {
-			if (!((controller*2 + i) == get_active_charge_pd_port() &&
+		for (pd_port = 0; pd_port < 2; pd_port++) {
+			if (!((controller*2 + pd_port) == get_active_charge_pd_port() &&
 				battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
 
 				/* clear pending interrupt event before do error recovery */
-				if (gpio_pin_get_dt(
-						gpio_get_dt_spec(pd_chip_config
-							[PORT_TO_CONTROLLER(i)].gpio)) == 0) {
-					cypd_get_int(PORT_TO_CONTROLLER(i), &pend_event);
+				if (gpio_pin_get_dt(gpio_get_dt_spec(pd_chip_config
+						[controller].gpio)) == 0) {
+					cypd_get_int(controller, &pend_event);
 					CPRINTS(" Int pending 0x%04x", pend_event);
-					cypd_clear_int(PORT_TO_CONTROLLER(i), pend_event);
+					cypd_clear_int(controller, pend_event);
 				}
 
-				data[0] = PORT_TO_CONTROLLER_PORT(i);
-				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
-									CCG_DPM_CMD_REG,
-									data, 2);
-
-				cypd_write_wait_ack(PORT_TO_CONTROLLER(i), CCG_DPM_CMD_REG, 0);
+				data[0] = PORT_TO_CONTROLLER_PORT(pd_port);
+				cypd_write_reg_block(controller, CCG_DPM_CMD_REG, data, 2);
+				cypd_write_wait_ack(controller, CCG_DPM_CMD_REG, 0);
 			}
 		}
 	else {
 		/* Hard reset all ports that are not supplying power in dead battery mode */
-		for (i = 0; i < PD_PORT_COUNT; i++) {
-			if (!(i == get_active_charge_pd_port() &&
+		for (int port = 0; port < PD_PORT_COUNT; port++) {
+			int pd_chip;
+
+			pd_port = board_perform_error_recovery_port(port);
+			pd_chip = PORT_TO_CONTROLLER(pd_port);
+
+			if (!(pd_port == get_active_charge_pd_port() &&
 			    battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
 
-				if ((pd_port_states[i].c_state == CCG_STATUS_SOURCE) &&
-				   (batt_os_percentage < 3) && (i == get_active_charge_pd_port()))
+				if ((pd_port_states[pd_port].c_state == CCG_STATUS_SOURCE) &&
+				   (batt_os_percentage < 3) &&
+				   (pd_port == get_active_charge_pd_port()))
 					continue;
 
 				/* clear pending interrupt event before do error recovery */
-				if (gpio_pin_get_dt(
-						gpio_get_dt_spec(pd_chip_config
-							[PORT_TO_CONTROLLER(i)].gpio)) == 0) {
-					cypd_get_int(PORT_TO_CONTROLLER(i), &pend_event);
+				if (gpio_pin_get_dt(gpio_get_dt_spec(pd_chip_config
+						[pd_chip].gpio)) == 0) {
+					cypd_get_int(pd_chip, &pend_event);
 					CPRINTS(" Int pending 0x%04x", pend_event);
-					cypd_clear_int(PORT_TO_CONTROLLER(i), pend_event);
+					cypd_clear_int(pd_chip, pend_event);
 				}
 
-				data[0] = PORT_TO_CONTROLLER_PORT(i);
-				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
-									CCG_DPM_CMD_REG,
-									data, 2);
-
-				cypd_write_wait_ack(PORT_TO_CONTROLLER(i), CCG_DPM_CMD_REG, 0);
+				data[0] = PORT_TO_CONTROLLER_PORT(pd_port);
+				cypd_write_reg_block(pd_chip, CCG_DPM_CMD_REG, data, 2);
+				cypd_write_wait_ack(pd_chip, CCG_DPM_CMD_REG, 0);
 			}
 		}
 	}
