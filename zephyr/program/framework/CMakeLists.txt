@@ -175,6 +175,7 @@ if(DEFINED CONFIG_BOARD_SUNFLOWER)
 			"sunflower/src/temperature.c"
 			"sunflower/src/touchpad.c"
 			"sunflower/src/board_tablet_mode.c"
+			"sunflower/src/usbc.c"
 	)
 
 endif()
