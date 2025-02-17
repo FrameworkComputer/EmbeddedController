@@ -1,0 +1,131 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ */
+
+/ {
+	aliases {
+		gpio-wp = &gpio_ec_flash_wp_odl;
+	};
+
+	named-gpios {
+		entering_rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		en_pp4200_s5: en_pp3700_s5 {};
+		ap_ec_sysrst_odl {
+			gpios = <&gpioj 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+						GPIO_ACTIVE_LOW)>;
+		};
+		ap_ec_wdtrst_l {
+			gpios = <&gpioj 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+						GPIO_ACTIVE_LOW)>;
+		};
+		ap_in_sleep_l {
+			gpios = <&gpiom 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+						GPIO_ACTIVE_LOW)>;
+		};
+		pmic_ec_resetb {
+			gpios = <&gpioj 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+		};
+	};
+
+	named-i2c-ports {
+		ec_smb_batt_scl_3v3 {
+			enum-names = "I2C_PORT_BATTERY", "I2C_PORT_VIRTUAL_BATTERY";
+		};
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpiob 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpiob 7 GPIO_INPUT_PULL_DOWN>,
+			<&gpiof 0 GPIO_INPUT_PULL_DOWN>,
+			<&gpiof 1 GPIO_INPUT_PULL_DOWN>,
+			<&gpiof 4 GPIO_INPUT_PULL_DOWN>,
+			<&gpiog 3 GPIO_OUTPUT_HIGH>,
+			<&gpiog 4 GPIO_OUTPUT_HIGH>,
+			<&gpiog 5 GPIO_OUTPUT_HIGH>,
+			<&gpiog 7 GPIO_OUTPUT_HIGH>,
+			<&gpioh 1 GPIO_INPUT_PULL_DOWN>,
+			<&gpioh 2 GPIO_INPUT_PULL_DOWN>,
+			<&gpioi 1 GPIO_INPUT_PULL_DOWN>,
+			<&gpioi 5 GPIO_INPUT_PULL_DOWN>,
+			<&gpioj 2 GPIO_INPUT_PULL_DOWN>;
+	};
+};
+
+&pinctrl {
+	/* I2C property setting */
+	i2c3_clk_gpb2_default: i2c3_clk_gpb2_default {
+		gpio-voltage = "1v8";
+	};
+	i2c3_data_gpb5_default: i2c3_data_gpb5_default {
+		gpio-voltage = "1v8";
+	};
+
+	i2c0_clk_gpb3_default: i2c0_clk_gpb3_default {
+		drive-strength = "low";
+	};
+	i2c0_data_gpb4_default: i2c0_data_gpb4_default {
+		drive-strength = "low";
+	};
+
+	i2c2_clk_gpf6_default: i2c2_clk_gpf6_default {
+		drive-strength = "low";
+	};
+	i2c2_data_gpf7_default: i2c2_data_gpf7_default {
+		drive-strength = "low";
+	};
+
+	shi_mosi_gpm0_default: shi_mosi_gpm0_default {
+		gpio-voltage = "1v8";
+	};
+	shi_miso_gpm1_default: shi_miso_gpm1_default {
+		gpio-voltage = "1v8";
+	};
+	shi_clk_gpm4_default: shi_clk_gpm4_default {
+		gpio-voltage = "1v8";
+	};
+	shi_cs_gpm5_default: shi_cs_gpm5_default {
+		gpio-voltage = "1v8";
+	};
+};
+
+&i2c3 {
+	label = "I2C_SENSOR";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c2 {
+	label = "I2C_PDC_SM";
+	prescale-scl-low = <8>;
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c4 {
+	label = "I2C_PDC_S";
+	prescale-scl-low = <8>;
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c0 {
+	label = "I2C_CHARGER";
+	prescale-scl-low = <8>;
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c1 {
+	label = "I2C_SMB_BATT";
+	/* Only i2c1 uses 100kHz SMBus which needs data-hold-time */
+	data-hold-time = <10>;
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c5 {
+	label = "I2C_GSC_I2C";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};

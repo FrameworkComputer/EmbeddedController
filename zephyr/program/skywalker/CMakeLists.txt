@@ -15,4 +15,7 @@ target_sources(app PRIVATE
 if(DEFINED CONFIG_BOARD_SKYWALKER)
 	project(skywalker)
 	add_subdirectory(skywalker)
+elseif(DEFINED CONFIG_BOARD_LUUKE)
+	project(luuke)
+	add_subdirectory(luuke)
 endif()

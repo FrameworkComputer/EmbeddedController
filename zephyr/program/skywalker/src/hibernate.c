@@ -10,7 +10,7 @@
 
 __override void board_hibernate_late(void)
 {
-#ifdef CONFIG_BOARD_SKYWALKER
+#if defined(CONFIG_BOARD_SKYWALKER) || defined(CONFIG_BOARD_LUUKE)
 	/* b/283037861, b/397139423:
 	 * Skywalker reference board only, Pre-off the 5V power line for
 	 * hibernate.
@@ -20,7 +20,7 @@ __override void board_hibernate_late(void)
 	/* It takes around 30ms to release the PP5000 capacitance. */
 	k_busy_wait(30 * USEC_PER_MSEC); /* 30ms */
 
-#ifdef CONFIG_BOARD_IT8XXX2
+#ifdef CONFIG_SOC_IT8XXX2
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_ulp), 1);
 #endif
 }

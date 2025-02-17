@@ -8,6 +8,12 @@ config BOARD_SKYWALKER
 	  Build Google Skywalker board. Skywalker has MediaTek SoC
 	  with Nuvoton NPCX997FB EC.
 
+config BOARD_LUUKE
+	bool "Google Luuke Board"
+	help
+	  Build Google Luuke board. Skywalker has MediaTek SoC
+	  with ITE IT82002 EC.
+
 module = SKYWALKER
 module-str = Skywalker board-specific code
 source "subsys/logging/Kconfig.template.log_config"

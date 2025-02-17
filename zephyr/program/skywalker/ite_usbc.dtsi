@@ -1,0 +1,88 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <usbc-policy.dtsi>
+
+/ {
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		usbc_port0: port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			chg = <&charger_bq25720>;
+			pdc = <&pdc_power_p0>;
+			policy = <&cros_policy>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&tusb546_mux_0 &virtual_mux_0>;
+			};
+		};
+
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		usbc_port1: port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			pdc = <&pdc_power_p1>;
+			policy = <&cros_policy>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&ps8747_mux_1 &virtual_mux_1>;
+			};
+		};
+
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+		ppm-driver {
+			compatible = "ucsi-ppm";
+		};
+	};
+};
+
+&i2c2 {
+	pdc_power_p0: rts54-pdc@66 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x66>;
+		irq-gpios = <&gpiod 3 GPIO_ACTIVE_LOW>;
+		ccd;
+	};
+	pdc_power_p1: rts54-pdc@67 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x67>;
+		irq-gpios = <&gpioa 6 GPIO_ACTIVE_LOW>;
+	};
+	/* TODO(b:380121396): enable PDC I2C_S port if we need it */
+};
+
+&i2c4 {
+	ps8747_mux_1: ps8747-mux-1@10 {
+		compatible = "parade,ps8743";
+		status = "okay";
+		reg = <0x10>;
+	};
+
+	tusb546_mux_0: tusb546-mux-0@44 {
+		compatible = "ti,tusb546";
+		reg = <0x44>;
+	};
+};
+
+&i2c0 {
+	charger_bq25720: bq25720@9 {
+		compatible = "ti,bq25710";
+		status = "okay";
+		reg = <0x9>;
+	};
+};
+
