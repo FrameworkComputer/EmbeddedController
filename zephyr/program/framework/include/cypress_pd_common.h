@@ -1129,4 +1129,10 @@ int cypd_get_active_pd_chip_count(void);
  */
 void cypd_update_safety_table(int safety_level);
 
+/**
+ * This function allow the project to change the pd port's order to
+ * perform the error recovery.
+ */
+__override_proto int board_perform_error_recovery_port(int port);
+
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

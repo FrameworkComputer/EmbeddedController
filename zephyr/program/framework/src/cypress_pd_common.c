@@ -1098,25 +1098,22 @@ static int cypd_modify_profile(int controller, int port, int profile)
 	return EC_SUCCESS;
 }
 
-int cypd_modify_safety_power_1_5A(int controller, int port)
+int cypd_modify_safety_power(int controller, int port, int profile)
 {
 	int rv;
 	int port_idx = (controller << 1) + port;
 
 	if (verbose_msg_logging)
-		CPRINTS("Safety level trigger force PDO 1.5A");
+		CPRINTS("PD Select PDO %s ", profile & 0x02 ? "3A" : "1.5A");
 
-	rv = cypd_select_rp(port_idx, CCG_PD_CMD_SET_TYPEC_1_5A);
-	rv = cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_1_5A);
+	rv = cypd_select_rp(port_idx, profile);
+	rv = cypd_select_pdo(controller, port, profile);
 	if (rv != EC_SUCCESS) {
+		CPRINTS("PD Select PDO %s failed", profile & 0x02 ? "3A" : "1.5A");
 		cypd_clear_port(controller, port);
 		cypd_set_prepare_pdo(controller, port);
 		return rv;
 	}
-
-	pd_3a_set = 0;
-	pd_3a_flag = 0;
-	pd_ports_1_5A_flag[port_idx] = 1;
 
 	return EC_SUCCESS;
 }
@@ -1790,6 +1787,11 @@ static void cypd_handle_state(int controller)
 		break;
 	}
 
+}
+
+__overridable int board_perform_error_recovery_port(int port)
+{
+	return port;
 }
 
 
@@ -2773,15 +2775,20 @@ void perform_error_recovery(int controller)
 	 * battery percentage less than 1%.
 	 */
 	for (port = 0; port < pd_chip_config[controller].support_max_port; port++) {
+		int pd_port, pd_chip;
+
+		pd_port = board_perform_error_recovery_port(port);
+		pd_chip  = PORT_TO_CONTROLLER(pd_port);
+
 #ifdef CONFIG_PLATFORM_EC_BATTERY
-		if (cypd_controller_port_to_charge_port(controller, port) ==
+		if (cypd_controller_port_to_charge_port(pd_chip, pd_port) ==
 			get_active_charge_pd_port() &&
 		    (battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED ||
 		    (charge_get_percent() < 1)))
 			continue;
 #endif
-		data[0] = port;
-		cypd_write_reg_block(controller, CCG_DPM_CMD_REG, data, 2);
+		data[0] = PORT_TO_CONTROLLER_PORT(pd_port);
+		cypd_write_reg_block(pd_chip, CCG_DPM_CMD_REG, data, 2);
 	}
 }
 
