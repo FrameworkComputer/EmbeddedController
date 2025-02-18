@@ -7,7 +7,7 @@
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
 		/* Uth1 */
-		apu-f75303 {
+		temp_sensor_power: power-f75303 {
 			temp_host_warn = <90>;
 			temp_host_high = <90>;
 			temp_host_halt = <105>;
@@ -17,10 +17,10 @@
 			temp_fan_off = <38>;
 			temp_fan_max = <54>;
 			power-good-pin = <&gpio_slp_s3_l>;
-			sensor = <&apu_f75303>;
+			sensor = <&power_f75303>;
 		};
 		/* Qth1 */
-		memory-f75303 {
+		temp_sensor_memory: memory-f75303 {
 			temp_host_warn = <90>;
 			temp_host_high = <90>;
 			temp_host_halt = <105>;
@@ -33,7 +33,7 @@
 			sensor = <&memory_f75303>;
 		};
 		/* Qth2 */
-		ambient-f75303 {
+		temp_sensor_ambient: ambient-f75303 {
 			temp_host_warn = <90>;
 			temp_host_high = <90>;
 			temp_host_halt = <105>;
@@ -45,7 +45,7 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&ambient_f75303>;
 		};
-		amd-apu {
+		temp_sensor_chipset: amd-apu {
 			temp_host_warn = <108>;
 			temp_host_high = <108>;
 			temp_host_halt = <127>;

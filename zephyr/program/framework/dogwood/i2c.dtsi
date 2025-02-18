@@ -121,7 +121,7 @@
 	};
 
 	/* Uth1 */
-	apu_f75303: apu_f75303@4d {
+	power_f75303: power_f75303@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
 		temperature-type = "F75303_IDX_LOCAL";
 		reg = <0x4d>;
