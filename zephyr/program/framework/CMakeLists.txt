@@ -26,8 +26,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
 	"src/battery_extender.c")
 
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
-	"src/charge_limit_control.c")
 
 if(DEFINED CONFIG_BOARD_LOTUS)
 	project(lotus)
