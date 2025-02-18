@@ -668,4 +668,44 @@ struct ec_response_read_boardid {
 	int8_t board_id;
 } __ec_align1;
 
+/*****************************************************************************
+ *
+ * Host command to set the fan configuration
+ */
+#define EC_CMD_FAN_CONFIGURATION	0x3E27
+
+enum sensor_source_t {
+	SENSOR_SRC_OFF = 0,
+	SENSOR_SRC_APU = 1,
+	SENSOR_SRC_CHASSIS = 2,
+};
+
+enum fan_hc_command_t {
+	FAN_HC_CMD_GET = 0,
+	FAN_HC_CMD_SET = 1,
+};
+
+struct fan_parameter_t {
+	uint8_t max_duty;	 /* Set the fan maximum duty */
+	uint8_t min_duty;	 /* Set the fan minimum duty */
+	uint8_t max_temperature; /* Set the maximum temperature point for fan's maximum duty */
+	uint8_t min_temperature; /* Set the minimum temperature point for fan's minimum duty */
+	/* Control the fan to minimum duty if the temperature is less than minimum temperature */
+	uint8_t fan_always_on;
+	/* Monitor which sensor source to control the fan. Reference enum sensor_source_t */
+	uint8_t	sensor_source;
+	uint8_t target_duty;	 /* Current fan duty */
+};
+
+struct ec_params_fan_configuration {
+	uint8_t fan_index;
+	/* CMD_SET to update the parameter from host. Reference enum fan_hc_command_t */
+	uint8_t command;
+	struct fan_parameter_t fan_config;
+} __ec_align1;
+
+struct ec_response_fan_configuration {
+	struct fan_parameter_t fan_config;
+} __ec_align1;
+
 #endif /* __BOARD_HOST_COMMAND_H */
