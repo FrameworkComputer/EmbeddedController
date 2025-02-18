@@ -64,6 +64,10 @@ static void wake_on_lan_power_on(void)
 	/* If chipset in shutdown mode, pulse the power button on lan to wake it. */
 	if (!lan_wake_satus && chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		chipset_power_on();
+
+	/* If chipset in suspend mode, set the ACPI query event to wake it. */
+	if (!lan_wake_satus && chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+		host_set_single_event(EC_HOST_EVENT_POWER_BUTTON);
 }
 DECLARE_DEFERRED(wake_on_lan_power_on);
 
