@@ -198,6 +198,17 @@
 		thermtrip {
 			gpios = <&gpio8 1 GPIO_INPUT>;
 		};
+
+		5valw_alert_ec_l {
+			gpios = <&gpio8 3 GPIO_INPUT>;	/* INA236 (monitor 5V) alert pin */
+		};
+		gpio_en_s0ix: en_s0ix {
+			gpios = <&gpio7 5 GPIO_OUTPUT_LOW>;
+		};
+		gpio_en_rvsp_l: en_rvsp_l {
+			gpios = <&gpio3 7 GPIO_OUTPUT_LOW>; /* Enable PSU reverse protect circuit */
+		};
+
 		/* unimplemented GPIOs */
 		entering-rw {
 			enum-name = "GPIO_ENTERING_RW";
@@ -231,15 +242,12 @@
 			<&gpio0 6 0>,
 			<&gpio0 5 0>,
 			<&gpio0 4 0>,
-			<&gpio8 3 0>,
 			<&gpio0 3 0>,
 			<&gpiob 1 0>,
 			<&gpio0 1 0>,
 			<&gpio0 2 0>,
-			<&gpio7 5 0>,
 			<&gpioc 4 0>,
 			<&gpio4 2 0>,
-			<&gpio3 7 0>,
 			<&gpioe 1 0>,
 			<&gpiof 1 0>;
 	};

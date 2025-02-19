@@ -36,9 +36,18 @@
 
 #define NPCX_ESPI_VWEVSM_ADDR ((volatile uint32_t *)0x4000a160)
 
+/**
+ * After EC turns off the susp#, the VS power good will deassert in 2ms.
+ * If the hardware happens something wrong, the VS power good does not
+ * deassert in 20ms, EC will force back to g3 and turn off all power rail.
+ */
+#define TIMEOUT_VS_POWER_TURN_OFF (20 * MSEC)
+
 static bool power_s5_up;		/* Chipset is sequencing up or down */
 static int force_shutdown_flags;
 static int d3cold_is_entry;	/* check the d3cold status */
+
+static void system_check_ssd_status(void);
 
 static void power_enable_psu(bool enable)
 {
@@ -296,7 +305,16 @@ static void chipset_force_g3(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_apu_aud_pwr_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_1p2valw_pwren), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75_1p8valw_pwren), 0);
+
+	if (board_get_version() >= BOARD_VERSION_8) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 0);
+	}
+
+	cypd_update_chips_state(CCG_STATE_NO_POWER);
+	power_enable_psu(0);
 }
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
@@ -342,22 +360,79 @@ static int chipset_prepare_S3(int enable)
 		k_msleep(85);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
 		peripheral_power_suspend();
+
+		if (board_get_version() >= BOARD_VERSION_8) {
+			if (power_wait_mask_signals_timeout(0, IN_VS_POWER,
+				TIMEOUT_VS_POWER_TURN_OFF)) {
+				/* exit S0ix, clear the flags */
+				resume_ms_flag = 0;
+				enter_ms_flag = 0;
+				system_in_s0ix = 0;
+				chipset_force_g3();
+				return false;
+			}
+
+			k_msleep(10);
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix), 1);
+
+			k_msleep(20);
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 0);
+
+			k_msleep(10);
+			power_enable_psu(0);
+		}
 	} else {
 		k_msleep(10);
+		if (board_get_version() >= BOARD_VERSION_8) {
+			power_enable_psu(1);
+
+			/**
+			 * Wait for the PSU power good.
+			 * If something wrong, turn off power and force to g3.
+			 */
+			if (power_wait_signals(IN_VALW_PGOOD)) {
+				/* exit S0ix, clear the flags */
+				resume_ms_flag = 0;
+				enter_ms_flag = 0;
+				system_in_s0ix = 0;
+				chipset_force_g3();
+				return false;
+			}
+
+			k_msleep(10);
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 1);
+			system_check_ssd_status();
+		}
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 1);
 
-		if (power_wait_signals(IN_VS_POWER))
-			force_shutdown_flags = 1;
+		/* wait VS power good. If something wrong, turn off power and force to g3 */
+		if (power_wait_signals(IN_VS_POWER)) {
+			/* exit S0ix, clear the flags */
+			resume_ms_flag = 0;
+			enter_ms_flag = 0;
+			system_in_s0ix = 0;
+			chipset_force_g3();
+			return false;
+		}
+
 		k_msleep(20);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 1);
 
-		/* wait VR power good. if something wrong, turn off power and force to g3 */
-		if (power_wait_signals(IN_VR_PGOOD))
-			force_shutdown_flags = 1;
+		/* wait VR power good. If something wrong, turn off power and force to g3 */
+		if (power_wait_signals(IN_VR_PGOOD)) {
+			/* exit S0ix, clear the flags */
+			resume_ms_flag = 0;
+			enter_ms_flag = 0;
+			system_in_s0ix = 0;
+			chipset_force_g3();
+			return false;
+		}
 
 		k_msleep(10);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 1);
 		peripheral_power_resume();
+
+		k_msleep(10);
 	}
 
 	return true;
@@ -401,6 +476,15 @@ enum power_state power_handle_state(enum power_state state)
 
 		k_msleep(10);
 		power_enable_psu(1);
+
+		if (board_get_version() >= BOARD_VERSION_8) {
+			/**
+			 * If en_evsp_l does not set to high, the pok_l will not de-assert
+			 * delay 400 ms to ensure the POK already turns on.
+			 */
+			k_msleep(400);
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 1);
+		}
 
 		if (power_wait_signals(IN_VALW_PGOOD)) {
 			/* something wrong, turn off power and force to g3 */
@@ -629,12 +713,14 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S0ixS3:
 		/* follow power sequence Disable S3 power */
-		chipset_prepare_S3(0);
+		if (!chipset_prepare_S3(0))
+			return POWER_G3;
 		return POWER_S3;
 
 	case POWER_S3S0ix:
 		/* Enable power for CPU check system */
-		chipset_prepare_S3(1);
+		if (!chipset_prepare_S3(1))
+			return POWER_G3;
 		return POWER_S0ix;
 
 	case POWER_S0ixS0:
@@ -643,6 +729,14 @@ enum power_state power_handle_state(enum power_state state)
 
 		lpc_s0ix_resume_restore_masks();
 		hook_notify(HOOK_CHIPSET_RESUME);
+
+		if (board_get_version() >= BOARD_VERSION_8) {
+			/**
+			 * system has waked up and update the EC_CUSTOMIZED_MEMMAP_POWER_STATE
+			 * turn off en_s0ix
+			 */
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix), 0);
+		}
 		return POWER_S0;
 
 		break;
@@ -700,6 +794,11 @@ enum power_state power_handle_state(enum power_state state)
 
 		k_msleep(5);
 
+		if (board_get_version() >= BOARD_VERSION_8) {
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 0);
+			k_msleep(5);
+		}
+
 		/* clear suspend flag when system shutdown */
 		power_state_clear(EC_PS_ENTER_S0ix |
 			EC_PS_RESUME_S0ix | EC_PS_RESUME_S3 | EC_PS_ENTER_S3);
@@ -720,13 +819,16 @@ enum power_state power_handle_state(enum power_state state)
 	return state;
 }
 
-void system_check_ssd_status(void)
+static void system_check_ssd_status(void)
 {
 	int ssd_power_states = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT);
 
 	if (ssd_power_states & JSSD2_POWER_ON) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 1);
-		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) &= ~JSSD2_POWER_ON;
+		/* only enable the ssd2 power after the PSU is on */
+		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pok_l)) == 1) {
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 1);
+			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) &= ~JSSD2_POWER_ON;
+		}
 	}
 }
 DECLARE_HOOK(HOOK_TICK, system_check_ssd_status, HOOK_PRIO_DEFAULT);
