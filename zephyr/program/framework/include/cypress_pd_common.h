@@ -224,7 +224,7 @@
 /************************************************/
 #define PORT_TO_CONTROLLER(x) ((x) >> 1)
 #define PORT_TO_CONTROLLER_PORT(x) ((x) & 0x01)
-
+#define PORTS_PER_CONTROLLER 2
 /************************************************/
 /*  CCG6 special setting                        */
 /************************************************/
