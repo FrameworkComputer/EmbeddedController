@@ -152,8 +152,12 @@
 			gpios = <&gpio9 4 GPIO_INPUT>;		/* Monitor 3VALW PWR OK */
 			enum-name = "GPIO_POWER_GOOD_3VALW";
 		};
-		gpio_vr_pwrgd: vr_pwrgd {
+		gpio_vr_pwrgd_evt: vr_pwrgd_evt {
 			gpios = <&gpio9 7 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_GOOD_VR_EVT";
+		};
+		gpio_vr_pwrgd: vr_pwrgd {
+			gpios = <&gpioa 4 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_GOOD_VR";
 		};
 		gpio_lan_wake: lan_wake {
@@ -235,8 +239,7 @@
 			<&gpio4 2 0>,
 			<&gpio3 7 0>,
 			<&gpioe 1 0>,
-			<&gpiof 1 0>,
-			<&gpioa 4 0>;
+			<&gpiof 1 0>;
 	};
 };
 

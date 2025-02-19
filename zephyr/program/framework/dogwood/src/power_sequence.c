@@ -759,6 +759,18 @@ static void peripheral_device_reset(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, peripheral_device_reset, HOOK_PRIO_DEFAULT);
 
+/* EC needs to change the power signal before chipset init the interrupt */
+static void power_select_power_signal(void)
+{
+	/**
+	 * default set the dvt2 pin in the power signal devicetree, and overrite it
+	 * if the mainboard is evt or dvt1
+	 */
+	if (board_get_version() < BOARD_VERSION_8)
+		power_signal_list[X86_VR_PG].gpio = GPIO_POWER_GOOD_VR_EVT;
+}
+DECLARE_HOOK(HOOK_INIT, power_select_power_signal, HOOK_PRIO_INIT_CHIPSET - 1);
+
 __override int chipset_in_low_power_mode(void)
 {
 	volatile uint32_t *address;
