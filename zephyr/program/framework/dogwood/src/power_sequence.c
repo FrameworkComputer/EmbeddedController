@@ -733,8 +733,13 @@ DECLARE_HOOK(HOOK_TICK, system_check_ssd_status, HOOK_PRIO_DEFAULT);
 
 void chipset_throttle_cpu(int throttle)
 {
-	if (chipset_in_state(CHIPSET_STATE_ON))
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), !throttle);
+	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		const struct gpio_dt_spec *prochot = GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l);
+
+		if (board_get_version() < BOARD_VERSION_8)
+			prochot = GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l_evt);
+		gpio_pin_set_dt(prochot, !throttle);
+	}
 }
 
 static void peripheral_device_reset(void)

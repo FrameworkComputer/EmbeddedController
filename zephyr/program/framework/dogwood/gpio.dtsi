@@ -91,8 +91,11 @@
 		gpio_pch_pwr_en: pch_pwr_en {
 			gpios = <&gpiod 4 GPIO_OUTPUT_LOW>;
 		};
-		gpio_h_prochot_l: h_prochot_l {
+		gpio_h_prochot_l_evt: h_prochot_l_evt {
 			gpios = <&gpioa 1 GPIO_ODR_HIGH>;
+		};
+		gpio_h_prochot_l: h_prochot_l {
+			gpios = <&gpio6 7 GPIO_ODR_HIGH>;
 		};
 		gpio_sys_pwrgd_ec: sys_pwrgd_ec {
 			gpios = <&gpio7 0 GPIO_OUTPUT_LOW>;
@@ -234,7 +237,6 @@
 			<&gpio0 1 0>,
 			<&gpio0 2 0>,
 			<&gpio7 5 0>,
-			<&gpio6 7 0>,
 			<&gpioc 4 0>,
 			<&gpio4 2 0>,
 			<&gpio3 7 0>,
