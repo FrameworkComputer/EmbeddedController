@@ -27,10 +27,15 @@
 #define GEN_POWER_SIGNAL_STRUCT(cid) \
 	[GEN_POWER_SIGNAL_ENUM_ENTRY(cid)] = GEN_POWER_SIGNAL_STRUCT_ENTRY(cid),
 
+#ifdef CONFIG_PLATFORM_EC_POWER_SIGNAL_RUNTIME_CONFIG
+struct power_signal_info power_signal_list[] = { DT_FOREACH_CHILD(
+	POWER_SIGNAL_LIST_NODE, GEN_POWER_SIGNAL_STRUCT) };
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+#else
 const struct power_signal_info power_signal_list[] = { DT_FOREACH_CHILD(
 	POWER_SIGNAL_LIST_NODE, GEN_POWER_SIGNAL_STRUCT) };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
-
+#endif
 /*
  * Verify the number of required power-signals are specified in
  * the DeviceTree

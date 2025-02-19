@@ -634,6 +634,13 @@ config CROS_EC_POWER_SIGNAL_LIST
 	  Define the global power_signal_list[] from the devicetree. Requires a
 	  node with nodelabel power_signal_list.
 
+config PLATFORM_EC_POWER_SIGNAL_RUNTIME_CONFIG
+	bool "EC can choose power signal gpio by schematic version"
+	default n
+	help
+		If enable this configuration, the power_signal_list will not declare const.
+		EC can run-time to change the power signal gpio by schematic version.
+
 config PLATFORM_EC_MKBP_EVENT
     bool "MKBP event"
     help
