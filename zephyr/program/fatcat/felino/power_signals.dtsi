@@ -18,66 +18,66 @@
 
 	pwr-en-pp3300-s5 {
 		compatible = "intel,ap-pwrseq-gpio";
-		dbg-label = "PP3300_S5 enable output to LS";
+		dbg-label = "EN_S5_RAILS enable output to LS";
 		enum-name = "PWR_EN_PP3300_A";
-		gpios = <PWR_EN_PP3300_S5 GPIO_ACTIVE_HIGH>;
+		gpios = <&gpiof 2 GPIO_ACTIVE_HIGH>;
 		output;
 	};
 	pwr-en-pp5000-s5 {
 		compatible = "intel,ap-pwrseq-gpio";
-		dbg-label = "PP5000_S5 enable output to LS";
+		dbg-label = "V5P0A_EN enable output to LS";
 		enum-name = "PWR_EN_PP5000_A";
-		gpios = <PWR_EN_PP5000_S5 GPIO_ACTIVE_HIGH>;
+		gpios = <&gpioh 3 GPIO_ACTIVE_HIGH>;
 		output;
 	};
 	pwr-pg-ec-rsmrst-od {
 		compatible = "intel,ap-pwrseq-gpio";
-		dbg-label = "RSMRST power good from regulator";
+		dbg-label = "VCCPRIM_IO power good from regulator";
 		enum-name = "PWR_RSMRST_PWRGD";
-		gpios = <PWR_RSMRST_PWRGD GPIO_ACTIVE_HIGH>;
+		gpios = <&gpiog 1 GPIO_ACTIVE_HIGH>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
 	pwr-ec-pch-rsmrst-odl {
 		compatible = "intel,ap-pwrseq-gpio";
-		dbg-label = "RSMRST output to PCH";
+		dbg-label = "RSMRST_L output to PCH";
 		enum-name = "PWR_EC_PCH_RSMRST";
-		gpios = <PWR_EC_PCH_RSMRST GPIO_ACTIVE_LOW>;
+		gpios = <&gpioi 6 GPIO_ACTIVE_LOW>;
 		reset-val = <1>;
 		output;
 	};
 	pwr-slp-s0-l {
 		compatible = "intel,ap-pwrseq-gpio";
-		dbg-label = "SLP_S0_L input from PCH";
+		dbg-label = "SYS_SLP_S0IX_L input from PCH";
 		enum-name = "PWR_SLP_S0";
-		gpios = <PWR_SLP_S0 GPIO_ACTIVE_LOW>;
+		gpios = <&gpioj 5 GPIO_ACTIVE_LOW>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
 	pwr-pch-pwrok {
 		compatible = "intel,ap-pwrseq-gpio";
-		dbg-label = "PCH_PWROK output to PCH";
+		dbg-label = "PTL_PWROK output to PCH";
 		enum-name = "PWR_PCH_PWROK";
-		gpios = <PWR_PCH_PWROK GPIO_OPEN_DRAIN>;
+		gpios = <&gpiob 5 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
 		output;
 	};
 	pwr-ec-pch-sys-pwrok {
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "SYS_PWROK output to PCH";
 		enum-name = "PWR_EC_PCH_SYS_PWROK";
-		gpios = <&gpiod 5 GPIO_ACTIVE_HIGH>;
+		gpios = <&gpiod 5 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
 		output;
 	};
 	pwr-slp-s3 {
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "SLP_S3_L input from PCH";
 		enum-name = "PWR_SLP_S3";
-		gpios = <&gpioc 6 GPIO_ACTIVE_LOW>;
+		gpios = <&gpioc 6 (GPIO_ACTIVE_LOW | GPIO_VOLTAGE_1P8)>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
 	pwr-slp-s4 {
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "SLP_S4_L input from PCH";
 		enum-name = "PWR_SLP_S4";
-		gpios = <&gpioc 4 GPIO_ACTIVE_LOW>;
+		gpios = <&gpioc 4 (GPIO_ACTIVE_LOW | GPIO_VOLTAGE_1P8)>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
 	pwr-slp-s5 {
@@ -89,16 +89,20 @@
 		vw-invert;
 	};
 	pwr-all-sys-pwrgd {
-		compatible = "intel,ap-pwrseq-gpio";
-		dbg-label = "all power good";
+		/*
+		 * This is a board level signal, since this
+		 * signal needs some special processing.
+		 */
+		compatible = "intel,ap-pwrseq-external";
+		dbg-label = "Combined all power good";
 		enum-name = "PWR_ALL_SYS_PWRGD";
-		gpios = <PWR_ALL_SYS_PWRGD GPIO_ACTIVE_HIGH>;
-		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
 	pwr-sys-rst-l {
-		compatible = "intel,ap-pwrseq-external";
+		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "SYS_RESET# output to PCH";
 		enum-name = "PWR_SYS_RST";
+		gpios = <&gpiog 0 (GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN)>;
+		output;
 	};
 	ap-power {
 		compatible = "ap-pwrseq-sub-states";
@@ -110,24 +114,27 @@
  * Because the power signals directly reference the GPIOs,
  * the correspinding named-gpios need to have no-auto-init set.
  */
-&en_pp3300_a {
+&gpio_en_s5_rails {
 	no-auto-init;
 };
-&en_pp5000_s5 {
+&gpio_v5p0a_en {
 	no-auto-init;
 };
-&rsmrst_pwrgd {
+&gpio_vccprim_io_pgood {
 	no-auto-init;
 };
-&ec_pch_rsmrst_l {
+&gpio_ec_rsmrst_l {
 	no-auto-init;
 };
-&pch_slp_s0_n {
+&gpio_sys_slp_s0ix_l {
 	no-auto-init;
 };
-&ec_pch_pwrok_od {
+&gpio_ec_pch_pwrok {
 	no-auto-init;
 };
-&all_sys_pwrgd {
+&gpio_ec_pch_sys_pwrok {
+	no-auto-init;
+};
+&sys_rst_odl {
 	no-auto-init;
 };

@@ -8,27 +8,10 @@
 #include <cros/integrated_fwid.dtsi>
 
 /* felino project DTS includes */
-
 #include "gpios.dtsi"
-#include "include/board.h"
-
-/ {
-	named-gpios {
-		/*
-		 * Aliases for power signal names
-		 */
-		en_pp3300_a: en_s5_rails {};
-		en_pp5000_s5: v5p0a_en {};
-		rsmrst_pwrgd: vccprim_io_pgood {};
-		ec_pch_rsmrst_l: ec_rsmrst_l {};
-		pch_slp_s0_n: sys_slp_s0ix_l {};
-		ec_pch_pwrok_od: ec_pch_pwrok {};
-		all_sys_pwrgd: vcc_ddr_pwrok {};
-		pwrbtn: gsc_ec_pwr_btn_odl {};
-	};
-};
 
 #include "adc.dtsi"
+#include "binman.dtsi"
 #include "console.dtsi"
 #include "fan.dtsi"
 #include "i2c.dtsi"
@@ -39,12 +22,6 @@
 #include "power_signals.dtsi"
 #include "temp_sensors.dtsi"
 #include "usb_typec.dtsi"
-
-/* these need to be promoted to program.conf */
-
-#include "binman.dtsi"
-
-/* Felino overrides follow... */
 
 / {
 	batteries {

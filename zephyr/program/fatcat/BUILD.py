@@ -78,9 +78,7 @@ register_npcx9_project(
 
 register_it8xxx2_project(
     project_name="felino",
-    extra_kconfig_files=[
-        here / ".." / "intelrvp" / "zephyr_ap_pwrseq.conf",
-    ],
+    extra_kconfig_files=[],
 )
 
 # Note for reviews, do not let anyone edit these assertions, the addresses
