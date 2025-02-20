@@ -221,6 +221,13 @@ config CHARGER_DYNAMIC_ACOK_REFERENCE
 		is disconnected. Control the charger acok reference dynamically can fix this
 		issue.
 
+config PLATFORM_EC_CHARGER_RAA489300
+	bool "Select renesas raa489300 chip"
+	default n
+	help
+		Framework project which uses the renesas raa489300 chip.
+		Enable raa489300 feature.
+
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code
 source "subsys/logging/Kconfig.template.log_config"

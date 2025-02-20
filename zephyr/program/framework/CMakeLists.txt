@@ -48,6 +48,8 @@ zephyr_library_sources_ifndef(CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
 	"src/diagnostics_laptop.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_WAKE_ON_LAN
 	"src/wol.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_RAA489300
+	"src/raa489300.c")
 
 if (NOT DEFINED CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC)
 	zephyr_library_sources("src/laptop_led.c")
