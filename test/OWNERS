@@ -1,0 +1,3 @@
+# Only CrOS FP team is owner of this file.
+per-file run_device_tests.py = set noparent
+per-file run_device_tests.py = file:chromiumos/owners:v1:/firmware/OWNERS.cros_fp
