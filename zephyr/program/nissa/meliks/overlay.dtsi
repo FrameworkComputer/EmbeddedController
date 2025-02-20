@@ -466,21 +466,25 @@
 	  unused-pins {
 		compatible = "unused-gpios";
 		unused-gpios =
+			<&gpio0 4 0>,
 			<&gpio3 2 0>,
 			<&gpio3 3 0>,
 			<&gpio3 5 0>,
 			<&gpio3 6 0>,
 			<&gpio5 7 0>,
 			<&gpio6 0 0>,
-			<&gpio6 3 0>,
 			<&gpio6 6 0>,
+			<&gpio8 2 0>,
 			<&gpio8 3 0>,
 			<&gpio8 6 0>,
+			<&gpio9 1 0>,
+			<&gpio9 5 0>,
 			<&gpiob 1 0>,
 			<&gpiob 7 0>,
-			<&gpioc 7 0>,
-			<&gpiof 2 0>,
-			<&gpiof 3 0>;
+			<&gpioc 0 0>,
+			<&gpioc 6 0>,
+			<&gpiod 5 0>,
+			<&gpioe 2 0>;
 	 };
 };
 
@@ -506,7 +510,8 @@
 		     &adc0_chan1_gp44
 		     &adc0_chan4_gp41
 		     &adc0_chan6_gp34
-		     &adc0_chan10_gpe0>;
+		     &adc0_chan10_gpe0
+		     &adc0_chan11_gpc7>;
 	pinctrl-names = "default";
 };
 
