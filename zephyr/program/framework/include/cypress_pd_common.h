@@ -938,6 +938,17 @@ void clear_erp_progress(void);
  */
 void cypd_update_epr_state(int controller, int port, int response_len);
 
+/**
+ * Board-specific callback to confirm if the 3-Level Buck transition is ready.
+ *
+ * This function checks whether the system is prepared to transition
+ * to Buck mode, with additional handling based on EPR mode support.
+ *
+ * @param is_epr	Set to true if transitioning for EPR mode.
+ * @return EC_SUCCESS if the transition is ready, error code otherwise.
+ */
+__override_proto int board_confirm_buck_transition_ready(bool is_epr);
+
 #endif /* CONFIG_PD_CCG8_EPR */
 
 #ifdef CONFIG_PD_COMMON_VBUS_CONTROL

@@ -272,6 +272,11 @@ void clear_erp_progress(void)
 	pd_epr_in_progress &= EPR_PROCESS_MASK;
 }
 
+__overridable int board_confirm_buck_transition_ready(bool is_epr)
+{
+	return EC_SUCCESS;
+}
+
 static void epr_flow_pending_deferred(void)
 {
 	int port_idx;
@@ -321,6 +326,7 @@ DECLARE_DEFERRED(epr_flow_pending_deferred);
 void enter_epr_mode(void)
 {
 	int port_idx;
+	int ret;
 
 	/**
 	 * Only enter EPR mode when the system in S0 state.
@@ -355,6 +361,24 @@ void enter_epr_mode(void)
 
 				/* Set input current to 0mA */
 				charger_set_input_current_limit(0, 0);
+			}
+
+			/* Try to set to Buck mode, retry up to 5 times */
+			for (int retry = 0; retry < 5; retry++) {
+				ret = board_confirm_buck_transition_ready(1);
+				if (ret == EC_SUCCESS) {
+					CPRINTS("3Level-Buck transition ready");
+					break;
+				}
+				CPRINTS("3Level-Buck transition retry");
+				crec_msleep(200);
+			}
+
+			/* If all retries fail, fallback to PTM mode */
+			if (ret != EC_SUCCESS) {
+				CPRINTS("Buck mode transition failed, reverting to SPR mode");
+				board_confirm_buck_transition_ready(0);
+				return;
 			}
 
 			cypd_write_reg8((port_idx & 0x2) >> 1,
@@ -444,6 +468,8 @@ void cypd_update_epr_state(int controller, int port, int response_len)
 		default:
 			/* see epr_event_failure_type*/
 			CPRINTS("EPR failed %d", data[1]);
+			/* EPR fail, switch to PTM mode */
+			board_confirm_buck_transition_ready(0);
 			/* EPR fail, do not retry */
 			pd_port_states[port_idx].epr_active = 0xff;
 		}
