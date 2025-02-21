@@ -80,9 +80,23 @@ static void peripheral_power_startup(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, peripheral_power_startup, HOOK_PRIO_DEFAULT);
 
-static void peripheral_power_resume(void)
+static void power_resume_lan_sequence(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_aux_on), 1);
+	k_msleep(120);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_lan_rst_l), 1);
+}
+
+static void power_suspend_lan_sequence(void)
+{
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_aux_on), 0);
+	k_msleep(1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_lan_rst_l), 0);
+}
+
+static void peripheral_power_resume(void)
+{
+	power_resume_lan_sequence();
 }
 
 static void peripheral_power_shutdown(void)
@@ -104,8 +118,7 @@ static void peripheral_power_suspend(void)
 
 	/* should not turn off the WoL signal if WoL is enabled */
 	if (!wake_on_lan_is_enabled())
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_aux_on), 0);
-
+		power_suspend_lan_sequence();
 }
 
 /*
