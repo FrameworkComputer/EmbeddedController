@@ -248,3 +248,38 @@ __override void board_check_extpower(void)
 
 	pre_active_port = pd_active_port;
 }
+
+__override int board_confirm_buck_transition_ready(bool is_epr)
+{
+	int rv;
+	int val = 0x0000;
+
+	if (!extpower_is_present()) {
+		return EC_ERROR_NOT_POWERED;
+	}
+
+	if (i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+		RAA489300_REG_INFORMATION1, &val) != EC_SUCCESS) {
+		CPRINTS("3Level-Buck not ready");
+		return EC_ERROR_NOT_POWERED;
+	}
+
+	/* check the regulator has gone to the reset state */
+	if (((val >> 8) & 0xF) == 0)
+		crec_msleep(150);
+
+	rv = write_level_buck_registers(is_epr);
+	if (rv)
+		return rv;
+
+	rv = i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+					RAA489300_REG_INFORMATION1, &val);
+	if (rv)
+		return rv;
+
+	if (((val >> 8) & 0x3F) == (is_epr ? 0x35 : 0x26)) {
+		return EC_SUCCESS;
+	} else {
+		return EC_ERROR_UNKNOWN;
+	}
+}
