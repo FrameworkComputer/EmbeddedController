@@ -97,14 +97,6 @@ config PLATFORM_EC_TEMP_SENSOR_GPU
 	  Enables support for the CrosEC GPU thermal driver, an i2c peripheral
 	  used for monitoring GPU temperature.
 
-config PLATFORM_EC_TEMP_SENSOR_AMD_R23M
-	bool "AMD R23M support"
-	default y
-	depends on DT_HAS_CROS_EC_TEMP_SENSOR_AMDR23M_ENABLED
-	help
-	  Enables support for the CrosEC AMD R23M driver, an i2c peripheral
-	  temperature sensor from AMD.
-
 endif # PLATFORM_EC_TEMP_SENSOR
 
 

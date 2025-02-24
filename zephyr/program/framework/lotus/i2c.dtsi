@@ -175,8 +175,8 @@
 		temperature-type = "F75303_IDX_GPU_REMOTE2";
 		reg = <0x4d>;
 	};
-	gpu_amdr23m: gpu_amdr23m@40 {
-		compatible = "cros-ec,temp-sensor-amdr23m";
+	gpu_temp: gpu_temp@40 {
+		compatible = "cros-ec,temp-sensor-gpu";
 		reg = <0x40>;
 		status = "okay";
 	};

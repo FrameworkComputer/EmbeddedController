@@ -66,11 +66,11 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&gpu_vram_f75303>;
 		};
-		temp_sensor_gpu_die: gpu-amdr23m {
+		temp_sensor_gpu_die: gpu-temp {
 			temp_fan_off = <50>;
 			temp_fan_max = <80>;
 			power-good-pin = <&gpio_slp_s3_l>;
-			sensor = <&gpu_amdr23m>;
+			sensor = <&gpu_temp>;
 		};
 	};
 
