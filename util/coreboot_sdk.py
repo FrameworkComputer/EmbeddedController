@@ -35,6 +35,9 @@ toolchain_name_map = {
     "picolibc-i386-elf": "COREBOOT_SDK_ROOT_picolibc_x86",
     "libstdcxx-i386-elf": "COREBOOT_SDK_ROOT_libstdcxx_x86",
     "riscv-elf": "COREBOOT_SDK_ROOT_riscv",
+    "riscv64-elf": "COREBOOT_SDK_ROOT_riscv64",
+    "picolibc-riscv64-elf": "COREBOOT_SDK_ROOT_picolibc_riscv64",
+    "libstdcxx-riscv64-elf": "COREBOOT_SDK_ROOT_libstdcxx_riscv64",
     "nds32le-elf": "COREBOOT_SDK_ROOT_nds32",
 }
 
