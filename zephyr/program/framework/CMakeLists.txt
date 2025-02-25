@@ -124,6 +124,7 @@ if(DEFINED CONFIG_BOARD_DOGWOOD)
 			"dogwood/src/cpu_power.c"
 			"dogwood/src/usbc.c"
 			"dogwood/src/project_diagnostics.c"
+			"dogwood/src/power_monitor.c"
 	)
 
 endif()

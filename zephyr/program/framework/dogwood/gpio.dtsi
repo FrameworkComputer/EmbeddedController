@@ -185,6 +185,9 @@
 			gpios = <&gpio5 0 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
+		gpio_input_alert_ec_l: input_alert_ec_l {
+			gpios = <&gpio8 2 0 GPIO_INPUT>;
+		};
 		thermtrip {
 			gpios = <&gpio8 1 GPIO_INPUT>;
 		};
@@ -221,7 +224,6 @@
 			<&gpio0 6 0>,
 			<&gpio0 5 0>,
 			<&gpio0 4 0>,
-			<&gpio8 2 0>,
 			<&gpio8 3 0>,
 			<&gpio0 3 0>,
 			<&gpiob 1 0>,
