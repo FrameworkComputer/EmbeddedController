@@ -111,7 +111,7 @@
 #define PANIC_REG_INFO(pdata) (pdata->x86.error_code)
 #else
 /* Not implemented for this arch */
-#define PANIC_ARCH 0
+#define PANIC_ARCH PANIC_ARCH_UNSUPPORTED
 #define PANIC_REG_LIST(M, M_GPR)
 static uint8_t placeholder_exception_reg;
 static uint32_t placeholder_reason_reg;
@@ -169,7 +169,7 @@ void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *esf)
 		panic_printf("Fatal error: %u\n", reason);
 	}
 
-	if (PANIC_ARCH && esf) {
+	if ((PANIC_ARCH != PANIC_ARCH_UNSUPPORTED) && esf) {
 		copy_esf_to_panic_data(esf, pdata);
 		if (!IS_ENABLED(CONFIG_LOG)) {
 			panic_data_print(panic_get_data());

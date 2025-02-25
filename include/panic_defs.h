@@ -154,6 +154,7 @@ struct panic_data {
 
 #define PANIC_DATA_MAGIC 0x21636e50 /* "Pnc!" */
 enum panic_arch {
+	PANIC_ARCH_UNSUPPORTED = 0,
 	PANIC_ARCH_CORTEX_M = 1, /* Cortex-M architecture */
 	PANIC_ARCH_NDS32_N8 = 2, /* NDS32 N8 architecture */
 	PANIC_ARCH_X86 = 3, /* Intel x86 */
