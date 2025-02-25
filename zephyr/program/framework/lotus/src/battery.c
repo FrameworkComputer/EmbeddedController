@@ -363,3 +363,15 @@ __override int board_cut_off_battery(void)
 
 	return EC_RES_ERROR;
 }
+
+static enum ec_status cmd_get_cutoff_status(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_cutoff_status *r = args->response;
+
+	r->status = battery_is_cut_off();
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_CUTOFF_STATUS, cmd_get_cutoff_status,
+			EC_VER_MASK(0));
