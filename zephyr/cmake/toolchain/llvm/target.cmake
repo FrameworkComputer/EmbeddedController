@@ -20,6 +20,8 @@ set(CROSS_COMPILE_TARGET_x86          x86_64-pc-linux-gnu)
 
 set(CROSS_COMPILE_TARGET          ${CROSS_COMPILE_TARGET_${ARCH}})
 
+set(toolchain_uses_newlib FALSE)
+
 if("${ARCH}" STREQUAL "arm")
   if(DEFINED CONFIG_ARMV7_M_ARMV8_M_MAINLINE)
     # ARMV7_M_ARMV8_M_MAINLINE means that ARMv7-M or backward compatible ARMv8-M
@@ -38,8 +40,14 @@ if("${ARCH}" STREQUAL "arm")
     # Baseline implementation processor is used.
     set(CROSS_COMPILE_TARGET arm-none-eabi)
   endif()
+  set(toolchain_uses_newlib TRUE)
+elseif("${ARCH}" STREQUAL "riscv")
+  set(CROSS_COMPILE_TARGET riscv32-cros-elf)
+  set(toolchain_uses_newlib TRUE)
+endif()
 
-  # LLVM based toolchains for ARM use newlib as a libc.
+if(toolchain_uses_newlib)
+  # LLVM based toolchains for ARM and RISC-V use newlib as a libc.
   # This variable is set AFTER all Kconfig files were processed, so it doesn't
   # affect them, but it's still useful for filtering tests.
   set(TOOLCHAIN_HAS_NEWLIB ON CACHE BOOL "True if toolchain supports newlib")

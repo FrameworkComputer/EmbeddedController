@@ -5,7 +5,7 @@
 # Use generic bintools.
 include("${TOOLCHAIN_ROOT}/cmake/bintools/llvm/generic.cmake")
 
-if("${ARCH}" STREQUAL "arm")
+if ("${ARCH}" STREQUAL "arm" OR "${ARCH}" STREQUAL "riscv")
   set(CMAKE_AR         "${CROSS_COMPILE}ar")
   set(CMAKE_NM         "${CROSS_COMPILE}nm")
   set(CMAKE_OBJCOPY    "${CROSS_COMPILE}objcopy")
