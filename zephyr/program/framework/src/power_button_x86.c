@@ -271,9 +271,12 @@ static void set_initial_pwrbtn_state(void)
 			pwrbtn_state = PWRBTN_STATE_INIT_ON;
 			CPRINTS("PB init power on");
 		}
-
-	} else if (ac_boot_status() &&
-		(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) == 1)) {
+#endif
+	} else if (ac_boot_status()
+#ifdef CONFIG_PLATFORM_EC_EXTPOWER_GPIO
+	&& (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) == 1)
+#endif
+	) {
 
 		/**
 		 * Only the developer will trigger the reset pin or soft flags.
@@ -287,7 +290,6 @@ static void set_initial_pwrbtn_state(void)
 		/* BIOS setup AC attach power on */
 		pwrbtn_state = PWRBTN_STATE_INIT_ON;
 		CPRINTS("PB init AC attach on");
-#endif
 	} else {
 		pwrbtn_state = PWRBTN_STATE_IDLE;
 		CPRINTS("PB idle");
