@@ -150,7 +150,7 @@ static void set_pmic_pwroff(void)
 	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 1);
 }
 
-void chipset_warm_reset_interrupt(enum gpio_signal signal)
+void chipset_reset_request_interrupt(enum gpio_signal signal)
 {
 	/* If this is not a chipset_reset, the ap_rst must be held by gsc or
 	 * servo.
@@ -170,11 +170,7 @@ static void reset_request_interrupt_deferred(void)
 }
 DECLARE_DEFERRED(reset_request_interrupt_deferred);
 
-/*
- * TODO(b/391746217): Fix chipset_reset_request_interrupt and
- * chipset_warm_reset_interrupt. The function names should be swapped.
- **/
-void chipset_reset_request_interrupt(enum gpio_signal signal)
+void chipset_warm_reset_interrupt(enum gpio_signal signal)
 {
 	power_signal_interrupt(signal);
 	hook_call_deferred(&reset_request_interrupt_deferred_data, 0);
