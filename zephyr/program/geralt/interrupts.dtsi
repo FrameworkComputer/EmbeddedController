@@ -64,7 +64,7 @@
 		int_warm_rst: warm-rst {
 			irq-pin = <&ap_ec_warm_rst_req>;
 			flags = <GPIO_INT_EDGE_RISING>;
-			handler = "chipset_reset_request_interrupt";
+			handler = "chipset_warm_reset_interrupt";
 		};
 		int_pmic_ec_resetb: pmic-ec-resetb {
 			irq-pin = <&pmic_ec_resetb>;
@@ -74,6 +74,8 @@
 		int_ap_in_rst: ap-in-rst {
 			irq-pin = <&ap_sysrst_odl_r>;
 			flags = <GPIO_INT_EDGE_BOTH>;
+			/* TODO: this should be chipset_reset_request_interrupt
+			 */
 			handler = "power_signal_interrupt";
 		};
 		int_wp: wp {
