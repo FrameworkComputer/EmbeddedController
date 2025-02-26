@@ -34,7 +34,7 @@
 		int_warm_rst: warm_rst {
 			irq-pin = <&ap_ec_warm_rst_req>;
 			flags = <GPIO_INT_EDGE_RISING>;
-			handler = "chipset_reset_request_interrupt";
+			handler = "chipset_warm_reset_interrupt";
 		};
 		int_ap_in_sleep: ap_in_sleep {
 			irq-pin = <&ap_in_sleep_l>;
@@ -44,7 +44,7 @@
 		int_ap_in_rst: ap_in_rst {
 			irq-pin = <&ap_sysrst_odl_r>;
 			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "chipset_warm_reset_interrupt";
+			handler = "chipset_reset_request_interrupt";
 		};
 		int_ap_wdtrst: ap_wdtrst {
 			irq-pin = <&ap_ec_wdtrst_l>;
