@@ -50,7 +50,7 @@
 		int_warm_rst: warm-rst {
 			irq-pin = <&gpio_ap_ec_warm_rst_req>;
 			flags = <GPIO_INT_EDGE_RISING>;
-			handler = "chipset_reset_request_interrupt";
+			handler = "chipset_warm_reset_interrupt";
 		};
 		int_pmic_ec_resetb: pmic-ec-resetb {
 			irq-pin = <&gpio_pmic_ec_resetb>;
@@ -60,7 +60,7 @@
 		int_ap_in_rst: ap-in-rst {
 			irq-pin = <&gpio_ap_ec_sysrst_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "chipset_warm_reset_interrupt";
+			handler = "chipset_reset_request_interrupt";
 		};
 		int_lid_accel: lid-accel {
 			irq-pin = <&gpio_lid_accel_int_ec_l>;
