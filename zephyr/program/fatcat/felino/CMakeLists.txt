@@ -3,3 +3,4 @@
 # found in the LICENSE file.
 
 zephyr_library_sources("src/board_power.c")
+zephyr_library_sources("src/hibernate.c")

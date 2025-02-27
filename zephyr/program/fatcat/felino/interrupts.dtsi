@@ -4,6 +4,14 @@
  */
 
 / {
+	hibernate-wake-pins {
+		compatible = "cros-ec,hibernate-wake-pins";
+		wakeup-irqs = <
+			&int_power_button
+			&int_lid_open
+		>;
+	};
+
 	gpio-interrupts {
 		compatible = "cros-ec,gpio-interrupts";
 
