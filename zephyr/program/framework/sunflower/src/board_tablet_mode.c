@@ -5,6 +5,7 @@
 
 #include "hooks.h"
 #include "tablet_mode.h"
+#include "keyboard_scan.h"
 
 static void board_tablet_mode_change(void)
 {
@@ -20,6 +21,9 @@ static void board_tablet_mode_change(void)
 	 */
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pad_mode),
 			tablet_get_mode());
+
+	/* EC needs to control the keyboard scan with non-ChromeOS systems */
+	keyboard_scan_enable(!tablet_get_mode(), KB_SCAN_DISABLE_LID_ANGLE);
 }
 DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, board_tablet_mode_change, HOOK_PRIO_DEFAULT);
 /* Run after gmr_tablet_switch_init to initialize GPIO after debounce. */
