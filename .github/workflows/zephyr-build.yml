@@ -78,13 +78,7 @@ jobs:
       # But that will make zmake pick up the scripts git commit SHA
       # To embed the ec repo's commit SHA we need to change pwd there
       - name: Build ${{ matrix.platform.name }} (versioned)
-        if: ${{ matrix.platform.zephyr_ref == 'framework-main' }}
         run: cros_sdk bash -c 'pushd ../platform/ec; zmake -D build -v ${{ matrix.platform.ver }} ${{ matrix.platform.name }}'
-
-      # zmake on lotus-zephyr branch doesn't have the -v flag
-      - name: Build ${{ matrix.platform.name }} (unversioned)
-        if: ${{ matrix.platform.zephyr_ref == 'lotus-zephyr' }}
-        run: cros_sdk bash -c 'pushd ../platform/ec; zmake -D build ${{ matrix.platform.name }}'
 
       - name: File sha256
         run: sha256sum src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output/ec.bin
