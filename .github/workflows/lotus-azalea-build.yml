@@ -3,10 +3,7 @@ name: build lotus, azalea firmware
 on:
   push:
     branches:
-      - lotus*
-      - azalea*
-      - fwk*
-      - framework*
+      - fwk-*
       - pr-*
 
 jobs:
