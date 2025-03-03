@@ -110,6 +110,19 @@ static enum ec_error_list fp_console_action(uint32_t mode)
 	return EC_ERROR_TIMEOUT;
 }
 
+static uint8_t get_sensor_bpp(void)
+{
+#if defined(HAVE_FP_PRIVATE_DRIVER) || defined(BOARD_HOST)
+	ec_response_fp_info info;
+	if (fp_sensor_get_info(&info) < 0) {
+		return EC_ERROR_UNKNOWN;
+	}
+	return info.bpp;
+#else
+	return EC_ERROR_UNKNOWN;
+#endif
+}
+
 static int command_fpcapture(int argc, const char **argv)
 {
 	if (system_is_locked())
