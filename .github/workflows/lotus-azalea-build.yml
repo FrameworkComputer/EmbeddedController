@@ -9,15 +9,15 @@ on:
 jobs:
   build:
     name: Build lotus/azalea
-    runs-on: [lotus-azalea-builders]
+    runs-on: [marigold-builders]
 
     strategy:
       # Only build one at a time because we have only one working directory
       max-parallel: 1
       matrix:
         platform: [
-          { name: lotus, folder: lotus, ver: "0.0.0", sha_len: 7, zephyr_ref: "lotus-zephyr", cmsis_ref: "cros/chromeos-main", remote: "github-private" },
-          { name: azalea, folder: lotus, ver: "0.0.0", sha_len: 7, zephyr_ref: "lotus-zephyr", cmsis_ref: "cros/chromeos-main", remote: "github-private" },
+          { name: lotus, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "lotus-zephyr", cmsis_ref: "cros/chromeos-main", remote: "github-private" },
+          { name: azalea, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "lotus-zephyr", cmsis_ref: "cros/chromeos-main", remote: "github-private" },
         ]
 
 
