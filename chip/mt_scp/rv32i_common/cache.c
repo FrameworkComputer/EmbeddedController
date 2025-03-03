@@ -9,9 +9,21 @@
 
 extern struct mpu_entry mpu_entries[];
 
+#define CONFIGURE_MPU_ENTRY(index)                                       \
+	do {                                                             \
+		if (mpu_entries[index].end_addr -                        \
+		    mpu_entries[index].start_addr) {                     \
+			write_csr(CSR_MPU_L(index),                      \
+				  mpu_entries[index].start_addr |        \
+					  mpu_entries[index].attribute); \
+			write_csr(CSR_MPU_H(index),                      \
+				  mpu_entries[index].end_addr);          \
+			mpu_en |= BIT(index);                            \
+		}                                                        \
+	} while (0)
+
 void cache_init(void)
 {
-	int i;
 	uint32_t mpu_en = 0;
 
 	/* disable mpu */
@@ -32,19 +44,25 @@ void cache_init(void)
 
 	/* set mpu entries
 	 *
-	 * The pragma is for force GCC unrolls the following loop.
-	 * See b/172886808
+	 * b/172886808: The loop to configure mpu entries must be enrolled.
 	 */
-#pragma GCC unroll 16
-	for (i = 0; i < NR_MPU_ENTRIES; ++i) {
-		if (mpu_entries[i].end_addr - mpu_entries[i].start_addr) {
-			write_csr(CSR_MPU_L(i),
-				  mpu_entries[i].start_addr |
-					  mpu_entries[i].attribute);
-			write_csr(CSR_MPU_H(i), mpu_entries[i].end_addr);
-			mpu_en |= BIT(i);
-		}
-	}
+	BUILD_ASSERT(NR_MPU_ENTRIES == 16);
+	CONFIGURE_MPU_ENTRY(0);
+	CONFIGURE_MPU_ENTRY(1);
+	CONFIGURE_MPU_ENTRY(2);
+	CONFIGURE_MPU_ENTRY(3);
+	CONFIGURE_MPU_ENTRY(4);
+	CONFIGURE_MPU_ENTRY(5);
+	CONFIGURE_MPU_ENTRY(6);
+	CONFIGURE_MPU_ENTRY(7);
+	CONFIGURE_MPU_ENTRY(8);
+	CONFIGURE_MPU_ENTRY(9);
+	CONFIGURE_MPU_ENTRY(10);
+	CONFIGURE_MPU_ENTRY(11);
+	CONFIGURE_MPU_ENTRY(12);
+	CONFIGURE_MPU_ENTRY(13);
+	CONFIGURE_MPU_ENTRY(14);
+	CONFIGURE_MPU_ENTRY(15);
 
 	/* enable mpu entries */
 	write_csr(CSR_MPU_ENTRY_EN, mpu_en);
