@@ -1611,6 +1611,7 @@ int cypd_handle_alert_msg(int controller, int port, int len)
 	int rv;
 	int port_idx = (controller << 1) + port;
 	uint8_t pd_status_reg[4];
+	uint32_t alert_event_type;
 
 	if (len > 8) {
 		CPRINTS("Alert Massage Too Long");
@@ -1624,35 +1625,51 @@ int cypd_handle_alert_msg(int controller, int port, int len)
 	/* Read the pd port partner status */
 	rv = cypd_read_reg_block(controller, CCG_PD_STATUS_REG(port), pd_status_reg, 4);
 
+	CPRINTS("PD Power Button: Data Role = %s",
+			pd_status_reg[0] & BIT(6) ? "DFP" : "UFP");
 	pd_port_states[port_idx].data_role =
 			pd_status_reg[0] & BIT(6) ? PD_ROLE_DFP : PD_ROLE_UFP;
 
+	alert_event_type = ADO_EXTENDED_ALERT_EVENT_TYPE & alert_rx[port_idx].ado;
+	CPRINTS("PD Power Button: ADO_EXTENDED_ALERT_EVENT (%X)", alert_event_type);
+
 	/* Extended Alert */
-	if (alert_rx[port_idx].ado & ADO_EXTENDED_ALERT_EVENT) {
-		if (pd_port_states[port_idx].data_role == PD_ROLE_DFP &&
-		    (ADO_EXTENDED_ALERT_EVENT_TYPE & alert_rx[port_idx].ado) ==
-			    ADO_POWER_BUTTON_PRESS) {
-			/**
-			 * follow Framework UI ERS Power Button Behavior
-			 * 1. <4 Seconds - Normal power event (Power on, Wake from
-			 * suspend, send event to PCH) for OS defined behavior.
-			 * 2. >8 seconds, < 12 seconds - Force CPU to G3(chipset_force_shutdown)
-			 * 3. >12 Seconds - Forced reset of system(system_reset).
-			 *
-			 * Set the maximum timer(>12s doing EC reset) to run all PB state machine.
-			 */
-			power_button_simulate_press(13000);
-			alert_press = 1;
-		} else if (pd_port_states[port_idx].data_role == PD_ROLE_DFP &&
-			   (ADO_EXTENDED_ALERT_EVENT_TYPE & alert_rx[port_idx].ado) ==
-				   ADO_POWER_BUTTON_RELEASE) {
-			/**
-			 * Re-schedule to a minimal(1) to release the power button when
-			 * received the ADO_POWER_BUTTON_RELEASE event.
-			 */
-			power_button_simulate_press(1);
-			alert_press = 0;
-		}
+	if ((alert_rx[port_idx].ado & ADO_EXTENDED_ALERT_EVENT) == 0) {
+		CPRINTS("PD Power Button: ADO_EXTENDED_ALERT_EVENT bit not set");
+		return rv;
+	}
+	if (pd_port_states[port_idx].data_role != PD_ROLE_DFP) {
+		CPRINTS("PD Power Button: Data role not DFP");
+		return rv;
+	}
+
+	switch (alert_event_type) {
+	case ADO_POWER_BUTTON_PRESS:
+		/**
+		 * follow Framework UI ERS Power Button Behavior
+		 * 1. <4 Seconds - Normal power event (Power on, Wake from
+		 * suspend, send event to PCH) for OS defined behavior.
+		 * 2. >8 seconds, < 12 seconds - Force CPU to G3(chipset_force_shutdown)
+		 * 3. >12 Seconds - Forced reset of system(system_reset).
+		 *
+		 * Set the maximum timer(>12s doing EC reset) to run all PB state machine.
+		 */
+		CPRINTS("PD Power Button: Simulate press");
+		power_button_simulate_press(13000);
+		alert_press = 1;
+		break;
+	case ADO_POWER_BUTTON_RELEASE:
+		/**
+		 * Re-schedule to a minimal(1) to release the power button when
+		 * received the ADO_POWER_BUTTON_RELEASE event.
+		 */
+		CPRINTS("PD Power Button: Simulate release");
+		power_button_simulate_press(1);
+		alert_press = 0;
+		break;
+	default:
+		CPRINTS("PD Power Button: ADO_EXTENDED_ALERT_EVENT invalid (%X)", alert_event_type);
+		break;
 	}
 	return rv;
 }
