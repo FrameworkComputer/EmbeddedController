@@ -40,6 +40,13 @@ config BOARD_HYLIA
 	  Build Google Hylia board. Hylia has MediaTek SoC
 	  with ITE it82202-ax EC.
 
+config RAURU_BOARD_PANEL_BACKLIGHT_SEQUENCE_CUSTOM
+	bool "Rauru Platform Board Panel Backlight Sequence Customization"
+	default n
+	help
+	  Redefine the rauru board panel backlight control sequence.
+
+
 module = RAURU
 module-str = Rauru board-specific code
 source "subsys/logging/Kconfig.template.log_config"

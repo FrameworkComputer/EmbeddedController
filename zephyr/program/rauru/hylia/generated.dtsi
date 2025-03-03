@@ -63,9 +63,6 @@
 			gpios = <&gpioi 0 (GPIO_INPUT)>;
 			enum-name = "GPIO_BATT_PRES_ODL";
 		};
-		gpio_ec_bl_en_od: ec_bl_en_od {
-			gpios = <&gpiod 2 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
-		};
 		gpio_ec_cbi_wp: ec_cbi_wp {
 			gpios = <&gpioi 1 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
@@ -180,6 +177,15 @@
 		gpio_ec_i2c_pdc_s_int_odl: ec_i2c_pdc_s_int_odl {
 			gpios = <&gpiof 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
+		gpio_ap_bl_en_odl: gpio_ap_bl_en_odl{
+			gpios = <&gpiod 7 GPIO_INPUT>;
+		};
+		gpio_tp_en_od:gpio_tp_en_od {
+			gpios = <&gpioe 4 (GPIO_ODR_LOW)>;
+		};
+		gpio_ec_bl_en_od: ec_bl_en_od {
+			gpios = <&gpiod 2 (GPIO_ODR_LOW)>;
+		};
 	};
 
 	hibernate-wake-pins {
@@ -199,12 +205,8 @@
 			<&gpioa 7 0>,
 			/* Reserved for HPD_INT_EC_L*/
 			<&gpiob 6 0>,
-			/* Reserved for EDP_BL_EN_1V8*/
-			<&gpioe 3 0>,
-			/* Reserved for EC_TCHSCR_REPORT_DISABLE*/
-			<&gpioe 4 0>,
 			<&gpiod 3 0>,
-			<&gpiod 7 0>,
+			<&gpioe 3 0>,
 			<&gpiof 0 0>,
 			<&gpiof 4 0>,
 			<&gpiof 5 0>,
