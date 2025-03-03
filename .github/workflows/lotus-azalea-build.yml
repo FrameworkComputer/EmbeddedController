@@ -16,8 +16,9 @@ jobs:
       max-parallel: 1
       matrix:
         platform: [
-          { name: lotus, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "lotus-zephyr", cmsis_ref: "cros/chromeos-main", remote: "github-private" },
-          { name: azalea, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "lotus-zephyr", cmsis_ref: "cros/chromeos-main", remote: "github-private" },
+          # c1488028cf525335b95b277112795219dc6b7688 is bad and won't build with our lotus EC branch
+          { name: lotus, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "lotus-zephyr", cmsis_ref: "c1488028cf525335b95b277112795219dc6b7688^", remote: "github-private" },
+          { name: azalea, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "lotus-zephyr", cmsis_ref: "c1488028cf525335b95b277112795219dc6b7688^", remote: "github-private" },
         ]
 
 
