@@ -18,7 +18,7 @@
 			policy = <&cros_policy>;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&tusb546_mux_0 &virtual_mux_0>;
+				usb-muxes = <&virtual_mux_0>;
 			};
 		};
 
@@ -35,7 +35,7 @@
 			policy = <&cros_policy>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&ps8747_mux_1 &virtual_mux_1>;
+				usb-muxes = <&virtual_mux_1>;
 			};
 		};
 
@@ -63,19 +63,6 @@
 		irq-gpios = <&gpio6 2 GPIO_ACTIVE_LOW>;
 	};
 	/* TODO(b:380121396): enable PDC I2C_S port if we need it */
-};
-
-&i2c2_0 {
-	ps8747_mux_1: ps8747-mux-1@10 {
-		compatible = "parade,ps8743";
-		status = "okay";
-		reg = <0x10>;
-	};
-
-	tusb546_mux_0: tusb546-mux-0@44 {
-		compatible = "ti,tusb546";
-		reg = <0x44>;
-	};
 };
 
 &i2c3_0 {
