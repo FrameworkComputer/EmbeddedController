@@ -109,7 +109,7 @@ hostcmd_get_protocol_info(struct host_cmd_handler_args *args)
 
 	args->response_size = sizeof(*r);
 
-	return EC_SUCCESS;
+	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, hostcmd_get_protocol_info,
 		     EC_VER_MASK(0));
