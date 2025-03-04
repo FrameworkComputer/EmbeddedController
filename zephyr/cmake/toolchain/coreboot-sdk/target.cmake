@@ -7,27 +7,36 @@ set(COMPILER gcc)
 set(LINKER ld)
 set(BINTOOLS gnu)
 
-# Mapping of Zephyr architecture -> ec-coreboot-sdk toolchain
-set(CROSS_COMPILE_TARGET_arm    arm-eabi)
-set(CROSS_COMPILE_TARGET_riscv  riscv64-elf)
-set(CROSS_COMPILE_TARGET_x86    i386-elf)
+# Map Target Architecture to Coreboot SDK Architecture
+set(TARGET_ARCH "${ARCH}")
+if("${ARCH}" STREQUAL "riscv")
+  set(TARGET_ARCH "riscv64")
+endif()
 
-set(CROSS_COMPILE_TARGET        ${CROSS_COMPILE_TARGET_${ARCH}})
+# Mapping of Zephyr architecture -> ec-coreboot-sdk toolchain
+set(CROSS_COMPILE_TARGET_arm      arm-eabi)
+set(CROSS_COMPILE_TARGET_riscv64  riscv64-elf)
+set(CROSS_COMPILE_TARGET_x86      i386-elf)
+
+set(CROSS_COMPILE_TARGET        ${CROSS_COMPILE_TARGET_${TARGET_ARCH}})
 set(CROSS_COMPILE_QUALIFIER     "")
 
-if("${ARCH}" STREQUAL "arm")
+if("${TARGET_ARCH}" STREQUAL "arm")
   set(CROSS_COMPILE_QUALIFIER     "thumb/")
   if(CONFIG_ARM64)
     set(CROSS_COMPILE_TARGET      aarch64-elf)
   endif()
-elseif("${ARCH}" STREQUAL "x86" AND CONFIG_X86_64)
+elseif("${TARGET_ARCH}" STREQUAL "x86" AND CONFIG_X86_64)
   set(CROSS_COMPILE_TARGET      x86_64-elf)
+elseif("${TARGET_ARCH}" STREQUAL "riscv64")
+  # TODO (b/404325494): Add coreboot sdk multilib support
+  set(CROSS_COMPILE_QUALIFIER     "rv32imac/ilp32/")
 endif()
 
-if(DEFINED COREBOOT_SDK_ROOT_${ARCH})
-  set(COREBOOT_SDK_ROOT "${COREBOOT_SDK_ROOT_${ARCH}}")
-  set(COREBOOT_SDK_ROOT_LIBSTDCXX "${COREBOOT_SDK_ROOT_libstdcxx_${ARCH}}")
-  set(COREBOOT_SDK_ROOT_PICOLIBC "${COREBOOT_SDK_ROOT_picolibc_${ARCH}}")
+if(DEFINED COREBOOT_SDK_ROOT_${TARGET_ARCH})
+  set(COREBOOT_SDK_ROOT "${COREBOOT_SDK_ROOT_${TARGET_ARCH}}")
+  set(COREBOOT_SDK_ROOT_LIBSTDCXX "${COREBOOT_SDK_ROOT_libstdcxx_${TARGET_ARCH}}")
+  set(COREBOOT_SDK_ROOT_PICOLIBC "${COREBOOT_SDK_ROOT_picolibc_${TARGET_ARCH}}")
 else()
   set(COREBOOT_SDK_ROOT_LIBSTDCXX "${COREBOOT_SDK_ROOT}")
   set(COREBOOT_SDK_ROOT_PICOLIBC "${COREBOOT_SDK_ROOT}")
