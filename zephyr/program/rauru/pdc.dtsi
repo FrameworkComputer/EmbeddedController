@@ -12,6 +12,7 @@
 
 		usbc_port0: port0@0 {
 			compatible = "named-usbc-port";
+			ccd;
 			reg = <0>;
 			chg = <&charger_bq25710>;
 			pdc = <&pdc_power_p0>;

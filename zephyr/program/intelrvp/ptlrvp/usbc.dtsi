@@ -12,6 +12,7 @@
 
 		port0@0 {
 			compatible = "named-usbc-port";
+			ccd;
 			reg = <0>;
 			chg = <&charger>;
 			pdc = <&pd_pow_port0>;
