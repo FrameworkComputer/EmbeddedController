@@ -14,6 +14,7 @@
 #include <stdio.h>
 
 #include <algorithm>
+#include <array>
 
 static int is_locked;
 
@@ -232,6 +233,21 @@ test_static int test_command_fpenroll(void)
 	return EC_SUCCESS;
 }
 
+#if defined(SECTION_IS_RW)
+enum ec_error_list upload_pgm_image(uint8_t *frame, uint8_t bpp);
+
+test_static int test_upload_pgm_image_wrong_bpp(void)
+{
+	std::array<uint8_t, 100> frame{};
+
+	TEST_EQ(upload_pgm_image(frame.data(), 0), EC_ERROR_UNKNOWN, "%d");
+	TEST_EQ(upload_pgm_image(frame.data(), 17), EC_ERROR_UNKNOWN, "%d");
+	TEST_EQ(upload_pgm_image(frame.data(), 23), EC_ERROR_UNKNOWN, "%d");
+
+	return EC_SUCCESS;
+}
+#endif
+
 void run_test(int argc, const char **argv)
 {
 	test_reset();
@@ -252,6 +268,9 @@ void run_test(int argc, const char **argv)
 		RUN_TEST(test_command_fpcapture_mode_is_negative);
 		RUN_TEST(test_command_fpcapture_mode_is_too_large);
 		RUN_TEST(test_command_fpenroll);
+#if defined(SECTION_IS_RW)
+		RUN_TEST(test_upload_pgm_image_wrong_bpp);
+#endif
 	}
 
 	test_print_result();
