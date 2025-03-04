@@ -327,6 +327,23 @@ ZTEST(pdc_api_null_check, test_pdc_get_drp_mode)
 		      -ENOSYS);
 }
 
+ZTEST(pdc_api_null_check, test_pdc_get_sbu_mux_mode)
+{
+	enum pdc_sbu_mux_mode mode;
+	int rv = pdc_get_sbu_mux_mode(&fake_pdc, &mode);
+
+	zassert_equal(-ENOSYS, rv, "Got %d, expected -ENOSYS (%d)", rv,
+		      -ENOSYS);
+}
+
+ZTEST(pdc_api_null_check, test_pdc_set_sbu_mux_mode)
+{
+	int rv = pdc_set_sbu_mux_mode(&fake_pdc, PDC_SBU_MUX_MODE_NORMAL);
+
+	zassert_equal(-ENOSYS, rv, "Got %d, expected -ENOSYS (%d)", rv,
+		      -ENOSYS);
+}
+
 ZTEST(pdc_api_null_check, test_completeness)
 {
 	/* Count the number of PDC API methods supported */

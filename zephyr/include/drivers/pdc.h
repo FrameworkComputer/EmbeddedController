@@ -145,6 +145,22 @@ struct get_pdo_t {
 	bool updating;
 };
 
+/**
+ * Used with pdc_get_sbu_mux_mode() / pdc_set_sbu_mux_mode()
+ */
+enum pdc_sbu_mux_mode {
+	/** SBU mux mode is invalid or unknown */
+	PDC_SBU_MUX_MODE_INVALID = -1,
+	/** The SBU mux behaves normally (switches to debug path when a debug
+	 *  accessory is attached, or connected to AP for alternate modes) */
+	PDC_SBU_MUX_MODE_NORMAL = 0,
+	/** The SBU mux is forced into the debug path unconditionally. Used when
+	 *  CCD must be kept alive. This is not cleared unless explicitly set
+	 *  back to PDC_SBU_MUX_MODE_NORMAL or the PDC reboots. */
+	PDC_SBU_MUX_MODE_FORCE_DBG,
+	PDC_SBU_MUX_MODE_MAX,
+};
+
 struct pdc_callback;
 
 /**
@@ -225,6 +241,10 @@ typedef int (*pdc_get_lpm_ppm_info_t)(const struct device *dev,
 typedef int (*pdc_set_frs_t)(const struct device *dev, bool enable);
 typedef int (*pdc_get_attention_vdo_t)(const struct device *dev,
 				       union get_attention_vdo_t *vdo);
+typedef int (*pdc_get_sbu_mux_mode_t)(const struct device *dev,
+				      enum pdc_sbu_mux_mode *mode);
+typedef int (*pdc_set_sbu_mux_mode_t)(const struct device *dev,
+				      enum pdc_sbu_mux_mode mode);
 
 /**
  * @cond INTERNAL_HIDDEN
@@ -273,6 +293,8 @@ __subsystem struct pdc_driver_api {
 	pdc_get_lpm_ppm_info_t get_lpm_ppm_info;
 	pdc_set_frs_t set_frs;
 	pdc_get_attention_vdo_t get_attention_vdo;
+	pdc_get_sbu_mux_mode_t get_sbu_mux_mode;
+	pdc_set_sbu_mux_mode_t set_sbu_mux_mode;
 };
 /**
  * @endcond
@@ -1401,6 +1423,48 @@ static inline int pdc_get_attention_vdo(const struct device *dev,
 	}
 
 	return api->get_attention_vdo(dev, vdo);
+}
+
+/**
+ * @brief Vendor command to query current SBU mux operational mode
+ * @param dev PDC device structure pointer
+ * @param mode Output pointer for current mode to be written to
+ * @return 0 on success, or negative error code
+ */
+static inline int pdc_get_sbu_mux_mode(const struct device *dev,
+				       enum pdc_sbu_mux_mode *mode)
+{
+	const struct pdc_driver_api *api =
+		(const struct pdc_driver_api *)dev->api;
+
+	if (api->get_sbu_mux_mode == NULL) {
+		return -ENOSYS;
+	}
+
+	return api->get_sbu_mux_mode(dev, mode);
+}
+
+/**
+ * @brief Vendor command to set the SBU mux operational mode
+ * @param dev PDC device structure pointer
+ * @param mode Mode to set the SBU mux to
+ * @return 0 on success, or negative error code
+ */
+static inline int pdc_set_sbu_mux_mode(const struct device *dev,
+				       enum pdc_sbu_mux_mode mode)
+{
+	const struct pdc_driver_api *api =
+		(const struct pdc_driver_api *)dev->api;
+
+	if (mode < 0 || mode >= PDC_SBU_MUX_MODE_MAX) {
+		return -EINVAL;
+	}
+
+	if (api->set_sbu_mux_mode == NULL) {
+		return -ENOSYS;
+	}
+
+	return api->set_sbu_mux_mode(dev, mode);
 }
 
 #ifdef __cplusplus
