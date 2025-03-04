@@ -104,3 +104,8 @@ jobs:
         with:
           name: ${{ matrix.platform.name }}.${{ env.VERSIONINFO }}
           path: /${{ matrix.platform.folder }}/ec_home/chromiumos/src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: util_${{ matrix.platform.name }}.${{ env.VERSIONINFO }}
+          path: /${{ matrix.platform.folder }}/ec_home/chromiumos/src/platform/ec/build/host/util
