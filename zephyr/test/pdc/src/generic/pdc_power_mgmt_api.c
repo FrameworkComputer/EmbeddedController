@@ -149,9 +149,10 @@ ZTEST_USER(pdc_power_mgmt_api, test_is_connected)
 	zassert_ok(emul_pdc_reset(emul));
 	zassert_equal(emul_pdc_get_frs(emul, &frs_enabled), -EIO);
 
+	/* Invalid port number */
 	zassert_false(pd_is_connected(CONFIG_USB_PD_PORT_MAX_COUNT));
 	zassert_equal(pd_get_task_state(CONFIG_USB_PD_PORT_MAX_COUNT),
-		      PDC_UNATTACHED);
+		      PDC_INVALID);
 
 	zassert_false(pd_is_connected(TEST_PORT));
 

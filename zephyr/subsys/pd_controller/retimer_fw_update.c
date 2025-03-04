@@ -20,6 +20,7 @@
 #include <atomic.h>
 #include <drivers/pdc.h>
 #include <usbc/pd_task_intel_altmode.h>
+#include <usbc/pdc_power_mgmt.h>
 #include <usbc/retimer_fw_update.h>
 
 /*
@@ -145,12 +146,15 @@ static struct retimer_update_workq_info exit_workq_info;
 /* Initialize retimer states of ports */
 test_export_static int pd_retimer_state_init(void)
 {
-	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+	/* Initialize full array to show all ports' retimers as absent */
+	for (int i = 0; i < ARRAY_SIZE(retimer_state); i++) {
+		retimer_state[i] = RETIMER_ABSENT;
+	}
+
+	for (int i = 0; i < pdc_power_mgmt_get_usb_pd_port_count(); i++) {
 		if (pd_retimer_ports[i] != NULL) {
 			retimer_state[i] = RETIMER_ONLINE;
 			port_info |= BIT(i);
-		} else {
-			retimer_state[i] = RETIMER_ABSENT;
 		}
 	}
 
@@ -207,7 +211,8 @@ static void exit_retimer_fw_update(struct k_work *work_item)
 #if defined(CONFIG_PLATFORM_EC_USBC_SS_MUX)
 int usb_retimer_fw_update_get_result(void)
 {
-	if (last_port < 0 && last_port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (last_port < 0 &&
+	    last_port >= pdc_power_mgmt_get_usb_pd_port_count())
 		return USB_RETIMER_FW_UPDATE_ERR;
 
 	/* Check if any retimer present */
@@ -280,7 +285,8 @@ int usb_retimer_fw_update_get_result(void)
 #else
 int usb_retimer_fw_update_get_result(void)
 {
-	if (last_port < 0 && last_port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (last_port < 0 &&
+	    last_port >= pdc_power_mgmt_get_usb_pd_port_count())
 		return USB_RETIMER_FW_UPDATE_ERR;
 
 	/* Check if any retimer present */
@@ -338,7 +344,7 @@ int usb_retimer_fw_update_get_result(void)
 
 void usb_retimer_fw_update_process_op(int port, int op)
 {
-	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	ASSERT(port >= 0 && port < pdc_power_mgmt_get_usb_pd_port_count());
 
 	last_op = op;
 	last_port = port;

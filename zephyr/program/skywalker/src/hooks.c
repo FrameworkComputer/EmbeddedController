@@ -50,7 +50,7 @@ void xhci_interrupt(enum gpio_signal signal)
 	}
 #endif
 
-	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+	for (int i = 0; i < pdc_power_mgmt_get_usb_pd_port_count(); i++) {
 		if (xhci_stat) {
 			pdc_power_mgmt_set_dual_role(i, PD_DRP_TOGGLE_ON);
 		}

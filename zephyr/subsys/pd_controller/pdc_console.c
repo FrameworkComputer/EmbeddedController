@@ -22,7 +22,7 @@ static int cmd_get_pd_port(const struct shell *sh, char *arg_val, uint8_t *port)
 	char *e;
 
 	*port = strtoul(arg_val, &e, 0);
-	if (*e || *port >= CONFIG_USB_PD_PORT_MAX_COUNT) {
+	if (*e || *port >= pdc_power_mgmt_get_usb_pd_port_count()) {
 		shell_error(sh, "Invalid port");
 		return -EINVAL;
 	}

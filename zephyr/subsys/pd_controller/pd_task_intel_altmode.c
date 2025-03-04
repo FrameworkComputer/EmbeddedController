@@ -296,7 +296,7 @@ static void intel_altmode_thread(void *unused1, void *unused2, void *unused3)
 	ap_power_ev_add_callback(&intel_altmode_task_data.cb);
 
 	/* Register PD interrupt callback */
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+	for (i = 0; i < pdc_power_mgmt_get_usb_pd_port_count(); i++)
 		pd_altmode_set_result_cb(pd_config_array[i],
 					 intel_altmode_event_cb);
 
@@ -328,14 +328,16 @@ static void intel_altmode_thread(void *unused1, void *unused2, void *unused3)
 		 */
 		if (events & BIT(INTEL_ALTMODE_EVENT_FORCE)) {
 			/* Process data for any wake events on all ports */
-			for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+			for (i = 0; i < pdc_power_mgmt_get_usb_pd_port_count();
+			     i++) {
 				while (process_altmode_pd_data(i)) {
 					k_msleep(25);
 				}
 			}
 		} else if (events & BIT(INTEL_ALTMODE_EVENT_INTERRUPT)) {
 			/* Process data of interrupted port */
-			for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+			for (i = 0; i < pdc_power_mgmt_get_usb_pd_port_count();
+			     i++) {
 				if (pd_altmode_is_interrupted(
 					    pd_config_array[i])) {
 					while (process_altmode_pd_data(i)) {
@@ -400,7 +402,7 @@ static int cmd_get_pd_port(const struct shell *sh, char *arg_val, uint8_t *port)
 	char *e;
 
 	*port = strtoul(arg_val, &e, 0);
-	if (*e || *port >= CONFIG_USB_PD_PORT_MAX_COUNT) {
+	if (*e || *port >= pdc_power_mgmt_get_usb_pd_port_count()) {
 		shell_error(sh, "Invalid port");
 		return -EINVAL;
 	}

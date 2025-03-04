@@ -105,7 +105,7 @@ void pd_set_new_power_request(int port)
 
 __override uint8_t board_get_usb_pd_port_count(void)
 {
-	return CONFIG_USB_PD_PORT_MAX_COUNT;
+	return pdc_power_mgmt_get_usb_pd_port_count();
 }
 
 __override int board_set_active_charge_port(int charge_port)
