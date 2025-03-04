@@ -79,7 +79,7 @@
 			enum-name = "GPIO_BATT_PRES_ODL";
 		};
 		gpio_ec_bl_en_od: ec_bl_en_od {
-			gpios = <&gpio4 0 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+			gpios = <&gpio4 0 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
 		gpio_ec_flash_wp_odl: ec_flash_wp_odl {
 			gpios = <&gpioe 3 (GPIO_INPUT)>;
@@ -113,7 +113,7 @@
 			gpios = <&gpioc 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
 		};
 		gpio_ec_pen_chg_dis_odl: ec_pen_chg_dis_odl {
-			gpios = <&gpioe 4 (GPIO_OUTPUT | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+			gpios = <&gpioe 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
 		};
 		gpio_ec_pmic_en_odl_r: ec_pmic_en_odl_r {
 			gpios = <&gpio7 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
@@ -137,7 +137,7 @@
 			gpios = <&gpio3 4 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
 		};
 		gpio_en_usb_c0_dev_mode: en_usb_c0_dev_mode {
-			gpios = <&gpioc 6 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+			gpios = <&gpioc 6 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
 		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
 			gpios = <&gpioa 6 (GPIO_INPUT)>;
