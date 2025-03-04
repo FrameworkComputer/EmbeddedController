@@ -61,7 +61,8 @@
  * sudo screen -c ${HOME}/.screenrc /dev/pts/NN 115200
  *
  */
-static enum ec_error_list upload_pgm_image(uint8_t *frame, uint8_t bpp)
+test_export_static enum ec_error_list upload_pgm_image(uint8_t *frame,
+						       uint8_t bpp)
 {
 	uint8_t *ptr = frame;
 	uint8_t bytes_per_pixel = DIV_ROUND_UP(bpp, 8);
