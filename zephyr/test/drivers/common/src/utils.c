@@ -25,7 +25,9 @@
 #include <zephyr/kernel.h>
 #include <zephyr/mgmt/ec_host_cmd/simulator.h>
 #include <zephyr/shell/shell.h>
+#if defined(CONFIG_SHELL_BACKEND_DUMMY)
 #include <zephyr/shell/shell_dummy.h>
+#endif
 #include <zephyr/shell/shell_uart.h>
 #include <zephyr/ztest.h>
 
@@ -821,6 +823,7 @@ int emul_init_stub(const struct device *dev)
 #define DT_DRV_COMPAT zephyr_espi_emul_espi_host
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);
 
+#if defined(CONFIG_SHELL_BACKEND_DUMMY)
 void check_console_cmd(const char *cmd, const char *expected_output,
 		       const int expected_rv, const char *file, const int line)
 {
@@ -842,3 +845,4 @@ void check_console_cmd(const char *cmd, const char *expected_output,
 			     "Invalid console output %s", buffer);
 	}
 }
+#endif /* CONFIG_SHELL_BACKEND_DUMMY */
