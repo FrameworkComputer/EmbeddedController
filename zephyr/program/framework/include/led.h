@@ -181,7 +181,7 @@ void update_pwr_led_level(void);
 void customized_leds_set_color(int *colors, int num_color,
 			int period, enum ec_led_id id);
 
-#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_DESKTOP
+#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
 /**
  * Control the multifunction led feature for Laptop projects
  * [1] C cover is opened - LEDs blink red/off
