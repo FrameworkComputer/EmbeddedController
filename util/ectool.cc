@@ -6346,6 +6346,8 @@ int cmd_fpled(int argc, char *argv[])
 		p_v0.set_led_level = 2;
 	} else if (argc == 2 && !strcmp(argv[1], "ultra-low")) {
 		p_v0.set_led_level = 3;
+	} else if (argc == 2 && !strcmp(argv[1], "auto")) {
+		p_v0.set_led_level = 0xFF;
 	} else if (argc == 2) {
 		p_v1.set_percentage = strtol(argv[1], &endptr, 0);
 		if (p_v1.set_percentage == 0 || p_v1.set_percentage > 100) {
