@@ -46,6 +46,8 @@ enum fp_led_brightness_level {
 	FP_LED_BRIGHTNESS_MEDIUM = 1,
 	FP_LED_BRIGHTNESS_LOW = 2,
 	FP_LED_BRIGHTNESS_ULTRA_LOW = 3,
+	/* Not allowed to set to enum custom value */
+	FP_LED_BRIGHTNESS_CUSTOM = 0xfe,
 };
 
 /* EC_LED_COLOR maps to LED_COLOR - 1 */
