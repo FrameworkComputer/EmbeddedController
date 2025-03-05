@@ -1058,9 +1058,12 @@ union bmOptionalFeatures_t {
 		uint16_t chunking_supported : 1;
 		/** Reserved */
 		uint16_t reserved : 1;
-	};
+	} __packed;
 	uint16_t raw_value;
-};
+} __packed;
+
+BUILD_ASSERT(sizeof(union bmOptionalFeatures_t) == 2,
+	     "sizeof(bmOptionalFeatures_t) incorrect size");
 
 /**
  * @brief bmAttributes of the connector
