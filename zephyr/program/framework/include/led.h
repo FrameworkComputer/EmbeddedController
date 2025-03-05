@@ -27,6 +27,7 @@
 
 #define FP_LED_HIGH 55
 #define FP_LED_MEDIUM 40
+#define FP_LED_MEDIUM_LOW 28
 #define FP_LED_LOW 15
 #define FP_LED_ULTRA_LOW 8
 
@@ -48,6 +49,17 @@ enum fp_led_brightness_level {
 	FP_LED_BRIGHTNESS_ULTRA_LOW = 3,
 	/* Not allowed to set to enum custom value */
 	FP_LED_BRIGHTNESS_CUSTOM = 0xfe,
+	FP_LED_BRIGHTNESS_AUTO = 0xff,
+};
+
+enum backlight_brightness {
+	KEYBOARD_BL_BRIGHTNESS_OFF = 0,
+	KEYBOARD_BL_BRIGHTNESS_ULT_LOW = 5,
+	KEYBOARD_BL_BRIGHTNESS_LOW = 20,
+	KEYBOARD_BL_BRIGHTNESS_MED_LOW = 50,
+	KEYBOARD_BL_BRIGHTNESS_MED = 75,
+	KEYBOARD_BL_BRIGHTNESS_HIGH = 100,
+	KEYBOARD_BL_BRIGHTNESS_AUTO = 99,
 };
 
 /* EC_LED_COLOR maps to LED_COLOR - 1 */
@@ -171,6 +183,10 @@ void led_set_color_with_pattern(const struct led_pattern_node_t *led);
 void board_led_apply_color(void);
 
 void update_pwr_led_level(void);
+
+int fp_led_auto_is_enable(void);
+
+int kbbl_auto_dim_is_enable(void);
 
 #ifdef TEST_BUILD
 const struct led_pins_node_t *led_get_node(enum led_color color,

@@ -16,6 +16,7 @@
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "keyboard_backlight.h"
+#include "led.h"
 #include "pwm.h"
 #include "hooks.h"
 #include "system.h"
@@ -129,12 +130,6 @@ __override struct keyboard_scan_config keyscan_config = {
  * KBL will use PWM, for now will use GPIO control first
  */
 
-enum backlight_brightness {
-	KEYBOARD_BL_BRIGHTNESS_OFF = 0,
-	KEYBOARD_BL_BRIGHTNESS_LOW = 20,
-	KEYBOARD_BL_BRIGHTNESS_MED = 50,
-	KEYBOARD_BL_BRIGHTNESS_HIGH = 100,
-};
 
 uint8_t bl_brightness = KEYBOARD_BL_BRIGHTNESS_OFF;
 
@@ -142,13 +137,26 @@ uint8_t bl_brightness = KEYBOARD_BL_BRIGHTNESS_OFF;
 #define NUM_LED BIT(1)
 #define CAPS_LED BIT(2)
 static uint8_t caps_led_status;
+bool kb_als_auto_brightness;
+
+/*
+ * return auto dim keyboard backlight, it decided by
+ * key combo(fn+space).
+ */
+int kbbl_auto_dim_is_enable(void)
+{
+	return kb_als_auto_brightness;
+}
 
 void board_kblight_init(void)
 {
 	uint8_t current_kblight = 0;
 
-	if (system_get_bbram(SYSTEM_BBRAM_IDX_KBSTATE, &current_kblight) == EC_SUCCESS)
+	if (system_get_bbram(SYSTEM_BBRAM_IDX_KBSTATE, &current_kblight) == EC_SUCCESS) {
 		kblight_set(current_kblight & 0x7F);
+		if (kblight_get() == KEYBOARD_BL_BRIGHTNESS_AUTO)
+			kb_als_auto_brightness = true;
+	}
 }
 
 int caps_status_check(void)
@@ -217,7 +225,10 @@ void fnkey_shutdown(void)
 {
 	uint8_t current_kb = 0;
 
-	current_kb |= kblight_get() & 0x7F;
+	if (kbbl_auto_dim_is_enable())
+		current_kb |= KEYBOARD_BL_BRIGHTNESS_AUTO;
+	else
+		current_kb |= kblight_get() & 0x7F;
 
 	if (Fn_key & FN_LOCKED) {
 		current_kb |= 0x80;
@@ -416,8 +427,15 @@ int functional_hotkey(uint16_t *key_code, int8_t pressed)
 	case SCANCODE_SPACE:	/* TODO: TOGGLE_KEYBOARD_BACKLIGHT */
 		if (fn_table_set(pressed, KB_FN_SPACE)) {
 			if (pressed) {
-				bl_brightness = kblight_get();
+				if (kbbl_auto_dim_is_enable())
+					bl_brightness = KEYBOARD_BL_BRIGHTNESS_AUTO;
+				else
+					bl_brightness = kblight_get();
+
 				switch (bl_brightness) {
+				case KEYBOARD_BL_BRIGHTNESS_OFF:
+					bl_brightness = KEYBOARD_BL_BRIGHTNESS_LOW;
+					break;
 				case KEYBOARD_BL_BRIGHTNESS_LOW:
 					bl_brightness = KEYBOARD_BL_BRIGHTNESS_MED;
 					break;
@@ -425,11 +443,12 @@ int functional_hotkey(uint16_t *key_code, int8_t pressed)
 					bl_brightness = KEYBOARD_BL_BRIGHTNESS_HIGH;
 					break;
 				case KEYBOARD_BL_BRIGHTNESS_HIGH:
-					bl_brightness = KEYBOARD_BL_BRIGHTNESS_OFF;
+					kb_als_auto_brightness = true;
+					return EC_ERROR_UNIMPLEMENTED;
 					break;
 				default:
-				case KEYBOARD_BL_BRIGHTNESS_OFF:
-					bl_brightness = KEYBOARD_BL_BRIGHTNESS_LOW;
+					bl_brightness = KEYBOARD_BL_BRIGHTNESS_OFF;
+					kb_als_auto_brightness = false;
 					break;
 				}
 				kblight_set(bl_brightness);

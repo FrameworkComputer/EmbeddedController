@@ -809,6 +809,10 @@ static int hid_target_read_requested(struct i2c_target_config *config,
 	return hid_target_read_processed(config, val);
 }
 
+int hidals_lux_get(void)
+{
+	return als_sensor.illuminanceValue;
+}
 
 static int cmd_hidals_status(int argc, const char **argv)
 {

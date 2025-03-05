@@ -22,4 +22,6 @@ int hid_target_register(const struct device *dev);
 
 int hid_target_unregister(const struct device *dev);
 
+int hidals_lux_get(void);
+
 #endif /* __CROS_EC_I2C_HID_DEVICE_H */
