@@ -107,4 +107,11 @@ config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	  This is used to not define chipset_in_state method as inline
 	  function.
 
+config TEST_SKIP_EC_APP_MAIN
+	bool "Skip running ec_app_main()"
+	help
+	  Some tests intentionally create errors, like incorrect
+	  initialization order, and verify the error handling paths.
+	  The ec_app_main() is broken in these cases.
+
 source "Kconfig.zephyr"

@@ -228,7 +228,12 @@ static bool ccg_is_init_done(const struct device *dev)
 	return false;
 }
 
+static void ccg_start_thread(const struct device *dev)
+{
+}
+
 static DEVICE_API(pdc, pdc_driver_api) = {
+	.start_thread = ccg_start_thread,
 	.is_init_done = ccg_is_init_done,
 	.get_ucsi_version = ccg_get_ucsi_version,
 	.reset = ccg_reset,

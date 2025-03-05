@@ -2323,6 +2323,13 @@ static int tps_set_comms_state(const struct device *dev, bool comms_active)
 	return 0;
 }
 
+static void tps_start_thread(const struct device *dev)
+{
+	struct pdc_data_t *data = dev->data;
+
+	k_thread_start(data->thread);
+}
+
 static bool tps_is_init_done(const struct device *dev)
 {
 	struct pdc_data_t *data = dev->data;
@@ -2379,6 +2386,7 @@ static int tps_execute_ucsi_cmd(const struct device *dev, uint8_t ucsi_command,
 }
 
 static DEVICE_API(pdc, pdc_driver_api) = {
+	.start_thread = tps_start_thread,
 	.is_init_done = tps_is_init_done,
 	.get_ucsi_version = tps_get_ucsi_version,
 	.reset = tps_pdc_reset,
@@ -2626,7 +2634,7 @@ static void tps_thread(void *dev, void *unused1, void *unused2)
 				tps6699x_thread_stack_area_##inst),            \
 			tps_thread, (void *)dev, 0, 0,                         \
 			CONFIG_USBC_PDC_TPS6699X_THREAD_PRIORITY, K_ESSENTIAL, \
-			K_NO_WAIT);                                            \
+			K_FOREVER);                                            \
 		k_thread_name_set(data->thread, "TPS6699X" STRINGIFY(inst));   \
 	}                                                                      \
                                                                                \

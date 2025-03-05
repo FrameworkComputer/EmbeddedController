@@ -53,6 +53,11 @@ void assert_post_action(const char *file, unsigned int line)
 		zassert_true(0, "Assert did not happen"); \
 	} while (0)
 
+ZTEST(pdc_api_null_check, test_pdc_start_thread)
+{
+	EXPECT_ASSERT(pdc_start_thread(&fake_pdc));
+}
+
 ZTEST(pdc_api_null_check, test_pdc_is_init_done)
 {
 	EXPECT_ASSERT(pdc_is_init_done(&fake_pdc));

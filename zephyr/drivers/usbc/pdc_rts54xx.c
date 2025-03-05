@@ -2453,6 +2453,13 @@ static int rts54_get_pch_data_status(const struct device *dev, uint8_t port_num,
 	return 0;
 }
 
+static void rts54_start_thread(const struct device *dev)
+{
+	struct pdc_data_t *data = dev->data;
+
+	k_thread_start(data->thread);
+}
+
 static bool rts54_is_init_done(const struct device *dev)
 {
 	struct pdc_data_t *data = dev->data;
@@ -2691,6 +2698,7 @@ static int rts54_get_attention_vdo(const struct device *dev,
 }
 
 static DEVICE_API(pdc, pdc_driver_api) = {
+	.start_thread = rts54_start_thread,
 	.is_init_done = rts54_is_init_done,
 	.get_ucsi_version = rts54_get_ucsi_version,
 	.reset = rts54_pdc_reset,
@@ -2863,7 +2871,7 @@ static void rts54xx_thread(void *dev, void *unused1, void *unused2)
 				rts54xx_thread_stack_area_##inst),            \
 			rts54xx_thread, (void *)dev, 0, 0,                    \
 			CONFIG_USBC_PDC_RTS54XX_THREAD_PRIORITY, K_ESSENTIAL, \
-			K_NO_WAIT);                                           \
+			K_FOREVER);                                           \
 		k_thread_name_set(data->thread, "RTS54XX" STRINGIFY(inst));   \
 	}                                                                     \
                                                                               \

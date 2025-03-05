@@ -68,6 +68,11 @@ enum pdc_power_mgmt_board_cb_t {
 };
 
 /**
+ * @brief Start the PDC subsystem and the PDC driver threads
+ */
+void pdc_subsys_start(void);
+
+/**
  * @brief Get the state of the port partner connection
  *
  * @param port USB-C port number

@@ -11,9 +11,10 @@
 
 void test_main(void)
 {
-	ec_app_main();
-
-	k_sleep(K_MSEC(1000));
+	if (!IS_ENABLED(CONFIG_TEST_SKIP_EC_APP_MAIN)) {
+		ec_app_main();
+		k_sleep(K_MSEC(1000));
+	}
 
 	/* Run all the suites that depend on main being called */
 	ztest_run_test_suites(NULL, false, 1, 1);
