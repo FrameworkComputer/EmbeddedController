@@ -175,6 +175,10 @@ enum pdc_cmd_t {
 	CMD_PDC_SET_FRS,
 	/** CMD_PDC_GET_ATTENTION_VDO */
 	CMD_PDC_GET_ATTENTION_VDO,
+	/** CMD_PDC_GET_SBU_MUX_MODE */
+	CMD_PDC_GET_SBU_MUX_MODE,
+	/** CMD_PDC_SET_SBU_MUX_MODE */
+	CMD_PDC_SET_SBU_MUX_MODE,
 	/** CMD_PDC_COUNT */
 	CMD_PDC_COUNT
 };
@@ -397,6 +401,8 @@ test_export_static const char *const pdc_cmd_names[] = {
 	[CMD_PDC_GET_LPM_PPM_INFO] = "PDC_GET_LPM_PPM_INFO",
 	[CMD_PDC_SET_FRS] = "PDC_SET_FRS",
 	[CMD_PDC_GET_ATTENTION_VDO] = "PDC_GET_ATTENTION_VDO",
+	[CMD_PDC_GET_SBU_MUX_MODE] = "PDC_GET_SBU_MUX_MODE",
+	[CMD_PDC_SET_SBU_MUX_MODE] = "PDC_SET_SBU_MUX_MODE",
 };
 const int pdc_cmd_types = CMD_PDC_COUNT;
 
@@ -736,6 +742,8 @@ struct pdc_port_t {
 	/** SET_DRP variable used with CMD_SET_DRP */
 	enum drp_mode_t drp;
 	enum drp_mode_t drp_read;
+	/** Used by CMD_PDC_SET_SBU_MUX_MODE / CMD_PDC_GET_SBU_MUX_MODE */
+	enum pdc_sbu_mux_mode sbu_mux_mode;
 	/** Callback */
 	struct pdc_callback cc_cb;
 	struct pdc_callback ci_cb;
@@ -781,6 +789,8 @@ struct pdc_data_t {
 struct pdc_config_t {
 	/** Port number for the connector */
 	uint8_t connector_num;
+	/** Whether or not this port supports CCD */
+	bool ccd;
 	/**
 	 * The usbc stack initializes this pointer that creates the
 	 * main thread for this port
@@ -924,45 +934,46 @@ static ALWAYS_INLINE void pdc_thread(void *pdc_dev, void *unused1,
 	}
 }
 
-#define PDC_SUBSYS_INIT(inst)                                                \
-	K_THREAD_STACK_DEFINE(my_stack_area_##inst,                          \
-			      CONFIG_PDC_POWER_MGMT_STACK_SIZE);             \
-                                                                             \
-	static void create_thread_##inst(const struct device *dev)           \
-	{                                                                    \
-		struct pdc_data_t *data = dev->data;                         \
-                                                                             \
-		data->thread = k_thread_create(                              \
-			&data->thread_data, my_stack_area_##inst,            \
-			K_THREAD_STACK_SIZEOF(my_stack_area_##inst),         \
-			pdc_thread, (void *)dev, 0, 0,                       \
-			CONFIG_PDC_POWER_MGMT_THREAD_PRIORTY, K_ESSENTIAL,   \
-			K_FOREVER);                                          \
-		k_thread_name_set(data->thread,                              \
-				  "PDC Power Mgmt" STRINGIFY(inst));         \
-	}                                                                    \
-                                                                             \
-	static struct pdc_data_t data_##inst = {                             \
-		.port.dev = DEVICE_DT_INST_GET(inst), /* Initial policy read \
-							 from device tree */ \
-		.port.pdc = DEVICE_DT_GET(DT_INST_PROP(inst, pdc)),          \
-		.port.una_policy.tcc = DT_STRING_TOKEN(                      \
-			DT_INST_PROP(inst, policy), unattached_rp_value),    \
-		.port.una_policy.cc_mode = DT_STRING_TOKEN(                  \
-			DT_INST_PROP(inst, policy), unattached_cc_mode),     \
-		.port.una_policy.drp_mode = DT_STRING_TOKEN(                 \
-			DT_INST_PROP(inst, policy), unattached_try),         \
-		.port.suspend = ATOMIC_INIT(0),                              \
-		.port.dual_role_state = PD_DRP_TOGGLE_ON,                    \
-	};                                                                   \
-                                                                             \
-	static struct pdc_config_t config_##inst = {                         \
-		.connector_num = USBC_PORT_NEW(DT_DRV_INST(inst)),           \
-		.create_thread = create_thread_##inst,                       \
-	};                                                                   \
-                                                                             \
-	DEVICE_DT_INST_DEFINE(inst, &pdc_subsys_init, NULL, &data_##inst,    \
-			      &config_##inst, POST_KERNEL,                   \
+#define PDC_SUBSYS_INIT(inst)                                                 \
+	K_THREAD_STACK_DEFINE(my_stack_area_##inst,                           \
+			      CONFIG_PDC_POWER_MGMT_STACK_SIZE);              \
+                                                                              \
+	static void create_thread_##inst(const struct device *dev)            \
+	{                                                                     \
+		struct pdc_data_t *data = dev->data;                          \
+                                                                              \
+		data->thread = k_thread_create(                               \
+			&data->thread_data, my_stack_area_##inst,             \
+			K_THREAD_STACK_SIZEOF(my_stack_area_##inst),          \
+			pdc_thread, (void *)dev, 0, 0,                        \
+			CONFIG_PDC_POWER_MGMT_THREAD_PRIORTY, K_ESSENTIAL,    \
+			K_FOREVER);                                           \
+		k_thread_name_set(data->thread,                               \
+				  "PDC Power Mgmt" STRINGIFY(inst));          \
+	}                                                                     \
+                                                                              \
+	static struct pdc_data_t data_##inst = {                              \
+		.port.dev = DEVICE_DT_INST_GET(inst), /* Initial policy read  \
+							 from device tree */  \
+		.port.pdc = DEVICE_DT_GET(DT_INST_PROP(inst, pdc)),           \
+		.port.una_policy.tcc = DT_STRING_TOKEN(                       \
+			DT_INST_PROP(inst, policy), unattached_rp_value),     \
+		.port.una_policy.cc_mode = DT_STRING_TOKEN(                   \
+			DT_INST_PROP(inst, policy), unattached_cc_mode),      \
+		.port.una_policy.drp_mode = DT_STRING_TOKEN(                  \
+			DT_INST_PROP(inst, policy), unattached_try),          \
+		.port.suspend = ATOMIC_INIT(0),                               \
+		.port.dual_role_state = PD_DRP_TOGGLE_ON,                     \
+	};                                                                    \
+                                                                              \
+	static struct pdc_config_t config_##inst = {                          \
+		.connector_num = USBC_PORT_NEW(DT_DRV_INST(inst)),            \
+		.ccd = COND_CODE_1(DT_INST_PROP(inst, ccd), (true), (false)), \
+		.create_thread = create_thread_##inst,                        \
+	};                                                                    \
+                                                                              \
+	DEVICE_DT_INST_DEFINE(inst, &pdc_subsys_init, NULL, &data_##inst,     \
+			      &config_##inst, POST_KERNEL,                    \
 			      CONFIG_PDC_POWER_MGMT_INIT_PRIORITY, NULL);
 
 DT_INST_FOREACH_STATUS_OKAY(PDC_SUBSYS_INIT)
@@ -2446,6 +2457,12 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 	case CMD_PDC_GET_LPM_PPM_INFO:
 		rv = pdc_get_lpm_ppm_info(port->pdc, port->lpm_ppm_info);
 		break;
+	case CMD_PDC_GET_SBU_MUX_MODE:
+		rv = pdc_get_sbu_mux_mode(port->pdc, &port->sbu_mux_mode);
+		break;
+	case CMD_PDC_SET_SBU_MUX_MODE:
+		rv = pdc_set_sbu_mux_mode(port->pdc, port->sbu_mux_mode);
+		break;
 	default:
 		LOG_ERR("Invalid command: %d", port->cmd->cmd);
 		return -EIO;
@@ -3259,6 +3276,10 @@ static bool is_connectionless_cmd(enum pdc_cmd_t pdc_cmd)
 	case CMD_PDC_GET_DRP:
 		__fallthrough;
 	case CMD_PDC_GET_LPM_PPM_INFO:
+		__fallthrough;
+	case CMD_PDC_GET_SBU_MUX_MODE:
+		__fallthrough;
+	case CMD_PDC_SET_SBU_MUX_MODE:
 		return true;
 	default:
 		return false;
@@ -4714,6 +4735,63 @@ int pdc_power_mgmt_get_connector_status_for_ppm(
 	}
 
 	return rv;
+}
+
+int pdc_power_mgmt_get_ccd_port(void)
+{
+	for (int i = 0; i < pdc_power_mgmt_get_usb_pd_port_count(); i++) {
+		const struct pdc_config_t *cfg = pdc_data[i]->port.dev->config;
+
+		if (cfg->ccd) {
+			return cfg->connector_num;
+		}
+	}
+
+	return -1;
+}
+
+test_mockable int pdc_power_mgmt_get_sbu_mux_mode(enum pdc_sbu_mux_mode *mode,
+						  int *port_num)
+{
+	if (mode == NULL) {
+		return -EINVAL;
+	}
+
+	int port = pdc_power_mgmt_get_ccd_port();
+
+	if (port < 0) {
+		LOG_ERR("%s: No CCD port specified in devicetree", __func__);
+		return -ENOTSUP;
+	}
+
+	if (port_num) {
+		*port_num = port;
+	}
+
+	/* Block until command completes */
+	if (public_api_block(port, CMD_PDC_GET_SBU_MUX_MODE)) {
+		return -EIO;
+	}
+
+	*mode = pdc_data[port]->port.sbu_mux_mode;
+	return 0;
+}
+
+test_mockable int pdc_power_mgmt_set_sbu_mux_mode(enum pdc_sbu_mux_mode mode)
+{
+	int port = pdc_power_mgmt_get_ccd_port();
+
+	if (port < 0) {
+		LOG_ERR("%s: No CCD port specified in devicetree", __func__);
+		return -ENOTSUP;
+	}
+
+	pdc_data[port]->port.sbu_mux_mode = mode;
+
+	LOG_INF("C%d: Setting SBU mux mode to %d", port, mode);
+
+	/* Block until command completes */
+	return public_api_block(port, CMD_PDC_SET_SBU_MUX_MODE);
 }
 
 #ifdef CONFIG_ZTEST

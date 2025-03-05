@@ -50,6 +50,10 @@ DECLARE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_get_rdo, int, uint32_t *);
 DECLARE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_get_drp_mode, int,
 			enum drp_mode_t *);
 DECLARE_FAKE_VALUE_FUNC(bool, pdc_power_mgmt_get_vconn_state, int);
+DECLARE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_get_sbu_mux_mode,
+			enum pdc_sbu_mux_mode *, int *);
+DECLARE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_set_sbu_mux_mode,
+			enum pdc_sbu_mux_mode);
 
 /**
  * @brief Reset the above set of fakes
