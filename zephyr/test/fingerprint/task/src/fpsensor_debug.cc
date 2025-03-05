@@ -184,3 +184,10 @@ ZTEST(fpsensor_debug, test_upload_pgm_image_wrong_bpp)
 	zassert_equal(upload_pgm_image(frame.data(), 17), EC_ERROR_UNKNOWN);
 	zassert_equal(upload_pgm_image(frame.data(), 24), EC_ERROR_UNKNOWN);
 }
+
+uint8_t get_sensor_bpp(void);
+
+ZTEST(fpsensor_debug, test_get_sensor_bpp)
+{
+	zassert_equal(get_sensor_bpp(), 8);
+}
