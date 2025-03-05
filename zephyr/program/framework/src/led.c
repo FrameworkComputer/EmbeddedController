@@ -19,6 +19,8 @@
 #include "extpower.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "hid_device.h"
+#include "keyboard_backlight.h"
 #include "led.h"
 #include "led_common.h"
 #include "power.h"
@@ -131,6 +133,87 @@ static struct node_prop_t node_array[] = {
 static int led_tick_time = 200;
 static bool pre_multifunction_led_state;
 static bool pre_fingerprint_led_state;
+
+static bool fp_als_auto_brightness;
+static bool last_fp_led_brightness;
+#ifdef CONFIG_PLATFORM_EC_KEYBOARD
+static bool last_kbbl_led_brightness;
+#endif
+
+/*
+ * return auto dim status, it decided by BIOS setup menu
+ * option(Power Button LED Brightness level).
+ */
+int fp_led_auto_is_enable(void)
+{
+	return fp_als_auto_brightness;
+}
+
+/*
+ * According to Microsoft's ALS spec common lighting conditions.
+ * Reference the first 5 level to modify the auto range.
+ *
+ * +------------------------+-----------+----------------+
+ * | Lighting condition     | lux       |  lux-fpled-kb  |
+ * +------------------------+-----------+----------------+
+ * | Pitch black            | 1         | 40(8%)(5%)     |
+ * | Very dark              | 10        | 70(15%)(20%    |
+ * | Dark indoors           | 50        | 100(28%)(50%)  |
+ * | Dim indoors            | 100       | 130(40%)(75%)  |
+ * | Normal indoors         | 300       | 200(55%)(100%) |
+ * | Bright indoors         | 700       | 200(55%)(100%) |
+ * | Dim outdoors(overcast) | 1000      | 200(55%)(100%) |
+ * | Sunlight outdoors      | 15000     | 200(55%)(100%) |
+ * | Direct Sunlight        | 100,000   | 200(55%)(100%) |
+ * +------------------------+-----------+---------------+
+ */
+void auto_als_led_brightness(void)
+{
+	int als_lux = hidals_lux_get();
+	int led_brightness;
+#ifdef CONFIG_PLATFORM_EC_KEYBOARD
+	int kb_brightness;
+#endif
+
+	if (fp_led_auto_is_enable()) {
+		if (als_lux > 130)
+			led_brightness = FP_LED_HIGH;
+		else if (als_lux > 100)
+			led_brightness = FP_LED_MEDIUM;
+		else if (als_lux > 70)
+			led_brightness = FP_LED_MEDIUM_LOW;
+		else if (als_lux > 40)
+			led_brightness = FP_LED_LOW;
+		else
+			led_brightness = FP_LED_ULTRA_LOW;
+
+		if (last_fp_led_brightness != led_brightness) {
+			last_fp_led_brightness = led_brightness;
+			system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, led_brightness);
+			update_pwr_led_level();
+		}
+	}
+
+#ifdef CONFIG_PLATFORM_EC_KEYBOARD
+	if (kbbl_auto_dim_is_enable()) {
+		if (als_lux > 130)
+			kb_brightness = KEYBOARD_BL_BRIGHTNESS_HIGH;
+		else if (als_lux > 100)
+			kb_brightness = KEYBOARD_BL_BRIGHTNESS_MED;
+		else if (als_lux > 70)
+			kb_brightness = KEYBOARD_BL_BRIGHTNESS_MED_LOW;
+		else if (als_lux > 40)
+			kb_brightness = KEYBOARD_BL_BRIGHTNESS_LOW;
+		else
+			kb_brightness = KEYBOARD_BL_BRIGHTNESS_ULT_LOW;
+
+		if (last_kbbl_led_brightness != kb_brightness) {
+			last_kbbl_led_brightness = kb_brightness;
+			kblight_set(kb_brightness);
+		}
+	}
+#endif
+}
 
 test_export_static enum power_state get_chipset_state(void)
 {
@@ -420,6 +503,8 @@ static void led_tick(void)
 	else
 		led_tick_time = 200;
 
+	auto_als_led_brightness();
+
 	board_led_set_color();
 	board_led_apply_color();
 
@@ -502,12 +587,17 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 				break;
 			}
 
+			/* If auto mode, overwrite deduced level */
+			if (fp_led_auto_is_enable())
+				r_v1->level = FP_LED_BRIGHTNESS_AUTO;
+
 			args->response_size = sizeof(*r_v1);
 			return EC_RES_SUCCESS;
 		}
 	}
 
 	if (args->version == 0) {
+		fp_als_auto_brightness = false;
 		/* HC v0 only allows setting 3 discrete levels */
 		switch (p_v0->set_led_level) {
 		case FP_LED_BRIGHTNESS_HIGH:
@@ -524,6 +614,13 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 			break;
 		/* Not used, use v1 to set custom, is only ever returned when getting */
 		case FP_LED_BRIGHTNESS_CUSTOM:
+		/* Keep using v0, even though auto is a new value */
+		/* v1 is for setting custom percentage */
+		case FP_LED_BRIGHTNESS_AUTO:
+			fp_als_auto_brightness = true;
+			/* If setting to auto, don't need to update the led_level now */
+			/* it'll be updated later in the periodic task based on ALS value */
+			return EC_RES_SUCCESS;
 		default:
 			return EC_RES_INVALID_PARAM;
 		}
@@ -532,6 +629,7 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 		if (p_v1->set_percentage == 0 || p_v1->set_percentage > 100)
 			return EC_RES_INVALID_PARAM;
 		led_level = p_v1->set_percentage;
+		fp_als_auto_brightness = false;
 	}
 
 	system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, led_level);
