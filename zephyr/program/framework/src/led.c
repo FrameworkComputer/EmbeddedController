@@ -582,21 +582,49 @@ void led_control(enum ec_led_id led_id, enum ec_led_state state)
 
 static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_fp_led_control *p = args->params;
-	struct ec_response_fp_led_level *r = args->response;
+	const struct ec_params_fp_led_control_v0 *p_v0 = args->params;
+	const struct ec_params_fp_led_control_v1 *p_v1 = args->params;
+	struct ec_response_fp_led_level_v0 *r_v0 = args->response;
+	struct ec_response_fp_led_level_v1 *r_v1 = args->response;
 	uint8_t led_level = FP_LED_HIGH;
 
 	/* Returns percentage in HC v0 and v1 */
-	if (p->get_led_level) {
-		system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &r->level);
-		args->response_size = sizeof(*r);
-		return EC_RES_SUCCESS;
+	if (p_v0->get_led_level) {
+		if (args->version == 0) {
+			system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &r_v0->percentage);
+			args->response_size = sizeof(*r_v0);
+			return EC_RES_SUCCESS;
+		} else if (args->version == 1) {
+			system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &r_v1->percentage);
+			/* Map from percentage to level */
+			/* Yes, it could also have been set manually to this level */
+			/* But I don't it's worth adding additional state to track that */
+			switch (r_v1->percentage) {
+			case FP_LED_HIGH:
+				r_v1->level = FP_LED_BRIGHTNESS_HIGH;
+				break;
+			case FP_LED_MEDIUM:
+				r_v1->level = FP_LED_BRIGHTNESS_MEDIUM;
+				break;
+			case FP_LED_LOW:
+				r_v1->level = FP_LED_BRIGHTNESS_LOW;
+				break;
+			case FP_LED_ULTRA_LOW:
+				r_v1->level = FP_LED_BRIGHTNESS_ULTRA_LOW;
+				break;
+			default:
+				r_v1->level = FP_LED_BRIGHTNESS_CUSTOM;
+				break;
+			}
+
+			args->response_size = sizeof(*r_v1);
+			return EC_RES_SUCCESS;
+		}
 	}
 
-	switch (args->version) {
-	case 0:
+	if (args->version == 0) {
 		/* HC v0 only allows setting 3 discrete levels */
-		switch (p->set_led_level) {
+		switch (p_v0->set_led_level) {
 		case FP_LED_BRIGHTNESS_HIGH:
 			led_level = FP_LED_HIGH;
 			break;
@@ -609,18 +637,16 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 		case FP_LED_BRIGHTNESS_ULTRA_LOW:
 			led_level = FP_LED_ULTRA_LOW;
 			break;
+		/* Not used, use v1 to set custom, is only ever returned when getting */
+		case FP_LED_BRIGHTNESS_CUSTOM:
 		default:
 			return EC_RES_INVALID_PARAM;
 		}
-		break;
-	case 1:
+	} else if (args->version == 1) {
 		/* HC v1 allows setting 1-100 percentage */
-		if (p->set_led_level == 0 || p->set_led_level > 100)
+		if (p_v1->set_percentage == 0 || p_v1->set_percentage > 100)
 			return EC_RES_INVALID_PARAM;
-		led_level = p->set_led_level;
-		break;
-	default:
-		return EC_RES_INVALID_PARAM;
+		led_level = p_v1->set_percentage;
 	}
 
 	system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, led_level);

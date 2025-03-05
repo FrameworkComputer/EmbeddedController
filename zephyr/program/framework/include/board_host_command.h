@@ -264,12 +264,22 @@ struct ec_params_vpro_control {
  */
 #define EC_CMD_FP_LED_LEVEL_CONTROL	0x3E0E
 
-struct ec_params_fp_led_control {
+struct ec_params_fp_led_control_v0 {
 	uint8_t set_led_level;
 	uint8_t get_led_level;
 } __ec_align1;
 
-struct ec_response_fp_led_level {
+struct ec_response_fp_led_level_v0 {
+	uint8_t percentage;
+} __ec_align1;
+
+struct ec_params_fp_led_control_v1 {
+	uint8_t set_percentage;
+	uint8_t get_led_level;
+} __ec_align1;
+
+struct ec_response_fp_led_level_v1 {
+	uint8_t percentage;
 	uint8_t level;
 } __ec_align1;
 
