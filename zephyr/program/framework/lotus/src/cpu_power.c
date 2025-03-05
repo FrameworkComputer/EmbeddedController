@@ -344,11 +344,15 @@ static void update_thermal_power_limit(int battery_percent, int active_mpower,
 	}
 }
 
-static int get_adapter_power_limit_index(int old_index, int battery_percent)
+static int get_adapter_power_limit_index(int old_index, int battery_percent, int mode)
 {
-	if (battery_percent > 60)
-		old_index = 0;
-	else if (battery_percent < 30)
+	/* at ERS only performance mode need to adjust limit */
+	if (mode == EC_AC_BEST_PERFORMANCE) {
+		if (battery_percent > 60)
+			old_index = 0;
+		else if (battery_percent < 30)
+			old_index = 1;
+	} else
 		old_index = 1;
 
 	return old_index;
@@ -363,7 +367,8 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 		if (with_dc) {
 			if (active_mpower >= 240000) {
 				new_index =
-					get_adapter_power_limit_index(new_index, battery_percent);
+					get_adapter_power_limit_index(new_index,
+						battery_percent, mode);
 				switch (new_index) {
 				case 0:
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 145000;
@@ -389,7 +394,8 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 				}
 			} else if (active_mpower >= 180000) {
 				new_index =
-					get_adapter_power_limit_index(new_index, battery_percent);
+					get_adapter_power_limit_index(new_index,
+						battery_percent, mode);
 				switch (new_index) {
 				case 0:
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 120000;
@@ -415,7 +421,8 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 				}
 			} else if (active_mpower >= 140000) {
 				new_index =
-					get_adapter_power_limit_index(new_index, battery_percent);
+					get_adapter_power_limit_index(new_index,
+						battery_percent, mode);
 				switch (new_index) {
 				case 0:
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 95000;
@@ -441,7 +448,8 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 				}
 			} else if (active_mpower >= 100000) {
 				new_index =
-					get_adapter_power_limit_index(new_index, battery_percent);
+					get_adapter_power_limit_index(new_index,
+						battery_percent, mode);
 				switch (new_index) {
 				case 0:
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 60000;
@@ -468,7 +476,8 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 			} else if (active_mpower >= 5000) {
 				/* DC + AC under 100W */
 				new_index =
-					get_adapter_power_limit_index(new_index, battery_percent);
+					get_adapter_power_limit_index(new_index,
+						battery_percent, mode);
 				switch (new_index) {
 				case 0:
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 60000;
@@ -567,7 +576,8 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 		if (with_dc) {
 			if (active_mpower >= 240000) {
 				new_index =
-					get_adapter_power_limit_index(new_index, battery_percent);
+					get_adapter_power_limit_index(new_index,
+						battery_percent, mode);
 				switch (new_index) {
 				case 0:
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
@@ -591,7 +601,8 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 				}
 			} else if (active_mpower >= 180000) {
 				new_index =
-					get_adapter_power_limit_index(new_index, battery_percent);
+					get_adapter_power_limit_index(new_index,
+						battery_percent, mode);
 				switch (new_index) {
 				case 0:
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
@@ -613,7 +624,8 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 				}
 			} else if (active_mpower >= 140000) {
 				new_index =
-					get_adapter_power_limit_index(new_index, battery_percent);
+					get_adapter_power_limit_index(new_index,
+						battery_percent, mode);
 				switch (new_index) {
 				case 0:
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
@@ -635,7 +647,8 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 				}
 			} else if (active_mpower >= 65000) {
 				new_index =
-					get_adapter_power_limit_index(new_index, battery_percent);
+					get_adapter_power_limit_index(new_index,
+						battery_percent, mode);
 				switch (new_index) {
 				case 0:
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
@@ -658,7 +671,8 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 			} else if (active_mpower >= 5000) {
 				/* DC + AC under 65W */
 				new_index =
-					get_adapter_power_limit_index(new_index, battery_percent);
+					get_adapter_power_limit_index(new_index,
+						battery_percent, mode);
 				switch (new_index) {
 				case 0:
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
