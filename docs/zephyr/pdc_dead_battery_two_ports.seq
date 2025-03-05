@@ -1,0 +1,70 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# Generated with https://sequencediagram.googleplex.com/
+
+Title: PDC Dead Battery Two Ports Call Flow
+
+participant Charge Manager as CMGR
+participant Power Mgmt as PMGMT
+participant DRIVER as DRIVER
+participant PDC1
+participant PDC2
+
+Note over PDC1: 45W charger [fillcolor="white"]
+Note over PDC2: 60W charger [fillcolor="white"]
+Note over PDC1,PDC2: Chargers connected [fillcolor="white"]
+Note over PDC1,PDC2: PDCs Initialized to 5V\n with sink path enabled [fillcolor="white"]
+Note over CMGR,DRIVER: Initializing [fillcolor="white"]
+
+PMGMT->DRIVER: GET_CONNECTOR_STATUS(C1)
+DRIVER->PDC1: GET_CONNECTOR_STATUS
+PDC1-->DRIVER:
+PMGMT->DRIVER: GET_CONNECTOR_STATUS(C2)
+DRIVER->PDC2: GET_CONNECTOR_STATUS
+PDC2-->DRIVER:
+
+PMGMT->DRIVER: GET_PDOS(C1)
+DRIVER->PDC1: GET_PDOS
+PDC1-->DRIVER:
+DRIVER-->PMGMT:
+PMGMT->DRIVER: GET_PDOS(C2)
+DRIVER->PDC2: GET_PDOS
+PDC2-->DRIVER:
+DRIVER-->PMGMT:
+
+Note over PMGMT: If sink path enabled\nskip evaluating PDOS\nSync with Charge Manager [fillcolor="lightgreen"]
+
+Note over PMGMT: Start\nEvaluating PDOS [fillcolor="lightblue"]
+PMGMT->CMGR: get_best_port()
+CMGR-->PMGMT: NONE (not seeded)
+Note over PMGMT: if 2 or more sink paths enabled\ndisable sink paths on non-preferred ports\nelse\nsend RDO[fillcolor="lightblue"]
+Note over PMGMT: End\nEvaluating PDOS [fillcolor="lightblue"]
+
+Note over PMGMT: Sync with Charge Manager[fillcolor="lightgreen"]
+PMGMT->CMGR: seed power(C1, 5V, 3A) 15W [color="green", fontcolor="green"]
+PMGMT->CMGR: seed power(C2, 5V, 3A) 15W [color="green", fontcolor="green"]
+
+Note over CMGR: Charge manager\nis seeded [fillcolor="white"]
+
+CMGR->PMGMT: get_port_best_power(C1)
+PMGMT-->CMGR: 45W
+CMGR->PMGMT: get_port_best_power(C2)
+PMGMT-->CMGR: 60W
+
+CMGR->PMGMT: set_active_charge_port(C2)
+PMGMT->DRIVER: SET_SINK_PATH(C1, false)
+DRIVER->PDC1: SET_SINK_PATH(false)
+PDC1-->DRIVER:
+PMGMT->DRIVER: SET_SINK_PATH(C2, true)
+DRIVER->PDC2: SET_SINK_PATH(true)
+PDC2-->DRIVER:
+PMGMT-->CMGR:
+
+CMGR->PMGMT: set_new_power_request(C1)
+PMGMT->DRIVER: SET_RDO(C1)
+DRIVER->PDC1: SET_RDO
+CMGR->PMGMT: set_new_power_request(C2)
+PMGMT->DRIVER: SET_RDO(C2)
+DRIVER->PDC2: SET_RDO
