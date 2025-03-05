@@ -6325,37 +6325,45 @@ int cmd_usb_pd_dps(int argc, char *argv[])
 
 int cmd_fpled(int argc, char *argv[])
 {
-	struct ec_params_fp_led_control p;
-	struct ec_response_fp_led_level r;
+	struct ec_params_fp_led_control_v0 p_v0;
+	struct ec_params_fp_led_control_v1 p_v1;
+	const void *p;
+	size_t p_size;
+	struct ec_response_fp_led_level_v0 r;
 	int rsize = 0;
 	int cmd_ver = 0;
 	char *endptr;
 
-	p.get_led_level = 0;
+	p_v0.get_led_level = 0;
+	p_v1.get_led_level = 0;
+	p = &p_v0;
+	p_size = sizeof(p_v0);
 	if (argc == 2 && !strcmp(argv[1], "high")) {
-		p.set_led_level = 0;
+		p_v0.set_led_level = 0;
 	} else if (argc == 2 && !strcmp(argv[1], "medium")) {
-		p.set_led_level = 1;
+		p_v0.set_led_level = 1;
 	} else if (argc == 2 && !strcmp(argv[1], "low")) {
-		p.set_led_level = 2;
+		p_v0.set_led_level = 2;
 	} else if (argc == 2 && !strcmp(argv[1], "ultra-low")) {
-		p.set_led_level = 3;
+		p_v0.set_led_level = 3;
 	} else if (argc == 2) {
-		p.set_led_level = strtol(argv[1], &endptr, 0);
-		if (endptr && *endptr && (p.set_led_level == 0 || p.set_led_level > 100)) {
+		p_v1.set_percentage = strtol(argv[1], &endptr, 0);
+		if (p_v1.set_percentage == 0 || p_v1.set_percentage > 100) {
 			fprintf(stderr, "Invalid percentage. Must be between 1-100.\n");
 			return -1;
 		}
 		cmd_ver = 1;
+		p = &p_v1;
+		p_size = sizeof(p_v1);
 	} else {
-		p.get_led_level = 1;
+		p_v0.get_led_level = 1;
 		rsize = sizeof(r);
 	}
 
-	int rv = ec_command(EC_CMD_FP_LED_LEVEL_CONTROL, cmd_ver, &p, sizeof(p), &r, rsize);
+	int rv = ec_command(EC_CMD_FP_LED_LEVEL_CONTROL, cmd_ver, p, p_size, &r, rsize);
 
 	if (rv > 0) {
-		printf("Level:  %d%%\n", r.level);
+		printf("Percentage:  %d%%\n", r.percentage);
 	}
 
 	return rv;
