@@ -23,6 +23,7 @@
 #include "keyboard_backlight.h"
 #include "led.h"
 #include "led_common.h"
+#include "math_util.h"
 #include "power.h"
 #include "power_sequence.h"
 #include "system.h"
@@ -139,6 +140,7 @@ static bool last_fp_led_brightness;
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD
 static bool last_kbbl_led_brightness;
 #endif
+static int prev_als_lux;
 
 /*
  * return auto dim status, it decided by BIOS setup menu
@@ -174,6 +176,12 @@ void auto_als_led_brightness(void)
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD
 	int kb_brightness;
 #endif
+
+	/* Only change brightness if lux has significantly changed */
+	/* Otherwise if it's around a threshold it might flip back and forth */
+	if (prev_als_lux != 0 && (ABS(als_lux - prev_als_lux) <= 15))
+		return;
+	prev_als_lux = als_lux;
 
 	if (fp_led_auto_is_enable()) {
 		if (als_lux > 130)
