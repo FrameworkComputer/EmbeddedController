@@ -177,7 +177,7 @@ void panic(const char *msg)
 	panic_reboot();
 }
 
-struct panic_data *panic_get_data(void)
+test_mockable struct panic_data *panic_get_data(void)
 {
 	BUILD_ASSERT(sizeof(struct panic_data) <= CONFIG_PANIC_DATA_SIZE);
 
