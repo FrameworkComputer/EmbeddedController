@@ -416,9 +416,6 @@ int uart_tx_char_raw(void *context, int c)
 void uart_write_char(char c)
 {
 	uart_poll_out(uart_shell_dev, c);
-
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE) && !k_is_in_isr())
-		console_buf_notify_chars(&c, 1);
 }
 
 void uart_flush_output(void)
