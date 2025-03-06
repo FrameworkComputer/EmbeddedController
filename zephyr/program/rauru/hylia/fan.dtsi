@@ -12,7 +12,7 @@
 			tach = <&tach0>;
 			rpm_min = <1000>;
 			rpm_start = <1000>;
-			rpm_max = <4000>;
+			rpm_max = <5000>;
 			enable_gpio = <&gpio_en_pp5000_fan>;
 			rpm_deviation = <1>;
 			use_fast_start;
@@ -22,39 +22,39 @@
 	fan_steps: fan-steps {
 		compatible = "cros-ec,fan-steps";
 		level_0 {
-			temp_on = <0 45 0 0>;
+			temp_on = <0 50 0 0>;
 			temp_off = <0 99 0 0>;
 			rpm_target = <0>;
 		};
 		level_1 {
-			temp_on = <0 48 0 0>;
-			temp_off = <0 43 0 0>;
-			rpm_target = <2200>;
+			temp_on = <0 53 0 0>;
+			temp_off = <0 48 0 0>;
+			rpm_target = <2600>;
 		};
 		level_2 {
-			temp_on = <0 51 0 0>;
-			temp_off = <0 45 0 0>;
-			rpm_target = <2500>;
-		};
-		level_3 {
-			temp_on = <0 54 0 0>;
-			temp_off = <0 48 0 0>;
-			rpm_target = <2700>;
-		};
-		level_4 {
-			temp_on = <0 57 0 0>;
-			temp_off = <0 51 0 0>;
+			temp_on = <0 56 0 0>;
+			temp_off = <0 50 0 0>;
 			rpm_target = <2900>;
 		};
-		level_5 {
+		level_3 {
+			temp_on = <0 59 0 0>;
+			temp_off = <0 53 0 0>;
+			rpm_target = <3200>;
+		};
+		level_4 {
 			temp_on = <0 62 0 0>;
-			temp_off = <0 54 0 0>;
-			rpm_target = <3100>;
+			temp_off = <0 56 0 0>;
+			rpm_target = <3500>;
+		};
+		level_5 {
+			temp_on = <0 65 0 0>;
+			temp_off = <0 59 0 0>;
+			rpm_target = <3800>;
 		};
 		level_6 {
 			temp_on = <0 99 0 0>;
-			temp_off = <0 57 0 0>;
-			rpm_target = <3500>;
+			temp_off = <0 62 0 0>;
+			rpm_target = <4200>;
 		};
 	};
 };
