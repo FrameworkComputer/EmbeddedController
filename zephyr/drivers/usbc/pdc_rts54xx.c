@@ -103,6 +103,10 @@ LOG_MODULE_REGISTER(pdc_rts54, CONFIG_USBC_LOG_LEVEL);
 #define RTS54XX_GET_IC_STATUS_PD_VER_MINOR_OFFSET 26
 #define RTS54XX_GET_IC_STATUS_PROG_NAME_STR 27
 #define RTS54XX_GET_IC_STATUS_PROG_NAME_STR_LEN 12
+#define RTS54XX_GET_IC_STATUS_SBU_MUX_MODE_OFFSET 39
+
+#define RTS54XX_GET_IC_STATUS_SBU_MUX_MODE_NORMAL 0
+#define RTS54XX_GET_IC_STATUS_SBU_MUX_MODE_FORCE_DBG 1
 
 /*
  * Constants for SET_PDO
@@ -208,7 +212,7 @@ static const struct smbus_cmd_t RTS_UCSI_GET_LPM_PPM_INFO = { 0x0E, 0x03,
 							      0x22 };
 static const struct smbus_cmd_t RTS_UCSI_GET_ATTENTION_VDO = { 0x0E, 0x03,
 							       0x16 };
-
+static const struct smbus_cmd_t RTS_SET_SBU_MUX_MODE = { 0x30, 0x01 };
 /**
  * @brief PDC Command states
  */
@@ -357,6 +361,10 @@ enum cmd_t {
 	CMD_GET_LPM_PPM_INFO,
 	/** CMD_GET_ATTENTION_VDO */
 	CMD_GET_ATTENTION_VDO,
+	/** CMD_GET_SBU_MUX_MODE */
+	CMD_GET_SBU_MUX_MODE,
+	/** CMD_SET_SBU_MUX_MODE */
+	CMD_SET_SBU_MUX_MODE,
 };
 
 /**
@@ -492,6 +500,8 @@ static const char *const cmd_names[] = {
 	[CMD_RAW_UCSI] = "CMD_RAW_UCSI",
 	[CMD_GET_LPM_PPM_INFO] = "CMD_GET_LPM_PPM_INFO",
 	[CMD_GET_ATTENTION_VDO] = "CMD_GET_ATTENTION_VDO",
+	[CMD_GET_SBU_MUX_MODE] = "CMD_GET_SBU_MUX_MODE",
+	[CMD_SET_SBU_MUX_MODE] = "CMD_SET_SBU_MUX_MODE",
 };
 
 /**
@@ -1230,7 +1240,7 @@ static void st_read_run(void *o)
 
 	/*
 	 * The data->user_buf is checked for NULL before a command is queued.
-	 * The check here gauards against an eronious ping_status indicating
+	 * The check here guards against an erroneous ping_status indicating
 	 * data is available for a command that doesn't send data.
 	 */
 	if (!data->user_buf) {
@@ -1420,6 +1430,30 @@ static void st_read_run(void *o)
 			*drp_mode = DRP_TRY_SNK;
 			break;
 		}
+		break;
+	}
+	case CMD_GET_SBU_MUX_MODE: {
+		/* This is parsing a partial GET_IC_STATUS response (offset of
+		 * 39, 1 byte) */
+
+		enum pdc_sbu_mux_mode *mode_out =
+			(enum pdc_sbu_mux_mode *)data->user_buf;
+		uint8_t raw_mode = data->rd_buf[offset];
+
+		switch (raw_mode) {
+		case RTS54XX_GET_IC_STATUS_SBU_MUX_MODE_NORMAL:
+			*mode_out = PDC_SBU_MUX_MODE_NORMAL;
+			break;
+		case RTS54XX_GET_IC_STATUS_SBU_MUX_MODE_FORCE_DBG:
+			*mode_out = PDC_SBU_MUX_MODE_FORCE_DBG;
+			break;
+		default:
+			*mode_out = PDC_SBU_MUX_MODE_INVALID;
+			LOG_ERR("C%d: Unknown raw SBU mux value: 0x%02x",
+				cfg->connector_number, raw_mode);
+			break;
+		}
+
 		break;
 	}
 	default:
@@ -2697,6 +2731,63 @@ static int rts54_get_attention_vdo(const struct device *dev,
 				  ARRAY_SIZE(payload), (uint8_t *)vdo);
 }
 
+static int rts54_get_sbu_mux_mode(const struct device *dev,
+				  enum pdc_sbu_mux_mode *mode)
+{
+	struct pdc_data_t *data = dev->data;
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	if (mode == NULL) {
+		return -EINVAL;
+	}
+
+	/* SBU mux mode is encoded in an extension of the GET_IC_STATUS
+	 * response. Read one byte starting at an offset of 38. */
+	uint8_t payload[] = {
+		GET_IC_STATUS.cmd,
+		GET_IC_STATUS.len,
+		/* Subtract one to account for leading length byte in response
+		 */
+		RTS54XX_GET_IC_STATUS_SBU_MUX_MODE_OFFSET - 1,
+		0x00,
+		1,
+	};
+
+	return rts54_post_command(dev, CMD_GET_SBU_MUX_MODE, payload,
+				  ARRAY_SIZE(payload), (uint8_t *)mode);
+}
+
+static int rts54_set_sbu_mux_mode(const struct device *dev,
+				  enum pdc_sbu_mux_mode mode)
+{
+	struct pdc_data_t *data = dev->data;
+	uint8_t setting;
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	switch (mode) {
+	case PDC_SBU_MUX_MODE_NORMAL:
+		setting = 0;
+		break;
+	case PDC_SBU_MUX_MODE_FORCE_DBG:
+		setting = 1;
+		break;
+	default:
+		return -ERANGE;
+	}
+
+	uint8_t payload[] = { RTS_SET_SBU_MUX_MODE.cmd,
+			      RTS_SET_SBU_MUX_MODE.len, setting };
+
+	return rts54_post_command(dev, CMD_SET_SBU_MUX_MODE, payload,
+				  ARRAY_SIZE(payload), NULL);
+}
+
 static DEVICE_API(pdc, pdc_driver_api) = {
 	.start_thread = rts54_start_thread,
 	.is_init_done = rts54_is_init_done,
@@ -2738,6 +2829,8 @@ static DEVICE_API(pdc, pdc_driver_api) = {
 	.get_lpm_ppm_info = rts54_get_lpm_ppm_info,
 	.set_frs = rts54_set_frs,
 	.get_attention_vdo = rts54_get_attention_vdo,
+	.get_sbu_mux_mode = rts54_get_sbu_mux_mode,
+	.set_sbu_mux_mode = rts54_set_sbu_mux_mode,
 };
 
 static int pdc_init(const struct device *dev)
