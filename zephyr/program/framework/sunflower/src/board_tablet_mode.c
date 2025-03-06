@@ -6,6 +6,7 @@
 #include "hooks.h"
 #include "tablet_mode.h"
 #include "keyboard_scan.h"
+#include "lid_angle.h"
 
 static void board_tablet_mode_change(void)
 {
@@ -28,3 +29,9 @@ static void board_tablet_mode_change(void)
 DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, board_tablet_mode_change, HOOK_PRIO_DEFAULT);
 /* Run after gmr_tablet_switch_init to initialize GPIO after debounce. */
 DECLARE_HOOK(HOOK_INIT, board_tablet_mode_change, HOOK_PRIO_DEFAULT + 1);
+
+__override void lid_angle_peripheral_enable(int enable)
+{
+	/* Disable default handler, which disables keyboard. We decode it in */
+	/* HOOK_TABLET_MODE_CHANGE, so that we can handle ovewritten tablet mode state*/
+}
