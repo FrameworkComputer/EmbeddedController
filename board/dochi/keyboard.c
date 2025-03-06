@@ -5,6 +5,9 @@
 
 #include "common.h"
 #include "ec_commands.h"
+#include "fw_config.h"
+#include "hooks.h"
+#include "keyboard_8042_sharedlib.h"
 #include "keyboard_scan.h"
 #include "timer.h"
 
@@ -49,3 +52,17 @@ board_vivaldi_keybd_config(void)
 {
 	return &dochi_kb;
 }
+
+void kb_init(void)
+{
+	if (ec_cfg_is_kb_cfk()) {
+		/*
+		 * Canadian French keyboard (US layout),
+		 *   \| (key 45):     0x0061->0x61->0x56
+		 *   r-ctrl (key 64): 0xe014->0x14->0x1d
+		 * move key45 (row:2,col:7) to key64 (row:4,col:0)
+		 */
+		set_scancode_set2(4, 0, get_scancode_set2(2, 7));
+	}
+}
+DECLARE_HOOK(HOOK_INIT, kb_init, HOOK_PRIO_PRE_DEFAULT);

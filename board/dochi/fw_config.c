@@ -54,3 +54,8 @@ enum ec_cfg_panel_power_ec_control ec_cfg_panel_power_ec_control(void)
 {
 	return fw_config.touch_en;
 }
+
+bool ec_cfg_is_kb_cfk(void)
+{
+	return (fw_config.kb_type == FW_KB_TYPE_CA_FR);
+}

@@ -32,6 +32,8 @@ enum ec_cfg_panel_power_ec_control {
 	PANEL_POWER_EC_CONTROL_ENABLE = 1
 };
 
+enum ec_cfg_fw_kb_type { FW_KB_TYPE_DEFAULT = 0, FW_KB_TYPE_CA_FR = 1 };
+
 union dochi_cbi_fw_config {
 	struct {
 		enum ec_cfg_usb_db_type usb_db : 2;
@@ -77,5 +79,12 @@ enum ec_cfg_keyboard_backlight_type ec_cfg_keyboard_backlight_type(void);
  * @return the panel power cpntrol type.
  */
 enum ec_cfg_panel_power_ec_control ec_cfg_panel_power_ec_control(void);
+
+/**
+ * Get the keyboard type field to change scancode setting.
+ *
+ * @return the keryboard matrix type.
+ */
+bool ec_cfg_is_kb_cfk(void);
 
 #endif /* __BOARD_DOCHI_FW_CONFIG_H_ */
