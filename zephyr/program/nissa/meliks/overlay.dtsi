@@ -87,6 +87,11 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "lsm6dsm_interrupt";
 		};
+		int_lid_accel: ec_lid_accel {
+			irq-pin = <&gpio_acc_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lis2ds_interrupt";
+		};
 		int_vol_down: vol_down {
 			irq-pin = <&gpio_voldn_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;

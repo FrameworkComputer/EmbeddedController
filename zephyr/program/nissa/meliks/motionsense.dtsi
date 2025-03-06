@@ -35,20 +35,14 @@
 	motionsense-rotation-ref {
 		compatible = "cros-ec,motionsense-rotation-ref";
 		lid_rot_ref: lid-rotation-ref {
-			mat33 = <(-1) 0 0
-				 0 1 0
-				 0 0 (-1)>;
-		};
-
-		base_rot_ref: base-rot-ref {
-			mat33 = <(-1) 0 0
-				 0 (-1) 0
+			mat33 = <0 1 0
+				 1 0 0
 				 0 0 1>;
 		};
 
-		base_rot_inverted: base-rotation-inverted {
-			mat33 = <1 0 0
-				 0 (-1) 0
+		base_rot_ref: base-rotation-ref {
+			mat33 = <(-1) 0 0
+				 0 1 0
 				 0 0 (-1)>;
 		};
 	};
@@ -104,10 +98,10 @@
 				compatible =
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
-					odr = <(10000 | ROUND_UP_FLAG)>;
+					odr = <(12500 | ROUND_UP_FLAG)>;
 				};
 				ec-s3 {
-					odr = <(10000 | ROUND_UP_FLAG)>;
+					odr = <(12500 | ROUND_UP_FLAG)>;
 				};
 			};
 		};
@@ -130,10 +124,10 @@
 				compatible =
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
-					odr = <(10000 | ROUND_UP_FLAG)>;
+					odr = <(13000 | ROUND_UP_FLAG)>;
 				};
 				ec-s3 {
-					odr = <(10000 | ROUND_UP_FLAG)>;
+					odr = <(13000 | ROUND_UP_FLAG)>;
 				};
 			};
 		};
@@ -159,8 +153,7 @@
 		 * list of GPIO interrupts that have to
 		 * be enabled at initial stage
 		 */
-		sensor-irqs = <&int_imu>;
+		sensor-irqs = <&int_imu &int_lid_accel>;
 		/* list of sensors in force mode */
-		accel-force-mode-sensors = <&lid_accel>;
 	};
 };
