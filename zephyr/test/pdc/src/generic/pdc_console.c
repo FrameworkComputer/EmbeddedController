@@ -1146,3 +1146,89 @@ ZTEST_USER(console_cmd_pdc, test_vconn)
 	zassert_true(buffer_size > 0, NULL);
 	zassert_not_null(strstr(outbuffer, "Vconn state: 1 (sourcing)"));
 }
+
+static int custom_fake_get_sbu_mux_mode(enum pdc_sbu_mux_mode *mode,
+					int *ccd_port)
+{
+	*mode = PDC_SBU_MUX_MODE_NORMAL;
+	*ccd_port = 2;
+
+	return 0;
+}
+
+ZTEST_USER(console_cmd_pdc, test_sbumux)
+{
+	int rv;
+	const char *outbuffer;
+	size_t buffer_size;
+
+	/* Invalid command format */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc sbumux xyz");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/*
+	 * Read current mode
+	 */
+
+	/* No CCD port */
+	pdc_power_mgmt_get_sbu_mux_mode_fake.return_val = -ENOTSUP;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc sbumux");
+
+	zassert_equal(rv, -ENOTSUP, "Expected %d, but got %d", -ENOTSUP, rv);
+	zassert_equal(1, pdc_power_mgmt_get_sbu_mux_mode_fake.call_count);
+
+	/* Other error */
+	RESET_FAKE(pdc_power_mgmt_get_sbu_mux_mode);
+	pdc_power_mgmt_get_sbu_mux_mode_fake.return_val = -99;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc sbumux");
+
+	zassert_equal(rv, -99, "Expected %d, but got %d", -99, rv);
+	zassert_equal(1, pdc_power_mgmt_get_sbu_mux_mode_fake.call_count);
+
+	/* Success */
+	RESET_FAKE(pdc_power_mgmt_get_sbu_mux_mode);
+	pdc_power_mgmt_get_sbu_mux_mode_fake.custom_fake =
+		custom_fake_get_sbu_mux_mode;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc sbumux");
+
+	zassert_ok(rv, "Expected success, but got %d", rv);
+	zassert_equal(1, pdc_power_mgmt_get_sbu_mux_mode_fake.call_count);
+
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+
+	zassert_true(buffer_size > 0, NULL);
+	zassert_not_null(strstr(outbuffer, "CCD Port: C2, Mode: NORMAL (0)"));
+
+	/*
+	 * Set new mode
+	 */
+	/* No CCD port */
+	pdc_power_mgmt_set_sbu_mux_mode_fake.return_val = -ENOTSUP;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc sbumux normal");
+
+	zassert_equal(rv, -ENOTSUP, "Expected %d, but got %d", -ENOTSUP, rv);
+	zassert_equal(1, pdc_power_mgmt_set_sbu_mux_mode_fake.call_count);
+
+	/* Other error */
+	RESET_FAKE(pdc_power_mgmt_set_sbu_mux_mode);
+	pdc_power_mgmt_set_sbu_mux_mode_fake.return_val = -99;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc sbumux debug");
+
+	zassert_equal(rv, -99, "Expected %d, but got %d", -99, rv);
+	zassert_equal(1, pdc_power_mgmt_set_sbu_mux_mode_fake.call_count);
+
+	/* Success */
+	RESET_FAKE(pdc_power_mgmt_set_sbu_mux_mode);
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc sbumux debug");
+
+	zassert_ok(rv, "Expected success, but got %d", rv);
+	zassert_equal(1, pdc_power_mgmt_set_sbu_mux_mode_fake.call_count);
+	zassert_equal(1, pdc_power_mgmt_set_sbu_mux_mode_fake.arg0_history[0]);
+}
