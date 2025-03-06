@@ -28,3 +28,12 @@ set_compiler_property(PROPERTY no_position_independent
                       -fno-PIC
                       -fno-PIE
 )
+
+# b/401022418 Newer versions of Clang produce some warnings. Until we have
+# fixes for those, turn the warnings off.
+set_compiler_property(APPEND PROPERTY warning_base
+  -Wno-main
+  -Wno-unknown-warning-option
+  -Wno-arm-interrupt-vfp-clobber
+  -Wno-extra
+)
