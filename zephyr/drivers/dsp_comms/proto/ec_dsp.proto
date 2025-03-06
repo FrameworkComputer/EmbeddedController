@@ -17,10 +17,15 @@ message EcService
 		NotifyNotebookModeChangeRequest notify_notebook_mode_change = 1;
 		GetCbiFlagsRequest get_cbi_flags = 2;
 		GetStatusRequest get_status = 3;
+		ResetConnectionRequest reset_connection = 4;
 	}
 }
 
 message GetStatusRequest
+{
+}
+
+message ResetConnectionRequest
 {
 }
 

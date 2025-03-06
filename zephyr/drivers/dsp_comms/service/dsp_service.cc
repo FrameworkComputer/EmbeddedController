@@ -232,6 +232,13 @@ bool cros::dsp::service::Driver::HandleDecodedRequest() {
       LOG_DBG("Scheduling get_cbi_flags_work");
       k_work_submit(&get_cbi_flags_work_);
       return true;
+    case cros_dsp_comms_EcService_reset_connection_tag:
+      LOG_DBG("Resetting connection");
+      // The connection is reset so flush all the pending messages from the old
+      // session.
+      while (transport_.ReadNextMessage().status().ok()) {
+      }
+      return false;
     default:
       LOG_WRN("Unsupported request type");
       cros::dsp::service::driver.transport_.SetStatusBit(
@@ -267,7 +274,8 @@ pw::Status cros::dsp::service::Driver::Init() {
       int rc = gpio_pin_set_dt(&this->interrupt_, CROS_DSP_GPIO_ON);
       LOG_DBG("asserting GPIO (%d)", rc);
     } else {
-      gpio_pin_set_dt(&this->interrupt_, CROS_DSP_GPIO_OFF);
+      int rc = gpio_pin_set_dt(&this->interrupt_, CROS_DSP_GPIO_OFF);
+      LOG_DBG("deasserting GPIO (%d)", rc);
     }
   });
 

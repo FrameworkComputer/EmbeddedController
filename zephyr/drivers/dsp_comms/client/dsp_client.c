@@ -368,6 +368,8 @@ static int dsp_client_init(const struct device* dev) {
   const struct dsp_client_config* config = data->config;
   int rc;
 
+  __ASSERT(device_is_ready(config->i2c.bus), "DSP client not ready!");
+
   k_mutex_init(&data->mutex);
   k_event_init(&data->response_ready_event);
   k_work_init(&data->read_status_work, dsp_client_read_status);
@@ -377,14 +379,24 @@ static int dsp_client_init(const struct device* dev) {
     return rc;
   }
 
-  if (data->interrupt_config == GPIO_INT_EDGE_TO_ACTIVE &&
-      gpio_pin_get_dt(&config->interrupt)) {
-    LOG_DBG(
-        "Using edge to active but GPIO is already high, simulating interrupt");
-    dsp_client_gpio_callback(
-        config->interrupt.port, &data->gpio_cb, config->interrupt.pin);
+  cros_dsp_comms_EcService service = {
+      .which_request = cros_dsp_comms_EcService_reset_connection_tag,
+      .request = {},
+  };
+  pb_ostream_t stream = pb_ostream_from_buffer(data->request_buffer,
+                                               cros_dsp_comms_EcService_size);
+  bool encode_status =
+      pb_encode(&stream, cros_dsp_comms_EcService_fields, &service);
+
+  ARG_UNUSED(encode_status);
+  __ASSERT_NO_MSG(encode_status);
+  rc = i2c_write_dt(&config->i2c, data->request_buffer, stream.bytes_written);
+
+  if (rc != 0) {
+    LOG_ERR("Failed to write reset message");
   }
-  return 0;
+
+  return rc;
 }
 
 #define DSP_CLIENT_DEFINE(inst)                                \

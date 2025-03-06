@@ -51,6 +51,7 @@ int zshim_run_ec_console_command(const struct zephyr_console_command *command,
 	static int WRAPPER_ID(const struct shell *shell, size_t argc,       \
 			      const char **argv)                            \
 	{                                                                   \
+		ARG_UNUSED(shell);                                          \
 		return zshim_run_ec_console_command(&ENTRY_ID, argc, argv); \
 	}                                                                   \
 	SHELL_CMD_ARG_REGISTER(NAME, NULL, HELP, WRAPPER_ID, 0,             \

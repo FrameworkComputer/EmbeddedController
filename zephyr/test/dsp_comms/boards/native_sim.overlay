@@ -29,7 +29,7 @@
 		compatible = "cros-ec,flash-emul";
 	};
 
-    gpio1: gpio_emul {
+  gpio1: gpio_emul {
 		status = "okay";
 		compatible = "zephyr,gpio-emul";
 		rising-edge;
@@ -41,7 +41,7 @@
 	};
 
 
-    i2c1: i2c1: i2c@400 {
+  i2c1: i2c@400 {
 		status = "okay";
 		compatible = "zephyr,i2c-emul-controller";
 		clock-frequency = <I2C_BITRATE_STANDARD>;
@@ -50,49 +50,49 @@
 		#forward-cells = <1>;
 		reg = <0x400 4>;
 
-        dsp_service: dsp-service@20 {
-            compatible = "cros,dsp-service";
-            int-gpios = <&gpio1 0 (GPIO_PUSH_PULL | GPIO_ACTIVE_LOW)>;
-            reg = <0x20>;
-        };
+      dsp_service: dsp-service@20 {
+        compatible = "cros,dsp-service";
+        int-gpios = <&gpio1 0 (GPIO_PUSH_PULL | GPIO_ACTIVE_LOW)>;
+        reg = <0x20>;
+      };
     };
 
 
     named-gpios {
-        gpio_wp_l: wp_l {
-            gpios = <&gpio0 1 (GPIO_INPUT | GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
-        };
-        gpio_ec_en_edp_bl: ec_en_edp_bl {
-            gpios = <&gpio0 3 GPIO_OUTPUT>;
-            enum-name = "GPIO_ENABLE_BACKLIGHT";
-        };
-		gpio_lid_open: lid_open {
-			gpios = <&gpio0 4 GPIO_INPUT>;
-			enum-name = "GPIO_LID_OPEN";
-		};
-		gpio_tablet_mode_l: tablet_mode_l {
-			gpios = <&gpio0 5 GPIO_INPUT>;
-			enum-name = "GPIO_TABLET_MODE_L";
-		};
+      gpio_wp_l: wp_l {
+        gpios = <&gpio0 1 (GPIO_INPUT | GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+      };
+      gpio_ec_en_edp_bl: ec_en_edp_bl {
+        gpios = <&gpio0 3 GPIO_OUTPUT>;
+        enum-name = "GPIO_ENABLE_BACKLIGHT";
+      };
+      gpio_lid_open: lid_open {
+        gpios = <&gpio0 4 GPIO_INPUT>;
+        enum-name = "GPIO_LID_OPEN";
+      };
+      gpio_tablet_mode_l: tablet_mode_l {
+        gpios = <&gpio0 5 GPIO_INPUT>;
+        enum-name = "GPIO_TABLET_MODE_L";
+      };
     };
 
     gpio_interrupts: gpio-interrupts {
-		compatible = "cros-ec,gpio-interrupts";
-		int_lid_open: lid_open {
-			irq-pin = <&gpio_lid_open>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "lid_interrupt";
-		};
+      compatible = "cros-ec,gpio-interrupts";
+      int_lid_open: lid_open {
+        irq-pin = <&gpio_lid_open>;
+        flags = <GPIO_INT_EDGE_BOTH>;
+        handler = "lid_interrupt";
+      };
     };
 
     gpio-keys {
-        compatible = "gpio-keys";
-        debounce-interval-ms = <30>;
-		power_button: power_button {
-			gpios = <&gpio0 2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
-			/* TODO: use an INPUT_KEY code here. */
-			zephyr,code = <BUTTON_POWER>;
-		};
+      compatible = "gpio-keys";
+      debounce-interval-ms = <30>;
+      power_button: power_button {
+        gpios = <&gpio0 2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+        /* TODO: use an INPUT_KEY code here. */
+        zephyr,code = <BUTTON_POWER>;
+      };
     };
 };
 
@@ -102,11 +102,12 @@
 };
 
 &i2c0 {
-    forwards = <&i2c1 0x20>;
+  forwards = <&i2c1 0x20>;
 
-    dsp_client: dsp-client@20 {
-        compatible = "cros,dsp-client";
-        reg = <0x20>;
-        int-gpios = <&gpio1 1 GPIO_ACTIVE_LOW>;
-    };
+  dsp_client: dsp-client@20 {
+    compatible = "cros,dsp-client";
+    zephyr,deferred-init;
+    reg = <0x20>;
+    int-gpios = <&gpio1 1 GPIO_ACTIVE_LOW>;
+  };
 };
