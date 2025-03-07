@@ -50,6 +50,9 @@
 		default_battery: smp-ap23b7q {
 			compatible = "smp,ap23b7q", "battery-smart";
 		};
+		panasonic_ap23a5l_2 {
+			compatible = "panasonic,ap23a5l-2", "battery-smart";
+		};
 		lges-ap22a8n {
 			compatible = "lges,ap22a8n", "battery-smart";
 		};
