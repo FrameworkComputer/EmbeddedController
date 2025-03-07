@@ -1462,7 +1462,7 @@ static void st_read_run(void *o)
 	}
 
 	/* Clear the read buffer */
-	memset(data->rd_buf, 0, 256);
+	memset(data->rd_buf, 0, sizeof(data->rd_buf));
 
 	/*
 	 * Set cci.data_len. This will be zero if no

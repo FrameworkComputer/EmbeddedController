@@ -34,7 +34,7 @@ extern "C" {
 #define UCSI_VERSION 0x0300
 
 /**
- * @brief Mamimun number of data bytes the PDC can transfer or receive
+ * @brief Maximum number of data bytes the PDC can transfer or receive
  *        at a time
  */
 #define PDC_MAX_DATA_LENGTH 255
