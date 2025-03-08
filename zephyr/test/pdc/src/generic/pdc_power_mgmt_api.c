@@ -94,6 +94,7 @@ static void pdc_power_mgmt_before(void *fixture)
 	emul_pdc_reset(emul);
 	emul_pdc_set_response_delay(emul, 0);
 	emul_pdc_disconnect(emul);
+	emul_pdc_reset_feature_flags(emul);
 
 	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
 	reset_fakes();
@@ -2054,6 +2055,68 @@ ZTEST_USER(pdc_power_mgmt_api, test_request_source_voltage)
 	pdc_power_mgmt_request_source_voltage(TEST_PORT, prev_mv);
 	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
 }
+
+/* Get / set SBU mux mode is only supported on RTK currently */
+ZTEST(pdc_power_mgmt_api, test_pdc_power_mgmt_sbu_mux_mode)
+{
+	enum pdc_sbu_mux_mode mode;
+	int ccd_port = -1;
+	int rv;
+
+	zassert_ok(emul_pdc_set_feature_flag(
+		emul, EMUL_PDC_FEATURE_SBU_MUX_OVERRIDE));
+
+	rv = pdc_power_mgmt_set_sbu_mux_mode(PDC_SBU_MUX_MODE_NORMAL);
+	zassert_ok(rv, "Setting SBU mux mode to normal failed: %d", rv);
+
+	rv = pdc_power_mgmt_get_sbu_mux_mode(&mode, &ccd_port);
+	zassert_ok(rv, "Getting SBU mux mode failed: %d", rv);
+
+	zassert_equal(PDC_SBU_MUX_MODE_NORMAL, mode);
+	zassert_equal(0, ccd_port);
+
+	rv = pdc_power_mgmt_set_sbu_mux_mode(PDC_SBU_MUX_MODE_FORCE_DBG);
+	zassert_ok(rv, "Setting SBU mux mode to debug failed: %d", rv);
+
+	/* Null pointer */
+	rv = pdc_power_mgmt_get_sbu_mux_mode(NULL, NULL);
+	zassert_equal(-EINVAL, rv);
+
+	/* Success */
+	rv = pdc_power_mgmt_get_sbu_mux_mode(&mode, &ccd_port);
+	zassert_ok(rv, "Getting SBU mux mode failed: %d", rv);
+
+	zassert_equal(PDC_SBU_MUX_MODE_FORCE_DBG, mode);
+	zassert_equal(0, ccd_port);
+}
+
+ZTEST(pdc_power_mgmt_api, test_pdc_power_mgmt_sbu_mux_mode_not_supported_set)
+{
+	int rv;
+
+	/* Do not enable support for SBU mux override. Commands will fail. */
+
+	rv = pdc_power_mgmt_set_sbu_mux_mode(PDC_SBU_MUX_MODE_NORMAL);
+	zassert_equal(-EBUSY, rv, "Expected -EBUSY (%d) but got %d", -EBUSY,
+		      rv);
+}
+
+ZTEST(pdc_power_mgmt_api, test_pdc_power_mgmt_sbu_mux_mode_not_supported_get)
+{
+	int rv;
+	enum pdc_sbu_mux_mode mode = PDC_SBU_MUX_MODE_NORMAL;
+
+	/* Do not enable support for SBU mux override. We should get an invalid
+	 * (PDC_SBU_MUX_MODE_INVALID) response.
+	 */
+
+	rv = pdc_power_mgmt_get_sbu_mux_mode(&mode, NULL);
+	zassert_ok(rv, "Expected success but got %d", rv);
+	zassert_equal(PDC_SBU_MUX_MODE_INVALID, mode,
+		      "Expected PDC_SBU_MUX_MODE_INVALID (%d) but got %d",
+		      PDC_SBU_MUX_MODE_INVALID, mode);
+}
+
 #endif /* CONFIG_TODO_B_345292002 */
 
 /**

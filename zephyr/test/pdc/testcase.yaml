@@ -32,6 +32,13 @@ tests:
     extra_dtc_overlay_files:
     - "./boards/rts5453p.overlay"
 
+  pdc.sbu_mux.no_ccd:
+    extra_configs:
+    - CONFIG_TEST_SUITE_PDC_SBU_MUX_NO_CCD=y
+    extra_dtc_overlay_files:
+    - "./boards/rts5453p.overlay"
+    - "./boards/no_ccd.overlay"
+
   pdc.generic.tps6699x:
     timeout: 300
     extra_configs:

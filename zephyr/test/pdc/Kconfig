@@ -82,6 +82,13 @@ config TEST_SUITE_PPM_STATE_MACHINE
 	help
 	  Enable tests for the state machine (ppm_common) of the PPM.
 
+config TEST_SUITE_PDC_SBU_MUX_NO_CCD
+	bool "Enable SBU mux mode tests w/o CCD support"
+	help
+	  Test getting/setting the SBU mux mode without a CCD port configured.
+	  This should cause `pdc_power_mgmt_set_sbu_mux_mode()` and
+	  `pdc_power_mgmt_get_sbu_mux_mode()` to fail.
+
 config TEST_PDC_MESSAGE_TRACING
 	bool "Enable PDC message tracing"
 	help
