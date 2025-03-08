@@ -21,6 +21,9 @@
  * or for a specific one.
  */
 enum emul_pdc_feature_flag {
+	/** Enable support for SBU mux override commands, used on PDC-driven CCD
+	 *  DUTs */
+	EMUL_PDC_FEATURE_SBU_MUX_OVERRIDE,
 	EMUL_PDC_FEATURE_COUNT,
 };
 
