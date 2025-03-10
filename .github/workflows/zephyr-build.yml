@@ -102,7 +102,7 @@ jobs:
       - name: Package dynamic libs with util (enough to run ectool)
         run: |
           # Check which libraries it links to
-          ldd src/platform/ec/build/host/util/ectool
+          cros_sdk bash -c 'ldd ../platform/ec/build/host/util/ectool'
           # Copy libraries to util folder so we can run it with
           # sudo LD_LIBRARY_PATH=. ./ectool
           cp chroot/usr/lib64/libec.so src/platform/ec/build/host/util/
