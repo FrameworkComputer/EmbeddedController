@@ -166,7 +166,7 @@ int fp_acquire_image(uint8_t *image_data);
  * @return 0 on success
  * @return negative value on error
  */
-int fp_acquire_image_with_mode(uint8_t *image_data, int mode);
+int fp_acquire_image_with_mode(uint8_t *image_data, enum fp_capture_type mode);
 
 /*
  * TODO(b/378523729): Refactor fpsensor API so that error_state is maintained by

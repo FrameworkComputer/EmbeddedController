@@ -57,7 +57,7 @@ int fp_acquire_image(uint8_t *image_data)
 	return mock_ctrl_fp_sensor.fp_acquire_image_return;
 }
 
-int fp_acquire_image_with_mode(uint8_t *image_data, int mode)
+int fp_acquire_image_with_mode(uint8_t *image_data, enum fp_capture_type mode)
 {
 	return mock_ctrl_fp_sensor.fp_acquire_image_with_mode_return;
 }

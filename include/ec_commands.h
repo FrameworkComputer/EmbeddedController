@@ -8303,8 +8303,9 @@ enum fp_capture_type {
 	FP_CAPTURE_TYPE_MAX,
 };
 /* Extracts the capture type from the sensor 'mode' word */
-#define FP_CAPTURE_TYPE(mode) \
-	(((mode) & FP_MODE_CAPTURE_TYPE_MASK) >> FP_MODE_CAPTURE_TYPE_SHIFT)
+#define FP_CAPTURE_TYPE(mode)                                          \
+	(enum fp_capture_type)(((mode) & FP_MODE_CAPTURE_TYPE_MASK) >> \
+			       FP_MODE_CAPTURE_TYPE_SHIFT)
 
 struct ec_params_fp_mode {
 	uint32_t mode; /* as defined by FP_MODE_ constants */

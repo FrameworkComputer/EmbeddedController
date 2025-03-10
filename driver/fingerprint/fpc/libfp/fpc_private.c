@@ -78,7 +78,8 @@ enum fpc_cmd {
 	FPC_CMD_HW_ID = 0xFC,
 };
 
-static int convert_fp_capture_mode_to_fpc_get_image_type(int mode)
+static int
+convert_fp_capture_mode_to_fpc_get_image_type(enum fp_capture_type mode)
 {
 	switch (mode) {
 	case FP_CAPTURE_VENDOR_FORMAT:
@@ -361,7 +362,7 @@ int fp_maintenance(void)
 	return fpc_fp_maintenance(&errors);
 }
 
-int fp_acquire_image_with_mode(uint8_t *image_data, int mode)
+int fp_acquire_image_with_mode(uint8_t *image_data, enum fp_capture_type mode)
 {
 	int rc = convert_fp_capture_mode_to_fpc_get_image_type(mode);
 

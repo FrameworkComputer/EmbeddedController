@@ -179,7 +179,7 @@ int fp_maintenance(void)
 	return EC_SUCCESS;
 }
 
-int fp_acquire_image_with_mode(uint8_t *image_data, int mode)
+int fp_acquire_image_with_mode(uint8_t *image_data, enum fp_capture_type mode)
 {
 	return convert_egis_get_image_error_code(
 		egis_get_image_with_mode(image_data, mode));
