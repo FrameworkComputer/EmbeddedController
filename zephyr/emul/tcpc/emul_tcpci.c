@@ -51,6 +51,14 @@ static int tcpci_emul_reg_bytes(int reg)
 	return 1;
 }
 
+static struct tcpci_ctx *tcpci_emul_get_ctx(const struct emul *emul)
+{
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+
+	return ctx;
+}
+
 /**
  * @brief Get value of given register of TCPCI
  *
@@ -85,10 +93,7 @@ static int get_reg(const struct tcpci_ctx *ctx, int reg, uint16_t *val)
 /** Check description in emul_tcpci.h */
 int tcpci_emul_get_reg(const struct emul *emul, int reg, uint16_t *val)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
-
-	return get_reg(ctx, reg, val);
+	return get_reg(tcpci_emul_get_ctx(emul), reg, val);
 }
 
 /**
@@ -175,10 +180,7 @@ static int update_reg(struct tcpci_ctx *ctx, int reg, uint16_t val,
 /** Check description in emul_tcpci.h */
 int tcpci_emul_set_reg(const struct emul *emul, int reg, uint16_t val)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
-
-	return set_reg(ctx, reg, val);
+	return set_reg(tcpci_emul_get_ctx(emul), reg, val);
 }
 
 /**
@@ -244,8 +246,7 @@ static bool tcpci_emul_check_int(const struct tcpci_ctx *ctx)
  */
 static int tcpci_emul_alert_changed(const struct emul *emul)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	struct tcpci_ctx *ctx = tcpci_emul_get_ctx(emul);
 	int rc;
 	bool alert_is_active = tcpci_emul_check_int(ctx);
 
@@ -279,8 +280,7 @@ static int tcpci_emul_alert_changed(const struct emul *emul)
  */
 static int tcpci_emul_get_next_rx_msg(const struct emul *emul)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	struct tcpci_ctx *ctx = tcpci_emul_get_ctx(emul);
 	struct tcpci_emul_msg *consumed_msg;
 
 	if (ctx->rx_msg == NULL) {
@@ -329,10 +329,7 @@ static void tcpci_emul_reset_mask_regs(struct tcpci_ctx *ctx)
  */
 static void tcpci_emul_disable_pd_msg_delivery(const struct emul *emul)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
-
-	set_reg(ctx, TCPC_REG_RX_DETECT, 0);
+	set_reg(tcpci_emul_get_ctx(emul), TCPC_REG_RX_DETECT, 0);
 	/* Clear received messages */
 	while (tcpci_emul_get_next_rx_msg(emul))
 		;
@@ -342,8 +339,7 @@ static void tcpci_emul_disable_pd_msg_delivery(const struct emul *emul)
 int tcpci_emul_add_rx_msg(const struct emul *emul,
 			  struct tcpci_emul_msg *rx_msg, bool alert)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	struct tcpci_ctx *ctx = tcpci_emul_get_ctx(emul);
 	uint16_t rx_detect_mask;
 	uint16_t rx_detect;
 	uint16_t dev_cap_2;
@@ -468,10 +464,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 /** Check description in emul_tcpci.h */
 struct tcpci_emul_msg *tcpci_emul_get_tx_msg(const struct emul *emul)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
-
-	return ctx->tx_msg;
+	return tcpci_emul_get_ctx(emul)->tx_msg;
 }
 
 /** Check description in emul_tcpci.h */
@@ -519,8 +512,7 @@ void tcpci_emul_set_alert_callback(const struct emul *emul,
 				   tcpci_emul_alert_state_func alert_callback,
 				   void *alert_callback_data)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	struct tcpci_ctx *ctx = tcpci_emul_get_ctx(emul);
 
 	ctx->alert_callback = alert_callback;
 	ctx->alert_callback_data = alert_callback_data;
@@ -530,10 +522,7 @@ void tcpci_emul_set_alert_callback(const struct emul *emul,
 void tcpci_emul_set_partner_ops(const struct emul *emul,
 				const struct tcpci_emul_partner_ops *partner)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
-
-	ctx->partner = partner;
+	tcpci_emul_get_ctx(emul)->partner = partner;
 }
 
 /**
@@ -581,8 +570,7 @@ int tcpci_emul_connect_partner(const struct emul *emul,
 			       enum tcpc_cc_voltage_status partner_cc2,
 			       enum tcpc_cc_polarity polarity)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	struct tcpci_ctx *ctx = tcpci_emul_get_ctx(emul);
 	uint16_t cc_status, alert, role_ctrl;
 	enum tcpc_cc_voltage_status cc1_v, cc2_v;
 	enum tcpc_cc_pull cc1_r, cc2_r;
@@ -639,8 +627,7 @@ int tcpci_emul_connect_partner(const struct emul *emul,
 /** Check description in emul_tcpci.h */
 int tcpci_emul_disconnect_partner(const struct emul *emul)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	struct tcpci_ctx *ctx = tcpci_emul_get_ctx(emul);
 	uint16_t val;
 	uint16_t term;
 	int rc;
@@ -685,8 +672,7 @@ int tcpci_emul_disconnect_partner(const struct emul *emul)
 void tcpci_emul_partner_msg_status(const struct emul *emul,
 				   enum tcpci_emul_tx_status status)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	struct tcpci_ctx *ctx = tcpci_emul_get_ctx(emul);
 	uint16_t alert;
 	uint16_t tx_status_alert;
 
@@ -824,8 +810,7 @@ static void tcpci_emul_reset_role_ctrl(struct tcpci_ctx *ctx)
  */
 int tcpci_emul_reset(const struct emul *emul)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	struct tcpci_ctx *ctx = tcpci_emul_get_ctx(emul);
 
 	ctx->reg[TCPC_REG_ALERT] = 0x00;
 	ctx->reg[TCPC_REG_ALERT + 1] = 0x00;
@@ -871,8 +856,7 @@ int tcpci_emul_reset(const struct emul *emul)
  */
 static int tcpci_emul_set_i2c_interface_err(const struct emul *emul)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	struct tcpci_ctx *ctx = tcpci_emul_get_ctx(emul);
 	uint16_t fault_status;
 
 	get_reg(ctx, TCPC_REG_FAULT_STATUS, &fault_status);
@@ -896,8 +880,7 @@ static int tcpci_emul_set_i2c_interface_err(const struct emul *emul)
 static int tcpci_emul_handle_rx_buf(const struct emul *emul, int reg,
 				    uint8_t *val, int bytes)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	struct tcpci_ctx *ctx = tcpci_emul_get_ctx(emul);
 	int is_rev1;
 
 	is_rev1 = ctx->reg[TCPC_REG_PD_INT_REV] == TCPC_REG_PD_INT_REV_REV_1_0;
@@ -993,8 +976,7 @@ static int tcpci_emul_handle_rx_buf(const struct emul *emul, int reg,
 int tcpci_emul_read_byte(const struct emul *emul, int reg, uint8_t *val,
 			 int bytes)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	struct tcpci_ctx *ctx = tcpci_emul_get_ctx(emul);
 
 	switch (reg) {
 	/* 16 bits values */
@@ -1072,8 +1054,7 @@ int tcpci_emul_write_byte(const struct emul *emul, int reg, uint8_t val,
 			  int bytes)
 {
 	int is_rev1;
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	struct tcpci_ctx *ctx = tcpci_emul_get_ctx(emul);
 
 	is_rev1 = ctx->reg[TCPC_REG_PD_INT_REV] == TCPC_REG_PD_INT_REV_REV_1_0;
 	switch (reg) {
@@ -1162,8 +1143,7 @@ int tcpci_emul_write_byte(const struct emul *emul, int reg, uint8_t val,
  */
 static int tcpci_emul_handle_command(const struct emul *emul)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	struct tcpci_ctx *ctx = tcpci_emul_get_ctx(emul);
 	uint16_t role_ctrl;
 	uint16_t pwr_ctrl;
 
@@ -1245,8 +1225,7 @@ static int tcpci_emul_handle_command(const struct emul *emul)
  */
 static int tcpci_emul_handle_transmit(const struct emul *emul)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	struct tcpci_ctx *ctx = tcpci_emul_get_ctx(emul);
 	enum tcpci_msg_type type;
 
 	ctx->tx_msg->cnt = ctx->tx_msg->idx;
@@ -1291,8 +1270,7 @@ static int tcpci_emul_handle_transmit(const struct emul *emul)
 /** Check description in emul_tcpci.h */
 int tcpci_emul_handle_write(const struct emul *emul, int reg, int msg_len)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	struct tcpci_ctx *ctx = tcpci_emul_get_ctx(emul);
 	uint16_t rsvd_mask = 0;
 	uint16_t alert_val;
 	bool inform_partner = false;
@@ -1460,8 +1438,7 @@ void tcpci_emul_i2c_init(const struct emul *emul, const struct device *i2c_dev)
 /** Check description in emul_tcpci.h */
 int tcpci_emul_set_vbus_level(const struct emul *emul, enum vbus_level level)
 {
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+	struct tcpci_ctx *ctx = tcpci_emul_get_ctx(emul);
 	uint16_t revision;
 	int rc;
 	uint16_t power_status;
