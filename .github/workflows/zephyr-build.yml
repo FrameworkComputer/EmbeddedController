@@ -105,13 +105,13 @@ jobs:
           cros_sdk bash -c 'ldd ../platform/ec/build/host/util/ectool'
           # Copy libraries to util folder so we can run it with
           # sudo LD_LIBRARY_PATH=. ./ectool
-          cp chroot/usr/lib64/libec.so src/platform/ec/build/host/util/
-          cp chroot/usr/lib64/libbase-core.so src/platform/ec/build/host/util/
-          cp chroot/usr/lib64/libc++.so.* src/platform/ec/build/host/util/
-          cp chroot/usr/lib64/libc++abi.so.* src/platform/ec/build/host/util/
-          cp chroot/usr/lib64/libabseil_dll.so.* src/platform/ec/build/host/util/
-          cp chroot/usr/lib64/libfmap.so.* src/platform/ec/build/host/util/
-          cp chroot/usr/lib64/libbrillo-core.so src/platform/ec/build/host/util/
+          cp chroot/usr/lib64/libec.so src/platform/ec/build/host/util/ || true
+          cp chroot/usr/lib64/libbase-core.so src/platform/ec/build/host/util/ || true
+          cp chroot/usr/lib64/libc++.so.* src/platform/ec/build/host/util/ || true
+          cp chroot/usr/lib64/libc++abi.so.* src/platform/ec/build/host/util/ || true
+          cp chroot/usr/lib64/libabseil_dll.so.* src/platform/ec/build/host/util/ || true
+          cp chroot/usr/lib64/libfmap.so.* src/platform/ec/build/host/util/ || true
+          cp chroot/usr/lib64/libbrillo-core.so src/platform/ec/build/host/util/ || true
 
       - uses: actions/upload-artifact@v4
         with:
