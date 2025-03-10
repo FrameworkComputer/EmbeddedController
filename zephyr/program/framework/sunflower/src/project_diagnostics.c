@@ -35,6 +35,8 @@ void check_device_deferred(void)
 	int touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
 #endif /* CONFIG_PLATFORM_IGNORED_TOUCHPAD_ID */
 	int audio = get_hardware_id(ADC_AUDIO_ID);
+	int powerbtn = get_hardware_id(ADC_POWER_BUTTON_BOARD_ID);
+	bool pb_enable = (powerbtn >= BOARD_VERSION_1 && powerbtn <= BOARD_VERSION_13);
 	int bma4_id = 0;
 
 	/* Clear the DIAGNOSTICS_HW_NO_BATTERY flag if battery is present */
@@ -56,6 +58,10 @@ void check_device_deferred(void)
 	if ((audio <= BOARD_VERSION_1 || audio >= BOARD_VERSION_14) &&
 		!get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_AUDIO_DAUGHTERBOARD, true);
+
+	if (!pb_enable) {
+		CPRINTS("Power button board missing");
+	}
 
 	/* Check whether the lid accelerometer responds */
 	i2c_read8(I2C_PORT_MOTION_SENSOR, BMA4_I2C_ADDR_SECONDARY,
