@@ -210,6 +210,9 @@ void record_ucsi_connector_change_event(int controller, int port)
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
+	if (!cypd_contoller_is_powered(controller))
+		return;
+
 	if (!chipset_in_state(CHIPSET_STATE_ON) && !chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		s0ix_connector_change_indicator |= BIT(cci_port);
 }

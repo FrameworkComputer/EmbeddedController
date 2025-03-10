@@ -971,4 +971,12 @@ void cypd_update_chips_state(enum ccg_pd_state state);
  */
 void cypd_ccd_mode_control(void);
 
+/**
+ * Check the PD chip is ready to communicate
+ *
+ * @param controller The PD chip for which to check the status
+ * @return false if the PD chips is not powered or waiting it to be stable
+ */
+bool cypd_contoller_is_powered(int controller);
+
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

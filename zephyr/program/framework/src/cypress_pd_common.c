@@ -53,6 +53,14 @@ static bool alert_press;
 static void cypd_pdo_reset_deferred(void);
 static void cypd_set_prepare_pdo(int controller, int port);
 
+bool cypd_contoller_is_powered(int controller)
+{
+	if (pd_chip_config[controller].state == CCG_STATE_NO_POWER)
+		return false;
+
+	return true;
+}
+
 int cypd_write_reg_block(int controller, int reg, void *data, int len)
 {
 	int rv;
@@ -274,6 +282,9 @@ void cypd_enable_interrupt(int controller, int enable_ndisable)
 {
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
+	if (!cypd_contoller_is_powered(controller))
+		return;
+
 	if (enable_ndisable)
 		gpio_enable_interrupt(pd_chip_config[controller].gpio);
 	else
@@ -303,6 +314,9 @@ static void cypd_get_version(int controller)
 	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
+	if (!cypd_contoller_is_powered(controller))
+		return;
 
 	rv = i2c_read_offset16_block(i2c_port, addr_flags, CCG_READ_ALL_VERSION_REG, data, 24);
 	if (rv != EC_SUCCESS)
@@ -342,6 +356,9 @@ static void cypd_pdo_init(int controller, int port, uint8_t profile)
 		};
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
+	if (!cypd_contoller_is_powered(controller))
+		return;
 
 	rv = cypd_write_reg_block(controller, CCG_WRITE_DATA_MEMORY_REG(port, 0),
 		pdos_reg, sizeof(pdos_reg));
@@ -469,6 +486,9 @@ void cypd_release_port(int controller, int port)
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
+	if (!cypd_contoller_is_powered(controller))
+		return;
+
 	/* if port disconnect should set RP and PDO to default */
 
 	cypd_select_rp(port_idx, CCG_PD_CMD_SET_TYPEC_1_5A);
@@ -534,6 +554,9 @@ DECLARE_DEFERRED(pdo_c1p1_deferred);
 static void cypd_set_prepare_pdo(int controller, int port)
 {
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
+	if (!cypd_contoller_is_powered(controller))
+		return;
 
 	switch (controller) {
 	case 0:
@@ -614,6 +637,9 @@ void cypd_set_typec_profile(int controller, int port)
 	int port_idx = (controller << 1) + port;
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
+	if (!cypd_contoller_is_powered(controller))
+		return;
 
 	rv = cypd_read_reg_block(controller, CCG_PD_STATUS_REG(port), pd_status_reg, 4);
 	if (rv != EC_SUCCESS)
@@ -728,6 +754,9 @@ void cypd_send_msg(int controller, int port, uint32_t pd_header, uint16_t ext_hd
 	uint16_t dm_control_data;
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
+	if (!cypd_contoller_is_powered(controller))
+		return;
 
 	/**
 	 * The extended message data should be written to the write data memory
@@ -869,6 +898,9 @@ void cypd_update_port_state(int controller, int port)
 #endif
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
+	if (!cypd_contoller_is_powered(controller))
+		return;
 
 	rv = cypd_read_reg_block(controller, CCG_PD_STATUS_REG(port), pd_status_reg, 4);
 	if (rv != EC_SUCCESS)
@@ -1025,6 +1057,9 @@ void cypd_set_power_state(int power_state, int controller)
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
+	if (!cypd_contoller_is_powered(controller))
+		return;
+
 	rv = cypd_write_reg8_wait_ack(controller, CCG_SYS_PWR_STATE, power_state);
 	if (rv != EC_SUCCESS) {
 		CPRINTS("C%d, cypd set system power state 0x%02x failed, rv=%d",
@@ -1038,6 +1073,9 @@ static void cypd_update_power_status(int controller)
 	int power_status = 0;
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
+	if (!cypd_contoller_is_powered(controller))
+		return;
 
 #ifdef CONFIG_PLATFORM_EC_BATTERY
 	int pd_controller_is_sink = (prev_charge_port & 0x02) >> 1;
@@ -1109,6 +1147,9 @@ static void cypd_handle_state(int controller)
 	int delay = 0;
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
+	if (!cypd_contoller_is_powered(controller))
+		return;
 
 	switch (pd_chip_config[controller].state) {
 #ifdef CONFIG_PD_CHIP_CCG6
@@ -1207,6 +1248,10 @@ int cypd_cfet_vbus_control(int port, bool enable, bool ec_control)
 	if (port < 0 || port >= PD_PORT_COUNT) {
 		return EC_ERROR_INVAL;
 	}
+
+	/* TODO: may check the vbus control after init GPU PD */
+	if (!cypd_contoller_is_powered(pd_controller))
+		return EC_ERROR_NOT_POWERED;
 
 	rv = cypd_write_reg8_wait_ack(pd_controller, CCG_PORT_VBUS_FET_CONTROL(pd_port),
 		regval);
@@ -1446,6 +1491,9 @@ void cypd_handle_vdm(int controller, int port, uint8_t *data, int len)
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
+	if (!cypd_contoller_is_powered(controller))
+		return;
+
 	for (i = 0; i < sizeof(framework_vdm_hdr_match)/sizeof(struct match_vdm_header); i++) {
 		if (framework_vdm_hdr_match[i].idx >= len) {
 			continue;
@@ -1539,6 +1587,9 @@ void cypd_port_int(int controller, int port)
 	static int snk_transition_flags;
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
+	if (!cypd_contoller_is_powered(controller))
+		return;
 
 	/* enum pd_msg_type sop_type; */
 	rv = i2c_read_offset16_block(i2c_port, addr_flags,
@@ -1685,6 +1736,9 @@ void cypd_interrupt(int controller)
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
+	if (!cypd_contoller_is_powered(controller))
+		return;
+
 	rv = cypd_get_int(controller, &data);
 	if (rv != EC_SUCCESS) {
 		return;
@@ -1784,13 +1838,17 @@ void cypd_interrupt_handler_task(void *p)
 			cypd_port_current_setting();
 
 		if (evt & CCG_EVT_S_CHANGE) {
-			for (i = 0; i < PD_CHIP_COUNT; i++)
-				update_system_power_state(i);
+			for (i = 0; i < PD_CHIP_COUNT; i++) {
+				if (cypd_contoller_is_powered(i))
+					update_system_power_state(i);
+			}
 		}
 
 		if (evt & CCG_EVT_UPDATE_PWRSTAT) {
-			for (i = 0; i < PD_CHIP_COUNT; i++)
-				cypd_update_power_status(i);
+			for (i = 0; i < PD_CHIP_COUNT; i++) {
+				if (cypd_contoller_is_powered(i))
+					cypd_update_power_status(i);
+			}
 		}
 
 		if (evt & CCG_EVT_INT_CTRL_0)
@@ -1803,8 +1861,10 @@ void cypd_interrupt_handler_task(void *p)
 
 		if (evt & CCG_EVT_PDO_INIT_0) {
 			/* update new PDO format to select pdo register */
-			for (i = 0; i < PD_CHIP_COUNT; i++)
-				cypd_pdo_init(i, 0, CCG_PD_CMD_SET_TYPEC_3A);
+			for (i = 0; i < PD_CHIP_COUNT; i++) {
+				if (cypd_contoller_is_powered(i))
+					cypd_pdo_init(i, 0, CCG_PD_CMD_SET_TYPEC_3A);
+			}
 
 			task_wait_event_mask(TASK_EVENT_TIMER, 10);
 			task_set_event(TASK_ID_CYPD, CCG_EVT_PDO_INIT_1);
@@ -1812,8 +1872,10 @@ void cypd_interrupt_handler_task(void *p)
 
 		if (evt & CCG_EVT_PDO_INIT_1) {
 			/* update new PDO format to select pdo register */
-			for (i = 0; i < PD_CHIP_COUNT; i++)
-				cypd_pdo_init(i, 1, CCG_PD_CMD_SET_TYPEC_3A);
+			for (i = 0; i < PD_CHIP_COUNT; i++) {
+				if (cypd_contoller_is_powered(i))
+					cypd_pdo_init(i, 1, CCG_PD_CMD_SET_TYPEC_3A);
+			}
 
 			task_wait_event_mask(TASK_EVENT_TIMER, 10);
 		}
@@ -1829,8 +1891,10 @@ void cypd_interrupt_handler_task(void *p)
 			cypd_set_typec_profile(0, 1);
 
 		if (evt & CCG_EVT_PERFORM_ERROR_RECOVERY)
-			for (i = 0; i < PD_CHIP_COUNT; i++)
-				perform_error_recovery(i);
+			for (i = 0; i < PD_CHIP_COUNT; i++) {
+				if (cypd_contoller_is_powered(i))
+					perform_error_recovery(i);
+			}
 
 		/**
 		 * below events communicate with the 2nd pd chip, ignore those if the
@@ -1869,8 +1933,7 @@ void cypd_interrupt_handler_task(void *p)
 			const struct gpio_dt_spec *intr = gpio_get_dt_spec(pd_chip_config[i].gpio);
 
 			/* Don't no read the interrupt until the PD chips power on */
-			if ((pd_chip_config[i].state != CCG_STATE_NO_POWER) &&
-				(gpio_pin_get_dt(intr) == 0)) {
+			if (cypd_contoller_is_powered(i) && (gpio_pin_get_dt(intr) == 0)) {
 				task_set_event(TASK_ID_CYPD, 1<<i);
 			}
 		}
@@ -1992,6 +2055,9 @@ void perform_error_recovery(int controller)
 	uint8_t data[2] = {0x00, CCG_PD_USER_CMD_TYPEC_ERR_RECOVERY};
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
+	if (!cypd_contoller_is_powered(controller))
+		return;
 
 	/**
 	 * There are two type-c ports for each PD chip.
