@@ -110,10 +110,10 @@ jobs:
           # sudo LD_LIBRARY_PATH=. ./ectool
           cp chroot/usr/lib64/libec.so src/platform/ec/build/host/util/
           cp chroot/usr/lib64/libbase-core.so src/platform/ec/build/host/util/
-          cp chroot/usr/lib64/libc++.so.1 src/platform/ec/build/host/util/
-          cp chroot/usr/lib64/libc++abi.so.1 src/platform/ec/build/host/util/
-          cp chroot/usr/lib64/libabseil_dll.so.2308.0.0 src/platform/ec/build/host/util/
-          cp chroot/usr/lib64/libfmap.so.0 src/platform/ec/build/host/util/
+          cp chroot/usr/lib64/libc++.so.* src/platform/ec/build/host/util/
+          cp chroot/usr/lib64/libc++abi.so.* src/platform/ec/build/host/util/
+          cp chroot/usr/lib64/libabseil_dll.so.* src/platform/ec/build/host/util/
+          cp chroot/usr/lib64/libfmap.so.* src/platform/ec/build/host/util/
           cp chroot/usr/lib64/libbrillo-core.so src/platform/ec/build/host/util/
 
       - uses: actions/upload-artifact@v4
