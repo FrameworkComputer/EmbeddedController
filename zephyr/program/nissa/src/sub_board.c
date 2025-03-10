@@ -89,6 +89,12 @@ enum nissa_sub_board_type nissa_get_sb_type(void)
  */
 test_export_static void board_usb_pd_count_init(void)
 {
+#if CONFIG_USB_PD_PORT_MAX_COUNT == 1
+	/* Board only has 1 TCPC configured. No need to check CBI. */
+	cached_usb_pd_port_count = 1;
+	return;
+#else
+	/* Check CBI to determine actual port count */
 	switch (nissa_get_sb_type()) {
 	default:
 		cached_usb_pd_port_count = 1;
@@ -99,6 +105,7 @@ test_export_static void board_usb_pd_count_init(void)
 		cached_usb_pd_port_count = 2;
 		break;
 	}
+#endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
 }
 /*
  * Make sure setup is done after EEPROM is readable.
