@@ -342,11 +342,6 @@ int fp_acquire_image_with_mode(uint8_t *image_data, enum fp_capture_type mode)
 	return fp_sensor_acquire_image_with_mode(image_data, rc);
 }
 
-int fp_acquire_image(uint8_t *image_data)
-{
-	return fp_sensor_acquire_image(image_data);
-}
-
 enum finger_state fp_finger_status(void)
 {
 	return fp_sensor_finger_status();

@@ -185,11 +185,6 @@ int fp_acquire_image_with_mode(uint8_t *image_data, enum fp_capture_type mode)
 		egis_get_image_with_mode(image_data, mode));
 }
 
-int fp_acquire_image(uint8_t *image_data)
-{
-	return convert_egis_get_image_error_code(egis_get_image(image_data));
-}
-
 enum finger_state fp_finger_status(void)
 {
 	egislog_i("");

@@ -135,36 +135,24 @@ enum finger_state fp_finger_status(void);
 #define FP_SENSOR_LOW_SENSOR_COVERAGE 3
 
 /**
- * Acquires a fingerprint image.
+ * Acquires a fingerprint image with specific capture mode.
  *
- * This function is called once the finger has been detected and cover enough
- * area of the sensor (i.e., fp_finger_status returned FINGER_PRESENT).
- * It does the acquisition immediately.
+ * This function captures a fingerprint image, allowing the caller to set a
+ * specific @p mode to one of the fp_capture_type constants. For capture
+ * types that require a finger presence (e.g. simple, qual test,etc.), this
+ * function is called once the finger has been detected and cover enough area of
+ * the sensor. Otherwise, it does the acquisition immediately (e.g. pattern0,
+ * reset, etc.).
  *
  * @param[out] image_data Image from sensor. Buffer must be allocated by
  * caller with size FP_SENSOR_IMAGE_SIZE.
+ * @param mode enum fp_capture_type
  *
  * @return 0 on success
  * @return negative value on error
  * @return FP_SENSOR_LOW_IMAGE_QUALITY on image captured but quality is too low
  * @return FP_SENSOR_TOO_FAST on finger removed before image was captured
  * @return FP_SENSOR_LOW_SENSOR_COVERAGE on sensor not fully covered by finger
- */
-int fp_acquire_image(uint8_t *image_data);
-
-/**
- * Acquires a fingerprint image with specific capture mode.
- *
- * Same as the fp_sensor_acquire_image function(),
- * except @p mode can be set to one of the fp_capture_type constants
- * to get a specific image type (e.g. a pattern) rather than the default one.
- *
- * @param[out] image_data Image from sensor. Buffer must be allocated by
- * caller with size FP_SENSOR_IMAGE_SIZE.
- * @param mode  enum fp_capture_type
- *
- * @return 0 on success
- * @return negative value on error
  */
 int fp_acquire_image_with_mode(uint8_t *image_data, enum fp_capture_type mode);
 
