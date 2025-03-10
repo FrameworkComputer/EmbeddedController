@@ -118,6 +118,18 @@ tcpci_faulty_ext_handle_sop_msg(struct tcpci_partner_extension *ext,
 				return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 			}
 		}
+	} else {
+		switch (PD_HEADER_TYPE(header)) {
+		case PD_CTRL_FR_SWAP:
+			if (action->action_mask &
+			    TCPCI_FAULTY_EXT_IGNORE_FR_SWAP) {
+				/* Send only GoodCRC */
+				tcpci_partner_received_msg_status(
+					common_data, TCPCI_EMUL_TX_SUCCESS);
+				tcpci_faulty_ext_reduce_action_count(data);
+				return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+			}
+		}
 	}
 
 	/*

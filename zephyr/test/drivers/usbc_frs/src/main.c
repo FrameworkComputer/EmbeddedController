@@ -9,6 +9,7 @@
 #include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_common.h"
 #include "emul/tcpc/emul_tcpci_partner_drp.h"
+#include "emul/tcpc/emul_tcpci_partner_faulty_ext.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "host_command.h"
@@ -32,6 +33,7 @@ struct common_fixture {
 	const struct emul *tcpci_emul;
 	const struct emul *charger_emul;
 	struct tcpci_partner_data partner;
+	struct tcpci_faulty_ext_data faulty_ext;
 	struct tcpci_src_emul_data src_ext;
 	struct tcpci_snk_emul_data snk_ext;
 	struct tcpci_drp_emul_data drp_ext;
@@ -55,6 +57,7 @@ static void disconnect_partner_from_port(const struct emul *tcpc_emul,
 static void common_before(struct common_fixture *common)
 {
 	port_frs_disable_until_source_on_fake.return_val = false;
+	tcpci_faulty_ext_clear_actions_list(&common->faulty_ext);
 
 	/* Set chipset to ON, this will set TCPM to DRP */
 	test_set_chipset_to_s0();
@@ -76,13 +79,16 @@ static void *usbc_frs_setup(void)
 	static struct usbc_frs_fixture fixture;
 	struct common_fixture *common = &fixture.common;
 	struct tcpci_partner_data *partner = &common->partner;
+	struct tcpci_faulty_ext_data *faulty_ext = &common->faulty_ext;
 	struct tcpci_drp_emul_data *drp_ext = &common->drp_ext;
 
 	tcpci_partner_init(partner, PD_REV30);
-	partner->extensions = tcpci_drp_emul_init(
-		drp_ext, partner, PD_ROLE_SOURCE,
-		tcpci_src_emul_init(&common->src_ext, partner, NULL),
-		tcpci_snk_emul_init(&common->snk_ext, partner, NULL));
+	partner->extensions = tcpci_faulty_ext_init(
+		faulty_ext, partner,
+		tcpci_drp_emul_init(
+			drp_ext, partner, PD_ROLE_SOURCE,
+			tcpci_src_emul_init(&common->src_ext, partner, NULL),
+			tcpci_snk_emul_init(&common->snk_ext, partner, NULL)));
 	/* Configure the partner to support FRS as initial source. */
 	common->snk_ext.pdo[0] |= PDO_FIXED_FRS_CURR_DFLT_USB_POWER;
 
@@ -125,6 +131,12 @@ ZTEST_USER_F(usbc_frs, test_frs_got_signal_fail)
 {
 	struct common_fixture *common = &fixture->common;
 	uint16_t power_control;
+	struct tcpci_faulty_ext_action ignore_frs = {
+		.action_mask = TCPCI_FAULTY_EXT_IGNORE_FR_SWAP,
+		.count = 1,
+	};
+
+	tcpci_faulty_ext_append_action(&common->faulty_ext, &ignore_frs);
 
 	/* FRS should be enabled */
 	zassert_ok(tcpci_emul_get_reg(common->tcpci_emul, TCPC_REG_POWER_CTRL,
@@ -133,7 +145,7 @@ ZTEST_USER_F(usbc_frs, test_frs_got_signal_fail)
 		      TCPC_REG_POWER_CTRL_FRS_ENABLE);
 
 	/* inform TCPM of FRS Rx */
-	pd_got_frs_signal(TEST_PORT);
+	tcpci_drp_emul_signal_frs(&common->partner);
 
 	k_sleep(K_MSEC(100));
 
@@ -147,6 +159,12 @@ ZTEST_USER_F(usbc_frs, test_frs_got_signal_frs_delay_disable_fail)
 {
 	struct common_fixture *common = &fixture->common;
 	uint16_t power_control;
+	struct tcpci_faulty_ext_action ignore_frs = {
+		.action_mask = TCPCI_FAULTY_EXT_IGNORE_FR_SWAP,
+		.count = 1,
+	};
+
+	tcpci_faulty_ext_append_action(&common->faulty_ext, &ignore_frs);
 
 	/* FRS should be enabled */
 	zassert_ok(tcpci_emul_get_reg(common->tcpci_emul, TCPC_REG_POWER_CTRL,
@@ -158,7 +176,7 @@ ZTEST_USER_F(usbc_frs, test_frs_got_signal_frs_delay_disable_fail)
 	port_frs_disable_until_source_on_fake.return_val = true;
 
 	/* inform TCPM of FRS Rx */
-	pd_got_frs_signal(TEST_PORT);
+	tcpci_drp_emul_signal_frs(&common->partner);
 
 	k_sleep(K_MSEC(100));
 

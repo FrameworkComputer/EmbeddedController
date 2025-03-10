@@ -72,6 +72,12 @@ tcpci_drp_emul_init(struct tcpci_drp_emul_data *data,
 void tcpci_drp_emul_set_dr_in_first_pdo(uint32_t *pdo);
 
 /**
+ * @brief Simulate an FRS signal to the connected port.
+ * @param data Pointer to USB-C DRP device emulator data
+ */
+void tcpci_drp_emul_signal_frs(struct tcpci_partner_data *data);
+
+/**
  * @}
  */
 

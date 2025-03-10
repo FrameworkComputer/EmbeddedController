@@ -13,9 +13,12 @@
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/__assert.h>
 #include <zephyr/sys/byteorder.h>
 
 LOG_MODULE_REGISTER(tcpci_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
+
+static int tcpci_emul_alert_changed(const struct emul *emul);
 
 /**
  * @brief Returns number of bytes in specific register
@@ -144,6 +147,10 @@ static int set_reg(const struct emul *emul, int reg, uint16_t val)
 		sys_put_le16(val, &ctx->reg[reg]);
 	} else {
 		ctx->reg[reg] = val;
+	}
+
+	if (update_alert != 0) {
+		__ASSERT_NO_MSG(tcpci_emul_alert_changed(emul) == 0);
 	}
 
 	return 0;
