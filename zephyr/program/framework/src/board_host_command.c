@@ -384,7 +384,6 @@ static enum ec_status get_active_charge_pd_chip(struct host_cmd_handler_args *ar
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_ACTIVE_CHARGE_PD_CHIP, get_active_charge_pd_chip, EC_VER_MASK(0));
 
-#ifdef CONFIG_BOARD_LOTUS
 static enum ec_status host_command_uefi_app_mode(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_uefi_app_mode *p = args->params;
@@ -411,6 +410,7 @@ static enum ec_status host_command_uefi_app_btn_status(struct host_cmd_handler_a
 }
 DECLARE_HOST_COMMAND(EC_CMD_UEFI_APP_BTN_STATUS, host_command_uefi_app_btn_status, EC_VER_MASK(0));
 
+#ifdef CONFIG_BOARD_LOTUS
 static enum ec_status hc_fingerprint_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_fingerprint_control *p = args->params;
