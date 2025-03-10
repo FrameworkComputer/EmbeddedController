@@ -306,31 +306,32 @@ __override void board_hibernate(void)
 	charge_gate_onoff(0);
 }
 
+#define CONFIG_DISCHARGE_TIMING 25
+
+void board_fast_discharge_enable(bool enable)
+{
+	int rv;
+	const int chgnum = 0; /* only support one charger */
+
+	rv = isl9241_set_csin_discharge_fet(chgnum, enable);
+
+	if (rv != EC_SUCCESS)
+		CPRINTS("ISL9241: update control0 fail");
+}
+DECLARE_DEFERRED(board_fast_discharge_enable);
+
 void acok_control(int voltage, int port)
 {
 	static int pre_acok_data;
 	int acok_data = 0x00;
-	int control0 = 0x0000;
-
-	/* when detect AC but PD not connect, set BIT15 for fast Discharge */
-	if (extpower_is_present() && port == -1) {
-
-		if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_CONTROL0, &control0)) {
-			CPRINTS("ISL9241: read control0 fail");
-		}
-
-		CPRINTS("CSIN SINK Discharge Enable");
-		control0 |= ISL9241_CONTROL0_CSIN_SINK_DISCHARGE;
-
-		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL0, control0)) {
-			CPRINTS("ISL9241: Enable CSIN SINK control0 fail");
-		}
-	}
 
 	if (!charger_psys_enable_flag)
 		return;
+
+	if (port == -1) {
+		board_fast_discharge_enable(true);
+		k_msleep(CONFIG_DISCHARGE_TIMING);
+	}
 
 	if (voltage > 15000)
 		acok_data = 0x0BC0; /*set ACOK 4.544V(0BC0)*/
@@ -344,27 +345,8 @@ void acok_control(int voltage, int port)
 		}
 		pre_acok_data = acok_data;
 	}
+
+	/* Avoid the leakage current, need to disable the fast discharge */
+	if (port == -1)
+		board_fast_discharge_enable(false);
 }
-
-/* only disable the fast discharge when the acok deasserts */
-void disable_fast_discharge(void)
-{
-	int control0 = 0x0000;
-
-	if (extpower_is_present())
-		return;
-
-	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL0, &control0)) {
-		CPRINTS("ISL9241: read control0 fail");
-	}
-
-	CPRINTS("CSIN SINK Discharge Disable");
-	control0 &= ~ISL9241_CONTROL0_CSIN_SINK_DISCHARGE;
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL0, control0)) {
-		CPRINTS("ISL9241: Disable CSIN SINK control0 fail");
-	}
-}
-DECLARE_HOOK(HOOK_AC_CHANGE, disable_fast_discharge, HOOK_PRIO_DEFAULT);
