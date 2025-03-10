@@ -52,10 +52,9 @@ enum finger_state fp_finger_status(void)
 	return mock_ctrl_fp_sensor.fp_finger_status_return;
 }
 
-int fp_acquire_image_with_mode(uint8_t *image_data,
-			       enum fp_capture_type capture_type)
+int fp_acquire_image(uint8_t *image_data, enum fp_capture_type capture_type)
 {
-	return mock_ctrl_fp_sensor.fp_acquire_image_with_mode_return;
+	return mock_ctrl_fp_sensor.fp_acquire_image_return;
 }
 
 int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,

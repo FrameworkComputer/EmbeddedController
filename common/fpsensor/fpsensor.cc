@@ -227,8 +227,8 @@ static void fp_process_finger(void)
 	timestamp_t t0 = get_time();
 
 	CPRINTS("Capturing ...");
-	int res = fp_acquire_image_with_mode(
-		fp_buffer, FP_CAPTURE_TYPE(global_context.sensor_mode));
+	int res = fp_acquire_image(fp_buffer,
+				   FP_CAPTURE_TYPE(global_context.sensor_mode));
 	capture_time_us = time_since32(t0);
 	if (!res) {
 		uint32_t evt = EC_MKBP_FP_IMAGE_READY;
@@ -304,8 +304,8 @@ extern "C" void fp_task(void)
 						 FP_MODE_ENROLL_SESSION;
 			}
 			if (!is_finger_needed(mode)) {
-				fp_acquire_image_with_mode(
-					fp_buffer, FP_CAPTURE_TYPE(mode));
+				fp_acquire_image(fp_buffer,
+						 FP_CAPTURE_TYPE(mode));
 				global_context.sensor_mode &= ~FP_MODE_CAPTURE;
 				send_mkbp_event(EC_MKBP_FP_IMAGE_READY);
 				continue;
