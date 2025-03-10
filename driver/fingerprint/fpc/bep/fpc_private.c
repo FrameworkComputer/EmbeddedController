@@ -330,12 +330,13 @@ int fp_maintenance(void)
 	return fpc_fp_maintenance(&errors);
 }
 
-int fp_acquire_image_with_mode(uint8_t *image_data, enum fp_capture_type mode)
+int fp_acquire_image_with_mode(uint8_t *image_data,
+			       enum fp_capture_type capture_type)
 {
-	int rc = convert_fp_capture_mode_to_fpc_get_image_type(mode);
+	int rc = convert_fp_capture_mode_to_fpc_get_image_type(capture_type);
 
 	if (rc < 0) {
-		CPRINTS("Unsupported mode %d provided", mode);
+		CPRINTS("Unsupported capture_type %d provided", capture_type);
 		return rc;
 	}
 

@@ -258,10 +258,11 @@ void fp_configure_detect(void)
  * - FP_SENSOR_TOO_FAST on finger removed before image was captured
  * - FP_SENSOR_LOW_SENSOR_COVERAGE on sensor not fully covered by finger
  */
-int fp_acquire_image_with_mode(uint8_t *image_data, enum fp_capture_type mode)
+int fp_acquire_image_with_mode(uint8_t *image_data,
+			       enum fp_capture_type capture_type)
 {
 	CPRINTF("========%s=======\n", __func__);
-	return elan_sensor_acquire_image_with_mode(image_data, mode);
+	return elan_sensor_acquire_image_with_mode(image_data, capture_type);
 }
 
 /**
