@@ -47,6 +47,9 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
+	if (!cypd_contoller_is_powered(controller))
+		return EC_ERROR_NOT_POWERED;
+
 	if (reg < 0x1000) {
 		expected_ack_mask = CCG_DEV_INTR;
 		cmd_port = -1;
@@ -184,6 +187,9 @@ int cypd_setup(int controller)
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
+	if (!cypd_contoller_is_powered(controller))
+		return EC_ERROR_NOT_POWERED;
+
 	/* Make sure the interrupt is not asserted before we start */
 	if (gpio_pin_get_dt(intr) == 0) {
 		rv = cypd_get_int(controller, &data);
@@ -220,6 +226,9 @@ void cypd_update_ac_status(int controller)
 	CPRINTS("Check C%d AC status!", controller);
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
+	if (!cypd_contoller_is_powered(controller))
+		return;
 
 	if (cypd_write_reg8_wait_ack(controller,
 		CCG_CUST_C_CTRL_CONTROL_REG, CCG6_AC_AT_PORT))
@@ -335,6 +344,9 @@ void update_system_power_state(int controller)
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
+	if (!cypd_contoller_is_powered(controller))
+		return;
+
 	switch (ps) {
 	case POWER_G3:
 	case POWER_S5G3:
@@ -390,6 +402,9 @@ void enable_compliance_mode(int controller)
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
+	if (!cypd_contoller_is_powered(controller))
+		return;
+
 	/* Write 0xD0000000 to address 0x0048 */
 	rv = cypd_write_reg_block(controller, CCG_ICL_BB_RETIMER_DAT_REG,
 			(void *) &debug_register, 4);
@@ -409,6 +424,9 @@ void disable_compliance_mode(int controller)
 	int debug_ctl = 0x0000;
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
+	if (!cypd_contoller_is_powered(controller))
+		return;
 
 	/* Write 0x00000000 to address 0x0048 */
 	rv = cypd_write_reg_block(controller, CCG_ICL_BB_RETIMER_DAT_REG,
@@ -430,6 +448,9 @@ void entry_tbt_mode(int controller)
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
+	if (!cypd_contoller_is_powered(controller))
+		return;
+
 	/* Write 0x0100 to address 0x0046 */
 	rv = cypd_write_reg16(controller, CCG_ICL_BB_RETIMER_CMD_REG, debug_ctl);
 	if (rv != EC_SUCCESS)
@@ -449,6 +470,9 @@ void exit_tbt_mode(int controller)
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
+	if (!cypd_contoller_is_powered(controller))
+		return;
+
 	/* Write 0x00 to address 0x0040 */
 	rv = cypd_write_reg8(controller, CCG_ICL_CTRL_REG, force_tbt_mode);
 	if (rv != EC_SUCCESS)
@@ -466,6 +490,9 @@ int check_tbt_mode(int controller)
 	int data;
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
+	if (!cypd_contoller_is_powered(controller))
+		return EC_ERROR_NOT_POWERED;
 
 	rv = cypd_read_reg8(controller, CCG_ICL_STS_REG, &data);
 	if (rv != EC_SUCCESS)
