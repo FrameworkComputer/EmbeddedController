@@ -208,14 +208,8 @@ void auto_als_led_brightness(void)
 
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD
 	if (kbbl_auto_dim_is_enable()) {
-		if (als_lux > 130)
-			kb_brightness = KEYBOARD_BL_BRIGHTNESS_HIGH;
-		else if (als_lux > 100)
-			kb_brightness = KEYBOARD_BL_BRIGHTNESS_MED;
-		else if (als_lux > 70)
-			kb_brightness = KEYBOARD_BL_BRIGHTNESS_MED_LOW;
-		else if (als_lux > 40)
-			kb_brightness = KEYBOARD_BL_BRIGHTNESS_LOW;
+		if (als_lux > 5)
+			kb_brightness = KEYBOARD_BL_BRIGHTNESS_OFF;
 		else
 			kb_brightness = KEYBOARD_BL_BRIGHTNESS_ULT_LOW;
 
