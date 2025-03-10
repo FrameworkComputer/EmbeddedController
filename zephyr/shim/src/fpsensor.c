@@ -127,9 +127,25 @@ void fp_configure_detect(void)
 
 int fp_acquire_image(uint8_t *image_data, enum fp_capture_type mode)
 {
-	return fingerprint_acquire_image(fp_sensor_dev, mode, image_data,
-					 FP_SENSOR_IMAGE_SIZE);
+	return fingerprint_acquire_image(fp_sensor_dev,
+					 (enum fingerprint_capture_type)mode,
+					 image_data, FP_SENSOR_IMAGE_SIZE);
 }
+
+/* BUILD_ASSERTs to ensure enum values are the same. */
+BUILD_ASSERT((int)FINGERPRINT_CAPTURE_TYPE_VENDOR_FORMAT ==
+	     (int)FP_CAPTURE_VENDOR_FORMAT);
+BUILD_ASSERT((int)FINGERPRINT_CAPTURE_TYPE_SIMPLE_IMAGE ==
+	     (int)FP_CAPTURE_SIMPLE_IMAGE);
+BUILD_ASSERT((int)FINGERPRINT_CAPTURE_TYPE_PATTERN0 ==
+	     (int)FP_CAPTURE_PATTERN0);
+BUILD_ASSERT((int)FINGERPRINT_CAPTURE_TYPE_PATTERN1 ==
+	     (int)FP_CAPTURE_PATTERN1);
+BUILD_ASSERT((int)FINGERPRINT_CAPTURE_TYPE_QUALITY_TEST ==
+	     (int)FP_CAPTURE_QUALITY_TEST);
+BUILD_ASSERT((int)FINGERPRINT_CAPTURE_TYPE_RESET_TEST ==
+	     (int)FP_CAPTURE_RESET_TEST);
+BUILD_ASSERT((int)FINGERPRINT_CAPTURE_TYPE_MAX == (int)FP_CAPTURE_TYPE_MAX);
 
 enum finger_state fp_finger_status(void)
 {

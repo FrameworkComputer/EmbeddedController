@@ -212,9 +212,9 @@ typedef int (*fingerprint_api_set_mode_t)(const struct device *dev,
  * @param image Pointer to buffer where image should be stored.
  * @param size Size of the buffer.
  */
-typedef int (*fingerprint_api_acquire_image_t)(const struct device *dev,
-					       int mode, uint8_t *image,
-					       size_t size);
+typedef int (*fingerprint_api_acquire_image_t)(
+	const struct device *dev, enum fingerprint_capture_type mode,
+	uint8_t *image, size_t size);
 
 /**
  * @typedef fingerprint_api_finger_status_t
@@ -407,12 +407,14 @@ static inline int z_impl_fingerprint_set_mode(const struct device *dev,
  * @retval -EINVAL Invalid argument was passed (e.g. size of buffer).
  * @retval other negative values indicates driver specific error.
  */
-__syscall int fingerprint_acquire_image(const struct device *dev, int mode,
+__syscall int fingerprint_acquire_image(const struct device *dev,
+					enum fingerprint_capture_type mode,
 					uint8_t *image, size_t size);
 
-static inline int z_impl_fingerprint_acquire_image(const struct device *dev,
-						   int mode, uint8_t *image,
-						   size_t size)
+static inline int
+z_impl_fingerprint_acquire_image(const struct device *dev,
+				 enum fingerprint_capture_type mode,
+				 uint8_t *image, size_t size)
 {
 	const struct fingerprint_driver_api *api =
 		(const struct fingerprint_driver_api *)dev->api;

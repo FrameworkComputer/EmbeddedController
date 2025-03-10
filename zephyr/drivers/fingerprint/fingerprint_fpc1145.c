@@ -32,7 +32,8 @@ enum fpc1145_cmd {
 	FPC1145_CMD_HW_ID = 0xFC,
 };
 
-int convert_fp_capture_mode_to_fpc_get_image_type(int mode)
+int convert_fp_capture_mode_to_fpc_get_image_type(
+	enum fingerprint_capture_type mode)
 {
 	switch (mode) {
 	case FINGERPRINT_CAPTURE_TYPE_VENDOR_FORMAT:
@@ -423,7 +424,8 @@ BUILD_ASSERT(FINGERPRINT_SENSOR_SCAN_TOO_FAST == FPC_SENSOR_TOO_FAST);
 BUILD_ASSERT(FINGERPRINT_SENSOR_SCAN_LOW_SENSOR_COVERAGE ==
 	     FPC_SENSOR_LOW_COVERAGE);
 
-static int fpc1145_acquire_image(const struct device *dev, int mode,
+static int fpc1145_acquire_image(const struct device *dev,
+				 enum fingerprint_capture_type mode,
 				 uint8_t *image_buf, size_t image_buf_size)
 {
 	int rc;

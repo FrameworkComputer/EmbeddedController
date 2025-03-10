@@ -98,7 +98,8 @@ static int fp_simulator_set_mode(const struct device *dev,
 	return 0;
 }
 
-static int fp_simulator_acquire_image(const struct device *dev, int mode,
+static int fp_simulator_acquire_image(const struct device *dev,
+				      enum fingerprint_capture_type mode,
 				      uint8_t *image_buf, size_t image_buf_size)
 {
 	const struct fp_simulator_cfg *config = dev->config;
