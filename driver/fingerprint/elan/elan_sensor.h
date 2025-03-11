@@ -33,6 +33,17 @@ extern "C" {
 #define FP_SENSOR_IMAGE_OFFSET_ELAN (0)
 #define FP_SENSOR_RES_BPP_ELAN (14)
 
+/* External capture types from ELAN's sensor library */
+enum elan_capture_type {
+	ELAN_CAPTURE_TYPE_INVALID = -1,
+	ELAN_CAPTURE_VENDOR_FORMAT = 0,
+	ELAN_CAPTURE_SIMPLE_IMAGE = 1,
+	ELAN_CAPTURE_PATTERN0 = 2,
+	ELAN_CAPTURE_PATTERN1 = 3,
+	ELAN_CAPTURE_QUALITY_TEST = 4,
+	ELAN_CAPTURE_RESET_TEST = 5,
+};
+
 /**
  * Get the fingerprint sensor HWID.
  */

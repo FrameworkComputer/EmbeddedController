@@ -20,6 +20,7 @@
 #include "trng.h"
 #include "util.h"
 
+#include <errno.h>
 #include <stddef.h>
 
 static uint16_t errors;
@@ -38,6 +39,27 @@ static struct ec_response_fp_info ec_fp_sensor_info = {
 	.height = FP_SENSOR_RES_Y_ELAN,
 	.bpp = FP_SENSOR_RES_BPP_ELAN,
 };
+
+static enum elan_capture_type
+convert_fp_capture_mode_to_elan_get_image_type(enum fp_capture_type mode)
+{
+	switch (mode) {
+	case FP_CAPTURE_VENDOR_FORMAT:
+		return ELAN_CAPTURE_VENDOR_FORMAT;
+	case FP_CAPTURE_SIMPLE_IMAGE:
+		return ELAN_CAPTURE_SIMPLE_IMAGE;
+	case FP_CAPTURE_PATTERN0:
+		return ELAN_CAPTURE_PATTERN0;
+	case FP_CAPTURE_PATTERN1:
+		return ELAN_CAPTURE_PATTERN1;
+	case FP_CAPTURE_QUALITY_TEST:
+		return ELAN_CAPTURE_QUALITY_TEST;
+	case FP_CAPTURE_RESET_TEST:
+		return ELAN_CAPTURE_RESET_TEST;
+	default:
+		return ELAN_CAPTURE_TYPE_INVALID;
+	}
+}
 
 int elan_get_hwid(uint16_t *id)
 {
@@ -260,8 +282,16 @@ void fp_configure_detect(void)
  */
 int fp_acquire_image(uint8_t *image_data, enum fp_capture_type capture_type)
 {
+	enum elan_capture_type rc =
+		convert_fp_capture_mode_to_elan_get_image_type(capture_type);
+
+	if (rc == ELAN_CAPTURE_TYPE_INVALID) {
+		CPRINTF("Unsupported capture_type %d provided", capture_type);
+		return -EINVAL;
+	}
+
 	CPRINTF("========%s=======\n", __func__);
-	return elan_sensor_acquire_image_with_mode(image_data, capture_type);
+	return elan_sensor_acquire_image_with_mode(image_data, rc);
 }
 
 /**
