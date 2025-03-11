@@ -285,19 +285,21 @@ ZTEST_F(fpc1145, test_acquire_image_small_buffer_size)
 {
 	uint8_t buffer[CONFIG_FINGERPRINT_SENSOR_IMAGE_SIZE] = { 0 };
 	size_t image_buf_size = CONFIG_FINGERPRINT_SENSOR_IMAGE_SIZE - 1;
-	int mode = FINGERPRINT_CAPTURE_TYPE_VENDOR_FORMAT;
+	enum fingerprint_capture_type capture_type =
+		FINGERPRINT_CAPTURE_TYPE_VENDOR_FORMAT;
 
-	zassert_equal(fingerprint_acquire_image(fixture->dev, mode, buffer,
-						image_buf_size),
+	zassert_equal(fingerprint_acquire_image(fixture->dev, capture_type,
+						buffer, image_buf_size),
 		      -EINVAL);
 }
 
-ZTEST_F(fpc1145, test_acquire_image_wrong_capture_mode)
+ZTEST_F(fpc1145, test_acquire_image_wrong_capture_type)
 {
 	uint8_t buffer[CONFIG_FINGERPRINT_SENSOR_IMAGE_SIZE] = { 0 };
-	int mode = FINGERPRINT_CAPTURE_TYPE_MAX;
+	enum fingerprint_capture_type capture_type =
+		FINGERPRINT_CAPTURE_TYPE_MAX;
 
-	zassert_equal(fingerprint_acquire_image(fixture->dev, mode, buffer,
-						sizeof(buffer)),
+	zassert_equal(fingerprint_acquire_image(fixture->dev, capture_type,
+						buffer, sizeof(buffer)),
 		      -EINVAL);
 }

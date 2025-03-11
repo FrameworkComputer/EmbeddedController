@@ -425,7 +425,7 @@ BUILD_ASSERT(FINGERPRINT_SENSOR_SCAN_LOW_SENSOR_COVERAGE ==
 	     FPC_SENSOR_LOW_COVERAGE);
 
 static int fpc1145_acquire_image(const struct device *dev,
-				 enum fingerprint_capture_type mode,
+				 enum fingerprint_capture_type capture_type,
 				 uint8_t *image_buf, size_t image_buf_size)
 {
 	int rc;
@@ -433,10 +433,10 @@ static int fpc1145_acquire_image(const struct device *dev,
 	if (image_buf_size < CONFIG_FINGERPRINT_SENSOR_IMAGE_SIZE)
 		return -EINVAL;
 
-	rc = convert_fp_capture_mode_to_fpc_get_image_type(mode);
+	rc = convert_fp_capture_mode_to_fpc_get_image_type(capture_type);
 
 	if (rc < 0) {
-		LOG_ERR("Unsupported mode %d provided", mode);
+		LOG_ERR("Unsupported capture_type %d provided", capture_type);
 		return rc;
 	}
 
@@ -446,7 +446,8 @@ static int fpc1145_acquire_image(const struct device *dev,
 
 	rc = fp_sensor_acquire_image_with_mode(image_buf, rc);
 	if (rc < 0) {
-		LOG_ERR("Failed to acquire image with mode %d: %d", mode, rc);
+		LOG_ERR("Failed to acquire image with capture_type %d: %d",
+			capture_type, rc);
 		return rc;
 	}
 

@@ -91,7 +91,7 @@ enum fingerprint_sensor_mode {
 };
 
 /**
- * Image capture mode.
+ * Image capture type.
  *
  * @note This enum must remain ordered, if you add new values you must ensure
  * that FINGERPRINT_CAPTURE_TYPE_MAX is still the last one.
@@ -208,12 +208,13 @@ typedef int (*fingerprint_api_set_mode_t)(const struct device *dev,
  * @brief Callback API for acquiring fingerprint image.
  *
  * @param dev Fingerprint sensor device.
- * @param mode One of the mode from fingerprint_capture_type enum.
+ * @param capture_type One of the capture types from fingerprint_capture_type
+ *                     enum.
  * @param image Pointer to buffer where image should be stored.
  * @param size Size of the buffer.
  */
 typedef int (*fingerprint_api_acquire_image_t)(
-	const struct device *dev, enum fingerprint_capture_type mode,
+	const struct device *dev, enum fingerprint_capture_type capture_type,
 	uint8_t *image, size_t size);
 
 /**
@@ -397,7 +398,8 @@ static inline int z_impl_fingerprint_set_mode(const struct device *dev,
  *
  * @param dev Pointer to the device structure for the fingerprint sensor driver
  *	      instance.
- * @param mode One of the mode from fingerprint_capture_type enum.
+ * @param capture_type One of the capture types from fingerprint_capture_type
+ *                     enum.
  * @param image Pointer to buffer where image should be stored.
  * @param size Size of the buffer.
  *
@@ -407,13 +409,14 @@ static inline int z_impl_fingerprint_set_mode(const struct device *dev,
  * @retval -EINVAL Invalid argument was passed (e.g. size of buffer).
  * @retval other negative values indicates driver specific error.
  */
-__syscall int fingerprint_acquire_image(const struct device *dev,
-					enum fingerprint_capture_type mode,
-					uint8_t *image, size_t size);
+__syscall int
+fingerprint_acquire_image(const struct device *dev,
+			  enum fingerprint_capture_type capture_type,
+			  uint8_t *image, size_t size);
 
 static inline int
 z_impl_fingerprint_acquire_image(const struct device *dev,
-				 enum fingerprint_capture_type mode,
+				 enum fingerprint_capture_type capture_type,
 				 uint8_t *image, size_t size)
 {
 	const struct fingerprint_driver_api *api =
@@ -423,7 +426,7 @@ z_impl_fingerprint_acquire_image(const struct device *dev,
 		return -ENOTSUP;
 	}
 
-	return api->acquire_image(dev, mode, image, size);
+	return api->acquire_image(dev, capture_type, image, size);
 }
 
 /**
