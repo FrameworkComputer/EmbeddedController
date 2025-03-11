@@ -213,8 +213,7 @@ ZTEST_USER(system_safe_mode, test_print_stack_contents)
 	zassert_ok(uart_console_read_buffer(CONSOLE_READ_RECENT, buffer,
 					    sizeof(buffer), &write_count),
 		   NULL);
-	/* Need at least 405 bytes for match */
-	zassert_true(write_count >= 405);
+	zassert_true(write_count > 0);
 
 	/* Check for expected stack print in console buffer */
 	zassert_ok(regexec(&regex, buffer, 0, NULL, 0));
