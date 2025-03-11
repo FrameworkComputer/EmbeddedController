@@ -17,6 +17,9 @@
 #include "motionsense.dtsi"
 
 / {
+	aliases {
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
+	};
 	batteries {
 		default_battery: placeholder {
 			compatible = "smp,c31n2005", "battery-smart";
@@ -44,4 +47,34 @@
 			0x0a    /* C14 */
 		>;
 	};
+};
+
+&cros_kb_raw {
+	pinctrl-0 = <
+		&ksi0_gp31
+		&ksi1_gp30
+		&ksi2_gp27
+		&ksi3_gp26
+		&ksi4_gp25
+		&ksi5_gp24
+		&ksi6_gp23
+		&ksi7_gp22
+		&kso00_gp21
+		&kso01_gp20
+		&kso03_gp16
+		&kso04_gp15
+		&kso05_gp14
+		&kso06_gp13
+		&kso07_gp12
+		&kso08_gp11
+		&kso09_gp10
+		&kso10_gp07
+		&kso11_gp06
+		&kso12_gp05
+		&kso13_gp04
+		&kso14_gp82
+		&kso15_gp83
+		&kso16_gp03
+		&kso17_gpb1
+	>;
 };
