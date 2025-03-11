@@ -1,0 +1,26 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	chosen {
+		cros-fp,fingerprint-sensor = &egis630;
+	};
+};
+
+&spi0 {
+	egis630: egis630@0 {
+		compatible = "egis,egis630";
+		reg = <0>;
+		spi-max-frequency = <4000000>;
+
+		width = <80>;
+		height = <64>;
+		bits-per-pixel = <8>;
+		v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+
+		irq-gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
+	};
+};

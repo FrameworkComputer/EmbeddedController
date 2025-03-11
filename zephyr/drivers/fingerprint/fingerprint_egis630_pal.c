@@ -13,6 +13,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/cbprintf.h>
+#include <zephyr/sys/util_macro.h>
 #include <zephyr/sys_clock.h>
 
 #include <drivers/fingerprint.h>
@@ -30,7 +31,7 @@ LOG_MODULE_REGISTER(egis630_pal, LOG_LEVEL_INF);
 K_HEAP_DEFINE(fp_driver_heap, CONFIG_FINGERPRINT_SENSOR_EGIS630_HEAP_SIZE);
 K_SEM_DEFINE(printf_buffer_lock, 1, 1);
 
-static char printf_buffer[256];
+IF_DISABLED(CONFIG_ZTEST, (static)) char printf_buffer[256];
 
 int __unused periphery_spi_write_read(uint8_t *write, uint32_t write_len,
 				      uint8_t *read, uint32_t read_len)
