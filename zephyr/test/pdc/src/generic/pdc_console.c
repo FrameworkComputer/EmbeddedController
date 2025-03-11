@@ -19,7 +19,7 @@
 
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
 
-static void console_cmd_pdc_setup(void)
+static void *console_cmd_pdc_setup(void)
 {
 	struct pdc_info_t info = {
 		.fw_version = 0x001a2b3c,
@@ -34,6 +34,8 @@ static void console_cmd_pdc_setup(void)
 
 	zassume(TEST_PORT < CONFIG_USB_PD_PORT_MAX_COUNT,
 		"TEST_PORT is invalid");
+
+	return NULL;
 }
 
 static void console_cmd_pdc_reset(void *fixture)

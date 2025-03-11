@@ -80,7 +80,7 @@ ZTEST_USER(retimer_fw_update, test_suspend_failure)
 		      USB_RETIMER_FW_UPDATE_ERR);
 }
 
-static void enter_tbt(void *unused)
+static void enter_tbt(struct k_work *work)
 {
 	k_msleep(300);
 	usb_mux_set(PORT, USB_PD_MUX_TBT_COMPAT_ENABLED, USB_SWITCH_CONNECT,

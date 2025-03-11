@@ -24,10 +24,12 @@ LOG_MODULE_REGISTER(pdc_pmc_debug_api);
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
 #define TEST_PORT 0
 
-void pdc_pmc_setup(void)
+void *pdc_pmc_setup(void)
 {
 	zassume(TEST_PORT < CONFIG_USB_PD_PORT_MAX_COUNT,
 		"TEST_PORT is invalid");
+
+	return NULL;
 }
 
 ZTEST_SUITE(pdc_pmc_debug_api, NULL, pdc_pmc_setup, NULL, NULL, NULL);

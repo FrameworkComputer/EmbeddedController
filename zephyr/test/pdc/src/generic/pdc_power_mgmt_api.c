@@ -47,6 +47,9 @@ bool pdc_power_mgmt_is_pd_attached(int port);
 bool test_pdc_power_mgmt_is_snk_typec_attached_run(int port);
 bool test_pdc_power_mgmt_is_src_typec_attached_run(int port);
 
+typedef void (*set_connector_status_t)(
+	const struct emul *target, union connector_status_t *connector_status);
+
 /* Test-specific FFF fakes */
 FAKE_VALUE_FUNC(int, system_jumped_late);
 FAKE_VALUE_FUNC(int, chipset_in_state, int);
@@ -78,10 +81,12 @@ static void clear_partner_pdos(const struct emul *e, enum pdo_type_t type)
 			  PARTNER_PDO, clear_pdos);
 }
 
-static void pdc_power_mgmt_setup(void)
+static void *pdc_power_mgmt_setup(void)
 {
 	zassume(TEST_PORT < CONFIG_USB_PD_PORT_MAX_COUNT,
 		"TEST_PORT is invalid");
+
+	return NULL;
 }
 
 static void pdc_power_mgmt_before(void *fixture)
@@ -753,7 +758,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_request_power_swap)
 	int i;
 	struct setup_t {
 		enum conn_partner_type_t conn_partner_type;
-		emul_pdc_set_connector_status_t configure;
+		set_connector_status_t configure;
 	};
 	struct expect_t {
 		union pdr_t pdr;
@@ -849,7 +854,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_request_data_swap)
 	int i;
 	struct setup_t {
 		enum conn_partner_type_t conn_partner_type;
-		emul_pdc_set_connector_status_t configure;
+		set_connector_status_t configure;
 	};
 	struct expect_t {
 		union uor_t uor;
@@ -1064,7 +1069,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 	int i;
 	struct setup_t {
 		enum pd_dual_role_states state;
-		emul_pdc_set_connector_status_t configure;
+		set_connector_status_t configure;
 	};
 	struct expect_t {
 		bool check_cc_mode;

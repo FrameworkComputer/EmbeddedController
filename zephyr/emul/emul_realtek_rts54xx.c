@@ -1433,7 +1433,7 @@ emul_realtek_rts54xx_set_lpm_ppm_info(const struct emul *target,
 }
 
 static int emul_realtek_rts54xx_set_vdo(const struct emul *target,
-					uint8_t num_vdos, uint32_t *vdos)
+					uint8_t num_vdos, const uint32_t *vdos)
 {
 	struct rts5453p_emul_pdc_data *data =
 		rts5453p_emul_get_pdc_data(target);
