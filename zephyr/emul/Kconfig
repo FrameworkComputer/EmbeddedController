@@ -170,6 +170,16 @@ config EMUL_CROS_FLASH
 	help
 	  This option enables the flash emulator for testing.
 
+config EMUL_EGIS630
+	bool "EGIS630 fingerprint sensor emulator"
+	depends on ZTEST && DT_HAS_EGIS_EGIS630_ENABLED && ARCH_POSIX
+	default y
+	help
+	  This option enables the EGIS630 fingerprint sensor emulator.
+	  It supports only basic commands (get hardware id, enter low power
+	  mode) that can be issued by the public driver (without EGIS private
+	  library)
+
 config EMUL_FPC1025
 	bool "FPC1025 fingerprint sensor emulator"
 	depends on ZTEST && DT_HAS_FPC_FPC1025_ENABLED && ARCH_POSIX
