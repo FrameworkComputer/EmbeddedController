@@ -11,7 +11,7 @@
   <vif:Product_Revision>1</vif:Product_Revision>
   <vif:TID>65535</vif:TID>
   <vif:VIF_Product_Type value="0">Port Product</vif:VIF_Product_Type>
-  <vif:Certification_Type value="1">Reference Platform</vif:Certification_Type>
+  <vif:Certification_Type value="0">End Product</vif:Certification_Type>
   <vif:Product>
     <!--Product Level Content:-->
   </vif:Product>
@@ -61,7 +61,7 @@
     <vif:Responds_To_Discov_SOP_UFP value="true" />
     <vif:Responds_To_Discov_SOP_DFP value="true" />
     <vif:Attempts_Discov_SOP value="true" />
-    <vif:Power_Interruption_Available value="3">AC Mains/Wall Power and DC Power</vif:Power_Interruption_Available>
+    <vif:Power_Interruption_Available value="0">No Interruption Possible</vif:Power_Interruption_Available>
     <vif:Data_Reset_Supported value="false" />
     <vif:Enter_USB_Supported value="false" />
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
@@ -105,7 +105,7 @@
     <vif:Sends_Pings value="false" />
     <vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="0">FR_Swap not supported</vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
     <vif:Master_Port value="false" />
-    <vif:Has_Invariant_PDOs value="true" />
+    <vif:Has_Invariant_PDOs value="false" />
     <vif:Port_Managed_Guaranteed_Type value="0">Managed Capability</vif:Port_Managed_Guaranteed_Type>
     <vif:Num_Src_PDOs value="1">1 Src PDO</vif:Num_Src_PDOs>
     <vif:PD_OC_Protection value="true" />
@@ -117,7 +117,7 @@
         <vif:Src_PDO_Supply_Type value="0">Fixed</vif:Src_PDO_Supply_Type>
         <vif:Src_PDO_Peak_Current value="0">100% IOC</vif:Src_PDO_Peak_Current>
         <vif:Src_PDO_Voltage value="100">5000 mV (Factor = 50)</vif:Src_PDO_Voltage>
-        <vif:Src_PDO_Max_Current value="150">1500 mA (Factor = 10)</vif:Src_PDO_Max_Current>
+        <vif:Src_PDO_Max_Current value="300">3000 mA (Factor = 10)</vif:Src_PDO_Max_Current>
         <vif:Src_PD_OCP_OC_Debounce value="200">200 msec</vif:Src_PD_OCP_OC_Debounce>
         <vif:Src_PD_OCP_OC_Threshold value="330">3300 mA (Factor = 10)</vif:Src_PD_OCP_OC_Threshold>
       </vif:SrcPDO>
