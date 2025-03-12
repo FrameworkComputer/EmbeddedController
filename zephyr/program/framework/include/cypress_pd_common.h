@@ -268,31 +268,43 @@ enum epr_event_failure_type {
 /*  CCG Task Events                            */
 /************************************************/
 enum pd_task_evt {
+	/*
+	 * The controller index must be in order here for INT as we assume
+	 * we can map controller number to the first one + id
+	 */
 	CCG_EVT_INT_CTRL_0 = BIT(0),
 	CCG_EVT_INT_CTRL_1 = BIT(1),
-	CCG_EVT_STATE_CTRL_0 = BIT(2),
-	CCG_EVT_STATE_CTRL_1 = BIT(3),
-	CCG_EVT_AC_PRESENT =  BIT(4),
-	CCG_EVT_S_CHANGE = BIT(5),
-	CCG_EVT_PLT_RESET = BIT(6),
-	CCG_EVT_UCSI_POLL_CTRL_0 = BIT(7),
-	CCG_EVT_UCSI_POLL_CTRL_1 = BIT(8),
-	CCG_EVT_RETIMER_PWR = BIT(9),
-	CCG_EVT_UPDATE_PWRSTAT = BIT(10),
-	CCG_EVT_PORT_ENABLE = BIT(11),
-	CCG_EVT_PORT_DISABLE = BIT(12),
-	CCG_EVT_UCSI_PPM_RESET = BIT(13),
-	CCG_EVT_CFET_VBUS_OFF = BIT(14),
-	CCG_EVT_CFET_VBUS_ON = BIT(15),
-	CCG_EVT_DPALT_DISABLE = BIT(16),
-	CCG_EVT_PDO_INIT_0 = BIT(17),
-	CCG_EVT_PDO_INIT_1 = BIT(18),
-	CCG_EVT_PDO_C0P0 = BIT(19),
-	CCG_EVT_PDO_C0P1 = BIT(20),
-	CCG_EVT_PDO_C1P0 = BIT(21),
-	CCG_EVT_PDO_C1P1 = BIT(22),
-	CCG_EVT_PERFORM_ERROR_RECOVERY = BIT(23),
-	CCG_EVT_PDO_RESET = BIT(24),
+	CCG_EVT_INT_CTRL_GPU = BIT(2),
+	/*
+	 * The controller index must be in order here for STATE as we assume
+	 * we can map controller number to the first one + id
+	 */
+	CCG_EVT_STATE_CTRL_0 = BIT(3),
+	CCG_EVT_STATE_CTRL_1 = BIT(4),
+	CCG_EVT_STATE_CTRL_GPU = BIT(5),
+	CCG_EVT_AC_PRESENT =  BIT(6),
+	CCG_EVT_S_CHANGE = BIT(7),
+	CCG_EVT_PLT_RESET = BIT(8),
+	CCG_EVT_UCSI_POLL_CTRL_0 = BIT(9),
+	CCG_EVT_UCSI_POLL_CTRL_1 = BIT(10),
+	CCG_EVT_UCSI_POLL_CTRL_GPU = BIT(11),
+	CCG_EVT_RETIMER_PWR = BIT(12),
+	CCG_EVT_UPDATE_PWRSTAT = BIT(13),
+	CCG_EVT_PORT_ENABLE = BIT(14),
+	CCG_EVT_PORT_DISABLE = BIT(15),
+	CCG_EVT_UCSI_PPM_RESET = BIT(16),
+	CCG_EVT_CFET_VBUS_OFF = BIT(17),
+	CCG_EVT_CFET_VBUS_ON = BIT(18),
+	CCG_EVT_DPALT_DISABLE = BIT(19),
+	CCG_EVT_PDO_INIT_0 = BIT(20),
+	CCG_EVT_PDO_INIT_1 = BIT(21),
+	CCG_EVT_PDO_C0P0 = BIT(22),
+	CCG_EVT_PDO_C0P1 = BIT(23),
+	CCG_EVT_PDO_C1P0 = BIT(24),
+	CCG_EVT_PDO_C1P1 = BIT(25),
+	CCG_EVT_PDO_C2P0 = BIT(26),
+	CCG_EVT_PERFORM_ERROR_RECOVERY = BIT(27),
+	CCG_EVT_PDO_RESET = BIT(28),
 };
 
 /************************************************
@@ -498,6 +510,7 @@ enum pd_port_role {
 enum pd_chip {
 	PD_CHIP_0,
 	PD_CHIP_1,
+	PD_CHIP_GPU,
 };
 
 #define PD_PORT_COUNT CONFIG_USB_PD_PORT_MAX_COUNT
@@ -506,6 +519,7 @@ enum pd_port {
 	PD_PORT_1,
 	PD_PORT_2,
 	PD_PORT_3,
+	PD_PORT_4,
 };
 
 enum pd_progress {

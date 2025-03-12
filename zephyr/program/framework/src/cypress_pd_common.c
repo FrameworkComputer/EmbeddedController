@@ -273,6 +273,13 @@ static void pd1_update_state_deferred(void)
 }
 DECLARE_DEFERRED(pd1_update_state_deferred);
 
+static void pd_gpu_update_state_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_STATE_CTRL_GPU);
+
+}
+DECLARE_DEFERRED(pd_gpu_update_state_deferred);
+
 void update_power_state_deferred(void)
 {
 	task_set_event(TASK_ID_CYPD, CCG_EVT_UPDATE_PWRSTAT);
@@ -551,6 +558,12 @@ static void pdo_c1p1_deferred(void)
 }
 DECLARE_DEFERRED(pdo_c1p1_deferred);
 
+static void pdo_c2p0_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_PDO_C2P0);
+}
+DECLARE_DEFERRED(pdo_c2p0_deferred);
+
 static void cypd_set_prepare_pdo(int controller, int port)
 {
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
@@ -559,17 +572,21 @@ static void cypd_set_prepare_pdo(int controller, int port)
 		return;
 
 	switch (controller) {
-	case 0:
+	case PD_CHIP_0:
 		if (!port)
 			hook_call_deferred(&pdo_c0p0_deferred_data, 2000 * MSEC);
 		else
 			hook_call_deferred(&pdo_c0p1_deferred_data, 2100 * MSEC);
 		break;
-	case 1:
+	case PD_CHIP_1:
 		if (!port)
 			hook_call_deferred(&pdo_c1p0_deferred_data, 2000 * MSEC);
 		else
 			hook_call_deferred(&pdo_c1p1_deferred_data, 2100 * MSEC);
+		break;
+	case PD_CHIP_GPU:
+		if (!port)
+			hook_call_deferred(&pdo_c2p0_deferred_data, 2100 * MSEC);
 		break;
 	}
 }
@@ -1198,10 +1215,12 @@ static void cypd_handle_state(int controller)
 		}
 		/*try again in a while*/
 		if (delay) {
-			if (controller == 0)
+			if (controller == PD_CHIP_0)
 				hook_call_deferred(&pd0_update_state_deferred_data, delay);
-			else
+			else if (controller == PD_CHIP_1)
 				hook_call_deferred(&pd1_update_state_deferred_data, delay);
+			else if (controller == PD_CHIP_GPU)
+				hook_call_deferred(&pd_gpu_update_state_deferred_data, delay);
 		} else
 			task_set_event(TASK_ID_CYPD, CCG_EVT_STATE_CTRL_0 << controller);
 		break;
@@ -1386,7 +1405,7 @@ int cypd_device_int(int controller)
 				pd_chip_config[controller].state = CCG_STATE_POWER_ON;
 
 			/* Run state handler to set up controller */
-			task_set_event(TASK_ID_CYPD, 4 << controller);
+			task_set_event(TASK_ID_CYPD, CCG_EVT_STATE_CTRL_0 << controller);
 			break;
 		case CCG_RESPONSE_MESSAGE_QUEUE_OVERFLOW:
 			CPRINTS("PD%d Message Overflow", controller);
@@ -1828,7 +1847,8 @@ void cypd_interrupt_handler_task(void *p)
 	}
 
 	/* trigger the handle_state to start setup in task */
-	task_set_event(TASK_ID_CYPD, (CCG_EVT_STATE_CTRL_0 | CCG_EVT_STATE_CTRL_1));
+	task_set_event(TASK_ID_CYPD, (CCG_EVT_STATE_CTRL_0 |
+		CCG_EVT_STATE_CTRL_1 | CCG_EVT_STATE_CTRL_GPU));
 
 	for (i = 0; i < PD_CHIP_COUNT; i++) {
 		cypd_enable_interrupt(i, true);
@@ -1932,9 +1952,25 @@ void cypd_interrupt_handler_task(void *p)
 				cypd_set_typec_profile(1, 1);
 		}
 
+		/**
+		 * below events communicate with the gpu pd chip, ignore those if the
+		 * project does not support GPU PD.
+		 */
+		if (PD_CHIP_COUNT > 2) {
+			if (evt & CCG_EVT_STATE_CTRL_GPU) {
+				cypd_handle_state(2);
+				task_wait_event_mask(TASK_EVENT_TIMER, 10);
+			}
 
-		if (evt & (CCG_EVT_INT_CTRL_0 | CCG_EVT_INT_CTRL_1 |
-					CCG_EVT_STATE_CTRL_0 | CCG_EVT_STATE_CTRL_1)) {
+			if (evt & CCG_EVT_INT_CTRL_GPU)
+				cypd_interrupt(2);
+
+			if (evt & CCG_EVT_PDO_C2P0)
+				cypd_set_typec_profile(2, 0);
+		}
+
+		if (evt & (CCG_EVT_INT_CTRL_0 | CCG_EVT_INT_CTRL_1 | CCG_EVT_INT_CTRL_GPU |
+			CCG_EVT_STATE_CTRL_0 | CCG_EVT_STATE_CTRL_1 | CCG_EVT_STATE_CTRL_GPU)) {
 			/*
 			 * If we just processed an event or sent some commands
 			 * wait a bit for the pd controller to clear any pending
