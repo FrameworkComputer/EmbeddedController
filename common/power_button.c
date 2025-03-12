@@ -9,6 +9,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -67,6 +68,10 @@ static int raw_power_button_pressed(void)
 	 * press the power button through the closed lid.
 	 */
 	if (!lid_is_open())
+		return 0;
+#endif
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_12
+	if (!lid_is_open() && !extpower_is_present())
 		return 0;
 #endif
 

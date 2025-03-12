@@ -245,7 +245,10 @@ static void set_initial_pwrbtn_state(void)
 			return;
 		}
 
-#ifndef CONFIG_POWER_BUTTON_IGNORE_LID
+    /* On Framework 12 we want to ignore the power button in this case anyways,
+     * if AC is not connected.
+     */
+#if !defined(CONFIG_POWER_BUTTON_IGNORE_LID) || CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_12
 		if (!lid_is_open())
 			CPRINTS("PB ignore signal - lid closed");
 			return;
