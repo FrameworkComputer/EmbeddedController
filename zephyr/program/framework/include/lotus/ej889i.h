@@ -11,4 +11,11 @@
 #include "gpu_configuration.h"
 int ej889i_init(struct gpu_subsys_pd *init);
 
+/**
+ * AMD PD chip ej889i interrupt handler
+ *
+ * @param signal interrupt signal
+ */
+void ej889i_interrupt_handler(enum gpio_signal signal);
+
 #endif /* __CROS_EC_EJ889I_H__ */

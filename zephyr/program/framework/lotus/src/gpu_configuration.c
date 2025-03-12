@@ -955,6 +955,7 @@ int parse_gpu_eeprom(void)
 		case GPUCFG_TYPE_PD:
 			{
 				struct gpu_subsys_pd *pd = (struct gpu_subsys_pd *)gpu_read_buff;
+				gpu_update_pd_type(pd->gpu_pd_type);
 				if (pd->gpu_pd_type == PD_TYPE_ETRON_EJ889I) {
 					ej889i_init(pd);
 				}
@@ -987,6 +988,8 @@ int init_parse_gpu_eeprom(void)
 	set_gpu_gpios_configuration();
 
 	set_gpu_gpios_powerstate();
+
+	gpu_set_pd_state();
 
 	control_5valw_power(POWER_REQ_INIT, 0);
 

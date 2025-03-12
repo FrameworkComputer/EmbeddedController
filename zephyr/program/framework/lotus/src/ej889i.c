@@ -153,8 +153,8 @@ void dp_hot_plug_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&dgpu_hot_plug_deferred_data, 100 * MSEC);
 }
 
-/* Currently, the GPU pd interrupt does not function */
-void gpu_pd_interrupt(enum gpio_signal signal)
+/* Currently, the ej889i pd interrupt does not be enabled */
+void ej889i_interrupt_handler(enum gpio_signal signal)
 {
 	CPRINTS("gpu pd interrupt!");
 	hook_call_deferred(&read_gpu_id_data, 50 * MSEC);

@@ -10,6 +10,8 @@
 #include "battery.h"
 #include "chipset.h"
 #include "customized_shared_memory.h"
+#include "cypress_pd_common.h"
+#include "ej889i.h"
 #include "extpower.h"
 #include "gpio/gpio_int.h"
 #include "gpio.h"
@@ -24,6 +26,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "system.h"
+#include "task.h"
 #include "thermal.h"
 #include "gpu_configuration.h"
 
@@ -36,6 +39,7 @@ static int module_fault;
 static int gpu_id_0;
 static int gpu_id_1;
 static int switch_status;
+static enum gpu_pd pd_type = PD_TYPE_INVALID;
 
 bool gpu_power_enable(void)
 {
@@ -140,6 +144,58 @@ void beam_function(void)
 		gpu_interposer_toggle_count = 0;
 }
 
+void gpu_pd_interrupt(enum gpio_signal signal)
+{
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_i2c_s5_int)) == 0) {
+
+		switch (pd_type) {
+		case PD_TYPE_CCG8S:
+			if (pd_chip_config[PD_CHIP_GPU].state != CCG_STATE_NO_POWER)
+				task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_GPU);
+			break;
+		case PD_TYPE_ETRON_EJ889I:
+			ej889i_interrupt_handler(signal);
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+static void gpu_set_pd_state_power_on(void)
+{
+	if (gpu_present() &&
+		gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en))) {
+
+		if (pd_type == PD_TYPE_CCG8S) {
+			cypd_update_chips_state(PD_CHIP_GPU, CCG_STATE_POWER_ON);
+			task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_GPU);
+		}
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, gpu_set_pd_state_power_on, HOOK_PRIO_DEFAULT + 1);
+
+static void gpu_set_pd_state_power_off(void)
+{
+	if (gpu_present()) {
+
+		if (pd_type == PD_TYPE_CCG8S)
+			cypd_update_chips_state(PD_CHIP_GPU, CCG_STATE_NO_POWER);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, gpu_set_pd_state_power_off, HOOK_PRIO_DEFAULT - 1);
+
+void gpu_update_pd_type(enum gpu_pd chip)
+{
+	pd_type = chip;
+}
+
+void gpu_set_pd_state(void)
+{
+	if (pd_type != PD_TYPE_INVALID && !chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		gpu_set_pd_state_power_on();
+}
+
 void check_gpu_module(void)
 {
 
@@ -215,6 +271,8 @@ void beam_open_interrupt(enum gpio_signal signal)
 	if (!open_state) {
 		/* Make sure the module is off as fast as possible! */
 		LOG_DBG("Powering off GPU");
+		gpu_set_pd_state_power_off();
+		gpu_update_pd_type(PD_TYPE_INVALID);
 		deinit_gpu_module();
 		switch_status = 0;
 	} else {
@@ -274,10 +332,6 @@ static void start_smart_access_graphic(void)
 		hook_call_deferred(&gpu_smart_access_graphic_data, 10 * MSEC);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, start_smart_access_graphic, HOOK_PRIO_DEFAULT);
-
-
-
-
 
 static enum ec_status host_command_expansion_bay_status(struct host_cmd_handler_args *args)
 {

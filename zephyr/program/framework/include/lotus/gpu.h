@@ -32,4 +32,17 @@ bool gpu_fan_board_present(void);
 
 void update_gpu_ac_mode_deferred(int times);
 
+/**
+ * Updated the GPU PD type when the GPU init/deinit
+ *
+ * @param type which PD chips on the GPU module
+ */
+void gpu_update_pd_type(enum gpu_pd chip);
+
+/**
+ * Set the PD chip state after gpu configure the GPIO
+ * to ensure the PD is powered on.
+ */
+void gpu_set_pd_state(void);
+
 #endif /* __BOARD_GPU_H__ */
