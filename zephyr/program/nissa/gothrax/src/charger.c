@@ -57,7 +57,6 @@ __override void board_hibernate(void)
 	cflush();
 }
 
-#ifndef CONFIG_ZTEST
 #define MAX_POWER_65W 20000
 #define DEFAULT_POWER 15000
 #define IS_SKU_ID_IN_RANGE(sku_id) \
@@ -103,4 +102,3 @@ static void adapter_voltage_limit(void)
 }
 
 DECLARE_HOOK(HOOK_INIT, adapter_voltage_limit, HOOK_PRIO_DEFAULT - 1);
-#endif

@@ -24,6 +24,9 @@ tests:
     extra_configs:
       - CONFIG_TEST_BOARD_GOTHRAX=y
       - CONFIG_TEST_EXTPOWER=y
+    extra_dtc_overlay_files:
+      - boards/native_sim.overlay
+      - boards/charger.gothrax.overlay
 
   isl923x.extpower.nissa.nivviks:
     extra_configs:
