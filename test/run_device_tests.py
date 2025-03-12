@@ -1770,6 +1770,12 @@ def main():
 
             print(colorama.Style.RESET_ALL)
 
+        if exit_code != 0:
+            print(
+                f"Tests failed for {args.board}"
+                f'{" Zephyr" if args.zephyr else ""}'
+                f'{" Renode" if args.renode else ""}'
+            )
         # TODO(b/368684364): Fix the underlying issue that prevents sys.exit()
         # from working correctly.
         os._exit(exit_code)  # pylint: disable=protected-access
