@@ -10,6 +10,7 @@
 #include "uefi_app_mode.h"
 #include "gpio.h"
 #include "gpio/gpio_int.h"
+#include "hooks.h"
 
 static uint8_t uefi_app_enable;
 
@@ -26,6 +27,16 @@ void uefi_app_mode_setting(uint8_t enable)
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_powerbtn));
 	}
 }
+
+/* If UEFI app doesn't cleanly exit, need to exit UEFI mode */
+/* Usually that would be the app crashing and system resetting */
+static void uefi_mode_reset(void)
+{
+	uefi_app_mode_setting(false);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, uefi_mode_reset, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESET, uefi_mode_reset, HOOK_PRIO_DEFAULT);
+
 
 uint8_t uefi_app_btn_status(void)
 {
