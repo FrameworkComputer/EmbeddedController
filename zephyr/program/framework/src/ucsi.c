@@ -316,6 +316,7 @@ int ucsi_read_tunnel(int controller)
 {
 	int rv, port_indicator;
 	int new_port = 0;
+	int support_max_port = pd_chip_config[controller].support_max_port;
 
 	if (ucsi_debug_enable && pd_chip_ucsi_info[controller].read_tunnel_complete == 1 &&
 		(pd_chip_ucsi_info[controller].cci & CCI_BUSY_FLAG) == 0) {
@@ -329,9 +330,9 @@ int ucsi_read_tunnel(int controller)
 		CPRINTS("CCI_REG failed");
 	/* we need to offset the pd connector number to correct number */
 	port_indicator = (pd_chip_ucsi_info[controller].cci & 0xFE)>>1;
-	if (port_indicator <= 0 || port_indicator > PORTS_PER_CONTROLLER) {
+	if (port_indicator <= 0 || port_indicator > support_max_port) {
 		/* Print the invalid port for debugging */
-		if (ucsi_debug_enable && port_indicator > PORTS_PER_CONTROLLER)
+		if (ucsi_debug_enable && port_indicator > support_max_port)
 			CPRINTS("UCSI read invalid type-c port:%d", port_indicator);
 	} else {
 		new_port = (pd_ucsi_port_map[controller*2+port_indicator-1]);

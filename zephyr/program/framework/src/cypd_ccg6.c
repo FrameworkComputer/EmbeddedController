@@ -195,6 +195,10 @@ int cypd_setup(int controller)
 			CCG_DEV_INTR + CCG_PORT0_INTR + CCG_PORT1_INTR + CCG_UCSI_INTR);
 	}
 	for (i = 0; i < CYPD_SETUP_CMDS_LEN; i++) {
+
+		if ((i % 2) >= pd_chip_config[controller].support_max_port)
+			continue;
+
 		rv = cypd_write_reg_block(controller, cypd_setup_cmds[i].reg,
 		(void *)&cypd_setup_cmds[i].value, cypd_setup_cmds[i].length);
 		if (rv != EC_SUCCESS) {

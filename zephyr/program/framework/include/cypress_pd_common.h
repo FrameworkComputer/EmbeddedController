@@ -224,9 +224,6 @@
 /************************************************/
 #define PORT_TO_CONTROLLER(x) ((x) >> 1)
 #define PORT_TO_CONTROLLER_PORT(x) ((x) & 0x01)
-#define PORTS_PER_CONTROLLER 2
-#define CONTROLLER_PORT_TO_CHARGE_PORT(controller, port) \
-	(controller * PORTS_PER_CONTROLLER + port)
 
 /************************************************/
 /*  CCG6 special setting                        */
@@ -521,6 +518,7 @@ enum pd_progress {
 struct pd_chip_config_t {
 	uint16_t i2c_port;
 	uint16_t addr_flags;
+	uint8_t support_max_port;
 	enum ccg_pd_state state;
 	int gpio;
 	uint8_t version[8];

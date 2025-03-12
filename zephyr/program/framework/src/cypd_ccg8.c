@@ -156,6 +156,10 @@ int cypd_setup(int controller)
 			CCG_DEV_INTR + CCG_PORT0_INTR + CCG_PORT1_INTR + CCG_UCSI_INTR);
 	}
 	for (i = 0; i < CYPD_SETUP_CMDS_LEN; i++) {
+
+		if ((i % 2) >= pd_chip_config[controller].support_max_port)
+			continue;
+
 		rv = cypd_write_reg_block(controller, cypd_setup_cmds[i].reg,
 		(void *)&cypd_setup_cmds[i].value, cypd_setup_cmds[i].length);
 		if (rv != EC_SUCCESS) {
@@ -271,6 +275,7 @@ void clear_erp_progress(void)
 static void epr_flow_pending_deferred(void)
 {
 	int port_idx;
+	int charge_port = get_active_charge_pd_port();
 
 	/**
 	 * Sometimes, EC does not receive the EPR event/NOT support event from PD chip.
@@ -283,10 +288,12 @@ static void epr_flow_pending_deferred(void)
 				pd_port_states[port_idx].epr_retry_count = 0;
 				pd_port_states[port_idx].epr_support = 0;
 				pd_epr_in_progress &= EPR_PROCESS_MASK;
-				if (get_active_charge_pd_port() != -1)
-					cypd_update_port_state(
-						(get_active_charge_pd_port() & 0x02) >> 1,
-						get_active_charge_pd_port() & BIT(0));
+				if (charge_port != -1) {
+					int controller = PORT_TO_CONTROLLER(charge_port);
+					int port = PORT_TO_CONTROLLER_PORT(charge_port);
+
+					cypd_update_port_state(controller, port);
+				}
 			}
 			/**
 			 * There is a low risk situation.

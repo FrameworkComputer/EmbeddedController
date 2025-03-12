@@ -1193,33 +1193,34 @@ static void cypd_handle_state(int controller)
 		break;
 
 	case CCG_STATE_APP_SETUP:
-			gpio_disable_interrupt(pd_chip_config[controller].gpio);
-			cypd_get_version(controller);
-			cypd_update_power_status(controller);
+		gpio_disable_interrupt(pd_chip_config[controller].gpio);
+		cypd_get_version(controller);
+		cypd_update_power_status(controller);
 
-			update_system_power_state(controller);
-			cypd_setup(controller);
+		update_system_power_state(controller);
+		cypd_setup(controller);
 
-			cypd_customize_app_setup(controller);
+		cypd_customize_app_setup(controller);
 
-			/* After initial complete, update the type-c port state */
-			cypd_update_port_state(controller, 0);
-			cypd_update_port_state(controller, 1);
+		/* After initial complete, update the type-c port state */
+		for (int port = 0; port < pd_chip_config[controller].support_max_port; port++) {
+			cypd_update_port_state(controller, port);
+		}
 
-			ucsi_startup(controller);
+		ucsi_startup(controller);
 
-			gpio_enable_interrupt(pd_chip_config[controller].gpio);
+		gpio_enable_interrupt(pd_chip_config[controller].gpio);
 
-			/* Update PDO format after init complete */
-			if (controller) {
+		/* Update PDO format after init complete */
+		if (controller) {
 #ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
-				hook_call_deferred(&pd_batt_init_deferred_data, 100 * MSEC);
+			hook_call_deferred(&pd_batt_init_deferred_data, 100 * MSEC);
 #endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
-				hook_call_deferred(&pdo_init_deferred_data, 25 * MSEC);
-			}
+			hook_call_deferred(&pdo_init_deferred_data, 25 * MSEC);
+		}
 
-			CPRINTS("CYPD %d Ready!", controller);
-			pd_chip_config[controller].state = CCG_STATE_READY;
+		CPRINTS("CYPD %d Ready!", controller);
+		pd_chip_config[controller].state = CCG_STATE_READY;
 		break;
 	case CCG_STATE_NO_POWER:
 		CPRINTS("CYPD %d no power!", controller);
@@ -1873,7 +1874,8 @@ void cypd_interrupt_handler_task(void *p)
 		if (evt & CCG_EVT_PDO_INIT_1) {
 			/* update new PDO format to select pdo register */
 			for (i = 0; i < PD_CHIP_COUNT; i++) {
-				if (cypd_contoller_is_powered(i))
+				if (cypd_contoller_is_powered(i) &&
+				    pd_chip_config[i].support_max_port == 2)
 					cypd_pdo_init(i, 1, CCG_PD_CMD_SET_TYPEC_3A);
 			}
 
@@ -2049,6 +2051,19 @@ int get_pd_alt_mode_status(int port)
 	return alt_mode_status;
 }
 
+static int cypd_controller_port_to_charge_port(int controller, int port)
+{
+	int charge_port = 0;
+	int pd_chip;
+
+	for (pd_chip = 0; pd_chip < controller; pd_chip++)
+		charge_port += pd_chip_config[pd_chip].support_max_port;
+
+	charge_port += port;
+
+	return charge_port;
+}
+
 void perform_error_recovery(int controller)
 {
 	int port;
@@ -2064,9 +2079,9 @@ void perform_error_recovery(int controller)
 	 * Hard reset all ports that are not supplying power in dead battery mode or
 	 * battery percentage less than 1%.
 	 */
-	for (port = 0; port < PORTS_PER_CONTROLLER; port++) {
+	for (port = 0; port < pd_chip_config[controller].support_max_port; port++) {
 #ifdef CONFIG_PLATFORM_EC_BATTERY
-		if (CONTROLLER_PORT_TO_CHARGE_PORT(controller, port) ==
+		if (cypd_controller_port_to_charge_port(controller, port) ==
 			get_active_charge_pd_port() &&
 		    (battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED ||
 		    (get_system_percentage() / 10) < 1))
@@ -2144,7 +2159,7 @@ static int cmd_cypd_get_status(int argc, const char **argv)
 			CPRINTS("CCG_ICL_STS_REG: 0x%04x", data);
 			cypd_read_reg8(i, CCG_SYS_PWR_STATE, &data);
 			CPRINTS("CYPD_SYS_PWR_STATE: 0x%02x", data);
-			for (p = 0; p < 2; p++) {
+			for (p = 0; p < pd_chip_config[i].support_max_port; p++) {
 				CPRINTS("=====Port %d======", p);
 				cypd_read_reg_block(i, CCG_PD_STATUS_REG(p), data16, 4);
 				CPRINTS("PD_STATUS %s DataRole:%s PowerRole:%s Vconn:%s Partner:%s EPR:%s %sCable:%s",
