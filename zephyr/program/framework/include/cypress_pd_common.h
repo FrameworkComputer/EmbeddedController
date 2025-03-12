@@ -959,8 +959,9 @@ void cypd_enable_interrupt(int controller, int enable_ndisable);
  * Update the PD chips state
  *
  * @param controller The PD chip for which to update the chip state
+ * @param state The PD chip state that wants to change
  */
-void cypd_update_chips_state(enum ccg_pd_state state);
+void cypd_update_chips_state(int controller, enum ccg_pd_state state);
 
 /**
  * CCD mode control

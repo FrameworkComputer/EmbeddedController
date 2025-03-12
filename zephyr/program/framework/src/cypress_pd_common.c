@@ -1116,12 +1116,26 @@ void cypd_set_power_active(void)
 	task_set_event(TASK_ID_CYPD, CCG_EVT_S_CHANGE);
 }
 
-void cypd_update_chips_state(enum ccg_pd_state state)
+void cypd_update_chips_state(int controller, enum ccg_pd_state state)
 {
-	int controller;
+	pd_chip_config[controller].state = state;
 
-	for (controller = 0; controller < PD_CHIP_COUNT; controller++)
-		pd_chip_config[controller].state = state;
+	/* Shuold clear the type-c status and update charge_manager */
+	if (state == CCG_STATE_NO_POWER) {
+		for (int port = 0; port < pd_chip_config[controller].support_max_port; port++) {
+			int port_idx = (controller << 1) + port;
+
+			clear_port_state(controller, port);
+			if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
+				typec_set_input_current_limit(port_idx, 0, 0);
+				charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
+					CHARGE_CEIL_NONE);
+				charge_manager_update_dualrole(port_idx, CAP_UNKNOWN);
+			}
+
+			cypd_enable_interrupt(controller, 0);
+		}
+	}
 }
 
 __overridable void cypd_customize_app_setup(int controller)
