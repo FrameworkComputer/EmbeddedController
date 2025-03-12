@@ -273,6 +273,7 @@
 		};
 		gpio_gpu_i2c_s5_int: gpu_i2c_s5_int {
 			gpios = <&gpioa 5 GPIO_INPUT>;
+			enum-name = "GPIO_EC_GPU_PD_INT_L";
 		};
 		gpio_usb_hub_re_en: usb_hub_re_en {
 			gpios = <&gpiob 0 GPIO_OUTPUT_LOW>;

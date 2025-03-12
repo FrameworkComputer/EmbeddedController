@@ -102,6 +102,10 @@
 			compatible = "named-usbc-port";
 			reg = <3>;
 		};
+		usbc_port4: port4@4 {
+			compatible = "named-usbc-port";
+			reg = <4>;
+		};
 	};
 	named-bbram-regions {
 		compatible = "named-bbram-regions";

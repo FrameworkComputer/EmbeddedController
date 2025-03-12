@@ -76,8 +76,8 @@ if(DEFINED CONFIG_BOARD_LOTUS OR DEFINED CONFIG_BOARD_TULIP)
 			"lotus/src/thermal.c"
 			"lotus/src/gpu_configuration.c"
 			"lotus/src/gpu_f75303.c"
-			"src/usbc_4port_config.c"
-			"src/ucsi_port_13.c"
+			"src/usbc_5port_config.c"
+			"src/ucsi_port_16.c"
 			"src/temperature_filter.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT

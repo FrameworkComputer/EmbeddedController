@@ -45,7 +45,8 @@
 		};
 		i2c_gpu0: gpu0 {
 			i2c-port = <&i2c5_0>;
-			enum-names = "I2C_PORT_GPU0";
+			enum-names = "I2C_PORT_GPU0",
+				"I2C_PORT_PD_MCU2";
 		};
 		i2c_gpu1: gpu1 {
 			i2c-port = <&i2c6_1>;

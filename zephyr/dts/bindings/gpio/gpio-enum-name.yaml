@@ -144,6 +144,7 @@ properties:
       - GPIO_WP_L
       - GPIO_EC_PD_INTA_L
       - GPIO_EC_PD_INTB_L
+      - GPIO_EC_GPU_PD_INT_L
       - IOEX_USB_A1_RETIMER_EN
       - IOEX_USB_C0_BB_RETIMER_LS_EN
       - IOEX_USB_C0_BB_RETIMER_RST
