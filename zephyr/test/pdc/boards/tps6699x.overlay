@@ -8,7 +8,7 @@
 /{
         /* Leverage 'zephyr,user' node for driver specific behavior */
         zephyr,user {
-                test_timeout = <1000>;
+                test_timeout = <1250>;
                 /* TI PDC Info */
                 pd_version = <0>;
                 pd_revision = <0>;
