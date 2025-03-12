@@ -11,17 +11,21 @@
 			i2c-port = <&i2c0_0>;
 			enum-names = "I2C_PORT_EEPROM";
 		};
-		i2c_ec_i2c_sensor: ec_i2c_sensor {
+		i2c_ec_i2c_thermal: ec_i2c_thermal {
 			i2c-port = <&i2c1_0>;
+			enum-names = "I2C_PORT_THERMAL";
+		};
+		i2c_ec_i2c_sensor: ec_i2c_sensor {
+			i2c-port = <&i2c2_0>;
 			enum-names = "I2C_PORT_SENSOR";
 		};
 		i2c_ec_i2c_pd_prog: ec_i2c_pd_prog {
 			i2c-port = <&i2c3_0>;
 			enum-names = "I2C_PORT_PD";
 		};
-		i2c_i2c_ec_pmc_pd: i2c_ec_pmc_pd {
+		i2c_i2c_ec_ish: i2c_ec_ish {
 			i2c-port = <&i2c4_1>;
-			enum-names = "I2C_PORT_PMC_PD";
+			enum-names = "I2C_PORT_ISH";
 		};
 		i2c_ec_i2c_batt: ec_i2c_batt {
 			i2c-port = <&i2c7_0>;
@@ -39,6 +43,12 @@
 &i2c1_0 {
 	status = "okay";
 	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
+	pinctrl-names = "default";
+};
+
+&i2c2_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
 	pinctrl-names = "default";
 };
 
@@ -65,6 +75,10 @@
 };
 
 &i2c_ctrl1 {
+	status = "okay";
+};
+
+&i2c_ctrl2 {
 	status = "okay";
 };
 

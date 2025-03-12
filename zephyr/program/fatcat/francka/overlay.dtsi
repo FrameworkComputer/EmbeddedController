@@ -31,12 +31,12 @@
 };
 
 &i2c1_0 {
-	label = "I2C_SENSOR";
+	label = "I2C_THERMAL";
 	clock-frequency = <I2C_BITRATE_FAST>;
 };
 
 &i2c2_0 {
-	label = "I2C_THERMAL";
+	label = "I2C_SENSOR";
 	clock-frequency = <I2C_BITRATE_FAST>;
 };
 
@@ -58,6 +58,7 @@
 };
 
 &i2c4_1 {
+	label = "I2C_ISH";
 	clock-frequency = <I2C_BITRATE_FAST>;
 };
 
