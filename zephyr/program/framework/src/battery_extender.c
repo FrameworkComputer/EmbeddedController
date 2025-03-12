@@ -192,8 +192,11 @@ static enum ec_status battery_extender_hc(struct host_cmd_handler_args *args)
 		if (batt_extender_disable != p->disable) {
 			batt_extender_disable = p->disable;
 			if (batt_extender_disable) {
-				battery_sustainer_set(-1, -1);
-				set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+				/* if charger limit has been set don't control sustainer again */
+				if (charger_sustainer_percentage() == 100) {
+					battery_sustainer_set(-1, -1);
+					set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+				}
 				stage = BATT_EXTENDER_STAGE_0;
 			}
 		}
