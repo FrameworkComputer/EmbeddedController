@@ -159,7 +159,8 @@ common-$(CONFIG_SHA256_SW)+=sha256.o
 common-$(CONFIG_SOFTWARE_CLZ)+=clz.o
 common-$(CONFIG_SOFTWARE_CTZ)+=ctz.o
 common-$(CONFIG_CMD_SPI_XFER)+=spi_commands.o
-common-$(CONFIG_SPI_FLASH)+=spi_flash.o
+common-$(CONFIG_SPI_FLASH)+=spi_flash.o spi_flash_reg.o
+common-$(CONFIG_SPI_FLASH_REGS)+=spi_flash_reg.o
 common-$(CONFIG_SPI_NOR)+=spi_nor.o
 common-$(CONFIG_SWITCH)+=switch.o
 common-$(CONFIG_SW_CRC)+=crc.o
@@ -338,7 +339,6 @@ endif
 
 include $(_common_dir)fpsensor/build.mk
 include $(_common_dir)usbc/build.mk
-include $(_common_dir)spi/build.mk
 include $(_common_dir)mock/build.mk
 
 $(eval $(call vars_from_dir,common,usbc,common-usbc))

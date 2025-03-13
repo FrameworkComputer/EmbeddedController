@@ -493,6 +493,7 @@ def main():
             sys.stdout.flush()
 
         # Invoke Twister and wait for it to exit.
+        print("Running: " + " ".join(twister_cli))
         result = subprocess.run(
             twister_cli,
             env=twister_env,
