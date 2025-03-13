@@ -6,7 +6,7 @@
 # pylint:disable=too-many-lines
 
 """Program to fetch power logging data from a sweetberry device
-   or other usb device that exports a USB power logging interface.
+or other usb device that exports a USB power logging interface.
 """
 
 import argparse

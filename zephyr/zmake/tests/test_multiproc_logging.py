@@ -43,9 +43,9 @@ def test_read_output_change_log_level():
         logger=logger,
         log_level=logging.DEBUG,
         file_descriptor=file_desc,
-        log_level_override_func=lambda line, lvl: logging.CRITICAL
-        if line.startswith("World")
-        else lvl,
+        log_level_override_func=lambda line, lvl: (
+            logging.CRITICAL if line.startswith("World") else lvl
+        ),
         job_id="",
     )
     os.write(pipe[1], "Hello\n".encode("utf-8"))

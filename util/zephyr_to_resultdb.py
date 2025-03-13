@@ -3,12 +3,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-""" Upload twister results to ResultDB
+"""Upload twister results to ResultDB
 
-    Usage:
-    $ rdb stream -new -realm chromium:public -tag builder_name:${HOSTNAME%%.*}
-      -- ./util/zephyr_to_resultdb.py --results=twister-out/twister.json
-      --upload=True
+Usage:
+$ rdb stream -new -realm chromium:public -tag builder_name:${HOSTNAME%%.*}
+  -- ./util/zephyr_to_resultdb.py --results=twister-out/twister.json
+  --upload=True
 """
 
 import argparse

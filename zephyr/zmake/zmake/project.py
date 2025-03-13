@@ -285,7 +285,7 @@ def load_config_file(path) -> typing.List[Project]:
 
 
 def find_projects(
-    root_dirs: typing.List[typing.Union[str, os.PathLike]]
+    root_dirs: typing.List[typing.Union[str, os.PathLike]],
 ) -> typing.Dict[str, Project]:
     """Finds all zmake projects in root_dir.
 

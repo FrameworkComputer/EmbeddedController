@@ -4,7 +4,7 @@
 # found in the LICENSE file.
 
 """Program to convert power logging config from a servo_ina device
-   to a sweetberry config.
+to a sweetberry config.
 """
 
 import os

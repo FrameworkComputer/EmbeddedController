@@ -560,9 +560,9 @@ class Zmake:
                         module_paths["nanopb"]
                     )
                 if ec_version_flags:
-                    default_cmake_defs[
-                        "EXTRA_EC_VERSION_FLAGS"
-                    ] = util.repr_command(ec_version_flags)
+                    default_cmake_defs["EXTRA_EC_VERSION_FLAGS"] = (
+                        util.repr_command(ec_version_flags)
+                    )
                 base_config = zmake.build_config.BuildConfig(
                     cmake_defs=default_cmake_defs
                 )
