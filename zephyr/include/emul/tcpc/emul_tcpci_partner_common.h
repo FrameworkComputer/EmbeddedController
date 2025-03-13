@@ -429,7 +429,7 @@ void tcpci_partner_set_header(struct tcpci_partner_data *data,
  *
  * @param data Pointer to TCPCI partner emulator
  * @param msg Pointer to message to send
- * @param delay Optional delay
+ * @param delay Optional delay in milliseconds
  *
  * @return TCPCI_EMUL_TX_SUCCESS on success
  * @return TCPCI_EMUL_TX_FAILED when TCPCI is configured to not handle
@@ -444,7 +444,7 @@ int tcpci_partner_send_msg(struct tcpci_partner_data *data,
  *
  * @param data Pointer to TCPCI partner emulator
  * @param type Type of message
- * @param delay Optional delay
+ * @param delay Optional delay in milliseconds
  *
  * @return TCPCI_EMUL_TX_SUCCESS on success
  * @return TCPCI_EMUL_TX_FAILED when TCPCI is configured to not handle
