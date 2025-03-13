@@ -257,10 +257,10 @@
 };
 
 &pinctrl {
-	i2c2_clk_gpf6_default: i2c2_clk_gpf6_default {
+	i2c0_clk_gpb3_default: i2c0_clk_gpb3_default {
 		gpio-voltage = "1v8";
 	};
-	i2c2_data_gpf7_default: i2c2_data_gpf7_default {
+	i2c0_data_gpb4_default: i2c0_data_gpb4_default {
 		gpio-voltage = "1v8";
 	};
 	i2c4_clk_gpe0_default: i2c4_clk_gpe0_default {
