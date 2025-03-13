@@ -26,7 +26,7 @@ static void opm_notify(void *context)
 }
 
 /* Sort of main */
-test_export_static int eppm_init(void)
+int eppm_init(void)
 {
 	const struct ucsi_pd_driver *drv;
 	const struct device *pdc_dev;
@@ -56,7 +56,6 @@ test_export_static int eppm_init(void)
 
 	return 0;
 }
-SYS_INIT(eppm_init, APPLICATION, 99);
 
 static enum ec_status hc_ucsi_ppm_set(struct host_cmd_handler_args *args)
 {
