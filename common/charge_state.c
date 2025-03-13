@@ -1962,7 +1962,8 @@ int charge_set_input_current_limit(int ma, int mv)
 #endif
 
 #if !defined(CONFIG_CHARGER_BYPASS_MODE) || !defined(CONFIG_CUSTOMIZED_DESIGN)
-	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
+	if (IS_ENABLED(CONFIG_CHARGE_MANAGER) &&
+		!IS_ENABLED(CONFIG_CHARGER_ALLOW_LARGE_CURRENT)) {
 		int pd_current_uncapped =
 			charge_manager_get_pd_current_uncapped();
 

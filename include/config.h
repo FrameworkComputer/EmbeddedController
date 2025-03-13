@@ -1330,6 +1330,12 @@
  */
 #undef CONFIG_CHARGER_BYPASS_MODE
 
+/*
+ * Select this option if the charger needs to allow large current.
+ * Do not clamp the input current and allow to exceed the PD's limitation.
+ */
+#undef CONFIG_CHARGER_ALLOW_LARGE_CURRENT
+
 /* Set this option when using a Narrow VDC (NVDC) charger, such as ISL9237/8. */
 #undef CONFIG_CHARGER_NARROW_VDC
 
