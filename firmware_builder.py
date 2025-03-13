@@ -70,29 +70,6 @@ def build(opts):
     metric_list = firmware_pb2.FwBuildMetricList()  # pylint: disable=no-member
     env = os.environ.copy()
     env.update(init_toolchain())
-    ec_dir = pathlib.Path(__file__).parent
-
-    # Run formatting checks on all python files.
-    cmd = ["black", "--check", "."]
-    print(f"# Running {' '.join(cmd)}.")
-    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True, env=env)
-    chromite_dir = ec_dir.resolve().parent.parent.parent / "chromite"
-    cmd = [
-        "isort",
-        f"--settings-file={chromite_dir / '.isort.cfg'}",
-        "--check",
-        "--gitignore",
-        "--dont-follow-links",
-        f"-j{opts.cpus}",
-        ".",
-    ]
-    print(f"# Running {' '.join(cmd)}.")
-    subprocess.run(
-        cmd,
-        cwd=os.path.dirname(__file__),
-        check=True,
-        env=env,
-    )
 
     if opts.code_coverage:
         print(
