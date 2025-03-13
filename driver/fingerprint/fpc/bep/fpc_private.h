@@ -18,6 +18,7 @@ extern "C" {
 
 /* External capture types from FPC's sensor library */
 enum fpc_capture_type {
+	FPC_CAPTURE_TYPE_INVALID = -1,
 	FPC_CAPTURE_VENDOR_FORMAT = 0,
 	FPC_CAPTURE_SIMPLE_IMAGE = 1,
 	FPC_CAPTURE_PATTERN0 = 2,
