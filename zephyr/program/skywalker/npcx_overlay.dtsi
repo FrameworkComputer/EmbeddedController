@@ -74,3 +74,15 @@
 	offset = <0x3e000>;
 	size = <0x1000>;
 };
+
+&pwm0_gpc3 {
+	drive-open-drain;
+};
+
+&pwm1_gpc2 {
+	drive-open-drain;
+};
+
+&pwm2_gpc4 {
+	drive-open-drain;
+};

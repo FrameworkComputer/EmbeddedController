@@ -103,15 +103,6 @@
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
 			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
 		};
-		gpio_ec_led1_odl: ec_led1_odl {
-			gpios = <&gpioc 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
-		};
-		gpio_ec_led2_odl: ec_led2_odl {
-			gpios = <&gpioc 2 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
-		};
-		gpio_ec_led3_odl: ec_led3_odl {
-			gpios = <&gpioc 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
-		};
 		gpio_ec_pen_chg_dis_odl: ec_pen_chg_dis_odl {
 			gpios = <&gpioe 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
 		};
@@ -261,6 +252,24 @@
 
 &i2c_ctrl5 {
 	status = "okay";
+};
+
+&pwm0 {
+	status = "okay";
+	pinctrl-0 = <&pwm0_gpc3>;
+	pinctrl-names = "default";
+};
+
+&pwm1 {
+	status = "okay";
+	pinctrl-0 = <&pwm1_gpc2>;
+	pinctrl-names = "default";
+};
+
+&pwm2 {
+	status = "okay";
+	pinctrl-0 = <&pwm2_gpc4>;
+	pinctrl-names = "default";
 };
 
 &pwm3 {
