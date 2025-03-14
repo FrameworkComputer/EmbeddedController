@@ -257,7 +257,7 @@ def find_i2c_portmap(edtlib, edt):
         named_i2c_ports = edt.get_node("/named-i2c-ports")
     except edtlib.EDTError:
         # If the named-i2c-ports node doesn't exist, return success.
-        logging.error("No named-i2c-ports node found")
+        logging.info("No named-i2c-ports node found")
         return {}
 
     # These compats are EC-chip-specific. List all the compats here.
