@@ -296,6 +296,12 @@ class Zmake:
             project_names,
             all_projects=all_projects,
         )
+
+        if len(projects) > 1:
+            # Turn on job names for multi-project builds so build logs can be
+            # clearly distinguished.
+            zmake.multiproc.LogWriter.set_job_name_logging(True)
+
         for project in projects:
             project_build_dir = (
                 pathlib.Path(build_dir) / project.config.project_name
@@ -424,6 +430,11 @@ class Zmake:
         if (len(project_names)) == 0 and not all_projects:
             self.logger.info("No projects to compare, exiting.")
             return 0
+
+        if len(project_names) > 1:
+            # Turn on job names for multi-project comparisons so build logs
+            # can be clearly distinguished.
+            zmake.multiproc.LogWriter.set_job_name_logging(True)
 
         self.logger.info("Compare zephyr builds")
 
@@ -612,7 +623,9 @@ class Zmake:
                 if not generated_include_dir.exists():
                     generated_include_dir.mkdir()
                 self.logger.info(
-                    "Building %s in %s.", project.config.project_name, build_dir
+                    "[%s] Building in %s.",
+                    project.config.project_name,
+                    build_dir,
                 )
                 # To reconstruct a Project object later, we need to know the
                 # name and project directory.
@@ -682,7 +695,7 @@ class Zmake:
             if config_json_file.is_file():
                 if config_json_file.read_text() == config_json:
                     self.logger.info(
-                        "Skip reconfiguring %s:%s due to previous cmake run of "
+                        "[%s:%s] Skip reconfiguring due to previous cmake run of "
                         "equivalent configuration.  Run with --clobber if this "
                         "optimization is undesired.",
                         project.config.project_name,
@@ -700,7 +713,7 @@ class Zmake:
                 shutil.rmtree(output_dir)
 
             self.logger.info(
-                "Configuring %s:%s.",
+                "[%s:%s] Configuring.",
                 project.config.project_name,
                 build_name,
             )
@@ -877,7 +890,7 @@ class Zmake:
             if coverage:
                 cmd.append("all.libraries")
             self.logger.info(
-                "Building %s:%s: %s",
+                "[%s:%s] Building: %s",
                 project.config.project_name,
                 build_name,
                 util.repr_command(cmd),

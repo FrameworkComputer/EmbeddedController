@@ -80,6 +80,8 @@ def test_read_output_from_second_pipe():
     logger = mock.Mock(spec=logging.Logger)
     logger.log.side_effect = lambda log_lvl, fmt, id, line: semaphore.release()
 
+    zmake.multiproc.LogWriter.set_job_name_logging(True)
+
     zmake.multiproc.LogWriter.log_output(
         logger, logging.DEBUG, fds[0], job_id="0"
     )
@@ -89,7 +91,7 @@ def test_read_output_from_second_pipe():
 
     os.write(pipes[1][1], "Hello\n".encode("utf-8"))
     semaphore.acquire()  # pylint: disable=consider-using-with
-    logger.log.assert_called_with(logging.ERROR, "[%s]%s", "1", "Hello")
+    logger.log.assert_called_with(logging.ERROR, "[%s] %s", "1", "Hello")
 
 
 def test_read_output_after_another_pipe_closed():
@@ -109,6 +111,8 @@ def test_read_output_after_another_pipe_closed():
     logger = mock.Mock(spec=logging.Logger)
     logger.log.side_effect = lambda log_lvl, fmt, id, line: semaphore.release()
 
+    zmake.multiproc.LogWriter.set_job_name_logging(True)
+
     zmake.multiproc.LogWriter.log_output(
         logger, logging.DEBUG, fds[0], job_id="0"
     )
@@ -119,4 +123,4 @@ def test_read_output_after_another_pipe_closed():
     fds[0].close()
     os.write(pipes[1][1], "Hello\n".encode("utf-8"))
     semaphore.acquire()  # pylint: disable=consider-using-with
-    logger.log.assert_called_with(logging.ERROR, "[%s]%s", "1", "Hello")
+    logger.log.assert_called_with(logging.ERROR, "[%s] %s", "1", "Hello")

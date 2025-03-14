@@ -177,12 +177,12 @@ class TestFilters:
         # TODO: Remove sets and figure out how to check the lines are in the
         # right order.
         expected = {
-            "Configuring fakeproject:rw.",
-            "Configuring fakeproject:ro.",
-            f"Building fakeproject in {tmp_path}/ec/build/zephyr/fakeproject.",
-            "Building fakeproject:ro: /usr/bin/ninja -C "
+            "[fakeproject:rw] Configuring.",
+            "[fakeproject:ro] Configuring.",
+            f"[fakeproject] Building in {tmp_path}/ec/build/zephyr/fakeproject.",
+            "[fakeproject:ro] Building: /usr/bin/ninja -C "
             f"{tmp_path / 'ec/build/zephyr/fakeproject/build'}-ro",
-            "Building fakeproject:rw: /usr/bin/ninja -C "
+            "[fakeproject:rw] Building: /usr/bin/ninja -C "
             f"{tmp_path / 'ec/build/zephyr/fakeproject/build'}-rw",
         }
         for suffix in ["ro", "rw"]:
@@ -190,7 +190,7 @@ class TestFilters:
                 get_test_filepath(f"{suffix}_INFO"), encoding="utf-8"
             ) as file:
                 for line in file:
-                    expected.add(f"[fakeproject:{suffix}]{line.strip()}")
+                    expected.add(f"[fakeproject:{suffix}] {line.strip()}")
         # This produces an easy-to-read diff if there is a difference
         assert expected == set(recs)
 

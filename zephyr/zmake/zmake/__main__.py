@@ -422,9 +422,9 @@ def main(argv=None):
         log_label = opts.log_label
     if log_label:
         log_format = "%(levelname)s: %(message)s"
+        multiproc.LogWriter.set_job_name_logging(True)
     else:
         log_format = "%(message)s"
-        multiproc.LOG_JOB_NAMES = False
 
     logging.basicConfig(format=log_format, level=opts.log_level)
     # Create the jobserver client BEFORE any pipes get opened in LogWriter

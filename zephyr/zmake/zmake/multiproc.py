@@ -19,10 +19,6 @@ import threading
 from typing import Any, ClassVar, Dict, List
 
 
-# Should we log job names or not
-LOG_JOB_NAMES = True
-
-
 class LogWriter:
     """Contains information about a file descriptor that is producing output
 
@@ -53,6 +49,9 @@ class LogWriter:
     # The thread that handles the reading from pipes and writing to log.
     _logging_thread = None
 
+    # Should we log job names or not
+    _log_job_names = False
+
     @classmethod
     def reset(cls):
         """Reset this module to its starting state (useful for tests)"""
@@ -64,6 +63,11 @@ class LogWriter:
                 cls._logging_interrupt_pipe = os.pipe()
             LogWriter._logging_thread = None
             LogWriter._logging_cv.notify_all()
+
+    @classmethod
+    def set_job_name_logging(cls, enable: bool):
+        """Controls if log messages are prepended with their job names"""
+        cls._log_job_names = enable
 
     def __init__(
         self,
@@ -102,8 +106,8 @@ class LogWriter:
             # greatly simplifies the logic that is needed to update the log
             # level.
             self._log_level = self._override_func(line, self._log_level)
-        if self._job_id and LOG_JOB_NAMES:
-            self._logger.log(self._log_level, "[%s]%s", self._job_id, line)
+        if self._job_id and LogWriter._log_job_names:
+            self._logger.log(self._log_level, "[%s] %s", self._job_id, line)
         else:
             self._logger.log(self._log_level, line)
         self._written_at_level[self._log_level] = True

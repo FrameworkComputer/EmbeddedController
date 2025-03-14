@@ -255,11 +255,19 @@ class BinmanPacker(BasePacker):
             encoding="utf-8",
         )
 
+        job_id = f"{self.project.config.project_name}:{self.__class__.__name__}"
+
         zmake.multiproc.LogWriter.log_output(
-            self.logger, logging.DEBUG, proc.stdout
+            self.logger,
+            logging.DEBUG,
+            proc.stdout,
+            job_id=job_id,
         )
         zmake.multiproc.LogWriter.log_output(
-            self.logger, logging.ERROR, proc.stderr
+            self.logger,
+            logging.ERROR,
+            proc.stderr,
+            job_id=job_id,
         )
         if proc.wait(timeout=60):
             raise OSError("Failed to run binman")
