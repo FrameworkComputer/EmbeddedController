@@ -60,6 +60,7 @@
 			handler = "enable_base_by_lid";
 		};
 
+		/delete-node/ tablet_mode;
 		/delete-node/ usb_c1_bc12_charger;
 		/delete-node/ lid_imu;
 	};
