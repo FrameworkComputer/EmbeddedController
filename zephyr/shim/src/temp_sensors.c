@@ -26,6 +26,7 @@
 
 #ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
 #include "lotus/amd_r23m.h"
+#include "lotus/gpu_temp.h"
 #endif /* CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN */
 
 /*
@@ -357,6 +358,32 @@ const struct amdr23m_sensor_t amdr23m_sensors[AMDR23M_COUNT] = {
 	DT_FOREACH_STATUS_OKAY(AMDR23M_COMPAT, DEFINE_AMDR23M_DATA)
 };
 
+#if DT_HAS_COMPAT_STATUS_OKAY(GPU_COMPAT)
+/* The function maybe unused because a temperature sensor can be added to dts
+ * without a reference in the cros_ec_temp_sensors node.
+ */
+__maybe_unused static int gpu_get_temp(const struct temp_sensor_t *sensor,
+					  int *temp_ptr)
+{
+	return gpu_get_val_k(sensor->idx, temp_ptr);
+}
+#endif /* GPU_COMPAT */
+
+#define GET_ZEPHYR_TEMP_SENSOR_GPU(named_id)        \
+	(&(const struct zephyr_temp_sensor){                     \
+		.read = &gpu_get_temp,                        \
+		.thermistor = NULL,                              \
+		.update_temperature = gpu_update_temperature, \
+		FILL_POWER_GOOD(named_id) })
+
+#define TEMP_GPU(named_id, sensor_id)                                \
+	[TEMP_SENSOR_ID(named_id)] = {                                  \
+		.name = DT_NODE_FULL_NAME(sensor_id),                   \
+		.idx = 0,                     \
+		.type = TEMP_SENSOR_TYPE_BOARD,                         \
+		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_GPU(named_id), \
+	}
+
 #if DT_HAS_COMPAT_STATUS_OKAY(PECI_COMPAT)
 __maybe_unused static int peci_get_temp(const struct temp_sensor_t *sensor,
 					  int *temp_ptr)
@@ -423,6 +450,7 @@ __maybe_unused static int peci_get_temp(const struct temp_sensor_t *sensor,
 	CHECK_COMPAT(F75397_COMPAT, named_id, sensor_id, TEMP_F75397)         \
 	CHECK_COMPAT(BATTERY_COMPAT, named_id, sensor_id, TEMP_BATTERY)         \
 	CHECK_COMPAT(AMDR23M_COMPAT, named_id, sensor_id, TEMP_AMDR23M)			\
+	CHECK_COMPAT(GPU_COMPAT, named_id, sensor_id, TEMP_GPU)					\
 	CHECK_COMPAT(PECI_COMPAT, named_id, sensor_id, TEMP_PECI)
 
 

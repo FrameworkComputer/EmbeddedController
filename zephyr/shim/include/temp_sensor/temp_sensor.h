@@ -26,6 +26,7 @@ extern "C" {
 #define THERMISTOR_COMPAT cros_ec_temp_sensor_thermistor
 #define TEMP_SENSORS_COMPAT cros_ec_temp_sensors
 #define AMDR23M_COMPAT cros_ec_temp_sensor_amdr23m
+#define GPU_COMPAT cros_ec_temp_sensor_gpu
 #define PECI_COMPAT cros_ec_temp_sensor_peci
 
 #define TEMP_SENSORS_NODEID DT_INST(0, TEMP_SENSORS_COMPAT)
@@ -40,6 +41,7 @@ extern "C" {
 	DT_FOREACH_STATUS_OKAY(F75397_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(BATTERY_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(AMDR23M_COMPAT, fn)                          \
+	DT_FOREACH_STATUS_OKAY(GPU_COMPAT, fn)                              \
 	DT_FOREACH_STATUS_OKAY(PECI_COMPAT, fn)                          \
 	DT_FOREACH_STATUS_OKAY_VARGS(RT9490_CHG_COMPAT, TEMP_RT9490_FN, fn) \
 	DT_FOREACH_STATUS_OKAY(SB_TSI_COMPAT, fn)                           \
@@ -198,6 +200,22 @@ enum amdr23m_sensor {
 };
 
 #undef AMDR23M_SENSOR_ID_WITH_COMMA
+
+/* GPU access array */
+/*
+ * Get the GPU sensor ID from a hardware device node.
+ *
+ * @param node_id: node id of a hardware GPU sensor node
+ */
+#define GPU_SENSOR_ID(node_id) DT_CAT(GPU, node_id)
+#define GPU_SENSOR_ID_WITH_COMMA(node_id) GPU_SENSOR_ID(node_id),
+
+enum gpu_sensor {
+	DT_FOREACH_STATUS_OKAY(GPU_COMPAT, GPU_SENSOR_ID_WITH_COMMA)
+		GPU_IDX_COUNT,
+};
+
+#undef GPU_SENSOR_ID_WITH_COMMA
 
 struct zephyr_temp_sensor {
 	/* Read sensor value in K into temp_ptr; return non-zero if error. */
