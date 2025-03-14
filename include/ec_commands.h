@@ -8412,6 +8412,49 @@ struct ec_response_fp_info {
 	uint32_t template_version; /* version of the template format */
 } __ec_align4;
 
+struct fp_sensor_info {
+	/* Sensor identification */
+	uint32_t vendor_id;
+	uint32_t product_id;
+	uint32_t model_id;
+	uint32_t version;
+	uint16_t num_capture_types; /* number of image capture types */
+	uint16_t errors; /* see FP_ERROR_ flags above */
+} __ec_align4;
+BUILD_ASSERT(sizeof(struct fp_sensor_info) == 20);
+
+struct fp_template_info {
+	/* Template/finger current information */
+	uint32_t template_size; /* max template size in bytes */
+	uint16_t template_max; /* maximum number of fingers/templates */
+	uint16_t template_valid; /* number of valid fingers/templates */
+	uint32_t template_dirty; /* bitmap of templates with MCU side changes */
+	uint32_t template_version; /* version of the template format */
+} __ec_align4;
+BUILD_ASSERT(sizeof(struct fp_template_info) == 16);
+
+struct fp_image_frame_params {
+	/* Image frame characteristics */
+	uint16_t bpp;
+	uint32_t frame_size;
+	uint32_t pixel_format; /* using V4L2_PIX_FMT_ */
+	uint16_t width;
+	uint16_t height;
+	uint16_t reserved; /**< padding for alignment */
+} __ec_align4;
+BUILD_ASSERT(sizeof(struct fp_image_frame_params) == 16);
+
+struct ec_response_fp_info_v2 {
+	/* Sensor identification */
+	struct fp_sensor_info sensor_info;
+	/* Template/finger current information */
+	struct fp_template_info template_info;
+	/* fingerprint image frame parameters */
+	struct fp_image_frame_params
+		image_frame_params[FLEXIBLE_ARRAY_MEMBER_SIZE];
+} __ec_align4;
+BUILD_ASSERT(sizeof(struct ec_response_fp_info_v2) == 36);
+
 /* Get the last captured finger frame or a template content */
 #define EC_CMD_FP_FRAME 0x0404
 
