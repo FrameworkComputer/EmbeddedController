@@ -35,7 +35,7 @@ void check_device_deferred(void)
 {
 	int touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
 	int audio = get_hardware_id(ADC_AUDIO_ID);
-	int product_id;
+	int product_id = 0;
 
 	/* Clear the DIAGNOSTICS_HW_NO_BATTERY flag if battery is present */
 	if (battery_is_present() == BP_YES || get_standalone_mode())

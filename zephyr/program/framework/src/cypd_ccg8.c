@@ -727,7 +727,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, exit_epr_mode, HOOK_PRIO_FIRST);
 void cypd_update_epr_state(int controller, int port, int response_len)
 {
 	int rv;
-	uint8_t data[16];
+	uint8_t data[16] = {0};
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
 	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
 	int port_idx = (controller << 1) + port;

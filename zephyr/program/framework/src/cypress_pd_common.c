@@ -347,7 +347,7 @@ static void cypd_get_version(int controller)
 {
 	int rv;
 	int i;
-	uint8_t data[24];
+	uint8_t data[24] = {0};
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
 	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
 
@@ -887,8 +887,8 @@ int cypd_modify_safety_power_1_5A(int controller, int port)
 void cypd_set_typec_profile(int controller, int port)
 {
 	int rv;
-	uint8_t pd_status_reg[4];
-	uint8_t rdo_reg[4];
+	uint8_t pd_status_reg[4] = {0};
+	uint8_t rdo_reg[4] = {0};
 
 	int rdo_max_current = 0;
 	int rdo_3a_idx = 0;
@@ -1923,7 +1923,7 @@ int cypd_handle_alert_msg(int controller, int port, int len)
 void cypd_port_int(int controller, int port)
 {
 	int i, rv, response_len;
-	uint8_t data2[32];
+	uint8_t data2[32] = {0};
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
 	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
 	int port_idx = (controller << 1) + port;
