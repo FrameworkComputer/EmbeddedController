@@ -1926,7 +1926,7 @@ struct ec_response_flash_info_2 {
 	uint16_t num_banks_total;
 	/* Number of banks described in banks array. */
 	uint16_t num_banks_desc;
-	struct ec_flash_bank banks[0];
+	struct ec_flash_bank banks[FLEXIBLE_ARRAY_MEMBER_SIZE];
 } __ec_align4;
 
 /*
