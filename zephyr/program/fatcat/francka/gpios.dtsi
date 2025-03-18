@@ -220,7 +220,7 @@
 			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
 		gpio_volup_btn_odl: volup_btn_odl {
-			gpios = <&gpiod 7 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpiob 1 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
 		gpio_soc_enbkl: soc_enbkl {
@@ -282,7 +282,7 @@
 			<&gpio6 6 0>,
 			<&gpio8 3 0>,
 			<&gpioa 7 0>,
-			<&gpiob 1 0>,
+			<&gpiod 7 0>,
 			<&gpioe 2 0>,
 			<&gpiof 2 0>,
 			<&gpiof 3 0>,
