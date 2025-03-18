@@ -280,11 +280,14 @@
 };
 
 &i2c1 {
-	label = "I2C_BATTERY";
-	clock-frequency = <I2C_BITRATE_STANDARD>;
-	pinctrl-0 = <&i2c1_clk_gpc1_default
-		     &i2c1_data_gpc2_default>;
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c3_clk_gph1_default
+		     &i2c3_data_gph2_default>;
 	pinctrl-names = "default";
+	scl-gpios = <&gpioh 1 0>;
+	sda-gpios = <&gpioh 2 0>;
+	status = "okay";
+	channel-switch-sel = <I2C_CHD_LOCATE>;
 };
 
 &i2c2 {
@@ -302,6 +305,18 @@
 	pinctrl-0 = <&i2c2_clk_gpf6_default
 		     &i2c2_data_gpf7_default>;
 	pinctrl-names = "default";
+};
+
+&i2c3 {
+	label = "I2C_BATTERY";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c1_clk_gpc1_default
+		     &i2c1_data_gpc2_default>;
+	pinctrl-names = "default";
+	scl-gpios = <&gpioc 1 0>;
+	sda-gpios = <&gpioc 2 0>;
+	channel-switch-sel = <I2C_CHB_LOCATE>;
+	status = "okay";
 };
 
 &i2c4 {
