@@ -162,39 +162,20 @@ void gpu_pd_interrupt(enum gpio_signal signal)
 	}
 }
 
-static void gpu_set_pd_state_power_on(void)
-{
-	if (gpu_present() &&
-		gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en))) {
-
-		if (pd_type == PD_TYPE_CCG8S) {
-			cypd_update_chips_state(PD_CHIP_GPU, CCG_STATE_POWER_ON);
-			task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_GPU);
-		}
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, gpu_set_pd_state_power_on, HOOK_PRIO_DEFAULT + 1);
 
 static void gpu_set_pd_state_power_off(void)
 {
 	if (gpu_present()) {
-
 		if (pd_type == PD_TYPE_CCG8S)
 			cypd_update_chips_state(PD_CHIP_GPU, CCG_STATE_NO_POWER);
 	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, gpu_set_pd_state_power_off, HOOK_PRIO_DEFAULT - 1);
 
 void gpu_update_pd_type(enum gpu_pd chip)
 {
 	pd_type = chip;
 }
 
-void gpu_set_pd_state(void)
-{
-	if (pd_type != PD_TYPE_INVALID && !chipset_in_state(CHIPSET_STATE_ANY_OFF))
-		gpu_set_pd_state_power_on();
-}
 
 void check_gpu_module(void)
 {

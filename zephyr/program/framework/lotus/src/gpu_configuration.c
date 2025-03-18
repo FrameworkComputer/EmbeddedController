@@ -959,6 +959,11 @@ int parse_gpu_eeprom(void)
 				if (pd->gpu_pd_type == PD_TYPE_ETRON_EJ889I) {
 					ej889i_init(pd);
 				}
+				if (pd->gpu_pd_type == PD_TYPE_CCG8S) {
+					/* GPU power on for PD to support charging through GPU connector
+					 * is done through the GPU GPIO config to set the power state to G3 */
+					ccg8s_init(pd->address, gpu_gpio_to_dt_int(pd->gpio_interrupt), pd->flags);
+				}
 			}
 			break;
 		default:
@@ -988,8 +993,6 @@ int init_parse_gpu_eeprom(void)
 	set_gpu_gpios_configuration();
 
 	set_gpu_gpios_powerstate();
-
-	gpu_set_pd_state();
 
 	control_5valw_power(POWER_REQ_INIT, 0);
 
