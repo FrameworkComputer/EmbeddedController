@@ -171,7 +171,7 @@
 			gpios = <&gpiof 1 (GPIO_INPUT)>;
 		};
 		gpio_virtual_battery_r: virtual_battery_r {
-			gpios = <&gpiod 7 (GPIO_INPUT)>;
+			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_PULL_UP)>;
 		};
 		gpio_volume_up_r: volume_up_r {
 			gpios = <&gpioa 4 (GPIO_INPUT)>;
