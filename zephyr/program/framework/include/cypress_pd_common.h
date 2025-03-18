@@ -538,6 +538,12 @@ struct pd_chip_config_t {
 	uint8_t version[8];
 };
 
+struct pd_port_map_t {
+	uint8_t controller;
+	uint8_t controller_port;
+	uint16_t flags;
+};
+
 struct pd_port_current_state_t {
 	enum ccg_port_state port_state;
 	int voltage;
@@ -991,5 +997,16 @@ void cypd_ccd_mode_control(void);
  * @return false if the PD chips is not powered or waiting it to be stable
  */
 bool cypd_contoller_is_powered(int controller);
+
+/**
+ * Initialize the optional ccg8s on 16in projects.
+ * 
+ * @param address The i2c address the PD controller is connected to.
+ * @param interrupt The interrupt pin that is connected to the pd controller to signal
+ * 					the ec
+ * @param flags		Additional flags needed to be passed to the PD controller.
+ */
+bool ccg8s_init(uint8_t address, const struct gpio_int_config * interrupt, uint32_t flags);
+
 
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */
