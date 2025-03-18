@@ -150,8 +150,7 @@ void gpu_pd_interrupt(enum gpio_signal signal)
 
 		switch (pd_type) {
 		case PD_TYPE_CCG8S:
-			if (pd_chip_config[PD_CHIP_GPU].state != CCG_STATE_NO_POWER)
-				task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_GPU);
+			ccg8s_interrupt(signal);
 			break;
 		case PD_TYPE_ETRON_EJ889I:
 			ej889i_interrupt_handler(signal);
@@ -162,14 +161,6 @@ void gpu_pd_interrupt(enum gpio_signal signal)
 	}
 }
 
-
-static void gpu_set_pd_state_power_off(void)
-{
-	if (gpu_present()) {
-		if (pd_type == PD_TYPE_CCG8S)
-			cypd_update_chips_state(PD_CHIP_GPU, CCG_STATE_NO_POWER);
-	}
-}
 
 void gpu_update_pd_type(enum gpu_pd chip)
 {
@@ -252,7 +243,6 @@ void beam_open_interrupt(enum gpio_signal signal)
 	if (!open_state) {
 		/* Make sure the module is off as fast as possible! */
 		LOG_DBG("Powering off GPU");
-		gpu_set_pd_state_power_off();
 		gpu_update_pd_type(PD_TYPE_INVALID);
 		deinit_gpu_module();
 		switch_status = 0;

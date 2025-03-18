@@ -61,14 +61,24 @@ bool cypd_contoller_is_powered(int controller)
 	return true;
 }
 
-bool ccg8s_init(uint8_t address, const struct gpio_int_config * interrupt, uint32_t flags)
+bool ccg8s_init(uint8_t address, uint32_t flags)
 {
 	/* we assume this is port 5 */
 	pd_chip_config[PD_CHIP_GPU].addr_flags = address | I2C_FLAG_ADDR16_LITTLE_ENDIAN;
-	pd_chip_config[PD_CHIP_GPU].gpio = interrupt->signal;
-	cypd_update_chips_state(PD_CHIP_GPU, CCG_STATE_POWER_ON);
-	task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_GPU);
+	if (address) {
+		cypd_update_chips_state(PD_CHIP_GPU, CCG_STATE_POWER_ON);
+		task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_GPU);
+	} else {
+		cypd_update_chips_state(PD_CHIP_GPU, CCG_STATE_NO_POWER);
+		task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_GPU);
+	}
 	return true;
+}
+
+void ccg8s_interrupt(enum gpio_signal signal)
+{
+	if (pd_chip_config[PD_CHIP_GPU].state != CCG_STATE_NO_POWER)
+		task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_GPU);
 }
 
 int cypd_write_reg_block(int controller, int reg, void *data, int len)

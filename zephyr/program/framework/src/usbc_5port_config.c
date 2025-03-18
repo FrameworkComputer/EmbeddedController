@@ -11,7 +11,6 @@
 /* TODO: create a i2c ccg yaml to define the i2c address */
 #define CCG_I2C_CHIP0	0x42
 #define CCG_I2C_CHIP1	0x40
-#define CCG_I2C_CHIP2   0x42 /* For NV GPU board */
 
 struct pd_chip_config_t pd_chip_config[] = {
 	[PD_CHIP_0] = {
@@ -30,7 +29,7 @@ struct pd_chip_config_t pd_chip_config[] = {
 	},
 	[PD_CHIP_GPU] = {
 		.i2c_port = I2C_PORT_PD_MCU2,
-		.addr_flags = CCG_I2C_CHIP2 | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
+		.addr_flags = 0xFF | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
 		.support_max_port = 1,
 		.state = CCG_STATE_NO_POWER,
 		.gpio = GPIO_EC_GPU_PD_INT_L,

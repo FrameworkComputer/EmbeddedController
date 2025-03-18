@@ -1006,7 +1006,13 @@ bool cypd_contoller_is_powered(int controller);
  * 					the ec
  * @param flags		Additional flags needed to be passed to the PD controller.
  */
-bool ccg8s_init(uint8_t address, const struct gpio_int_config * interrupt, uint32_t flags);
+bool ccg8s_init(uint8_t address, uint32_t flags);
 
+
+/**
+ * Trigger GPU interrupt for PD
+ * 
+ */
+void ccg8s_interrupt(enum gpio_signal signal);
 
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

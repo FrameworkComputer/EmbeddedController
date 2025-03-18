@@ -21,6 +21,7 @@
 #include "hooks.h"
 
 #include "ej889i.h"
+#include "cypress_pd_common.h"
 #include "gpu_f75303.h"
 #include "board_adc.h"
 #include "thermal.h"
@@ -284,7 +285,7 @@ static struct default_gpu_cfg nv_gpu_cfg = {
 
 	.hdr5 = {.block_type = GPUCFG_TYPE_PD, .block_length = sizeof(struct gpu_subsys_pd)},
 	.pd = {.gpu_pd_type = PD_TYPE_CCG8S, .address = 0x42,
-					.flags = 0, .pdo = 0, .rdo = 0, .power_domain = POWER_S5,
+					.flags = 0, .pdo = 0, .rdo = 0, .power_domain = POWER_G3,
 					.gpio_hpd = GPU_1H1_GPIO1_EC, .gpio_interrupt = GPU_1F2_I2C_S5_INT
 	},
 
@@ -962,7 +963,7 @@ int parse_gpu_eeprom(void)
 				if (pd->gpu_pd_type == PD_TYPE_CCG8S) {
 					/* GPU power on for PD to support charging through GPU connector
 					 * is done through the GPU GPIO config to set the power state to G3 */
-					ccg8s_init(pd->address, gpu_gpio_to_dt_int(pd->gpio_interrupt), pd->flags);
+					ccg8s_init(pd->address, pd->flags);
 				}
 			}
 			break;
@@ -1047,6 +1048,8 @@ void deinit_gpu_module(void)
 	gpu_f75303_init(NULL);
 
 	ej889i_init(NULL);
+
+	ccg8s_init(0, 0);
 
 	gpu_module_gpio_safe();
 
