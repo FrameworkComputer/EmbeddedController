@@ -182,7 +182,14 @@ class Manifest:
         }
 
     def insert_component(
-        self, ctype, name, i2c_port, i2c_addr, usbc_port=None, ssfc=None
+        self,
+        ctype,
+        name,
+        i2c_port,
+        i2c_addr,
+        usbc_port=None,
+        ssfc=None,
+        probe="direct",
     ):
         """Insert the component inform to the component manifest.
 
@@ -193,6 +200,7 @@ class Manifest:
             i2c_address: I2C device address (7-bit).
             usbc_port: USB-C port number.
             ssfc: SSFC element to be inserted as is.
+            probe: String describing how this component should be probed.
         """
         component = {
             "component_type": ctype,
@@ -203,6 +211,7 @@ class Manifest:
             component.update({"usbc": {"port": usbc_port}})
         if ssfc:
             component.update({"ssfc": ssfc})
+        component.update({"probe": probe})
 
         for comp in self.manifest["component_list"]:
             if comp == component:
@@ -442,12 +451,17 @@ def insert_i2c_component(ctype, node, usbc_port, i2c_portmap, manifest):
     if not node_is_valid(node, i2c_node, i2c_portmap):
         return
 
+    probe_str = "direct"
+    if "ls-en-pin" in node.props:
+        probe_str = "low_power"
+
     manifest.insert_component(
         ctype,
         compatible_name_parser(ctype, node.props["compatible"].val[0]),
         i2c_portmap[i2c_node.name],
         hex(reg_node.props["reg"].val[0]),
         usbc_port,
+        probe=probe_str,
     )
 
 
