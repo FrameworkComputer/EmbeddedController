@@ -14,6 +14,16 @@
 
 #include <drivers/pdc.h>
 
+/**
+ * Flags that may be passed to PDC emulators to alter their behavior in some
+ * way. Can be used to toggle support for a feature specific to certain PDC FW
+ * versions or variations, or similar. May be common to multiple PDC emulators
+ * or for a specific one.
+ */
+enum emul_pdc_feature_flag {
+	EMUL_PDC_FEATURE_COUNT,
+};
+
 /* Mirror PDC APIs to fetch or set emulated values */
 typedef int (*emul_pdc_set_ucsi_version_t)(const struct emul *target,
 					   uint16_t version);
@@ -99,6 +109,11 @@ typedef int (*emul_pdc_set_attention_vdo_t)(const struct emul *target,
 typedef int (*emul_pdc_get_data_role_preference_t)(const struct emul *target,
 						   int *swap_to_dfp,
 						   int *swap_to_ufp);
+typedef int (*emul_pdc_set_feature_flag_t)(const struct emul *target,
+					   enum emul_pdc_feature_flag feature);
+typedef int (*emul_pdc_clear_feature_flag_t)(
+	const struct emul *target, enum emul_pdc_feature_flag feature);
+typedef void (*emul_pdc_reset_feature_flags_t)(const struct emul *target);
 
 __subsystem struct emul_pdc_driver_api {
 	emul_pdc_set_response_delay_t set_response_delay;
@@ -137,6 +152,9 @@ __subsystem struct emul_pdc_driver_api {
 	emul_pdc_set_cmd_error_t set_cmd_error;
 	emul_pdc_set_attention_vdo_t set_attention_vdo;
 	emul_pdc_get_data_role_preference_t get_data_role_preference;
+	emul_pdc_set_feature_flag_t set_feature_flag;
+	emul_pdc_clear_feature_flag_t clear_feature_flag;
+	emul_pdc_reset_feature_flags_t reset_feature_flags;
 };
 
 static inline int emul_pdc_set_ucsi_version(const struct emul *target,
@@ -756,5 +774,50 @@ emul_pdc_set_attention_vdo(const struct emul *target,
 	}
 	return -ENOSYS;
 }
+
+/* LCOV_EXCL_START - Internal emulator feature */
+static inline int emul_pdc_set_feature_flag(const struct emul *target,
+					    enum emul_pdc_feature_flag feature)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_driver_api *api = target->backend_api;
+	if (api->set_feature_flag) {
+		return api->set_feature_flag(target, feature);
+	}
+	return -ENOSYS;
+}
+
+static inline int
+emul_pdc_clear_feature_flag(const struct emul *target,
+			    enum emul_pdc_feature_flag feature)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_driver_api *api = target->backend_api;
+	if (api->clear_feature_flag) {
+		return api->clear_feature_flag(target, feature);
+	}
+	return -ENOSYS;
+}
+
+static inline int emul_pdc_reset_feature_flags(const struct emul *target)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_driver_api *api = target->backend_api;
+	if (api->reset_feature_flags) {
+		api->reset_feature_flags(target);
+		return 0;
+	}
+	return -ENOSYS;
+}
+/* LCOV_EXCL_STOP - Internal emulator feature */
 
 #endif /* ZEPHYR_INCLUDE_EMUL_PDC_H_ */
