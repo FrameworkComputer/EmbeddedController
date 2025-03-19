@@ -165,6 +165,7 @@ struct default_gpu_cfg {
 	struct gpu_cfg_gpio     gpio_vsys;
 	struct gpu_cfg_gpio     gpio_fan;
 	struct gpu_cfg_gpio     gpu_3v_5v_en;
+	struct gpu_cfg_gpio     gpu_vadp_en;
 
 	struct gpu_block_header hdr5;
 	struct gpu_subsys_pd    pd;
@@ -207,7 +208,7 @@ static struct default_gpu_cfg gpu_cfg = {
 	.hdr3 = {.block_type = GPUCFG_TYPE_VENDOR, .block_length = sizeof(gpu_vendor)},
 	.vendor = GPU_AMD_R23M,
 
-	.hdr4 = {.block_type = GPUCFG_TYPE_GPIO, .block_length = (sizeof(struct gpu_cfg_gpio) * 7)},
+	.hdr4 = {.block_type = GPUCFG_TYPE_GPIO, .block_length = (sizeof(struct gpu_cfg_gpio) * 8)},
 	/* Critical temperature fault input */
 	.gpio0 = {.gpio = GPU_1G1_GPIO0_EC, .function = GPIO_FUNC_TEMPFAULT, .flags = GPIO_INPUT, .power_domain = POWER_S3},
 	/* DP HPD status from PD */
@@ -218,6 +219,8 @@ static struct default_gpu_cfg gpu_cfg = {
 	.gpio3 = {.gpio = GPU_2L7_GPIO3_EC, .function = GPIO_FUNC_UNUSED, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_G3},
 	/* GPU_VSYS_EN */
 	.gpio_vsys = {.gpio = GPU_VSYS_EN, .function = GPIO_FUNC_GPU_PWR, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S3},
+	/* GPU_VADP_EN */
+	.gpu_vadp_en = {.gpio = GPU_VADP_EN, .function = GPIO_FUNC_UNUSED, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_G3},
 
 	.gpio_fan = {.gpio = GPU_FAN_EN, .function = GPIO_FUNC_HIGH, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S0},
 
@@ -267,7 +270,7 @@ static struct default_gpu_cfg nv_gpu_cfg = {
 	.hdr3 = {.block_type = GPUCFG_TYPE_VENDOR, .block_length = sizeof(enum gpu_vendor)},
 	.vendor = GPU_NV_GN22,
 
-	.hdr4 = {.block_type = GPUCFG_TYPE_GPIO, .block_length = (sizeof(struct gpu_cfg_gpio) * 7)},
+	.hdr4 = {.block_type = GPUCFG_TYPE_GPIO, .block_length = (sizeof(struct gpu_cfg_gpio) * 8)},
 	/* Critical temperature fault input */
 	.gpio0 = {.gpio = GPU_1G1_GPIO0_EC, .function = GPIO_FUNC_TEMPFAULT, .flags = GPIO_INPUT, .power_domain = POWER_S3},
 	/* DP HPD status from PD */
@@ -278,6 +281,8 @@ static struct default_gpu_cfg nv_gpu_cfg = {
 	.gpio3 = {.gpio = GPU_2L7_GPIO3_EC, .function = GPIO_FUNC_UNUSED, .flags = GPIO_INPUT, .power_domain = POWER_S0},
 	/* GPU_VSYS_EN */
 	.gpio_vsys = {.gpio = GPU_VSYS_EN, .function = GPIO_FUNC_GPU_PWR, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S3},
+	/* GPU_VADP_EN */
+	.gpu_vadp_en = {.gpio = GPU_VADP_EN, .function = GPIO_FUNC_HIGH, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_G3},
 
 	.gpio_fan = {.gpio = GPU_FAN_EN, .function = GPIO_FUNC_HIGH, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S0},
 
