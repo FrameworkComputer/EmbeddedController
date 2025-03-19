@@ -98,6 +98,7 @@ int ucsi_write_tunnel(void)
 	int controller = 0;
 	int offset = 0;
 	int rv = EC_SUCCESS;
+	int new_port = 0;
 
 	/**
 	 * Note that CONTROL data has always to be written after MESSAGE_OUT data is written
@@ -148,8 +149,13 @@ int ucsi_write_tunnel(void)
 				CPRINTS("UCSI write invalid type-c port:%d",
 					change_connector_indicator);
 		} else {
-			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset) =
-				  ucsi_pd_port_map[change_connector_indicator-1].pd_controller_port;
+			new_port =
+				ucsi_pd_port_map[change_connector_indicator-1].pd_controller_port;
+			if (new_port != change_connector_indicator) {
+				*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset) =
+				(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset)
+				& 0x80)	| new_port;
+			}
 			controller = ucsi_pd_port_map[change_connector_indicator-1].pd_controller;
 		}
 
@@ -275,6 +281,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, resend_ucsi_connector_change_event, HOOK_PRIO_
 int ucsi_read_tunnel(int controller)
 {
 	int rv, port_indicator;
+	int new_port = 0;
 
 	if (ucsi_debug_enable && pd_chip_ucsi_info[controller].read_tunnel_complete == 1 &&
 		(pd_chip_ucsi_info[controller].cci & CCI_BUSY_FLAG) == 0) {
@@ -293,10 +300,12 @@ int ucsi_read_tunnel(int controller)
 		if (ucsi_debug_enable && port_indicator > PORTS_PER_CONTROLLER)
 			CPRINTS("UCSI read invalid type-c port:%d", port_indicator);
 	} else {
-		pd_chip_ucsi_info[controller].cci = (pd_chip_ucsi_info[controller].cci & 0xFFFFFF01)
-		| (pd_ucsi_port_map[controller*2+port_indicator-1] << 1);
+		new_port = (pd_ucsi_port_map[controller*2+port_indicator-1]);
+		if (port_indicator != new_port) {
+			pd_chip_ucsi_info[controller].cci = (pd_chip_ucsi_info[controller].cci
+			& 0xFFFFFF01) | (new_port << 1);
+		}
 	}
-
 	/* If data length is non zero, then get data */
 	if (pd_chip_ucsi_info[controller].cci & 0xFF00) {
 		rv = cypd_read_reg_block(controller, CCG_MESSAGE_IN_REG,
