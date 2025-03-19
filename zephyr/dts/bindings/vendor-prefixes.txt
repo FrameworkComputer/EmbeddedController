@@ -15,6 +15,7 @@ cosmx	Battery vendor
 cros-ec	The Chromium OS Embedded Controller Project
 cros	The Chromium OS Embedded Controller Project
 dynapack	Battery vendor
+egis	Egis Technology Inc.
 fairchild	Fairchild Semiconductor
 fpc	Fingerprint Cards AB
 ganfeng	Battery vendor
