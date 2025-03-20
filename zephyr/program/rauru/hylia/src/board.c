@@ -29,13 +29,14 @@ static void board_setup_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_setup_init, HOOK_PRIO_PRE_DEFAULT);
 
-enum battery_present battery_is_present(void)
+static enum battery_present cached_batt_state = BP_NO;
+
+/*
+ * I2C read register to detect battery
+ */
+static void update_battery_state_cache(void)
 {
 	int state;
-
-	if (gpio_get_level(GPIO_BATT_PRES_ODL)) {
-		return BP_NO;
-	}
 
 	/*
 	 *  According to the battery manufacturer's reply:
@@ -43,13 +44,31 @@ enum battery_present battery_is_present(void)
 	 *  If the 12th bit(Permanently Failure) is 1, it means a bad battery.
 	 */
 	if (sb_read(SB_MANUFACTURER_ACCESS, &state)) {
-		return BP_NO;
+		cached_batt_state = BP_NO;
+		return;
 	}
 
 	/* Detect the 12th bit value */
 	if (state & BIT(12)) {
+		cached_batt_state = BP_NO;
+	} else {
+		cached_batt_state = BP_YES;
+	}
+}
+/*
+ *  i2c read takes 3.5ms. Battery_is_present is called continuously
+ *  during startup, which delays the DUT loading powerd. To avoid
+ *  the delay of powerd, put the i2c read action into
+ *  update_battery_state_cache and call it once every 1S to
+ *  record the register status.
+ */
+DECLARE_HOOK(HOOK_SECOND, update_battery_state_cache, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, update_battery_state_cache, HOOK_PRIO_DEFAULT);
+
+enum battery_present battery_is_present(void)
+{
+	if (gpio_get_level(GPIO_BATT_PRES_ODL)) {
 		return BP_NO;
 	}
-
-	return BP_YES;
+	return cached_batt_state;
 }
