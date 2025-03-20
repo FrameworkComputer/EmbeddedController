@@ -1059,6 +1059,14 @@ void cypd_update_port_state(int controller, int port)
 	 */
 
 	if (pd_port_states[port_idx].c_state == CCG_STATUS_SOURCE) {
+		/*
+		 * at GRL TEST.PD.PS.SRC.3#18 if device didn't provide current(5V0A)
+		 * DUT should not get power from device, so limit the charger
+		 * to avoid drawn the current from device
+		 */
+		if (pd_current == 0)
+			type_c_current = pd_current;
+
 		typec_set_input_current_limit(port_idx, type_c_current, TYPE_C_VOLTAGE);
 		charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
 							type_c_current);
