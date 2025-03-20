@@ -195,4 +195,14 @@
 #define AC_REG_TO_CURRENT(REG) (((REG) * ISL9241_DEFAULT_RS1) / BOARD_RS1)
 #define AC_CURRENT_TO_REG(CUR) (((CUR) * BOARD_RS1) / ISL9241_DEFAULT_RS1)
 
+/**
+ * Enables or turns on the discharge FET to pull down the CSIN.
+ *
+ * @param chgnum: charger IC index
+ * @param enable: set 1 to enable the discharge FET
+ *
+ * @return EC_SUCCESS on success, an error otherwise
+ */
+int isl9241_set_csin_discharge_fet(int chgnum, bool enable);
+
 #endif /* __CROS_EC_ISL9241_H */
