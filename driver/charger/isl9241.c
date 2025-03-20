@@ -34,6 +34,9 @@
 static int learn_mode;
 
 /* Mutex for CONTROL1 register, that can be updated from multiple tasks. */
+static K_MUTEX_DEFINE(control0_mutex_isl9241);
+
+/* Mutex for CONTROL1 register, that can be updated from multiple tasks. */
 static K_MUTEX_DEFINE(control1_mutex_isl9241);
 
 /* Mutex for CONTROL3 register, that can be updated from multiple tasks. */
@@ -1353,6 +1356,21 @@ static int isl9241_ramp_get_current_limit(int chgnum)
 	return (reg * 222) / 10;
 }
 #endif /* CONFIG_CHARGE_RAMP_HW */
+
+int isl9241_set_csin_discharge_fet(int chgnum, bool enable)
+{
+	int rv;
+
+	mutex_lock(&control0_mutex_isl9241);
+
+	rv = isl9241_update(chgnum, ISL9241_REG_CONTROL0,
+		ISL9241_CONTROL0_CSIN_SINK_DISCHARGE,
+		(enable) ? MASK_SET : MASK_CLR);
+
+	mutex_unlock(&control0_mutex_isl9241);
+
+	return rv;
+}
 
 /*
  * When fully charged in a low-power state, the ISL9241 may get stuck
