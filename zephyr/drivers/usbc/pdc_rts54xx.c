@@ -212,7 +212,8 @@ static const struct smbus_cmd_t RTS_UCSI_GET_LPM_PPM_INFO = { 0x0E, 0x03,
 							      0x22 };
 static const struct smbus_cmd_t RTS_UCSI_GET_ATTENTION_VDO = { 0x0E, 0x03,
 							       0x16 };
-static const struct smbus_cmd_t RTS_SET_SBU_MUX_MODE = { 0x30, 0x01 };
+__maybe_unused static const struct smbus_cmd_t RTS_SET_SBU_MUX_MODE = { 0x30,
+									0x01 };
 /**
  * @brief PDC Command states
  */
@@ -1432,6 +1433,7 @@ static void st_read_run(void *o)
 		}
 		break;
 	}
+#ifdef CONFIG_USBC_PDC_DRIVEN_CCD
 	case CMD_GET_SBU_MUX_MODE: {
 		/* This is parsing a partial GET_IC_STATUS response (offset of
 		 * 39, 1 byte) */
@@ -1456,6 +1458,7 @@ static void st_read_run(void *o)
 
 		break;
 	}
+#endif /* defined(CONFIG_USBC_PDC_DRIVEN_CCD) */
 	default:
 		/* No preprocessing needed for the user data */
 		memcpy(data->user_buf, data->rd_buf + offset, len);
@@ -2731,6 +2734,7 @@ static int rts54_get_attention_vdo(const struct device *dev,
 				  ARRAY_SIZE(payload), (uint8_t *)vdo);
 }
 
+#ifdef CONFIG_USBC_PDC_DRIVEN_CCD
 static int rts54_get_sbu_mux_mode(const struct device *dev,
 				  enum pdc_sbu_mux_mode *mode)
 {
@@ -2787,6 +2791,7 @@ static int rts54_set_sbu_mux_mode(const struct device *dev,
 	return rts54_post_command(dev, CMD_SET_SBU_MUX_MODE, payload,
 				  ARRAY_SIZE(payload), NULL);
 }
+#endif /* defined(CONFIG_USBC_PDC_DRIVEN_CCD) */
 
 static DEVICE_API(pdc, pdc_driver_api) = {
 	.start_thread = rts54_start_thread,
@@ -2829,8 +2834,10 @@ static DEVICE_API(pdc, pdc_driver_api) = {
 	.get_lpm_ppm_info = rts54_get_lpm_ppm_info,
 	.set_frs = rts54_set_frs,
 	.get_attention_vdo = rts54_get_attention_vdo,
+#ifdef CONFIG_USBC_PDC_DRIVEN_CCD
 	.get_sbu_mux_mode = rts54_get_sbu_mux_mode,
 	.set_sbu_mux_mode = rts54_set_sbu_mux_mode,
+#endif /* define(CONFIG_USBC_PDC_DRIVEN_CCD) */
 };
 
 static int pdc_init(const struct device *dev)

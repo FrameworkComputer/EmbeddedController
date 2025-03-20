@@ -98,6 +98,13 @@ config PDC_DRIVER_INIT_PRIORITY
 	help
 	  Initialization priority of the PDC device driver(s) in POST_KERNEL.
 
+config USBC_PDC_DRIVEN_CCD
+	bool "Board uses the PDC-driven CCD"
+	help
+	  Set if board uses the PDC to detect a debug accessory and enter CCD.
+	  Enables the `pdc sbumux` console command for forcing the PDC's SBU mux
+	  into the debug path. Requires support in PDC firmware to take effect.
+
 rsource "Kconfig.pdc_trace"
 
 endif # PLATFORM_EC_USBC

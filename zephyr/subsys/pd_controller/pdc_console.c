@@ -692,6 +692,7 @@ static int cmd_pdc_srccaps(const struct shell *sh, size_t argc, char **argv)
 	return 0;
 }
 
+#ifdef CONFIG_USBC_PDC_DRIVEN_CCD
 /**
  * @brief Return a string representation for an `enum pdc_sbu_mux_mode` value
  */
@@ -760,6 +761,7 @@ static int cmd_pdc_sbu_mux_mode(const struct shell *sh, size_t argc,
 		   mode);
 	return 0;
 }
+#endif /* defined(CONFIG_USBC_PDC_DRIVEN_CCD) */
 
 #ifdef CONFIG_USBC_PDC_TPS6699X_FW_UPDATER
 /* LCOV_EXCL_START - non-shipping code */
@@ -861,11 +863,13 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "Get Vconn state for a port\n"
 		      "Usage: pdc vconn <port>",
 		      cmd_vconn_state, 2, 0),
+#ifdef CONFIG_USBC_PDC_DRIVEN_CCD
 	SHELL_CMD_ARG(sbumux, &dsub_sbu_mux_modes,
 		      "Get or set the SBU mux mode "
 		      "(for PDC-driven CCD boards only)\n"
 		      "Usage: pdc sbumux [normal|debug]",
 		      cmd_pdc_sbu_mux_mode, 1, 1),
+#endif /* defined(CONFIG_USBC_PDC_DRIVEN_CCD) */
 #ifdef CONFIG_USBC_PDC_TPS6699X_FW_UPDATER
 	SHELL_CMD_ARG(fwupdate, NULL,
 		      "Updates TPS6699x firmware\n"

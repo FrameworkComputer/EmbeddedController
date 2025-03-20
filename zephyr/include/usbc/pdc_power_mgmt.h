@@ -724,6 +724,7 @@ int pdc_power_mgmt_get_connector_status_for_ppm(
  */
 int pdc_power_mgmt_get_ccd_port(void);
 
+#ifdef CONFIG_USBC_PDC_DRIVEN_CCD
 /**
  * @brief Reads the current SBU mux operating mode. This targets the port with
  *        the `ccd` property in the devicetree.
@@ -742,5 +743,6 @@ int pdc_power_mgmt_get_sbu_mux_mode(enum pdc_sbu_mux_mode *mode, int *port_num);
  * @return 0 on success, or negative error code
  */
 int pdc_power_mgmt_set_sbu_mux_mode(enum pdc_sbu_mux_mode mode);
+#endif /* defined(CONFIG_USBC_PDC_DRIVEN_CCD) */
 
 #endif /* __CROS_EC_PDC_POWER_MGMT_H */

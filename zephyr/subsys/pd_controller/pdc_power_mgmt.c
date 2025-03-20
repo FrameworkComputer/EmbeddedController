@@ -4750,6 +4750,7 @@ int pdc_power_mgmt_get_ccd_port(void)
 	return -1;
 }
 
+#ifdef CONFIG_USBC_PDC_DRIVEN_CCD
 test_mockable int pdc_power_mgmt_get_sbu_mux_mode(enum pdc_sbu_mux_mode *mode,
 						  int *port_num)
 {
@@ -4793,6 +4794,7 @@ test_mockable int pdc_power_mgmt_set_sbu_mux_mode(enum pdc_sbu_mux_mode mode)
 	/* Block until command completes */
 	return public_api_block(port, CMD_PDC_SET_SBU_MUX_MODE);
 }
+#endif /* defined(CONFIG_USBC_PDC_DRIVEN_CCD) */
 
 #ifdef CONFIG_ZTEST
 
