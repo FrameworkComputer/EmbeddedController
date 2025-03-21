@@ -567,8 +567,22 @@ ZTEST(guren, test_db_with_c)
 			  GPIO_PULL_UP | GPIO_INPUT | GPIO_INT_EDGE_FALLING);
 }
 
+static int gpio_emul_output_get_dt(const struct gpio_dt_spec *dt)
+{
+	return gpio_emul_output_get(dt->port, dt->pin);
+}
+
+static int gpio_emul_input_set_dt(const struct gpio_dt_spec *dt, int value)
+{
+	return gpio_emul_input_set(dt->port, dt->pin, value);
+}
+
 ZTEST(guren, test_db_with_hdmi)
 {
+	const struct gpio_dt_spec *const hdmi_hpd_gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_ec_soc_hdmi_hpd);
+	struct ap_power_ev_data data;
+
 	nissa_configure_hdmi_rails_fake.call_count = 0;
 	/* Set the sub-board, reported configuration is correct. */
 	set_sb_config(FW_SUB_BOARD_1);
@@ -614,6 +628,36 @@ ZTEST(guren, test_db_with_hdmi)
 	hook_notify(HOOK_INIT);
 
 	zassert_equal(nissa_configure_hdmi_rails_fake.call_count, 1);
+
+	data.event = AP_POWER_SHUTDOWN;
+	board_power_change(NULL, data);
+	zassert_equal(gpio_emul_output_get_dt(hdmi_hpd_gpio), 0);
+
+	/* Set the sub-board, reported configuration is correct. */
+	set_sb_config(FW_SUB_BOARD_6);
+	zassert_equal(guren_get_sb_type(), GUREN_SB_HDMI);
+
+	init_gpios(NULL);
+	hook_notify(HOOK_INIT);
+
+	zassert_equal(nissa_configure_hdmi_rails_fake.call_count, 2);
+
+	data.event = AP_POWER_SHUTDOWN;
+	board_power_change(NULL, data);
+	zassert_equal(gpio_emul_output_get_dt(hdmi_hpd_gpio), 0);
+
+	/* Set the sub-board, reported configuration is correct. */
+	set_sb_config(FW_SUB_BOARD_7);
+	zassert_equal(guren_get_sb_type(), GUREN_SB_HDMI_1A);
+
+	init_gpios(NULL);
+	hook_notify(HOOK_INIT);
+
+	zassert_equal(nissa_configure_hdmi_rails_fake.call_count, 3);
+
+	data.event = AP_POWER_SHUTDOWN;
+	board_power_change(NULL, data);
+	zassert_equal(gpio_emul_output_get_dt(hdmi_hpd_gpio), 0);
 }
 
 ZTEST_F(guren_sub_board, test_db_with_lte)
@@ -910,16 +954,6 @@ ZTEST(guren, test_alt_sensor)
 
 	zassert_equal(bmi3xx_interrupt_fake.call_count, 0);
 	zassert_equal(icm42607_interrupt_fake.call_count, 1);
-}
-
-static int gpio_emul_output_get_dt(const struct gpio_dt_spec *dt)
-{
-	return gpio_emul_output_get(dt->port, dt->pin);
-}
-
-static int gpio_emul_input_set_dt(const struct gpio_dt_spec *dt, int value)
-{
-	return gpio_emul_input_set(dt->port, dt->pin, value);
 }
 
 ZTEST(guren, test_pen_detect_interrupt)

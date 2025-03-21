@@ -17,6 +17,7 @@
 #include "driver/accelgyro_bmi323.h"
 #include "driver/accelgyro_icm42607.h"
 #include "gpio/gpio_int.h"
+#include "guren_sub_board.h"
 #include "hooks.h"
 #include "motion_sense.h"
 #include "motionsense_sensors.h"
@@ -83,12 +84,20 @@ void pen_detect_interrupt(enum gpio_signal s)
 __override void board_power_change(struct ap_power_ev_callback *cb,
 				   struct ap_power_ev_data data)
 {
+	int state;
+	uint32_t val;
+
 	const struct gpio_dt_spec *const pen_power_gpio =
 		GPIO_DT_FROM_NODELABEL(gpio_en_pp5000_pen_x);
 	const struct gpio_dt_spec *const pen_detect_gpio =
 		GPIO_DT_FROM_NODELABEL(gpio_pen_detect_odl);
 	const struct gpio_int_config *const pen_detect_int =
 		GPIO_INT_FROM_NODELABEL(int_pen_det_l);
+	const struct gpio_dt_spec *const hdmi_hpd_gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_ec_soc_hdmi_hpd);
+
+	cros_cbi_get_fw_config(FW_SUB_BOARD, &val);
+
 	switch (data.event) {
 	case AP_POWER_STARTUP:
 		/* Enable Pen Detect interrupt */
@@ -98,6 +107,13 @@ __override void board_power_change(struct ap_power_ev_callback *cb,
 		 */
 		if (!gpio_pin_get_dt(pen_detect_gpio))
 			gpio_pin_set_dt(pen_power_gpio, 1);
+
+		if ((val == GUREN_SB_HDMI_LTE) || (val == GUREN_SB_HDMI) ||
+		    (val == GUREN_SB_HDMI_1A)) {
+			state = gpio_pin_get_dt(
+				GPIO_DT_FROM_ALIAS(gpio_hpd_odl));
+			gpio_pin_set_dt(hdmi_hpd_gpio, state);
+		}
 		break;
 	case AP_POWER_SHUTDOWN:
 		/*
@@ -106,6 +122,11 @@ __override void board_power_change(struct ap_power_ev_callback *cb,
 		 */
 		gpio_disable_dt_interrupt(pen_detect_int);
 		gpio_pin_set_dt(pen_power_gpio, 0);
+
+		if ((val == GUREN_SB_HDMI_LTE) || (val == GUREN_SB_HDMI) ||
+		    (val == GUREN_SB_HDMI_1A)) {
+			gpio_pin_set_dt(hdmi_hpd_gpio, 0);
+		}
 		break;
 	default:
 		break;

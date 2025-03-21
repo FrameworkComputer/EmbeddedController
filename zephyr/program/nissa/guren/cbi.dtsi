@@ -60,6 +60,16 @@
 				enum-name = "FW_SUB_BOARD_5";
 				value = <5>;
 			};
+			sub-board-6 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_6";
+				value = <6>;
+			};
+			sub-board-7 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_7";
+				value = <7>;
+			};
 		};
 		/*
 		 * FW_CONFIG field to enable TypeC BC1.2.
