@@ -52,9 +52,14 @@
 			rpm_target = <3800>;
 		};
 		level_6 {
-			temp_on = <0 99 0 0>;
+			temp_on = <0 70 0 0>;
 			temp_off = <0 62 0 0>;
 			rpm_target = <4200>;
+		};
+		level_7 {
+			temp_on = <0 99 0 0>;
+			temp_off = <0 67 0 0>;
+			rpm_target = <4700>;
 		};
 	};
 };
