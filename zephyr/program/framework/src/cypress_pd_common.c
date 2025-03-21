@@ -1043,7 +1043,7 @@ void cypd_update_port_state(int controller, int port)
 			pd_port_states[port_idx].current = pd_current;
 			pd_port_states[port_idx].voltage = pd_voltage;
 			if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGER_RAA489300) &&
-				(battery_is_present() == BP_NO)) {
+				(battery_is_present() != BP_YES)) {
 				board_level_buck_update();
 			}
 		} else {
