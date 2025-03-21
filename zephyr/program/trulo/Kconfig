@@ -8,6 +8,12 @@ config BOARD_TRULO
 	  Build Google Trulo reference board.  This board uses an Intel TWL SoC
 	  and NUVATON EC
 
+config BOARD_PUJJOLO
+	bool "Google Pujjolo Board"
+	help
+	  Build Google Pujjolo reference board.  This board uses an Intel TWL SoC
+	  and Nuvoton EC
+
 config BOARD_ULDRENITE
 	bool "Google Uldrenite Board"
 	help

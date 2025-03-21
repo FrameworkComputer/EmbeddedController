@@ -1,0 +1,44 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+/* Orisa-specific fw_config fields. */
+	trulo-fw-config {
+		/*
+		 * FW_CONFIG field to defined for THERMAL SOLUTION.
+		 */
+		thermal-solution {
+			enum-name = "FW_THERMAL_SOLUTION";
+			start = <0>;
+			size = <1>;
+
+			thermal-solution-6w {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_SOLUTION_6W";
+				value = <0>;
+			};
+			thermal-solution-15w {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_SOLUTION_15W";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for KB TYPE.
+		 */
+		kb-type {
+			enum-name = "FW_KB_TYPE";
+			start = <1>;
+			size = <1>;
+
+			kb-type-default {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_TYPE_DEFAULT";
+				value = <0>;
+			};
+		};
+	};
+};

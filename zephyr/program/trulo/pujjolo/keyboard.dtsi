@@ -1,0 +1,153 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	chosen {
+		cros-ec,keyboard = &kbd;
+	};
+};
+
+&kbd {
+	status = "okay";
+	pinctrl-0 = <
+		&ksi0_gp31 /* KSI0 PIN31 */
+		&ksi1_gp30 /* KSI1 PIN30 */
+		&ksi2_gp27 /* KSI2 PIN27 */
+		&ksi3_gp26 /* KSI3 PIN26 */
+		&ksi4_gp25 /* KSI4 PIN25 */
+		&ksi5_gp24 /* KSI5 PIN24 */
+		&ksi6_gp23 /* KSI6 PIN23 */
+		&ksi7_gp22 /* KSI7 PIN22 */
+		&kso00_gp21 /* KSO00 PIN21 */
+		&kso01_gp20 /* KSO01 PIN20 */
+		&kso03_gp16 /* KSO03 PIN16 */
+		&kso04_gp15 /* KSO04 PIN15 */
+		&kso05_gp14 /* KSO05 PIN14 */
+		&kso06_gp13 /* KSO06 PIN13 */
+		&kso07_gp12 /* KSO07 PIN12 */
+		&kso08_gp11 /* KSO08 PIN11 */
+		&kso09_gp10 /* KSO09 PIN10 */
+		&kso10_gp07 /* KSO10 PIN07 */
+		&kso11_gp06 /* KSO11 PIN06 */
+		&kso12_gp05 /* KSO12 PIN05 */
+	>;
+	pinctrl-1 = <
+		&ksi0_gpio_gp31
+		&ksi1_gpio_gp30
+		&ksi2_gpio_gp27
+		&ksi3_gpio_gp26
+		&ksi4_gpio_gp25
+		&ksi5_gpio_gp24
+		&ksi6_gpio_gp23
+		&ksi7_gpio_gp22
+		&kso00_gpio_gp21
+		&kso01_gpio_gp20
+		&kso03_gpio_gp16
+		&kso04_gpio_gp15
+		&kso05_gpio_gp14
+		&kso06_gpio_gp13
+		&kso07_gpio_gp12
+		&kso08_gpio_gp11
+		&kso09_gpio_gp10
+		&kso10_gpio_gp07
+		&kso11_gpio_gp06
+		&kso12_gpio_gp05
+	>;
+	pinctrl-names = "default", "sleep";
+	row-size = <8>;
+	col-size = <13>;
+
+	kso-gpio {
+		compatible = "cros-ec,col-gpio";
+		col-num = <2>;
+		col-gpios = <&gpio1 7 GPIO_ACTIVE_HIGH>;
+	};
+
+	boot-keys {
+		compatible = "cros-ec,boot-keys";
+		down-arrow-rc = <KBD_RC(6, 11)>;
+		esc-rc = <KBD_RC(1, 1)>;
+		left-shift-rc = <KBD_RC(5, 7)>;
+		refresh-rc = <KBD_RC(3, 2)>;
+	};
+
+	runtime-keys {
+		compatible = "cros-ec,runtime-keys";
+		left-alt-rc = <KBD_RC(0, 10)>;
+		right-alt-rc = <KBD_RC(6, 10)>;
+		h-rc = <KBD_RC(1, 6)>;
+		r-rc = <KBD_RC(7, 3)>;
+	};
+
+	factory-test {
+		compatible = "cros-ec,keyboard-factory-test";
+
+		/* 1 nc */
+		/* 2 nc */
+		/* 3 nc */
+		/* 4 nc */
+		/* 5 nc */
+		/* 6 nc */
+		pin7-gpios = <&gpio3 0 GPIO_ACTIVE_HIGH>;
+		pin8-gpios = <&gpio2 2 GPIO_ACTIVE_HIGH>;
+		pin9-gpios = <&gpio2 3 GPIO_ACTIVE_HIGH>;
+		pin10-gpios = <&gpio1 2 GPIO_ACTIVE_HIGH>;
+		pin11-gpios = <&gpio2 5 GPIO_ACTIVE_HIGH>;
+		pin12-gpios = <&gpio2 4 GPIO_ACTIVE_HIGH>;
+		pin13-gpios = <&gpio2 1 GPIO_ACTIVE_HIGH>;
+		pin14-gpios = <&gpio2 7 GPIO_ACTIVE_HIGH>;
+		pin15-gpios = <&gpio2 6 GPIO_ACTIVE_HIGH>;
+		pin16-gpios = <&gpio1 5 GPIO_ACTIVE_HIGH>;
+		pin17-gpios = <&gpio2 0 GPIO_ACTIVE_HIGH>;
+		pin18-gpios = <&gpio3 1 GPIO_ACTIVE_HIGH>;
+		pin19-gpios = <&gpio1 7 GPIO_ACTIVE_HIGH>;
+		pin20-gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;
+		/* 21 nc */
+		pin22-gpios = <&gpio1 3 GPIO_ACTIVE_HIGH>;
+		pin23-gpios = <&gpio1 4 GPIO_ACTIVE_HIGH>;
+		/* 24 nc */
+		/* 25 nc */
+		pin26-gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
+		pin27-gpios = <&gpio0 6 GPIO_ACTIVE_HIGH>;
+		pin28-gpios = <&gpio1 0 GPIO_ACTIVE_HIGH>;
+		pin29-gpios = <&gpio1 1 GPIO_ACTIVE_HIGH>;
+		pin30-gpios = <&gpio0 5 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+&vivaldi_kbd {
+	vivaldi-keys = <
+	       KBD_RC(0, 2)  /* T1 */
+	       KBD_RC(3, 2)  /* T2 */
+	       KBD_RC(2, 2)  /* T3 */
+	       KBD_RC(1, 2)  /* T4 */
+	       KBD_RC(3, 4)  /* T5 */
+	       KBD_RC(2, 4)  /* T6 */
+	       KBD_RC(1, 4)  /* T7 */
+	       KBD_RC(2, 9)  /* T8 */
+	       KBD_RC(1, 9)  /* T9 */
+	       KBD_RC(0, 4)  /* T10 */
+	       KBD_RC(3, 0)  /* T11 */
+	       KBD_RC(1, 5)  /* T12 */
+	       KBD_RC(3, 5)  /* T13 */
+	       KBD_RC(0, 9)  /* T14 */
+	       KBD_RC(0, 11) /* T15 */
+	>;
+};
+
+&kbd_config_0 {
+	vivaldi-codes = <
+		VIVALDI_TK_BACK             /* T1 */
+		VIVALDI_TK_REFRESH          /* T2 */
+		VIVALDI_TK_FULLSCREEN       /* T3 */
+		VIVALDI_TK_OVERVIEW         /* T4 */
+		VIVALDI_TK_SNAPSHOT         /* T5 */
+		VIVALDI_TK_BRIGHTNESS_DOWN  /* T6 */
+		VIVALDI_TK_BRIGHTNESS_UP    /* T7 */
+		VIVALDI_TK_VOL_MUTE         /* T8 */
+		VIVALDI_TK_VOL_DOWN         /* T9 */
+		VIVALDI_TK_VOL_UP           /* T10 */
+	>;
+};

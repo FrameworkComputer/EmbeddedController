@@ -1,0 +1,18 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	batteries {
+		default_battery: smp {
+			compatible = "smp,l24m3pg2", "battery-smart";
+		};
+		sunwoda_l24d3pg2 {
+			compatible = "sunwoda,l24d3pg2", "battery-smart";
+		};
+		celxpert_l22c3pg0 {
+			compatible = "celxpert,l22c3pg0", "battery-smart";
+		};
+	};
+};

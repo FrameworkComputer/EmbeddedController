@@ -1,0 +1,58 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/cbi_flash.dtsi>
+
+/* Pujjolo program common DTS includes */
+#include "../cbi.dtsi"
+#include "../generated.dtsi"
+#include "../i2c.dtsi"
+#include "../trulo.dtsi"
+
+/* Pujjolo project DTS includes*/
+#include "battery.dtsi"
+#include "cbi.dtsi"
+#include "gpio.dtsi"
+#include "i2c.dtsi"
+#include "fan.dtsi"
+#include "keyboard.dtsi"
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
+#include "power_signals.dtsi"
+#include "temp_sensors.dtsi"
+#include "usb_typec.dtsi"
+#include "usba.dtsi"
+
+/* Trulo overrides follow... */
+
+/{
+	gpio-interrupts {
+		/delete-node/ vol_up ;
+		/delete-node/ vol_down ;
+		/delete-node/ soc_enbkl;
+	};
+};
+
+&cbi_flash {
+	/*
+	 * CBI section size is 0x1000 bytes, the CBI portion lies at the end of
+	 * EC_RO section. WP_RO section size is 0x40000 bytes, EC_RO will be
+	 * trimmed down to 0x3e000 and CBI will be added at 0x3e000.
+	 */
+	offset = <0x3e000>;
+	size = <0x1000>;
+};
+
+&adc_ec_vsense_pp3300_s5 {
+	/*
+	 * Voltage divider on input has 47k upper and 220k lower legs with
+	 * 2714 mV full-scale reading on the ADC. Apply the largest possible
+	 * multiplier (without overflowing int32) to get the best possible
+	 * approximation of the actual ratio, but derate by a factor of two to
+	 * ensure unexpectedly high values won't overflow.
+	 */
+	mul = <(791261 / 2)>;
+	div = <(651975 / 2)>;
+};

@@ -1,0 +1,117 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ / {
+
+	named-gpios {
+		/delete-node/ acok_od;
+		/delete-node/ ec_pmc_pd_int_odl;
+		/delete-node/ gsc_ec_pwr_btn_odl;
+		/delete-node/ ec_tris_l;
+		/delete-node/ en_kb_bl;
+		/delete-node/ en_z1_rails;
+		/delete-node/ imvp91_vrrdy_r_od;
+		/delete-node/ vccin_aux_r_vid0;
+		/delete-node/ vccin_aux_r_vid1;
+		/delete-node/ imu_int_l;
+		/delete-node/ i2c_ec_pd_int_odl;
+		/delete-node/ voldn_btn_odl;
+		/delete-node/ en_kb_bl;
+		/delete-node/ volup_btn_odl;
+		/delete-node/ voldn_btn_odl;
+		/delete-node/ ccd_mode_odl;
+
+
+		gpio_ec_acok_od: ec_acok_od {
+			gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_ec_edp_bl_en_od: ec_edp_bl_en_od {
+			gpios = <&gpiod 3 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_ENABLE_BACKLIGHT";
+		};
+		gpio_imvp91_vrrdy_od_ec: imvp91_vrrdy_od_ec {
+			gpios = <&gpio6 6 GPIO_INPUT>;
+			no-auto-init;
+		};
+		gpio_en_usb_a0_vbus: en_usb_a0_vbus {
+			gpios = <&gpio9 1 GPIO_OUTPUT>;
+		};
+		gpio_i2c_ec_pd1_int_odl: i2c_ec_pd1_int_odl {
+			gpios = <&gpioe 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		ec-i2c-sensor-scl {
+			gpios = <&gpio9 0 GPIO_INPUT>;
+		};
+		ec-i2c-sensor-sda {
+			gpios = <&gpio8 7 GPIO_INPUT>;
+		};
+		gpio_en_pp3300_z1: en_pp3300_z1 {
+			gpios = <&gpio8 5 GPIO_OUTPUT>;
+		};
+		gpio_i2c_ec_pd0_int_odl: i2c_ec_pd0_int_odl {
+			gpios = <&gpio0 2 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_pmc_pd0_int_odl: ec_pmc_pd0_int_odl {
+			gpios = <&gpio7 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_pmc_pd1_int_odl: ec_pmc_pd1_int_odl {
+			gpios = <&gpioe 5 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_fault_pen: fault_pen {
+			gpios = <&gpio4 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_rst_r_odl: ec_rst_r_odl {
+			gpios = <&gpio7 7 GPIO_INPUT>;
+		};
+		gpio_ec_shdf_espi_l: ec_shdf_espi_l {
+			gpios = <&gpiod 6 GPIO_INPUT>;
+		};
+		gpio_sen_mode2_ec_ish_int_odl: sen_mode2_ec_ish_int_odl {
+			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_OUTPUT)>;
+		};
+		gpio_uart_gsc_dbg_rx_ec_tx_r: uart_gsc_dbg_rx_ec_tx_r {
+			gpios = <&gpio6 5 GPIO_OUTPUT>;
+		};
+		gpio_uart_gsc_dbg_tx_ec_rx: uart_gsc_dbg_tx_ec_rx {
+			gpios = <&gpio6 4 GPIO_INPUT>;
+		};
+
+
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpiob 5 0>,
+			<&gpiob 4 0>,
+			<&gpiod 1 0>,
+			<&gpiod 0 0>,
+			<&gpio3 3 0>,
+			<&gpio3 6 0>,
+			<&gpio3 5 0>,
+			<&gpio8 6 0>,
+			<&gpioc 7 0>,
+			<&gpioa 2 0>,
+			<&gpioa 0 0>,
+			<&gpiod 5 0>,
+			<&gpio8 1 0>,
+			<&gpio4 2 0>;
+	};
+};
+
+/* These GPIOS are initialized by the PDC driver */
+&gpio_i2c_ec_pd0_int_odl {
+	no-auto-init;
+};
+&gpio_i2c_ec_pd1_int_odl {
+	no-auto-init;
+};
+&gpio_ec_pmc_pd0_int_odl {
+	no-auto-init;
+};
+&gpio_ec_pmc_pd1_int_odl {
+	no-auto-init;
+};
