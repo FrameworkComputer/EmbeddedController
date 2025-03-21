@@ -183,16 +183,16 @@
 		gpio_hdmi2_src_hpd: hdmi2_src_hpd {
 			gpios = <&gpioksol 3 GPIO_INPUT>;
 		};
-		gpio_ec_usb_a1_vbus: ec_usb_a1_vbus {
+		gpio_en_usb_a1_vbus: en_usb_a1_vbus {
 			gpios = <&gpioc 6 GPIO_OUTPUT>;
 		};
-		gpio_ec_usb_a2_vbus: ec_usb_a2_vbus {
+		gpio_en_usb_a2_vbus: en_usb_a2_vbus {
 			gpios = <&gpioa 3 GPIO_OUTPUT>;
 		};
-		gpio_ec_usb_a3_vbus: ec_usb_a3_vbus {
+		gpio_en_usb_a3_vbus: en_usb_a3_vbus {
 			gpios = <&gpioc 0 GPIO_OUTPUT>;
 		};
-		gpio_ec_usb_a4_vbus: ec_usb_a4_vbus {
+		gpio_en_usb_a4_vbus: en_usb_a4_vbus {
 			gpios = <&gpiol 5 GPIO_OUTPUT>;
 		};
 		gpio_bj_adp_present: bj_adp_present {

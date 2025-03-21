@@ -117,10 +117,10 @@
 		compatible = "cros-ec,usba-port-enable-pins";
 
 		enable-pins = <&gpio_en_usb_a0_vbus
-			       &gpio_ec_usb_a1_vbus
-			       &gpio_ec_usb_a2_vbus
-			       &gpio_ec_usb_a3_vbus
-			       &gpio_ec_usb_a4_vbus>;
+			       &gpio_en_usb_a1_vbus
+			       &gpio_en_usb_a2_vbus
+			       &gpio_en_usb_a3_vbus
+			       &gpio_en_usb_a4_vbus>;
 		status = "okay";
 	};
 
