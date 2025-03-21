@@ -367,7 +367,7 @@ void enter_epr_mode(void)
 			for (int retry = 0; retry < 5; retry++) {
 				ret = board_confirm_buck_transition_ready(1);
 				if (ret == EC_SUCCESS) {
-					CPRINTS("3Level-Buck transition ready");
+					CPRINTS("3Level-Buck enter epr ready");
 					break;
 				}
 				CPRINTS("3Level-Buck transition retry");
@@ -407,6 +407,7 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, enter_epr_mode_without_battery, HOOK_PRIO_DEF
 void exit_epr_mode(void)
 {
 	int port_idx;
+	int ret;
 
 	for (port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
 		if (pd_port_states[port_idx].epr_active == 1) {
@@ -425,6 +426,17 @@ void exit_epr_mode(void)
 			} else {
 				update_pmf_events(BIT(PD_PROGRESS_EXIT_EPR_MODE),
 						!!(pd_epr_in_progress & ~EPR_PROCESS_MASK));
+			}
+
+			/* Try to set to Buck mode, retry up to 5 times */
+			for (int retry = 0; retry < 5; retry++) {
+				ret = board_confirm_buck_transition_ready(1);
+				if (ret == EC_SUCCESS) {
+					CPRINTS("3Level-Buck exit epr ready");
+					break;
+				}
+				CPRINTS("3Level-Buck transition retry");
+				crec_msleep(200);
 			}
 
 			cypd_write_reg8((port_idx & 0x2) >> 1,
