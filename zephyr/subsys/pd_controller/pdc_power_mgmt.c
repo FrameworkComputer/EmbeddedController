@@ -957,7 +957,9 @@ static ALWAYS_INLINE void pdc_thread(void *pdc_dev, void *unused1,
 	static struct pdc_data_t data_##inst = {                              \
 		.port.dev = DEVICE_DT_INST_GET(inst), /* Initial policy read  \
 							 from device tree */  \
-		.port.pdc = DEVICE_DT_GET(DT_INST_PROP_BY_IDX(inst, pdc, 0)), \
+		.port.pdc = COND_CODE_1(                                      \
+			CONFIG_PDC_RUNTIME_PORT_CONFIG, (NULL),               \
+			DEVICE_DT_GET(DT_INST_PROP_BY_IDX(inst, pdc, 0))),    \
 		.port.una_policy.tcc = DT_STRING_TOKEN(                       \
 			DT_INST_PROP(inst, policy), unattached_rp_value),     \
 		.port.una_policy.cc_mode = DT_STRING_TOKEN(                   \
@@ -3221,18 +3223,42 @@ static int pdc_subsys_init(const struct device *dev)
 	const struct pdc_config_t *const config = dev->config;
 	int rv;
 
-	/* Make sure underlying PDC driver is ready */
-	if (!device_is_ready(port->pdc)) {
-		LOG_ERR("PDC not ready. Cannot init pdc_power_mgmt for port %d",
-			config->connector_num);
+	const struct device *pdc =
+		pdc_power_mgmt_get_port_pdc_driver(config->connector_num);
 
-		/* Prevent sending public API commands. Note: we never create a
-		 * driver thread in this code path, so nothing will happen for
-		 * this port. */
-		smf_set_initial(&port->ctx, &pdc_states[PDC_DISABLED]);
+#ifdef CONFIG_PDC_RUNTIME_PORT_CONFIG
+	/* Runtime-defined PDC configuration. Need to initialize this PDC
+	 * driver here manually. */
 
-		return -ENODEV;
+	uint8_t active_port_count = pdc_power_mgmt_get_usb_pd_port_count();
+
+	if (config->connector_num >= active_port_count || pdc == NULL) {
+		LOG_ERR("C%d: Port disabled per board configuration "
+			"(total active ports: %u)",
+			config->connector_num, active_port_count);
+
+		goto disable_port;
 	}
+
+	/* Try initializing this driver */
+	rv = device_init(pdc);
+	if (rv) {
+		LOG_ERR("C%d: Cannot initialize PDC: %d (PDC %p %s). "
+			"Disabling this port",
+			config->connector_num, rv, pdc,
+			pdc->name ? pdc->name : "<no name>");
+		goto disable_port;
+	}
+#else /* !defined(CONFIG_PDC_RUNTIME_PORT_CONFIG) */
+	/* Static PDC configuration. Make sure the assigned PDC is ready. */
+
+	if (!device_is_ready(pdc)) {
+		LOG_ERR("C%d: PDC is not ready", config->connector_num);
+		goto disable_port;
+	}
+#endif /* !defined(CONFIG_PDC_RUNTIME_PORT_CONFIG) */
+
+	port->pdc = pdc;
 
 	init_port_variables(port, false);
 	port->drp = port->una_policy.drp_mode;
@@ -3265,6 +3291,14 @@ static int pdc_subsys_init(const struct device *dev)
 	config->create_thread(dev);
 
 	return 0;
+
+disable_port:
+	/* Prevent sending public API commands. Note: we never create a
+	 * driver thread in this code path, so nothing will happen for
+	 * this port. */
+	smf_set_initial(&port->ctx, &pdc_states[PDC_DISABLED]);
+
+	return -ENODEV;
 }
 
 /**
@@ -3415,10 +3449,40 @@ test_mockable bool pdc_power_mgmt_is_connected(int port)
 	return pdc_data[port]->port.attached_state != UNATTACHED_STATE;
 }
 
+#ifndef CONFIG_PDC_RUNTIME_PORT_CONFIG
+/*
+ * When static port config is used (normal), each named-usbc-port must have
+ * only one PDC phandle entry, and it must not be marked zephyr,deferred-init.
+ */
+#define CHECK_NAMED_USBC_PORT(inst)                                  \
+	BUILD_ASSERT(1 == DT_INST_PROP_LEN(inst, pdc));              \
+	BUILD_ASSERT(0 == DT_PROP(DT_INST_PROP_BY_IDX(inst, pdc, 0), \
+				  zephyr_deferred_init));
+
+#ifndef CONFIG_ZTEST
+/* Only enforce this on real builds so tests can try some failure scenarios */
+DT_INST_FOREACH_STATUS_OKAY(CHECK_NAMED_USBC_PORT)
+#endif /* !defined(CONFIG_ZTEST) */
+
+/* Find the associated PDC driver using static devicetree information */
+const struct device *pdc_power_mgmt_get_port_pdc_driver(int port)
+{
+	if (port < 0 || port >= CONFIG_USB_PD_PORT_MAX_COUNT) {
+		return NULL;
+	}
+
+	/* This array is statically initialized and should always have the
+	 * correct data */
+	return pdc_data[port]->port.pdc;
+}
+
+/* Note: this is defined in pdc_runtime_port_config.c when
+ * CONFIG_PDC_RUNTIME_PORT_CONFIG is enabled */
 uint8_t pdc_power_mgmt_get_usb_pd_port_count(void)
 {
 	return CONFIG_USB_PD_PORT_MAX_COUNT;
 }
+#endif /* !defined(CONFIG_PDC_RUNTIME_PORT_CONFIG) */
 
 int pdc_power_mgmt_set_active_charge_port(int charge_port)
 {

@@ -16,6 +16,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <zephyr/device.h>
 #include <zephyr/sys/atomic.h>
 
 #include <drivers/pdc.h>
@@ -746,5 +747,13 @@ int pdc_power_mgmt_get_sbu_mux_mode(enum pdc_sbu_mux_mode *mode, int *port_num);
  */
 int pdc_power_mgmt_set_sbu_mux_mode(enum pdc_sbu_mux_mode mode);
 #endif /* defined(CONFIG_USBC_PDC_DRIVEN_CCD) */
+
+/**
+ * @brief Get a handle to the PDC (LPM) driver serving a given port
+ *
+ * @return NULL if port is disabled or invalid
+ * @return Device pointer on success
+ */
+const struct device *pdc_power_mgmt_get_port_pdc_driver(int port);
 
 #endif /* __CROS_EC_PDC_POWER_MGMT_H */

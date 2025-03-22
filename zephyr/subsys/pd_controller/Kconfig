@@ -95,6 +95,17 @@ config PDC_POWER_MGMT_USB_MUX
 	  enabled if the USB3/DP mux control is managed by the EC rather than
 	  the SoC.
 
+config PDC_RUNTIME_PORT_CONFIG
+	bool "Select and enable port drivers at runtime"
+	help
+	  Used for runtime selection of PDC drivers and variable USB-C port
+	  count support from a single EC binary.
+
+	  If enabled, PDC drivers must be marked with `zephyr,deferred-init`
+	  in the devicetree so they do not automatically initialize. Board code
+	  is invoked to determine which USB-C ports to enable and with what
+	  driver instance.
+
 if PDC_POWER_MGMT_USB_MUX
 config USB_MUX_SYS_INIT_PRIORITY
 	int "USB mux module init priority"
