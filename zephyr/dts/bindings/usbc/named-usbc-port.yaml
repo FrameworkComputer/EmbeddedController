@@ -65,9 +65,10 @@ properties:
     description: |
       PD chip for configuring the alternate modes of the USB-C port.
   pdc:
-    type: phandle
+    type: phandles
     description: |
-      PD chip for managing Power Delivery
+      PD chip for managing Power Delivery. Multiple PDC candidates may be
+      specified if using CONFIG_PDC_RUNTIME_PORT_CONFIG.
   pd-retimer:
     type: boolean
     description: |

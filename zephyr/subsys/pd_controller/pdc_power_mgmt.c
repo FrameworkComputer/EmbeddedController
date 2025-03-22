@@ -957,7 +957,7 @@ static ALWAYS_INLINE void pdc_thread(void *pdc_dev, void *unused1,
 	static struct pdc_data_t data_##inst = {                              \
 		.port.dev = DEVICE_DT_INST_GET(inst), /* Initial policy read  \
 							 from device tree */  \
-		.port.pdc = DEVICE_DT_GET(DT_INST_PROP(inst, pdc)),           \
+		.port.pdc = DEVICE_DT_GET(DT_INST_PROP_BY_IDX(inst, pdc, 0)), \
 		.port.una_policy.tcc = DT_STRING_TOKEN(                       \
 			DT_INST_PROP(inst, policy), unattached_rp_value),     \
 		.port.una_policy.cc_mode = DT_STRING_TOKEN(                   \

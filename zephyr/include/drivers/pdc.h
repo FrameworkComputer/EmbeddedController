@@ -50,9 +50,13 @@ extern "C" {
 
 #define NODE_MATCHES(node1, node2) IS_EQ(DT_DEP_ORD(node1), DT_DEP_ORD(node2))
 
-#define GET_USBC_PORT_IF_MATCHES_PROP(usbc_id, nodeid, prop)         \
-	COND_CODE_1(NODE_MATCHES(DT_PHANDLE(usbc_id, prop), nodeid), \
+#define COMPARE_PDC_ARRAY_MEMBER(usbc_id, prop, idx, target)                  \
+	COND_CODE_1(NODE_MATCHES(DT_PROP_BY_IDX(usbc_id, prop, idx), target), \
 		    (USBC_PORT_NEW(usbc_id)), ())
+
+#define GET_USBC_PORT_IF_PDC_IN_LIST(usbc_id, target)                      \
+	DT_FOREACH_PROP_ELEM_VARGS(usbc_id, pdc, COMPARE_PDC_ARRAY_MEMBER, \
+				   target)
 
 /**
  * @brief Given a devicetree node, return the USB-C port number that references
@@ -74,16 +78,16 @@ extern "C" {
  *		pdc_power_p1: driver@88 {
  *			compatible = "my-driver";
  *		}
+ *      };
  *
  *
- *
- * @param nodeid Devicetree node to search for
+ * @param target Devicetree node to search for
  * @param prop named-usbc-port property to check
  * @returns USB-C port number
  */
-#define USBC_PORT_FROM_PDC_DRIVER_NODE(nodeid) \
-	DT_FOREACH_STATUS_OKAY_VARGS(          \
-		named_usbc_port, GET_USBC_PORT_IF_MATCHES_PROP, nodeid, pdc)
+#define USBC_PORT_FROM_PDC_DRIVER_NODE(target)        \
+	DT_FOREACH_STATUS_OKAY_VARGS(named_usbc_port, \
+				     GET_USBC_PORT_IF_PDC_IN_LIST, target)
 
 /**
  * @brief Power Delivery Controller Information

@@ -528,8 +528,12 @@ def iterate_usbc_components(edtlib, edt, i2c_portmap, manifest):
             insert_i2c_component("tcpc", tcpc, port, i2c_portmap, manifest)
 
         if "pdc" in node.props:
-            pdc = node.props["pdc"].val
-            insert_i2c_component("pdc", pdc, port, i2c_portmap, manifest)
+            for pdc in node.props["pdc"].val:
+                # There may be multiple PDC phandles specified. In this case,
+                # both drivers will be compiled but board code will choose which
+                # PDC driver to initialize (supports runtime selection of a PDC)
+                # See CONFIG_PDC_RUNTIME_PORT_CONFIG
+                insert_i2c_component("pdc", pdc, port, i2c_portmap, manifest)
 
         for mux_chain in node.children.values():
             if "usb-muxes" in mux_chain.props:
