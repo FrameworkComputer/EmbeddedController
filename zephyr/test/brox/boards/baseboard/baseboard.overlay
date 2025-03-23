@@ -6,3 +6,17 @@
 #include <it8xxx2_emul.dts>
 
 #include "baseboard.dtsi"
+
+/{
+	/* Stub PDC nodes. Only needed for the node label. Don't actually
+	 * instantiate any PDC drivers for simplicity.
+	 */
+	pdc_power_p0: pdc_stub0 {
+	};
+	pdc_power_p1: pdc_stub1 {
+	};
+	pdc_power_p0_ti: pdc_stub2 {
+	};
+	pdc_power_p1_ti: pdc_stub3 {
+	};
+};

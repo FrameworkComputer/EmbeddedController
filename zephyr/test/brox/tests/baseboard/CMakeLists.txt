@@ -7,6 +7,8 @@ target_sources(app PRIVATE src/common.c)
 if (DEFINED CONFIG_TEST_BOARD_USBC)
 	target_sources(app PRIVATE src/usbc.c)
 	target_sources(app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/brox/src/usbc.c)
+	target_sources(app PRIVATE
+		${PLATFORM_EC_PROGRAM_DIR}/brox/brox/src/usbc_runtime.c)
 endif()
 
 if (DEFINED CONFIG_TEST_BOARD_HIBERNATE)
