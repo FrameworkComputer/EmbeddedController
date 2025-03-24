@@ -188,7 +188,7 @@
 			gpios = <&gpioj 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_x00085: x00085 {
-			gpios = <&gpioj 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+			gpios = <&gpioj 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
 	};
 
