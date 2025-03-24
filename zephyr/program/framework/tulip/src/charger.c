@@ -34,6 +34,7 @@
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
 static int last_extpower_present;
+static int prev_charge_ma;
 
 #ifdef CONFIG_PLATFORM_EC_CHARGER_INIT_CUSTOM
 static void charger_chips_init(void);
@@ -185,9 +186,17 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 
 	CPRINTS("Updating charger with EPR correction: ma %d", (int16_t)calculate_ma);
 
-	level_buck_set_input_current_limit(level_buck_ma);
+	if (charge_ma < prev_charge_ma) {
+		/* adjusting the limit down */
+		charge_set_input_current_limit((int)calculate_ma, charge_mv);
+		level_buck_set_input_current_limit(level_buck_ma);
+	} else {
+		/* adjusting the limit up */
+		level_buck_set_input_current_limit(level_buck_ma);
+		charge_set_input_current_limit((int)calculate_ma, charge_mv);
+	}
 
-	charge_set_input_current_limit((int)calculate_ma, charge_mv);
+	prev_charge_ma = charge_ma;
 }
 
 __overridable int extpower_is_present(void)

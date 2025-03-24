@@ -921,6 +921,19 @@ static void clear_port_state(int controller, int port)
 	pd_port_states[port_idx].voltage = 0;
 }
 
+#ifdef CONFIG_PD_CCG8_EPR
+static int64_t calculate_input_current(int pd_current, int pd_voltage, int scale_voltage,
+	int factor1, int factor2, int low_voltage_factor)
+{
+	if (pd_voltage > 20000) {
+		return (int64_t)pd_current * (int64_t)pd_voltage * factor1 * factor2
+				/ scale_voltage;
+	} else {
+		return (int64_t)pd_current * low_voltage_factor / 100;
+	}
+}
+#endif
+
 void cypd_update_port_state(int controller, int port)
 {
 	int rv;
@@ -935,6 +948,7 @@ void cypd_update_port_state(int controller, int port)
 	int port_idx = (controller << 1) + port;
 #ifdef CONFIG_PD_CCG8_EPR
 	int64_t calculate_ma;
+	int level_buck_ma;
 #endif
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
@@ -1069,18 +1083,29 @@ void cypd_update_port_state(int controller, int port)
 	if (!!(epr_progress_status() & EPR_PROCESS_MASK) &&
 	    !(epr_progress_status() & ~EPR_PROCESS_MASK)) {
 
-		/* Handle EPR converstion through the buck switcher */
-		if (pd_voltage > 20000) {
-			/**
-			 * (charge_ma * charge_mv / 20000 ) * 0.9 * 0.94
-			 */
-			calculate_ma =
-				(int64_t)pd_current * (int64_t)pd_voltage * 90 * 95 / 200000000;
-		} else {
-			calculate_ma = (int64_t)pd_current * 88 / 100;
-		}
+#ifdef CONFIG_BOARD_LOTUS
+		/**
+		 * >20V: (charge_ma * charge_mv / 20000 ) * 0.9 * 0.94
+		 * <=20V: (charge_ma * 88 / 100)
+		 */
+		calculate_ma = calculate_input_current(pd_current, pd_voltage,
+							200000000, 90, 95, 88);
+#elif defined(CONFIG_BOARD_TULIP)
+		/**
+		 * >20V: (charge_ma * charge_mv / 24000 ) * 0.95 * 0.95
+		 * <=20V: (charge_ma * 98 / 100)
+		 */
+		calculate_ma = calculate_input_current(pd_current, pd_voltage,
+							240000000, 95, 95, 98);
+#endif
 
 		board_discharge_on_ac(0);
+
+		if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGER_RAA489300)) {
+			level_buck_ma = pd_current * 98 / 100;
+			level_buck_set_input_current_limit(level_buck_ma);
+		}
+
 		charger_set_input_current_limit(0, (int)calculate_ma);
 		clear_erp_progress_mask();
 	}
