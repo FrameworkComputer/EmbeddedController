@@ -82,7 +82,7 @@
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		gpio_ec_soc_rec_switch_odl: ec_soc_rec_switch_odl {
-			gpios = <&gpiof 5 (GPIO_INPUT)>;
+			gpios = <&gpiof 5 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
 		gpio_ec_soc_rsmrst_l_r: ec_soc_rsmrst_l_r {
 			gpios = <&gpio9 5 (GPIO_INPUT)>;
