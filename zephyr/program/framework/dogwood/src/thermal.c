@@ -88,14 +88,36 @@ int board_get_ambient_temp_mk(int *temp_mk)
 	return f75303_get_val_mk(F75303_ID_QTH2, temp_mk);
 }
 
+static int thermal_fan_percent_with_hysteresis(int low, int high, int cur, bool fan_is_on)
+{
+	int hysteresis_low = (low - 2);
+
+	/* Set hysteresis target point to minimum temperature - 2 degree */
+	if (fan_is_on && cur < hysteresis_low)
+		return 0;
+	else if (fan_is_on && cur >= hysteresis_low && cur <= low) {
+		/**
+		 * If the sensor temperature in hysteresis range, return duty to 1,
+		 * EC will set the duty to fan_param->min_duty.
+		 */
+		return 1;
+	} else if (!fan_is_on && cur < low)
+		return 0;
+
+	if (cur > high)
+		return 100;
+	return 100 * (cur - low) / (high - low);
+}
+
 static int thermal_process_sensor_source_apu(int fan, int *temp)
 {
 	int duty;
 	struct fan_parameter_t *fan_param = &fan_params[fan];
 
-	duty = thermal_fan_percent(fan_param->min_temperature,
+	duty = thermal_fan_percent_with_hysteresis(fan_param->min_temperature,
 				   fan_param->max_temperature,
-				   temp[TEMP_ID_CHIPSET]);
+				   temp[TEMP_ID_CHIPSET],
+				   fan_param->target_duty ? true : false);
 
 	if (duty && duty < fan_param->min_duty)
 		duty = fan_param->min_duty;
@@ -118,9 +140,10 @@ static int thermal_process_sensor_source_chassis(int fan, int *temp)
 			max_temp = temp[idx];
 	}
 
-	duty = thermal_fan_percent(fan_param->min_temperature,
+	duty = thermal_fan_percent_with_hysteresis(fan_param->min_temperature,
 				   fan_param->max_temperature,
-				   max_temp);
+				   max_temp,
+				   fan_param->target_duty ? true : false);
 
 	if (duty && duty < fan_param->min_duty)
 		duty = fan_param->min_duty;
