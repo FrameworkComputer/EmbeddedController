@@ -39,6 +39,16 @@ static void rauru_common_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, rauru_common_init, HOOK_PRIO_PRE_DEFAULT);
 
+#ifdef CONFIG_PDC_POWER_MGMT_USB_MUX
+static void swap_to_src(void)
+{
+	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		pdc_power_mgmt_request_swap_to_src(i);
+	}
+}
+DECLARE_DEFERRED(swap_to_src);
+#endif
+
 /* USB-A */
 void xhci_interrupt(enum gpio_signal signal)
 {
@@ -70,6 +80,7 @@ void xhci_interrupt(enum gpio_signal signal)
 		 */
 		if (xhci_stat) {
 			pd_set_dual_role(i, PD_DRP_TOGGLE_ON);
+			pd_resume_check_pr_swap_needed(i);
 		} else if (tc_is_attached_src(i)) {
 			/*
 			 * This is a AP reset S0->S0 transition.
@@ -81,6 +92,15 @@ void xhci_interrupt(enum gpio_signal signal)
 	}
 #endif /* defined(CONFIG_PLATFORM_EC_USB_PD_TCPMV2) || \
 	  defined(CONFIG_PDC_POWER_MGMT_USB_MUX) */
+
+#ifdef CONFIG_PDC_POWER_MGMT_USB_MUX
+	/* pdc_power_mgmt_request_swap_to_src is a blocking function, call
+	 * it in hook task instead of IRQ context
+	 */
+	if (xhci_stat) {
+		hook_call_deferred(&swap_to_src_data, 0);
+	}
+#endif
 }
 
 #if defined(CONFIG_PLATFORM_EC_USB_PD_TCPMV2) || \
