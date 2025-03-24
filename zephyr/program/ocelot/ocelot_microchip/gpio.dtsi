@@ -1,0 +1,23 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ / {
+	aliases {
+		gpio-wp = &ec_spi_oe_mecc;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		/*TODO: ec_spi_oe_mecc to be declared later while uploading the ioexp changes*/
+		ec_spi_oe_mecc: ec-spi-wp {
+			gpios = <MCHP_GPIO_DECODE_227 GPIO_INPUT>;
+		};
+
+		entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+};

@@ -14,4 +14,8 @@ if(DEFINED CONFIG_BOARD_OCELOT_NUVOTON)
 	project(ocelot_nuvoton)
 endif()
 
+if(DEFINED CONFIG_BOARD_OCELOT_MICROCHIP)
+	project(ocelot_microchip)
+endif()
+
 add_subdirectory(${PROJECT_NAME})

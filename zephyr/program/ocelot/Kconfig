@@ -16,6 +16,13 @@ config BOARD_OCELOT_NUVOTON
 	  This board is for use with the Intel RVP using the
 	  MECC 2.1 connector.
 
+config BOARD_OCELOT_MICROCHIP
+	bool "Google Ocelot with microchip (mec1727) EC"
+	help
+	  Build Microchip EC based Ocelot.
+	  This board is for use with the Intel RVP using the
+	  on board EC.
+
 module = Oceolot
 module-str = Ocelot board-specific code
 source "subsys/logging/Kconfig.template.log_config"
