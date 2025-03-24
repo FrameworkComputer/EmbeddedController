@@ -3,6 +3,20 @@
  * found in the LICENSE file.
  */
 
+/* Below pins are supporting different functions. Hence, not defined here.
+ *
+ * GPIO003, GPIO004 used for I2C
+ * GPIO201, GPIO202, GPIO203, GPIO204, GPIO205, GPIO206, GPIO207 used for adc
+ * GPIO104, GPIO105 used for uart
+ * GPIO132, GPIO140 used for I2C
+ * GPIO035 used for pwm8
+ * GPIO050 used for tach0
+ * GPIO044 used for vref-vtt
+ * GPIO130, GPIO131 used for I2C
+ * GPIO061, GPIO065, GPIO066, GPIO070, GPIO071, GPIO072, GPIO073 used for eSPI
+ * GPIO226, GPIO244, GPIO012, GPIO052, GPIO054, GPIO100 used as power signals.
+ */
+
  / {
 	aliases {
 		gpio-wp = &ec_spi_oe_mecc;
@@ -11,13 +25,210 @@
 	named-gpios {
 		compatible = "named-gpios";
 
+		bc_acok: bc-acok-ec-in {
+			gpios = <MCHP_GPIO_DECODE_155 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		all_sys_pwrgd: all-sys-pwrgd {
+			gpios = <MCHP_GPIO_DECODE_057 GPIO_INPUT>;
+			no-auto-init;
+		};
+		cse_early_rec_sw: ec-cse-early-sw {
+			gpios = <MCHP_GPIO_DECODE_064 GPIO_ODR_LOW>;
+		};
+		vol_up_ec: vol-up-ec {
+			gpios = <MCHP_GPIO_DECODE_242 GPIO_INPUT>;
+			enum-name = "GPIO_VOLUME_UP_L";
+		};
+		vol_dn_ec: vol-down-ec {
+			gpios = <MCHP_GPIO_DECODE_246 GPIO_INPUT>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		};
+		/* Keep low to prioritize AC brick power source selection */
+		std-adpt-cntrl-gpio-r {
+			gpios = <MCHP_GPIO_DECODE_254 GPIO_OUTPUT_LOW>;
+		};
+		gpio_fan_control: fan-pwr-disable {
+			gpios = <MCHP_GPIO_DECODE_060 GPIO_OUTPUT_LOW>;
+		};
+		std_adp_prsnt: std-adp-prsnt-ec {
+			gpios = <MCHP_GPIO_DECODE_243 GPIO_INPUT>;
+		};
+		gpio_ec_pch_wake_odl: smc-wake-sci-ec {
+			gpios = <MCHP_GPIO_DECODE_034 GPIO_ODR_HIGH>;
+		};
 		/*TODO: ec_spi_oe_mecc to be declared later while uploading the ioexp changes*/
 		ec_spi_oe_mecc: ec-spi-wp {
 			gpios = <MCHP_GPIO_DECODE_227 GPIO_INPUT>;
+		};
+		gpio_mic_privacy_ec: mic-privacy-ec {
+			gpios = <MCHP_GPIO_DECODE_053 GPIO_OUTPUT_HIGH>;
+		};
+		bat-id-r {
+			gpios = <MCHP_GPIO_DECODE_162 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		smc_lid: peci-mux-ctrl-er-int {
+			gpios = <MCHP_GPIO_DECODE_161 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		pwrbtn: home-btn-ec-rvp-aep-id {
+			gpios = <MCHP_GPIO_DECODE_000 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		prwbtn: pm-pwrbtn-n-r {
+			gpios = <MCHP_GPIO_DECODE_011 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 
 		entering-rw {
 			enum-name = "GPIO_ENTERING_RW";
 		};
+	};
+
+	/* Below pins provided in the spreadsheet are not connected
+	 * to EC in the schematic or functionality is not enabled yet.
+	 * Hence, defined below pins as unused pins.
+	 */
+
+	unused-pins {
+		compatible = "unused-gpios";
+
+		unused-gpios =
+			/* kbc-numlock */
+			<MCHP_GPIO_DECODE_154 GPIO_INPUT>,
+			/* typec-ec-smbus-alert */
+			<MCHP_GPIO_DECODE_143 GPIO_INPUT>,
+			/* ps2-kb-clk */
+			<MCHP_GPIO_DECODE_007 GPIO_INPUT>,
+			/* ps2-kb-data */
+			<MCHP_GPIO_DECODE_010 GPIO_INPUT>,
+			/* ec-gpio144-wake */
+			<MCHP_GPIO_DECODE_144 GPIO_INPUT>,
+			/* m2-ssd-ec-i2c05-data */
+			<MCHP_GPIO_DECODE_141 GPIO_INPUT>,
+			/* m2-ssd-ec-i2c05-clk */
+			<MCHP_GPIO_DECODE_142 GPIO_INPUT>,
+			/* ec-jtag-tdi */
+			<MCHP_GPIO_DECODE_145 GPIO_INPUT>,
+			/* ec-jtag-tdo */
+			<MCHP_GPIO_DECODE_146 GPIO_INPUT>,
+			/* ec-jtag-tck */
+			<MCHP_GPIO_DECODE_147 GPIO_INPUT>,
+			/* ec-jtag-tms */
+			<MCHP_GPIO_DECODE_150 GPIO_INPUT>,
+			/* tp_ec_a2 */
+			<MCHP_GPIO_DECODE_062 GPIO_INPUT>,
+			/* tp-ec-h9 */
+			<MCHP_GPIO_DECODE_114 GPIO_INPUT>,
+			/* pca9555-1-r-int-n */
+			<MCHP_GPIO_DECODE_115 GPIO_INPUT>,
+			/* tp-ec-j13 */
+			<MCHP_GPIO_DECODE_043 GPIO_INPUT>,
+			/* kbd-bklt-ctrl */
+			<MCHP_GPIO_DECODE_153 GPIO_INPUT>,
+			/* pm_bat_status_led2 */
+			<MCHP_GPIO_DECODE_157 GPIO_OUTPUT_LOW>,
+			/* pm_bat_status_led1 */
+			<MCHP_GPIO_DECODE_156 GPIO_OUTPUT_LOW>,
+			/* ec-edp1-bklt-en */
+			<MCHP_GPIO_DECODE_200 GPIO_INPUT>,
+			/* ec-jtag-strap */
+			<MCHP_GPIO_DECODE_170 GPIO_INPUT>,
+			/* prochot-ec-r */
+			<MCHP_GPIO_DECODE_171 GPIO_INPUT>,
+			/* kbc-capslock */
+			<MCHP_GPIO_DECODE_127 GPIO_INPUT>,
+			/* peci-ec */
+			<MCHP_GPIO_DECODE_042 GPIO_INPUT>,
+			/**
+			* All `kbc-scanin-x` pins are configured as input GPIO's,
+			* discrete keyboard connected to IO expander will be used.
+			**/
+			<MCHP_GPIO_DECODE_032 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_031 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_030 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_027 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_026 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_021 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_020 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_017 GPIO_INPUT>,
+			/**
+			* All `kbc-scanout-x` pins are configured as input GPIO's,
+			* discrete keyboard connected to IO expander will be used.
+			**/
+			<MCHP_GPIO_DECODE_151 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_152 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_126 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_125 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_124 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_123 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_122 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_121 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_113 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_112 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_107 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_047 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_046 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_045 GPIO_INPUT>,
+			<MCHP_GPIO_DECODE_040 GPIO_INPUT>,
+			/* pwrbtn-ec-in-n */
+			<MCHP_GPIO_DECODE_106 GPIO_INPUT>,
+			/* pm-pwrbtn-led */
+			<MCHP_GPIO_DECODE_241 GPIO_INPUT>,
+			/* m2-bt-led2-ec-n */
+			<MCHP_GPIO_DECODE_175 GPIO_INPUT>,
+			/* btp-ec-r */
+			<MCHP_GPIO_DECODE_221 GPIO_INPUT>,
+			/* pm-batlow-ec-n */
+			<MCHP_GPIO_DECODE_165 GPIO_INPUT>,
+			/* usb-pb-ppc-int-od-n */
+			<MCHP_GPIO_DECODE_240 GPIO_INPUT>,
+			/* c-ioex-kbd-intr-n*/
+			<MCHP_GPIO_DECODE_025 GPIO_INPUT>,
+			/* tp-ec-h13 */
+			<MCHP_GPIO_DECODE_036 GPIO_INPUT>,
+			/* h-caterr-ec-n */
+			<MCHP_GPIO_DECODE_255 GPIO_INPUT>,
+			/* smc-lid */
+			<MCHP_GPIO_DECODE_033 GPIO_INPUT>,
+			/* tcss-ec-i2c-int-n */
+			<MCHP_GPIO_DECODE_051 GPIO_INPUT>,
+			/* ec-pdb-ctrl */
+			<MCHP_GPIO_DECODE_245 GPIO_INPUT>,
+			/* saf-g3-detect */
+			<MCHP_GPIO_DECODE_022 GPIO_INPUT>,
+			/* recvry-indicator-n */
+			<MCHP_GPIO_DECODE_023 GPIO_INPUT>,
+			/* mod-tcss-ec-sx-cntrl */
+			<MCHP_GPIO_DECODE_024 GPIO_INPUT>,
+			/* vref-adc-ec */
+			<MCHP_GPIO_DECODE_067 GPIO_INPUT>,
+			/* cpu-c10-gate-n-r */
+			<MCHP_GPIO_DECODE_013 GPIO_INPUT>,
+			/* ec-spi-hold */
+			<MCHP_GPIO_DECODE_016 GPIO_INPUT>,
+			/* ec-spi-miso */
+			<MCHP_GPIO_DECODE_224 GPIO_INPUT>,
+			/* ec-spi-mosi */
+			<MCHP_GPIO_DECODE_223 GPIO_INPUT>,
+			/* ec-spi-cs0-n */
+			<MCHP_GPIO_DECODE_055 GPIO_INPUT>,
+			/* ec-spi-clk */
+			<MCHP_GPIO_DECODE_056 GPIO_INPUT>,
+			/* flash-des-sec-override */
+			<MCHP_GPIO_DECODE_002 GPIO_INPUT>,
+			/* dnx-force-reload-ec */
+			<MCHP_GPIO_DECODE_014 GPIO_INPUT>,
+			/* sys-pwrok-ec-r */
+			<MCHP_GPIO_DECODE_015 GPIO_INPUT>,
+			/* ec-slatemode-hallout-snsr-r */
+			<MCHP_GPIO_DECODE_222 GPIO_INPUT>,
+			/* tp-bgp1 */
+			<MCHP_GPIO_DECODE_101 GPIO_INPUT>,
+			/* tp-bgp2 */
+			<MCHP_GPIO_DECODE_102 GPIO_INPUT>,
+			/* espi-alert0-ec-n */
+			<MCHP_GPIO_DECODE_063 GPIO_INPUT>;
 	};
 };
