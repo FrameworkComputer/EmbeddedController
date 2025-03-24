@@ -116,3 +116,14 @@ endif()
 if (DEFINED CONFIG_TEST_SUITE_PDC_TRACE_MSG)
 	target_sources(app PRIVATE src/generic/pdc_trace_msg.c)
 endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PDC_RUNTIME_PORT_CONFIG)
+	target_sources_ifdef(CONFIG_TEST_PDC_RUNTIME_CONFIG_SCENARIO_NO_PDCS
+		app PRIVATE src/runtime_config/no_pdcs.c)
+	target_sources_ifdef(CONFIG_TEST_PDC_RUNTIME_CONFIG_SCENARIO_ONE_PDC
+		app PRIVATE src/runtime_config/one_pdc.c)
+	target_sources_ifdef(CONFIG_TEST_PDC_RUNTIME_CONFIG_SCENARIO_DISCONT
+		app PRIVATE src/runtime_config/discontiguous.c)
+	target_sources_ifdef(CONFIG_TEST_PDC_RUNTIME_CONFIG_SCENARIO_TWO_PDCS
+		app PRIVATE src/runtime_config/two_pdcs.c)
+endif()

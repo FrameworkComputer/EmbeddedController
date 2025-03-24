@@ -114,11 +114,43 @@ config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	  This is used to not define chipset_in_state method as inline
 	  function.
 
+config TEST_SUITE_PDC_RUNTIME_PORT_CONFIG
+	bool "Enable PDC runtime port config tests"
+	help
+	  Run tests for the runtime USB-C port configuration feature
+
 config TEST_SKIP_EC_APP_MAIN
 	bool "Skip running ec_app_main()"
 	help
 	  Some tests intentionally create errors, like incorrect
 	  initialization order, and verify the error handling paths.
 	  The ec_app_main() is broken in these cases.
+
+choice TEST_PDC_RUNTIME_CONFIG_SCENARIO
+	prompt "Select a PDC topology to set up at runtime"
+	depends on TEST_SUITE_PDC_RUNTIME_PORT_CONFIG
+
+config TEST_PDC_RUNTIME_CONFIG_SCENARIO_NO_PDCS
+	bool "Cause an error while reading board PDC config"
+	help
+	  Return an error from `board_get_pdc_for_port()`, causing no PDCs to be
+	  initialized.
+
+config TEST_PDC_RUNTIME_CONFIG_SCENARIO_ONE_PDC
+	bool "Enable C0 but not C1"
+	help
+	  Activate one of two ports from `board_get_pdc_for_port()`
+
+config TEST_PDC_RUNTIME_CONFIG_SCENARIO_DISCONT
+	bool "Disable C0 but enable C1"
+	help
+	  Activate only the second port from `board_get_pdc_for_port()`
+
+config TEST_PDC_RUNTIME_CONFIG_SCENARIO_TWO_PDCS
+	bool "Enable C0 and enable C1"
+	help
+	  Activate both ports from `board_get_pdc_for_port()`
+
+endchoice
 
 source "Kconfig.zephyr"

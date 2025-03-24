@@ -231,3 +231,39 @@ tests:
     - CONFIG_USBC_PDC_TRACE_MSG_LOG_LEVEL_DBG=y
     extra_dtc_overlay_files:
     - "./boards/rts5453p.overlay"
+
+  pdc.runtime_port_config.no_pdcs:
+    extra_configs:
+    - CONFIG_TEST_SUITE_PDC_RUNTIME_PORT_CONFIG=y
+    - CONFIG_TEST_PDC_RUNTIME_CONFIG_SCENARIO_NO_PDCS=y
+    - CONFIG_PDC_RUNTIME_PORT_CONFIG=y
+    extra_dtc_overlay_files:
+    - "./boards/rts5453p.overlay"
+    - "./boards/pdc_deferred.overlay"
+
+  pdc.runtime_port_config.one_pdc:
+    extra_configs:
+    - CONFIG_TEST_SUITE_PDC_RUNTIME_PORT_CONFIG=y
+    - CONFIG_TEST_PDC_RUNTIME_CONFIG_SCENARIO_ONE_PDC=y
+    - CONFIG_PDC_RUNTIME_PORT_CONFIG=y
+    extra_dtc_overlay_files:
+    - "./boards/rts5453p.overlay"
+    - "./boards/pdc_deferred.overlay"
+
+  pdc.runtime_port_config.discontiguous:
+    extra_configs:
+    - CONFIG_TEST_SUITE_PDC_RUNTIME_PORT_CONFIG=y
+    - CONFIG_TEST_PDC_RUNTIME_CONFIG_SCENARIO_DISCONT=y
+    - CONFIG_PDC_RUNTIME_PORT_CONFIG=y
+    extra_dtc_overlay_files:
+    - "./boards/rts5453p.overlay"
+    - "./boards/pdc_deferred.overlay"
+
+  pdc.runtime_port_config.two_pdcs:
+    extra_configs:
+    - CONFIG_TEST_SUITE_PDC_RUNTIME_PORT_CONFIG=y
+    - CONFIG_TEST_PDC_RUNTIME_CONFIG_SCENARIO_TWO_PDCS=y
+    - CONFIG_PDC_RUNTIME_PORT_CONFIG=y
+    extra_dtc_overlay_files:
+    - "./boards/rts5453p.overlay"
+    - "./boards/pdc_deferred.overlay"
