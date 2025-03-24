@@ -233,8 +233,6 @@ struct send_cmd_t {
 enum snk_attached_local_state_t {
 	/** SNK_ATTACHED_GET_CONNECTOR_CAPABILITY */
 	SNK_ATTACHED_GET_CONNECTOR_CAPABILITY,
-	/** SNK_ATTACHED_GET_CABLE_PROPERTY */
-	SNK_ATTACHED_GET_CABLE_PROPERTY,
 	/** SNK_ATTACHED_SET_DR_SWAP_POLICY */
 	SNK_ATTACHED_SET_DR_SWAP_POLICY,
 	/** SNK_ATTACHED_SET_PR_SWAP_POLICY */
@@ -256,6 +254,8 @@ enum snk_attached_local_state_t {
 	SNK_ATTACHED_START_CHARGING,
 	/** SNK_ATTACHED_GET_SINK_PDO */
 	SNK_ATTACHED_GET_SINK_PDO,
+	/** SNK_ATTACHED_GET_CABLE_PROPERTY */
+	SNK_ATTACHED_GET_CABLE_PROPERTY,
 	/** SNK_ATTACHED_RUN */
 	SNK_ATTACHED_RUN,
 };
@@ -268,8 +268,6 @@ enum src_attached_local_state_t {
 	SRC_ATTACHED_SET_SINK_PATH_OFF,
 	/** SRC_ATTACHED_GET_CONNECTOR_CAPABILITY */
 	SRC_ATTACHED_GET_CONNECTOR_CAPABILITY,
-	/** SRC_ATTACHED_GET_CABLE_PROPERTY */
-	SRC_ATTACHED_GET_CABLE_PROPERTY,
 	/** SRC_ATTACHED_SET_DR_SWAP_POLICY */
 	SRC_ATTACHED_SET_DR_SWAP_POLICY,
 	/** SRC_ATTACHED_SET_PR_SWAP_POLICY */
@@ -278,6 +276,8 @@ enum src_attached_local_state_t {
 	SRC_ATTACHED_READ_POWER_LEVEL,
 	/** SRC_ATTACHED_GET_VDO */
 	SRC_ATTACHED_GET_VDO,
+	/** SRC_ATTACHED_GET_CABLE_PROPERTY */
+	SRC_ATTACHED_GET_CABLE_PROPERTY,
 	/** SRC_ATTACHED_RUN */
 	SRC_ATTACHED_RUN,
 };
@@ -1919,13 +1919,8 @@ static void pdc_src_attached_run(void *obj)
 		return;
 	case SRC_ATTACHED_GET_CONNECTOR_CAPABILITY:
 		port->src_attached_local_state =
-			SRC_ATTACHED_GET_CABLE_PROPERTY;
-		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_CAPABILITY);
-		return;
-	case SRC_ATTACHED_GET_CABLE_PROPERTY:
-		port->src_attached_local_state =
 			SRC_ATTACHED_SET_DR_SWAP_POLICY;
-		queue_internal_cmd(port, CMD_PDC_GET_CABLE_PROPERTY);
+		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_CAPABILITY);
 		return;
 	case SRC_ATTACHED_SET_DR_SWAP_POLICY:
 		port->src_attached_local_state =
@@ -1954,8 +1949,13 @@ static void pdc_src_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_READ_POWER_LEVEL);
 		return;
 	case SRC_ATTACHED_GET_VDO:
-		port->src_attached_local_state = SRC_ATTACHED_RUN;
+		port->src_attached_local_state =
+			SRC_ATTACHED_GET_CABLE_PROPERTY;
 		queue_internal_cmd(port, CMD_PDC_GET_VDO);
+		return;
+	case SRC_ATTACHED_GET_CABLE_PROPERTY:
+		port->src_attached_local_state = SRC_ATTACHED_RUN;
+		queue_internal_cmd(port, CMD_PDC_GET_CABLE_PROPERTY);
 		return;
 	case SRC_ATTACHED_RUN:
 		run_src_policies(port);
@@ -2133,13 +2133,8 @@ static void pdc_snk_attached_run(void *obj)
 	switch (port->snk_attached_local_state) {
 	case SNK_ATTACHED_GET_CONNECTOR_CAPABILITY:
 		port->snk_attached_local_state =
-			SNK_ATTACHED_GET_CABLE_PROPERTY;
-		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_CAPABILITY);
-		return;
-	case SNK_ATTACHED_GET_CABLE_PROPERTY:
-		port->snk_attached_local_state =
 			SNK_ATTACHED_SET_DR_SWAP_POLICY;
-		queue_internal_cmd(port, CMD_PDC_GET_CABLE_PROPERTY);
+		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_CAPABILITY);
 		return;
 	case SNK_ATTACHED_SET_DR_SWAP_POLICY:
 		port->snk_attached_local_state =
@@ -2255,7 +2250,8 @@ static void pdc_snk_attached_run(void *obj)
 			port->snk_attached_local_state =
 				SNK_ATTACHED_GET_SINK_PDO;
 		} else {
-			port->snk_attached_local_state = SNK_ATTACHED_RUN;
+			port->snk_attached_local_state =
+				SNK_ATTACHED_GET_CABLE_PROPERTY;
 		}
 
 		/* Test if battery should be charged from this port */
@@ -2264,7 +2260,8 @@ static void pdc_snk_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
 		return;
 	case SNK_ATTACHED_GET_SINK_PDO:
-		port->snk_attached_local_state = SNK_ATTACHED_RUN;
+		port->snk_attached_local_state =
+			SNK_ATTACHED_GET_CABLE_PROPERTY;
 
 		if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS)) {
 			/*
@@ -2288,6 +2285,10 @@ static void pdc_snk_attached_run(void *obj)
 		/* If !CONFIG_PLATFORM_EC_USB_PD_FRS, fallthrough */
 		__fallthrough;
 
+	case SNK_ATTACHED_GET_CABLE_PROPERTY:
+		port->snk_attached_local_state = SNK_ATTACHED_RUN;
+		queue_internal_cmd(port, CMD_PDC_GET_CABLE_PROPERTY);
+		return;
 	case SNK_ATTACHED_RUN:
 		/* Hard Reset could disable Sink FET. Re-enable it */
 		if (atomic_get(&port->hard_reset_sent)) {
