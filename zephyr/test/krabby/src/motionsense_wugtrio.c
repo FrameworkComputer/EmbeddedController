@@ -22,6 +22,15 @@ FAKE_VALUE_FUNC(int, cbi_get_ssfc, uint32_t *);
 static int interrupt_id;
 static int ssfc_data;
 
+static void reset(void)
+{
+	/* Re-initialize CBI */
+	cros_cbi_ec_init();
+
+	/* Re-initialize sensors and board config */
+	hook_notify(HOOK_INIT);
+}
+
 static int cbi_get_ssfc_mock(uint32_t *ssfc)
 {
 	*ssfc = ssfc_data;
@@ -50,7 +59,7 @@ static void *alt_sensor_use_setup(void)
 	cbi_get_ssfc_fake.custom_fake = cbi_get_ssfc_mock;
 	ssfc_data = SSFC_LID_ALT_SENSOR;
 	/* Run init hooks to initialize cbi. */
-	hook_notify(HOOK_INIT);
+	reset();
 
 	return NULL;
 }
@@ -84,7 +93,7 @@ static void *alt_sensor_no_use_setup(void)
 	cbi_get_ssfc_fake.custom_fake = cbi_get_ssfc_mock;
 	ssfc_data = SSFC_LID_MAIN_SENSOR;
 	/* Run init hooks to initialize cbi. */
-	hook_notify(HOOK_INIT);
+	reset();
 
 	return NULL;
 }

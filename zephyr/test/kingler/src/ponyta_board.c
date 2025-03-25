@@ -42,6 +42,15 @@ FAKE_VALUE_FUNC(int, clock_get_freq);
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
 
+static void reset(void)
+{
+	/* Re-initialize CBI */
+	cros_cbi_ec_init();
+
+	/* Re-initialize sensors and board config */
+	hook_notify(HOOK_INIT);
+}
+
 static void ponyta_before(void *fixture)
 {
 	RESET_FAKE(clock_get_freq);
@@ -62,12 +71,6 @@ int mock_cros_cbi_get_fw_config_converible(enum cbi_fw_config_field_id field_id,
 	return 0;
 }
 
-int mock_cros_cbi_get_fw_config_error(enum cbi_fw_config_field_id field_id,
-				      uint32_t *value)
-{
-	return -1;
-}
-
 static void teardown(void *unused)
 {
 	/* Reset board globals */
@@ -80,7 +83,7 @@ static void *clamshell_setup(void)
 
 	cros_cbi_get_fw_config_fake.custom_fake =
 		mock_cros_cbi_get_fw_config_clamshell;
-	hook_notify(HOOK_INIT);
+	reset();
 
 	/* Check if CBI write worked. */
 	zassert_ok(cros_cbi_get_fw_config(FORM_FACTOR, &val), NULL);
@@ -137,13 +140,6 @@ ZTEST(ponyta_clamshell, test_base_imu_irq_disabled)
 		      interrupt_count);
 }
 
-ZTEST_USER(ponyta_clamshell, test_error_reading_cbi)
-{
-	cros_cbi_get_fw_config_fake.custom_fake =
-		mock_cros_cbi_get_fw_config_error;
-	hook_notify(HOOK_INIT);
-}
-
 void bmi3xx_interrupt(enum gpio_signal signal)
 {
 	interrupt_id = 1;
@@ -168,8 +164,8 @@ static void *use_alt_sensor_setup(void)
 	/* Set form factor to CONVERTIBLE to enable motion sense interrupts. */
 	cros_cbi_get_fw_config_fake.custom_fake =
 		mock_cros_cbi_get_fw_config_converible;
-	/* Run init hooks to initialize cbi. */
-	hook_notify(HOOK_INIT);
+	/* Re-initialize CBI */
+	reset();
 
 	return NULL;
 }
@@ -205,8 +201,8 @@ static void *no_alt_sensor_setup(void)
 	/* Set form factor to CONVERTIBLE to enable motion sense interrupts. */
 	cros_cbi_get_fw_config_fake.custom_fake =
 		mock_cros_cbi_get_fw_config_converible;
-	/* Run init hooks to initialize cbi. */
-	hook_notify(HOOK_INIT);
+	/* Re-initialize CBI */
+	reset();
 
 	return NULL;
 }
@@ -240,7 +236,8 @@ ZTEST(customize_vol_up_key, test_customize_vol_up)
 
 	cros_cbi_get_fw_config_fake.custom_fake =
 		mock_cros_cbi_get_fw_config_clamshell;
-	hook_notify(HOOK_INIT);
+	/* Re-initialize CBI */
+	reset();
 
 	/* Check if CBI write worked. */
 	zassert_ok(cros_cbi_get_fw_config(FORM_FACTOR, &val), NULL);
@@ -251,7 +248,8 @@ ZTEST(customize_vol_up_key, test_customize_vol_up)
 
 	cros_cbi_get_fw_config_fake.custom_fake =
 		mock_cros_cbi_get_fw_config_converible;
-	hook_notify(HOOK_INIT);
+	/* Re-initialize CBI */
+	reset();
 
 	/* Check if CBI write worked. */
 	zassert_ok(cros_cbi_get_fw_config(FORM_FACTOR, &val), NULL);

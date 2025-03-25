@@ -120,6 +120,13 @@ bool cros_cbi_ssfc_check_match(enum cbi_ssfc_value_id value_id);
 int cros_cbi_get_fw_config(enum cbi_fw_config_field_id field_id,
 			   uint32_t *value);
 
+#ifdef CONFIG_ZTEST
+/**
+ * @brief Allow test code to re-initialize the CBI driver.
+ */
+int cros_cbi_ec_init(void);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

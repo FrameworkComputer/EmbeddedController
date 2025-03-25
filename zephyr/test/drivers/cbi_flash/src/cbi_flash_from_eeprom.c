@@ -5,6 +5,7 @@
 
 #include "cbi_flash.h"
 #include "cros_board_info.h"
+#include "cros_cbi.h"
 #include "emul/emul_flash.h"
 #include "flash.h"
 #include "hooks.h"
@@ -124,7 +125,8 @@ ZTEST(cbi_flash_from_eeprom, test_hook_called)
 		prev_eeprom_reads = eeprom_load_fake.call_count;
 		prev_flash_reads = flash_load_fake.call_count;
 
-		hook_notify(HOOK_INIT);
+		/* Re-initialize CBI */
+		cros_cbi_ec_init();
 
 		zassert_true(flash_load_fake.call_count > prev_flash_reads,
 			     "CBI flash not read during HOOK_INIT");
@@ -149,7 +151,8 @@ ZTEST(cbi_flash_from_eeprom, test_cbi_copy)
 	 * checked and (if valid) copied to flash.
 	 */
 
-	hook_notify(HOOK_INIT);
+	/* Re-initialize CBI */
+	cros_cbi_ec_init();
 
 	zassert_true(flash_load_fake.call_count > 0,
 		     "CBI flash not read during HOOK_INIT");
@@ -164,7 +167,8 @@ ZTEST(cbi_flash_from_eeprom, test_cbi_copy)
 	prev_eeprom_reads = eeprom_load_fake.call_count;
 	prev_flash_reads = flash_load_fake.call_count;
 
-	hook_notify(HOOK_INIT);
+	/* Re-initialize CBI */
+	cros_cbi_ec_init();
 
 	zassert_true(flash_load_fake.call_count > prev_flash_reads,
 		     "CBI flash not read during 2nd HOOK_INIT");
@@ -177,7 +181,8 @@ ZTEST(cbi_flash_from_eeprom, test_bad_flash)
 	eeprom_load_fake.custom_fake = mock_eeprom_read_cbi;
 	flash_load_fake.custom_fake = mock_flash_read_error;
 
-	hook_notify(HOOK_INIT);
+	/* Re-initialize CBI */
+	cros_cbi_ec_init();
 
 	zassert_true(flash_load_fake.call_count > 0,
 		     "CBI flash not read during HOOK_INIT");
@@ -190,7 +195,8 @@ ZTEST(cbi_flash_from_eeprom, test_bad_eeprom)
 	eeprom_load_fake.custom_fake = mock_eeprom_read_error;
 	flash_load_fake.custom_fake = mock_flash_read;
 
-	hook_notify(HOOK_INIT);
+	/* Re-initialize CBI */
+	cros_cbi_ec_init();
 
 	zassert_true(flash_load_fake.call_count > 0,
 		     "CBI flash not read during HOOK_INIT");
@@ -203,7 +209,8 @@ ZTEST(cbi_flash_from_eeprom, test_bad_version)
 	eeprom_load_fake.custom_fake = mock_eeprom_read_cbi;
 	flash_load_fake.custom_fake = mock_flash_read_bad_version;
 
-	hook_notify(HOOK_INIT);
+	/* Re-initialize CBI */
+	cros_cbi_ec_init();
 
 	zassert_true(flash_load_fake.call_count > 0,
 		     "CBI flash not read during HOOK_INIT");
@@ -216,7 +223,8 @@ ZTEST(cbi_flash_from_eeprom, test_bad_size)
 	eeprom_load_fake.custom_fake = mock_eeprom_read_cbi;
 	flash_load_fake.custom_fake = mock_flash_read_bad_size;
 
-	hook_notify(HOOK_INIT);
+	/* Re-initialize CBI */
+	cros_cbi_ec_init();
 
 	zassert_true(flash_load_fake.call_count > 0,
 		     "CBI flash not read during HOOK_INIT");
@@ -229,7 +237,8 @@ ZTEST(cbi_flash_from_eeprom, test_bad_crc)
 	eeprom_load_fake.custom_fake = mock_eeprom_read_cbi;
 	flash_load_fake.custom_fake = mock_flash_read_bad_crc;
 
-	hook_notify(HOOK_INIT);
+	/* Re-initialize CBI */
+	cros_cbi_ec_init();
 
 	zassert_true(flash_load_fake.call_count > 0,
 		     "CBI flash not read during HOOK_INIT");

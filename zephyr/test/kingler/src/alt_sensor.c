@@ -22,6 +22,15 @@
 #define SSFC_MAIM_SENSORS (SSFC_LID_MAIN_SENSOR | SSFC_BASE_MAIN_SENSOR)
 #define SSFC_ALT_SENSORS (SSFC_LID_ALT_SENSOR | SSFC_BASE_ALT_SENSOR)
 
+static void reset(void)
+{
+	/* Re-initialize CBI */
+	cros_cbi_ec_init();
+
+	/* Re-initialize sensors and board config */
+	hook_notify(HOOK_INIT);
+}
+
 static void *use_alt_sensor_setup(void)
 {
 	const struct device *wp_gpio =
@@ -35,7 +44,7 @@ static void *use_alt_sensor_setup(void)
 	/* Set form factor to CONVERTIBLE to enable motion sense interrupts. */
 	zassert_ok(cbi_set_fw_config(CONVERTIBLE << 13), NULL);
 	/* Run init hooks to initialize cbi. */
-	hook_notify(HOOK_INIT);
+	reset();
 
 	return NULL;
 }
@@ -55,7 +64,7 @@ static void *no_alt_sensor_setup(void)
 	/* Set form factor to CONVERTIBLE to enable motion sense interrupts. */
 	zassert_ok(cbi_set_fw_config(CONVERTIBLE << 13), NULL);
 	/* Run init hooks to initialize cbi. */
-	hook_notify(HOOK_INIT);
+	reset();
 
 	return NULL;
 }

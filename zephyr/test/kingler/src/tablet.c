@@ -24,7 +24,9 @@ static void *tablet_setup(void)
 	zassert_ok(gpio_emul_input_set(wp_gpio, wp_pin, 1), NULL);
 	/* Set CBI form factor to CONVERTIBLE. */
 	zassert_ok(cbi_set_fw_config(CONVERTIBLE << 13), NULL);
-	/* Run init hooks to initialize cbi. */
+	/* Re-initialize CBI */
+	cros_cbi_ec_init();
+	/* Re-initialize sensors and board config */
 	hook_notify(HOOK_INIT);
 
 	/* Check if CBI write worked. */

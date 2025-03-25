@@ -14,8 +14,6 @@
 extern "C" {
 #endif
 
-#define DT_DRV_COMPAT cros_ec_flash_layout
-
 #define CBI_FLASH_NODE DT_NODELABEL(cbi_flash)
 #define CBI_FLASH_OFFSET DT_PROP(CBI_FLASH_NODE, offset)
 #define CBI_FLASH_PRESERVE DT_PROP(CBI_FLASH_NODE, preserve)

@@ -78,8 +78,14 @@ ZTEST(board_version_tests, test_board_get_version)
 		expected_board_id, version);
 }
 
-/* Board ID gpios need to be initialized before other applications */
-SYS_INIT(test_set_board_id_gpios, POST_KERNEL, 99);
+/* Board ID gpios need to be initialized before other applications.
+ * Use 80 to place it just ahead of the CBI driver priority */
+#define INTELRVP_BOARD_GPIO_SYS_INIT_PRIORITY 80
+BUILD_ASSERT(INTELRVP_BOARD_GPIO_SYS_INIT_PRIORITY <
+	     CONFIG_PLATFORM_EC_CBI_SYS_INIT_PRIORITY);
+
+SYS_INIT(test_set_board_id_gpios, POST_KERNEL,
+	 INTELRVP_BOARD_GPIO_SYS_INIT_PRIORITY);
 
 #ifdef CONFIG_TEST_PROJECT_PTLRVP_MCHP
 static int board_ap_power_action_g3_run(void *data)

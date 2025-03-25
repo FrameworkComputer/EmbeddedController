@@ -60,6 +60,16 @@ config PLATFORM_EC_CBI_TRANSFER_EEPROM_FLASH
 	  Copy CBI from EEPROM to flash automatically if CBI on flash is
 	  not valid and EEPROM has valid CBI
 
+config PLATFORM_EC_CBI_SYS_INIT_PRIORITY
+	int "Initialization priority for the CBI driver"
+	default 81
+	help
+	  Priority level at which to initialize the CBI driver in the
+	  POST_KERNEL boot phase. This must come after any required EEPROM or
+	  flash drivers and their own dependencies.
+
+	  The default value, 81, is based on EEPROM_AT2X_INIT_PRIORITY+1
+
 choice PLATFORM_EC_CBI_STORAGE_TYPE
 	prompt "CBI storage type"
 	default PLATFORM_EC_CBI_EEPROM_OR_FLASH if PLATFORM_EC_CBI_EEPROM || PLATFORM_EC_CBI_FLASH
