@@ -106,6 +106,22 @@
 				value = <1>;
 			};
 		};
+		usbc-ports {
+			enum-name = "USBC_PORTS";
+			start = <7>;
+			size = <1>;
+
+			two-ports {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "TWO_PORTS";
+				value = <0>;
+			};
+			one-port {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "ONE_PORT";
+				value = <1>;
+			};
+		};
 	};
 	cbi-ssfc {
 		compatible = "cros-ec,cbi-ssfc";

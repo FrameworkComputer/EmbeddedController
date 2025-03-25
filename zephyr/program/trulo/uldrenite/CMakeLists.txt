@@ -12,3 +12,5 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 )
 zephyr_library_sources("src/mp2964_update.c")
 zephyr_library_sources("src/thermal.c")
+zephyr_library_sources_ifdef(
+    CONFIG_PDC_RUNTIME_PORT_CONFIG "src/usbc_runtime.c")
