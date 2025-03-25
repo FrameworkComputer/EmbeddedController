@@ -70,6 +70,9 @@
 		gpio_tchpad_lid_close: tchpad_lid_close {
 			gpios = <&gpio6 3 GPIO_OUTPUT>;
 		};
+		gpio_ec_soc_wake_odl: ec_soc_wake_odl {
+			gpios = <&gpiob 0 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_OUTPUT_INIT_LOW)>;
+		};
 	};
 	gpio-interrupts {
 		compatible = "cros-ec,gpio-interrupts";
