@@ -38,7 +38,7 @@
 			handler = "syv682x_interrupt";
 		};
 		int_rec_button: rec_button {
-			irq-pin = <&gpio_gsc_ec_rec_btn_odl>;
+			irq-pin = <&gpio_ec_rec_btn_od>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "button_interrupt";
 		};
