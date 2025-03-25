@@ -53,7 +53,7 @@ int fan_table_to_rpm(int fan, int *temp)
 	static int prev_level;
 	/* previous sensor temperature */
 	static int prev_temp[TEMP_SENSOR_COUNT];
-	int i;
+	int i, temp_off, temp_on;
 
 	/*
 	 * Compare the current and previous temperature, we have
@@ -64,27 +64,26 @@ int fan_table_to_rpm(int fan, int *temp)
 	 */
 	if (temp[TEMP_IMVP_SOC] < prev_temp[TEMP_IMVP_SOC]) {
 		for (i = current_level; i > 0; i--) {
-			if (temp[TEMP_IMVP_SOC] <
-			    fan_step_table[i].off[TEMP_IMVP_SOC])
+			temp_off = fan_step_table[i].off[TEMP_IMVP_SOC];
+			if (temp[TEMP_IMVP_SOC] < temp_off) {
 				current_level = i - 1;
-			else
+			} else {
 				break;
+			}
 		}
 	} else if (temp[TEMP_IMVP_SOC] > prev_temp[TEMP_IMVP_SOC]) {
 		for (i = current_level; i < NUM_FAN_LEVELS; i++) {
-			if (temp[TEMP_IMVP_SOC] >
-			    fan_step_table[i].on[TEMP_IMVP_SOC])
+			temp_on = fan_step_table[i].on[TEMP_IMVP_SOC];
+			if (temp[TEMP_IMVP_SOC] > temp_on) {
 				current_level = i + 1;
-			else
+			} else {
 				break;
+			}
 		}
 	}
 
-	if (current_level < 0)
-		current_level = 0;
-
-	if (current_level >= NUM_FAN_LEVELS)
-		current_level = NUM_FAN_LEVELS - 1;
+	/* Ensure current_level will not exceed existing level */
+	current_level = CLAMP(current_level, 0, NUM_FAN_LEVELS - 1);
 
 	if (current_level != prev_level) {
 		LOG_INF("temp_imvp_soc: %d, prev_temp_imvp_soc: %d",
