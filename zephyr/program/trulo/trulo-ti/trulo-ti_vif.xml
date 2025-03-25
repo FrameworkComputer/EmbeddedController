@@ -79,7 +79,7 @@
     <vif:Type_C_Power_Source value="2">Both</vif:Type_C_Power_Source>
     <vif:Type_C_Sources_VCONN value="true" />
     <vif:Type_C_Is_Alt_Mode_Controller value="true" />
-    <vif:Type_C_Is_Alt_Mode_Adapter value="true" />
+    <vif:Type_C_Is_Alt_Mode_Adapter value="false" />
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;Product Power-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
@@ -160,16 +160,16 @@
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;SOP Discover ID-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
-    <vif:XID_SOP value="1105">1105</vif:XID_SOP>
+    <vif:XID_SOP value="0">0</vif:XID_SOP>
     <vif:Data_Capable_As_USB_Host_SOP value="true" />
     <vif:Data_Capable_As_USB_Device_SOP value="false" />
-    <vif:Product_Type_UFP_SOP value="2">PDUSB Peripheral</vif:Product_Type_UFP_SOP>
+    <vif:Product_Type_UFP_SOP value="0">Undefined</vif:Product_Type_UFP_SOP>
     <vif:Product_Type_DFP_SOP value="2">PDUSB Host</vif:Product_Type_DFP_SOP>
     <vif:DFP_VDO_Port_Number value="0">0</vif:DFP_VDO_Port_Number>
-    <vif:Modal_Operation_Supported_SOP value="true" />
+    <vif:Modal_Operation_Supported_SOP value="false" />
     <vif:USB_VID_SOP value="6353">18D1</vif:USB_VID_SOP>
     <vif:PID_SOP value="20588">506C</vif:PID_SOP>
-    <vif:bcdDevice_SOP value="2308">0904</vif:bcdDevice_SOP>
+    <vif:bcdDevice_SOP value="4880">1310</vif:bcdDevice_SOP>
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;SOP Modes-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
