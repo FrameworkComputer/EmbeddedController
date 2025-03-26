@@ -2482,6 +2482,24 @@ static int pdc_interrupt_mask_init(struct pdc_data_t *data)
 	return tps_rw_interrupt_mask(&cfg->i2c, &irq_mask, I2C_MSG_WRITE);
 }
 
+static int pdc_port_control_init(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	union reg_port_control pdc_port_control = {
+		.typec_current = 1,
+		.process_swap_to_sink = 1,
+		.process_swap_to_source = 1,
+		.automatic_cap_request = 1,
+		.auto_alert_enable = 1,
+		.process_swap_to_dfp = 1,
+		.automatic_id_request = 1,
+		.fr_swap_enabled = 1,
+		.deglitch_cnt_lo = 6,
+	};
+
+	return tps_rw_port_control(&cfg->i2c, &pdc_port_control, I2C_MSG_WRITE);
+}
+
 static int pdc_autonegotiate_sink_reset(struct pdc_data_t *data)
 {
 	union reg_autonegotiate_sink an_snk;
@@ -2605,6 +2623,11 @@ static int pdc_init(const struct device *dev)
 	rv = pdc_autonegotiate_sink_reset(data);
 	if (rv < 0) {
 		LOG_ERR("Reset autonegotiate_sink reg failed");
+		return rv;
+	}
+	rv = pdc_port_control_init(data);
+	if (rv < 0) {
+		LOG_ERR("Write port control failed");
 		return rv;
 	}
 	rv = pdc_exit_dead_battery(data);
