@@ -374,7 +374,6 @@ if(DEFINED CONFIG_BOARD_PUJJONIRU)
 	zephyr_include_directories("pujjoniru/include")
 	zephyr_library_sources(
 			"pujjoniru/src/board.c"
-			"pujjoniru/src/sub_board.c"
 			"pujjoniru/src/board_touchpanel.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "pujjoniru/src/usbc.c")
