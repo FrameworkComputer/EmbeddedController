@@ -53,8 +53,6 @@ int board_set_active_charge_port(int port)
 	int i;
 
 	if (port == CHARGE_PORT_NONE) {
-		CPRINTSUSB("Disabling all charger ports");
-
 		/* Disable all ports. */
 		for (i = 0; i < ppc_cnt; i++) {
 			/*
@@ -99,6 +97,13 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
+static void notify_power_change(void)
+{
+	/* Notify host of power info change. */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+}
+DECLARE_DEFERRED(notify_power_change);
+
 void pd_power_supply_reset(int port)
 {
 	/* Disable VBUS. */
@@ -108,8 +113,8 @@ void pd_power_supply_reset(int port)
 	if (IS_ENABLED(CONFIG_USB_PD_DISCHARGE))
 		pd_set_vbus_discharge(port, 1);
 
-	/* Notify host of power info change. */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+	/* Defer pd_send_host_event to save ~2ms for PD compliance */
+	hook_call_deferred(&notify_power_change_data, 0);
 }
 
 int pd_set_power_supply_ready(int port)
@@ -137,8 +142,8 @@ int pd_set_power_supply_ready(int port)
 		return rv;
 	}
 
-	/* Notify host of power info change. */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+	/* Defer pd_send_host_event to save ~2ms for PD compliance */
+	hook_call_deferred(&notify_power_change_data, 0);
 
 	return EC_SUCCESS;
 }
