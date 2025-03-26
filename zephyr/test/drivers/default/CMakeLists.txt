@@ -6,9 +6,6 @@ target_sources(app PRIVATE
     src/bmi_common.c
     src/bmi160.c
     src/bmi260.c
-    src/charge_manager.c
-    src/charge_ramp.c
-    src/charge_state_prevent_power_on.c
     src/console.c
     src/cros_cbi.c
     src/espi.c

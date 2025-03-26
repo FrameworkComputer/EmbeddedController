@@ -60,3 +60,29 @@ tests:
     extra_configs:
       - CONFIG_TEST_BOARD_XIVUR=y
       - CONFIG_TEST_EXTPOWER=y
+
+  charge.manager:
+    extra_dtc_overlay_files:
+      - boards/native_sim.overlay
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_CHARGE=y
+      - CONFIG_TEST_CHARGE_MANAGER=y
+      - CONFIG_TEST_BOARD_NATIVE_SIM=y
+
+  charge.ramp:
+    extra_dtc_overlay_files:
+      - boards/native_sim.overlay
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_CHARGE=y
+      - CONFIG_TEST_CHARGE_RAMP=y
+      - CONFIG_SYSTEM_FAKE=y
+      - CONFIG_PLATFORM_EC_CHARGE_RAMP_SW=y
+      - CONFIG_TEST_BOARD_NATIVE_SIM=y
+
+  charge.state_prevent_power_on:
+    extra_dtc_overlay_files:
+      - boards/native_sim.overlay
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_CHARGE=y
+      - CONFIG_TEST_CHARGE_STATE_PREVENT_POWER_ON=y
+      - CONFIG_TEST_BOARD_NATIVE_SIM=y

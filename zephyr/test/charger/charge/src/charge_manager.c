@@ -5,12 +5,10 @@
 
 #include "charge_manager.h"
 #include "ec_commands.h"
-#include "test/drivers/test_state.h"
 
 #include <zephyr/ztest.h>
 
-ZTEST_SUITE(charge_manager, drivers_predicate_post_main, NULL, NULL, NULL,
-	    NULL);
+ZTEST_SUITE(charge_manager, NULL, NULL, NULL, NULL, NULL);
 
 /**
  * Test the default implementation of board_fill_source_power_info(). The fill

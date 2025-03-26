@@ -7,10 +7,11 @@
 #include "charge_ramp.h"
 #include "system.h"
 #include "system_fake.h"
-#include "test/drivers/test_mocks.h"
 
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
+
+FAKE_VALUE_FUNC(int, system_is_locked);
 
 static void charge_ramp_before(void *state)
 {

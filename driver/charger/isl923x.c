@@ -1016,7 +1016,7 @@ static enum ec_error_list isl923x_discharge_on_ac_weak_disable(int chgnum)
 	return rv;
 }
 
-enum ec_error_list raa489000_is_acok(int chgnum, bool *acok)
+test_mockable enum ec_error_list raa489000_is_acok(int chgnum, bool *acok)
 {
 	int regval, rv;
 

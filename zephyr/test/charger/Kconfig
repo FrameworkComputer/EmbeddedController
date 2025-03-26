@@ -72,6 +72,10 @@ choice TEST_BOARD_VARIANT
 		select TEST_PROGRAM_NISSA
 		select TEST_ISL923X
 		select TEST_CHARGER_MULTI_DEF
+
+	config TEST_BOARD_NATIVE_SIM
+		bool "native sim test"
+
 endchoice # TEST_BOARD_VARIANT
 
 config TEST_PROGRAM_NAME
@@ -119,5 +123,17 @@ config TEST_CHARGER_MULTI_DEF
 	bool
 	help
 	  Define CHARGER_PRIMARY and CHARGER_SECONDARY
+
+config LINK_TEST_SUITE_CHARGE
+	bool "Link and test charge files"
+
+config TEST_CHARGE_MANAGER
+	bool "Test charge_manager.c"
+
+config TEST_CHARGE_RAMP
+	bool "Test charge_ramp.c"
+
+config TEST_CHARGE_STATE_PREVENT_POWER_ON
+	bool "Test charge_state.c prevent power on"
 
 source "Kconfig.zephyr"

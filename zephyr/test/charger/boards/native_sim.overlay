@@ -3,13 +3,124 @@
  * found in the LICENSE file.
  */
 
-/ {
-	named-gpios {
-		compatible = "named-gpios";
+ #include <board-overlays/native_sim.dts>
+ #include <usbc-policy.dtsi>
 
-		/* Legacy system code requires GPIO_ENTERING_RW symbol */
-		gpio_ec_entering_rw: ec_entering_rw {
-			enum-name = "GPIO_ENTERING_RW";
+/ {
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		/* Configure just the DB port
+		 */
+		usbc0: port0@0 {
+			compatible = "named-usbc-port";
+			ccd;
+			reg = <0>;
+			chg = <&charger>;
+			pdc = <&pdc_emul1>;
+			chg = <&isl923x_emul>;
+			policy = <&cros_policy>;
+			pd-retimer;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
 		};
+
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		usbc1: port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			pdc = <&pdc_emul2>;
+			policy = <&cros_policy>;
+			pd-retimer;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1>;
+			};
+		};
+
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		ppm_driver_nodelabel: ppm-driver {
+			compatible = "ucsi-ppm";
+		};
+	};
+
+	batteries {
+		default_battery: lgc_ac17a8m {
+			compatible = "lgc,ac17a8m", "battery-smart";
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_usb_c0: ec_i2c_usb_c0 {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_USB_C0_TCPC";
+		};
+
+		i2c_ec_i2c_charger: ec_i2c_charger {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_BATTERY";
+		};
+	};
+
+};
+
+&i2c0 {
+	battery: sb@b {
+		compatible = "zephyr,smart-battery-emul";
+		reg = <0xb>;
+		cycle-count = <6>;
+		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
+		desired-charg-volt = <11250>;
+		desired-charg-cur = <2400>;
+		mf-name = "LGC";
+		dev-name = "AP18C8K";
+	};
+
+	isl923x_emul: isl923x@9 {
+		compatible = "cros,isl923x-emul";
+		status = "okay";
+		reg = <0x09>;
+		battery = <&battery>;
+	};
+
+	smbus_ara_emul: smbus_ara@c {
+		compatible = "zephyr,smbus-ara-emul";
+		reg = <0xc>;
+	};
+
+	charger: isl9238@9 {
+		compatible = "cros,isl923x-emul";
+		status = "okay";
+		reg = <0x9>;
+		battery = <&battery>;
+	};
+
+	pdc_emul1: rts5453p@66 {
+		compatible = "realtek,rts54-pdc";
+		status = "okay";
+		reg = <0x66>;
+		irq-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
+	};
+
+	pdc_emul2: rts5453p@67 {
+		compatible = "realtek,rts54-pdc";
+		status = "okay";
+		reg = <0x67>;
+		irq-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
 	};
 };
