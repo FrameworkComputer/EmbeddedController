@@ -633,6 +633,22 @@ void touchpad_task(void *p)
 	}
 }
 
+/* emumouse                              Print current status
+ * HostCtl: "Detected" if OS is communicating over I2C HID, no need for PS2 emulation
+ *          "Not Detected" means OS is not using I2C HID, need PS2 Emulation
+ *
+ * emumouse int                          Trigger interrupt
+ *   Wake the ps2mouse task on the ec and attempt to process an interrupt. This
+ *   will not directly kick the host over i2c-hid.
+ * emumouse res                          Reset to auto detect
+ * emumouse [button] [posx] [posy]       Manually simulate mouse action
+ * button: 0=none, 1=left, 2=right 4=middle, add to combine
+ * Examples:
+ * emumouse 0 50 50                      Move mouse 50px up, 50px right
+ * emumouse 1 0   0                      Press left mouse button (no release)
+ * emumouse 2 0   0                      Press right mouse button (no release)
+ * emumouse 0 0   0                      Release mouse buttons
+ */
 static int command_emumouse(int argc, const char **argv)
 {
 	int32_t btn_state, x, y, response_byte;
