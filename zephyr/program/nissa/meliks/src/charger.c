@@ -30,7 +30,7 @@ int extpower_is_present(void)
 }
 
 /*
- * Nivviks does not have a GPIO indicating whether extpower is present,
+ * Meliks does not have a GPIO indicating whether extpower is present,
  * so detect using the charger(s).
  */
 __override void board_check_extpower(void)

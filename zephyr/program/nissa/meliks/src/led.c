@@ -19,7 +19,7 @@ __override const int led_charge_lvl_1 = 1;
 
 __override const int led_charge_lvl_2 = 100;
 
-/* pirrha : There are 3 leds for AC, Battery and Power */
+/* meliks : There are 3 leds for AC, Battery and Power */
 __override struct led_descriptor
 	led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 		[STATE_CHARGING_LVL_1] = { { EC_LED_COLOR_RED,
@@ -107,7 +107,7 @@ __override void led_set_color_battery(enum ec_led_colors color)
 	}
 	/*
 	 * Battery leds must be turn off when blue led is on
-	 * because pirrha has 3-in-1 led.
+	 * because meliks has 3-in-1 led.
 	 */
 	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_chg_led_b))) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_chg_led_r),
