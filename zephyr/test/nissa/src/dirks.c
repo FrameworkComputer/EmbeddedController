@@ -374,6 +374,8 @@ ZTEST(dirks, test_board_set_active_charge_port)
 		GPIO_DT_FROM_NODELABEL(gpio_en_ppvar_bj_adp_od);
 	int port;
 
+	/* clear call_count */
+	charge_manager_get_active_charge_port_fake.call_count = 0;
 	board_bj_init();
 
 	/* invalid port */
@@ -515,4 +517,64 @@ ZTEST(dirks, test_power_monitor)
 	zassert_equal(ppc_set_vbus_source_current_limit_fake.call_count, 2);
 	zassert_equal(ppc_set_vbus_source_current_limit_fake.arg1_val,
 		      TYPEC_RP_3A0);
+}
+
+static int vbus_in;
+
+static int adc_read_channel_mock(enum adc_channel ch)
+{
+	return vbus_in;
+}
+
+static int active_port;
+
+static int charge_manager_get_active_charge_port_mock(void)
+{
+	return active_port;
+}
+
+ZTEST(dirks, test_board_is_power_good)
+{
+	const struct gpio_dt_spec *bj_adp_present =
+		GPIO_DT_FROM_NODELABEL(gpio_bj_adp_present);
+
+	/* powered by BJ adp */
+	active_port = CHARGE_PORT_BARRELJACK;
+	charge_manager_get_active_charge_port_fake.custom_fake =
+		charge_manager_get_active_charge_port_mock;
+	/* bj adp present pin is exist */
+	zassert_ok(gpio_emul_input_set(bj_adp_present->port,
+				       bj_adp_present->pin, 1),
+		   NULL);
+	zassert_true(board_is_power_good());
+
+	/* bj adp present pin is not exist */
+	zassert_ok(gpio_emul_input_set(bj_adp_present->port,
+				       bj_adp_present->pin, 0),
+		   NULL);
+	zassert_false(board_is_power_good());
+
+	/* powered by USBC adapter */
+	active_port = CHARGE_PORT_TYPEC0;
+	charge_manager_get_active_charge_port_fake.custom_fake =
+		charge_manager_get_active_charge_port_mock;
+
+	/* the request vbus is 20V, actual vbus is 19010 mV
+	 * which is more than 5% less (19000mV).
+	 */
+	charge_manager_get_charger_voltage_fake.return_val = 20000;
+	vbus_in = 19010;
+	adc_read_channel_fake.custom_fake = adc_read_channel_mock;
+	zassert_true(board_is_power_good());
+
+	/* vbus is less than 19000mV */
+	vbus_in = 18900;
+	adc_read_channel_fake.custom_fake = adc_read_channel_mock;
+	zassert_false(board_is_power_good());
+
+	/* charge port is not BJ or USBC */
+	active_port = -1;
+	charge_manager_get_active_charge_port_fake.custom_fake =
+		charge_manager_get_active_charge_port_mock;
+	zassert_false(board_is_power_good());
 }

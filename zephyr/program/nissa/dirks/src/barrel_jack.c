@@ -392,3 +392,33 @@ static void power_monitor(void)
 
 /* Start power monitoring after ADCs have been initialised. */
 DECLARE_HOOK(HOOK_INIT, power_monitor, HOOK_PRIO_INIT_ADC + 1);
+
+/*
+ * Dirks can be powered by BJ adapter and USBC adapter. We
+ * can check if the power is good by the method:
+ * BJ adapter: check the present pin existence
+ * USBC adapter: check if the actual VBUS is more than 5% less of the
+ * requested VBUS.
+ */
+
+__override bool board_is_power_good(void)
+{
+	int active_port = charge_manager_get_active_charge_port();
+
+	if (active_port == CHARGE_PORT_BARRELJACK) {
+		if (!gpio_pin_get_dt(
+			    GPIO_DT_FROM_NODELABEL(gpio_bj_adp_present))) {
+			return false;
+		}
+	} else if (active_port == CHARGE_PORT_TYPEC0) {
+		int voltage = charge_manager_get_charger_voltage();
+		if (adc_read_channel(ADC_VBUS) < voltage * 0.95) {
+			return false;
+		}
+	} else {
+		/* Charge port should be one of BJ or USBC */
+		return false;
+	}
+
+	return true;
+}

@@ -14,6 +14,10 @@
 			enum-name = "ADC_VBUS";
 			io-channels = <&adc0 4>;
 		};
+		adc_ppvar_pwr_in: adc_ppvar_pwr_in {
+			enum-name = "ADC_PSYS";
+			io-channels = <&adc0 16>;
+		};
 	};
 
 	zephyr,user {
