@@ -133,6 +133,7 @@ if(DEFINED CONFIG_BOARD_DOGWOOD)
 			"dogwood/src/project_diagnostics.c"
 			"dogwood/src/power_monitor.c"
 			"dogwood/src/thermal.c"
+			"src/ucsi_port_mini_pc.c"
 	)
 
 endif()
