@@ -30,5 +30,10 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "lid_interrupt";
 		};
+		int_edp_bklt: edp_bklt {
+			irq-pin = <&gpio_edp_bklt_en>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "edp_bklt_interrupt";
+		};
 	};
 };

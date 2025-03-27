@@ -28,7 +28,6 @@ void board_ap_power_force_shutdown(void)
 	power_signal_set(PWR_EC_PCH_RSMRST, 1);
 
 	/* Disable all control gpio here */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_edp_bklt_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_cpu_vr_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_slp_sx_n), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_vddq_en), 0);
@@ -104,7 +103,6 @@ static int board_ap_power_action_s3_run(void *data)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_codec_amp_en),
 				0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_touchpad_en_ec), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_edp_bklt_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_cpu_vr_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_slp_sx_n), 0);
 		return 0;
@@ -116,7 +114,6 @@ static int board_ap_power_action_s3_run(void *data)
 		k_msleep(2);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_cpu_vr_en), 1);
 		/* Todo: enable devices power here, optimize these later */
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_edp_bklt_en), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_touchpad_en_ec), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_codec_amp_en),
 				1);
