@@ -44,17 +44,22 @@ if(DEFINED CONFIG_PLATFORM_EC AND EXISTS "${EDT_PICKLE}")
     message(FATAL_ERROR "led_policy.py failed with return code: ${ret}")
   endif()
 
-  message(STATUS "Generating component manifest file")
-  set(CME_SCRIPT ${PLATFORM_EC}/zephyr/scripts/cme.py)
-  set(CMD_CME ${PYTHON_EXECUTABLE} ${CME_SCRIPT}
-    --zephyr-base ${ZEPHYR_BASE}
-    --edt-pickle ${EDT_PICKLE}
-    --manifest-file "${CMAKE_BINARY_DIR}/zephyr/component_manifest.json"
-    ${EXTRA_EC_VERSION_FLAGS_LIST}
-  )
-  execute_process(COMMAND ${CMD_CME} RESULT_VARIABLE ret)
-  if(NOT "${ret}" STREQUAL "0")
-    message(FATAL_ERROR "cme.py failed with return code: ${ret}")
+  if(NOT DEFINED CONFIG_PLATFORM_EC_DETACHABLE_BASE AND
+    NOT DEFINED CONFIG_FINGERPRINT_SENSOR AND
+    DEFINED CONFIG_PLATFORM_EC_I2C)
+
+    message(STATUS "Generating component manifest file")
+    set(CME_SCRIPT ${PLATFORM_EC}/zephyr/scripts/cme.py)
+    set(CMD_CME ${PYTHON_EXECUTABLE} ${CME_SCRIPT}
+      --zephyr-base ${ZEPHYR_BASE}
+      --edt-pickle ${EDT_PICKLE}
+      --manifest-file "${CMAKE_BINARY_DIR}/zephyr/component_manifest.json"
+      ${EXTRA_EC_VERSION_FLAGS_LIST}
+    )
+    execute_process(COMMAND ${CMD_CME} RESULT_VARIABLE ret)
+    if(NOT "${ret}" STREQUAL "0")
+      message(FATAL_ERROR "cme.py failed with return code: ${ret}")
+    endif()
   endif()
 endif()
 

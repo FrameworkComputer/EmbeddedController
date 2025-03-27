@@ -278,10 +278,10 @@ class BinmanPacker(BasePacker):
         yield ro_dir / "zephyr" / "zephyr.lst", "zephyr.ro.lst"
         yield rw_dir / "zephyr" / "zephyr.elf", "zephyr.rw.elf"
         yield rw_dir / "zephyr" / "zephyr.lst", "zephyr.rw.lst"
-        yield (
-            rw_dir / "zephyr" / "component_manifest.json",
-            "component_manifest.json",
-        )
+
+        cm_path = rw_dir / "zephyr" / "component_manifest.json"
+        if os.path.exists(cm_path):
+            yield cm_path, "component_manifest.json"
 
         token_db_name = "database.bin"
         token_paths = [
