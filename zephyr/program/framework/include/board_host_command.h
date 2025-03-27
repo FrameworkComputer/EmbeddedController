@@ -468,4 +468,53 @@ struct ec_params_power_on_ac_attach {
 	uint8_t enable;
 } __ec_align1;
 
+/*****************************************************************************/
+/*
+ * Measure a Board ID to see what's currently populated
+ *
+ * Similar to EC_CMD_GET_CROS_BOARD_INFO. But that is only measured once,
+ * not for hotpluggable components.
+ * We use the board ID for hotpluggable components like the inputmodules,
+ * touchpad, powerbutton board and audio board.
+ * To detect whether these are plugged in and which version of the is plugged in,
+ * the board ID needs to be measured at run-time.
+ *
+ * For the Framework 16 inputmodules there is a dedicated command, which abstracts the logic,
+ * because there is also a mux involed: EC_CMD_CHECK_DECK_STATE
+ *
+ * For Framework 13 we have multiple versions of the touchpad and speakers (audio board)
+ * that BIOS/OS need to distinguish through this host command.
+ *
+ * Compared to EC_CMD_ADC_READ this host command adds the board specific logic
+ * to convert the voltage level into the board ID index.
+ */
+#define EC_CMD_READ_BOARDID	0x3E26
+
+enum ec_board_id_type {
+	/* Mainboard - any system */
+	HC_BOARD_ID_MAINBOARD = 0,
+	/* Power button board - Framework 12 */
+	HC_BOARD_ID_POWERBUTTON_BOARD = 1,
+	/* Power button board - Framework 12, 13, 16 */
+	HC_BOARD_ID_TOUCHPAD = 2,
+	/* Power button board - Framework 12, 13 */
+	HC_BOARD_ID_AUDIO_BOARD = 3,
+	/* dGPU board - Framework 16 */
+	HC_BOARD_ID_DGPU0 = 4,
+	/* dGPU board - Framework 16 */
+	HC_BOARD_ID_DGPU1 = 5,
+};
+
+struct ec_params_read_boardid {
+  /* See enum ec_board_id_type */
+	uint8_t board_id_type;
+} __ec_align1;
+
+struct ec_response_read_boardid {
+	/* -1 if unknown (some issue reading it)
+	 * Otherwise 0-15
+	 */
+	int8_t board_id;
+} __ec_align1;
+
 #endif /* __BOARD_HOST_COMMAND_H */
