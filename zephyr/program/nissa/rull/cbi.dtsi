@@ -46,5 +46,26 @@
 				value = <1>;
 			};
 		};
+		/*
+		 * FW_CONFIG field to indicate which keyboard layout
+		 * should be used.
+		 */
+		kb-layout {
+			enum-name = "FW_KB_LAYOUT";
+			start = <20>;
+			size = <1>;
+
+			kb-layout-1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_LAYOUT_DEFAULT";
+				value = <0>;
+				default;
+			};
+			kb-layout-2 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_LAYOUT_1";
+				value = <1>;
+			};
+		};
 	};
 };
