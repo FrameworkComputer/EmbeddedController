@@ -7,7 +7,9 @@
 
 #include "adc.h"
 #include "board_adc.h"
+#include "board_host_command.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "system.h"
 #include "hooks.h"
 
@@ -96,3 +98,45 @@ __override int board_get_version(void)
 	return version;
 }
 
+/* Host command */
+static enum ec_status hc_read_boardid(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_read_boardid *p = args->params;
+	struct ec_response_read_boardid *r = args->response;
+
+	switch (p->board_id_type) {
+	case HC_BOARD_ID_MAINBOARD:
+		r->board_id = get_hardware_id(ADC_MAIN_BOARD_ID);
+		break;
+#ifdef ADC_POWER_BUTTON_BOARD_ID
+	case HC_BOARD_ID_POWERBUTTON_BOARD:
+		r->board_id = get_hardware_id(ADC_POWER_BUTTON_BOARD_ID);
+		break;
+#endif
+#ifdef ADC_TOUCHPAD_ID
+	case HC_BOARD_ID_TOUCHPAD:
+		r->board_id = get_hardware_id(ADC_TOUCHPAD_ID);
+		break;
+#endif
+#ifdef ADC_AUDIO_ID
+	case HC_BOARD_ID_AUDIO_BOARD:
+		r->board_id = get_hardware_id(ADC_AUDIO_ID);
+		break;
+#endif
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
+	case HC_BOARD_ID_DGPU0:
+		r->board_id = get_hardware_id(ADC_GPU_BOARD_ID_0);
+		break;
+	case HC_BOARD_ID_DGPU1:
+		r->board_id = get_hardware_id(ADC_GPU_BOARD_ID_1);
+		break;
+#endif
+	default:
+		return EC_ERROR_INVAL;
+	}
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_READ_BOARDID, hc_read_boardid, EC_VER_MASK(0));
