@@ -207,7 +207,9 @@
  * Attribute that will generate a compiler warning if the return value is not
  * used.
  */
+#ifndef __warn_unused_result
 #define __warn_unused_result __attribute__((warn_unused_result))
+#endif
 
 /**
  * @brief Attribute used to annotate intentional fallthrough between switch
@@ -227,7 +229,9 @@
  * See https://clang.llvm.org/docs/AttributeReference.html#noreturn-noreturn and
  * https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#index-noreturn-function-attribute.
  */
+#ifndef __noreturn
 #define __noreturn __attribute__((noreturn))
+#endif
 
 /*
  * Macros for combining bytes into larger integers. _LE and _BE signify little
