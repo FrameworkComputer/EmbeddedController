@@ -68,6 +68,9 @@ enum board_version_t get_hardware_id(enum adc_channel channel)
 	int mv;
 	int i;
 
+	if (channel >= ADC_CH_COUNT)
+		return BOARD_VERSION_UNKNOWN;
+
 	mv = adc_read_channel(channel);
 
 	if (mv < 0) {
