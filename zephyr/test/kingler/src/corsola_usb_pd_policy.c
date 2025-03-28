@@ -29,6 +29,7 @@ FAKE_VALUE_FUNC(int, ppc_vbus_sink_enable, int, int);
 FAKE_VALUE_FUNC(uint8_t, get_dp_pin_mode, int);
 FAKE_VOID_FUNC(pd_set_vbus_discharge, int, int);
 FAKE_VOID_FUNC(pd_send_host_event, int);
+FAKE_VOID_FUNC(lid_angle_peripheral_enable, int);
 
 #define FFF_FAKES_LIST(FAKE)               \
 	FAKE(board_set_active_charge_port) \
@@ -56,6 +57,7 @@ static void corsola_reset(void *fixture)
 
 	/* Reset fakes */
 	FFF_FAKES_LIST(RESET_FAKE);
+	RESET_FAKE(lid_angle_peripheral_enable);
 	FFF_RESET_HISTORY();
 
 	active_aux_port = -1;
