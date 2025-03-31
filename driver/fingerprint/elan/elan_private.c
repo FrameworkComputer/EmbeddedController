@@ -42,7 +42,7 @@ static struct ec_response_fp_info ec_fp_sensor_info = {
 };
 
 static enum elan_capture_type
-convert_fp_capture_mode_to_elan_get_image_type(enum fp_capture_type mode)
+convert_fp_capture_type_to_elan_capture_type(enum fp_capture_type mode)
 {
 	switch (mode) {
 	case FP_CAPTURE_VENDOR_FORMAT:
@@ -289,7 +289,7 @@ void fp_configure_detect(void)
 int fp_acquire_image(uint8_t *image_data, enum fp_capture_type capture_type)
 {
 	enum elan_capture_type rc =
-		convert_fp_capture_mode_to_elan_get_image_type(capture_type);
+		convert_fp_capture_type_to_elan_capture_type(capture_type);
 
 	if (rc == ELAN_CAPTURE_TYPE_INVALID) {
 		CPRINTF("Unsupported capture_type %d provided", capture_type);

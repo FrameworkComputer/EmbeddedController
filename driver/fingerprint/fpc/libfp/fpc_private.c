@@ -79,7 +79,7 @@ enum fpc_cmd {
 };
 
 enum fpc_capture_type
-convert_fp_capture_mode_to_fpc_get_image_type(enum fp_capture_type mode)
+convert_fp_capture_type_to_fpc_capture_type(enum fp_capture_type mode)
 {
 	switch (mode) {
 	case FP_CAPTURE_VENDOR_FORMAT:
@@ -365,7 +365,7 @@ int fp_maintenance(void)
 int fp_acquire_image(uint8_t *image_data, enum fp_capture_type capture_type)
 {
 	enum fpc_capture_type rc =
-		convert_fp_capture_mode_to_fpc_get_image_type(capture_type);
+		convert_fp_capture_type_to_fpc_capture_type(capture_type);
 
 	if (rc == FPC_CAPTURE_TYPE_INVALID) {
 		CPRINTS("Unsupported capture_type %d provided", capture_type);
