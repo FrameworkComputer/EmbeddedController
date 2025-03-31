@@ -279,10 +279,6 @@ void board_override_fan_control(int fan, int *temp)
 		}
 		fan_set_rpm_mode(fan, 1);
 		fan_set_rpm_target(FAN_CH(fan), new_rpm);
-	} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
-		/* Stop fan when enter S0ix */
-		fan_set_rpm_mode(fan, 1);
-		fan_set_rpm_target(fan, 0);
 	}
 }
 
