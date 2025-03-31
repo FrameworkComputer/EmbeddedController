@@ -667,7 +667,7 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S0:
 
-		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 0 ||
+		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 0 ||
 			force_shutdown_flags) {
 
 			/* power loss, don't communicate with PD chip */
