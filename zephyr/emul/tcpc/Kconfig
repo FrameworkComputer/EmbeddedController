@@ -32,13 +32,6 @@ config EMUL_ANX7447
 	  TCPCI emulator. ANX7447 specific API is available in
 	  zephyr/include/emul/tcpc/emul_anx7447.h
 
-config EMUL_TCPCI_PARTNER_COMMON
-	bool
-	help
-	  This option is selected automatically by specific TCPCI partner
-	  emulators. Enable common code that can be used by TCPCI partner device
-	  emulators. It covers sending delayed messages. API of common functions
-	  is available in zephyr/include/emul/tcpc/emul_common_tcpci_partner.h
 
 config EMUL_NCT38XX
 	bool "Nuvoton NCT38xx emulator"
@@ -83,6 +76,14 @@ config EMUL_RT1718S
 	  Enable emulator for rt1718s of TCPM. This emulator is extension for
 	  TCPCI emulator. rt1718s specific API is available in
 	  zephyr/include/emul/tcpc/emul_rt1718s.h
+
+config EMUL_TCPCI_PARTNER_COMMON
+	bool
+	help
+	  This option is selected automatically by specific TCPCI partner
+	  emulators. Enable common code that can be used by TCPCI partner device
+	  emulators. It covers sending delayed messages. API of common functions
+	  is available in zephyr/include/emul/tcpc/emul_common_tcpci_partner.h
 
 config EMUL_TCPCI_PARTNER_SRC
 	bool "USB-C source device emulator"
