@@ -738,6 +738,7 @@ class Zmake:
                 cipd_install_dir = str(protoc_path_obj.parent.parent)
                 env["PW_PIGWEED_CIPD_INSTALL_DIR"] = cipd_install_dir
 
+            env["CROSTC_USER_ACKNOWLEDGES_THAT_RISCV_IS_EXPERIMENTAL"] = "1"
             kconfig_file = build_dir / f"kconfig-{build_name}.conf"
             proc = config.popen_cmake(
                 self.jobserver,
@@ -895,14 +896,18 @@ class Zmake:
                 build_name,
                 util.repr_command(cmd),
             )
+            # TODO(b/239619222): Filter os.environ for ninja.
+            ninja_env = os.environ.copy()
+            ninja_env["CROSTC_USER_ACKNOWLEDGES_THAT_RISCV_IS_EXPERIMENTAL"] = (
+                "1"
+            )
             proc = self.jobserver.popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 encoding="utf-8",
                 errors="replace",
-                # TODO(b/239619222): Filter os.environ for ninja.
-                env=os.environ,
+                env=ninja_env,
             )
             job_id = f"{project.config.project_name}:{build_name}"
             dirs[build_name].mkdir(parents=True, exist_ok=True)
