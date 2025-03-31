@@ -31,7 +31,7 @@ enum fpc1025_cmd {
 	FPC1025_CMD_HW_ID = 0xFC,
 };
 
-int convert_fp_capture_mode_to_fpc_get_image_type(
+int convert_fp_capture_type_to_fpc_capture_type(
 	enum fingerprint_capture_type mode)
 {
 	switch (mode) {
@@ -353,7 +353,7 @@ static int fpc1025_acquire_image(const struct device *dev,
 	if (image_buf_size < CONFIG_FINGERPRINT_SENSOR_IMAGE_SIZE)
 		return -EINVAL;
 
-	rc = convert_fp_capture_mode_to_fpc_get_image_type(capture_type);
+	rc = convert_fp_capture_type_to_fpc_capture_type(capture_type);
 
 	if (rc < 0) {
 		LOG_ERR("Unsupported capture_type %d provided", capture_type);
