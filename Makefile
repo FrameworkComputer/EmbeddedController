@@ -215,9 +215,9 @@ _tsk_lst_flags+=-I$(BDIR) -DBOARD_$(UC_BOARD)=$(EMPTY) -I$(BASEDIR) \
 		-D_MAKEFILE=$(EMPTY) -imacros $(_tsk_lst_file)
 -include $(ec-private)/task_list_flags.mk
 
-_tsk_lst_ro:=$(call shell_echo,$(CPP) -P -DSECTION_IS_RO=$(EMPTY) \
+_tsk_lst_ro:=$(call shell_echo,$(CPP) $(CPPFLAGS) -P -DSECTION_IS_RO=$(EMPTY) \
 	$(_tsk_lst_flags) include/task_filter.h)
-_tsk_lst_rw:=$(call shell_echo,$(CPP) -P -DSECTION_IS_RW=$(EMPTY) \
+_tsk_lst_rw:=$(call shell_echo,$(CPP) $(CPPFLAGS) -P -DSECTION_IS_RW=$(EMPTY) \
 	$(_tsk_lst_flags) include/task_filter.h)
 
 _tsk_cfg_ro:=$(foreach t,$(_tsk_lst_ro) ,HAS_TASK_$(t))
@@ -269,7 +269,7 @@ _mock_file := $(if $(TEST_FUZZ),fuzz,test)/$(PROJECT).mocklist
 # mocks from mockfile.
 _mock_lst :=
 ifneq ($(and $(TEST_BUILD),$(wildcard $(_mock_file))),)
-	_mock_lst += $(call shell_echo,$(CPP) -P $(_mock_lst_flags) \
+	_mock_lst += $(call shell_echo,$(CPP) $(CPPFLAGS) -P $(_mock_lst_flags) \
 		include/mock_filter.h)
 endif
 
