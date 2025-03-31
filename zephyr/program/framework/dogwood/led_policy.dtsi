@@ -5,7 +5,7 @@
 
 / {
 	led-colors {
-		compatible = "cros-ec,led-policy";
+		compatible = "cros-ec,fwk-led-policy";
 
 		power-state-s0 {
 			chipset-state = "POWER_S0";
@@ -57,10 +57,6 @@
 			chassis_led3 {
 				led-id = "EC_LED_ID_SECOND_POWER_LED";
 				transition = "LED_TRANSITION_LINEAR";
-
-				/* period-ms =
-				 *	target time * tick time (200ms) / deferred time (10ms)
-				 */
 
 				/* Fade time target 600ms (In, low to high) */
 				color-0 {
