@@ -90,3 +90,19 @@
 	cs-gpios = <&gpioa 6 GPIO_ACTIVE_LOW>;
 	status = "okay";
 };
+
+/*
+ * PCC: increase core/APB clock to 96 MHz
+ */
+&pcc {
+	clock-frequency = <DT_FREQ_M(96)>; /* OFMCLK runs at 96 MHz */
+	core-prescaler = <1>; /* CORE_CLK runs at 96 MHz */
+	apb1-prescaler = <6>; /* APB1_CLK runs at 16 MHz */
+	apb2-prescaler = <6>; /* APB2_CLK runs at 16 MHz */
+	apb3-prescaler = <6>; /* APB3_CLK runs at 16 MHz */
+	/*
+	 * APB4_CLK runs at 48 MHz, required to support
+	 * UART2 Baudrate=3 MHz
+	 */
+	apb4-prescaler = <2>;
+};
