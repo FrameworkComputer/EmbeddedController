@@ -71,7 +71,8 @@ def get_toolchains_shell(
                 output_toolchain
             ):
                 print(
-                    f"Skipping {downloaded_file} because the output dir exists"
+                    f"Skipping {downloaded_file} because the output dir exists",
+                    file=sys.stderr,
                 )
             else:
                 src_uri = (
@@ -85,31 +86,40 @@ def get_toolchains_shell(
                     ) as dest_file:
                         shutil.copyfileobj(source_file, dest_file)
                 except urllib.error.HTTPError as e:
-                    print(f"HTTP Error: {e.code} - {e.reason}: {src_uri}")
+                    print(
+                        f"HTTP Error: {e.code} - {e.reason}: {src_uri}",
+                        file=sys.stderr,
+                    )
                     success = False
                     continue
                 except TimeoutError as e:
-                    print(f"Timeout Error: {e}")
+                    print(f"Timeout Error: {e}", file=sys.stderr)
                     success = False
                     continue
                 except ConnectionRefusedError as e:
-                    print(f"Connection refused: {e}")
+                    print(f"Connection refused: {e}", file=sys.stderr)
                     success = False
                     continue
                 except urllib.error.URLError as e:
-                    print(f"URL Error: {e.reason}")
+                    print(f"URL Error: {e.reason}", file=sys.stderr)
                     success = False
                     continue
                 except shutil.SameFileError:
-                    print("The source and dest files are the same")
+                    print(
+                        "The source and dest files are the same",
+                        file=sys.stderr,
+                    )
                     success = False
                     continue
                 except FileNotFoundError:
-                    print(f"Error: File not found '{downloaded_file}'")
+                    print(
+                        f"Error: File not found '{downloaded_file}'",
+                        file=sys.stderr,
+                    )
                     success = False
                     continue
                 except OSError as e:
-                    print(f"OS Error: {e}")
+                    print(f"OS Error: {e}", file=sys.stderr)
                     success = False
                     continue
 
@@ -121,10 +131,14 @@ def get_toolchains_shell(
                     shutil.move(tmp_dir, output_toolchain)
                     print(
                         f"Successfully extracted '{downloaded_file}'"
-                        f" to '{output_toolchain}'"
+                        f" to '{output_toolchain}'",
+                        file=sys.stderr,
                     )
                 except subprocess.CalledProcessError as e:
-                    print(f"Error extracting with command-line tool: {e}")
+                    print(
+                        f"Error extracting with command-line tool: {e}",
+                        file=sys.stderr,
+                    )
                     success = False
                     continue
 
