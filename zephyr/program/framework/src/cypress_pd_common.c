@@ -2068,11 +2068,16 @@ __override uint8_t board_get_usb_pd_port_count(void)
 
 uint8_t *get_pd_version(int controller)
 {
-	/* return empty version for host command EC_CMD_READ_PD_VERSION */
-	if (controller >= PD_CHIP_COUNT) {
+	/**
+	 * If the PD chip does not ready or not exit, return the 0x00 version.
+	 * E.g. dGPU board is not connected, PD chip initial fail...
+	 */
+	if (controller >= PD_CHIP_COUNT ||
+		pd_chip_config[controller].state != CCG_STATE_READY) {
 		static uint8_t version[8] = {0};
 		return version;
 	}
+
 	return pd_chip_config[controller].version;
 }
 
