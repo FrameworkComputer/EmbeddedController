@@ -65,10 +65,12 @@ bool ccg8s_init(uint8_t address, uint32_t flags)
 {
 	/* we assume this is port 5 */
 	pd_chip_config[PD_CHIP_GPU].addr_flags = address | I2C_FLAG_ADDR16_LITTLE_ENDIAN;
-	if (address) {
+
+	/* only update the POWER_ON pd chip state once the pd chip is not ready */
+	if (address && pd_chip_config[PD_CHIP_GPU].state != CCG_STATE_READY) {
 		cypd_update_chips_state(PD_CHIP_GPU, CCG_STATE_POWER_ON);
 		task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_GPU);
-	} else {
+	} else if (!address) {
 		cypd_update_chips_state(PD_CHIP_GPU, CCG_STATE_NO_POWER);
 		task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_GPU);
 	}
