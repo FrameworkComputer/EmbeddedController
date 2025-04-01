@@ -12,6 +12,8 @@
 #include "common.h"
 #include "ec_commands.h"
 
+#include <stddef.h>
+
 /* ec_command return value for non-success result from EC */
 #define EECRESULT 1000
 
