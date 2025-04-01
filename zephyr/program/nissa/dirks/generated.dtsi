@@ -220,6 +220,10 @@
 			i2c-port = <&i2c0>;
 			enum-names = "I2C_PORT_EEPROM";
 		};
+		i2c_ec_i2c_usb_a4: ec_i2c_usb_a4 {
+			i2c-port = <&i2c4>;
+			enum-names = "I2C_PORT_USB_A4";
+		};
 		i2c_ec_i2c_usb_c0: ec_i2c_usb_c0 {
 			i2c-port = <&i2c5>;
 			enum-names = "I2C_PORT_USB_C0";
@@ -244,7 +248,7 @@
 };
 
 &i2c4 {
-	status = "disabled";
+	status = "okay";
 };
 
 &i2c5 {
