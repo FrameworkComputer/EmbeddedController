@@ -32,6 +32,9 @@
 };
 
 / {
+	chosen {
+		cros-ec,sha = &symcr;
+	};
 	named-gpios {
 		/delete-node/  ec-jtag-tms;
 	};
@@ -40,4 +43,12 @@
 		compatible = "cros,tabletmode-interrupt";
 		irq-gpios = <MCHP_GPIO_DECODE_150 GPIO_ACTIVE_LOW>;
 	};
+};
+
+&symcr {
+	status = "okay";
+};
+
+&rom_api {
+	status = "okay";
 };
