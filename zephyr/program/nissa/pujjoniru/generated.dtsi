@@ -225,7 +225,7 @@
 			enum-names = "I2C_PORT_EEPROM";
 		};
 		i2c_ec_i2c_batt: ec_i2c_batt {
-			i2c-port = <&i2c3>;
+			i2c-port = <&i2c1>;
 			enum-names = "I2C_PORT_BATTERY";
 		};
 		i2c_ec_i2c_usb_c1: ec_i2c_usb_c1 {
