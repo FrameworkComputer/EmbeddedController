@@ -16,14 +16,16 @@
 			reg = <0>;
 			chg = <&charger>;
 			chg_alt = <&alt_charger>;
-			pdc = <&pdc_power_p0>;
+			/* Set up runtime driver selection of TI and RTK PDCs */
+			pdc = <&pdc_power_p0 &pdc_power_p0_ti>;
 			policy = <&cros_policy>;
 		};
 		usbc_port1: port1@1 {
 			compatible = "named-usbc-port";
 			ccd;
 			reg = <1>;
-			pdc = <&pdc_power_p1>;
+			/* Set up runtime driver selection of TI and RTK PDCs */
+			pdc = <&pdc_power_p1 &pdc_power_p1_ti>;
 			policy = <&cros_policy>;
 		};
 	};

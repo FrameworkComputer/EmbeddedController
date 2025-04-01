@@ -60,7 +60,6 @@ SPECIAL_BOARDS = [
     "fatcat_it82002aw",
     "felino",
     "francka",
-    "francka-ti",
     # Nissa variants
     "nereid",
     "nivviks",

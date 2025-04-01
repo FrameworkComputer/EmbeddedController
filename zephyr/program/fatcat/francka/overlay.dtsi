@@ -48,12 +48,28 @@
 		compatible = "realtek,rts54-pdc";
 		reg = <0x67>;
 		irq-gpios = <&gpioc 1 GPIO_ACTIVE_LOW>;
+		zephyr,deferred-init;
 	};
 	pdc_power_p1: rts54-pdc@66 {
 		compatible = "realtek,rts54-pdc";
 		reg = <0x66>;
 		irq-gpios = <&gpioc 1 GPIO_ACTIVE_LOW>;
 		no-fw-update;
+		zephyr,deferred-init;
+	};
+
+	pdc_power_p0_ti: tps6699-pdc@20 {
+		compatible = "ti,tps6699-pdc";
+		reg = <0x20>;
+		irq-gpios = <&gpioc 1 GPIO_ACTIVE_LOW>;
+		zephyr,deferred-init;
+	};
+	pdc_power_p1_ti: tps6699-pdc@24 {
+		compatible = "ti,tps6699-pdc";
+		reg = <0x24>;
+		irq-gpios = <&gpioc 1 GPIO_ACTIVE_LOW>;
+		no-fw-update;
+		zephyr,deferred-init;
 	};
 };
 

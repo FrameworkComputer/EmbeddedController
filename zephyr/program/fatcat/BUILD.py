@@ -69,13 +69,6 @@ register_npcx9_project(
     project_name="francka",
 )
 
-register_npcx9_project(
-    project_name="francka-ti",
-    extra_kconfig_files=[
-        here / "francka" / "project.conf",
-    ],
-)
-
 register_it8xxx2_project(
     project_name="felino",
     extra_kconfig_files=[],
@@ -86,5 +79,4 @@ register_it8xxx2_project(
 assert_rw_fwid_DO_NOT_EDIT(project_name="fatcat_npcx9m7f", addr=0x80144)
 assert_rw_fwid_DO_NOT_EDIT(project_name="fatcat_it82002aw", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="francka", addr=0x80144)
-assert_rw_fwid_DO_NOT_EDIT(project_name="francka-ti", addr=0x80144)
 assert_rw_fwid_DO_NOT_EDIT(project_name="felino", addr=0x60098)
