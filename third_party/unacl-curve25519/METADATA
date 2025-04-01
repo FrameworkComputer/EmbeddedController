@@ -10,7 +10,7 @@ third_party {
     value: "https://munacl.cryptojedi.org/curve25519-cortexm0.shtml"
   }
   url {
-    type: PACKAGE
+    type: ARCHIVE
     value: "https://munacl.cryptojedi.org/data/curve25519-cortexm0-20150813.tar.bz2"
   }
   version: "20150813"
@@ -22,4 +22,3 @@ third_party {
     "the code being public domain."
     "2. Adapted the code for the EC codebase, see git log."
 }
-
