@@ -10,6 +10,7 @@
 #include "i2c.h"
 #include "raa489300.h"
 #include "task.h"
+#include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
@@ -223,26 +224,44 @@ void level_buck_set_input_current_limit(int ma)
 
 static int raa489300_cmd(int argc, const char **argv)
 {
-	if (argc >= 2) {
-		if (!strncmp(argv[1], "get", 3)) {
-			int i;
-			int val;
+	int i, val;
+	uint8_t reg;
+	uint16_t value;
+	char *e;
 
-			/* Dump all readable registers*/
-			static const uint8_t regs[] = {
-				0x14, 0x15, 0x39, 0x3a, 0x3c, 0x3d, 0x3f, 0x40, 0x43,
-				0x49, 0x4b, 0x4c, 0x4e, 0x4f,
-			};
+	if (argc == 2 && !strncmp(argv[1], "get", 3)) {
+		/* Dump all readable registers*/
+		static const uint8_t regs[] = {
+			0x14, 0x15, 0x39, 0x3a, 0x3c, 0x3d, 0x3f, 0x40, 0x43,
+			0x49, 0x4b, 0x4c, 0x4e, 0x4f, 0x90, 0x91,
+		};
 
-			for (i = 0; i < ARRAY_SIZE(regs); ++i) {
-				if (i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
-					regs[i], &val))
-					continue;
-				ccprintf("raa489300 REG 0x%02x:  0x%04x\n", regs[i], val);
-			}
+		for (i = 0; i < ARRAY_SIZE(regs); ++i) {
+			if (i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+				regs[i], &val))
+				continue;
+			ccprintf("raa489300 REG 0x%02x:  0x%04x\n", regs[i], val);
 		}
+	}
+
+	if (argc >= 4 && !strncmp(argv[1], "set", 3)) {
+		reg = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM1;
+		value = strtoi(argv[3], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+
+		if (i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+			reg, value)) {
+			ccprintf("Failed to write 0x%04x to REG 0x%02x\n", value, reg);
+			return EC_ERROR_UNKNOWN;
+		}
+
+		ccprintf("raa489300 REG 0x%02x set to 0x%04x\n", reg, value);
 	}
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(raa489300, raa489300_cmd, "[get]",
-			"Get raa489300 register");
+DECLARE_CONSOLE_COMMAND(raa489300, raa489300_cmd,
+			"raa489300 set/get reg value",
+			"Set/Get raa489300 register");
