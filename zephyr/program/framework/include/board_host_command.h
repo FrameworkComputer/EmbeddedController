@@ -315,6 +315,7 @@ struct ec_response_chassis_open_check {
 struct ec_response_read_pd_version {
 	uint8_t pd0_version[8];
 	uint8_t pd1_version[8];
+	uint8_t pd2_version[8];
 } __ec_align1;
 
 /*****************************************************************************/

@@ -284,6 +284,7 @@ static enum ec_status read_pd_versoin(struct host_cmd_handler_args *args)
 
 	memcpy(r->pd0_version, get_pd_version(0), sizeof(r->pd0_version));
 	memcpy(r->pd1_version, get_pd_version(1), sizeof(r->pd1_version));
+	memcpy(r->pd2_version, get_pd_version(2), sizeof(r->pd2_version));
 
 	args->response_size = sizeof(*r);
 
