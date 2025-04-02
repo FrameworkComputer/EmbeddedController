@@ -6,4 +6,4 @@ description: AOZ1380 USBC PPC binding
 
 compatible: "aoz,aoz1380"
 
-include: ppc-chip.yaml
+include: ["base.yaml", "ppc-chip.yaml"]

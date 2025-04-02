@@ -4,6 +4,6 @@
 
 description: USB-C Virtual USB MUX
 
-include: cros-ec,usbc-mux.yaml
+include: ["base.yaml", "cros-ec,usbc-mux.yaml"]
 
 compatible: "cros-ec,usbc-mux-virtual"

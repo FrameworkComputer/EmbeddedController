@@ -4,7 +4,7 @@
 
 description: USBC ANX7447 USB MUX
 
-include: cros-ec,usbc-mux.yaml
+include: ["base.yaml", "cros-ec,usbc-mux.yaml"]
 
 compatible: "analogix,usbc-mux-anx7447"
 

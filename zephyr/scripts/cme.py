@@ -258,8 +258,8 @@ def node_is_valid(node, i2c_node, i2c_portmap):
         i2c_portmap: Dict of the mapping from I2C name to remote port number.
     """
     if "compatible" not in node.props:
-        logging.info("Compatible not found: %s", node.name)
-        return False
+        logging.error("Compatible not found: %s", node.name)
+        sys.exit(1)
 
     if i2c_node is None or i2c_node.name not in i2c_portmap:
         logging.info(
@@ -307,7 +307,7 @@ def find_i2c_portmap(edtlib, edt):
 
     if not i2c_chip_names:
         logging.info("No I2C port found")
-        return {}
+        sys.exit(1)
 
     # Find the mapping of the remote_port.
     i2c_portmap = {}
@@ -493,13 +493,15 @@ def iterate_usbc_components(edtlib, edt, i2c_portmap, manifest):
         edt: EDT object representation of a devicetree
         i2c_portmap: Dict of the mapping from I2C name to remote port number.
         manifest: Manifest object.
+    Returns:
+        Zero upon success, or non-zero upon failure.
     """
     try:
         usbc = edt.get_node("/usbc")
     except edtlib.EDTError:
         # If the usbc node doesn't exist, return success.
         logging.info("No usbc node found")
-        return
+        return 0
 
     for node in usbc.children.values():
         # Ignore the child node without a port number.
@@ -543,6 +545,8 @@ def iterate_usbc_components(edtlib, edt, i2c_portmap, manifest):
                         "mux", mux, port, i2c_portmap, manifest
                     )
 
+    return 0
+
 
 def insert_motionsense_component(
     node, edt, i2c_portmap, ssfc_map, manifest, is_alt
@@ -556,6 +560,8 @@ def insert_motionsense_component(
         ssfc_map: Dict of the mapping from ssfc name to ssfc manifest element.
         manifest: Manifest object.
         is_alt: boolean for if this component is alt sensor.
+    Returns:
+        Zero upon success, or non-zero upon failure.
     """
     if "port" in node.props:
         i2c = node.props["port"].val.props["i2c-port"].val
@@ -565,9 +571,9 @@ def insert_motionsense_component(
             node.name,
             node.props["compatible"].val[0],
         )
-        return
+        return 0
     if not node_is_valid(node, i2c, i2c_portmap):
-        return
+        return 0
 
     i2c_addr = node.props["i2c-spi-addr-flags"].val
     if i2c_addr in SENSOR_I2C_ADDRESSES:
@@ -579,7 +585,7 @@ def insert_motionsense_component(
             node.props["compatible"].val[0],
             i2c_addr,
         )
-        sys.exit(1)
+        return 1
 
     compatible_name = node.props["compatible"].val[0]
 
@@ -602,6 +608,7 @@ def insert_motionsense_component(
         i2c_addr_val,
         ssfc=ssfc_element,
     )
+    return 0
 
 
 def iterate_motionsensor_components(
@@ -615,30 +622,38 @@ def iterate_motionsensor_components(
         i2c_portmap: Dict of the mapping from I2C name to remote port number.
         ssfc_map: Dict of the mapping from ssfc name to ssfc manifest element.
         manifest: Manifest object.
+    Returns:
+        Zero upon success, or non-zero upon failure.
     """
     try:
         mss = edt.get_node("/motionsense-sensor")
     except edtlib.EDTError:
         # If the motionsense-sensor node doesn't exist, return success.
         logging.info("No motionsense-sensor node found")
-        return
+        return 0
 
     for node in mss.children.values():
-        insert_motionsense_component(
+        ret = insert_motionsense_component(
             node, edt, i2c_portmap, ssfc_map, manifest, is_alt=False
         )
+        if ret != 0:
+            return ret
 
     try:
         mss_alt = edt.get_node("/motionsense-sensor-alt")
     except edtlib.EDTError:
         # If the motionsense-sensor-alt node doesn't exist, return success.
         logging.info("No motionsense-sensor-alt node found")
-        return
+        return 0
 
     for node in mss_alt.children.values():
-        insert_motionsense_component(
+        ret = insert_motionsense_component(
             node, edt, i2c_portmap, ssfc_map, manifest, is_alt=True
         )
+        if ret != 0:
+            return ret
+
+    return 0
 
 
 def main(argv: Optional[List[str]] = None) -> Optional[int]:
@@ -678,13 +693,15 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
         )
     manifest = Manifest(ec_version_string)
 
-    iterate_usbc_components(edtlib, edt, i2c_portmap, manifest)
+    ret = iterate_usbc_components(edtlib, edt, i2c_portmap, manifest)
+    if ret != 0:
+        return ret
 
-    iterate_motionsensor_components(
+    ret = iterate_motionsensor_components(
         edtlib, edt, i2c_portmap, ssfc_map, manifest
     )
-
-    # TODO(b/308028560): Iterate all sensor components.
+    if ret != 0:
+        return ret
 
     manifest.json_dump(args.manifest_file)
 
