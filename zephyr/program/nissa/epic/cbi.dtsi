@@ -1,0 +1,127 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* epic-specific ssfc fields. */
+	cbi-ssfc {
+		compatible = "cros-ec,cbi-ssfc";
+		/*
+		 * SSFC field to identify LID motion sensor.
+		 */
+		lid-sensor {
+			enum-name = "LID_SENSOR";
+			size = <2>;
+
+			lid_sensor_none: none {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <0>;
+				default;
+			};
+			lid_sensor_bma422: bma422 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+			};
+		};
+		/*
+		 * SSFC field to identify BASE motion sensor.
+		 */
+		base-sensor {
+			enum-name = "BASE_SENSOR";
+			size = <2>;
+
+			base_sensor_none: none {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <0>;
+				default;
+			};
+			base_sensor_bmi323: bmi323 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+			};
+		};
+	};
+	/* epic-specific fw_config fields. */
+	nissa-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+		/*
+		 * FW_CONFIG field to indicate which sub-board
+		 * is attached.
+		 */
+		sub-board {
+			enum-name = "FW_SUB_BOARD";
+			start = <0>;
+			size = <3>;
+
+			sub-board-1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_1";
+				value = <1>;
+			};
+			sub-board-2 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_2";
+				value = <2>;
+			};
+			sub-board-3 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_3";
+				value = <3>;
+			};
+			sub-board-6 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_6";
+				value = <6>;
+			};
+		};
+		/*
+		 * FW_CONFIG field to extern charger max voltage select 15v/20v
+		 */
+		adapter_voltage_limit {
+			enum-name = "ADAPTER_VOLTAGE_LIMIT";
+			start = <11>;
+			size = <1>;
+			limit15  {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "MAX15";
+				value = <0>;
+				default;
+			};
+			limit20 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "MAX20";
+				value = <1>;
+			};
+		};
+		/*
+		 * FW_CONFIG field to enable fan or not.
+		 */
+		fan {
+			enum-name = "FW_FAN";
+			start = <22>;
+			size = <1>;
+
+			no-fan {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_NOT_PRESENT";
+				value = <0>;
+			};
+
+			fan-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_PRESENT";
+				value = <1>;
+				/*
+				 * Set as default so that unprovisioned
+				 * configs will run the fan regardless.
+				 */
+				default;
+			};
+		};
+	};
+};

@@ -420,3 +420,16 @@ if(DEFINED CONFIG_BOARD_MELIKS)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "meliks/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "meliks/src/charger.c")
 endif()
+if(DEFINED CONFIG_BOARD_EPIC)
+	project(epic)
+	zephyr_library_sources(
+			"epic/src/hdmi.c"
+			"epic/src/usb_mux_config.c"
+			"epic/src/form_factor.c"
+			"epic/src/sub_board.c"
+			"epic/src/thermal.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "epic/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "epic/src/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "epic/src/fan.c")
+endif()
