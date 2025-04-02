@@ -17,9 +17,6 @@
 #include <stdint.h>
 #define LOG_TAG "RBS-rapwer"
 
-/* Lock to access the sensor */
-static K_MUTEX_DEFINE(sensor_lock);
-static task_id_t sensor_owner;
 /* recorded error flags */
 static uint16_t errors;
 
@@ -54,20 +51,6 @@ static int convert_egis_get_image_error_code(egis_api_return_t code)
 		assert(code < 0);
 		return code;
 	}
-}
-
-void fp_sensor_lock(void)
-{
-	if (sensor_owner != task_get_current()) {
-		mutex_lock(&sensor_lock);
-		sensor_owner = task_get_current();
-	}
-}
-
-void fp_sensor_unlock(void)
-{
-	sensor_owner = 0xFF;
-	mutex_unlock(&sensor_lock);
 }
 
 void fp_sensor_low_power(void)
