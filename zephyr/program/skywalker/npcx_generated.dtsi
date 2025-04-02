@@ -139,6 +139,7 @@
 		};
 		gpio_lid_360_l: lid_360_l {
 			gpios = <&gpiob 2 (GPIO_INPUT)>;
+			enum-name = "GPIO_TABLET_MODE_L";
 		};
 		gpio_lid_accel_int_ec_l: lid_accel_int_ec_l {
 			gpios = <&gpiob 3 (GPIO_INPUT)>;
