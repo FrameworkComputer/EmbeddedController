@@ -730,9 +730,6 @@ ZTEST_USER(pdc_api, test_execute_ucsi_cmd)
 	zassert_equal(out->raw_value, in.raw_value);
 }
 
-/* TODO(b/345292002): Not supported by TI driver currently. */
-#ifndef CONFIG_TODO_B_345292002
-
 ZTEST_USER(pdc_api, test_get_sbu_mux_mode)
 {
 	/* Null pointer error */
@@ -746,7 +743,22 @@ ZTEST_USER(pdc_api, test_set_sbu_mux_mode)
 		      pdc_set_sbu_mux_mode(dev, PDC_SBU_MUX_MODE_INVALID));
 }
 
-#endif /* !defined(CONFIG_TODO_B_345292002) */
+ZTEST_USER(pdc_api, test_get_sbu_mux_mode_access_error)
+{
+	int rv;
+	enum pdc_sbu_mux_mode mode = PDC_SBU_MUX_MODE_NORMAL;
+
+	/* Invalid access */
+	rv = emul_pdc_set_cmd_error(emul, true);
+	if (rv != -ENOSYS) {
+		zassert_ok(pdc_get_sbu_mux_mode(dev, &mode));
+		k_sleep(K_MSEC(SLEEP_MS));
+		zassert_equal(mode, PDC_SBU_MUX_MODE_INVALID,
+			      "Expect PDC_SBU_MUX_MODE_INVALID (%d), Get (%d)",
+			      PDC_SBU_MUX_MODE_INVALID, mode);
+		emul_pdc_set_cmd_error(emul, false);
+	}
+}
 
 /*
  * Suspended tests - ensure API calls behave correctly when PDC communication
@@ -821,8 +833,6 @@ ZTEST_USER(pdc_api_suspended, test_get_lpm_ppm_info)
 	zassert_equal(-EBUSY, pdc_get_lpm_ppm_info(dev, &out));
 }
 
-/* TODO(b/345292002): Not supported by TI driver currently. */
-#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api_suspended, test_get_sbu_mux_mode)
 {
 	enum pdc_sbu_mux_mode mode;
@@ -837,4 +847,3 @@ ZTEST_USER(pdc_api_suspended, test_set_sbu_mux_mode)
 	zassert_equal(-EBUSY,
 		      pdc_set_sbu_mux_mode(dev, PDC_SBU_MUX_MODE_FORCE_DBG));
 }
-#endif /* !defined(CONFIG_TODO_B_345292002) */

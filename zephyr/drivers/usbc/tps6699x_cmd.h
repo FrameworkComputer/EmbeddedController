@@ -419,6 +419,16 @@ int tps_rd_data_status_reg(const struct i2c_dt_spec *i2c,
 			   union reg_data_status *status);
 
 /**
+ * @brief Read the status register (0x1A)
+ *
+ * @param i2c device pointer to i2c device
+ * @param status Output location for contents
+ *
+ * @return 0 on success, else -EIO
+ */
+int tps_rd_status_reg(const struct i2c_dt_spec *i2c, union reg_status *status);
+
+/**
  * @brief Perform bulk transfers to the PDC
  *
  * @param i2c device pointer to i2c device

@@ -395,6 +395,34 @@ static void tps6699x_emul_handle_disc(struct tps6699x_emul_pdc_data *data,
 	data_reg[0] = TASK_COMPLETED_SUCCESSFULLY;
 }
 
+static int tps6699x_emul_handle_sbud(struct tps6699x_emul_pdc_data *data,
+				     uint8_t *data_reg)
+{
+	if (!atomic_test_bit(data->features,
+			     EMUL_PDC_FEATURE_SBU_MUX_OVERRIDE)) {
+		/* Command does not exist. */
+		LOG_ERR("This commands requires EMUL_PDC_FEATURE_SBU_MUX_OVERRIDE");
+		data_reg[0] = TASK_REJECTED;
+		return -EINVAL;
+	}
+
+	uint8_t mode = data_reg[0];
+
+	LOG_INF("SET_SBU_MUX_MODE mode=0x%02x", mode);
+
+	/* LCOV_EXCL_START - Internal emul error checking */
+	if (!(mode == 0x00 || mode == 0x01)) {
+		LOG_ERR("SET_SBU_MUX_MODE: invalid mode 0x%02x", mode);
+		return -EINVAL;
+	}
+	/* LCOV_EXCL_STOP */
+
+	data->reg_val[REG_STATUS][3] = mode << 2;
+	data_reg[0] = TASK_COMPLETED_SUCCESSFULLY;
+
+	return 0;
+}
+
 static void delayable_work_handler(struct k_work *w)
 {
 	struct k_work_delayable *dwork = k_work_delayable_from_work(w);
@@ -430,6 +458,9 @@ static void tps6699x_emul_handle_command(struct tps6699x_emul_pdc_data *data,
 		break;
 	case COMMAND_TASK_DISC:
 		tps6699x_emul_handle_disc(data, data_reg);
+		break;
+	case COMMAND_TASK_SBUD:
+		tps6699x_emul_handle_sbud(data, data_reg);
 		break;
 	default: {
 		char task_str[5] = {
@@ -1112,6 +1143,58 @@ static int tps6699x_emul_get_data_role_preference(const struct emul *target,
 	return 0;
 }
 
+/* LCOV_EXCL_START - Emulator backend functionality only */
+static bool is_feature_flag_supported(enum emul_pdc_feature_flag feature)
+{
+	switch (feature) {
+	case EMUL_PDC_FEATURE_SBU_MUX_OVERRIDE:
+		return true;
+	default:
+		return false;
+	}
+}
+
+static int emul_tps6699x_set_feature_flag(const struct emul *target,
+					  enum emul_pdc_feature_flag feature)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	if (!is_feature_flag_supported(feature)) {
+		LOG_ERR("Setting invalid feature flag %d", feature);
+		return -ENOTSUP;
+	}
+
+	LOG_INF("Setting feature flag %d", feature);
+	atomic_set_bit(data->features, feature);
+	return 0;
+}
+
+static int emul_tps6699x_clear_feature_flag(const struct emul *target,
+					    enum emul_pdc_feature_flag feature)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	if (!is_feature_flag_supported(feature)) {
+		LOG_ERR("Clearing invalid feature flag %d", feature);
+		return -ENOTSUP;
+	}
+
+	LOG_INF("Clearing feature flag %d", feature);
+	atomic_clear_bit(data->features, feature);
+	return 0;
+}
+
+static void emul_tps6699x_reset_feature_flags(const struct emul *target)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	atomic_clear(data->features);
+}
+/* LCOV_EXCL_STOP */
+
 static DEVICE_API(emul_pdc, emul_tps6699x_api) = {
 	.reset = emul_tps6699x_reset,
 	.set_response_delay = emul_tps6699x_set_response_delay,
@@ -1142,6 +1225,9 @@ static DEVICE_API(emul_pdc, emul_tps6699x_api) = {
 	.set_cmd_error = tps6699x_emul_set_cmd_error,
 	.get_frs = tps6699x_emul_get_frs,
 	.get_data_role_preference = tps6699x_emul_get_data_role_preference,
+	.set_feature_flag = emul_tps6699x_set_feature_flag,
+	.clear_feature_flag = emul_tps6699x_clear_feature_flag,
+	.reset_feature_flags = emul_tps6699x_reset_feature_flags,
 };
 
 /* clang-format off */

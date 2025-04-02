@@ -311,6 +311,8 @@ enum command_task {
 	COMMAND_TASK_ANEG = TASK_TO_UINT32('A', 'N', 'e', 'g'),
 	/* Clear Dead Battery Flag */
 	COMMAND_TASK_DBFG = TASK_TO_UINT32('D', 'B', 'f', 'g'),
+	/* Override SBU Debug Mux Path */
+	COMMAND_TASK_SBUD = TASK_TO_UINT32('S', 'B', 'U', 'd'),
 	/* Error handling for I2C3m transactions */
 	COMMAND_TASK_MUXR = TASK_TO_UINT32('M', 'u', 'x', 'R'),
 	/* Trigger an Input GPIO Event */
@@ -533,7 +535,7 @@ union reg_status {
 		uint8_t usb_host_present : 2;
 
 		uint8_t acting_as_legacy : 2;
-		uint8_t reserved2 : 1;
+		uint8_t sbumux_mode : 1;
 		uint8_t bist : 1;
 		uint8_t reserved4 : 2;
 		uint8_t soc_ack_timeout : 1;

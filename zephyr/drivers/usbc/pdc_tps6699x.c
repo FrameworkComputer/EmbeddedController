@@ -155,6 +155,10 @@ enum cmd_t {
 	CMD_GET_CURRENT_PDO,
 	/** CMD_IS_VCONN_SOURCING */
 	CMD_IS_VCONN_SOURCING,
+	/** CMD_GET_SBU_MUX_MODE */
+	CMD_GET_SBU_MUX_MODE,
+	/** CMD_SET_SBU_MUX_MODE */
+	CMD_SET_SBU_MUX_MODE,
 	/** CMD_RAW_UCSI */
 	CMD_RAW_UCSI,
 };
@@ -291,6 +295,8 @@ struct pdc_data_t {
 	bool use_cached_conn_status_change;
 	/* Cached connector status for this connector. */
 	union connector_status_t cached_conn_status;
+	/* sbumux mode */
+	enum pdc_sbu_mux_mode sbumux_mode;
 	/* Raw UCSI data to send. */
 	union reg_data raw_ucsi_cmd_data;
 };
@@ -321,6 +327,7 @@ static int cmd_get_ic_status_sync_internal(struct pdc_config_t const *cfg,
 static void cmd_get_vdo(struct pdc_data_t *data);
 static void cmd_get_identity_discovery(struct pdc_data_t *data);
 static void cmd_get_pdc_data_status_reg(struct pdc_data_t *data);
+static void cmd_get_sbu_mux_mode(struct pdc_data_t *data);
 static void cmd_update_retimer(struct pdc_data_t *data);
 static void cmd_get_current_pdo(struct pdc_data_t *data);
 static void cmd_is_vconn_sourcing(struct pdc_data_t *data);
@@ -329,6 +336,7 @@ static void task_srdy(struct pdc_data_t *data);
 static void task_dbfg(struct pdc_data_t *data);
 static void task_aneg(struct pdc_data_t *data);
 static void task_disc(struct pdc_data_t *data);
+static void task_sbud(struct pdc_data_t *data);
 static void task_ucsi(struct pdc_data_t *data,
 		      enum ucsi_command_t ucsi_command);
 static void task_raw_ucsi(struct pdc_data_t *data);
@@ -805,6 +813,12 @@ static void st_idle_run(void *o)
 			break;
 		case CMD_IS_VCONN_SOURCING:
 			cmd_is_vconn_sourcing(data);
+			break;
+		case CMD_SET_SBU_MUX_MODE:
+			task_sbud(data);
+			break;
+		case CMD_GET_SBU_MUX_MODE:
+			cmd_get_sbu_mux_mode(data);
 			break;
 		case CMD_RAW_UCSI:
 			task_raw_ucsi(data);
@@ -1453,6 +1467,35 @@ error_recovery:
 	set_state(data, ST_ERROR_RECOVERY);
 }
 
+static void cmd_get_sbu_mux_mode(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	union reg_status status;
+	enum pdc_sbu_mux_mode *mode = (enum pdc_sbu_mux_mode *)data->user_buf;
+
+	int rv;
+
+	rv = tps_rd_status_reg(&cfg->i2c, &status);
+	if (rv) {
+		LOG_ERR("Failed to read status reg (%d)", rv);
+		*mode = PDC_SBU_MUX_MODE_INVALID;
+		goto error_recovery;
+	}
+
+	*mode = status.sbumux_mode;
+
+	/* Command has completed */
+	data->cci_event.command_completed = 1;
+	/* Inform the system of the event */
+	call_cci_event_cb(data);
+
+	set_state(data, ST_IDLE);
+	return;
+
+error_recovery:
+	set_state(data, ST_ERROR_RECOVERY);
+}
+
 static int write_task_cmd(struct pdc_config_t const *cfg,
 			  enum command_task task, union reg_data *cmd_data)
 {
@@ -1576,6 +1619,23 @@ static void task_aneg(struct pdc_data_t *data)
 	int rv;
 
 	rv = write_task_cmd(cfg, COMMAND_TASK_ANEG, NULL);
+	if (rv) {
+		set_state(data, ST_ERROR_RECOVERY);
+		return;
+	}
+
+	set_state(data, ST_TASK_WAIT);
+	return;
+}
+
+static void task_sbud(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	union reg_data cmd_data;
+	int rv;
+
+	cmd_data.data[0] = data->sbumux_mode;
+	rv = write_task_cmd(cfg, COMMAND_TASK_SBUD, &cmd_data);
 	if (rv) {
 		set_state(data, ST_ERROR_RECOVERY);
 		return;
@@ -2054,6 +2114,25 @@ static int tps_set_fast_role_swap(const struct device *dev, bool enable)
 	return tps_post_command(dev, CMD_SET_FRS, NULL);
 }
 
+static int tps_set_sbu_mux_mode(const struct device *dev,
+				enum pdc_sbu_mux_mode mode)
+{
+	struct pdc_data_t *data = dev->data;
+
+	data->sbumux_mode = mode;
+
+	return tps_post_command(dev, CMD_SET_SBU_MUX_MODE, NULL);
+}
+
+static int tps_get_sbu_mux_mode(const struct device *dev,
+				enum pdc_sbu_mux_mode *mode)
+{
+	if (mode == NULL)
+		return -EINVAL;
+
+	return tps_post_command(dev, CMD_GET_SBU_MUX_MODE, mode);
+}
+
 static int tps_set_sink_path(const struct device *dev, bool en)
 {
 	struct pdc_data_t *data = dev->data;
@@ -2461,6 +2540,8 @@ static DEVICE_API(pdc, pdc_driver_api) = {
 	.update_retimer = tps_update_retimer_mode,
 	.execute_ucsi_cmd = tps_execute_ucsi_cmd,
 	.set_frs = tps_set_fast_role_swap,
+	.set_sbu_mux_mode = tps_set_sbu_mux_mode,
+	.get_sbu_mux_mode = tps_get_sbu_mux_mode,
 };
 
 static int pdc_interrupt_mask_init(struct pdc_data_t *data)

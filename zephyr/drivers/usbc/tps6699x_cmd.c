@@ -268,6 +268,12 @@ int tps_rd_data_status_reg(const struct i2c_dt_spec *i2c,
 			    sizeof(*status), I2C_MSG_READ);
 }
 
+int tps_rd_status_reg(const struct i2c_dt_spec *i2c, union reg_status *status)
+{
+	return tps_xfer_reg(i2c, REG_STATUS, status->raw_value, sizeof(*status),
+			    I2C_MSG_READ);
+}
+
 /** Split streaming transfers down into chunks of this size for more manageable
  *  I2C write lengths.
  */

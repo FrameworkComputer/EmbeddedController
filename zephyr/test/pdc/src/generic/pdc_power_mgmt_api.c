@@ -2056,6 +2056,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_request_source_voltage)
 	pdc_power_mgmt_request_source_voltage(TEST_PORT, prev_mv);
 	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
 }
+#endif /* CONFIG_TODO_B_345292002 */
 
 /* Get / set SBU mux mode is only supported on RTK currently */
 ZTEST(pdc_power_mgmt_api, test_pdc_power_mgmt_sbu_mux_mode)
@@ -2091,6 +2092,8 @@ ZTEST(pdc_power_mgmt_api, test_pdc_power_mgmt_sbu_mux_mode)
 	zassert_equal(0, ccd_port);
 }
 
+/* TODO(b/345292002): Not supported by TI driver currently. */
+#ifndef CONFIG_TODO_B_345292002
 ZTEST(pdc_power_mgmt_api, test_pdc_power_mgmt_sbu_mux_mode_not_supported_set)
 {
 	int rv;
