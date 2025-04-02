@@ -993,6 +993,12 @@ HELIPILOT_CONFIG = BoardConfig(
     expected_mcu_power=PowerUtilization(
         idle=RangedValue(34.8, 7.0), sleep=RangedValue(2.7, 2.5)
     ),
+    expected_fp_power_zephyr=PowerUtilization(
+        idle=RangedValue(0.0, 0.1), sleep=RangedValue(0.0, 0.1)
+    ),
+    expected_mcu_power_zephyr=PowerUtilization(
+        idle=RangedValue(34.8, 7.0), sleep=RangedValue(2.7, 2.5)
+    ),
     variants={
         "helipilot_v2.0.24337": {"ro_image_path": HELIPILOT_IMAGE_PATH},
         "buccaneer_v2.0.26328": {
