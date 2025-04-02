@@ -944,7 +944,7 @@ int parse_gpu_eeprom(void)
 		case GPUCFG_TYPE_VENDOR:
 			gpu_vendor = gpu_read_buff[0];
 			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE) = gpu_read_buff[0];
-			if (gpu_vendor == GPU_AMD_R23M) {
+			if ((gpu_vendor == GPU_AMD_R23M) || (gpu_vendor == GPU_NV_GN22)) {
 				*host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL) |= GPU_PRESENT;
 			}
 			
