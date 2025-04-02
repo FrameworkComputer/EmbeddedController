@@ -16,11 +16,15 @@
 
 /* Process Status Word bits */
 #define PSW_GIE BIT(0) /* Global Interrupt Enable */
+#define PSW_DEX BIT(10) /* Debug Exception */
 #define PSW_INTL_SHIFT 1 /* Interrupt Stack Level */
 #define PSW_INTL_MASK (0x3 << PSW_INTL_SHIFT)
 
 #ifndef __ASSEMBLER__
 
+#include "compile_time_macros.h"
+
+#include <stdbool.h>
 #include <stdint.h>
 
 /* write Process Status Word privileged register */
@@ -63,6 +67,12 @@ static inline uint32_t get_interrupt_level(void)
 {
 	/* Get interrupt stack level, 0 | 1 | 2 */
 	return (get_psw() & PSW_INTL_MASK) >> PSW_INTL_SHIFT;
+}
+
+/* Returns true if Debug Exception (DEX) flag is set */
+static inline bool get_dex(void)
+{
+	return !!(get_psw() & PSW_DEX);
 }
 
 /* Generic CPU core initialization */

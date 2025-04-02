@@ -249,14 +249,17 @@ inline bool is_interrupt_enabled(void)
 
 	asm volatile("mfsr %0, $INT_MASK" : "=r"(val));
 
-	/* Interrupts are enabled if any of HW2, HW4 ~ HW15 is enabled */
-	return val & 0xFFF4;
+	/* Interrupts are enabled if any of HW2, HW4 ~ HW15 is enabled
+	 * and DEX is not enabled.
+	 * Ref: Andes_Embedded_Debug_Module_V3_DSP011_V1.2
+	 */
+	return val & 0xFFF4 && !get_dex();
 }
 
 inline bool in_interrupt_context(void)
 {
-	/* check INTL (Interrupt Stack Level) bits */
-	return get_psw() & PSW_INTL_MASK;
+	/* check Interrupt Stack Level or DEX mode */
+	return get_interrupt_level() || get_dex();
 }
 
 task_id_t task_get_current(void)
