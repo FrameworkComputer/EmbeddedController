@@ -74,6 +74,13 @@ int charger_sustainer_percentage(void)
 	return charging_maximum_level;
 }
 
+void charger_sustainer_reset(void)
+{
+	old_charger_limit = 0;
+	battery_sustainer_set(-1, -1);
+	set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+}
+
 static void battery_percentage_control(void)
 {
 	if (charging_maximum_level == EC_CHARGE_LIMIT_RESTORE) {
@@ -83,9 +90,9 @@ static void battery_percentage_control(void)
 	}
 
 	if (charging_maximum_level & CHG_LIMIT_OVERRIDE ||
-		!charging_maximum_level) {
-		battery_sustainer_set(-1, -1);
-		set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+		!charging_maximum_level ||
+		charging_maximum_level == 100) {
+		charger_sustainer_reset();
 		return;
 	}
 
@@ -136,8 +143,10 @@ void battery_extender(void)
 			now.val + battery_extender_trigger;
 		batt_extender_deadline_stage2.val =
 				now.val + battery_extender_trigger + 2*DAY;
-		battery_sustainer_set(-1, -1);
-		set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+		/* if charger limit has been set don't clear sustainer and charger mode */
+		if (charger_sustainer_percentage() == 100) {
+			charger_sustainer_reset();
+		}
 	}
 
 	if (batt_extender_deadline_stage2.val &&
@@ -194,8 +203,7 @@ static enum ec_status battery_extender_hc(struct host_cmd_handler_args *args)
 			if (batt_extender_disable) {
 				/* if charger limit has been set don't control sustainer again */
 				if (charger_sustainer_percentage() == 100) {
-					battery_sustainer_set(-1, -1);
-					set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+					charger_sustainer_reset();
 				}
 				stage = BATT_EXTENDER_STAGE_0;
 			}
@@ -323,8 +331,7 @@ static int cmd_batt_extender(int argc, const char **argv)
 			CPRINTS("battery extender %s",
 				disable ? "enabled" : "disabled");
 			if (batt_extender_disable) {
-				battery_sustainer_set(-1, -1);
-				set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+				charger_sustainer_reset();
 				stage = BATT_EXTENDER_STAGE_0;
 			} else {
 				if (battery_extender_reset) {
@@ -385,6 +392,14 @@ static int cmd_batt_extender(int argc, const char **argv)
 			print_time_offset(reset_deadline.val, now.val);
 		}
 		CPRINTF("\tsustainer percentage:\n");
+		if (stage == BATT_EXTENDER_STAGE_1) {
+			sustainer_lower = MIN(90, sustainer_lower);
+			sustainer_upper = MIN(95, sustainer_upper);
+		} else if (stage == BATT_EXTENDER_STAGE_2) {
+			sustainer_lower = MIN(85, sustainer_lower);
+			sustainer_upper = MIN(87, sustainer_upper);
+		}
+
 		CPRINTF("\tlower: %d, upper: %d\n", sustainer_lower, sustainer_upper);
 		CPRINTF("\tUser charge limit:%d\n", charging_maximum_level);
 	}
