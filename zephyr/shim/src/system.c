@@ -342,26 +342,19 @@ test_mockable void system_reset(int flags)
 static int check_reset_cause(void)
 {
 	uint32_t system_flags = chip_read_reset_flags(); /* system reset flag */
-	uint32_t chip_flags = system_flags; /* used to write back to the BBRAM
-					     */
+	uint32_t chip_flags = 0; /* used to write back to the BBRAM */
 	int chip_reset_cause = 0; /* chip-level reset cause */
 
 	chip_reset_cause = cros_system_get_reset_cause(sys_dev);
 	if (chip_reset_cause < 0)
 		return -1;
 
-	/*
-	 * TODO(b/182876692): Implement CONFIG_POWER_BUTTON_INIT_IDLE &
-	 * CONFIG_BOARD_FORCE_RESET_PIN.
-	 */
 	if (IS_ENABLED(CONFIG_POWER_BUTTON_INIT_IDLE)) {
 		/*
 		 * We're not sure whether we're booting or not. AP_IDLE will be
 		 * cleared on S5->S3 transition.
 		 */
-		chip_flags &= EC_RESET_FLAG_AP_IDLE;
-	} else {
-		chip_flags = 0;
+		chip_flags = system_flags & EC_RESET_FLAG_AP_IDLE;
 	}
 
 	switch (chip_reset_cause) {
