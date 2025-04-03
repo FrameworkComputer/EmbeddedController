@@ -46,6 +46,9 @@ add_link_options(-flto)
 add_compile_options(-fno-exceptions)
 add_compile_options(-fno-unwind-tables)
 add_compile_options(-fno-asynchronous-unwind-tables)
+if ("${CC_NAME}" STREQUAL clang)
+add_link_options(--unwindlib=none)
+endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
 

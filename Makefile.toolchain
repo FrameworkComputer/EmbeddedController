@@ -266,6 +266,9 @@ ifneq (${SYSROOT},)
 endif
 LDFLAGS=-g -no-pie -Wl,-X -Wl,--gc-sections -Wl,--build-id=none \
 	$(LDFLAGS_EXTRA) $(CFLAGS_CPU)
+ifeq ($(CROSS_COMPILE_CC_NAME),clang)
+	LDFLAGS+=--unwindlib=none
+endif
 ifeq ($(USE_BUILTIN_STDLIB), 1)
 LDFLAGS+=-nostdlib
 else
