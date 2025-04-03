@@ -77,15 +77,7 @@ test_mockable void __keep fpu_irq(uint32_t excep_lr, uint32_t excep_sp)
 		uint32_t *stack;
 
 		if (!fpu_exc_present) {
-			/*
-			 * Examine least significant 4 bits from exception LR
-			 * to find which stack should be used to find the
-			 * exception frame:
-			 * - 0xd - CPU was in Thread Mode and PSP was used
-			 * - 0x9 - CPU was in Thread Mode and MSP was used
-			 * - 0x1 - CPU was in Handler Mode and MSP was used
-			 */
-			if ((excep_lr & 0xf) == 0xd)
+			if (!is_frame_in_handler_stack(excep_lr))
 				asm("mrs %0, psp" : "=r"(stack));
 			else
 				stack = (uint32_t *)excep_sp;
@@ -95,7 +87,7 @@ test_mockable void __keep fpu_irq(uint32_t excep_lr, uint32_t excep_sp)
 			fpu_fpscr = fpu_state[FPU_IDX_REG_FPSCR];
 			fpu_task = -1;
 
-			if ((excep_lr & 0xf) != 0x1)
+			if (!is_exception_from_handler_mode(excep_lr))
 				fpu_task = task_get_current();
 
 			atomic_add(&fpu_exc_present, 1);

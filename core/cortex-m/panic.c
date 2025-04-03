@@ -68,22 +68,6 @@ static void print_reg(int regnum, const uint32_t *regs, int index)
 }
 
 /*
- * Returns non-zero if the exception frame was created on the main stack, or
- * zero if it's on the process stack.
- *
- * See B1.5.8 "Exception return behavior" of ARM DDI 0403D for details.
- */
-static int32_t is_frame_in_handler_stack(const uint32_t exc_return)
-{
-#ifdef CONFIG_FPU
-	return exc_return == 0xfffffff1 || exc_return == 0xfffffff9 ||
-	       exc_return == 0xffffffe1 || exc_return == 0xffffffe9;
-#else
-	return exc_return == 0xfffffff1 || exc_return == 0xfffffff9;
-#endif /* CONFIG_FPU */
-}
-
-/*
  * Returns the size of the exception frame.
  *
  * See B1.5.7 "Stack alignment on exception entry" of ARM DDI 0403D for details.
@@ -273,15 +257,15 @@ void panic_data_print(const struct panic_data *pdata)
 {
 	const uint32_t *lregs = pdata->cm.regs;
 	const uint32_t *sregs = NULL;
-	const int32_t in_handler = is_frame_in_handler_stack(
-		pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]);
+	const uint32_t excep_lr = lregs[CORTEX_PANIC_REGISTER_LR];
 	int i;
 
 	if (pdata->flags & PANIC_DATA_FLAG_FRAME_VALID)
 		sregs = pdata->cm.frame;
 
 	panic_printf("\n=== %s EXCEPTION: %02x ====== xPSR: %08x ===\n",
-		     in_handler ? "HANDLER" : "PROCESS",
+		     is_exception_from_handler_mode(excep_lr) ? "HANDLER" :
+								"PROCESS",
 		     lregs[CORTEX_PANIC_REGISTER_IPSR] & 0xff,
 		     sregs ? sregs[CORTEX_PANIC_FRAME_REGISTER_PSR] : -1);
 	for (i = 0; i < 4; i++)
@@ -292,8 +276,9 @@ void panic_data_print(const struct panic_data *pdata)
 	print_reg(11, lregs, CORTEX_PANIC_REGISTER_R11);
 	print_reg(12, sregs, CORTEX_PANIC_FRAME_REGISTER_R12);
 	print_reg(13, lregs,
-		  in_handler ? CORTEX_PANIC_REGISTER_MSP :
-			       CORTEX_PANIC_REGISTER_PSP);
+		  is_frame_in_handler_stack(excep_lr) ?
+			  CORTEX_PANIC_REGISTER_MSP :
+			  CORTEX_PANIC_REGISTER_PSP);
 	print_reg(14, sregs, CORTEX_PANIC_FRAME_REGISTER_LR);
 	print_reg(15, sregs, CORTEX_PANIC_FRAME_REGISTER_PC);
 
@@ -391,6 +376,8 @@ void __keep report_panic(void)
 	if (IS_ENABLED(CONFIG_SYSTEM_SAFE_MODE)) {
 		/* Only start safe mode if panic occurred in thread context */
 		if (!is_frame_in_handler_stack(
+			    pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]) &&
+		    !is_exception_from_handler_mode(
 			    pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]) &&
 		    start_system_safe_mode() == EC_SUCCESS) {
 			pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_STARTED;

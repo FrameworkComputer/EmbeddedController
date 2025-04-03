@@ -152,4 +152,47 @@ static inline void cpu_enter_suspend_mode(void)
 	}
 }
 
+/*
+ * Returns true if the exception frame was created on the main stack,
+ * false if the frame was created on the process stack.
+ *
+ * The least significant 4 bits of the exception LR determine
+ * the exception stack and exception context.
+ * - 0xd - CPU was in Thread Mode and PSP was used
+ * - 0x9 - CPU was in Thread Mode and MSP was used
+ * - 0x1 - CPU was in Handler Mode and MSP was used
+ *
+ * See B1.5.8 "Exception return behavior" of ARM DDI for details.
+ */
+static inline bool is_frame_in_handler_stack(const uint32_t exc_return)
+{
+#ifdef CONFIG_FPU
+	return exc_return == 0xfffffff1 || exc_return == 0xfffffff9 ||
+	       exc_return == 0xffffffe1 || exc_return == 0xffffffe9;
+#else
+	return exc_return == 0xfffffff1 || exc_return == 0xfffffff9;
+#endif /* CONFIG_FPU */
+}
+
+/*
+ * Returns true if the exception occurred in handler mode,
+ * false if exception occurred in process mode.
+ *
+ * The least significant 4 bits of the exception LR determine
+ * the exception stack and exception context.
+ * - 0xd - CPU was in Thread Mode and PSP was used
+ * - 0x9 - CPU was in Thread Mode and MSP was used
+ * - 0x1 - CPU was in Handler Mode and MSP was used
+ *
+ * See B1.5.8 "Exception return behavior" of ARM DDI for details.
+ */
+static inline bool is_exception_from_handler_mode(const uint32_t exc_return)
+{
+#ifdef CONFIG_FPU
+	return exc_return == 0xfffffff1 || exc_return == 0xffffffe1;
+#else
+	return exc_return == 0xfffffff1;
+#endif /* CONFIG_FPU */
+}
+
 #endif /* __CROS_EC_CPU_H */
