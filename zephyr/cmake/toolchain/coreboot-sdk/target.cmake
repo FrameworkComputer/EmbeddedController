@@ -67,8 +67,8 @@ endif()
 
 if(CONFIG_PICOLIBC AND NOT CONFIG_PICOLIBC_USE_MODULE)
   # Move picolibc.specs files to a location that they can be found since zephyr adds the spec definition
-  configure_file(${COREBOOT_SDK_ROOT_PICOLIBC}/picolibc/coreboot-${CROSS_COMPILE_TARGET}/picolibc.specs ${COREBOOT_SDK_ROOT}/lib/gcc/${CROSS_COMPILE_TARGET}/${GCC_VERSION}/ COPYONLY)
-  configure_file(${COREBOOT_SDK_ROOT_PICOLIBC}/picolibc/coreboot-${CROSS_COMPILE_TARGET}/picolibcpp.specs ${COREBOOT_SDK_ROOT}/lib/gcc/${CROSS_COMPILE_TARGET}/${GCC_VERSION}/ COPYONLY)
+  configure_file(${COREBOOT_SDK_ROOT_PICOLIBC}/picolibc/coreboot-${CROSS_COMPILE_TARGET}/picolibc.specs ${APPLICATION_BINARY_DIR}/ COPYONLY)
+  configure_file(${COREBOOT_SDK_ROOT_PICOLIBC}/picolibc/coreboot-${CROSS_COMPILE_TARGET}/picolibcpp.specs ${APPLICATION_BINARY_DIR}/ COPYONLY)
 
   # Add system include paths
   set(CMAKE_C_FLAGS    "${CMAKE_C_FLAGS} -isystem ${COREBOOT_SDK_ROOT_PICOLIBC}/picolibc/coreboot-${CROSS_COMPILE_TARGET}")
