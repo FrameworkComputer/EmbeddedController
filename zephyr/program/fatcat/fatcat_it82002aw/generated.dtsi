@@ -75,7 +75,7 @@
 			gpios = <&gpiob 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_c_edp_bklt_en_r: c_edp_bklt_en_r {
-			gpios = <&gpioc 6 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
+			gpios = <&gpioc 6 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
 		};
 		gpio_c_en_pp5000_typea_r: c_en_pp5000_typea_r {
 			gpios = <&gpiof 4 (GPIO_INPUT)>;
