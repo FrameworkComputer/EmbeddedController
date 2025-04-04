@@ -71,7 +71,7 @@ SECTIONS
 		 * text section to avoid gap.
 		 */
 		__flash_dma_start = .;
-		ASSERT((__flash_dma_start == 0),
+		ASSERT((__flash_dma_start & (0x1000 - 1)) == 0,
 		       "__flash_dma_start has to be 4k-byte aligned");
 #endif
 		KEEP(STRINGIFY(OUTDIR/core/CORE/init.o) (.text.vecttable))
