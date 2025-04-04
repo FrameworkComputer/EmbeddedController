@@ -88,8 +88,8 @@ SECTIONS
 		KEEP(*(.ram_code))
 
 		__flash_dma_size = . - __flash_dma_start;
-		ASSERT((__flash_dma_size < IT83XX_ILM_BLOCK_SIZE),
-		       "__flash_dma_size < IT83XX_ILM_BLOCK_SIZE");
+		ASSERT((__flash_dma_size <= IT83XX_ILM_BLOCK_SIZE),
+		       "__flash_dma_size <= IT83XX_ILM_BLOCK_SIZE");
 		. = ALIGN(IT83XX_ILM_BLOCK_SIZE);
 		__ilm0_ram_code = .;
 		KEEP(*(.ram_code_ilm0))
