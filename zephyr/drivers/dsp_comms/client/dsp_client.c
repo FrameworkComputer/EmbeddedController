@@ -417,3 +417,10 @@ static int dsp_client_init(const struct device* dev) {
                         NULL);
 
 DT_INST_FOREACH_STATUS_OKAY(DSP_CLIENT_DEFINE)
+
+/* DSP Client initialization, which sets up the GPIOs and registers the
+ * callback function, should be completed before the DSP client initializes
+ * the CBI information.
+ */
+BUILD_ASSERT(CONFIG_PLATFORM_EC_DSP_INIT_PRIORITY <
+             CONFIG_PLATFORM_EC_CBI_SYS_INIT_PRIORITY);
