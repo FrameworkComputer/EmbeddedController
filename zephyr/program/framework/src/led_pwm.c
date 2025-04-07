@@ -131,7 +131,8 @@ void led_set_color_with_pattern(const struct led_pattern_node_t *pattern)
 {
 	uint8_t pins_count = pattern->pattern_color[pattern->cur_color]
 				     .led_color_node->pins_count;
-	uint8_t duration = pattern->pattern_color[pattern->cur_color].duration;
+	int curr_tick = led_get_current_tick_time();
+	int duration = pattern->pattern_color[pattern->cur_color].period_ms / curr_tick;
 	struct pwm_pin_t *next_color =
 		pattern->pattern_color[pattern->cur_color]
 			.led_color_node->pwm_pins;
