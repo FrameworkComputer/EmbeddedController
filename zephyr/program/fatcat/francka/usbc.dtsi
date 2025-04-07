@@ -13,6 +13,7 @@
 		#size-cells = <0>;
 		usbc_port0: port0@0 {
 			compatible = "named-usbc-port";
+			ccd;
 			reg = <0>;
 			chg = <&charger>;
 			chg_alt = <&alt_charger>;
@@ -22,7 +23,6 @@
 		};
 		usbc_port1: port1@1 {
 			compatible = "named-usbc-port";
-			ccd;
 			reg = <1>;
 			/* Set up runtime driver selection of TI and RTK PDCs */
 			pdc = <&pdc_power_p1 &pdc_power_p1_ti>;
