@@ -62,8 +62,7 @@ DT_FOREACH_CHILD_STATUS_OKAY_VARGS(
 		.led_color_node = &PINS_NODE_FROM_POLICY(                     \
 			GET_PROP(DT_PARENT(id), led_id),                      \
 			GET_PROP(id, led_color)),                             \
-		.duration =                                                   \
-			DT_PROP_OR(id, period_ms, 0) / HOOK_TICK_INTERVAL_MS, \
+		.period_ms = DT_PROP_OR(id, period_ms, 0)                     \
 	},
 
 #define PATTERN_COLOR_ARRAY(id) DT_CAT(PATTERN_COLOR_, id)
@@ -155,6 +154,11 @@ static bool last_fp_led_brightness;
 static bool last_kbbl_led_brightness;
 #endif
 static int prev_als_lux;
+
+int led_get_current_tick_time(void)
+{
+	return led_tick_time;
+}
 
 /*
  * return auto dim status, it decided by BIOS setup menu
@@ -322,11 +326,11 @@ static void set_color(int node_idx)
 
 		led_set_color_with_pattern(&patterns[i]);
 
-		if (GET_DURATION(patterns[i], patterns[i].cur_color) != 0)
+		if (GET_DURATION(patterns[i], patterns[i].cur_color, led_tick_time) != 0)
 			patterns[i].ticks++;
 
 		if (patterns[i].ticks >=
-		    GET_DURATION(patterns[i], patterns[i].cur_color)) {
+		    GET_DURATION(patterns[i], patterns[i].cur_color, led_tick_time)) {
 			patterns[i].cur_color++;
 			patterns[i].ticks = 0;
 		}
