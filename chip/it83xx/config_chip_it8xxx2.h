@@ -6,7 +6,10 @@
 #ifndef __CROS_EC_CONFIG_CHIP_IT8XXX2_H
 #define __CROS_EC_CONFIG_CHIP_IT8XXX2_H
 
+/* TODO(b/409069694): Disable RAM code when building with clang. */
+#if !defined(__clang__)
 #define __RAM_CODE_ILM0_SECTION_NAME ".ram_code_ilm0"
+#endif
 
 /* CPU core BFD configuration */
 #include "core/riscv-rv32i/config_core.h"

@@ -11,7 +11,12 @@
 #include "common.h"
 #include "compile_time_macros.h"
 
+/* TODO(b/409069694): Disable RAM code when building with clang. */
+#if defined(__clang__)
+#define __ram_code
+#else
 #define __ram_code __attribute__((section(__RAM_CODE_SECTION_NAME)))
+#endif
 
 /* IRQ numbers */
 /* Group 0 */
