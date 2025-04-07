@@ -17,7 +17,7 @@
 
 /* charging data */
 #define DEFAULT_DESIGN_CAPACITY 5723
-#define CHARGING_VOLTAGE 8700
+#define CHARGING_VOLTAGE 8600
 #define BAT_SERIES 2
 #define TC_CHARGING_VOLTAGE 8300
 #define CRATE_100 80
@@ -32,18 +32,20 @@ struct therm_item {
 	int high;
 };
 static enum {
-	LOW_TEMP1 = 0,
-	LOW_TEMP2,
+	STOP_LOW_TEMP = 0,
 	LOW_TEMP3,
+	LOW_TEMP2,
+	LOW_TEMP1,
 	NORMAL_TEMP,
 	HIGH_TEMP,
-	STOP_TEMP,
+	STOP_HIGH_TEMP,
 	TEMP_TYPE_COUNT,
 } temp_zone = NORMAL_TEMP;
 static const struct therm_item bat_temp_table[] = {
-	{ .low = 0, .high = 7 },   { .low = 4, .high = 17 },
-	{ .low = 14, .high = 20 }, { .low = 17, .high = 42 },
-	{ .low = 39, .high = 51 }, { .low = 45, .high = 500 },
+	{ .low = -100, .high = 2 }, { .low = 0, .high = 10 },
+	{ .low = 8, .high = 17 },   { .low = 15, .high = 20 },
+	{ .low = 18, .high = 42 },  { .low = 40, .high = 51 },
+	{ .low = 46, .high = 500 },
 };
 BUILD_ASSERT(ARRAY_SIZE(bat_temp_table) == TEMP_TYPE_COUNT);
 
@@ -60,7 +62,7 @@ void find_battery_thermal_zone(int bat_temp)
 
 	if (bat_temp < prev_temp) {
 		for (i = temp_zone; i > 0; i--) {
-			if (bat_temp <= bat_temp_table[i].low)
+			if (bat_temp < bat_temp_table[i].low)
 				temp_zone = i - 1;
 			else
 				break;
@@ -184,15 +186,9 @@ void set_current_volatage_by_capacity(int *current, int *voltage)
 		cal_current = design_capacity;
 	}
 
-	if (chipset_in_state(CHIPSET_STATE_ON)) {
-		/* FCC or DC * 0.45C */
-		cal_current *= 9;
-		cal_current /= 20;
-	} else {
-		/* FCC or DC * C-rate * Charge factor */
-		cal_current *= (CRATE_100 * CFACT_10);
-		cal_current /= 1000;
-	}
+	/* FCC or DC * 0.45C */
+	cal_current *= 9;
+	cal_current /= 20;
 
 	*current = (int)cal_current;
 }
@@ -200,40 +196,34 @@ void set_current_volatage_by_capacity(int *current, int *voltage)
 void set_current_voltage_by_temperature(int *current, int *voltage)
 {
 	switch (temp_zone) {
-	/* low temp 1 */
-	case LOW_TEMP1:
+	/* low temp step 3 */
+	case LOW_TEMP3:
 		/* DC * 8% */
 		*current = design_capacity;
 		*current *= 2;
 		*current /= 25;
 		break;
-	/* low temp 2 */
+	/* low temp step 2 */
 	case LOW_TEMP2:
 		/* DC * 24% */
 		*current = design_capacity;
 		*current *= 6;
 		*current /= 25;
 		break;
-	/* low temp 3 */
-	case LOW_TEMP3:
+	/* low temp step 1 */
+	case LOW_TEMP1:
 		*current = charging_data->batt.full_capacity;
-		if (chipset_in_state(CHIPSET_STATE_ON)) {
-			/* FCC * 0.45C */
-			*current *= 9;
-			*current /= 20;
-		} else {
-			/* FCC * 0.72C */
-			*current *= 18;
-			*current /= 25;
-		}
+		/* FCC * 0.45C */
+		*current *= 9;
+		*current /= 20;
 		break;
 	/* high temp */
 	case HIGH_TEMP:
 		if (check_ready_for_high_temperature()) {
-			/* DC * 30% */
+			/* DC * 0.45C */
 			*current = design_capacity;
-			*current *= 3;
-			*current /= 10;
+			*current *= 9;
+			*current /= 20;
 			*voltage = TC_CHARGING_VOLTAGE;
 		} else {
 			temp_zone = NORMAL_TEMP;
@@ -258,7 +248,7 @@ int charger_profile_override(struct charge_state_data *curr)
 		find_battery_thermal_zone(bat_temp);
 
 		/* charge stop */
-		if (temp_zone == STOP_TEMP) {
+		if (temp_zone == STOP_LOW_TEMP || temp_zone == STOP_HIGH_TEMP) {
 			curr->requested_current = curr->requested_voltage = 0;
 			curr->batt.flags &= ~BATT_FLAG_WANT_CHARGE;
 			curr->state = ST_IDLE;
