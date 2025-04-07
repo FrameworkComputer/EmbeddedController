@@ -141,12 +141,12 @@ struct led_pins_node_t {
 
 struct pattern_color_node_t {
 	struct led_pins_node_t *led_color_node;
-	uint8_t duration;
+	int period_ms;
 };
 
 struct led_pattern_node_t {
 	uint8_t cur_color;
-	uint8_t ticks;
+	uint16_t ticks;
 	enum led_transition transition;
 	struct pattern_color_node_t *pattern_color;
 	uint8_t pattern_len;
@@ -154,8 +154,8 @@ struct led_pattern_node_t {
 
 #define GET_COLOR(pattern_element, color_index) \
 	pattern_element.pattern_color[color_index].led_color
-#define GET_DURATION(pattern_element, color_index) \
-	pattern_element.pattern_color[color_index].duration
+#define GET_DURATION(pattern_element, color_index, curr_tick) \
+	(pattern_element.pattern_color[color_index].period_ms / curr_tick)
 
 /**
  * Set LED color using color enum
@@ -215,6 +215,13 @@ extern bool power_button_led_control(void);
 int fp_led_auto_is_enable(void);
 
 int kbbl_auto_dim_is_enable(void);
+
+/**
+ * Return the current tick time from led driver
+ *
+ * @return current led tick time
+ */
+int led_get_current_tick_time(void);
 
 #ifdef TEST_BUILD
 const struct led_pins_node_t *led_get_node(enum led_color color,
