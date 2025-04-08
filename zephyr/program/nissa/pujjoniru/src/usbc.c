@@ -22,6 +22,29 @@
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
+#ifdef CONFIG_USB_PD_TCPM_ITE_ON_CHIP
+/* TypeC CC tuning for PD3.1 test */
+const struct cc_para_t *board_get_cc_tuning_parameter(enum usbpd_port port)
+{
+	const static struct cc_para_t
+		cc_parameter[CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT] = {
+			{
+				.rising_time =
+					IT83XX_TX_PRE_DRIVING_TIME_1_UNIT,
+				.falling_time =
+					IT83XX_TX_PRE_DRIVING_TIME_2_UNIT,
+			},
+			{
+				.rising_time =
+					IT83XX_TX_PRE_DRIVING_TIME_1_UNIT,
+				.falling_time =
+					IT83XX_TX_PRE_DRIVING_TIME_2_UNIT,
+			},
+		};
+	return &cc_parameter[port];
+}
+#endif
+
 /* Vconn control for integrated ITE TCPC */
 void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 {
