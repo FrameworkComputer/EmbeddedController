@@ -82,7 +82,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_ACCEL,
 		.i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
 		.rot_standard_ref = NULL, /* identity matrix */
-		.min_frequency = BMI_GYRO_MIN_FREQ,
 		.min_frequency = BMA255_ACCEL_MIN_FREQ,
 		.max_frequency = BMA255_ACCEL_MAX_FREQ,
 		.default_range = 2, /* g, to support tablet mode */
