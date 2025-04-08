@@ -68,6 +68,16 @@ config USBC_PDC_RTS54XX_THREAD_PRIORITY
         help
           Set thread priority of the USB-C PDC
 
+config USBC_PDC_RTS54XX_CONSOLE_FW_UPDATER
+	bool "USB-C RTK RTS54xx PDC FW update support"
+	depends on USBC_PDC_RTS54XX
+	depends on PLATFORM_EC_SYSTEM_UNLOCKED
+	select BASE64
+	help
+	  If enabled, expose console commands for updating the RTK PDC remotely
+	  over the EC console with help from a script (extra/pdc/pdc_fwup.py)
+	  running on the host.
+
 config USBC_PDC_TRACE_MSG
 	bool "USB-C PDC message tracing"
 	depends on USBC_PDC_RTS54XX
