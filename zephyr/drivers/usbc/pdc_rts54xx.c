@@ -6,8 +6,8 @@
 /*
  * Realtek RTS545x Power Delivery Controller Driver
  */
-
 #include "drivers/ucsi_v3.h"
+#include "pdc_rts54xx.h"
 
 #include <assert.h>
 #include <string.h>
@@ -81,34 +81,6 @@ LOG_MODULE_REGISTER(pdc_rts54, CONFIG_USBC_LOG_LEVEL);
 #define VBSIN_EN_ON 0x43
 #define VBSIN_EN_OFF 0x40
 
-/**
- * @brief Offsets of data fields in the GET_IC_STATUS response
- *
- * These are based on the Realtek spec version 3.3.25.
- *
- * "Data Byte 0" is the first byte after "Byte Count" and is available
- * at .rd_buf[1].
- */
-#define RTS54XX_GET_IC_STATUS_RUNNING_FLASH_CODE 1
-#define RTS54XX_GET_IC_STATUS_FWVER_MAJOR_OFFSET 4
-#define RTS54XX_GET_IC_STATUS_FWVER_MINOR_OFFSET 5
-#define RTS54XX_GET_IC_STATUS_FWVER_PATCH_OFFSET 6
-#define RTS54XX_GET_IC_STATUS_VID_L 10
-#define RTS54XX_GET_IC_STATUS_VID_H 11
-#define RTS54XX_GET_IC_STATUS_PID_L 12
-#define RTS54XX_GET_IC_STATUS_PID_H 13
-#define RTS54XX_GET_IC_STATUS_RUNNING_FLASH_BANK 15
-#define RTS54XX_GET_IC_STATUS_PD_REV_MAJOR_OFFSET 23
-#define RTS54XX_GET_IC_STATUS_PD_REV_MINOR_OFFSET 24
-#define RTS54XX_GET_IC_STATUS_PD_VER_MAJOR_OFFSET 25
-#define RTS54XX_GET_IC_STATUS_PD_VER_MINOR_OFFSET 26
-#define RTS54XX_GET_IC_STATUS_PROG_NAME_STR 27
-#define RTS54XX_GET_IC_STATUS_PROG_NAME_STR_LEN 12
-#define RTS54XX_GET_IC_STATUS_SBU_MUX_MODE_OFFSET 39
-
-#define RTS54XX_GET_IC_STATUS_SBU_MUX_MODE_NORMAL 0
-#define RTS54XX_GET_IC_STATUS_SBU_MUX_MODE_FORCE_DBG 1
-
 /*
  * Constants for SET_PDO
  */
@@ -119,12 +91,6 @@ LOG_MODULE_REGISTER(pdc_rts54, CONFIG_USBC_LOG_LEVEL);
 #define RTS54XX_SET_PD_CMD_MAX_LENGTH      \
 	(RTS54XX_SET_PDO_CMD_BASE_LENGTH + \
 	 sizeof(uint32_t) * RTS54XX_SET_PDO_MAX_PDO_COUNT)
-
-/* FW project name length should not exceed the max length supported in struct
- * pdc_info_t
- */
-BUILD_ASSERT(RTS54XX_GET_IC_STATUS_PROG_NAME_STR_LEN <=
-	     (sizeof(((struct pdc_info_t *)0)->project_name) - 1));
 
 /**
  * @brief Macro to transition to init or idle state and return
@@ -148,10 +114,6 @@ BUILD_ASSERT(RTS54XX_GET_IC_STATUS_PROG_NAME_STR_LEN <=
  */
 #define NUM_PDC_RTS54XX_PORTS DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT)
 
-/**
- * @brief RTS54XX I2C block read command
- */
-#define RTS54XX_BLOCK_READ_CMD 0x80
 /**
  * @brief SMbus Command struct for Realtek commands
  */
@@ -215,32 +177,6 @@ static const struct smbus_cmd_t RTS_UCSI_GET_ATTENTION_VDO = { 0x0E, 0x03,
 							       0x16 };
 __maybe_unused static const struct smbus_cmd_t RTS_SET_SBU_MUX_MODE = { 0x30,
 									0x01 };
-/**
- * @brief PDC Command states
- */
-enum cmd_sts_t {
-	/** Command has not been started */
-	CMD_BUSY = 0,
-	/** Command has completed */
-	CMD_DONE = 1,
-	/** Command has been started but has not completed */
-	CMD_DEFERRED = 2,
-	/** Command completed with error. Send GET_ERROR_STATUS for details */
-	CMD_ERROR = 3
-};
-
-/**
- * @brief Ping Status of the PDC
- */
-union ping_status_t {
-	struct {
-		/** Command status */
-		uint8_t cmd_sts : 2;
-		/** Length of data read to read */
-		uint8_t data_len : 6;
-	};
-	uint8_t raw_value;
-};
 
 /**
  * @brief States of the main state machine
@@ -1290,41 +1226,7 @@ static void st_read_run(void *o)
 	case CMD_GET_IC_STATUS: {
 		struct pdc_info_t *info = (struct pdc_info_t *)data->user_buf;
 
-		/* Realtek Is running flash code: Data Byte0 */
-		info->is_running_flash_code =
-			data->rd_buf[RTS54XX_GET_IC_STATUS_RUNNING_FLASH_CODE];
-
-		/* Realtek FW main version: Data Byte3..5 */
-		info->fw_version =
-			data->rd_buf[RTS54XX_GET_IC_STATUS_FWVER_MAJOR_OFFSET]
-				<< 16 |
-			data->rd_buf[RTS54XX_GET_IC_STATUS_FWVER_MINOR_OFFSET]
-				<< 8 |
-			data->rd_buf[RTS54XX_GET_IC_STATUS_FWVER_PATCH_OFFSET];
-
-		/* Realtek VID: Data Byte9..10 (little-endian) */
-		info->vid = data->rd_buf[RTS54XX_GET_IC_STATUS_VID_H] << 8 |
-			    data->rd_buf[RTS54XX_GET_IC_STATUS_VID_L];
-
-		/* Realtek PID: Data Byte11..12 (little-endian) */
-		info->pid = data->rd_buf[RTS54XX_GET_IC_STATUS_PID_H] << 8 |
-			    data->rd_buf[RTS54XX_GET_IC_STATUS_PID_L];
-
-		/* Realtek Running flash bank offset: Data Byte14 */
-		info->running_in_flash_bank =
-			data->rd_buf[RTS54XX_GET_IC_STATUS_RUNNING_FLASH_BANK];
-
-		/* Realtek PD Revision: Data Byte22..23 (big-endian) */
-		info->pd_revision =
-			data->rd_buf[RTS54XX_GET_IC_STATUS_PD_REV_MAJOR_OFFSET]
-				<< 8 |
-			data->rd_buf[RTS54XX_GET_IC_STATUS_PD_REV_MINOR_OFFSET];
-
-		/* Realtek PD Version: Data Byte24..25 (big-endian) */
-		info->pd_version =
-			data->rd_buf[RTS54XX_GET_IC_STATUS_PD_VER_MAJOR_OFFSET]
-				<< 8 |
-			data->rd_buf[RTS54XX_GET_IC_STATUS_PD_VER_MINOR_OFFSET];
+		rts54xx_unpack_get_ic_status_response(data->rd_buf, info);
 
 		/* Project name string is supported on version >= 0.3.x */
 		memcpy(info->project_name,
