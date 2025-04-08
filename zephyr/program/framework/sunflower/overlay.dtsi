@@ -29,7 +29,7 @@
 			temp_host_halt = <73>;
 			temp_host_release_high = <65>;
 			temp_fan_off = <43>;
-			temp_fan_max = <53>;
+			temp_fan_max = <60>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&top_skin_f75303>;
 		};
@@ -38,8 +38,8 @@
 			temp_host_high = <64>;
 			temp_host_halt = <69>;
 			temp_host_release_high = <61>;
-			temp_fan_off = <41>;
-			temp_fan_max = <49>;
+			temp_fan_off = <40>;
+			temp_fan_max = <64>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&local_f75303>;
 		};
