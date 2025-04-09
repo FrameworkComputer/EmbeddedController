@@ -37,6 +37,38 @@
 			enum-names = "I2C_PORT_BATTERY", "I2C_PORT_VIRTUAL_BATTERY";
 		};
 	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpio0 2 0>,
+			<&gpio3 2 0>,
+			<&gpio3 5 0>,
+			<&gpio3 7 0>,
+			<&gpio4 1 0>,
+			<&gpio5 0 0>,
+			<&gpio6 6 0>,
+			<&gpio7 5 0>,
+			<&gpio7 6 0>,
+			<&gpio8 1 0>,
+			<&gpio8 5 0>,
+			<&gpio8 6 0>,
+			<&gpio9 3 0>,
+			<&gpio9 6 0>,
+			<&gpioa 0 0>,
+			<&gpioa 2 0>,
+			<&gpioa 4 0>,
+			<&gpioa 5 0>,
+			<&gpioa 7 0>,
+			<&gpiob 0 0>,
+			<&gpioc 0 0>,
+			<&gpioc 7 0>,
+			<&gpiof 0 0>,
+			<&gpiof 2 0>,
+			<&gpiof 3 0>,
+			<&gpiof 4 0>,
+			<&gpiof 5 0>;
+	};
 };
 
 &i2c0_0 {
