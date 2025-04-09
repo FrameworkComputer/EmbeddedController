@@ -200,5 +200,24 @@
                                 value = <1>;
                         };
                 };
+
+                /*
+                 * SSFC field to identify LID motion sensor.
+                 */
+                lid-sensor {
+                        enum-name = "LID_SENSOR";
+                        size = <2>;
+                        lid_sensor_0: bma422_0 {
+                                compatible = "cros-ec,cbi-ssfc-value";
+                                status = "okay";
+                                value = <0>;
+                                default;
+                        };
+                        lid_sensor_1: bma422_1 {
+                                compatible = "cros-ec,cbi-ssfc-value";
+                                status = "okay";
+                                value = <1>;
+                        };
+                };
 	};
 };

@@ -41,6 +41,12 @@
 				 0 0 1>;
 		};
 
+		lid_rot_ref_1: lid-rotation-ref-1 {
+			mat33 = <(-1) 0 0
+				 0 1 0
+				 0 0 (-1)>;
+		};
+
 		base_rot_ref: base-rotation-ref {
 			mat33 = <0 (-1) 0
 				 (-1) 0 0
@@ -149,6 +155,32 @@
 	};
 
 	motionsense-sensor-alt {
+		alt_lid_accel: lid-accel {
+			compatible = "cros-ec,bma4xx";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex>;
+			port = <&i2c_ec_i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref_1>;
+			default-range = <2>;
+			drv-data = <&bma422_data>;
+			i2c-spi-addr-flags = "BMA4_I2C_ADDR_SECONDARY";
+			alternate-for = <&lid_accel>;
+			alternate-ssfc-indicator = <&lid_sensor_1>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
 		alt_base_accel: alt-base-accel {
 			compatible = "cros-ec,icm42607-accel";
 			status = "okay";
