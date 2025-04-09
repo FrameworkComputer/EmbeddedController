@@ -271,6 +271,7 @@ extern "C" {
 /* Set if some of the static/dynamic data is invalid (or outdated). */
 #define EC_BATT_FLAG_INVALID_DATA 0x20
 #define EC_BATT_FLAG_CUT_OFF 0x40
+#define EC_BATT_FLAG_LIMIT_ACTIVE 0x80
 
 /* Switch flags at EC_MEMMAP_SWITCHES */
 #define EC_SWITCH_LID_OPEN 0x01
