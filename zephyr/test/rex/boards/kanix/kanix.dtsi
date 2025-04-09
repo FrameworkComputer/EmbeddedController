@@ -34,33 +34,33 @@
 			rpm_target = <0>;
 		};
 		level_1 {
-			temp_on = <38>;
-			temp_off = <34>;
+			temp_on = <40>;
+			temp_off = <35>;
 			rpm_target = <2700>;
 		};
 		level_2 {
-			temp_on = <42>;
-			temp_off = <37>;
+			temp_on = <43>;
+			temp_off = <39>;
 			rpm_target = <2925>;
 		};
 		level_3 {
-			temp_on = <45>;
-			temp_off = <41>;
+			temp_on = <46>;
+			temp_off = <42>;
 			rpm_target = <3300>;
 		};
 		level_4 {
-			temp_on = <48>;
-			temp_off = <44>;
+			temp_on = <49>;
+			temp_off = <45>;
 			rpm_target = <3585>;
 		};
 		level_5 {
-			temp_on = <51>;
-			temp_off = <47>;
+			temp_on = <52>;
+			temp_off = <48>;
 			rpm_target = <3900>;
 		};
 		level_6 {
-			temp_on = <54>;
-			temp_off = <50>;
+			temp_on = <55>;
+			temp_off = <51>;
 			rpm_target = <4255>;
 		};
 		level_7 {

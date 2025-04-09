@@ -65,27 +65,27 @@ ZTEST(fan, test_board_override_fan_control)
 	board_override_fan_control(0, &temp);
 	zassert_equal(fan_set_rpm_target_fake.arg1_val, 0);
 
-	temp = 38;
+	temp = 40;
 	board_override_fan_control(0, &temp);
 	zassert_equal(fan_set_rpm_target_fake.arg1_val, 2700);
 
-	temp = 42;
+	temp = 43;
 	board_override_fan_control(0, &temp);
 	zassert_equal(fan_set_rpm_target_fake.arg1_val, 2925);
 
-	temp = 45;
+	temp = 46;
 	board_override_fan_control(0, &temp);
 	zassert_equal(fan_set_rpm_target_fake.arg1_val, 3300);
 
-	temp = 48;
+	temp = 49;
 	board_override_fan_control(0, &temp);
 	zassert_equal(fan_set_rpm_target_fake.arg1_val, 3585);
 
-	temp = 51;
+	temp = 52;
 	board_override_fan_control(0, &temp);
 	zassert_equal(fan_set_rpm_target_fake.arg1_val, 3900);
 
-	temp = 54;
+	temp = 55;
 	board_override_fan_control(0, &temp);
 	zassert_equal(fan_set_rpm_target_fake.arg1_val, 4255);
 
@@ -97,27 +97,27 @@ ZTEST(fan, test_board_override_fan_control)
 	board_override_fan_control(0, &temp);
 	zassert_equal(fan_set_rpm_target_fake.arg1_val, 4255);
 
-	temp = 50;
+	temp = 51;
 	board_override_fan_control(0, &temp);
 	zassert_equal(fan_set_rpm_target_fake.arg1_val, 3900);
 
-	temp = 47;
+	temp = 48;
 	board_override_fan_control(0, &temp);
 	zassert_equal(fan_set_rpm_target_fake.arg1_val, 3585);
 
-	temp = 44;
+	temp = 45;
 	board_override_fan_control(0, &temp);
 	zassert_equal(fan_set_rpm_target_fake.arg1_val, 3300);
 
-	temp = 41;
+	temp = 42;
 	board_override_fan_control(0, &temp);
 	zassert_equal(fan_set_rpm_target_fake.arg1_val, 2925);
 
-	temp = 37;
+	temp = 39;
 	board_override_fan_control(0, &temp);
 	zassert_equal(fan_set_rpm_target_fake.arg1_val, 2700);
 
-	temp = 34;
+	temp = 35;
 	board_override_fan_control(0, &temp);
 	zassert_equal(fan_set_rpm_target_fake.arg1_val, 0);
 }
