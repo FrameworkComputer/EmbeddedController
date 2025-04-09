@@ -440,6 +440,14 @@ int board_want_charger_change_mode(void);
  */
 int battery_sustainer_set(int8_t lower, int8_t upper);
 
+/**
+ * return the sustainer is active or not
+ * lower and upper == -1 is mean disable
+ *
+ * @return if sustain_soc.lower and sustain_soc.upper != -1 will be true
+ */
+bool battery_sustainer_enabled(void);
+
 /* Config Charger */
 #include "charge_state.h"
 

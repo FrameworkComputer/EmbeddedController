@@ -236,7 +236,7 @@ static void battery_sustainer_disable(void)
 	battery_sustainer_set(-1, -1);
 }
 
-test_export_static bool battery_sustainer_enabled(void)
+bool battery_sustainer_enabled(void)
 {
 	return sustain_soc.lower != -1 && sustain_soc.upper != -1;
 }

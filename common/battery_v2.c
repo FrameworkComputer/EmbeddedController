@@ -475,6 +475,23 @@ void update_dynamic_battery_info(void)
 		tmp |= curr->batt_is_charging ? EC_BATT_FLAG_CHARGING :
 						EC_BATT_FLAG_DISCHARGING;
 	}
+
+	/*
+	 * in ACPI spec _BST(battery status) have a feature
+	 * 3.9.6 Battery Charge Limiting follows the spec
+	 * to return limiting status to OS and if Limiting is engaged
+	 * and the battery has reached the steady state need to
+	 * clear CHARGING and DISCHARGING flag.
+	 */
+	if (battery_sustainer_enabled()) {
+		tmp |= EC_BATT_FLAG_LIMIT_ACTIVE;
+		if (get_chg_ctrl_mode() == CHARGE_CONTROL_IDLE) {
+			tmp &= ~EC_BATT_FLAG_CHARGING;
+			tmp &= ~EC_BATT_FLAG_DISCHARGING;
+		}
+	} else
+		tmp &= ~EC_BATT_FLAG_LIMIT_ACTIVE;
+
 #else
 	tmp |= curr->batt_is_charging ? EC_BATT_FLAG_CHARGING :
 					EC_BATT_FLAG_DISCHARGING;
