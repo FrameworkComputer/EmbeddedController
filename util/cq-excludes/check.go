@@ -38,6 +38,8 @@ var expectedCQPatterns = []string{
 	"src/platform/ec/extra/rma_reset/**",
 	// TODO: Switch to only the actual deps instead of all of the util dir
 	"src/platform/ec/util/**",
+	// BUILD.py changes that don't match src/project/*/*/config.star can break.
+	"src/platform/ec/zephyr/program/**/BUILD.py",
 }
 
 // gitIgnores are patterns that would normally be ignored by git.
@@ -151,6 +153,7 @@ func main() {
 		return
 	}
 	if numErrors > 0 {
+		log.Printf("Edit infra/config/build_targets.star, and run cd infra/config; ./regenerate_configs.py -b")
 		log.Fatalf("%d files were incorrectly filtered", numErrors)
 		return
 	}
