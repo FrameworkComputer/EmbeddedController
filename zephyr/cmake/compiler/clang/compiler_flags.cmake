@@ -37,3 +37,10 @@ set_compiler_property(APPEND PROPERTY warning_base
   -Wno-arm-interrupt-vfp-clobber
   -Wno-extra
 )
+
+if("${ARCH}" STREQUAL "riscv")
+  # TODO(b/409614368): The ChromeOS LLVM RISC-V baremetal toolchain is using the
+  # wrong C++ header search path.
+  set_property(TARGET compiler-cpp APPEND PROPERTY required "-nostdinc++")
+  set_property(TARGET compiler-cpp APPEND PROPERTY required "-I/usr/${CROSS_COMPILE_TARGET}/usr/include/c++/v1/")
+endif()
