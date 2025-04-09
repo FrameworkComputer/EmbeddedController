@@ -193,7 +193,7 @@ void reset_prev_disp_charge(void)
 	prev_disp_charge = -1;
 }
 
-test_export_static bool battery_sustainer_enabled(void)
+bool battery_sustainer_enabled(void)
 {
 	return sustain_soc.lower != -1 && sustain_soc.upper != -1;
 }
