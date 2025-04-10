@@ -235,50 +235,50 @@ ZTEST(dirks, test_led_shutdown)
 
 ZTEST(dirks, test_led_suspend)
 {
-	/* WHITE LED breathing when suspend */
+	/* BLUE LED breathing when suspend */
 	hook_notify(HOOK_CHIPSET_SUSPEND);
 	zassert_equal(set_color_power_fake.call_count, 0);
 	k_sleep(K_MSEC(LED_CPU_DELAY_MS));
 	zassert_equal(set_color_power_fake.call_count, 1);
-	zassert_equal(set_color_power_fake.arg0_val, LED_WHITE);
+	zassert_equal(set_color_power_fake.arg0_val, LED_BLUE);
 	zassert_equal(set_color_power_fake.arg1_val, 0);
 	k_sleep(K_MSEC(LED_PULSE_TICK_US));
 	zassert_equal(set_color_power_fake.call_count, 2);
-	zassert_equal(set_color_power_fake.arg0_val, LED_WHITE);
+	zassert_equal(set_color_power_fake.arg0_val, LED_BLUE);
 	zassert_equal(set_color_power_fake.arg1_val, 2);
 	k_sleep(K_MSEC(LED_PULSE_TICK_US));
 	zassert_equal(set_color_power_fake.call_count, 3);
-	zassert_equal(set_color_power_fake.arg0_val, LED_WHITE);
+	zassert_equal(set_color_power_fake.arg0_val, LED_BLUE);
 	zassert_equal(set_color_power_fake.arg1_val, 4);
 }
 
 ZTEST(dirks, test_led_resume)
 {
-	/* WHITE LED always on when chipset is on */
+	/* BLUE LED always on when chipset is on */
 	hook_notify(HOOK_CHIPSET_RESUME);
 	zassert_equal(set_color_power_fake.call_count, 1);
-	zassert_equal(set_color_power_fake.arg0_val, LED_WHITE);
+	zassert_equal(set_color_power_fake.arg0_val, LED_BLUE);
 	zassert_equal(set_color_power_fake.arg1_val, 100);
 }
 
 ZTEST(dirks, test_led_init)
 {
-	/* If chipset state is off at init, Turn white led off */
+	/* If chipset state is off at init, Turn blue led off */
 	sys_state = CHIPSET_STATE_ANY_OFF;
 	chipset_in_state_fake.custom_fake = chipset_in_state_mock;
 
 	hook_notify(HOOK_INIT);
 	zassert_equal(set_color_power_fake.call_count, 1);
-	zassert_equal(set_color_power_fake.arg0_val, LED_WHITE);
+	zassert_equal(set_color_power_fake.arg0_val, LED_BLUE);
 	zassert_equal(set_color_power_fake.arg1_val, 0);
 
-	/* If chipset state is on at init, Turn white led on */
+	/* If chipset state is on at init, Turn blue led on */
 	sys_state = CHIPSET_STATE_ON;
 	chipset_in_state_fake.custom_fake = chipset_in_state_mock;
 
 	hook_notify(HOOK_INIT);
 	zassert_equal(set_color_power_fake.call_count, 2);
-	zassert_equal(set_color_power_fake.arg0_val, LED_WHITE);
+	zassert_equal(set_color_power_fake.arg0_val, LED_BLUE);
 	zassert_equal(set_color_power_fake.arg1_val, 100);
 }
 
@@ -297,11 +297,11 @@ ZTEST(dirks, test_led_brightness_range)
 	 */
 	led_get_brightness_range(EC_LED_ID_POWER_LED, brightness);
 	zassert_equal(brightness[EC_LED_COLOR_RED], 100);
-	zassert_equal(brightness[EC_LED_COLOR_WHITE], 100);
+	zassert_equal(brightness[EC_LED_COLOR_BLUE], 100);
 
 	led_set_brightness(EC_LED_ID_POWER_LED, brightness);
 	zassert_equal(set_color_power_fake.call_count, 2);
-	zassert_equal(set_color_power_fake.arg0_val, LED_WHITE);
+	zassert_equal(set_color_power_fake.arg0_val, LED_BLUE);
 	zassert_equal(set_color_power_fake.arg1_val, 100);
 
 	memset(brightness, 0, sizeof(brightness));

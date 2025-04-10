@@ -107,7 +107,7 @@
 		pwm_pwr_red_led: pwm_pwr_red_led {
 			pwms = <&pwm1 1 PWM_HZ(2000) PWM_POLARITY_INVERTED>;
 		};
-		pwm_pwr_white_led: pwm_pwr_white_led {
+		pwm_pwr_blue_led: pwm_pwr_blue_led {
 			pwms = <&pwm2 2 PWM_HZ(2000) PWM_POLARITY_INVERTED>;
 		};
 	};
@@ -116,7 +116,7 @@
 		compatible = "cros-ec,pwm-leds";
 
 		leds = <&pwm_pwr_red_led>;
-		leds = <&pwm_pwr_white_led>;
+		leds = <&pwm_pwr_blue_led>;
 	};
 
 	pwm-led-pins {
@@ -124,20 +124,20 @@
 
 		power_led: power-led {
 			led-id = "EC_LED_ID_POWER_LED";
-			led-pwms = <&pwm_pwr_red_led &pwm_pwr_white_led>;
+			led-pwms = <&pwm_pwr_red_led &pwm_pwr_blue_led>;
 
-			color-battery-off {
+			color-power-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
 
-			color-battery-amber {
-				led-color = "LED_AMBER";
+			color-power-red {
+				led-color = "LED_RED";
 				led-values = <100 0>;
 			};
 
-			color-battery-white {
-				led-color = "LED_WHITE";
+			color-power-blue {
+				led-color = "LED_BLUE";
 				led-values = <0 100>;
 			};
 		};

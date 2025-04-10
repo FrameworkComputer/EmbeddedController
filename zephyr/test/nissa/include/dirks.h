@@ -10,7 +10,7 @@
 
 enum led_color {
 	LED_OFF = 0,
-	LED_WHITE,
+	LED_BLUE,
 	LED_RED,
 	/* Number of colors, not a color itself */
 	LED_COLOR_COUNT
