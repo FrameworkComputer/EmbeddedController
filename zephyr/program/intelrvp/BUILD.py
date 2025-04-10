@@ -164,30 +164,6 @@ register_intelrvp_project(
 )
 
 register_intelrvp_project(
-    project_name="mtlrvpp_pd",
-    chip="npcx9/npcx9m3f",
-    extra_dts_overlays=[
-        here / "mtlrvp/mtlrvpp_npcx/fan.dts",
-        here / "mtlrvp/mtlrvpp_npcx/gpio.dts",
-        here / "mtlrvp/mtlrvpp_pd/gpio.dts",
-        here / "mtlrvp/mtlrvpp_npcx/keyboard.dts",
-        here / "mtlrvp/mtlrvpp_npcx/interrupts.dts",
-        here / "mtlrvp/ioex.dts",
-        here / "mtlrvp/mtlrvpp_npcx/mtlrvp_npcx.dts",
-        here / "mtlrvp/mtlrvpp_pd/pd_i2c.dts",
-        here / "mtlrvp/mtlrvpp_npcx/mtlrvp_npcx_power_signals.dts",
-        here / "adlrvp/adlrvp_npcx/temp_sensor.dts",
-        here / "mtlrvp/pd.dts",
-    ],
-    extra_kconfig_files=[
-        here / "zephyr_ap_pwrseq.conf",
-        here / "mtlrvp/mtlrvpp_pd/prj.conf",
-        here / "mtlrvp/mtlrvpp_npcx/board_npcx.conf",
-        here / "mtlrvp/pd.conf",
-    ],
-)
-
-register_intelrvp_project(
     project_name="ptlrvp_npcx",
     chip="npcx9/npcx9m7f",
     extra_dts_overlays=[
@@ -246,7 +222,6 @@ assert_rw_fwid_DO_NOT_EDIT(project_name="adlrvp_npcx", addr=0xCFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="mtlrvpp_m1723", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="mtlrvpp_mchp", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="mtlrvpp_npcx", addr=0x7FFE0)
-assert_rw_fwid_DO_NOT_EDIT(project_name="mtlrvpp_pd", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="ptlrvp_mchp", addr=0x40318)
 assert_rw_fwid_DO_NOT_EDIT(project_name="ptlrvp_npcx", addr=0x80144)
 assert_rw_fwid_DO_NOT_EDIT(project_name="ptlgcs", addr=0x40318)
