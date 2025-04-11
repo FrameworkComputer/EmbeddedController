@@ -4,6 +4,24 @@
  */
 
 / {
+	chosen {
+		cros-ec,cec-counter = &counter0;
+	};
+
+	counter0 {
+		status = "okay";
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_cec_bitbang: cec_bitbang {
+			irq-pin = <&gpio_hdmi_cec_in>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "cec_gpio_interrupt";
+		};
+	};
+
 	cec {
 		compatible = "cros-ec,cec";
 

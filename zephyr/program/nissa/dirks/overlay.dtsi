@@ -12,7 +12,6 @@
 		gpio-wp = &gpio_ec_wp_odl;
 	};
 
-
 	ec-console {
 		compatible = "ec-console";
 		disabled = "events", "lpc", "hostcmd";
@@ -40,6 +39,11 @@
 			irq-pin = <&gpio_bj_adp_present>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "adp_connect_interrupt";
+		};
+		int_cec_bitbang: cec_bitbang {
+			irq-pin = <&gpio_hdmi2_cec_in>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "cec_gpio_interrupt";
 		};
 	};
 
@@ -261,5 +265,9 @@
 };
 
 &usbpd0 {
+	status = "okay";
+};
+
+&counter0 {
 	status = "okay";
 };

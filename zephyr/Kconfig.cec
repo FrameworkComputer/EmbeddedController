@@ -17,6 +17,7 @@ config PLATFORM_EC_CEC_DEBUG
 
 config PLATFORM_EC_CEC_BITBANG
 	bool "CEC bitbang driver"
+	select COUNTER
 	help
 	  Enable the CEC bitbang driver. This driver uses GPIOs and a hardware
 	  timer to send and receive CEC messages. It can be used on ECs without
