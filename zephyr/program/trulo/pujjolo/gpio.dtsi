@@ -72,14 +72,6 @@
 		gpio_sen_mode2_ec_ish_int_odl: sen_mode2_ec_ish_int_odl {
 			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_OUTPUT)>;
 		};
-		gpio_uart_gsc_dbg_rx_ec_tx_r: uart_gsc_dbg_rx_ec_tx_r {
-			gpios = <&gpio6 5 GPIO_OUTPUT>;
-		};
-		gpio_uart_gsc_dbg_tx_ec_rx: uart_gsc_dbg_tx_ec_rx {
-			gpios = <&gpio6 4 GPIO_INPUT>;
-		};
-
-
 	};
 
 	unused-pins {
