@@ -5,12 +5,13 @@
 
 #include "gpio.h"
 #include "gpio_signal.h"
-#include "include/system.h"
 #include "system_boot_time.h"
 
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
 
+#include <ap_power/ap_power.h>
+#include <ap_power_override_functions.h>
 #include <power_signals.h>
 #ifdef CONFIG_AP_PWRSEQ_DRIVER
 #include <ap_power/ap_pwrseq_sm.h>
@@ -109,7 +110,9 @@ static int board_ap_power_action_s3_run(void *data)
 	}
 
 	/* Enable GPIOs before goto S0 */
-	if (power_signal_get(PWR_ALL_SYS_PWRGD)) {
+	if (!power_wait_signals_on_timeout(
+		    POWER_SIGNAL_MASK(PWR_ALL_SYS_PWRGD),
+		    AP_PWRSEQ_DT_VALUE(all_sys_pwrgd_timeout))) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_slp_sx_n), 1);
 		k_msleep(2);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_cpu_vr_en), 1);
