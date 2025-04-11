@@ -28,6 +28,12 @@ config BOARD_FELINO
 	  Build Google Felino board. Felino has Intel PTL SoC
 	  with it82002aw EC.
 
+config BOARD_KINMEN
+	bool "Google kinmen"
+	help
+	  Build Google Kinmen board. Kinmen has Intel PTL SoC
+	  with it82002aw EC.
+
 module = Fatcat
 module-str = Fatcat board-specific code
 source "subsys/logging/Kconfig.template.log_config"

@@ -1,0 +1,14 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_ch1_gpi1_default
+		&adc0_ch2_gpi2_default
+		&adc0_ch3_gpi3_default
+		&adc0_ch4_gpi4_default
+		&adc0_ch5_gpi5_default>;
+	pinctrl-names = "default";
+};

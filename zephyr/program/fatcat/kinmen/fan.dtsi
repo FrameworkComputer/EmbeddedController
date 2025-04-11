@@ -1,0 +1,19 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&pwm5 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm5_gpa5_default>;
+	pinctrl-names = "default";
+};
+
+&tach0 {
+	status = "okay";
+	pinctrl-0 = <&tach0a_gpd6_default>;
+	pinctrl-names = "default";
+	channel = <IT8XXX2_TACH_CHANNEL_A>;
+	pulses-per-round = <2>;
+};
