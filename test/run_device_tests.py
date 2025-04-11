@@ -909,7 +909,8 @@ BLOONCHIPPER_CONFIG = BoardConfig(
     sensor_type=FPSensorType.FPC,
     servo_uart_name="raw_fpmcu_console_uart_pty",
     servo_power_enable="fpmcu_pp3300",
-    reboot_timeout=2.0,
+    # TODO(b/410057326): add polling logic to reboot to RW, then decrease this timeout to 2s.
+    reboot_timeout=4.0,
     rollback_region0_regex=DATA_ACCESS_VIOLATION_8020000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_8040000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_20000000_REGEX,
