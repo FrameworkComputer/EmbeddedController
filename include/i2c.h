@@ -75,7 +75,7 @@ extern "C" {
 /* This port allows changing speed at runtime */
 #define I2C_PORT_FLAG_DYNAMIC_SPEED BIT(0)
 
-#ifndef CONFIG_I2C_BITBANG
+#ifndef CONFIG_I2C_BITBANG_CROS_EC
 #define I2C_BITBANG_PORT_COUNT 0
 #endif
 

@@ -88,7 +88,7 @@ const struct i2c_port_t *get_i2c_port(const int port)
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_I2C_BITBANG)) {
+	if (IS_ENABLED(CONFIG_I2C_BITBANG_CROS_EC)) {
 		/* Find the matching port in i2c_bitbang_ports[] table. */
 		for (i = 0; i < i2c_bitbang_ports_used; i++) {
 			if (i2c_bitbang_ports[i].port == port)

@@ -38,7 +38,7 @@
 	    */
 
 /* I2C */
-#define CONFIG_I2C_BITBANG
+#define CONFIG_I2C_BITBANG_CROS_EC
 #define I2C_BITBANG_PORT_COUNT 1
 
 /* PWM */

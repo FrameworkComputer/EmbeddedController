@@ -292,7 +292,7 @@ static int command_scan(int argc, const char **argv)
 		for (port = 0; port < i2c_ports_used; port++)
 			scan_bus(i2c_ports[port].port, i2c_ports[port].name);
 
-		if (IS_ENABLED(CONFIG_I2C_BITBANG))
+		if (IS_ENABLED(CONFIG_I2C_BITBANG_CROS_EC))
 			for (port = 0; port < i2c_bitbang_ports_used; port++)
 				scan_bus(i2c_bitbang_ports[port].port,
 					 i2c_bitbang_ports[port].name);

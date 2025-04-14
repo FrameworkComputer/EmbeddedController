@@ -178,7 +178,7 @@
 #include "usbc_config.h"
 
 /* I2C access in polling mode before task is initialized */
-#define CONFIG_I2C_BITBANG
+#define CONFIG_I2C_BITBANG_CROS_EC
 
 enum banshee_bitbang_i2c_channel {
 	I2C_BITBANG_CHAN_BRD_ID,

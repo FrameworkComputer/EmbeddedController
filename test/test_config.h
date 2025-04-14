@@ -693,7 +693,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #ifdef TEST_I2C_BITBANG
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
-#define CONFIG_I2C_BITBANG
+#define CONFIG_I2C_BITBANG_CROS_EC
 #define I2C_BITBANG_PORT_COUNT 1
 #endif
 

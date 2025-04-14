@@ -2947,9 +2947,8 @@
  */
 #undef CONFIG_I2C_MULTI_PORT_CONTROLLER
 
-#ifndef CONFIG_ZEPHYR
 /*
- * Enable I2C bitbang driver.
+ * Enable the legacy I2C bitbang driver.
  *
  * If defined, the board must define array i2c_bitbang_ports[] and
  * i2c_bitbang_ports_count (same as i2c_ports/i2c_ports_count), but with
@@ -2957,9 +2956,10 @@
  *
  * For example:
  * {"battery", 2, 100, GPIO_I2C3_SCL, GPIO_I2C3_SDA, .drv = &bitbang_drv},
+ *
+ * This option cannot be used by Zephyr EC projects.
  */
-#undef CONFIG_I2C_BITBANG
-#endif /* CONFIG_ZEPHYR */
+#undef CONFIG_I2C_BITBANG_CROS_EC
 
 /*
  * If defined, reduce I2C traffic from update functions (i2c_update8/16

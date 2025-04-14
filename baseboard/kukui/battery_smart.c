@@ -62,7 +62,7 @@ enum battery_present battery_is_present(void)
 	return batt_pres_prev;
 }
 
-#ifdef CONFIG_I2C_BITBANG
+#ifdef CONFIG_I2C_BITBANG_CROS_EC
 static void fix_single_param(int flag, int *cached, int *curr)
 {
 	if (flag)
@@ -126,4 +126,4 @@ __override void board_battery_compensate_params(struct batt_params *batt)
 	/* remove bad flags after applying cached values */
 	batt->flags &= ~BATT_FLAG_BAD_ANY;
 }
-#endif /* CONFIG_I2C_BITBANG */
+#endif /* CONFIG_I2C_BITBANG_CROS_EC */
