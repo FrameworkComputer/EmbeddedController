@@ -43,7 +43,7 @@
     <vif:Manufacturer_Info_VID_Port value="6353">18D1</vif:Manufacturer_Info_VID_Port>
     <vif:Manufacturer_Info_PID_Port value="20588">506C</vif:Manufacturer_Info_PID_Port>
     <vif:Chunking_Implemented_SOP value="true" />
-    <vif:Unchunked_Extended_Messages_Supported value="false" />
+    <vif:Unchunked_Extended_Messages_Supported value="true" />
     <vif:Security_Msgs_Supported_SOP value="false" />
     <vif:Unconstrained_Power value="false" />
     <vif:Num_Fixed_Batteries value="1">1</vif:Num_Fixed_Batteries>
@@ -131,9 +131,9 @@
     <vif:EPR_Supported_As_Snk value="false" />
     <vif:No_USB_Suspend_May_Be_Set value="true" />
     <vif:GiveBack_May_Be_Set value="false" />
-    <vif:Higher_Capability_Set value="true" />
+    <vif:Higher_Capability_Set value="false" />
     <vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source value="0">FR_Swap not supported</vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source>
-    <vif:Num_Snk_PDOs value="2">2 Snk PDOs</vif:Num_Snk_PDOs>
+    <vif:Num_Snk_PDOs value="3">3 Snk PDOs</vif:Num_Snk_PDOs>
     <!--Bundle: SnkPdoList-->
     <vif:SnkPdoList>
       <vif:SnkPDO>
@@ -144,9 +144,17 @@
       </vif:SnkPDO>
       <vif:SnkPDO>
         <!--Sink PDO 2-->
-        <vif:Snk_PDO_Supply_Type value="0">Fixed</vif:Snk_PDO_Supply_Type>
-        <vif:Snk_PDO_Voltage value="400">20000 mV (Factor = 50)</vif:Snk_PDO_Voltage>
+        <vif:Snk_PDO_Supply_Type value="1">Battery</vif:Snk_PDO_Supply_Type>
+        <vif:Snk_PDO_Op_Power value="60">15000 mW (Factor = 250)</vif:Snk_PDO_Op_Power>
+        <vif:Snk_PDO_Min_Voltage value="95">4750 mV (Factor = 50)</vif:Snk_PDO_Min_Voltage>
+        <vif:Snk_PDO_Max_Voltage value="400">20000 mV (Factor = 50)</vif:Snk_PDO_Max_Voltage>
+      </vif:SnkPDO>
+      <vif:SnkPDO>
+        <!--Sink PDO 3-->
+        <vif:Snk_PDO_Supply_Type value="2">Variable</vif:Snk_PDO_Supply_Type>
         <vif:Snk_PDO_Op_Current value="325">3250 mA (Factor = 10)</vif:Snk_PDO_Op_Current>
+        <vif:Snk_PDO_Min_Voltage value="95">4750 mV (Factor = 50)</vif:Snk_PDO_Min_Voltage>
+        <vif:Snk_PDO_Max_Voltage value="400">20000 mV (Factor = 50)</vif:Snk_PDO_Max_Voltage>
       </vif:SnkPDO>
     </vif:SnkPdoList>
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
