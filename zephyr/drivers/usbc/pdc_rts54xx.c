@@ -1084,13 +1084,12 @@ static void st_ping_status_run(void *o)
 			set_state(data, ST_ERROR_RECOVERY);
 		} else {
 			/*
-			 * If Busy, then set this cci.busy to a 1b
-			 * and all other fields to zero.
+			 * If Busy, then set this cci.busy to a 1b and all other
+			 * fields to zero. Only notify subsystem of busy event
+			 * for the first time.
 			 */
-			if (data->cci_event.busy == 0) {
-				/* Only notify subsystem of busy event once */
+			if (data->ping_retry_counter == 1) {
 				data->cci_event.busy = 1;
-
 				/* Notify system of status change */
 				call_cci_event_cb(data);
 			}
