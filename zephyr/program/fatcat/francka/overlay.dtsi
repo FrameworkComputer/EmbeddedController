@@ -56,6 +56,7 @@
 		irq-gpios = <&gpioc 1 GPIO_ACTIVE_LOW>;
 		no-fw-update;
 		zephyr,deferred-init;
+		ccd;
 	};
 
 	pdc_power_p0_ti: tps6699-pdc@20 {
@@ -70,6 +71,7 @@
 		irq-gpios = <&gpioc 1 GPIO_ACTIVE_LOW>;
 		no-fw-update;
 		zephyr,deferred-init;
+		ccd;
 	};
 };
 

@@ -197,6 +197,8 @@ struct pdc_config_t {
 	void (*create_thread)(const struct device *dev);
 	/** If true, do not apply PDC FW updates to this port */
 	bool no_fw_update;
+	/** Whether or not this port supports CCD */
+	bool ccd;
 };
 
 /**
@@ -2261,18 +2263,19 @@ static int tps_get_info(const struct device *dev, struct pdc_info_t *info,
 	return tps_post_command(dev, CMD_GET_IC_STATUS, info);
 }
 
-static int tps_get_bus_info(const struct device *dev,
-			    struct pdc_bus_info_t *info)
+static int tps_get_hw_config(const struct device *dev,
+			     struct pdc_hw_config_t *config)
 {
 	const struct pdc_config_t *cfg =
 		(const struct pdc_config_t *)dev->config;
 
-	if (info == NULL) {
+	if (config == NULL) {
 		return -EINVAL;
 	}
 
-	info->bus_type = PDC_BUS_TYPE_I2C;
-	info->i2c = cfg->i2c;
+	config->bus_type = PDC_BUS_TYPE_I2C;
+	config->i2c = cfg->i2c;
+	config->ccd = cfg->ccd;
 
 	return 0;
 }
@@ -2525,7 +2528,7 @@ static DEVICE_API(pdc, pdc_driver_api) = {
 	.set_handler_cb = tps_set_handler_cb,
 	.read_power_level = tps_read_power_level,
 	.get_info = tps_get_info,
-	.get_bus_info = tps_get_bus_info,
+	.get_hw_config = tps_get_hw_config,
 	.set_power_level = tps_set_power_level,
 	.reconnect = tps_reconnect,
 	.get_cable_property = tps_get_cable_property,
@@ -2807,6 +2810,7 @@ static void tps_thread(void *dev, void *unused1, void *unused2)
 		.bits.sink_path_status_change = 1,                             \
 		.create_thread = create_thread_##inst,                         \
 		.no_fw_update = DT_INST_PROP(inst, no_fw_update),              \
+		.ccd = DT_INST_PROP(inst, ccd),                                \
 	};                                                                     \
                                                                                \
 	DEVICE_DT_INST_DEFINE(inst, pdc_init, NULL, &pdc_data_##inst,          \

@@ -36,14 +36,6 @@ properties:
     type: phandle
     description: |
       TCPC chip for the USB-C port.
-  ccd:
-    type: boolean
-    description: |
-      If present, this USB-C port has hardware support for closed-case
-      debugging (CCD). Used only on boards with PDC-driven CCD. This should be
-      applied to the port serviced by the PDC driver that correlates to PORTB
-      on dual-port PDCs. On dual-port RTK PDCs, this is the lower I2C target
-      address; on TI PDCs, this is the higher I2C address.
   chg:
     type: phandle
     description: |

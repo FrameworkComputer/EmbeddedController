@@ -56,23 +56,23 @@ static enum ec_status hc_locate_chip(struct host_cmd_handler_args *args)
 		if (params->index >= pdc_power_mgmt_get_usb_pd_port_count())
 			return EC_RES_OVERFLOW;
 
-		struct pdc_bus_info_t bus_info;
+		struct pdc_hw_config_t hw_config;
 		int i2c_port;
 
-		if (pdc_power_mgmt_get_bus_info(params->index, &bus_info)) {
+		if (pdc_power_mgmt_get_hw_config(params->index, &hw_config)) {
 			/* Cannot obtain I2C info for PDC */
 			return EC_RES_ERROR;
 		}
 
 		/* Only I2C PDCs are supported at this time. */
-		if (bus_info.bus_type != PDC_BUS_TYPE_I2C) {
+		if (hw_config.bus_type != PDC_BUS_TYPE_I2C) {
 			return EC_RES_UNAVAILABLE;
 		}
 		resp->bus_type = EC_BUS_TYPE_I2C;
 
-		resp->i2c_info.addr_flags = bus_info.i2c.addr;
+		resp->i2c_info.addr_flags = hw_config.i2c.addr;
 
-		i2c_port = i2c_get_port_from_device(bus_info.i2c.bus);
+		i2c_port = i2c_get_port_from_device(hw_config.i2c.bus);
 		if (i2c_port < 0) {
 			return EC_RES_DUP_UNAVAILABLE;
 		}

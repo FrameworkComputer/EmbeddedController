@@ -12,7 +12,6 @@
 
 		usbc_port0: port0@0 {
 			compatible = "named-usbc-port";
-			ccd;
 			reg = <0>;
 			chg = <&charger_bq25710>;
 			pdc = <&pdc_power_p0>;
@@ -73,6 +72,7 @@
 		compatible = "realtek,rts54-pdc";
 		reg = <0x66>;
 		irq-gpios = <&gpiod 4 GPIO_ACTIVE_LOW>;
+		ccd;
 	};
 	pdc_power_p1: rts54-pdc@67 {
 		compatible = "realtek,rts54-pdc";

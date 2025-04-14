@@ -5,6 +5,6 @@
 
 /* Remove the CCD port properties to test cases where they are missing */
 
-&usbc0 {
+&pdc_emul1 {
     /delete-property/ ccd;
 };

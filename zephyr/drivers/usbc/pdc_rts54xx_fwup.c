@@ -296,7 +296,7 @@ static int rts54xx_write_flash_chunk(const struct i2c_dt_spec *i2c,
 
 static int pdc_rts54xx_fwup_start(const struct device *dev)
 {
-	struct pdc_bus_info_t bus_info;
+	struct pdc_hw_config_t hw_config;
 	int rv;
 
 	if (ctx.pdc_dev) {
@@ -314,13 +314,13 @@ static int pdc_rts54xx_fwup_start(const struct device *dev)
 	}
 
 	/* Get I2C info */
-	rv = pdc_get_bus_info(dev, &bus_info);
+	rv = pdc_get_hw_config(dev, &hw_config);
 	if (rv) {
 		LOG_ERR("Cannot get PDC I2C info: %d", rv);
 		return rv;
 	}
 
-	ctx.pdc_i2c = bus_info.i2c;
+	ctx.pdc_i2c = hw_config.i2c;
 
 	/* Enable vendor commands */
 	LOG_INF("Enabling vendor commands");

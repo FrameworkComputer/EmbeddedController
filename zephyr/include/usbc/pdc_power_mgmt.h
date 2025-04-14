@@ -352,14 +352,15 @@ void pdc_power_mgmt_request_data_swap(int port);
 int pdc_power_mgmt_get_info(int port, struct pdc_info_t *pdc_info, bool live);
 
 /**
- * @brief Query bus info from PDC used to access the chip
+ * @brief Query hw config from PDC used to access the chip
  *
  * @param port USB-C port number
- * @param pdc_info Output struct for bus info
+ * @param pdc_hw_config Output struct for hw config
  *
  * @retval 0 if successful or error code
  */
-int pdc_power_mgmt_get_bus_info(int port, struct pdc_bus_info_t *pdc_bus_info);
+int pdc_power_mgmt_get_hw_config(int port,
+				 struct pdc_hw_config_t *pdc_hw_config);
 
 /**
  * @brief Get current PD Revision

@@ -130,11 +130,12 @@ enum pdc_bus_type {
  * @brief Bus info for PDC chip. This gets exposed via host command to enable
  *        passthrough access to the PDC from AP during firmware updates.
  */
-struct pdc_bus_info_t {
+struct pdc_hw_config_t {
 	enum pdc_bus_type bus_type;
 	union {
 		struct i2c_dt_spec i2c;
 	};
+	bool ccd;
 };
 
 /**
@@ -206,8 +207,8 @@ typedef int (*pdc_get_rdo_t)(const struct device *dev, uint32_t *rdo);
 typedef int (*pdc_set_rdo_t)(const struct device *dev, uint32_t rdo);
 typedef int (*pdc_get_info_t)(const struct device *dev, struct pdc_info_t *info,
 			      bool live);
-typedef int (*pdc_get_bus_info_t)(const struct device *dev,
-				  struct pdc_bus_info_t *info);
+typedef int (*pdc_get_hw_config_t)(const struct device *dev,
+				   struct pdc_hw_config_t *config);
 typedef int (*pdc_get_current_pdo_t)(const struct device *dev, uint32_t *pdo);
 typedef int (*pdc_read_power_level_t)(const struct device *dev);
 typedef int (*pdc_set_power_level_t)(const struct device *dev,
@@ -279,7 +280,7 @@ __subsystem struct pdc_driver_api {
 	pdc_set_rdo_t set_rdo;
 	pdc_read_power_level_t read_power_level;
 	pdc_get_info_t get_info;
-	pdc_get_bus_info_t get_bus_info;
+	pdc_get_hw_config_t get_hw_config;
 	pdc_set_power_level_t set_power_level;
 	pdc_reconnect_t reconnect;
 	pdc_get_current_flash_bank_t get_current_flash_bank;
@@ -795,23 +796,23 @@ static inline int pdc_get_info(const struct device *dev,
 }
 
 /**
- * @brief Get bus interface info about the PDC
+ * @brief Get bus interface hw config about the PDC
  *
  * @param dev PDC device structure pointer
- * @param info Output struct for bus info
+ * @param config Output struct for hw config
  *
  * @retval 0 on success
  * @retval -EINVAL if info pointer is NULL
  */
-static inline int pdc_get_bus_info(const struct device *dev,
-				   struct pdc_bus_info_t *info)
+static inline int pdc_get_hw_config(const struct device *dev,
+				    struct pdc_hw_config_t *config)
 {
 	const struct pdc_driver_api *api =
 		(const struct pdc_driver_api *)dev->api;
 
-	__ASSERT(api->get_bus_info != NULL, "GET_INFO is not optional");
+	__ASSERT(api->get_hw_config != NULL, "GET_INFO is not optional");
 
-	return api->get_bus_info(dev, info);
+	return api->get_hw_config(dev, config);
 }
 
 /**

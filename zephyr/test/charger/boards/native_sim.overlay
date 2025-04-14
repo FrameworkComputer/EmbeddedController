@@ -15,7 +15,6 @@
 		 */
 		usbc0: port0@0 {
 			compatible = "named-usbc-port";
-			ccd;
 			reg = <0>;
 			chg = <&charger>;
 			pdc = <&pdc_emul1>;
@@ -115,6 +114,7 @@
 		status = "okay";
 		reg = <0x66>;
 		irq-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
+		ccd;
 	};
 
 	pdc_emul2: rts5453p@67 {

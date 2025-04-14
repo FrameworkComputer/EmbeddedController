@@ -21,6 +21,7 @@
                 compatible = "ti,tps6699-pdc";
                 reg = <0x20>;
                 irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
+                ccd;
         };
 
         pdc_emul2: tps6699-pdc@24 {

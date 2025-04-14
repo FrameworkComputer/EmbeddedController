@@ -791,8 +791,6 @@ struct pdc_data_t {
 struct pdc_config_t {
 	/** Port number for the connector */
 	uint8_t connector_num;
-	/** Whether or not this port supports CCD */
-	bool ccd;
 	/**
 	 * The usbc stack initializes this pointer that creates the
 	 * main thread for this port
@@ -937,48 +935,47 @@ static ALWAYS_INLINE void pdc_thread(void *pdc_dev, void *unused1,
 	}
 }
 
-#define PDC_SUBSYS_INIT(inst)                                                 \
-	K_THREAD_STACK_DEFINE(my_stack_area_##inst,                           \
-			      CONFIG_PDC_POWER_MGMT_STACK_SIZE);              \
-                                                                              \
-	static void create_thread_##inst(const struct device *dev)            \
-	{                                                                     \
-		struct pdc_data_t *data = dev->data;                          \
-                                                                              \
-		data->thread = k_thread_create(                               \
-			&data->thread_data, my_stack_area_##inst,             \
-			K_THREAD_STACK_SIZEOF(my_stack_area_##inst),          \
-			pdc_thread, (void *)dev, 0, 0,                        \
-			CONFIG_PDC_POWER_MGMT_THREAD_PRIORTY, K_ESSENTIAL,    \
-			K_FOREVER);                                           \
-		k_thread_name_set(data->thread,                               \
-				  "PDC Power Mgmt" STRINGIFY(inst));          \
-	}                                                                     \
-                                                                              \
-	static struct pdc_data_t data_##inst = {                              \
-		.port.dev = DEVICE_DT_INST_GET(inst), /* Initial policy read  \
-							 from device tree */  \
-		.port.pdc = COND_CODE_1(                                      \
-			CONFIG_PDC_RUNTIME_PORT_CONFIG, (NULL),               \
-			DEVICE_DT_GET(DT_INST_PROP_BY_IDX(inst, pdc, 0))),    \
-		.port.una_policy.tcc = DT_STRING_TOKEN(                       \
-			DT_INST_PROP(inst, policy), unattached_rp_value),     \
-		.port.una_policy.cc_mode = DT_STRING_TOKEN(                   \
-			DT_INST_PROP(inst, policy), unattached_cc_mode),      \
-		.port.una_policy.drp_mode = DT_STRING_TOKEN(                  \
-			DT_INST_PROP(inst, policy), unattached_try),          \
-		.port.suspend = ATOMIC_INIT(0),                               \
-		.port.dual_role_state = PD_DRP_TOGGLE_ON,                     \
-	};                                                                    \
-                                                                              \
-	static struct pdc_config_t config_##inst = {                          \
-		.connector_num = USBC_PORT_NEW(DT_DRV_INST(inst)),            \
-		.ccd = COND_CODE_1(DT_INST_PROP(inst, ccd), (true), (false)), \
-		.create_thread = create_thread_##inst,                        \
-	};                                                                    \
-                                                                              \
-	DEVICE_DT_INST_DEFINE(inst, &pdc_subsys_init, NULL, &data_##inst,     \
-			      &config_##inst, POST_KERNEL,                    \
+#define PDC_SUBSYS_INIT(inst)                                                \
+	K_THREAD_STACK_DEFINE(my_stack_area_##inst,                          \
+			      CONFIG_PDC_POWER_MGMT_STACK_SIZE);             \
+                                                                             \
+	static void create_thread_##inst(const struct device *dev)           \
+	{                                                                    \
+		struct pdc_data_t *data = dev->data;                         \
+                                                                             \
+		data->thread = k_thread_create(                              \
+			&data->thread_data, my_stack_area_##inst,            \
+			K_THREAD_STACK_SIZEOF(my_stack_area_##inst),         \
+			pdc_thread, (void *)dev, 0, 0,                       \
+			CONFIG_PDC_POWER_MGMT_THREAD_PRIORTY, K_ESSENTIAL,   \
+			K_FOREVER);                                          \
+		k_thread_name_set(data->thread,                              \
+				  "PDC Power Mgmt" STRINGIFY(inst));         \
+	}                                                                    \
+                                                                             \
+	static struct pdc_data_t data_##inst = {                             \
+		.port.dev = DEVICE_DT_INST_GET(inst), /* Initial policy read \
+							 from device tree */ \
+		.port.pdc = COND_CODE_1(                                     \
+			CONFIG_PDC_RUNTIME_PORT_CONFIG, (NULL),              \
+			DEVICE_DT_GET(DT_INST_PROP_BY_IDX(inst, pdc, 0))),   \
+		.port.una_policy.tcc = DT_STRING_TOKEN(                      \
+			DT_INST_PROP(inst, policy), unattached_rp_value),    \
+		.port.una_policy.cc_mode = DT_STRING_TOKEN(                  \
+			DT_INST_PROP(inst, policy), unattached_cc_mode),     \
+		.port.una_policy.drp_mode = DT_STRING_TOKEN(                 \
+			DT_INST_PROP(inst, policy), unattached_try),         \
+		.port.suspend = ATOMIC_INIT(0),                              \
+		.port.dual_role_state = PD_DRP_TOGGLE_ON,                    \
+	};                                                                   \
+                                                                             \
+	static struct pdc_config_t config_##inst = {                         \
+		.connector_num = USBC_PORT_NEW(DT_DRV_INST(inst)),           \
+		.create_thread = create_thread_##inst,                       \
+	};                                                                   \
+                                                                             \
+	DEVICE_DT_INST_DEFINE(inst, &pdc_subsys_init, NULL, &data_##inst,    \
+			      &config_##inst, POST_KERNEL,                   \
 			      CONFIG_PDC_POWER_MGMT_INIT_PRIORITY, NULL);
 
 DT_INST_FOREACH_STATUS_OKAY(PDC_SUBSYS_INIT)
@@ -4173,13 +4170,14 @@ test_mockable int pdc_power_mgmt_get_lpm_ppm_info(int port,
 	return 0;
 }
 
-int pdc_power_mgmt_get_bus_info(int port, struct pdc_bus_info_t *pdc_bus_info)
+int pdc_power_mgmt_get_hw_config(int port,
+				 struct pdc_hw_config_t *pdc_hw_config)
 {
 	/* This operation is handled synchronously within the driver based on
 	 * compile-time data. No need to block or go through the state machine.
 	 */
 
-	return pdc_get_bus_info(pdc_data[port]->port.pdc, pdc_bus_info);
+	return pdc_get_hw_config(pdc_data[port]->port.pdc, pdc_hw_config);
 }
 
 int pdc_power_mgmt_get_rev(int port, enum tcpci_msg_type type)
@@ -4860,10 +4858,12 @@ int pdc_power_mgmt_get_connector_status_for_ppm(
 
 int pdc_power_mgmt_get_ccd_port(void)
 {
+	struct pdc_hw_config_t pdc_hw_config;
 	for (int i = 0; i < pdc_power_mgmt_get_usb_pd_port_count(); i++) {
 		const struct pdc_config_t *cfg = pdc_data[i]->port.dev->config;
+		pdc_power_mgmt_get_hw_config(i, &pdc_hw_config);
 
-		if (cfg->ccd) {
+		if (pdc_hw_config.ccd) {
 			return cfg->connector_num;
 		}
 	}

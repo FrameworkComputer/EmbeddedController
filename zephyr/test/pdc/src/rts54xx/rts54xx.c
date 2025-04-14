@@ -170,17 +170,17 @@ ZTEST_USER(rts54xx, test_pdos)
 	zassert_ok(memcmp(pdos, spr_pdos, 6));
 }
 
-ZTEST_USER(rts54xx, test_get_bus_info)
+ZTEST_USER(rts54xx, test_get_hw_config)
 {
-	struct pdc_bus_info_t info;
+	struct pdc_hw_config_t config;
 	struct i2c_dt_spec i2c_spec = I2C_DT_SPEC_GET(RTS5453P_NODE);
 
-	zassert_not_ok(pdc_get_bus_info(dev, NULL));
+	zassert_not_ok(pdc_get_hw_config(dev, NULL));
 
-	zassert_ok(pdc_get_bus_info(dev, &info));
-	zassert_equal(info.bus_type, PDC_BUS_TYPE_I2C);
-	zassert_equal(info.i2c.bus, i2c_spec.bus);
-	zassert_equal(info.i2c.addr, i2c_spec.addr);
+	zassert_ok(pdc_get_hw_config(dev, &config));
+	zassert_equal(config.bus_type, PDC_BUS_TYPE_I2C);
+	zassert_equal(config.i2c.bus, i2c_spec.bus);
+	zassert_equal(config.i2c.addr, i2c_spec.addr);
 }
 
 static volatile struct {

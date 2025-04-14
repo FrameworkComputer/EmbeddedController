@@ -321,6 +321,8 @@ struct pdc_config_t {
 	void (*create_thread)(const struct device *dev);
 	/** If true, do not apply PDC FW updates to this port */
 	bool no_fw_update;
+	/** Whether or not this port supports CCD */
+	bool ccd;
 	/** Pointer to the device-specific callback function */
 	gpio_callback_handler_t callback_handler;
 };
@@ -2124,18 +2126,19 @@ static int rts54_get_info(const struct device *dev, struct pdc_info_t *info,
 				  ARRAY_SIZE(payload), (uint8_t *)info);
 }
 
-static int rts54_get_bus_info(const struct device *dev,
-			      struct pdc_bus_info_t *info)
+static int rts54_get_hw_config(const struct device *dev,
+			       struct pdc_hw_config_t *config)
 {
 	const struct pdc_config_t *cfg =
 		(const struct pdc_config_t *)dev->config;
 
-	if (info == NULL) {
+	if (config == NULL) {
 		return -EINVAL;
 	}
 
-	info->bus_type = PDC_BUS_TYPE_I2C;
-	info->i2c = cfg->i2c;
+	config->bus_type = PDC_BUS_TYPE_I2C;
+	config->i2c = cfg->i2c;
+	config->ccd = cfg->ccd;
 
 	return 0;
 }
@@ -2727,7 +2730,7 @@ static DEVICE_API(pdc, pdc_driver_api) = {
 	.set_handler_cb = rts54_set_handler_cb,
 	.read_power_level = rts54_read_power_level,
 	.get_info = rts54_get_info,
-	.get_bus_info = rts54_get_bus_info,
+	.get_hw_config = rts54_get_hw_config,
 	.set_power_level = rts54_set_power_level,
 	.reconnect = rts54_reconnect,
 	.update_retimer = rts54_set_retimer_update_mode,
@@ -2919,6 +2922,7 @@ static void rts54xx_thread(void *dev, void *unused1, void *unused2)
 		.bits.sink_path_status_change = 1,                            \
 		.create_thread = create_thread_##inst,                        \
 		.no_fw_update = DT_INST_PROP(inst, no_fw_update),             \
+		.ccd = DT_INST_PROP(inst, ccd),                               \
 		.callback_handler = pdc_interrupt_callback##inst,             \
 	};                                                                    \
                                                                               \

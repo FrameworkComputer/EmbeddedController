@@ -20,7 +20,6 @@
 		};
 		usbc_port1: port1@1 {
 			compatible = "named-usbc-port";
-			ccd;
 			reg = <1>;
 			pdc = <&pdc_power_p1>;
 			pd-retimer;
@@ -43,6 +42,7 @@
 		reg = <0x25>;
 		irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
 		no-fw-update;
+		ccd;
 	};
 };
 

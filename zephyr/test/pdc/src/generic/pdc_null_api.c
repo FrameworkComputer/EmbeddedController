@@ -139,9 +139,9 @@ ZTEST(pdc_api_null_check, test_pdc_get_info)
 	EXPECT_ASSERT(pdc_get_info(&fake_pdc, NULL, false));
 }
 
-ZTEST(pdc_api_null_check, test_pdc_get_bus_info)
+ZTEST(pdc_api_null_check, test_pdc_get_hw_config)
 {
-	EXPECT_ASSERT(pdc_get_bus_info(&fake_pdc, NULL));
+	EXPECT_ASSERT(pdc_get_hw_config(&fake_pdc, NULL));
 }
 
 ZTEST(pdc_api_null_check, test_pdc_get_rdo)
