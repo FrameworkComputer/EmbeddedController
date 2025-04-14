@@ -40,10 +40,18 @@ static void rauru_common_init(void)
 DECLARE_HOOK(HOOK_INIT, rauru_common_init, HOOK_PRIO_PRE_DEFAULT);
 
 #ifdef CONFIG_PDC_POWER_MGMT_USB_MUX
+static bool is_pr_swap_needed(int port)
+{
+	return pd_get_power_role(port) == PD_ROLE_SINK &&
+	       charge_manager_get_active_charge_port() != port;
+}
+
 static void swap_to_src(void)
 {
 	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		pdc_power_mgmt_request_swap_to_src(i);
+		if (is_pr_swap_needed(i)) {
+			pdc_power_mgmt_request_swap_to_src(i);
+		}
 	}
 }
 DECLARE_DEFERRED(swap_to_src);
