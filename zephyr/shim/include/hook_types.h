@@ -30,7 +30,9 @@ extern "C" {
 #define HOOK_TYPES_USB_SUSPEND
 #endif
 
-#if defined(CONFIG_BODY_DETECTION) || defined(_LINKER)
+#if defined(CONFIG_BODY_DETECTION) ||                            \
+	defined(CONFIG_PLATFORM_EC_DSP_REMOTE_BODY_DETECTION) || \
+	defined(_LINKER)
 #define HOOK_TYPES_BODY_DETECTION HOOK_BODY_DETECT_CHANGE
 #else
 #define HOOK_TYPES_BODY_DETECTION

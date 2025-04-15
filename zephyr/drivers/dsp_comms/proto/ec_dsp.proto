@@ -18,6 +18,8 @@ message EcService
 		GetCbiFlagsRequest get_cbi_flags = 2;
 		GetStatusRequest get_status = 3;
 		ResetConnectionRequest reset_connection = 4;
+		NotifyBodyDetectionChangeRequest notify_body_detection_change =
+			5;
 	}
 }
 
@@ -85,4 +87,9 @@ enum NotebookMode {
 message NotifyNotebookModeChangeRequest
 {
 	NotebookMode new_mode = 1;
+}
+
+message NotifyBodyDetectionChangeRequest
+{
+	bool on_body = 1;
 }

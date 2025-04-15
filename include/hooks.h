@@ -210,7 +210,8 @@ enum hook_type {
 	 */
 	HOOK_TABLET_MODE_CHANGE,
 
-#ifdef CONFIG_BODY_DETECTION
+#if defined(CONFIG_BODY_DETECTION) || \
+	defined(CONFIG_PLATFORM_EC_DSP_REMOTE_BODY_DETECTION)
 	/*
 	 * Body dectection mode change.
 	 *

@@ -9,6 +9,7 @@ pw_add_library(dsp.service STATIC
     dsp_service.cc
     i2c_target_pio_funcs.cc
     $<$<BOOL:${CONFIG_I2C_TARGET_BUFFER_MODE}>:i2c_target_buffer_funcs.cc>
+    $<$<BOOL:${CONFIG_PLATFORM_EC_DSP_REMOTE_BODY_DETECTION}>:remote_body_detection.cc>
   HEADERS
     include/cros/dsp/service/cros_transport.hh
     include/cros/dsp/service/driver.hh

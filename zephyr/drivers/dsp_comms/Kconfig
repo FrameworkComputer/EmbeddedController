@@ -62,4 +62,11 @@ config PLATFORM_EC_DSP_RESPONSE_BUFFER_SIZE
 	  that is used to store it until the client reads it. It must be big
 	  enough for the largest encoded response.
 
+config PLATFORM_EC_DSP_REMOTE_BODY_DETECTION
+	bool "Body detection is handled on another MCU"
+	default y if !TEST
+	help
+	  Use the body detection hooks, but the source of truth is on another
+	  MCU. DSP will broadcast events, while the server will receive them.
+
 endif # PLATFORM_EC_DSP_COMMS
