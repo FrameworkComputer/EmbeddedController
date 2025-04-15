@@ -310,6 +310,10 @@ static void cypd_pdo_init(int controller, int port, uint8_t profile)
 {
 	int rv;
 
+#ifndef CONFIG_SELECT_3A_TYPEC_OUTPUT_CURRENT
+	return;
+#endif
+
 	/*
 	 * EC needs to provide the data for all Source PDOs when doing a dynamic update of the PDOs.
 	 * If less than 7 PDOs are required, the remaining PDO values should be set to 0.
@@ -461,6 +465,9 @@ void cypd_release_port(int controller, int port)
 
 	/* if port disconnect should set RP and PDO to default */
 
+#ifndef CONFIG_SELECT_3A_TYPEC_OUTPUT_CURRENT
+	return;
+#endif
 	cypd_select_rp(port_idx, CCG_PD_CMD_SET_TYPEC_1_5A);
 	cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_3A);
 
@@ -610,6 +617,10 @@ void cypd_set_typec_profile(int controller, int port)
 
 	if (!cypd_contoller_is_powered(controller))
 		return;
+
+#ifndef CONFIG_SELECT_3A_TYPEC_OUTPUT_CURRENT
+	return;
+#endif
 
 	rv = cypd_read_reg_block(controller, CCG_PD_STATUS_REG(port), pd_status_reg, 4);
 	if (rv != EC_SUCCESS)
