@@ -15,6 +15,7 @@
 
 #include <cstddef>
 
+#include "ap_power/ap_power.h"
 #include "cros/dsp/service/cros_transport.hh"
 #include "cros/dsp/service/driver.hh"
 #include "cros_board_info.h"
@@ -49,7 +50,21 @@ Driver driver(DT_INST_REG_ADDR(0),
 
 }  // namespace cros::dsp::service
 
-int init_driver() { return cros::dsp::service::driver.Init().ok() ? 0 : -1; }
+static void dsp_service_startup(struct ap_power_ev_callback* cb,
+                                struct ap_power_ev_data) {
+  /* Only run this once */
+  ap_power_ev_remove_callback(cb);
+
+  cros::dsp::service::driver.Init().IgnoreError();
+}
+
+static int init_driver() {
+  static struct ap_power_ev_callback cb;
+
+  ap_power_ev_init_callback(&cb, dsp_service_startup, AP_POWER_STARTUP);
+  ap_power_ev_add_callback(&cb);
+  return 0;
+}
 
 SYS_INIT(init_driver, APPLICATION, 50);
 

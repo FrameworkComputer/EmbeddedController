@@ -15,6 +15,7 @@
 #include <cstring>
 #include <limits>
 
+#include "ap_power/ap_power_events.h"
 #include "cros/dsp/client.h"
 #include "cros_board_info.h"
 #include "hooks.h"
@@ -70,6 +71,7 @@ class DspComms : public ::testing::Test {
     if (is_initialized) {
       return;
     }
+    ap_power_ev_send_callbacks(AP_POWER_STARTUP);
     PW_ASSERT(0 == device_init(kClient));
     // We have to poke any CBI value to make sure that it was
     // initialized
