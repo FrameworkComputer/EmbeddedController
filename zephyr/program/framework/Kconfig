@@ -193,6 +193,12 @@ config PLATFORM_EC_HID
 	  EC is an i2c slave device and report the data (e.g ALS sensor value)
 	  to the host via hid over i2c protocaol.
 
+config SELECT_3A_TYPEC_OUTPUT_CURRENT
+	bool "EC will select one type-c port to output 3A current"
+	default y
+	help
+		Default set all type-c port to output 1.5A current. And select
+		the first PD device to provide 3A current.
 
 # Driver configuration
 config PLATFORM_EC_WAKE_ON_LAN
