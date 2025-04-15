@@ -33,6 +33,8 @@ enum battery_extender_stage_t {
 	BATT_EXTENDER_STAGE_2,
 };
 
+extern const char *mode_text[];
+
 static bool batt_extender_disable;
 static uint64_t battery_extender_trigger = 5*DAY;
 static uint64_t battery_extender_reset = 30*MINUTE;
@@ -83,7 +85,11 @@ void battery_extender(void)
 		batt_extender_deadline_stage2.val =
 				now.val + battery_extender_trigger + 2*DAY;
 		battery_sustainer_set(-1, -1);
-		set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+		int rv = set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+		CPRINTS("%s: %s control mode to %s, rv=%d", __func__,
+			rv == EC_SUCCESS ? "Switched" : "Failed to switch",
+			mode_text[CHARGE_CONTROL_NORMAL],
+			rv);
 	}
 
 	if (batt_extender_deadline_stage2.val &&
@@ -141,7 +147,11 @@ static enum ec_status battery_extender_hc(struct host_cmd_handler_args *args)
 			batt_extender_disable = p->disable;
 			if (batt_extender_disable) {
 				battery_sustainer_set(-1, -1);
-				set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+				int rv = set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+				CPRINTS("%s: %s control mode to %s, rv=%d", __func__,
+					rv == EC_SUCCESS ? "Switched" : "Failed to switch",
+					mode_text[CHARGE_CONTROL_NORMAL],
+					rv);
 				stage = BATT_EXTENDER_STAGE_0;
 			}
 		}
@@ -231,7 +241,11 @@ static int cmd_batt_extender(int argc, const char **argv)
 				disable ? "enabled" : "disabled");
 			if (batt_extender_disable) {
 				battery_sustainer_set(-1, -1);
-				set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+				int rv = set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+				CPRINTS("%s: %s control mode to %s, rv=%d", __func__,
+					rv == EC_SUCCESS ? "Switched" : "Failed to switch",
+					mode_text[CHARGE_CONTROL_NORMAL],
+					rv);
 				stage = BATT_EXTENDER_STAGE_0;
 			} else {
 				if (battery_extender_reset) {

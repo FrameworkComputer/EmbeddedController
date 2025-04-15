@@ -26,13 +26,15 @@
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
 
 static uint8_t charging_maximum_level = EC_CHARGE_LIMIT_RESTORE;
+extern const char *mode_text[];
+extern bool battery_sustainer_enabled(void);
 
 static void battery_percentage_control(void)
 {
 	enum ec_charge_control_mode new_mode;
 	static int in_percentage_control;
 	uint32_t batt_os_percentage = get_system_percentage();
-	int rv;
+	//int rv;
 
 	/**
 	 * If the host command EC_CMD_CHARGE_CONTROL set control mode to CHARGE_CONTROL_DISCHARGE
@@ -40,6 +42,12 @@ static void battery_percentage_control(void)
 	 */
 	if (!in_percentage_control && get_chg_ctrl_mode() != CHARGE_CONTROL_NORMAL)
 		return;
+	if (battery_sustainer_enabled()) {
+		CPRINTS("%s: battery_percentage_control suppressed", __func__);
+		return;
+	} else {
+		CPRINTS("%s: battery_percentage_control running", __func__);
+	}
 
 	if (charging_maximum_level == EC_CHARGE_LIMIT_RESTORE)
 		system_get_bbram(SYSTEM_BBRAM_IDX_CHARGE_LIMIT_MAX, &charging_maximum_level);
@@ -51,7 +59,8 @@ static void battery_percentage_control(void)
 	} else if (charging_maximum_level < 20)
 		new_mode = CHARGE_CONTROL_NORMAL;
 	else if (batt_os_percentage > charging_maximum_level * 10) {
-		new_mode = CHARGE_CONTROL_DISCHARGE;
+		//new_mode = CHARGE_CONTROL_DISCHARGE;
+		new_mode = CHARGE_CONTROL_IDLE;
 		in_percentage_control = 1;
 	} else if (batt_os_percentage == charging_maximum_level * 10) {
 		new_mode = CHARGE_CONTROL_IDLE;
@@ -61,12 +70,16 @@ static void battery_percentage_control(void)
 		in_percentage_control = 0;
 	}
 
-	set_chg_ctrl_mode(new_mode);
+	int rv2 = set_chg_ctrl_mode(new_mode);
+	CPRINTS("%s: %s control mode to %s, rv=%d", __func__,
+		rv2 == EC_SUCCESS ? "Switched" : "Failed to switch",
+		mode_text[new_mode],
+		rv2);
 #ifdef CONFIG_PLATFORM_EC_CHARGER_DISCHARGE_ON_AC
-	rv = charger_discharge_on_ac(new_mode == CHARGE_CONTROL_DISCHARGE);
-#endif
+	int rv = charger_discharge_on_ac(new_mode == CHARGE_CONTROL_DISCHARGE);
 	if (rv != EC_SUCCESS)
 		CPRINTS("Failed to discharge.");
+#endif
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, battery_percentage_control, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, battery_percentage_control, HOOK_PRIO_DEFAULT);

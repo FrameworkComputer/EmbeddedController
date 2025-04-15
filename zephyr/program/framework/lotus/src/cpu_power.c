@@ -40,6 +40,8 @@ enum clear_reasons {
 	PROCHOT_CLEAR_REASON_FORCE,
 };
 
+extern const char *mode_text[];
+
 /* Update PL for thermal table pmf sheet : slider default */
 static void update_os_power_slider(int mode, bool with_dc, int active_mpower)
 {
@@ -816,10 +818,18 @@ static void update_safety_power_limit(int active_mpower)
 	case LEVEL_STOP_CHARGE:
 		/* stop charging */
 		if (level_increase) {
-			set_chg_ctrl_mode(CHARGE_CONTROL_IDLE);
+			int rv = set_chg_ctrl_mode(CHARGE_CONTROL_IDLE);
+			CPRINTS("%s: %s control mode to %s, rv=%d", __func__,
+				rv == EC_SUCCESS ? "Switched" : "Failed to switch",
+				mode_text[CHARGE_CONTROL_IDLE],
+				rv);
 			safety_level++;
 		} else {
-			set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+			int rv = set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+			CPRINTS("%s: %s control mode to %s, rv=%d", __func__,
+				rv == EC_SUCCESS ? "Switched" : "Failed to switch",
+				mode_text[CHARGE_CONTROL_NORMAL],
+				rv);
 			if (safety_level > 0)
 				safety_level--;
 		}

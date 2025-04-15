@@ -499,6 +499,7 @@ void battery_get_params(struct batt_params *batt)
 	 * will be preserved.
 	 */
 	memcpy(&batt_new, batt, sizeof(*batt));
+	// This clears all the BAD flags.
 	batt_new.flags &= ~BATT_FLAG_VOLATILE;
 
 	if (sb_read(SB_TEMPERATURE, &batt_new.temperature) &&

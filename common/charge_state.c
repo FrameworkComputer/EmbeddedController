@@ -236,7 +236,8 @@ static void battery_sustainer_disable(void)
 	battery_sustainer_set(-1, -1);
 }
 
-test_export_static bool battery_sustainer_enabled(void)
+//test_export_static bool battery_sustainer_enabled(void)
+bool battery_sustainer_enabled(void)
 {
 	return sustain_soc.lower != -1 && sustain_soc.upper != -1;
 }
@@ -594,6 +595,9 @@ int set_chg_ctrl_mode(enum ec_charge_control_mode mode)
 	int current, voltage;
 	int rv;
 
+	CPRINTS("%s: Trying to switch control mode from %s to %s", __func__,
+		mode_text[local_state.chg_ctl_mode],
+		mode_text[mode]);
 	current = local_state.manual_current;
 	voltage = local_state.manual_voltage;
 
@@ -620,8 +624,10 @@ int set_chg_ctrl_mode(enum ec_charge_control_mode mode)
 
 	if (IS_ENABLED(CONFIG_CHARGER_DISCHARGE_ON_AC)) {
 		rv = charger_discharge_on_ac(discharge_on_ac);
-		if (rv != EC_SUCCESS)
+		if (rv != EC_SUCCESS) {
+			CPRINTS("%s: Returning due to failure of charger_discharge_on_ac() rv=%d", __func__, rv);
 			return rv;
+		}
 	}
 
 	/* Commit all atomically */
@@ -946,7 +952,8 @@ sustain_switch_mode(enum ec_charge_control_mode mode)
 			 * We come here only if the soc is already above the
 			 * upper limit at the time the sustainer started.
 			 */
-			new_mode = CHARGE_CONTROL_DISCHARGE;
+			//new_mode = CHARGE_CONTROL_DISCHARGE;
+			new_mode = CHARGE_CONTROL_IDLE;
 		} else if (sustain_soc.upper == soc) {
 			/*
 			 * We've been charging and finally reached the upper.
@@ -972,7 +979,8 @@ sustain_switch_mode(enum ec_charge_control_mode mode)
 			 * This can happen only if sustainer is restarted with
 			 * decreased upper limit. Let's discharge to the upper.
 			 */
-			new_mode = CHARGE_CONTROL_DISCHARGE;
+			//new_mode = CHARGE_CONTROL_DISCHARGE;
+			new_mode = CHARGE_CONTROL_IDLE;
 		break;
 	case CHARGE_CONTROL_DISCHARGE:
 		/* Discharging actively. */
@@ -1015,9 +1023,10 @@ static void sustain_battery_soc(void)
 		return;
 
 	rv = set_chg_ctrl_mode(new_mode);
-	CPRINTS("%s: %s control mode to %s", __func__,
+	CPRINTS("%s: %s control mode to %s, rv=%d", __func__,
 		rv == EC_SUCCESS ? "Switched" : "Failed to switch",
-		mode_text[new_mode]);
+		mode_text[new_mode],
+		rv);
 }
 
 static void current_limit_battery_soc(void)
@@ -1279,7 +1288,11 @@ static void process_ac_change(const int chgnum)
 			prev_ac = curr.ac;
 	} else {
 		/* Some things are only meaningful on AC */
-		set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+		int rv = set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
+		CPRINTS("%s: %s control mode to %s, rv=%d", __func__,
+			rv == EC_SUCCESS ? "Switched" : "Failed to switch",
+			mode_text[CHARGE_CONTROL_NORMAL],
+			rv);
 		battery_seems_dead = 0;
 		prev_ac = curr.ac;
 
@@ -2156,8 +2169,8 @@ charge_command_charge_control(struct host_cmd_handler_args *args)
 				 * components are updated to v3.
 				 */
 				if (sustain_soc.lower < sustain_soc.upper)
-					sustain_soc.flags =
-						EC_CHARGE_CONTROL_FLAG_NO_IDLE;
+					sustain_soc.flags = 0;
+						//EC_CHARGE_CONTROL_FLAG_NO_IDLE;
 			} else {
 				sustain_soc.flags = p->flags;
 			}
@@ -2177,6 +2190,10 @@ charge_command_charge_control(struct host_cmd_handler_args *args)
 	}
 
 	rv = set_chg_ctrl_mode(p->mode);
+	CPRINTS("%s: %s control mode to %s, rv=%d", __func__,
+		rv == EC_SUCCESS ? "Switched" : "Failed to switch",
+		mode_text[p->mode],
+		rv);
 	if (rv != EC_SUCCESS)
 		return EC_RES_ERROR;
 
@@ -2421,6 +2438,10 @@ static int command_chgstate(int argc, const char **argv)
 				return EC_ERROR_PARAM2;
 			rv = set_chg_ctrl_mode(val ? CHARGE_CONTROL_IDLE :
 						     CHARGE_CONTROL_NORMAL);
+			CPRINTS("%s: %s control mode to %s, rv=%d", __func__,
+				rv == EC_SUCCESS ? "Switched" : "Failed to switch",
+				mode_text[val ? CHARGE_CONTROL_IDLE : CHARGE_CONTROL_NORMAL],
+				rv);
 			if (rv)
 				return rv;
 		} else if (!strcasecmp(argv[1], "discharge")) {
@@ -2430,6 +2451,10 @@ static int command_chgstate(int argc, const char **argv)
 				return EC_ERROR_PARAM2;
 			rv = set_chg_ctrl_mode(val ? CHARGE_CONTROL_DISCHARGE :
 						     CHARGE_CONTROL_NORMAL);
+			CPRINTS("%s: %s control mode to %s, rv=%d", __func__,
+				rv == EC_SUCCESS ? "Switched" : "Failed to switch",
+				mode_text[val ? CHARGE_CONTROL_DISCHARGE : CHARGE_CONTROL_NORMAL],
+				rv);
 			if (rv)
 				return rv;
 		} else if (IS_ENABLED(CONFIG_CHARGE_DEBUG) &&

@@ -3678,7 +3678,7 @@
 #undef CONFIG_POLLING_UART
 
 /* Define length of history buffer for port80 messages. */
-#define CONFIG_PORT80_HISTORY_LEN 128
+#define CONFIG_PORT80_HISTORY_LEN 4096
 
 /*
  * Enable/Disable printing of port80 messages in interrupt context. By default,
