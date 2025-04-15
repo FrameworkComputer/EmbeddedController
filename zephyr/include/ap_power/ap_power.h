@@ -26,6 +26,10 @@
 
 #include <zephyr/kernel.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief AP power events for callback notification.
  */
@@ -157,7 +161,7 @@ typedef void (*ap_power_ev_callback_handler_t)(struct ap_power_ev_callback *cb,
 struct ap_power_ev_callback {
 	sys_snode_t node; /* Only usable by AP power event code */
 	ap_power_ev_callback_handler_t handler;
-	enum ap_power_events events; /* Events to listen for */
+	uint32_t events; /* Events to listen for */
 };
 /** @endcond */
 
@@ -171,7 +175,7 @@ struct ap_power_ev_callback {
 static inline void
 ap_power_ev_init_callback(struct ap_power_ev_callback *cb,
 			  ap_power_ev_callback_handler_t handler,
-			  enum ap_power_events events)
+			  uint32_t events)
 {
 	__ASSERT(cb, "Callback pointer should not be NULL");
 	__ASSERT(handler, "Callback handler pointer should not be NULL");
@@ -186,8 +190,7 @@ ap_power_ev_init_callback(struct ap_power_ev_callback *cb,
  * @param callback A valid ap_power_ev_callback structure pointer.
  * @param events The bitmask of events to add.
  */
-void ap_power_ev_add_events(struct ap_power_ev_callback *cb,
-			    enum ap_power_events events);
+void ap_power_ev_add_events(struct ap_power_ev_callback *cb, uint32_t events);
 
 /**
  * @brief Update a callback event mask to remove events
@@ -196,7 +199,7 @@ void ap_power_ev_add_events(struct ap_power_ev_callback *cb,
  * @param events The bitmask of events to remove.
  */
 static inline void ap_power_ev_remove_events(struct ap_power_ev_callback *cb,
-					     enum ap_power_events events)
+					     uint32_t events)
 {
 	__ASSERT(cb, "Callback pointer should not be NULL");
 
@@ -218,5 +221,9 @@ int ap_power_ev_add_callback(struct ap_power_ev_callback *cb);
  * @return 0 on success, negative errno on failure.
  */
 int ap_power_ev_remove_callback(struct ap_power_ev_callback *cb);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __AP_POWER_AP_POWER_H__ */
