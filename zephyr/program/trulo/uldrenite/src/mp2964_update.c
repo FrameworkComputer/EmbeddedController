@@ -3,11 +3,17 @@
  * found in the LICENSE file.
  */
 /* Tune the MP2964 IMVP9.1 parameters for yaviks */
+#include "ap_power/ap_power.h"
 #include "charger.h"
 #include "common.h"
 #include "driver/mp2964.h"
 #include "hooks.h"
 #include "i2c.h"
+
+#include <zephyr/init.h>
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_DECLARE(mp2964, CONFIG_LOG_DEFAULT_LEVEL);
 
 const static struct mp2964_reg_val rail_a[] = {
 	{ 0x00, 0x0000 }, { 0x01, 0x0080 }, { 0x07, 0x0000 }, { 0x0a, 0x0000 },
@@ -61,26 +67,32 @@ const static struct mp2964_reg_val rail_b[] = {
 	{ 0xa3, 0x000a }, { 0xb0, 0x18a6 },
 };
 
-static void mp2964_on_startup(void)
+static void mp2964_pre_init(struct ap_power_ev_callback *cb,
+			    struct ap_power_ev_data data)
 {
-	static int chip_updated;
 	int status;
 
-	if (chip_updated)
-		return;
+	/* Only run this once */
+	ap_power_ev_remove_callback(cb);
 
-	chip_updated = 1;
-
-#ifdef CONFIG_PLATFORM_EC_BRINGUP
-	ccprintf("%s: attempting to tune PMIC\n", __func__);
-#endif /* CONFIG_PLATFORM_EC_BRINGUP */
+	LOG_DBG("attempting to tune PMIC");
 
 	status = mp2964_tune(rail_a, ARRAY_SIZE(rail_a), rail_b,
 			     ARRAY_SIZE(rail_b));
-#ifdef CONFIG_PLATFORM_EC_BRINGUP
-	ccprintf("%s: PMIC update done with all cell setting\n", __func__);
-#endif /* CONFIG_PLATFORM_EC_BRINGUP */
-	if (status != EC_SUCCESS)
-		ccprintf("%s: could not update all settings\n", __func__);
+
+	LOG_DBG("PMIC update done with all cell setting");
+
+	if (status != EC_SUCCESS) {
+		LOG_ERR("could not update all settings");
+	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, mp2964_on_startup, HOOK_PRIO_FIRST);
+
+static int mp2964_init(void)
+{
+	static struct ap_power_ev_callback cb;
+
+	ap_power_ev_init_callback(&cb, mp2964_pre_init, AP_POWER_PRE_INIT);
+	ap_power_ev_add_callback(&cb);
+	return 0;
+}
+SYS_INIT(mp2964_init, APPLICATION, 1);
