@@ -195,7 +195,5 @@
 		 * be enabled at initial stage
 		 */
 		sensor-irqs = <&int_imu &int_lid_imu>;
-		/* list of sensors in force mode */
-		accel-force-mode-sensors = <&base_accel>;
 	};
 };
