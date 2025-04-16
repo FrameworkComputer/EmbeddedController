@@ -27,7 +27,7 @@
 #include "thermal.h"
 #include "fan.h"
 #include "board_thermal.h"
-
+#include "ucsi.h"
 #include "gpu.h"
 
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
@@ -1043,6 +1043,13 @@ void gpu_module_gpio_safe(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
 
 }
+
+void update_ucsi_pd_mapping(void)
+{
+	setup_ucsi_pd_mapping();
+}
+DECLARE_DEFERRED(update_ucsi_pd_mapping);
+
 void deinit_gpu_module(void)
 {
 	gpu_cfg_descriptor_valid = 0;
@@ -1073,6 +1080,7 @@ void deinit_gpu_module(void)
 	thermal_params[2].temp_fan_max = C_TO_K(62); /* QTH1 */
 	thermal_params[2].temp_fan_off = C_TO_K(47); /* QTH1 */
 
+	hook_call_deferred(&update_ucsi_pd_mapping_data, 500 * MSEC);
 }
 
 void init_gpu_module(void)

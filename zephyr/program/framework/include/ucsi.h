@@ -66,4 +66,5 @@ int ucsi_startup(int controller);
 void ucsi_set_debug(bool enable);
 void check_ucsi_event_from_host(void);
 void record_ucsi_connector_change_event(int controller, int port);
+void setup_ucsi_pd_mapping(void);
 #endif	/* __CROS_EC_UCSI_H */

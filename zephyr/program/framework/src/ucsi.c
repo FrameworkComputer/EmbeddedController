@@ -36,6 +36,8 @@ static int ucsi_debug_enable;
 static uint8_t s0ix_connector_change_indicator;
 static bool read_complete;
 static int pd_ucsi_port_map[PD_PORT_COUNT];
+static int active_pd_chip_count;
+static int valid_ucsi_port_count;
 
 void ucsi_set_debug(bool enable)
 {
@@ -102,7 +104,7 @@ int ucsi_write_tunnel(void)
 		CPRINTS("UCSI PPM_RESET");
 	}
 
-	for (int i = 0; i < PD_CHIP_COUNT; i++)
+	for (int i = 0; i < active_pd_chip_count; i++)
 		pd_chip_ucsi_info[i].read_tunnel_complete = 0;
 
 	switch (*command) {
@@ -133,10 +135,10 @@ int ucsi_write_tunnel(void)
 		change_connector_indicator =
 			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset) & 0x7f;
 
-		if (change_connector_indicator > PD_PORT_COUNT ||
+		if (change_connector_indicator > valid_ucsi_port_count ||
 			change_connector_indicator == 0) {
 			/* Print the invalid port for debugging */
-			if (ucsi_debug_enable && change_connector_indicator > PD_PORT_COUNT)
+			if (ucsi_debug_enable && change_connector_indicator > valid_ucsi_port_count)
 				CPRINTS("UCSI write invalid type-c port:%d",
 					change_connector_indicator);
 		} else {
@@ -155,7 +157,7 @@ int ucsi_write_tunnel(void)
 		rv = cypd_write_reg_block(controller, CCG_CONTROL_REG, command, 8);
 		break;
 	default:
-		for (int i = 0; i < PD_CHIP_COUNT; i++) {
+		for (int i = 0; i < active_pd_chip_count; i++) {
 
 			/**
 			 * If the controller does not needs to respond ACK,
@@ -283,7 +285,7 @@ static int ucsi_check_all_pd_status(int operator)
 
 	/* or operator = 0; and operator = 1 */
 	if (operator) {
-		for (controller = 0; controller < PD_CHIP_COUNT; controller++) {
+		for (controller = 0; controller < active_pd_chip_count; controller++) {
 			/**
 			 * In the and operator condition,
 			 * if one pd chip does not complete the read tunnel, return false
@@ -296,7 +298,7 @@ static int ucsi_check_all_pd_status(int operator)
 		return true;
 	}
 
-	for (controller = 0; controller < PD_CHIP_COUNT; controller++) {
+	for (controller = 0; controller < active_pd_chip_count; controller++) {
 		/**
 		 * In the or operator condition,
 		 * if one pd chip has completed the read tunnel, return true
@@ -482,7 +484,7 @@ void check_ucsi_event_from_host(void)
 	/* If the UCSI interface previously was busy then
 	 * poll to see if the busy bit cleared
 	 */
-	for (i = 0; i < PD_CHIP_COUNT; i++) {
+	for (i = 0; i < active_pd_chip_count; i++) {
 		if (pd_chip_ucsi_info[i].cci & CCI_BUSY_FLAG) {
 			ucsi_read_tunnel(i);
 		}
@@ -513,7 +515,7 @@ void check_ucsi_event_from_host(void)
 				command_names(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND)));
 		}
 
-		for (i = 0; i < PD_CHIP_COUNT; i++) {
+		for (i = 0; i < active_pd_chip_count; i++) {
 			if (pd_chip_ucsi_info[i].read_tunnel_complete) {
 				message_in = pd_chip_ucsi_info[i].message_in;
 				cci = &pd_chip_ucsi_info[i].cci;
@@ -529,7 +531,7 @@ void check_ucsi_event_from_host(void)
 		 * both controllers
 		 */
 		if (ucsi_check_all_pd_status(OPERATOR_AND)) {
-			for (i = 0; i < PD_CHIP_COUNT; i++) {
+			for (i = 0; i < active_pd_chip_count; i++) {
 				if (pd_chip_ucsi_info[i].cci & 0xFE) {
 					message_in = pd_chip_ucsi_info[i].message_in;
 					cci = &pd_chip_ucsi_info[i].cci;
@@ -557,9 +559,10 @@ void check_ucsi_event_from_host(void)
 
 		/* override bNumConnectors to the total number of connectors on the system */
 		if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND) == UCSI_CMD_GET_CAPABILITY)
-			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_MESSAGE_IN + 4) = PD_PORT_COUNT;
+			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_MESSAGE_IN + 4) =
+				valid_ucsi_port_count;
 
-		for (i = 0; i < PD_CHIP_COUNT; i++)
+		for (i = 0; i < active_pd_chip_count; i++)
 			pd_chip_ucsi_info[i].read_tunnel_complete = 0;
 
 		/* clear the UCSI command if busy flag is not set */
@@ -575,14 +578,29 @@ void check_ucsi_event_from_host(void)
  * Map the UCSI port to the PD port, so that we can use the PD port_id
  * to find the UCSI port number
  */
-static void ucsi_pd_port_mapping(void)
+void ucsi_pd_port_mapping(void)
 {
 	int port_idx;
+	valid_ucsi_port_count = 0;
 
-	for (int i = 0; i < PD_PORT_COUNT; i++) {
+	for (int i = 0; i < active_pd_chip_count; i++) {
+		valid_ucsi_port_count += pd_chip_config[i].support_max_port;
+	}
+
+	for (int i = 0; i < valid_ucsi_port_count; i++) {
 		port_idx = (ucsi_pd_port_map[i].pd_controller * 2) +
 			ucsi_pd_port_map[i].pd_controller_port;
 		pd_ucsi_port_map[port_idx-1] = i+1;
 	}
 }
-DECLARE_HOOK(HOOK_INIT, ucsi_pd_port_mapping, HOOK_PRIO_DEFAULT);
+
+void setup_ucsi_pd_mapping(void)
+{
+	active_pd_chip_count = cypd_get_active_pd_chip_count();
+	ucsi_pd_port_mapping();
+	if (ucsi_debug_enable) {
+		CPRINTS("PD mapping setup: active_chips=%d, valid_ports=%d",
+			active_pd_chip_count, valid_ucsi_port_count);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, setup_ucsi_pd_mapping, HOOK_PRIO_DEFAULT);
