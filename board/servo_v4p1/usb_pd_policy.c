@@ -1350,7 +1350,9 @@ static int command_cc(int argc, const char **argv)
 }
 DECLARE_CONSOLE_COMMAND(cc, command_cc,
 			"[off|on|src|snk|pdsnk|drp|srcdts|snkdts|pdsnkdts|"
-			"drpdts|dtsoff|dtson|emca|nonemca] [cc1|cc2]",
+			"drpdts|dtsoff|dtson|emca|nonemca|nopdsrcdts3A0|"
+			"nopdsrcdts1A5|nopdsrcdtsusb|nopdsrc3A0|nopdsrc1A5|"
+			"nopdsrcusb] [cc1|cc2]",
 			"Servo_v4 DTS and CHG mode");
 
 static void fake_disconnect_end(void)
