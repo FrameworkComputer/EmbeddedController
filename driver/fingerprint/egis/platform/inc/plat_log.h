@@ -72,10 +72,6 @@ void output_log(LOG_LEVEL level, const char *tag, const char *file_name,
  *
  */
 void set_debug_level(LOG_LEVEL level);
-#if defined(SDK_EVTOOL_DEBUG) || defined(SDK_ALGO_MODULE_MODE)
-#include "common_definition.h"
-void set_debug_log_callback(event_callback_t event_callback);
-#endif
 
 #define egislog_e(format, args...) egislog(LOG_ERROR, format, ##args)
 #define egislog_d(format, args...) egislog(LOG_DEBUG, format, ##args)
