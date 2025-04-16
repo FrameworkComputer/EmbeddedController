@@ -59,5 +59,9 @@ rsmrst_pwrgd: &gpio_ec_rsmrst_odl {};
 		c-ec-kso-02-inv {
 			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
+		gpio_c_ec_pdb_ctrl: c_ec_pdb_ctrl {
+			/* Power down audio AMP, N/C on PTL */
+			gpios = <&gpiod 1 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_ACTIVE)>;
+		};
 	};
 };
