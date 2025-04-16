@@ -7,6 +7,7 @@
 #include "../npcx_generated.dtsi"
 #include "../interrupts.dtsi"
 #include "../npcx_common.dtsi"
+#include "../npcx_default_gpio_pinctrl.dtsi"
 #include "../npcx_keyboard.dtsi"
 #include "../npcx_overlay.dtsi"
 #include "../npcx_usbc.dtsi"
