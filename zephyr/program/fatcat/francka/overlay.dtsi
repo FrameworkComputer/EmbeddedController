@@ -44,19 +44,19 @@
 	label = "I2C_PORT_PD";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 
-	pdc_power_p0: rts54-pdc@67 {
-		compatible = "realtek,rts54-pdc";
-		reg = <0x67>;
-		irq-gpios = <&gpioc 1 GPIO_ACTIVE_LOW>;
-		zephyr,deferred-init;
-	};
-	pdc_power_p1: rts54-pdc@66 {
+	pdc_power_p0: rts54-pdc@66 {
 		compatible = "realtek,rts54-pdc";
 		reg = <0x66>;
 		irq-gpios = <&gpioc 1 GPIO_ACTIVE_LOW>;
-		no-fw-update;
 		zephyr,deferred-init;
 		ccd;
+	};
+	pdc_power_p1: rts54-pdc@67 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x67>;
+		irq-gpios = <&gpioc 1 GPIO_ACTIVE_LOW>;
+		no-fw-update;
+		zephyr,deferred-init;
 	};
 
 	pdc_power_p0_ti: tps6699-pdc@20 {
