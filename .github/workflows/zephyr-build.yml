@@ -30,7 +30,7 @@ jobs:
           # Marigold builder uses same folder for all
           # Not official release on track-upstream branch.
           # And need to use zephyr on track-upstream as well
-          { name: dogwood, folder: marigold2, ver: "2.0.1", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
+          { name: dogwood, folder: marigold2, ver: "2.0.2", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           { name: marigold, folder: marigold2, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           # Lotus and Azalea official releases are NOT coming from this branch
           { name: lotus, folder: marigold2, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
