@@ -13,11 +13,22 @@
 
 #include <ap_power/ap_power.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
- * @brief Dispatch callbacks for an event.
+ * @brief Dispatch callbacks for an event(s).
  *
- * @param event The event to invoke callbacks for.
+ * The event parameter should be a bitmap by or'ing one or more
+ * ap_power_events.
+ *
+ * @param event The event(s) to invoke callbacks for.
  */
-void ap_power_ev_send_callbacks(enum ap_power_events event);
+void ap_power_ev_send_callbacks(uint32_t event);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __AP_POWER_AP_EVENTS_H__ */

@@ -58,7 +58,7 @@ void ap_power_ev_add_events(struct ap_power_ev_callback *cb, uint32_t events)
 /*
  * Run the callback list
  */
-void ap_power_ev_send_callbacks(enum ap_power_events event)
+void ap_power_ev_send_callbacks(uint32_t event)
 {
 	struct ap_power_ev_data data;
 	struct ap_power_ev_callback *cb, *tmp;
