@@ -22,7 +22,9 @@
 		/delete-node/ volup_btn_odl;
 		/delete-node/ voldn_btn_odl;
 		/delete-node/ ccd_mode_odl;
-
+		/delete-node/ all_sys_pwrgd;
+		/delete-node/ ec_pwr_btn_odl;
+		/delete-node/ imvp91_vrrdy_r_od;
 
 		gpio_ec_acok_od: ec_acok_od {
 			gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
@@ -31,10 +33,6 @@
 		gpio_ec_edp_bl_en_od: ec_edp_bl_en_od {
 			gpios = <&gpiod 3 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
-		};
-		gpio_imvp91_vrrdy_od_ec: imvp91_vrrdy_od_ec {
-			gpios = <&gpio6 6 GPIO_INPUT>;
-			no-auto-init;
 		};
 		gpio_en_usb_a0_vbus: en_usb_a0_vbus {
 			gpios = <&gpio9 1 GPIO_OUTPUT>;
@@ -71,6 +69,16 @@
 		};
 		gpio_sen_mode2_ec_ish_int_odl: sen_mode2_ec_ish_int_odl {
 			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_OUTPUT)>;
+		};
+		gpio_all_sys_pwrgd: all_sys_pwrgd {
+			gpios = <&gpioa 7 (GPIO_INPUT)>;
+		};
+		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
+			gpios = <&gpio0 0 (GPIO_INPUT)>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_imvp91_vrrdy_r_od: imvp91_vrrdy_r_od {
+			gpios = <&gpio6 6 (GPIO_INPUT)>;
 		};
 	};
 
