@@ -14,7 +14,6 @@
 
 /delete-node/ &int_volume_up;
 /delete-node/ &int_volume_down;
-/delete-node/ &int_wp;
 /delete-node/ &int_spi0_cs;
 /delete-node/ &int_ccd_mode_odl;
 /delete-node/ &int_lid_360;
@@ -22,10 +21,6 @@
 
 /* no need to maintain the unused-pins list in test code */
 /delete-node/ &{/unused-pins};
-
-&{/aliases} {
-	/delete-property/ int-wp;
-};
 
 /* open-drain is not supported in gpio emul, re-config to push-pull  */
 &ec_pmic_en_odl {

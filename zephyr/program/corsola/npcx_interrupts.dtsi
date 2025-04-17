@@ -8,10 +8,6 @@
  */
 
 / {
-	aliases {
-		int-wp = &int_wp;
-	};
-
 	gpio-interrupts {
 		compatible = "cros-ec,gpio-interrupts";
 
@@ -64,11 +60,6 @@
 			irq-pin = <&gpio_ap_xhci_init_done>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "xhci_interrupt";
-		};
-		int_wp: wp {
-			irq-pin = <&gpio_ec_wp_l>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "switch_interrupt";
 		};
 		int_usb_c0_ppc: usb_c0_ppc {
 			irq-pin = <&gpio_usb_c0_ppc_int_odl>;

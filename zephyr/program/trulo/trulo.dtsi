@@ -18,11 +18,6 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_button_interrupt";
 		};
-		int_wp_l: wp_l {
-			irq-pin = <&gpio_ec_wp_odl>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "switch_interrupt";
-		};
 		int_lid_open: lid_open {
 			irq-pin = <&gpio_lid_open>;
 			flags = <GPIO_INT_EDGE_BOTH>;

@@ -11,7 +11,6 @@
 	aliases {
 		gpio-cbi-wp = &gpio_ec_cbi_wp;
 		gpio-wp = &gpio_ec_wp_odl;
-		int-wp = &int_wp_l;
 		/*
 		 * USB-C: interrupt input.
 		 * I2C pins are on i2c_ec_i2c_sub_usb_c1
@@ -74,11 +73,6 @@
 			irq-pin = <&gpio_volup_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "button_interrupt";
-		};
-		int_wp_l: wp_l {
-			irq-pin = <&gpio_ec_wp_odl>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "switch_interrupt";
 		};
 		int_lid_open: lid_open {
 			irq-pin = <&gpio_lid_open>;

@@ -18,16 +18,11 @@
 /delete-node/ &int_volume_down;
 /delete-node/ &int_tablet_mode;
 /delete-node/ &int_xhci;
-/delete-node/ &int_wp;
 /delete-node/ &int_spi0_cs;
 /delete-node/ &int_x_ec_gpio2;
 /delete-node/ &int_ccd_mode_odl;
 /delete-node/ &int_base_imu;
 /delete-node/ &int_lid_imu;
-
-&{/aliases} {
-	/delete-property/ int-wp;
-};
 
 / {
 	aliases {

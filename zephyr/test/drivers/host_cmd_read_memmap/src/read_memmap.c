@@ -10,10 +10,6 @@
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
 
-#ifndef CONFIG_PLATFORM_EC_SWITCH
-FAKE_VOID_FUNC(switch_interrupt, int);
-#endif
-
 ZTEST(ec_cmd_read_memmap, test_id)
 {
 	struct ec_params_read_memmap params = {

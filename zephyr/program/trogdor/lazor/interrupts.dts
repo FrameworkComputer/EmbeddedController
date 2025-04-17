@@ -4,10 +4,6 @@
  */
 
 / {
-	aliases {
-		int-wp = &int_wp;
-	};
-
 	gpio-interrupts {
 		compatible = "cros-ec,gpio-interrupts";
 
@@ -20,11 +16,6 @@
 			irq-pin = <&gpio_lid_open_ec>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "lid_interrupt";
-		};
-		int_wp: wp {
-			irq-pin = <&gpio_ec_wp_odl>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "switch_interrupt";
 		};
 		int_power_button: power_button {
 			irq-pin = <&gpio_ec_pwr_btn_odl>;

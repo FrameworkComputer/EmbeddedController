@@ -77,11 +77,6 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "xhci_interrupt";
 		};
-		int_wp: wp {
-			irq-pin = <&gpio_ec_flash_wp_odl>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "switch_interrupt";
-		};
 		int_tablet_mode: tablet_mode {
 			irq-pin = <&gpio_lid_360_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
