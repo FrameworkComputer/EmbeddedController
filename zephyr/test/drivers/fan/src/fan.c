@@ -283,6 +283,27 @@ ZTEST(fan_common, test_fan_hc_set_duty_v1_bad_fan)
 	zassert_equal(host_command_process(&args), EC_RES_ERROR);
 }
 
+ZTEST(fan_common, test_fan_hc_get_duty)
+{
+	struct ec_params_pwm_get_fan_duty req = { .fan_idx = 0 };
+	struct ec_response_pwm_get_fan_duty resp;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_PWM_GET_FAN_DUTY, 0, resp, req);
+
+	zassert_ok(host_command_process(&args));
+	zassert_equal(resp.percent, fan_get_duty(0));
+}
+
+ZTEST(fan_common, test_fan_hc_get_duty_bad)
+{
+	struct ec_params_pwm_get_fan_duty req = { .fan_idx = 80 };
+	struct ec_response_pwm_get_fan_duty resp;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_PWM_GET_FAN_DUTY, 0, resp, req);
+
+	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM);
+}
+
 void set_thermal_control_enabled(int fan, int enable);
 
 ZTEST(fan_common, test_fan_hc_set_auto_fan_v0)

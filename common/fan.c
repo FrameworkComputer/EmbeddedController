@@ -485,6 +485,21 @@ static enum ec_status hc_pwm_set_fan_duty(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_FAN_DUTY, hc_pwm_set_fan_duty,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
+static enum ec_status hc_pwm_get_fan_duty(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_pwm_get_fan_duty *req = args->params;
+	struct ec_response_pwm_get_fan_duty *resp = args->response;
+
+	if (req->fan_idx >= fan_count)
+		return EC_RES_INVALID_PARAM;
+
+	resp->percent = fan_get_duty(FAN_CH(req->fan_idx));
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_FAN_DUTY, hc_pwm_get_fan_duty,
+		     EC_VER_MASK(0));
+
 static enum ec_status
 hc_thermal_auto_fan_ctrl(struct host_cmd_handler_args *args)
 {
