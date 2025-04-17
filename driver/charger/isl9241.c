@@ -1255,11 +1255,11 @@ static void isl9241_init(int chgnum)
 	 * [15:13]: Trickle Charging Current (battery pre-charge current)
 	 * [10:9] : Prochot# Debounce time (1000us)
 	 */
-	if (isl9241_update(
-		    chgnum, ISL9241_REG_CONTROL2,
-		    (ISL9241_CONTROL2_TRICKLE_CHG_CURR(bi->precharge_current) |
-		     ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000),
-		    MASK_SET))
+	if (isl9241_update(chgnum, ISL9241_REG_CONTROL2,
+			   (ISL9241_CONTROL2_TRICKLE_CHG_CURR(
+				    BC_CURRENT_TO_REG(bi->precharge_current)) |
+			    ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000),
+			   MASK_SET))
 		goto init_fail;
 
 	/*
