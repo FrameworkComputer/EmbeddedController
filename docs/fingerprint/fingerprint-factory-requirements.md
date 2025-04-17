@@ -140,7 +140,7 @@ The module testing procedure is documented in the following:
 
 In-device tests are run during the `FATP` process once the device has been fully
 assembled. Google provides source code for these tests in
-[`fingerprint_mcu.py`].
+[`fingerprint_sensor_fpc.py`].
 
 Hardware Required: ChromeOS DUT before finalization.
 
@@ -185,7 +185,7 @@ Copy the second checkerboard image to a different file:
 
 Perform median analysis on the resulting image as described in the `MTS`
 document. The factory toolkit does this in
-[`fingerprint_mcu.py`][Checkerboard Test].
+[`fingerprint_sensor_fpc.py`][Checkerboard Test].
 
 <!-- mdformat off(b/139308852) -->
 *** note
@@ -213,7 +213,7 @@ the FPC `MTS` document for the sensor being tested.
 
 This is implemented by the FPMCU on every boot. The results can be checked with
 the `ectool` command. The factory toolkit does this in
-[`fpmcu_utils.py`][GetSensorIdErrors].
+[`fpmcu_utils.py`][ValidateFpinfoNoErrorFlags].
 
 ##### Success/Failure
 
@@ -240,7 +240,7 @@ the correct sensor has been assembled.
 
 `ectool` can be used to request the hardware ID, which can be compared with the
 expected hardware ID. The factory toolkit does this in
-[`fpmcu_utils.py`][GetSensorId].
+[`fpmcu_utils.py`][GetFpSensorInfo].
 
 ##### Success/Failure
 
@@ -267,7 +267,7 @@ deviation to the median is within the specified range.
 ##### Implementation
 
 Capture the test image with `ectool` and analyze the output. The factory toolkit
-does this in [`fingerprint_mcu.py`][ProcessResetPixelImage].
+does this in [`fingerprint_sensor_fpc.py`][ProcessResetPixelImage].
 
 Switch to correct capture mode and wait:
 
@@ -325,7 +325,8 @@ Error, MQT status : (5)
 MQT failed (-1)
 ```
 
-The factory toolkit does this in [`fingerprint_mcu.py`][rubber_finger_present].
+The factory toolkit does this in
+[`fingerprint_sensor_fpc.py`][rubber_finger_present].
 
 ##### Success/Failure
 
@@ -477,14 +478,14 @@ Wrote /tmp/fp.1.png (14025 bytes)
 [FPC1025: Module Test Specification]: http://go/cros-fingerprint-fpc1025-module-test-spec
 [FPC1145: Module Test Specification]: http://go/cros-fingerprint-fpc1145-module-test-spec
 [FPC In-Device Test Specification]: http://go/cros-fingerprint-fpc-indevice-test-spec
-[`fingerprint_mcu.py`]: https://chromium.googlesource.com/chromiumos/platform/factory/+/HEAD/py/test/pytests/fingerprint_mcu.py
-[Checkerboard Test]: https://chromium.googlesource.com/chromiumos/platform/factory/+/d23ebc7eeb074760e8a720e3acac4cfe4073b2ae/py/test/pytests/fingerprint_mcu.py#166
-[GetSensorIdErrors]: https://chromium.googlesource.com/chromiumos/platform/factory/+/d23ebc7eeb074760e8a720e3acac4cfe4073b2ae/py/test/utils/fpmcu_utils.py#73
-[GetSensorId]: https://chromium.googlesource.com/chromiumos/platform/factory/+/d23ebc7eeb074760e8a720e3acac4cfe4073b2ae/py/test/utils/fpmcu_utils.py#65
-[ProcessResetPixelImage]: https://chromium.googlesource.com/chromiumos/platform/factory/+/d23ebc7eeb074760e8a720e3acac4cfe4073b2ae/py/test/pytests/fingerprint_mcu.py#268
-[rubber_finger_present]: https://chromium.googlesource.com/chromiumos/platform/factory/+/d23ebc7eeb074760e8a720e3acac4cfe4073b2ae/py/test/pytests/fingerprint_mcu.py#330
+[`fingerprint_sensor_fpc.py`]: https://crsrc.org/o/src/platform/factory/py/test/pytests/fingerprint_sensor_fpc.py;drc=2de02068b2b373dff85e52025c143d7c7698f918
+[Checkerboard Test]: https://crsrc.org/o/src/platform/factory/py/test/pytests/fingerprint_sensor_fpc.py;l=237-304;drc=2de02068b2b373dff85e52025c143d7c7698f918
+[ValidateFpinfoNoErrorFlags]: https://crsrc.org/o/src/platform/factory/py/test/utils/fpmcu_utils.py;l=236-256;drc=ad468eb986e8c9717248a41ae54ca1602ceb48bf
+[GetFpSensorInfo]: https://crsrc.org/o/src/platform/factory/py/test/utils/fpmcu_utils.py;l=258-280;drc=ad468eb986e8c9717248a41ae54ca1602ceb48bf
+[ProcessResetPixelImage]: https://crsrc.org/o/src/platform/factory/py/test/pytests/fingerprint_sensor_fpc.py;l=337-343;drc=2de02068b2b373dff85e52025c143d7c7698f918
+[rubber_finger_present]: https://crsrc.org/o/src/platform/factory/py/test/pytests/fingerprint_sensor_fpc.py;l=473-502;drc=2de02068b2b373dff85e52025c143d7c7698f918
 [ChromeOS Fingerprint Team]: http://go/cros-fingerprint-docs
 [`flash_fp_mcu`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/util/flash_fp_mcu
 [ChromeOS Config]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md
 [updating ChromeOS Config]: ./fingerprint.md#update-chromeos-config
-[`update_fpmcu_firmware.py`]: https://crsrc.org/o/src/platform/factory/py/test/pytests/update_fpmcu_firmware.py;drc=672e24bb3e2dd0dec7578dcd4c52805d022662d1
+[`update_fpmcu_firmware.py`]: https://crsrc.org/o/src/platform/factory/py/test/pytests/update_fpmcu_firmware.py;drc=d67bc648618088b1da7ba4eb98222b2944722080
