@@ -58,7 +58,7 @@
     <vif:DR_Swap_To_UFP_Supported value="false" />
     <vif:VCONN_Swap_To_On_Supported value="true" />
     <vif:VCONN_Swap_To_Off_Supported value="true" />
-    <vif:Responds_To_Discov_SOP_UFP value="false" />
+    <vif:Responds_To_Discov_SOP_UFP value="true" />
     <vif:Responds_To_Discov_SOP_DFP value="true" />
     <vif:Attempts_Discov_SOP value="true" />
     <vif:Power_Interruption_Available value="0">No Interruption Possible</vif:Power_Interruption_Available>
@@ -103,14 +103,14 @@
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;PD Source-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
-    <vif:PD_Power_As_Source value="7500">7500 mW</vif:PD_Power_As_Source>
+    <vif:PD_Power_As_Source value="15000">15000 mW</vif:PD_Power_As_Source>
     <vif:EPR_Supported_As_Src value="false" />
     <vif:USB_Suspend_May_Be_Cleared value="true" />
     <vif:Sends_Pings value="false" />
     <vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="0">FR_Swap not supported</vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
     <vif:Master_Port value="false" />
     <vif:Has_Invariant_PDOs value="true" />
-    <vif:Port_Managed_Guaranteed_Type value="1">Guaranteed Capability</vif:Port_Managed_Guaranteed_Type>
+    <vif:Port_Managed_Guaranteed_Type value="0">Managed Capability</vif:Port_Managed_Guaranteed_Type>
     <vif:Num_Src_PDOs value="1">1 Src PDO</vif:Num_Src_PDOs>
     <vif:PD_OC_Protection value="true" />
     <vif:PD_OCP_Method value="0">Over-Current Response</vif:PD_OCP_Method>
@@ -178,7 +178,7 @@
     <vif:DFP_VDO_Port_Number value="0">0</vif:DFP_VDO_Port_Number>
     <vif:Modal_Operation_Supported_SOP value="false" />
     <vif:USB_VID_SOP value="6353">18D1</vif:USB_VID_SOP>
-    <vif:PID_SOP value="20570">505A</vif:PID_SOP>
+    <vif:PID_SOP value="20572">505C</vif:PID_SOP>
     <vif:bcdDevice_SOP value="0">0000</vif:bcdDevice_SOP>
   </vif:Component>
 </vif:VIF>
