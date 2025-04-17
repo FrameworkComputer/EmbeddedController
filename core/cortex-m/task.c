@@ -255,6 +255,9 @@ task_id_t task_get_current(void)
 	/* If we haven't done a context switch then our task ID isn't valid */
 	ASSERT(current_task != (task_ *)scratchpad);
 #endif
+	/* Check if current_task is valid */
+	if (current_task == (task_ *)scratchpad)
+		return TASK_ID_INVALID;
 	return current_task - tasks;
 }
 
