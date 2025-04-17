@@ -155,7 +155,7 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
  * CCG6 Setup Functions
  ****************************************************************/
 
-#define CYPD_SETUP_CMDS_LEN 4
+#define CYPD_SETUP_CMDS_LEN 2
 int cypd_setup(int controller)
 {
 	/*
@@ -176,10 +176,6 @@ int cypd_setup(int controller)
 		int status_reg;
 	} const cypd_setup_cmds[] = {
 		/* Set the port event mask */
-		/* Set the port 0 PDO 1.5A */
-		{ CCG_PD_CONTROL_REG(0), CCG_PD_CMD_SET_TYPEC_1_5A, CCG_PORT0_INTR},
-		/* Set the port 1 PDO 1.5A */
-		{ CCG_PD_CONTROL_REG(1), CCG_PD_CMD_SET_TYPEC_1_5A, CCG_PORT1_INTR},
 		{ CCG_EVENT_MASK_REG(0), 0x27ffff, 4, CCG_PORT0_INTR},
 		{ CCG_EVENT_MASK_REG(1), 0x27ffff, 4, CCG_PORT1_INTR },
 	};
