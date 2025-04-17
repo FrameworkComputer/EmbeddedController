@@ -58,13 +58,22 @@ int update_charger_in_cutoff_mode(void)
 	return EC_SUCCESS;
 }
 
+void set_charger_system_voltage(void)
+{
+	if (extpower_is_present() && battery_is_present() == BP_YES) {
+		bq25710_set_min_system_voltage(CHARGER_SOLO, 13200);
+	} else {
+		bq25710_set_min_system_voltage(CHARGER_SOLO, 17800);
+	}
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, set_charger_system_voltage, HOOK_PRIO_DEFAULT);
+
 static void charger_chips_init(void)
 {
 	uint32_t data = 0;
 	uint16_t option0 = BQ25770_CHARGE_OPTION_0_RESET_VALUE;
 	uint16_t option1 = 0x0000;
 	uint16_t option4 = 0x0000;
-	int value;
 	int idchg;
 
 	const struct battery_info *bi = battery_get_info();
@@ -96,6 +105,9 @@ static void charger_chips_init(void)
 	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
 		BQ25770_REG_GATEDRIVE, 0x4C4C))
 		goto init_fail;
+
+	/* 0x3E */
+	set_charger_system_voltage();
 
 	/* 0x31 */
 	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
@@ -136,11 +148,6 @@ static void charger_chips_init(void)
 		BQ25710_REG_INPUT_VOLTAGE, VINDPM_TO_REG(3200) << 2))
 		goto init_fail;
 
-	/* 0x3E */
-	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
-		BQ25710_REG_MIN_SYSTEM_VOLTAGE, 0x0A50))
-		goto init_fail;
-
 	/* 0x61 */
 	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
 		BQ25770_REG_AUTOTUNE_FORCE, 0xD2D2))
@@ -157,12 +164,6 @@ static void charger_chips_init(void)
 	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
 		BQ25710_REG_CHARGE_OPTION_0, option0))
 		goto init_fail;
-
-	value = battery_is_charge_fet_disabled();
-
-	/* reverse the flag if no error */
-	if (value != -1)
-		value = !value;
 
 	/* TODO: should we need to talk to PD chip after initial complete ? */
 	CPRINTS("BQ25770 customized initial complete!");
