@@ -56,6 +56,7 @@ register_trulo_project(
 
 register_trulo_project(
     project_name="pujjolo",
+    chip="npcx9/npcx9m7fb",
     kconfig_files=[
         # Common to all projects.
         here / "program.conf",
