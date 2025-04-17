@@ -34,7 +34,6 @@ For questions regarding this document, please contact the
 *   [FPC1025: Module Test Specification]
 *   [FPC1145: Module Test Specification]
 *   [FPC In-Device Test Specification]
-*   [Factory Fingerprint Sensor Testing for `nocturne` ]
 
 ## FPMCU Firmware Location
 
@@ -485,7 +484,6 @@ Wrote /tmp/fp.1.png (14025 bytes)
 [ProcessResetPixelImage]: https://chromium.googlesource.com/chromiumos/platform/factory/+/d23ebc7eeb074760e8a720e3acac4cfe4073b2ae/py/test/pytests/fingerprint_mcu.py#268
 [rubber_finger_present]: https://chromium.googlesource.com/chromiumos/platform/factory/+/d23ebc7eeb074760e8a720e3acac4cfe4073b2ae/py/test/pytests/fingerprint_mcu.py#330
 [ChromeOS Fingerprint Team]: http://go/cros-fingerprint-docs
-[Factory Fingerprint Sensor Testing for `nocturne`]: http://go/fingerprint-factory-testing-nocturne
 [`flash_fp_mcu`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/util/flash_fp_mcu
 [ChromeOS Config]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md
 [updating ChromeOS Config]: ./fingerprint.md#update-chromeos-config
