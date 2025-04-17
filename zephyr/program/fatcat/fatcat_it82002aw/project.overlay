@@ -26,8 +26,8 @@ i2c3ALT: &i2c3 {
 		/*
 		 * Aliases for power signal names
 		 */
-		en_pp3300_a: ec_ds3_r {};
-		en_pp5000_s5: bga_pinf4 {};
+		en_pp3300_a: en_ds3_r_en_s5_rails {};
+		en_pp5000_s5: gpio_en_pp5000_s5 {};
 		rsmrst_pwrgd: rsmrst_pwrgd_n_r {};
 		/*
 		 * TODO: b/386856132 - update schematics net names
@@ -36,7 +36,7 @@ i2c3ALT: &i2c3 {
 		pch_slp_s0_n: pch_slp_s0_n_r {};
 		ec_pch_pwrok_od: pch_pwrok_ec_r {};
 		all_sys_pwrgd: all_sys_pwrgd_r {};
-		pwrbtn: bga_pinb4 {};
+		pwrbtn: c_gsc_ec_pwr_btn_n {};
 	};
 };
 
@@ -74,9 +74,6 @@ i2c3ALT: &i2c3 {
 
 		c_ioex_kbd_intr_r {
 			enum-name = "GPIO_KB_DISCRETE_INT";
-		};
-		bga_pine5 {
-			enum-name = "GPIO_AC_PRESENT";
 		};
 		/* override since arb does not support GPIO_VOLTAGE_1P8 */
 		gpio_rsmrst_pwrgd_n_r: rsmrst_pwrgd_n_r {

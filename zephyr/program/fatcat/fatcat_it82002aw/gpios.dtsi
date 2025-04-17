@@ -7,10 +7,10 @@
  * Aliases to common names
  */
 gpio_ec_pch_wake_odl: &gpio_smc_wake_sci_n_r {};
-cse_early_rec_sw: &gpio_x00085 {};
+cse_early_rec_sw: &gpio_c_mecc_cse_early_sw_r {};
 std_adp_prsnt: &gpio_std_adp_prsnt_r {};
 gpio_pdc_pow_irq: &gpio_wc_usbc_pd_alrt_aic1_r {};
-bc_acok: &gpio_bga_pine5 {};
+bc_acok: &gpio_bc_acok {};
 
 vol_up_ec: &gpio_volume_up_r {};
 vol_dn_ec: &gpio_vol_dn_ec_r {};
