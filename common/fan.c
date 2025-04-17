@@ -504,7 +504,8 @@ static enum ec_status
 hc_thermal_auto_fan_ctrl(struct host_cmd_handler_args *args)
 {
 	int fan;
-	const struct ec_params_auto_fan_ctrl_v1 *p_v1 = args->params;
+	const struct ec_params_auto_fan_ctrl_v2 *req = args->params;
+	struct ec_response_auto_fan_control *resp = args->response;
 
 	if (args->version == 0) {
 		for (fan = 0; fan < fan_count; fan++)
@@ -513,16 +514,28 @@ hc_thermal_auto_fan_ctrl(struct host_cmd_handler_args *args)
 		return EC_RES_SUCCESS;
 	}
 
-	fan = p_v1->fan_idx;
+	/* v1 and v2 share the same fan_idx at same byte location. */
+	fan = req->fan_idx;
 	if (fan >= fan_count)
-		return EC_RES_ERROR;
+		return EC_RES_INVALID_PARAM;
 
-	set_thermal_control_enabled(fan, 1);
+	if (args->version == 1) {
+		set_thermal_control_enabled(fan, 1);
+		return EC_RES_SUCCESS;
+	}
+
+	if (req->cmd == EC_AUTO_FAN_CONTROL_CMD_SET) {
+		set_thermal_control_enabled(fan, req->set_auto);
+	} else if (req->cmd == EC_AUTO_FAN_CONTROL_CMD_GET) {
+		resp->is_auto = is_thermal_control_enabled(fan);
+	} else {
+		return EC_RES_INVALID_PARAM;
+	}
 
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_THERMAL_AUTO_FAN_CTRL, hc_thermal_auto_fan_ctrl,
-		     EC_VER_MASK(0) | EC_VER_MASK(1));
+		     EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2));
 
 /*****************************************************************************/
 /* Hooks */
