@@ -18,6 +18,7 @@
 #include "power_signals.dtsi"
 #include "pwm.dtsi"
 #include "usb_typec.dtsi"
+#include "usba.dtsi"
 
 / {
 	batteries {
