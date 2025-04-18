@@ -1,0 +1,32 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: CEC policy parent node
+
+compatible: "cros-ec,cec-policy"
+
+child-binding:
+  description:
+    CEC policy nodes to describe the policy combination a node depends on.
+  properties:
+    command:
+      type: string
+      required: true
+      enum:
+        - CEC_MSG_IMAGE_VIEW_ON
+        - CEC_MSG_TEXT_VIEW_ON
+        - CEC_MSG_ACTIVE_SOURCE
+        - CEC_MSG_REPORT_PHYSICAL_ADDRESS
+        - CEC_MSG_DEVICE_VENDOR_ID
+        - CEC_MSG_REQUEST_ACTIVE_SOURCE
+        - CEC_MSG_SET_STREAM_PATH
+    action:
+      type: string
+      required: true
+      description:
+        Source of valid reference actions is "enum cec_action” found in
+        include/cec.
+      enum:
+        - CEC_ACTION_NONE
+        - CEC_ACTION_POWER_BUTTON
