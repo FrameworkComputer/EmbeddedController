@@ -244,8 +244,18 @@ int charger_profile_override(struct charge_state_data *curr)
 	charging_data = curr;
 
 	if (curr->batt.is_present == BP_YES) {
-		int bat_temp = DECI_KELVIN_TO_CELSIUS(curr->batt.temperature);
-		find_battery_thermal_zone(bat_temp);
+		/*
+		 * Precharge must be executed when communication is failed on
+		 * dead battery.
+		 */
+		if (!(curr->batt.flags & BATT_FLAG_RESPONSIVE))
+			return 0;
+
+		if (!(curr->batt.flags & BATT_FLAG_BAD_TEMPERATURE)) {
+			int bat_temp =
+				DECI_KELVIN_TO_CELSIUS(curr->batt.temperature);
+			find_battery_thermal_zone(bat_temp);
+		}
 
 		/* charge stop */
 		if (temp_zone == STOP_LOW_TEMP || temp_zone == STOP_HIGH_TEMP) {
