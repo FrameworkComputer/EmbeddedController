@@ -179,7 +179,7 @@
 			gpios = <&gpioa 6 (GPIO_INPUT)>;
 		};
 		gpio_sys_pwrok_ec_r: sys_pwrok_ec_r {
-			gpios = <&gpiof 1 (GPIO_INPUT)>;
+			gpios = <&gpiof 1 (GPIO_INPUT | GPIO_PULL_DOWN)>;
 		};
 		gpio_virtual_battery_r: virtual_battery_r {
 			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_PULL_UP)>;
