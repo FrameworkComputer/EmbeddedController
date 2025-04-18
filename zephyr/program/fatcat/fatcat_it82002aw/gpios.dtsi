@@ -14,3 +14,18 @@ bc_acok: &gpio_bga_pine5 {};
 
 vol_up_ec: &gpio_volume_up_r {};
 vol_dn_ec: &gpio_vol_dn_ec_r {};
+
+/ {
+	/*
+	 * These pin definitions should have been auto-generated,
+	 * but the tooling did not catch them.
+	 */
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_gpf3: gpf3 {
+			gpios = <&gpiof 3 (GPIO_INPUT)>;
+		};
+	};
+};
