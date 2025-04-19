@@ -7422,8 +7422,6 @@ int cmd_switches(int argc, char *argv[])
 	       (s & EC_SWITCH_LID_OPEN ? "OPEN" : "CLOSED"));
 	printf("Power button:       %s\n",
 	       (s & EC_SWITCH_POWER_BUTTON_PRESSED ? "DOWN" : "UP"));
-	printf("Write protect:      %sABLED\n",
-	       (s & EC_SWITCH_WRITE_PROTECT_DISABLED ? "DIS" : "EN"));
 	printf("Dedicated recovery: %sABLED\n",
 	       (s & EC_SWITCH_DEDICATED_RECOVERY ? "EN" : "DIS"));
 

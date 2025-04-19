@@ -272,7 +272,8 @@ extern "C" {
 /* Switch flags at EC_MEMMAP_SWITCHES */
 #define EC_SWITCH_LID_OPEN 0x01
 #define EC_SWITCH_POWER_BUTTON_PRESSED 0x02
-#define EC_SWITCH_WRITE_PROTECT_DISABLED 0x04
+/* Was write protect disabled; now unused. */
+#define EC_SWITCH_IGNORE2 0x04
 /* Was recovery requested via keyboard; now unused. */
 #define EC_SWITCH_IGNORE1 0x08
 /* Recovery requested via dedicated signal (from servo board) */
