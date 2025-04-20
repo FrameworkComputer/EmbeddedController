@@ -7649,7 +7649,7 @@ static void cmd_charge_control_help(const char *cmd, const char *msg)
 		"  Usage: %s\n"
 		"    Get current settings.\n"
 		"  Usage: %s normal|idle|discharge\n"
-		"    Set charge mode (and disable battery sustainer).\n"
+		"    Set charge mode.\n"
 		"  Usage: %s normal <lower> <upper> [<flags>]\n"
 		"    Enable battery sustainer. <lower> and <upper> are battery SoC\n"
 		"    between which EC tries to keep the battery level.\n"
@@ -7711,8 +7711,8 @@ int cmd_charge_control(int argc, char *argv[])
 	if (!strcasecmp(argv[1], "normal")) {
 		p.mode = CHARGE_CONTROL_NORMAL;
 		if (argc == 2) {
-			p.sustain_soc.lower = -1;
-			p.sustain_soc.upper = -1;
+			p.sustain_soc.lower = sustain_soc.lower;
+			p.sustain_soc.upper = sustain_soc.upper;
 		} else if (argc > 3) {
 			p.sustain_soc.lower = strtol(argv[2], &e, 0);
 			if (e && *e) {
@@ -7744,12 +7744,16 @@ int cmd_charge_control(int argc, char *argv[])
 			cmd_charge_control_help(argv[0], "Bad arguments");
 			return -1;
 		}
+		p.sustain_soc.lower = sustain_soc.lower;
+		p.sustain_soc.upper = sustain_soc.upper;
 		p.mode = CHARGE_CONTROL_IDLE;
 	} else if (!strcasecmp(argv[1], "discharge")) {
 		if (argc != 2) {
 			cmd_charge_control_help(argv[0], "Bad arguments");
 			return -1;
 		}
+		p.sustain_soc.lower = sustain_soc.lower;
+		p.sustain_soc.upper = sustain_soc.upper;
 		p.mode = CHARGE_CONTROL_DISCHARGE;
 	} else {
 		cmd_charge_control_help(argv[0], "Bad sub-command");

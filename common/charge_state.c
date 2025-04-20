@@ -2175,7 +2175,7 @@ charge_command_charge_control(struct host_cmd_handler_args *args)
 				sustain_soc.flags = p->flags;
 			}
 		} else {
-			battery_sustainer_disable();
+			//battery_sustainer_disable();
 		}
 	} else if (p->cmd == EC_CHARGE_CONTROL_CMD_GET) {
 		r->mode = get_chg_ctrl_mode();

@@ -32,26 +32,38 @@ extern bool battery_sustainer_enabled(void);
 static void battery_percentage_control(void)
 {
 	enum ec_charge_control_mode new_mode;
-	static int in_percentage_control;
-	uint32_t batt_os_percentage = get_system_percentage();
+	//static int in_percentage_control;
+	//uint32_t batt_os_percentage = get_system_percentage();
 	//int rv;
 
 	/**
 	 * If the host command EC_CMD_CHARGE_CONTROL set control mode to CHARGE_CONTROL_DISCHARGE
 	 * or CHARGE_CONTROL_IDLE, ignore the battery_percentage_control();
 	 */
-	if (!in_percentage_control && get_chg_ctrl_mode() != CHARGE_CONTROL_NORMAL)
-		return;
+	//if (!in_percentage_control && get_chg_ctrl_mode() != CHARGE_CONTROL_NORMAL)
+	//	return;
+
+	CPRINTS("%s: charging_maximum_level %d", __func__, charging_maximum_level);
+	if (charging_maximum_level == EC_CHARGE_LIMIT_RESTORE) {
+		system_get_bbram(SYSTEM_BBRAM_IDX_CHARGE_LIMIT_MAX, &charging_maximum_level);
+	}
+
 	if (battery_sustainer_enabled()) {
 		CPRINTS("%s: battery_percentage_control suppressed", __func__);
 		return;
 	} else {
 		CPRINTS("%s: battery_percentage_control running", __func__);
+		// A charging_maximum_level less than 20 is unhealthy for the battery.
+		if (charging_maximum_level >= 20 && charging_maximum_level <= 100) {
+			battery_sustainer_set(charging_maximum_level - 5, charging_maximum_level);
+		} else {
+			// Set the default to 55, 60
+			battery_sustainer_set(55, 60);
+		}
 	}
 
-	if (charging_maximum_level == EC_CHARGE_LIMIT_RESTORE)
-		system_get_bbram(SYSTEM_BBRAM_IDX_CHARGE_LIMIT_MAX, &charging_maximum_level);
-
+	// Don't use this to adjust the CHARGE_CONTROL mode. Use battery_sustainer() for everything.
+#if 0
 	if (charging_maximum_level & CHG_LIMIT_OVERRIDE) {
 		new_mode = CHARGE_CONTROL_NORMAL;
 		if (batt_os_percentage == 1000)
@@ -69,6 +81,9 @@ static void battery_percentage_control(void)
 		new_mode = CHARGE_CONTROL_NORMAL;
 		in_percentage_control = 0;
 	}
+#endif
+	// Start off in IDLE mode
+	new_mode = CHARGE_CONTROL_IDLE;
 
 	int rv2 = set_chg_ctrl_mode(new_mode);
 	CPRINTS("%s: %s control mode to %s, rv=%d", __func__,
