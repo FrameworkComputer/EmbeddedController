@@ -1,0 +1,52 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ / {
+	pwm-leds {
+		compatible = "pwm-leds";
+		led_red: led-red {
+			pwms = <&pwm0 0 PWM_HZ(324) PWM_POLARITY_INVERTED>;
+		};
+		led_green: led-green {
+			pwms = <&pwm1 0 PWM_HZ(324) PWM_POLARITY_INVERTED>;
+		};
+		led_blue: led-blue {
+			pwms = <&pwm2 0 PWM_HZ(324) PWM_POLARITY_INVERTED>;
+		};
+	};
+
+	pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+
+		combo_led: combo-led {
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pwms = <&led_red &led_green &led_blue>;
+			color_off: color-off {
+				led-color = "LED_OFF";
+				led-values = <0 0 0>;
+			};
+
+			color_red: color-red {
+				led-color = "LED_RED";
+				led-values = <100 0 0>;
+			};
+
+			color_green: color-green {
+				led-color = "LED_GREEN";
+				led-values = <0 100 0>;
+			};
+
+			color_blue: color-blue {
+				led-color = "LED_BLUE";
+				led-values = <0 0 100>;
+			};
+
+			color_white: color-white {
+				led-color = "LED_WHITE";
+				led-values = <100 100 100>;
+			};
+		};
+	};
+};

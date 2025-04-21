@@ -14,6 +14,12 @@ config BOARD_LUUKE
 	  Build Google Luuke board. Skywalker has MediaTek SoC
 	  with ITE IT82002 EC.
 
+config BOARD_OBIWAN
+	bool "Google Obiwan Board"
+	help
+	  Build Google Obiwan board. Obiwan has MediaTek SoC
+	  with Nuvoton NPCX997FB EC.
+
 module = SKYWALKER
 module-str = Skywalker board-specific code
 source "subsys/logging/Kconfig.template.log_config"
