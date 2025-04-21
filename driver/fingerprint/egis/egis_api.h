@@ -15,7 +15,6 @@
 extern "C" {
 #endif
 
-#if (defined(CONFIG_FP_SENSOR_EGIS630))
 #define FP_SENSOR_HWID_EGIS 630
 #define FP_SENSOR_RES_X_EGIS 80
 #define FP_SENSOR_RES_Y_EGIS 64
@@ -23,7 +22,6 @@ extern "C" {
 #define FP_ALGORITHM_TEMPLATE_SIZE_EGIS (16 * 1024)
 #define FP_MAX_FINGER_COUNT_EGIS 3
 #define FP_ALGORITHM_MAX_ENROLL_COUNT_EGIS 15
-#endif
 
 #define FP_SENSOR_IMAGE_OFFSET_EGIS (0)
 #define FP_SENSOR_RES_BPP_EGIS (8)
