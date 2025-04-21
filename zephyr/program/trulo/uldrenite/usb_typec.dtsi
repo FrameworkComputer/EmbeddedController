@@ -45,6 +45,7 @@
 		reg = <0x24>;
 		/* EC_PD_INT */
 		irq-gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
+		no-fw-update;
 		zephyr,deferred-init;
 	};
 };
