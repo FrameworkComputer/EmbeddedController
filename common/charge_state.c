@@ -2335,6 +2335,9 @@ charge_command_charge_state(struct host_cmd_handler_args *args)
 #endif
 					val = 0;
 				break;
+			case CS_PARAM_BATT_TEMP:
+				val = curr.batt.temperature;
+				break;
 			default:
 				rv = EC_RES_INVALID_PARAM;
 			}
@@ -2371,6 +2374,7 @@ charge_command_charge_state(struct host_cmd_handler_args *args)
 				break;
 			case CS_PARAM_CHG_STATUS:
 			case CS_PARAM_LIMIT_POWER:
+			case CS_PARAM_BATT_TEMP:
 				/* Can't set this */
 				rv = EC_RES_ACCESS_DENIED;
 				break;

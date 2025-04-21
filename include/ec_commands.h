@@ -4775,6 +4775,9 @@ enum charge_state_params {
 	 */
 	CS_PARAM_LIMIT_POWER,
 
+	/* Battery Temperature in Kelvin */
+	CS_PARAM_BATT_TEMP,
+
 	/* How many so far? */
 	CS_NUM_BASE_PARAMS,
 
