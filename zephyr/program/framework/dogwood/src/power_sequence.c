@@ -842,9 +842,15 @@ static void peripheral_device_reset(void)
 			return;
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usbc_hub_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usba_hub_en), 0);
+		crec_msleep(4);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hubc_rst_l), 0);
+		power_usb_huba_reset(0);
 		crec_msleep(10);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usbc_hub_en), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usba_hub_en), 1);
+		crec_msleep(4);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hubc_rst_l), 1);
+		power_usb_huba_reset(1);
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, peripheral_device_reset, HOOK_PRIO_DEFAULT);
