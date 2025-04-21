@@ -114,38 +114,50 @@ static int thermal_fan_percent_with_hysteresis(int low, int high, int cur, bool 
 
 static int thermal_process_sensor_source_apu(int fan, int *temp)
 {
-	int duty;
 	struct fan_parameter_t *fan_param = &fan_params[fan];
+	int duty;
+	int duty_max = fan_param->max_duty;
+	int duty_min = fan_param->min_duty;
+	int temp_ratio;
 
-	duty = thermal_fan_percent_with_hysteresis(fan_param->min_temperature,
+	temp_ratio = thermal_fan_percent_with_hysteresis(fan_param->min_temperature,
 				   fan_param->max_temperature,
 				   temp[TEMP_ID_POWER],
 				   fan_param->target_duty ? true : false);
 
-	if (duty && duty < fan_param->min_duty)
-		duty = fan_param->min_duty;
-
-	if (duty && duty > fan_param->max_duty)
-		duty = fan_param->max_duty;
+	/**
+	 * If the current temperature between minimum and maximum, we need to convert the
+	 * current ratio to fan duty
+	 */
+	if (temp_ratio <= 0)
+		duty = 0;
+	else
+		duty = ((temp_ratio - 1) * duty_max + (100 - temp_ratio) * duty_min) / 99;
 
 	return duty;
 }
 
 static int thermal_process_sensor_source_chassis(int fan, int *temp)
 {
-	int duty;
 	struct fan_parameter_t *fan_param = &fan_params[fan];
+	int duty;
+	int duty_max = fan_param->max_duty;
+	int duty_min = fan_param->min_duty;
+	int temp_ratio;
 
-	duty = thermal_fan_percent_with_hysteresis(fan_param->min_temperature,
+	temp_ratio = thermal_fan_percent_with_hysteresis(fan_param->min_temperature,
 				   fan_param->max_temperature,
 				   temp[TEMP_ID_AMBIENT],
 				   fan_param->target_duty ? true : false);
 
-	if (duty && duty < fan_param->min_duty)
-		duty = fan_param->min_duty;
-
-	if (duty && duty > fan_param->max_duty)
-		duty = fan_param->max_duty;
+	/**
+	 * If the current temperature between minimum and maximum, we need to convert the
+	 * current ratio to fan duty
+	 */
+	if (temp_ratio <= 0)
+		duty = 0;
+	else
+		duty = ((temp_ratio - 1) * duty_max + (100 - temp_ratio) * duty_min) / 99;
 
 	return duty;
 }
