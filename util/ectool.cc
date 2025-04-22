@@ -6688,6 +6688,149 @@ int cmd_usb_pd_mux_info(int argc, char *argv[])
 	return 0;
 }
 
+static void print_usb_pd_port_caps(int port_num,
+				   const struct ec_response_get_pd_port_caps *r)
+{
+	printf("Port %02d: ", port_num);
+
+	printf("power_role_cap=");
+	switch (r->pd_power_role_cap) {
+	case EC_PD_POWER_ROLE_SOURCE:
+		printf("source-only ");
+		break;
+	case EC_PD_POWER_ROLE_SINK:
+		printf("sink-only ");
+		break;
+	case EC_PD_POWER_ROLE_DUAL:
+		printf("dual-role ");
+		break;
+	default:
+		printf("unknown(%u) ", r->pd_power_role_cap);
+		break;
+	}
+
+	printf("try_power_role_cap=");
+	switch (r->pd_try_power_role_cap) {
+	case EC_PD_TRY_POWER_ROLE_NONE:
+		printf("none ");
+		break;
+	case EC_PD_TRY_POWER_ROLE_SINK:
+		printf("trysink ");
+		break;
+	case EC_PD_TRY_POWER_ROLE_SOURCE:
+		printf("trysrc ");
+		break;
+	default:
+		printf("unknown(%u) ", r->pd_try_power_role_cap);
+		break;
+	}
+
+	printf("data_role_cap=");
+	switch (r->pd_data_role_cap) {
+	case EC_PD_DATA_ROLE_DFP:
+		printf("dfp-only ");
+		break;
+	case EC_PD_DATA_ROLE_UFP:
+		printf("ufp-only ");
+		break;
+	case EC_PD_DATA_ROLE_DUAL:
+		printf("dual-role ");
+		break;
+	default:
+		printf("unknown(%u) ", r->pd_data_role_cap);
+		break;
+	}
+
+	printf("port_location=");
+	switch (r->pd_port_location) {
+	case EC_PD_PORT_LOCATION_UNKNOWN:
+		printf("unknown ");
+		break;
+	case EC_PD_PORT_LOCATION_LEFT:
+		printf("left ");
+		break;
+	case EC_PD_PORT_LOCATION_RIGHT:
+		printf("right ");
+		break;
+	case EC_PD_PORT_LOCATION_BACK:
+		printf("back ");
+		break;
+	case EC_PD_PORT_LOCATION_FRONT:
+		printf("front ");
+		break;
+	case EC_PD_PORT_LOCATION_LEFT_FRONT:
+		printf("left-front ");
+		break;
+	case EC_PD_PORT_LOCATION_LEFT_BACK:
+		printf("left-back ");
+		break;
+	case EC_PD_PORT_LOCATION_RIGHT_FRONT:
+		printf("right-front ");
+		break;
+	case EC_PD_PORT_LOCATION_RIGHT_BACK:
+		printf("right-back ");
+		break;
+	case EC_PD_PORT_LOCATION_BACK_LEFT:
+		printf("back-left ");
+		break;
+	case EC_PD_PORT_LOCATION_BACK_RIGHT:
+		printf("back-right ");
+		break;
+	default:
+		printf("other(%u) ", r->pd_port_location);
+		break;
+	}
+
+	printf("\n");
+}
+
+int cmd_usb_pd_port_caps(int argc, char *argv[])
+{
+	struct ec_params_get_pd_port_caps p;
+	struct ec_response_get_pd_port_caps *r =
+		(struct ec_response_get_pd_port_caps *)ec_inbuf;
+	int num_ports, rv;
+	char *e;
+
+	if (argc < 2) {
+		/* Print all ports' capabilities */
+		rv = get_num_pd_ports(&num_ports);
+		if (rv < 0)
+			return rv;
+
+		for (int i = 0; i < num_ports; i++) {
+			p.port = i;
+
+			rv = ec_command(EC_CMD_GET_PD_PORT_CAPS, 0, &p,
+					sizeof(p), ec_inbuf, ec_max_insize);
+			if (rv < 0) {
+				return rv;
+			}
+
+			print_usb_pd_port_caps(i, r);
+		}
+
+		return 0;
+	}
+
+	/* Print a specific port's capabilities */
+	p.port = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port number\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_GET_PD_PORT_CAPS, 0, &p, sizeof(p), ec_inbuf,
+			ec_max_insize);
+	if (rv < 0) {
+		return rv;
+	}
+
+	print_usb_pd_port_caps(p.port, r);
+
+	return 0;
+}
+
 int cmd_usb_pd_power(int argc, char *argv[])
 {
 	struct ec_params_usb_pd_power_info p;
@@ -13019,6 +13162,9 @@ const struct command commands[] = {
 	  "as:\n"
 	  "\t\t   Port, USB enabled, DP enabled, Polarity, HPD IRQ, "
 	  "HPD LVL." },
+	{ "usbpdportcaps", cmd_usb_pd_port_caps,
+	  "[port]\n"
+	  "\tGet port capabilities for a specified USB-C port." },
 	{ "usbpdpower", cmd_usb_pd_power,
 	  "[port]\n"
 	  "\tGet USB PD power information." },
