@@ -122,6 +122,23 @@
 				value = <1>;
 			};
 		};
+		ish {
+			enum-name = "ISH";
+			start = <8>;
+			size = <1>;
+
+			ish-disabled {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "ISH_DISABLED";
+				value = <0>;
+				default;
+			};
+			ish-enabled {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "ISH_ENABLED";
+				value = <1>;
+			};
+		};
 	};
 	cbi-ssfc {
 		compatible = "cros-ec,cbi-ssfc";
