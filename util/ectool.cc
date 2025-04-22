@@ -6601,6 +6601,30 @@ static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
 	printf("\n");
 }
 
+/**
+ * @brief Helper function for getting the number of USB-PD ports in the system
+ *
+ * @param num_ports[out] Output parameter for number of ports
+ * @return 0 on success
+ * @return negative error code on failure
+ */
+static int get_num_pd_ports(int *num_ports)
+{
+	struct ec_response_usb_pd_ports r;
+	int rv;
+
+	assert(num_ports);
+
+	rv = ec_command(EC_CMD_USB_PD_PORTS, 0, NULL, 0, &r, sizeof(r));
+	if (rv < 0) {
+		return rv;
+	}
+
+	*num_ports = r.num_ports;
+
+	return 0;
+}
+
 int cmd_usb_pd_mux_info(int argc, char *argv[])
 {
 	struct ec_params_usb_pd_mux_info p;
@@ -6615,11 +6639,9 @@ int cmd_usb_pd_mux_info(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_USB_PD_PORTS, 0, NULL, 0, ec_inbuf,
-			ec_max_insize);
+	rv = get_num_pd_ports(&num_ports);
 	if (rv < 0)
 		return rv;
-	num_ports = ((struct ec_response_usb_pd_ports *)ec_inbuf)->num_ports;
 
 	for (i = 0; i < num_ports; i++) {
 		p.port = i;
@@ -6674,11 +6696,9 @@ int cmd_usb_pd_power(int argc, char *argv[])
 	int num_ports, i, rv;
 	char *e;
 
-	rv = ec_command(EC_CMD_USB_PD_PORTS, 0, NULL, 0, ec_inbuf,
-			ec_max_insize);
+	rv = get_num_pd_ports(&num_ports);
 	if (rv < 0)
 		return rv;
-	num_ports = ((struct ec_response_usb_pd_ports *)r)->num_ports;
 
 	if (argc < 2) {
 		for (i = 0; i < num_ports; i++) {
