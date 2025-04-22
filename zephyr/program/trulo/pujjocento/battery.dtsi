@@ -1,0 +1,39 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	batteries {
+		default_battery: smp_smp_atl_4_106 {
+			compatible = "smp,smp-atl-4-106", "battery-smart";
+		};
+		smp_hpt_4_122 {
+			compatible = "smp,smp-hpt-4-122", "battery-smart";
+		};
+		smp_smp_atl_4_106_1 {
+			compatible = "smp,smp-atl-4-106-1", "battery-smart";
+		};
+		smp_cos_4_122 {
+			compatible = "smp,smp-cos-4-122", "battery-smart";
+		};
+		swd_atl4_106 {
+			compatible = "swd,swd-atl4-106", "battery-smart";
+		};
+		swd_cos4_122 {
+			compatible = "swd,swd-cos4-122", "battery-smart";
+		};
+		com_cos4_122 {
+			compatible = "cosmx,com-cos4-122", "battery-smart";
+		};
+		atl_atl4_106 {
+			compatible = "nvt,atl-atl4-106", "battery-smart";
+		};
+		byd_byd_1 {
+			compatible = "byd,byd-1", "battery-smart";
+		};
+		byd_byd {
+			compatible = "byd,byd", "battery-smart";
+		};
+	};
+};

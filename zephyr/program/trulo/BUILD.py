@@ -44,6 +44,17 @@ register_trulo_project(
 )
 
 register_trulo_project(
+    project_name="pujjocento",
+    chip="npcx9/npcx9m7fb",
+    kconfig_files=[
+        # Common to all projects.
+        here / "program.conf",
+        # Parent project's config
+        here / "pujjocento" / "project.conf",
+    ],
+)
+
+register_trulo_project(
     project_name="pujjolo",
     kconfig_files=[
         # Common to all projects.
@@ -94,6 +105,7 @@ register_ish_project(
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release.
 assert_rw_fwid_DO_NOT_EDIT(project_name="trulo", addr=0x40144)
+assert_rw_fwid_DO_NOT_EDIT(project_name="pujjocento", addr=0x40144)
 assert_rw_fwid_DO_NOT_EDIT(project_name="pujjolo", addr=0x40144)
 assert_rw_fwid_DO_NOT_EDIT(project_name="trulo-ti", addr=0x40144)
 assert_rw_fwid_DO_NOT_EDIT(project_name="uldrenite", addr=0x40144)

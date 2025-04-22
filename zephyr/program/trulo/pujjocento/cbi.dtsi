@@ -1,0 +1,147 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+/* Pujjocento-specific fw_config fields. */
+	trulo-fw-config {
+		/*
+		 * FW_CONFIG field to defined for THERMAL SOLUTION.
+		 */
+		form-factor {
+			enum-name = "FORM_FACTOR";
+			start = <0>;
+			size = <1>;
+
+			form-factor-clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FORM_FACTOR_CLAMSHELL";
+				value = <0>;
+				default;
+			};
+			form-factor-convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FORM_FACTOR_CONVERTIBLE";
+				value = <1>;
+			};
+		};
+		db-cellular {
+			enum-name = "DB_CELLULAR";
+			start = <1>;
+			size = <2>;
+
+			cellular-absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CELLULAR_ABSENT";
+				value = <0>;
+			};
+			cellular-rw350r {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CELLULAR_RW350R";
+				value = <1>;
+			};
+		};
+		external-vr {
+			enum-name = "EXTERNAL_VR";
+			start = <3>;
+			size = <1>;
+
+			cellular-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "EXT_VR_PRESENT";
+				value = <0>;
+			};
+			cellular-absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "EXT_VR_ABSENT";
+				value = <1>;
+			};
+		};
+		touchscreen {
+			enum-name = "TOUCHSCREEN";
+			start = <4>;
+			size = <1>;
+
+			touch-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "TOUCHSCREEN_PRESENT";
+				value = <0>;
+			};
+			touch-absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "TOUCHSCREEN_ABSENT";
+				value = <1>;
+			};
+		};
+		memory-channel {
+			enum-name = "MEMORY_CHANNEL";
+			start = <5>;
+			size = <1>;
+
+			half-channel {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "HALF_CHANNEL";
+				value = <0>;
+			};
+			full-channel {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FULL_CHANNEL";
+				value = <1>;
+			};
+		};
+		wifi-sar {
+			enum-name = "WIFI_SAR";
+			start = <6>;
+			size = <1>;
+
+			id-0 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "ID_0";
+				value = <0>;
+			};
+			id-1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "ID_1";
+				value = <1>;
+			};
+		};
+		usbc-ports {
+			enum-name = "USBC_PORTS";
+			start = <7>;
+			size = <1>;
+
+			two-ports {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "TWO_PORTS";
+				value = <0>;
+			};
+			one-port {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "ONE_PORT";
+				value = <1>;
+			};
+		};
+	};
+	cbi-ssfc {
+		compatible = "cros-ec,cbi-ssfc";
+		/*
+		 * SSFC field to identify BASE motion sensor.
+		 */
+		base-sensor {
+			enum-name = "BASE_SENSOR";
+			size = <1>;
+			base_sensor_lis2dw12: lis2dw12 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <0>;
+				default;
+			};
+			base_sensor_lsm6dsm: lsm6dsm {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+			};
+		};
+	};
+};

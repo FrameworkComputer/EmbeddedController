@@ -1,0 +1,64 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_eeprom: ec_i2c_eeprom {
+			i2c-port = <&i2c0_0>;
+			enum-names = "I2C_PORT_EEPROM";
+		};
+
+		i2c_ec_i2c_sensor_r: ec_i2c_sensor_r {
+			i2c-port = <&i2c1_0>;
+			enum-names = "I2C_PORT_SENSOR",
+						 "I2C_PORT_MP2964";
+		};
+	};
+};
+
+&i2c0_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
+	pinctrl-names = "default";
+
+	label = "I2C_EEPROM";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+};
+
+&i2c1_0 {
+	label = "I2C_SENSOR";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pmic_mp2964: pmic_mp2964@20 {
+			compatible = "mps,mp2964";
+			reg = <0x20>;
+			label = "I2C_ADDR_MP2964_FLAGS";
+	};
+};
+
+&i2c_ctrl0 {
+	status = "okay";
+};
+
+/* Disable sensor I2C nodes */
+&i2c6_1 {
+    status = "disabled";
+};
+/delete-node/ &i2c_ec_i2c_charger;
+
+&i2c2_0 {
+    status = "disabled";
+};
+/delete-node/ &i2c_i2c_ec_pd;
