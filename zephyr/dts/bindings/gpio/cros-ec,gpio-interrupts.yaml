@@ -7,19 +7,19 @@ description: |
 
   Uses device tree to configure the interrupt handling e.g
 
-    int_wp_l: wp_l {
-      irq-pin = <&gpio_ec_wp_odl>;
+    int_lid_open: lid_open {
+      irq-pin = <&gpio_lid_open>;
       flags = <GPIO_INT_EDGE_BOTH>;
-      handler = "wp_interrupt";
+      handler = "lid_interrupt";
     };
 
   The interrupt can be enabled either using the DTS label:
 
-    gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_wp_l));
+    gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_lid_open));
 
   or the legacy:
 
-    gpio_enable_interrupt(GPIO_WP_L);
+    gpio_enable_interrupt(GPIO_LID_OPEN);
 
 compatible: "cros-ec,gpio-interrupts"
 
