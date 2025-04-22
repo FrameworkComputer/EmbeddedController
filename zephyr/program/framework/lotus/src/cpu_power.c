@@ -7,6 +7,7 @@
 #include "board_charger.h"
 #include "board_battery.h"
 #include "board_function.h"
+#include "board_host_command.h"
 #include "chipset.h"
 #include "common_cpu_power.h"
 #include "customized_shared_memory.h"
@@ -38,6 +39,191 @@ enum clear_reasons {
 	PROCHOT_CLEAR_REASON_SUCCESS,
 	PROCHOT_CLEAR_REASON_NOT_POWER,
 	PROCHOT_CLEAR_REASON_FORCE,
+};
+
+enum power_supply_type {
+	AC_DC_MODE,
+	AC_ONLY_MODE,
+	DC_ONLY_MODE,
+};
+
+struct pmf_data {
+	uint8_t fPPT;
+	uint8_t sPPT;
+	uint8_t SPL;
+	uint8_t APU_only_sPPT;
+} __packed;
+
+/*
+ * The active power should be the lower boundary of the watt interval.
+ * ex: intervel 240w~220W, the active_power is 220.
+ */
+struct pmf_info {
+	uint16_t active_power;
+	enum power_slide_mode slide;
+	uint16_t table_num;
+	struct pmf_data pmf;
+} __packed;
+
+struct pmf_table {
+	struct pmf_info *info;
+	uint8_t arr_size;
+} __packed;
+
+/**********************************************************
+ * AMD GPU PMF table
+ **********************************************************/
+struct pmf_info AMD_GPU_AC_DC_PMF[] ={
+	{180, EC_AC_BEST_PERFORMANCE, 1, {145, 145, 145, 54}},
+	{180, EC_AC_BALANCED, 2, {120, 120, 120, 50}},
+	{180, EC_AC_BEST_EFFICIENCY, 3, {85, 85, 85, 40}},
+	{140, EC_AC_BEST_PERFORMANCE, 4, {95, 95, 95, 50}},
+	{140, EC_AC_BALANCED, 5, {85, 85, 85, 40}},
+	{140, EC_AC_BEST_EFFICIENCY, 6, {60, 60, 60, 30}},
+	{100, EC_AC_BEST_PERFORMANCE, 7, {85, 85, 85, 40}},
+	{100, EC_AC_BALANCED, 8, {60, 60, 60, 30}},
+	{100, EC_AC_BEST_EFFICIENCY, 8, {60, 60, 60, 30}},
+	{80, EC_AC_BEST_PERFORMANCE, 9, {60, 60, 60, 30}},
+	{80, EC_AC_BALANCED, 9, {60, 60, 60, 30}},
+	{80, EC_AC_BEST_EFFICIENCY, 9, {60, 60, 60, 30}},
+	{1, EC_AC_BEST_PERFORMANCE, 10, {60, 60, 60, 30}},
+	{1, EC_AC_BALANCED, 10, {60, 60, 60, 30}},
+	{1, EC_AC_BEST_EFFICIENCY, 10, {60, 60, 60, 30}},
+};
+
+struct pmf_info AMD_GPU_AC_ONLY_PMF[] ={
+	{180, EC_AC_BEST_PERFORMANCE, 14, {60, 60, 60, 30}},
+	{180, EC_AC_BALANCED, 15, {50, 50, 50, 30}},
+	{180, EC_AC_BEST_EFFICIENCY, 16, {30, 30, 30, 30}},
+	{140, EC_AC_BEST_PERFORMANCE, 17, {60, 60, 60, 30}},
+	{140, EC_AC_BALANCED, 18, {50, 50, 50, 30}},
+	{140, EC_AC_BEST_EFFICIENCY, 19, {30, 30, 30, 30}},
+	{100, EC_AC_BEST_PERFORMANCE, 20, {50, 50, 50, 30}},
+	{100, EC_AC_BALANCED, 20, {50, 50, 50, 30}},
+	{100, EC_AC_BEST_EFFICIENCY, 21, {30, 30, 30, 30}},
+	{80, EC_AC_BEST_PERFORMANCE, 22, {30, 30, 30, 30}},
+	{80, EC_AC_BALANCED, 22, {30, 30, 30, 30}},
+	{80, EC_AC_BEST_EFFICIENCY, 22, {30, 30, 30, 30}},
+	{1, EC_AC_BEST_PERFORMANCE, 23, {30, 30, 30, 30}},
+	{1, EC_AC_BALANCED, 23, {30, 30, 30, 30}},
+	{1, EC_AC_BEST_EFFICIENCY, 23, {30, 30, 30, 30}},
+};
+
+struct pmf_info AMD_GPU_DC_ONLY_PMF[] ={
+	{0, EC_DC_BEST_PERFORMANCE, 11, {60, 60, 60, 30}},
+	{0, EC_DC_BALANCED, 12, {50, 50, 50, 20}},
+	{0, EC_DC_BEST_EFFICIENCY, 12, {50, 50, 50, 20}},
+	{0, EC_DC_BATTERY_SAVER, 13, {20, 20, 20, 20}},
+};
+
+struct pmf_table AMD_GPU_PMF_TABLE[] = {
+	[AC_DC_MODE] = {.info = AMD_GPU_AC_DC_PMF, .arr_size = sizeof(AMD_GPU_AC_DC_PMF)},
+	[AC_ONLY_MODE] = {.info = AMD_GPU_AC_ONLY_PMF, .arr_size = sizeof(AMD_GPU_AC_DC_PMF)},
+	[DC_ONLY_MODE] = {.info = AMD_GPU_DC_ONLY_PMF, .arr_size = sizeof(AMD_GPU_AC_DC_PMF)},
+};
+
+/**********************************************************
+ * NV GPU PMF table
+ **********************************************************/
+struct pmf_info NV_GPU_AC_DC_PMF[] ={
+	{180, EC_AC_BEST_PERFORMANCE, 47, {65, 54, 45, 0}},
+	{180, EC_AC_BALANCED, 48, {58, 48, 40, 0}},
+	{180, EC_AC_BEST_EFFICIENCY, 49, {44, 36, 30, 0}},
+	{140, EC_AC_BEST_PERFORMANCE, 50, {65, 50, 45, 0}},
+	{140, EC_AC_BALANCED, 51, {58, 40, 40, 0}},
+	{140, EC_AC_BEST_EFFICIENCY, 52, {44, 30, 30, 0}},
+	{100, EC_AC_BEST_PERFORMANCE, 53, {65, 40, 40, 0}},
+	{100, EC_AC_BALANCED, 54, {44, 30, 30, 0}},
+	{100, EC_AC_BEST_EFFICIENCY, 54, {44, 30, 30, 0}},
+	{80, EC_AC_BEST_PERFORMANCE, 55, {44, 30, 30, 0}},
+	{80, EC_AC_BALANCED, 55, {44, 30, 30, 0}},
+	{80, EC_AC_BEST_EFFICIENCY, 55, {44, 30, 30, 0}},
+	{1, EC_AC_BEST_PERFORMANCE, 56, {30, 30, 30, 0}},
+	{1, EC_AC_BALANCED, 56, {30, 30, 30, 0}},
+	{1, EC_AC_BEST_EFFICIENCY, 56, {30, 30, 30, 0}},
+};
+
+struct pmf_info NV_GPU_AC_ONLY_PMF[] ={
+	{180, EC_AC_BEST_PERFORMANCE, 60, {60, 30, 30, 0}},
+	{180, EC_AC_BALANCED, 61, {58, 30, 30, 0}},
+	{180, EC_AC_BEST_EFFICIENCY, 62, {30, 30, 30, 0}},
+	{140, EC_AC_BEST_PERFORMANCE, 63, {60, 30, 30, 0}},
+	{140, EC_AC_BALANCED, 64, {50, 30, 30, 0}},
+	{140, EC_AC_BEST_EFFICIENCY, 65, {30, 30, 30, 0}},
+	{100, EC_AC_BEST_PERFORMANCE, 66, {50, 30, 30, 0}},
+	{100, EC_AC_BALANCED, 66, {50, 30, 30, 0}},
+	{100, EC_AC_BEST_EFFICIENCY, 67, {30, 30, 30, 0}},
+	{80, EC_AC_BEST_PERFORMANCE, 68, {30, 30, 30, 0}},
+	{80, EC_AC_BALANCED, 68, {30, 30, 30, 0}},
+	{80, EC_AC_BEST_EFFICIENCY, 68, {30, 30, 30, 0}},
+	{1, EC_AC_BEST_PERFORMANCE, 69, {30, 30, 30, 0}},
+	{1, EC_AC_BALANCED, 69, {30, 30, 30, 0}},
+	{1, EC_AC_BEST_EFFICIENCY, 69, {30, 30, 30, 0}},
+};
+
+struct pmf_info NV_GPU_DC_ONLY_PMF[] ={
+	{0, EC_DC_BEST_PERFORMANCE, 57, {58, 30, 30, 0}},
+	{0, EC_DC_BALANCED, 58, {44, 20, 20, 0}},
+	{0, EC_DC_BEST_EFFICIENCY, 58, {44, 20, 20, 0}},
+	{0, EC_DC_BATTERY_SAVER, 59, {20, 20, 20, 0}},
+};
+
+struct pmf_table NV_GPU_PMF_TABLE[] = {
+	[AC_DC_MODE] = {.info = NV_GPU_AC_DC_PMF, .arr_size = sizeof(NV_GPU_AC_DC_PMF)},
+	[AC_ONLY_MODE] = {.info = NV_GPU_AC_ONLY_PMF, .arr_size = sizeof(NV_GPU_AC_ONLY_PMF)},
+	[DC_ONLY_MODE] = {.info = NV_GPU_DC_ONLY_PMF, .arr_size = sizeof(NV_GPU_DC_ONLY_PMF)},
+};
+
+/**********************************************************
+ * UMA PMF table
+ **********************************************************/
+struct pmf_info UMA_GPU_AC_DC_PMF[] ={
+	{180, EC_AC_BEST_PERFORMANCE, 24, {65, 54, 45, 0}},
+	{180, EC_AC_BALANCED, 25, {58, 48, 40, 0}},
+	{180, EC_AC_BEST_EFFICIENCY, 26, {44, 36, 30, 0}},
+	{140, EC_AC_BEST_PERFORMANCE, 27, {65, 50, 45, 0}},
+	{140, EC_AC_BALANCED, 28, {58, 40, 40, 0}},
+	{140, EC_AC_BEST_EFFICIENCY, 29, {44, 30, 30, 0}},
+	{100, EC_AC_BEST_PERFORMANCE, 30, {65, 40, 40, 0}},
+	{100, EC_AC_BALANCED, 31, {44, 30, 30, 0}},
+	{100, EC_AC_BEST_EFFICIENCY, 31, {44, 30, 30, 0}},
+	{80, EC_AC_BEST_PERFORMANCE, 32, {44, 30, 30, 0}},
+	{80, EC_AC_BALANCED, 32, {44, 30, 30, 0}},
+	{80, EC_AC_BEST_EFFICIENCY, 32, {44, 30, 30, 0}},
+	{1, EC_AC_BEST_PERFORMANCE, 33, {30, 30, 30, 0}},
+	{1, EC_AC_BALANCED, 33, {30, 30, 30, 0}},
+	{1, EC_AC_BEST_EFFICIENCY, 33, {30, 30, 30, 0}},
+};
+
+struct pmf_info UMA_AC_ONLY_PMF[] ={
+	{180, EC_AC_BEST_PERFORMANCE, 37, {60, 30, 30, 0}},
+	{180, EC_AC_BALANCED, 38, {58, 30, 30, 0}},
+	{180, EC_AC_BEST_EFFICIENCY, 39, {30, 30, 30, 0}},
+	{140, EC_AC_BEST_PERFORMANCE, 40, {60, 30, 30, 0}},
+	{140, EC_AC_BALANCED, 41, {50, 30, 30, 0}},
+	{140, EC_AC_BEST_EFFICIENCY, 42, {30, 30, 30, 0}},
+	{100, EC_AC_BEST_PERFORMANCE, 43, {50, 30, 30, 0}},
+	{100, EC_AC_BALANCED, 43, {50, 30, 30, 0}},
+	{100, EC_AC_BEST_EFFICIENCY, 44, {30, 30, 30, 0}},
+	{80, EC_AC_BEST_PERFORMANCE, 45, {30, 30, 30, 0}},
+	{80, EC_AC_BALANCED, 45, {30, 30, 30, 0}},
+	{80, EC_AC_BEST_EFFICIENCY, 45, {30, 30, 30, 0}},
+	{1, EC_AC_BEST_PERFORMANCE, 46, {30, 30, 30, 0}},
+	{1, EC_AC_BALANCED, 46, {30, 30, 30, 0}},
+	{1, EC_AC_BEST_EFFICIENCY, 46, {30, 30, 30, 0}},
+};
+
+struct pmf_info UMA_DC_ONLY_PMF[] ={
+	{0, EC_DC_BEST_PERFORMANCE, 34, {58, 30, 30, 0}},
+	{0, EC_DC_BALANCED, 35, {44, 20, 20, 0}},
+	{0, EC_DC_BEST_EFFICIENCY, 35, {44, 20, 20, 0}},
+	{0, EC_DC_BATTERY_SAVER, 36, {20, 20, 20, 0}},
+};
+
+struct pmf_table UMA_PMF_TABLE[] = {
+	[AC_DC_MODE] = {.info = UMA_GPU_AC_DC_PMF, .arr_size = sizeof(UMA_GPU_AC_DC_PMF)},
+	[AC_ONLY_MODE] = {.info = UMA_AC_ONLY_PMF, .arr_size = sizeof(UMA_AC_ONLY_PMF)},
+	[DC_ONLY_MODE] = {.info = UMA_DC_ONLY_PMF, .arr_size = sizeof(UMA_DC_ONLY_PMF)},
 };
 
 /* Update PL for thermal table pmf sheet : slider default */
@@ -131,215 +317,54 @@ static void update_os_power_slider(int mode, bool with_dc, int active_mpower)
 	}
 }
 
+void update_thermal_value(struct pmf_table *table, int active_mpower, bool with_dc, int mode) {
+	enum power_supply_type power_mode;
+	int active_power = active_mpower/1000;
+
+	if(with_dc && active_mpower == 0) {
+		power_mode = DC_ONLY_MODE;
+	} else if(with_dc && active_mpower > 0) {
+		power_mode = AC_DC_MODE;
+	} else {
+		power_mode = AC_ONLY_MODE;
+	}
+
+	for(int i = 0; i<table[power_mode].arr_size; i++) {
+		if(active_power >= table[power_mode].info[i].active_power && mode ==
+			table[power_mode].info[i].slide) {
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] =
+				table[power_mode].info[i].pmf.fPPT * 1000;
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] =
+				table[power_mode].info[i].pmf.sPPT * 1000;
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] =
+				table[power_mode].info[i].pmf.SPL * 1000;
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] =
+				table[power_mode].info[i].pmf.APU_only_sPPT * 1000;
+			thermal_stt_table = table[power_mode].info[i].table_num;
+			break;
+		}
+	}
+}
+
 /* Update PL for thermal table pmf sheet : pmf */
 static void update_thermal_power_limit(int battery_percent, int active_mpower,
 				       bool with_dc, int mode)
 {
-	if (gpu_is_working()) {
-		if ((active_mpower >= 240000) && with_dc) {
-			/* limited by update_os_power_slider */
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT];
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT];
-			thermal_stt_table = slider_stt_table;
-		} else if (active_mpower >= 180000) {
-			if (mode == EC_AC_BALANCED) {
-				/* limited by update_os_power_slider */
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 950000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 950000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 950000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
-					= 50000;
-				thermal_stt_table = 2;
-			} else {
-				/* limited by update_os_power_slider */
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] =
-					power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] =
-					power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT];
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] =
-					power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] =
-					power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT];
-				thermal_stt_table = slider_stt_table;
-			}
-		} else if (active_mpower >= 140000) {
-			if (with_dc) {
-				if (mode == EC_AC_BEST_PERFORMANCE) {
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 95000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 95000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 95000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
-						= 50000;
-					thermal_stt_table = 4;
-				} else if (mode == EC_AC_BALANCED) {
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 85000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 85000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 85000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
-						= 40000;
-					thermal_stt_table = 15;
-				} else {
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 60000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 60000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 60000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] 
-						= 30000;
-					thermal_stt_table = 17;
-				}
-			} else {
-				if (mode == EC_AC_BEST_PERFORMANCE) {
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 60000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 60000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 60000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
-						= 30000;
-					thermal_stt_table = 26;
-				} else if (mode == EC_AC_BALANCED) {
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 50000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 50000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 50000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
-						= 20000;
-					thermal_stt_table = 27;
-				} else {
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 30000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 30000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 30000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
-						= 30000;
-					thermal_stt_table = 28;
-				}
-			}
-		} else if (active_mpower >= 100000) {
-			if (with_dc) {
-				if (mode == EC_AC_BEST_PERFORMANCE) {
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 85000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 85000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 85000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
-						= 40000;
-					thermal_stt_table = 5;
-				} else {
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 60000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 60000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 60000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
-						= 30000;
-					thermal_stt_table = 16;
-				}
-			} else {
-				if ((mode == EC_AC_BEST_PERFORMANCE) || (mode == EC_AC_BALANCED)) {
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 50000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 50000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 50000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
-						= 20000;
-					thermal_stt_table = 29;
-				} else {
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 30000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 30000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 30000;
-					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
-						= 30000;
-					thermal_stt_table = 30;
-				}
-			}
-		} else if ((active_mpower < 100000) && (active_mpower > 0)) {
-			if (with_dc) {
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 60000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 60000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 60000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 30000;
-				thermal_stt_table = 6;
-			} else {
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 30000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 30000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 30000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 30000;
-				thermal_stt_table = 31;
-			}
-		} else {
-			/* DC only */
-			/* limited by update_os_power_slider */
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT];
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT];
-			thermal_stt_table = slider_stt_table;
-		}
+	uint8_t gpu_vendor;
+    gpu_vendor = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE);
+
+	if (!gpu_is_working()) {
+		update_thermal_value(UMA_PMF_TABLE, active_mpower, with_dc, mode);
 	} else {
-		/* UMA */
-		if (active_mpower >= 180000) {
-			/* limited by update_os_power_slider */
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT];
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-			thermal_stt_table = slider_stt_table;
-		} else if (active_mpower >= 100000) {
-			if (mode == EC_AC_BEST_PERFORMANCE) {
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 45000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 54000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 65000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				thermal_stt_table = 11;
-			} else if (mode == EC_AC_BALANCED) {
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 40000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 48000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 58000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				thermal_stt_table = 18;
-			} else {
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 30000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 36000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 44000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				thermal_stt_table = 19;
-			}
-		} else if (active_mpower >= 80000) {
-			if (mode == EC_AC_BEST_PERFORMANCE) {
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 30000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 36000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 44000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				thermal_stt_table = 12;
-			} else {
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 30000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 36000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 44000;
-				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				thermal_stt_table = 20;
-			}
-		} else if ((active_mpower < 80000) && (active_mpower > 0)) {
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 30000;
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 30000;
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 30000;
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-			thermal_stt_table = 13;
-		} else {
-			/* DC only */
-			/* limited by update_os_power_slider */
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT];
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-			thermal_stt_table = slider_stt_table;
+		switch (gpu_vendor) {
+		case GPU_AMD_R23M:
+			update_thermal_value(AMD_GPU_PMF_TABLE, active_mpower, with_dc, mode);
+			break;
+		case GPU_NV_GN22:
+			update_thermal_value(NV_GPU_PMF_TABLE, active_mpower, with_dc, mode);
+			break;
+		default:
+			break;
 		}
 	}
 }
