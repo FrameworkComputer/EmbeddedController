@@ -32,21 +32,6 @@ static inline int write_protect_is_asserted(void)
 #endif
 }
 
-/**
- * Enable interrupt for WP pin. The interrupt itself has to be defined in a node
- * with compatible = "cros-ec,gpio-interrupts" and pointed by the alias int_wp.
- *
- * @return 0 if success
- */
-static inline int write_protect_enable_interrupt(void)
-{
-#if DT_NODE_EXISTS(DT_ALIAS(int_wp))
-	return gpio_enable_dt_interrupt(GPIO_INT_FROM_NODE(DT_ALIAS(int_wp)));
-#else
-	return -1;
-#endif
-}
-
 #ifdef __cplusplus
 }
 #endif

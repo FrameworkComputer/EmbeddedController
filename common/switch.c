@@ -78,13 +78,6 @@ static void switch_init(void)
 	/* Enable interrupts, now that we've initialized */
 	gpio_enable_interrupt(GPIO_RECOVERY_L);
 #endif
-
-	/*
-	 * TODO(crosbug.com/p/23793): It's weird that flash_common.c owns
-	 * reading the write protect signal, but we enable the interrupt for it
-	 * here.  Take ownership of WP back, or refactor it to its own module.
-	 */
-	write_protect_enable_interrupt();
 }
 DECLARE_HOOK(HOOK_INIT, switch_init, HOOK_PRIO_INIT_SWITCH);
 

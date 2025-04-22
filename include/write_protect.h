@@ -26,15 +26,6 @@ static inline bool write_protect_is_asserted(void)
 #endif
 }
 
-static inline int write_protect_enable_interrupt(void)
-{
-#ifdef CONFIG_WP_ACTIVE_HIGH
-	return gpio_enable_interrupt(GPIO_WP);
-#else
-	return gpio_enable_interrupt(GPIO_WP_L);
-#endif
-}
-
 #ifdef TEST_BUILD
 /**
  * Set the WP state.
