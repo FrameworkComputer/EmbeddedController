@@ -72,9 +72,9 @@ static void motionsense_init(void)
 		gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_lid_imu));
 		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_acc_int_l),
 				      GPIO_INPUT | GPIO_PULL_UP);
-		ccprints("Board is Clamshell");
+		LOG_INF("Board is Clamshell");
 	} else if (sensor_fwconfig == FORM_FACTOR_CONVERTIBLE) {
-		ccprints("Board is Convertible");
+		LOG_INF("Board is Convertible");
 	}
 }
 DECLARE_HOOK(HOOK_INIT, motionsense_init, HOOK_PRIO_DEFAULT);
