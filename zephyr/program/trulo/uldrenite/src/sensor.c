@@ -9,6 +9,7 @@
 #include "cros_cbi.h"
 #include "driver/accel_bma4xx.h"
 #include "driver/accel_lis2dw12_public.h"
+#include "driver/accelgyro_bmi323.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
@@ -22,15 +23,23 @@
 
 LOG_MODULE_DECLARE(trulo, LOG_LEVEL_INF);
 
+enum base_sensor_type {
+	base_lis2dw12 = 0,
+	base_lsm6ds3tr,
+	base_bmi323,
+};
+
 static int sensor_fwconfig;
 static int base_use_alt_sensor;
 
 void motion_interrupt(enum gpio_signal signal)
 {
-	if (base_use_alt_sensor)
-		lsm6dsm_interrupt(signal);
-	else
+	if (base_use_alt_sensor == base_lis2dw12)
 		lis2dw12_interrupt(signal);
+	else if (base_use_alt_sensor == base_lsm6ds3tr)
+		lsm6dsm_interrupt(signal);
+	else if (base_use_alt_sensor == base_bmi323)
+		bmi3xx_interrupt(signal);
 }
 
 void lid_accel_interrupt(enum gpio_signal signal)
@@ -81,8 +90,19 @@ DECLARE_HOOK(HOOK_INIT, motionsense_init, HOOK_PRIO_DEFAULT);
 
 static void alt_sensor_init(void)
 {
-	base_use_alt_sensor = cros_cbi_ssfc_check_match(
-		CBI_SSFC_VALUE_ID(DT_NODELABEL(base_sensor_lsm6dsm)));
+	if (cros_cbi_ssfc_check_match(
+		    CBI_SSFC_VALUE_ID(DT_NODELABEL(base_sensor_0)))) {
+		base_use_alt_sensor = base_lis2dw12;
+		LOG_INF("BASE ACCEL IS lis2dw12");
+	} else if (cros_cbi_ssfc_check_match(
+			   CBI_SSFC_VALUE_ID(DT_NODELABEL(base_sensor_1)))) {
+		base_use_alt_sensor = base_lsm6ds3tr;
+		LOG_INF("BASE ACCEL IS lsm6ds3tr");
+	} else if (cros_cbi_ssfc_check_match(
+			   CBI_SSFC_VALUE_ID(DT_NODELABEL(base_sensor_2)))) {
+		base_use_alt_sensor = base_bmi323;
+		LOG_INF("BASE ACCEL IS bmi323");
+	}
 
 	motion_sensors_check_ssfc();
 }

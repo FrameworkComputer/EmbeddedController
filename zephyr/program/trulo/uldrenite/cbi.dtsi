@@ -147,17 +147,22 @@
 		 */
 		base-sensor {
 			enum-name = "BASE_SENSOR";
-			size = <1>;
-			base_sensor_lis2dw12: lis2dw12 {
+			size = <3>;
+			base_sensor_0: lis2dw12 {
 				compatible = "cros-ec,cbi-ssfc-value";
 				status = "okay";
 				value = <0>;
 				default;
 			};
-			base_sensor_lsm6dsm: lsm6dsm {
+			base_sensor_1: lsm6dsm {
 				compatible = "cros-ec,cbi-ssfc-value";
 				status = "okay";
 				value = <1>;
+			};
+			base_sensor_2: bmi323 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <2>;
 			};
 		};
 	};
