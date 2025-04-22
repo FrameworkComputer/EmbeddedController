@@ -494,6 +494,7 @@ static enum ec_status hc_pwm_get_fan_duty(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 
 	resp->percent = fan_get_duty(FAN_CH(req->fan_idx));
+	args->response_size = sizeof(*resp);
 
 	return EC_RES_SUCCESS;
 }
@@ -528,6 +529,7 @@ hc_thermal_auto_fan_ctrl(struct host_cmd_handler_args *args)
 		set_thermal_control_enabled(fan, req->set_auto);
 	} else if (req->cmd == EC_AUTO_FAN_CONTROL_CMD_GET) {
 		resp->is_auto = is_thermal_control_enabled(fan);
+		args->response_size = sizeof(*resp);
 	} else {
 		return EC_RES_INVALID_PARAM;
 	}
