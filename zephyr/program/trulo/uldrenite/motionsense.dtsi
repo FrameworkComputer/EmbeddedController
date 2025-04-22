@@ -150,7 +150,7 @@
 					odr = <(50000 | ROUND_UP_FLAG)>;
 				};
 				ec-s3 {
-					odr = <(50000 | ROUND_UP_FLAG)>;
+					odr = <(10000 | ROUND_UP_FLAG)>;
 				};
 			};
 		};
