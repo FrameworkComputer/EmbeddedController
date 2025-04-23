@@ -113,7 +113,8 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 
 	if (p->role != USB_PD_CTRL_ROLE_NO_CHANGE) {
-		if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE))
+		if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) ||
+		    IS_ENABLED(CONFIG_USB_PD_CONTROLLER))
 			pd_set_dual_role(p->port, dual_role_map[p->role]);
 		else
 			return EC_RES_INVALID_PARAM;
@@ -129,7 +130,8 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 
 	if (p->swap == USB_PD_CTRL_SWAP_DATA) {
 		pd_request_data_swap(p->port);
-	} else if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE)) {
+	} else if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) ||
+		   IS_ENABLED(CONFIG_USB_PD_CONTROLLER)) {
 		if (p->swap == USB_PD_CTRL_SWAP_POWER)
 			pd_request_power_swap(p->port);
 		else if (IS_ENABLED(CONFIG_USBC_VCONN_SWAP) &&

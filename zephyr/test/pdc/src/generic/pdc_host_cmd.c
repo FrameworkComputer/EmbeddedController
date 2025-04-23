@@ -255,3 +255,146 @@ ZTEST(host_cmd_pdc, test_ec_cmd_usb_pd_mux_info)
 	zassert_ok(ec_cmd_usb_pd_mux_info(NULL, &param, &resp));
 	zassert_equal(resp.flags, expect);
 }
+
+ZTEST(host_cmd_pdc, test_ec_cmd_usb_pd_control__invalid_inputs)
+{
+	struct ec_params_usb_pd_control params;
+	struct ec_response_usb_pd_control_v2 resp;
+	int rv;
+
+	/* Port out of range */
+	params = (struct ec_params_usb_pd_control){
+		.port = CONFIG_USB_PD_PORT_MAX_COUNT,
+	};
+
+	rv = ec_cmd_usb_pd_control_v2(NULL, &params, &resp);
+
+	zassert_equal(EC_RES_INVALID_PARAM, rv,
+		      "Expected EC_RES_INVALID_PARAM (%d), got %d",
+		      EC_RES_INVALID_PARAM, rv);
+
+	/* Role out of range */
+	params = (struct ec_params_usb_pd_control){
+		.role = USB_PD_CTRL_ROLE_COUNT,
+	};
+
+	rv = ec_cmd_usb_pd_control_v2(NULL, &params, &resp);
+
+	zassert_equal(EC_RES_INVALID_PARAM, rv,
+		      "Expected EC_RES_INVALID_PARAM (%d), got %d",
+		      EC_RES_INVALID_PARAM, rv);
+
+	/* Mux choice out of range */
+	params = (struct ec_params_usb_pd_control){
+		.mux = USB_PD_CTRL_MUX_COUNT,
+	};
+
+	rv = ec_cmd_usb_pd_control_v2(NULL, &params, &resp);
+
+	zassert_equal(EC_RES_INVALID_PARAM, rv,
+		      "Expected EC_RES_INVALID_PARAM (%d), got %d",
+		      EC_RES_INVALID_PARAM, rv);
+}
+
+ZTEST(host_cmd_pdc, test_ec_cmd_usb_pd_control__change_dual_role_mode)
+{
+	struct ec_params_usb_pd_control params = { 0 };
+	struct ec_response_usb_pd_control_v2 resp;
+	int rv;
+
+	const static struct {
+		enum usb_pd_control_role requested;
+		enum pd_dual_role_states expected;
+	} test_roles[] = {
+		{
+			.requested = USB_PD_CTRL_ROLE_NO_CHANGE,
+		},
+		{
+			.requested = USB_PD_CTRL_ROLE_TOGGLE_ON,
+			.expected = PD_DRP_TOGGLE_ON,
+		},
+		{
+			.requested = USB_PD_CTRL_ROLE_TOGGLE_OFF,
+			.expected = PD_DRP_TOGGLE_OFF,
+		},
+		{
+			.requested = USB_PD_CTRL_ROLE_FORCE_SINK,
+			.expected = PD_DRP_FORCE_SINK,
+		},
+		{
+			.requested = USB_PD_CTRL_ROLE_FORCE_SOURCE,
+			.expected = PD_DRP_FORCE_SOURCE,
+		},
+		{
+			.requested = USB_PD_CTRL_ROLE_FREEZE,
+			.expected = PD_DRP_FREEZE,
+		},
+	};
+
+	for (int i = 0; i < ARRAY_SIZE(test_roles); i++) {
+		RESET_FAKE(pdc_power_mgmt_set_dual_role);
+
+		params.role = test_roles[i].requested;
+		params.port = 0;
+
+		rv = ec_cmd_usb_pd_control_v2(NULL, &params, &resp);
+
+		zassert_equal(EC_RES_SUCCESS, rv,
+			      "Expected EC_RES_SUCCESS (%d), got %d",
+			      EC_RES_SUCCESS, rv);
+
+		if (params.role == USB_PD_CTRL_ROLE_NO_CHANGE) {
+			/* Special case where no call/change should occur. */
+			zassert_equal(
+				0, pdc_power_mgmt_set_dual_role_fake.call_count,
+				"Dual role mode should not have been changed");
+			continue;
+		}
+
+		zassert_equal(1, pdc_power_mgmt_set_dual_role_fake.call_count,
+			      "Dual role mode should have been called once");
+		zassert_equal(
+			0, pdc_power_mgmt_set_dual_role_fake.arg0_history[0]);
+		zassert_equal(test_roles[i].expected,
+			      pdc_power_mgmt_set_dual_role_fake.arg1_history[0],
+			      "Set dual role mode to %d but expected %d",
+			      pdc_power_mgmt_set_dual_role_fake.arg1_history[0],
+			      test_roles[i].expected);
+	}
+}
+
+ZTEST(host_cmd_pdc, test_ec_cmd_usb_pd_control__swap_power_role)
+{
+	struct ec_params_usb_pd_control params = { 0 };
+	struct ec_response_usb_pd_control_v2 resp;
+	int rv;
+
+	params.swap = USB_PD_CTRL_SWAP_POWER;
+
+	rv = ec_cmd_usb_pd_control_v2(NULL, &params, &resp);
+
+	zassert_equal(EC_RES_SUCCESS, rv,
+		      "Expected EC_RES_SUCCESS (%d), got %d", EC_RES_SUCCESS,
+		      rv);
+
+	zassert_equal(1, pdc_power_mgmt_request_power_swap_fake.call_count,
+		      "pdc_power_mgmt_request_power_swap not called!");
+}
+
+ZTEST(host_cmd_pdc, test_ec_cmd_usb_pd_control__swap_data_role)
+{
+	struct ec_params_usb_pd_control params = { 0 };
+	struct ec_response_usb_pd_control_v2 resp;
+	int rv;
+
+	params.swap = USB_PD_CTRL_SWAP_DATA;
+
+	rv = ec_cmd_usb_pd_control_v2(NULL, &params, &resp);
+
+	zassert_equal(EC_RES_SUCCESS, rv,
+		      "Expected EC_RES_SUCCESS (%d), got %d", EC_RES_SUCCESS,
+		      rv);
+
+	zassert_equal(1, pdc_power_mgmt_request_data_swap_fake.call_count,
+		      "pdc_power_mgmt_request_data_swap not called!");
+}
