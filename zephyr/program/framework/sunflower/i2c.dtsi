@@ -132,6 +132,11 @@
 		compatible = "cros-ec,temp-sensor-battery";
 		reg = <0xb>;
 	};
+
+	charger_temp: charger_temp@9 {
+		compatible = "cros-ec,temp-sensor-isl9241";
+		reg = <0x9>;
+	};
 };
 
 &i2c_ctrl3 {

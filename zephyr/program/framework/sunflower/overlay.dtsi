@@ -62,6 +62,9 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&peci_temp>;
 		};
+		temp_sensor_charger: charger-temp {
+			sensor = <&charger_temp>;
+		};
 	};
 
 	peci_temp: peci-temp {
