@@ -13,6 +13,7 @@
 #include "charge_state.h"
 #include "charger/chg_rt9490.h"
 #include "driver/charger/rt9490.h"
+#include "driver/charger/isl9241.h"
 #include "hooks.h"
 #include "peci.h"
 #include "temp_sensor.h"
@@ -320,6 +321,31 @@ __maybe_unused static int battery_get_temp(const struct temp_sensor_t *sensor,
 		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_BATTERY(named_id), \
 	}
 
+
+#if DT_HAS_COMPAT_STATUS_OKAY(ISL9241_COMPAT)
+__maybe_unused static int isl9241_get_temp(const struct temp_sensor_t *sensor,
+						int *temp_ptr)
+{
+	return isl9241_get_temperature_val(sensor->idx, temp_ptr);
+}
+#endif /* BATTERY_COMPAT */
+
+#define GET_ZEPHYR_TEMP_SENSOR_ISL9241(named_id)                  \
+	(&(const struct zephyr_temp_sensor){                     \
+		.read = &isl9241_get_temp,                        \
+		.thermistor = NULL,                              \
+		.update_temperature = NULL, \
+		FILL_POWER_GOOD(named_id) })
+
+#define TEMP_ISL9241(named_id, sensor_id)                                \
+	[TEMP_SENSOR_ID(named_id)] = {                                  \
+		.name = DT_NODE_FULL_NAME(sensor_id),                   \
+		.idx = 0,                     \
+		.type = TEMP_SENSOR_TYPE_BOARD,                         \
+		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_ISL9241(named_id), \
+	}
+
+
 #ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
 #if DT_HAS_COMPAT_STATUS_OKAY(AMDR23M_COMPAT)
 /* The function maybe unused because a temperature sensor can be added to dts
@@ -422,6 +448,7 @@ __maybe_unused static int peci_get_temp(const struct temp_sensor_t *sensor,
 	CHECK_COMPAT(F75303_COMPAT, named_id, sensor_id, TEMP_F75303)         \
 	CHECK_COMPAT(F75397_COMPAT, named_id, sensor_id, TEMP_F75397)         \
 	CHECK_COMPAT(BATTERY_COMPAT, named_id, sensor_id, TEMP_BATTERY)         \
+	CHECK_COMPAT(ISL9241_COMPAT, named_id, sensor_id, TEMP_ISL9241)         \
 	CHECK_COMPAT(AMDR23M_COMPAT, named_id, sensor_id, TEMP_AMDR23M)			\
 	CHECK_COMPAT(PECI_COMPAT, named_id, sensor_id, TEMP_PECI)
 

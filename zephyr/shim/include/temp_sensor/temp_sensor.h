@@ -22,6 +22,7 @@ extern "C" {
 #define F75303_COMPAT cros_ec_temp_sensor_f75303
 #define F75397_COMPAT cros_ec_temp_sensor_f75397
 #define BATTERY_COMPAT cros_ec_temp_sensor_battery
+#define ISL9241_COMPAT cros_ec_temp_sensor_isl9241
 #define SB_TSI_COMPAT cros_ec_temp_sensor_sb_tsi
 #define THERMISTOR_COMPAT cros_ec_temp_sensor_thermistor
 #define TEMP_SENSORS_COMPAT cros_ec_temp_sensors
@@ -39,6 +40,7 @@ extern "C" {
 	DT_FOREACH_STATUS_OKAY(F75303_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(F75397_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(BATTERY_COMPAT, fn)                           \
+	DT_FOREACH_STATUS_OKAY(ISL9241_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(AMDR23M_COMPAT, fn)                          \
 	DT_FOREACH_STATUS_OKAY(PECI_COMPAT, fn)                          \
 	DT_FOREACH_STATUS_OKAY_VARGS(RT9490_CHG_COMPAT, TEMP_RT9490_FN, fn) \

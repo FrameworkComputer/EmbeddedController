@@ -1464,3 +1464,20 @@ const struct charger_drv isl9241_drv = {
 	.dump_prochot = &isl9241_dump_prochot_status,
 #endif
 };
+
+int isl9241_get_temperature_val(int idx, int *temp_ptr)
+{
+	int data;
+	uint32_t temp;
+
+	if (idx != 0)
+		return EC_ERROR_PARAM1;
+
+	RETURN_ERROR(isl9241_read(idx, ISL9241_REG_TJ_ADC_RESULTS, &data));
+
+	/* Section 6.5.4 ADC Operation describes the algorithm */
+	temp = 10000 * (252 - data) / 6154;
+	*temp_ptr = C_TO_K(temp);
+
+	return EC_SUCCESS;
+}
