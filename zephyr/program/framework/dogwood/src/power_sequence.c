@@ -295,43 +295,27 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 	/* unused function, EC doesn't control GPIO_SYS_RESET_L */
 }
 
-static void chipset_force_g3(void)
-{
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_apu_aud_pwr_en), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_1p2valw_pwren), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75_1p8valw_pwren), 0);
-
-	if (board_get_version() >= BOARD_VERSION_8) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 0);
-	}
-
-	cypd_update_chips_state(CCG_STATE_NO_POWER);
-	power_enable_psu(0);
-}
-
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		CPRINTS("%s(%d)", __func__, reason);
 		report_ap_reset(reason);
 		force_shutdown_flags = 1;
-		task_wake(TASK_ID_CHIPSET);
+		/**
+		 * Force shutdown the system, clear the wake event and set the PD
+		 * state to NO POWER to avoid the EC communicates with PD chip.
+		 */
+		cypd_update_chips_state(CCG_STATE_NO_POWER);
 		power_clear_wake_event(RTCWAKE | USBWAKE);
+
+		task_wake(TASK_ID_CHIPSET);
 	}
 }
 
 enum power_state power_chipset_init(void)
 {
 	/* If we don't need to image jump to RW, always start at G3 state */
-	chipset_force_g3();
+	chipset_force_shutdown(CHIPSET_SHUTDOWN_G3);
 	return POWER_G3;
 }
 
@@ -350,93 +334,6 @@ void system_hang_detect(void)
 	}
 }
 DECLARE_DEFERRED(system_hang_detect);
-
-static int chipset_prepare_S3(int enable)
-{
-	if (!enable) {
-		k_msleep(5);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
-		k_msleep(85);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
-		peripheral_power_suspend();
-
-		if (board_get_version() >= BOARD_VERSION_8) {
-			if (power_wait_mask_signals_timeout(0, IN_VS_POWER,
-				TIMEOUT_VS_POWER_TURN_OFF)) {
-				/* exit S0ix, clear the flags */
-				resume_ms_flag = 0;
-				enter_ms_flag = 0;
-				system_in_s0ix = 0;
-				chipset_force_g3();
-				return false;
-			}
-
-			k_msleep(10);
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix), 1);
-
-			k_msleep(20);
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 0);
-
-			k_msleep(10);
-			power_enable_psu(0);
-		}
-	} else {
-		k_msleep(10);
-		if (board_get_version() >= BOARD_VERSION_8) {
-			power_enable_psu(1);
-
-			/**
-			 * Wait for the PSU power good.
-			 * If something wrong, turn off power and force to g3.
-			 */
-			if (power_wait_signals(IN_VALW_PGOOD)) {
-				/* exit S0ix, clear the flags */
-				resume_ms_flag = 0;
-				enter_ms_flag = 0;
-				system_in_s0ix = 0;
-				chipset_force_g3();
-				return false;
-			}
-
-			k_msleep(10);
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 1);
-			system_check_ssd_status();
-		}
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 1);
-
-		/* wait VS power good. If something wrong, turn off power and force to g3 */
-		if (power_wait_signals(IN_VS_POWER)) {
-			/* exit S0ix, clear the flags */
-			resume_ms_flag = 0;
-			enter_ms_flag = 0;
-			system_in_s0ix = 0;
-			chipset_force_g3();
-			return false;
-		}
-
-		k_msleep(20);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 1);
-
-		/* wait VR power good. If something wrong, turn off power and force to g3 */
-		if (power_wait_signals(IN_VR_PGOOD)) {
-			/* exit S0ix, clear the flags */
-			resume_ms_flag = 0;
-			enter_ms_flag = 0;
-			system_in_s0ix = 0;
-			chipset_force_g3();
-			return false;
-		}
-
-		k_msleep(10);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 1);
-		peripheral_power_resume();
-
-		k_msleep(10);
-	}
-
-	return true;
-}
 
 static void power_check_12vb_apu(void)
 {
@@ -488,7 +385,7 @@ enum power_state power_handle_state(enum power_state state)
 
 		if (power_wait_signals(IN_VALW_PGOOD)) {
 			/* something wrong, turn off power and force to g3 */
-			chipset_force_g3();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_WAIT);
 			return POWER_G3;
 		}
 		/* If pok_l is on make psu pok pass */
@@ -564,9 +461,10 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S5S3:
+		/* enable the ssd2 power when the system power on from S5 */
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 1);
 
 		/* Call hooks now that rails are up */
-		/* hook_call_deferred(&system_hang_detect_data, 3 * SECOND); */
 		hook_notify(HOOK_CHIPSET_STARTUP);
 		return POWER_S3;
 
@@ -578,38 +476,22 @@ enum power_state power_handle_state(enum power_state state)
 			if (system_in_s0ix)
 				return POWER_S3S0ix;
 
-			/* enable the ssd2 power when the system power on from S5 */
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 1);
-
 			/* Power up to next state */
 			k_msleep(10);
 			return POWER_S3S0;
 		} else if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 0
 			|| force_shutdown_flags) {
 
+			/**
+			 * If abnormal/force shutdown happens in s0i3 state, EC needs to
+			 * clear the flags run the shutdown sequence.
+			 */
 			if (system_in_s0ix) {
 				resume_ms_flag = 0;
 				enter_ms_flag = 0;
 				system_in_s0ix = 0;
-				lpc_s0ix_resume_restore_masks();
-				/* Call hooks now that rails are up */
-				hook_notify(HOOK_CHIPSET_RESUME);
-				peripheral_power_resume();
-
-				/* if system drop power return to S0 run sequence shutdown */
-				return POWER_S0;
 			}
 
-			/* power loss, don't communicate with PD chip */
-			if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pok_l)) == 0) {
-				cypd_update_chips_state(CCG_STATE_NO_POWER);
-				power_clear_wake_event(RTCWAKE | USBWAKE);
-				return POWER_G3;
-			}
-
-			/* disable the ssd2 power when the system shutdown to S5 */
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 0);
-			k_msleep(55);
 			/* Power down to next state */
 			return POWER_S3S5;
 		}
@@ -633,7 +515,7 @@ enum power_state power_handle_state(enum power_state state)
 		if (power_wait_signals(IN_VS_POWER)) {
 			/* something wrong, turn off power and force to g3 */
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
-			force_shutdown_flags = 1;
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_WAIT);
 			return POWER_S3;
 		}
 
@@ -646,7 +528,7 @@ enum power_state power_handle_state(enum power_state state)
 			set_diagnostic(DIAGNOSTICS_HW_PGOOD_VR, 1);
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
-			force_shutdown_flags = 1;
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_WAIT);
 			return POWER_S3;
 		}
 
@@ -669,13 +551,6 @@ enum power_state power_handle_state(enum power_state state)
 
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 0 ||
 			force_shutdown_flags) {
-
-			/* power loss, don't communicate with PD chip */
-			if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pok_l)) == 0) {
-				cypd_update_chips_state(CCG_STATE_NO_POWER);
-				power_clear_wake_event(RTCWAKE | USBWAKE);
-				return POWER_G3;
-			}
 
 			/* Power down to next state */
 			k_msleep(5);
@@ -713,14 +588,107 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S0ixS3:
 		/* follow power sequence Disable S3 power */
-		if (!chipset_prepare_S3(0))
-			return POWER_G3;
+
+		k_msleep(5);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
+		k_msleep(85);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
+		peripheral_power_suspend();
+
+		if (board_get_version() >= BOARD_VERSION_8) {
+			if (power_wait_mask_signals_timeout(0, IN_VS_POWER,
+				TIMEOUT_VS_POWER_TURN_OFF)) {
+				/**
+				 * EC needs to wait the EC_CUSTOMIZED_MEMMAP_POWER_STATE
+				 * bit 7 to exit the S0ix.
+				 *
+				 * If the power fail during S0ix transfer to S0i3 (S3),
+				 * the host can't to update the EC_CUSTOMIZED_MEMMAP_POWER_STATE.
+				 * Therefore, EC should clear the flags and return power state to
+				 * S0 to run the shutdown sequence.
+				 */
+				resume_ms_flag = 0;
+				enter_ms_flag = 0;
+				system_in_s0ix = 0;
+				chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
+				return POWER_S0;
+			}
+
+			k_msleep(10);
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix), 1);
+
+			k_msleep(20);
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 0);
+
+			k_msleep(10);
+			power_enable_psu(0);
+		}
+
 		return POWER_S3;
 
 	case POWER_S3S0ix:
 		/* Enable power for CPU check system */
-		if (!chipset_prepare_S3(1))
-			return POWER_G3;
+		k_msleep(10);
+		if (board_get_version() >= BOARD_VERSION_8) {
+			power_enable_psu(1);
+
+			/**
+			 * Wait for the PSU power good.
+			 * If something wrong, turn off power and force to g3.
+			 */
+			if (power_wait_signals(IN_VALW_PGOOD)) {
+				resume_ms_flag = 0;
+				enter_ms_flag = 0;
+				system_in_s0ix = 0;
+				chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
+				/**
+				 * If happens something wrong, transfer the state to POWER_S0ixS3.
+				 * Eventually go all the way to S5 due to force_shutdown_flags set.
+				 */
+				return POWER_S0ixS3;
+			}
+
+			k_msleep(10);
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 1);
+			system_check_ssd_status();
+		}
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 1);
+
+		/* wait VS power good. If something wrong, turn off power and force to g3 */
+		if (power_wait_signals(IN_VS_POWER)) {
+			resume_ms_flag = 0;
+			enter_ms_flag = 0;
+			system_in_s0ix = 0;
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
+			/**
+			 * If happens something wrong, transfer the state to POWER_S0ixS3.
+			 * Eventually go all the way to S5 due to force_shutdown_flags set.
+			 */
+			return POWER_S0ixS3;
+		}
+
+		k_msleep(20);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 1);
+
+		/* wait VR power good. If something wrong, turn off power and force to g3 */
+		if (power_wait_signals(IN_VR_PGOOD)) {
+			resume_ms_flag = 0;
+			enter_ms_flag = 0;
+			system_in_s0ix = 0;
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
+			/**
+			 * If happens something wrong, transfer the state to POWER_S0ixS3.
+			 * Eventually go all the way to S5 due to force_shutdown_flags set.
+			 */
+			return POWER_S0ixS3;
+		}
+
+		k_msleep(10);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 1);
+		peripheral_power_resume();
+
+		k_msleep(10);
 		return POWER_S0ix;
 
 	case POWER_S0ixS0:
@@ -767,6 +735,9 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S5:
+		/* disable the ssd2 power when the system shutdown to S5 */
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 0);
+		k_msleep(55);
 		/* Call hooks before we remove power rails */
 		power_s5_up_control(0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 0);
@@ -795,6 +766,11 @@ enum power_state power_handle_state(enum power_state state)
 		k_msleep(5);
 
 		if (board_get_version() >= BOARD_VERSION_8) {
+			/**
+			 * ensure to turn off the en_s0ix when the system occurs
+			 * the abnormal/force shutdown
+			 */
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix), 0);
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 0);
 			k_msleep(5);
 		}
