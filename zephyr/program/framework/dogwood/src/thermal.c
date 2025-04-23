@@ -38,6 +38,9 @@
 #define FAN_CHASSIS_1	DT_NODELABEL(fan_front)
 #define FAN_CHASSIS_2	DT_NODELABEL(fan_rsv)
 
+/* Follow BIOS EC and SW ERS to define the fan off temperature (unit: C) */
+#define FAN_OFF_MIN_TEMP_HYSTERESIS 1
+
 struct fan_parameter_t fan_params[FAN_CH_COUNT];
 
 void fan_init(void)
@@ -90,9 +93,9 @@ int board_get_ambient_temp_mk(int *temp_mk)
 
 static int thermal_fan_percent_with_hysteresis(int low, int high, int cur, bool fan_is_on)
 {
-	int hysteresis_low = (low - 2);
+	int hysteresis_low = (low - FAN_OFF_MIN_TEMP_HYSTERESIS);
 
-	/* Set hysteresis target point to minimum temperature - 2 degree */
+	/* Set hysteresis target point to minimum temperature - FAN_OFF_MIN_TEMP_HYSTERESIS */
 	if (fan_is_on && cur < hysteresis_low)
 		return 0;
 	else if (fan_is_on && cur >= hysteresis_low && cur <= low) {
