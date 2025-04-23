@@ -211,7 +211,9 @@ ZTEST_USER(pdc_api, test_set_uor)
 	k_sleep(K_MSEC(SLEEP_MS));
 	zassert_ok(emul_pdc_get_uor(emul, &out));
 
-	zassert_equal(out.raw_value, in.raw_value);
+	zassert_equal(out.swap_to_dfp, in.swap_to_dfp);
+	zassert_equal(out.swap_to_ufp, in.swap_to_ufp);
+	zassert_equal(out.accept_dr_swap, in.accept_dr_swap);
 }
 
 ZTEST_USER(pdc_api, test_set_pdr)

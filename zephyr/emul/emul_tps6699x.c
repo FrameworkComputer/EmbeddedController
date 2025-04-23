@@ -492,6 +492,18 @@ tps6699x_emul_handle_port_control(struct tps6699x_emul_pdc_data *data,
 		data->frs_configured = true;
 	}
 
+	/*
+	 * The tps6699x driver doesn't send the UCSI_SET_UOR cmd to control data
+	 * role swaps because this command doesn't allow to specify allowing
+	 * data role swap requests based on the current data role (b/393455660).
+	 * Instead data role swap policy is controlled using the port control
+	 * register. Need to update the uor data struct here so that the current
+	 * emulated data role is reflected correctly.
+	 */
+	data->uor.swap_to_dfp = pc->initiate_swap_to_dfp;
+	data->uor.swap_to_ufp = pc->initiate_swap_to_ufp;
+	data->uor.accept_dr_swap = pc->process_swap_to_ufp;
+
 	data->port_control = *pc;
 }
 

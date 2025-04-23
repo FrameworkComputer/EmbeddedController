@@ -162,8 +162,10 @@ ZTEST_USER(tps6699x, test_set_uor_tps)
 	zassert_ok(pdc_set_uor(dev, in), "Failed to set uor");
 	k_sleep(K_MSEC(SLEEP_MS));
 	zassert_ok(emul_pdc_get_uor(emul, &out));
+	zassert_equal(out.swap_to_dfp, 0);
+	zassert_equal(out.swap_to_ufp, 1);
+	zassert_equal(out.accept_dr_swap, 1);
 	emul_pdc_get_data_role_preference(emul, &swap_to_dfp, &swap_to_ufp);
-	zassert_equal(out.raw_value, in.raw_value);
 	zassert_equal(swap_to_ufp, 1);
 	zassert_equal(swap_to_dfp, 0);
 

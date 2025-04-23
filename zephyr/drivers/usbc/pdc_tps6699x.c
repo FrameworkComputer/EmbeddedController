@@ -161,6 +161,8 @@ enum cmd_t {
 	CMD_SET_SBU_MUX_MODE,
 	/** CMD_RAW_UCSI */
 	CMD_RAW_UCSI,
+	/** Set data role swap options */
+	CMD_SET_DRS,
 };
 
 /**
@@ -318,6 +320,7 @@ static const char *const state_names[] = {
 static const struct smf_state states[];
 
 static void cmd_set_drp_mode(struct pdc_data_t *data);
+static void cmd_set_drs(struct pdc_data_t *data);
 static void cmd_get_drp_mode(struct pdc_data_t *data);
 static void cmd_set_tpc_rp(struct pdc_data_t *data);
 static void cmd_set_frs(struct pdc_data_t *data);
@@ -427,41 +430,6 @@ static void call_cci_event_cb(struct pdc_data_t *data)
 	}
 
 	data->cci_event.raw_value = 0;
-}
-
-static void tps_set_data_role_prefence(struct pdc_data_t *data)
-{
-	struct pdc_config_t const *cfg = data->dev->config;
-	union reg_port_control pdc_port_control;
-	int rv;
-
-	/* Read PDC port control */
-	rv = tps_rw_port_control(&cfg->i2c, &pdc_port_control, I2C_MSG_READ);
-	if (rv) {
-		LOG_ERR("Read port control failed");
-		goto error_recovery;
-	}
-
-	/* swap_to_dfp and swap_to_ufp should not both be set */
-	if (data->uor.swap_to_dfp) {
-		pdc_port_control.initiate_swap_to_dfp = data->uor.swap_to_dfp;
-		pdc_port_control.initiate_swap_to_ufp = 0;
-	} else {
-		pdc_port_control.initiate_swap_to_ufp = data->uor.swap_to_ufp;
-		pdc_port_control.initiate_swap_to_dfp = 0;
-	}
-
-	/* Write PDC port control */
-	rv = tps_rw_port_control(&cfg->i2c, &pdc_port_control, I2C_MSG_WRITE);
-	if (rv) {
-		LOG_ERR("Write port control failed");
-		goto error_recovery;
-	}
-
-	return;
-
-error_recovery:
-	set_state(data, ST_ERROR_RECOVERY);
 }
 
 static void st_irq_entry(void *o)
@@ -737,7 +705,6 @@ static void st_idle_run(void *o)
 			task_ucsi(data, UCSI_GET_CONNECTOR_CAPABILITY);
 			break;
 		case CMD_SET_UOR:
-			tps_set_data_role_prefence(data);
 			task_ucsi(data, UCSI_SET_UOR);
 			break;
 		case CMD_SET_PDR:
@@ -824,6 +791,9 @@ static void st_idle_run(void *o)
 			break;
 		case CMD_RAW_UCSI:
 			task_raw_ucsi(data);
+			break;
+		case CMD_SET_DRS:
+			cmd_set_drs(data);
 		}
 	}
 }
@@ -940,6 +910,71 @@ static void cmd_set_drp_mode(struct pdc_data_t *data)
 	/* Transition to idle state */
 	set_state(data, ST_IDLE);
 	return;
+}
+
+static void cmd_set_drs(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	union reg_port_control pdc_port_control;
+	int rv;
+
+	/* Read PDC port control */
+	rv = tps_rw_port_control(&cfg->i2c, &pdc_port_control, I2C_MSG_READ);
+	if (rv) {
+		LOG_ERR("Read port control failed");
+		goto error_recovery;
+	}
+
+	/*
+	 * Either uor.swap_to_dfp or uor.swap_to_ufp should be set. Having both
+	 * set is not allowed per the UCSI spec. SET_UOR can't be sent directly
+	 * as a UCSI command for two reasons.
+	 *  1. If a hard reset occurs while the port is in a SNK power role then
+	 *     there is no mechanism to trigger a data role swap to the desired
+	 *     data role. Setting initiate_swap_to_dfp|ufp instructs the PDC to
+	 *     automatically trigger a data role swap request to the desired
+	 *     data role following the establishment of a new PD contract.
+	 *
+	 *  2. If uor.accept_dr_swap is set to 0, which will usually be the case
+	 *     if the data role is DFP, then the TI PDC will clear the data role
+	 *     capable bit in the SRC/SNK CAP which then causes issues with
+	 *     complicance test TD 4.11.1
+	 *
+	 * So SET_UOR is instead mapped to the port control register which
+	 * provides the required control for data role swaps while still
+	 * allowing compliance tests to pass.
+	 */
+	if (data->uor.swap_to_dfp) {
+		pdc_port_control.initiate_swap_to_dfp = 1;
+		pdc_port_control.initiate_swap_to_ufp = 0;
+	} else {
+		pdc_port_control.initiate_swap_to_ufp = 1;
+		pdc_port_control.initiate_swap_to_dfp = 0;
+	}
+
+	/* Always want to accept a request to swap to DFP */
+	pdc_port_control.process_swap_to_dfp = 1;
+	/* accept_dr_swap control applies to either DFP or UFP */
+	pdc_port_control.process_swap_to_ufp = data->uor.accept_dr_swap;
+
+	/* Write PDC port control */
+	rv = tps_rw_port_control(&cfg->i2c, &pdc_port_control, I2C_MSG_WRITE);
+	if (rv) {
+		LOG_ERR("Write port control failed");
+		goto error_recovery;
+	}
+
+	/* Command has completed */
+	data->cci_event.command_completed = 1;
+	/* Inform the system of the event */
+	call_cci_event_cb(data);
+
+	/* Transition to idle state */
+	set_state(data, ST_IDLE);
+	return;
+
+error_recovery:
+	set_state(data, ST_ERROR_RECOVERY);
 }
 
 static void cmd_get_drp_mode(struct pdc_data_t *data)
@@ -2303,7 +2338,7 @@ static int tps_set_uor(const struct device *dev, union uor_t uor)
 
 	data->uor = uor;
 
-	return tps_post_command(dev, CMD_SET_UOR, NULL);
+	return tps_post_command(dev, CMD_SET_DRS, NULL);
 }
 
 static int tps_set_pdr(const struct device *dev, union pdr_t pdr)
