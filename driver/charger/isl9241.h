@@ -205,4 +205,14 @@
  */
 int isl9241_set_csin_discharge_fet(int chgnum, bool enable);
 
+/**
+ * Use this function to get the charger ISL9241 temperature.
+ *
+ * @param idx: sensor index
+ * @param temp_ptr: temperature value from charger
+ *
+ * @result EC_SUCCESS if gets the vlaue
+ */
+int isl9241_get_temperature_val(int idx, int *temp_ptr);
+
 #endif /* __CROS_EC_ISL9241_H */
