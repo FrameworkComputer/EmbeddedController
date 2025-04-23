@@ -15,7 +15,6 @@
 #include "../usba.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
-#include "motionsense.dtsi"
 
 / {
 	aliases {
@@ -47,6 +46,11 @@
 			0x40    /* C13 */
 			0x0a    /* C14 */
 		>;
+	};
+	gpio-interrupts {
+		/delete-node/ lid-accel;
+		/delete-node/ ec-imu;
+		/delete-node/ tablet_mode;
 	};
 };
 
