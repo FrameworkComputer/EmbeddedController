@@ -119,7 +119,7 @@ static int thermal_process_sensor_source_apu(int fan, int *temp)
 
 	duty = thermal_fan_percent_with_hysteresis(fan_param->min_temperature,
 				   fan_param->max_temperature,
-				   temp[TEMP_ID_CHIPSET],
+				   temp[TEMP_ID_POWER],
 				   fan_param->target_duty ? true : false);
 
 	if (duty && duty < fan_param->min_duty)
@@ -134,18 +134,11 @@ static int thermal_process_sensor_source_apu(int fan, int *temp)
 static int thermal_process_sensor_source_chassis(int fan, int *temp)
 {
 	int duty;
-	int max_temp = 0;
 	struct fan_parameter_t *fan_param = &fan_params[fan];
-
-	/* use the maximum value to be the target temperature */
-	for (int idx = 0; idx < F75303_IDX_COUNT; idx++) {
-		if (temp[idx] > max_temp)
-			max_temp = temp[idx];
-	}
 
 	duty = thermal_fan_percent_with_hysteresis(fan_param->min_temperature,
 				   fan_param->max_temperature,
-				   max_temp,
+				   temp[TEMP_ID_AMBIENT],
 				   fan_param->target_duty ? true : false);
 
 	if (duty && duty < fan_param->min_duty)
