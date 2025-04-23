@@ -11,11 +11,14 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "charger.h"
+#include "common.h"
 #include "console.h"
 #include "cypress_pd_common.h"
 #include "driver/charger/isl9241.h"
+#include "driver/temp_sensor/f75303.h"
 #include "extpower.h"
 #include "hooks.h"
+#include "math_util.h"
 #include "i2c.h"
 #include "power_sequence.h"
 #include "util.h"
@@ -24,6 +27,10 @@
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
 static bool charger_psys_enable_flag;
+
+/* charging current is limited to 3200mA or 2800mA */
+#define CHARGING_CURRENT_3200	3200
+#define CHARGING_CURRENT_2800	2800
 
 #ifdef CONFIG_PLATFORM_EC_CHARGER_INIT_CUSTOM
 static void charger_chips_init(void);
@@ -349,4 +356,45 @@ void acok_control(int voltage, int port)
 	/* Avoid the leakage current, need to disable the fast discharge */
 	if (port == -1)
 		board_fast_discharge_enable(false);
+}
+
+int charger_profile_override(struct charge_state_data *curr)
+{
+	int charger_temp, rv;
+
+	/**
+	 * Do not change the charge current when the system in S0 state.
+	 * Because we don't have to avoid high temperature it's expected
+	 * that the fan runs in S0.
+	 */
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		return EC_SUCCESS;
+
+	rv = isl9241_get_temperature_val(0, &charger_temp);
+
+	if (rv == EC_SUCCESS) {
+
+		if (K_TO_C(charger_temp) >= 73 && K_TO_C(charger_temp) < 78)
+			curr->requested_current =
+				MIN(curr->requested_current, CHARGING_CURRENT_3200);
+
+		if (K_TO_C(charger_temp) >= 78)
+			curr->requested_current =
+				MIN(curr->requested_current, CHARGING_CURRENT_2800);
+	}
+
+	return 0;
+}
+
+/* Not be used */
+enum ec_status charger_profile_override_get_param(uint32_t param,
+						  uint32_t *value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+enum ec_status charger_profile_override_set_param(uint32_t param,
+						  uint32_t value)
+{
+	return EC_RES_INVALID_PARAM;
 }
