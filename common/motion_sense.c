@@ -1158,7 +1158,10 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		if (args->version < 3)
 			args->response_size = sizeof(out->info);
 		if (args->version >= 3) {
-			out->info_3.min_frequency = sensor->min_frequency;
+			out->info_3.min_frequency =
+				MAX(sensor->min_frequency,
+				    BASE_ODR(sensor->config[SENSOR_CONFIG_EC_S0]
+						     .odr));
 			out->info_3.max_frequency = sensor->max_frequency;
 			out->info_3.fifo_max_event_count =
 				CONFIG_ACCEL_FIFO_SIZE;
