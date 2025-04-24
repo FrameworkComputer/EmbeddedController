@@ -858,10 +858,10 @@ class AllTests:
         # Make sure proper paths are added in the twister script, see ZEPHYR_TEST_PATHS
         tests = [
             # TODO(b/380492754): Fix compilation.
-            # TestConfig(
-            #    zephyr_name="cpp.main.newlib",
-            #    test_name="zephyr_cpp_newlib",
-            # ),
+            TestConfig(
+                zephyr_name="cpp.main.newlib",
+                test_name="zephyr_cpp_newlib",
+            ),
             # TODO(b/380491850): Test hangs.
             # TestConfig(
             #    zephyr_name="cpp.main.cpp20",
