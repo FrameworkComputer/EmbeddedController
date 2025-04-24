@@ -772,9 +772,9 @@ static uint16_t pass_args_to_sim(struct host_cmd_handler_args *args)
 	rv = k_sem_take(&send_called, K_SECONDS(1));
 	zassert_equal(rv, 0, "Send was not called");
 
-	memcpy(args->response, (uint8_t *)tx_buf->buf + TX_HEADER_SIZE,
-	       args->response_max);
 	args->response_size = tx_buf->len - TX_HEADER_SIZE;
+	memcpy(args->response, (uint8_t *)tx_buf->buf + TX_HEADER_SIZE,
+	       args->response_size);
 	tx_header = tx_buf->buf;
 
 	return tx_header->result;
