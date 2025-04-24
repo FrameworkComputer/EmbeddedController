@@ -702,4 +702,22 @@ struct ec_response_fan_configuration {
 	struct fan_parameter_t fan_config;
 } __ec_align1;
 
+/*****************************************************************************/
+/*
+ * Host command to enable/disable force on the PSU in standby mode
+ */
+#define EC_CMD_PSU_CONTROL	0x3E28
+
+struct ec_params_psu_control {
+	/* bool; force enable the PSU in standby mode */
+	uint8_t force_enable_in_standby;
+} __ec_align1;
+
+
+struct ec_response_psu_control {
+	/* bool; force enable the PSU in standby mode */
+	uint8_t force_enable_in_standby;
+} __ec_align1;
+
+
 #endif /* __BOARD_HOST_COMMAND_H */
