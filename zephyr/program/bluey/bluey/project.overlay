@@ -1,0 +1,15 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* bluey program common DTS includes */
+
+#include <cros/integrated_fwid.dtsi>
+
+#include "../bluey_stub.dtsi"
+
+/* bluey project DTS includes */
+
+/* bluey overrides follow... */
+

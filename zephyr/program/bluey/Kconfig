@@ -1,0 +1,15 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_BLUEY
+	bool "Google Bluey baseboard"
+	help
+	  Build Google Bluey reference board.  The board uses Nuvoton
+	  NPCX9 chip as the EC.
+
+module = Bluey
+module-str = Bluey board-specific code
+source "subsys/logging/Kconfig.template.log_config"
+
+source "Kconfig.zephyr"
