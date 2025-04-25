@@ -59,8 +59,8 @@
 				 0 0 1>;
 		};
 		base_rot_ref_lis2dw12: base-rotation-ref-lis2dw12 {
-			mat33 = <0 1 0
-				(-1) 0 0
+			mat33 = <(-1) 0 0
+				 0 (-1) 0
 				 0 0 1>;
 		};
 		base_rot_bmi323: base-rotation-bmi {
@@ -145,7 +145,7 @@
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&lid_mutex_lis2dw12>;
 			port = <&i2c_ec_i2c_sensor_r>;
-			rot-standard-ref = <&base_rot_ref>;
+			rot-standard-ref = <&base_rot_ref_lis2dw12>;
 			default-range = <4>; /* to meet CDD 7.3.1/C-1-4 reqs. */
 			drv-data = <&lis2dw12_data>;
 			i2c-spi-addr-flags = "LIS2DWL_ADDR1_FLAGS";
