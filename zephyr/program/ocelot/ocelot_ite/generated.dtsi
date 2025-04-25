@@ -37,33 +37,26 @@
 			gpios = <&gpioe 5 (GPIO_INPUT)>;
 			enum-name = "GPIO_BATT_PRES_ODL";
 		};
-		gpio_bga_pina10: bga_pina10 {
-			gpios = <&gpiof 2 (GPIO_INPUT)>;
+		gpio_bc_acok: bc_acok {
+			// signal name was manually overriden from "bga_pine5"
+			gpios = <&gpioc 0 (GPIO_INPUT)>;
+			enum-name = "GPIO_AC_PRESENT";
 		};
 		gpio_bga_pinb1: bga_pinb1 {
 			gpios = <&gpiof 6 (GPIO_INPUT)>;
 		};
-		gpio_bga_pinb4: bga_pinb4 {
-			gpios = <&gpioe 4 (GPIO_INPUT)>;
-			enum-name = "GPIO_POWER_BUTTON_L";
-		};
 		gpio_bga_pinc1: bga_pinc1 {
 			gpios = <&gpiof 7 (GPIO_INPUT)>;
-		};
-		gpio_bga_pine5: bga_pine5 {
-			gpios = <&gpioc 0 (GPIO_INPUT)>;
-		};
-		gpio_bga_pinf4: bga_pinf4 {
-			gpios = <&gpiog 1 (GPIO_INPUT)>;
-		};
-		gpio_bga_pinm1: bga_pinm1 {
-			gpios = <&gpioe 6 (GPIO_INPUT)>;
 		};
 		gpio_bga_pinm2: bga_pinm2 {
 			gpios = <&gpioc 7 (GPIO_INPUT)>;
 		};
 		gpio_bga_pinn1: bga_pinn1 {
 			gpios = <&gpiod 0 (GPIO_INPUT)>;
+		};
+		gpio_ccd_mode_odl: ccd_mode_odl {
+			// signal name was manually overriden from "bga_pinm1"
+			gpios = <&gpioe 6 (GPIO_INPUT)>;
 		};
 		gpio_cpu_c10_gate_r: cpu_c10_gate_r {
 			gpios = <&gpioj 0 (GPIO_INPUT)>;
@@ -72,20 +65,25 @@
 			gpios = <&gpioh 0 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_c_ec_wp_odl_r: c_ec_wp_odl_r {
-			gpios = <&gpiob 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpiob 5 (GPIO_INPUT | GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 		};
 		gpio_c_edp_bklt_en_r: c_edp_bklt_en_r {
-			gpios = <&gpioc 6 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
+			gpios = <&gpioc 6 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
 		};
 		gpio_c_en_pp5000_typea_r: c_en_pp5000_typea_r {
 			gpios = <&gpiof 4 (GPIO_INPUT)>;
 		};
+		gpio_c_gsc_ec_pwr_btn_n: c_gsc_ec_pwr_btn_n {
+			// signal name was manually overriden from "bga_pinb4"
+			gpios = <&gpioe 4 (GPIO_INPUT)>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
 		gpio_c_ioex_kbd_intr_r: c_ioex_kbd_intr_r {
 			gpios = <&gpioi 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
-		gpio_ec_ds3_r: ec_ds3_r {
-			gpios = <&gpioi 7 (GPIO_INPUT)>;
-			enum-name = "GPIO_TEMP_SENSOR_POWER";
+		gpio_c_mecc_cse_early_sw_r: c_mecc_cse_early_sw_r {
+			// signal name was manually overriden from "x00085"
+			gpios = <&gpioj 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
 		gpio_ec_fan_pwr_disable_n_r: ec_fan_pwr_disable_n_r {
 			gpios = <&gpioc 4 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
@@ -95,6 +93,15 @@
 		};
 		gpio_ec_slatemode_hallout_snsr_r: ec_slatemode_hallout_snsr_r {
 			gpios = <&gpiod 1 (GPIO_INPUT)>;
+		};
+		gpio_en_ds3_r_en_s5_rails: en_ds3_r_en_s5_rails {
+			// signal name was manually overriden from "ec_ds3_r"
+			gpios = <&gpioi 7 (GPIO_INPUT)>;
+			enum-name = "GPIO_TEMP_SENSOR_POWER";
+		};
+		gpio_en_pp5000_s5: en_pp5000_s5 {
+			// signal name was manually overriden from "bga_pinf4"
+			gpios = <&gpiog 1 (GPIO_INPUT)>;
 		};
 		gpio_en_slp_z_r: en_slp_z_r {
 			gpios = <&gpiod 4 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
@@ -110,6 +117,10 @@
 		};
 		gpio_fsck_r: fsck_r {
 			gpios = <&gpiog 7 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+		};
+		gpio_gpf2: gpf2 {
+			// signal name was manually overriden from "bga_pina10"
+			gpios = <&gpiof 2 (GPIO_INPUT)>;
 		};
 		gpio_gpg0: gpg0 {
 			gpios = <&gpiog 0 (GPIO_INPUT)>;
@@ -168,7 +179,7 @@
 			gpios = <&gpioa 6 (GPIO_INPUT)>;
 		};
 		gpio_sys_pwrok_ec_r: sys_pwrok_ec_r {
-			gpios = <&gpiof 1 (GPIO_INPUT)>;
+			gpios = <&gpiof 1 (GPIO_INPUT | GPIO_PULL_DOWN)>;
 		};
 		gpio_virtual_battery_r: virtual_battery_r {
 			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_PULL_UP)>;
@@ -186,9 +197,6 @@
 		};
 		gpio_wc_usbc_pd_alrt_aic2_r: wc_usbc_pd_alrt_aic2_r {
 			gpios = <&gpioj 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-		};
-		gpio_x00085: x00085 {
-			gpios = <&gpioj 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
 	};
 
