@@ -302,9 +302,13 @@ struct ec_response_chassis_open_check {
  */
 #define EC_CMD_READ_PD_VERSION		0x3E11
 
-struct ec_response_read_pd_version {
+struct ec_response_read_pd_version_v0 {
 	uint8_t pd0_version[8];
 	uint8_t pd1_version[8];
+} __ec_align1;
+struct ec_response_read_pd_version_v1 {
+	uint8_t pd_chip_count;
+	uint8_t pd_versions[0][8];
 } __ec_align1;
 
 /*****************************************************************************/
