@@ -285,6 +285,7 @@ hc_pdc_trace_msg_enable(struct host_cmd_handler_args *args)
 	r->port = pdc_trace_msg_enable(req_port);
 	r->fifo_free = ring_buf_space_get(&msg_fifo_rbuf);
 	r->dropped_count = msg_fifo.dropped;
+	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
 }
