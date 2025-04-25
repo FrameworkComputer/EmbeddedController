@@ -148,6 +148,7 @@ ZTEST_USER(common_cbi, test_hc_cbi_set_then_get)
 		EC_CMD_GET_CROS_BOARD_INFO, 0, hc_get_response, hc_get_params);
 
 	zassert_ok(host_command_process(&get_args));
+	zassert_equal(get_args.response_size, sizeof(hc_get_response));
 	zassert_mem_equal(hc_get_response.data, hc_set_params.actual_data,
 			  hc_set_params.params.size);
 }
@@ -272,6 +273,7 @@ ZTEST_USER(common_cbi, test_hc_cbi_bin_write_then_read)
 		EC_CMD_CBI_BIN_READ, 0, hc_get_response, hc_get_params);
 
 	zassert_ok(host_command_process(&get_args));
+	zassert_equal(get_args.response_size, sizeof(hc_get_response));
 
 	zassert_mem_equal(hc_get_response.data, hc_set_params.params.data,
 			  hc_set_params.params.size);

@@ -192,6 +192,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, test_typec_status_using_rmdo)
 	 * bits 16-31 of the partner's RMDO
 	 */
 	zassert_ok(host_command_process(&args));
+	zassert_equal(args.response_size, sizeof(response));
 	zassert_equal(response.sop_revision, fixture->source_5v_3a.rmdo >> 16);
 }
 

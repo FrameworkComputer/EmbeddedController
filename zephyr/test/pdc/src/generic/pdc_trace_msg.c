@@ -65,15 +65,18 @@ static int hc_msg_enable(struct ec_response_pdc_trace_msg_enable *r)
 	};
 	struct host_cmd_handler_args msg_enable_args = BUILD_HOST_COMMAND(
 		EC_CMD_PDC_TRACE_MSG_ENABLE, 0, *r, msg_enable_p);
+	int ret = host_command_process(&msg_enable_args);
 
-	return host_command_process(&msg_enable_args);
+	if (ret == EC_RES_SUCCESS) {
+		zassert_equal(msg_enable_args.response_size, sizeof(*r));
+	}
+	return ret;
 }
 
 static int hc_msg_get(struct ec_response_pdc_trace_msg_get_entries *r)
 {
 	struct host_cmd_handler_args msg_get_args = BUILD_HOST_COMMAND_RESPONSE(
 		EC_CMD_PDC_TRACE_MSG_GET_ENTRIES, 0, *r);
-
 	return host_command_process(&msg_get_args);
 }
 

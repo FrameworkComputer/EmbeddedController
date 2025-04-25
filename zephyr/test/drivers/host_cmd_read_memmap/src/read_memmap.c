@@ -29,6 +29,7 @@ ZTEST(ec_cmd_read_memmap, test_id)
 	}
 
 	zassert_ok(rv, "Got %d", rv);
+	zassert_equal(args.response_size, sizeof(response));
 	/* Response should be 'E' 'C' */
 	zassert_equal('E', response[0]);
 	zassert_equal('C', response[1]);
@@ -57,6 +58,7 @@ ZTEST(ec_cmd_read_memmap, test_switches)
 	 */
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_SWITCH)) {
 		zassert_ok(rv, "Got %d", rv);
+		zassert_equal(args.response_size, sizeof(response));
 	} else {
 		zassert_equal(rv, EC_RES_UNAVAILABLE, "Got %d", rv);
 	}

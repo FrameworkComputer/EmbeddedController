@@ -325,6 +325,7 @@ ZTEST_USER(panic_log, test_host_cmd_info)
 		BUILD_HOST_COMMAND(EC_CMD_PANIC_LOG_INFO, 0, response, params);
 
 	zassert_equal(host_command_process(&args), EC_RES_SUCCESS);
+	zassert_equal(args.response_size, sizeof(response));
 	zassert_equal(response.version, panic_log_version());
 	zassert_equal(response.capacity, panic_log_capacity());
 	zassert_equal(response.length, panic_log_len());
@@ -349,6 +350,7 @@ ZTEST_USER(panic_log, test_host_cmd_info_reset)
 
 	/* Send command to reset */
 	zassert_equal(host_command_process(&args), EC_RES_SUCCESS);
+	zassert_equal(args.response_size, sizeof(response));
 
 	/* Verify panic log was reset */
 	zassert_false(panic_log_contains(test_str));
@@ -373,6 +375,7 @@ ZTEST_USER(panic_log, test_host_cmd_info_freeze)
 	zassert_false(panic_log_frozen);
 	/* Send command to freeze */
 	zassert_equal(host_command_process(&args), EC_RES_SUCCESS);
+	zassert_equal(args.response_size, sizeof(response));
 	zassert_true(panic_log_frozen);
 
 	/* Verify panic log was not reset */
@@ -397,6 +400,7 @@ ZTEST_USER(panic_log, test_host_cmd_info_unfreeze)
 	zassert_true(panic_log_frozen);
 	/* Send command to unfreeze */
 	zassert_equal(host_command_process(&args), EC_RES_SUCCESS);
+	zassert_equal(args.response_size, sizeof(response));
 	zassert_false(panic_log_frozen);
 
 	/* Verify panic log was not reset */

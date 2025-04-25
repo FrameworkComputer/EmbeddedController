@@ -84,6 +84,7 @@ ZTEST(keyboard_factory_test, test_factory_test_hc)
 	gpio_flags_t flags;
 
 	zassert_ok(host_command_process(&args));
+	zassert_equal(args.response_size, sizeof(resp));
 	zassert_equal(resp.shorted, 0);
 	zassert_equal(pinctrl_configure_pins_fake.call_count, 2);
 
@@ -103,6 +104,7 @@ ZTEST(keyboard_factory_test, test_factory_test_hc_shorted)
 	simulate_short_p3_p11 = true;
 
 	zassert_ok(host_command_process(&args));
+	zassert_equal(args.response_size, sizeof(resp));
 	zassert_equal(resp.shorted, 3 << 8 | 11);
 }
 

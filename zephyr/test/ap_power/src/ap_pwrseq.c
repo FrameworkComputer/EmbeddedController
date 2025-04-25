@@ -305,6 +305,7 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_0_wake)
 	/* Confirm that counters keeps the same value through wakeup */
 	zassert_ok(host_command_process(&s0ix_cnt_ev_args),
 		   "Failed to get s0ix counter");
+	zassert_equal(s0ix_cnt_ev_args.response_size, sizeof(s0ix_cnt_ev_r));
 	zassert_equal(s0ix_cnt_ev_r.s0ix_counter, 1);
 
 	zassert_equal(0,
@@ -314,18 +315,22 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_0_wake)
 
 	k_msleep(500);
 	zassert_ok(host_command_process(&args));
+	zassert_equal(args.response_size, sizeof(r));
 	zassert_ok(host_command_process(&s0ix_cnt_ev_args),
 		   "Failed to get sleep counter");
+	zassert_equal(s0ix_cnt_ev_args.response_size, sizeof(s0ix_cnt_ev_r));
 	zassert_equal(s0ix_cnt_ev_r.s0ix_counter, 1);
 
 	/* Verify the reset command sets the counter to zero */
 	s0ix_cnt_ev_p.flags = EC_S0IX_COUNTER_RESET;
 	zassert_ok(host_command_process(&s0ix_cnt_ev_args),
 		   "Failed to get s0ix counter");
+	zassert_equal(s0ix_cnt_ev_args.response_size, sizeof(s0ix_cnt_ev_r));
 
 	s0ix_cnt_ev_p.flags = 0;
 	zassert_ok(host_command_process(&s0ix_cnt_ev_args),
 		   "Failed to get s0ix counter");
+	zassert_equal(s0ix_cnt_ev_args.response_size, sizeof(s0ix_cnt_ev_r));
 	zassert_equal(s0ix_cnt_ev_r.s0ix_counter, 0);
 }
 

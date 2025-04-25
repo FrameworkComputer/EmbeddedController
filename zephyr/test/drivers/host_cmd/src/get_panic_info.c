@@ -55,6 +55,7 @@ ZTEST_USER(host_cmd_get_panic_info, test_get_panic_info)
 	pdata->magic = PANIC_DATA_MAGIC;
 
 	zassert_ok(host_command_process(&args), NULL);
+	zassert_equal(args.response_size, sizeof(response));
 	zassert_equal(sizeof(struct panic_data), args.response_size, NULL);
 	zassert_equal(0, response.arch, NULL);
 	zassert_equal(1, response.struct_version, NULL);
@@ -76,6 +77,7 @@ ZTEST_USER(host_cmd_get_panic_info, test_get_panic_info_bad_magic)
 
 	pdata->magic = PANIC_DATA_MAGIC + 1;
 	zassert_ok(host_command_process(&args), NULL);
+	zassert_equal(args.response_size, 0);
 	/* Check that nothing was written to response */
 	zassert_mem_equal(&response, &expected, sizeof(struct panic_data),
 			  NULL);
@@ -92,6 +94,7 @@ ZTEST_USER(host_cmd_get_panic_info, test_get_panic_info_size_is_zero)
 	pdata->magic = PANIC_DATA_MAGIC;
 	pdata->struct_size = 0;
 	zassert_ok(host_command_process(&args), NULL);
+	zassert_equal(args.response_size, 0);
 	/* Check that nothing was written to response */
 	zassert_mem_equal(&response, &expected, sizeof(struct panic_data),
 			  NULL);
@@ -112,6 +115,7 @@ ZTEST_USER(host_cmd_get_panic_info, test_get_panic_info_truncate)
 	pdata->struct_size = sizeof(struct panic_data);
 
 	zassert_ok(host_command_process(&args), NULL);
+	zassert_equal(args.response_size, sizeof(struct panic_data) - 2);
 	zassert_equal(sizeof(struct panic_data) - 2, args.response_size, NULL);
 	/* Truncation flag must be set */
 	zassert_equal(response.flags & PANIC_DATA_FLAG_TRUNCATED,

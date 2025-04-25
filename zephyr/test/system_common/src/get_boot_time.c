@@ -34,6 +34,7 @@ ZTEST(host_cmd_get_boot_time, test_get_boot_time)
 	ret = host_command_process(&args);
 
 	zassert_equal(ret, EC_SUCCESS, "Unexpected return value: %d", ret);
+	zassert_equal(args.response_size, sizeof(r));
 
 	ccprintf("arail: %" PRIu64 "\n", r.timestamp[ARAIL]);
 	ccprintf("rsmrst: %" PRIu64 "\n", r.timestamp[RSMRST]);

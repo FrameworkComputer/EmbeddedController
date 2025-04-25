@@ -109,6 +109,7 @@ ZTEST(host_cmd_battery_v2, test_get_static__v2)
 
 	rv = host_command_process(&args);
 	zassert_ok(rv, "Got %d", rv);
+	zassert_equal(args.response_size, sizeof(response));
 
 	/* Validate all of the fields */
 	struct battery_static_info *batt = &battery_static[0];

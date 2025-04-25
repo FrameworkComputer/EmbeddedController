@@ -130,6 +130,7 @@ ZTEST(cbi_flash, test_cbi_flash_host_read_empty)
 		EC_CMD_CBI_BIN_READ, 0, hc_get_response, hc_get_params);
 
 	zassert_ok(host_command_process(&get_args));
+	zassert_equal(get_args.response_size, sizeof(hc_get_response));
 
 	uint8_t response_is_empty[32];
 
@@ -140,6 +141,7 @@ ZTEST(cbi_flash, test_cbi_flash_host_read_empty)
 	hc_get_params.offset = CBI_IMAGE_SIZE - 1;
 
 	zassert_ok(host_command_process(&get_args));
+	zassert_equal(get_args.response_size, sizeof(hc_get_response));
 }
 
 ZTEST(cbi_flash, test_cbi_flash_host_write_overflow)

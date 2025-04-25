@@ -119,6 +119,7 @@ ZTEST(host_cmd_host_commands, test_get_proto_version)
 	rv = host_command_process(&args);
 
 	zassert_ok(rv, "Got %d", rv);
+	zassert_equal(args.response_size, sizeof(response));
 	zassert_equal(EC_PROTO_VERSION, response.version);
 }
 
@@ -137,6 +138,7 @@ ZTEST(host_cmd_host_commands, test_hello)
 		rv = host_command_process(&args);
 
 		zassert_ok(rv, "Got %d, in_data: %x", rv, params_to_test[i]);
+		zassert_equal(args.response_size, sizeof(response));
 		zassert_equal(params_to_test[i] + 0x01020304, response.out_data,
 			      "in_data: %x", params_to_test[i]);
 	}

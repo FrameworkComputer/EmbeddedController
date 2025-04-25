@@ -196,6 +196,7 @@ ZTEST(fan_common, test_fan_hc_get_target_rpm)
 		EC_CMD_PWM_GET_FAN_TARGET_RPM, 0, r);
 
 	zassert_ok(host_command_process(&args));
+	zassert_equal(args.response_size, sizeof(r));
 	zassert_equal(r.rpm, fan_get_rpm_target(0));
 }
 
@@ -291,6 +292,7 @@ ZTEST(fan_common, test_fan_hc_get_duty)
 		BUILD_HOST_COMMAND(EC_CMD_PWM_GET_FAN_DUTY, 0, resp, req);
 
 	zassert_ok(host_command_process(&args));
+	zassert_equal(args.response_size, sizeof(resp));
 	zassert_equal(resp.percent, fan_get_duty(0));
 }
 
@@ -384,10 +386,12 @@ ZTEST(fan_common, test_fan_hc_set_auto_fan_v2_get)
 
 	set_thermal_control_enabled(0, 0);
 	zassert_ok(host_command_process(&args));
+	zassert_equal(args.response_size, sizeof(resp));
 	zassert_false(resp.is_auto);
 
 	set_thermal_control_enabled(0, 1);
 	zassert_ok(host_command_process(&args));
+	zassert_equal(args.response_size, sizeof(resp));
 	zassert_true(resp.is_auto);
 }
 

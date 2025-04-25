@@ -286,8 +286,21 @@ int host_cmd_motion_sense_info(uint8_t cmd_version, uint8_t sensor_num,
 	};
 	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
 		EC_CMD_MOTION_SENSE_CMD, cmd_version, *response, params);
+	int ret = host_command_process(&args);
 
-	return host_command_process(&args);
+	if (ret == EC_RES_SUCCESS) {
+		if (cmd_version < 3) {
+			zassert_equal(args.response_size,
+				      sizeof(response->info));
+		} else if (cmd_version == 3) {
+			zassert_equal(args.response_size,
+				      sizeof(response->info_3));
+		} else if (cmd_version >= 4) {
+			zassert_equal(args.response_size,
+				      sizeof(response->info_4));
+		}
+	}
+	return ret;
 }
 
 int host_cmd_motion_sense_ec_rate(uint8_t sensor_num, int data_rate_ms,
@@ -569,7 +582,6 @@ host_cmd_get_next_event_v2(struct ec_response_get_next_event_v1 *response)
 {
 	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_RESPONSE(
 		EC_CMD_GET_NEXT_EVENT, 2, *response);
-
 	return host_command_process(&args);
 }
 

@@ -202,6 +202,9 @@ ZTEST(vivaldi_kbd, test_get_vivaldi_keybd_config)
 	ret = host_command_process(&args);
 
 	zassert_equal(ret, hc_resp_expect);
+	if (hc_resp_expect == EC_RES_SUCCESS) {
+		zassert_equal(args.response_size, sizeof(resp));
+	}
 	zassert_equal(resp.num_top_row_keys, ACTION_KEYS_EXPECT_SIZE);
 
 	for (int i = 0; i < ACTION_KEYS_EXPECT_SIZE; i++) {

@@ -289,6 +289,7 @@ ZTEST_USER(memory_dump, test_dump_before_registered)
 
 	rv = host_command_process(&args);
 
+	zassert_equal(args.response_size, sizeof(metadata_response));
 	zassert_equal(metadata_response.memory_dump_entry_count, 0);
 }
 

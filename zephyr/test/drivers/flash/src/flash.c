@@ -265,6 +265,7 @@ ZTEST_USER(flash, test_hostcmd_flash_info_1)
 	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT)) {
 		/* Get the flash info. */
 		zassert_ok(host_command_process(&args), NULL);
+		zassert_equal(args.response_size, sizeof(response));
 		zassert_equal(response.flash_size,
 			      CONFIG_FLASH_SIZE_BYTES - EC_FLASH_REGION_START,
 			      "response.flash_size = %d", response.flash_size);
@@ -556,9 +557,13 @@ static uint16_t read_flash_helper32(uint32_t offset, uint32_t *output)
 	};
 	struct host_cmd_handler_args read_args =
 		BUILD_HOST_COMMAND(EC_CMD_FLASH_READ, 0, *output, read_params);
-
 	/* Flash read and compare the readback data */
-	return host_command_process(&read_args);
+	int ret = host_command_process(&read_args);
+
+	if (ret == EC_RES_SUCCESS) {
+		zassert_equal(read_args.response_size, sizeof(*output));
+	}
+	return ret;
 }
 
 ZTEST_USER(flash, test_console_cmd_flash_erase__happy)

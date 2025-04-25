@@ -28,6 +28,8 @@ ZTEST(host_cmd_get_build_info, test_get_build_info)
 	ret = host_command_process(&args);
 
 	zassert_equal(ret, EC_SUCCESS, "Unexpected return value: %d", ret);
+	zassert_equal(args.response_size,
+		      strlen(system_get_build_info_fake.return_val) + 1);
 	zassert_equal(strcmp(resp, "i-am-a-version"), 0,
 		      "Unexpected response: %s", resp);
 	zassert_equal(system_get_build_info_fake.call_count, 1,
@@ -48,6 +50,7 @@ ZTEST(host_cmd_get_build_info, test_get_build_info_truncated)
 	ret = host_command_process(&args);
 
 	zassert_equal(ret, EC_SUCCESS, "Unexpected return value: %d", ret);
+	zassert_equal(args.response_size, sizeof(resp));
 	zassert_equal(strcmp(resp, "i-am-a-"), 0, "Unexpected response: %s",
 		      resp);
 	zassert_equal(system_get_build_info_fake.call_count, 1,
