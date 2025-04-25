@@ -278,19 +278,41 @@ static enum ec_status enter_acpi_mode(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_ACPI_NOTIFY, enter_acpi_mode, EC_VER_MASK(0));
 
-static enum ec_status read_pd_versoin(struct host_cmd_handler_args *args)
+static enum ec_status read_pd_version(struct host_cmd_handler_args *args)
 {
-	struct ec_response_read_pd_version *r = args->response;
+	struct ec_response_read_pd_version_v0 *r_v0 = args->response;
+	struct ec_response_read_pd_version_v1 *r_v1 = args->response;
 
-	memcpy(r->pd0_version, get_pd_version(0), sizeof(r->pd0_version));
-	memcpy(r->pd1_version, get_pd_version(1), sizeof(r->pd1_version));
-	memcpy(r->pd2_version, get_pd_version(2), sizeof(r->pd2_version));
+	uint8_t *pd_versions[3] = {
+		get_pd_version(0),
+		get_pd_version(1),
+		get_pd_version(2),
+	};
+	uint8_t no_pd[8] = { 0 };
 
-	args->response_size = sizeof(*r);
+	switch (args->version) {
+	case 0:
+		memcpy(r_v0->pd0_version, pd_versions[0], sizeof(r_v0->pd0_version));
+		memcpy(r_v0->pd1_version, pd_versions[1], sizeof(r_v0->pd1_version));
+		args->response_size = sizeof(*r_v0);
+		break;
+	case 1:
+		r_v1->pd_chip_count = 0;
+		for (int i = 0; i < ARRAY_SIZE(pd_versions); i++) {
+			/* If encountering a missing PD controller we've reached the end */
+			if (memcmp(pd_versions[i], no_pd, sizeof(no_pd)) == 0)
+				break;
+			memcpy(r_v1->pd_versions[i], pd_versions[i], sizeof(r_v1->pd_versions[0]));
+			r_v1->pd_chip_count++;
+		}
+		args->response_size = sizeof(*r_v1) +
+			r_v1->pd_chip_count * sizeof(r_v1->pd_versions[0]);
+		break;
+	}
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_READ_PD_VERSION, read_pd_versoin, EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_READ_PD_VERSION, read_pd_version, EC_VER_MASK(0) | EC_VER_MASK(1));
 
 #ifndef CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
 static enum ec_status standalone_mode(struct host_cmd_handler_args *args)
