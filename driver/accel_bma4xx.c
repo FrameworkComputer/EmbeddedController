@@ -613,8 +613,7 @@ out:
 /* Handle IRQ from sensor: schedule read from task context */
 test_mockable void bma4xx_interrupt(enum gpio_signal signal)
 {
-	__atomic_store_n(&last_irq_timestamp, __hw_clock_source_read(),
-			 __ATOMIC_RELAXED);
+	last_irq_timestamp = __hw_clock_source_read();
 	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ACCEL_BMA4XX_INT_EVENT);
 }
 
@@ -656,8 +655,7 @@ static void process_fifo_data(struct motion_sensor_t *s, uint8_t *data,
 /* Handle interrupt in task context */
 static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 {
-	uint32_t irq_timestamp =
-		__atomic_load_n(&last_irq_timestamp, __ATOMIC_RELAXED);
+	uint32_t irq_timestamp = last_irq_timestamp;
 	bool read_any_data = false;
 	int interrupt_status_reg, fifo_depth;
 
