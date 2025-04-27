@@ -27,6 +27,11 @@
 		lsm6dsm-int = &base_accel;
 	};
 
+	ec-console {
+		compatible = "ec-console";
+		disabled = "events";
+	};
+
 	motionsense-sensor-info {
 		compatible = "cros-ec,motionsense-sensor-info";
 
