@@ -38,15 +38,6 @@ config UART_INTERRUPT_DRIVEN
 	default y
 endif # SERIAL
 
-if SHELL
-config SHELL_TAB
-	default y
-config SHELL_TAB_AUTOCOMPLETION
-	default y
-config SHELL_HISTORY
-	default y
-endif # SHELL
-
 if WATCHDOG
 config PLATFORM_EC_WATCHDOG_PERIOD_MS
 	default 2500
