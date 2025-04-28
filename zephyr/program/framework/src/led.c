@@ -159,14 +159,25 @@ test_export_static enum power_state get_chipset_state(void)
 
 static void change_pwm_led_maximum_duty(void)
 {
-	int node_idx, pattern_idx, color_idx, num_patterns;
+	int node_idx, pattern_idx, color_idx, num_patterns, rv;
 	enum ec_led_id id;
 	struct led_pattern_node_t *patt;
 	struct pwm_pin_t *target_pwm;
 	uint8_t fingerpint_led_level;
 	uint64_t pulse_ns;
 
-	system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &fingerpint_led_level);
+	rv = system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &fingerpint_led_level);
+
+	/**
+	 * If the project does not support SYSTEM_BBRAM_IDX_FP_LED_LEVEL, don't change
+	 * the fingerprint led level. The led driver macro the led pwm maximum duty from
+	 * the devicetree properties "period-ms".
+	 *
+	 * TODO: we should store the default (init) pulse_ns before overriding
+	 * it and then restore the value if the led level is 0 or FP_LED_HIGH.
+	 */
+	if (rv != EC_SUCCESS)
+		return;
 
 	if (fingerpint_led_level == 0)
 		fingerpint_led_level = FP_LED_HIGH;
