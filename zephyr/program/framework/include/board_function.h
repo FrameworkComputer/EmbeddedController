@@ -13,6 +13,11 @@ enum function_type {
 	TYPE_FLASH	= 2,
 };
 
+enum bios_option {
+	/* for bios option switch */
+	ALS_AUTO_FP	= BIT(0),
+};
+
 /* set bios function bit to bbram when ACPI_DRIVER_READY */
 void bios_function_detect(void);
 
