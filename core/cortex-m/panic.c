@@ -447,15 +447,22 @@ void exception_panic(void)
 		: [pregs] "r"(pdata_ptr->cm.regs), [pstack] "r"(pstack_addr)
 		:
 		/* Constraints protecting these from being clobbered.
-		 * Gcc should be using r0 & r12 for pregs and pstack. */
+		 * Gcc and Clang should be using r0 & r12 for pregs and
+		 * pstack. */
 		"r1", "r2", "r3", "r4", "r5", "r6",
-	/* clang warns that we're clobbering a reserved register:
-	 * inline asm clobber list contains reserved registers: R7
-	 * [-Werror,-Winline-asm]. The intent of the clobber list is
-	 * to force pregs and pstack to be in R0 and R12, which
-	 * still holds.
-	 */
-#ifndef __clang__
+#if !defined(__clang__) || __clang_major__ >= 21
+		/* clang <21 warns that we're clobbering a reserved register:
+		 * inline asm clobber list contains reserved registers: R7
+		 * [-Werror,-Winline-asm]. The intent of the clobber list is
+		 * to force pregs and pstack to be in R0 and R12, which
+		 * still holds.
+		 *
+		 * As of version 21, Clang no longer reserves this register by
+		 * default, so we need to explicitly clobber it.
+		 *
+		 * b/404909262: Once version 21 sticks in ChromeOS, the `#if`
+		 * guard here can be removed.
+		 */
 		"r7",
 #endif
 		"r8", "r9", "r10", "r11", "cc", "memory");
