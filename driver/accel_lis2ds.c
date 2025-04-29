@@ -146,8 +146,7 @@ static int lis2ds_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	uint16_t nsamples = 0;
 	uint8_t fifo_src_samples[2];
 
-	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
-	    (!(*event & CONFIG_ACCEL_LIS2DS_INT_EVENT)))
+	if (!(*event & CONFIG_ACCEL_LIS2DS_INT_EVENT))
 		return EC_ERROR_NOT_HANDLED;
 
 	ret = st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags,

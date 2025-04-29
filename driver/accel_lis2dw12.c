@@ -172,8 +172,7 @@ static int lis2dw12_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	bool commit_needed = false;
 	int nsamples;
 
-	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
-	    (!(*event & CONFIG_ACCEL_LIS2DW12_INT_EVENT)) ||
+	if ((!(*event & CONFIG_ACCEL_LIS2DW12_INT_EVENT)) ||
 	    motion_sensor_in_forced_mode(s)) {
 		return EC_ERROR_NOT_HANDLED;
 	}

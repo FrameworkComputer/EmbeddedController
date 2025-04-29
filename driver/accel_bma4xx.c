@@ -661,8 +661,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	bool read_any_data = false;
 	int interrupt_status_reg, fifo_depth;
 
-	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
-	    (!(*event & CONFIG_ACCEL_BMA4XX_INT_EVENT)) ||
+	if ((!(*event & CONFIG_ACCEL_BMA4XX_INT_EVENT)) ||
 	    motion_sensor_in_forced_mode(s)) {
 		return EC_ERROR_NOT_HANDLED;
 	}
