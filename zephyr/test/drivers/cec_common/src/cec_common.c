@@ -664,7 +664,7 @@ ZTEST_USER_F(cec_common, test_mkbp_event_no_events)
 	/* Send a MKBP event without setting any events */
 	mkbp_send_event(EC_MKBP_EVENT_CEC_EVENT);
 
-	/* Check an event is available, but the data is zero */
+	/* Check an event is available, and the data is a zero value */
 	zassert_ok(get_next_cec_mkbp_event(&event));
 	zassert_true(cec_event_matches(&event, 0, 0));
 

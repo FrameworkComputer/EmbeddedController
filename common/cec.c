@@ -403,12 +403,16 @@ static int cec_get_next_event(uint8_t *out)
 		break;
 	}
 
-	if (!event_out) {
-		/* Didn't find any events */
-		return 0;
-	}
-
 	memcpy(out, &event_out, sizeof(event_out));
+
+	if (!event_out) {
+		/*
+		 * Didn't find any events, set the out to zero and return the
+		 * size of event_out, so content send back to AP are not garbage
+		 * values.
+		 */
+		return sizeof(event_out);
+	}
 
 	/* Notify the AP if there are more events to send */
 	for (port = 0; port < CEC_PORT_COUNT; port++) {
