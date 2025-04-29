@@ -11,6 +11,7 @@
 #include "battery.h"
 #include "board_host_command.h"
 #include "board_led.h"
+#include "board_function.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
@@ -141,6 +142,39 @@ static bool last_kbbl_led_brightness;
 #endif
 static int prev_als_lux;
 
+static bool als_stable;
+static timestamp_t als_init_deadline;
+
+static int als_lux_get(void)
+{
+	uint16_t real_illuminance = *(uint16_t *)host_get_memmap(EC_MEMMAP_ALS);
+	timestamp_t now = get_time();
+
+	/*
+	 * before als_task stable return data (als.c common)
+	 * keep 2 second of the lightness to default high
+	 **/
+	if (chipset_in_state(CHIPSET_STATE_ON) && !als_stable) {
+		if (now.val > als_init_deadline.val + 2 * SECOND) {
+			als_stable = true;
+			als_init_deadline.val = 0;
+		}
+		real_illuminance = 1000;
+	} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		als_init_deadline.val = now.val;
+		if (als_stable) {
+			als_stable = false;
+			real_illuminance = 0;
+			/* clear als data and set default level for next time bootup */
+			*(uint16_t *)host_get_memmap(EC_MEMMAP_ALS) = 0;
+			system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, FP_LED_HIGH);
+			update_pwr_led_level();
+		}
+	}
+
+	return real_illuminance;
+}
+
 int led_get_current_tick_time(void)
 {
 	return led_tick_time;
@@ -175,7 +209,7 @@ int fp_led_auto_is_enable(void)
  */
 void auto_als_led_brightness(void)
 {
-	int als_lux = hidals_lux_get();
+	int als_lux = als_lux_get();
 	int led_brightness;
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD
 	int kb_brightness;
@@ -187,7 +221,8 @@ void auto_als_led_brightness(void)
 		return;
 	prev_als_lux = als_lux;
 
-	if (fp_led_auto_is_enable()) {
+	if (fp_led_auto_is_enable() &&
+		chipset_in_state(CHIPSET_STATE_ON)) {
 		if (als_lux > 130)
 			led_brightness = FP_LED_HIGH;
 		else if (als_lux > 100)
@@ -515,7 +550,8 @@ static void led_tick(void)
 	else
 		led_tick_time = 200;
 
-	auto_als_led_brightness();
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_DEDICATED_ALS))
+		auto_als_led_brightness();
 
 	board_led_set_color();
 	board_led_apply_color();
@@ -525,6 +561,18 @@ static void led_tick(void)
 
 static void led_hook_init(void)
 {
+	uint8_t als_auto;
+
+	system_get_bbram(SYSTEM_BBRAM_IDX_BIOS_FUNCTION, &als_auto);
+	if (als_auto & ALS_AUTO_FP) {
+		/*
+		 * if enable auto als fp, set the default level to high
+		 * and call the update level to update pwm duty
+		 **/
+		system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, FP_LED_HIGH);
+		update_pwr_led_level();
+		fp_als_auto_brightness = true;
+	}
 	hook_call_deferred(&led_tick_data, 200 * MSEC);
 }
 DECLARE_HOOK(HOOK_INIT, led_hook_init, HOOK_PRIO_DEFAULT);
@@ -569,7 +617,9 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 	struct ec_response_fp_led_level_v0 *r_v0 = args->response;
 	struct ec_response_fp_led_level_v1 *r_v1 = args->response;
 	uint8_t led_level = FP_LED_HIGH;
+	uint8_t als_auto;
 
+	system_get_bbram(SYSTEM_BBRAM_IDX_BIOS_FUNCTION, &als_auto);
 	/* Returns percentage in HC v0 and v1 */
 	if (p_v0->get_led_level) {
 		if (args->version == 0) {
@@ -609,7 +659,7 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 	}
 
 	if (args->version == 0) {
-		fp_als_auto_brightness = false;
+		als_auto &= ~ALS_AUTO_FP;
 		/* HC v0 only allows setting 3 discrete levels */
 		switch (p_v0->set_led_level) {
 		case FP_LED_BRIGHTNESS_HIGH:
@@ -629,10 +679,8 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 		/* Keep using v0, even though auto is a new value */
 		/* v1 is for setting custom percentage */
 		case FP_LED_BRIGHTNESS_AUTO:
-			fp_als_auto_brightness = true;
-			/* If setting to auto, don't need to update the led_level now */
-			/* it'll be updated later in the periodic task based on ALS value */
-			return EC_RES_SUCCESS;
+			als_auto |= ALS_AUTO_FP;
+			break;
 		default:
 			return EC_RES_INVALID_PARAM;
 		}
@@ -641,11 +689,24 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 		if (p_v1->set_percentage == 0 || p_v1->set_percentage > 100)
 			return EC_RES_INVALID_PARAM;
 		led_level = p_v1->set_percentage;
-		fp_als_auto_brightness = false;
+		als_auto &= ~ALS_AUTO_FP;
 	}
 
-	system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, led_level);
-	update_pwr_led_level();
+	/*
+	 * save option setting for next time boot
+	 * also make this time setting on work.
+	 *
+	 * If setting to auto, don't need to update the led_level now
+	 * it'll be updated later in the periodic task based on ALS value
+	 **/
+	system_set_bbram(SYSTEM_BBRAM_IDX_BIOS_FUNCTION, als_auto);
+	if (als_auto & ALS_AUTO_FP) {
+		fp_als_auto_brightness = true;
+	} else {
+		fp_als_auto_brightness = false;
+		system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, led_level);
+		update_pwr_led_level();
+	}
 
 	return EC_RES_SUCCESS;
 }
