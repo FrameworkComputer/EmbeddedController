@@ -26,6 +26,12 @@
 #define INA236_MONITOR_12V_CURRENT 30000 /* 30 A */
 #define INA236_MONITOR_5V_CURRENT  2400  /* 2.4 A */
 
+/**
+ * We measured the timing between EC turns on the ps_on and recevies the pok_l signal.
+ * The average timing is 400 ~ 420 ms.
+ */
+#define WAIT_PSU_STABLE	500
+
 static bool power_monitor_5vsb_has_alert;
 
 static void power_monitor_enable_interrupt(int idx)
@@ -177,6 +183,16 @@ __maybe_unused static void power_monitor_release_index_1(void)
 }
 DECLARE_DEFERRED(power_monitor_release_index_1);
 
+static void power_monitor_check_status(void)
+{
+	bool has_alert = power_monitor_get_5vsb_alert();
+	bool power_is_5vsb = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix));
+
+	if ((has_alert && power_is_5vsb) || (!has_alert && !power_is_5vsb))
+		task_wake(TASK_ID_CHIPSET);
+}
+DECLARE_DEFERRED(power_monitor_check_status);
+
 void power_monitor_interrupt_idx_0(enum gpio_signal signal)
 {
 	hook_call_deferred(&power_monitor_release_index_0_data, 6 * MSEC);
@@ -198,4 +214,11 @@ void power_monitor_interrupt_idx_1(enum gpio_signal signal)
 	 */
 	power_monitor_set_5vsb_alert(has_alert);
 	task_wake(TASK_ID_CHIPSET);
+
+	/**
+	 * Call the deferred hook to re-check the status, if the alert pin asserts and
+	 * then releases before chipset task idle, EC will not process the enter/exit flow.
+	 */
+	hook_call_deferred(&power_monitor_check_status_data, WAIT_PSU_STABLE * MSEC);
+
 }
