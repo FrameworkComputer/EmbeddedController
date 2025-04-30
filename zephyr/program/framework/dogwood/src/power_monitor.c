@@ -8,21 +8,55 @@
 #include "ec_commands.h"
 #include "hooks.h"
 #include "driver/ina2xx.h"
+#include "gpio/gpio_int.h"
+#include "gpio.h"
+#include "power_monitor.h"
+#include "power.h"
 #include "system.h"
 #include "timer.h"
+#include "task.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-
-#define INA236_IDX_PSU_12V INA236_INDEX_ADD_PIN_GND
-#define INA236_IDX_PSU_5V  INA236_INDEX_ADD_PIN_VS
 
 #define INA236_SHUNT_RESISTOR	1 /* 1 mohm */
 #define INA236_ADC_RANGE	2500 /* 2500 nV */
 #define INA236_ALERT_LIMIT(x) ((x * INA236_SHUNT_RESISTOR) * 1000 / INA236_ADC_RANGE)
 
 #define INA236_MONITOR_12V_CURRENT 30000 /* 30 A */
-#define INA236_MONITOR_5V_CURRENT  2500  /* 2.5 A */
+#define INA236_MONITOR_5V_CURRENT  2400  /* 2.4 A */
+
+static bool power_monitor_5vsb_has_alert;
+
+static void power_monitor_enable_interrupt(int idx)
+{
+	if (idx == INA236_IDX_PSU_12V)
+		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_power_monitor_0_interrput));
+	else if (idx == INA236_IDX_PSU_5V)
+		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_power_monitor_1_interrput));
+	else
+		CPRINTS("Unsupport INA236 address index");
+}
+
+static void power_monitor_disable_interrupt(int id)
+{
+	if (id == INA236_IDX_PSU_12V)
+		gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_power_monitor_0_interrput));
+	else if (id == INA236_IDX_PSU_5V)
+		gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_power_monitor_1_interrput));
+	else
+		CPRINTS("Unsupport INA236 address index");
+}
+
+void power_monitor_set_5vsb_alert(bool enabled)
+{
+	power_monitor_5vsb_has_alert = enabled;
+}
+
+bool power_monitor_get_5vsb_alert(void)
+{
+	return power_monitor_5vsb_has_alert;
+}
 
 static int power_monitor_update_configuration(int id, uint16_t flags)
 {
@@ -81,6 +115,43 @@ void power_monitor_init(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, power_monitor_init, HOOK_PRIO_DEFAULT);
 
+static void power_monitor_suspend(void)
+{
+	enum power_state ps = power_get_state();
+	int has_alert = !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_5valw_alert_ec_l));
+
+
+	if (ps == POWER_S0S0ix) {
+		/* Set the alert status before enabling the interrupt */
+		power_monitor_set_5vsb_alert(has_alert);
+		power_monitor_enable_interrupt(INA236_IDX_PSU_5V);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, power_monitor_suspend, HOOK_PRIO_DEFAULT);
+
+static void power_monitor_resume(void)
+{
+	enum power_state ps = power_get_state();
+
+	if (ps == POWER_S0ixS0) {
+		/* Clear the alert status before disabling the interrupt */
+		power_monitor_set_5vsb_alert(false);
+		power_monitor_disable_interrupt(INA236_IDX_PSU_5V);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, power_monitor_resume, HOOK_PRIO_DEFAULT);
+
+/* Disable the interrupt before powering off the power monitor */
+static void power_monitor_shutdown(void)
+{
+	int index;
+	int ina236_max_idx = (board_get_version() >= BOARD_VERSION_8) ? 2 : 1;
+
+	for (index = 0; index < ina236_max_idx; index++)
+		power_monitor_disable_interrupt(index);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, power_monitor_shutdown, HOOK_PRIO_DEFAULT);
+
 static void power_monitor_release_index_0(void)
 {
 	int rv;
@@ -93,7 +164,8 @@ static void power_monitor_release_index_0(void)
 }
 DECLARE_DEFERRED(power_monitor_release_index_0);
 
-static void power_monitor_release_index_1(void)
+/* We don't need to release the alert */
+__maybe_unused static void power_monitor_release_index_1(void)
 {
 	int rv;
 
@@ -112,5 +184,18 @@ void power_monitor_interrupt_idx_0(enum gpio_signal signal)
 
 void power_monitor_interrupt_idx_1(enum gpio_signal signal)
 {
-	hook_call_deferred(&power_monitor_release_index_1_data, 6 * MSEC);
+	bool has_alert = !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_5valw_alert_ec_l));
+	bool psu_has_enabled = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pok_l));
+
+	/* EC needs to turn on the psu power as soon as possible. */
+	if (has_alert && !psu_has_enabled)
+		gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ps_on));
+
+	/**
+	 * If the power monitor asserts the alert pin to notice there is
+	 * an OCP occurs. Set the alert flag and wake up the chipset task
+	 * to turn on the PSU power.
+	 */
+	power_monitor_set_5vsb_alert(has_alert);
+	task_wake(TASK_ID_CHIPSET);
 }

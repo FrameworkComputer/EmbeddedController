@@ -199,7 +199,7 @@
 			gpios = <&gpio8 1 GPIO_INPUT>;
 		};
 
-		5valw_alert_ec_l {
+		gpio_5valw_alert_ec_l: 5valw_alert_ec_l {
 			gpios = <&gpio8 3 GPIO_INPUT>;	/* INA236 (monitor 5V) alert pin */
 		};
 		gpio_en_s0ix: en_s0ix {

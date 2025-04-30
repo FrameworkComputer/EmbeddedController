@@ -21,6 +21,7 @@
 #include "lpc.h"
 #include "power.h"
 #include "power_sequence.h"
+#include "power_monitor.h"
 #include "port80.h"
 #include "task.h"
 #include "timer.h"
@@ -539,6 +540,24 @@ enum power_state power_handle_state(enum power_state state)
 			/* Power down to next state */
 			return POWER_S3S5;
 		}
+
+		if (system_in_s0ix) {
+			bool has_exited_5vsb =
+				!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix));
+			bool has_alert = power_monitor_get_5vsb_alert();
+
+			if (has_alert && !has_exited_5vsb) {
+				if (!power_5vsb_exit()) {
+					resume_ms_flag = 0;
+					enter_ms_flag = 0;
+					system_in_s0ix = 0;
+					chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
+					return POWER_S3S5;
+				}
+			} else if (!has_alert && has_exited_5vsb)
+				power_5vsb_enter();
+		}
+
 		break;
 
 	case POWER_S3S0:
@@ -661,9 +680,9 @@ enum power_state power_handle_state(enum power_state state)
 
 			/**
 			 * Don't convert the 5VALW to 5VSB if the user enables to force
-			 * on PSU in standby mode.
+			 * on PSU in standby mode or the 5V current is over 2.4A.
 			 */
-			if (!force_enable_psu) {
+			if (!force_enable_psu && !power_monitor_get_5vsb_alert()) {
 				k_msleep(10);
 				power_5vsb_enter();
 			}
