@@ -50,15 +50,27 @@ static int force_enable_psu = 0;
 
 static void system_check_ssd_status(void);
 
-static void power_enable_psu(bool enable)
+static bool power_enable_psu(bool enable)
 {
 	int board_version = board_get_version();
 
 	/* EC cannot control the ps_on pin on EVT mainboard */
 	if (board_version <= BOARD_VERSION_4)
-		return;
+		return false;
 
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ps_on), enable);
+
+	if (enable) {
+		/**
+		 * Wait for the PSU power good.
+		 * According to the waveform, EC needs to delay 500ms to
+		 * wait the pok signal to be asserted after enable the PSU.
+		 */
+		if (power_wait_signals(IN_VALW_PGOOD))
+			return false;
+	}
+
+	return true;
 }
 
 static void power_usb_huba_reset(bool enable)
@@ -373,13 +385,15 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_G3S5:
 
 		k_msleep(10);
+
+		/**
+		 * If en_evsp_l does not set to high, the pok_l will not de-assert.
+		 * So we don't care the power_enable_psu return value here.
+		 * delay 400 ms to ensure the POK already turns on.
+		 */
 		power_enable_psu(1);
 
 		if (board_get_version() >= BOARD_VERSION_8) {
-			/**
-			 * If en_evsp_l does not set to high, the pok_l will not de-assert
-			 * delay 400 ms to ensure the POK already turns on.
-			 */
 			k_msleep(400);
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 1);
 		}
@@ -638,13 +652,11 @@ enum power_state power_handle_state(enum power_state state)
 		/* Enable power for CPU check system */
 		k_msleep(10);
 		if (board_get_version() >= BOARD_VERSION_8) {
-			power_enable_psu(1);
-
 			/**
 			 * Wait for the PSU power good.
 			 * If something wrong, turn off power and force to g3.
 			 */
-			if (power_wait_signals(IN_VALW_PGOOD)) {
+			if (!power_enable_psu(1)) {
 				resume_ms_flag = 0;
 				enter_ms_flag = 0;
 				system_in_s0ix = 0;
