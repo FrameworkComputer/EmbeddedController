@@ -348,6 +348,35 @@ void system_hang_detect(void)
 }
 DECLARE_DEFERRED(system_hang_detect);
 
+void power_5vsb_enter(void)
+{
+	CPRINTS("power 5vsb enter");
+
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix), 1);
+
+	k_msleep(20);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 0);
+
+	k_msleep(10);
+	power_enable_psu(0);
+}
+
+bool power_5vsb_exit(void)
+{
+	CPRINTS("power 5vsb exit");
+
+	if (!power_enable_psu(1))
+		return false;
+
+	k_msleep(10);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 1);
+
+	k_msleep(10);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix), 0);
+
+	return true;
+}
+
 static void power_check_12vb_apu(void)
 {
 	int voltage = ina2xx_get_voltage(0); /* Unit: mV */
@@ -636,13 +665,7 @@ enum power_state power_handle_state(enum power_state state)
 			 */
 			if (!force_enable_psu) {
 				k_msleep(10);
-				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix), 1);
-
-				k_msleep(20);
-				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 0);
-
-				k_msleep(10);
-				power_enable_psu(0);
+				power_5vsb_enter();
 			}
 		}
 
@@ -652,11 +675,8 @@ enum power_state power_handle_state(enum power_state state)
 		/* Enable power for CPU check system */
 		k_msleep(10);
 		if (board_get_version() >= BOARD_VERSION_8) {
-			/**
-			 * Wait for the PSU power good.
-			 * If something wrong, turn off power and force to g3.
-			 */
-			if (!power_enable_psu(1)) {
+
+			if (!power_5vsb_exit()) {
 				resume_ms_flag = 0;
 				enter_ms_flag = 0;
 				system_in_s0ix = 0;
@@ -668,8 +688,6 @@ enum power_state power_handle_state(enum power_state state)
 				return POWER_S0ixS3;
 			}
 
-			k_msleep(10);
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 1);
 			system_check_ssd_status();
 		}
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 1);
@@ -717,13 +735,6 @@ enum power_state power_handle_state(enum power_state state)
 		lpc_s0ix_resume_restore_masks();
 		hook_notify(HOOK_CHIPSET_RESUME);
 
-		if (board_get_version() >= BOARD_VERSION_8) {
-			/**
-			 * system has waked up and update the EC_CUSTOMIZED_MEMMAP_POWER_STATE
-			 * turn off en_s0ix
-			 */
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix), 0);
-		}
 		return POWER_S0;
 
 		break;
