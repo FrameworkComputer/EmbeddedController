@@ -18,6 +18,7 @@
 
 #include "temp_sensor/f75303.h"
 #include "temp_sensor/f75397.h"
+#include "temp_sensor/temp_sensor.h"
 
 #define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_THERMAL, format, ##args)
@@ -27,6 +28,7 @@
 #define TEMP_ID_DDR	TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_memory))
 #define TEMP_ID_AMBIENT	TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_ambient))
 #define TEMP_ID_CHIPSET	TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_chipset))
+#define TEMP_ID_VIRTUAL	TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_virtual))
 
 /* The macro of temperature sensor F75303 IDs */
 #define F75303_ID_UTH1	F75303_SENSOR_ID(DT_NODELABEL(power_f75303))
@@ -57,10 +59,7 @@ void fan_init(void)
 		fan_params[idx].max_temperature = 54;
 		fan_params[idx].min_temperature = 40;
 		fan_params[idx].fan_always_on = false;
-		if (idx == FAN_APU)
-			fan_params[idx].sensor_source = SENSOR_SRC_APU;
-		else
-			fan_params[idx].sensor_source = SENSOR_SRC_OFF;
+		fan_params[idx].sensor_source = TEMP_ID_DDR;
 		fan_params[idx].target_duty = 0;
 	}
 }
@@ -112,7 +111,7 @@ static int thermal_fan_percent_with_hysteresis(int low, int high, int cur, bool 
 	return 100 * (cur - low) / (high - low);
 }
 
-static int thermal_process_sensor_source_apu(int fan, int *temp)
+static int thermal_process_sensor(int fan, enum temp_sensor_id id, int *temp)
 {
 	struct fan_parameter_t *fan_param = &fan_params[fan];
 	int duty;
@@ -122,32 +121,7 @@ static int thermal_process_sensor_source_apu(int fan, int *temp)
 
 	temp_ratio = thermal_fan_percent_with_hysteresis(fan_param->min_temperature,
 				   fan_param->max_temperature,
-				   temp[TEMP_ID_POWER],
-				   fan_param->target_duty ? true : false);
-
-	/**
-	 * If the current temperature between minimum and maximum, we need to convert the
-	 * current ratio to fan duty
-	 */
-	if (temp_ratio <= 0)
-		duty = 0;
-	else
-		duty = ((temp_ratio - 1) * duty_max + (100 - temp_ratio) * duty_min) / 99;
-
-	return duty;
-}
-
-static int thermal_process_sensor_source_chassis(int fan, int *temp)
-{
-	struct fan_parameter_t *fan_param = &fan_params[fan];
-	int duty;
-	int duty_max = fan_param->max_duty;
-	int duty_min = fan_param->min_duty;
-	int temp_ratio;
-
-	temp_ratio = thermal_fan_percent_with_hysteresis(fan_param->min_temperature,
-				   fan_param->max_temperature,
-				   temp[TEMP_ID_AMBIENT],
+				   temp[id],
 				   fan_param->target_duty ? true : false);
 
 	/**
@@ -172,15 +146,13 @@ static void thermal_set_fan_duty(int fan, int duty)
 void board_override_fan_control(int fan, int *temp)
 {
 	struct fan_parameter_t *fan_param = &fan_params[fan];
+	enum temp_sensor_id id = fan_param->sensor_source;
 
 	if (!is_thermal_control_enabled(fan))
 		return;
 
-	/* TODO: should we use the unit mk to calculate the target duty? */
-	if (fan_param->sensor_source == SENSOR_SRC_APU)
-		fan_param->target_duty = thermal_process_sensor_source_apu(fan, temp);
-	else if (fan_param->sensor_source == SENSOR_SRC_CHASSIS)
-		fan_param->target_duty = thermal_process_sensor_source_chassis(fan, temp);
+	if (id != TEMP_SENSOR_OFF)
+		fan_param->target_duty = thermal_process_sensor(fan, id, temp);
 	else
 		fan_param->target_duty = 0;
 
@@ -207,7 +179,6 @@ static int cmd_fan_control(int argc, const char **argv)
 
 	/* Get the parameters */
 	if (argc == 3) {
-		static const char * const source[] = { "NULL", "APU", "CHASSIS",};
 
 		if (strcasecmp(argv[1], "get") == 0) {
 			CPRINTS("Fan%d parameters:", fan_index);
@@ -216,7 +187,9 @@ static int cmd_fan_control(int argc, const char **argv)
 			CPRINTS("    Minimum Duty:%d", fan_param->min_duty);
 			CPRINTS("    Maximum Temperature:%d", fan_param->max_temperature);
 			CPRINTS("    Minimum Temperature:%d", fan_param->min_temperature);
-			CPRINTS("    Sensor Source:%s", source[fan_param->sensor_source]);
+			CPRINTS("    Sensor Source:%s",
+				(fan_param->sensor_source == TEMP_SENSOR_OFF) ?
+				"off" : temp_sensors[fan_param->sensor_source].name);
 			CPRINTS("    Always on %sabled", fan_param->fan_always_on ? "en" : "dis");
 			return EC_SUCCESS;
 		} else
@@ -248,11 +221,8 @@ static int cmd_fan_control(int argc, const char **argv)
 					fan_param->min_temperature = value;
 					break;
 				case 7:
-					/* APU FAN sensor source can't be changed */
-					if (fan_index == FAN_APU ||
-					    (value != SENSOR_SRC_APU &&
-					     value != SENSOR_SRC_CHASSIS))
-						break;
+					if (value < 0 || value >= TEMP_SENSOR_COUNT)
+						return EC_ERROR_PARAM1 + param - 1;
 
 					fan_param->sensor_source = value;
 					break;
@@ -286,12 +256,8 @@ static enum ec_status hc_fan_configuration(struct host_cmd_handler_args *args)
 
 	fan = &fan_params[p->fan_index];
 
-	if (p->command == FAN_HC_CMD_SET) {
+	if (p->command == FAN_HC_CMD_SET)
 		memcpy(fan, &p->fan_config, sizeof(p->fan_config));
-		/* avoid the sensor source of the APU fan to be changed */
-		if (p->fan_index == FAN_APU)
-			fan->sensor_source = SENSOR_SRC_APU;
-	}
 
 	memcpy(&r->fan_config, fan, sizeof(*r));
 	args->response_size = sizeof(*r);
