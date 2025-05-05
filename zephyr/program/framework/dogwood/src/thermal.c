@@ -40,6 +40,9 @@
 #define FAN_CHASSIS_1	DT_NODELABEL(fan_front)
 #define FAN_CHASSIS_2	DT_NODELABEL(fan_rsv)
 
+#define BACKUP_MAX_TEMP 65 /* Uint: Celsius */
+#define BACKUP_MIN_TEMP 50 /* Uint: Celsius */
+
 /* Follow BIOS EC and SW ERS to define the fan off temperature (unit: C) */
 #define FAN_OFF_MIN_TEMP_HYSTERESIS 1
 
@@ -117,12 +120,27 @@ static int thermal_process_sensor(int fan, enum temp_sensor_id id, int *temp)
 	int duty;
 	int duty_max = fan_param->max_duty;
 	int duty_min = fan_param->min_duty;
-	int temp_ratio;
+	int temp_ratio, sensor_ratio;
+	int backup_ratio = 0;
 
-	temp_ratio = thermal_fan_percent_with_hysteresis(fan_param->min_temperature,
+	sensor_ratio = thermal_fan_percent_with_hysteresis(fan_param->min_temperature,
 				   fan_param->max_temperature,
 				   temp[id],
 				   fan_param->target_duty ? true : false);
+
+	/**
+	 * In some cases the CPU temperature might not be updated.
+	 * So we use the onboard thermal sensors (QTH1, UTH1) as a backup to the CPU sensor.
+	 */
+	if (id == TEMP_ID_CHIPSET || id == TEMP_ID_VIRTUAL) {
+		backup_ratio = thermal_fan_percent_with_hysteresis(BACKUP_MIN_TEMP,
+				   BACKUP_MAX_TEMP,
+				   MAX(temp[TEMP_ID_DDR], temp[TEMP_ID_POWER]),
+				   fan_param->target_duty ? true : false);
+	}
+
+	/* Select the biggest ratio to be the target duty */
+	temp_ratio = MAX(sensor_ratio, backup_ratio);
 
 	/**
 	 * If the current temperature between minimum and maximum, we need to convert the
