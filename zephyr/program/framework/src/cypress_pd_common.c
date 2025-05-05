@@ -691,8 +691,6 @@ void cypd_set_typec_profile(int controller, int port)
 				CCG_PD_CMD_SET_TYPEC_1_5A);
 		}
 	}
-
-	cypd_update_port_state(controller, port);
 }
 
 void cypd_port_current_setting(void)
@@ -1716,6 +1714,7 @@ void cypd_port_int(int controller, int port)
 		CPRINTS("CYPD_RESPONSE_PORT_CONNECT %d", port_idx);
 		record_ucsi_connector_change_event(controller, port);
 		cypd_set_typec_profile(controller, port);
+		cypd_update_port_state(controller, port);
 		break;
 	case CCG_RESPONSE_SOURCE_CAP_MSG_RX:
 		i2c_read_offset16_block(i2c_port, addr_flags,
@@ -1938,11 +1937,17 @@ void cypd_interrupt_handler_task(void *p)
 			poweroff_dp_check();
 		}
 
-		if (evt & CCG_EVT_PDO_C0P0)
+		if (evt & CCG_EVT_PDO_C0P0) {
 			cypd_set_typec_profile(0, 0);
+			cypd_update_port_state(0, 0);
 
-		if (evt & CCG_EVT_PDO_C0P1)
+		}
+
+		if (evt & CCG_EVT_PDO_C0P1) {
 			cypd_set_typec_profile(0, 1);
+			cypd_update_port_state(0, 1);
+
+		}
 
 		if (evt & CCG_EVT_PERFORM_ERROR_RECOVERY)
 			for (i = 0; i < PD_CHIP_COUNT; i++) {
@@ -1963,11 +1968,16 @@ void cypd_interrupt_handler_task(void *p)
 			if (evt & CCG_EVT_INT_CTRL_1)
 				cypd_interrupt(1);
 
-			if (evt & CCG_EVT_PDO_C1P0)
+			if (evt & CCG_EVT_PDO_C1P0) {
 				cypd_set_typec_profile(1, 0);
+				cypd_update_port_state(1, 0);
+			}
 
-			if (evt & CCG_EVT_PDO_C1P1)
+			if (evt & CCG_EVT_PDO_C1P1) {
 				cypd_set_typec_profile(1, 1);
+				cypd_update_port_state(1, 1);
+
+			}
 		}
 
 
