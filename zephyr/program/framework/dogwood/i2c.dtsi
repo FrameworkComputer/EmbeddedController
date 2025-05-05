@@ -107,21 +107,21 @@
 	pinctrl-names = "default";
 
 	/* Qth1 */
-	memory_f75303: memory_f75303@4d {
+	memory_f75303: mainboard_memory@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
 		temperature-type = "F75303_IDX_REMOTE1";
 		reg = <0x4d>;
 	};
 
 	/* Qth2 */
-	ambient_f75303: ambient_f75303@4d {
+	ambient_f75303: mainboard_ambient@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
 		temperature-type = "F75303_IDX_REMOTE2";
 		reg = <0x4d>;
 	};
 
 	/* Uth1 */
-	power_f75303: power_f75303@4d {
+	power_f75303: mainboard_power@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
 		temperature-type = "F75303_IDX_LOCAL";
 		reg = <0x4d>;
