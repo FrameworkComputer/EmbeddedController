@@ -674,12 +674,6 @@ struct ec_response_read_boardid {
  */
 #define EC_CMD_FAN_CONFIGURATION	0x3E27
 
-enum sensor_source_t {
-	SENSOR_SRC_OFF = 0,
-	SENSOR_SRC_APU = 1,
-	SENSOR_SRC_CHASSIS = 2,
-};
-
 enum fan_hc_command_t {
 	FAN_HC_CMD_GET = 0,
 	FAN_HC_CMD_SET = 1,
