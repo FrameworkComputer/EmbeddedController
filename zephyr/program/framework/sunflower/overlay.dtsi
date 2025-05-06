@@ -15,8 +15,8 @@
 		compatible = "cros-ec,temp-sensors";
 		/* Q56 sensor close to cpu */
 		temp_sensor_cpu: cpu-f75303 {
-			temp_host_high = <84>;
-			temp_host_halt = <89>;
+			temp_host_high = <75>;
+			temp_host_halt = <85>;
 			temp_host_release_high = <81>;
 			temp_fan_off = <45>;
 			temp_fan_max = <55>;
@@ -25,8 +25,8 @@
 		};
 		/* Q57 sensor on top skin close to H16 */
 		temp_sensor_top_skin: top-skin-f75303 {
-			temp_host_high = <68>;
-			temp_host_halt = <73>;
+			temp_host_high = <80>;
+			temp_host_halt = <90>;
 			temp_host_release_high = <65>;
 			temp_fan_off = <43>;
 			temp_fan_max = <60>;
@@ -35,10 +35,10 @@
 		};
 		/* U31 sensor.*/
 		temp_sensor_local: local-f75303 {
-			temp_host_high = <64>;
-			temp_host_halt = <69>;
+			temp_host_high = <84>;
+			temp_host_halt = <94>;
 			temp_host_release_high = <61>;
-			temp_fan_off = <40>;
+			temp_fan_off = <52>;
 			temp_fan_max = <64>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&local_f75303>;
