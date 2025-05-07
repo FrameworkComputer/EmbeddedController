@@ -27,7 +27,7 @@ jobs:
       matrix:
         platform: [
           # Tulip during EVT, DVT1 is released from fwk-main
-          { name: tulip, folder: marigold2, ver: "0.0.7", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
+          { name: tulip, folder: marigold2, ver: "1.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           # Just for reference, not releasing from this branch
           { name: marigold, folder: marigold2, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           { name: lotus, folder: marigold2, ver: "0.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
