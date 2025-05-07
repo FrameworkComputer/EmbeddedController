@@ -29,8 +29,10 @@
 static bool charger_psys_enable_flag;
 
 /* charging current is limited to 3200mA or 2800mA */
-#define CHARGING_CURRENT_3200	3200
+#define CHARGING_CURRENT_3200		3200
+#define CHARGING_CURRENT_3200_TEMP	73
 #define CHARGING_CURRENT_2800	2800
+#define CHARGING_CURRENT_2800_TEMP	78
 
 #ifdef CONFIG_PLATFORM_EC_CHARGER_INIT_CUSTOM
 static void charger_chips_init(void);
@@ -360,7 +362,7 @@ void acok_control(int voltage, int port)
 
 int charger_profile_override(struct charge_state_data *curr)
 {
-	int charger_temp, rv;
+	int charger_temp, charger_temp_c, rv;
 
 	/**
 	 * Do not change the charge current when the system in S0 state.
@@ -373,14 +375,25 @@ int charger_profile_override(struct charge_state_data *curr)
 	rv = isl9241_get_temperature_val(0, &charger_temp);
 
 	if (rv == EC_SUCCESS) {
-
-		if (K_TO_C(charger_temp) >= 73 && K_TO_C(charger_temp) < 78)
+		charger_temp_c = K_TO_C(charger_temp);
+		ccprints("ISL9241 Charger temperature: %dC", charger_temp_c);
+		if (charger_temp_c >= CHARGING_CURRENT_3200_TEMP && charger_temp_c < CHARGING_CURRENT_2800_TEMP) {
+			ccprints("Temperature %dC over %dC, limiting charger current to %dmA",
+					charger_temp_c,
+					CHARGING_CURRENT_3200_TEMP,
+					CHARGING_CURRENT_3200);
 			curr->requested_current =
 				MIN(curr->requested_current, CHARGING_CURRENT_3200);
+		}
 
-		if (K_TO_C(charger_temp) >= 78)
+		if (charger_temp_c >= CHARGING_CURRENT_2800_TEMP) {
+			ccprints("Temperature %dC over %dC, limiting charger current to %dmA",
+					charger_temp_c,
+					CHARGING_CURRENT_2800_TEMP,
+					CHARGING_CURRENT_2800);
 			curr->requested_current =
 				MIN(curr->requested_current, CHARGING_CURRENT_2800);
+		}
 	}
 
 	return 0;
