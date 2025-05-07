@@ -1705,9 +1705,6 @@ flash_command_protect_v2(struct host_cmd_handler_args *args)
 	struct ec_response_flash_protect *r = args->response;
 	int rc;
 
-	flash_protect_async_data.mask = p->mask;
-	flash_protect_async_data.flags = p->flags;
-
 	/*
 	 * Handle requesting new flags.  Note that we ignore the return code
 	 * from flash_set_protect(), since errors will be visible to the caller
@@ -1721,6 +1718,10 @@ flash_command_protect_v2(struct host_cmd_handler_args *args)
 		if (rc == EC_RES_BUSY) {
 			return rc;
 		}
+
+		flash_protect_async_data.mask = p->mask;
+		flash_protect_async_data.flags = p->flags;
+
 		if (p->mask) {
 			hook_call_deferred(
 				&crec_flash_set_protect_deferred_data,
