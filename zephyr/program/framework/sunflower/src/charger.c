@@ -27,6 +27,7 @@
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
 static bool charger_psys_enable_flag;
+static int prev_charger_temp_c;
 
 /* charging current is limited to 3200mA or 2800mA */
 #define CHARGING_CURRENT_3200		3200
@@ -374,27 +375,33 @@ int charger_profile_override(struct charge_state_data *curr)
 
 	rv = isl9241_get_temperature_val(0, &charger_temp);
 
-	if (rv == EC_SUCCESS) {
-		charger_temp_c = K_TO_C(charger_temp);
-		ccprints("ISL9241 Charger temperature: %dC", charger_temp_c);
-		if (charger_temp_c >= CHARGING_CURRENT_3200_TEMP && charger_temp_c < CHARGING_CURRENT_2800_TEMP) {
-			ccprints("Temperature %dC over %dC, limiting charger current to %dmA",
-					charger_temp_c,
-					CHARGING_CURRENT_3200_TEMP,
-					CHARGING_CURRENT_3200);
-			curr->requested_current =
-				MIN(curr->requested_current, CHARGING_CURRENT_3200);
-		}
+	if (rv != EC_SUCCESS) {
+		CPRINTS("ISL9241 Charger temperature - Failed to read");
+		return 0;
+	}
 
-		if (charger_temp_c >= CHARGING_CURRENT_2800_TEMP) {
-			ccprints("Temperature %dC over %dC, limiting charger current to %dmA",
+	charger_temp_c = K_TO_C(charger_temp);
+
+	if (charger_temp_c >= CHARGING_CURRENT_2800_TEMP) {
+		if (prev_charger_temp_c != 0 && prev_charger_temp_c != charger_temp_c) {
+			CPRINTS("Temperature %dC over %dC, limiting charger current to %dmA",
 					charger_temp_c,
 					CHARGING_CURRENT_2800_TEMP,
 					CHARGING_CURRENT_2800);
-			curr->requested_current =
-				MIN(curr->requested_current, CHARGING_CURRENT_2800);
 		}
+		curr->requested_current =
+			MIN(curr->requested_current, CHARGING_CURRENT_2800);
+	} else if (charger_temp_c >= CHARGING_CURRENT_3200_TEMP) {
+		if (prev_charger_temp_c != 0 && prev_charger_temp_c != charger_temp_c) {
+			CPRINTS("Temperature %dC over %dC, limiting charger current to %dmA",
+					charger_temp_c,
+					CHARGING_CURRENT_3200_TEMP,
+					CHARGING_CURRENT_3200);
+		}
+		curr->requested_current =
+			MIN(curr->requested_current, CHARGING_CURRENT_3200);
 	}
+	prev_charger_temp_c = charger_temp_c;
 
 	return 0;
 }
