@@ -465,17 +465,32 @@ struct ec_response_get_gpu_serial {
 /*****************************************************************************/
 /*
  * This command returns the PCIE configuration of the GPU module
- *   PCIE_8X1 = 0,
- *   PCIE_4X1 = 1,
- *   PCIE_4X2 = 2,
- *   it will also return the GPU vendor type
- *   GPU_AMD_R23M = 0,
- *   GPU_PCIE_ACCESSORY = 0xFF
+ * it will also return the GPU vendor type
  */
 #define EC_CMD_GET_GPU_PCIE	0x3E1E
 
+enum gpu_pcie_cfg {
+	PCIE_8X1 = 0,
+	PCIE_4X1 = 1,
+	PCIE_4X2 = 2,
+} __packed;
+BUILD_ASSERT(sizeof(enum gpu_pcie_cfg) == sizeof(uint8_t));
+
+
+enum gpu_vendor {
+	GPU_VENDOR_INITIALIZING = 0,
+	GPU_FAN_ONLY = 1,
+	GPU_AMD_R23M = 2,
+	GPU_SSD = 3,
+	GPU_PCIE_ACCESSORY = 4,
+	GPU_NV_GN22 = 5,
+} __packed;
+BUILD_ASSERT(sizeof(enum gpu_vendor) == sizeof(uint8_t));
+
 struct ec_response_get_gpu_config {
+	/* See enum gpu_pcie_cfg */
 	uint8_t gpu_pcie_config;
+	/* See enum gpu_vendor */
 	uint8_t gpu_vendor;
 } __ec_align1;
 
