@@ -84,16 +84,16 @@
 			gpios = <&gpioc 1 GPIO_INPUT>;
 		};
 		gpio_gpu_b_gpio00_ec: gpu_b_gpio00_ec {
-			gpios = <&gpio3 1 GPIO_ODR_HIGH>;	/* Reserved */
+			gpios = <&gpio3 1 GPIO_INPUT>;	/* Reserved */
 		};
 		gpio_gpu_b_gpio01_ec: gpu_b_gpio01_ec {
 			gpios = <&gpio3 0 GPIO_INPUT>;		/* Control 2nd Batt discharge */
 		};
 		gpio_gpu_b_gpio02_ec: gpu_b_gpio02_ec {
-			gpios = <&gpio2 7 GPIO_OUTPUT_LOW>;	/* PWR switch from AC to DC */
+			gpios = <&gpio2 7 GPIO_INPUT>;	/* PWR switch from AC to DC */
 		};
 		gpio_gpu_b_gpio03_ec: gpu_b_gpio03_ec {
-			gpios = <&gpio2 6 GPIO_ODR_HIGH>;	/* Reserved */
+			gpios = <&gpio2 6 GPIO_INPUT>;	/* Reserved */
 		};
 		gpio_usb3_ec_p2_cc1: usb3_ec_p2_cc1 {
 			gpios = <&gpio2 5 GPIO_OUTPUT_LOW>;	/* Control GL3590 type-c orientation */
