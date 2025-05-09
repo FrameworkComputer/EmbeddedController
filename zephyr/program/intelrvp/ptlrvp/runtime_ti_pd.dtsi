@@ -1,0 +1,18 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "ti_pd.dtsi"
+
+&pdc_ti_c0 {
+	zephyr,deferred-init;
+};
+
+&pdc_ti_c1 {
+	zephyr,deferred-init;
+};
+
+&pdc_ti_c2 {
+	zephyr,deferred-init;
+};

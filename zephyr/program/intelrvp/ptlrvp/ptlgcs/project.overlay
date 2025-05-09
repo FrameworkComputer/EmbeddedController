@@ -35,7 +35,7 @@
 /delete-node/ &int_vol_dn;
 
 /* PTLGCS has 2 Type-C ports */
-/delete-node/ &pd_pow_port2;
+/delete-node/ &pdc_rtk_c2;
 &usbc {
 	/delete-node/ port2@2;
 };

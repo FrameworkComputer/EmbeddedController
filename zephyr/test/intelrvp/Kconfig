@@ -74,4 +74,10 @@ config TEST_PROJECT_PTL_BOARD_POWER
 	help
 	  Include board_power.c into the binary and test its functions.
 
+config TEST_PROJECT_PTL_PDC_RUNTIME_PORT_CFG
+	bool "Run tests pdc runtime port config"
+	depends on TEST_PROJECT_PTLRVP_MCHP
+	help
+	  Include usbc_runtime.c into the binary and test its functions.
+
 source "Kconfig.zephyr"

@@ -16,10 +16,8 @@
 #include "../ioex_gpio.dtsi"
 #include "../interrupts.dtsi"
 #include "../keyboard.dtsi"
-#include "../pd.dtsi"
 #include "../power_signals.dtsi"
 #include "../temp_sensor.dts"
-#include "../usbc.dtsi"
 
 &it8801_mfd {
 	irq-gpios = <MCHP_GPIO_DECODE_000 GPIO_ACTIVE_HIGH>;

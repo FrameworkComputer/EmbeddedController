@@ -117,6 +117,8 @@ tests:
     extra_dtc_overlay_files:
       - boards/intelrvp.dtsi
       - boards/ptlrvp/ptlrvp_mchp/ptlrvp_mchp.dtsi
+      - boards/ptlrvp/pd.dtsi
+      - boards/ptlrvp/usbc.dtsi
     extra_conf_files:
       - boards/ptlrvp/program.conf
       - boards/ptlrvp/pd.conf
@@ -139,6 +141,8 @@ tests:
     extra_dtc_overlay_files:
       - boards/intelrvp.dtsi
       - boards/ptlrvp/ptlrvp_mchp/ptlrvp_mchp.dtsi
+      - boards/ptlrvp/pd.dtsi
+      - boards/ptlrvp/usbc.dtsi
     extra_conf_files:
       - boards/ptlrvp/program.conf
       - boards/ptlrvp/pd.conf
@@ -151,3 +155,73 @@ tests:
       - CONFIG_CHIPSET_API_MOCK=y
       - CONFIG_AP_POWER_EVENTS_MOCK=y
       - CONFIG_POWER_SIGNALS_MOCK=y
+
+  intelrvp.ptlrvp_mchp.pd_runtime_no_pdc:
+    extra_dtc_overlay_files:
+      - boards/intelrvp.dtsi
+      - boards/ptlrvp/ptlrvp_mchp/ptlrvp_mchp.dtsi
+      - boards/ptlrvp/runtime_pd.dtsi
+      - boards/ptlrvp/runtime_usbc.dtsi
+    extra_conf_files:
+      - boards/ptlrvp/program.conf
+      - boards/ptlrvp/pd.conf
+      - boards/ptlrvp/ptlrvp.conf
+    extra_configs:
+      - CONFIG_TEST_PROJECT_PTLRVP_MCHP=y
+      - CONFIG_X86_NON_DSX_PWRSEQ_MTL=n
+      - CONFIG_AP_PWRSEQ=y
+      - CONFIG_AP_PWRSEQ_DRIVER=y
+      - CONFIG_EMUL_AP_PWRSEQ_DRIVER=n
+      - CONFIG_AP_POWER_EVENTS_MOCK=y
+      - CONFIG_POWER_SIGNALS_MOCK=y
+      - CONFIG_CHIPSET_API_MOCK=y
+      - CONFIG_AP_EVENTS=n
+      - CONFIG_PDC_RUNTIME_PORT_CONFIG=y
+      - CONFIG_EMUL_PDC_RTS54=n
+      - CONFIG_EMUL_PDC_TPS6699X=n
+
+  intelrvp.ptlrvp_mchp.pd_runtime_no_runtime_pdc:
+    extra_dtc_overlay_files:
+      - boards/intelrvp.dtsi
+      - boards/ptlrvp/ptlrvp_mchp/ptlrvp_mchp.dtsi
+      - boards/ptlrvp/runtime_pd.dtsi
+      - boards/ptlrvp/runtime_usbc.dtsi
+    extra_conf_files:
+      - boards/ptlrvp/program.conf
+      - boards/ptlrvp/pd.conf
+      - boards/ptlrvp/ptlrvp.conf
+    extra_configs:
+      - CONFIG_TEST_PROJECT_PTLRVP_MCHP=y
+      - CONFIG_X86_NON_DSX_PWRSEQ_MTL=n
+      - CONFIG_AP_PWRSEQ=y
+      - CONFIG_AP_PWRSEQ_DRIVER=y
+      - CONFIG_EMUL_AP_PWRSEQ_DRIVER=n
+      - CONFIG_AP_POWER_EVENTS_MOCK=y
+      - CONFIG_POWER_SIGNALS_MOCK=y
+      - CONFIG_CHIPSET_API_MOCK=y
+      - CONFIG_AP_EVENTS=n
+      - CONFIG_PDC_RUNTIME_PORT_CONFIG=y
+      - CONFIG_EMUL_PDC_RTS54=n
+
+  intelrvp.ptlrvp_mchp.pd_runtime_no_ti_pdc:
+    extra_dtc_overlay_files:
+      - boards/intelrvp.dtsi
+      - boards/ptlrvp/ptlrvp_mchp/ptlrvp_mchp.dtsi
+      - boards/ptlrvp/runtime_pd.dtsi
+      - boards/ptlrvp/runtime_usbc.dtsi
+    extra_conf_files:
+      - boards/ptlrvp/program.conf
+      - boards/ptlrvp/pd.conf
+      - boards/ptlrvp/ptlrvp.conf
+    extra_configs:
+      - CONFIG_TEST_PROJECT_PTLRVP_MCHP=y
+      - CONFIG_X86_NON_DSX_PWRSEQ_MTL=n
+      - CONFIG_AP_PWRSEQ=y
+      - CONFIG_AP_PWRSEQ_DRIVER=y
+      - CONFIG_EMUL_AP_PWRSEQ_DRIVER=n
+      - CONFIG_AP_POWER_EVENTS_MOCK=y
+      - CONFIG_POWER_SIGNALS_MOCK=y
+      - CONFIG_CHIPSET_API_MOCK=y
+      - CONFIG_AP_EVENTS=n
+      - CONFIG_PDC_RUNTIME_PORT_CONFIG=y
+      - CONFIG_EMUL_PDC_TPS6699X=n

@@ -1,4 +1,4 @@
-/* Copyright 2024 The ChromiumOS Authors
+/* Copyright 2026 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,30 +10,30 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		usbc_p0: port0@0 {
+		port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
 			chg = <&charger>;
-			pdc = <&pdc_rtk_c0>;
+			pdc = <&pdc_rtk_c0 &pdc_ti_c0>;
 			pd-retimer;
 			policy = <&cros_policy>;
+			zephyr,deferred-init;
 		};
-		usbc_p1: port1@1 {
+		port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
-			pdc = <&pdc_rtk_c1>;
+			pdc = <&pdc_rtk_c1 &pdc_ti_c1>;
 			pd-retimer;
 			policy = <&cros_policy>;
+			zephyr,deferred-init;
 		};
-		usbc_p2: port2@2 {
+		port2@2 {
 			compatible = "named-usbc-port";
 			reg = <2>;
-			pdc = <&pdc_rtk_c2>;
+			pdc = <&pdc_rtk_c2 &pdc_ti_c2>;
 			pd-retimer;
 			policy = <&cros_policy>;
-		};
-		ppm-driver {
-			compatible = "ucsi-ppm";
+			zephyr,deferred-init;
 		};
 	};
 };

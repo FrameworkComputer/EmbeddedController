@@ -1,0 +1,36 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/gpio_defines.h>
+
+&pd_pow_i2c {
+	pdc_ti_c0: tps6699-pdc@20 {
+		compatible = "ti,tps6699-pdc";
+		reg = <0x20>;
+		port-index-on-chip = <0x1>;
+		irq-gpios = <PD_POW_IRQ_GPIO GPIO_ACTIVE_LOW>;
+		frs-supported;
+		ccd;
+	};
+	pdc_ti_c1: tps6699-pdc@24 {
+		compatible = "ti,tps6699-pdc";
+		reg = <0x24>;
+		port-index-on-chip = <0x2>;
+		irq-gpios = <PD_POW_IRQ_GPIO GPIO_ACTIVE_LOW>;
+		frs-supported;
+		no-fw-update;
+	};
+	pdc_ti_c2: tps6699-pdc@21 {
+		compatible = "ti,tps6699-pdc";
+		reg = <0x21>;
+		port-index-on-chip = <0x1>;
+		irq-gpios = <PD_POW_IRQ_GPIO GPIO_ACTIVE_LOW>;
+		frs-supported;
+	};
+};
+
+&gpio_pdc_pow_irq {
+	no-auto-init;
+};

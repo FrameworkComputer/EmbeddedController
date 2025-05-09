@@ -1,0 +1,63 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/gpio_defines.h>
+
+/* typec-aic1-power */
+&PD_POW_I2C {
+	pdc_rtk_c0: rts54-pdc@66 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x66>;
+		zephyr,deferred-init;
+		irq-gpios = <PD_POW_IRQ_GPIO GPIO_ACTIVE_LOW>;
+		ccd;
+	};
+	pdc_rtk_c1: rts54-pdc@67 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x67>;
+		zephyr,deferred-init;
+		irq-gpios = <PD_POW_IRQ_GPIO GPIO_ACTIVE_LOW>;
+		no-fw-update;
+	};
+	pdc_rtk_c2: rts54-pdc@68 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x68>;
+		zephyr,deferred-init;
+		irq-gpios = <PD_POW_IRQ_GPIO GPIO_ACTIVE_LOW>;
+	};
+	pdc_ti_c0: tps6699-pdc@20 {
+		compatible = "ti,tps6699-pdc";
+		reg = <0x20>;
+		port-index-on-chip = <0x1>;
+		ccd;
+		zephyr,deferred-init;
+		irq-gpios = <PD_POW_IRQ_GPIO GPIO_ACTIVE_LOW>;
+		frs-supported;
+	};
+	pdc_ti_c1: tps6699-pdc@24 {
+		compatible = "ti,tps6699-pdc";
+		reg = <0x24>;
+		port-index-on-chip = <0x2>;
+		zephyr,deferred-init;
+		irq-gpios = <PD_POW_IRQ_GPIO GPIO_ACTIVE_LOW>;
+		frs-supported;
+	};
+	pdc_ti_c2: tps6699-pdc@21 {
+		compatible = "ti,tps6699-pdc";
+		reg = <0x21>;
+		port-index-on-chip = <0x1>;
+		zephyr,deferred-init;
+		irq-gpios = <PD_POW_IRQ_GPIO GPIO_ACTIVE_LOW>;
+		frs-supported;
+	};
+	smbus_ara_emul: smbus_ara@c {
+		compatible = "zephyr,smbus-ara-emul";
+		reg = <0xc>;
+	};
+};
+
+&gpio_pdc_pow_irq {
+	no-auto-init;
+};
