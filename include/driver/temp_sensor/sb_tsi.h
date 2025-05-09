@@ -33,6 +33,15 @@
 #define SB_TSI_MANUFACTURE_ID 0xFE
 #define SB_TSI_REVISION 0xFF
 
+#ifdef CONFIG_ZEPHYR
+/**
+ * Polling to read the sensor value
+ *
+ * @param idx		Index to read. Only 0 is valid for sb_tsi.
+ */
+void sb_tsi_update_temperature(int idx);
+#endif /* CONFIG_ZEPHYR */
+
 /**
  * Get the value of a sensor in K.
  *

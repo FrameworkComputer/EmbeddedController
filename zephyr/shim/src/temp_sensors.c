@@ -177,7 +177,7 @@ __maybe_unused static int sb_tsi_get_temp(const struct temp_sensor_t *sensor,
 #define GET_ZEPHYR_TEMP_SENSOR_SB_TSI(named_id)                          \
 	(&(const struct zephyr_temp_sensor){ .read = &sb_tsi_get_temp,   \
 					     .thermistor = NULL,         \
-					     .update_temperature = NULL, \
+					     .update_temperature = sb_tsi_update_temperature, \
 					     FILL_POWER_GOOD(named_id) })
 
 #define TEMP_SB_TSI(named_id, sensor_id)                                \
