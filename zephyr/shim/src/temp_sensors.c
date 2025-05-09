@@ -23,6 +23,7 @@
 #include "temp_sensor/temp_sensor.h"
 #include "temp_sensor/thermistor.h"
 #include "temp_sensor/tmp112.h"
+#include "temperature_filter.h"
 
 #ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
 #include "lotus/amd_r23m.h"
@@ -449,6 +450,7 @@ static bool temp_sensor_check_power(const struct temp_sensor_t *sensor)
 int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
 {
 	const struct temp_sensor_t *sensor;
+	int rv = EC_SUCCESS;
 
 	if (id < 0 || id >= TEMP_SENSOR_COUNT)
 		return EC_ERROR_INVAL;
@@ -457,7 +459,12 @@ int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
 	if (!temp_sensor_check_power(sensor))
 		return EC_ERROR_NOT_POWERED;
 
-	return sensor->zephyr_info->read(sensor, temp_ptr);
+	if (temperature_filter_is_support(id))
+		temperature_filter_get_temp(id, temp_ptr);
+	else
+		rv = sensor->zephyr_info->read(sensor, temp_ptr);
+
+	return rv;
 }
 
 void temp_sensors_update(void)
@@ -470,6 +477,18 @@ void temp_sensors_update(void)
 
 		if (!temp_sensor_check_power(sensor))
 			continue;
+
+		/**
+		 * thermal filter will use the one of physical sensor, so we don't
+		 * need to update the sensor again.
+		 */
+		if (temperature_filter_is_support(i)) {
+			int temp_ptr;
+
+			if (!sensor->zephyr_info->read(sensor, &temp_ptr))
+				temperature_filter_update_temp(i, temp_ptr);
+			continue;
+		}
 
 		sensor->zephyr_info->update_temperature(sensor->idx);
 	}

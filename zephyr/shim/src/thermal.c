@@ -43,6 +43,7 @@
 		.temp_fan_max = C_TO_K(DT_PROP_OR(node_id,		\
 						  temp_fan_max,	\
 						  -273)),		\
+		.coefficients = DT_PROP_OR(node_id, coefficients, {0}), \
 	}
 
 struct ec_thermal_config thermal_params[] = {

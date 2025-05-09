@@ -79,7 +79,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SWITCHCAP_GPIO
 zephyr_library_sources_ifdef(CONFIG_CROS_EC_SWITCHCAP_LN9310
 							    switchcap_ln9310.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TEMP_SENSOR temp_sensors.c
-                                                            thermal.c)
+                                                            thermal.c
+                                                            temperature_filter.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TIMER       hwtimer.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C         i2c.c)
 zephyr_library_sources_ifdef(CONFIG_SHIMMED_TASKS           tasks.c)

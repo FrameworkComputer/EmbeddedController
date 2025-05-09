@@ -72,3 +72,10 @@ child-binding:
       type: int
       description:
         Temperature release threshold in degrees C of thermal shutdown
+
+    coefficients:
+      type: array
+      description:
+        thermal_filter_update() uses six coefficients (b0, b1, b2, a0, a1, a2)
+        to calculate the virtual temperature.
+        Array values are all zero to disable virtual temperature.
