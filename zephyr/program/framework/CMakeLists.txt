@@ -13,7 +13,6 @@ zephyr_library_sources("src/flash_storage.c")
 zephyr_library_sources("src/factory.c")
 zephyr_library_sources("src/uefi_app_mode.c")
 zephyr_library_sources("src/ucsi.c")
-zephyr_library_sources("src/temperature_filter.c")
 zephyr_library_sources("src/power_button_x86.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_DEDICATED_ALS
@@ -96,6 +95,7 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 			"azalea/src/project_diagnostics.c"
 			"src/usbc_4port_config.c"
 			"src/keyboard_customization_13.c"
+			"src/temperature_filter.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
 	"azalea/src/stt.c")
@@ -118,6 +118,7 @@ if(DEFINED CONFIG_BOARD_MARIGOLD)
 			"marigold/src/thermal.c"
 			"marigold/src/usbc.c"
 			"src/usbc_4port_config.c"
+			"src/temperature_filter.c"
 	)
 
 endif()
