@@ -323,12 +323,7 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t fn, int8_t pressed)
 		}
 		break;
 	case SCANCODE_F11:
-			/*
-			 * TODO this might need an
-			 * extra key combo of:
-			 * 0xE012 0xE07C to simulate
-			 * PRINT_SCREEN
-			 */
+		/* Print screen / SYSRQ */
 		if (fn_table_media_set(pressed, KB_FN_F11))
 			*key_code = 0xE07C;
 		break;
@@ -356,10 +351,6 @@ int hotkey_special_key(uint16_t *key_code, int8_t pressed)
 	case SCANCODE_K:
 		if (fn_table_set(pressed, KB_FN_K))
 			*key_code = SCANCODE_SCROLL_LOCK;
-		break;
-	case SCANCODE_S:  /* TODO: SYSRQ */
-		/*if (!fn_table_set(pressed, KB_FN_S))*/
-
 		break;
 	case SCANCODE_LEFT:  /* HOME */
 		if (fn_table_set(pressed, KB_FN_LEFT))
