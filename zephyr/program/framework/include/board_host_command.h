@@ -100,7 +100,7 @@ struct ec_response_chg_limit_control {
 
 /*****************************************************************************/
 /*
- * Configure the behavior of the charge limit control.
+ * Get actual fan RPM, not target
  */
 
 #define EC_CMD_PWM_GET_FAN_ACTUAL_RPM	0x3E04
