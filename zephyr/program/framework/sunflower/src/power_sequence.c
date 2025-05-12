@@ -649,6 +649,7 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* Call hooks after we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
+		pb_module_pwr_control_enable(false);
 
 		cypd_set_power_active();
 		return POWER_G3;
