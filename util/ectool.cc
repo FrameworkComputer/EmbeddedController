@@ -6371,6 +6371,32 @@ int cmd_fpled(int argc, char *argv[])
 	return rv;
 }
 
+int cmd_ps2_emu(int argc, char *argv[])
+{
+	struct ec_params_ps2_emulation_control p;
+	int rv;
+
+	if (argc < 1) {
+		fprintf(stderr, "Usage: %s [enable|disable]\n", argv[0]);
+		return -1;
+	}
+
+	if (!strcasecmp(argv[1], "enable")) {
+		p.disable = 0;
+	} else if (!strcasecmp(argv[1], "disable")) {
+		p.disable = 1;
+	} else {
+		fprintf(stderr, "Usage: %s [enable|disable]\n", argv[0]);
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_DISABLE_PS2_EMULATION, 0, &p, sizeof(p), NULL, 0);
+	if (rv < 0)
+		return rv;
+
+	return 0;
+}
+
 static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
 {
 	switch (r->role) {
@@ -12635,6 +12661,9 @@ const struct command commands[] = {
 	{ "fpled", cmd_fpled,
 		"[<percentage> | ultra-low | low | medium | high]\n"
 		"\tGet or set fingerprint LED brightness." },
+	{ "ps2emu", cmd_ps2_emu,
+	  "[enable | disable]\n"
+	  "\tEnable or disable PS2 mouse emulation." },
 	{ NULL, NULL }
 };
 
