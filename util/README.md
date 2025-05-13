@@ -17,7 +17,7 @@ Framework specific host commands:
 | EC_CMD_FP_LED_LEVEL_CONTROL        | 0x3E0E | Yes   | Yes    | Yes              |
 | EC_CMD_CHASSIS_OPEN_CHECK          | 0x3E0F | Yes   | Yes    | Yes              |
 | EC_CMD_ACPI_NOTIFY                 | 0x3E10 |       |        | No               |
-| EC_CMD_READ_PD_VERSION             | 0x3E11 |       |        | Yes              |
+| EC_CMD_READ_PD_VERSION             | 0x3E11 | Yes   | Yes    | Yes              |
 | EC_CMD_STANDALONE_MODE             | 0x3E13 |       |        | No               |
 | EC_CMD_PRIVACY_SWITCHES_CHECK_MODE | 0x3E14 | Yes   | Yes    | Yes              |
 | EC_CMD_CHASSIS_COUNTER             | 0x3E15 |       |        | Yes              |

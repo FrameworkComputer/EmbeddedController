@@ -6482,6 +6482,50 @@ int cmd_apthrottle(int argc, char *argv[])
 	return rv;
 }
 
+int cmd_pdversion(int argc, char *argv[])
+{
+	struct ec_response_read_pd_version r;
+
+	int rv = ec_command(EC_CMD_READ_PD_VERSION, 0, NULL, 0, &r, sizeof(r));
+
+	if (rv > 0) {
+		printf("PD 1 Version\n");
+    printf("  Base:     %X.%X.%X.%X\n",
+				(r.pd0_version[3] & 0xF0) >> 4,
+				r.pd0_version[3] & 0x0F,
+				r.pd0_version[2],
+				(r.pd0_version[1] << 8) + r.pd0_version[0]
+        );
+    printf("  App Type: %c%c\n",
+				r.pd0_version[5],
+				r.pd0_version[4]
+        );
+    printf("  App:      %X.%X.%X\n",
+				(r.pd0_version[7] & 0xF0) >> 4,
+				r.pd0_version[7] & 0x0F,
+				r.pd0_version[6]
+				);
+		printf("PD 2 Version\n");
+    printf("  Base:     %X.%X.%X.%X\n",
+				(r.pd1_version[3] & 0xF0) >> 4,
+				r.pd1_version[3] & 0x0F,
+				r.pd1_version[2],
+				(r.pd1_version[1] << 8) + r.pd1_version[0]
+        );
+    printf("  App Type: %c%c\n",
+				r.pd1_version[5],
+				r.pd1_version[4]
+        );
+    printf("  App:      %X.%X.%X\n",
+				(r.pd1_version[7] & 0xF0) >> 4,
+				r.pd1_version[7] & 0x0F,
+				r.pd1_version[6]
+				);
+	}
+
+	return rv;
+}
+
 static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
 {
 	switch (r->role) {
@@ -12754,6 +12798,7 @@ const struct command commands[] = {
 	{ "privswitches", cmd_privswitches, "\n\tPrints the status of the camera/microphone privacy switches." },
 	{ "intrusion", cmd_intrusion, "\n\tPrints the status and history of the intrusion switch." },
 	{ "apthrottle", cmd_apthrottle, "\n\tPrints the AP throttle status." },
+	{ "pdversion", cmd_pdversion, "\n\tPrints the PD controller versions." },
 	{ NULL, NULL }
 };
 
