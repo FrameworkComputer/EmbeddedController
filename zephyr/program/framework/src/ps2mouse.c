@@ -8,6 +8,15 @@
  * and there are a few settings that configure this touchpad
  * mouse mode based on fixed assumptions from the hid descriptor
  * specifically the mode switch command.
+ *
+ * When the touchpad IC detects there is no I2C communication partner, it keeps
+ * toggling the interrupt line high/low. From the EC we monitor this and can
+ * detect that no OS driver is running. In that case we can enable PS2 emulation.
+ *
+ * TODO: Discuss timing and in which case PS2 emulation can be disabled.
+ *
+ * TODO: There is a bug that sometimes even after the OS uses an I2C HID
+ * driver, PS2 emulation gets re-enabled.
  */
 #include <zephyr/drivers/gpio.h>
 
@@ -32,8 +41,16 @@ static enum ps2_mouse_state mouse_state = PS2MSTATE_STREAM;
 static enum ps2_mouse_state prev_mouse_state = PS2MSTATE_STREAM;
 static uint8_t prev_command;
 static uint8_t data_report_en = true;
+
+/**
+ * Global variables that contain the current state of the trackpad
+ * They're updated from either the console command by manually simulating movement
+ * or by HID reports from the touchpad when the EC is intercepting them.
+ * Then they're translated to PS2 and sent to the host.
+ */
 static int32_t current_pos[4] = {0x08, 0, 0, 0};
 static uint8_t button_state;
+
 /*in 5 button mode deltaz is changed by +-1 for vertical scroll, and +-2 for horizontal scroll*/
 static uint8_t five_button_mode;
 /* State of magic Knock to enter 5 button mode */
@@ -45,11 +62,15 @@ static uint8_t ec_mode_disabled;
 static uint8_t detected_host_packet = true;
 static uint8_t aux_data;
 
+/**
+ * Send a byte of PS2 mouse emulation to the host
+ * It uses the same API as the keyboard
+ */
 void send_data_byte(uint8_t data)
 {
 	int timeout = 0;
 
-		/* sometimes the host will get behind */
+	/* sometimes the host will get behind */
 	while (aux_buffer_available() < 1 && timeout++ < AUX_BUFFER_FULL_RETRIES)
 		crec_msleep(10);
 	send_aux_data_to_host_interrupt(data);
