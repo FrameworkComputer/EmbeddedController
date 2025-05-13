@@ -37,3 +37,41 @@ Framework specific host commands:
 | EC_CMD_GET_PD_PORT_STATE           | 0x3E23 |       |        | Yes              |
 | EC_CMD_BATTERY_EXTENDER            | 0x3E24 |       |        | No               |
 | EC_CMD_WAKE_ON_LAN                 | 0x3E25 |       |        | No               |
+
+
+## Examples
+
+```
+$ sudo ./build/host/util/ectool fpled
+Percentage:  55%
+$ sudo ./build/host/util/ectool fpled 100
+$ sudo ./build/host/util/ectool fpled 5
+$ sudo ./build/host/util/ectool fpled auto
+
+$ sudo ./build/host/util/ectool chassisopen
+Chassis closed
+
+$ sudo ./build/host/util/ectool apthrottle
+Soft AP Throttle: 0
+Hard AP Throttle: 0
+
+$ sudo ./build/host/util/ectool privswitches
+Microphone: Disconnected
+Camera:     Disconnected
+$ sudo ./build/host/util/ectool privswitches
+Microphone: Connected
+Camera:     Disconnected
+
+$ sudo ./build/host/util/ectool simpleversion
+e9662c
+
+$ sudo ./build/host/util/ectool pdversion
+PD 1 Version
+  Base:     3.7.0.197
+  App Type: nb
+  App:      0.0.B
+PD 2 Version
+  Base:     3.7.0.197
+  App Type: nb
+  App:      0.0.B
+```
