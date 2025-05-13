@@ -665,7 +665,7 @@ void set_gpu_gpios_configuration(void)
 						gpu_gpio_fn_to_name(gpu_gpio_cfgs[i].function),
 						gpu_gpio_cfgs[i].flags,
 						gpu_gpio_powerdomain_to_name(gpu_gpio_cfgs[i].power_domain));
-		gpio_pin_configure_dt(dt_gpio, gpu_gpio_cfgs[i].flags);
+		gpio_pin_configure(dt_gpio->port, dt_gpio->pin, gpu_gpio_cfgs[i].flags);
 	}
 }
 
@@ -1008,16 +1008,25 @@ DECLARE_DEFERRED(init_parse_gpu_eeprom);
 
 void gpu_module_gpio_safe(void)
 {
+	const struct gpio_dt_spec *gpu_b_gpio00_ec =
+		GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio00_ec);
+	const struct gpio_dt_spec *gpu_b_gpio01_ec =
+		GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio01_ec);
+	const struct gpio_dt_spec *gpu_b_gpio02_ec =
+		GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec);
+	const struct gpio_dt_spec *gpu_b_gpio03_ec =
+		GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio03_ec);
+
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio00_ec), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio01_ec), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio03_ec), 0);
 
 	/* tristate all EC general purpose GPIOs */
-	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio00_ec), GPIO_INPUT);
-	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio01_ec), GPIO_INPUT);
-	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), GPIO_INPUT);
-	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio03_ec), GPIO_INPUT);
+	gpio_pin_configure(gpu_b_gpio00_ec->port, gpu_b_gpio00_ec->pin, GPIO_INPUT);
+	gpio_pin_configure(gpu_b_gpio01_ec->port, gpu_b_gpio01_ec->pin, GPIO_INPUT);
+	gpio_pin_configure(gpu_b_gpio02_ec->port, gpu_b_gpio02_ec->pin, GPIO_INPUT);
+	gpio_pin_configure(gpu_b_gpio03_ec->port, gpu_b_gpio03_ec->pin, GPIO_INPUT);
 
 #ifdef CONFIG_BOARD_LOTUS
 	if (board_get_version() >= BOARD_VERSION_7)
