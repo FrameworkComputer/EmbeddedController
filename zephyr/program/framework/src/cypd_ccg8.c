@@ -319,10 +319,11 @@ void cypd_customize_battery_cap(void)
 	}
 
 	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		if (!cypd_contoller_is_powered(i))
+			continue;
+
 		cypd_write_reg_block(i, CCG_WRITE_DATA_MEMORY_REG(0, 0),
-				&pd_battery_cap, sizeof(pd_battery_cap));
-		cypd_write_reg_block(i, CCG_WRITE_DATA_MEMORY_REG(1, 0),
-				&pd_battery_cap, sizeof(pd_battery_cap));
+			&pd_battery_cap, sizeof(pd_battery_cap));
 
 		cypd_write_reg8(i, CCG_PD_CONTROL_REG(0),
 			CCG_PD_CMD_RW_PD_RESPONSE_DATA);
@@ -409,10 +410,11 @@ void cypd_customize_battery_status(void)
 	}
 
 	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		if (!cypd_contoller_is_powered(i))
+			continue;
+
 		cypd_write_reg_block(i, CCG_WRITE_DATA_MEMORY_REG(0, 0),
 			&pd_battery_status, sizeof(pd_battery_status));
-		cypd_write_reg_block(i, CCG_WRITE_DATA_MEMORY_REG(1, 0),
-				&pd_battery_status, sizeof(pd_battery_status));
 
 		cypd_write_reg8(i, CCG_PD_CONTROL_REG(0),
 			CCG_PD_CMD_RW_PD_RESPONSE_DATA);
