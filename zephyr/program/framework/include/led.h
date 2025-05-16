@@ -188,6 +188,8 @@ int fp_led_auto_is_enable(void);
 
 int kbbl_auto_dim_is_enable(void);
 
+void auto_als_led_reset(void);
+
 /**
  * Return the current tick time from led driver
  *

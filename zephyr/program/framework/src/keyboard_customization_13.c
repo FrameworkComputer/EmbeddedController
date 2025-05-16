@@ -415,7 +415,7 @@ int functional_hotkey(uint16_t *key_code, int8_t pressed)
 			return EC_ERROR_UNIMPLEMENTED;
 		}
 		break;
-	case SCANCODE_SPACE:	/* TODO: TOGGLE_KEYBOARD_BACKLIGHT */
+	case SCANCODE_SPACE: /* Keyboard backlight */
 		if (fn_table_set(pressed, KB_FN_SPACE)) {
 			if (pressed) {
 				if (kbbl_auto_dim_is_enable())
@@ -423,6 +423,7 @@ int functional_hotkey(uint16_t *key_code, int8_t pressed)
 				else
 					bl_brightness = kblight_get();
 
+				/* Cycle through off, 3 levels of brightness and on */
 				switch (bl_brightness) {
 				case KEYBOARD_BL_BRIGHTNESS_OFF:
 					bl_brightness = KEYBOARD_BL_BRIGHTNESS_LOW;
@@ -435,8 +436,10 @@ int functional_hotkey(uint16_t *key_code, int8_t pressed)
 					break;
 				case KEYBOARD_BL_BRIGHTNESS_HIGH:
 					kb_als_auto_brightness = true;
+					auto_als_led_reset();
 					return EC_ERROR_UNIMPLEMENTED;
 					break;
+				case KEYBOARD_BL_BRIGHTNESS_AUTO:
 				default:
 					bl_brightness = KEYBOARD_BL_BRIGHTNESS_OFF;
 					kb_als_auto_brightness = false;
