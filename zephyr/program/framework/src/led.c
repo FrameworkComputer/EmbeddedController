@@ -213,9 +213,23 @@ void auto_als_led_brightness(void)
 	int led_brightness;
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD
 	int kb_brightness;
+
+	if (kbbl_auto_dim_is_enable()) {
+		last_kbbl_led_brightness = kblight_get();
+
+		if (als_lux > 5)
+			kb_brightness = KEYBOARD_BL_BRIGHTNESS_OFF;
+		else
+			kb_brightness = KEYBOARD_BL_BRIGHTNESS_ULT_LOW;
+
+		if (last_kbbl_led_brightness != kb_brightness) {
+			last_kbbl_led_brightness = kb_brightness;
+			kblight_set(kb_brightness);
+		}
+	}
 #endif
 
-	/* Only change brightness if lux has significantly changed */
+	/* Only change power button brightness if lux has significantly changed */
 	/* Otherwise if it's around a threshold it might flip back and forth */
 	if (prev_als_lux != 0 && (ABS(als_lux - prev_als_lux) <= 15))
 		return;
@@ -240,22 +254,6 @@ void auto_als_led_brightness(void)
 			update_pwr_led_level();
 		}
 	}
-
-#ifdef CONFIG_PLATFORM_EC_KEYBOARD
-	if (kbbl_auto_dim_is_enable()) {
-		last_kbbl_led_brightness = kblight_get();
-
-		if (als_lux > 5)
-			kb_brightness = KEYBOARD_BL_BRIGHTNESS_OFF;
-		else
-			kb_brightness = KEYBOARD_BL_BRIGHTNESS_ULT_LOW;
-
-		if (last_kbbl_led_brightness != kb_brightness) {
-			last_kbbl_led_brightness = kb_brightness;
-			kblight_set(kb_brightness);
-		}
-	}
-#endif
 }
 
 /*
