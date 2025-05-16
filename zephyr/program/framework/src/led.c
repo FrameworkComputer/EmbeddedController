@@ -138,7 +138,7 @@ static bool pre_fingerprint_led_state;
 static bool fp_als_auto_brightness;
 static bool last_fp_led_brightness;
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD
-static bool last_kbbl_led_brightness;
+static int last_kbbl_led_brightness;
 #endif
 static int prev_als_lux;
 
@@ -243,6 +243,8 @@ void auto_als_led_brightness(void)
 
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD
 	if (kbbl_auto_dim_is_enable()) {
+		last_kbbl_led_brightness = kblight_get();
+
 		if (als_lux > 5)
 			kb_brightness = KEYBOARD_BL_BRIGHTNESS_OFF;
 		else
@@ -254,6 +256,17 @@ void auto_als_led_brightness(void)
 		}
 	}
 #endif
+}
+
+/*
+ * Force ALS dependent brightness (keyboard, powerbutton) to immediately adjust
+ * based on ALS measurement, if they're enabled. Useeful if the setting was just enabled.
+ */
+void auto_als_led_reset(void)
+{
+	prev_als_lux = 0;
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_DEDICATED_ALS))
+		auto_als_led_brightness();
 }
 
 test_export_static enum power_state get_chipset_state(void)
