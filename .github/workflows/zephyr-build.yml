@@ -8,6 +8,7 @@ on:
       - azalea*
       - fwk*
       - pr-*
+      - test-*
       - framework*
   #  paths:
   #    - 'zephyr/program/framework/**'
