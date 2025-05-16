@@ -210,7 +210,7 @@ static void power_button_debounce_deferred(void)
 		 * Power button already release ignore PB signal
 		 */
 		pwrbtn_state = PWRBTN_STATE_IDLE;
-		CPRINTS("PB debounce ignore signal");
+		CPRINTS("PB ignore signal - debounce");
 	} else {
 		/**
 		 * Power button is still pressed, power on the system
@@ -241,7 +241,7 @@ static void set_initial_pwrbtn_state(void)
 			(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_on_off_btn_l)) == 1) &&
 			!get_standalone_mode()) {
 			pwrbtn_state = PWRBTN_STATE_IDLE;
-			CPRINTS("PB ignore signal");
+			CPRINTS("PB ignore signal - chassis open");
 			return;
 		}
 
@@ -249,9 +249,10 @@ static void set_initial_pwrbtn_state(void)
      * if AC is not connected.
      */
 #if !defined(CONFIG_POWER_BUTTON_IGNORE_LID) || CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_12
-		if (!lid_is_open())
+		if (!lid_is_open()) {
 			CPRINTS("PB ignore signal - lid closed");
 			return;
+		}
 #endif
 
 		/**
