@@ -5,16 +5,16 @@
       "locked": {
         "lastModified": 1667999874,
         "narHash": "sha256-IKmdIn/K1eHBVxA0sNvzr1i5LpkgJQMAMsks13lmDNw=",
-        "ref": "4aa3ff8e4f8a21e31cd9831b943acb7a7cd56ac8",
+        "ref": "refs/heads/upstream/master",
         "rev": "4aa3ff8e4f8a21e31cd9831b943acb7a7cd56ac8",
         "revCount": 32,
         "type": "git",
-        "url": "https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis?name=cmsis"
+        "url": "https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis"
       },
       "original": {
         "rev": "4aa3ff8e4f8a21e31cd9831b943acb7a7cd56ac8",
         "type": "git",
-        "url": "https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis?name=cmsis"
+        "url": "https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis"
       }
     },
     "flake-utils": {
@@ -121,16 +121,16 @@
       "locked": {
         "lastModified": 1733524766,
         "narHash": "sha256-aJ/azDsQAmGyGQ4M9krj7E6IUHKWfMwp5y2M5mVbgeU=",
-        "ref": "upstream/next",
+        "ref": "refs/heads/chromeos-v2023.04",
         "rev": "39759bf9fe3a5b6d4788164fc046f5f8aee5cbff",
         "revCount": 96674,
         "type": "git",
-        "url": "https://chromium.googlesource.com/chromiumos/third_party/u-boot?name=u-boot"
+        "url": "https://chromium.googlesource.com/chromiumos/third_party/u-boot"
       },
       "original": {
-        "ref": "upstream/next",
+        "rev": "39759bf9fe3a5b6d4788164fc046f5f8aee5cbff",
         "type": "git",
-        "url": "https://chromium.googlesource.com/chromiumos/third_party/u-boot?name=u-boot"
+        "url": "https://chromium.googlesource.com/chromiumos/third_party/u-boot"
       }
     },
     "zephyr": {

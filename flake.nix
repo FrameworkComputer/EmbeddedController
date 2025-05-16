@@ -7,13 +7,13 @@
     zephyr-nix.url = github:adisbladis/zephyr-nix;
     zephyr-nix.inputs.nixpkgs.follows = "nixpkgs";
 
-    cmsis.url = git+https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis?rev=4aa3ff8e4f8a21e31cd9831b943acb7a7cd56ac8&name=cmsis;
+    cmsis.url = git+https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis?rev=4aa3ff8e4f8a21e31cd9831b943acb7a7cd56ac8;
     cmsis.flake = false;
 
     zephyr.url = github:FrameworkComputer/zephyr?ref=lotus-zephyr&name=zephyr;
     zephyr.flake = false;
 
-    u-boot.url = git+https://chromium.googlesource.com/chromiumos/third_party/u-boot?ref=upstream/next&name=u-boot;
+    u-boot.url = git+https://chromium.googlesource.com/chromiumos/third_party/u-boot?rev=39759bf9fe3a5b6d4788164fc046f5f8aee5cbff;
     u-boot.flake = false;
   };
 
