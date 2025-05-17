@@ -210,7 +210,7 @@ static void power_button_debounce_deferred(void)
 		 * Power button already release ignore PB signal
 		 */
 		pwrbtn_state = PWRBTN_STATE_IDLE;
-		CPRINTS("PB debounce ignore signal - debounce");
+		CPRINTS("PB debounce ignore signal");
 	} else {
 		/**
 		 * Power button is still pressed, power on the system
@@ -241,7 +241,7 @@ static void set_initial_pwrbtn_state(void)
 			(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_on_off_btn_l)) == 1) &&
 			!get_standalone_mode()) {
 			pwrbtn_state = PWRBTN_STATE_IDLE;
-			CPRINTS("PB ignore signal - chassis open");
+			CPRINTS("PB ignore signal");
 			return;
 		}
 
