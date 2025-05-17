@@ -320,6 +320,10 @@ struct ec_response_read_pd_version_v1 {
 	uint8_t pd_chip_count;
 	uint8_t pd_versions[0][8];
 } __ec_align1;
+struct ec_response_read_pd_version_v1_4x {
+	uint8_t pd_chip_count;
+	uint8_t pd_versions[4][8];
+} __ec_align1;
 
 /*****************************************************************************/
 /*

@@ -6482,49 +6482,57 @@ int cmd_apthrottle(int argc, char *argv[])
 	return rv;
 }
 
+void print_ccgx_version(uint8_t *version) {
+	printf("  Base:     %X.%X.%X.%X\n",
+			(version[3] & 0xF0) >> 4,
+			version[3] & 0x0F,
+			version[2],
+			(version[1] << 8) + version[0]
+	);
+	printf("  App Type: %c%c\n",
+			version[5],
+			version[4]
+	);
+	printf("  App:      %X.%X.%X\n",
+			(version[7] & 0xF0) >> 4,
+			version[7] & 0x0F,
+			version[6]
+	);
+}
+
 int cmd_pdversion(int argc, char *argv[])
 {
-	struct ec_response_read_pd_version r;
+	struct ec_response_read_pd_version_v0 r_v0;
+	struct ec_response_read_pd_version_v1_4x r_v1;
+	int rv;
 
-	int rv = ec_command(EC_CMD_READ_PD_VERSION, 0, NULL, 0, &r, sizeof(r));
-
-	if (rv > 0) {
-		printf("PD 1 Version\n");
-    printf("  Base:     %X.%X.%X.%X\n",
-				(r.pd0_version[3] & 0xF0) >> 4,
-				r.pd0_version[3] & 0x0F,
-				r.pd0_version[2],
-				(r.pd0_version[1] << 8) + r.pd0_version[0]
-        );
-    printf("  App Type: %c%c\n",
-				r.pd0_version[5],
-				r.pd0_version[4]
-        );
-    printf("  App:      %X.%X.%X\n",
-				(r.pd0_version[7] & 0xF0) >> 4,
-				r.pd0_version[7] & 0x0F,
-				r.pd0_version[6]
-				);
-		printf("PD 2 Version\n");
-    printf("  Base:     %X.%X.%X.%X\n",
-				(r.pd1_version[3] & 0xF0) >> 4,
-				r.pd1_version[3] & 0x0F,
-				r.pd1_version[2],
-				(r.pd1_version[1] << 8) + r.pd1_version[0]
-        );
-    printf("  App Type: %c%c\n",
-				r.pd1_version[5],
-				r.pd1_version[4]
-        );
-    printf("  App:      %X.%X.%X\n",
-				(r.pd1_version[7] & 0xF0) >> 4,
-				r.pd1_version[7] & 0x0F,
-				r.pd1_version[6]
-				);
+	if (ec_cmd_version_supported(EC_CMD_GET_PANIC_INFO, 1)) {
+		rv = ec_command(EC_CMD_READ_PD_VERSION, 1, NULL, 0, &r_v1, sizeof(r_v1));
+		if (rv > 0) {
+			for (int i = 0; i < r_v1.pd_chip_count; i++) {
+				printf("PD %d Version\n", i + 1);
+				/* Don't read more than was received if
+				 * r_v1.pd_chip_count is larger than the
+				 * number of PD versions that were sent
+				 */
+				if (rv < 1 + i * sizeof(r_v1.pd_versions[0]))
+					break;
+				print_ccgx_version(r_v1.pd_versions[i]);
+			}
+		}
+	} else {
+		rv = ec_command(EC_CMD_READ_PD_VERSION, 0, NULL, 0, &r_v0, sizeof(r_v0));
+		if (rv > 0) {
+			printf("PD 1 Version\n");
+			print_ccgx_version(r_v0.pd0_version);
+			printf("PD 2 Version\n");
+			print_ccgx_version(r_v0.pd1_version);
+		}
 	}
 
 	return rv;
 }
+
 
 static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
 {
