@@ -3,16 +3,16 @@
     "cmsis": {
       "flake": false,
       "locked": {
-        "lastModified": 1667999874,
-        "narHash": "sha256-IKmdIn/K1eHBVxA0sNvzr1i5LpkgJQMAMsks13lmDNw=",
+        "lastModified": 1709666614,
+        "narHash": "sha256-u3+dLjAuoWGVC/5e/qSplhZV2lwscMAtCnulclaqy1M=",
         "ref": "refs/heads/upstream/master",
-        "rev": "4aa3ff8e4f8a21e31cd9831b943acb7a7cd56ac8",
-        "revCount": 32,
+        "rev": "b9d63132c1cc195464a57aad984398c41edcd3a2",
+        "revCount": 43,
         "type": "git",
         "url": "https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis"
       },
       "original": {
-        "rev": "4aa3ff8e4f8a21e31cd9831b943acb7a7cd56ac8",
+        "rev": "b9d63132c1cc195464a57aad984398c41edcd3a2",
         "type": "git",
         "url": "https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis"
       }
@@ -120,16 +120,16 @@
     "u-boot": {
       "flake": false,
       "locked": {
-        "lastModified": 1733524766,
-        "narHash": "sha256-aJ/azDsQAmGyGQ4M9krj7E6IUHKWfMwp5y2M5mVbgeU=",
-        "ref": "refs/heads/chromeos-v2023.04",
-        "rev": "39759bf9fe3a5b6d4788164fc046f5f8aee5cbff",
-        "revCount": 96674,
+        "lastModified": 1708620973,
+        "narHash": "sha256-QeMCW9bef2KK32eNWMFSNvWb2GS9apv/hH2ska6IVqI=",
+        "ref": "chromeos-v2023.10-next",
+        "rev": "923f25080339770806369e41767f8d0464f2b451",
+        "revCount": 88472,
         "type": "git",
         "url": "https://chromium.googlesource.com/chromiumos/third_party/u-boot"
       },
       "original": {
-        "rev": "39759bf9fe3a5b6d4788164fc046f5f8aee5cbff",
+        "ref": "chromeos-v2023.10-next",
         "type": "git",
         "url": "https://chromium.googlesource.com/chromiumos/third_party/u-boot"
       }
@@ -137,16 +137,16 @@
     "zephyr": {
       "flake": false,
       "locked": {
-        "lastModified": 1702014141,
-        "narHash": "sha256-KgTh39Ba9jDByv7+9gDdZHCl2OOku3Y3yxq0Pt4GeBo=",
+        "lastModified": 1711438127,
+        "narHash": "sha256-hl6Rb0tRMKs3+MxbRdqt1EK6VMS0R8lnf8lKD92acVA=",
         "owner": "FrameworkComputer",
         "repo": "zephyr",
-        "rev": "7b88e177ba900ce45495a7a49af7148baf3348ee",
+        "rev": "885166fd90da0621d60094c091774a0f52a5a253",
         "type": "github"
       },
       "original": {
         "owner": "FrameworkComputer",
-        "ref": "lotus-zephyr",
+        "ref": "marigold",
         "repo": "zephyr",
         "type": "github"
       }

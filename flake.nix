@@ -7,13 +7,13 @@
     zephyr-nix.url = github:adisbladis/zephyr-nix;
     zephyr-nix.inputs.nixpkgs.follows = "nixpkgs";
 
-    cmsis.url = git+https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis?rev=4aa3ff8e4f8a21e31cd9831b943acb7a7cd56ac8;
+    cmsis.url = git+https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis?rev=b9d63132c1cc195464a57aad984398c41edcd3a2;
     cmsis.flake = false;
 
-    zephyr.url = github:FrameworkComputer/zephyr?ref=lotus-zephyr&name=zephyr;
+    zephyr.url = github:FrameworkComputer/zephyr?ref=marigold&name=zephyr;
     zephyr.flake = false;
 
-    u-boot.url = git+https://chromium.googlesource.com/chromiumos/third_party/u-boot?rev=39759bf9fe3a5b6d4788164fc046f5f8aee5cbff;
+    u-boot.url = git+https://chromium.googlesource.com/chromiumos/third_party/u-boot?ref=chromeos-v2023.10-next;
     u-boot.flake = false;
   };
 
@@ -111,6 +111,7 @@
       packages.default = packages.lotus;
       packages.lotus = mkBuild packages "lotus";
       packages.azalea = mkBuild packages "azalea";
+      packages.marigold = mkBuild packages "marigold";
 
       packages.zmake = pythonPkgs.buildPythonPackage {
         name = "zmake";
