@@ -2258,6 +2258,20 @@ void perform_error_recovery(int controller)
 	}
 }
 
+int cypd_get_active_pd_chip_count(void)
+{
+	int active_pd_chip_count = 0;
+
+	for (int i = 0; i < PD_CHIP_COUNT; i++) {
+		if (!cypd_contoller_is_powered(i))
+			continue;
+
+		active_pd_chip_count++;
+	}
+
+	return active_pd_chip_count;
+}
+
 /*****************************************************************************/
 /* Host command */
 
