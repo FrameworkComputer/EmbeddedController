@@ -131,6 +131,11 @@
 		compatible = "cros-ec,temp-sensor-sb-tsi";
 		reg = <0x4c>;
 	};
+
+	temp_cpu_virtual: cpu_virtual@4c {
+		compatible = "cros-ec,temp-sensor-sb-tsi";
+		reg = <0x4c>;
+	};
 };
 
 &i2c_ctrl7 {

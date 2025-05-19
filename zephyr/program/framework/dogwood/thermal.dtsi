@@ -55,5 +55,19 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&temp_cpu>;
 		};
+
+		temp_sensor_virtual: amd-apu-virtual {
+			temp_host_warn = <108>;
+			temp_host_high = <108>;
+			temp_host_halt = <127>;
+			temp_host_release_warn = <60>;
+			temp_host_release_high = <60>;
+			temp_host_release_halt = <122>;
+			temp_fan_off = <50>;
+			temp_fan_max = <100>;
+			power-good-pin = <&gpio_slp_s3_l>;
+			sensor = <&temp_cpu_virtual>;
+			coefficients = <15 31 15 16384 (-31313) 14991>;
+		};
 	};
 };
