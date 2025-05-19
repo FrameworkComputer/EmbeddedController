@@ -47,6 +47,7 @@ enum power_supply_type {
 };
 
 struct pmf_data {
+	uint8_t P3T;
 	uint8_t fPPT;
 	uint8_t sPPT;
 	uint8_t SPL;
@@ -72,53 +73,53 @@ struct pmf_table {
 /**********************************************************
  * AMD GPU PMF table
  **********************************************************/
-struct pmf_info AMD_GPU_AC_DC_PMF[] ={
-	{220, EC_AC_BEST_PERFORMANCE, 1, {145, 145, 145, 54}},
-	{220, EC_AC_BALANCED, 2, {120, 120, 120, 50}},
-	{220, EC_AC_BEST_EFFICIENCY, 3, {95, 95, 95, 45}},
-	{180, EC_AC_BEST_PERFORMANCE, 4, {120, 120, 120, 50}},
-	{180, EC_AC_BALANCED, 5, {95, 95, 95, 45}},
-	{180, EC_AC_BEST_EFFICIENCY, 6, {85, 85, 85, 40}},
-	{140, EC_AC_BEST_PERFORMANCE, 7, {95, 95, 95, 50}},
-	{140, EC_AC_BALANCED, 8, {85, 85, 85, 40}},
-	{140, EC_AC_BEST_EFFICIENCY, 9, {60, 60, 60, 30}},
-	{100, EC_AC_BEST_PERFORMANCE, 10, {85, 85, 85, 40}},
-	{100, EC_AC_BALANCED, 11, {60, 60, 60, 30}},
-	{100, EC_AC_BEST_EFFICIENCY, 11, {60, 60, 60, 30}},
-	{80, EC_AC_BEST_PERFORMANCE, 12, {60, 60, 60, 30}},
-	{80, EC_AC_BALANCED, 12, {60, 60, 60, 30}},
-	{80, EC_AC_BEST_EFFICIENCY, 12, {60, 60, 60, 30}},
-	{1, EC_AC_BEST_PERFORMANCE, 13, {60, 60, 60, 30}},
-	{1, EC_AC_BALANCED, 13, {60, 60, 60, 30}},
-	{1, EC_AC_BEST_EFFICIENCY, 13, {60, 60, 60, 30}},
+struct pmf_info AMD_GPU_AC_DC_PMF[] = {
+	{240, EC_AC_BEST_PERFORMANCE, 1, {227, 145, 145, 145, 54}},
+	{240, EC_AC_BALANCED, 2, {150, 120, 120, 120, 50}},
+	{240, EC_AC_BEST_EFFICIENCY, 3, {150, 95, 95, 95, 45}},
+	{180, EC_AC_BEST_PERFORMANCE, 4, {145, 120, 120, 120, 50}},
+	{180, EC_AC_BALANCED, 5, {145, 95, 95, 95, 45}},
+	{180, EC_AC_BEST_EFFICIENCY, 6, {145, 85, 85, 85, 40}},
+	{140, EC_AC_BEST_PERFORMANCE, 7, {138, 95, 95, 95, 50}},
+	{140, EC_AC_BALANCED, 8, {120, 85, 85, 85, 40}},
+	{140, EC_AC_BEST_EFFICIENCY, 9, {120, 60, 60, 60, 30}},
+	{100, EC_AC_BEST_PERFORMANCE, 10, {120, 85, 85, 85, 40}},
+	{100, EC_AC_BALANCED, 11, {100, 60, 60, 60, 30}},
+	{100, EC_AC_BEST_EFFICIENCY, 11, {100, 60, 60, 60, 30}},
+	{80, EC_AC_BEST_PERFORMANCE, 12, {118, 60, 60, 60, 30}},
+	{80, EC_AC_BALANCED, 12, {100, 60, 60, 60, 30}},
+	{80, EC_AC_BEST_EFFICIENCY, 12, {100, 60, 60, 60, 30}},
+	{1, EC_AC_BEST_PERFORMANCE, 13, {100, 60, 60, 60, 30}},
+	{1, EC_AC_BALANCED, 13, {100, 60, 60, 60, 30}},
+	{1, EC_AC_BEST_EFFICIENCY, 13, {100, 60, 60, 60, 30}},
 };
 
-struct pmf_info AMD_GPU_AC_ONLY_PMF[] ={
-	{220, EC_AC_BEST_PERFORMANCE, 17, {60, 60, 60, 30}},
-	{220, EC_AC_BALANCED, 18, {50, 50, 50, 30}},
-	{220, EC_AC_BEST_EFFICIENCY, 19, {30, 30, 30, 30}},
-	{180, EC_AC_BEST_PERFORMANCE, 20, {60, 60, 60, 30}},
-	{180, EC_AC_BALANCED, 21, {50, 50, 50, 30}},
-	{180, EC_AC_BEST_EFFICIENCY, 22, {30, 30, 30, 30}},
-	{140, EC_AC_BEST_PERFORMANCE, 23, {60, 60, 60, 30}},
-	{140, EC_AC_BALANCED, 24, {50, 50, 50, 30}},
-	{140, EC_AC_BEST_EFFICIENCY, 25, {30, 30, 30, 30}},
-	{100, EC_AC_BEST_PERFORMANCE, 26, {50, 50, 50, 30}},
-	{100, EC_AC_BALANCED, 26, {50, 50, 50, 30}},
-	{100, EC_AC_BEST_EFFICIENCY, 27, {30, 30, 30, 30}},
-	{80, EC_AC_BEST_PERFORMANCE, 28, {30, 30, 30, 30}},
-	{80, EC_AC_BALANCED, 28, {30, 30, 30, 30}},
-	{80, EC_AC_BEST_EFFICIENCY, 28, {30, 30, 30, 30}},
-	{1, EC_AC_BEST_PERFORMANCE, 29, {30, 30, 30, 30}},
-	{1, EC_AC_BALANCED, 29, {30, 30, 30, 30}},
-	{1, EC_AC_BEST_EFFICIENCY, 29, {30, 30, 30, 30}},
+struct pmf_info AMD_GPU_AC_ONLY_PMF[] = {
+	{240, EC_AC_BEST_PERFORMANCE, 14, {145, 60, 60, 60, 30}},
+	{240, EC_AC_BALANCED, 15, {145, 50, 50, 50, 30}},
+	{240, EC_AC_BEST_EFFICIENCY, 16, {145, 30, 30, 30, 30}},
+	{180, EC_AC_BEST_PERFORMANCE, 17, {75, 60, 60, 60, 30}},
+	{180, EC_AC_BALANCED, 18, {75, 50, 50, 50, 30}},
+	{180, EC_AC_BEST_EFFICIENCY, 19, {75, 30, 30, 30, 30}},
+	{140, EC_AC_BEST_PERFORMANCE, 20, {75, 60, 60, 60, 30}},
+	{140, EC_AC_BALANCED, 21, {75, 50, 50, 50, 30}},
+	{140, EC_AC_BEST_EFFICIENCY, 22, {75, 30, 30, 30, 30}},
+	{100, EC_AC_BEST_PERFORMANCE, 23, {75, 50, 50, 50, 30}},
+	{100, EC_AC_BALANCED, 23, {75, 50, 50, 50, 30}},
+	{100, EC_AC_BEST_EFFICIENCY, 24, {75, 30, 30, 30, 30}},
+	{80, EC_AC_BEST_PERFORMANCE, 25, {72, 30, 30, 30, 30}},
+	{80, EC_AC_BALANCED, 25, {72, 30, 30, 30, 30}},
+	{80, EC_AC_BEST_EFFICIENCY, 25, {72, 30, 30, 30, 30}},
+	{1, EC_AC_BEST_PERFORMANCE, 26, {54, 30, 30, 30, 30}},
+	{1, EC_AC_BALANCED, 26, {54, 30, 30, 30, 30}},
+	{1, EC_AC_BEST_EFFICIENCY, 26, {54, 30, 30, 30, 30}},
 };
 
-struct pmf_info AMD_GPU_DC_ONLY_PMF[] ={
-	{0, EC_DC_BEST_PERFORMANCE, 14, {60, 60, 60, 30}},
-	{0, EC_DC_BALANCED, 15, {50, 50, 50, 20}},
-	{0, EC_DC_BEST_EFFICIENCY, 15, {50, 50, 50, 20}},
-	{0, EC_DC_BATTERY_SAVER, 16, {20, 20, 20, 20}},
+struct pmf_info AMD_GPU_DC_ONLY_PMF[] = {
+	{0, EC_DC_BEST_PERFORMANCE, 27, {76, 60, 60, 60, 30}},
+	{0, EC_DC_BALANCED, 28, {76, 50, 50, 50, 20}},
+	{0, EC_DC_BEST_EFFICIENCY, 28, {76, 50, 50, 50, 20}},
+	{0, EC_DC_BATTERY_SAVER, 29, {65, 20, 20, 20, 20}},
 };
 
 struct pmf_table AMD_GPU_PMF_TABLE[] = {
@@ -130,53 +131,53 @@ struct pmf_table AMD_GPU_PMF_TABLE[] = {
 /**********************************************************
  * NV GPU PMF table
  **********************************************************/
-struct pmf_info NV_GPU_AC_DC_PMF[] ={
-	{220, EC_AC_BEST_PERFORMANCE, 59, {65, 54, 45, 0}},
-	{220, EC_AC_BALANCED, 60, {58, 48, 40, 0}},
-	{220, EC_AC_BEST_EFFICIENCY, 61, {44, 36, 30, 0}},
-	{180, EC_AC_BEST_PERFORMANCE, 62, {65, 54, 45, 0}},
-	{180, EC_AC_BALANCED, 63, {58, 48, 40, 0}},
-	{180, EC_AC_BEST_EFFICIENCY, 64, {44, 36, 30, 0}},
-	{140, EC_AC_BEST_PERFORMANCE, 65, {65, 50, 45, 0}},
-	{140, EC_AC_BALANCED, 66, {58, 40, 40, 0}},
-	{140, EC_AC_BEST_EFFICIENCY, 67, {44, 30, 30, 0}},
-	{100, EC_AC_BEST_PERFORMANCE, 68, {65, 40, 40, 0}},
-	{100, EC_AC_BALANCED, 69, {44, 30, 30, 0}},
-	{100, EC_AC_BEST_EFFICIENCY, 69, {44, 30, 30, 0}},
-	{80, EC_AC_BEST_PERFORMANCE, 70, {44, 30, 30, 0}},
-	{80, EC_AC_BALANCED, 70, {44, 30, 30, 0}},
-	{80, EC_AC_BEST_EFFICIENCY, 70, {44, 30, 30, 0}},
-	{1, EC_AC_BEST_PERFORMANCE, 71, {30, 30, 30, 0}},
-	{1, EC_AC_BALANCED, 71, {30, 30, 30, 0}},
-	{1, EC_AC_BEST_EFFICIENCY, 71, {30, 30, 30, 0}},
+struct pmf_info NV_GPU_AC_DC_PMF[] = {
+	{240, EC_AC_BEST_PERFORMANCE, 59, {216, 65, 54, 45, 0}},
+	{240, EC_AC_BALANCED, 60, {216, 58, 48, 40, 0}},
+	{240, EC_AC_BEST_EFFICIENCY, 61, {216, 44, 36, 30, 0}},
+	{180, EC_AC_BEST_PERFORMANCE, 62, {216, 65, 54, 45, 0}},
+	{180, EC_AC_BALANCED, 63, {216, 58, 48, 40, 0}},
+	{180, EC_AC_BEST_EFFICIENCY, 64, {216, 44, 36, 30, 0}},
+	{140, EC_AC_BEST_PERFORMANCE, 65, {202, 65, 50, 45, 0}},
+	{140, EC_AC_BALANCED, 66, {202, 58, 40, 40, 0}},
+	{140, EC_AC_BEST_EFFICIENCY, 67, {202, 44, 30, 30, 0}},
+	{100, EC_AC_BEST_PERFORMANCE, 68, {167, 65, 40, 40, 0}},
+	{100, EC_AC_BALANCED, 69, {167, 44, 30, 30, 0}},
+	{100, EC_AC_BEST_EFFICIENCY, 69, {167, 44, 30, 30, 0}},
+	{80, EC_AC_BEST_PERFORMANCE, 70, {148, 44, 30, 30, 0}},
+	{80, EC_AC_BALANCED, 70, {148, 44, 30, 30, 0}},
+	{80, EC_AC_BEST_EFFICIENCY, 70, {148, 44, 30, 30, 0}},
+	{1, EC_AC_BEST_PERFORMANCE, 71, {131, 44, 30, 30, 0}},
+	{1, EC_AC_BALANCED, 71, {131, 44, 30, 30, 0}},
+	{1, EC_AC_BEST_EFFICIENCY, 71, {131, 44, 30, 30, 0}},
 };
 
-struct pmf_info NV_GPU_AC_ONLY_PMF[] ={
-	{220, EC_AC_BEST_PERFORMANCE, 75, {60, 30, 30, 0}},
-	{220, EC_AC_BALANCED, 76, {58, 30, 30, 0}},
-	{220, EC_AC_BEST_EFFICIENCY, 77, {30, 30, 30, 0}},
-	{180, EC_AC_BEST_PERFORMANCE, 78, {60, 30, 30, 0}},
-	{180, EC_AC_BALANCED, 79, {58, 30, 30, 0}},
-	{180, EC_AC_BEST_EFFICIENCY, 80, {30, 30, 30, 0}},
-	{140, EC_AC_BEST_PERFORMANCE, 81, {60, 30, 30, 0}},
-	{140, EC_AC_BALANCED, 82, {50, 30, 30, 0}},
-	{140, EC_AC_BEST_EFFICIENCY, 83, {30, 30, 30, 0}},
-	{100, EC_AC_BEST_PERFORMANCE, 84, {50, 30, 30, 0}},
-	{100, EC_AC_BALANCED, 84, {50, 30, 30, 0}},
-	{100, EC_AC_BEST_EFFICIENCY, 85, {30, 30, 30, 0}},
-	{80, EC_AC_BEST_PERFORMANCE, 86, {30, 30, 30, 0}},
-	{80, EC_AC_BALANCED, 86, {30, 30, 30, 0}},
-	{80, EC_AC_BEST_EFFICIENCY, 86, {30, 30, 30, 0}},
-	{1, EC_AC_BEST_PERFORMANCE, 87, {30, 30, 30, 0}},
-	{1, EC_AC_BALANCED, 87, {30, 30, 30, 0}},
-	{1, EC_AC_BEST_EFFICIENCY, 87, {30, 30, 30, 0}},
+struct pmf_info NV_GPU_AC_ONLY_PMF[] = {
+	{240, EC_AC_BEST_PERFORMANCE, 72, {216, 60, 30, 30, 0}},
+	{240, EC_AC_BALANCED, 73, {216, 58, 30, 30, 0}},
+	{240, EC_AC_BEST_EFFICIENCY, 74, {216, 30, 30, 30, 0}},
+	{180, EC_AC_BEST_PERFORMANCE, 75, {162, 60, 30, 30, 0}},
+	{180, EC_AC_BALANCED, 76, {162, 58, 30, 30, 0}},
+	{180, EC_AC_BEST_EFFICIENCY, 77, {162, 30, 30, 30, 0}},
+	{140, EC_AC_BEST_PERFORMANCE, 78, {126, 60, 30, 30, 0}},
+	{140, EC_AC_BALANCED, 79, {126, 50, 30, 30, 0}},
+	{140, EC_AC_BEST_EFFICIENCY, 80, {126, 30, 30, 30, 0}},
+	{100, EC_AC_BEST_PERFORMANCE, 81, {90, 50, 30, 30, 0}},
+	{100, EC_AC_BALANCED, 81, {90, 50, 30, 30, 0}},
+	{100, EC_AC_BEST_EFFICIENCY, 82, {90, 30, 30, 30, 0}},
+	{80, EC_AC_BEST_PERFORMANCE, 83, {72, 30, 30, 30, 0}},
+	{80, EC_AC_BALANCED, 83, {72, 30, 30, 30, 0}},
+	{80, EC_AC_BEST_EFFICIENCY, 83, {72, 30, 30, 30, 0}},
+	{1, EC_AC_BEST_PERFORMANCE, 84, {54, 30, 30, 30, 0}},
+	{1, EC_AC_BALANCED, 84, {54, 30, 30, 30, 0}},
+	{1, EC_AC_BEST_EFFICIENCY, 84, {54, 30, 30, 30, 0}},
 };
 
-struct pmf_info NV_GPU_DC_ONLY_PMF[] ={
-	{0, EC_DC_BEST_PERFORMANCE, 72, {58, 30, 30, 0}},
-	{0, EC_DC_BALANCED, 73, {44, 20, 20, 0}},
-	{0, EC_DC_BEST_EFFICIENCY, 73, {44, 20, 20, 0}},
-	{0, EC_DC_BATTERY_SAVER, 74, {20, 20, 20, 0}},
+struct pmf_info NV_GPU_DC_ONLY_PMF[] = {
+	{0, EC_DC_BEST_PERFORMANCE, 85, {76, 58, 30, 30, 0}},
+	{0, EC_DC_BALANCED, 86, {76, 44, 20, 20, 0}},
+	{0, EC_DC_BEST_EFFICIENCY, 86, {76, 44, 20, 20, 0}},
+	{0, EC_DC_BATTERY_SAVER, 87, {76, 20, 20, 20, 0}},
 };
 
 struct pmf_table NV_GPU_PMF_TABLE[] = {
@@ -188,53 +189,53 @@ struct pmf_table NV_GPU_PMF_TABLE[] = {
 /**********************************************************
  * UMA PMF table
  **********************************************************/
-struct pmf_info UMA_GPU_AC_DC_PMF[] ={
-	{220, EC_AC_BEST_PERFORMANCE, 30, {65, 54, 45, 0}},
-	{220, EC_AC_BALANCED, 31, {58, 48, 40, 0}},
-	{220, EC_AC_BEST_EFFICIENCY, 32, {44, 36, 30, 0}},
-	{180, EC_AC_BEST_PERFORMANCE, 33, {65, 54, 45, 0}},
-	{180, EC_AC_BALANCED, 34, {58, 48, 40, 0}},
-	{180, EC_AC_BEST_EFFICIENCY, 35, {44, 36, 30, 0}},
-	{140, EC_AC_BEST_PERFORMANCE, 36, {65, 50, 45, 0}},
-	{140, EC_AC_BALANCED, 37, {58, 40, 40, 0}},
-	{140, EC_AC_BEST_EFFICIENCY, 38, {44, 30, 30, 0}},
-	{100, EC_AC_BEST_PERFORMANCE, 39, {65, 40, 40, 0}},
-	{100, EC_AC_BALANCED, 40, {44, 30, 30, 0}},
-	{100, EC_AC_BEST_EFFICIENCY, 40, {44, 30, 30, 0}},
-	{80, EC_AC_BEST_PERFORMANCE, 41, {44, 30, 30, 0}},
-	{80, EC_AC_BALANCED, 41, {44, 30, 30, 0}},
-	{80, EC_AC_BEST_EFFICIENCY, 41, {44, 30, 30, 0}},
-	{1, EC_AC_BEST_PERFORMANCE, 42, {30, 30, 30, 0}},
-	{1, EC_AC_BALANCED, 42, {30, 30, 30, 0}},
-	{1, EC_AC_BEST_EFFICIENCY, 42, {30, 30, 30, 0}},
+struct pmf_info UMA_GPU_AC_DC_PMF[] = {
+	{240, EC_AC_BEST_PERFORMANCE, 30, {216, 65, 54, 45, 0}},
+	{240, EC_AC_BALANCED, 31, {216, 58, 48, 40, 0}},
+	{240, EC_AC_BEST_EFFICIENCY, 32, {216, 44, 36, 30, 0}},
+	{180, EC_AC_BEST_PERFORMANCE, 33, {216, 65, 54, 45, 0}},
+	{180, EC_AC_BALANCED, 34, {216, 58, 48, 40, 0}},
+	{180, EC_AC_BEST_EFFICIENCY, 35, {216, 44, 36, 30, 0}},
+	{140, EC_AC_BEST_PERFORMANCE, 36, {202, 65, 50, 45, 0}},
+	{140, EC_AC_BALANCED, 37, {202, 58, 40, 40, 0}},
+	{140, EC_AC_BEST_EFFICIENCY, 38, {202, 44, 30, 30, 0}},
+	{100, EC_AC_BEST_PERFORMANCE, 39, {167, 65, 40, 40, 0}},
+	{100, EC_AC_BALANCED, 40, {167, 44, 30, 30, 0}},
+	{100, EC_AC_BEST_EFFICIENCY, 40, {167, 44, 30, 30, 0}},
+	{80, EC_AC_BEST_PERFORMANCE, 41, {148, 44, 30, 30, 0}},
+	{80, EC_AC_BALANCED, 41, {148, 44, 30, 30, 0}},
+	{80, EC_AC_BEST_EFFICIENCY, 41, {148, 44, 30, 30, 0}},
+	{1, EC_AC_BEST_PERFORMANCE, 42, {131, 44, 30, 30, 0}},
+	{1, EC_AC_BALANCED, 42, {131, 44, 30, 30, 0}},
+	{1, EC_AC_BEST_EFFICIENCY, 42, {131, 44, 30, 30, 0}},
 };
 
-struct pmf_info UMA_AC_ONLY_PMF[] ={
-	{220, EC_AC_BEST_PERFORMANCE, 46, {60, 30, 30, 0}},
-	{220, EC_AC_BALANCED, 47, {58, 30, 30, 0}},
-	{220, EC_AC_BEST_EFFICIENCY, 48, {30, 30, 30, 0}},
-	{180, EC_AC_BEST_PERFORMANCE, 49, {60, 30, 30, 0}},
-	{180, EC_AC_BALANCED, 50, {58, 30, 30, 0}},
-	{180, EC_AC_BEST_EFFICIENCY, 51, {30, 30, 30, 0}},
-	{140, EC_AC_BEST_PERFORMANCE, 52, {60, 30, 30, 0}},
-	{140, EC_AC_BALANCED, 53, {50, 30, 30, 0}},
-	{140, EC_AC_BEST_EFFICIENCY, 54, {30, 30, 30, 0}},
-	{100, EC_AC_BEST_PERFORMANCE, 55, {50, 30, 30, 0}},
-	{100, EC_AC_BALANCED, 55, {50, 30, 30, 0}},
-	{100, EC_AC_BEST_EFFICIENCY, 56, {30, 30, 30, 0}},
-	{80, EC_AC_BEST_PERFORMANCE, 57, {30, 30, 30, 0}},
-	{80, EC_AC_BALANCED, 57, {30, 30, 30, 0}},
-	{80, EC_AC_BEST_EFFICIENCY, 57, {30, 30, 30, 0}},
-	{1, EC_AC_BEST_PERFORMANCE, 58, {30, 30, 30, 0}},
-	{1, EC_AC_BALANCED, 58, {30, 30, 30, 0}},
-	{1, EC_AC_BEST_EFFICIENCY, 58, {30, 30, 30, 0}},
+struct pmf_info UMA_AC_ONLY_PMF[] = {
+	{240, EC_AC_BEST_PERFORMANCE, 43, {216, 60, 30, 30, 0}},
+	{240, EC_AC_BALANCED, 44, {216, 58, 30, 30, 0}},
+	{240, EC_AC_BEST_EFFICIENCY, 45, {216, 30, 30, 30, 0}},
+	{180, EC_AC_BEST_PERFORMANCE, 46, {162, 60, 30, 30, 0}},
+	{180, EC_AC_BALANCED, 47, {162, 58, 30, 30, 0}},
+	{180, EC_AC_BEST_EFFICIENCY, 48, {162, 30, 30, 30, 0}},
+	{140, EC_AC_BEST_PERFORMANCE, 49, {126, 60, 30, 30, 0}},
+	{140, EC_AC_BALANCED, 50, {126, 50, 30, 30, 0}},
+	{140, EC_AC_BEST_EFFICIENCY, 51, {126, 30, 30, 30, 0}},
+	{100, EC_AC_BEST_PERFORMANCE, 52, {90, 50, 30, 30, 0}},
+	{100, EC_AC_BALANCED, 52, {90, 50, 30, 30, 0}},
+	{100, EC_AC_BEST_EFFICIENCY, 53, {90, 30, 30, 30, 0}},
+	{80, EC_AC_BEST_PERFORMANCE, 54, {72, 30, 30, 30, 0}},
+	{80, EC_AC_BALANCED, 54, {72, 30, 30, 30, 0}},
+	{80, EC_AC_BEST_EFFICIENCY, 54, {72, 30, 30, 30, 0}},
+	{1, EC_AC_BEST_PERFORMANCE, 55, {54, 30, 30, 30, 0}},
+	{1, EC_AC_BALANCED, 55, {54, 30, 30, 30, 0}},
+	{1, EC_AC_BEST_EFFICIENCY, 55, {54, 30, 30, 30, 0}},
 };
 
-struct pmf_info UMA_DC_ONLY_PMF[] ={
-	{0, EC_DC_BEST_PERFORMANCE, 43, {58, 30, 30, 0}},
-	{0, EC_DC_BALANCED, 44, {44, 20, 20, 0}},
-	{0, EC_DC_BEST_EFFICIENCY, 44, {44, 20, 20, 0}},
-	{0, EC_DC_BATTERY_SAVER, 45, {20, 20, 20, 0}},
+struct pmf_info UMA_DC_ONLY_PMF[] = {
+	{0, EC_DC_BEST_PERFORMANCE, 56, {76, 58, 30, 30, 0}},
+	{0, EC_DC_BALANCED, 57, {76, 44, 20, 20, 0}},
+	{0, EC_DC_BEST_EFFICIENCY, 57, {76, 44, 20, 20, 0}},
+	{0, EC_DC_BATTERY_SAVER, 58, {76, 20, 20, 20, 0}},
 };
 
 struct pmf_table UMA_PMF_TABLE[] = {
@@ -243,7 +244,9 @@ struct pmf_table UMA_PMF_TABLE[] = {
 	[DC_ONLY_MODE] = {.info = UMA_DC_ONLY_PMF, .arr_size = sizeof(UMA_DC_ONLY_PMF)},
 };
 
-void update_power_limit_thermal_value(struct pmf_data *pmf) {
+void update_power_limit_thermal_value(struct pmf_data *pmf)
+{
+	power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_P3T] = pmf->P3T * 1000;
 	power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = pmf->fPPT * 1000;
 	power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = pmf->sPPT * 1000;
 	power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = pmf->SPL * 1000;
@@ -251,22 +254,23 @@ void update_power_limit_thermal_value(struct pmf_data *pmf) {
 		pmf->APU_only_sPPT * 1000;
 }
 
-void update_thermal_value(struct pmf_table *table, int active_mpower, bool with_dc, int mode) {
+void update_thermal_value(struct pmf_table *table, int active_mpower, bool with_dc, int mode)
+{
 	enum power_supply_type power_mode;
 	int active_power = active_mpower/1000;
 	int arr_size = 0;
 
-	if(with_dc && active_mpower == 0) {
+	if (with_dc && active_mpower == 0) {
 		power_mode = DC_ONLY_MODE;
-	} else if(with_dc && active_mpower > 0) {
+	} else if (with_dc && active_mpower > 0) {
 		power_mode = AC_DC_MODE;
 	} else {
 		power_mode = AC_ONLY_MODE;
 	}
 
 	arr_size = table[power_mode].arr_size / sizeof(table[power_mode].info[0]);
-	for(int i = 0; i<arr_size; i++) {
-		if(active_power >= table[power_mode].info[i].active_power && mode ==
+	for (int i = 0; i < arr_size; i++) {
+		if (active_power >= table[power_mode].info[i].active_power && mode ==
 			table[power_mode].info[i].slide) {
 			update_power_limit_thermal_value(&table[power_mode].info[i].pmf);
 			thermal_stt_table = table[power_mode].info[i].table_num;
@@ -280,7 +284,8 @@ static void update_thermal_power_limit(int battery_percent, int active_mpower,
 				       bool with_dc, int mode)
 {
 	uint8_t gpu_vendor;
-    gpu_vendor = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE);
+
+	gpu_vendor = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE);
 
 	if (!gpu_is_working()) {
 		update_thermal_value(UMA_PMF_TABLE, active_mpower, with_dc, mode);
@@ -294,425 +299,6 @@ static void update_thermal_power_limit(int battery_percent, int active_mpower,
 			break;
 		default:
 			break;
-		}
-	}
-}
-
-static int get_adapter_power_limit_index(int old_index, int battery_percent, int mode)
-{
-	/* at ERS only performance mode need to adjust limit */
-	if (mode == EC_AC_BEST_PERFORMANCE) {
-		if (battery_percent > 60)
-			old_index = 0;
-		else if (battery_percent < 30)
-			old_index = 1;
-	} else
-		old_index = 1;
-
-	return old_index;
-}
-
-static void update_adapter_power_limit(int battery_percent, int active_mpower,
-				       bool with_dc, int mode)
-{
-	static int new_index;
-
-	if (gpu_is_working()) {
-		if (with_dc) {
-			if (active_mpower >= 240000) {
-				new_index =
-					get_adapter_power_limit_index(new_index,
-						battery_percent, mode);
-				switch (new_index) {
-				case 0:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 145000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 145000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 145000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						54000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-						MIN(227000, (active_mpower * 918 / 1000) +
-						133740 - 30000 - 125000);
-					break;
-				case 1:
-				default:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 105000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 105000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 105000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						50000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-						MIN(150000, (active_mpower * 918 / 1000) +
-						55000 - 30000 - 95000);
-					break;
-				}
-			} else if (active_mpower >= 180000) {
-				new_index =
-					get_adapter_power_limit_index(new_index,
-						battery_percent, mode);
-				switch (new_index) {
-				case 0:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 120000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 120000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 120000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						54000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-						MIN(145000, (active_mpower * 918 / 1000) +
-						133740 - 30000 - 125000);
-					break;
-				case 1:
-				default:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 95000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 95000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 95000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						50000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-						MIN(95000, (active_mpower * 918 / 1000) +
-						55000 - 30000 - 95000);
-					break;
-				}
-			} else if (active_mpower >= 140000) {
-				new_index =
-					get_adapter_power_limit_index(new_index,
-						battery_percent, mode);
-				switch (new_index) {
-				case 0:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 95000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 95000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 95000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						50000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-						MIN(138000, (active_mpower * 918 / 1000) +
-						123000 - 30000 - 120000);
-					break;
-				case 1:
-				default:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 85000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 85000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 85000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						40000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-						MIN(120000, (active_mpower * 918 / 1000) +
-						75000 - 30000 - 85000);
-					break;
-				}
-			} else if (active_mpower >= 100000) {
-				new_index =
-					get_adapter_power_limit_index(new_index,
-						battery_percent, mode);
-				switch (new_index) {
-				case 0:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						30000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-						MIN(120000, (active_mpower * 918 / 1000) +
-						123000 - 30000 - 100000);
-					break;
-				case 1:
-				default:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 40000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 40000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 40000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						30000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-						MIN(100000, (active_mpower * 918 / 1000) +
-						75000 - 30000 - 75000);
-					break;
-				}
-			} else if (active_mpower >= 5000) {
-				/* DC + AC under 100W */
-				new_index =
-					get_adapter_power_limit_index(new_index,
-						battery_percent, mode);
-				switch (new_index) {
-				case 0:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						30000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 118000;
-					break;
-				case 1:
-				default:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 40000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 40000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 40000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						20000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 100000;
-					break;
-				}
-			} else {
-				/* DC only */
-				if (battery_percent > 30) {
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						30000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 118000;
-					new_index = 0;
-				} else if (battery_percent > 25) {
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 50000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 50000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 50000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						20000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 100000;
-					new_index = 1;
-				} else if (battery_percent > 20) {
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 40000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 40000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 40000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						20000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 100000;
-					new_index = 1;
-				} else {
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 20000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 20000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 20000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						20000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 65000;
-					new_index = 1;
-				}
-			}
-		} else {
-		/* AC only */
-			if (active_mpower >= 240000) {
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 120000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 120000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 120000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 54000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-					MIN(145000, (active_mpower * 918 / 1000) - 30000 - 60000);
-			} else if (active_mpower >= 180000) {
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 60000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 60000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 60000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 30000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-					MIN(75000, (active_mpower * 918 / 1000) - 30000);
-			} else if (active_mpower >= 140000) {
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 50000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 50000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 50000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 20000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-					75000;
-			} else if (active_mpower >= 100000) {
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 30000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 30000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-					75000;
-			} else {
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 0;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 0;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 0;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 65000;
-			}
-		}
-	} else {
-		/* UMA */
-		if (with_dc) {
-			if (active_mpower >= 240000) {
-				new_index =
-					get_adapter_power_limit_index(new_index,
-						battery_percent, mode);
-				switch (new_index) {
-				case 0:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-						MIN(227000, (active_mpower * 918 / 1000)
-							+ 133740 - 30000);
-					break;
-				case 1:
-				default:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-						MIN(227000, (active_mpower * 918 / 1000)
-							+ 40000 - 30000);
-					break;
-				}
-			} else if (active_mpower >= 180000) {
-				new_index =
-					get_adapter_power_limit_index(new_index,
-						battery_percent, mode);
-				switch (new_index) {
-				case 0:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-						MIN(227000, (active_mpower * 918 / 1000) + 133740 - 30000);
-					break;
-				case 1:
-				default:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-						MIN(170000, (active_mpower * 918 / 1000) + 40000 - 30000);
-					break;
-				}
-			} else if (active_mpower >= 140000) {
-				new_index =
-					get_adapter_power_limit_index(new_index,
-						battery_percent, mode);
-				switch (new_index) {
-				case 0:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-						MIN(227000, (active_mpower * 918 / 1000) + 133740 - 30000);
-					break;
-				case 1:
-				default:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 40000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 48000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 58000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-						MIN(175000, (active_mpower * 918 / 1000) + 40000 - 30000);
-					break;
-				}
-			} else if (active_mpower >= 65000) {
-				new_index =
-					get_adapter_power_limit_index(new_index,
-						battery_percent, mode);
-				switch (new_index) {
-				case 0:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-						MIN(187000, (active_mpower * 6885 / 10000) + 148600 - 30000);
-					break;
-				case 1:
-				default:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 36000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 44000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-						MIN(175000, (active_mpower * 6885 / 10000) + 45000 - 30000);
-					break;
-				}
-			} else if (active_mpower >= 5000) {
-				/* DC + AC under 65W */
-				new_index =
-					get_adapter_power_limit_index(new_index,
-						battery_percent, mode);
-				switch (new_index) {
-				case 0:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 118000;
-					break;
-				case 1:
-				default:
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 36000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 44000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 65000;
-					break;
-				}
-			} else {
-				/*  DC only */
-				if (battery_percent > 30) {
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 118000;
-					new_index = 0;
-				} else if (battery_percent > 25) {
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 36000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 44000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 100000;
-					new_index = 1;
-				} else if (battery_percent > 20) {
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 20000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 24000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 29000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 100000;
-					new_index = 1;
-				} else {
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 20000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 20000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 20000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 65000;
-					new_index = 1;
-				}
-			}
-		} else {
-		/* AC only */
-			if (active_mpower >= 240000) {
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-					MIN(227000, (active_mpower * 918 / 1000) - 30000);
-			} else if (active_mpower >= 180000) {
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-					MIN(135000, (active_mpower * 918 / 1000) - 30000);
-			} else if (active_mpower >= 140000) {
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-					MIN(100000, (active_mpower * 918 / 1000) - 30000);
-			} else if (active_mpower >= 65000) {
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 36000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 44000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-					MIN(70000, (active_mpower - 30000));
-			} else {
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 0;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 0;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 0;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 65000;
-			}
 		}
 	}
 }
@@ -994,18 +580,19 @@ void clear_prochot(enum clear_reasons reason)
 
 void update_d_notify(int active_mpower, bool with_dc)
 {
-	uint8_t gpu_vendor,d_notify;
+	uint8_t gpu_vendor, d_notify;
 	int active_power = active_mpower/1000;
-    gpu_vendor = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE);
+
+	gpu_vendor = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE);
 
 	if (gpu_is_working() && gpu_vendor == GPU_NV_GN22) {
-		if(active_power >= 180)
+		if (active_power >= 180)
 			d_notify = 1;
-		else if(active_power < 180 && active_power>= 140)
+		else if (active_power < 180 && active_power >= 140)
 			d_notify = 2;
-		else if(active_power < 140 && active_power>= 100 && with_dc)
+		else if (active_power < 140 && active_power >= 100 && with_dc)
 			d_notify = 3;
-		else if(active_power < 100 && active_power>= 1 && with_dc)
+		else if (active_power < 100 && active_power >= 1 && with_dc)
 			d_notify = 4;
 		else
 			d_notify = 5;
@@ -1055,9 +642,6 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 
 	if (func_ctl & 0x1)
 		update_thermal_power_limit(battery_percent, active_mpower, with_dc, mode);
-
-	if (func_ctl & 0x2)
-		update_adapter_power_limit(battery_percent, active_mpower, with_dc, mode);
 
 	if (func_ctl & 0x4) {
 		update_safety_power_limit(active_mpower);
@@ -1132,6 +716,7 @@ static void initial_soc_power_limit(void)
 
 	/* initial thermal table to battery balance as default */
 	uint8_t DC_BALANCED_INDEX = 1;
+
 	update_power_limit_thermal_value(&UMA_DC_ONLY_PMF[DC_BALANCED_INDEX].pmf);
 }
 DECLARE_HOOK(HOOK_INIT, initial_soc_power_limit, HOOK_PRIO_INIT_I2C);
