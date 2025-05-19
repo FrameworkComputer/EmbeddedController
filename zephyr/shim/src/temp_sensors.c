@@ -167,8 +167,11 @@ __maybe_unused static int sb_tsi_get_temp(const struct temp_sensor_t *sensor,
 	return sb_tsi_get_val(sensor->idx, temp_ptr);
 }
 
-/* There can be only one SB TSI sensor with current driver */
-#if DT_NUM_INST_STATUS_OKAY(SB_TSI_COMPAT) > 1
+/**
+ * There can be only two SB TSI sensor with current driver
+ * (one for virtual temperature sensor).
+ */
+#if DT_NUM_INST_STATUS_OKAY(SB_TSI_COMPAT) > 2
 #error "Unsupported number of SB TSI sensors"
 #endif
 
