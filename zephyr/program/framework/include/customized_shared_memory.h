@@ -114,4 +114,6 @@ enum power_slide_mode {
 
 #define EC_CUSTOMIZED_MEMMAP_DTT_TEMP	0x160
 
+#define EC_MEMMAP_DGPU_DX_STATUS 0x197
+
 #endif /* __BOARD_CUSTOMIZED_SHARED_MEMORY_H */

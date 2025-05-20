@@ -992,6 +992,29 @@ void clear_prochot(enum clear_reasons reason)
 	}
 }
 
+void update_d_notify(int active_mpower, bool with_dc)
+{
+	uint8_t gpu_vendor,d_notify;
+	int active_power = active_mpower/1000;
+    gpu_vendor = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE);
+
+	if (gpu_is_working() && gpu_vendor == GPU_NV_GN22) {
+		if(active_power >= 180)
+			d_notify = 1;
+		else if(active_power < 180 && active_power>= 140)
+			d_notify = 2;
+		else if(active_power < 140 && active_power>= 100 && with_dc)
+			d_notify = 3;
+		else if(active_power < 100 && active_power>= 1 && with_dc)
+			d_notify = 4;
+		else
+			d_notify = 5;
+
+		*host_get_memmap(EC_MEMMAP_DGPU_DX_STATUS) = d_notify;
+	} else
+		*host_get_memmap(EC_MEMMAP_DGPU_DX_STATUS) = 0;
+}
+
 void update_soc_power_limit(bool force_update, bool force_no_adapter)
 {
 	static uint32_t old_sustain_power_limit;
@@ -1043,6 +1066,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	if ((mode != 0) && (old_stt_table != thermal_stt_table) && (thermal_stt_table != 0)) {
 		*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER) = thermal_stt_table;
 		old_stt_table = thermal_stt_table;
+		update_d_notify(active_mpower, with_dc);
 		host_set_single_event(EC_HOST_EVENT_STT_UPDATE);
 	}
 
