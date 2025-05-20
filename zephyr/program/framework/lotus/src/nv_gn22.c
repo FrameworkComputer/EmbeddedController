@@ -66,6 +66,28 @@ void nv_gn22_set_dds_pin_mode(enum dds_pin_mode mode)
 	current_dds_pin_mode = mode;
 }
 
+void nv_gn22_configure_gpio(void)
+{
+	static uint8_t last_dds_pwm_switch = 0xFF;
+	uint8_t gpu_vendor = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE);
+	uint8_t dds_pwm_switch = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_DDS_PWM_SOURCING);
+
+	if (gpu_vendor != GPU_NV_GN22) {
+		return;
+	}
+
+	if (dds_pwm_switch == last_dds_pwm_switch)
+		return;
+
+	if ((dds_pwm_switch & 0x01) == DDS_PWM_EC_CONTROL) {
+		nv_gn22_set_dds_pin_mode(PIN_PWM);
+	} else {
+		nv_gn22_set_dds_pin_mode(PIN_INPUT);
+	}
+
+	last_dds_pwm_switch = dds_pwm_switch;
+}
+
 int get_nv_gpu_temp(int idx, int *temp)
 {
 	int reg;

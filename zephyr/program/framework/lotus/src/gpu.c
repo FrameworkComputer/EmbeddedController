@@ -21,10 +21,12 @@
 #include "board_host_command.h"
 #include "console.h"
 #include "driver/temp_sensor/f75303.h"
+#include "drivers/cros_displight.h"
 #include "extpower.h"
 #include "flash_storage.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "lotus/nv_gn22.h"
 #include "system.h"
 #include "task.h"
 #include "thermal.h"
@@ -257,6 +259,8 @@ DECLARE_DEFERRED(gpu_smart_access_graphic);
 void gpu_smart_access_graphic(void)
 {
 	uint8_t gpu_status = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL);
+	uint8_t dds_pwm_sourcing = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_DDS_PWM_SOURCING);
+	int dds_pwm_duty = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_DDS_PWM_DUTY);
 
 	/**
 	 * Host updated the shared memory to control the mux,
@@ -286,6 +290,21 @@ void gpu_smart_access_graphic(void)
 	if ((gpu_status & GPU_EDP_MASK) == DEASSERTED_EDP_RESET) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_edp_reset), 1);
 		gpu_status &= ~GPU_EDP_MASK;
+	}
+
+	nv_gn22_configure_gpio();
+
+	if ((dds_pwm_sourcing & 0x01) == DDS_PWM_EC_CONTROL) {
+		/**
+		 * Panel pwm is controlled by EC
+		 */
+		if (dds_pwm_duty > 100)
+			dds_pwm_duty = 100;
+
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pwm_en_l), 1);
+		displight_set(dds_pwm_duty);
+	} else {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pwm_en_l), 0);
 	}
 
 	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL) = gpu_status;
