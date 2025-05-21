@@ -46,14 +46,8 @@ bool gpu_power_enable(void)
 	/* dgpu pwr enable pin will be high at s5 state*/
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		return 0;
-	else {
-		uint8_t gpu_type = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE);
-
-		if (gpu_type == GPU_NV_GN22)
-			return true;
-
+	else
 		return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_dgpu_pwr_en));
-	}
 }
 
 bool gpu_is_working(void)
