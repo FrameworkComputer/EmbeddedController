@@ -2025,7 +2025,13 @@ void pd_request_power_swap(int port)
 
 void pd_set_new_power_request(int port)
 {
-	/* We probably dont need to do this since we will always request max. */
+	/*
+	 * if the old port have change the request
+	 * need to reopen the vbus port again,
+	 * eg: after PD send again CCG_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE
+	 * will set a new power request, the VBUS port need to open again.
+	 */
+	board_set_active_charge_port(port);
 	return;
 }
 
