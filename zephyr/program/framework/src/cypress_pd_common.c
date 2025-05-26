@@ -37,6 +37,8 @@
 #include "cpu_power.h"
 #endif
 
+#include <zephyr/sys_clock.h>
+
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
@@ -47,6 +49,11 @@ static int prev_charge_port = -1;
 static bool verbose_msg_logging;
 static bool firmware_update;
 static bool alert_press;
+
+/**
+ * Delay 500 ms to start updating the battery information
+ */
+#define READY_BATTERY_UPDATE 500
 
 /*****************************************************************************/
 /* Internal functions */
@@ -70,10 +77,10 @@ bool ccg8s_init(uint8_t address, uint32_t flags)
 	/* only update the POWER_ON pd chip state once the pd chip is not ready */
 	if (address && pd_chip_config[PD_CHIP_GPU].state != CCG_STATE_READY) {
 		cypd_update_chips_state(PD_CHIP_GPU, CCG_STATE_POWER_ON);
-		task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_GPU);
+		task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_GPU | CCG_EVT_BATT_UPDATE);
 	} else if (!address) {
 		cypd_update_chips_state(PD_CHIP_GPU, CCG_STATE_NO_POWER);
-		task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_GPU);
+		task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_GPU | CCG_EVT_BATT_UPDATE);
 	}
 	return true;
 }
@@ -1232,24 +1239,14 @@ __overridable void cypd_customize_app_setup(int controller)
 	 */
 }
 
-#ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
 static void pd_batt_init_deferred(void)
 {
-	cypd_customize_battery_cap();
-	cypd_customize_battery_status();
+	task_set_event(TASK_ID_CYPD, CCG_EVT_BATT_UPDATE);
 }
 DECLARE_DEFERRED(pd_batt_init_deferred);
-#endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
+DECLARE_HOOK(HOOK_AC_CHANGE, pd_batt_init_deferred, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, pd_batt_init_deferred, HOOK_PRIO_DEFAULT);
 
-
-#ifdef CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE
-static void pd_batt_init_deferred(void)
-{
-	cypd_customize_battery_cap();
-	cypd_customize_battery_status();
-}
-DECLARE_DEFERRED(pd_batt_init_deferred);
-#endif /* CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE */
 
 static void cypd_handle_state(int controller)
 {
@@ -1938,6 +1935,7 @@ static int ucsi_tunnel_disabled;
 void cypd_interrupt_handler_task(void *p)
 {
 	int i, j, evt;
+	k_timepoint_t ready_battery_update;
 
 	/* Initialize all charge suppliers to 0 */
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
@@ -1956,6 +1954,7 @@ void cypd_interrupt_handler_task(void *p)
 		task_set_event(TASK_ID_CYPD, CCG_EVT_STATE_CTRL_0<<i);
 	}
 
+	ready_battery_update = sys_timepoint_calc(K_MSEC(READY_BATTERY_UPDATE));
 
 	while (1) {
 		evt = task_wait_event(10*MSEC);
@@ -2021,6 +2020,22 @@ void cypd_interrupt_handler_task(void *p)
 			poweroff_dp_check();
 		}
 
+#if defined(CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE) ||\
+	defined(CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE)
+		if (evt & CCG_EVT_BATT_UPDATE) {
+			bool ready = false;
+
+			if (!sys_timepoint_expired(ready_battery_update))
+				ready = false;
+			else
+				ready = true;
+
+			if (ready) {
+				cypd_customize_battery_cap();
+				cypd_customize_battery_status();
+			}
+		}
+#endif
 		if (evt & CCG_EVT_PDO_C0P0) {
 			cypd_set_typec_profile(0, 0);
 			cypd_update_port_state(0, 0);

@@ -515,10 +515,6 @@ void cypd_customize_battery_cap(void)
 	bool battery_can_discharge = (battery_is_present() == BP_YES) &
 		battery_get_disconnect_state();
 
-	/* only send status when PD ready */
-	if (!are_cypd_chips_ready())
-		return;
-
 	if (!battery_can_discharge) {
 		cypd_batt_update = false;
 		pd_battery_cap.design_cap = 0x0000;
@@ -561,21 +557,36 @@ void cypd_customize_battery_cap(void)
 void cypd_customize_battery_status(void)
 {
 	int i, soc_wh;
+	int force_update = 0;
 	uint8_t	batt_info;
 	uint32_t c, v;
 	struct batt_params batt;
+	static int pre_ac_state;
+	static enum ccg_pd_state pd_pre_state[PD_CHIP_COUNT];
+	int curr_ac_state = extpower_is_present();
+	bool ac_changed = (pre_ac_state != curr_ac_state);
 	bool battery_can_discharge = (battery_is_present() == BP_YES) &
 		battery_get_disconnect_state();
 
 	battery_get_params(&batt);
 
-	/* only send status when PD ready */
-	if (!are_cypd_chips_ready())
+	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		/*
+		 * If any PD chip's state has changed since the last check,
+		 * need to update the battery status to ensure PD receives
+		 * the latest information.
+		 */
+		if (pd_chip_config[i].state != pd_pre_state[i]) {
+			force_update = 1;
+			pd_pre_state[i] = pd_chip_config[i].state;
+		}
+	}
+
+	/* Update data when soc change/ac change/force update */
+	if ((batt.state_of_charge == pd_batt_soc) && !ac_changed && !force_update)
 		return;
 
-	/* only update data when soc change */
-	if (batt.state_of_charge == pd_batt_soc)
-		return;
+	pre_ac_state = curr_ac_state;
 
 	pd_batt_soc = batt.state_of_charge;
 
@@ -629,8 +640,6 @@ void cypd_customize_battery_status(void)
 				&pd_battery_status, sizeof(pd_battery_status));
 
 }
-DECLARE_HOOK(HOOK_AC_CHANGE, cypd_customize_battery_status, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, cypd_customize_battery_status, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
 
 static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)

@@ -266,12 +266,6 @@ void cypd_customize_battery_cap(void)
 	bool battery_can_discharge = (battery_is_present() == BP_YES) &
 		battery_get_disconnect_state();
 
-	/* only send status when PD ready */
-	if (!(pd_chip_config[0].state == CCG_STATE_READY &&
-		pd_chip_config[1].state == CCG_STATE_READY)) {
-		return;
-	}
-
 	/* Type=Battery_Capabilities */
 	pd_battery_cap.type = 0x02;
 	/* B2=1 for all ports B0:1 command = 0 for write */
@@ -334,23 +328,36 @@ void cypd_customize_battery_cap(void)
 void cypd_customize_battery_status(void)
 {
 	int i, soc_wh;
+	int force_update = 0;
 	uint8_t	batt_info;
 	uint32_t c, v;
 	struct batt_params batt;
+	static int pre_ac_state;
+	static enum ccg_pd_state pd_pre_state[PD_CHIP_COUNT];
+	int curr_ac_state = extpower_is_present();
+	bool ac_changed = (pre_ac_state != curr_ac_state);
 	bool battery_can_discharge = (battery_is_present() == BP_YES) &
 		battery_get_disconnect_state();
 
 	battery_get_params(&batt);
 
-	/* only send status when PD ready */
-	if (!(pd_chip_config[0].state == CCG_STATE_READY &&
-		pd_chip_config[1].state == CCG_STATE_READY)) {
-		return;
+	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		/*
+		 * If any PD chip's state has changed since the last check,
+		 * need to update the battery status to ensure PD receives
+		 * the latest information.
+		 */
+		if (pd_chip_config[i].state != pd_pre_state[i]) {
+			force_update = 1;
+			pd_pre_state[i] = pd_chip_config[i].state;
+		}
 	}
 
-	/* only update data when soc change */
-	if (batt.state_of_charge == pd_batt_soc)
+	/* Update data when soc change/ac change/force update */
+	if ((batt.state_of_charge == pd_batt_soc) && !ac_changed && !force_update)
 		return;
+
+	pre_ac_state = curr_ac_state;
 
 	pd_batt_soc = batt.state_of_charge;
 
@@ -421,8 +428,6 @@ void cypd_customize_battery_status(void)
 	}
 
 }
-DECLARE_HOOK(HOOK_AC_CHANGE, cypd_customize_battery_status, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, cypd_customize_battery_status, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE */
 
 #ifdef CONFIG_PD_CCG8_EPR
