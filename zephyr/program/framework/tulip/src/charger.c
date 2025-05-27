@@ -17,6 +17,7 @@
 #include "console.h"
 #include "cypress_pd_common.h"
 #include "driver/charger/bq25710.h"
+#include "driver/charger/bq257x0_regs.h"
 #include "extpower.h"
 #include "gpu.h"
 #include "gpio.h"
@@ -34,6 +35,7 @@
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
 #define VINDPM_TO_REG(mv) (((mv) < 3200) ? 160 : ((mv) / 20))
+#define IDCHG_TH1_CURRENT_TO_REG(CUR) (((CUR) <= 1500) ? 0 : (((CUR) - 1500) / 500))
 
 static int last_extpower_present;
 static int prev_charge_ma;
@@ -59,7 +61,11 @@ int update_charger_in_cutoff_mode(void)
 static void charger_chips_init(void)
 {
 	uint32_t data = 0;
+	uint16_t option0 = BQ25770_CHARGE_OPTION_0_RESET_VALUE;
+	uint16_t option1 = 0x0000;
+	uint16_t option4 = 0x0000;
 	int value;
+	int idchg;
 
 	const struct battery_info *bi = battery_get_info();
 
@@ -104,8 +110,22 @@ static void charger_chips_init(void)
 		goto init_fail;
 
 	/* 0x34 */
+	idchg = IDCHG_TH1_CURRENT_TO_REG(7500);
+	option1 |= (idchg << BQ257X0_PROCHOT_OPTION_1_IDCHG_VTH_SHIFT) |
+				BQ25770_PROCHOT_OPTION_1_IDCHG_DEGLITCH_5S |
+				BQ25770_PROCHOT_OPTION_1_PP_ICRIT |
+				BQ25770_PROCHOT_OPTION_1_PP_INOM |
+				BQ25770_PROCHOT_OPTION_1_PP_IDCHG1;
 	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
-		BQ25710_REG_PROCHOT_OPTION_1, 0x4120))
+		BQ25710_REG_PROCHOT_OPTION_1, option1))
+		goto init_fail;
+
+	/* 0x36 */
+	option4 = BQ25770_CHARGE_OPTION_4_IDCHG_DEG2_5P2MS |
+			  BQ25770_CHARGE_OPTION_4_PP_IDCHG2;
+
+	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+		BQ25720_REG_CHARGE_OPTION_4, option4))
 		goto init_fail;
 
 	/* 0x3D */
@@ -129,6 +149,13 @@ static void charger_chips_init(void)
 	/* 0x62 */
 	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
 		BQ25770_REG_GM_ADJUST_FORCE, 0xCACB))
+		goto init_fail;
+
+	/* 0x12 */
+	option0 &= ~(1 << BQ257X0_CHARGE_OPTION_0_EN_LWPWR_SHIFT);
+
+	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+		BQ25710_REG_CHARGE_OPTION_0, option0))
 		goto init_fail;
 
 	value = battery_is_charge_fet_disabled();
