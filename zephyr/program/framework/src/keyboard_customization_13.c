@@ -139,6 +139,10 @@ uint8_t bl_brightness = KEYBOARD_BL_BRIGHTNESS_OFF;
 static uint8_t caps_led_status;
 bool kb_als_auto_brightness;
 
+#define KB_FN_LOCKED BIT(7)
+/* Mask off the FN Locked bit */
+#define KB_BRIGHTNESS_MASK 0x7F
+
 /*
  * return auto dim keyboard backlight, it decided by
  * key combo(fn+space).
@@ -228,10 +232,10 @@ void fnkey_shutdown(void)
 	if (kbbl_auto_dim_is_enable())
 		current_kb |= KEYBOARD_BL_BRIGHTNESS_AUTO;
 	else
-		current_kb |= kblight_get() & 0x7F;
+		current_kb |= kblight_get() & KB_BRIGHTNESS_MASK;
 
 	if (Fn_key & FN_LOCKED) {
-		current_kb |= 0x80;
+		current_kb |= KB_FN_LOCKED;
 	}
 	system_set_bbram(SYSTEM_BBRAM_IDX_KBSTATE, current_kb);
 
@@ -246,7 +250,7 @@ void fnkey_startup(void)
 	uint8_t current_kb = 0;
 
 	if (system_get_bbram(SYSTEM_BBRAM_IDX_KBSTATE, &current_kb) == EC_SUCCESS) {
-		if (current_kb & 0x80) {
+		if (current_kb & KB_FN_LOCKED) {
 			Fn_key |= FN_LOCKED;
 		}
 	}
