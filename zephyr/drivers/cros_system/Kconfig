@@ -141,4 +141,25 @@ config CROS_SYSTEM_REALTEK_INIT_PRIORITY
 
 endif # CROS_SYSTEM_REALTEK
 
+menuconfig CROS_SYSTEM_ET171
+	bool "Egis ET171 cros system driver"
+	depends on SOC_EGIS_ET171
+	select SYSCON
+	select HWINFO
+	default y
+	help
+	  This option enables the cros system driver for the Egis ET171 SOC.
+	  It uses AOSMU(Always On System Management Unit) custom Egis module.
+
+if CROS_SYSTEM_ET171
+
+config CROS_SYSTEM_ET171_INIT_PRIORITY
+	int "cros_system Egis ET171 SOC initialization priority"
+	default 10
+	help
+	  This sets the Egis ET171 SOC cros_system driver initialization
+	  priority.
+
+endif
+
 endif # PLATFORM_EC
