@@ -153,3 +153,21 @@ config CROS_FLASH_EM32F967
 	  This option enables the flash driver for Elan EM32F967 chip. We can
 	  access the flash by read, write and erase. The flash size of EM32F967
 	  is 640k byte (536k byte for firmware).
+
+config CROS_FLASH_ANDES_XIP
+	bool "Cros-flash driver using Andes flash xip driver"
+	depends on DT_HAS_ANDESTECH_QSPI_NOR_XIP_CROS_FLASH_ENABLED
+	select PLATFORM_EC_FLASH_CROS
+	select PLATFORM_EC_SPI_FLASH_REGS
+	select FLASH_EX_OP_ENABLED
+	default y
+	help
+	  Cros-flash driver using the Andes flash xip driver.
+
+if CROS_FLASH_ANDES_XIP
+
+# Initialize the Andes flash driver before the cros-flash driver
+config FLASH_ANDES_QSPI_INIT_PRIORITY
+	default 50
+
+endif
