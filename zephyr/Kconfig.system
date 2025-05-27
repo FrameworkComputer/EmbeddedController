@@ -110,6 +110,7 @@ config PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY
 config PLATFORM_EC_FW_RESET_VECTOR
 	bool "Firmware Reset Vector chip specific retrieval"
 	default y if SOC_FAMILY_ITE_EC
+	default y if SOC_EGIS_ET171
 	help
 	  This defines if there is a chip specific machanism for
 	  retrieving the firmware reset vector. The function that
