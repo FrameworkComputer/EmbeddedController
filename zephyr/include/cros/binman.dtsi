@@ -9,6 +9,19 @@
 	binman: binman {
 		filename = "ec.bin";
 		pad-byte = <0x1d>;
+
+		/*
+		 * The flash header that is not part of the firmware image
+		 * itself.
+		 *
+		 * Ensure to reference this node explicitly in the DTS files,
+		 * otherwise it will be omitted.
+		 */
+		/omit-if-no-ref/ flash_header: flash-header {
+			type = "null";
+			size = <0x0>;
+		};
+
 		wp-ro {
 			compatible = "cros-ec,flash-layout";
 			type = "section";
