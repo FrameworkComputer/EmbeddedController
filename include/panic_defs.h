@@ -175,6 +175,7 @@ enum panic_arch {
 /* Already reported via host event */
 #define PANIC_DATA_FLAG_OLD_HOSTEVENT BIT(3)
 /* The data was truncated to fit panic info host cmd */
+/* Deprecated with EC_CMD_GET_PANIC_INFO >=v2 */
 #define PANIC_DATA_FLAG_TRUNCATED BIT(4)
 /* Panic occurred in RO image */
 #define PANIC_DATA_FLAG_RO_IMAGE BIT(5)

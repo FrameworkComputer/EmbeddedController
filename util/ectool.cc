@@ -7109,31 +7109,58 @@ usage:
 int cmd_panic_info(int argc, char *argv[])
 {
 	int rv;
-	struct ec_params_get_panic_info_v1 params = {
+	/* ec_params_get_panic_info_v2 is a superset of
+	 * ec_params_get_panic_info_v1 */
+	struct ec_params_get_panic_info_v2 params = {
+		/* By default, reading the panic info will set
+		 * PANIC_DATA_FLAG_OLD_HOSTCMD. Prefer to leave this
+		 * flag untouched when supported.
+		 */
 		.preserve_old_hostcmd_flag = 1,
+		.read_offset = 0,
 	};
+	std::vector<unsigned char> data;
 
-	/* By default, reading the panic info will set
-	 * PANIC_DATA_FLAG_OLD_HOSTCMD. Prefer to leave this
-	 * flag untouched when supported.
-	 */
-	if (ec_cmd_version_supported(EC_CMD_GET_PANIC_INFO, 1))
+	if (ec_cmd_version_supported(EC_CMD_GET_PANIC_INFO, 2)) {
+		const int max_read_count = 100;
+		int read_count = 0;
+		while (true) {
+			if (read_count++ >= max_read_count) {
+				printf("ERROR: timeout reading panic info.\n");
+				return -ETIMEDOUT;
+			}
+			rv = ec_command(EC_CMD_GET_PANIC_INFO, 2, &params,
+					sizeof(params), ec_inbuf,
+					ec_max_insize);
+			/* Read until no more data is returned */
+			if (rv <= 0)
+				break;
+			data.insert(data.end(),
+				    static_cast<unsigned char *>(ec_inbuf),
+				    static_cast<unsigned char *>(ec_inbuf) +
+					    rv);
+			params.read_offset += rv;
+		};
+	} else if (ec_cmd_version_supported(EC_CMD_GET_PANIC_INFO, 1)) {
 		rv = ec_command(EC_CMD_GET_PANIC_INFO, 1, &params,
 				sizeof(params), ec_inbuf, ec_max_insize);
-	else
+		data.assign(static_cast<unsigned char *>(ec_inbuf),
+			    static_cast<unsigned char *>(ec_inbuf) + rv);
+	} else {
 		rv = ec_command(EC_CMD_GET_PANIC_INFO, 0, NULL, 0, ec_inbuf,
 				ec_max_insize);
+		data.assign(static_cast<unsigned char *>(ec_inbuf),
+			    static_cast<unsigned char *>(ec_inbuf) + rv);
+	}
 
 	if (rv < 0)
 		return rv;
 
-	if (rv == 0) {
+	if (data.empty()) {
 		printf("No panic data.\n");
 		return 0;
 	}
 
-	std::vector<uint8_t> data(static_cast<uint8_t *>(ec_inbuf),
-				  static_cast<uint8_t *>(ec_inbuf) + rv);
 	auto result = ec::ParsePanicInfo(data);
 
 	if (!result.has_value()) {
