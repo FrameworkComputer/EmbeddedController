@@ -20,6 +20,12 @@
 #include "temp_sensor/temp_sensor.h"
 #include "util.h"
 
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/pinctrl.h>
+#include <zephyr/drivers/watchdog.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/util.h>
+#include <zephyr/toolchain.h>
 
 #define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_THERMAL, format, ##args)
@@ -28,6 +34,37 @@
 #define GPU_ADDR_FLAGS 0x004F
 
 #define NV_GPU_TEMPERATURE_OFFSET 0x00
+
+#define DISPLAY_NODE DT_NODELABEL(pwm6)
+PINCTRL_DT_DEFINE(DISPLAY_NODE);
+
+static enum dds_pin_mode current_dds_pin_mode = PIN_PWM;
+
+void nv_gn22_set_dds_pin_mode(enum dds_pin_mode mode)
+{
+	const struct pinctrl_dev_config *pcfg = PINCTRL_DT_DEV_CONFIG_GET(DISPLAY_NODE);
+
+	if (current_dds_pin_mode == mode)
+		return;
+
+	switch (mode) {
+	case PIN_PWM:
+		CPRINTS("DDS gpio set pwm");
+		pinctrl_apply_state(pcfg, PINCTRL_STATE_DEFAULT);
+		break;
+	case PIN_INPUT:
+		CPRINTS("DDS gpio set input");
+		pinctrl_apply_state(pcfg, PINCTRL_STATE_SLEEP);
+		break;
+	default:
+		CPRINTS("Invalid DDS pin mode: defaulting to input");
+		pinctrl_apply_state(pcfg, PINCTRL_STATE_SLEEP);
+		mode = PIN_INPUT;
+		break;
+	}
+
+	current_dds_pin_mode = mode;
+}
 
 int get_nv_gpu_temp(int idx, int *temp)
 {
@@ -55,3 +92,25 @@ int get_nv_gpu_temp(int idx, int *temp)
 
 	return EC_SUCCESS;
 }
+
+static int nv_gn22_dds_mode_cmd(int argc, const char **argv)
+{
+	if (argc == 2 && !strncmp(argv[1], "get", 3)) {
+		ccprintf("Current DDS pin mode: %s\n",
+			current_dds_pin_mode == PIN_PWM ? "(PWM)" : "(INPUT)");
+		return EC_SUCCESS;
+	}
+
+	if (argc == 3 && !strncmp(argv[1], "set", 3)) {
+		if (!strcasecmp(argv[2], "pwm")) {
+			nv_gn22_set_dds_pin_mode(PIN_PWM);
+		} else if (!strcasecmp(argv[2], "input")) {
+			nv_gn22_set_dds_pin_mode(PIN_INPUT);
+		}
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(dds, nv_gn22_dds_mode_cmd,
+			"get | set pwm|input",
+			"Get or set DDS display pin mode");

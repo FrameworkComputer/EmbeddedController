@@ -13,6 +13,15 @@
  * One second trigger ,Use I2C read GPU temperature.
  */
 
+enum dds_pin_mode {
+	PIN_PWM,
+	PIN_INPUT,
+};
+
 int get_nv_gpu_temp(int idx, int *temp);
+
+void nv_gn22_set_dds_pin_mode(enum dds_pin_mode mode);
+
+void nv_gn22_configure_gpio(void);
 
 #endif /* __CROS_EC_NV_GN22_H */

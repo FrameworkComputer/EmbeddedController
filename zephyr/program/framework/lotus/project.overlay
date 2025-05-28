@@ -6,6 +6,7 @@
 #include "adc.dtsi"
 #include "battery.dtsi"
 #include "fan.dtsi"
+#include "display.dtsi"
 #include "gpio.dtsi"
 #include "i2c.dtsi"
 #include "interrupts.dtsi"

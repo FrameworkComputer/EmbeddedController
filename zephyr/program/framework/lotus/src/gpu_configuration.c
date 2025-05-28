@@ -29,6 +29,7 @@
 #include "board_thermal.h"
 #include "ucsi.h"
 #include "gpu.h"
+#include "lotus/nv_gn22.h"
 
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ##args)
@@ -1075,6 +1076,8 @@ void deinit_gpu_module(void)
 	gpu_module_gpio_safe();
 
 	fan_configure_gpu(NULL);
+
+	nv_gn22_set_dds_pin_mode(PIN_INPUT);
 
 	/* reset to APU only defaults */
 	thermal_params[2].temp_fan_max = C_TO_K(62); /* QTH1 */

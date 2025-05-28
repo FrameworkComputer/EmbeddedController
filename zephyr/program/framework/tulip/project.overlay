@@ -13,6 +13,7 @@
 #include "../lotus/led_policy.dtsi"
 #include "../lotus/overlay.dtsi"
 #include "../lotus/power_signal.dtsi"
+#include "../lotus/display.dtsi"
 
 / {
 	named-gpios {
