@@ -710,6 +710,14 @@ enum power_state power_handle_state(enum power_state state)
 void system_check_ssd_status(void)
 {
 	int ssd_power_states = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT);
+#ifdef CONFIG_BOARD_TULIP
+	int ssd1_power_states = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT2);
+
+	if (ssd1_power_states & JSSD1_POWER_ON) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd1_pwr_en), 1);
+		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT2) &= ~JSSD1_POWER_ON;
+	}
+#endif
 
 	if (ssd_power_states & JSSD2_POWER_ON) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 1);

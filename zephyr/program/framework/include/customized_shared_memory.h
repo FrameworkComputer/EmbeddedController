@@ -24,6 +24,7 @@
 #define EC_PS_ENTER_S0ix		BIT(6)
 #define EC_PS_RESUME_S0ix		BIT(7)
 
+/* See also EC_CUSTOMIZED_MEMMAP_WAKE_EVENT2 */
 #define EC_CUSTOMIZED_MEMMAP_WAKE_EVENT		0x102
 /*
  * define wake source for keep PCH power
@@ -119,5 +120,10 @@ enum power_slide_mode {
 #define NV_DGPU_GC6_EXIT     BIT(4)
 
 #define EC_MEMMAP_DGPU_DX_STATUS 0x197
+
+/* See also EC_CUSTOMIZED_MEMMAP_WAKE_EVENT */
+#define EC_CUSTOMIZED_MEMMAP_WAKE_EVENT2 0x198
+#define JSSD1_POWER_OFF                  BIT(0)
+#define JSSD1_POWER_ON                   BIT(1)
 
 #endif /* __BOARD_CUSTOMIZED_SHARED_MEMORY_H */
