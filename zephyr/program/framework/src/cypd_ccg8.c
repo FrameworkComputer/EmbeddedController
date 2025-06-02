@@ -558,8 +558,8 @@ void enter_epr_mode(void)
 				return;
 			}
 
-			cypd_write_reg8((port_idx & 0x2) >> 1,
-					CCG_PD_CONTROL_REG(port_idx & 0x1),
+			cypd_write_reg8(PORT_TO_CONTROLLER(port_idx),
+					CCG_PD_CONTROL_REG(PORT_TO_CONTROLLER_PORT(port_idx)),
 					CCG_PD_CMD_INITIATE_EPR_ENTRY);
 
 			hook_call_deferred(&epr_flow_pending_deferred_data, 200 * MSEC);
@@ -616,8 +616,8 @@ void exit_epr_mode(void)
 				crec_msleep(200);
 			}
 
-			cypd_write_reg8((port_idx & 0x2) >> 1,
-					CCG_PD_CONTROL_REG(port_idx & 0x1),
+			cypd_write_reg8(PORT_TO_CONTROLLER(port_idx),
+					CCG_PD_CONTROL_REG(PORT_TO_CONTROLLER_PORT(port_idx)),
 					CCG_PD_CMD_INITIATE_EPR_EXIT);
 
 			hook_call_deferred(&epr_flow_pending_deferred_data, 500 * MSEC);
