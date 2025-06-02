@@ -1175,9 +1175,9 @@ static void cypd_update_power_status(int controller)
 		(extpower_is_present() && controller != pd_controller_is_sink &&
 		prev_charge_port >= 0))
 		power_status |= CCG_POWERSTAT_EXT_POWER_PRESENT + CCG_POWERSTAT_EXT_POWER_TYPE;
-#endif
-
+#else
 	power_status = CCG_POWERSTAT_INTERNAL_POWER;
+#endif
 
 	rv = cypd_write_reg8_wait_ack(controller, CCG_POWER_STAT, power_status);
 	if (rv != EC_SUCCESS) {
