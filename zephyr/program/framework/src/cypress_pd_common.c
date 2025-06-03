@@ -2031,7 +2031,8 @@ void pd_set_new_power_request(int port)
 	 * eg: after PD send again CCG_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE
 	 * will set a new power request, the VBUS port need to open again.
 	 */
-	board_set_active_charge_port(port);
+	if (get_active_charge_pd_port() == port && pd_is_connected(port))
+		board_set_active_charge_port(port);
 	return;
 }
 
