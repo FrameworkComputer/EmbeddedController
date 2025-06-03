@@ -351,6 +351,10 @@ DECLARE_DEFERRED(system_hang_detect);
 
 void power_5vsb_enter(void)
 {
+	/* Don't enter 5vsb if the user forces enabling PSU */
+	if (force_enable_psu)
+		return;
+
 	CPRINTS("power 5vsb enter");
 
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix), 1);
@@ -679,10 +683,9 @@ enum power_state power_handle_state(enum power_state state)
 			}
 
 			/**
-			 * Don't convert the 5VALW to 5VSB if the user enables to force
-			 * on PSU in standby mode or the 5V current is over 2.4A.
+			 * Don't convert the 5VALW to 5VSB if the 5V current is over 2.4A.
 			 */
-			if (!force_enable_psu && !power_monitor_get_5vsb_alert()) {
+			if (!power_monitor_get_5vsb_alert()) {
 				k_msleep(10);
 				power_5vsb_enter();
 			}
