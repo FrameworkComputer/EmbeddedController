@@ -208,6 +208,14 @@ config SELECT_3A_TYPEC_OUTPUT_CURRENT
 		Default set all type-c port to output 1.5A current. And select
 		the first PD device to provide 3A current.
 
+config PD_ERROR_RECOVERY
+	bool "enable to send the error recovery command to PD"
+	default y
+	help
+		If the retimer power rail is differernt with PD chip, EC may need
+		to send the error recovery command to PD during powering up the
+		system.
+
 # Driver configuration
 config PLATFORM_EC_WAKE_ON_LAN
 	bool "system can be waked on lan"
