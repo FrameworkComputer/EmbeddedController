@@ -205,7 +205,7 @@ void power_monitor_interrupt_idx_1(enum gpio_signal signal)
 
 	/* EC needs to turn on the psu power as soon as possible. */
 	if (has_alert && !psu_has_enabled)
-		gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ps_on));
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ps_on), 1);
 
 	/**
 	 * If the power monitor asserts the alert pin to notice there is
