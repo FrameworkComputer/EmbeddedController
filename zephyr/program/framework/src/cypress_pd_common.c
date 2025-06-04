@@ -2115,7 +2115,7 @@ void perform_error_recovery(int controller)
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
 
-	if (!cypd_contoller_is_powered(controller))
+	if (!cypd_contoller_is_powered(controller) || !IS_ENABLED(CONFIG_PD_ERROR_RECOVERY))
 		return;
 
 	/**
