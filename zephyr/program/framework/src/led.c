@@ -400,12 +400,14 @@ static int match_node(int node_idx)
 						port, pwr_state);
 					return -1;
 				}
+				/* If charging from left or right, indicate on that side */
+				/* If charging from the back (dGPU), indicate on both sides */
 				gpio_pin_set_dt(
 					GPIO_DT_FROM_NODELABEL(gpio_right_side),
-						(port < 2) ? 1 : 0);
+						(port == 0 || port == 1 || port == 4) ? 1 : 0);
 				gpio_pin_set_dt(
 					GPIO_DT_FROM_NODELABEL(gpio_left_side),
-						(port >= 2) ? 1 : 0);
+						(port == 2 || port == 3 || port == 4) ? 1 : 0);
 			}
 		}
 
