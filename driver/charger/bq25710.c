@@ -819,7 +819,7 @@ static int reg_adc_input_current_to_ma(int reg)
 	/*
 	 * LSB => 50mA.
 	 */
-	return reg * BQ25710_IIN_DPM_CODE0_OFFSET;
+	return reg * BQ257X0_IIN_DPM_CODE0_OFFSET;
 }
 
 static enum ec_error_list bq25710_get_input_current(int chgnum,
