@@ -602,6 +602,46 @@ void update_d_notify(int active_mpower, bool with_dc)
 		*host_get_memmap(EC_MEMMAP_DGPU_DX_STATUS) = 0;
 }
 
+enum power_slide_mode best_performance_power_plan(int battery_percent,
+					int active_mpower, bool with_dc, int mode)
+{
+	/*
+	 * For main board ERS best performance mode power plan define
+	 */
+
+	static bool force_balance;
+
+	if (!with_dc) {
+		force_balance = false;
+		return mode;
+	} else if (!force_balance && battery_percent > 30) {
+		force_balance = false;
+		return mode;
+	} else if (force_balance && battery_percent > 60) {
+		force_balance = false;
+		return mode;
+	} else if (force_balance && active_mpower == 0 && battery_percent >= 30) {
+		/*remove active power*/
+		force_balance = false;
+		return mode;
+	}
+
+	if (mode == EC_AC_BEST_PERFORMANCE || mode == EC_DC_BEST_PERFORMANCE) {
+		if (battery_percent < 30)
+			force_balance = true;
+	} else {
+		force_balance = false;
+	}
+
+	if (force_balance && mode == EC_AC_BEST_PERFORMANCE) {
+		return EC_AC_BALANCED;
+	} else if (force_balance && mode == EC_DC_BEST_PERFORMANCE) {
+		return EC_DC_BALANCED;
+	}
+
+	return mode;
+}
+
 void update_soc_power_limit(bool force_update, bool force_no_adapter)
 {
 	static uint32_t old_sustain_power_limit;
@@ -640,8 +680,10 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		active_mpower = 0;
 	}
 
-	if (func_ctl & 0x1)
+	if (func_ctl & 0x1) {
+		mode = best_performance_power_plan(battery_percent, active_mpower, with_dc, mode);
 		update_thermal_power_limit(battery_percent, active_mpower, with_dc, mode);
+	}
 
 	if (func_ctl & 0x4) {
 		update_safety_power_limit(active_mpower);
