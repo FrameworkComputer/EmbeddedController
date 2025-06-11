@@ -23,9 +23,6 @@
 #define INA236_ADC_RANGE	2500 /* 2500 nV */
 #define INA236_ALERT_LIMIT(x) ((x * INA236_SHUNT_RESISTOR) * 1000 / INA236_ADC_RANGE)
 
-#define INA236_MONITOR_12V_CURRENT 30000 /* 30 A */
-#define INA236_MONITOR_5V_CURRENT  2400  /* 2.4 A */
-
 /**
  * We measured the timing between EC turns on the ps_on and recevies the pok_l signal.
  * The average timing is 400 ~ 420 ms.
@@ -89,7 +86,7 @@ static void power_monitor_update_ina236(int idx)
 	if (idx == INA236_IDX_PSU_12V)
 		current = INA236_MONITOR_12V_CURRENT;
 	else if (idx == INA236_IDX_PSU_5V)
-		current = INA236_MONITOR_5V_CURRENT;
+		current = INA236_MONITOR_5V_UPPER_CURRENT_MA;
 	else {
 		CPRINTS("%s gets invalid index: %d", __func__, idx);
 		return;
@@ -100,15 +97,22 @@ static void power_monitor_update_ina236(int idx)
 	if (rv != EC_SUCCESS)
 		CPRINTS("INA236 index %d write config fail", idx);
 
-	rv = ina2xx_set_alert(idx, INA236_ALERT_LIMIT(current));
-
-	if (rv != EC_SUCCESS)
-		CPRINTS("INA236 index %d write alert fail", idx);
+	power_monitor_set_alert_current(idx, current);
 
 	rv = ina2xx_set_mask(idx, INA2XX_MASK_EN_SOL);
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("INA236 index %d mask fail", idx);
+}
+
+void power_monitor_set_alert_current(int idx, int ma)
+{
+	int rv;
+
+	rv = ina2xx_set_alert(idx, INA236_ALERT_LIMIT(ma));
+
+	if (rv != EC_SUCCESS)
+		CPRINTS("INA236 index %d write alert fail", idx);
 }
 
 void power_monitor_init(void)
@@ -143,6 +147,8 @@ static void power_monitor_resume(void)
 		/* Clear the alert status before disabling the interrupt */
 		power_monitor_set_5vsb_alert(false);
 		power_monitor_disable_interrupt(INA236_IDX_PSU_5V);
+		power_monitor_set_alert_current(INA236_IDX_PSU_5V,
+				INA236_MONITOR_5V_UPPER_CURRENT_MA);
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, power_monitor_resume, HOOK_PRIO_DEFAULT);

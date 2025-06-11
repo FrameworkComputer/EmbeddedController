@@ -44,6 +44,19 @@
  */
 #define TIMEOUT_VS_POWER_TURN_OFF (20 * MSEC)
 
+/*
+ * Time to wait until turning off the power supply in low power
+ * usage (like suspend).
+ *
+ * _MIN start at this timeout,
+ * After every low-power entry we'll *= by _INCREASE_FACTOR.
+ * for a max of _MAX
+ */
+#define TIMEOUT_5VSB_MIN (3 * MINUTE)
+#define TIMEOUT_5VSB_INCREASE_FACTOR 2
+#define TIMEOUT_5VSB_MAX (30 * MINUTE)
+static int timeout_5vsb = TIMEOUT_5VSB_MIN;
+
 static bool power_s5_up;		/* Chipset is sequencing up or down */
 static int force_shutdown_flags;
 static int d3cold_is_entry;	/* check the d3cold status */
@@ -62,6 +75,7 @@ static bool power_enable_psu(bool enable)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ps_on), enable);
 
 	if (enable) {
+		CPRINTS("PS_ON was sent, waiting for POK");
 		/**
 		 * Wait for the PSU power good.
 		 * According to the waveform, EC needs to delay 500ms to
@@ -355,7 +369,8 @@ void power_5vsb_enter(void)
 	if (force_enable_psu)
 		return;
 
-	CPRINTS("power 5vsb enter");
+	CPRINTS("current was low (<%dmA) for a long time, switching to 5vsb",
+			INA236_MONITOR_5V_LOWER_CURRENT_MA);
 
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix), 1);
 
@@ -364,20 +379,39 @@ void power_5vsb_enter(void)
 
 	k_msleep(10);
 	power_enable_psu(0);
+
+	/* Set the upper current limit */
+	power_monitor_set_alert_current(INA236_IDX_PSU_5V,
+			INA236_MONITOR_5V_UPPER_CURRENT_MA);
 }
+
+static void power_5vsb_enter_deferred(void)
+{
+	power_5vsb_enter();
+	timeout_5vsb *= TIMEOUT_5VSB_INCREASE_FACTOR;
+	if (timeout_5vsb > TIMEOUT_5VSB_MAX)
+		timeout_5vsb = TIMEOUT_5VSB_MAX;
+}
+DECLARE_DEFERRED(power_5vsb_enter_deferred);
 
 bool power_5vsb_exit(void)
 {
-	CPRINTS("power 5vsb exit");
+	CPRINTS("5vsb is not enough (>%dmA), turning on PSU",
+			INA236_MONITOR_5V_UPPER_CURRENT_MA);
 
 	if (!power_enable_psu(1))
 		return false;
 
 	k_msleep(10);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 1);
+	CPRINTS("switched to high power rails");
 
 	k_msleep(10);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix), 0);
+
+	/* Set the lower current limit */
+	power_monitor_set_alert_current(INA236_IDX_PSU_5V,
+			INA236_MONITOR_5V_LOWER_CURRENT_MA);
 
 	return true;
 }
@@ -428,7 +462,6 @@ static void diagnostic_power_glitch_detect(void)
 enum power_state power_handle_state(enum power_state state)
 {
 	int s5_exit_tries = 0;	/* For global reset to wait SLP_S5 signal de-asserts */
-
 	if (run_diagnostics == 1)
 		diagnostic_power_glitch_detect();
 
@@ -570,16 +603,22 @@ enum power_state power_handle_state(enum power_state state)
 				!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix));
 			bool has_alert = power_monitor_get_5vsb_alert();
 
-			if (has_alert && !has_exited_5vsb) {
-				if (!power_5vsb_exit()) {
+			if (has_alert) {
+				/* clear the enter 5VSB timer if over upper current */
+				hook_call_deferred(&power_5vsb_enter_deferred_data, -1);
+				if (!has_exited_5vsb && !power_5vsb_exit()) {
 					resume_ms_flag = 0;
 					enter_ms_flag = 0;
 					system_in_s0ix = 0;
 					chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 					return POWER_S3S5;
 				}
-			} else if (!has_alert && has_exited_5vsb)
-				power_5vsb_enter();
+			} else if (!has_alert && has_exited_5vsb) {
+				hook_call_deferred(&power_5vsb_enter_deferred_data, timeout_5vsb);
+				CPRINTS("5V current under %dmA, don't need power supply, but waiting another %d min",
+						INA236_MONITOR_5V_LOWER_CURRENT_MA,
+						timeout_5vsb / MINUTE);
+			}
 		}
 
 		break;
@@ -635,6 +674,8 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S0;
 
 	case POWER_S0:
+		/* Reset the timeout so we're power efficient entering suspend. */
+		timeout_5vsb = TIMEOUT_5VSB_MIN;
 
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 0 ||
 			force_shutdown_flags) {
@@ -702,13 +743,7 @@ enum power_state power_handle_state(enum power_state state)
 				return POWER_S0;
 			}
 
-			/**
-			 * Don't convert the 5VALW to 5VSB if the 5V current is over 2.4A.
-			 */
-			if (!power_monitor_get_5vsb_alert()) {
-				k_msleep(10);
-				power_5vsb_enter();
-			}
+			hook_call_deferred(&power_5vsb_enter_deferred_data, timeout_5vsb);
 		}
 
 		return POWER_S3;
@@ -717,8 +752,12 @@ enum power_state power_handle_state(enum power_state state)
 		/* Enable power for CPU check system */
 		k_msleep(10);
 		if (board_get_version() >= BOARD_VERSION_8) {
+			bool has_exited_5vsb =
+				!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix));
 
-			if (!power_5vsb_exit()) {
+			/* clear the enter 5VSB timer if resume to s0ix */
+			hook_call_deferred(&power_5vsb_enter_deferred_data, -1);
+			if (!has_exited_5vsb && !power_5vsb_exit()) {
 				resume_ms_flag = 0;
 				enter_ms_flag = 0;
 				system_in_s0ix = 0;
@@ -776,7 +815,6 @@ enum power_state power_handle_state(enum power_state state)
 
 		lpc_s0ix_resume_restore_masks();
 		hook_notify(HOOK_CHIPSET_RESUME);
-
 		return POWER_S0;
 
 		break;
