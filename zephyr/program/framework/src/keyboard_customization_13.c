@@ -154,7 +154,7 @@ void board_kblight_init(void)
 
 	if (system_get_bbram(SYSTEM_BBRAM_IDX_KBSTATE, &current_kblight) == EC_SUCCESS) {
 		kblight_set(current_kblight & 0x7F);
-		if (kblight_get() == KEYBOARD_BL_BRIGHTNESS_AUTO)
+		if (current_kblight == KEYBOARD_BL_BRIGHTNESS_AUTO)
 			kb_als_auto_brightness = true;
 	}
 }
