@@ -421,6 +421,8 @@ static void board_power_off_deferred(void)
 	charger_psys_enable(0);
 	charge_gate_onoff(0);
 
+	MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX) |= 0x80;
+
 	/* Disable interrupts */
 	interrupt_disable();
 	for (i = 0; i < MCHP_IRQ_MAX; ++i) {
