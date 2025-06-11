@@ -59,7 +59,8 @@ enum backlight_brightness {
 	KEYBOARD_BL_BRIGHTNESS_MED_LOW = 50,
 	KEYBOARD_BL_BRIGHTNESS_MED = 75,
 	KEYBOARD_BL_BRIGHTNESS_HIGH = 100,
-	KEYBOARD_BL_BRIGHTNESS_AUTO = 99,
+	/* Out of range of valid values. kblight_set will ignore it, but we can detect that auto brightness is enabled */
+	KEYBOARD_BL_BRIGHTNESS_AUTO = 101,
 };
 
 /* EC_LED_COLOR maps to LED_COLOR - 1 */

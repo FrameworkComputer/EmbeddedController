@@ -164,7 +164,7 @@ static int als_lux_get(void)
 		als_init_deadline.val = now.val;
 		if (als_stable) {
 			als_stable = false;
-			real_illuminance = 0;
+			real_illuminance = 10;
 			/* clear als data and set default level for next time bootup */
 			*(uint16_t *)host_get_memmap(EC_MEMMAP_ALS) = 0;
 			system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, FP_LED_HIGH);
@@ -214,7 +214,8 @@ void auto_als_led_brightness(void)
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD
 	int kb_brightness;
 
-	if (kbbl_auto_dim_is_enable()) {
+	if (kbbl_auto_dim_is_enable() &&
+		chipset_in_state(CHIPSET_STATE_ON)) {
 		last_kbbl_led_brightness = kblight_get();
 
 		if (als_lux > 5)
