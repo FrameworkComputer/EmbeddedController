@@ -1555,6 +1555,7 @@ struct framework_dp_ids {
 	{0x32AC, 0x000E}, /* 180w adapter vid and pid */
 	{0x32AC, 0x0023}, /* Chicony 60w adapter vid and pid */
 	{0x32AC, 0x000B}, /* Phihong 60w adapter vid and pid */
+	{0x32AC, 0x0022}, /* Chicony 240w adapter vid and pid */
 };
 struct match_vdm_header {
 	uint8_t idx;
@@ -1597,6 +1598,9 @@ void cypd_handle_vdm(int controller, int port, uint8_t *data, int len)
 	 *
 	 * 60W Power Adapter
 	 * 0x8f5b 00 00 41a800ff ac32c001 00000000 01012300 01008020
+	 *
+	 * 240W Power Adapter
+	 * 0x8f5b 00 00 41a800ff ac32c001 00000000 00002200 00000040
 	 */
 	int i;
 	uint16_t vid, pid;
