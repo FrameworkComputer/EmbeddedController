@@ -216,6 +216,14 @@ void board_kblight_init(void)
 }
 #endif
 
+uint8_t display_toggle_key_hid = 0;
+
+void set_display_toggle_key_hid(uint8_t enable)
+{
+	CPRINTS("set display_toggle_key_hid = %hhd", enable);
+	display_toggle_key_hid = enable;
+}
+
 #ifdef CONFIG_KEYBOARD_CUSTOMIZATION_COMBINATION_KEY
 #define FN_PRESSED BIT(0)
 #define FN_LOCKED BIT(1)
@@ -273,6 +281,8 @@ void fnkey_startup(void) {
 			Fn_key |= FN_LOCKED;
 		}
 	}
+
+	update_hid_key(HID_FN_LOCK_INDICATOR, (Fn_key & FN_LOCKED) != 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, fnkey_startup, HOOK_PRIO_DEFAULT);
 
@@ -329,12 +339,11 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t fn, int8_t pressed)
 		break;
 	case SCANCODE_F9:  /* EXTERNAL_DISPLAY */
 		if (fn_table_media_set(pressed, KB_FN_F9)) {
-			if (pressed) {
-				simulate_keyboard(SCANCODE_LEFT_WIN, 1);
-				simulate_keyboard(SCANCODE_P, 1);
+			if (display_toggle_key_hid) {
+				update_hid_key(HID_KEY_DISPLAY_TOGGLE, pressed);
 			} else {
-				simulate_keyboard(SCANCODE_P, 0);
-				simulate_keyboard(SCANCODE_LEFT_WIN, 0);
+				simulate_keyboard(SCANCODE_LEFT_WIN, pressed);
+				simulate_keyboard(SCANCODE_P, pressed);
 			}
 			return EC_ERROR_UNIMPLEMENTED;
 		}
@@ -415,11 +424,15 @@ int functional_hotkey(uint16_t *key_code, int8_t pressed)
 	switch (prss_key) {
 	case SCANCODE_ESC: /* TODO: FUNCTION_LOCK */
 		if (fn_table_set(pressed, KB_FN_ESC)) {
+			update_hid_key(HID_KEY_FN_LOCK, pressed);
 			if (pressed) {
-				if (Fn_key & FN_LOCKED)
+				if (Fn_key & FN_LOCKED) {
 					Fn_key &= ~FN_LOCKED;
-				else
+					update_hid_key(HID_FN_LOCK_INDICATOR, 0);
+				} else {
 					Fn_key |= FN_LOCKED;
+					update_hid_key(HID_FN_LOCK_INDICATOR, 1);
+				}
 			}
 			return EC_ERROR_UNIMPLEMENTED;
 		}
@@ -488,11 +501,13 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 	if (factory_status())
 		return EC_SUCCESS;
 
-	if (pressed_key == SCANCODE_FN && pressed) {
-		Fn_key |= FN_PRESSED;
-		return EC_ERROR_UNIMPLEMENTED;
-	} else if (pressed_key == SCANCODE_FN && !pressed) {
-		Fn_key &= ~FN_PRESSED;
+	if (pressed_key == SCANCODE_FN) {
+		if (pressed) {
+			Fn_key |= FN_PRESSED;
+		} else {
+			Fn_key &= ~FN_PRESSED;
+		}
+		update_hid_key(HID_KEY_FN, pressed);
 		return EC_ERROR_UNIMPLEMENTED;
 	}
 

@@ -203,4 +203,12 @@ struct ec_params_standalone_mode {
 	uint8_t enable;
 } __ec_align1;
 
+/* If enabled, display key emits HID System Display Toggle Int/Ext Mode;
+   otherwise emits Win+P */
+#define EC_CMD_DISPLAY_TOGGLE_KEY_HID 0x3E16
+
+struct ec_params_display_toggle_key_hid {
+	uint8_t enable;
+} __ec_align1;
+
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */
