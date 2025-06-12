@@ -20,6 +20,7 @@
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "input_module.h"
+#include "lid_switch.h"
 #include "lpc.h"
 #include "power.h"
 #include "power_sequence.h"
@@ -41,16 +42,11 @@ static int d3cold_is_entry;	/* check the d3cold status */
 
 static void inputdeck_resume(void)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 1);
+	/* Initialize sleep_l based on lid state */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), lid_is_open());
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, inputdeck_resume, HOOK_PRIO_DEFAULT);
 
-
-static void inputdeck_suspend(void)
-{
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, inputdeck_suspend, HOOK_PRIO_DEFAULT);
 
 static void peripheral_power_startup(void)
 {

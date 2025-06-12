@@ -158,15 +158,7 @@ bool input_deck_is_fully_populated(void)
 /* Make sure the inputdeck is sleeping when lid is closed */
 static void inputdeck_lid_change(void)
 {
-	/* If suspend or off we don't want to turn on input module LEDs even if the lid is open */
-	if (!chipset_in_state(CHIPSET_STATE_ON))
-		return;
-
-	if (lid_is_open()) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 1);
-	} else {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 0);
-	}
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), lid_is_open());
 
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, inputdeck_lid_change, HOOK_PRIO_DEFAULT);
