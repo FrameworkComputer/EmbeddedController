@@ -193,6 +193,21 @@ static bool diagnostics_tick(void)
 
 }
 
+void diagnostics_check_boot_fail(void)
+{
+	/* If the system boot fail, we should run the diagnostics to show the errer */
+	if ((hw_diagnostics & BIT(DIAGNOSTICS_NO_S0)) == BIT(DIAGNOSTICS_NO_S0))
+		return;
+
+	if (device_diagnostic_is_completed)
+		return;
+
+	/* Call deferred hook to check the device */
+	CPRINTS("dbg: run project diagnostics");
+	project_diagnostics();
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, diagnostics_check_boot_fail, HOOK_PRIO_DEFAULT);
+
 static void diagnostics_check(void)
 {
 	if (device_diagnostic_is_completed)
