@@ -147,8 +147,10 @@ static bool diagnostics_tick(void)
 		return false;
 
 	/* Everything is ok after minimum 90 seconds of checking */
-	if (bios_diagnostic_is_completed && hw_diagnostics == 0)
+	if (bios_diagnostic_is_completed && hw_diagnostics == 0) {
+		run_diagnostics = 0;
 		return false;
+	}
 
 	if (diagnostics_ctr == DIAGNOSTICS_START ||
 		diagnostics_ctr == DIAGNOSTICS_HW_FINISH) {
