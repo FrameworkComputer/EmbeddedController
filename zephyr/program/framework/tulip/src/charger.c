@@ -33,6 +33,8 @@
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
+#define VINDPM_TO_REG(mv) (((mv) < 3200) ? 160 : ((mv) / 20))
+
 static int last_extpower_present;
 static int prev_charge_ma;
 
@@ -162,6 +164,29 @@ int board_discharge_on_ac(int enable)
 	return rv;
 }
 
+static void board_dynamic_acok_control(void)
+{
+	static int pre_acok_mv = -1;
+	int acok_mv;
+	int voltage = cypd_get_active_port_voltage();
+
+	if (voltage <= 5000)
+		acok_mv = 3200;		/*set ACOK 3.2V*/
+	else if (voltage < 20000)
+		acok_mv = 7000;		/*set ACOK 7V*/
+	else
+		acok_mv = 15000;	/*set ACOK 15V*/
+
+	if (acok_mv != pre_acok_mv) {
+		if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+			BQ25710_REG_INPUT_VOLTAGE, VINDPM_TO_REG(acok_mv) << 2)) {
+			CPRINTS("BQ25770 update ACOK reference fail");
+		}
+
+		pre_acok_mv = acok_mv;
+	}
+}
+
 __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
@@ -197,6 +222,8 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	}
 
 	prev_charge_ma = charge_ma;
+
+	board_dynamic_acok_control();
 }
 
 __overridable int extpower_is_present(void)
