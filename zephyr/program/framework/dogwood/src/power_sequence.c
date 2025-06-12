@@ -382,6 +382,17 @@ bool power_5vsb_exit(void)
 	return true;
 }
 
+void power_led2_blinking(void);
+DECLARE_DEFERRED(power_led2_blinking);
+void power_led2_blinking(void)
+{
+	static int tick;
+
+	/* blink LED2 with 2 Hz */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), !!(tick++ % 2));
+	hook_call_deferred(&power_led2_blinking_data, 500 * MSEC);
+}
+
 static void power_check_12vb_apu(void)
 {
 	int voltage = ina2xx_get_voltage(0); /* Unit: mV */
@@ -391,10 +402,19 @@ static void power_check_12vb_apu(void)
 	 * EC read the ina236 bus voltage register to monitor the
 	 * 12VB_APU is present or not to control the debug led2.
 	 */
-	if (voltage < 5000 || psu_is_off) {
-		set_diagnostic(DIAGNOSTICS_12V_OK, 1);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), 0);
+	if (voltage < 5000) {
+
+		if (psu_is_off) {
+			/* Strat blinking the LED2 (G3) */
+			hook_call_deferred(&power_led2_blinking_data, -1);
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), 0);
+		} else {
+			/* Strat blinking the LED2 (S0 but 12V is not detected) */
+			power_led2_blinking();
+			set_diagnostic(DIAGNOSTICS_12V_OK, 1);
+		}
 	} else
+		/* Turn on the LED2 (S0 and 12V is detected) */
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), 1);
 }
 
