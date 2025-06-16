@@ -363,6 +363,52 @@ void system_hang_detect(void)
 }
 DECLARE_DEFERRED(system_hang_detect);
 
+void power_led2_blinking(void);
+DECLARE_DEFERRED(power_led2_blinking);
+void power_led2_blinking(void)
+{
+	static int tick;
+
+	/* blink LED2 with 2 Hz */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), !!(tick++ % 2));
+	hook_call_deferred(&power_led2_blinking_data, 500 * MSEC);
+}
+
+static void power_check_12vb_apu(void)
+{
+	int voltage = ina2xx_get_voltage(0); /* Unit: mV */
+	bool psu_is_supposed_to_be_on =
+		gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ps_on));
+
+	/* LED should follow ps_on */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv),
+					psu_is_supposed_to_be_on);
+	/* Except when there's errors further on... */
+
+	/**
+	 * EC read the ina236 bus voltage register to monitor the
+	 * 12VB_APU is present or not to control the debug led2.
+	 */
+	if (voltage < 5000) {
+		if (!psu_is_supposed_to_be_on) {
+			/* Stop blinking the LED2 (G3) */
+			hook_call_deferred(&power_led2_blinking_data, -1);
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), 0);
+		} else {
+			/* Start blinking the LED2 (S0 but 12V is not detected) */
+			power_led2_blinking();
+			set_diagnostic(DIAGNOSTICS_12V_OK, 1);
+		}
+	}
+}
+
+static void diagnostic_power_glitch_detect(void)
+{
+	if ((hw_diagnostics & (1 << DIAGNOSTICS_PSU_POK)) == 0 &&
+		power_has_signals(IN_VALW_PGOOD) == 0)
+		set_diagnostic(DIAGNOSTICS_POWER_GLITCH, 1);
+}
+
 void power_5vsb_enter(void)
 {
 	CPRINTS("current was low (<%dmA) for a long time, switching to 5vsb",
@@ -389,6 +435,8 @@ void power_5vsb_enter(void)
 	/* Set the upper current limit */
 	power_monitor_set_alert_current(INA236_IDX_PSU_5V,
 			INA236_MONITOR_5V_UPPER_CURRENT_MA);
+
+	power_check_12vb_apu();
 }
 
 static void power_5vsb_enter_deferred(void)
@@ -424,50 +472,9 @@ bool power_5vsb_exit(void)
 	power_monitor_set_alert_current(INA236_IDX_PSU_5V,
 			INA236_MONITOR_5V_LOWER_CURRENT_MA);
 
+	power_check_12vb_apu();
+
 	return true;
-}
-
-void power_led2_blinking(void);
-DECLARE_DEFERRED(power_led2_blinking);
-void power_led2_blinking(void)
-{
-	static int tick;
-
-	/* blink LED2 with 2 Hz */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), !!(tick++ % 2));
-	hook_call_deferred(&power_led2_blinking_data, 500 * MSEC);
-}
-
-static void power_check_12vb_apu(void)
-{
-	int voltage = ina2xx_get_voltage(0); /* Unit: mV */
-	bool psu_is_off = !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ps_on));
-
-	/**
-	 * EC read the ina236 bus voltage register to monitor the
-	 * 12VB_APU is present or not to control the debug led2.
-	 */
-	if (voltage < 5000) {
-
-		if (psu_is_off) {
-			/* Strat blinking the LED2 (G3) */
-			hook_call_deferred(&power_led2_blinking_data, -1);
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), 0);
-		} else {
-			/* Strat blinking the LED2 (S0 but 12V is not detected) */
-			power_led2_blinking();
-			set_diagnostic(DIAGNOSTICS_12V_OK, 1);
-		}
-	} else
-		/* Turn on the LED2 (S0 and 12V is detected) */
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), 1);
-}
-
-static void diagnostic_power_glitch_detect(void)
-{
-	if ((hw_diagnostics & (1 << DIAGNOSTICS_PSU_POK)) == 0 &&
-		power_has_signals(IN_VALW_PGOOD) == 0)
-		set_diagnostic(DIAGNOSTICS_POWER_GLITCH, 1);
 }
 
 enum power_state power_handle_state(enum power_state state)
