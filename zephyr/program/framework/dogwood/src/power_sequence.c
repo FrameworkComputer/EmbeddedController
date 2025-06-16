@@ -414,7 +414,7 @@ void power_5vsb_enter(void)
 	CPRINTS("current was low (<%dmA) for a long time, switching to 5vsb",
 			INA236_MONITOR_5V_LOWER_CURRENT_MA);
 
-	if (board_get_version() < BOARD_VERSION_8) {
+	if (board_get_version() < BOARD_VERSION_9) {
 		CPRINTS("...this board is too old to turn power supply off");
 		return;
 	}
@@ -456,7 +456,7 @@ bool power_5vsb_exit(void)
 	if (!power_enable_psu(1))
 		return false;
 
-	if (board_get_version() < BOARD_VERSION_8) {
+	if (board_get_version() < BOARD_VERSION_9) {
 		CPRINTS("...power supply was already forced on because board is old");
 		return true;
 	}
