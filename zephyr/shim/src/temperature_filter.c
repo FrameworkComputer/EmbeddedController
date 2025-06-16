@@ -6,12 +6,28 @@
 #include "hooks.h"
 #include "math_util.h"
 #include "temperature_filter.h"
+#include "temp_sensor.h"
 #include "thermal.h"
 #include "util.h"
 
 #define Q_SCALE 14
 /* scale input up to improve filter performance */
 #define IN_SCALE 7
+
+struct ec_temperature_filter_config {
+	int32_t coefficients[6]; /* coefficients to calculate the virtual temperature */
+} __ec_align4;
+
+#define TEMP_FILTER_CONFIG(node_id) \
+	[TEMP_SENSOR_ID(node_id)] = {				\
+		.coefficients = DT_PROP_OR(node_id, coefficients, {0}), \
+	}
+
+struct ec_temperature_filter_config temp_filter_params[] = {
+#if DT_HAS_COMPAT_STATUS_OKAY(TEMP_SENSORS_COMPAT)
+	DT_FOREACH_CHILD_SEP(TEMP_SENSORS_NODEID, TEMP_FILTER_CONFIG, (,))
+#endif /* DT_HAS_COMPAT_STATUS_OKAY(TEMP_SENSORS_COMPAT) */
+};
 
 struct temperature_filter_t {
 	int32_t state[4];
@@ -55,7 +71,7 @@ bool temperature_filter_is_support(enum temp_sensor_id id)
 	int zero[6] = {0};
 	int rv;
 
-	rv = memcmp(thermal_params[id].coefficients, zero, 6);
+	rv = memcmp(temp_filter_params[id].coefficients, zero, 6);
 
 	/* No coefficients (zero arrays), return false */
 	return !!rv;
@@ -76,7 +92,7 @@ static void temperature_filter_init(void)
 {
 	for (int temp_id = 0; temp_id < TEMP_SENSOR_COUNT; temp_id++) {
 		if (temperature_filter_is_support(temp_id))
-			memcpy(filters[temp_id].coeff, thermal_params[temp_id].coefficients,
+			memcpy(filters[temp_id].coeff, temp_filter_params[temp_id].coefficients,
 					sizeof(filters[temp_id].coeff));
 	}
 }
