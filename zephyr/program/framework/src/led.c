@@ -164,21 +164,23 @@ static int als_lux_get(void)
 	uint16_t real_illuminance = *(uint16_t *)host_get_memmap(EC_MEMMAP_ALS);
 	timestamp_t now = get_time();
 
-	/*
-	 * before als_task stable return data (als.c common)
-	 * keep 2 second of the lightness to default high
-	 **/
 	if (chipset_in_state(CHIPSET_STATE_ON) && !als_stable) {
 		if (now.val > als_init_deadline.val + 2 * SECOND) {
 			als_stable = true;
 			als_init_deadline.val = 0;
 		}
-		real_illuminance = 1000;
+		/*
+		 * before ALS returns stable data (als.c common)
+		 * keep 2 second of the lightness to default high
+		 * power button brightness
+		 **/
+		real_illuminance = FP_LED_HIGH_ALS_THRESH + 1;
 	} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		als_init_deadline.val = now.val;
 		if (als_stable) {
 			als_stable = false;
-			real_illuminance = 10;
+			/* Default keyboard backlight to off */
+			real_illuminance = KB_BL_THRESHOLD + 1;
 			/* clear als data and set default level for next time bootup */
 			*(uint16_t *)host_get_memmap(EC_MEMMAP_ALS) = 0;
 			system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, FP_LED_HIGH);
@@ -232,7 +234,7 @@ void auto_als_led_brightness(void)
 		chipset_in_state(CHIPSET_STATE_ON)) {
 		last_kbbl_led_brightness = kblight_get();
 
-		if (als_lux > 5)
+		if (als_lux > KB_BL_THRESHOLD)
 			kb_brightness = KEYBOARD_BL_BRIGHTNESS_OFF;
 		else
 			kb_brightness = KEYBOARD_BL_BRIGHTNESS_ULT_LOW;
@@ -252,13 +254,13 @@ void auto_als_led_brightness(void)
 
 	if (fp_led_auto_is_enable() &&
 		chipset_in_state(CHIPSET_STATE_ON)) {
-		if (als_lux > 130)
+		if (als_lux > FP_LED_HIGH_ALS_THRESH)
 			led_brightness = FP_LED_HIGH;
-		else if (als_lux > 100)
+		else if (als_lux > FP_LED_MED_ALS_THRESH)
 			led_brightness = FP_LED_MEDIUM;
-		else if (als_lux > 70)
+		else if (als_lux > FP_LED_MED_LOW_ALS_THRESH)
 			led_brightness = FP_LED_MEDIUM_LOW;
-		else if (als_lux > 40)
+		else if (als_lux > FP_LED_LOW_ALS_THRESH)
 			led_brightness = FP_LED_LOW;
 		else
 			led_brightness = FP_LED_ULTRA_LOW;

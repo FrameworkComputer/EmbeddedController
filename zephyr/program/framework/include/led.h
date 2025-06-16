@@ -25,11 +25,20 @@
 #define PINS_ARRAY(id) DT_CAT(PINS_ARRAY_, id)
 #define DATA_NODE(node_id) DT_CAT(DATA_NODE_, node_id)
 
+/* Above this threshold (in lux) power button brightness is high is off, else on */
+#define FP_LED_HIGH_ALS_THRESH 130
+#define FP_LED_MED_ALS_THRESH 100
+#define FP_LED_MED_LOW_ALS_THRESH 70
+#define FP_LED_LOW_ALS_THRESH 40
+
 #define FP_LED_HIGH 55
 #define FP_LED_MEDIUM 40
 #define FP_LED_MEDIUM_LOW 28
 #define FP_LED_LOW 15
 #define FP_LED_ULTRA_LOW 8
+
+/* Above this threshold (in lux) keyboard backlight is off, else on */
+#define KB_BL_THRESHOLD 5
 
 enum led_color {
 	LED_OFF,
