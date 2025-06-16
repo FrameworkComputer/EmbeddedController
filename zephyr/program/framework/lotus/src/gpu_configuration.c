@@ -750,6 +750,19 @@ void reset_mux_status(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, reset_mux_status, HOOK_PRIO_DEFAULT);
 
+void reset_dds_pwm_mux(void)
+{
+	uint8_t dds_pwm_sourcing = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_DDS_PWM_SOURCING);
+	/**
+	 * When the system shuts down or the GPU bay is opened,
+	 * the dds pwm sourcing reset to host control.
+	 */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pwm_en), 0);
+	dds_pwm_sourcing &= ~DDS_PWM_EC_CONTROL;
+	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_DDS_PWM_SOURCING) = dds_pwm_sourcing;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, reset_dds_pwm_mux, HOOK_PRIO_DEFAULT);
+
 static void reset_smart_access_graphic(void)
 {
 	/* smart access graphic default should be hybrid mode */
@@ -1078,6 +1091,8 @@ void deinit_gpu_module(void)
 	fan_configure_gpu(NULL);
 
 	nv_gn22_set_dds_pin_mode(PIN_INPUT);
+
+	reset_dds_pwm_mux();
 
 	/* reset to APU only defaults */
 	thermal_params[2].temp_fan_max = C_TO_K(62); /* QTH1 */

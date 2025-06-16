@@ -260,6 +260,7 @@ DECLARE_DEFERRED(gpu_smart_access_graphic);
 void gpu_smart_access_graphic(void)
 {
 	uint8_t gpu_status = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL);
+	uint8_t gpu_vendor = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE);
 	uint8_t dds_pwm_sourcing = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_DDS_PWM_SOURCING);
 	int dds_pwm_duty = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_DDS_PWM_DUTY);
 
@@ -295,7 +296,7 @@ void gpu_smart_access_graphic(void)
 
 	nv_gn22_configure_gpio();
 
-	if ((dds_pwm_sourcing & 0x01) == DDS_PWM_EC_CONTROL) {
+	if ((gpu_vendor == GPU_NV_GN22) && (dds_pwm_sourcing & 0x01) == DDS_PWM_EC_CONTROL) {
 		/**
 		 * Panel pwm is controlled by EC
 		 */
