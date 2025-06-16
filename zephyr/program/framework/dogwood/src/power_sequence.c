@@ -365,12 +365,18 @@ DECLARE_DEFERRED(system_hang_detect);
 
 void power_5vsb_enter(void)
 {
-	/* Don't enter 5vsb if the user forces enabling PSU */
-	if (force_enable_psu)
-		return;
-
 	CPRINTS("current was low (<%dmA) for a long time, switching to 5vsb",
 			INA236_MONITOR_5V_LOWER_CURRENT_MA);
+
+	if (board_get_version() < BOARD_VERSION_8) {
+		CPRINTS("...this board is too old to turn power supply off");
+		return;
+	}
+
+	if (force_enable_psu) {
+		CPRINTS("...but we want to force power supply on");
+		return;
+	}
 
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_s0ix), 1);
 
@@ -401,6 +407,11 @@ bool power_5vsb_exit(void)
 
 	if (!power_enable_psu(1))
 		return false;
+
+	if (board_get_version() < BOARD_VERSION_8) {
+		CPRINTS("...power supply was already forced on because board is old");
+		return true;
+	}
 
 	k_msleep(10);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_rvsp_l), 1);
