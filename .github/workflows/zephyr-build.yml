@@ -27,7 +27,7 @@ jobs:
       max-parallel: 1
       matrix:
         platform: [
-          { name: dogwood, folder: marigold2, ver: "3.0.0", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
+          { name: dogwood, folder: marigold2, ver: "3.0.1", sha_len: 7, zephyr_ref: "framework-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
         ]
 
 
