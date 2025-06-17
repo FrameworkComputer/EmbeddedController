@@ -40,14 +40,6 @@ static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts *
 static int force_shoutdown_flags;
 static int d3cold_is_entry;	/* check the d3cold status */
 
-static void inputdeck_resume(void)
-{
-	/* Initialize sleep_l based on lid state */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), lid_is_open());
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, inputdeck_resume, HOOK_PRIO_DEFAULT);
-
-
 static void peripheral_power_startup(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wlan_en), 1);

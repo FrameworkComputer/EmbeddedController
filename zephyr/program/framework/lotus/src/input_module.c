@@ -158,11 +158,22 @@ bool input_deck_is_fully_populated(void)
 /* Make sure the inputdeck is sleeping when lid is closed */
 static void inputdeck_lid_change(void)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), lid_is_open());
+	/* If inputdeck powered off, sleep pin should also be off to avoid
+	 * backpowering the modules.
+	 **/
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en)))
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), lid_is_open());
+	else
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 0);
 
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, inputdeck_lid_change, HOOK_PRIO_DEFAULT);
 
+void inputdeck_set_power(bool on)
+{
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), on);
+	inputdeck_lid_change();
+}
 
 static void poll_c_deck(void);
 DECLARE_DEFERRED(poll_c_deck);
@@ -198,7 +209,7 @@ static void poll_c_deck(void)
 		if (input_deck_is_fully_populated() &&
 			turning_on_count > (INPUT_MODULE_POWER_ON_DELAY / (INPUT_MODULE_POLL_INTERVAL*8))) {
 			enable_touchpad_emulate(0);
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
+			inputdeck_set_power(true);
 			deck_state = DECK_ON;
 			LOG_INF("Input modules on");
 		} else if (hub_board_id[TOUCHPAD] != INPUT_MODULE_TOUCHPAD) {
@@ -211,7 +222,7 @@ static void poll_c_deck(void)
 		 * if lid is closed input modules cannot be removed
 		 */
 		if (!input_deck_is_fully_populated()) {
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+			inputdeck_set_power(false);
 			/* enable TP emulation */
 			enable_touchpad_emulate(1);
 			deck_state = DECK_DISCONNECTED;
@@ -234,7 +245,7 @@ static void poll_c_deck(void)
 static void input_modules_powerup(void)
 {
 	if (deck_state == DECK_FORCE_ON)
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
+		inputdeck_set_power(true);
 	else if (deck_state != DECK_FORCE_ON && deck_state != DECK_FORCE_OFF)
 		deck_state = DECK_DISCONNECTED;
 
@@ -251,10 +262,10 @@ void input_modules_reset(void)
 void input_modules_powerdown(void)
 {
 	if (deck_state == DECK_FORCE_ON)
-		 gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+		inputdeck_set_power(false);
 	else if (deck_state != DECK_FORCE_ON && deck_state != DECK_FORCE_OFF) {
 		deck_state = DECK_OFF;
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+		inputdeck_set_power(false);
 		/* Hub mux input 6 is NC, so lower power draw  by disconnecting all PD */
 		set_hub_mux(TOP_ROW_NOT_CONNECTED);
 	}
@@ -278,13 +289,13 @@ static enum ec_status check_deck_state(struct host_cmd_handler_args *args)
 		/* set mode */
 		if (p->mode == 0x01) {
 			deck_state = DECK_DISCONNECTED;
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+			inputdeck_set_power(false);
 		} else if (p->mode == 0x02) {
 			deck_state = DECK_FORCE_ON;
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
+			inputdeck_set_power(true);
 		} else if (p->mode == 0x04) {
 			deck_state = DECK_FORCE_OFF;
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+			inputdeck_set_power(false);
 		}
 
 		set_detect_mode(p->mode);
@@ -312,14 +323,14 @@ static int inputdeck_cmd(int argc, const char **argv)
 
 	if (argc >= 2) {
 		if (!strncmp(argv[1], "on", 2)) {
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
+			inputdeck_set_power(true);
 			ccprintf("Forcing Input modules on\n");
 			deck_state = DECK_FORCE_ON;
 		} else if (!strncmp(argv[1], "off", 3)) {
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+			inputdeck_set_power(false);
 			deck_state = DECK_FORCE_OFF;
 		} else if (!strncmp(argv[1], "auto", 4)) {
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+			inputdeck_set_power(false);
 			deck_state = DECK_DISCONNECTED;
 		} else if (!strncmp(argv[1], "nodetection", 4)) {
 			deck_state = DECK_NO_DETECTION;

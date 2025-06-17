@@ -58,4 +58,6 @@ void set_detect_mode(int mode);
 
 int get_detect_mode(void);
 
+void inputdeck_set_power(bool on);
+
 #endif /*__BOARD_INPUT_MODULE_H__*/
