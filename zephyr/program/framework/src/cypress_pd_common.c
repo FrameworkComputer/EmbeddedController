@@ -1845,7 +1845,13 @@ void cypd_port_int(int controller, int port)
 		i2c_read_offset16_block(i2c_port, addr_flags,
 			CCG_READ_DATA_MEMORY_REG(port, 0), data2, MIN(response_len, 32));
 		cypd_handle_vdm(controller, port, data2, response_len);
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
+		if (controller == PD_CHIP_GPU) {
+			gpu_update_pd_vdm(controller, port, data2, response_len);
+		}
+#endif /*CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16*/
 		CPRINTS("CCG_RESPONSE_VDM_RX");
+
 		__fallthrough;
 	default:
 		if (response_len && verbose_msg_logging) {

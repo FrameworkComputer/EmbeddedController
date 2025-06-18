@@ -45,4 +45,11 @@ void gpu_update_pd_type(enum gpu_pd chip);
  */
 void gpu_set_pd_state(void);
 
+/**
+ * @brief handle GPU PD events
+ *
+ */
+
+void gpu_update_pd_vdm(int controller, int port, uint8_t *data, int len);
+
 #endif /* __BOARD_GPU_H__ */

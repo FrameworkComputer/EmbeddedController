@@ -31,6 +31,7 @@
 #include "task.h"
 #include "thermal.h"
 #include "gpu_configuration.h"
+#include "usb_pd.h"
 
 LOG_MODULE_REGISTER(gpu, LOG_LEVEL_DBG);
 
@@ -346,3 +347,21 @@ static enum ec_status host_command_expansion_bay_status(struct host_cmd_handler_
 }
 DECLARE_HOST_COMMAND(EC_CMD_EXPANSION_BAY_STATUS, host_command_expansion_bay_status,
 		EC_VER_MASK(0));
+
+
+
+void gpu_update_pd_vdm(int controller, int port, uint8_t *data, int len)
+{
+	/* When device plugged into NV GPU, detect VDM with HPD high from CCG8 */
+	if (controller == PD_CHIP_GPU && (PD_VDO_CMD(data[4]) == CMD_DP_STATUS
+		|| PD_VDO_CMD(data[4]) == CMD_ATTENTION)) {
+		uint16_t dp_status = data[8] | data[9] << 8;
+		int hpd_level = PD_VDO_DPSTS_HPD_LVL(dp_status);
+		int hpd_irq = PD_VDO_DPSTS_HPD_IRQ(dp_status);
+
+		if (hpd_level && !hpd_irq) {
+			LOG_DBG("GPU HPD wake");
+			host_set_single_event(EC_HOST_EVENT_DGPU_TYPEC_NOTIFY);
+		}
+	}
+}
