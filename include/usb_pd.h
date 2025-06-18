@@ -2702,7 +2702,7 @@ bool pd_capable(int port);
  *
  * @param port USB-C port number
  */
-const uint32_t * const pd_get_src_caps(int port);
+const uint32_t *pd_get_src_caps(int port);
 
 /**
  * Returns the number of source caps
