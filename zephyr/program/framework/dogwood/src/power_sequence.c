@@ -52,7 +52,7 @@
  * After every low-power entry we'll *= by _INCREASE_FACTOR.
  * for a max of _MAX
  */
-#define TIMEOUT_5VSB_MIN (3 * MINUTE)
+#define TIMEOUT_5VSB_MIN (1 * MINUTE)
 #define TIMEOUT_5VSB_INCREASE_FACTOR 2
 #define TIMEOUT_5VSB_MAX (30 * MINUTE)
 static int timeout_5vsb = TIMEOUT_5VSB_MIN;
