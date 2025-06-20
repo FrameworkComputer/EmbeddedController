@@ -1,0 +1,12 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+common:
+  platform_allow: native_sim
+  extra_dtc_overlay_files:
+    - boards/native_sim.overlay
+tests:
+  fingerprint.drivers.elan80sg:
+    extra_dtc_overlay_files:
+      - boards/elan80sg.dtsi

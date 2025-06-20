@@ -20,7 +20,8 @@
 
 LOG_MODULE_REGISTER(cros_fingerprint, LOG_LEVEL_INF);
 
-static enum elan_capture_type
+COND_CODE_1(CONFIG_ZTEST, (), (static))
+enum elan_capture_type
 convert_fp_capture_type_to_elan_capture_type(enum fingerprint_capture_type mode)
 {
 	switch (mode) {
@@ -125,7 +126,7 @@ static int elan80series_init(const struct device *dev)
 	rc = elan80series_check_hwid(dev);
 	if (rc != 0) {
 		data->errors |= FINGERPRINT_ERROR_INIT_FAIL;
-		return 0;
+		return rc;
 	}
 
 	if (elan_execute_calibration() < 0)
@@ -309,16 +310,16 @@ elan80series_acquire_image(const struct device *dev,
 		return -EINVAL;
 	}
 
-	if (!IS_ENABLED(CONFIG_HAVE_ELAN80SERIES_PRIVATE_DRIVER)) {
-		return -ENOTSUP;
-	}
-
 	enum elan_capture_type rc =
 		convert_fp_capture_type_to_elan_capture_type(capture_type);
 
 	if (rc == ELAN_CAPTURE_TYPE_INVALID) {
 		LOG_ERR("Unsupported capture_type %d provided", capture_type);
 		return -EINVAL;
+	}
+
+	if (!IS_ENABLED(CONFIG_HAVE_ELAN80SERIES_PRIVATE_DRIVER)) {
+		return -ENOTSUP;
 	}
 
 	rc = elan_sensor_acquire_image_with_mode(image_buf, rc);
