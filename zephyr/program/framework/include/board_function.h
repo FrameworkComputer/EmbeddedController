@@ -26,4 +26,9 @@ __override_proto void project_chassis_function(enum gpio_signal signal);
 
 uint32_t get_system_percentage(void);
 
+/**
+ * Disable entering the EC hibernation mode
+ */
+void chassis_disable_enter_hibernate(void);
+
 #endif	/* __CROS_EC_BOARD_FUNCTION_H */

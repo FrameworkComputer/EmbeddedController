@@ -189,6 +189,10 @@ board_system_is_idle(uint64_t last_shutdown_time, uint64_t *target,
 	return CRITICAL_SHUTDOWN_HIBERNATE;
 }
 
+void chassis_disable_enter_hibernate(void)
+{
+	hook_call_deferred(&chassis_open_hibernate_data, -1);
+}
 __overridable void project_chassis_function(enum gpio_signal signal)
 {
 }
