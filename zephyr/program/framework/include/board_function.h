@@ -48,4 +48,9 @@ uint32_t get_system_percentage(void);
  */
 enum framework_battery_type board_get_battery_type(void);
 
+/**
+ * Disable entering the EC hibernation mode
+ */
+void chassis_disable_enter_hibernate(void);
+
 #endif	/* __CROS_EC_BOARD_FUNCTION_H */

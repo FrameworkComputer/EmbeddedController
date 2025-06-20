@@ -345,6 +345,7 @@ static void state_machine(uint64_t tnow)
 			 * just call the exit hard off start to run the state mechine.
 			 */
 			reset_diagnostics();
+			chassis_disable_enter_hibernate();
 			chipset_exit_hard_off();
 
 			/*

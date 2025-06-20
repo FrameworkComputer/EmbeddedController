@@ -163,6 +163,11 @@ static int chassis_cmd_clear(int type)
 	return -1;
 }
 
+void chassis_disable_enter_hibernate(void)
+{
+	hook_call_deferred(&chassis_open_hibernate_data, -1);
+}
+
 /* Host command */
 static enum ec_status host_chassis_intrusion_control(struct host_cmd_handler_args *args)
 {
