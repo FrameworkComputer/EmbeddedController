@@ -384,6 +384,10 @@ int hotkey_special_key(uint16_t *key_code, int8_t pressed)
 		/*if (!fn_table_set(pressed, KB_FN_S))*/
 
 		break;
+	case SCANCODE_RIGHT_CTRL:  /* MENU */
+		if (fn_table_set(pressed, KB_FN_RIGHT_CTRL))
+			*key_code = SCANCODE_MENU;
+		break;
 	case SCANCODE_LEFT:  /* HOME */
 		if (fn_table_set(pressed, KB_FN_LEFT))
 			*key_code = 0xe06c;
