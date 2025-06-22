@@ -216,6 +216,14 @@ void board_kblight_init(void)
 }
 #endif
 
+uint8_t display_toggle_key_hid = 0;
+
+void set_display_toggle_key_hid(uint8_t enable)
+{
+	CPRINTS("set display_toggle_key_hid = %hhd", enable);
+	display_toggle_key_hid = enable;
+}
+
 #ifdef CONFIG_KEYBOARD_CUSTOMIZATION_COMBINATION_KEY
 #define FN_PRESSED BIT(0)
 #define FN_LOCKED BIT(1)
@@ -329,12 +337,11 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t fn, int8_t pressed)
 		break;
 	case SCANCODE_F9:  /* EXTERNAL_DISPLAY */
 		if (fn_table_media_set(pressed, KB_FN_F9)) {
-			if (pressed) {
-				simulate_keyboard(SCANCODE_LEFT_WIN, 1);
-				simulate_keyboard(SCANCODE_P, 1);
+			if (display_toggle_key_hid) {
+				update_hid_key(HID_KEY_DISPLAY_TOGGLE, pressed);
 			} else {
-				simulate_keyboard(SCANCODE_P, 0);
-				simulate_keyboard(SCANCODE_LEFT_WIN, 0);
+				simulate_keyboard(SCANCODE_LEFT_WIN, pressed);
+				simulate_keyboard(SCANCODE_P, pressed);
 			}
 			return EC_ERROR_UNIMPLEMENTED;
 		}

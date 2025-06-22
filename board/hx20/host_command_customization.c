@@ -290,3 +290,13 @@ static enum ec_status standalone_mode(struct host_cmd_handler_args *args)
 
 }
 DECLARE_HOST_COMMAND(EC_CMD_STANDALONE_MODE, standalone_mode, EC_VER_MASK(0));
+
+static enum ec_status display_toggle_key_hid(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_display_toggle_key_hid *p = args->params;
+
+	set_display_toggle_key_hid(p->enable);
+	return EC_RES_SUCCESS;
+
+}
+DECLARE_HOST_COMMAND(EC_CMD_DISPLAY_TOGGLE_KEY_HID, display_toggle_key_hid, EC_VER_MASK(0));

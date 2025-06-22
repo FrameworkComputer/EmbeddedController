@@ -112,4 +112,6 @@ int factory_status(void);
 void hx20_8042_led_control(int data);
 #endif
 
+void set_display_toggle_key_hid(uint8_t enable);
+
 #endif /* __KEYBOARD_CUSTOMIZATION_H */
