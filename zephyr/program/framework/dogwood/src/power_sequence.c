@@ -44,6 +44,9 @@
  */
 #define TIMEOUT_VS_POWER_TURN_OFF (20 * MSEC)
 
+#define POWER_12V_LED_BLINKING_PERIOD (500 * MSEC)
+#define POWER_12V_LED_BLINKING_SECOND(x) ((x * SECOND) / POWER_12V_LED_BLINKING_PERIOD)
+
 /*
  * Time to wait until turning off the power supply in low power
  * usage (like suspend).
@@ -371,7 +374,14 @@ void power_led2_blinking(void)
 
 	/* blink LED2 with 2 Hz */
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), !!(tick++ % 2));
-	hook_call_deferred(&power_led2_blinking_data, 500 * MSEC);
+
+	if (tick < POWER_12V_LED_BLINKING_SECOND(30))
+		hook_call_deferred(&power_led2_blinking_data, POWER_12V_LED_BLINKING_PERIOD);
+	else {
+		/* Stop blinking the LED2 */
+		tick = 0;
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), 0);
+	}
 }
 
 static void power_check_12vb_apu(void)
@@ -390,15 +400,12 @@ static void power_check_12vb_apu(void)
 	 * 12VB_APU is present or not to control the debug led2.
 	 */
 	if (voltage < 5000) {
-		if (!psu_is_supposed_to_be_on) {
-			/* Stop blinking the LED2 (G3) */
-			hook_call_deferred(&power_led2_blinking_data, -1);
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led2_drv), 0);
-		} else {
-			/* Start blinking the LED2 (S0 but 12V is not detected) */
-			power_led2_blinking();
-			set_diagnostic(DIAGNOSTICS_12V_OK, 1);
-		}
+		/* Start blinking the LED2 30 seconds */
+		power_led2_blinking();
+		set_diagnostic(DIAGNOSTICS_12V_OK, 1);
+	} else {
+		/* Stop blinking if the 12V is detected */
+		hook_call_deferred(&power_led2_blinking_data, -1);
 	}
 }
 
