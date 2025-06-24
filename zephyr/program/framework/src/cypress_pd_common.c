@@ -387,9 +387,9 @@ static void cypd_pdo_init(int controller, int port, uint8_t profile)
 	 */
 	uint8_t pdos_reg[32] = {
 			0x50, 0x43, 0x52, 0x53,	/* “SRCP”		*/
-			0x96, 0x90, 0x01, 0x27,	/* PDO0 - 1.5A	*/
-			0x2c, 0x91, 0x01, 0x27,	/* PDO1 - 3A	*/
-			0x00, 0x00, 0x00, 0x00,	/* PDO2			*/
+			0x5A, 0x90, 0x01, 0x27,	/* PDO0 - 0.9A	*/
+			0x96, 0x90, 0x01, 0x27,	/* PDO1 - 1.5A	*/
+			0x2c, 0x91, 0x01, 0x27,	/* PDO2 - 3A	*/
 			0x00, 0x00, 0x00, 0x00,	/* PDO3			*/
 			0x00, 0x00, 0x00, 0x00,	/* PDO4			*/
 			0x00, 0x00, 0x00, 0x00,	/* PDO5			*/
@@ -437,7 +437,7 @@ static int cypd_select_pdo(int controller, int port, uint8_t profile)
 {
 	int rv;
 
-	rv = cypd_write_reg8_wait_ack(controller, CCG_SELECT_SOURCE_PDO_REG(port), profile);
+	rv = cypd_write_reg8_wait_ack(controller, CCG_SELECT_SOURCE_PDO_REG(port), BIT(profile));
 	if (rv != EC_SUCCESS)
 		CPRINTS("SET CCG_SELECT_REG failed");
 
@@ -632,11 +632,12 @@ static int cypd_modify_profile(int controller, int port, int profile)
 {
 	int rv;
 	int port_idx = (controller << 1) + port;
+	static const char * const current_level[] = {"0.9A", "1.5A", "3A", "InvA"};
 
 	if (verbose_msg_logging)
-		CPRINTS("PD Select PDO %s ", profile & 0x02 ? "3A" : "1.5A");
+		CPRINTS("PD Select PDO %s ", current_level[profile]);
 
-	if (profile == CCG_PD_CMD_SET_TYPEC_3A) {
+	if (profile != CCG_PD_CMD_SET_TYPEC_1_5A) {
 		rv = cypd_select_rp(port_idx, profile);
 		if (rv != EC_SUCCESS)
 			return rv;
@@ -644,7 +645,7 @@ static int cypd_modify_profile(int controller, int port, int profile)
 
 	rv = cypd_select_pdo(controller, port, profile);
 	if (rv != EC_SUCCESS) {
-		CPRINTS("PD Select PDO %s failed", profile & 0x02 ? "3A" : "1.5A");
+		CPRINTS("PD Select PDO %s failed", current_level[profile]);
 		cypd_clear_port(controller, port);
 		cypd_set_prepare_pdo(controller, port);
 		return rv;
