@@ -302,10 +302,10 @@ void gpu_smart_access_graphic(void)
 		if (dds_pwm_duty > 100)
 			dds_pwm_duty = 100;
 
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pwm_en_l), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pwm_en), 1);
 		displight_set(dds_pwm_duty);
 	} else {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pwm_en_l), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pwm_en), 0);
 	}
 
 	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL) = gpu_status;

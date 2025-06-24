@@ -395,7 +395,7 @@ const struct gpio_dt_spec * gpu_gpio_to_dt(enum gpu_gpio_idx gpio_idx)
 	case GPU_2B5_ALERTn:
 		return GPIO_DT_FROM_NODELABEL(gpio_gpu_alert_l);
 	case GPU_ECPWM_EN:
-		return GPIO_DT_FROM_NODELABEL(gpio_ec_pwm_en_l);
+		return GPIO_DT_FROM_NODELABEL(gpio_ec_pwm_en);
 	case GPU_EDP_MUX_SEL:
 		return GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw);
 	case GPU_PCIE_MUX_SEL: /* select between EDP AUX or SSD PCIE2 CLK*/
@@ -1294,7 +1294,7 @@ static int cmd_gpucfg(int argc, const char **argv)
 			CPRINTS("   VADP_EN   %d", gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vdap_en)));
 			CPRINTS("   FAN_EN    %d", gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en)));
 			CPRINTS("   GPUPWR_EN %d", gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_dgpu_pwr_en)));
-			CPRINTS("   ECPWM_EN  %d", gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pwm_en_l)));
+			CPRINTS("   ECPWM_EN  %d", gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pwm_en)));
 			CPRINTS("   ALW_EN    %d", gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en)));
 			CPRINTS("   BAY DOOR  %s", get_gpu_latch() ? "Closed" : "Open");
 			CPRINTS("   5VALW_REQ 0x%02x", power_enable);

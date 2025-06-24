@@ -135,7 +135,7 @@
 		gpio_gpu_vdap_en: gpu_vdap_en {
 			gpios = <&gpio1 1 GPIO_OUTPUT_LOW>;	/* Enable GPIO ADP PWR */
 		};
-		gpio_ec_pwm_en_l: ec_pwm_en_l {
+		gpio_ec_pwm_en: ec_pwm_en {
 			gpios = <&gpio1 0 GPIO_OUTPUT_LOW>;	/* Enable EDP mux control chip */
 		};
 		ac_present_pd_l {
