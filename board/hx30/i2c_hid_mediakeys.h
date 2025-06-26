@@ -81,6 +81,7 @@ enum media_key {
     HID_KEY_DISPLAY_BRIGHTNESS_UP,
     HID_KEY_DISPLAY_BRIGHTNESS_DN,
     HID_KEY_AIRPLANE_MODE,
+    HID_KEY_KEYBOARD_BACKLIGHT,
     HID_ALS_REPORT_LUX,
     HID_KEY_MAX
 };
@@ -89,5 +90,6 @@ BUILD_ASSERT(HID_KEY_MAX < 16);
 
 int update_hid_key(enum media_key key, bool pressed);
 void set_illuminance_value(uint16_t value);
+void kblight_update_hid(uint8_t percent);
 
 #endif /* __CROS_EC_I2C_HID_MEDIAKEYS_H */

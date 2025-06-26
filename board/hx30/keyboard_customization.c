@@ -470,6 +470,7 @@ int functional_hotkey(uint16_t *key_code, int8_t pressed)
 					break;
 				}
 				kblight_set(bl_brightness);
+				kblight_update_hid(bl_brightness);
 			}
 			/* we dont want to pass the space key event to the OS */
 			return EC_ERROR_UNIMPLEMENTED;

@@ -25,6 +25,7 @@
 #define REPORT_ID_RADIO		0x01
 #define REPORT_ID_CONSUMER	0x02
 #define REPORT_ID_SENSOR	0x03
+#define REPORT_ID_KEYBOARD_BACKLIGHT	0x05
 
 #define ALS_REPORT_STOP		0x00
 #define ALS_REPORT_POLLING	0x01
@@ -74,18 +75,22 @@ struct als_feature_report {
 	uint16_t minimum;
 } __packed;
 
+struct keyboard_backlight_report {
+	uint8_t level;
+} __packed;
 
 static struct radio_report radio_button;
 static struct consumer_button_report consumer_button;
 static struct als_input_report als_sensor;
 static struct als_feature_report als_feature;
+static struct keyboard_backlight_report keyboard_backlight;
 
 int update_hid_key(enum media_key key, bool pressed)
 {
 	if (key >= HID_KEY_MAX) {
 		return EC_ERROR_INVAL;
 	}
-	if (key == HID_KEY_AIRPLANE_MODE) {
+	if (key == HID_KEY_AIRPLANE_MODE || key == HID_KEY_KEYBOARD_BACKLIGHT) {
 		key_states[key] = pressed;
 		if (pressed)
 			task_set_event(TASK_ID_HID, 1 << key, 0);
@@ -95,6 +100,12 @@ int update_hid_key(enum media_key key, bool pressed)
 	}
 
 	return EC_SUCCESS;
+}
+
+void kblight_update_hid(uint8_t percent)
+{
+	keyboard_backlight.level = percent;
+	update_hid_key(HID_KEY_KEYBOARD_BACKLIGHT, 1);
 }
 
 /* Called on AP S5 -> S3 transition */
@@ -285,6 +296,20 @@ static const uint8_t report_desc[] = {
 	0x95, 0x01,		/* Report Count (1) */
 	0x81, 0x02,		/* Input (Data,Arr,Abs) */
 	0xC0,			/* END_COLLECTION */
+
+	/* Keyboard Backlight Level Collection */
+	0x05, 0x01,		/* USAGE_PAGE (Generic Desktop) */
+	0x09, 0x06,		/* USAGE (Keyboard) */
+	0xA1, 0x01,		/* COLLECTION (Application) */
+	0x85, REPORT_ID_KEYBOARD_BACKLIGHT,	/* Report ID (Keyboard Backlight) */
+	0x05, 0x0C,		/* USAGE_PAGE (Consumer Devices) */
+	0x09, 0x7B,		/* USAGE (Keyboard Backlight Set Level) */
+	0x15, 0x00,		/* LOGICAL_MINIMUM (0) */
+	0x25, 0x64,		/* LOGICAL_MAXIMUM (100) */
+	0x95, 0x01,		/* REPORT_COUNT (1) */
+	0x75, 0x08,		/* REPORT_SIZE (8) */
+	0x81, 0x02,		/* INPUT (Data,Var,Abs) */
+	0xC0,	
 };
 
 
@@ -478,6 +503,12 @@ static int i2c_hid_touchpad_command_process(size_t len, uint8_t *buffer)
 						sizeof(struct als_feature_report));
 			}
 			break;
+		case REPORT_ID_KEYBOARD_BACKLIGHT:
+			response_len =
+				fill_report(buffer, report_id,
+						&keyboard_backlight,
+						sizeof(struct keyboard_backlight_report));
+			break;
 		default:
 			response_len = 2;
 			buffer[0] = response_len;
@@ -564,7 +595,12 @@ int i2c_hid_process(unsigned int len, uint8_t *buffer)
 				fill_report(buffer, REPORT_ID_SENSOR,
 						&als_sensor,
 						sizeof(struct als_input_report));
-		}
+		} else if (input_mode == REPORT_ID_KEYBOARD_BACKLIGHT) {
+			response_len =
+				fill_report(buffer, REPORT_ID_KEYBOARD_BACKLIGHT,
+						&keyboard_backlight,
+						sizeof(struct keyboard_backlight_report));
+		};
 		break;
 	case I2C_HID_COMMAND_REGISTER:
 		response_len = i2c_hid_touchpad_command_process(len, buffer);
@@ -672,6 +708,9 @@ void hid_handler_task(void *p)
 					case HID_KEY_AIRPLANE_MODE:
 						input_mode = REPORT_ID_RADIO;
 							radio_button.state = key_states[i] ? 1 : 0;
+						break;
+					case HID_KEY_KEYBOARD_BACKLIGHT:
+						input_mode = REPORT_ID_KEYBOARD_BACKLIGHT;
 						break;
 					case HID_ALS_REPORT_LUX:
 
