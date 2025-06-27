@@ -140,7 +140,7 @@
 #define CHARGE_I_STEP 8
 #define INPUT_I_MAX 8200
 #define INPUT_I_MIN 400
-#define INPUT_I_STEP 50
+#define INPUT_I_STEP 25
 #endif
 
 #if defined(CONFIG_CHARGER_BQ25770)
@@ -165,6 +165,9 @@ static struct mutex bq25710_perf_mode_mutex;
 #if defined(CONFIG_CHARGER_BQ25770)
 /* 10mOhm sense resistor, there is 400mA offset at code 0.. */
 #define BQ257X0_IIN_DPM_CODE0_OFFSET REG_TO_CHARGING_CURRENT(400)
+#define BQ257X0_IIN_HOST_CURRENT_STEP_MA REG_TO_CHARGING_CURRENT_AC(25)
+#define BQ25770_IIN_HOST_CURRENT_SCALING \
+	CONFIG_CHARGER_BQ25770_CURRENT_SCALING
 #else
 /*
  * 10mOhm sense resistor, there is 50mA offset at code 0.
@@ -182,6 +185,19 @@ static const struct charger_info bq25710_charger_info = {
 	.current_max = REG_TO_CHARGING_CURRENT(CHARGE_I_MAX),
 	.current_min = REG_TO_CHARGING_CURRENT(CHARGE_I_MIN),
 	.current_step = REG_TO_CHARGING_CURRENT(CHARGE_I_STEP),
+	.input_current_max = REG_TO_CHARGING_CURRENT_AC(INPUT_I_MAX),
+	.input_current_min = REG_TO_CHARGING_CURRENT_AC(INPUT_I_MIN),
+	.input_current_step = REG_TO_CHARGING_CURRENT_AC(INPUT_I_STEP),
+};
+
+static const struct charger_info bq25770_charger_info = {
+	.name = CHARGER_NAME,
+	.voltage_max = CHARGE_V_MAX,
+	.voltage_min = CHARGE_V_MIN,
+	.voltage_step = CHARGE_V_STEP,
+	.current_max = CHARGE_I_MAX,
+	.current_min = CHARGE_I_MIN,
+	.current_step = CHARGE_I_STEP,
 	.input_current_max = REG_TO_CHARGING_CURRENT_AC(INPUT_I_MAX),
 	.input_current_min = REG_TO_CHARGING_CURRENT_AC(INPUT_I_MIN),
 	.input_current_step = REG_TO_CHARGING_CURRENT_AC(INPUT_I_STEP),
@@ -208,8 +224,12 @@ static inline int iin_dpm_reg_to_current(int reg)
 
 static inline int iin_host_current_to_reg(int current)
 {
-	return (REG_TO_CHARGING_CURRENT_AC(current) /
+	int reg = (REG_TO_CHARGING_CURRENT_AC(current) /
 		BQ257X0_IIN_HOST_CURRENT_STEP_MA);
+#if defined(CONFIG_CHARGER_BQ25770)
+	reg /= BQ25770_IIN_HOST_CURRENT_SCALING;
+#endif
+	return reg;
 }
 
 static inline enum ec_error_list raw_read16(int chgnum, int offset, int *value)
@@ -642,7 +662,10 @@ static void bq25710_init(int chgnum)
 /* Charger interfaces */
 static const struct charger_info *bq25710_get_info(int chgnum)
 {
-	return &bq25710_charger_info;
+	if (IS_ENABLED(CONFIG_CHARGER_BQ25770))
+		return &bq25770_charger_info;
+	else
+		return &bq25710_charger_info;
 }
 
 static enum ec_error_list bq25710_post_init(int chgnum)
