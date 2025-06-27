@@ -378,6 +378,8 @@ _CROS_EC_CV_F_P(EC_CMD_HOST_EVENT_SET_WAKE_MASK, 0, host_event_set_wake_mask,
 		host_event_mask);
 _CROS_EC_C0_F_PF(EC_CMD_HOST_SLEEP_EVENT, host_sleep_event);
 _CROS_EC_C1_F_PF_RF(EC_CMD_HOST_SLEEP_EVENT, host_sleep_event);
+_CROS_EC_C0_F_RF(EC_CMD_HOST_SLEEP_SIGNAL_TRANSITIONS,
+		 host_sleep_signal_transitions);
 _CROS_EC_C0_F_PF_RF(EC_CMD_I2C_CONTROL, i2c_control);
 _CROS_EC_C0_F_PF_RF(EC_CMD_I2C_PASSTHRU_PROTECT, i2c_passthru_protect);
 _CROS_EC_C0_F_RF(EC_CMD_KEYBOARD_FACTORY_TEST, keyboard_factory_test);

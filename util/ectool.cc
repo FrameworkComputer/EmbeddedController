@@ -10175,6 +10175,19 @@ int cmd_set_alarm_slp_s0_dbg(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_sleep_signal_transitions(int argc, char *argv[])
+{
+	struct ec_response_host_sleep_signal_transitions resp;
+	if (ec_command(EC_CMD_HOST_SLEEP_SIGNAL_TRANSITIONS, 0, NULL, 0, &resp,
+		       sizeof(resp)) < 0) {
+		fprintf(stderr, "Host command failed\n");
+		return -1;
+	}
+	printf("0x%x\n", resp.sleep_signal_transitions);
+
+	return 0;
+}
+
 struct param_info {
 	const char *name; /* name of this parameter */
 	const char *help; /* help message */
@@ -13135,6 +13148,8 @@ const struct command commands[] = {
 	  "<sec>\n"
 	  "\tSet alarm to wake host in <sec> seconds, "
 	  "PS: EC won't wake host if SLP_S0 is not asserted" },
+	{ "sleepsignaltransitions", cmd_sleep_signal_transitions,
+	  "\n\tPrints current EC sleep_signal_transitions value" },
 	{ "sysinfo", cmd_sysinfo,
 	  "[flags|reset_flags|firmware_copy]\n"
 	  "\tDisplay system info." },

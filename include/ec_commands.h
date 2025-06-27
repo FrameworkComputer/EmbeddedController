@@ -5341,6 +5341,17 @@ struct ec_response_s0ix_cnt {
 } __ec_align4;
 
 /*****************************************************************************/
+/* Ask the EC for sleep_signal_transitions without needing to send a
+ * HOST_SLEEP_EVENT command, which this command is related to.
+ * Note: EC_CMD_CONSOLE_PRINT has value 0x00AC, so skip over it.
+ */
+#define EC_CMD_HOST_SLEEP_SIGNAL_TRANSITIONS 0x00AD
+
+struct ec_response_host_sleep_signal_transitions {
+	uint32_t sleep_signal_transitions;
+} __ec_align4;
+
+/*****************************************************************************/
 /* Smart battery pass-through */
 
 /* Get / Set 16-bit smart battery registers  - OBSOLETE */

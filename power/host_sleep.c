@@ -409,6 +409,18 @@ void sleep_reset_tracking(void)
 	timeout_hang_type = SLEEP_HANG_NONE;
 }
 
+static enum ec_status
+host_command_host_sleep_signal_transitions(struct host_cmd_handler_args *args)
+{
+	struct ec_response_host_sleep_signal_transitions *resp = args->response;
+	args->response_size = sizeof(*resp);
+	resp->sleep_signal_transitions = sleep_signal_transitions;
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_HOST_SLEEP_SIGNAL_TRANSITIONS,
+		     host_command_host_sleep_signal_transitions,
+		     EC_VER_MASK(0));
+
 static int command_sleep_fail_timeout(int argc, const char **argv)
 {
 	if (argc < 2) {

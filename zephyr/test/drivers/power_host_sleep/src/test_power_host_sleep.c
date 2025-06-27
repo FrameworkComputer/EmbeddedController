@@ -431,5 +431,35 @@ ZTEST(power_host_sleep, test_increment_change_state)
 	zassert_equal(rsp.s0ix_counter, 0);
 }
 
+ZTEST(power_host_sleep, test_sleep_signal_transitions)
+{
+	// The HOST_SLEEP_SIGNAL_TRANSISIONS command is only available in RW.
+	Z_TEST_SKIP_IFNDEF(SECTION_IS_RW);
+
+	struct ec_response_host_sleep_signal_transitions rsp;
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_RESPONSE(
+		EC_CMD_HOST_SLEEP_SIGNAL_TRANSITIONS, 0, rsp);
+
+	zassert_ok(host_command_process(&args),
+		   "Failed to get sleep transitions counter");
+	zassert_equal(args.response_size, sizeof(rsp));
+	uint32_t prev_sst_cnt = rsp.sleep_signal_transitions;
+
+	sleep_suspend_transition();
+
+	zassert_ok(host_command_process(&args),
+		   "Failed to get sleep transitions counter");
+	zassert_equal(args.response_size, sizeof(rsp));
+	zassert_equal(prev_sst_cnt + 1, rsp.sleep_signal_transitions);
+	prev_sst_cnt += 1;
+
+	sleep_resume_transition();
+
+	zassert_ok(host_command_process(&args),
+		   "Failed to get sleep transitions counter");
+	zassert_equal(args.response_size, sizeof(rsp));
+	zassert_equal(prev_sst_cnt + 1, rsp.sleep_signal_transitions);
+}
+
 ZTEST_SUITE(power_host_sleep, drivers_predicate_post_main, NULL,
 	    power_host_sleep_before_after, power_host_sleep_before_after, NULL);
