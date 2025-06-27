@@ -11,8 +11,8 @@
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
 		ambient-f75303 {
-			temp_host_warn = <90>;
-			temp_host_high = <90>;
+			temp_host_warn = <87>;
+			temp_host_high = <87>;
 			temp_host_halt = <105>;
 			temp_host_release_warn = <60>;
 			temp_host_release_high = <60>;
@@ -20,8 +20,8 @@
 			sensor = <&ambient_f75303>;
 		};
 		charger-f75303 {
-			temp_host_warn = <90>;
-			temp_host_high = <90>;
+			temp_host_warn = <87>;
+			temp_host_high = <87>;
 			temp_host_halt = <105>;
 			temp_host_release_warn = <60>;
 			temp_host_release_high = <60>;
@@ -29,8 +29,8 @@
 			sensor = <&charger_f75303>;
 		};
 		temp_sensor_apu: apu-f75303 {
-			temp_host_warn = <90>;
-			temp_host_high = <90>;
+			temp_host_warn = <87>;
+			temp_host_high = <87>;
 			temp_host_halt = <105>;
 			temp_host_release_warn = <60>;
 			temp_host_release_high = <60>;
@@ -40,9 +40,9 @@
 			sensor = <&apu_f75303>;
 		};
 		temp_sensor_apu_die: amd-apu {
-			temp_host_warn = <108>;
-			temp_host_high = <108>;
-			temp_host_halt = <127>;
+			temp_host_warn = <105>;
+			temp_host_high = <105>;
+			temp_host_halt = <125>;
 			temp_host_release_warn = <60>;
 			temp_host_release_high = <60>;
 			temp_fan_off = <50>;
@@ -56,7 +56,10 @@
 		};
 		temp_sensor_gpu: gpu-vr-f75303 {
 			temp_host_warn = <71>;
+			temp_host_high = <90>;
+			temp_host_halt = <105>;
 			temp_host_release_warn = <60>;
+			temp_host_release_high = <60>;
 			temp_fan_off = <50>;
 			temp_fan_max = <74>;
 			power-good-pin = <&gpio_slp_s3_l>;
@@ -67,6 +70,11 @@
 			sensor = <&gpu_vram_f75303>;
 		};
 		temp_sensor_gpu_die: gpu-temp {
+			temp_host_warn = <87>;
+			temp_host_high = <97>;
+			temp_host_halt = <100>;
+			temp_host_release_warn = <60>;
+			temp_host_release_high = <60>;
 			temp_fan_off = <50>;
 			temp_fan_max = <80>;
 			power-good-pin = <&gpio_slp_s3_l>;

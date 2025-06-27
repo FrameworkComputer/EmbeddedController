@@ -281,12 +281,8 @@ void update_thermal_value(struct pmf_table *table, int active_mpower, bool with_
 
 /* Update PL for thermal table pmf sheet : pmf */
 static void update_thermal_power_limit(int battery_percent, int active_mpower,
-				       bool with_dc, int mode)
+				       bool with_dc, int mode, uint8_t gpu_vendor)
 {
-	uint8_t gpu_vendor;
-
-	gpu_vendor = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE);
-
 	if (!gpu_is_working()) {
 		update_thermal_value(UMA_PMF_TABLE, active_mpower, with_dc, mode);
 	} else {
@@ -578,14 +574,14 @@ void clear_prochot(enum clear_reasons reason)
 	}
 }
 
-void update_d_notify(int active_mpower, bool with_dc)
+void update_d_notify(int active_mpower, bool with_dc, uint8_t gpu_vendor)
 {
-	uint8_t gpu_vendor, d_notify;
-	int active_power = active_mpower/1000;
-
-	gpu_vendor = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE);
+	static uint8_t pre_d_notify;
+	uint8_t d_notify;
+	int active_power;
 
 	if (gpu_is_working() && gpu_vendor == GPU_NV_GN22) {
+		active_power = active_mpower/1000;
 		if (active_power >= 180)
 			d_notify = 1;
 		else if (active_power < 180 && active_power >= 140)
@@ -597,9 +593,13 @@ void update_d_notify(int active_mpower, bool with_dc)
 		else
 			d_notify = 5;
 
-		*host_get_memmap(EC_MEMMAP_DGPU_DX_STATUS) = d_notify;
 	} else
-		*host_get_memmap(EC_MEMMAP_DGPU_DX_STATUS) = 0;
+		d_notify = 0;
+
+	if (pre_d_notify != d_notify) {
+		pre_d_notify = d_notify;
+		*host_get_memmap(EC_MEMMAP_DGPU_DX_STATUS) = d_notify;
+	}
 }
 
 enum power_slide_mode best_performance_power_plan(int battery_percent,
@@ -650,6 +650,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	static uint32_t old_p3t_limit;
 	static int set_pl_limit;
 	static uint32_t old_ao_sppt;
+	uint8_t gpu_vendor;
 	static int old_stt_table;
 	int mode = *host_get_memmap(EC_MEMMAP_POWER_SLIDE);
 	int active_mpower = cypd_get_ac_power();
@@ -680,9 +681,12 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		active_mpower = 0;
 	}
 
+	gpu_vendor = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE);
+
 	if (func_ctl & 0x1) {
 		mode = best_performance_power_plan(battery_percent, active_mpower, with_dc, mode);
-		update_thermal_power_limit(battery_percent, active_mpower, with_dc, mode);
+		update_thermal_power_limit(battery_percent, active_mpower, with_dc, mode,
+					gpu_vendor);
 	}
 
 	if (func_ctl & 0x4) {
@@ -692,16 +696,26 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	if ((mode != 0) && (old_stt_table != thermal_stt_table) && (thermal_stt_table != 0)) {
 		*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER) = thermal_stt_table;
 		old_stt_table = thermal_stt_table;
-		update_d_notify(active_mpower, with_dc);
+		update_d_notify(active_mpower, with_dc, gpu_vendor);
 		host_set_single_event(EC_HOST_EVENT_STT_UPDATE);
 	}
 
-	/* when trigger thermal warm, reduce TYPE_APU_ONLY_SPPT to 45W */
+	/*
+	 * when trigger thermal warm
+	 * AMD GPU sku reduce TYPE_APU_ONLY_SPPT to 45W
+	 * NV GPU sku reduce TYPE_SPPT to 45W
+	 */
 	if (gpu_is_working()) {
-		if (thermal_warn_trigger())
-			power_limit[FUNCTION_THERMAL].mwatt[TYPE_APU_ONLY_SPPT] = 45000;
-		else
+		if (thermal_warn_trigger()) {
+			if (gpu_vendor == GPU_AMD_R23M)
+				power_limit[FUNCTION_THERMAL].mwatt[TYPE_APU_ONLY_SPPT] = 45000;
+			else if (gpu_vendor == GPU_NV_GN22)
+				power_limit[FUNCTION_THERMAL].mwatt[TYPE_SPPT] = 45000;
+
+		} else {
 			power_limit[FUNCTION_THERMAL].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+			power_limit[FUNCTION_THERMAL].mwatt[TYPE_SPPT] = 0;
+		}
 	}
 
 	for (int item = TYPE_SPL; item < TYPE_COUNT; item++) {
