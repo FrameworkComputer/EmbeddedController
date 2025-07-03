@@ -235,5 +235,6 @@ void set_gpu_gpio(enum gpu_gpio_purpose gpiofn, int level);
 int get_gpu_gpio(enum gpu_gpio_purpose gpiofn);
 
 bool gpu_present(void);
+bool gpu_is_initializing(void);
 
 #endif /* __CROS_EC_GPU_CONFIGURATION_H__ */

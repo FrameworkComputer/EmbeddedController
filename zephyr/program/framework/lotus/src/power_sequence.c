@@ -343,6 +343,11 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_G3S5:
+		while (gpu_is_initializing()) {
+			if (task_wait_event(200 * MSEC) == TASK_EVENT_TIMER) {
+				return state;
+			}
+		}
 
 		control_5valw_power(POWER_REQ_POWER_ON, 1);
 

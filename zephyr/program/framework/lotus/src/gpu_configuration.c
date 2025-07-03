@@ -24,6 +24,7 @@
 #include "cypress_pd_common.h"
 #include "gpu_f75303.h"
 #include "board_adc.h"
+#include "task.h"
 #include "thermal.h"
 #include "fan.h"
 #include "board_thermal.h"
@@ -137,6 +138,7 @@ uint8_t gpu_subsys_serials[GPU_SUBSYS_MAX][20];
 enum gpu_pcie_cfg gpu_pcie_configuration;
 enum gpu_vendor  gpu_vendor;
 static int power_enable;
+static bool gpu_initializing;
 
 uint8_t address = 0x50;
 
@@ -1016,6 +1018,10 @@ int init_parse_gpu_eeprom(void)
 
 	control_5valw_power(POWER_REQ_INIT, 0);
 
+	gpu_initializing = false;
+
+	task_wake(TASK_ID_CHIPSET);
+
 	return EC_SUCCESS;
 }
 DECLARE_DEFERRED(init_parse_gpu_eeprom);
@@ -1067,6 +1073,7 @@ DECLARE_DEFERRED(update_ucsi_pd_mapping);
 void deinit_gpu_module(void)
 {
 	gpu_cfg_descriptor_valid = 0;
+	gpu_initializing = false;
 	gpu_vendor = GPU_VENDOR_INITIALIZING;
 	address = 0x50;
 	memset(&gpu_descriptor, 0x00, sizeof(struct gpu_cfg_descriptor));
@@ -1105,6 +1112,8 @@ void init_gpu_module(void)
 {
 	deinit_gpu_module();
 
+	gpu_initializing = true;
+
 	control_5valw_power(POWER_REQ_INIT, 1);
 
 	/* do not turn on the 5valw_c_en and gpu_3v_5v_en at the same time */
@@ -1114,6 +1123,11 @@ void init_gpu_module(void)
 	/* wait for power to come up to GPU PD and EEPROM */
 	hook_call_deferred(&init_parse_gpu_eeprom_data, 150*MSEC);
 
+}
+
+bool gpu_is_initializing(void)
+{
+	return gpu_initializing;
 }
 
 void init_uma_fan(void)
