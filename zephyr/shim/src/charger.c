@@ -8,6 +8,7 @@
 #include "charger/chg_isl923x.h"
 #include "charger/chg_isl9241.h"
 #include "charger/chg_isl95522.h"
+#include "charger/chg_rt9478.h"
 #include "charger/chg_rt9490.h"
 #include "charger/chg_sm5803.h"
 #include "usbc/utils.h"
@@ -28,6 +29,7 @@
 	CHECK_COMPAT(ISL9241_CHG_COMPAT, usbc_id, chg_id, CHG_CONFIG_ISL9241)  \
 	CHECK_COMPAT(ISL95522_CHG_COMPAT, usbc_id, chg_id,                     \
 		     CHG_CONFIG_ISL95522)                                      \
+	CHECK_COMPAT(RT9478_CHG_COMPAT, usbc_id, chg_id, CHG_CONFIG_RT9478)    \
 	CHECK_COMPAT(RT9490_CHG_COMPAT, usbc_id, chg_id, CHG_CONFIG_RT9490)    \
 	CHECK_COMPAT(RT9490_EMUL_COMPAT, usbc_id, chg_id, CHG_CONFIG_RT9490)   \
 	CHECK_COMPAT(SM5803_CHG_COMPAT, usbc_id, chg_id, CHG_CONFIG_SM5803)

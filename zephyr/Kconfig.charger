@@ -250,6 +250,17 @@ config PLATFORM_EC_RAA489000_AC_PRESENT_CONTROL
 	  should be set low, so the comparator output must be inverted.
 	  The GPIO_AC_PRESENT gpio signal must not be configured.
 
+config PLATFORM_EC_CHARGER_RT9478
+	bool "Use the RT9478 charger"
+	depends on PLATFORM_EC_I2C
+	select PLATFORM_EC_CHARGER_NARROW_VDC
+	help
+	  Enables the driver for the Richtek RT9478 battery charge
+	  controller. This is a synchronous narrow voltage DC buck-boost
+	  battery charger for two to four battery cell applications. A
+	  wide range of input power sources are supported such as high
+	  voltage USB-C power delivery.
+
 config PLATFORM_EC_CHARGER_RT9490
 	bool "Use the RT9490 charger"
 	default y
@@ -695,6 +706,260 @@ config PLATFORM_EC_CHARGER_PSYS_READ
 	  Sample output:
 
 	    PSYS from chg_adc: 456 mW
+
+config PLATFORM_EC_CHARGER_RT9478_IDCHG_LIMIT_MA
+	int "IDCHG_TH1 in milli-amps"
+	default 8192
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  Sets the 1st battery discharge current limit (IDCHG_TH1)
+	  in milli-amps. It can be set
+	  from 0 A to 32.256 A in 512 mA increments.
+
+config PLATFORM_EC_CHARGER_RT9478_PSYS_SENSING
+	bool "Charger monitors PSYS"
+	default n
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  This enables the PSYS sensing circuit on the RT9478 chargers.
+	  This is used for system power monitoring on board designs that support
+	  this capability. This circuit is disabled by default (reset) and
+	  needs to be explicitly enabled for meaningful results.
+
+config PLATFORM_EC_CHARGER_RT9478_CMP_REF_1P2
+	bool "Use 1.2 V for internal comparator reference voltage"
+	default n
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  This changes the charger's internal comparator reference
+	  voltage to 1.2 V. The power-on default is 2.3 V. This must be
+	  enabled if the board was designed for 1.2 V instead of 2.3 V.
+
+config PLATFORM_EC_CHARGER_RT9478_CMP_POL_POSITIVE
+	bool "independent comparator output polarity"
+	default n
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  Set the CMP_POL register. When CMPIN is above internal threshold,
+	  CMPOUT is LOW if setting value is 0. When CMPIN is below internal
+	  threshold, CMPOUT is LOW if setting value is 1.
+
+config PLATFORM_EC_CHARGER_RT9478_PKPWR_TOVLD_DEG_CUSTOM
+	bool "PKPWR_TOVLD_DEG override"
+	default n
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  Enable customizing the charger's PKPWR_TOVLD_DEG period.
+
+config PLATFORM_EC_CHARGER_RT9478_PKPWR_TOVLD_DEG
+	int "PKPWR_TOVLD_DEG period"
+	range 0 3
+	default 0
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  Sets the input overload time when in peak power mode
+	  (PKPWR_TOVLD_DEG). This limits how long the charger can draw
+	  IAICR2 from the adapter. This is a 2 bit field.
+	  1 ms to 10 ms can be encoded.
+
+config PLATFORM_EC_CHARGER_RT9478_EN_IBUS_OCP1
+	bool "Enable IBUS over-current protection"
+	default n
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  This enables the charger's IBUS over-current protection. The
+	  converter turns off when the OC threshold is reached. The
+	  threshold is selected using the ACOC_VTH bit.
+
+config PLATFORM_EC_CHARGER_RT9478_IBUS_OCP1_TH_1P33
+	bool "Set IBUS_OCP1 threshold to 133% of IAICR2"
+	default n
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+          This selects which IBUS_OCP1 protection threshold is used with
+	  EN_IBUS_OCP1. Enabling this option selects 133% of
+	  IAICR2. Otherwise, the default is 200% of IAICR2.
+
+config PLATFORM_EC_CHARGER_RT9478_BATOC_VTH_MINIMUM
+	bool "Select the minimum BATOC threshold"
+	default n
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+          This selects the minimum BATOC protection threshold to be used
+          with EN_BATOC. The minimum threshold is 133% of PROCHOT IDCHG_TH2.
+	  The default threshold is 200%.
+
+config PLATFORM_EC_CHARGER_RT9478_PP_COMP
+	bool "Enable independent comparator PROCHOT"
+	default n
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  Sets the PP_COMP in Prochot Option 1 register. When in low power
+	  mode(Battery only), this bit will lose controllability to independent
+	  comparator PROCHOT profiles. Need to use EN_PROCHOT_LPWR to enable
+	  independent comparator and its PROCHOT profile.
+
+config PLATFORM_EC_CHARGER_RT9478_PP_INOM
+	bool "Enable PROCHOT on adapter current exceeding INOM"
+	default n
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  Sets the PP_INOM bit in Prochot Option 1 register. This causes
+	  PROCHOT to be pulsed when the nominal adapter current
+	  threshold is reached. INOM is 110% of IAICR1 (input
+	  current setting).
+
+config PLATFORM_EC_CHARGER_RT9478_PP_BATGONE
+	bool "Enable PROCHOT on battery removal"
+	default n
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  Sets the PP_BATGONE bit in Prochot Option 1 register. This
+	  causes PROCHOT to be pulsed when the battery is removed.
+
+config PLATFORM_EC_CHARGER_RT9478_PP_VBUSOK
+	bool "Enable PROCHOT on AC removal"
+	default n
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  Sets the PP_VBUSOK in Prochot Option 1 register. This causes
+	  PROCHOT to be pulsed when the AC adapter is removed.
+
+config PLATFORM_EC_CHARGER_RT9478_PP_IDCHG2
+	bool "Enable PROCHOT on battery current exceeding IDCHG_TH2"
+	default n
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  Sets the PP_IDCHG2 bit in Charge Option 4 register. This
+	  causes PROCHOT to be pulsed when the battery discharge current
+	  exceeds IDCHG_TH2.
+
+config PLATFORM_EC_CHARGER_RT9478_SENSE_RESISTOR
+	int "Value of the charge sense-resistor, in mOhms"
+	default 10
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  The charge sense-resistor is used to detect the charge current to the
+	  battery. Its value must be known for the calculation to be correct.
+	  The value is typically around 10 mOhms.
+
+config PLATFORM_EC_CHARGER_RT9478_SENSE_RESISTOR_IN
+	int "Value of the input sense-resistor, in mOhms"
+	default 10
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  The input sense-resistor is used to detect the input current from the
+	  external AC power supply. Its value must be known for the calculation
+	  to be correct. The value is typically around 10 mOhms.
+
+config PLATFORM_EC_CHARGER_RT9478_IAICR2_CUSTOM
+	bool "IAICR2 override"
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  Enable customizing the charhger's IAICR2 threshold
+
+config PLATFORM_EC_CHARGER_RT9478_IAICR2
+	int "IAICR2 threshold"
+	range 1 30
+	default 9
+	depends on PLATFORM_EC_CHARGER_RT9478_IAICR2_CUSTOM
+	help
+	  Set percentage of IAICR1 as threshold. ICRIT threshold is set to be
+	  110% of IAICR2. Input overcurrent protection (IBUS_OCP1) threshold is
+	  also 1.33x or 2x of IAICR2 (1.33x or 2x based on IBUS_OCP1_TH field).
+	  1  - 25: 110% - 230%, step is 5%.
+	  26 - 30: 250% - 450%, step is 50%.
+	  31: Out of range (ignored).
+
+config PLATFORM_EC_CHARGER_RT9478_VSYS_TH2_CUSTOM
+	bool "VSYS_TH2 override"
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  Enable customizing the charger's VSYS_TH2 threshold.
+
+config PLATFORM_EC_CHARGER_RT9478_VSYS_TH2_DV
+	int "VSYS threshold 2 in deci-volts"
+	range 32 95
+	default 32
+	depends on PLATFORM_EC_CHARGER_RT9478_VSYS_TH2_CUSTOM
+	help
+	  Sets the VSYS threshold 2 in deci volts. This is the first
+	  threshold that will be encountered when VSYS droops, typically
+	  due to high power demand from the main processor. The charger
+	  chip reacts by asserting PROCHOT which the main processor uses
+	  as an indication to throttle back and reduce power demand. The
+	  charger chip uses default thresholds which may be low enough
+	  to cause system instability. The default is 5.9v.
+	  The valid range is 3.2 - 9.5v for 2S or higher batteries.
+
+config PLATFORM_EC_CHARGER_RT9478_VSYS_UVP_CUSTOM
+	bool "VSYS_UVP override"
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  Enable customizing the charger's VSYS_UVP threshold.
+
+config PLATFORM_EC_CHARGER_RT9478_VSYS_UVP
+	int "VSYS_UVP threshold"
+	range 0 7
+	default 0
+	depends on PLATFORM_EC_CHARGER_RT9478_VSYS_UVP_CUSTOM
+	help
+	  Sets the VSYS under voltage (VSYS_UVP) lockout threshold. This
+	  is a 3 bit field with default value 0. The actual voltage
+	  encoded is (0.8 * <value> + 2.4), allowing a threshold in the
+	  range of 2.4 V to 8.0 V to be specified.
+
+config PLATFORM_EC_CHARGER_RT9478_IDCHG_DEG2_CUSTOM
+	bool "IDCHG_TH2 deglitch time override"
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  Enable customizing the charger's 2nd battery discharge current
+	  limit (IDCHG_TH2) deglitch time (IDCHG_DEG2).
+
+config PLATFORM_EC_CHARGER_RT9478_IDCHG_DEG2
+	int "IDCHG_TH2 deglitch time"
+	range 0 3
+	default 1
+	depends on PLATFORM_EC_CHARGER_RT9478_IDCHG_DEG2_CUSTOM
+	help
+	  Sets the 2nd battery discharge current limit (IDCHG_TH2)
+	  deglitch time (IDCHG_DEG2). This is a 2 bit field with default
+	  value 1 (1.6 ms). The encoded value ranges from 100 us to 12
+	  ms.
+
+config PLATFORM_EC_CHARGER_RT9478_IDCHG_TH2_CUSTOM
+	bool "IDCHG_TH2 override"
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  Enable customizing the charger's 2nd battery discharge current
+	  limit (IDCHG_TH2).
+
+config PLATFORM_EC_CHARGER_RT9478_IDCHG_TH2
+	int "IDCHG threshold 2"
+	range 0 7
+	default 1
+	depends on PLATFORM_EC_CHARGER_RT9478_IDCHG_TH2_CUSTOM
+	help
+	  Sets the charger's 2nd battery discharge current limit
+	  (IDCHG_TH2) as a percentage of IDCHG_TH1. This is a 3 bit
+	  field with default value 1 (150%). The encoded value ranges
+	  from 125% to 400%.
+
+config PLATFORM_EC_CHARGER_RT9478_VSYS_MIN_VOLTAGE_CUSTOM
+	bool "Enable minimum system voltage override"
+	depends on PLATFORM_EC_CHARGER_RT9478
+	help
+	  Enable customizing the charger's minimum system voltage.
+
+config PLATFORM_EC_CHARGER_RT9478_VSYS_MIN_VOLTAGE_MV
+	int "Minimum system voltage in milli-volts"
+	default 0
+	depends on PLATFORM_EC_CHARGER_RT9478_VSYS_MIN_VOLTAGE_CUSTOM
+	help
+	  Sets the minimum system voltage in milli-volts. It can be set
+	  from 5.0 V to 19.2 V in 100 mV increments.
+	  The default value depends on configured number of
+	  battery cells connected in series using the CELL_BATPRES strap.
 
 config PLATFORM_EC_CHARGER_SENSE_RESISTOR
 	int "Value of the charge sense-resistor, in mOhms"

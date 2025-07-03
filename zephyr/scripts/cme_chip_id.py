@@ -601,6 +601,26 @@ DISAMBIGUATION_DICTIONARY = {
             },
         ),
     ],
+    "richtek,rt9478": [
+        CompatibleInfo(
+            "richtek,rt9478",
+            None,
+            None,
+            None,
+            {
+                "reg": "0xff",
+                "mask": "0xff",
+                "value": "0x1c",
+                "bytes": 1,
+            },
+            {
+                "reg": "0xfe",
+                "mask": "0xff",
+                "value": "0x1e",
+                "bytes": 1,
+            },
+        ),
+    ],
     "richtek,rt9490": [
         CompatibleInfo(
             "richtek,rt9490",

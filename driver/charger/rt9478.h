@@ -1,0 +1,339 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Richtek 2-4 cell NVDC switching battery charger driver.
+ */
+
+#ifndef __CROS_EC_RT9478_H
+#define __CROS_EC_RT9478_H
+
+/* SMBUS Interface */
+#define RT9478_SMBUS_ADDR1_FLAGS 0x09
+
+/* Registers */
+#define RT9478_REG_CHARGE_OPTION_0 0x12
+#define RT9478_REG_CHARGE_CURRENT 0x14
+#define RT9478_REG_CHARGE_VOLTAGE 0x15
+#define RT9478_REG_CHARGER_STATUS 0x20
+#define RT9478_REG_PROCHOT_STATUS 0x21
+#define RT9478_REG_AICR 0x22
+#define RT9478_REG_ADC_VBUS_PSYS 0x23
+#define RT9478_REG_ADC_IBAT 0x24
+#define RT9478_REG_ADC_CMPIN_IIN 0x25
+#define RT9478_REG_ADC_VSYS_VBAT 0x26
+#define RT9478_REG_CHARGE_OPTION_1 0x30
+#define RT9478_REG_CHARGE_OPTION_2 0x31
+#define RT9478_REG_CHARGE_OPTION_3 0x32
+#define RT9478_REG_PROCHOT_OPTION_0 0x33
+#define RT9478_REG_PROCHOT_OPTION_1 0x34
+#define RT9478_REG_ADC_OPTION 0x35
+#define RT9478_REG_CHARGE_OPTION_4 0x36
+#define RT9478_REG_VMIN_ACTIVE_PROTECTION 0x37
+#define RT9478_REG_OTG_VOLTAGE 0x3B
+#define RT9478_REG_OTG_CURRENT 0x3C
+#define RT9478_REG_INPUT_VOLTAGE 0x3D
+#define RT9478_REG_MIN_SYSTEM_VOLTAGE 0x3E
+#define RT9478_REG_AICR_HOST 0x3F
+#define RT9478_REG_MANUFACTURER_ID 0xFE
+#define RT9478_REG_DEVICE_ADDRESS 0xFF
+
+/* ADC conversion time in ms */
+#define RT9478_ADC_OPTION_ADC_CONV_MS 25
+
+/* ADCVBUS/PSYS Register */
+#define RT9478_ADC_VBUS_STEP_MV 96
+
+/* Min System Voltage Register */
+#define RT9478_VSYS_MIN_VOLTAGE_STEP_MV 100
+
+extern const struct charger_drv rt9478_drv;
+
+/**
+ * Set VSYS_MIN
+ *
+ * @param chgnum: Index into charger chips
+ * @param mv: min system voltage in mV
+ * @return EC_SUCCESS or error
+ */
+int rt9478_set_min_system_voltage(int chgnum, int mv);
+
+/********************************************************************/
+/*
+ * ChargeOption0 Register (0x12)
+ */
+#define RT9478_CHARGE_OPTION_0_EN_LPWR_SHIFT 15
+#define RT9478_CHARGE_OPTION_0_EN_LPWR_BITS 1
+#define RT9478_CHARGE_OPTION_0_EN_LEARN_SHIFT 5
+#define RT9478_CHARGE_OPTION_0_EN_LEARN_BITS 1
+#define RT9478_CHARGE_OPTION_0_CHG_INHIBIT_SHIFT 0
+#define RT9478_CHARGE_OPTION_0_CHG_INHIBIT_BITS 1
+
+/*
+ * ChargerStatus Register (0x20)
+ */
+#define RT9478_CHARGER_STATUS_AICC_DONE_SHIFT 14
+#define RT9478_CHARGER_STATUS_AICC_DONE_BITS 1
+
+/*
+ * AICR Register (0x22)
+ */
+#define RT9478_AICR_CURRENT_SHIFT 8
+#define RT9478_AICR_CURRENT_BITS 7
+#define RT9478_AICR_CURRENT_STEP_MA 50
+
+/*
+ * ADCVBUS/PSYS Register (0x23)
+ */
+#define RT9478_ADC_VBUS_PSYS_VBUS_SHIFT 8
+#define RT9478_ADC_VBUS_PSYS_VBUS_BITS 8
+
+/*
+ * ADCIIN/CMPIN Register (0x25)
+ */
+#define RT9478_ADC_IIN_CMPIN_IBUS_SHIFT 8
+#define RT9478_ADC_IIN_CMPIN_IBUS_BITS 8
+
+/*
+ * ChargeOption1 Register (0x30)
+ */
+#define RT9478_CHARGE_OPTION_1_PSYS_CONFIG_SHIFT 12
+#define RT9478_CHARGE_OPTION_1_PSYS_CONFIG_BITS 2
+#define RT9478_CHARGE_OPTION_1_PSYS_CONFIG__PBUS_PBAT 0
+#define RT9478_CHARGE_OPTION_1_PSYS_CONFIG__OFF 3
+
+#define RT9478_CHARGE_OPTION_1_RSNS_IN_SHIFT 11
+#define RT9478_CHARGE_OPTION_1_RSNS_IN_BITS 1
+#define RT9478_CHARGE_OPTION_1_RSNS_IN__10 0
+#define RT9478_CHARGE_OPTION_1_RSNS_IN__5 1
+
+#define RT9478_CHARGE_OPTION_1_RSNS_BAT_SHIFT 10
+#define RT9478_CHARGE_OPTION_1_RSNS_BAT_BITS 1
+#define RT9478_CHARGE_OPTION_1_RSNS_BAT__10 0
+#define RT9478_CHARGE_OPTION_1_RSNS_BAT__5 1
+
+#define RT9478_CHARGE_OPTION_1_CMP_REF_SHIFT 7
+#define RT9478_CHARGE_OPTION_1_CMP_REF_BITS 1
+#define RT9478_CHARGE_OPTION_1_CMP_REF__2P3 0
+#define RT9478_CHARGE_OPTION_1_CMP_REF__1P2 1
+
+#define RT9478_CHARGE_OPTION_1_CMP_POL_SHIFT 6
+#define RT9478_CHARGE_OPTION_1_CMP_POL_BITS 1
+#define RT9478_CHARGE_OPTION_1_CMP_POL__NEGATIVE 0
+#define RT9478_CHARGE_OPTION_1_CMP_POL__POSITIVE 1
+
+/*
+ * ChargeOption2 Register (0x31)
+ */
+#define RT9478_CHARGE_OPTION_2_PKPWR_TOVLD_DEG_SHIFT 14
+#define RT9478_CHARGE_OPTION_2_PKPWR_TOVLD_DEG_BITS 2
+#define RT9478_CHARGE_OPTION_2_PKPWR_TOVLD_DEG__10MS 3
+
+#define RT9478_CHARGE_OPTION_2_EN_EXTILIM_SHIFT 7
+#define RT9478_CHARGE_OPTION_2_EN_EXTILIM_BITS 1
+#define RT9478_CHARGE_OPTION_2_EN_EXTILIM__DISABLE 0
+#define RT9478_CHARGE_OPTION_2_EN_EXTILIM__ENABLE 1
+
+#define RT9478_CHARGE_OPTION_2_EN_IBUS_OCP1_SHIFT 3
+#define RT9478_CHARGE_OPTION_2_EN_IBUS_OCP1_BITS 1
+#define RT9478_CHARGE_OPTION_2_EN_IBUS_OCP1__DISABLE 0
+#define RT9478_CHARGE_OPTION_2_EN_IBUS_OCP1__ENABLE 1
+
+#define RT9478_CHARGE_OPTION_2_IBUS_OCP1_TH_SHIFT 2
+#define RT9478_CHARGE_OPTION_2_IBUS_OCP1_TH_BITS 1
+#define RT9478_CHARGE_OPTION_2_IBUS_OCP1_TH__1P33 0
+#define RT9478_CHARGE_OPTION_2_IBUS_OCP1_TH__2P00 1
+
+#define RT9478_CHARGE_OPTION_2_BATOC_VTH_SHIFT 0
+#define RT9478_CHARGE_OPTION_2_BATOC_VTH_BITS 1
+#define RT9478_CHARGE_OPTION_2_BATOC_VTH__1P33 0
+#define RT9478_CHARGE_OPTION_2_BATOC_VTH__2P00 1
+
+/*
+ * ChargeOption3 Register (0x32)
+ */
+#define RT9478_CHARGE_OPTION_3_RESET_REG_SHIFT 14
+#define RT9478_CHARGE_OPTION_3_RESET_REG_BITS 1
+
+#define RT9478_CHARGE_OPTION_3_EN_AICC_SHIFT 11
+#define RT9478_CHARGE_OPTION_3_EN_AICC_BITS 1
+
+#define RT9478_CHARGE_OPTION_3_IL_AVG_SHIFT 3
+#define RT9478_CHARGE_OPTION_3_IL_AVG_BITS 2
+#define RT9478_CHARGE_OPTION_3_IL_AVG__10A 1
+
+/*
+ * ProchotOption0 Register (0x33)
+ */
+#define RT9478_PROCHOT_OPTION_0_IAICR2_SHIFT 11
+#define RT9478_PROCHOT_OPTION_0_IAICR2_BITS 5
+#define RT9478_PROCHOT_OPTION_0_IAICR2__1P10 1
+#define RT9478_PROCHOT_OPTION_0_IAICR2__1P40 7
+#define RT9478_PROCHOT_OPTION_0_IAICR2__1P50 9
+#define RT9478_PROCHOT_OPTION_0_IAICR2__2P30 25
+#define RT9478_PROCHOT_OPTION_0_IAICR2__2P50 26
+#define RT9478_PROCHOT_OPTION_0_IAICR2__4P50 30
+#define RT9478_PROCHOT_OPTION_0_IAICR2__NA 31
+
+/*
+ * ProchotOption1 Register (0x34)
+ */
+#define RT9478_PROCHOT_OPTION_1_IDCHG_TH1_SHIFT 10
+#define RT9478_PROCHOT_OPTION_1_IDCHG_TH1_BITS 6
+
+#define RT9478_PROCHOT_OPTION_1_PP_MIVR_SHIFT 7
+#define RT9478_PROCHOT_OPTION_1_PP_MIVR_BITS 1
+#define RT9478_PROCHOT_OPTION_1_PP_MIVR__DISABLE 0
+#define RT9478_PROCHOT_OPTION_1_PP_MIVR__ENABLE 1
+
+#define RT9478_PROCHOT_OPTION_1_PP_COMP_SHIFT 6
+#define RT9478_PROCHOT_OPTION_1_PP_COMP_BITS 1
+#define RT9478_PROCHOT_OPTION_1_PP_COMP__DISABLE 0
+#define RT9478_PROCHOT_OPTION_1_PP_COMP__ENABLE 1
+
+#define RT9478_PROCHOT_OPTION_1_PP_INOM_SHIFT 4
+#define RT9478_PROCHOT_OPTION_1_PP_INOM_BITS 1
+#define RT9478_PROCHOT_OPTION_1_PP_INOM__DISABLE 0
+#define RT9478_PROCHOT_OPTION_1_PP_INOM__ENABLE 1
+
+#define RT9478_PROCHOT_OPTION_1_PP_IDCHG1_SHIFT 3
+#define RT9478_PROCHOT_OPTION_1_PP_IDCHG1_BITS 1
+#define RT9478_PROCHOT_OPTION_1_PP_IDCHG1__DISABLE 0
+#define RT9478_PROCHOT_OPTION_1_PP_IDCHG1__ENABLE 1
+
+#define RT9478_PROCHOT_OPTION_1_PP_VSYS_SHIFT 2
+#define RT9478_PROCHOT_OPTION_1_PP_VSYS_BITS 1
+#define RT9478_PROCHOT_OPTION_1_PP_VSYS__DISABLE 0
+#define RT9478_PROCHOT_OPTION_1_PP_VSYS__ENABLE 1
+
+#define RT9478_PROCHOT_OPTION_1_PP_BATGONE_SHIFT 1
+#define RT9478_PROCHOT_OPTION_1_PP_BATGONE_BITS 1
+#define RT9478_PROCHOT_OPTION_1_PP_BATGONE__DISABLE 0
+#define RT9478_PROCHOT_OPTION_1_PP_BATGONE__ENABLE 1
+
+#define RT9478_PROCHOT_OPTION_1_PP_VBUSOK_SHIFT 0
+#define RT9478_PROCHOT_OPTION_1_PP_VBUSOK_BITS 1
+#define RT9478_PROCHOT_OPTION_1_PP_VBUSOK__DISABLE 0
+#define RT9478_PROCHOT_OPTION_1_PP_VBUSOK__ENABLE 1
+
+/*
+ * ADCOption Register (0x35)
+ */
+#define RT9478_ADC_OPTION_ADC_START_SHIFT 14
+#define RT9478_ADC_OPTION_ADC_START_BITS 1
+
+#define RT9478_ADC_OPTION_EN_ADC_VBUS_SHIFT 6
+#define RT9478_ADC_OPTION_EN_ADC_VBUS_BITS 1
+#define RT9478_ADC_OPTION_EN_ADC_IBUS_SHIFT 4
+#define RT9478_ADC_OPTION_EN_ADC_IBUS_BITS 1
+#define RT9478_ADC_OPTION_EN_ADC_ALL GENMASK(7, 0)
+
+/*
+ * ChargeOption4 Register (0x36)
+ */
+#define RT9478_CHARGE_OPTION_4_VSYS_UVP_SHIFT 13
+#define RT9478_CHARGE_OPTION_4_VSYS_UVP_BITS 3
+#define RT9478_CHARGE_OPTION_4_VSYS_UVP__3P65 1
+#define RT9478_CHARGE_OPTION_4_VSYS_UVP__4P0 2
+#define RT9478_CHARGE_OPTION_4_VSYS_UVP__4P8 3
+#define RT9478_CHARGE_OPTION_4_VSYS_UVP__5P6 4
+#define RT9478_CHARGE_OPTION_4_VSYS_UVP__6P4 5
+#define RT9478_CHARGE_OPTION_4_VSYS_UVP__7P2 6
+#define RT9478_CHARGE_OPTION_4_VSYS_UVP__8P0 7
+
+#define RT9478_CHARGE_OPTION_4_IDCHG_DEG2_SHIFT 6
+#define RT9478_CHARGE_OPTION_4_IDCHG_DEG2_BITS 2
+#define RT9478_CHARGE_OPTION_4_IDCHG_DEG2__1P6MS 1
+#define RT9478_CHARGE_OPTION_4_IDCHG_DEG2__12MS 3
+
+#define RT9478_CHARGE_OPTION_4_IDCHG_TH2_SHIFT 3
+#define RT9478_CHARGE_OPTION_4_IDCHG_TH2_BITS 3
+#define RT9478_CHARGE_OPTION_4_IDCHG_TH2__1P25 0
+#define RT9478_CHARGE_OPTION_4_IDCHG_TH2__1P5 1
+
+#define RT9478_CHARGE_OPTION_4_PP_IDCHG2_SHIFT 2
+#define RT9478_CHARGE_OPTION_4_PP_IDCHG2_BITS 1
+#define RT9478_CHARGE_OPTION_4_PP_IDCHG2__DISABLE 0
+#define RT9478_CHARGE_OPTION_4_PP_IDCHG2__ENABLE 1
+
+/*
+ * Vmin Active Protection Register (0x37)
+ */
+#define RT9478_VMIN_AP_VSYS_TH2_SHIFT 2
+#define RT9478_VMIN_AP_VSYS_TH2_BITS 6
+
+/*
+ * VSYS_MIN Register (0x3e)
+ */
+#define RT9478_VSYS_MIN_VOLTAGE_SHIFT 8
+#define RT9478_VSYS_MIN_VOLTAGE_BITS 8
+
+/*
+ * AICR_HOST Register (0x3f)
+ */
+#define RT9478_AICR_HOST_CURRENT_SHIFT 8
+#define RT9478_AICR_HOST_CURRENT_BITS 7
+#define RT9478_AICR_HOST_CURRENT_STEP_MA 50
+
+/*
+ * RT9478 register field accessor macros.
+ */
+
+/*
+ * Returns the bitmask of a register field.
+ *
+ *  _chip	chip name
+ *  _reg	chip register name
+ *  _field	register field name
+ */
+
+#define RT_FIELD_MASK(_chip, _reg, _field)              \
+	GENMASK((_chip##_##_reg##_##_field##_SHIFT +    \
+		 _chip##_##_reg##_##_field##_BITS - 1), \
+		_chip##_##_reg##_##_field##_SHIFT)
+
+/*
+ * Given a register value, returns the value of the specified field.
+ *
+ *  _chip	chip name
+ *  _reg	chip register name
+ *  _field	register field name
+ *  _x		the value of the register to be examined
+ */
+
+#define GET_RT_FIELD(_chip, _reg, _field, _x)          \
+	(((_x) >> _chip##_##_reg##_##_field##_SHIFT) & \
+	 GENMASK(_chip##_##_reg##_##_field##_BITS - 1, 0))
+
+/*
+ * Given a register value, sets the specified field to the given value,
+ * and returns the resulting register value.
+ *
+ *  _chip	chip name
+ *  _reg	chip register name
+ *  _field	register field name
+ *  _v		register field value
+ *  _x		the initial value of the register
+ */
+
+#define SET_RT_FIELD(_chip, _reg, _field, _v, _x)                   \
+	(((_x) & ~RT_FIELD_MASK(_chip, _reg, _field)) |             \
+	 (((_v) & GENMASK(_chip##_##_reg##_##_field##_BITS - 1, 0)) \
+	  << _chip##_##_reg##_##_field##_SHIFT))
+
+/*
+ * Given a register value, sets the specified field to the predefined
+ * constant, and returns the resulting register value.
+ *
+ *  _chip	chip name
+ *  _reg	chip register name
+ *  _field	register field name
+ *  _c		register field value constant name
+ *  _x		the initial value of the register
+ */
+
+#define SET_RT_FIELD_BY_NAME(_chip, _reg, _field, _c, _x)                    \
+	SET_RT_FIELD(_chip, _reg, _field, _chip##_##_reg##_##_field##__##_c, \
+		     (_x))
+
+#endif /* __CROS_EC_RT9478_H */
