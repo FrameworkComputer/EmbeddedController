@@ -128,17 +128,18 @@ static int cmd_cpupower(int argc, const char **argv)
 
 	CPRINTF("Now SOC Power Limit:\n FUNC = %d, SPL %dmW,\n",
 		target_func[TYPE_SPL], power_limit[target_func[TYPE_SPL]].mwatt[TYPE_SPL]);
-	CPRINTF("FUNC = %d, fPPT %dmW,\n FUNC = %d, sPPT %dmW,\n FUNC = %d, p3T %dmW,\n",
-		target_func[TYPE_SPPT], power_limit[target_func[TYPE_SPPT]].mwatt[TYPE_SPPT],
+	CPRINTF(" FUNC = %d, fPPT %dmW,\n FUNC = %d, sPPT %dmW,\n FUNC = %d, p3T %dmW,\n",
 		target_func[TYPE_FPPT], power_limit[target_func[TYPE_FPPT]].mwatt[TYPE_FPPT],
+		target_func[TYPE_SPPT], power_limit[target_func[TYPE_SPPT]].mwatt[TYPE_SPPT],
 		target_func[TYPE_P3T], power_limit[target_func[TYPE_P3T]].mwatt[TYPE_P3T]);
 
 #ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
-	CPRINTF("FUNC = %d, ao_sppt %dmW\n",
+	CPRINTF(" FUNC = %d, ao_sppt %dmW\n",
 		target_func[TYPE_APU_ONLY_SPPT],
 		power_limit[target_func[TYPE_APU_ONLY_SPPT]].mwatt[TYPE_APU_ONLY_SPPT]);
 
-	CPRINTF("stt_table = %d\n", (*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER)));
+	CPRINTF(" stt_table = %d\n", (*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER)));
+	CPRINTF(" d_notify = %d\n", (*host_get_memmap(EC_MEMMAP_DGPU_DX_STATUS)));
 #endif
 
 	if (argc >= 2) {
