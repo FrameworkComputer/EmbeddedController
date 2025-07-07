@@ -87,6 +87,47 @@ check_spidev() {
   exit "${EXIT_PRECONDITION}"
 }
 
+stop_services() {
+  if [[ "$(os)" == "android" ]]; then
+    echo "# Stopping vendor.biometrics.fingerprint-service.crosfp"
+    stop vendor.biometrics.fingerprint-service.crosfp
+    return 0
+  fi
+
+  if [[ "${FLAGS_services}" -eq "${FLAGS_TRUE}" ]]; then
+    echo "# Stopping biod"
+    stop biod
+  fi
+  echo "# Stopping timberslide"
+  stop timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
+}
+
+start_services() {
+  if [[ "$(os)" == "android" ]]; then
+    echo "# Restarting vendor.biometrics.fingerprint-service.crosfp"
+    start vendor.biometrics.fingerprint-service.crosfp
+    return 0
+  fi
+
+  if [[ "${FLAGS_services}" -eq "${FLAGS_TRUE}" ]]; then
+  echo "# Restarting timberslide"
+  start timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
+    echo "# Restarting biod"
+    start biod
+  fi
+}
+
+echo_service_warning() {
+  if [[ "$(os)" == "android" ]]; then
+    echo "Try 'stop vendor.biometrics.fingerprint-service.crosfp'" >&2
+  else
+    echo "Try 'stop biod' and" >&2
+    echo "'stop timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log'" >&2
+  fi
+
+  echo "before running this script." >&2
+}
+
 check_hardware_write_protect_disabled() {
   local hardware_write_protect_state
   if ! hardware_write_protect_state="$(crossystem wpsw_cur)"; then
@@ -1386,12 +1427,7 @@ main() {
   # Ensure hardware write-protect is disabled.
   check_hardware_write_protect_disabled
 
-  if [[ "${FLAGS_services}" -eq "${FLAGS_TRUE}" ]]; then
-    echo "# Stopping biod"
-    stop biod
-  fi
-  echo "# Stopping timberslide"
-  stop timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
+  stop_services
 
   # If cros-ec driver isn't bound on startup, this means the final rebinding
   # may fail.
@@ -1403,14 +1439,11 @@ main() {
   fi
   local files_open
   # Ensure no processes have cros_fp device or debug device open.
-  # This might be biod and/or timberslide.
   if files_open=$(proc_open_file "/dev/cros_fp|/sys/kernel/debug/cros_fp/.*")
   then
     echo "WARNING: Another process has a cros_fp device file open." >&2
     echo "${files_open}" >&2
-    echo "Try 'stop biod' and" >&2
-    echo "'stop timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log'" >&2
-    echo "before running this script." >&2
+    echo_service_warning
     echo "See b/188985272." >&2
   fi
   # Ensure no processes are using the raw driver. This might be a wedged
@@ -1439,12 +1472,7 @@ main() {
     "${chip_type}"
   ret=$?
 
-  if [[ "${FLAGS_services}" -eq "${FLAGS_TRUE}" ]]; then
-  echo "# Restarting timberslide"
-  start timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
-    echo "# Restarting biod"
-    start biod
-  fi
+  start_services
 
   exit "${ret}"
 }
