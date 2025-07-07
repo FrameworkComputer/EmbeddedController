@@ -81,8 +81,11 @@ static void charger_chips_init(void)
 	}
 
 	/* TODO: Need to be replaced with charger api and macro */
+	/* 0x3F*/
+	charger_set_input_current_limit(CHARGER_SOLO, 500);
+
 	/* 0x14 */
-	charger_set_current(CHARGER_SOLO, 4000);
+	charger_set_current(CHARGER_SOLO, bi->precharge_current);
 
 	/* 0x15 */
 	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
@@ -92,11 +95,6 @@ static void charger_chips_init(void)
 	/* 0x18 */
 	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
 		BQ25770_REG_GATEDRIVE, 0x4C4C))
-		goto init_fail;
-
-	/* 0x1A */
-	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
-		BQ25770_REG_AUTO_CHARGE, 0x1DC3))
 		goto init_fail;
 
 	/* 0x31 */
@@ -128,18 +126,20 @@ static void charger_chips_init(void)
 		BQ25720_REG_CHARGE_OPTION_4, option4))
 		goto init_fail;
 
+	/* 0x1A */
+	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
+		BQ25770_REG_AUTO_CHARGE, 0x1DC3))
+		goto init_fail;
+
 	/* 0x3D */
 	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
-		BQ25710_REG_INPUT_VOLTAGE, 0x0280))
+		BQ25710_REG_INPUT_VOLTAGE, VINDPM_TO_REG(3200) << 2))
 		goto init_fail;
 
 	/* 0x3E */
 	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
 		BQ25710_REG_MIN_SYSTEM_VOLTAGE, 0x0A50))
 		goto init_fail;
-
-	/* 0x3F*/
-	charger_set_input_current_limit(CHARGER_SOLO, 8000);
 
 	/* 0x61 */
 	if (i2c_write16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
