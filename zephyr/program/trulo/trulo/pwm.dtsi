@@ -1,0 +1,17 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * These PWM channels exist in the trulo reference, so are included
+ * in generated.dtsi from arbitrage but are not used on the ORB.
+ */
+&pwm1 {
+	status = "disabled";
+};
+
+&pwm6 {
+	status = "disabled";
+};
+

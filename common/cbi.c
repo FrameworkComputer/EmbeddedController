@@ -186,13 +186,15 @@ int cbi_get_board_info(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size)
 {
 	const struct cbi_data *d;
 
-	if (cbi_read())
+	if (cbi_read()) {
 		return EC_ERROR_UNKNOWN;
+	}
 
 	d = cbi_find_tag(cbi, tag);
-	if (!d)
+	if (!d) {
 		/* Not found */
 		return EC_ERROR_UNKNOWN;
+	}
 	if (*size < d->size)
 		/* Insufficient buffer size */
 		return EC_ERROR_INVAL;
@@ -282,21 +284,6 @@ int cbi_get_model_id(uint32_t *id)
 	uint8_t size = sizeof(*id);
 
 	return cbi_get_board_info(CBI_TAG_MODEL_ID, (uint8_t *)id, &size);
-}
-
-test_mockable int cbi_get_fw_config(uint32_t *fw_config)
-{
-	uint8_t size = sizeof(*fw_config);
-
-	return cbi_get_board_info(CBI_TAG_FW_CONFIG, (uint8_t *)fw_config,
-				  &size);
-}
-
-test_mockable int cbi_get_ssfc(uint32_t *ssfc)
-{
-	uint8_t size = sizeof(*ssfc);
-
-	return cbi_get_board_info(CBI_TAG_SSFC, (uint8_t *)ssfc, &size);
 }
 
 int cbi_get_pcb_supplier(uint32_t *pcb_supplier)

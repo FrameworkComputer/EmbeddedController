@@ -6,14 +6,15 @@ description: |
   Runtime keys definition.
 
   This can be used to define the key combinations that trigger runtime key
-  events for reboot and hibernate.
+  events for reboot and hibernate. Note that the volume up key combination is
+  obtained automatically from the Vivaldi configuration node, which allows
+  selecting different mappings at boot time..
 
   Example configuration:
 
   kbd {
       runtime-keys {
           compatible = "cros-ec,runtime-keys";
-          vol-up-rc = <KBD_RC(0, 4)>;
           left-alt-rc = <KBD_RC(0, 10)>;
           right-alt-rc = <KBD_RC(6, 10)>;
           h-rc = <KBD_RC(1, 6)>;
@@ -26,11 +27,6 @@ compatible: "cros-ec,runtime-keys"
 include: base.yaml
 
 properties:
-  vol-up-rc:
-    type: int
-    required: true
-    description: Row-column position of the "volume up" key.
-
   left-alt-rc:
     type: int
     required: true

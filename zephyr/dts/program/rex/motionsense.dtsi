@@ -89,7 +89,7 @@
 					compatible =
 					"cros-ec,accelgyro-als-channel-scale";
 						k-channel-scale = <1>;
-						cover-scale = <1>;
+						cover-scale = "1.0f";
 					};
 				};
 			};
@@ -108,32 +108,32 @@
 
 				rgb-cal-x {
 					offset = <0>;
-					coeff = <0 0 0 1>;
+					coeff = "0", "0", "0", "1";
 					als-channel-scale {
 					compatible =
 					"cros-ec,accelgyro-als-channel-scale";
 						k-channel-scale = <1>;
-						cover-scale = <1>;
+						cover-scale = "1.0f";
 					};
 				};
 				rgb-cal-y {
 					offset = <0>;
-					coeff = <0 0 0 1>;
+					coeff = "0", "0", "0", "1";
 					als-channel-scale {
 					compatible =
 					"cros-ec,accelgyro-als-channel-scale";
 						k-channel-scale = <1>;
-						cover-scale = <1>;
+						cover-scale = "1.0f";
 					};
 				};
 				rgb-cal-z {
 					offset = <0>;
-					coeff = <0 0 0 1>;
+					coeff = "0", "0", "0", "1";
 					als-channel-scale {
 					compatible =
 					"cros-ec,accelgyro-als-channel-scale";
 						k-channel-scale = <1>;
-						cover-scale = <1>;
+						cover-scale = "1.0f";
 					};
 				};
 			};

@@ -74,13 +74,13 @@ static int mpu_add_static_rollback_regions(void)
 	 */
 	const struct z_arm_mpu_partition rollback_regions[] = {
 		{
-			.start = CONFIG_FLASH_BASE_ADDRESS +
+			.start = CONFIG_MAPPED_STORAGE_BASE +
 				 DT_REG_ADDR(DT_NODELABEL(rollback0)),
 			.size = DT_REG_SIZE(DT_NODELABEL(rollback0)),
 			.attr = K_MEM_PARTITION_P_NA_U_NA,
 		},
 		{
-			.start = CONFIG_FLASH_BASE_ADDRESS +
+			.start = CONFIG_MAPPED_STORAGE_BASE +
 				 DT_REG_ADDR(DT_NODELABEL(rollback1)),
 			.size = DT_REG_SIZE(DT_NODELABEL(rollback1)),
 			.attr = K_MEM_PARTITION_P_NA_U_NA,
@@ -105,7 +105,7 @@ static int mpu_add_static_rollback_regions(void)
 	for (int index = 0; index < 7; index++) {
 		MPU->RNR = index;
 		if ((MPU->RBAR & MPU_RBAR_ADDR_Msk) ==
-		    CONFIG_FLASH_BASE_ADDRESS +
+		    CONFIG_MAPPED_STORAGE_BASE +
 			    DT_REG_ADDR(DT_NODELABEL(rollback0))) {
 			mpu_static_rollback_region_id = index;
 			LOG_DBG("Rollback MPU regions start at %d", index);

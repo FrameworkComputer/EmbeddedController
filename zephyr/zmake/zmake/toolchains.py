@@ -22,7 +22,7 @@ class GenericToolchain:
         self.name = name
         self.modules = modules or {}
 
-    def probe(self):  # pylint: disable=no-self-use
+    def probe(self):
         """Probe if the toolchain is available on the system."""
         # Since the toolchain is not known to zmake, we have no way to
         # know if it's installed.  Simply return False to indicate not

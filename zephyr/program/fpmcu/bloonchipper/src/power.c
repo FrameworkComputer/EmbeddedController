@@ -14,6 +14,8 @@
 #include <zephyr/pm/device.h>
 #include <zephyr/pm/policy.h>
 
+#include <stm32f4xx_ll_rcc.h>
+
 static struct k_work slp_event_work;
 static struct gpio_callback slp_event_callback;
 static struct gpio_callback slp_alt_event_callback;
@@ -104,3 +106,12 @@ static int gpio_init(void)
 	return 0;
 }
 SYS_INIT(gpio_init, POST_KERNEL, CONFIG_APPLICATION_INIT_PRIORITY);
+
+/* Switch the MCO2 source clock to HSE, because it reduces power consumption. */
+static int mco2_init(void)
+{
+	LL_RCC_ConfigMCO(LL_RCC_MCO2SOURCE_HSE, LL_RCC_MCO2_DIV_1);
+
+	return 0;
+}
+SYS_INIT(mco2_init, POST_KERNEL, CONFIG_APPLICATION_INIT_PRIORITY);

@@ -1,0 +1,1 @@
+../../zephyr/scripts/firmware_builder_lib.py

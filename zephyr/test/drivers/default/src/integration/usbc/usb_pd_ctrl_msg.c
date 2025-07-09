@@ -146,7 +146,17 @@ ZTEST_SUITE(usb_pd_ctrl_msg_test_source, drivers_predicate_post_main,
 	    usb_pd_ctrl_msg_source_setup, usb_pd_ctrl_msg_before,
 	    usb_pd_ctrl_msg_after, NULL);
 
-ZTEST_F(usb_pd_ctrl_msg_test_sink, test_verify_vconn_swap)
+/**
+ * @brief Verifies TCPM accepts Vconn swap when it is Vconn Source
+ *
+ * @details
+ *  - TCPM is configured initially as Vconn Source
+ *  - Partner requests VConn Swap
+ *
+ * Expected Results
+ *  - VCONN Swap accepted
+ */
+ZTEST_F(usb_pd_ctrl_msg_test_sink, test_vconn_swap)
 {
 	struct usb_pd_ctrl_msg_test_fixture *super_fixture = &fixture->fixture;
 	struct ec_response_typec_status snk_resp = { 0 };
@@ -169,7 +179,48 @@ ZTEST_F(usb_pd_ctrl_msg_test_sink, test_verify_vconn_swap)
 		      "SNK Returned vconn_role=%u", snk_resp.vconn_role);
 }
 
-ZTEST_F(usb_pd_ctrl_msg_test_sink, test_verify_pr_swap)
+/**
+ * @brief Verifies TCPM obeys the board policy when it is Vconn Sink
+ *
+ * @details
+ *  - TCPM is configured initially as Vconn Sink
+ *  - Partner requests VConn Swap
+ *  - Board policy rejects Vconn Swap
+ *
+ * Expected Results
+ *  - VCONN Swap rejected
+ */
+ZTEST_F(usb_pd_ctrl_msg_test_source, test_vconn_swap_reject)
+{
+	struct usb_pd_ctrl_msg_test_fixture *super_fixture = &fixture->fixture;
+	struct ec_response_typec_status typec_status = { 0 };
+	int rv = 0;
+
+	/* pd_check_vconn_swap() in the test environment rejects Vconn swap in
+	 * G3 */
+	test_set_chipset_to_g3();
+	k_sleep(K_SECONDS(1));
+
+	typec_status = host_cmd_typec_status(TEST_USB_PORT);
+
+	zassert_equal(PD_ROLE_VCONN_OFF, typec_status.vconn_role,
+		      "Returned vconn_role=%u", typec_status.vconn_role);
+
+	/* Send VCONN_SWAP request, pd_check_vconn_swap() should reject
+	 * this because device is in G3 */
+	rv = tcpci_partner_send_control_msg(&super_fixture->partner_emul,
+					    PD_CTRL_VCONN_SWAP, 0);
+	zassert_ok(rv, "Failed to send VCONN_SWAP request, rv=%d", rv);
+
+	k_sleep(K_SECONDS(1));
+
+	typec_status = host_cmd_typec_status(TEST_USB_PORT);
+
+	zassert_equal(PD_ROLE_VCONN_OFF, typec_status.vconn_role,
+		      "Returned vconn_role=%u", typec_status.vconn_role);
+}
+
+ZTEST_F(usb_pd_ctrl_msg_test_sink, test_pr_swap)
 {
 	struct usb_pd_ctrl_msg_test_fixture *super_fixture = &fixture->fixture;
 	struct ec_response_typec_status snk_resp = { 0 };
@@ -216,7 +267,7 @@ ZTEST_F(usb_pd_ctrl_msg_test_sink, test_verify_pr_swap)
  * Expected Results
  *  - TypeC status query returns PD_ROLE_DFP
  */
-ZTEST_F(usb_pd_ctrl_msg_test_sink, test_verify_dr_swap)
+ZTEST_F(usb_pd_ctrl_msg_test_sink, test_dr_swap)
 {
 	struct ec_response_typec_status typec_status =
 		host_cmd_typec_status(TEST_USB_PORT);
@@ -238,7 +289,7 @@ ZTEST_F(usb_pd_ctrl_msg_test_sink, test_verify_dr_swap)
  * Expected Results
  *  - Data role does not change on TEST_USB_PORT after DR Swap request.
  */
-ZTEST_F(usb_pd_ctrl_msg_test_source, test_verify_dr_swap_rejected)
+ZTEST_F(usb_pd_ctrl_msg_test_source, test_dr_swap_rejected)
 {
 	struct usb_pd_ctrl_msg_test_fixture *super_fixture = &fixture->fixture;
 	struct ec_response_typec_status typec_status = { 0 };
@@ -274,7 +325,7 @@ ZTEST_F(usb_pd_ctrl_msg_test_source, test_verify_dr_swap_rejected)
  * Expected Results
  *  - Data role changes after DPM DR Swap request
  */
-ZTEST_F(usb_pd_ctrl_msg_test_source, test_verify_dpm_dr_swap)
+ZTEST_F(usb_pd_ctrl_msg_test_source, test_dpm_dr_swap)
 {
 	struct ec_response_typec_status typec_status = { 0 };
 
@@ -301,7 +352,7 @@ ZTEST_F(usb_pd_ctrl_msg_test_source, test_verify_dpm_dr_swap)
  * Expected Results
  *  - TypeC Status Host Command reveals sink capabilility PDOs.
  */
-ZTEST(usb_pd_ctrl_msg_test_source, test_verify_dpm_get_sink_cap)
+ZTEST(usb_pd_ctrl_msg_test_source, test_dpm_get_sink_cap)
 {
 	struct ec_response_typec_status typec_status = { 0 };
 
@@ -322,7 +373,7 @@ ZTEST(usb_pd_ctrl_msg_test_source, test_verify_dpm_get_sink_cap)
  * Expected Results
  *  - TypeC Status Host Command reveals sink capabilility PDOs.
  */
-ZTEST(usb_pd_ctrl_msg_test_sink, test_verify_get_sink_cap)
+ZTEST(usb_pd_ctrl_msg_test_sink, test_get_sink_cap)
 {
 	struct ec_response_typec_status typec_status = { 0 };
 
@@ -342,7 +393,7 @@ ZTEST(usb_pd_ctrl_msg_test_sink, test_verify_get_sink_cap)
  * Expected Results
  *  - BIST occurs and we transition back to READY state
  */
-ZTEST_F(usb_pd_ctrl_msg_test_source, test_verify_bist_tx_mode2)
+ZTEST_F(usb_pd_ctrl_msg_test_source, test_bist_tx_mode2)
 {
 	struct usb_pd_ctrl_msg_test_fixture *super_fixture = &fixture->fixture;
 	uint32_t bdo = BDO(BDO_MODE_CARRIER2, 0);
@@ -369,7 +420,7 @@ ZTEST_F(usb_pd_ctrl_msg_test_source, test_verify_bist_tx_mode2)
  * Expected Results
  *  - Partner remains in BIST_TX state until hard reset is received.
  */
-ZTEST_F(usb_pd_ctrl_msg_test_source, test_verify_bist_tx_test_data)
+ZTEST_F(usb_pd_ctrl_msg_test_source, test_bist_tx_test_data)
 {
 	struct usb_pd_ctrl_msg_test_fixture *super_fixture = &fixture->fixture;
 	uint32_t bdo = BDO(BDO_MODE_TEST_DATA, 0);

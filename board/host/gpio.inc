@@ -37,3 +37,6 @@ GPIO(I2C_SCL,             PIN(0, 16),  GPIO_INPUT)
 GPIO(I2C_SDA,             PIN(0, 17),  GPIO_INPUT)
 
 GPIO(EC_CBI_WP,           PIN(0, 18), GPIO_OUT_LOW)
+
+GPIO(USB_C0_5V_EN,        PIN(0,20), GPIO_INPUT)
+GPIO(USB_C1_5V_EN,        PIN(0,21), GPIO_INPUT)

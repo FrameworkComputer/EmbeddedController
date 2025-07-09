@@ -370,7 +370,7 @@ class Executor:
         This function will run the function provided in the append() function.
         The result value of the function will be used to determine the
         Executor's result value. If the function throws any exception it will be
-        caught and -1 will be used as the assumed result value.
+        caught and 1 will be used as the assumed result value.
 
         Args:
             func: The function to run.
@@ -379,7 +379,7 @@ class Executor:
             result = func()
         except Exception as e:  # pylint: disable=broad-except
             self.logger.exception(e)
-            result = -1
+            result = 1
         with self.lock:
             self.results.append(result)
             self.lock.notify_all()

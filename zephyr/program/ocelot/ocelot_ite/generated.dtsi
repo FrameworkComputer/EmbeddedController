@@ -1,0 +1,322 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * This file is auto-generated - do not edit!
+ */
+
+/ {
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_c_chrg_amon_bmon_r: c_chrg_amon_bmon_r {
+			io-channels = <&adc0 1>;
+		};
+		adc_vr_temp_v_1p05_pch_ec_r: vr_temp_v_1p05_pch_ec_r {
+			io-channels = <&adc0 2>;
+		};
+		adc_skin_therm_in_r: skin_therm_in_r {
+			io-channels = <&adc0 3>;
+		};
+		adc_ddr_temp_ec_5v_r: ddr_temp_ec_5v_r {
+			io-channels = <&adc0 4>;
+		};
+		adc_ambient_therm_in0_r: ambient_therm_in0_r {
+			io-channels = <&adc0 5>;
+		};
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_all_sys_pwrgd_r: all_sys_pwrgd_r {
+			gpios = <&gpiod 5 (GPIO_INPUT)>;
+		};
+		gpio_bat_det_r: bat_det_r {
+			gpios = <&gpioe 5 (GPIO_INPUT)>;
+		};
+		gpio_bga_pina10: bga_pina10 {
+			gpios = <&gpiof 2 (GPIO_INPUT)>;
+		};
+		gpio_bga_pinb1: bga_pinb1 {
+			gpios = <&gpiof 6 (GPIO_INPUT)>;
+		};
+		gpio_bga_pinb4: bga_pinb4 {
+			gpios = <&gpioe 4 (GPIO_INPUT)>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_bga_pinc1: bga_pinc1 {
+			gpios = <&gpiof 7 (GPIO_INPUT)>;
+		};
+		gpio_bga_pine5: bga_pine5 {
+			gpios = <&gpioc 0 (GPIO_INPUT)>;
+		};
+		gpio_bga_pinf4: bga_pinf4 {
+			gpios = <&gpiog 1 (GPIO_INPUT)>;
+		};
+		gpio_bga_pinm1: bga_pinm1 {
+			gpios = <&gpioe 6 (GPIO_INPUT)>;
+		};
+		gpio_bga_pinm2: bga_pinm2 {
+			gpios = <&gpioc 7 (GPIO_INPUT)>;
+		};
+		gpio_bga_pinn1: bga_pinn1 {
+			gpios = <&gpiod 0 (GPIO_INPUT)>;
+		};
+		gpio_cpu_c10_gate_r: cpu_c10_gate_r {
+			gpios = <&gpioj 0 (GPIO_INPUT)>;
+		};
+		gpio_c_ec_pdb_ctrl_r: c_ec_pdb_ctrl_r {
+			gpios = <&gpioh 0 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_c_ec_wp_odl_r: c_ec_wp_odl_r {
+			gpios = <&gpiob 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_c_edp_bklt_en_r: c_edp_bklt_en_r {
+			gpios = <&gpioc 6 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
+		};
+		gpio_c_en_pp5000_typea_r: c_en_pp5000_typea_r {
+			gpios = <&gpiof 4 (GPIO_INPUT)>;
+		};
+		gpio_c_ioex_kbd_intr_r: c_ioex_kbd_intr_r {
+			gpios = <&gpioi 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_ds3_r: ec_ds3_r {
+			gpios = <&gpioi 7 (GPIO_INPUT)>;
+			enum-name = "GPIO_TEMP_SENSOR_POWER";
+		};
+		gpio_ec_fan_pwr_disable_n_r: ec_fan_pwr_disable_n_r {
+			gpios = <&gpioc 4 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_ish_int_odl_c_ec_ish_alert_r: ec_ish_int_odl_c_ec_ish_alert_r {
+			gpios = <&gpioh 6 (GPIO_INPUT)>;
+		};
+		gpio_ec_slatemode_hallout_snsr_r: ec_slatemode_hallout_snsr_r {
+			gpios = <&gpiod 1 (GPIO_INPUT)>;
+		};
+		gpio_en_slp_z_r: en_slp_z_r {
+			gpios = <&gpiod 4 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
+		};
+		gpio_fmiso_r: fmiso_r {
+			gpios = <&gpiog 5 (GPIO_INPUT | GPIO_PULL_UP)>;
+		};
+		gpio_fmosi_r: fmosi_r {
+			gpios = <&gpiog 4 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+		};
+		gpio_fsce_l_r: fsce_l_r {
+			gpios = <&gpiog 3 (GPIO_INPUT | GPIO_PULL_UP)>;
+		};
+		gpio_fsck_r: fsck_r {
+			gpios = <&gpiog 7 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+		};
+		gpio_gpg0: gpg0 {
+			gpios = <&gpiog 0 (GPIO_INPUT)>;
+		};
+		gpio_gpg2_r: gpg2_r {
+			gpios = <&gpiog 2 (GPIO_INPUT)>;
+		};
+		gpio_gpg6_r: gpg6_r {
+			gpios = <&gpiog 6 (GPIO_INPUT)>;
+		};
+		gpio_io_exp_int_mecc_r: io_exp_int_mecc_r {
+			gpios = <&gpioh 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_pch_pwrok_ec_r: pch_pwrok_ec_r {
+			gpios = <&gpioj 1 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		gpio_pch_slp_s0_n_r: pch_slp_s0_n_r {
+			gpios = <&gpioj 5 (GPIO_INPUT)>;
+		};
+		gpio_pm_pwrbtn_n_r: pm_pwrbtn_n_r {
+			gpios = <&gpioe 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		gpio_pm_rsmrst_n_r: pm_rsmrst_n_r {
+			gpios = <&gpiob 2 (GPIO_INPUT)>;
+		};
+		gpio_pm_slp_s3_n_r: pm_slp_s3_n_r {
+			gpios = <&gpioh 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_pm_slp_s4_n_r: pm_slp_s4_n_r {
+			gpios = <&gpioh 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_prochot_ec_n_r: prochot_ec_n_r {
+			gpios = <&gpioi 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_rsmrst_pwrgd_n_r: rsmrst_pwrgd_n_r {
+			gpios = <&gpiof 0 (GPIO_INPUT)>;
+		};
+		gpio_rst_push_n_d_r: rst_push_n_d_r {
+			gpios = <&gpioj 7 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_smc_extsmi_n_c_ec_pch_int_odl_r: smc_extsmi_n_c_ec_pch_int_odl_r {
+			gpios = <&gpioj 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_smc_lid_r: smc_lid_r {
+			gpios = <&gpiod 3 (GPIO_INPUT)>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		gpio_smc_wake_sci_n_r: smc_wake_sci_n_r {
+			gpios = <&gpiob 6 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_std_adpt_cntrl_gpio_r: std_adpt_cntrl_gpio_r {
+			gpios = <&gpioa 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
+		};
+		gpio_std_adp_prsnt_r: std_adp_prsnt_r {
+			gpios = <&gpioa 6 (GPIO_INPUT)>;
+		};
+		gpio_sys_pwrok_ec_r: sys_pwrok_ec_r {
+			gpios = <&gpiof 1 (GPIO_INPUT)>;
+		};
+		gpio_virtual_battery_r: virtual_battery_r {
+			gpios = <&gpiod 7 (GPIO_INPUT)>;
+		};
+		gpio_volume_up_r: volume_up_r {
+			gpios = <&gpioa 4 (GPIO_INPUT)>;
+			enum-name = "GPIO_VOLUME_UP_L";
+		};
+		gpio_vol_dn_ec_r: vol_dn_ec_r {
+			gpios = <&gpioa 0 (GPIO_INPUT)>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		};
+		gpio_wc_usbc_pd_alrt_aic1_r: wc_usbc_pd_alrt_aic1_r {
+			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_wc_usbc_pd_alrt_aic2_r: wc_usbc_pd_alrt_aic2_r {
+			gpios = <&gpioj 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_x00085: x00085 {
+			gpios = <&gpioj 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_bga_pina5: bga_pina5 {
+			i2c-port = <&i2c0>;
+		};
+		i2c_wc_usbc_pd_clk_aic1_r: wc_usbc_pd_clk_aic1_r {
+			i2c-port = <&i2c1>;
+		};
+		i2c_wc_usbc_pd_clk_aic2_r: wc_usbc_pd_clk_aic2_r {
+			i2c-port = <&i2c3>;
+		};
+		i2c_smb_bs_clk_r: smb_bs_clk_r {
+			i2c-port = <&i2c4>;
+		};
+		i2c_c_ish_ec_clk_r: c_ish_ec_clk_r {
+			i2c-port = <&i2c5>;
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_ch1_gpi1_default
+		&adc0_ch2_gpi2_default
+		&adc0_ch3_gpi3_default
+		&adc0_ch4_gpi4_default
+		&adc0_ch5_gpi5_default>;
+	pinctrl-names = "default";
+};
+
+&i2c0 {
+	status = "okay";
+	pinctrl-0 = <&i2c0_clk_gpb3_default
+		&i2c0_data_gpb4_default>;
+	pinctrl-names = "default";
+};
+
+&i2c1 {
+	status = "okay";
+	pinctrl-0 = <&i2c1_clk_gpc1_default
+		&i2c1_data_gpc2_default>;
+	pinctrl-names = "default";
+};
+
+&i2c3ALT {
+	status = "okay";
+	pinctrl-0 = <&i2c3_clk_gph1_default
+		&i2c3_data_gph2_default>;
+	pinctrl-names = "default";
+};
+
+&i2c4 {
+	status = "okay";
+	pinctrl-0 = <&i2c4_clk_gpe0_default
+		&i2c4_data_gpe7_default>;
+	pinctrl-names = "default";
+};
+
+&i2c5 {
+	status = "okay";
+	pinctrl-0 = <&i2c5_clk_gpe1_default
+		&i2c5_data_gpe2_default>;
+	pinctrl-names = "default";
+};
+
+&pwm1 {
+	status = "okay";
+	pinctrl-0 = <&pwm1_gpa1_default>;
+	pinctrl-names = "default";
+};
+
+&pwm2 {
+	status = "okay";
+	pinctrl-0 = <&pwm2_gpa2_default>;
+	pinctrl-names = "default";
+};
+
+&pwm3 {
+	status = "okay";
+	pinctrl-0 = <&pwm3_gpa3_default>;
+	pinctrl-names = "default";
+};
+
+&pwm5 {
+	status = "okay";
+	pinctrl-0 = <&pwm5_gpa5_default>;
+	pinctrl-names = "default";
+};
+
+&tach0 {
+	status = "okay";
+	pinctrl-0 = <&tach0a_gpd6_default>;
+	pinctrl-names = "default";
+	channel = <IT8XXX2_TACH_CHANNEL_A>;
+	pulses-per-round = <2>;
+};
+
+&cros_kb_raw {
+	status = "okay";
+	/* No KSO2 (it's inverted and implemented by GPIO) */
+	pinctrl-0 = <
+		&ksi0_default
+		&ksi1_default
+		&ksi2_default
+		&ksi4_default
+		&ksi5_default
+		&ksi6_default
+		&ksi7_default
+		&kso0_default
+		&kso10_default
+		&kso11_default
+		&kso12_default
+		&kso13_default
+		&kso14_default
+		&kso15_default
+		&kso16_default
+		&kso17_default
+		&kso1_default
+		&kso3_default
+		&kso4_default
+		&kso5_default
+		&kso6_default
+		&kso7_default
+		&kso8_default
+		&kso9_default
+	>;
+	pinctrl-names = "default";
+};

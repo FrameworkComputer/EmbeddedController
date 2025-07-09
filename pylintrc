@@ -14,3 +14,8 @@ disable=
     too-many-nested-blocks,
     too-many-statements,
     too-many-instance-attributes
+
+[REPORTS]
+
+reports=no
+score=no

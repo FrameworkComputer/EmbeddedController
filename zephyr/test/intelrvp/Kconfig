@@ -1,0 +1,77 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+choice TEST_PROJECT_TYPE
+	prompt "Select Intel RVP board variant for tests"
+	help
+	  Choose the board variant for which the tests will be compiled and run.
+
+config TEST_PROJECT_MTLRVPP_COMMON
+	bool "Enable tests for board mtlrvp common source code"
+	help
+	  Enable tests specific to the mtlrvp common source code.
+
+config TEST_PROJECT_MTLRVPP_NPCX
+	bool "Enable tests for board mtlrvp_npcx"
+	help
+	  Enable tests specific to the mtlrvp_npcx variant.
+
+config TEST_PROJECT_MTLRVPP_MCHP
+	bool "Enable tests for board mtlrvp_mchp"
+	help
+	  Enable tests specific to the mtlrvp_mchp variant.
+
+config TEST_PROJECT_PTLRVP_MCHP
+	bool "Enable ptlrvp_mchp-specific tests"
+	help
+	  Enable tests specific to the ptlrvp_mchp variant.
+
+endchoice
+
+config TEST_PROJECT_MTL_BOARD_POWER
+	bool "Run tests for board_power.c"
+	help
+	  Include board_power.c into the binary and test its functions.
+
+config TEST_AP_PWRSEQ_PP5500
+        bool "Enable PP5500 rail tests"
+        default n
+        help
+          Enable PP5500 rail tests for board power.
+
+config TEST_PROJECT_INTELRVP_TCPC
+	bool "Run tests for tcpc.c"
+	help
+	  Include tcpc.c into the binary and test its functions.
+
+config TEST_PROJECT_INTELRVP_CHG_USB_PD_MECC
+	bool "Run tests for chg_usb_pd_mecc_1_1.c"
+	help
+	  Include chg_usb_pd_mecc_1_1.c into the binary and test its functions.
+
+config TEST_PROJECT_INTELRVP_DC_JACK
+	bool "Run tests for dc_jack.c"
+	help
+	  Include dc_jack.c into the binary and test its functions.
+
+config TEST_PROJECT_INTELRVP_BOARD_ID
+	bool "Run INTELRVP board id test"
+	help
+	  Run board ID test for INTELRVP.
+
+config TEST_PROJECT_INTELRVP_BOARD_ID_VAL
+	int "Value to be used for board ID test"
+	depends on TEST_PROJECT_INTELRVP_BOARD_ID
+	default 1051 if TEST_PROJECT_MTLRVPP_COMMON
+	default 1078 if TEST_PROJECT_PTLRVP_MCHP
+	help
+	  Value to be used for board ID test.
+
+config TEST_PROJECT_PTL_BOARD_POWER
+	bool "Run tests for board_power.c"
+	depends on TEST_PROJECT_PTLRVP_MCHP
+	help
+	  Include board_power.c into the binary and test its functions.
+
+source "Kconfig.zephyr"

@@ -7,15 +7,25 @@
 #include "hooks.h"
 #include "keyboard_8042_sharedlib.h"
 
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(markarth_kbd, LOG_LEVEL_INF);
+
 /*
  * Keyboard layout decided by FW config.
  */
-static void kb_layout_init(void)
+test_export_static void kb_layout_init(void)
 {
 	int ret;
 	uint32_t val;
 
 	ret = cros_cbi_get_fw_config(FW_KB_LAYOUT, &val);
+	if (ret != 0) {
+		LOG_ERR("Error retrieving CBI FW_CONFIG field %d",
+			FW_KB_LAYOUT);
+		return;
+	}
+
 	/*
 	 * If keyboard is ANSI(KEYBOARD_ANSI), we need translate make code 64
 	 * to 45.And translate 29 to 42

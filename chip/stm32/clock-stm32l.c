@@ -7,6 +7,7 @@
 
 #include "chipset.h"
 #include "clock.h"
+#include "clock_chip.h"
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
@@ -35,12 +36,6 @@ static int fake_hibernate;
  */
 #define MSI_2MHZ_CLOCK BIT(21)
 #define MSI_1MHZ_CLOCK BIT(20)
-
-enum clock_osc {
-	OSC_INIT = 0, /* Uninitialized */
-	OSC_HSI, /* High-speed oscillator */
-	OSC_MSI, /* Med-speed oscillator @ 1 MHz */
-};
 
 static int freq;
 static int current_osc;
@@ -73,7 +68,7 @@ void clock_wait_bus_cycles(enum bus_type bus, uint32_t cycles)
  *
  * @param osc		Oscillator to use
  */
-static void clock_set_osc(enum clock_osc osc)
+void clock_set_osc(enum clock_osc osc, enum clock_osc pll_osc)
 {
 	uint32_t tmp_acr;
 
@@ -211,7 +206,7 @@ test_mockable void clock_enable_module(enum module_id module, int enable)
 		/* Flush UART before switching clock speed */
 		cflush();
 
-		clock_set_osc(new_mask ? OSC_HSI : OSC_MSI);
+		clock_set_osc(new_mask ? OSC_HSI : OSC_MSI, OSC_INIT);
 	}
 
 	if (module == MODULE_USB) {
@@ -345,7 +340,7 @@ void clock_init(void)
 	 */
 
 	/* Switch to high-speed oscillator */
-	clock_set_osc(1);
+	clock_set_osc(OSC_HSI, OSC_INIT);
 }
 
 static void clock_chipset_startup(void)
@@ -368,9 +363,9 @@ static int command_clock(int argc, const char **argv)
 {
 	if (argc >= 2) {
 		if (!strcasecmp(argv[1], "hsi"))
-			clock_set_osc(OSC_HSI);
+			clock_set_osc(OSC_HSI, OSC_INIT);
 		else if (!strcasecmp(argv[1], "msi"))
-			clock_set_osc(OSC_MSI);
+			clock_set_osc(OSC_MSI, OSC_INIT);
 		else
 			return EC_ERROR_PARAM1;
 	}

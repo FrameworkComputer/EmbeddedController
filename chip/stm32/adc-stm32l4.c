@@ -85,7 +85,7 @@ static void adc_init(void)
 	/* Enable ADC clock */
 	clock_enable_module(MODULE_ADC, 1);
 
-	/* set ADC clock to 20MHz */
+	/* Set ADC clock to 1/4 of SYSCLK (CPU_CLOCK) */
 	STM32_ADC1_CCR &= ~0x003C0000;
 	STM32_ADC1_CCR |= 0x00080000;
 
@@ -175,6 +175,14 @@ int adc_read_channel(enum adc_channel ch)
 			if (wait_loop_index-- == 0)
 				break;
 		}
+
+		/*
+		 * At least four ADC clock cycles must pass between end of
+		 * calibration and enabling the ADC.  1us delay will be enough
+		 * as long as ADC clock is at least 4MHz, that is SYSCLK
+		 * (CPU_CLOCK) is at least 16MHz.
+		 */
+		udelay(1);
 
 		/* Enable ADC */
 		stm32_adc1_isr_clear(STM32_ADC1_ISR_ADRDY);

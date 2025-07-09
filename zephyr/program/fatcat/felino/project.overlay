@@ -1,0 +1,73 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* fatcat program common DTS includes */
+
+#include <cros/integrated_fwid.dtsi>
+
+/* felino project DTS includes */
+
+#include "gpios.dtsi"
+#include "include/board.h"
+
+/ {
+	named-gpios {
+		/*
+		 * Aliases for power signal names
+		 */
+		en_pp3300_a: en_s5_rails {};
+		en_pp5000_s5: v5p0a_en {};
+		rsmrst_pwrgd: vccprim_io_pgood {};
+		ec_pch_rsmrst_l: ec_rsmrst_l {};
+		pch_slp_s0_n: sys_slp_s0ix_l {};
+		ec_pch_pwrok_od: ec_pch_pwrok {};
+		all_sys_pwrgd: vcc_ddr_pwrok {};
+		pwrbtn: gsc_ec_pwr_btn_odl {};
+	};
+};
+
+#include "adc.dtsi"
+#include "console.dtsi"
+#include "i2c.dtsi"
+#include "interrupts.dtsi"
+#include "power_signals.dtsi"
+#include "usb_typec.dtsi"
+
+/* these need to be promoted to program.conf */
+
+#include "binman.dtsi"
+
+/* Felino overrides follow... */
+
+/ {
+	batteries {
+		default_battery: smp-ap23b7q {
+			compatible = "smp,ap23b7q", "battery-smart";
+		};
+		lges-ap22a8n {
+			compatible = "lges,ap22a8n", "battery-smart";
+		};
+		smp_ap23a7l {
+			compatible = "smp,ap23a7l", "battery-smart";
+		};
+		lges-ap23a8l {
+			compatible = "lges,ap23a8l", "battery-smart";
+		};
+	};
+
+	usba-port-enable-list {
+		compatible = "cros-ec,usba-port-enable-pins";
+		enable-pins = <&gpio_en_pp5000_usba>;
+	};
+};
+
+/* AP interface */
+&espi0 {
+	status = "okay";
+};
+
+&sha0 {
+	status = "okay";
+};

@@ -8,6 +8,7 @@
 #include "common.h"
 #include "console.h"
 #include "queue.h"
+#include "queue_policies.h"
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
@@ -415,10 +416,91 @@ static int test_queue8_iterate_next_reset_on_change(void)
 	return EC_SUCCESS;
 }
 
+static int num_consumer_invocations;
+static size_t last_consumer_invocation_count;
+
+static void test_consumer_written(struct consumer const *consumer, size_t count)
+{
+	num_consumer_invocations++;
+	last_consumer_invocation_count = count;
+}
+
+static struct consumer const test_consumer_unbuffered;
+static struct queue const test_queue_unbuffered =
+	QUEUE_DIRECT(16, int8_t, null_producer, test_consumer_unbuffered);
+static struct consumer const test_consumer_unbuffered = {
+	.queue = &test_queue_unbuffered,
+	.ops = &((struct consumer_ops const){
+		.written = test_consumer_written,
+	}),
+};
+
+static struct consumer const test_consumer_buffered;
+static struct queue const test_queue_buffered =
+	QUEUE_DIRECT(16, int8_t, null_producer, test_consumer_buffered);
+static struct consumer const test_consumer_buffered = {
+	.queue = &test_queue_buffered,
+	.ops = &((struct consumer_ops const){
+		.written = test_consumer_written,
+	}),
+};
+
+static int test_queue_flush_unbuffered(void)
+{
+	struct queue const *q = &test_queue_unbuffered;
+	int8_t data[2] = { 17, 42 };
+	num_consumer_invocations = 0;
+
+	TEST_ASSERT(!is_queue_buffered(q));
+
+	/* Writing two bytes should result in notifying consumer. */
+	queue_add_units(q, data, 2);
+	TEST_EQ(num_consumer_invocations, 1, "%d");
+	TEST_EQ(last_consumer_invocation_count, (size_t)2, "%zu");
+
+	/* Writing zero bytes should not notify consumer. */
+	queue_add_units(q, data, 0);
+	TEST_EQ(num_consumer_invocations, 1, "%d");
+
+	/* Flushing should not notify consumer. */
+	queue_flush(q);
+	TEST_EQ(num_consumer_invocations, 1, "%d");
+
+	return EC_SUCCESS;
+}
+
+static int test_queue_flush_buffered(void)
+{
+	struct queue const *q = &test_queue_buffered;
+	int8_t data[2] = { 17, 42 };
+	num_consumer_invocations = 0;
+
+	TEST_ASSERT(is_queue_buffered(q));
+
+	/* Writing two bytes should result in notifying consumer. */
+	queue_add_units(q, data, 2);
+	TEST_EQ(num_consumer_invocations, 1, "%d");
+	TEST_EQ(last_consumer_invocation_count, (size_t)2, "%zu");
+
+	/* Writing zero bytes should not notify consumer. */
+	queue_add_units(q, data, 0);
+	TEST_EQ(num_consumer_invocations, 1, "%d");
+
+	/* Flushing should notify consumer of "zero bytes added". */
+	queue_flush(q);
+	TEST_EQ(num_consumer_invocations, 2, "%d");
+	TEST_EQ(last_consumer_invocation_count, (size_t)0, "%zu");
+
+	return EC_SUCCESS;
+}
+
 void before_test(void)
 {
 	queue_init(&test_queue2);
 	queue_init(&test_queue8);
+	queue_init(&test_queue_unbuffered);
+	queue_init(&test_queue_buffered);
+	queue_enable_buffered_mode(&test_queue_buffered);
 }
 
 void run_test(int argc, const char **argv)
@@ -442,6 +524,8 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_queue8_iterate_next);
 	RUN_TEST(test_queue2_iterate_next_full);
 	RUN_TEST(test_queue8_iterate_next_reset_on_change);
+	RUN_TEST(test_queue_flush_unbuffered);
+	RUN_TEST(test_queue_flush_buffered);
 
 	test_print_result();
 }

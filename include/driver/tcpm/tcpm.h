@@ -5,12 +5,6 @@
 
 /* USB Power delivery port management - common header for TCPM drivers */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #ifndef __CROS_EC_USB_PD_TCPM_TCPM_H
 #define __CROS_EC_USB_PD_TCPM_TCPM_H
 
@@ -29,12 +23,6 @@ extern "C" {
 #error "DRP auto toggle requires board to have DRP support"
 #error "Please upgrade your board configuration"
 #endif
-
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 38
 
 #ifndef CONFIG_USB_PD_TCPC
 
@@ -248,7 +236,8 @@ static inline int tcpm_sop_prime_enable(int port, bool enable)
 static inline int tcpm_set_vconn(int port, int enable)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_TCPC_VCONN) ||
-	    tcpc_config[port].flags & TCPC_FLAGS_CONTROL_VCONN) {
+	    tcpc_config[port].flags &
+		    (TCPC_FLAGS_CONTROL_VCONN | TCPC_FLAGS_SET_VCONN_IN_SYNC)) {
 		int rv;
 
 		rv = tcpc_config[port].drv->set_vconn(port, enable);

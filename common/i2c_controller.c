@@ -5,12 +5,6 @@
 
 /* I2C cross-platform code for Chrome EC */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #include "builtin/assert.h"
 #include "console.h"
 #include "crc8.h"
@@ -237,7 +231,7 @@ int i2c_xfer_unlocked(const int port, const uint16_t addr_flags,
 			 * If this read follows a write (above) then we need a
 			 * restart
 			 */
-			if (num_msgs)
+			if (num_msgs || flags & I2C_XFER_RESTART)
 				rflags |= I2C_MSG_RESTART;
 			msg[num_msgs].flags = rflags;
 			num_msgs++;

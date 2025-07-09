@@ -487,6 +487,7 @@ USB_DECLARE_EP(USB_EP_HID_KEYBOARD, hid_keyboard_tx,
 #endif
 	       hid_keyboard_event);
 
+#ifdef CONFIG_USB_HID_KEYBOARD_VIVALDI
 struct action_key_config {
 	uint32_t mask; /* bit position of usb_hid_keyboard_report.top_row */
 	uint32_t usage; /*usage ID */
@@ -517,7 +518,6 @@ static const struct action_key_config action_key[] = {
 /* TK_* is 1-indexed, so the next bit is at ARRAY_SIZE(action_key) - 1 */
 static const int SLEEP_KEY_MASK = BIT(ARRAY_SIZE(action_key) - 1);
 
-#ifdef CONFIG_USB_HID_KEYBOARD_VIVALDI
 static uint32_t feature_report[CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS];
 
 static void hid_keyboard_feature_init(void)
@@ -631,12 +631,15 @@ void keyboard_clear_buffer(void)
  */
 static uint32_t maybe_convert_function_key(int keycode)
 {
+#ifndef CONFIG_USB_HID_KEYBOARD_VIVALDI
+	return 0;
+#else
 	const struct ec_response_keybd_config *config =
 		board_vivaldi_keybd_config();
 	/* zero-based function key index (e.g. F1 -> 0) */
 	int index;
 
-	if (!IS_ENABLED(CONFIG_USB_HID_KEYBOARD_VIVALDI) || !config)
+	if (!config)
 		return 0;
 
 	if (IN_RANGE(keycode, HID_F1, HID_F12))
@@ -654,6 +657,7 @@ static uint32_t maybe_convert_function_key(int keycode)
 	    config->action_keys[index] == TK_ABSENT)
 		return 0; /* not mapped */
 	return action_key[config->action_keys[index]].mask;
+#endif
 }
 
 static void keyboard_process_queue(void)

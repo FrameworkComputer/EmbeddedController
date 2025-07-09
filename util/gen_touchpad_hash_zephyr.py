@@ -40,6 +40,8 @@ def calculate_update_pdu_size(ec_fw: Path, tp_fw: Path) -> int:
     #   TOUCHPAD_FW_HASHES 350648 2048
     if match := re.match(rb"TOUCHPAD_FW_HASHES \d+ (\d+)", proc.stdout):
         sec_size = int(match.group(1))
+    else:
+        raise ValueError("TOUCHPAD_FW_HASHES not found")
 
     tp_fw_size = tp_fw.stat().st_size
     num_blocks = sec_size // SHA256_DIGEST_LENGTH

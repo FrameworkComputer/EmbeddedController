@@ -216,9 +216,9 @@ ZTEST(utils, test_mula32)
 	uint32_t b = 0x1;
 	uint32_t c = 0x1;
 	uint32_t i;
-	timestamp_t t0, t1;
+	int64_t t0, t1;
 
-	t0 = get_time();
+	t0 = k_uptime_ticks();
 	for (i = 0; i < 5000000; i++) {
 		r = mula32(b, c, r + (r >> 32));
 		r2 = mulaa32(b, c, r2 >> 32, r2);
@@ -228,11 +228,11 @@ ZTEST(utils, test_mula32)
 		if (i % 100000 == 0)
 			watchdog_reload();
 	}
-	t1 = get_time();
+	t1 = k_uptime_ticks();
 
 	ccprintf("After %d iterations, r=%08x%08x, r2=%08x%08x (time: %d)\n", i,
 		 (uint32_t)(r >> 32), (uint32_t)r, (uint32_t)(r2 >> 32),
-		 (uint32_t)r2, t1.le.lo - t0.le.lo);
+		 (uint32_t)r2, k_ticks_to_us_near32(t1 - t0));
 	zassert_true(r == 0x9df59b9fb0ab9d96L);
 	zassert_true(r2 == 0x9df59b9fb0beabd6L);
 }

@@ -108,7 +108,7 @@ static void intel_altmode_set_result_cb(const struct device *dev,
 	}
 }
 
-static const struct intel_altmode_driver_api intel_pd_altmode_driver_api = {
+static DEVICE_API(intel_altmode, intel_pd_altmode_driver_api) = {
 	.read_status = intel_altmode_read_status,
 	.write_control = intel_altmode_write_control,
 	.is_interrupted = intel_altmode_is_interrupted,

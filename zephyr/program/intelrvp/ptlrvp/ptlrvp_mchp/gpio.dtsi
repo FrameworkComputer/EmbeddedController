@@ -69,11 +69,11 @@
 		kbd-bklt-ctrl {
 			gpios = <MCHP_GPIO_DECODE_153 GPIO_INPUT>;
 		};
-		ec-pm-bat-status-led2 {
-			gpios = <MCHP_GPIO_DECODE_157 GPIO_OUTPUT_HIGH>;
+		pm_bat_status_led2: ec-pm-bat-status-led2 {
+			gpios = <MCHP_GPIO_DECODE_157 GPIO_OUTPUT_LOW>;
 		};
-		ec-pm-bat-status-led1 {
-			gpios = <MCHP_GPIO_DECODE_156 GPIO_OUTPUT_HIGH>;
+		pm_bat_status_led1: ec-pm-bat-status-led1 {
+			gpios = <MCHP_GPIO_DECODE_156 GPIO_OUTPUT_LOW>;
 		};
 		/**
 		NOTE: Used for adc07, do not define.
@@ -225,8 +225,8 @@
 			gpios = <MCHP_GPIO_DECODE_140 GPIO_INPUT>;
 		};
 		**/
-		ec-cse-early-sw {
-			gpios = <MCHP_GPIO_DECODE_064 GPIO_INPUT>;
+		cse_early_rec_sw: ec-cse-early-sw {
+			gpios = <MCHP_GPIO_DECODE_064 GPIO_ODR_LOW>;
 		};
 		pwrbtn: pwrbtn-ec-in-n {
 			gpios = <MCHP_GPIO_DECODE_106 GPIO_INPUT>;
@@ -286,7 +286,7 @@
 		en_pp5000_s5: ec-gppc-b14 {
 			gpios = <MCHP_GPIO_DECODE_244 GPIO_OUTPUT_LOW>;
 		};
-		smc_lid: smc-lid {
+		smc_lid_n: smc-lid {
 			gpios = <MCHP_GPIO_DECODE_033 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
 		};
@@ -368,15 +368,14 @@
 			gpios = <MCHP_GPIO_DECODE_014 GPIO_INPUT>;
 		};
 		gpio_mic_privacy_ec: mic-privacy-ec {
-			gpios = <MCHP_GPIO_DECODE_053 GPIO_OUTPUT_LOW>;
+			gpios = <MCHP_GPIO_DECODE_053 GPIO_INPUT>;
 		};
 		ec_pch_rsmrst_l: pm-rsmrst-ec-n {
 			gpios = <MCHP_GPIO_DECODE_054 GPIO_OUTPUT>;
 			enum-name = "GPIO_PCH_RSMRST_L";
 		};
-		sys_pwrok_ec: sys-pwrok-ec-r {
-			gpios = <MCHP_GPIO_DECODE_015 GPIO_ODR_LOW>;
-			enum-name = "GPIO_PCH_SYS_PWROK";
+		sys-pwrok-ec-r {
+			gpios = <MCHP_GPIO_DECODE_015 GPIO_INPUT>;
 		};
 		ec-slatemode-hallout-snsr-r {
 			gpios = <MCHP_GPIO_DECODE_222 GPIO_INPUT>;

@@ -1,0 +1,14 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * Aliases to RVP sensor names
+ */
+adc_ambient: &adc_ambient_therm_in0_r {};
+adc_ddr: &adc_ddr_temp_ec_5v_r {};
+adc_skin: &adc_skin_therm_in_r {};
+adc_vr: &adc_vr_temp_v_1p05_pch_ec_r {};
+
+#include "../../intelrvp/ptlrvp/temp_sensor.dts"

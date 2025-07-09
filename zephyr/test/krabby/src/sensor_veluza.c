@@ -7,6 +7,7 @@
 #include "cros_cbi.h"
 #include "driver/accel_bma422.h"
 #include "driver/accel_bma4xx.h"
+#include "driver/accelgyro_bmi260.h"
 #include "driver/accelgyro_bmi323.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
@@ -27,6 +28,17 @@
 
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
+FAKE_VALUE_FUNC(bool, cros_cbi_ssfc_check_match, enum cbi_ssfc_value_id);
+
+static int mock_cros_cbi_ssfc_check_match(enum cbi_ssfc_value_id ssfc)
+{
+	return true;
+}
+
+static int mock_cros_cbi_ssfc_check_not_match(enum cbi_ssfc_value_id ssfc)
+{
+	return false;
+}
 
 static int base_interrupt_id;
 static int lid_interrupt_id;
@@ -35,6 +47,7 @@ static int interrupt_count;
 static void test_before(void *fixture)
 {
 	RESET_FAKE(cros_cbi_get_fw_config);
+	RESET_FAKE(cros_cbi_ssfc_check_match);
 	base_interrupt_id = 0;
 	lid_interrupt_id = 0;
 	interrupt_count = 0;
@@ -51,6 +64,12 @@ void bma4xx_interrupt(enum gpio_signal signal)
 void bmi3xx_interrupt(enum gpio_signal signal)
 {
 	base_interrupt_id = 1;
+	interrupt_count++;
+}
+
+void bmi260_interrupt(enum gpio_signal signal)
+{
+	base_interrupt_id = 2;
 	interrupt_count++;
 }
 
@@ -128,11 +147,41 @@ ZTEST(veluza, test_base_sensor_interrupt)
 
 	cros_cbi_get_fw_config_fake.custom_fake =
 		cros_cbi_get_fw_config_fw_factor;
+	cros_cbi_ssfc_check_match_fake.custom_fake =
+		mock_cros_cbi_ssfc_check_match;
+	hook_notify(HOOK_INIT);
+
 	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 1), NULL);
 	k_sleep(K_MSEC(100));
 	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 0), NULL);
 	k_sleep(K_MSEC(100));
 	zassert_equal(base_interrupt_id, 1, "base_interrupt_id=%d",
+		      base_interrupt_id);
+	zassert_equal(interrupt_count, 1, "unexpected interrupt count: %d",
+		      interrupt_count);
+}
+
+ZTEST(veluza, test_base_alt_sensor_interrupt)
+{
+	const struct device *base_imu_gpio = DEVICE_DT_GET(
+		DT_GPIO_CTLR(DT_NODELABEL(base_imu_int_l), gpios));
+	const gpio_port_pins_t base_imu_pin =
+		DT_GPIO_PIN(DT_NODELABEL(base_imu_int_l), gpios);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_base_imu));
+	interrupt_count = 0;
+	base_interrupt_id = 0;
+	fw_factor = 1;
+
+	cros_cbi_get_fw_config_fake.custom_fake =
+		cros_cbi_get_fw_config_fw_factor;
+	cros_cbi_ssfc_check_match_fake.custom_fake =
+		mock_cros_cbi_ssfc_check_not_match;
+
+	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 1), NULL);
+	k_sleep(K_MSEC(100));
+	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 0), NULL);
+	k_sleep(K_MSEC(100));
+	zassert_equal(base_interrupt_id, 2, "base_interrupt_id=%d",
 		      base_interrupt_id);
 	zassert_equal(interrupt_count, 1, "unexpected interrupt count: %d",
 		      interrupt_count);

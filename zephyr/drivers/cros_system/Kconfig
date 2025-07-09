@@ -6,6 +6,7 @@ menuconfig CROS_SYSTEM_NPCX
 	bool "Nuvoton NPCX cros system driver"
 	depends on SOC_FAMILY_NPCX
 	default y
+	select PINCTRL if DT_HAS_NUVOTON_NPCX_POWER_PSL_ENABLED
 	help
 	  This option enables the cros system driver for the NPCX family of
 	  processors. Currently, Zephyr doesn't provide the system related API.
@@ -95,7 +96,8 @@ endif # CROS_SYSTEM_NATIVE_POSIX
 
 menuconfig CROS_SYSTEM_STM32
 	bool "ST STM32 cros system driver"
-	depends on SOC_FAMILY_STM32 && IWDG_STM32 && HWINFO
+	depends on SOC_FAMILY_STM32 && IWDG_STM32
+	select HWINFO
 	select REBOOT
 	default y
 	help

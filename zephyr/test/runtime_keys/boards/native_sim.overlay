@@ -19,7 +19,6 @@
 
 		test_runtime_keys: runtime-keys {
 			compatible = "cros-ec,runtime-keys";
-			vol-up-rc = <KBD_RC(0, 1)>;
 			left-alt-rc = <KBD_RC(2, 3)>;
 			right-alt-rc = <KBD_RC(4, 5)>;
 			h-rc = <KBD_RC(6, 7)>;

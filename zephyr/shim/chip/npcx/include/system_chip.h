@@ -9,10 +9,6 @@
 #define SET_BIT(reg, bit) ((reg) |= (0x1 << (bit)))
 #define CLEAR_BIT(reg, bit) ((reg) &= (~(0x1 << (bit))))
 
-/* TODO(b:179900857) Clean this up too */
-#undef IS_BIT_SET
-#define IS_BIT_SET(reg, bit) (((reg) >> (bit)) & (0x1))
-
 /*****************************************************************************/
 /* Memory mapping */
 #define CONFIG_LPRAM_BASE 0x40001400 /* memory address of lpwr ram */

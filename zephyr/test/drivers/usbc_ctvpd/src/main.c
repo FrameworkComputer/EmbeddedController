@@ -125,7 +125,7 @@ static void usbc_ctvpd_after(void *data)
 ZTEST_SUITE(usbc_ctvpd, drivers_predicate_post_main, usbc_ctvpd_setup,
 	    usbc_ctvpd_before, usbc_ctvpd_after, NULL);
 
-ZTEST_USER_F(usbc_ctvpd, test_verify_discovery)
+ZTEST_USER_F(usbc_ctvpd, test_discovery)
 {
 	uint8_t response_buffer[EC_LPC_HOST_PACKET_SIZE];
 	struct ec_response_typec_discovery *discovery =
@@ -148,7 +148,7 @@ ZTEST_USER_F(usbc_ctvpd, test_verify_discovery)
 			  "Discovered SOP identity ACK did not match");
 }
 
-ZTEST_USER_F(usbc_ctvpd, test_verify_no_vconn_swap)
+ZTEST_USER_F(usbc_ctvpd, test_no_vconn_swap)
 {
 	struct ec_response_typec_status status =
 		host_cmd_typec_status(TEST_PORT);

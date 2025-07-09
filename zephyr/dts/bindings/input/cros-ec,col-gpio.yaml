@@ -33,3 +33,10 @@ properties:
     type: phandle-array
     required: true
     description: GPIO to use to handle the column
+
+  settle-time-us:
+    type: int
+    default: 30
+    description: |
+      Extra delay after changing the column state, note that this adds up to
+      the parent device settle-time-us.

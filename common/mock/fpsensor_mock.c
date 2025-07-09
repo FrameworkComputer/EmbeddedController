@@ -13,6 +13,7 @@
 #include "mock/fpsensor_mock.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #ifndef TEST_BUILD
 #error "Mocks should only be in the test build."
@@ -32,6 +33,8 @@ int fp_sensor_deinit(void)
 
 int fp_sensor_get_info(struct ec_response_fp_info *resp)
 {
+	memset(resp, 0, sizeof(*resp));
+
 	resp->version = 0;
 	return mock_ctrl_fp_sensor.fp_sensor_get_info_return;
 }

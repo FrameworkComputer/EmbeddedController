@@ -18,8 +18,7 @@ Detokenizing occurs before the log is outputted to console or saved to
 
 Enable Kconfig `CONFIG_PLATFORM_EC_LOG_TOKENIZED` and its dependencies for the
 board you want to enable tokenized logging.  Additionally, make sure `picolibc`
-and `pigweed` modules are added to your board and don't forget to regenerate
-`all_targets.generated.bzl`.
+and `pigweed` modules are added to your board.
 
 *Note: Tokenized logging is only supported for Zephyr EC*
 
@@ -112,7 +111,7 @@ automatically be used to detokenize logs.
 
 *TODO(b/320527595) change argument default to true.*
 ```
-start-servod -b ${BOARD} --channel=release -- --fetch-token-db
+start-servod -b ${BOARD} -m ${MODEL} --channel=release -- --fetch-token-db
 ```
 
 If you want to use a locally built token database, this will require mounting
@@ -122,7 +121,7 @@ See [servod outside chroot](https://chromium.googlesource.com/chromiumos/third_p
 You can mount your `ec/build` path to the docker image and specify the token
 database to use with the following command.
 ```
-start-servod -b ${BOARD} --channel=release --mount=<your_path>/ec/build:/tmp/cros_ec -n flashing_servod -- --token_db=/tmp/cros_ec/tokens.bin
+start-servod -b ${BOARD} -m ${MODEL} --channel=release --token_db=${EC_PATH}/build/tokens.bin
 ```
 
 Once connected to ec_uart_pty - you can specify the token database using above
@@ -184,9 +183,9 @@ scp tokens.bin root@${DUT_IP}:/usr/local/cros_ec/tokens.bin
 The second path is on a read-only partitiion. `cros deploy` can be used to
 manually update this path. Run following commands
 ```
-cros workon start chromeos-base/chromeos-zephyr -b ${BOARD}
-cros_sdk cros_workon_make --board=${BOARD} chromeos-base/chromeos-zephyr
-cros deploy ${DUT_IP} chromeos-base/chromeos-zephyr
+cros workon start chromeos-base/chromeos-ec-token -b ${BOARD}
+cros_sdk cros_workon_make --board=${BOARD} chromeos-base/chromeos-ec-token
+cros deploy ${DUT_IP} chromeos-base/chromeos-ec-token
 ```
 
 ## Recovering from failures
@@ -252,7 +251,8 @@ Fixes the log
 The historical token database is the database to support all boards and
 its entire history of log format strings used over time.  This database should
 handle all boards no matter when it was released.
-This lives at `https://storage.googleapis.com/chromeos-localmirror/cros_ec/tokens/historical.bin`
+This lives at
+https://storage.googleapis.com/chromeos-localmirror/distfiles/cros_ec/tokens/chromeos-ec-token-historical.bin
 
 Database management is handled in `recipes/build_firmware_historical_db.py`.  The
 [firmware-zephyr-token-db-uploader](https://ci.chromium.org/ui/p/chromeos/builders/informational/firmware-zephyr-token-db-uploader) builder will update the database on a daily basis.

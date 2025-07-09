@@ -298,14 +298,14 @@ class Cts:
         )
         for i, ddd in enumerate(dut_results):
             th_cn = self.get_return_code_name(th_results[i]["rc"], True)
-            dut_cn = self.get_return_code_name(dut_results[i]["rc"], True)
+            dut_cn = self.get_return_code_name(ddd["rc"], True)
             th_res = self.evaluate_result(
                 th_results[i],
                 self.testlist[i]["th_rc"],
                 self.testlist[i]["th_string"],
             )
             dut_res = self.evaluate_result(
-                dut_results[i],
+                ddd,
                 self.testlist[i]["dut_rc"],
                 self.testlist[i]["dut_string"],
             )
@@ -314,7 +314,7 @@ class Cts:
                 th_cn,
                 dut_cn,
                 "YES" if th_results[i]["string"] else "NO",
-                "YES" if dut_results[i]["string"] else "NO",
+                "YES" if ddd["string"] else "NO",
                 "PASS" if th_res and dut_res else "FAIL",
             )
 

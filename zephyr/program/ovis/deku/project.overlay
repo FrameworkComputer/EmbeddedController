@@ -28,11 +28,16 @@
 			enum-name = "ADC_TEMP_SENSOR_4";
 			io-channels = <&adc0 9>;
 		};
+		adc_sensor_5: adc_sensor_5 {
+			enum-name = "ADC_PSYS";
+			io-channels = <&adc0 3>;
+		};
 	};
 
 	named-gpios {
 		/delete-node/ ec_spare_gpio14;
 		/delete-node/ ec_spare_gpio16;
+		/delete-node/ ec_spare_gpio33;
 		/delete-node/ ec_spare_gpio50;
 		/delete-node/ ec_spare_gpio80;
 		/delete-node/ ec_spare_gpio83;
@@ -101,9 +106,6 @@
 		};
 		gpio_ec_spare_gpio25: ec_spare_gpio25 {
 			gpios = <&gpio2 5 GPIO_OUTPUT>;
-		};
-		gpio_ec_spare_gpio36: ec_spare_gpio36 {
-			gpios = <&gpio3 6 GPIO_OUTPUT>;
 		};
 		gpio_ec_spare_gpio60: ec_spare_gpio60 {
 			gpios = <&gpio6 0 GPIO_OUTPUT>;
@@ -187,6 +189,11 @@
 		i2c-port = <&i2c0_0>;
 		enum-names = "I2C_USB_C3";
 		};
+
+		i2c_ec_i2c_3924: ec_i2c_3924 {
+		i2c-port = <&i2c5_0>;
+		enum-names = "I2C_mp3924";
+		};
 	};
 
 	usbc {
@@ -205,6 +212,30 @@
 			virtual_mux_c3: virtual-mux-c3 {
 				compatible = "cros-ec,usbc-mux-virtual";
 			};
+		};
+	};
+
+	fan_steps: fan-steps {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp_on = <0 0 1 0>;
+			temp_off = <0 0 99 0>;
+			rpm_target = <0>;
+		};
+		level_1 {
+			temp_on = <0 0 55 0>;
+			temp_off = <0 0 0 0>;
+			rpm_target = <2700>;
+		};
+		level_2 {
+			temp_on = <0 0 57 0>;
+			temp_off = <0 0 52 0>;
+			rpm_target = <3600>;
+		};
+		level_3 {
+			temp_on = <0 0 100 0>;
+			temp_off = <0 0 54 0>;
+			rpm_target = <4400>;
 		};
 	};
 };
@@ -246,6 +277,18 @@
 };
 
 &i2c_ctrl0 {
+	status = "okay";
+};
+
+&i2c5_0 {
+	status = "okay";
+	label = "I2C_3924";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
+	pinctrl-names = "default";
+};
+
+&i2c_ctrl5 {
 	status = "okay";
 };
 

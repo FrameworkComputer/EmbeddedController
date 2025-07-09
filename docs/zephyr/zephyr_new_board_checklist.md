@@ -57,17 +57,28 @@ EC Feature                                                                  | Ne
 [Configure AP Power Thresholds](./zephyr_ap_power.md)                       | yes
 [Configure AP Power Sequencing (TODO)](./zephyr_template.md)                | yes
 [Configure USB-A](./zephyr_usba.md)                                         | no
-[Configure USB-C (TODO)](./zephyr_template.md)                              | yes
-[Configure Charger (TODO)](./zephyr_template.md)                            | yes
+[Configure USB-C](#usb-c-ports)                                             | yes
+[Configure Charger](./zephyr_charger.md)                                    | yes
 [Configure I2C Buses](./zephyr_i2c.md)                                      | yes
 [Configure GPIO](./zephyr_gpio.md)                                          | yes
 [Configure Batteries](./zephyr_battery.md)                                  | no
 [Configure CrOS Board Information (CBI)](./zephyr_cbi.md)                   | no
-[Configure Keyboard (TODO)](./zephyr_template.md)                           | no
+[Configure Keyboard](./zephyr_keyboard.md)                                  | no
 [Configure LEDs](./zephyr_leds.md)                                          | no
 [Configure Motion Sensors](./zephyr_motionsense.md)                         | no
-[Configure BC1.2 Charger Detector (TODO)](./zephyr_template.md)             | no
+[Configure BC1.2 Charger Detector](./zephyr_bc12.md)                        | no
 [Configure ADC](./zephyr_adc.md)                                            | no
 [Configure Temperature Sensors](./zephyr_temperature_sensor.md)             | no
+
+### USB-C Ports
+The Zephyr EC application supports two different technology stacks to support
+USB Type-C ports and USB PD (Power Delivery).  Click on the links for
+instructions specific to each technology stack.
+
+1. [TCPMv2](./zephyr_usbc.md): Projects created before 2024 implement the TCPMv2
+(Type-C Port Manager version 2) technology stack.
+1. [PDC](./pdc.md): Projects created 2024 and later support USB Type-C ports
+using Power Delivery Controller (PDC) chips.
+
 
 [Zephyr Introduction to Devicetree]: https://docs.zephyrproject.org/latest/build/dts/intro.html

@@ -23,5 +23,5 @@ __override void intel_x86_sys_reset_delay(void)
 	 * Minimum - 20 ms, Typical - 40 ms, Maximum - 80 ms.
 	 * See b/153128296.
 	 */
-	udelay(60 * MSEC);
+	k_busy_wait(60 * USEC_PER_MSEC);
 }

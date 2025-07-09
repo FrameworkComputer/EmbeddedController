@@ -142,6 +142,7 @@ __override struct keyboard_scan_config keyscan_config = {
 	.debounce_down_us = 9 * MSEC,
 	.debounce_up_us = 30 * MSEC,
 	.scan_period_us = 3 * MSEC,
+	.stable_scan_period_us = 9 * MSEC,
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
@@ -354,7 +355,7 @@ static const struct ec_response_keybd_config zed_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
-static const struct ec_response_keybd_config bland_kb = {
+static const struct ec_response_keybd_config eel_kb = {
 	.num_top_row_keys = 10,
 	.action_keys = {
 		TK_BACK,
@@ -388,16 +389,28 @@ static const struct ec_response_keybd_config duck_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
+/* For boards that have vivaldi configs, make sure it is enabled. */
+#if defined(BOARD_ZED) || defined(BOARD_STAR) || defined(BOARD_GELATIN) || \
+	defined(BOARD_EEL) || defined(BOARD_DUCK)
+#if defined(SECTION_IS_RW) && !defined(CONFIG_USB_HID_KEYBOARD_VIVALDI)
+#error CONFIG_USB_HID_KEYBOARD_VIVALDI must be defined in RW if \
+board_vivaldi_keybd_config is used.
+#endif
+#endif
+
 __override const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void)
 {
 	if (IS_ENABLED(BOARD_ZED) || IS_ENABLED(BOARD_STAR) ||
 	    IS_ENABLED(BOARD_GELATIN))
 		return &zed_kb;
-	if (IS_ENABLED(BOARD_BLAND) || IS_ENABLED(BOARD_EEL))
-		return &bland_kb;
+	if (IS_ENABLED(BOARD_EEL))
+		return &eel_kb;
 	if (IS_ENABLED(BOARD_DUCK))
 		return &duck_kb;
 
 	return NULL;
 }
+
+/* TODO(b/219051027): Add assert to check that key_typ.{row,col}_refresh == the
+ * row/col in the tables above. */

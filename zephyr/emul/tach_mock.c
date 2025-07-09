@@ -43,7 +43,7 @@ static int tach_mock_channel_get(const struct device *dev,
 	return 0;
 }
 
-static const struct sensor_driver_api tach_mock_api = {
+static DEVICE_API(sensor, tach_mock_api) = {
 	.sample_fetch = tach_mock_sample_fetch,
 	.channel_get = tach_mock_channel_get,
 };

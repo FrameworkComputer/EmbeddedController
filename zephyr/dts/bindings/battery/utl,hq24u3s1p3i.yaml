@@ -1,0 +1,57 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: "UTL,HQ24U3S1P3I"
+compatible: "utl,hq24u3s1p3i"
+
+include: battery-smart.yaml
+
+properties:
+  enum-name:
+    type: string
+    default: "utl,hq24u3s1p3i"
+
+  # Fuel gauge
+  manuf_name:
+    default: "UTL"
+  device_name:
+    default: "HQ24U3S1P3I"
+  ship_mode_reg_addr:
+    default: 0x00
+  ship_mode_reg_data:
+    default: [0x0010, 0x0010]
+  flags:
+    default: 0x04
+  fet_reg_addr:
+    default: 0x0054
+  fet_reg_mask:
+    default: 0x0002
+  fet_disconnect_val:
+    default: 0x0000
+  fet_cfet_mask:
+    default: 0x0004
+  fet_cfet_off_val:
+    default: 0x0000
+
+  # Battery info
+  voltage_max:
+    default: 12600
+  voltage_normal:
+    default: 11100
+  voltage_min:
+    default: 9000
+  precharge_current:
+    default: 178
+  start_charging_min_c:
+    default: 0
+  start_charging_max_c:
+    default: 60
+  charging_min_c:
+    default: 0
+  charging_max_c:
+    default: 60
+  discharging_min_c:
+    default: -20
+  discharging_max_c:
+    default: 60

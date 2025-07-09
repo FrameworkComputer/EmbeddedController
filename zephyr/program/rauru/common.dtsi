@@ -26,6 +26,7 @@
 	ec-mkbp-event-wakeup-mask {
 		compatible = "cros-ec,mkbp-event-wakeup-mask";
 		wakeup-mask = <(MKBP_EVENT_KEY_MATRIX |
+				MKBP_EVENT_DP_ALT_MODE_ENTERED |
 				MKBP_EVENT_HOST_EVENT)>;
 	};
 };

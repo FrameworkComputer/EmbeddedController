@@ -5,7 +5,7 @@
 
 #include "common.h"
 #include "gpio.h"
-#include "keyboard_customization.h"
+#include "keyboard_config.h"
 #include "keyboard_protocol.h"
 #include "keyboard_raw.h"
 

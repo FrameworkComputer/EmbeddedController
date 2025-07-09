@@ -1,0 +1,50 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* RULL-specific fw_config fields. */
+	nissa-fw-config {
+		/*
+		 * FW_CONFIG field to enable KB Numpat or not
+		 */
+		kb-numpad {
+			enum-name = "FW_KB_NUMPAD";
+			start = <6>;
+			size = <1>;
+
+			no-kb-numpad {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_NUMPAD_NOT_PRESENT";
+				value = <0>;
+				default;
+			};
+			kb-numpat-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_NUMPAD_PRESENT";
+				value = <1>;
+			};
+		};
+		/*
+		 * FW_CONFIG field to enable KB backlight or not.
+		 */
+		kb-bl {
+			enum-name = "FW_KB_BL";
+			start = <7>;
+			size = <1>;
+
+			no-kb-bl {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_NOT_PRESENT";
+				value = <0>;
+				default;
+			};
+			kb-bl-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_PRESENT";
+				value = <1>;
+			};
+		};
+	};
+};

@@ -7,6 +7,8 @@
 #include "../program/corsola/ite_gpio.dtsi"
 #include "../program/corsola/ite_interrupts.dtsi"
 #include "../program/corsola/power_signal.dtsi"
+#include "../program/corsola/wugtrio/thermistor.dtsi"
+#include <cros/thermistor/thermistor.dtsi>
 
 /* remove pinctrl to avoid pull in too many unwanted dependency */
 /delete-node/ &pinctrl;
@@ -168,6 +170,21 @@
 		compatible = "cros-ec,motionsense-sensor-info";
 
 		sensor-irqs = <&int_base_imu>;
+	};
+
+	charger_bc12_port1: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+
+		thermistor = <&thermistor_rt9490>;
+		adc = <&adc_charger>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_charger: charger {
+			status = "okay";
+			sensor = <&charger_bc12_port1>;
+		};
 	};
 
 	named-adc-channels {

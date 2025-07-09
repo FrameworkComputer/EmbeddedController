@@ -1,0 +1,46 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_ec_amb_ntc: ec_amb_ntc {
+			enum-name = "ADC_TEMP_SENSOR_2_AMBIENT";
+			io-channels = <&adc0 0>;
+		};
+		adc_chg_ibat: chg_ibat {
+			enum-name = "ADC_AMON_BMON";
+			io-channels = <&adc0 1>;
+		};
+		adc_chg_iadpt: chg_iadpt {
+			enum-name = "ADC_PMON";
+			io-channels = <&adc0 2>;
+		};
+		adc_ec_chager_ntc: ec_chager_ntc {
+			enum-name = "ADC_TEMP_SENSOR_3_CHARGER";
+			io-channels = <&adc0 3>;
+		};
+		adc_ec_typec0_ntc: ec_typec0_ntc {
+			enum-name = "ADC_TEMP_SENSOR_1";
+			io-channels = <&adc0 5>;
+		};
+		adc_ec_cpu_otp_ntc: ec_cpu_otp_ntc {
+			enum-name = "ADC_TEMP_SENSOR_SOC";
+			io-channels = <&adc0 6>;
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_ch0_gpi0_default
+		&adc0_ch1_gpi1_default
+		&adc0_ch2_gpi2_default
+		&adc0_ch3_gpi3_default
+		&adc0_ch5_gpi5_default
+		&adc0_ch6_gpi6_default>;
+	pinctrl-names = "default";
+};

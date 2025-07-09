@@ -1,5 +1,6 @@
 common:
-  platform_allow: native_sim
+  platform_allow:
+    - native_sim
 tests:
   boot_keys.default: {}
   boot_keys.ignore_key:

@@ -14,7 +14,7 @@ LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 /* touch panel power sequence control */
 
-#define TOUCH_ENABLE_DELAY_MS (500 * MSEC)
+#define TOUCH_ENABLE_DELAY_MS (500 * USEC_PER_MSEC)
 
 void touch_enable(void)
 {

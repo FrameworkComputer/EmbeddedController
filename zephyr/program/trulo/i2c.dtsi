@@ -1,0 +1,36 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Set bus speeds for I2C */
+
+&i2c1_0 {
+	label = "I2C_SENSOR";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c2_0 {
+	label = "I2C_PDC";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c3_0 {
+	label = "I2C_IMVP91";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c4_1 {
+	label = "I2C_PMC_PD";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c6_1 {
+	label = "I2C_PORT_CHARGER";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c7_0 {
+	label = "I2C_BATTERY";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};

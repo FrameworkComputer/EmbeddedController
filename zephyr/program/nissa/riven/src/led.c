@@ -11,7 +11,7 @@
 #include "led_pwm.h"
 
 __override const int led_charge_lvl_1 = 5;
-__override const int led_charge_lvl_2 = 97;
+__override const int led_charge_lvl_2 = 100;
 __override struct led_descriptor
 	led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 		[STATE_CHARGING_LVL_1] = { { EC_LED_COLOR_AMBER,

@@ -20,6 +20,18 @@ config UCSI_PPM_THREAD_PRIORITY
 	help
 	  Set thread priority of the PPM.
 
+config UCSI_PPM_CONSOLE
+	bool "UCSI PPM console commands"
+	help
+	  Enable the `ppm` console command, which supports calling various
+	  UCSI commands through the PPM subsystem to the PDCs.
+
+config UCSI_PPM_INIT_PRIORITY
+	int "USCI PPM init priority"
+	default 92
+	help
+	  Initialization priority of the PPM (POST_KERNEL). Must come after
+	  CONFIG_PDC_POWER_MGMT_INIT_PRIORITY
 
 module = UCSI_PPM
 module-str = UCSI PPM

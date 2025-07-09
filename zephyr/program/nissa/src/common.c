@@ -142,6 +142,7 @@ static void it8xxx2_i2c_swap_default(void)
 DECLARE_HOOK(HOOK_SYSJUMP, it8xxx2_i2c_swap_default, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_SOC_IT8XXX2 */
 
+#ifdef CONFIG_PLATFORM_EC_HIBERNATE
 /* Trigger shutdown by enabling the Z-sleep circuit */
 __override void board_hibernate_late(void)
 {
@@ -153,6 +154,7 @@ __override void board_hibernate_late(void)
 	 */
 #endif
 }
+#endif
 
 #ifdef CONFIG_OCPC
 __override void board_ocpc_init(struct ocpc_data *ocpc)

@@ -178,8 +178,8 @@ static void ps185_hdmi_hpd_deferred(void)
 }
 DECLARE_DEFERRED(ps185_hdmi_hpd_deferred);
 
-#define HPD_SINK_HPD_SING (500 * MSEC)
-#define HPD_SINK_ABSENCE_DEBOUNCE (2 * MSEC)
+#define HPD_SINK_HPD_SING (500 * USEC_PER_MSEC)
+#define HPD_SINK_ABSENCE_DEBOUNCE (2 * USEC_PER_MSEC)
 
 static void hdmi_hpd_low(void)
 {

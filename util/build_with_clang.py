@@ -11,7 +11,6 @@ from concurrent.futures import ThreadPoolExecutor
 import logging
 import math
 import multiprocessing
-import os
 import shutil
 import subprocess
 import sys
@@ -25,11 +24,13 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "bloonchipper",
     "bloonchipper-druid",
     "buccaneer",
+    "gwendolin",
     "helipilot",
     "nami_fp",
     "nucleo-dartmonkey",
     "nucleo-f412zg",
     "nucleo-h743zi",
+    "rosalia",
     # Boards that use CHIP:=stm32 and *not* CHIP_FAMILY:=stm32f0
     # git grep  --name-only 'CHIP:=stm32' | xargs grep -L \
     #   'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
@@ -50,7 +51,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
     # git grep  --name-only 'CHIP:=stm32' | xargs grep -L \
     #   'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
-    "bland",
     "c2d2",
     "coffeecake",
     "dingdong",
@@ -84,6 +84,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "tigertail",
     "twinkie",
     "wand",
+    "whitebeard",
     "zed",
     "zinger",
     # Boards that use CHIP:=mchp
@@ -175,7 +176,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "moli",
     "moonbuggy",
     "morphius",
-    "mrbland",
+    "moxie",
     "nami",
     "nautilus",
     "nightfury",
@@ -235,7 +236,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "arcada_ish",
     "drallion_ish",
     "tglrvp_ish",
-    "volteer_ish",
 ]
 
 NDS32_BOARDS = [
@@ -337,10 +337,11 @@ def build(board_name: str, max_cpus: int) -> None:
     cmd = [
         "make",
         "BOARD=" + board_name,
+        "CROSS_COMPILE_CC_NAME=clang",
         f"-j{max_cpus}",
     ]
     logging.debug('Running command: "%s"', " ".join(cmd))
-    subprocess.run(cmd, env=dict(os.environ, CC="clang"), check=True)
+    subprocess.run(cmd, check=True)
 
 
 def get_all_boards() -> typing.List[str]:

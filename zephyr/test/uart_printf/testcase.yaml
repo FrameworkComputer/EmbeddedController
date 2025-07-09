@@ -4,5 +4,6 @@
 
 tests:
   uart.printf:
-    tags: uart
+    tags:
+      - uart
     type: unit

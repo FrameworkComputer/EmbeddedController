@@ -8,6 +8,7 @@
 		compatible = "cros-ec,keyscan";
 
 		scan-period = <10000>;
+		stable-scan-period = <10000>;
 		output-settle = <80>; /* us */
 
 		actual-key-mask = <
@@ -115,10 +116,10 @@
 	/delete-property/ bias-pull-up;
 };
 
-&kso16_gpc3_default {
+&kso16_default {
 	/delete-property/ bias-pull-up;
 };
 
-&kso17_gpc5_default {
+&kso17_default {
 	/delete-property/ bias-pull-up;
 };

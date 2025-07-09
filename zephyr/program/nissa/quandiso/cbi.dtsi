@@ -149,4 +149,27 @@
 		 *	size = <1>;
 		 */
 	};
+	/* Quandiso-specific ssfc fields. */
+	cbi-ssfc {
+		compatible = "cros-ec,cbi-ssfc";
+		/*
+		 * SSFC field to identify lid accel sensor.
+		 */
+		lid-sensor {
+			enum-name = "LID_SENSOR";
+			size = <2>;
+
+			lid_sensor_0: kx022 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <0>;
+				default;
+			};
+			lid_sensor_1: bma422 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+			};
+		};
+	};
 };

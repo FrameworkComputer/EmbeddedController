@@ -7,7 +7,7 @@
 #include "ec_commands.h"
 #include "hooks.h"
 #include "keyboard_8042_sharedlib.h"
-#include "keyboard_customization.h"
+#include "keyboard_config.h"
 #include "keyboard_scan.h"
 #include "timer.h"
 

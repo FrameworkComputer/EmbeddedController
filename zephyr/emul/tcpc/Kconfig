@@ -57,6 +57,15 @@ config EMUL_PS8XXX
 	  for TCPCI emulator. PS8XXX specific API is available in
 	  zephyr/include/emul/tcpc/emul_ps8xxx.h
 
+config EMUL_RAA489000
+	bool "Renesas RAA489000 emulator"
+	default y
+	depends on ZTEST && DT_HAS_RENESAS_RAA489000_ENABLED
+	help
+	  Enable emulator for the raa489000 TCPC. This emulator is an
+	  extension of the TCPCI emulator. The raa489000 specific API is
+	  available in zephyr/include/emul/tcpc/emul_raa489000.h.
+
 config EMUL_RT1715
 	bool "Richtek rt1715 emulator"
 	default y

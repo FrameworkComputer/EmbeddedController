@@ -36,12 +36,6 @@ LOG_MODULE_REGISTER(cros_kb_raw, LOG_LEVEL_ERR);
 #define KSOH_PIN_MASK (((1 << (KEYBOARD_COLS_MAX - 8)) - 1) & 0xff)
 #define KSOH2_PIN_MASK GENMASK(1, 0)
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 44
-
 /* Device config */
 struct cros_kb_raw_wuc_map_cfg {
 	/* WUC control device structure */
@@ -133,7 +127,7 @@ static void kb_raw_ite_drive_column_reg_set_v1(const struct device *dev)
 	 *       rest be configured as GPIO output mode. In this case that we
 	 *       disable the ISR in critical section to avoid race condition.
 	 */
-	inst->KBS_KSOH1 &= ~KSOH_PIN_MASK;
+	inst->KBS_KSOH1 &= (uint8_t)~KSOH_PIN_MASK;
 	/* restore interrupts */
 	irq_unlock(key);
 	/* KSO[17:16] pins output low */
@@ -291,7 +285,7 @@ static int cros_kb_raw_ite_init(const struct device *dev)
 	return 0;
 }
 
-static const struct cros_kb_raw_driver_api cros_kb_raw_ite_driver_api = {
+static DEVICE_API(cros_kb_raw, cros_kb_raw_ite_driver_api) = {
 	.init = cros_kb_raw_ite_init,
 	.drive_colum = cros_kb_raw_ite_drive_column,
 	.read_rows = cros_kb_raw_ite_read_row,

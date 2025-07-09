@@ -337,7 +337,7 @@ static int shim_ioex_manage_callback(const struct device *dev,
 	return gpio_manage_callback(&drv_data->callbacks, callback, enable);
 }
 
-static const struct gpio_driver_api api_table = {
+static DEVICE_API(gpio, api_table) = {
 	.pin_configure = shim_ioex_pin_configure,
 	.port_get_raw = shim_ioex_port_get_raw,
 	.port_set_masked_raw = shim_ioex_port_set_masked_raw,

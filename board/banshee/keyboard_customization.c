@@ -7,7 +7,6 @@
 #include "gpio.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_config.h"
-#include "keyboard_customization.h"
 #include "keyboard_protocol.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
@@ -48,22 +47,22 @@ void set_scancode_set2(uint8_t row, uint8_t col, uint16_t val)
 }
 
 struct keyboard_type key_typ = {
-	.col_esc = KEYBOARD_COL_ESC,
-	.row_esc = KEYBOARD_ROW_ESC,
-	.col_down = KEYBOARD_COL_DOWN,
-	.row_down = KEYBOARD_ROW_DOWN,
-	.col_left_shift = KEYBOARD_COL_LEFT_SHIFT,
-	.row_left_shift = KEYBOARD_ROW_LEFT_SHIFT,
-	.col_refresh = KEYBOARD_COL_REFRESH,
-	.row_refresh = KEYBOARD_ROW_REFRESH,
-	.col_right_alt = KEYBOARD_COL_RIGHT_ALT,
-	.row_right_alt = KEYBOARD_ROW_RIGHT_ALT,
-	.col_left_alt = KEYBOARD_COL_LEFT_ALT,
-	.row_left_alt = KEYBOARD_ROW_LEFT_ALT,
-	.col_key_r = KEYBOARD_COL_KEY_R,
-	.row_key_r = KEYBOARD_ROW_KEY_R,
-	.col_key_h = KEYBOARD_COL_KEY_H,
-	.row_key_h = KEYBOARD_ROW_KEY_H,
+	.col_esc = BANSHEE_KEYBOARD_COL_ESC,
+	.row_esc = BANSHEE_KEYBOARD_ROW_ESC,
+	.col_down = BANSHEE_KEYBOARD_COL_DOWN,
+	.row_down = BANSHEE_KEYBOARD_ROW_DOWN,
+	.col_left_shift = BANSHEE_KEYBOARD_COL_LEFT_SHIFT,
+	.row_left_shift = BANSHEE_KEYBOARD_ROW_LEFT_SHIFT,
+	.col_refresh = BANSHEE_KEYBOARD_COL_REFRESH,
+	.row_refresh = BANSHEE_KEYBOARD_ROW_REFRESH,
+	.col_right_alt = BANSHEE_KEYBOARD_COL_RIGHT_ALT,
+	.row_right_alt = BANSHEE_KEYBOARD_ROW_RIGHT_ALT,
+	.col_left_alt = BANSHEE_KEYBOARD_COL_LEFT_ALT,
+	.row_left_alt = BANSHEE_KEYBOARD_ROW_LEFT_ALT,
+	.col_key_r = BANSHEE_KEYBOARD_COL_KEY_R,
+	.row_key_r = BANSHEE_KEYBOARD_ROW_KEY_R,
+	.col_key_h = BANSHEE_KEYBOARD_COL_KEY_H,
+	.row_key_h = BANSHEE_KEYBOARD_ROW_KEY_H,
 };
 
 void board_id_keyboard_col_inverted(int board_id)

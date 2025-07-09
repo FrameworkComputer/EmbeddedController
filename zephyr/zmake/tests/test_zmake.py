@@ -81,7 +81,7 @@ class FakeJobserver(zmake.jobserver.GNUMakeJobServer):
         super().__init__(jobs=2)
         self.fnames = fnames
 
-    def get_job(self):  # pylint: disable=no-self-use
+    def get_job(self):
         """Fake implementation of get_job(), which returns a real JobHandle()"""
         return zmake.jobserver.JobHandle(unittest.mock.Mock())
 
@@ -98,10 +98,10 @@ class FakeJobserver(zmake.jobserver.GNUMakeJobServer):
                 new_cmd = ["cat", filename]
                 break
         else:
-            raise Exception(f'No pattern matched "{" ".join(cmd)}"')
+            raise ValueError(f'No pattern matched "{" ".join(cmd)}"')
         return super().popen(new_cmd, env=env, **kwargs)
 
-    def env(self):  # pylint: disable=no-self-use
+    def env(self):
         """Runs test commands with an empty environment for simpler logs."""
         return {}
 
@@ -204,6 +204,7 @@ class TestFilters:
         )
 
         dt_errs = [rec for rec in recs if "adc" in rec]
+        assert dt_errs
         assert (
             "devicetree error: 'adc' is marked as required" in list(dt_errs)[0]
         )

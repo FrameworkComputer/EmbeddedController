@@ -13,12 +13,7 @@
  * exact spaces for arrays. Actual keyboard scanning is done using
  * keyboard_cols, which holds a runtime column size.
  */
-#ifdef CONFIG_KEYBOARD_CUSTOMIZATION
-#undef KEYBOARD_COLS_MAX
-#undef KEYBOARD_ROWS
-
 #define KEYBOARD_COLS_MAX 16
 #define KEYBOARD_ROWS 8
-#endif
 
 #endif /* __KEYBOARD_CUSTOMIZATION_H */

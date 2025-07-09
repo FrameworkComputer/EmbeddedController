@@ -15,5 +15,6 @@ dirs-y+=$(_elan_cur_dir)
 
 all-obj-rw+=$(_elan_cur_dir)elan_private.o
 all-obj-rw+=$(_elan_cur_dir)elan_sensor_pal.o
+all-obj-rw+=$(_elan_cur_dir)elan_misc.o
 
 endif

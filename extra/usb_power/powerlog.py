@@ -307,8 +307,7 @@ class Spower:
         if write_list:
             cmd = write_list
             ret = self._write_ep.write(cmd, wtimeout)
-
-        self._logger.debug("RET: %s ", ret)
+            self._logger.debug("RET: %s ", ret)
 
         # Read back response if necessary.
         if read_count:
@@ -367,7 +366,7 @@ class Spower:
                     "TRY %d of %d: %s", count, max_reset_retry, err
                 )
                 time.sleep(count * 0.01)
-        raise Exception("Power", "Failed to reset")
+        raise ValueError("Power", "Failed to reset")
 
     def stop(self):
         """Stop any active data acquisition."""
@@ -433,7 +432,7 @@ class Spower:
                     )
                     return True
                 return False
-        raise Exception("Power", f"Failed to find INA {name}")
+        raise ValueError("Power", f"Failed to find INA {name}")
 
     def set_time(self, timestamp_us):
         """Set sweetberry time to match host time.
@@ -476,7 +475,7 @@ class Spower:
             "Command ADD_INA: %s", "success" if ret == 0 else "failure"
         )
 
-    def report_header_size(self):  # pylint:disable=no-self-use
+    def report_header_size(self):
         """Helper function to calculate power record header size."""
         result = 2
         timestamp = 8
@@ -581,6 +580,10 @@ class Spower:
                 val = raw_val * self._inas[i]["uAscale"]
             elif self._inas[i]["type"] == Spower.INA_SHUNTV:
                 val = raw_val * self._inas[i]["uVscale"]
+            else:
+                raise ValueError(
+                    f"Invalid inas[{i}]['type'] {self._inas[i]['type']}"
+                )
 
             self._logger.debug(
                 "READ %d %s: %fs: 0x%04x %f", i, name, ftimestamp, raw_val, val
@@ -686,7 +689,7 @@ class powerlog:  # pylint:disable=invalid-name
                     if key not in used_boards:
                         used_boards.append(key)
             if not success:
-                raise Exception(
+                raise ValueError(
                     f"Failed to add {name} (maybe missing "
                     "sweetberry, or bad board file?)"
                 )
@@ -702,7 +705,7 @@ class powerlog:  # pylint:disable=invalid-name
             else:
                 val.set_time(0)
 
-    def process_scenario(self, name_list):  # pylint:disable=no-self-use
+    def process_scenario(self, name_list):
         """Return list of tuples indicating name and type.
 
         Args:
@@ -724,7 +727,7 @@ class powerlog:  # pylint:disable=invalid-name
                 elif entry[1] == "SHUNTV":
                     power_type = Spower.INA_SHUNTV
                 else:
-                    raise Exception(
+                    raise ValueError(
                         "Invalid INA type",
                         f"Type of {entry[0]} [{entry[1]}] not recognized,"
                         " try one of POWER, BUSV, CURRENT",
@@ -751,7 +754,7 @@ class powerlog:  # pylint:disable=invalid-name
             integration_us_new = val.start(integration_us_request)
             if integration_us:
                 if integration_us != integration_us_new:
-                    raise Exception(
+                    raise ValueError(
                         "FAIL",
                         f"Integration on A: {integration_us:d}us != integration"
                         f" on B {integration_us_new:d}us",
@@ -771,6 +774,8 @@ class powerlog:  # pylint:disable=invalid-name
                 unit = "uA"
             elif ina_type == Spower.INA_SHUNTV:
                 unit = "uV"
+            else:
+                raise ValueError(f"Invalid ina_type {ina_type}")
 
             title += f", {name} {unit}"
             name_type = name + Spower.INA_SUFFIX[ina_type]
@@ -1015,9 +1020,9 @@ def main(argv=None):
 
     integration_us_request = args.integration_us
     if not args.board:
-        raise Exception("Power", "No board file selected, see board.README")
+        raise ValueError("Power", "No board file selected, see board.README")
     if not args.config:
-        raise Exception("Power", "No config file selected, see board.README")
+        raise ValueError("Power", "No config file selected, see board.README")
 
     brdfile = args.board
     cfgfile = args.config

@@ -31,28 +31,30 @@
 #define CONFIG_SHARED_MALLOC
 #define CONFIG_DFU_BOOTMANAGER_MAIN
 #define CONFIG_DFU_BOOTMANAGER_SHARED
+#define CONFIG_DFU_BOOTMANAGER_MAX_REBOOT_COUNT 10
 #undef CONFIG_COMMON_RUNTIME
 #undef CONFIG_COMMON_PANIC_OUTPUT
 #undef CONFIG_COMMON_GPIO
 #undef CONFIG_COMMON_TIMER
-#undef CONFIG_WATCHDOG
 
 #else /* !SECTION_IS_RO */
 
 /*
- * PLL configuration. Freq = STM32_HSE_CLOCK or HSI (16MHz) * N / M / R.
+ * PLL configuration. Freq = HSE or HSI (16MHz) * N / M / R.
  *
- * In our case, 16MHz * 55 / 4 / 2 = 110MHz.
+ * In our case the values can be changed at runtime.  Initial settings are:
+ * 16MHz * 55 / 4 / 2 = 110MHz.
  */
 
 #undef STM32_PLLM
 #undef STM32_PLLN
 #undef STM32_PLLR
-#define STM32_PLLM 4
-#define STM32_PLLN 55
-#define STM32_PLLR 2
+#define STM32_PLLM stm32_pllm
+#define STM32_PLLN stm32_plln
+#define STM32_PLLR stm32_pllr
 
 #define STM32_USE_PLL
+#define STM32_INITIAL_PLL_INPUT OSC_INIT
 #define CPU_CLOCK 110000000
 
 #define CONFIG_ADC
@@ -198,6 +200,10 @@
 
 #ifndef __ASSEMBLER__
 
+extern int stm32_pllm;
+extern int stm32_plln;
+extern int stm32_pllr;
+
 /* Timer selection */
 #define PWM_TIMER_1 1
 #define TIM_CLOCK32 2
@@ -212,6 +218,7 @@
 #define PWM_TIMER_17 17
 
 #include "gpio_signal.h"
+#include "timer.h"
 
 /* USB string indexes */
 enum usb_strings {
@@ -283,6 +290,18 @@ void user_button_edge(enum gpio_signal signal);
 enum gpio_signal gpio_find_by_name(const char *name);
 
 extern int shield_reset_pin;
+
+/*
+ * Utility methods shared by SPI and I2C TPM code.
+ *
+ * A invocation of `start_monitoring_for_falling_edge()` will enable rather
+ * frequent timer interrupts, and must always be followed by an eventual
+ * invocation of `stop_monitoring_for_falling_edge()`.  In between such a pair
+ * of calls, `wait_for_falling_edge()` may be called once, or not at all.
+ */
+void start_monitoring_for_falling_edge(int gsc_ready_pin);
+int wait_for_falling_edge(timestamp_t deadline);
+void stop_monitoring_for_falling_edge(void);
 
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

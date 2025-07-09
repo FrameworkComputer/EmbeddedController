@@ -7,6 +7,7 @@
 #include "console.h"
 #include "flash.h"
 #include "flash_chip.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "intc.h"
 #include "registers.h"
@@ -56,6 +57,43 @@
 #define IMMU_TAG_INDEX_BY_DEFAULT 0x7E000
 /* immu cache size is 8K bytes. */
 #define IMMU_SIZE 0x2000
+#endif
+
+#if defined(CHIP_CORE_NDS32) && defined(CONFIG_IT83XX_EXTENDED_ILM)
+struct dlm_ilm_ctrl_t {
+	volatile uint8_t *scar_l;
+	volatile uint8_t *scar_m;
+	volatile uint8_t *scar_h;
+	volatile uint8_t *dlm;
+	uint8_t ctrl;
+};
+
+const struct dlm_ilm_ctrl_t dlm_ilm_ctrl_regs[] = {
+	[0] = { NULL, NULL, NULL, NULL, 0 },
+	[1] = { NULL, NULL, NULL, NULL, 0 },
+	[2] = { &IT83XX_SMFI_SCAR10L, &IT83XX_SMFI_SCAR10M,
+		&IT83XX_SMFI_SCAR10H, &IT83XX_GCTRL_MCCR, BIT(2) },
+	[3] = { &IT83XX_SMFI_SCAR11L, &IT83XX_SMFI_SCAR11M,
+		&IT83XX_SMFI_SCAR11H, &IT83XX_GCTRL_MCCR, BIT(3) },
+	[4] = { &IT83XX_SMFI_SCAR8L, &IT83XX_SMFI_SCAR8M, &IT83XX_SMFI_SCAR8H,
+		&IT83XX_GCTRL_MCCR1, BIT(2) },
+	[5] = { &IT83XX_SMFI_SCAR9L, &IT83XX_SMFI_SCAR9M, &IT83XX_SMFI_SCAR9H,
+		&IT83XX_GCTRL_MCCR1, BIT(3) },
+	[6] = { &IT83XX_SMFI_SCAR3L, &IT83XX_SMFI_SCAR3M, &IT83XX_SMFI_SCAR3H,
+		&IT83XX_GCTRL_MCCR1, BIT(4) },
+	[7] = { &IT83XX_SMFI_SCAR4L, &IT83XX_SMFI_SCAR4M, &IT83XX_SMFI_SCAR4H,
+		&IT83XX_GCTRL_MCCR1, BIT(5) },
+	[8] = { &IT83XX_SMFI_SCAR5L, &IT83XX_SMFI_SCAR5M, &IT83XX_SMFI_SCAR5H,
+		&IT83XX_GCTRL_MCCR1, BIT(6) },
+	[9] = { &IT83XX_SMFI_SCAR6L, &IT83XX_SMFI_SCAR6M, &IT83XX_SMFI_SCAR6H,
+		&IT83XX_GCTRL_MCCR2, BIT(0) },
+	[10] = { &IT83XX_SMFI_SCAR7L, &IT83XX_SMFI_SCAR7M, &IT83XX_SMFI_SCAR7H,
+		 &IT83XX_GCTRL_MCCR2, BIT(1) },
+	[11] = { &IT83XX_SMFI_SCAR1L, &IT83XX_SMFI_SCAR1M, &IT83XX_SMFI_SCAR1H,
+		 &IT83XX_GCTRL_MCCR2, BIT(2) },
+};
+BUILD_ASSERT(ARRAY_SIZE(dlm_ilm_ctrl_regs) ==
+	     CONFIG_RAM_SIZE / IT83XX_ILM_BLOCK_SIZE);
 #endif
 
 static int stuck_locked;
@@ -638,12 +676,28 @@ uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 	return ret;
 }
 
+#if defined(CHIP_CORE_NDS32) && defined(CONFIG_IT83XX_EXTENDED_ILM)
+static void flash_disable_ilms(void)
+{
+	uint32_t int_mask = read_clear_int_mask();
+
+	for (int i = 2; i < ARRAY_SIZE(dlm_ilm_ctrl_regs); i++) {
+		/* invalid all static DMA first */
+		*dlm_ilm_ctrl_regs[i].scar_h = 0x8;
+		*dlm_ilm_ctrl_regs[i].scar_m = 0;
+		*dlm_ilm_ctrl_regs[i].scar_l = 0;
+	}
+
+	set_int_mask(int_mask);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, flash_disable_ilms, HOOK_PRIO_LAST);
+#endif
+
 static void flash_enable_second_ilm(void)
 {
-#ifdef CHIP_CORE_RISCV
 	/* Make sure no interrupt while enable static cache */
 	interrupt_disable();
-
+#ifdef CHIP_CORE_RISCV
 	/* Invalid ILM0 */
 	IT83XX_GCTRL_RVILMCR0 &= ~ILMCR_ILM0_ENABLE;
 	IT83XX_SMFI_SCAR0H = BIT(3);
@@ -663,9 +717,44 @@ static void flash_enable_second_ilm(void)
 		IT83XX_SMFI_SCAR0H &= ~BIT(7);
 	/* Enable ILM 0 */
 	IT83XX_GCTRL_RVILMCR0 |= ILMCR_ILM0_ENABLE;
+#elif defined(CHIP_CORE_NDS32) && defined(CONFIG_IT83XX_EXTENDED_ILM)
+	uint8_t dlm_base_idx = ((uintptr_t)__nds32_flash_dlm_start >> 12) & 0xf;
+	uintptr_t dlm_base = (uintptr_t)__nds32_flash_dlm_start;
+	uintptr_t ilm_base = (uintptr_t)__nds32_flash_ilm_start;
+	uint32_t ramcode_size = ((uintptr_t)__nds32_flash_ilm_size) & 0xffff;
+	int ilm_block;
 
-	interrupt_enable();
+	ilm_block = ramcode_size / IT83XX_ILM_BLOCK_SIZE;
+	ilm_block += (ramcode_size % IT83XX_ILM_BLOCK_SIZE) ? 1 : 0;
+
+	flash_disable_ilms();
+
+	for (int i = 0; i < ilm_block; i++) {
+		/* Enable DLM region and than copy data into it */
+		*dlm_ilm_ctrl_regs[dlm_base_idx].dlm |=
+			dlm_ilm_ctrl_regs[dlm_base_idx].ctrl;
+		memcpy((void *)dlm_base, (const void *)ilm_base,
+		       IT83XX_ILM_BLOCK_SIZE);
+		/* Disable DLM region and be the ram code section */
+		*dlm_ilm_ctrl_regs[dlm_base_idx].dlm &=
+			~dlm_ilm_ctrl_regs[dlm_base_idx].ctrl;
+		/* Enable ILM */
+		*dlm_ilm_ctrl_regs[dlm_base_idx].scar_l = ilm_base & 0xff;
+		*dlm_ilm_ctrl_regs[dlm_base_idx].scar_m = (ilm_base >> 8) &
+							  0xff;
+		*dlm_ilm_ctrl_regs[dlm_base_idx].scar_h = (ilm_base >> 16) &
+							  0x0f;
+		/*
+		 * Validate Direct-map SRAM function by programming
+		 * register SCARx bit20=0
+		 */
+		*dlm_ilm_ctrl_regs[dlm_base_idx].scar_h &= ~BIT(4);
+		dlm_base_idx++;
+		ilm_base += IT83XX_ILM_BLOCK_SIZE;
+		dlm_base += IT83XX_ILM_BLOCK_SIZE;
+	}
 #endif
+	interrupt_enable();
 }
 
 static void flash_code_static_dma(void)

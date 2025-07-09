@@ -24,6 +24,8 @@
 #include "driver/usb_mux/it5205.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "i2c.h"
+#include "i2c_bitbang.h"
 #include "intc.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
@@ -292,6 +294,16 @@ const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
+const struct i2c_port_t i2c_bitbang_ports[] = {
+	{ .name = "eeprom",
+	  .port = I2C_PORT_EEPROM,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C_EEPROM_SCL,
+	  .sda = GPIO_EC_I2C_EEPROM_SDA,
+	  .drv = &bitbang_drv },
+};
+const unsigned int i2c_bitbang_ports_used = ARRAY_SIZE(i2c_bitbang_ports);
+
 /* Sensor Mutexes */
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
@@ -470,6 +482,15 @@ void board_init(void)
 	/* Make sure HDMI_HPD signal can be reported to CPU at sysjump */
 	board_enable_hdmi_hpd(1);
 
+	/*
+	 * Since vol_up button has been reassigned to fake vol_up button GPIO
+	 * for DB_HDMI SKU, which indicates that interrupt cannot be enabled
+	 * by button_reset, we have to enable it by this.
+	 */
+	if (db == DB_1A_HDMI || db == DB_LTE_HDMI || db == DB_1A_HDMI_LTE) {
+		gpio_enable_interrupt(GPIO_VOLUP_BTN_ODL_HDMI_HPD);
+	}
+
 	/* Charger on the MB will be outputting PROCHOT_ODL and OD CHG_DET */
 	sm5803_configure_gpio0(CHARGER_PRIMARY, GPIO0_MODE_PROCHOT, 1);
 	sm5803_configure_chg_det_od(CHARGER_PRIMARY, 1);
@@ -485,6 +506,30 @@ void board_init(void)
 	board_power_5v_enable(on);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+static void board_init_early(void)
+{
+	uint32_t cached_fw_config_early;
+	enum fw_config_db db;
+
+	if (cbi_get_fw_config(&cached_fw_config_early) != EC_SUCCESS)
+		cached_fw_config_early = 0;
+
+	ccprints("FW_CONFIG read 0x%04X in early init", cached_fw_config_early);
+
+	db = (cached_fw_config_early & FW_CONFIG_DB_MASK) >>
+	     FW_CONFIG_DB_OFFSET;
+	if (db == DB_1A_HDMI || db == DB_LTE_HDMI || db == DB_1A_HDMI_LTE) {
+		/*
+		 * To avoid boot button triggered incorrectly for DB_HDMI SKUs,
+		 * assign fake pin GPIO_VOLUP_BTN_FAKE for volume up button.
+		 * See b:355586970.
+		 */
+		ccprints("DB_HDMI SKU! Assign fake vol_up button GPIO.");
+		button_reassign_gpio(BUTTON_VOLUME_UP, GPIO_VOLUP_BTN_FAKE);
+	}
+}
+DECLARE_HOOK(HOOK_INIT_EARLY, board_init_early, HOOK_PRIO_DEFAULT);
 
 static void board_resume(void)
 {
@@ -736,32 +781,6 @@ const struct temp_sensor_t temp_sensors[] = {
 			    .idx = ADC_TEMP_SENSOR_4 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-
-/* This callback disables keyboard when convertibles are fully open */
-__override void lid_angle_peripheral_enable(int enable)
-{
-	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
-
-	/*
-	 * If the lid is in tablet position via other sensors,
-	 * ignore the lid angle, which might be faulty then
-	 * disable keyboard.
-	 */
-	if (tablet_get_mode())
-		enable = 0;
-
-	if (enable) {
-		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
-	} else {
-		/*
-		 * Ensure that the chipset is off before disabling the keyboard.
-		 * When the chipset is on, the EC keeps the keyboard enabled and
-		 * the AP decides whether to ignore input devices or not.
-		 */
-		if (!chipset_in_s0)
-			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
-	}
-}
 
 __override void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
 				       int *ki_div, int *kd, int *kd_div)

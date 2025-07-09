@@ -3,21 +3,13 @@
  * found in the LICENSE file.
  */
 
-/ {
-	fans {
-		compatible = "cros-ec,fans";
+/*
+ * Define nodelabel aliases needed for fan devicetree.
+ */
+pwm_fan: &pwm8 {};
+tach_fan: &tach0 {};
 
-		fan_0 {
-			pwms = <&pwm8 0 PWM_KHZ(30) PWM_POLARITY_NORMAL>;
-			rpm_min = <3200>;
-			rpm_start = <2200>;
-			rpm_max = <6600>;
-			tach = <&tach0>;
-			pgood_gpio = <&all_sys_pwrgd>;
-			enable_gpio = <&gpio_fan_control>;
-		};
-	};
-};
+#include "../fan.dtsi"
 
 /* Tachemeter for fan speed measurement */
 &tach0 {

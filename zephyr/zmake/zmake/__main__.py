@@ -9,6 +9,8 @@ import inspect
 import logging
 import os
 import pathlib
+import re
+import subprocess
 import sys
 
 from zmake import jobserver
@@ -112,12 +114,6 @@ def get_argparser():
         "--jobs",
         type=int,
         help="Degree of multiprogramming to use",
-    )
-    parser.add_argument(
-        "--goma",
-        action="store_true",
-        dest="goma",
-        help="Enable hyperspeed compilation with Goma! (Googlers only)",
     )
 
     log_level_group = parser.add_mutually_exclusive_group()
@@ -367,6 +363,39 @@ def add_common_configure_args(sub_parser: argparse.ArgumentParser):
     )
 
 
+def find_toolchains():
+    """Attempts to load toolchain paths.
+
+    Args: None
+
+    Returns:
+        None: Modifies the os environment if found
+    """
+    env = dict(os.environ)
+    if "COREBOOT_SDK_ROOT" not in env:
+        for sys_path in sys.path:
+            ec_util_path = (
+                pathlib.Path(sys_path) / ".." / ".." / "util"
+            ).resolve()
+            if ec_util_path.is_dir():
+                run_result = subprocess.run(
+                    ["./coreboot_sdk.py"],
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    cwd=str(ec_util_path),
+                )
+                # Convert bash associative array to python dict
+                env_vars = dict(
+                    re.findall(
+                        r'\["([^"]*)"\]="([^"]*)"',
+                        run_result.stdout.decode("utf-8"),
+                    )
+                )
+                if env_vars:
+                    os.environ.update(env_vars.items())
+                break
+
+
 def main(argv=None):
     """The main function.
 
@@ -383,6 +412,8 @@ def main(argv=None):
 
     parser, _ = get_argparser()
     opts = parser.parse_args(argv)
+
+    find_toolchains()
 
     # Default logging
     log_label = False

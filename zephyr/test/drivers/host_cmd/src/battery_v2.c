@@ -41,9 +41,16 @@ ZTEST(host_cmd_battery_v2, test_get_static__v0)
 	zassert_equal(batt->design_voltage, response.design_voltage);
 	zassert_equal(batt->cycle_count, response.cycle_count);
 	zassert_mem_equal(batt->manufacturer_ext, response.manufacturer,
-			  sizeof(response.manufacturer));
+			  sizeof(response.manufacturer) - 1, "%s != %s",
+			  batt->manufacturer_ext, response.manufacturer);
+	zassert_equal(0,
+		      response.manufacturer[sizeof(response.manufacturer) - 1],
+		      "Missing NULL");
 	zassert_mem_equal(batt->model_ext, response.model,
-			  sizeof(response.model));
+			  sizeof(response.model) - 1, "%s != %s",
+			  batt->model_ext, response.model);
+	zassert_equal(0, response.model[sizeof(response.model) - 1],
+		      "Missing NULL");
 	zassert_mem_equal(batt->serial_ext, response.serial,
 			  sizeof(response.serial));
 	zassert_mem_equal(batt->type_ext, response.type, sizeof(response.type));
@@ -71,9 +78,17 @@ ZTEST(host_cmd_battery_v2, test_get_static__v1)
 	zassert_equal(batt->design_voltage, response.design_voltage);
 	zassert_equal(batt->cycle_count, response.cycle_count);
 	zassert_mem_equal(batt->manufacturer_ext, response.manufacturer_ext,
-			  sizeof(response.manufacturer_ext));
+			  sizeof(response.manufacturer_ext) - 1, "%s != %s",
+			  batt->manufacturer_ext, response.manufacturer_ext);
+	zassert_equal(
+		0,
+		response.manufacturer_ext[sizeof(response.manufacturer_ext) - 1],
+		"Missing NULL");
 	zassert_mem_equal(batt->model_ext, response.model_ext,
-			  sizeof(response.model_ext));
+			  sizeof(response.model_ext) - 1, "%s != %s",
+			  batt->model_ext, response.model_ext);
+	zassert_equal(0, response.model_ext[sizeof(response.model_ext) - 1],
+		      "Missing NULL");
 	zassert_mem_equal(batt->serial_ext, response.serial_ext,
 			  sizeof(response.serial_ext));
 	zassert_mem_equal(batt->type_ext, response.type_ext,

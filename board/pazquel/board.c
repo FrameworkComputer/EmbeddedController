@@ -122,8 +122,7 @@ static void board_connect_c0_sbu(enum gpio_signal s)
 
 /* Keyboard scan setting */
 __override struct keyboard_scan_config keyscan_config = {
-	/* Use 80 us, because KSO_02 passes through the H1. */
-	.output_settle_us = 80,
+	.output_settle_us = 50,
 	/*
 	 * 1. launcher key mapped to (KSI_3, KSO_0):
 	 *    change actual_key_mask[0] = 0x14 to 0x1c
@@ -132,10 +131,10 @@ __override struct keyboard_scan_config keyscan_config = {
 	 */
 	.actual_key_mask = { 0x1c, 0xfe, 0xff, 0xff, 0xff, 0xf5, 0xff, 0xa4,
 			     0xff, 0xfe, 0x55, 0xfa, 0xca },
-	/* Other values should be the same as the default configuration. */
 	.debounce_down_us = 9 * MSEC,
 	.debounce_up_us = 30 * MSEC,
 	.scan_period_us = 3 * MSEC,
+	.stable_scan_period_us = 9 * MSEC,
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 };

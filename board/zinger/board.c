@@ -56,9 +56,12 @@ static int check_rw_valid(void *rw_hash)
 	if (*rw_rst == 0xffffffff)
 		return 0;
 
-	good = rsa_verify((const struct rsa_public_key *)CONFIG_RO_PUBKEY_ADDR,
-			  (const uint8_t *)CONFIG_RW_SIG_ADDR, rw_hash,
-			  rsa_workbuf);
+	good = rsa_verify(
+		(const struct rsa_public_key *)(CONFIG_MAPPED_STORAGE_BASE +
+						CONFIG_RO_PUBKEY_OFF),
+		(const uint8_t *)(CONFIG_MAPPED_STORAGE_BASE +
+				  CONFIG_RW_SIG_OFF),
+		rw_hash, rsa_workbuf);
 	if (!good) {
 		debug_printf("RSA FAILED\n");
 		pd_log_event(PD_EVENT_ACC_RW_FAIL, 0, 0, NULL);

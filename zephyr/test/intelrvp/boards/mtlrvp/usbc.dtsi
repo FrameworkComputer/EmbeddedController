@@ -1,0 +1,105 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		usbc_port0: port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			tcpc = <&tcpci_emul0>;
+			ppc = <&ppc0_emul>;
+			chg = <&charger_emul>;
+			usb_mux_chain_0: usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c0_hb_retimer
+					     &virtual_mux_c0>;
+			};
+			usb_mux_alt_chain_0: usb-mux-atl-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
+				usb-muxes = <&virtual_mux_c0>;
+			};
+		};
+		port0-muxes {
+			virtual_mux_c0: virtual-mux-c0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		usbc_port1: port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			tcpc = <&tcpci_emul1>;
+			ppc = <&ppc1_emul>;
+			usb_mux_chain_1: usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c1_hb_retimer
+					     &virtual_mux_c1>;
+			};
+
+			/* TODO:
+			 * LP5 doesn't have port 1; should remove PD_C1
+			 * task.
+			 */
+			usb_mux_alt_chain_1: usb-mux-alt-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
+				usb-muxes = <&virtual_mux_c1>;
+			};
+		};
+		port1-muxes {
+			virtual_mux_c1: virtual-mux-c1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		usbc_port2: port2@2 {
+			compatible = "named-usbc-port";
+			reg = <2>;
+			tcpc = <&tcpci_emul2>;
+			usb_mux_chain_2: usb-mux-chain-2 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c2_hb_retimer
+					     &virtual_mux_c2>;
+			};
+			usb_mux_alt_chain_2: usb-mux-alt-chain-2 {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
+				usb-muxes = <&usb_c2_alt_hb_retimer
+					     &virtual_mux_c2>;
+			};
+		};
+		port2-muxes {
+			virtual_mux_c2: virtual-mux-c2 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		usbc_port3: port3@3 {
+			compatible = "named-usbc-port";
+			reg = <3>;
+			tcpc = <&tcpci_emul3>;
+			usb_mux_chain_3: usb-mux-chain-3 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c3_hb_retimer
+					     &virtual_mux_c3>;
+			};
+			usb_mux_alt_chain_3: usb-mux-alt-chain-3 {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
+				usb-muxes = <&usb_c3_alt_hb_retimer
+					     &virtual_mux_c3>;
+			};
+		};
+		port3-muxes {
+			virtual_mux_c3: virtual-mux-c3 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+};

@@ -53,10 +53,11 @@
 
 /* delay to turn on/off vconn */
 /* Define operating power and max power */
-#define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_VOLTAGE_MV 20000
-#define PD_MAX_CURRENT_MA 3000
-#define PD_MAX_POWER_MW ((PD_MAX_VOLTAGE_MV * PD_MAX_CURRENT_MA) / 1000)
+#define CONFIG_USB_PD_OPERATING_POWER_MW 15000
+#define CONFIG_USB_PD_MAX_VOLTAGE_MV 20000
+#define CONFIG_USB_PD_MAX_CURRENT_MA 3000
+#define CONFIG_USB_PD_MAX_POWER_MW \
+	((CONFIG_USB_PD_MAX_VOLTAGE_MV * CONFIG_USB_PD_MAX_CURRENT_MA) / 1000)
 
 /* Degine board specific type-C power constants */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */

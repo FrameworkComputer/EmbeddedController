@@ -17,7 +17,7 @@
 /* Tests that require CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY disabled
  */
 
-ZTEST_F(usbc_alt_mode, test_verify_displayport_mode_power_cycle)
+ZTEST_F(usbc_alt_mode, test_displayport_mode_power_cycle)
 {
 	struct ec_response_typec_status status;
 

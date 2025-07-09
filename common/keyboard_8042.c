@@ -5,12 +5,6 @@
  * 8042 keyboard protocol
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #include "atkbd_protocol.h"
 #include "builtin/assert.h"
 #include "button.h"
@@ -230,6 +224,16 @@ struct kblog_t {
 
 static struct kblog_t *kblog_buf; /* Log buffer; NULL if not logging */
 static int kblog_len; /* Current log length */
+
+#ifndef CONFIG_8042_AUX
+/*
+ * Stub in case the call did not get optimized away and we do not have
+ * LPC configured.
+ */
+__attribute__((weak)) void lpc_aux_put_char(uint8_t chr, int send_irq)
+{
+}
+#endif /* !CONFIG_8042_AUX */
 
 /**
  * Add event to keyboard log.

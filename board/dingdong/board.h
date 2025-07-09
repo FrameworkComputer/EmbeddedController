@@ -89,10 +89,10 @@ enum usb_strings {
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 0 /* us */
 
 /* Define typical operating power and max power */
-#define PD_OPERATING_POWER_MW 1000
-#define PD_MAX_POWER_MW 1500
-#define PD_MAX_CURRENT_MA 300
-#define PD_MAX_VOLTAGE_MV 5000
+#define CONFIG_USB_PD_OPERATING_POWER_MW 1000
+#define CONFIG_USB_PD_MAX_POWER_MW 1500
+#define CONFIG_USB_PD_MAX_CURRENT_MA 300
+#define CONFIG_USB_PD_MAX_VOLTAGE_MV 5000
 
 #endif /* !__ASSEMBLER__ */
 

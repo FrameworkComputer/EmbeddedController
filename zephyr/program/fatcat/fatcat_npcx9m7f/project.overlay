@@ -7,8 +7,62 @@
 
 #include <cros/integrated_fwid.dtsi>
 
-#include "../fatcat_stub.dts"
-
 /* fatcat_npcx9m7f project DTS includes */
 
+#include <cros/cbi_flash.dtsi>
+
+#include "generated.dtsi"
+
+#include "fan.dtsi"
+#include "gpios.dtsi"
+#include "i2c.dtsi"
+#include "temp_sensors.dtsi"
+
+#include "../fatcat_it82002aw/interrupts.dtsi"
+
+/* Power Signals */
+#define PWR_EN_PP3300_S5 &gpio4 1
+#define PWR_EN_PP5000_S5 &gpio7 6
+#define PWR_RSMRST_PWRGD &gpio7 2
+#define PWR_EC_PCH_RSMRST &gpio9 5
+#define PWR_SLP_S0 &gpiob 0
+#define PWR_PCH_PWROK &gpio6 1
+#define PWR_ALL_SYS_PWRGD &gpio6 3
+
+#define PD_POW_IRQ_GPIO &gpiof 0
+
+#include "../../intelrvp/ptlrvp/power_signals.dtsi"
+#include "../../intelrvp/ptlrvp/gsc_board.dtsi"
+#include "../../intelrvp/ptlrvp/battery.dtsi"
+#include "../../intelrvp/ptlrvp/ioex_gpio.dtsi"
+#include "../../intelrvp/ptlrvp/ptlrvp_npcx/psl.dtsi"
+#include "../../intelrvp/ptlrvp/ptlrvp_npcx/keyboard.dtsi"
+#include "../../intelrvp/ptlrvp/pd.dtsi"
+#include "../../intelrvp/ptlrvp/usbc.dtsi"
+
+&it8801_mfd {
+	irq-gpios = <&gpio7 0 GPIO_ACTIVE_LOW>;
+};
+
 /* fatcat_npcx9m7f overrides follow... */
+
+&cbi_flash {
+	/*
+	 * CBI section size is 0x1000 bytes, the CBI portion lies at the end of
+	 * EC_RO section. EC_RO section ends at 0x50000 byte which is the offset
+	 */
+	offset = <0x50000>;
+	size = <0x1000>;
+};
+
+/* AP interface */
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
+};
+
+/* Enable hardware acceleration */
+&sha0 {
+	status = "okay";
+};

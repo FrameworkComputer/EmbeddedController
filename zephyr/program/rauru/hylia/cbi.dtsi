@@ -1,0 +1,220 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	hylia-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		pdc {
+			enum-name = "FW_PDC";
+			start = <12>;
+			size = <1>;
+			pdc-not-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_PDC_NOT_PRESENT";
+				value = <0>;
+				default;
+			};
+			pdc-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_PDC_PRESENT";
+				value = <1>;
+			};
+		};
+		hdmi {
+			enum-name = "FW_HDMI";
+			start = <13>;
+			size = <1>;
+			hdmi-not-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_HDMI_NOT_PRESENT";
+				value = <0>;
+			};
+			hdmi-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_HDMI_PRESENT";
+				value = <1>;
+				default;
+			};
+		};
+		fingerprint {
+			enum-name = "FW_FINGERPRINT";
+			start = <14>;
+			size = <2>;
+
+			fp-disabled {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FP_DISABLED";
+				value = <0>;
+				default;
+			};
+			fp-helipilot {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FP_HELIPILOT";
+				value = <1>;
+			};
+		};
+		form-factor {
+			enum-name = "FW_FORM_FACTOR";
+			start = <16>;
+			size = <2>;
+			clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FORM_FACTOR_CLAMSHELL";
+				value = <0>;
+			};
+			convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FORM_FACTOR_CONVERTIBLE";
+				value = <1>;
+			};
+			detchable {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FORM_FACTOR_DETACHABLE";
+				value = <2>;
+				default;
+			};
+			chromebox {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FORM_FACTOR_CHROMEBOX";
+				value = <3>;
+			};
+		};
+		panel {
+			enum-name = "FW_PANEL";
+			start = <18>;
+			size = <4>;
+			default-panel {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_PANEL_DEFAULT";
+				value = <0>;
+				default;
+			};
+			old {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_PANEL_OLD";
+				value = <1>;
+			};
+		};
+		kb_bl {
+			enum-name = "FW_KB_BL";
+			start = <22>;
+			size = <1>;
+			kb-bl-not-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_NOT_PRESENT";
+				value = <0>;
+			};
+			kb-bl-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_PRESENT";
+				value = <1>;
+				default;
+			};
+		};
+		fan {
+			enum-name = "FW_FAN";
+			start = <23>;
+			size = <1>;
+
+			no-fan {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_NOT_PRESENT";
+				value = <0>;
+			};
+			fan-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_PRESENT";
+				value = <1>;
+				/*
+				 * Set as default so that unprovisioned
+				 * configs will run the fan regardless.
+				 */
+				default;
+			};
+		};
+		usb-combo {
+			enum-name = "FW_USB_COMBO";
+			start = <24>;
+			size = <2>;
+
+			usb-combo-a-c {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_USB_A_C";
+				value = <0>;
+			};
+
+			usb-combo-a {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_USB_A";
+				value = <1>;
+				default;
+			};
+			usb-combo-c {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_USB_C";
+				value = <2>;
+			};
+			usb-combo-none {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_USB_NONE";
+				value = <3>;
+			};
+		};
+		sub-board {
+			enum-name = "FW_SUB_BOARD";
+			start = <26>;
+			size = <2>;
+
+			sub-board-none {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SB_NONE";
+				value = <0>;
+			};
+
+			sub-board-redriver-tusb1046-ps8761 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SB_REDRIVER";
+				value = <1>;
+				default;
+			};
+			sub-board-retimer-anx3443-ps8811 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SB_RETIMER";
+				value = <2>;
+			};
+		};
+		amp {
+			enum-name = "FW_AMP";
+			start = <28>;
+			size = <2>;
+		};
+		storage {
+			enum-name = "FW_STORAGE";
+			start = <30>;
+			size = <2>;
+			ufs-40 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_UFS_40";
+				value = <0>;
+			};
+			ufs-31 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_UFS_31";
+				value = <1>;
+			};
+			ufs-40-hs-lss {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_UFS_40_HS_LSS";
+				value = <2>;
+			};
+			nvme {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_NVME";
+				value = <3>;
+			};
+		};
+	};
+};

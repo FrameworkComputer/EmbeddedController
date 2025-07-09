@@ -49,7 +49,7 @@ ZTEST_USER(console_cmd_accelinfo, test_enable_disable)
 	 * just assert that the command executed and returned 0.
 	 */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelinfo on"));
-	k_msleep(CONFIG_MOTION_MIN_SENSE_WAIT_TIME * MSEC * 2);
+	k_msleep(CONFIG_MOTION_MIN_SENSE_WAIT_TIME * USEC_PER_MSEC * 2);
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelinfo off"));
 }

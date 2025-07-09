@@ -45,7 +45,7 @@ int charger_profile_override(struct charge_state_data *curr)
 	    (curr->batt.status & STATUS_FULLY_CHARGED))
 		usb_mv = 5000;
 	else
-		usb_mv = PD_MAX_VOLTAGE_MV;
+		usb_mv = CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV;
 
 	if (pd_get_max_voltage() != usb_mv) {
 		CPRINTS("VBUS limited to %dmV", usb_mv);
@@ -176,7 +176,7 @@ void board_reset_pd_mcu(void)
 
 	gpio_pin_set_dt(&tcpc_config[0].rst_gpio, 1);
 	gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 1);
-	crec_msleep(PS8XXX_RESET_DELAY_MS);
+	k_msleep(PS8XXX_RESET_DELAY_MS);
 	gpio_pin_set_dt(&tcpc_config[0].rst_gpio, 0);
 	gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 0);
 }

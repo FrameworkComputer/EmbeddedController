@@ -50,8 +50,8 @@
 				gpio-controller;
 				#gpio-cells = <2>;
 				ngpios = <8>;
-				pin_mask = <0xdc>;
-				pinmux_mask = <0xff>;
+				pin-mask = <0xdc>;
+				pinmux-mask = <0xff>;
 			};
 		};
 	};
@@ -80,8 +80,8 @@
 				gpio-controller;
 				#gpio-cells = <2>;
 				ngpios = <8>;
-				pin_mask = <0xdc>;
-				pinmux_mask = <0xff>;
+				pin-mask = <0xdc>;
+				pinmux-mask = <0xff>;
 			};
 		};
 	};

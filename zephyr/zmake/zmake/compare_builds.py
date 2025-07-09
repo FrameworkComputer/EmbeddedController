@@ -5,12 +5,12 @@
 """Module to compare Zephyr EC builds"""
 
 import dataclasses
+import functools
 import logging
 import os
 import pathlib
 import shlex
 import subprocess
-import sys
 from typing import List
 
 import zmake.modules
@@ -35,24 +35,26 @@ def get_git_hash(ref):
             stderr=subprocess.DEVNULL,
             encoding="utf-8",
         )
-    except subprocess.CalledProcessError:
-        logging.error("Failed to determine hash for git reference %s", ref)
-        sys.exit(1)
-    else:
-        full_reference = result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        raise OSError(
+            f"Failed to determine hash for git reference {ref}"
+        ) from e
+    full_reference = result.stdout.strip()
 
     return full_reference
 
 
-def git_do_checkout(module_name, work_dir, git_source, dst_dir, git_ref):
-    """Clone a repository and perform a checkout.
+def _git_clone_repo(module_name, work_dir, git_source, dst_dir):
+    """Clone a repository, skipping the checkout.
 
     Args:
         module_name: The module name to checkout.
-        work_dir: Root directory for the checktout.
+        work_dir: Root directory for the checkout.
         git_source: Path to the repository for the module.
-        dst_dir: Destination directory for the checkout, relative to the work_dir.
-        git_ref: Git reference to checkout.
+        dst_dir: Destination directory for the checkout, relative to work_dir.
+
+    Returns:
+        0 on success, non-zero otherwise
     """
     cmd = [
         "git",
@@ -71,10 +73,25 @@ def git_do_checkout(module_name, work_dir, git_source, dst_dir, git_ref):
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-    except subprocess.CalledProcessError:
-        logging.error("Clone failed for %s: %s", module_name, shlex.join(cmd))
-        sys.exit(1)
+    except subprocess.CalledProcessError as e:
+        raise OSError(
+            f"Clone failed for {module_name}: {shlex.join(cmd)}"
+        ) from e
 
+    return 0
+
+
+def _git_do_checkout(work_dir, dst_dir, git_ref):
+    """Perform a checkout of a specific Git reference from existing repository.
+
+    Args:
+        work_dir: Root directory for the checkout.
+        dst_dir: Destination directory for the checkout, relative to work_dir.
+        git_ref: Git reference to checkout.
+
+    Returns:
+        0 on success, non-zero otherwise
+    """
     cmd = ["git", "-C", dst_dir, "checkout", "--quiet", git_ref]
     try:
         subprocess.run(
@@ -84,14 +101,12 @@ def git_do_checkout(module_name, work_dir, git_source, dst_dir, git_ref):
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-    except subprocess.CalledProcessError:
-        logging.error(
-            "Checkout of %s failed for %s: %s",
-            git_ref,
-            module_name,
-            shlex.join(cmd),
-        )
-        sys.exit(1)
+    except subprocess.CalledProcessError as e:
+        raise OSError(
+            f"Checkout of {git_ref} failed for: {shlex.join(cmd)}"
+        ) from e
+
+    return 0
 
 
 def create_bin_from_elf(elf_input, bin_output):
@@ -115,9 +130,8 @@ def create_bin_from_elf(elf_input, bin_output):
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-    except subprocess.CalledProcessError:
-        logging.error("Failed to create binary: %s", bin_output)
-        sys.exit(1)
+    except subprocess.CalledProcessError as e:
+        raise OSError(f"Failed to create binary: {bin_output}") from e
 
 
 def _compare_non_test_projects(projects, cmp_method, *args):
@@ -164,16 +178,45 @@ class CompareBuilds:
         ref1: 1st git reference for the EC repository.  May be a partial hash,
             local branch name, or remote branch name.
         ref2: 2nd git reference for the EC repository.
+        executor: a zmake.multiproc.Executor object for submitting
+            tasks to.
+        sequential: True to perform git checkouts sequentially. False to
+            do the git checkouts in parallel.
 
     Attributes:
         checkouts: list of CheckoutConfig objects containing information
             about the code checkout at each EC git reference.
     """
 
-    def __init__(self, temp_dir, ref1, ref2):
+    def __init__(self, temp_dir, ref1, ref2, executor, sequential):
         self.checkouts = []
         self.checkouts.append(CheckoutConfig(temp_dir, ref1))
         self.checkouts.append(CheckoutConfig(temp_dir, ref2))
+        self._executor = executor
+        self._sequential = sequential
+
+    def _do_git_work(self, func):
+        """Start a git operation. If the "sequential" option is disabled
+            then the operation is started in the background and the caller
+            must use the executor.wait routine.
+            If "sequential" is enabled, then this routine blocks until the
+            git operation completes.
+
+        Args:
+            func: A function that is passed to the multiproc executor.
+        """
+        self._executor.append(func)
+
+        if self._sequential and self._executor.wait():
+            # git operation is blocking, and returned non-zero.
+            raise OSError("Failed to complete git work")
+
+    def _do_git_wait(self, message):
+        """Wait for any pending git operations.  This is a no-op if the
+        sequential option is used.
+        """
+        if not self._sequential and self._executor.wait():
+            raise OSError(message)
 
     def do_checkouts(self, zephyr_base, module_paths):
         """Checkout all EC sources at a specific commit.
@@ -187,21 +230,51 @@ class CompareBuilds:
             for module_name, git_source in module_paths.items():
                 dst_dir = checkout.modules_dir / module_name
                 git_ref = checkout.full_ref if module_name == "ec" else "HEAD"
-                git_do_checkout(
-                    module_name=module_name,
-                    work_dir=checkout.work_dir,
-                    git_source=git_source,
-                    dst_dir=dst_dir,
-                    git_ref=git_ref,
+                self._do_git_work(
+                    func=functools.partial(
+                        _git_clone_repo,
+                        module_name=module_name,
+                        work_dir=checkout.work_dir,
+                        git_source=git_source,
+                        dst_dir=dst_dir,
+                    )
                 )
 
-            git_do_checkout(
-                module_name="zephyr",
-                work_dir=checkout.work_dir,
-                git_source=zephyr_base,
-                dst_dir="zephyr-base",
-                git_ref="HEAD",
+            self._do_git_work(
+                func=functools.partial(
+                    _git_clone_repo,
+                    module_name="zephyr",
+                    work_dir=checkout.work_dir,
+                    git_source=zephyr_base,
+                    dst_dir="zephyr-base",
+                )
             )
+
+        self._do_git_wait("Failed to clone one or more repositories")
+
+        for checkout in self.checkouts:
+            for module_name, git_source in module_paths.items():
+                dst_dir = checkout.modules_dir / module_name
+                git_ref = checkout.full_ref if module_name == "ec" else "HEAD"
+                self._do_git_work(
+                    func=functools.partial(
+                        _git_do_checkout,
+                        work_dir=checkout.work_dir,
+                        dst_dir=dst_dir,
+                        git_ref=git_ref,
+                    )
+                )
+
+            self._do_git_work(
+                func=functools.partial(
+                    _git_do_checkout,
+                    work_dir=checkout.work_dir,
+                    dst_dir="zephyr-base",
+                    git_ref="HEAD",
+                )
+            )
+
+        self._do_git_wait("Failed to checkout one or more repositories")
 
     def _compare_binaries(self, project):
         output_path = (
@@ -211,7 +284,7 @@ class CompareBuilds:
             / pathlib.Path(project.config.project_name)
             / "output"
         )
-        ish_targets = {"rex-ish", "brox-ish"}
+        ish_targets = {"rex-ish", "brox-ish", "orisa-ish", "ptl-ish"}
 
         output_dir1 = self.checkouts[0].modules_dir / output_path
         output_dir2 = self.checkouts[1].modules_dir / output_path

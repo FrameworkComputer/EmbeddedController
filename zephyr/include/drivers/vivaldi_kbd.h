@@ -7,3 +7,8 @@
  * initialization if more than one configurations are defined.
  */
 int8_t board_vivaldi_keybd_idx(void);
+
+/* Returns true if the specified row, col is the one specified for the
+ * TK_VOL_UP key.
+ */
+bool vivaldi_kbd_is_vol_up(uint8_t row, uint8_t col);

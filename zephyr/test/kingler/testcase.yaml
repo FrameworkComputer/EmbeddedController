@@ -1,5 +1,6 @@
 common:
-  platform_allow: native_sim
+  platform_allow:
+  - native_sim
 tests:
   corsola.usbc:
     extra_configs:
@@ -95,6 +96,11 @@ tests:
     - CONFIG_TEST_USB_PD_POLICY=y
     extra_dtc_overlay_files:
     - kingler.default.overlay
+  kingler.voltorb_dps:
+    extra_configs:
+    - CONFIG_TEST_VOLTORB_DPS=y
+    extra_dtc_overlay_files:
+    - kingler.default.overlay
   kingler.usb_port_count:
     extra_configs:
     - CONFIG_TEST_DB_DETECTION_USB_COUNT=y
@@ -111,6 +117,16 @@ tests:
   kingler.kyogre_sensor:
     extra_configs:
     - CONFIG_TEST_KYOGRE_SENSOR_PROBE=y
+    extra_dtc_overlay_files:
+    - kingler.kyogre.overlay
+  kingler.kyogre_battery_detection:
+    extra_configs:
+    - CONFIG_TEST_KYOGRE_BATTERY_DETECTION_PROBE=y
+    extra_dtc_overlay_files:
+    - kingler.kyogre.overlay
+  kingler.kyogre_pen_charge:
+    extra_configs:
+    - CONFIG_TEST_KYOGRE_PEN_CHARGE_PROBE=y
     extra_dtc_overlay_files:
     - kingler.kyogre.overlay
   kingler.squirtle:

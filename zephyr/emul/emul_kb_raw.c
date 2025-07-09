@@ -108,7 +108,7 @@ void emul_kb_raw_reset(const struct device *dev)
 	}
 }
 
-static const struct cros_kb_raw_driver_api emul_kb_raw_driver_api = {
+static DEVICE_API(cros_kb_raw, emul_kb_raw_driver_api) = {
 	.init = emul_kb_raw_init,
 	.drive_colum = emul_kb_raw_drive_column,
 	.read_rows = emul_kb_raw_read_rows,

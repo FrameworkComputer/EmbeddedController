@@ -15,13 +15,25 @@
 			reg = <0>;
 			chg = <&charger>;
 			pdc = <&pd_pow_port0>;
+			pd-retimer;
 			policy = <&cros_policy>;
 		};
 		port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
 			pdc = <&pd_pow_port1>;
+			pd-retimer;
 			policy = <&cros_policy>;
+		};
+		port2@2 {
+			compatible = "named-usbc-port";
+			reg = <2>;
+			pdc = <&pd_pow_port2>;
+			pd-retimer;
+			policy = <&cros_policy>;
+		};
+		ppm-driver {
+			compatible = "ucsi-ppm";
 		};
 	};
 };

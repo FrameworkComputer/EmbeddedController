@@ -3,7 +3,8 @@
 # found in the LICENSE file.
 
 common:
-  platform_allow: native_sim
+  platform_allow:
+  - native_sim
 tests:
   fingerprint.task.capture:
     extra_configs:
@@ -50,5 +51,12 @@ tests:
   fingerprint.task.utils:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_FINGERPRINT_UTILS=y
+    extra_conf_files:
+    - prj.conf
+
+  fingerprint.task.debug:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FINGERPRINT_DEBUG=y
+    - CONFIG_FINGERPRINT_SHELL=y
     extra_conf_files:
     - prj.conf

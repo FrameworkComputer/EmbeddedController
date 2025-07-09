@@ -141,6 +141,13 @@ int sb_read_mfgacc(int cmd, int block, uint8_t *data, int len)
 	if (len < 3)
 		return EC_ERROR_INVAL;
 
+	/*
+	 * Ship mode command need to set continuously, can't be interfered
+	 * by another command.
+	 */
+	if (sb_cutoff_or_in_progress())
+		return EC_ERROR_ACCESS_DENIED;
+
 	/* Send manufacturer access command */
 	rv = sb_write(SB_MANUFACTURER_ACCESS, cmd);
 	if (rv)
@@ -291,7 +298,7 @@ int battery_time_to_full(int *minutes)
 }
 
 /* Read battery status */
-int battery_status(int *status)
+test_mockable int battery_status(int *status)
 {
 	return sb_read(SB_BATTERY_STATUS, status);
 }
@@ -501,6 +508,16 @@ void battery_get_params(struct batt_params *batt)
 	memcpy(&batt_new, batt, sizeof(*batt));
 	batt_new.flags &= ~BATT_FLAG_VOLATILE;
 
+#if defined(CONFIG_BATTERY_PRESENT_CUSTOM) || \
+	defined(CONFIG_BATTERY_PRESENT_GPIO)
+	/* Hardware can tell us for certain */
+	batt_new.is_present = battery_is_present();
+	if (batt_new.is_present != BP_YES) {
+		batt->is_present = BP_NO;
+		batt->flags = BATT_FLAG_BAD_ANY;
+		return;
+	}
+#endif
 	if (sb_read(SB_TEMPERATURE, &batt_new.temperature) &&
 	    fake_temperature < 0)
 		batt_new.flags |= BATT_FLAG_BAD_TEMPERATURE;
@@ -549,11 +566,8 @@ void battery_get_params(struct batt_params *batt)
 		batt_new.flags |= BATT_FLAG_IMBALANCED_CELL;
 #endif
 
-#if defined(CONFIG_BATTERY_PRESENT_CUSTOM) || \
-	defined(CONFIG_BATTERY_PRESENT_GPIO)
-	/* Hardware can tell us for certain */
-	batt_new.is_present = battery_is_present();
-#else
+#if !defined(CONFIG_BATTERY_PRESENT_CUSTOM) && \
+	!defined(CONFIG_BATTERY_PRESENT_GPIO)
 	/* No hardware test, so we only know it's there if it responds */
 	if (batt_new.flags & BATT_FLAG_RESPONSIVE)
 		batt_new.is_present = BP_YES;

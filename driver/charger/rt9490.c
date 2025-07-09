@@ -806,6 +806,7 @@ int rt9490_get_thermistor_val(const struct temp_sensor_t *sensor, int *temp_ptr)
 {
 	uint16_t mv;
 	int idx = sensor->idx;
+	int val;
 #if IS_ENABLED(CONFIG_ZEPHYR) && IS_ENABLED(CONFIG_TEMP_SENSOR)
 	const struct thermistor_info *info = sensor->zephyr_info->thermistor;
 #else
@@ -814,6 +815,13 @@ int rt9490_get_thermistor_val(const struct temp_sensor_t *sensor, int *temp_ptr)
 
 	if (idx != 0)
 		return EC_ERROR_PARAM1;
+
+	/* Check ADC is enable before read temps */
+	RETURN_ERROR(rt9490_read8(idx, RT9490_REG_ADC_CTRL, &val));
+	if ((val & RT9490_ADC_EN) != RT9490_ADC_EN) {
+		return EC_ERROR_UNAVAILABLE;
+	}
+
 	RETURN_ERROR(rt9490_read16(idx, RT9490_REG_TS_ADC, &mv));
 	*temp_ptr = thermistor_linear_interpolate(mv, info);
 	*temp_ptr = C_TO_K(*temp_ptr);

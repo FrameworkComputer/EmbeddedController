@@ -276,7 +276,7 @@ ZTEST_USER(usb_common, test_drp_auto_toggle_next_state_attached_to_sink)
 		      DRP_TC_UNATTACHED_SNK);
 	/* After 100 ms, the next state should be auto-toggle. */
 	drp_sink_time = 0;
-	fake_time.val = drp_sink_time + 105 * MSEC;
+	fake_time.val = drp_sink_time + 105 * USEC_PER_MSEC;
 	get_time_mock = &fake_time;
 	zassert_equal(drp_auto_toggle_next_state(
 			      &drp_sink_time, PD_ROLE_SINK, PD_DRP_TOGGLE_OFF,
@@ -286,7 +286,7 @@ ZTEST_USER(usb_common, test_drp_auto_toggle_next_state_attached_to_sink)
 	 * drp_sink_time should be updated.
 	 */
 	drp_sink_time = 0;
-	fake_time.val = drp_sink_time + 205 * MSEC;
+	fake_time.val = drp_sink_time + 205 * USEC_PER_MSEC;
 	get_time_mock = &fake_time;
 	zassert_equal(drp_auto_toggle_next_state(
 			      &drp_sink_time, PD_ROLE_SINK, PD_DRP_TOGGLE_OFF,

@@ -1,0 +1,114 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ / {
+	aliases {
+		gpio-cbi-wp = &gpio_ec_cbi_wp;
+				/*
+		 * HPD pins for HDMI sub-board.
+		 */
+		gpio-hdmi-en-odl = &gpio_sb_3;
+		gpio-hpd-odl = &gpio_sb_4;
+	};
+
+	named-gpios {
+		/delete-node/ acok_od;
+		/delete-node/ amp_mute_l;
+		/delete-node/ charger_vap_otg_en;
+		/delete-node/ ec_pmc_pd_int_odl;
+		/delete-node/ gsc_ec_pwr_btn_odl;
+		/delete-node/ ec_tris_l;
+		/delete-node/ en_kb_bl;
+		/delete-node/ en_pp5000_pen_x;
+		/delete-node/ imvp91_vrrdy_r_od;
+		/delete-node/ pdc_rst;
+		/delete-node/ pen_detect_odl;
+		/delete-node/ vccin_aux_r_vid0;
+		/delete-node/ vccin_aux_r_vid1;
+		/delete-node/ all_sys_pwrgd;
+		/delete-node/ pg_pp5000_z1_od;
+		/delete-node/ tablet_mode_l;
+		/delete-node/ imu_int_l;
+		/delete-node/ acc_int_l;
+
+		gpio_ec_acok_od: ec_acok_od {
+			gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_ec_i2c_pmc_pd_int_odl: ec_i2c_pmc_pd_int_odl {
+			gpios = <&gpio3 6 GPIO_INPUT>;
+		};
+		gpio_ec_edp_bl_en_od: ec_edp_bl_en_od {
+			gpios = <&gpiod 3 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_ENABLE_BACKLIGHT";
+		};
+		gpio_imvp91_vrrdy_r_od: imvp91_vrrdy_r_od {
+			gpios = <&gpio4 3 GPIO_INPUT>;
+			no-auto-init;
+		};
+		gpio_vccin_aux_vid0: vccin_aux_vid0 {
+			gpios = <&gpio9 2 GPIO_INPUT>;
+		};
+		gpio_vccin_aux_vid1: vccin_aux_vid1 {
+			gpios = <&gpioe 3 GPIO_INPUT>;
+		};
+		gpio_all_sys_pwrgd: all_sys_pwrgd {
+			gpios = <&gpioa 7 GPIO_INPUT>;
+		};
+		gpio_ec_acok_otg_c0: ec_acok_otg_c0 {
+			gpios = <&gpioc 6 GPIO_OUTPUT>;
+		};
+		gpio_soc_enbkl: soc_enbkl {
+			gpios = <&gpioc 7 GPIO_INPUT>;
+		};
+		gpio_ec_cbi_wp: ec_cbi_wp {
+			gpios = <&gpio7 4 GPIO_OUTPUT>;
+		};
+		gpio_en_usb_a0_vbus: en_usb_a0_vbus {
+			gpios = <&gpio9 1 GPIO_OUTPUT>;
+		};
+		gpio_en_slp_z: en_slp_z {
+			gpios = <&gpioe 1 GPIO_OUTPUT>;
+		};
+		gpio_sb_3: sb-3 {
+			gpios = <&gpiof 4 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
+			no-auto-init;
+		};
+		gpio_sb_4: sb-4 {
+			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			no-auto-init;
+		};
+		gpio_ec_soc_hdmi_hpd: ec_soc_hdmi_hpd {
+			gpios = <&gpioe 4 GPIO_OUTPUT>;
+		};
+		me_en {
+			/* workaround for b/333336079, reserved */
+			gpios = <&gpioc 0 GPIO_INPUT>;
+		};
+		gpio_pg_pp5000_s5_od: pg_pp5000_s5_od {
+			gpios = <&gpio4 2 GPIO_INPUT>;
+		};
+		ec-i2c-sensor-scl {
+			gpios = <&gpio9 0 GPIO_INPUT>;
+		};
+		ec-i2c-sensor-sda {
+			gpios = <&gpio8 7 GPIO_INPUT>;
+		};
+		gpio_ec_soc_wake_odl: ec_soc_wake_odl {
+			gpios = <&gpiob 0 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_OUTPUT_INIT_LOW)>;
+		};
+	};
+
+	unused-pins {
+	};
+};
+
+/* These GPIOS are initialized by the PDC driver */
+&gpio_i2c_ec_pd_int_odl {
+	no-auto-init;
+};
+&gpio_ec_i2c_pmc_pd_int_odl {
+	no-auto-init;
+};

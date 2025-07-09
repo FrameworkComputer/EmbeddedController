@@ -17,3 +17,7 @@
 		VIVALDI_TK_VOL_UP            /* T10 */
 	>;
 };
+
+&boot_keys {
+	refresh-rc = <KBD_RC(3, 2)>;
+};

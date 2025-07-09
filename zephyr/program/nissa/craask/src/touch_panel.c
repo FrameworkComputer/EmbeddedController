@@ -14,7 +14,7 @@ LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 /* touch panel power sequence control */
 
-#define TOUCH_ENABLE_DELAY_MS (500 * MSEC)
+#define TOUCH_ENABLE_DELAY_MS (500 * USEC_PER_MSEC)
 
 void touch_enable(void)
 {
@@ -40,7 +40,7 @@ void soc_edp_bl_interrupt(enum gpio_signal signal)
 	LOG_INF("%s: %d", __func__, state);
 }
 
-test_export_static void touch_enable_init(void)
+static void touch_enable_init(void)
 {
 	int ret;
 	uint32_t val;

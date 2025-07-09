@@ -1,0 +1,50 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* ocelot program common DTS includes */
+
+#include <cros/integrated_fwid.dtsi>
+
+/* ocelot_ite project DTS includes */
+
+/* TODO(b/358612639)
+ * Arbitrage generates an incorrect node label when using alternate pins.
+ * Create a 2nd node label on I2C3 as a workaround.
+ */
+i2c3ALT: &i2c3 {
+};
+
+#include "generated.dtsi"
+
+/* ocelot_ite overrides follow... */
+/ {
+	aliases {
+		gpio-wp = &gpio_c_ec_wp_odl_r;
+	};
+
+	named-gpios {
+		/* unimplemented GPIOs */
+		entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+};
+
+/* Disable nodes for features not yet enabled. */
+/delete-node/ &{/named-adc-channels};
+/delete-node/ &{/named-i2c-ports};
+
+&pwm1 {
+	status = "disabled";
+};
+&pwm2 {
+	status = "disabled";
+};
+&pwm3 {
+	status = "disabled";
+};
+&pwm5 {
+	status = "disabled";
+};

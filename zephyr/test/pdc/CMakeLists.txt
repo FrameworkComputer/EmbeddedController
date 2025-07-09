@@ -20,8 +20,27 @@ target_sources_ifdef(CONFIG_TEST_PDC_MESSAGE_TRACING  app PRIVATE
 
 if (DEFINED CONFIG_TEST_SUITE_PDC_GENERIC)
 	target_sources(app PRIVATE src/generic/pdc_api.c)
+	target_sources(app PRIVATE src/generic/pdc_attached_snk.c)
 	target_sources(app PRIVATE src/generic/pdc_power_mgmt_api.c)
 	target_sources(app PRIVATE src/generic/pdc_pmc_debug_api.c)
+endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PDC_UTILS)
+	target_sources(app PRIVATE src/generic/usb_utils.c)
+endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PDC_POLICY)
+	target_sources(app PRIVATE src/pdc_policy/src_policy.c)
+	target_sources(app PRIVATE src/pdc_policy/non_pd_policy.c)
+	target_sources(app PRIVATE src/pdc_policy/select_best_pdo.c)
+endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PDC_POLICY_CLAMPED)
+	target_sources(app PRIVATE src/pdc_policy/select_best_pdo_clamped.c)
+endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PDC_POLICY_VARIABLE)
+	target_sources(app PRIVATE src/pdc_policy/select_best_pdo_variable.c)
 endif()
 
 if (DEFINED CONFIG_TEST_SUITE_PDC_API_NULL_CHECK)
@@ -54,12 +73,36 @@ if (DEFINED CONFIG_TEST_SUITE_PDC_HOSTCMD)
 	target_sources(app PRIVATE src/mock_pdc_power_mgmt.c)
 endif()
 
+if (DEFINED CONFIG_TEST_SUITE_UCSI_HOSTCMD)
+	target_sources(app PRIVATE src/generic/ucsi_host_cmd.c)
+	target_sources(app PRIVATE ${PLATFORM_EC}/zephyr/subsys/ucsi/ucsi_host_cmd.c)
+endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PPM)
+	zephyr_include_directories(${PLATFORM_EC}/zephyr/subsys/ucsi)
+	target_sources(app PRIVATE src/generic/ppm.c)
+endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PPM_CONSOLE)
+	target_sources(app PRIVATE ${PLATFORM_EC}/zephyr/subsys/ucsi/ppm_console.c)
+	target_sources(app PRIVATE src/generic/ppm_console.c)
+endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PDC_PMC_USB_MUX)
+	target_sources(app PRIVATE src/generic/pdc_pmc_usb_mux.c)
+endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PPM_DRIVER)
+	target_sources(app PRIVATE src/generic/ppm_driver.c)
+	target_sources(app PRIVATE ${PLATFORM_EC}/zephyr/subsys/ucsi/ppm_driver.c)
+endif()
+
 if (DEFINED CONFIG_TEST_SUITE_PDC_UCSI)
 	target_sources(app PRIVATE src/ucsi/ucsi.c)
 endif()
 
-if (DEFINED CONFIG_TEST_SUITE_PPM)
-	target_sources(app PRIVATE src/generic/ppm.c)
+if (DEFINED CONFIG_TEST_SUITE_PPM_STATE_MACHINE)
+	target_sources(app PRIVATE src/generic/ppm_state_machine.c)
 
 	zephyr_include_directories(${PLATFORM_EC}/zephyr/subsys/ucsi)
 	target_sources(app PRIVATE ${PLATFORM_EC}/zephyr/subsys/ucsi/ppm_common.c)

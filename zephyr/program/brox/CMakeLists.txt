@@ -26,11 +26,14 @@ elseif(DEFINED CONFIG_BOARD_JUBILANT)
 	add_subdirectory(jubilant)
 
 	zephyr_include_directories("jubilant/include")
+	zephyr_library_sources("jubilant/src/touch_panel.c")
 	zephyr_library_sources("src/hibernate.c")
 	zephyr_library_sources("src/suspend_resume.c")
 	zephyr_library_sources("src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 					"jubilant/src/keyboard_customization.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CUSTOM_FAN_CONTROL
+					"jubilant/src/thermal.c")
 elseif(DEFINED CONFIG_BOARD_LOTSO)
 	project(lotso)
 	add_subdirectory(lotso)
@@ -41,7 +44,7 @@ elseif(DEFINED CONFIG_BOARD_LOTSO)
 	zephyr_library_sources("src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 					"lotso/src/keyboard_customization.c")
-elseif(DEFINED CONFIG_BOARD_INTEL_ISH_5_6_0)
+elseif(DEFINED CONFIG_BOARD_INTEL_ISH_5_4_1)
 	project(brox-ish)
 	add_subdirectory(brox-ish)
 endif()

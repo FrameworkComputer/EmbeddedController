@@ -4,5 +4,6 @@
 
 tests:
   spi.flash_reg:
-    tags: spi
+    tags:
+      - spi
     type: unit

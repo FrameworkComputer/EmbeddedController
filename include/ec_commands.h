@@ -5,12 +5,6 @@
 
 /* Host communication command constants for Chrome EC */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #ifndef __CROS_EC_EC_COMMANDS_H
 #define __CROS_EC_EC_COMMANDS_H
 
@@ -147,6 +141,8 @@ extern "C" {
 #define EC_LPC_ADDR_MEMMAP 0x900
 #define EC_MEMMAP_SIZE 255 /* ACPI IO buffer max is 255 bytes */
 #define EC_MEMMAP_TEXT_MAX 8 /* Size of a string in the memory map */
+
+#define EC_LPC_ADDR_MEMMAP_INDEXED_IO 0x380
 
 /* The offset address of each type of data in mapped memory. */
 #define EC_MEMMAP_TEMP_SENSOR 0x00 /* Temp sensors 0x00 - 0x0f */
@@ -1791,6 +1787,10 @@ enum ec_feature_code {
 	 * The EC supports UCSI PPM.
 	 */
 	EC_FEATURE_UCSI_PPM = 54,
+	/*
+	 * The EC supports Strauss keyboard.
+	 */
+	EC_FEATURE_STRAUSS = 55,
 };
 
 #define EC_FEATURE_MASK_0(event_code) BIT(event_code % 32)
@@ -3153,7 +3153,7 @@ struct ec_params_motion_sense {
 		 */
 		struct __ec_todo_unpacked {
 			/* Data to set or EC_MOTION_SENSE_NO_VALUE to read.
-			 * kb_wake_angle: angle to wakup AP.
+			 * kb_wake_angle: angle to wakeup AP.
 			 */
 			int16_t data;
 		} kb_wake_angle;
@@ -4976,6 +4976,33 @@ enum charge_state_params {
 	 */
 	CS_PARAM_LIMIT_POWER,
 
+	/* min value of charger voltage limit (READ ONLY) */
+	CS_PARAM_CHG_VOLTAGE_MIN,
+
+	/* max value of charger voltage limit (READ ONLY) */
+	CS_PARAM_CHG_VOLTAGE_MAX,
+
+	/* step value of charger voltage limit (READ ONLY) */
+	CS_PARAM_CHG_VOLTAGE_STEP,
+
+	/* min value of charger current limit (READ ONLY) */
+	CS_PARAM_CHG_CURRENT_MIN,
+
+	/* max value of charger current limit (READ ONLY) */
+	CS_PARAM_CHG_CURRENT_MAX,
+
+	/* step value of charger current limit (READ ONLY) */
+	CS_PARAM_CHG_CURRENT_STEP,
+
+	/* min value of charger input current limit (READ ONLY) */
+	CS_PARAM_CHG_INPUT_CURRENT_MIN,
+
+	/* max value of charger input current limit (READ ONLY) */
+	CS_PARAM_CHG_INPUT_CURRENT_MAX,
+
+	/* step value of charger input current limit (READ ONLY) */
+	CS_PARAM_CHG_INPUT_CURRENT_STEP,
+
 	/* How many so far? */
 	CS_NUM_BASE_PARAMS,
 
@@ -5956,6 +5983,7 @@ struct ec_response_pd_status {
 #define PD_EVENT_DATA_SWAP BIT(3)
 #define PD_EVENT_TYPEC BIT(4)
 #define PD_EVENT_PPM BIT(5)
+#define PD_EVENT_INIT BIT(6)
 
 struct ec_response_host_event_status {
 	uint32_t status; /* PD MCU host event status */
@@ -6438,6 +6466,7 @@ struct ec_response_pd_chip_info_v1 {
  *  does NOT include a NUL-terminator.
  */
 #define USB_PD_CHIP_INFO_PROJECT_NAME_LEN 12
+
 struct ec_response_pd_chip_info_v2 {
 	uint16_t vendor_id;
 	uint16_t product_id;
@@ -6456,6 +6485,33 @@ struct ec_response_pd_chip_info_v2 {
 	 *  byte for a NUL-terminator.
 	 */
 	char fw_name_str[USB_PD_CHIP_INFO_PROJECT_NAME_LEN + 1];
+} __ec_align2;
+
+/** Maximum length of a driver/chip name reported in the pd_chip_info
+ *  response
+ */
+#define USB_PD_CHIP_INFO_DRIVER_NAME_LEN 24
+
+struct ec_response_pd_chip_info_v3 {
+	uint16_t vendor_id;
+	uint16_t product_id;
+	uint16_t device_id;
+	union {
+		uint8_t fw_version_string[8];
+		uint64_t fw_version_number;
+	} __ec_align2;
+	union {
+		uint8_t min_req_fw_version_string[8];
+		uint64_t min_req_fw_version_number;
+	} __ec_align2;
+	/** Flag to control the FW update process for this chip. */
+	uint16_t fw_update_flags;
+	/** Project name string associated with the chip's FW. Add an extra
+	 *  byte for a NUL-terminator.
+	 */
+	char fw_name_str[USB_PD_CHIP_INFO_PROJECT_NAME_LEN + 1];
+	/** Driver/chip string, plus room for a NUL-terminator */
+	char driver_name[USB_PD_CHIP_INFO_DRIVER_NAME_LEN + 1];
 } __ec_align2;
 
 /* Run RW signature verification and get status */
@@ -8218,9 +8274,9 @@ struct ec_params_fp_passthru {
 	 FP_MODE_MATCH | FP_MODE_RESET_SENSOR | FP_MODE_SENSOR_MAINTENANCE | \
 	 FP_MODE_DONT_CHANGE)
 
-/* Capture types defined in bits [30..28] */
-#define FP_MODE_CAPTURE_TYPE_SHIFT 28
-#define FP_MODE_CAPTURE_TYPE_MASK (0x7 << FP_MODE_CAPTURE_TYPE_SHIFT)
+/* Capture types defined in bits [30..26] */
+#define FP_MODE_CAPTURE_TYPE_SHIFT 26
+#define FP_MODE_CAPTURE_TYPE_MASK (0x1F << FP_MODE_CAPTURE_TYPE_SHIFT)
 /**
  * enum fp_capture_type - Specifies the "mode" when capturing images.
  *
@@ -8239,11 +8295,11 @@ struct ec_params_fp_passthru {
  */
 enum fp_capture_type {
 	FP_CAPTURE_VENDOR_FORMAT = 0,
-	FP_CAPTURE_SIMPLE_IMAGE = 1,
-	FP_CAPTURE_PATTERN0 = 2,
-	FP_CAPTURE_PATTERN1 = 3,
-	FP_CAPTURE_QUALITY_TEST = 4,
-	FP_CAPTURE_RESET_TEST = 5,
+	FP_CAPTURE_SIMPLE_IMAGE = 4,
+	FP_CAPTURE_PATTERN0 = 8,
+	FP_CAPTURE_PATTERN1 = 12,
+	FP_CAPTURE_QUALITY_TEST = 16,
+	FP_CAPTURE_RESET_TEST = 20,
 	FP_CAPTURE_TYPE_MAX,
 };
 /* Extracts the capture type from the sensor 'mode' word */
@@ -8261,10 +8317,14 @@ struct ec_response_fp_mode {
 /* Retrieve Fingerprint sensor information */
 #define EC_CMD_FP_INFO 0x0403
 
+/* Mask for dead pixels */
+#define FP_ERROR_DEAD_PIXELS_MASK 0x3FF
+/* Maximum number of dead pixels */
+#define FP_ERROR_DEAD_PIXELS_MAX (FP_ERROR_DEAD_PIXELS_MASK - 1)
 /* Number of dead pixels detected on the last maintenance */
-#define FP_ERROR_DEAD_PIXELS(errors) ((errors) & 0x3FF)
+#define FP_ERROR_DEAD_PIXELS(errors) ((errors) & FP_ERROR_DEAD_PIXELS_MASK)
 /* Unknown number of dead pixels detected on the last maintenance */
-#define FP_ERROR_DEAD_PIXELS_UNKNOWN (0x3FF)
+#define FP_ERROR_DEAD_PIXELS_UNKNOWN (FP_ERROR_DEAD_PIXELS_MASK)
 /* No interrupt from the sensor */
 #define FP_ERROR_NO_IRQ BIT(12)
 /* SPI communication error */

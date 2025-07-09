@@ -10,27 +10,12 @@
 
 	kblight: kblight {
 		compatible = "cros-ec,kblight-pwm";
-		pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(2400) PWM_POLARITY_NORMAL>;
+		pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(324) PWM_POLARITY_NORMAL>;
 	};
 };
 
 &vivaldi_kbd {
-	vivaldi-keys = <
-		KBD_RC(0, 2)  /* T1 */
-		KBD_RC(3, 2)  /* T2 */
-		KBD_RC(2, 2)  /* T3 */
-		KBD_RC(1, 2)  /* T4 */
-		KBD_RC(4, 4)  /* T5 */
-		KBD_RC(2, 4)  /* T6 */
-		KBD_RC(1, 4)  /* T7 */
-		KBD_RC(2, 11) /* T8 */
-		KBD_RC(1, 9)  /* T9 */
-		KBD_RC(0, 4)  /* T10 */
-		KBD_RC(0, 1)  /* T11 */
-		KBD_RC(1, 5)  /* T12 */
-		KBD_RC(3, 5)  /* T13 */
-		KBD_RC(0, 11) /* T14 */
-	>;
+	vivaldi-keys = <VIVALDI_KEYS_STRAUSS_T14>;
 
 	kbd_config_0: kbd-config-0 {
 		/* TODO: modify the top key and check the Fn key */
@@ -82,18 +67,18 @@
 		&kso13_default
 		&kso14_default
 		&kso15_default
-		&kso16_gpc3_default
-		&kso17_gpc5_default
+		&kso16_default
+		&kso17_default
 	>;
 	pinctrl-names = "default";
 	row-size = <8>;
 	col-size = <18>;
-	settle-time-us = <80>;
 	debounce-down-ms = <15>;
 	debounce-up-ms = <15>;
 	actual-key-mask = <0x08 0xff 0xff 0xff 0xff 0xff 0xff 0xa0
 			   0xff 0xff 0x01 0xff 0xff 0x40 0x0a 0x40
 			   0x01 0xc4>;
+	kso-ignore-mask = <04>;
 
 	kso-gpio {
 		compatible = "cros-ec,col-gpio";
@@ -111,7 +96,6 @@
 
 	runtime-keys {
 		compatible = "cros-ec,runtime-keys";
-		vol-up-rc = <KBD_RC(0, 11)>;
 		left-alt-rc = <KBD_RC(6, 13)>;
 		right-alt-rc = <KBD_RC(0, 10)>;
 		h-rc = <KBD_RC(1, 6)>;

@@ -1,0 +1,15 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_SKYWALKER
+	bool "Google Skywalker Board"
+	help
+	  Build Google Skywalker board. Skywalker has MediaTek SoC
+	  with Nuvoton NPCX997FB EC.
+
+module = SKYWALKER
+module-str = Skywalker board-specific code
+source "subsys/logging/Kconfig.template.log_config"
+
+source "Kconfig.zephyr"

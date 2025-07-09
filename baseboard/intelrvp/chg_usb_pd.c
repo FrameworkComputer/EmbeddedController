@@ -43,8 +43,8 @@ static void board_dc_jack_handle(void)
 
 	/* System is booted from DC Jack */
 	if (board_dc_jack_present()) {
-		charge_dc_jack.current =
-			(PD_MAX_POWER_MW * 1000) / DC_JACK_MAX_VOLTAGE_MV;
+		charge_dc_jack.current = (CONFIG_USB_PD_MAX_POWER_MW * 1000) /
+					 DC_JACK_MAX_VOLTAGE_MV;
 		charge_dc_jack.voltage = DC_JACK_MAX_VOLTAGE_MV;
 	} else {
 		charge_dc_jack.current = 0;

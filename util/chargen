@@ -58,7 +58,7 @@ def main(args):
             if len(args) > 1:
                 max_chars = int(args[1])
     except ValueError:
-        sys.stderr.write("usage %s:" "['seq_length' ['max_chars']]\n")
+        sys.stderr.write(f"usage {args[0]}:['seq_length' ['max_chars']]\n")
         sys.exit(1)
 
     try:

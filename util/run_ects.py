@@ -15,7 +15,7 @@ import sys
 TESTS = ["meta", "gpio", "hook", "i2c", "interrupt", "mutex", "task", "timer"]
 
 
-# pylint:disable=missing-function-docstring,no-self-use
+# pylint:disable=missing-function-docstring
 class CtsRunner:
     """Class running eCTS tests."""
 

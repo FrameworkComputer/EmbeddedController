@@ -9,9 +9,17 @@ config FP_FPC_BEP_ALGORITHM
 	  Enable FPC BEP matching algorithm. To work properly, FPC private
 	  library is required.
 
+config FP_FPC_LIBFP_ALGORITHM
+	bool "FPC LIBFP matching algorithm"
+	default y if FINGERPRINT_SENSOR_FPC1145
+	help
+	  Enable FPC LIBFP matching algorithm. To work properly, FPC private
+	  library is required.
+
 config FP_ALGORITHM_TEMPLATE_SIZE
 	int "Size of template size"
 	default 5092 if FINGERPRINT_SENSOR_FPC1025 && FP_FPC_BEP_ALGORITHM
+	default 47552 if FINGERPRINT_SENSOR_FPC1145 && FP_FPC_LIBFP_ALGORITHM
 	default 0
 	help
 	  Constant value corresponding to the maximum template size.
@@ -27,3 +35,17 @@ config HAVE_BEP_PRIVATE_DRIVER
 	default n
 	help
 	  If enabled, it indicates that BEP private driver is present.
+
+config HAVE_LIBFP_PRIVATE_DRIVER
+	bool
+	default n
+	help
+	  If enabled, it indicates that LIBFP private driver is present.
+
+config LIBFP_PRIVATE_DRIVER_HEAP_SIZE
+	int "Size of heap for FPC1145 driver"
+	depends on HAVE_LIBFP_PRIVATE_DRIVER
+	default 393216
+	help
+	  Size of heap to be used by FPC private library. The default vaule has
+	  been established experimentally.

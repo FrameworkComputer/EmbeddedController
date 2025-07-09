@@ -223,8 +223,8 @@ void request_start_from_g3(void)
 	 * inactivity timer expiring before the AP can process
 	 * the power button press and start up.
 	 */
-	if (ap_pwrseq_get_current_state(dev) == AP_POWER_STATE_S5 &&
-	    AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout)) {
+	if ((ap_pwrseq_get_current_state(dev) == AP_POWER_STATE_S5) &&
+	    (AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout) != 0)) {
 		k_timer_start(
 			&x86_non_dsx_timer,
 			K_SECONDS(AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout)),
@@ -277,7 +277,7 @@ void ap_power_force_shutdown(enum ap_power_shutdown_reason reason)
 
 void set_start_from_g3_delay_seconds(uint32_t d_time)
 {
-	start_from_g3_delay_ms = d_time * MSEC;
+	start_from_g3_delay_ms = d_time * USEC_PER_MSEC;
 }
 
 void ap_power_reset(enum ap_power_shutdown_reason reason)
@@ -852,6 +852,13 @@ static int x86_non_dsx_s5_run(void *data)
 			return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S4);
 		}
 	}
+#ifdef CONFIG_AP_PWRSEQ_DEBUG_MODE_COMMAND
+	/* This prevents force shutdown if debug mode is enabled */
+	if (in_debug_mode) {
+		LOG_WRN("debug_mode is enabled, preventing G3 transition");
+		return 0;
+	}
+#endif /* CONFIG_AP_PWRSEQ_DEBUG_MODE_COMMAND */
 	/* S5 inactivity timeout, go to G3 */
 	if (AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout) == 0) {
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_G3);

@@ -23,7 +23,7 @@ uint32_t __hw_clock_event_get(void)
 	return 0;
 }
 
-void udelay(unsigned int us)
+void udelay(unsigned int us) /* NOLINT_EC_SYMBOL */
 {
 	k_busy_wait(us);
 }

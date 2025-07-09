@@ -266,3 +266,66 @@ ZTEST(anx7447, test_flash_erase)
 	reg = anx7447_emul_peek_spi_reg(emul, ANX7447_REG_R_FLASH_RW_CTRL);
 	zassert_equal(!!(reg & ANX7447_R_FLASH_RW_CTRL_FLASH_ERASE_EN), 1);
 }
+
+#define TEST_PORT 0
+#define INVALID_PORT -1
+extern bool anx7447_bist_test_mode[CONFIG_USB_PD_PORT_MAX_COUNT];
+enum ec_error_list anx7447_get_bist_test_mode(const int port, bool *enable);
+enum ec_error_list anx7447_set_bist_test_mode(const int port,
+					      const bool enable);
+
+ZTEST(anx7447, test_set_bist_mode_enable)
+{
+	int ret = anx7447_set_bist_test_mode(TEST_PORT, true);
+	zassert_equal(ret, EC_SUCCESS, "Failed to enable BIST mode");
+	zassert_true(anx7447_bist_test_mode[TEST_PORT],
+		     "BIST mode should be enabled for port 0");
+	int reg = anx7447_emul_peek_tcpci_extra_reg(emul,
+						    ANX7447_REG_TCPC_CTRL_1);
+	zassert_true(reg & CC_DEBOUNCE_MS);
+
+	reg = anx7447_emul_peek_tcpci_extra_reg(emul,
+						ANX7447_REG_CC_DEBOUNCE_TIME);
+	zassert_true(reg == 2);
+
+	ret = anx7447_set_bist_test_mode(TEST_PORT, false);
+	zassert_equal(ret, EC_SUCCESS, "Failed to disable BIST mode");
+	zassert_false(anx7447_bist_test_mode[TEST_PORT],
+		      "BIST mode should be disable for port 0");
+	reg = anx7447_emul_peek_tcpci_extra_reg(emul, ANX7447_REG_TCPC_CTRL_1);
+	zassert_false(reg & CC_DEBOUNCE_MS);
+
+	reg = anx7447_emul_peek_tcpci_extra_reg(emul,
+						ANX7447_REG_CC_DEBOUNCE_TIME);
+	zassert_true(reg == 10);
+}
+
+ZTEST(anx7447, test_get_bist_mode_valid)
+{
+	bool enable;
+
+	anx7447_set_bist_test_mode(TEST_PORT, true);
+	anx7447_get_bist_test_mode(TEST_PORT, &enable);
+	zassert_true(enable, "BIST mode should be enabled");
+	zassert_true(anx7447_bist_test_mode[TEST_PORT],
+		     "BIST mode should be enabled for port 0");
+
+	anx7447_set_bist_test_mode(TEST_PORT, false);
+	anx7447_get_bist_test_mode(TEST_PORT, &enable);
+	zassert_false(enable, "BIST mode should be disabled");
+	zassert_false(anx7447_bist_test_mode[TEST_PORT],
+		      "BIST mode should be disable for port 0");
+}
+
+ZTEST(anx7447, test_invalid_port)
+{
+	bool enable;
+
+	int ret = anx7447_set_bist_test_mode(INVALID_PORT, true);
+	zassert_equal(ret, EC_ERROR_INVAL,
+		      "Expected EC_ERROR_INVAL for invalid port");
+
+	ret = anx7447_get_bist_test_mode(INVALID_PORT, &enable);
+	zassert_equal(ret, EC_SUCCESS,
+		      "Expected EC_ERROR_INVAL for invalid port");
+}

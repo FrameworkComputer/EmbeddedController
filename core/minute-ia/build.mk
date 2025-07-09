@@ -6,6 +6,10 @@
 # Minute-IA core build
 #
 
+# No fingerprint boards using Minute-IA, so we have no need for clang support.
+# Let GCC be the default unless explicitly requested otherwise.
+CROSS_COMPILE_CC_NAME?=gcc
+
 # FPU compilation flags
 CFLAGS_FPU-$(CONFIG_FPU)=
 
@@ -15,7 +19,7 @@ CFLAGS_CPU+=-O2 -fomit-frame-pointer					\
 	    -fno-builtin-printf -fno-builtin-sprintf			\
 	    -fno-stack-protector -gdwarf-2  -fno-common -ffreestanding	\
 	    -minline-all-stringops -fno-strict-aliasing
-ifneq ($(cc-name),clang)
+ifneq ($(CROSS_COMPILE_CC_NAME),clang)
 CFLAGS_CPU+=-mno-accumulate-outgoing-args
 endif
 

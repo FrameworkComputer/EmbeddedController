@@ -230,23 +230,54 @@ config PLATFORM_EC_POWERSEQ_MT8186
 config PLATFORM_EC_POWERSEQ_MT8188
 	bool "Use common MT8188 code for power sequencing"
 	default y
-	depends on AP_ARM_MTK_MT8188 || AP_ARM_MTK_MT8196
+	depends on AP_ARM_MTK_MT8188
 	help
 	  Use the MT8188 code for power sequencing. Re-use MT8186 common
 	  code.
 
-if PLATFORM_EC_POWERSEQ_MT8188
+config PLATFORM_EC_POWERSEQ_MT8196
+	bool "Use common MT8196 code for power sequencing"
+	default y
+	depends on AP_ARM_MTK_MT8196
+	select PLATFORM_EC_POWERSEQ_MTK_ALLOW_S3_WDT
+	select PLATFORM_EC_POWERSEQ_MTK_FW_SUSPEND
+	help
+	  Use the MT8196 code for power sequencing. Re-use MT8186 common
+	  code.
+
+config PLATFORM_EC_POWERSEQ_MTK_ALLOW_S3_WDT
+	bool "Support MT81XX invoke AP watchdog in S3"
+	help
+	  Allow AP watchdog resets to be triggered during the S3 suspend state.
+	  This is necessary on some MT8196 platforms due to updated power
+	  sequencing.
+
+
+config PLATFORM_EC_POWERSEQ_MTK_S5_EN_RAIL
+	bool "Control MTK S5 rails enablement"
+	default y
+	depends on PLATFORM_EC_POWERSEQ_MT8188 || PLATFORM_EC_POWERSEQ_MT8196
+	help
+	  Enable if MTK powerseq control S5 rail enablement.
+
+config PLATFORM_EC_POWERSEQ_MTK_FW_SUSPEND
+	bool "Use common MT8186 code for MT8196 power sequencing"
+	help
+	  This configuration is for MTK systems where the SUSPEND signal is
+	  managed by firmware instead of hardware.  Because firmware-controlled
+	  suspend signals can take up to a second to deactivate in a cold boot
+	  due to the firmware load time, using this configuration will speed up
+	  the process of entering the S0 state.
 
 config PLATFORM_EC_PP3700_DISCHARGE_TIME_MS
 	int "Time(in millisecond) required for power-cycling PP3700_S5"
 	default 0
+	depends on PLATFORM_EC_POWERSEQ_MTK_S5_EN_RAIL
 	help
 	  Timeout value (in milliseconds) for EC to wait for PP3700_S5 to
 	  fully discharge.
 	  This implies that whenever AP shutdown, AP has to stay in the
 	  shutdown state for at least PP3700_DISCHARGE_TIME_MS.
-
-endif # PLATFORM_EC_POWERSEQ_MT8188
 
 config PLATFORM_EC_POWERSEQ_SC7180
 	bool "SC7180 power sequencing"

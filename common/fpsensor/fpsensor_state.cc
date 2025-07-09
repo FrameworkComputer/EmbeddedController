@@ -205,7 +205,7 @@ static int validate_fp_mode(const uint32_t mode)
 
 enum ec_status fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output)
 {
-	if (mode_output == NULL)
+	if (mode_output == nullptr)
 		return EC_RES_INVALID_PARAM;
 
 	int ret = validate_fp_mode(mode);

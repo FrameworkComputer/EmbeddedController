@@ -31,12 +31,10 @@
 #include "usb_api.h"
 #include "util.h"
 
+#include <string.h>
+
 #ifdef CONFIG_ZEPHYR
 #include "drivers/one_wire_uart.h"
-#endif
-
-#ifdef CONFIG_KEYBOARD_MULTIPLE
-#include "keyboard_customization.h"
 #endif
 
 /* Console output macros */
@@ -66,22 +64,27 @@
 #define CONFIG_KEYBOARD_POST_SCAN_CLOCKS 16000
 #endif
 
-__overridable struct keyboard_scan_config keyscan_config = {
+/*
+ * CONFIG_KEYBOARD_COL2_INVERTED is defined for passing the column 2
+ * to H1 which inverts the signal. The signal passing through H1
+ * adds more delay. Need a larger delay value. Otherwise, pressing
+ * Refresh key will also trigger T key, which is in the next scanning
+ * column line. See http://b/156007029.
+ */
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
-	/*
-	 * CONFIG_KEYBOARD_COL2_INVERTED is defined for passing the column 2
-	 * to H1 which inverts the signal. The signal passing through H1
-	 * adds more delay. Need a larger delay value. Otherwise, pressing
-	 * Refresh key will also trigger T key, which is in the next scanning
-	 * column line. See http://b/156007029.
-	 */
-	.output_settle_us = 80,
+#define COL2_DELAY_US 30
 #else
+#define COL2_DELAY_US 0
+#endif
+
+#define COL2 2
+
+__overridable struct keyboard_scan_config keyscan_config = {
 	.output_settle_us = 50,
-#endif /* CONFIG_KEYBOARD_COL2_INVERTED */
 	.debounce_down_us = 9 * MSEC,
 	.debounce_up_us = 30 * MSEC,
 	.scan_period_us = 3 * MSEC,
+	.stable_scan_period_us = 9 * MSEC,
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
@@ -92,18 +95,15 @@ __overridable struct keyboard_scan_config keyscan_config = {
 
 #ifdef CONFIG_KEYBOARD_BOOT_KEYS
 #ifndef CONFIG_KEYBOARD_MULTIPLE
-static const
-#endif
-	struct boot_key_entry boot_key_list[] = {
-		[BOOT_KEY_ESC] = { KEYBOARD_COL_ESC, KEYBOARD_ROW_ESC },
-		[BOOT_KEY_DOWN_ARROW] = { KEYBOARD_COL_DOWN,
-					  KEYBOARD_ROW_DOWN },
-		[BOOT_KEY_LEFT_SHIFT] = { KEYBOARD_COL_LEFT_SHIFT,
-					  KEYBOARD_ROW_LEFT_SHIFT },
-		[BOOT_KEY_REFRESH] = { KEYBOARD_COL_REFRESH,
-				       KEYBOARD_ROW_REFRESH },
-	};
+static const struct boot_key_entry boot_key_list[] = {
+	[BOOT_KEY_ESC] = { KEYBOARD_COL_ESC, KEYBOARD_ROW_ESC },
+	[BOOT_KEY_DOWN_ARROW] = { KEYBOARD_COL_DOWN, KEYBOARD_ROW_DOWN },
+	[BOOT_KEY_LEFT_SHIFT] = { KEYBOARD_COL_LEFT_SHIFT,
+				  KEYBOARD_ROW_LEFT_SHIFT },
+	[BOOT_KEY_REFRESH] = { KEYBOARD_COL_REFRESH, KEYBOARD_ROW_REFRESH },
+};
 BUILD_ASSERT(ARRAY_SIZE(boot_key_list) == BOOT_KEY_COUNT);
+#endif
 static uint32_t boot_key_value = BOOT_KEY_NONE;
 #endif
 
@@ -223,7 +223,7 @@ static void ensure_keyboard_scanned(int old_polls)
 	 */
 	while ((kbd_polls == old_polls) &&
 	       (get_time().val - start_time < SCAN_TASK_TIMEOUT_US))
-		crec_usleep(keyscan_config.scan_period_us);
+		crec_usleep(keyscan_config.stable_scan_period_us);
 }
 
 #ifdef CONFIG_KEYBOARD_SCAN_ADC
@@ -354,6 +354,12 @@ static int read_matrix(uint8_t *state, bool at_boot)
 		keyboard_raw_drive_column(c);
 		udelay(keyscan_config.output_settle_us);
 
+		/* Only add the extre delay when selecting or deselecting COL2
+		 */
+		if (c == COL2 || c == (COL2 + 1)) {
+			udelay(COL2_DELAY_US);
+		}
+
 		/* Read the row state */
 #ifdef CONFIG_KEYBOARD_SCAN_ADC
 		state[c] = keyboard_read_adc_rows();
@@ -369,16 +375,32 @@ static int read_matrix(uint8_t *state, bool at_boot)
 	if (pb_pressed && at_boot) {
 		/* Check if KSI2 (or KSI3) is asserted on all columns */
 		for (c = 0; c < keyboard_cols; c++) {
-			if (!(state[c] & KEYBOARD_MASKED_BY_POWERBTN)) {
+#ifdef CONFIG_KEYBOARD_MULTIPLE
+			if (!(state[c] & KEYBOARD_MASKED_BY_POWERBTN(
+						 key_typ.row_refresh))) {
 				break;
 			}
+#else
+			if (!(state[c] & KEYBOARD_MASKED_BY_POWERBTN(
+						 KEYBOARD_ROW_REFRESH))) {
+				break;
+			}
+#endif
 		}
 
 		if (c == keyboard_cols) {
 			for (c = 0; c < keyboard_cols; c++) {
+#ifdef CONFIG_KEYBOARD_MULTIPLE
+				if (c == key_typ.col_refresh)
+					continue;
+				state[c] &= ~KEYBOARD_MASKED_BY_POWERBTN(
+					key_typ.row_refresh);
+#else
 				if (c == KEYBOARD_COL_REFRESH)
 					continue;
-				state[c] &= ~KEYBOARD_MASKED_BY_POWERBTN;
+				state[c] &= ~KEYBOARD_MASKED_BY_POWERBTN(
+					KEYBOARD_ROW_REFRESH);
+#endif
 			}
 		}
 	}
@@ -464,19 +486,44 @@ static int check_runtime_keys(const uint8_t *state)
 	int c;
 
 	/*
+	 * if volume up and r are on the same column,
+	 * the coresponding row should be masked.
+	 */
+#ifndef CONFIG_KEYBOARD_MULTIPLE
+	uint8_t mask_key_r_row = 0;
+	uint8_t mask_key_vol_up_row = 0;
+
+	if (key_vol_up_col == KEYBOARD_COL_KEY_R) {
+		mask_key_r_row = KEYBOARD_ROW_TO_MASK(KEYBOARD_ROW_KEY_R);
+		mask_key_vol_up_row = KEYBOARD_ROW_TO_MASK(key_vol_up_row);
+	}
+#else
+	uint8_t mask_key_r_row = 0;
+
+	if (key_vol_up_col == key_typ.col_key_r) {
+		mask_key_r_row = KEYBOARD_ROW_TO_MASK(key_typ.row_key_r);
+	}
+#endif
+
+	/*
 	 * All runtime key combos are (right or left ) alt + volume up + (some
 	 * key NOT on the same col as alt or volume up )
 	 */
-	if (state[key_vol_up_col] != KEYBOARD_ROW_TO_MASK(key_vol_up_row))
+	if ((state[key_vol_up_col] & ~mask_key_r_row) !=
+	    KEYBOARD_ROW_TO_MASK(key_vol_up_row))
 		return 0;
 
 #ifndef CONFIG_KEYBOARD_MULTIPLE
-	if (state[KEYBOARD_COL_RIGHT_ALT] != KEYBOARD_MASK_RIGHT_ALT &&
-	    state[KEYBOARD_COL_LEFT_ALT] != KEYBOARD_MASK_LEFT_ALT)
+	if (state[KEYBOARD_COL_RIGHT_ALT] !=
+		    KEYBOARD_ROW_TO_MASK(KEYBOARD_ROW_RIGHT_ALT) &&
+	    state[KEYBOARD_COL_LEFT_ALT] !=
+		    KEYBOARD_ROW_TO_MASK(KEYBOARD_ROW_LEFT_ALT))
 		return 0;
 #else
-	if (state[key_typ.col_right_alt] != KEYBOARD_MASK_RIGHT_ALT &&
-	    state[key_typ.col_left_alt] != KEYBOARD_MASK_LEFT_ALT)
+	if (state[key_typ.col_right_alt] !=
+		    KEYBOARD_ROW_TO_MASK(key_typ.row_right_alt) &&
+	    state[key_typ.col_left_alt] !=
+		    KEYBOARD_ROW_TO_MASK(key_typ.row_left_alt))
 		return 0;
 #endif
 
@@ -490,18 +537,20 @@ static int check_runtime_keys(const uint8_t *state)
 			num_press++;
 	}
 
-	if (num_press != 3)
+	if (num_press > 3)
 		return 0;
 
 #ifndef CONFIG_KEYBOARD_MULTIPLE
 	/* Check individual keys */
-	if (state[KEYBOARD_COL_KEY_R] == KEYBOARD_MASK_KEY_R) {
+	if ((state[KEYBOARD_COL_KEY_R] & ~mask_key_vol_up_row) ==
+	    KEYBOARD_ROW_TO_MASK(KEYBOARD_ROW_KEY_R)) {
 		/* R = reboot */
 		CPRINTS("warm reboot");
 		keyboard_clear_buffer();
 		chipset_reset(CHIPSET_RESET_KB_WARM_REBOOT);
 		return 1;
-	} else if (state[KEYBOARD_COL_KEY_H] == KEYBOARD_MASK_KEY_H) {
+	} else if (state[KEYBOARD_COL_KEY_H] ==
+		   KEYBOARD_ROW_TO_MASK(KEYBOARD_ROW_KEY_H)) {
 		/* H = hibernate */
 		CPRINTS("hibernate");
 		system_enter_hibernate(0, 0);
@@ -509,13 +558,15 @@ static int check_runtime_keys(const uint8_t *state)
 	}
 #else
 	/* Check individual keys */
-	if (state[key_typ.col_key_r] == KEYBOARD_MASK_KEY_R) {
+	if (state[key_typ.col_key_r] ==
+	    KEYBOARD_ROW_TO_MASK(key_typ.row_key_r)) {
 		/* R = reboot */
 		CPRINTS("warm reboot");
 		keyboard_clear_buffer();
 		chipset_reset(CHIPSET_RESET_KB_WARM_REBOOT);
 		return 1;
-	} else if (state[key_typ.col_key_h] == KEYBOARD_MASK_KEY_H) {
+	} else if (state[key_typ.col_key_h] ==
+		   KEYBOARD_ROW_TO_MASK(key_typ.row_key_h)) {
 		/* H = hibernate */
 		CPRINTS("hibernate");
 		system_enter_hibernate(0, 0);
@@ -756,7 +807,7 @@ static uint8_t keyboard_scan_column(int column)
 	uint8_t state;
 
 	keyboard_raw_drive_column(column);
-	udelay(keyscan_config.output_settle_us);
+	udelay(keyscan_config.output_settle_us + COL2_DELAY_US);
 #ifdef CONFIG_KEYBOARD_SCAN_ADC
 	state = keyboard_read_adc_rows();
 #else
@@ -840,7 +891,7 @@ static uint32_t check_key_list(const uint8_t *state)
 
 	/* Update mask with all boot keys that were pressed. */
 	k = boot_key_list;
-	for (c = 0; c < ARRAY_SIZE(boot_key_list); c++, k++) {
+	for (c = 0; c < BOOT_KEY_COUNT; c++, k++) {
 		if (curr_state[k->col] & BIT(k->row)) {
 			boot_key_mask |= BIT(c);
 			curr_state[k->col] &= ~BIT(k->row);
@@ -873,7 +924,7 @@ static void read_adc_boot_keys(uint8_t *state)
 
 		/* Select column, then wait a bit for it to settle */
 		keyboard_raw_drive_column(c);
-		udelay(keyscan_config.output_settle_us);
+		udelay(keyscan_config.output_settle_us + COL2_DELAY_US);
 
 		if (adc_read_channel(ADC_KSI_00 + r) >
 		    keyscan_config.ksi_threshold_mv)
@@ -1022,6 +1073,17 @@ void keyboard_scan_init(void)
 #endif /* CONFIG_KEYBOARD_BOOT_KEYS */
 }
 
+static bool keyboard_is_debouncing(void)
+{
+	for (uint8_t c = 0; c < keyboard_cols; c++) {
+		if (debouncing[c] != 0) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void keyboard_scan_task(void *u)
 {
 	timestamp_t poll_deadline, start;
@@ -1061,7 +1123,8 @@ void keyboard_scan_task(void *u)
 				 * results.
 				 */
 				keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
-				udelay(keyscan_config.output_settle_us);
+				udelay(keyscan_config.output_settle_us +
+				       COL2_DELAY_US);
 			} else if (!local_disable_scanning) {
 				/*
 				 * Scanning isn't enabled but it was last time
@@ -1134,8 +1197,14 @@ void keyboard_scan_task(void *u)
 			}
 
 			/* Delay between scans */
-			wait_time = keyscan_config.scan_period_us -
-				    (get_time().val - start.val);
+			if (keyscan_config.stable_scan_period_us > 0 &&
+			    !keyboard_is_debouncing()) {
+				wait_time =
+					keyscan_config.stable_scan_period_us;
+			} else {
+				wait_time = keyscan_config.scan_period_us;
+			}
+			wait_time -= get_time().val - start.val;
 
 			if (wait_time < keyscan_config.min_post_scan_delay_us)
 				wait_time =
@@ -1309,17 +1378,26 @@ DECLARE_CONSOLE_COMMAND(ksstate, command_ksstate, "ksstate [on | off | force]",
 static int command_keyboard_press(int argc, const char **argv)
 {
 	if (argc == 1) {
-		int i, j;
+		int c, r;
 
 		ccputs("Simulated keys:\n");
-		for (i = 0; i < keyboard_cols; ++i) {
-			if (simulated_key[i] == 0)
+		for (c = 0; c < keyboard_cols; ++c) {
+			if (simulated_key[c] == 0)
 				continue;
-			for (j = 0; j < KEYBOARD_ROWS; ++j)
-				if (simulated_key[i] & BIT(j))
-					ccprintf("\t%d %d\n", i, j);
+			for (r = 0; r < KEYBOARD_ROWS; ++r)
+				if (simulated_key[c] & BIT(r))
+					ccprintf("\t%d %d\n", c, r);
 		}
+	} else if (argc == 2 && !strncmp(argv[1], "clear", 6)) {
+		int c, r;
 
+		for (c = 0; c < keyboard_cols; ++c) {
+			if (simulated_key[c] == 0)
+				continue;
+			for (r = 0; r < KEYBOARD_ROWS; ++r)
+				if (simulated_key[c] & BIT(r))
+					simulate_key(r, c, 0);
+		}
 	} else if (argc == 3 || argc == 4) {
 		int r, c, p;
 		char *e;

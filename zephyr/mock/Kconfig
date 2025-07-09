@@ -15,6 +15,11 @@ config AP_POWER_EVENTS_MOCK
 	help
 	  A simplified ap power events driver that provides it's functions fakes.
 
+config CHIPSET_API_MOCK
+	bool "use mocked chipset API."
+	help
+	  A simplified chipset APIs that provides it's functions fakes.
+
 config POWER_SIGNALS_MOCK
 	bool "Use a mocked power signals driver."
 	help

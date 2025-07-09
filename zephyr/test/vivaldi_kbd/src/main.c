@@ -9,6 +9,7 @@
 #include <zephyr/sys/util.h>
 #include <zephyr/ztest.h>
 
+#include <drivers/vivaldi_kbd.h>
 #include <dt-bindings/vivaldi_kbd.h>
 #include <ec_commands.h>
 #include <hooks.h>
@@ -152,15 +153,15 @@ static const enum ec_status hc_resp_expect = EC_RES_SUCCESS;
 static const uint8_t action_keys_expect[] = {
 	TK_PLAY_PAUSE, TK_NEXT_TRACK, TK_PREV_TRACK,
 	TK_ABSENT,     TK_ABSENT,     TK_ABSENT,
-	TK_ABSENT,     TK_ABSENT,     TK_KBD_BKLIGHT_TOGGLE,
+	TK_ABSENT,     TK_VOL_UP,     TK_KBD_BKLIGHT_TOGGLE,
 	TK_MICMUTE,    TK_MENU,
 };
 static const uint32_t capabilities_expect = KEYBD_CAP_SCRNLOCK_KEY |
 					    KEYBD_CAP_NUMERIC_KEYPAD |
 					    KEYBD_CAP_SCRNLOCK_KEY;
 static const uint8_t actual_key_mask_expect[] = {
-	0, BIT(0), BIT(0) | BIT(2) | BIT(3), 0, BIT(0), 0, 0, 0, 0, BIT(1),
-	0, 0,
+	0, BIT(0), BIT(0) | BIT(2) | BIT(3), 0, BIT(0), 0, 0,
+	0, 0,	   BIT(1) | BIT(2),	     0, 0,
 };
 uint16_t scancodes_expect[KEYBOARD_ROWS][KEYBOARD_COLS_MAX] = {
 	[0] = {
@@ -173,6 +174,7 @@ uint16_t scancodes_expect[KEYBOARD_ROWS][KEYBOARD_COLS_MAX] = {
 	},
 	[2] = {
 		[2] = SCANCODE_PREV_TRACK,
+		[9] = SCANCODE_VOLUME_UP,
 	},
 	[3] = {
 		[2] = SCANCODE_NEXT_TRACK,
@@ -257,14 +259,33 @@ ZTEST(vivaldi_kbd, test_set2_codes)
 	zassert_equal(set2_test.call_count, keycodes);
 }
 
+ZTEST(vivaldi_kbd, test_kbd_is_vol_up)
+{
+#if !CONFIG_VIVALDI_KBD_TEST_USE_IDX || CONFIG_VIVALDI_KBD_TEST_IDX_VALUE == 0
+	zassert_true(vivaldi_kbd_is_vol_up(0, 4));
+	zassert_false(vivaldi_kbd_is_vol_up(1, 4));
+	zassert_false(vivaldi_kbd_is_vol_up(0, 3));
+#elif CONFIG_VIVALDI_KBD_TEST_IDX_VALUE == -1
+	zassert_false(vivaldi_kbd_is_vol_up(0, 4));
+#else
+	zassert_true(vivaldi_kbd_is_vol_up(2, 9));
+	zassert_false(vivaldi_kbd_is_vol_up(1, 4));
+	zassert_false(vivaldi_kbd_is_vol_up(0, 3));
+#endif
+}
+
 ZTEST(vivaldi_kbd, test_vol_up_key)
 {
 #if !CONFIG_VIVALDI_KBD_TEST_USE_IDX || CONFIG_VIVALDI_KBD_TEST_IDX_VALUE == 0
 	zassert_equal(vol_up_key.row, 0);
 	zassert_equal(vol_up_key.col, 4);
 	zassert_equal(vol_up_key.call_count, 1);
-#else
+#elif CONFIG_VIVALDI_KBD_TEST_IDX_VALUE == -1
 	zassert_equal(vol_up_key.call_count, 0);
+#else
+	zassert_equal(vol_up_key.row, 2);
+	zassert_equal(vol_up_key.col, 9);
+	zassert_equal(vol_up_key.call_count, 1);
 #endif
 }
 

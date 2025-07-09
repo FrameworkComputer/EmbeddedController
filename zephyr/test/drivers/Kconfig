@@ -175,6 +175,12 @@ config LINK_TEST_SUITE_PS8743
 config LINK_TEST_SUITE_PS8XXX
 	bool "Link and test the ps8xxx tests"
 
+config LINK_TEST_SUITE_RAA489000
+	bool "Link and test the raa489000 tests"
+	help
+	  Link raa489000 test suite for the TCPM driver related function
+	  tests.
+
 config LINK_TEST_SUITE_RT1715
 	bool "Link and test the rt17115 tests"
 	help
@@ -317,6 +323,12 @@ config LINK_TEST_SUITE_USBC_VCONN_SWAP
 	bool "Link and test the usbc_vconn_swap tests"
 	help
 	  Include the test suite exercising VCONN Swap behaviors in the binary.
+
+config LINK_TEST_SUITE_USBC_FAKE_PDOS
+	bool "Link and test the usbc_fake_pdos tests"
+	help
+	  Include the test suite exercising non-standard PDO behaviors in the
+	  binary.
 
 config LINK_TEST_SUITE_CONSOLE
 	bool "Link and test the console tests"

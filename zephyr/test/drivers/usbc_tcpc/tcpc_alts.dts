@@ -43,7 +43,7 @@
 	};
 
 	tcpc_raa489000_alt: tcpc-raa489000-alt@e {
-		compatible = "renesas,raa489000", "cros,i2c-mock";
+		compatible = "renesas,raa489000";
 		reg = <0xe>;
 		tcpc-flags = <(
 			TCPC_FLAGS_TCPCI_REV2_0 |

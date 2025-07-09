@@ -1,0 +1,59 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: "Celxpert b340442"
+compatible: "celxpert,b340442"
+
+include: battery-smart.yaml
+
+properties:
+  enum-name:
+    type: string
+    default: "celxpert,b340442"
+
+  # Fuel gauge
+  manuf_name:
+    default: "AS3GXXD3KB"
+  device_name:
+    default: "b340442"
+  ship_mode_reg_addr:
+    default: 0x00
+  ship_mode_reg_data:
+    default: [0x10, 0x10]
+  # Charging/Discharging FETs Status
+  # Register SBS_PackStatus_ACCESS (0x99)
+  # Bit-3: XDSG
+  # Bit-2: XCHG
+  fet_reg_addr:
+    default: 0x99
+  fet_reg_mask:
+    default: 0x08
+  fet_disconnect_val:
+    default: 0x08
+  fet_cfet_mask:
+    default: 0x04
+  fet_cfet_off_val:
+    default: 0x04
+
+  # Battery info
+  voltage_max:
+    default: 13200
+  voltage_normal:
+    default: 11880
+  voltage_min:
+    default: 9000
+  precharge_current:
+    default: 256
+  start_charging_min_c:
+    default: 0
+  start_charging_max_c:
+    default: 45
+  charging_min_c:
+    default: 0
+  charging_max_c:
+    default: 60
+  discharging_min_c:
+    default: -20
+  discharging_max_c:
+    default: 60

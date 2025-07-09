@@ -42,7 +42,6 @@ const struct tcpc_config_t tcpc_config[] = {
 		.drv = &ps8xxx_tcpm_drv,
 		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
 			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V |
-			TCPC_FLAGS_CONTROL_VCONN |
 			TCPC_FLAGS_CONTROL_FRS,
 	},
 };

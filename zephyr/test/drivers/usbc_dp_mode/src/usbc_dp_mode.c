@@ -44,7 +44,7 @@ static struct tcpci_cable_data undef_cable_ptype = {
 	.identity_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR,
+		VDO_SVDM_VERS(SVDM_VER_2_1),
 	.identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
 		/* USB host */ false, /* USB device */ false, IDH_PTYPE_UNDEF,
 		/* modal operation */ false, USB_VID_GOOGLE),
@@ -62,7 +62,7 @@ static struct tcpci_cable_data passive_usb3_32 = {
 	.identity_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR,
+		VDO_SVDM_VERS(SVDM_VER_2_1),
 	.identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
 		/* USB host */ false, /* USB device */ false, IDH_PTYPE_PCABLE,
 		/* modal operation */ false, USB_VID_GOOGLE),
@@ -80,7 +80,7 @@ static struct tcpci_cable_data passive_usb3_4 = {
 	.identity_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR,
+		VDO_SVDM_VERS(SVDM_VER_2_1),
 	.identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
 		/* USB host */ false, /* USB device */ false, IDH_PTYPE_PCABLE,
 		/* modal operation */ false, USB_VID_GOOGLE),
@@ -98,7 +98,7 @@ static struct tcpci_cable_data passive_usb3_4_modal = {
 	.identity_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR,
+		VDO_SVDM_VERS(SVDM_VER_2_1),
 	.identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
 		/* USB host */ false, /* USB device */ false, IDH_PTYPE_PCABLE,
 		/* modal operation */ true, USB_VID_GOOGLE),
@@ -116,7 +116,7 @@ static struct tcpci_cable_data passive_usb2_cable = {
 	.identity_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0),
+		VDO_SVDM_VERS(SVDM_VER_2_0),
 	.identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
 		/* USB host */ false, /* USB device */ false, IDH_PTYPE_PCABLE,
 		/* modal operation */ true, USB_VID_GOOGLE),
@@ -130,7 +130,7 @@ static struct tcpci_cable_data active_cable = {
 	.identity_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR,
+		VDO_SVDM_VERS(SVDM_VER_2_1),
 	.identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
 		/* USB host */ false, /* USB device */ false, IDH_PTYPE_ACABLE,
 		/* modal operation */ true, USB_VID_GOOGLE),
@@ -141,7 +141,7 @@ static struct tcpci_cable_data active_cable = {
 	.svids_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_SVID) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR,
+		VDO_SVDM_VERS(SVDM_VER_2_1),
 	/* .svids_vdm[VDO_INDEX_HDR + 1] Caller sets this */
 	.svids_vdos = VDO_INDEX_HDR + 2,
 };
@@ -151,7 +151,7 @@ static struct tcpci_cable_data no_modal_active_cable = {
 	.identity_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR,
+		VDO_SVDM_VERS(SVDM_VER_2_1),
 	.identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
 		/* USB host */ false, /* USB device */ false, IDH_PTYPE_ACABLE,
 		/* modal operation */ false, USB_VID_GOOGLE),
@@ -167,7 +167,7 @@ static void add_dp_21_discovery(struct tcpci_partner_data *partner)
 	partner->identity_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR;
+		VDO_SVDM_VERS(SVDM_VER_2_1);
 	partner->identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
 		/* USB host */ false, /* USB device */ true, IDH_PTYPE_HUB,
 		/* modal operation */ true, USB_VID_GOOGLE);
@@ -185,7 +185,7 @@ static void add_dp_21_discovery(struct tcpci_partner_data *partner)
 	partner->modes_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_MODES) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR;
+		VDO_SVDM_VERS(SVDM_VER_2_1);
 	partner->modes_vdm[VDO_INDEX_HDR + 1] =
 		VDO_MODE_DP(MODE_DP_PIN_C | MODE_DP_PIN_D, 0, 1,
 			    CABLE_RECEPTACLE, MODE_DP_GEN2, MODE_DP_SNK) |
@@ -197,7 +197,7 @@ static void add_dp_21_discovery(struct tcpci_partner_data *partner)
 	partner->svids_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_SVID) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR;
+		VDO_SVDM_VERS(SVDM_VER_2_1);
 	partner->svids_vdm[VDO_INDEX_HDR + 1] =
 		VDO_SVID(USB_SID_DISPLAYPORT, 0);
 	partner->svids_vdos = VDO_INDEX_HDR + 2;
@@ -209,14 +209,14 @@ static void add_displayport_mode_responses(struct tcpci_partner_data *partner)
 	partner->enter_mode_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_ENTER_MODE) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR;
+		VDO_SVDM_VERS(SVDM_VER_2_1);
 	partner->enter_mode_vdos = VDO_INDEX_HDR + 1;
 
 	/* Add DisplayPort StatusUpdate response */
 	partner->dp_status_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DP_STATUS) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR;
+		VDO_SVDM_VERS(SVDM_VER_2_1);
 	partner->dp_status_vdm[VDO_INDEX_HDR + 1] =
 		VDO_DP_STATUS(0, /* IRQ_HPD */
 			      false, /* HPD_HI|LOW - Changed*/
@@ -232,7 +232,7 @@ static void add_displayport_mode_responses(struct tcpci_partner_data *partner)
 	partner->dp_config_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DP_CONFIG) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR;
+		VDO_SVDM_VERS(SVDM_VER_2_1);
 	partner->dp_config_vdos = VDO_INDEX_HDR + 1;
 }
 
@@ -312,7 +312,7 @@ static void setup_active_tbt_base_cable(struct tcpci_partner_data *partner)
 	partner->cable->modes_vdm[VDO_INDEX_HDR] =
 		VDO(USB_VID_INTEL, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_MODES) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR;
+		VDO_SVDM_VERS(SVDM_VER_2_1);
 
 	partner->cable->modes_vdm[VDO_INDEX_HDR + 1] = cable_resp.raw_value;
 	partner->cable->modes_vdos = VDO_INDEX_HDR + 2;
@@ -416,7 +416,7 @@ static void setup_active_dp_base_cable(struct tcpci_partner_data *partner)
 	partner->cable->modes_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_MODES) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR;
+		VDO_SVDM_VERS(SVDM_VER_2_1);
 
 	partner->cable->modes_vdm[VDO_INDEX_HDR + 1] = cable_resp.raw_value;
 	partner->cable->modes_vdos = VDO_INDEX_HDR + 2;
@@ -493,21 +493,22 @@ static void usbc_dp_mode_after(void *data)
 ZTEST_SUITE(usbc_dp_mode, drivers_predicate_post_main, usbc_dp_mode_setup,
 	    usbc_dp_mode_before, usbc_dp_mode_after, NULL);
 
-ZTEST_F(usbc_dp_mode, test_verify_discovery)
+ZTEST_F(usbc_dp_mode, test_discovery)
 {
 	setup_passive_cable(&fixture->partner);
-	/* But with DP mode response */
+	/* But with DP mode response and modal operation set to true */
+	fixture->partner.cable->identity_vdm[VDO_INDEX_IDH] |= 1 << 26;
 	fixture->partner.cable->svids_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_SVID) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR;
+		VDO_SVDM_VERS(SVDM_VER_2_1);
 	fixture->partner.cable->svids_vdm[VDO_INDEX_HDR + 1] =
 		VDO_SVID(USB_SID_DISPLAYPORT, 0);
 	fixture->partner.cable->svids_vdos = VDO_INDEX_HDR + 2;
 	fixture->partner.cable->modes_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_MODES) |
-		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_1) | VDM_VERS_MINOR;
+		VDO_SVDM_VERS(SVDM_VER_2_1);
 	fixture->partner.cable->modes_vdm[VDO_INDEX_HDR + 1] =
 		VDO_MODE_DP(MODE_DP_PIN_C | MODE_DP_PIN_D, 0, 1,
 			    CABLE_RECEPTACLE, MODE_DP_GEN2, MODE_DP_SNK) |

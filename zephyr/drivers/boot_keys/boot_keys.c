@@ -31,9 +31,8 @@ LOG_MODULE_REGISTER(boot_keys, LOG_LEVEL_INF);
 	(DT_PROP(CROS_EC_KEYBOARD_NODE, debounce_down_ms) * 2)
 
 static uint32_t boot_keys_value;
-static uint32_t boot_keys_value_external;
 static uint32_t boot_keys_counter;
-static bool boot_keys_timeout;
+static bool boot_keys_release_only;
 struct k_work_delayable boot_keys_timeout_dwork;
 
 #define BOOT_KEY_INIT(prop)                               \
@@ -81,6 +80,10 @@ static void process_key(uint8_t row, uint8_t col, bool pressed)
 	}
 
 	if (pressed) {
+		if (boot_keys_release_only) {
+			return;
+		}
+
 		boot_keys_counter++;
 	} else {
 		boot_keys_counter--;
@@ -106,11 +109,6 @@ static void boot_keys_input_cb(struct input_event *evt, void *user_data)
 	static uint8_t col;
 	static bool pressed;
 
-	/* Skip early once we settled and cleared all the keys */
-	if (boot_keys_timeout && boot_keys_value == 0) {
-		return;
-	}
-
 	switch (evt->code) {
 	case INPUT_ABS_X:
 		col = evt->value;
@@ -134,12 +132,11 @@ INPUT_CALLBACK_DEFINE(DEVICE_DT_GET(CROS_EC_KEYBOARD_NODE), boot_keys_input_cb,
 
 static void power_button_change(void)
 {
-	/* Skip early once we settled and cleared all the keys */
-	if (boot_keys_timeout && boot_keys_value == 0) {
-		return;
-	}
-
 	if (power_button_is_pressed()) {
+		if (boot_keys_release_only) {
+			return;
+		}
+
 		WRITE_BIT(boot_keys_value, BOOT_KEY_POWER, 1);
 		boot_keys_counter++;
 	} else {
@@ -154,12 +151,12 @@ DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, power_button_change, HOOK_PRIO_DEFAULT);
 
 uint32_t keyboard_scan_get_boot_keys(void)
 {
-	return boot_keys_value_external;
+	return boot_keys_value;
 }
 
 static void boot_keys_timeout_handler(struct k_work *work)
 {
-	boot_keys_timeout = true;
+	boot_keys_release_only = true;
 
 	if (boot_keys_counter > POPCOUNT(boot_keys_value)) {
 		LOG_WRN("boot_keys: stray keys, skipping");
@@ -167,8 +164,6 @@ static void boot_keys_timeout_handler(struct k_work *work)
 	}
 
 	LOG_INF("boot_keys: boot_keys_value=0x%08x", boot_keys_value);
-
-	boot_keys_value_external = boot_keys_value;
 
 	if (boot_keys_value & BIT(BOOT_KEY_ESC)) {
 		LOG_WRN("boot_keys: recovery");
@@ -221,9 +216,8 @@ void test_power_button_change(void)
 void test_reset(void)
 {
 	boot_keys_value = 0;
-	boot_keys_value_external = 0;
 	boot_keys_counter = 0;
-	boot_keys_timeout = false;
+	boot_keys_release_only = false;
 }
 
 void test_reinit(void)

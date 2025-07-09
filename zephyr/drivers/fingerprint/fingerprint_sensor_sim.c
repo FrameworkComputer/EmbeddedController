@@ -65,7 +65,9 @@ static int fp_simulator_maintenance(const struct device *dev, uint8_t *buf,
 	struct fp_simulator_data *data = dev->data;
 
 	data->state.maintenance_ran = true;
-	data->errors = FINGERPRINT_ERROR_DEAD_PIXELS(data->state.bad_pixels);
+	data->errors &= ~FINGERPRINT_ERROR_DEAD_PIXELS_MASK;
+	data->errors |= FINGERPRINT_ERROR_DEAD_PIXELS(
+		MIN(data->state.bad_pixels, FINGERPRINT_ERROR_DEAD_PIXELS_MAX));
 
 	return 0;
 }
@@ -118,7 +120,7 @@ static int fp_simulator_finger_status(const struct device *dev)
 	return data->state.finger_state;
 }
 
-static const struct fingerprint_driver_api fp_simulator_driver_api = {
+static DEVICE_API(fingerprint, fp_simulator_driver_api) = {
 	.init = fp_simulator_init,
 	.deinit = fp_simulator_deinit,
 	.config = fp_simulator_config,

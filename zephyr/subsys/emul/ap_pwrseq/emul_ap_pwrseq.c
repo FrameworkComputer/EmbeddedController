@@ -21,7 +21,7 @@ static struct ap_pwrseq_data emul_ap_pwrseq_data;
 static int ap_pwrseq_driver_init(const struct device *dev);
 
 DEVICE_DEFINE(ap_pwrseq_dev, "ap_pwrseq_drv", ap_pwrseq_driver_init, NULL,
-	      &emul_ap_pwrseq_data, NULL, APPLICATION,
+	      &emul_ap_pwrseq_data, NULL, POST_KERNEL,
 	      CONFIG_APPLICATION_INIT_PRIORITY, NULL);
 
 /**

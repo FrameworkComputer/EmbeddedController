@@ -455,6 +455,26 @@ void __ram_code clock_cpu_standby(void)
 {
 	/* standby instruction */
 	if (IS_ENABLED(CHIP_CORE_NDS32)) {
+#ifdef CONFIG_IT83XX_PREWDT_ALWAYS_ENABLED
+		/*
+		 * Since we have to enable peripheral interrupts that share
+		 * CPU HW3 interrupt before CPU go into idle state, disable all
+		 * interrupts first to ensure that pending interrupts are not
+		 * triggered before the CPU ilde. This means that once SOC is
+		 * stuck in this code, program counter of panic information will
+		 * point to interrupt_enable() which is called later.
+		 */
+		uint32_t val = BIT(30);
+
+		asm volatile("mtsr %0, $INT_MASK" : : "r"(val));
+		asm volatile("dsb");
+		/*
+		 * Peripheral interrupts (EXT_IERx) must remain enabled before
+		 * CPU enters standby state otherwise pending interrupts will
+		 * not wake up CPU.
+		 */
+		IT83XX_INTC_EXT_IER19 = BRAM_EC_EXT_REG19;
+#endif
 		asm("standby wake_grant");
 	} else if (IS_ENABLED(CHIP_CORE_RISCV)) {
 		if (!IS_ENABLED(IT83XX_RISCV_WAKEUP_CPU_WITHOUT_INT_ENABLED))
@@ -540,9 +560,9 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	espi_enable_pad(0);
 #endif
 	clock_ec_pll_ctrl(EC_PLL_SLEEP);
-	interrupt_enable();
 	/* standby instruction */
 	clock_cpu_standby();
+	interrupt_enable();
 
 	/* we should never reach that point */
 	__builtin_unreachable();

@@ -82,7 +82,7 @@ int board_set_active_charge_port(int port)
 
 static void set_ac_prochot(void)
 {
-	isl9241_set_ac_prochot(CHARGER_SOLO, PD_MAX_CURRENT_MA);
+	isl9241_set_ac_prochot(CHARGER_SOLO, CONFIG_USB_PD_MAX_CURRENT_MA);
 }
 DECLARE_HOOK(HOOK_INIT, set_ac_prochot, HOOK_PRIO_DEFAULT);
 

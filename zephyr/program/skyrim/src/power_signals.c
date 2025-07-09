@@ -150,17 +150,18 @@ void board_pwrbtn_to_pch(int level)
 	    !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l))) {
 		start = get_time();
 		do {
-			crec_usleep(500);
+			k_usleep(500);
 			if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
 				    gpio_ec_soc_rsmrst_l)))
 				break;
-		} while (time_since32(start) < (RSMRST_WAIT_DELAY * MSEC));
+		} while (time_since32(start) <
+			 (RSMRST_WAIT_DELAY * USEC_PER_MSEC));
 
 		if (!gpio_pin_get_dt(
 			    GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l)))
 			ccprints("Error pwrbtn: RSMRST_L still low");
 
-		crec_msleep(EDS_PWR_BTN_RSMRST_T1A_DELAY);
+		k_msleep(EDS_PWR_BTN_RSMRST_T1A_DELAY);
 	}
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_pwr_btn_l), level);
 }
@@ -209,7 +210,7 @@ void baseboard_s0_pgood(enum gpio_signal signal)
 
 	/* Set up the MP2845, which is powered in S0 */
 	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_s0_pgood)))
-		hook_call_deferred(&setup_mp2845_data, 50 * MSEC);
+		hook_call_deferred(&setup_mp2845_data, 50 * USEC_PER_MSEC);
 	else
 		gpio_disable_dt_interrupt(
 			GPIO_INT_FROM_NODELABEL(int_soc_pcore_ocp));
@@ -262,7 +263,8 @@ void baseboard_s5_pgood(enum gpio_signal signal)
 #ifdef CONFIG_BOARD_USB_HUB_RESET
 	/* We must enable the USB hub at least 30ms after S5 PGOOD */
 	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pg_pwr_s5)))
-		hook_call_deferred(&baseboard_enable_hub_data, 30 * MSEC);
+		hook_call_deferred(&baseboard_enable_hub_data,
+				   30 * USEC_PER_MSEC);
 	else
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_rst), 1);
 #endif /* CONFIG_BOARD_USB_HUB_RESET */

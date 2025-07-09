@@ -166,10 +166,10 @@ static void pe_request_run(const int port)
 		/* Prepare to send ACK */
 
 		/* VDM Header */
-		payload[0] =
-			VDO(USB_VID_GOOGLE, 1, /* Structured VDM */
-			    VDO_SVDM_VERS_MAJOR(1) | VDO_CMDT(CMDT_RSP_ACK) |
-				    CMD_DISCOVER_IDENT);
+		payload[0] = VDO(USB_VID_GOOGLE, 1, /* Structured VDM */
+				 VDO_SVDM_VERS(SVDM_VER_2_0) |
+					 VDO_CMDT(CMDT_RSP_ACK) |
+					 CMD_DISCOVER_IDENT);
 
 		/* ID Header VDO */
 		payload[1] = VDO_IDH(0, /* Not a USB Host */

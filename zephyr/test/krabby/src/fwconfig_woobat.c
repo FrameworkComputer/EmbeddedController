@@ -76,6 +76,8 @@ static void *clamshell_reset(void)
 {
 	uint32_t val;
 
+	RESET_FAKE(cros_cbi_get_fw_config);
+
 	base_interrupt_id = 0;
 	lid_interrupt_id = 0;
 	interrupt_count = 0;
@@ -106,6 +108,8 @@ static void *main_sensor_reset(void)
 {
 	uint32_t val;
 
+	RESET_FAKE(cros_cbi_get_fw_config);
+
 	base_interrupt_id = 0;
 	lid_interrupt_id = 0;
 	interrupt_count = 0;
@@ -135,6 +139,8 @@ ZTEST_SUITE(woobat_main_sensor, NULL, NULL, main_sensor_reset, NULL, teardown);
 static void *alt_sensor_reset(void)
 {
 	uint32_t val;
+
+	RESET_FAKE(cros_cbi_get_fw_config);
 
 	base_interrupt_id = 0;
 	lid_interrupt_id = 0;

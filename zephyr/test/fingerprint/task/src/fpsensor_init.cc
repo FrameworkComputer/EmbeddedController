@@ -107,7 +107,7 @@ ZTEST_USER(fpsensor_init, test_set_fp_context)
 	zassert_true(status.status & FP_CONTEXT_USER_ID_SET);
 }
 
-ZTEST_USER(fpsensor_init, test_maintenance_mode)
+ZTEST_USER(fpsensor_init, test_maintenance_mode_dead_pixel_3)
 {
 	struct ec_params_fp_mode params = {
 		.mode = FP_MODE_SENSOR_MAINTENANCE,
@@ -141,6 +141,120 @@ ZTEST_USER(fpsensor_init, test_maintenance_mode)
 	/* Confirm that number of dead pixels is correct. */
 	zassert_ok(ec_cmd_fp_info(NULL, &info));
 	zassert_equal(FP_ERROR_DEAD_PIXELS(info.errors), dead_pixels);
+
+	/*
+	 * Confirm that maintenance flag is not set after the maintenance
+	 * operation is finished.
+	 */
+	params.mode = FP_MODE_DONT_CHANGE;
+	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
+	zassert_false(response.mode & FP_MODE_SENSOR_MAINTENANCE);
+}
+
+ZTEST_USER(fpsensor_init, test_maintenance_mode_dead_pixel_max_plus_2)
+{
+	struct ec_params_fp_mode params = {
+		.mode = FP_MODE_SENSOR_MAINTENANCE,
+	};
+	struct ec_response_fp_mode response;
+	struct ec_response_fp_info info;
+	struct fingerprint_sensor_state state;
+
+	fingerprint_get_state(fp_sim, &state);
+	state.bad_pixels = FP_ERROR_DEAD_PIXELS_MAX + 2;
+	fingerprint_set_state(fp_sim, &state);
+
+	/* Change fingerprint mode to maintenance. */
+	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
+	zassert_true(response.mode & FP_MODE_SENSOR_MAINTENANCE);
+
+	/* Give opportunity for fpsensor task to change mode. */
+	k_msleep(1);
+
+	/* Check that maintenance was run. */
+	fingerprint_get_state(fp_sim, &state);
+	zassert_true(state.maintenance_ran);
+
+	/* Confirm that number of dead pixels is correct. */
+	zassert_ok(ec_cmd_fp_info(NULL, &info));
+	zassert_equal(FP_ERROR_DEAD_PIXELS(info.errors),
+		      FP_ERROR_DEAD_PIXELS_MAX);
+
+	/*
+	 * Confirm that maintenance flag is not set after the maintenance
+	 * operation is finished.
+	 */
+	params.mode = FP_MODE_DONT_CHANGE;
+	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
+	zassert_false(response.mode & FP_MODE_SENSOR_MAINTENANCE);
+}
+
+ZTEST_USER(fpsensor_init, test_maintenance_mode_dead_pixel_max)
+{
+	struct ec_params_fp_mode params = {
+		.mode = FP_MODE_SENSOR_MAINTENANCE,
+	};
+	struct ec_response_fp_mode response;
+	struct ec_response_fp_info info;
+	struct fingerprint_sensor_state state;
+
+	fingerprint_get_state(fp_sim, &state);
+	state.bad_pixels = FP_ERROR_DEAD_PIXELS_MAX;
+	fingerprint_set_state(fp_sim, &state);
+
+	/* Change fingerprint mode to maintenance. */
+	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
+	zassert_true(response.mode & FP_MODE_SENSOR_MAINTENANCE);
+
+	/* Give opportunity for fpsensor task to change mode. */
+	k_msleep(1);
+
+	/* Check that maintenance was run. */
+	fingerprint_get_state(fp_sim, &state);
+	zassert_true(state.maintenance_ran);
+
+	/* Confirm that number of dead pixels is correct. */
+	zassert_ok(ec_cmd_fp_info(NULL, &info));
+	zassert_equal(FP_ERROR_DEAD_PIXELS(info.errors),
+		      FP_ERROR_DEAD_PIXELS_MAX);
+
+	/*
+	 * Confirm that maintenance flag is not set after the maintenance
+	 * operation is finished.
+	 */
+	params.mode = FP_MODE_DONT_CHANGE;
+	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
+	zassert_false(response.mode & FP_MODE_SENSOR_MAINTENANCE);
+}
+
+ZTEST_USER(fpsensor_init, test_maintenance_mode_dead_pixel_max_minus_1)
+{
+	struct ec_params_fp_mode params = {
+		.mode = FP_MODE_SENSOR_MAINTENANCE,
+	};
+	struct ec_response_fp_mode response;
+	struct ec_response_fp_info info;
+	struct fingerprint_sensor_state state;
+
+	fingerprint_get_state(fp_sim, &state);
+	state.bad_pixels = FP_ERROR_DEAD_PIXELS_MAX - 1;
+	fingerprint_set_state(fp_sim, &state);
+
+	/* Change fingerprint mode to maintenance. */
+	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
+	zassert_true(response.mode & FP_MODE_SENSOR_MAINTENANCE);
+
+	/* Give opportunity for fpsensor task to change mode. */
+	k_msleep(1);
+
+	/* Check that maintenance was run. */
+	fingerprint_get_state(fp_sim, &state);
+	zassert_true(state.maintenance_ran);
+
+	/* Confirm that number of dead pixels is correct. */
+	zassert_ok(ec_cmd_fp_info(NULL, &info));
+	zassert_equal(FP_ERROR_DEAD_PIXELS(info.errors),
+		      FP_ERROR_DEAD_PIXELS_MAX - 1);
 
 	/*
 	 * Confirm that maintenance flag is not set after the maintenance

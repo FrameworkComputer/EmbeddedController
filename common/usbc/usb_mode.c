@@ -9,12 +9,6 @@
  * USB Power Delivery Specification Revision 3.0, Version 2.0 Section 6.4.8
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 17
-
 #include "compile_time_macros.h"
 #include "console.h"
 #include "tcpm/tcpm.h"
@@ -32,12 +26,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 41
 
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)

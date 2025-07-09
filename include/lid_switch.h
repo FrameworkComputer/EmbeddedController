@@ -5,12 +5,6 @@
 
 /* Lid switch API for Chrome EC */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #ifndef __CROS_EC_LID_SWITCH_H
 #define __CROS_EC_LID_SWITCH_H
 
@@ -20,11 +14,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * Debounce time for lid switch
- */
-#define LID_DEBOUNCE_US (30 * MSEC)
 
 /**
  * Return non-zero if lid is open.

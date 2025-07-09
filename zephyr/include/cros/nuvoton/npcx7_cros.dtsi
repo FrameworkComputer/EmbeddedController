@@ -1,0 +1,33 @@
+/*
+ * Copyright 2021 The ChromiumOS Authors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <cros/nuvoton/npcx_cros.dtsi>
+
+&pinctrl {
+	/* TODO - move this upstream */
+	/omit-if-no-ref/ dbg0_gp16_17_20_22: periph-dbg0 {
+		pinmux = <&alt5_njen0_en>;
+		periph-pupd = <0x00 0>;
+	};
+	/omit-if-no-ref/ dbg1_gp16_17_20_22: periph-dbg1 {
+		pinmux = <&alt5_njen1_en>;
+		periph-pupd = <0x00 0>;
+	};
+};
+
+/ {
+
+	soc {
+
+		dbg: dbg@400c3074 {
+			compatible = "nuvoton,npcx-cros-dbg";
+			reg = <0x400c3074 0x0C>;
+			label = "DBG";
+			status = "disabled";
+		};
+	};
+
+};

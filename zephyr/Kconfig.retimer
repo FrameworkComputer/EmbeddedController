@@ -82,6 +82,16 @@ config PLATFORM_EC_USBC_RETIMER_INTEL_BB_VPRO_CAPABLE
 	  configure the Burnside Bridge retimer to support vPro, when connected
 	  dock supports vPro.
 
+config PLATFORM_EC_USBC_RETIMER_ANX3443
+	bool "Support Analogix ANX3443 10G Active Mux and Retimer"
+	depends on DT_HAS_ANALOGIX_ANX3443_ENABLED
+	default y
+	help
+	  ANX3443 is a 4x4 re-timing mux capable of switching DisplayPort (DP)
+	  and USB3.2 Gen 2 10Gbps signals to support a single USB Type-C port.
+	  ANX3443 has built-in re-timers to recover both the USB and DP signals
+	  with loss compensation of 23dB for USB and up to 27dB for DP.
+
 config PLATFORM_EC_USBC_RETIMER_ANX7451
 	bool "Support Analogix ANX7451 10G Active Mux and Retimer"
 	help

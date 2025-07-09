@@ -51,7 +51,7 @@ int charger_profile_override(struct charge_state_data *curr)
 	    (curr->batt.status & STATUS_FULLY_CHARGED))
 		usb_mv = 5000;
 	else
-		usb_mv = PD_MAX_VOLTAGE_MV;
+		usb_mv = CONFIG_USB_PD_MAX_VOLTAGE_MV;
 
 	if (pd_get_max_voltage() != usb_mv) {
 		CPRINTS("VBUS limited to %dmV", usb_mv);

@@ -1,3 +1,1 @@
-bnemec@google.com
-matthewb@chromium.org
-shurst@google.com
+include chromiumos/owners:v1:/platform/OWNERS.hwtools

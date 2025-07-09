@@ -824,8 +824,9 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	if (s->type == MOTIONSENSE_TYPE_ACCEL) {
 		if (rate == 0) {
 			/* FIFO stop collecting events */
-			if (IS_ENABLED(ACCELGYRO_BMI3XX_INT_ENABLE))
-				ret = enable_fifo(s, 0);
+#ifdef ACCELGYRO_BMI3XX_INT_ENABLE
+			ret = enable_fifo(s, 0);
+#endif
 
 			/*
 			 * Disable accel to set rate equal to zero.
@@ -848,8 +849,9 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	} else if (s->type == MOTIONSENSE_TYPE_GYRO) {
 		if (rate == 0) {
 			/* FIFO stop collecting events */
-			if (IS_ENABLED(ACCELGYRO_BMI3XX_INT_ENABLE))
-				ret = enable_fifo(s, 0);
+#ifdef ACCELGYRO_BMI3XX_INT_ENABLE
+			ret = enable_fifo(s, 0);
+#endif
 
 			/*
 			 * Set gyro to suspend mode to disable gyro
@@ -886,8 +888,10 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	 * If rate is non zero, FIFO start collecting events.
 	 * They will be discarded if AP does not want them.
 	 */
-	if (IS_ENABLED(ACCELGYRO_BMI3XX_INT_ENABLE) && (rate > 0))
+#ifdef ACCELGYRO_BMI3XX_INT_ENABLE
+	if (rate > 0)
 		ret = enable_fifo(s, 1);
+#endif
 
 	mutex_unlock(s->mutex);
 	return ret;
@@ -1065,8 +1069,9 @@ static int init(struct motion_sensor_t *s)
 		RETURN_ERROR(bmi3_write_n(s, BMI3_REG_FEATURE_ENGINE_GLOB_CTRL,
 					  reg_data, 2));
 
-		if (IS_ENABLED(ACCELGYRO_BMI3XX_INT_ENABLE))
-			RETURN_ERROR(config_interrupt(s));
+#ifdef ACCELGYRO_BMI3XX_INT_ENABLE
+		RETURN_ERROR(config_interrupt(s));
+#endif
 	}
 
 	for (i = X; i <= Z; i++)

@@ -67,6 +67,10 @@
 			gpios = <&gpio5 6 GPIO_INPUT>;
 		};
 
+		gpio_acc_int_l: acc_int_l {
+			gpios = <&gpio5 0 (GPIO_INPUT)>;
+		};
+
 		gpio_lid_open: lid_open {
 			gpios = <&gpiod 2 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
@@ -131,6 +135,11 @@
 			irq-pin = <&gpio_pen_detect_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "pen_detect_interrupt";
+		};
+		int_lid_accel: lid_accel {
+			irq-pin = <&gpio_acc_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lis2dw12_interrupt";
 		};
 	};
 

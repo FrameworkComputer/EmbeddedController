@@ -300,40 +300,62 @@ config PLATFORM_EC_USB_PD_ONLY_FIXED_PDOS
 
 # Define power related settings here for now to allow projects to overwrite
 # them. Ideally they would be defined in the devicetree.
-config PLATFORM_EC_PD_OPERATING_POWER_MW
+config PLATFORM_EC_USB_PD_OPERATING_POWER_MW
 	int "PD operating power in milliwatt"
 	default 15000
 	help
 	  Base configuration for PD power operating power value, which is used
 	  in PD negotiation. The final PD parameter used in negotiation is
-	  affected by PLATFORM_EC_PD_MAX_POWER_MW,
-	  PLATFORM_EC_PD_MAX_CURRENT_MA, and PLATFORM_EC_PD_MAX_VOLTAGE_MV.
+	  affected by PLATFORM_EC_USB_PD_MAX_POWER_MW,
+	  PLATFORM_EC_USB_PD_MAX_CURRENT_MA, and PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV.
 	  Increase this value is the system requires more than 15 watts to boot
 	  without a battery.
 
-config PLATFORM_EC_PD_MAX_POWER_MW
+config PLATFORM_EC_USB_PD_MAX_POWER_MW
 	int "PD maximum power in milliwatt"
 	default 60000
 	help
 	  The maximum PD negotiated power for the system. The value should match
-	  with configured PLATFORM_EC_PD_MAX_CURRENT_MA and
-	  PLATFORM_EC_PD_MAX_VOLTAGE_MV.
+	  with configured PLATFORM_EC_USB_PD_MAX_CURRENT_MA and
+	  PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV.
 
-config PLATFORM_EC_PD_MAX_CURRENT_MA
+config PLATFORM_EC_USB_PD_MAX_CURRENT_MA
 	int "PD maximum current in milliampere"
 	default 3000
 	help
 	  The maximum PD negotiated current for the system. The value should
-	  match with configured PLATFORM_EC_PD_MAX_POWER_MW and
-	  PLATFORM_EC_PD_MAX_VOLTAGE_MV.
+	  match with configured PLATFORM_EC_USB_PD_MAX_POWER_MW and
+	  PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV.
 
-config PLATFORM_EC_PD_MAX_VOLTAGE_MV
+config PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV
 	int "PD maximum voltage in millivolt"
 	default 20000
 	help
 	  The maximum PD negotiated voltage for the system. The value should
-	  match with configured PLATFORM_EC_PD_MAX_POWER_MW and
-	  PLATFORM_EC_PD_MAX_CURRENT_MA.
+	  match with configured PLATFORM_EC_USB_PD_MAX_POWER_MW and
+	  PLATFORM_EC_USB_PD_MAX_CURRENT_MA.
+
+choice PLATFORM_EC_USB_PD_VOLTAGE_CHOICE
+	prompt "Set the PD selection voltage policy"
+	optional
+	help
+	  This optional choice instructs the DUT to override the default PDO
+	  selection algorithm in favor of a lower or higher voltage.
+
+config PLATFORM_EC_USB_PD_PREFER_LOW_VOLTAGE
+	bool "Prefer lower voltage PDO"
+	help
+	  If enabled, if the partner source device offers multiple PDOs at the
+	  same wattage, the DUT will select the PDO offering the lowest voltage.
+
+config PLATFORM_EC_USB_PD_PREFER_HIGH_VOLTAGE
+	bool "Prefer higher voltage PDO"
+	help
+	  If enabled, if the partner source device offers multiple PDOs at the
+	  same wattage, the DUT will select the PDO offering the highest
+	  voltage.
+
+endchoice
 
 config PLATFORM_EC_PD_POWER_SUPPLY_TURN_ON_DELAY
 	int "Power supply turn on delay in us"
@@ -362,14 +384,30 @@ config PLATFORM_EC_USBC_RETIMER_FW_UPDATE
 	   update can only be performed on retimers which show up in the AP
 	   thunderbolt device entries.
 
-config PLATFORM_EC_CONSOLE_CMD_TYPEC
-	bool "Console command: typec"
-	default y
+choice PLATFORM_EC_CONSOLE_CMD_TYPEC_CHOICE
+	prompt "Console command typec choices"
+	default PLATFORM_EC_CONSOLE_CMD_TYPEC
 	help
-	  Enable the 'typec' console command. Use this command to override
-	  the USB Type-C connector mux configuration on a specified port.
+	   This symbol selects the typec command implemtation used
+	   on the ChromiumOS EC.
+
+config PLATFORM_EC_CONSOLE_CMD_TYPEC
+	bool "Console command typec for EC managed USB muxes"
+	depends on PLATFORM_EC_USBC_SS_MUX || PDC_POWER_MGMT_USB_MUX
+	help
+	  Enable the 'typec' console command for EC managed USB Type-C
+	  connector muxes.
+
+config PLATFORM_EC_CONSOLE_CMD_PDC_TYPEC
+	bool "Console command typec for PDC/AP managed USB muxes"
+	depends on USB_PDC_POWER_MGMT && !PDC_POWER_MGMT_USB_MUX
+	help
+	  Enable the 'typec' console command for USB muxes are _not_ managed by
+	  EC.  Use this command to override the USB Type-C connector mux
+	  configuration on a specified port.
 
 	  Passing in 'debug' instead of a port number turns on additional
 	  debug messages whenever the EC application modifies the mux state.
+endchoice
 
 endif  # PLATFORM_EC_USBC

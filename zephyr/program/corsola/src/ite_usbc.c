@@ -76,8 +76,6 @@ int board_set_active_charge_port(int port)
 	}
 
 	if (port == CHARGE_PORT_NONE) {
-		CPRINTS("Disabling all charger ports");
-
 		/* Disable all ports. */
 		for (i = 0; i < board_get_adjusted_usb_pd_port_count(); i++) {
 			/*

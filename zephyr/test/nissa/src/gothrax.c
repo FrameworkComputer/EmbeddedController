@@ -75,6 +75,7 @@ static void test_before(void *fixture)
 	RESET_FAKE(nissa_configure_hdmi_rails);
 	RESET_FAKE(nissa_configure_hdmi_vcc);
 	RESET_FAKE(cbi_get_board_version);
+	RESET_FAKE(cros_cbi_get_fw_config);
 
 	RESET_FAKE(raa489000_enable_asgate);
 	RESET_FAKE(raa489000_set_output_current);

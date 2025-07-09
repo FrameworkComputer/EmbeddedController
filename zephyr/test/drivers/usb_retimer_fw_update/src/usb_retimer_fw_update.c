@@ -77,7 +77,7 @@ static void usb_retimer_fw_update_after(void *data)
 ZTEST_SUITE(usb_retimer_fw_update, drivers_predicate_post_main, NULL,
 	    usb_retimer_fw_update_before, usb_retimer_fw_update_after, NULL);
 
-ZTEST(usb_retimer_fw_update, test_verify_query_port)
+ZTEST(usb_retimer_fw_update, test_query_port)
 {
 	/* Write our command to query ports */
 	acpi_write(EC_ACPI_MEM_USB_RETIMER_FW_UPDATE,
@@ -88,7 +88,7 @@ ZTEST(usb_retimer_fw_update, test_verify_query_port)
 		     "Failed to see port in query");
 }
 
-ZTEST(usb_retimer_fw_update, test_verify_suspend_port)
+ZTEST(usb_retimer_fw_update, test_suspend_port)
 {
 	/* Write our command to suspend the port */
 	acpi_write(EC_ACPI_MEM_USB_RETIMER_FW_UPDATE,
@@ -104,7 +104,7 @@ ZTEST(usb_retimer_fw_update, test_verify_suspend_port)
 		     "Failed to see successful suspend");
 }
 
-ZTEST(usb_retimer_fw_update, test_verify_resume_port)
+ZTEST(usb_retimer_fw_update, test_resume_port)
 {
 	usb_retimer_fw_update_suspend_port();
 
@@ -122,7 +122,7 @@ ZTEST(usb_retimer_fw_update, test_verify_resume_port)
 		     "Failed to see successful resume");
 }
 
-ZTEST(usb_retimer_fw_update, test_verify_get_mux)
+ZTEST(usb_retimer_fw_update, test_get_mux)
 {
 	struct ec_response_typec_status typec_status;
 
@@ -141,7 +141,7 @@ ZTEST(usb_retimer_fw_update, test_verify_get_mux)
 }
 
 /* Commands which first require suspend to be run */
-ZTEST(usb_retimer_fw_update, test_verify_set_mux_usb)
+ZTEST(usb_retimer_fw_update, test_set_mux_usb)
 {
 	struct ec_response_typec_status typec_status;
 
@@ -165,7 +165,7 @@ ZTEST(usb_retimer_fw_update, test_verify_set_mux_usb)
 		      USB_PD_MUX_USB_ENABLED, "Status mux disagreement");
 }
 
-ZTEST(usb_retimer_fw_update, test_verify_set_mux_safe)
+ZTEST(usb_retimer_fw_update, test_set_mux_safe)
 {
 	struct ec_response_typec_status typec_status;
 
@@ -189,7 +189,7 @@ ZTEST(usb_retimer_fw_update, test_verify_set_mux_safe)
 		      USB_PD_MUX_SAFE_MODE, "Status mux disagreement");
 }
 
-ZTEST(usb_retimer_fw_update, test_verify_set_mux_tbt)
+ZTEST(usb_retimer_fw_update, test_set_mux_tbt)
 {
 	struct ec_response_typec_status typec_status;
 
@@ -213,7 +213,7 @@ ZTEST(usb_retimer_fw_update, test_verify_set_mux_tbt)
 		      USB_PD_MUX_TBT_COMPAT_ENABLED, "Status mux disagreement");
 }
 
-ZTEST(usb_retimer_fw_update, test_verify_update_disconnect)
+ZTEST(usb_retimer_fw_update, test_update_disconnect)
 {
 	uint64_t command_start;
 
@@ -252,7 +252,7 @@ ZTEST(usb_retimer_fw_update, test_verify_update_disconnect)
 }
 
 /* Verify we get an error if port isn't suspended */
-ZTEST(usb_retimer_fw_update, test_verify_mux_usb_error)
+ZTEST(usb_retimer_fw_update, test_mux_usb_error)
 {
 	/* Set the mux to USB  on unsuspended port */
 	acpi_write(EC_ACPI_MEM_USB_RETIMER_FW_UPDATE,

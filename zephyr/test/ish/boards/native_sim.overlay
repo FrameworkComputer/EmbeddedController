@@ -1,0 +1,21 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_sim.dts>
+
+/ {
+
+	aliases {
+		gpio-nb-mode = &gpio_soc_ec_ish_nb_mode_l;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_soc_ec_ish_nb_mode_l: sen_mode_ec_pch_int_odl {
+			gpios = <&gpio0 10 (GPIO_ACTIVE_LOW | GPIO_OUTPUT_ACTIVE)>;
+		};
+	};
+};

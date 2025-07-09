@@ -5,10 +5,14 @@
 
 #include "include/board.h"
 
+#include <cros/cbi_flash.dtsi>
+#include <cros/integrated_fwid.dtsi>
+
 #include "adc.dtsi"
 #include "fan.dtsi"
 #include "gpio.dtsi"
 #include "i2c.dts"
+#include "vci.dtsi"
 #include "../battery.dtsi"
 #include "../i2c.dtsi"
 #include "../ioex.dtsi"
@@ -19,3 +23,21 @@
 #include "../power_signals.dtsi"
 #include "../temp_sensor.dts"
 #include "../usbc.dtsi"
+#include "../led_pins.dtsi"
+#include "../led_policy.dtsi"
+
+&cbi_flash {
+	offset = <0x3F000>;
+	size = <0x1000>;
+};
+
+/ {
+	named-gpios {
+		/delete-node/  ec-jtag-tms;
+	};
+
+	tabletmode_interrupt: tabletmode-interrupt {
+		compatible = "cros,tabletmode-interrupt";
+		irq-gpios = <MCHP_GPIO_DECODE_150 GPIO_ACTIVE_LOW>;
+	};
+};

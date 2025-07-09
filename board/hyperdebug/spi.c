@@ -5,6 +5,7 @@
 /* HyperDebug SPI logic and console commands */
 
 #include "board_util.h"
+#include "builtin/assert.h"
 #include "clock.h"
 #include "clock_chip.h"
 #include "common.h"
@@ -19,6 +20,35 @@
 #include "usb_spi.h"
 #include "util.h"
 
+const uint8_t OCTOSPI_PORT = (uint8_t)-1;
+
+/*
+ * This flag indicates that the SPI request is for a TPM, that is, as the
+ * fourth and final command byte is written to the SPI bus, the controller
+ * must pay attention to the simultaneous output from the SPI device.  If the
+ * byte has the value 0x01, it means that the transaction can immediately
+ * proceed (read or write), of the value is 0x00, then the controller must
+ * continue polling, until a value 0x01 is received, before proceeding.
+ *
+ * Care must be taken that this bit does not overlap with any of the
+ * "standard" bits declared in chip/stm32/usb_spi.h
+ */
+#define FLASH_FLAG_TPM_POS 27
+#define FLASH_FLAG_TPM (0x1U << FLASH_FLAG_TPM_POS)
+
+/*
+ * This flag requests that HyperDebug should wait for a "ready pulse" on a
+ * particular pin, before proceeding with the TPM transaction.  (For reads,
+ * the wait is between header and data, for writes, the wait is after the data
+ * transfer.)
+ *
+ * Care must be taken that this bit does not overlap with any of the
+ * "standard" bits declared in chip/stm32/usb_spi.h
+ */
+#define FLASH_FLAG_TPM_WAIT_FOR_READY_POS 26
+#define FLASH_FLAG_TPM_WAIT_FOR_READY \
+	(0x1U << FLASH_FLAG_TPM_WAIT_FOR_READY_POS)
+
 /*
  * List of SPI devices that can be controlled via USB.
  *
@@ -32,9 +62,10 @@ struct spi_device_t spi_devices[] = {
 	  .port = 1,
 	  .div = 5,
 	  .gpio_cs = GPIO_CN9_25,
-	  .usb_flags = USB_SPI_ENABLED },
+	  .usb_flags = USB_SPI_ENABLED | USB_SPI_CUSTOM_SPI_DEVICE |
+		       USB_SPI_CUSTOM_SPI_DEVICE_FULL_DUPLEX_SUPPORTED },
 	{ .name = "QSPI",
-	  .port = -1 /* OCTOSPI */,
+	  .port = OCTOSPI_PORT,
 	  .div = 255,
 	  .gpio_cs = GPIO_CN10_6,
 	  .usb_flags = USB_SPI_ENABLED | USB_SPI_CUSTOM_SPI_DEVICE |
@@ -44,12 +75,14 @@ struct spi_device_t spi_devices[] = {
 	  .port = 0,
 	  .div = 5,
 	  .gpio_cs = GPIO_CN7_4,
-	  .usb_flags = USB_SPI_ENABLED },
+	  .usb_flags = USB_SPI_ENABLED | USB_SPI_CUSTOM_SPI_DEVICE |
+		       USB_SPI_CUSTOM_SPI_DEVICE_FULL_DUPLEX_SUPPORTED },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 static int spi_device_default_gpio_cs[ARRAY_SIZE(spi_devices)];
 static int spi_device_default_div[ARRAY_SIZE(spi_devices)];
+static int spi_device_ready_pin[ARRAY_SIZE(spi_devices)];
 
 static const size_t NUM_MSI_FREQUENCIES = 12;
 
@@ -111,7 +144,7 @@ static void print_spi_info(int index)
 {
 	uint32_t bits_per_second;
 
-	if (spi_devices[index].usb_flags & USB_SPI_CUSTOM_SPI_DEVICE) {
+	if (spi_devices[index].port == OCTOSPI_PORT) {
 		// OCTOSPI as 8 bit prescaler, dividing clock by 1..256.
 		bits_per_second =
 			octospi_clock() / (spi_devices[index].div + 1);
@@ -170,7 +203,7 @@ static int command_spi_set_speed(int argc, const char **argv)
 	if (*e)
 		return EC_ERROR_PARAM4;
 
-	if (spi_devices[index].usb_flags & USB_SPI_CUSTOM_SPI_DEVICE) {
+	if (spi_devices[index].port == OCTOSPI_PORT) {
 		/* Turn off MSI oscillator (in order to allow modification). */
 		STM32_RCC_CR &= ~STM32_RCC_CR_MSION;
 
@@ -279,6 +312,26 @@ static int command_spi_set_cs(int argc, const char **argv)
 	return EC_SUCCESS;
 }
 
+static int command_spi_set_ready_pin(int argc, const char **argv)
+{
+	int index;
+	int desired_gpio;
+	if (argc < 5)
+		return EC_ERROR_PARAM_COUNT;
+
+	index = find_spi_by_name(argv[3]);
+	if (index < 0)
+		return EC_ERROR_PARAM3;
+
+	desired_gpio = gpio_find_by_name(argv[4]);
+	if (desired_gpio == GPIO_COUNT)
+		return EC_ERROR_PARAM4;
+
+	spi_device_ready_pin[index] = desired_gpio;
+
+	return EC_SUCCESS;
+}
+
 static int command_spi_set(int argc, const char **argv)
 {
 	if (argc < 3)
@@ -287,6 +340,8 @@ static int command_spi_set(int argc, const char **argv)
 		return command_spi_set_speed(argc, argv);
 	if (!strcasecmp(argv[2], "cs"))
 		return command_spi_set_cs(argc, argv);
+	if (!strcasecmp(argv[2], "ready"))
+		return command_spi_set_ready_pin(argc, argv);
 	return EC_ERROR_PARAM2;
 }
 
@@ -303,7 +358,8 @@ static int command_spi(int argc, const char **argv)
 DECLARE_CONSOLE_COMMAND_FLAGS(spi, command_spi,
 			      "info [PORT]"
 			      "\nset speed PORT BPS"
-			      "\nset cs PORT PIN",
+			      "\nset cs PORT PIN"
+			      "\nset ready PORT PIN",
 			      "SPI bus manipulation", CMD_FLAG_RESTRICTED);
 
 /******************************************************************************
@@ -345,19 +401,14 @@ static bool previous_cs;
 static timestamp_t deadline;
 
 /*
- * Board-specific SPI driver entry point, called by usb_spi.c.  On this board,
- * the only spi device declared as requiring board specific driver is OCTOSPI.
- *
- * Actually, there is nothing board-specific in the code below, as it merely
- * implements the serial flash USB protocol extensions on the OctoSPI hardware
- * found on STM32L5 chips (and probably others).  For now, however, HyperDebug
- * is the only board that uses a chip with such an OctoSPI controller, so until
- * we have seen this code being generally useful, it will live in
- * board/hyperdebug.
+ * Implementation of EC SPI driver for OCTOSPI controller in STM32L5 chips (and
+ * probably others).  For now, HyperDebug is the only board that uses a chip
+ * with such an OctoSPI controller, so until we have seen this code being
+ * generally useful, it will live in board/hyperdebug.
  */
-int usb_spi_board_transaction_async(const struct spi_device_t *spi_device,
-				    uint32_t flash_flags, const uint8_t *txdata,
-				    int txlen, uint8_t *rxdata, int rxlen)
+static int qspi_transaction_async(const struct spi_device_t *spi_device,
+				  uint32_t flash_flags, const uint8_t *txdata,
+				  int txlen, uint8_t *rxdata, int rxlen)
 {
 	uint32_t opcode = 0, address = 0;
 	const uint32_t mode = flash_flags & FLASH_FLAG_MODE_MSK;
@@ -598,13 +649,13 @@ int usb_spi_board_transaction_async(const struct spi_device_t *spi_device,
 	return EC_SUCCESS;
 }
 
-int usb_spi_board_transaction_is_complete(const struct spi_device_t *spi_device)
+static int qspi_transaction_is_complete(const struct spi_device_t *spi_device)
 {
 	/* Query the "transaction complete flag" of the status register. */
 	return STM32_OCTOSPI_SR & STM32_OCTOSPI_SR_TCF;
 }
 
-int usb_spi_board_transaction_flush(const struct spi_device_t *spi_device)
+static int qspi_transaction_flush(const struct spi_device_t *spi_device)
 {
 	/*
 	 * Wait until DMA transfer is complete (no-op if DMA not started because
@@ -632,10 +683,142 @@ int usb_spi_board_transaction_flush(const struct spi_device_t *spi_device)
 	return rv;
 }
 
+/*
+ * Board-specific SPI driver entry point, called by usb_spi.c.  On this board,
+ * every spi device is declared as requiring board specific driver, in order to
+ * add enhanced TPM functionality.
+ */
+int usb_spi_board_transaction_async(const struct spi_device_t *spi_device,
+				    uint32_t flash_flags, const uint8_t *txdata,
+				    int txlen, uint8_t *rxdata, int rxlen)
+{
+	if (flash_flags & (FLASH_FLAG_TPM_WAIT_FOR_READY | FLASH_FLAG_TPM)) {
+		/* Polling only supported in synchronous function. */
+		return USB_SPI_UNSUPPORTED_FLASH_MODE;
+	}
+	if (spi_device->port == OCTOSPI_PORT)
+		return qspi_transaction_async(spi_device, flash_flags, txdata,
+					      txlen, rxdata, rxlen);
+	if (flash_flags & FLASH_FLAGS_REQUIRING_SUPPORT) {
+		/*
+		 * The standard spi_transaction() does not support
+		 * any multi-lane modes.
+		 */
+		return USB_SPI_UNSUPPORTED_FLASH_MODE;
+	}
+	return spi_transaction_async(spi_device, txdata, txlen, rxdata, rxlen);
+}
+
+/*
+ * Board-specific SPI driver entry point, called by usb_spi.c.  On this board,
+ * every spi device is declared as requiring board specific driver, in order to
+ * add enhanced TPM functionality.
+ */
+int usb_spi_board_transaction_is_complete(const struct spi_device_t *spi_device)
+{
+	if (spi_device->port == OCTOSPI_PORT)
+		return qspi_transaction_is_complete(spi_device);
+	return true;
+}
+
+/*
+ * Board-specific SPI driver entry point, called by usb_spi.c.  On this board,
+ * every spi device is declared as requiring board specific driver, in order to
+ * add enhanced TPM functionality.
+ */
+int usb_spi_board_transaction_flush(const struct spi_device_t *spi_device)
+{
+	if (spi_device->port == OCTOSPI_PORT)
+		return qspi_transaction_flush(spi_device);
+	return spi_transaction_flush(spi_device);
+}
+
+/*
+ * Synchronously perform one TPM transaction, consisting of four byte header
+ * followed by a number of data bytes.  Respect TPM protocol by polling when
+ * data phase can proceed, as well as optionally wait for edge on Google
+ * proprietary "ready signal".
+ */
+static int usb_spi_tpm_transaction(const struct spi_device_t *spi_device,
+				   uint32_t flash_flags, const uint8_t *txdata,
+				   int txlen, uint8_t *rxdata, int rxlen)
+{
+	size_t spi_index = spi_device - spi_devices;
+	assert(spi_index < ARRAY_SIZE(spi_devices));
+	int gsc_ready_pin = spi_device_ready_pin[spi_index];
+
+	/* TPM protocol has 4-byte command/address. */
+	if (txlen < 4)
+		return USB_SPI_UNSUPPORTED_FLASH_MODE;
+
+	if (flash_flags & FLASH_FLAG_TPM_WAIT_FOR_READY &&
+	    gsc_ready_pin == GPIO_COUNT) {
+		/*
+		 * Waiting for ready pulse was requested, but ready pin not
+		 * declared.
+		 */
+		return USB_SPI_UNSUPPORTED_FLASH_MODE;
+	}
+
+	timestamp_t deadline;
+	deadline.val = get_time().val + 100000;
+
+	/* Assert chip select */
+	int chip_select_level_before = gpio_get_level(spi_device->gpio_cs);
+	gpio_set_level(spi_device->gpio_cs, 0);
+
+	/* Enable polling from fast timer interrupt. */
+	if (flash_flags & FLASH_FLAG_TPM_WAIT_FOR_READY)
+		start_monitoring_for_falling_edge(gsc_ready_pin);
+
+	uint8_t resp[4];
+
+	/* Send 4-byte TPM header, also receiving ready status. */
+	int rv = spi_transaction(spi_device, txdata, 4, resp, -1);
+
+	/* Poll for the TPM standard ready status. */
+	while (rv == EC_SUCCESS && resp[3] != 0x01) {
+		timestamp_t now = get_time();
+		if (timestamp_expired(deadline, &now)) {
+			rv = EC_ERROR_TIMEOUT;
+			break;
+		}
+		rv = spi_transaction(spi_device, NULL, 0, resp + 3, 1);
+	}
+
+	/* Data phase of the TPM transaction. */
+	if (rv == EC_SUCCESS)
+		rv = spi_transaction(spi_device, txdata + 4, txlen - 4, rxdata,
+				     rxlen);
+
+	/* Release chip select even when returning an error. */
+	gpio_set_level(spi_device->gpio_cs, chip_select_level_before);
+
+	/* Optionally wait for Google ready signal. */
+	if (flash_flags & FLASH_FLAG_TPM_WAIT_FOR_READY) {
+		if (rv == EC_SUCCESS)
+			rv = wait_for_falling_edge(deadline);
+		stop_monitoring_for_falling_edge();
+	}
+
+	return rv;
+}
+
+/*
+ * Board-specific SPI driver entry point, called by usb_spi.c.  On this board,
+ * every spi device is declared as requiring board specific driver, in order to
+ * add enhanced TPM functionality.
+ */
 int usb_spi_board_transaction(const struct spi_device_t *spi_device,
 			      uint32_t flash_flags, const uint8_t *txdata,
 			      int txlen, uint8_t *rxdata, int rxlen)
 {
+	if (flash_flags & FLASH_FLAG_TPM) {
+		/* Tailored logic for TPM transactions. */
+		return usb_spi_tpm_transaction(spi_device, flash_flags, txdata,
+					       txlen, rxdata, rxlen);
+	}
+
 	int rv = usb_spi_board_transaction_async(spi_device, flash_flags,
 						 txdata, txlen, rxdata, rxlen);
 	if (rv == EC_SUCCESS) {
@@ -648,7 +831,8 @@ int usb_spi_board_transaction(const struct spi_device_t *spi_device,
 static void spi_reinit(void)
 {
 	for (unsigned int i = 0; i < spi_devices_used; i++) {
-		if (spi_devices[i].usb_flags & USB_SPI_CUSTOM_SPI_DEVICE) {
+		spi_device_ready_pin[i] = GPIO_COUNT;
+		if (spi_devices[i].port == OCTOSPI_PORT) {
 			/* Quad SPI controller */
 			spi_devices[i].gpio_cs = spi_device_default_gpio_cs[i];
 			spi_devices[i].div = spi_device_default_div[i];
@@ -671,6 +855,9 @@ DECLARE_HOOK(HOOK_REINIT, spi_reinit, HOOK_PRIO_DEFAULT);
 /* Initialize board for SPI. */
 static void spi_init(void)
 {
+	for (unsigned int i = 0; i < spi_devices_used; i++)
+		spi_device_ready_pin[i] = GPIO_COUNT;
+
 	/* Record initial values for use by `spi_reinit()` above. */
 	for (unsigned int i = 0; i < spi_devices_used; i++) {
 		spi_device_default_gpio_cs[i] = spi_devices[i].gpio_cs;

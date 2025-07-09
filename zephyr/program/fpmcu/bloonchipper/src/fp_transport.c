@@ -5,44 +5,19 @@
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
-#include <zephyr/drivers/gpio.h>
 #include <zephyr/init.h>
-#include <zephyr/kernel.h>
 #include <zephyr/mgmt/ec_host_cmd/ec_host_cmd.h>
 #include <zephyr/pm/device.h>
 
 #include <ec_commands.h>
 #include <fpsensor/fpsensor_detect.h>
-#include <gpio_signal.h>
-
-enum fp_transport_type get_fp_transport_type(void)
-{
-	static enum fp_transport_type ret = FP_TRANSPORT_TYPE_UNKNOWN;
-
-	if (ret == FP_TRANSPORT_TYPE_UNKNOWN) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(div_highside), 1);
-		k_usleep(1);
-		switch (gpio_pin_get_dt(
-			GPIO_DT_FROM_NODELABEL(transport_sel))) {
-		case 0:
-			ret = FP_TRANSPORT_TYPE_UART;
-			break;
-		case 1:
-			ret = FP_TRANSPORT_TYPE_SPI;
-			break;
-		default:
-			ret = FP_TRANSPORT_TYPE_UNKNOWN;
-			break;
-		}
-	}
-
-	return ret;
-}
 
 #if !defined(CONFIG_EC_HOST_CMD_BACKEND_SPI) && \
 	!defined(CONFIG_EC_HOST_CMD_BACKEND_UART)
 BUILD_ASSERT(0, "Both backends are not enabled");
 #endif
+
+/* TODO(b/394346384): De-duplicate with helipilot code */
 
 test_export_static int fp_transport_init(void)
 {

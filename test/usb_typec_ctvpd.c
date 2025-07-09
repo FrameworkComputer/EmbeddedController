@@ -343,7 +343,7 @@ static void simulate_discovery_identity(int port)
 				    pd_port[port].msg_rx_id, 1,
 				    pd_port[port].rev, 0);
 	uint32_t msg = VDO(USB_SID_PD, 1, /* Structured VDM */
-			   VDO_SVDM_VERS_MAJOR(1) | VDO_CMDT(CMDT_INIT) |
+			   VDO_SVDM_VERS(SVDM_VER_2_0) | VDO_CMDT(CMDT_INIT) |
 				   CMD_DISCOVER_IDENT);
 
 	simulate_rx_msg(port, header, 1, (const uint32_t *)&msg);
@@ -541,7 +541,7 @@ static int test_vpd_host_src_detection_message_reception(void)
 	int port = PORT0;
 	uint32_t expected_vdm_header =
 		VDO(USB_VID_GOOGLE, 1, /* Structured VDM */
-		    VDO_SVDM_VERS_MAJOR(1) | VDO_CMDT(CMDT_RSP_ACK) |
+		    VDO_SVDM_VERS(SVDM_VER_2_0) | VDO_CMDT(CMDT_RSP_ACK) |
 			    CMD_DISCOVER_IDENT);
 	uint32_t expected_vdo_id_header =
 		VDO_IDH(0, /* Not a USB Host */
@@ -988,7 +988,7 @@ static int test_ctvpd_behavior_case4(void)
 	int port = PORT0;
 	uint32_t expected_vdm_header =
 		VDO(USB_VID_GOOGLE, 1, /* Structured VDM */
-		    VDO_SVDM_VERS_MAJOR(1) | VDO_CMDT(CMDT_RSP_ACK) |
+		    VDO_SVDM_VERS(SVDM_VER_2_0) | VDO_CMDT(CMDT_RSP_ACK) |
 			    CMD_DISCOVER_IDENT);
 	uint32_t expected_vdo_id_header =
 		VDO_IDH(0, /* Not a USB Host */

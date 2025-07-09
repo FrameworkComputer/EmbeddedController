@@ -34,6 +34,9 @@
 	named-gpios {
 		compatible = "named-gpios";
 
+		gpio_acc_int_l: acc_int_l {
+			gpios = <&gpioc 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
 		gpio_all_sys_pwrgd: all_sys_pwrgd {
 			gpios = <&gpiob 7 GPIO_INPUT>;
 		};

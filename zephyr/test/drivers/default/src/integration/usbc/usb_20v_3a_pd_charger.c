@@ -31,7 +31,7 @@ connect_charger_to_port(struct usb_attach_20v_3a_pd_charger_fixture *fixture)
 		   NULL);
 
 	isl923x_emul_set_adc_vbus(fixture->charger_emul,
-				  PDO_FIXED_GET_VOLT(fixture->src_ext.pdo[1]));
+				  PDO_FIXED_VOLTAGE(fixture->src_ext.pdo[1]));
 
 	/* Wait for PD negotiation and current ramp.
 	 * TODO(b/213906889): Check message timing and contents.

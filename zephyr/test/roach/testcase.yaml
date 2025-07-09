@@ -1,5 +1,6 @@
 common:
-  platform_allow: native_sim
+  platform_allow:
+  - native_sim
 tests:
   roach.axii:
     extra_configs:
@@ -9,5 +10,13 @@ tests:
   roach.spikyrock:
     extra_configs:
     - CONFIG_TEST_SPIKYROCK=y
+    - CONFIG_USB_DC_HID_VIVALDI=y
+    - CONFIG_USB_DC_HID_KEYBOARD=y
+    - CONFIG_USB_DEVICE_STACK=y
+    - CONFIG_USB_DEVICE_MANUFACTURER="Google"
+    - CONFIG_USB_DEVICE_PRODUCT="Spikyrock"
+    - CONFIG_USB_DEVICE_SN="0"
+    - CONFIG_USB_DEVICE_VID=0x18D1
+    - CONFIG_USB_DEVICE_PID=0x5067
     extra_dtc_overlay_files:
     - spikyrock.default.overlay

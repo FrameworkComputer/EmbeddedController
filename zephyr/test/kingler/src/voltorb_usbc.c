@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "battery_smart.h"
 #include "chipset.h"
 #include "hooks.h"
 #include "usb_pd.h"

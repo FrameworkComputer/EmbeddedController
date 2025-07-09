@@ -71,13 +71,15 @@ static void mp2964_on_startup(void)
 
 	chip_updated = 1;
 
+#ifdef CONFIG_PLATFORM_EC_BRINGUP
 	ccprintf("%s: attempting to tune PMIC\n", __func__);
+#endif /* CONFIG_PLATFORM_EC_BRINGUP */
 
 	status = mp2964_tune(rail_a, ARRAY_SIZE(rail_a), rail_b,
 			     ARRAY_SIZE(rail_b));
-
+#ifdef CONFIG_PLATFORM_EC_BRINGUP
 	ccprintf("%s: PMIC update done with all cell setting\n", __func__);
-
+#endif /* CONFIG_PLATFORM_EC_BRINGUP */
 	if (status != EC_SUCCESS)
 		ccprintf("%s: could not update all settings\n", __func__);
 }

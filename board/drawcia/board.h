@@ -21,10 +21,13 @@
 /* BC 1.2 */
 #define CONFIG_BC12_DETECT_PI3USB9201
 
+/* Button */
+#define CONFIG_BUTTONS_RUNTIME_CONFIG
+
 /* Charger */
 #define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_CHARGER_SM5803 /* C0 and C1: Charger */
-#define PD_MAX_VOLTAGE_MV 15000
+#define CONFIG_USB_PD_MAX_VOLTAGE_MV 15000
 #define CONFIG_USB_PD_VBUS_DETECT_CHARGER
 #define CONFIG_USB_PD_5V_CHARGER_CTRL
 #define CONFIG_CHARGER_OTG
@@ -33,6 +36,10 @@
 #define CONFIG_OCPC_DEF_RBATT_MOHMS               \
 	21 /* R_DS(on) 10.7mOhm + 10mOhm sns rstr \
 	    */
+
+/* I2C */
+#define CONFIG_I2C_BITBANG
+#define I2C_BITBANG_PORT_COUNT 1
 
 /* PWM */
 #define CONFIG_PWM

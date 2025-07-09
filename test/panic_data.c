@@ -61,6 +61,7 @@ test_static int test_panic_data(void)
 }
 
 /*
+ * On STM32 chips only.
  * After hard reboot we expect to have panic flags, panic exception and lower
  * 16 bits of panic reason and info (upper 16 bits should be zero). This
  * information is saved in backup RAM because hard reboot clears memory. The
@@ -129,7 +130,10 @@ void test_run_step(uint32_t state)
 	}
 	/* Step 4: Check panic data after hard reboot */
 	else if (state & TEST_STATE_MASK(TEST_STATE_STEP_4)) {
-		RUN_TEST(test_panic_data_half);
+		if (IS_ENABLED(CHIP_STM32))
+			RUN_TEST(test_panic_data_half);
+		else
+			RUN_TEST(test_panic_data);
 		if (!test_get_error_count())
 			test_reboot_to_next_step(TEST_STATE_PASSED);
 		else

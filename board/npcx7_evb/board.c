@@ -139,6 +139,7 @@ __override struct keyboard_scan_config keyscan_config = {
 	.debounce_down_us = 6 * MSEC,
 	.debounce_up_us = 30 * MSEC,
 	.scan_period_us = 1500,
+	.stable_scan_period_us = 1500,
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = SECOND,
 	.actual_key_mask = {

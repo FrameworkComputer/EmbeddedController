@@ -1,0 +1,132 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/motionsense/utils.h>
+
+/ {
+	aliases {
+		/*
+		 * motion sense's <>_INT_EVENT is handled by alias. Using the
+		 * alias, each driver creates its own <>_INT_EVENT.
+		 */
+		bma4xx-int = &lid_accel;
+	};
+
+	motionsense-mutex {
+		compatible = "cros-ec,motionsense-mutex";
+		mutex_bma4xx_lid: mutex-bma4xx-lid {
+		};
+		mutex_bmi323_base: mutex-bmi323-base {
+		};
+	};
+
+	/* Rotation matrix used by drivers. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		/* TODO (b/315858961) check rotation matrices */
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <1 0 0
+				 0 1 0
+				 0 0 1>;
+		};
+		base_rot_ref: base-rotation-ref {
+			mat33 = <1 0 0
+				 0 (-1) 0
+				 0 0 1>;
+		};
+	};
+
+	/* Driver specific data */
+	motionsense-sensor-data {
+		base_data: bmi323-drv-data {
+			compatible = "cros-ec,drvdata-bmi3xx";
+			status = "okay";
+		};
+		lid_data: bma422-drv-data {
+			compatible = "cros-ec,drvdata-bma4xx";
+			status = "okay";
+		};
+	};
+
+	/* List of motion sensors that create motion_sensors array. */
+	motionsense-sensor {
+		lid_accel: lid-accel {
+			compatible = "cros-ec,bma4xx";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&mutex_bma4xx_lid>;
+			port = <&i2c_ish_sensor>;
+			rot-standard-ref = <&lid_rot_ref>;
+			default-range = <2>;
+			drv-data = <&lid_data>;
+			i2c-spi-addr-flags = "BMA4_I2C_ADDR_SECONDARY";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+					ec-rate = <(100 * USEC_PER_MSEC)>;
+				};
+			};
+		};
+
+		base_accel: base-accel {
+			compatible = "cros-ec,bmi3xx-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&mutex_bmi323_base>;
+			port = <&i2c_ish_sensor>;
+			rot-standard-ref = <&base_rot_ref>;
+			default-range = <2>;
+			drv-data = <&base_data>;
+			i2c-spi-addr-flags = "BMI3_ADDR_I2C_SEC";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+					ec-rate = <(100 * USEC_PER_MSEC)>;
+				};
+			};
+		};
+
+		base_gyro: base-gyro {
+			compatible = "cros-ec,bmi3xx-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&mutex_bmi323_base>;
+			port = <&i2c_ish_sensor>;
+			i2c-spi-addr-flags = "BMI3_ADDR_I2C_SEC";
+			rot-standard-ref = <&base_rot_ref>;
+			drv-data = <&base_data>;
+		};
+	};
+
+	/* High level description info */
+	motionsense-sensor-info {
+		compatible = "cros-ec,motionsense-sensor-info";
+
+		/*
+		 * List of GPIO interrupts that have to be enabled at initial
+		 * stage.
+		 */
+		sensor-irqs = <&int_lid_accel>;
+
+		/* List of sensors in force mode */
+		accel-force-mode-sensors = <&base_accel>;
+	};
+};

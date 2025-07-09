@@ -14,5 +14,7 @@ add_definitions(-DCROS_EC)
 # long file path strings. This compile options will strip the source path, and
 # recude the final code size.
 # The reason we don't use "-ffile-prefix-map" here is because we don't want to
-# break the debug symbols for debugging.
-add_compile_options(-fmacro-prefix-map="${CMAKE_CURRENT_SOURCE_DIR}/=")
+# break the debug symbols for debugging. The flag needs to be passed to the
+# preprocessor:
+# https://gcc.gnu.org/onlinedocs/gcc/Preprocessor-Options.html#index-fmacro-prefix-map
+add_definitions(-fmacro-prefix-map=${CMAKE_CURRENT_SOURCE_DIR}/=)

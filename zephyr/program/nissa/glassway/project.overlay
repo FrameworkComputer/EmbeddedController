@@ -11,3 +11,4 @@
 #include "overlay.dtsi"
 #include "power_signals.dtsi"
 #include "gpio_leds.dtsi"
+#include "motionsense.dtsi"

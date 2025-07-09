@@ -1464,7 +1464,7 @@ class StackAnalyzer:
 
         return (add_set, remove_list, eliminated_addrs, failed_sigtxts)
 
-    def PreprocessAnnotation(  # pylint:disable=invalid-name,no-self-use
+    def PreprocessAnnotation(  # pylint:disable=invalid-name
         self, function_map, add_set, remove_list, eliminated_addrs
     ):
         """Preprocess the annotation and callgraph.
@@ -1535,7 +1535,7 @@ class StackAnalyzer:
 
     def AnalyzeCallGraph(
         self, function_map, remove_list
-    ):  # pylint:disable=invalid-name,no-self-use
+    ):  # pylint:disable=invalid-name
         """Analyze callgraph.
 
         It will update the max stack size and path for each function.

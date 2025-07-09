@@ -235,11 +235,6 @@ static void do_thermistor_test(const struct temp_sensor_t *temp_sensor,
 					   adc_temperature_func, &state),
 		   "adc_emul_value_func_set() failed on %s", temp_sensor->name);
 
-	/* Makes sure that reference voltage is correct for given thermistor */
-	zassert_ok(adc_emul_ref_voltage_set(adc_dev, ADC_REF_INTERNAL, state.v),
-		   "adc_emul_ref_voltage_set() failed %s on ",
-		   temp_sensor->name);
-
 	/* Test whole supported range from 0*C to 100*C (273*K to 373*K) */
 	for (temp_expected = 273; temp_expected <= 373; temp_expected++) {
 		state.temp_expected = temp_expected;

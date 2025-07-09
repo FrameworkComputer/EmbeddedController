@@ -155,7 +155,7 @@ drv_clock_ctrl_get_status(const struct device *dev, clock_control_subsys_t sys)
 	return status;
 }
 
-static const struct clock_control_driver_api driver_api = {
+static DEVICE_API(clock_control, driver_api) = {
 	.on = drv_clock_ctrl_on,
 	.off = drv_clock_ctrl_off,
 	.async_on = drv_clock_ctrl_async_on,

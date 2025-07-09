@@ -25,6 +25,7 @@ child-binding:
       - LID_SENSOR
       - LIGHTBAR
       - USB_SS_MUX
+      - PANEL_TYPE
     size:
       type: int
       required: true

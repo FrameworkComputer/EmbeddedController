@@ -1,0 +1,5 @@
+common:
+  platform_allow:
+    - native_sim
+tests:
+  aic_io_sweep.default: {}

@@ -10,8 +10,6 @@ This is the entry point for the custom firmware builder workflow recipe.  It
 gets invoked by chromite/api/controller/firmware.py.
 """
 
-import argparse
-import multiprocessing
 import os
 import pathlib
 import shutil
@@ -20,7 +18,10 @@ import sys
 
 # pylint: disable=import-error
 from google.protobuf import json_format
+from util.coreboot_sdk import init_toolchain
+import zephyr.scripts.firmware_builder_lib
 
+# pylint: disable=wrong-import-order
 from chromite.api.gen_sdk.chromite.api import firmware_pb2
 
 
@@ -67,12 +68,14 @@ def build(opts):
     message.
     """
     metric_list = firmware_pb2.FwBuildMetricList()  # pylint: disable=no-member
+    env = os.environ.copy()
+    env.update(init_toolchain())
     ec_dir = pathlib.Path(__file__).parent
 
     # Run formatting checks on all python files.
     cmd = ["black", "--check", "."]
     print(f"# Running {' '.join(cmd)}.")
-    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True, env=env)
     chromite_dir = ec_dir.resolve().parent.parent.parent / "chromite"
     cmd = [
         "isort",
@@ -80,6 +83,7 @@ def build(opts):
         "--check",
         "--gitignore",
         "--dont-follow-links",
+        f"-j{opts.cpus}",
         ".",
     ]
     print(f"# Running {' '.join(cmd)}.")
@@ -87,6 +91,7 @@ def build(opts):
         cmd,
         cwd=os.path.dirname(__file__),
         check=True,
+        env=env,
     )
 
     if opts.code_coverage:
@@ -100,29 +105,29 @@ def build(opts):
 
     cmd = ["make", "clobber"]
     print(f"# Running {' '.join(cmd)}.")
-    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True, env=env)
 
     cmd = ["make", "buildall_only", f"-j{opts.cpus}"]
     print(f"# Running {' '.join(cmd)}.")
-    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True, env=env)
 
     # extra/rma_reset is used in chromeos-base/ec-utils-test
     cmd = ["make", "-C", "extra/rma_reset", "clean"]
     print(f"# Running {' '.join(cmd)}.")
-    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True, env=env)
 
     cmd = ["make", "-C", "extra/rma_reset", f"-j{opts.cpus}"]
     print(f"# Running {' '.join(cmd)}.")
-    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True, env=env)
 
     # extra/usb_updater is used in chromeos-base/ec-devutils
     cmd = ["make", "-C", "extra/usb_updater", "clean"]
     print(f"# Running {' '.join(cmd)}.")
-    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True, env=env)
 
     cmd = ["make", "-C", "extra/usb_updater", "usb_updater2", f"-j{opts.cpus}"]
     print(f"# Running {' '.join(cmd)}.")
-    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True, env=env)
 
     cmd = ["make", "print-all-baseboards", f"-j{opts.cpus}"]
     print(f"# Running {' '.join(cmd)}.")
@@ -133,6 +138,7 @@ def build(opts):
         check=True,
         universal_newlines=True,
         stdout=subprocess.PIPE,
+        env=env,
     ).stdout.splitlines():
         parts = line.split("=")
         if len(parts) > 1:
@@ -176,7 +182,7 @@ def build(opts):
         # successfully with clang: b/172020503.
         cmd = ["./util/build_with_clang.py", f"-j{opts.cpus}"]
         print(f'# Running {" ".join(cmd)}.')
-        subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+        subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True, env=env)
     finally:
         shutil.rmtree(build_dir)
         os.rename(gcc_build_dir, build_dir)
@@ -315,10 +321,12 @@ def test(opts):
     #
     # Otherwise, build the 'runtests' target, which verifies all
     # posix-based unit tests build and pass.
+    env = os.environ.copy()
+    env.update(init_toolchain())
     target = "coverage" if opts.code_coverage else "runtests"
     cmd = ["make", target, f"-j{opts.cpus}"]
     print(f"# Running {' '.join(cmd)}.")
-    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True, env=env)
 
     if not opts.code_coverage:
         # Verify compilation of the on-device unit test binaries.
@@ -327,7 +335,7 @@ def test(opts):
         cmd = ["make", f"-j{opts.cpus}"]
         cmd.extend(["tests-" + b for b in BOARDS_UNIT_TEST])
         print(f"# Running {' '.join(cmd)}.")
-        subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+        subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True, env=env)
 
         # Verify the tests pass with ASan also
         ec_dir = os.path.dirname(__file__)
@@ -338,7 +346,7 @@ def test(opts):
 
         cmd = ["make", "TEST_ASAN=y", target, f"-j{opts.cpus}"]
         print(f"# Running {' '.join(cmd)}.")
-        subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+        subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True, env=env)
 
         # Use the x86_64-cros-linux-gnu- compiler also
         cmd = [
@@ -350,7 +358,7 @@ def test(opts):
             f"-j{opts.cpus}",
         ]
         print(f"# Running {' '.join(cmd)}.")
-        subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+        subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True, env=env)
 
 
 def main(args):
@@ -358,7 +366,10 @@ def main(args):
 
     Additionally, the tool reports build metrics.
     """
-    opts = parse_args(args)
+    parser, _ = zephyr.scripts.firmware_builder_lib.create_arg_parser(
+        build, bundle, test
+    )
+    opts = parser.parse_args(args)
 
     if not hasattr(opts, "func"):
         print("Must select a valid sub command!")
@@ -375,71 +386,7 @@ def main(args):
             for fail in os.listdir(failed_dir):
                 print(f"\t{fail}")
         return 1
-    else:
-        return 0
-
-
-def parse_args(args):
-    """Parse all command line args and return opts dict."""
-    parser = argparse.ArgumentParser(description=__doc__)
-
-    parser.add_argument(
-        "--cpus",
-        default=multiprocessing.cpu_count(),
-        help="The number of cores to use.",
-    )
-
-    parser.add_argument(
-        "--metrics",
-        dest="metrics",
-        required=True,
-        help="File to write the json-encoded MetricsList proto message.",
-    )
-
-    parser.add_argument(
-        "--metadata",
-        required=False,
-        help="Full pathname for the file in which to write build artifact metadata.",
-    )
-
-    parser.add_argument(
-        "--output-dir",
-        required=False,
-        help="Full pathanme for the directory in which to bundle build artifacts.",
-    )
-
-    parser.add_argument(
-        "--code-coverage",
-        required=False,
-        action="store_true",
-        help="Build host-based unit tests for code coverage.",
-    )
-
-    parser.add_argument(
-        "--bcs-version",
-        dest="bcs_version",
-        default="",
-        required=False,
-        # TODO(b/180008931): make this required=True.
-        help="BCS version to include in metadata.",
-    )
-
-    # Would make this required=True, but not available until 3.7
-    sub_cmds = parser.add_subparsers()
-
-    build_cmd = sub_cmds.add_parser("build", help="Builds all firmware targets")
-    build_cmd.set_defaults(func=build)
-
-    build_cmd = sub_cmds.add_parser(
-        "bundle",
-        help="Creates a tarball containing build artifacts from all firmware targets",
-    )
-    build_cmd.set_defaults(func=bundle)
-
-    test_cmd = sub_cmds.add_parser("test", help="Runs all firmware unit tests")
-    test_cmd.set_defaults(func=test)
-
-    return parser.parse_args(args)
+    return 0
 
 
 if __name__ == "__main__":

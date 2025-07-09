@@ -441,7 +441,7 @@ static int cros_flash_it8xxx2_protect_now(const struct device *dev, int all)
 }
 
 /* cros ec flash driver registration */
-static const struct cros_flash_driver_api cros_flash_it8xxx2_driver_api = {
+static DEVICE_API(cros_flash, cros_flash_it8xxx2_driver_api) = {
 	.init = cros_flash_it8xxx2_init,
 	.physical_write = cros_flash_it8xxx2_write,
 	.physical_erase = cros_flash_it8xxx2_erase,

@@ -6,6 +6,9 @@ set(COMPILER clang)
 set(LINKER lld)
 set(BINTOOLS llvm)
 
+# Look for toolchain binaries in /usr/bin
+set(TOOLCHAIN_HOME "/usr/bin")
+
 if("${ARCH}" STREQUAL "posix")
 set(LINKER ld)
 endif()
@@ -41,6 +44,12 @@ if("${ARCH}" STREQUAL "arm")
   # affect them, but it's still useful for filtering tests.
   set(TOOLCHAIN_HAS_NEWLIB ON CACHE BOOL "True if toolchain supports newlib")
 endif()
+
+# LLVM_TOOLCHAIN_PATH is used as a base path to look for 'newlib.cfg' or
+# 'picolibc.cfg' provided by toolchain. Our compiler doesn't provide these files
+# but without this variable, CMake looks for these files starting from '/' which
+# takes long time and can lead to errors if somebody creates the file somewhere.
+set(LLVM_TOOLCHAIN_PATH "/usr/${CROSS_COMPILE_TARGET}")
 
 # CMAKE_{C, ASM, CXX}_COMPILER_TARGET is used by CMake to provide correct
 # "--target" option to Clang and by Zephyr to determine which runtime library

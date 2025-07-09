@@ -8,7 +8,7 @@
 
 #include "../arbitrage.dtsi"
 #include "../common.dtsi"
-#include "../usbc.dtsi"
+#include "../tcpc.dtsi"
 #include "../usba.dtsi"
 #include "../generated.dtsi"
 #include "../interrupts.dtsi"
@@ -16,19 +16,73 @@
 #include "../power_signal.dtsi"
 #include "keyboard.dtsi"
 
+#include <cros/thermistor/thermistor.dtsi>
+
 / {
 	aliases {
 		tcs3400-int = &als_clear;
 	};
 
+	rauru-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		touch {
+			enum-name = "FW_TOUCH";
+			start = <0>;
+			size = <2>;
+			touch-not-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TOUCH_NOT_PRESENT";
+				value = <0>;
+			};
+			touch-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TOUCH_PRESENT";
+				value = <1>;
+				default;
+			};
+		};
+	};
+
 	named-adc-channels {
-			adc_temp_sensor_3: temp_sensor_2 {
+			adc_temp_sensor2: temp_sensor2 {
 			enum-name = "ADC_TEMP_SENSOR_2";
 			io-channels = <&adc0 5>;
 		};
-			adc_temp_sensor_4: temp_sensor_3 {
+			adc_temp_sensor3: temp_sensor3 {
 			enum-name = "ADC_TEMP_SENSOR_3";
 			io-channels = <&adc0 6>;
+		};
+	};
+
+	temp_sensor_pwr_thermistor: sensor-temp-pwr-thermistor {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&adc_temp_sensor1>;
+	};
+
+	temp_sensor_cpu_thermistor: sensor-temp-cpu-thermistor {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&adc_temp_sensor2>;
+	};
+
+	temp_sensor_chg_thermistor: sensor-temp-chg-thermistor {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&adc_temp_sensor3>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_sensor_pwr {
+			sensor = <&temp_sensor_pwr_thermistor>;
+		};
+		temp_sensor_cpu {
+			sensor = <&temp_sensor_cpu_thermistor>;
+		};
+		temp_sensor_chg {
+			sensor = <&temp_sensor_chg_thermistor>;
 		};
 	};
 
@@ -103,7 +157,27 @@
 					compatible =
 					"cros-ec,accelgyro-als-channel-scale";
 						k-channel-scale = <1>;
-						cover-scale = <1>;
+						cover-scale = "1.9f";
+					};
+				};
+			};
+		};
+
+		tcs_clear_nt_data: tcs3400-clear-nt-drv-data {
+			compatible = "cros-ec,drvdata-tcs3400-clear";
+			status = "okay";
+
+			als-drv-data {
+				compatible = "cros-ec,accelgyro-als-drv-data";
+				als-cal {
+					scale = <1>;
+					uscale = <0>;
+					offset = <0>;
+					als-channel-scale {
+					compatible =
+					"cros-ec,accelgyro-als-channel-scale";
+						k-channel-scale = <1>;
+						cover-scale = "1.99f";
 					};
 				};
 			};
@@ -122,32 +196,76 @@
 
 				rgb-cal-x {
 					offset = <0>;
-					coeff = <0 0 0 1>;
+					coeff = "3.104837469", "-3.042481383", "-2.665622822", "-3.48553635";
 					als-channel-scale {
 					compatible =
 					"cros-ec,accelgyro-als-channel-scale";
 						k-channel-scale = <1>;
-						cover-scale = <1>;
+						cover-scale = "1.9f";
 					};
 				};
 				rgb-cal-y {
 					offset = <0>;
-					coeff = <0 0 0 1>;
+					coeff = "-4.896982528", "4.933101898", "5.191614317", "4.774099358";
 					als-channel-scale {
 					compatible =
 					"cros-ec,accelgyro-als-channel-scale";
 						k-channel-scale = <1>;
-						cover-scale = <1>;
+						cover-scale = "1.9f";
 					};
 				};
 				rgb-cal-z {
 					offset = <0>;
-					coeff = <0 0 0 1>;
+					coeff = "-4.474227687", "4.463081990", "4.725799761", "4.329380493";
 					als-channel-scale {
 					compatible =
 					"cros-ec,accelgyro-als-channel-scale";
 						k-channel-scale = <1>;
-						cover-scale = <1>;
+						cover-scale = "1.9f";
+					};
+				};
+			};
+		};
+
+		tcs_rgb_nt_data: tcs3400-rgb-nt-drv-data {
+			compatible = "cros-ec,drvdata-tcs3400-rgb";
+			status = "okay";
+
+			/* node for rgb_calibration_t defined in accelgyro.h */
+			rgb_calibration {
+				compatible =
+					"cros-ec,accelgyro-rgb-calibration";
+
+				irt = <1>;
+
+				rgb-cal-x {
+					offset = <0>;
+					coeff = "-0.270504545", "0.365824995", "0.63568366", "0.125036008";
+					als-channel-scale {
+					compatible =
+					"cros-ec,accelgyro-als-channel-scale";
+						k-channel-scale = <1>;
+						cover-scale = "1.99f";
+					};
+				};
+				rgb-cal-y {
+					offset = <0>;
+					coeff = "-0.260229489", "0.327072623", "0.60465724", "0.140379923";
+					als-channel-scale {
+					compatible =
+					"cros-ec,accelgyro-als-channel-scale";
+						k-channel-scale = <1>;
+						cover-scale = "1.99f";
+					};
+				};
+				rgb-cal-z {
+					offset = <0>;
+					coeff = "0.317013982", "-0.481912324", "-0.01555734", "-0.110027566";
+					als-channel-scale {
+					compatible =
+					"cros-ec,accelgyro-als-channel-scale";
+						k-channel-scale = <1>;
+						cover-scale = "1.99f";
 					};
 				};
 			};
@@ -187,7 +305,7 @@
 			};
 		};
 
-		base-als-rgb {
+		als_rgb: base-als-rgb {
 			compatible = "cros-ec,tcs3400-rgb";
 			status = "okay";
 
@@ -195,6 +313,44 @@
 			location = "MOTIONSENSE_LOC_LID";
 			default-range = <0x10000>; /* scale = 1x, uscale = 0 */
 			drv-data = <&tcs_rgb_data>;
+		};
+	};
+
+	motionsense-sensor-alt {
+		/delete-node/ lid-accel;
+		/delete-node/ base-accel;
+		/delete-node/ base-gyro;
+
+		alt_als_clear: alt-base-als-clear {
+			compatible = "cros-ec,tcs3400-clear";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0";
+			location = "MOTIONSENSE_LOC_LID";
+			port = <&i2c_ec_i2c_sensor_scl_1v8>;
+			default-range = <0x10000>;
+			drv-data = <&tcs_clear_nt_data>;
+			alternate-for = <&als_clear>;
+			i2c-spi-addr-flags = "TCS3400_I2C_ADDR_FLAGS";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					/* Run ALS sensor in S0 */
+					odr = <1000>;
+				};
+			};
+		};
+
+		alt_als_rgb: alt-base-als-rgb {
+			compatible = "cros-ec,tcs3400-rgb";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0";
+			location = "MOTIONSENSE_LOC_LID";
+			default-range = <0x10000>; /* scale = 1x, uscale = 0 */
+			drv-data = <&tcs_rgb_nt_data>;
+			alternate-for = <&als_rgb>;
 		};
 	};
 
@@ -244,9 +400,10 @@
 
 		port1@1 {
 			/delete-node/  usb-mux-chain-1 ;
+			/delete-node/  usb-mux-chain-1-tusb;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&ps8802_mux_0 &virtual_mux_1>;
+				usb-muxes = <&ps8802_mux_1 &virtual_mux_1>;
 			};
 		};
 	};
@@ -324,6 +481,12 @@
 		reg = <0x8>;
 	};
 
+	ps8802_mux_1: ps8802-mx-1@18 {
+		compatible = "parade,ps8802";
+		status = "okay";
+		reg = <0x18>;
+	};
+
 	/delete-node/ syv682x@40;
 	/delete-node/ tusb1046-mux-1@12;
 };
@@ -337,4 +500,8 @@
 &i2c5ALT {
 	/delete-property/ pinctrl-0;
 	/delete-property/ pinctrl-names;
+};
+
+&thermistor_3V3_100K_100K_4250B {
+	status = "okay";
 };

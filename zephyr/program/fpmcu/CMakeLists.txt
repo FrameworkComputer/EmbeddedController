@@ -18,3 +18,5 @@ if (DEFINED CONFIG_BOARD_BLOONCHIPPER)
 	add_subdirectory(bloonchipper)
 	project(bloonchipper)
 endif()
+
+zephyr_library_sources_ifdef(CONFIG_EC_HOST_CMD "src/fp_transport.c")

@@ -74,7 +74,7 @@ ZTEST_SUITE(button, drivers_predicate_post_main, button_setup, button_before,
 static inline void pass_time(uint64_t duration_ms)
 {
 	for (uint64_t i = 0; i <= duration_ms; i += 100) {
-		get_time_mock->val += 100 * MSEC;
+		get_time_mock->val += 100 * USEC_PER_MSEC;
 		k_msleep(100);
 	}
 }

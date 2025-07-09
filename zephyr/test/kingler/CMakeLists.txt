@@ -62,6 +62,9 @@ target_sources_ifdef(CONFIG_TEST_KINGLER_CCD app PRIVATE src/ccd.c
                      ${PLATFORM_EC_PROGRAM_DIR}/corsola/src/board.c)
 target_sources_ifdef(CONFIG_TEST_VOLTORB app PRIVATE src/voltorb_usbc.c
                      ${PLATFORM_EC_PROGRAM_DIR}/corsola/voltorb/src/usbc.c)
+target_sources_ifdef(CONFIG_TEST_VOLTORB_DPS app PRIVATE src/voltorb_dps.c
+                     ${PLATFORM_EC_PROGRAM_DIR}/corsola/voltorb/src/board.c)
+
 target_sources_ifdef(
         CONFIG_TEST_DB_DETECTION_USB_COUNT
         app
@@ -77,6 +80,16 @@ target_sources_ifdef(
         src/ponyta_board.c)
 
 target_sources_ifdef(CONFIG_TEST_KYOGRE_SENSOR_PROBE app PRIVATE src/kyogre_sensor.c)
+target_sources_ifdef(
+	CONFIG_TEST_KYOGRE_BATTERY_DETECTION_PROBE
+	app
+	PRIVATE
+        ${PLATFORM_EC_PROGRAM_DIR}/corsola/kyogre/src/battery_detection.c
+	src/kyogre_battery_detection.c)
+target_sources_ifdef(CONFIG_TEST_KYOGRE_PEN_CHARGE_PROBE app PRIVATE
+        ${PLATFORM_EC_PROGRAM_DIR}/corsola/kyogre/src/pen_charge.c
+        src/kyogre_pen_charge.c)
+
 target_sources_ifdef(CONFIG_TEST_SQUIRTLE
 			app PRIVATE
                         src/voltorb_usbc.c

@@ -67,7 +67,7 @@ static void update_prochot_deferred(void)
 
 defferred:
 	/* Check the battert discharge current every 500ms */
-	hook_call_deferred(&update_prochot_deferred_data, 500 * MSEC);
+	hook_call_deferred(&update_prochot_deferred_data, 500 * USEC_PER_MSEC);
 }
 
 static void check_batt_current(void)
@@ -82,7 +82,7 @@ static void check_batt_current(void)
 	}
 
 	/* Deferred 2s to avoid state conflict */
-	hook_call_deferred(&update_prochot_deferred_data, 2 * SECOND);
+	hook_call_deferred(&update_prochot_deferred_data, 2 * USEC_PER_SEC);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, check_batt_current, HOOK_PRIO_DEFAULT);
 

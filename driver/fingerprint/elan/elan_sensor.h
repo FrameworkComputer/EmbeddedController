@@ -3,25 +3,40 @@
  * found in the LICENSE file.
  */
 
-#ifndef CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SENSOR_H
-#define CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SENSOR_H
+#ifndef __CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SENSOR_H_
+#define __CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SENSOR_H_
+
 #include "common.h"
 #include "ec_commands.h"
 #include "fpsensor/fpsensor_types.h"
 
-/* Sensor pixel resolution */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* The 16-bit hardware ID  */
+#define FP_SENSOR_HWID_ELAN_80SG 0x4f4f
+#define FP_SENSOR_HWID_ELAN_515 0x9533
+
 #if (defined(CONFIG_FP_SENSOR_ELAN80) || defined(CONFIG_FP_SENSOR_ELAN80SG))
 #define FP_SENSOR_IMAGE_SIZE_ELAN (80 * 80 * 2)
 #define FP_SENSOR_RES_X_ELAN 80
 #define FP_SENSOR_RES_Y_ELAN 80
+#define FP_SENSOR_HWID_ELAN FP_SENSOR_HWID_ELAN_80SG
 #elif defined(CONFIG_FP_SENSOR_ELAN515)
 #define FP_SENSOR_IMAGE_SIZE_ELAN (52 * 150 * 2)
 #define FP_SENSOR_RES_X_ELAN 52
 #define FP_SENSOR_RES_Y_ELAN 150
+#define FP_SENSOR_HWID_ELAN FP_SENSOR_HWID_ELAN_515
 #endif
 
 #define FP_SENSOR_IMAGE_OFFSET_ELAN (0)
 #define FP_SENSOR_RES_BPP_ELAN (14)
+
+/**
+ * Get the fingerprint sensor HWID.
+ */
+int elan_get_hwid(uint16_t *id);
 
 /**
  * Set ELAN fingerprint sensor into finger touch detects and power saving mode
@@ -43,7 +58,7 @@ __staticlib int elan_sensing_mode(void);
  * To initialize parameters of the ELAN matching algorithm
  *
  */
-__staticlib void algorithm_parameter_setting(void);
+__staticlib void elan_alg_param_setting(void);
 
 /**
  * Compares given finger image against enrolled templates.
@@ -69,6 +84,19 @@ __staticlib void algorithm_parameter_setting(void);
  */
 __staticlib int elan_match(void *templ, uint32_t templ_count, uint8_t *image,
 			   int32_t *match_index, uint32_t *update_bitmap);
+
+/**
+ * Update the enrolled template.
+ *
+ * @param[in]  templ            a pointer to the array of template buffers.
+ * @param[in]  match_index      index of the matched finger in the template
+ *                              array if any.
+ *
+ * @return negative value on error, else one of the following code :
+ * - EC_MKBP_FP_ERR_MATCH_YES_UPDATED if template was updated with new data
+ * - EC_MKBP_FP_ERR_MATCH_YES if template was not updated with new data
+ */
+__staticlib int elan_template_update(void *templ, int32_t match_index);
 
 /**
  * start a finger enrollment session and initialize enrollment data
@@ -144,15 +172,6 @@ __staticlib enum finger_state elan_sensor_finger_status(void);
 __staticlib int elan_enrollment_finish(void *templ);
 
 /**
- * Fill the 'ec_response_fp_alg_info' buffer with the sensor alg information
- *
- * @param[out] resp      retrieve the algorithm information
- *
- * @return EC_SUCCESS on success otherwise error.
- */
-__staticlib int elan_sensor_get_alg_info(struct ec_response_fp_info *resp);
-
-/**
  * Runs a test for defective pixels.
  *
  * Unused by staticlib.
@@ -171,4 +190,9 @@ int elan_fp_maintenance(uint16_t *error_state);
  * @return EC_SUCCESS on success otherwise error.
  */
 __staticlib int elan_fp_deinit(void);
+
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* __CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SENSOR_H_ */

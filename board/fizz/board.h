@@ -253,10 +253,11 @@ enum OEM_ID {
 
 /* Define typical operating power. Since Fizz doesn't have a battery to charge,
  * we're not interested in any power lower than the AP power-on threshold. */
-#define PD_OPERATING_POWER_MW CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
-#define PD_MAX_POWER_MW 100000
-#define PD_MAX_CURRENT_MA 5000
-#define PD_MAX_VOLTAGE_MV 20000
+#define CONFIG_USB_PD_OPERATING_POWER_MW \
+	CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
+#define CONFIG_USB_PD_MAX_POWER_MW 100000
+#define CONFIG_USB_PD_MAX_CURRENT_MA 5000
+#define CONFIG_USB_PD_MAX_VOLTAGE_MV 20000
 
 /* Board specific handlers */
 void board_reset_pd_mcu(void);

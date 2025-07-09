@@ -7,6 +7,7 @@ menuconfig PLATFORM_EC_CHARGER
 	default y
 	select HAS_TASK_CHARGER
 	select PLATFORM_EC_EXTPOWER
+	select PLATFORM_EC_CHARGE_MANAGER
 	depends on PLATFORM_EC_BATTERY
 	help
 	  Enable the EC charging task.
@@ -61,21 +62,12 @@ config PLATFORM_EC_CHARGER_RUNTIME_CONFIG
 	  in some hardware configurations or when ports in some configurations
 	  are setup differently.
 
-config PLATFORM_EC_CHARGE_MANAGER
-	bool "Charge manager"
-	default y
+config PLATFORM_EC_CHARGE_MANAGER_EXTERNAL_POWER_LIMIT
+	bool "Charge manager external power limit"
 	help
-	  The EC charge manager manages charging the battery from all supported
-	  power sources.  This includes dedicated charge ports (such as a
-	  barrel jack connector), BC1.2 (Battery Charging 1.2) sources, and
-	  USB-C sources. When multiple charge sources are connected to a
-	  Chromebook simultaneously, the charge manager is responsible for
-	  picking the best source. This also enables compilation of the
-	  charge_state_v2 code.
-
-	  Note that the charge manager assumes that at least one USB-C power
-	  source is available on the hardware, so cannot be built without
-	  PLATFORM_EC_USBC.
+	  Enables Application processor to send host command to control the
+	  input current and voltage limit. Enabling this config will allow the
+	  EC to accept host command EC_CMD_EXTERNAL_POWER_LIMIT.
 
 config PLATFORM_EC_CHARGE_STATE_DEBUG
 	bool "Debug information about the charge state"
@@ -107,6 +99,13 @@ config PLATFORM_EC_CHARGESPLASH
 	help
 	  Enable visual charging indicator to display on-screen when
 	  AC is initially connected.
+
+config PLATFORM_EC_CHARGER_ILIM_PIN_DISABLED
+	bool "Disable external ILIM pin"
+	help
+	  Board specific flag used to disable external ILIM pin used to
+	  determine input current limit. When defined, the input current
+	  limit is decided only by the software register value.
 
 config PLATFORM_EC_CHARGER_ISL9237
 	bool "Use the ISL9237 charger"
@@ -816,12 +815,6 @@ config PLATFORM_EC_CONSOLE_CMD_CHARGER_DUMP
 	  Enable the "charger dump" subcommand. If the charger driver provides
 	  a dump_registers() function, this command shows its register dump.
 
-# TODO(b/229236582): Move this to devicetree
-config PLATFORM_EC_DEDICATED_CHARGE_PORT
-	bool "Dedicated charging port"
-	help
-	  Enable if there is a dedicated charging port on the system.
-
 if PLATFORM_EC_CHARGER_RAA489000
 
 choice
@@ -932,3 +925,24 @@ endif
 rsource "drivers/sm5803/Kconfig.sm5803"
 
 endif # PLATFORM_EC_CHARGER
+
+config PLATFORM_EC_CHARGE_MANAGER
+	bool "Charge manager"
+	help
+	  The EC charge manager manages charging the battery from all supported
+	  power sources.  This includes dedicated charge ports (such as a
+	  barrel jack connector), BC1.2 (Battery Charging 1.2) sources, and
+	  USB-C sources. When multiple charge sources are connected to a
+	  Chromebook simultaneously, the charge manager is responsible for
+	  picking the best source. This also enables compilation of the
+	  charge_state_v2 code.
+
+	  Note that the charge manager assumes that at least one USB-C power
+	  source is available on the hardware, so cannot be built without
+	  PLATFORM_EC_USBC.
+
+# TODO(b/229236582): Move this to devicetree
+config PLATFORM_EC_DEDICATED_CHARGE_PORT
+	bool "Dedicated charging port"
+	help
+	  Enable if there is a dedicated charging port on the system.

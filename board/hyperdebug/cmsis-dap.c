@@ -129,6 +129,8 @@ const uint32_t GOOG_CAP_GpioMonitoring = BIT(2);
 const uint32_t GOOG_CAP_GpioBitbanging = BIT(3);
 /* This bit indicates support for a particular UART USB control request */
 const uint32_t GOOG_CAP_UartClearQueue = BIT(4);
+/* This bit indicates support for SPI and I2C polling for TPM ready. */
+const uint32_t GOOG_CAP_TpmPoll = BIT(5);
 
 /* Bitfield used in DAP_SWJ_Pins request */
 const uint8_t PIN_SwClk_Tck = 0x01;
@@ -583,7 +585,8 @@ static void dap_goog_info(size_t peek_c)
 {
 	const uint16_t CAPABILITIES =
 		GOOG_CAP_I2c | GOOG_CAP_I2cDevice | GOOG_CAP_GpioMonitoring |
-		GOOG_CAP_GpioBitbanging | GOOG_CAP_UartClearQueue;
+		GOOG_CAP_GpioBitbanging | GOOG_CAP_UartClearQueue |
+		GOOG_CAP_TpmPoll;
 
 	if (peek_c < 2)
 		return;
@@ -631,6 +634,8 @@ static void cmsis_dap_dispatch(void)
 		tx_buffer[0] = rx_buffer[0];
 		/* Invoke handler routine. */
 		dispatch_table[rx_buffer[0]](peek_c);
+		/* Trigger sending of response. */
+		queue_flush(&cmsis_dap_tx_queue);
 	} else {
 		/*
 		 * Unrecognized command.  The CMSIS-DAP protocol does not allow
@@ -670,6 +675,14 @@ bool cmsis_dap_unwind_requested(void)
  */
 void cmsis_dap_task(void *unused)
 {
+	/*
+	 * Signal that the consumer is allowed to buffer characters
+	 * indefinitely.  `queue_flush()` will be invoked by
+	 * `cmsis_dap_dispatch()` after processing each command, to ensure that
+	 * the complete response is sent via USB.
+	 */
+	queue_enable_buffered_mode(&cmsis_dap_tx_queue);
+
 	while (true) {
 		/*
 		 * If another task has requested unwinding, we can now report

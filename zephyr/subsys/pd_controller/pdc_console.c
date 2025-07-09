@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "drivers/ucsi_v3.h"
 #include "uart.h"
 #include "usb_common.h"
 
@@ -218,7 +219,7 @@ static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 
 	/* Check if the FW project name is set. */
 	bool has_proj_name = pdc_info.project_name[0] != '\0' &&
-			     pdc_info.project_name[0] != 0xFF;
+			     (uint8_t)pdc_info.project_name[0] != 0xFF;
 
 	shell_fprintf(sh, SHELL_INFO,
 		      "Live: %d\n"
@@ -228,16 +229,17 @@ static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 		      "VID/PID: %04x:%04x\n"
 		      "Running Flash Code: %c\n"
 		      "Flash Bank: %u\n"
-		      "Project Name: '%s'\n",
+		      "Project Name: '%s'\n"
+		      "Driver Name: '%s'\n"
+		      "FW Update: %c\n",
 		      live, PDC_FWVER_GET_MAJOR(pdc_info.fw_version),
 		      PDC_FWVER_GET_MINOR(pdc_info.fw_version),
 		      PDC_FWVER_GET_PATCH(pdc_info.fw_version),
-		      pdc_info.pd_revision, pdc_info.pd_version,
-		      PDC_VIDPID_GET_VID(pdc_info.vid_pid),
-		      PDC_VIDPID_GET_PID(pdc_info.vid_pid),
-		      pdc_info.is_running_flash_code ? 'Y' : 'N',
+		      pdc_info.pd_revision, pdc_info.pd_version, pdc_info.vid,
+		      pdc_info.pid, pdc_info.is_running_flash_code ? 'Y' : 'N',
 		      pdc_info.running_in_flash_bank,
-		      has_proj_name ? pdc_info.project_name : "<None>");
+		      has_proj_name ? pdc_info.project_name : "<None>",
+		      pdc_info.driver_name, pdc_info.no_fw_update ? 'N' : 'Y');
 
 	return EC_SUCCESS;
 }
@@ -267,6 +269,25 @@ static int cmd_lpm_ppm_info(const struct shell *sh, size_t argc, char **argv)
 		      "HW Ver: %08x\n",
 		      info.vid, info.pid, info.xid, info.fw_ver,
 		      info.fw_ver_sub, info.hw_ver);
+
+	return 0;
+}
+
+static int cmd_vconn_state(const struct shell *sh, size_t argc, char **argv)
+{
+	bool vconn_state;
+	uint8_t port;
+	int rv;
+
+	/* Get PD port number */
+	rv = cmd_get_pd_port(sh, argv[1], &port);
+	if (rv)
+		return rv;
+
+	vconn_state = pd_get_vconn_state(port);
+
+	shell_fprintf(sh, SHELL_INFO, "Vconn state: %d (%s)\n", vconn_state,
+		      vconn_state ? "sourcing" : "not sourcing");
 
 	return 0;
 }
@@ -368,6 +389,30 @@ static int cmd_pdc_dualrole(const struct shell *sh, size_t argc, char **argv)
 
 	shell_info(sh, "Dual role state: %s", state_str);
 
+	return EC_SUCCESS;
+}
+
+static int cmd_pdc_get_drp_mode(const struct shell *sh, size_t argc,
+				char **argv)
+{
+	int rv;
+	uint8_t port;
+	enum drp_mode_t drp_mode;
+
+	/* Get PD port number */
+	rv = cmd_get_pd_port(sh, argv[1], &port);
+	if (rv)
+		return rv;
+
+	rv = pdc_power_mgmt_get_drp_mode(port, &drp_mode);
+	if (rv) {
+		shell_error(sh, "Could not get DRP mode: %d (port %u)", rv,
+			    port);
+		return rv;
+	}
+
+	shell_info(sh, "DRP mode on port %d is %s", port,
+		   get_drp_mode_name(drp_mode));
 	return EC_SUCCESS;
 }
 
@@ -535,6 +580,11 @@ static int cmd_pdc_src_voltage(const struct shell *sh, size_t argc, char **argv)
 		shell_fprintf(sh, SHELL_INFO, "Using max voltage (%dmV)\n", mv);
 	}
 
+	if (mv < 5000) {
+		shell_fprintf(sh, SHELL_ERROR, "Must be >= 5000mV\n");
+		return EC_ERROR_PARAM2;
+	}
+
 	shell_fprintf(sh, SHELL_INFO, "Requesting to source %dmV\n", mv);
 	pd_request_source_voltage(port, mv);
 
@@ -545,6 +595,7 @@ static int cmd_pdc_srccaps(const struct shell *sh, size_t argc, char **argv)
 {
 	int rv;
 	uint8_t port;
+	uint32_t rdo = 0;
 
 	/* Get PD port number */
 	rv = cmd_get_pd_port(sh, argv[1], &port);
@@ -560,12 +611,23 @@ static int cmd_pdc_srccaps(const struct shell *sh, size_t argc, char **argv)
 		return 0;
 	}
 
+	if (pdc_power_mgmt_get_rdo(port, &rdo) != 0) {
+		shell_fprintf(sh, SHELL_INFO, "No active RDO on port %u\n",
+			      port);
+	} else {
+		shell_fprintf(sh, SHELL_INFO,
+			      "RDO: 0x%08x (index=%u, I_op=%umA, I_max=%umA)\n",
+			      rdo, RDO_POS(rdo), RDO_FIXED_GET_VAR_OP_CURR(rdo),
+			      RDO_FIXED_GET_VAR_MAX_CURR(rdo));
+	}
+
 	for (uint8_t i = 0; i < src_caps_count; i++) {
 		uint32_t src_cap = src_caps[i];
 		uint32_t max_ma = 0, max_mv = 0, min_mv = 0;
 		const char *type_str;
 
-		pd_extract_pdo_power(src_cap, &max_ma, &max_mv, &min_mv);
+		pd_extract_pdo_power_unclamped(src_cap, &max_ma, &max_mv,
+					       &min_mv);
 
 		switch (src_cap & PDO_TYPE_MASK) {
 		case PDO_TYPE_FIXED:
@@ -573,9 +635,10 @@ static int cmd_pdc_srccaps(const struct shell *sh, size_t argc, char **argv)
 			/* Fixed PDOs have flags and a single voltage */
 			shell_fprintf(
 				sh, SHELL_INFO,
-				"Src %02u: %08x %s %13umV, %5umA "
+				"%cSrc %u: %08x %s %13umV, %5umA "
 				"[%s %s %s %s %s]\n",
-				i, src_cap, type_str, max_mv, max_ma,
+				(RDO_POS(rdo) == i + 1 ? '*' : ' '), i, src_cap,
+				type_str, max_mv, max_ma,
 				src_cap & PDO_FIXED_DUAL_ROLE ? "DRP" : "   ",
 				src_cap & PDO_FIXED_UNCONSTRAINED ? "UP" : "  ",
 				src_cap & PDO_FIXED_COMM_CAP ? "USB" : "   ",
@@ -598,11 +661,9 @@ static int cmd_pdc_srccaps(const struct shell *sh, size_t argc, char **argv)
 		 * ranges but no flags.
 		 */
 		shell_fprintf(sh, SHELL_INFO,
-			      "Src %02u: %08x %s %5umV-%5umV, %5um%c\n", i,
-			      src_cap, type_str, min_mv, max_mv, max_ma,
-			      (((src_cap & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) ?
-				       'W' :
-				       'A'));
+			      "%cSrc %u: %08x %s %5umV-%5umV, %5umA\n",
+			      (RDO_POS(rdo) == i + 1 ? '*' : ' '), i, src_cap,
+			      type_str, min_mv, max_mv, max_ma);
 	}
 
 	return 0;
@@ -670,6 +731,10 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "Set trysrc mode\n"
 		      "Usage: pdc trysrc <port> [0|1]",
 		      cmd_pdc_trysrc, 3, 0),
+	SHELL_CMD_ARG(drp, NULL,
+		      "Get DRP mode\n"
+		      "Usage: pdc drp <port>",
+		      cmd_pdc_get_drp_mode, 2, 0),
 	SHELL_CMD_ARG(conn_reset, NULL,
 		      "Trigger hard or data reset\n"
 		      "Usage: pdc conn_reset  <port> [hard|data]",
@@ -700,6 +765,10 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "Get PDC chip info via GET_LPM_PPM_INFO UCSI cmd\n"
 		      "Usage: pdc lpm_ppm_info <port>",
 		      cmd_lpm_ppm_info, 2, 0),
+	SHELL_CMD_ARG(vconn, NULL,
+		      "Get Vconn state for a port\n"
+		      "Usage: pdc vconn <port>",
+		      cmd_vconn_state, 2, 0),
 #ifdef CONFIG_USBC_PDC_TPS6699X_FW_UPDATER
 	SHELL_CMD_ARG(fwupdate, NULL,
 		      "Updates TPS6699x firmware\n"

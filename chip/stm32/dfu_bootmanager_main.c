@@ -18,6 +18,7 @@
 #include "flash.h"
 #include "registers.h"
 #include "task.h"
+#include "watchdog.h"
 
 #ifdef CONFIG_DFU_BOOTMANAGER_MAX_REBOOT_COUNT
 #if CONFIG_DFU_BOOTMANAGER_MAX_REBOOT_COUNT <= 0 || \
@@ -94,6 +95,18 @@ static bool backup_boot_checks(void)
  */
 static void dfu_bootmanager_init(void)
 {
+#ifdef CONFIG_WATCHDOG
+	/*
+	 * Enable the watchdog.  This boot stage will complete and jump to
+	 * either RW or DFU bootloader so quickly, that there is not need to
+	 * reset the watchdog counter.  Enabling it before jumping allows
+	 * catching a bad RW, which may lock up in initialization before itself
+	 * reaching the step of configuring the watchdog.  After such lockup is
+	 * repeated CONFIG_DFU_BOOTMANAGER_MAX_REBOOT_COUNT times, this RO stage
+	 * will jump to DFU, allowing remote recovery.
+	 */
+	watchdog_init();
+#endif
 	/* enable clock on Power module */
 #ifndef CHIP_FAMILY_STM32H7
 #if defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)

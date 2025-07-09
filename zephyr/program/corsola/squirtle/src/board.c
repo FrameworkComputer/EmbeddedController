@@ -21,6 +21,7 @@
 LOG_MODULE_REGISTER(board_init, LOG_LEVEL_ERR);
 
 #define SB_AP23A7L 0x00
+#define CONFIG_BATTERY_ACTIVATION_TIMEOUT (10 * USEC_PER_SEC)
 
 bool squirtle_is_more_efficient(int curr_mv, int prev_mv, int batt_mv,
 				int batt_mw, int input_mw)
@@ -43,22 +44,14 @@ __override struct dps_config_t dps_config = {
 	.k_more_pwr = 96,
 	.k_sample = 1,
 	.k_window = 3,
-	.t_stable = 10 * SECOND,
-	.t_check = 5 * SECOND,
+	.t_stable = 10 * USEC_PER_SEC,
+	.t_check = 5 * USEC_PER_SEC,
 	.is_more_efficient = &squirtle_is_more_efficient,
 };
 
 enum battery_present battery_is_present(void)
 {
 	int state;
-	struct battery_static_info *bs = &battery_static[BATT_IDX_MAIN];
-
-	/*
-	 * When the battery information is not ready, it is determined that
-	 * the battery is not present.
-	 */
-	if (!strcasecmp(bs->model_ext, ""))
-		return BP_NO;
 
 	if (gpio_get_level(GPIO_BATT_PRES_ODL))
 		return BP_NO;
@@ -76,4 +69,35 @@ enum battery_present battery_is_present(void)
 		return BP_NO;
 
 	return BP_YES;
+}
+
+static const struct battery_info *batt_info;
+
+int charger_profile_override(struct charge_state_data *curr)
+{
+	batt_info = battery_get_info();
+
+	if (get_time().val < CONFIG_BATTERY_ACTIVATION_TIMEOUT &&
+	    !gpio_get_level(GPIO_BATT_PRES_ODL) &&
+	    curr->batt.voltage <= batt_info->voltage_min) {
+		int current = 256;
+
+		curr->requested_current = MAX(curr->requested_current, current);
+
+		return -1;
+	}
+
+	return 0;
+}
+
+enum ec_status charger_profile_override_get_param(uint32_t param,
+						  uint32_t *value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+enum ec_status charger_profile_override_set_param(uint32_t param,
+						  uint32_t value)
+{
+	return EC_RES_INVALID_PARAM;
 }

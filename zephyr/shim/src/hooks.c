@@ -3,12 +3,6 @@
  * found in the LICENSE file.
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 11
-
 #include "common.h"
 #include "console.h"
 #include "ec_tasks.h"
@@ -18,12 +12,6 @@
 #include "timer.h"
 
 #include <zephyr/kernel.h>
-
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 27
 
 #include <ap_power/ap_power.h>
 #include <ap_power/ap_power_events.h>

@@ -2,7 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-zephyr_library_sources("src/mtlrvp.c")
+zephyr_library_sources("src/board_id.c")
+zephyr_library_sources("src/common.c")
 zephyr_library_sources("src/board_power.c")
 zephyr_library_sources_ifdef(CONFIG_BOARD_MTLRVP_PD "src/pd.c")
 

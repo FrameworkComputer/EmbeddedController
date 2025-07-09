@@ -30,7 +30,7 @@
 /* a flag for indicating the tasks are inited. */
 test_export_static bool tasks_inited;
 
-#define SET_DUAL_ROLE_DEBOUNCE (2 * MSEC)
+#define SET_DUAL_ROLE_DEBOUNCE (2 * USEC_PER_MSEC)
 static int xhci_state;
 /* Baseboard */
 test_export_static void baseboard_init(void)
@@ -238,7 +238,7 @@ test_export_static void baseboard_x_ec_gpio2_init(void)
 	 * not be getting the fake type-c port count if the deferred call is
 	 * later than the kernel upstarts.
 	 */
-	hook_call_deferred(&tasks_init_deferred_data, 500 * MSEC);
+	hook_call_deferred(&tasks_init_deferred_data, 500 * USEC_PER_MSEC);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_x_ec_gpio2_init, HOOK_PRIO_DEFAULT);
 

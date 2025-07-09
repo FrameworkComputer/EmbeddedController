@@ -10,6 +10,7 @@
 def register_corsola_project(
     project_name,
     chip="it8xxx2/it81202bx",
+    inherited_from=None,
 ):
     """Register a variant of corsola."""
     register_func = register_binman_project
@@ -17,6 +18,8 @@ def register_corsola_project(
         register_func = register_npcx_project
 
     chip_kconfig = {"it8xxx2/it81202bx": "ite", "npcx9/npcx9m3f": "npcx"}[chip]
+    if inherited_from is None:
+        inherited_from = ["corsola"]
 
     register_func(
         project_name=project_name,
@@ -27,7 +30,7 @@ def register_corsola_project(
             here / f"{chip_kconfig}_program.conf",
             here / project_name / "project.conf",
         ],
-        inherited_from=["corsola"],
+        inherited_from=inherited_from,
     )
 
 
@@ -63,7 +66,10 @@ register_corsola_project(
     chip="npcx9/npcx9m3f",
 )
 
-register_corsola_project("starmie")
+register_corsola_project(
+    project_name="starmie",
+    inherited_from=["staryu"],
+)
 
 register_corsola_project("tentacruel")
 
@@ -81,7 +87,10 @@ register_corsola_project(
 
 register_corsola_project("chinchou")
 register_corsola_project("woobat")
-register_corsola_project("wugtrio")
+register_corsola_project(
+    project_name="wugtrio",
+    inherited_from=["staryu"],
+)
 register_corsola_project("skitty")
 register_corsola_project("veluza")
 
@@ -93,6 +102,11 @@ register_corsola_project(
 register_corsola_project(
     project_name="squirtle",
     chip="npcx9/npcx9m3f",
+)
+
+register_corsola_project(
+    project_name="wyrdeer",
+    inherited_from=["staryu"],
 )
 
 # Note for reviews, do not let anyone edit these assertions, the addresses
@@ -112,3 +126,4 @@ assert_rw_fwid_DO_NOT_EDIT(project_name="wugtrio", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="skitty", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="veluza", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="squirtle", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="wyrdeer", addr=0xBFFE0)

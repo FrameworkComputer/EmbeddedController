@@ -57,7 +57,7 @@ static int test_sensor_attr_set(const struct device *dev,
 
 sensor_trigger_handler_t callback;
 
-static const struct sensor_driver_api test_sensor_api = {
+static DEVICE_API(sensor, test_sensor_api) = {
 	.attr_set = test_sensor_attr_set,
 	.trigger_set = test_sensor_trigger_set,
 };

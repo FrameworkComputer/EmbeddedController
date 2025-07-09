@@ -1,0 +1,63 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * Aliases to common names
+ */
+gpio_ec_pch_wake_odl: &gpio_ec_soc_wake_ls_odl {};
+pwrbtn: &gpio_ec_mech_pwr_btn_l {};
+gpio_c_ioex_kbd_intr_r: &gpio_ioex_kbd_int_odl {};
+cse_early_rec_sw: &gpio_ec_soc_rec_switch_odl {};
+std_adp_prsnt: &gpio_adp_det {};
+gpio_pdc_pow_irq: &gpio_usb_pd_int_ls_odl {};
+bc_acok: &gpio_acok_od {};
+
+vol_up_ec: &gpio_ec_volup_btn_odl {};
+vol_dn_ec: &gpio_ec_voldn_btn_odl {};
+
+en_pp5000_s5: &gpio_en_pp5000_s5 {};
+ec_pch_pwrok_od: &gpio_soc_pwrok_r {};
+all_sys_pwrgd: &gpio_all_sys_pwrgd {};
+en_pp3300_a: &gpio_en_s5_rails {};
+pch_slp_s0_n: &gpio_sys_slp_s0ix_l {};
+ec_pch_rsmrst_l: &gpio_ec_soc_rsmrst_l_r {};
+rsmrst_pwrgd: &gpio_ec_rsmrst_odl {};
+
+/ {
+	/*
+	 * These pin definitions should have been auto-generated,
+	 * but the tooling did not catch them.
+	 */
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_usb_pd2_int_odl: usb_pd2_int_odl {
+			gpios = <&gpio0 2 GPIO_INPUT>;
+		};
+		gpio_usb_pd3_int_odl: usb_pd3_int_odl {
+			gpios = <&gpio3 4 (GPIO_INPUT)>;
+		};
+		gpio_charger_amon: charger_amon {
+			gpios = <&gpio3 7 GPIO_INPUT>;
+		};
+		gpio_adp_en_q: adp_en_q {
+			/* Keep low to prioritize AC brick power source selection */
+			gpios = <&gpio6 6 (GPIO_OUTPUT_LOW)>;
+		};
+		gpio_usb_pd4_int_odl: usb_pd4_int_odl {
+			gpios = <&gpio6 7 (GPIO_INPUT)>;
+		};
+		gpio_mecc_num_lock: mecc_num_lock {
+			gpios = <&gpioc 0 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_mecc_caps_lock: mecc_caps_lock {
+			gpios = <&gpioc 4 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		c-ec-kso-02-inv {
+			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
+		};
+	};
+};

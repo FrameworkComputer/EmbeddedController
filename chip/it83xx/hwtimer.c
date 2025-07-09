@@ -229,7 +229,7 @@ static void __hw_clock_source_irq(void)
 		return;
 	}
 }
-DECLARE_IRQ(CPU_INT_GROUP_3, __hw_clock_source_irq, 1);
+DECLARE_IRQ(CPU_INT_GROUP_3, __hw_clock_source_irq, 0);
 
 #ifdef IT83XX_EXT_OBSERVATION_REG_READ_TWO_TIMES
 /* Number of CPU cycles in 125 us */

@@ -3,7 +3,8 @@
 # found in the LICENSE file.
 
 common:
-  platform_allow: native_sim
+  platform_allow:
+    - native_sim
 tests:
   nissa.board_power:
     extra_dtc_overlay_files:
@@ -15,6 +16,7 @@ tests:
       - CONFIG_TEST_DISABLE_AP_PWRSEQ=y
       - CONFIG_AP_POWER_EVENTS_MOCK=y
       - CONFIG_POWER_SIGNALS_MOCK=y
+      - CONFIG_AP_EVENTS=n
   nissa.board_power.ap_pwrseq_drv:
     extra_configs:
       - CONFIG_TEST_NISSA_BOARD_POWER=y
@@ -97,6 +99,22 @@ tests:
       - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=y
       - CONFIG_PLATFORM_EC_USB_PD_HOST_CMD=y
       - CONFIG_NISSA_BOARD_HAS_HDMI_SUPPORT=y
+  nissa.pujjogatwin:
+    extra_dtc_overlay_files:
+      - "boards/pujjogatwin.dts"
+    extra_conf_files:
+      - "prj.conf"
+    extra_configs:
+      - CONFIG_TEST_NISSA_PUJJOGATWIN=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSM=y
+      - CONFIG_PLATFORM_EC_ACCEL_LIS2DW12=y
+      - CONFIG_PLATFORM_EC_LED_PWM=n
+      - CONFIG_PLATFORM_EC_LED_COMMON=y
+      - CONFIG_PLATFORM_EC_TABLET_MODE=y
+      - CONFIG_PLATFORM_EC_GMR_TABLET_MODE=y
+      - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=y
+      - CONFIG_PLATFORM_EC_USB_PD_HOST_CMD=y
+      - CONFIG_NISSA_BOARD_HAS_HDMI_SUPPORT=y
   nissa.sundance:
     extra_dtc_overlay_files:
       - "boards/sundance.dts"
@@ -123,6 +141,12 @@ tests:
       - CONFIG_PLATFORM_EC_GMR_TABLET_MODE=y
       - CONFIG_PLATFORM_EC_HOSTCMD=y
       - CONFIG_PLATFORM_EC_VBOOT_HASH=n
+  nissa.gothrax.sub_board:
+    extra_dtc_overlay_files:
+      - "boards/gothrax_sub_board.dts"
+    extra_configs:
+      - CONFIG_TEST_GOTHRAX_SUB_BOARD=y
+      - CONFIG_NISSA_BOARD_HAS_HDMI_SUPPORT=y
   nissa.pujjo:
     extra_dtc_overlay_files:
       - "boards/generic_npcx.dts"
@@ -202,6 +226,7 @@ tests:
       - CONFIG_TEST_NISSA_ANRAGGAR=y
       - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
       - CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION=y
+      - CONFIG_PLATFORM_EC_KEYBOARD_RUNTIME_KEYS=y
       - CONFIG_PLATFORM_EC_ACCEL_LIS2DW12=y
       - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSM=y
       - CONFIG_PLATFORM_EC_ACCEL_BMA4XX=y
@@ -223,6 +248,7 @@ tests:
       - CONFIG_PLATFORM_EC_CHARGER_RAA489000=n
       - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
       - CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION=y
+      - CONFIG_PLATFORM_EC_KEYBOARD_RUNTIME_KEYS=y
   nissa.uldren:
     extra_dtc_overlay_files:
       - "boards/uldren.dts"
@@ -275,6 +301,23 @@ tests:
       - CONFIG_PLATFORM_EC_VBOOT_HASH=n
       - CONFIG_PLATFORM_EC_LID_SWITCH=y
       - CONFIG_PLATFORM_EC_LED_COMMON=y
+  nissa.quandiso2:
+    extra_dtc_overlay_files:
+      - "boards/quandiso2.dts"
+    extra_configs:
+      - CONFIG_TEST_NISSA_QUANDISO2=y
+      - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
+      - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
+      - CONFIG_PLATFORM_EC_ACCELGYRO_BMI_COMM_I2C=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_BMI3XX=y
+      - CONFIG_PLATFORM_EC_ACCEL_KX022=y
+      - CONFIG_PLATFORM_EC_DYNAMIC_MOTION_SENSOR_COUNT=y
+      - CONFIG_PLATFORM_EC_TABLET_MODE=y
+      - CONFIG_PLATFORM_EC_GMR_TABLET_MODE=y
+      - CONFIG_PLATFORM_EC_HOSTCMD=y
+      - CONFIG_PLATFORM_EC_VBOOT_HASH=n
+      - CONFIG_PLATFORM_EC_LID_SWITCH=y
+      - CONFIG_PLATFORM_EC_LED_COMMON=y
   nissa.yavilla:
     extra_dtc_overlay_files:
       - "boards/yavilla.dts"
@@ -304,6 +347,15 @@ tests:
       - CONFIG_PLATFORM_EC_ACCEL_LIS2DW12=n
       - CONFIG_PLATFORM_EC_CHARGER=n
       - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
+      - CONFIG_PLATFORM_EC_LID_SWITCH=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_BMI_COMM_I2C=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_BMI3XX=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_ICM42607=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_ICM_COMM_I2C=y
+      - CONFIG_PLATFORM_EC_ACCEL_BMA4XX=y
+      - CONFIG_PLATFORM_EC_DYNAMIC_MOTION_SENSOR_COUNT=y
+      - CONFIG_PLATFORM_EC_TABLET_MODE=y
+      - CONFIG_PLATFORM_EC_GMR_TABLET_MODE=y
   nissa.riven:
     extra_dtc_overlay_files:
       - "boards/riven.dts"
@@ -347,14 +399,49 @@ tests:
       - CONFIG_TEST_NISSA_TELIKS=y
       - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
       - CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION=y
+      - CONFIG_PLATFORM_EC_KEYBOARD_RUNTIME_KEYS=y
       - CONFIG_PLATFORM_EC_ACCEL_LIS2DW12=y
       - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSM=y
       - CONFIG_PLATFORM_EC_ACCEL_BMA4XX=y
       - CONFIG_PLATFORM_EC_ACCELGYRO_BMI_COMM_I2C=y
       - CONFIG_PLATFORM_EC_ACCELGYRO_BMI3XX=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_ICM42607=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_ICM_COMM_I2C=y
       - CONFIG_PLATFORM_EC_DYNAMIC_MOTION_SENSOR_COUNT=y
       - CONFIG_PLATFORM_EC_TABLET_MODE=y
       - CONFIG_PLATFORM_EC_GMR_TABLET_MODE=y
       - CONFIG_PLATFORM_EC_BATTERY_HW_PRESENT_CUSTOM=y
       - CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION=y
       - CONFIG_PLATFORM_EC_KEYBOARD_DEBUG=y
+  nissa.dirks:
+    extra_configs:
+      - CONFIG_TEST_NISSA_DIRKS=y
+      - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
+      - CONFIG_PLATFORM_EC_USB_PORT_ENABLE_DYNAMIC=n
+      - CONFIG_PLATFORM_EC_LED_COMMON=y
+      - CONFIG_PLATFORM_EC_LED_PWM=n
+      - CONFIG_PLATFORM_EC_DEDICATED_CHARGE_PORT=y
+    extra_dtc_overlay_files:
+      - "boards/dirks.dts"
+  nissa.guren:
+    extra_dtc_overlay_files:
+      - "boards/generic_npcx.dts"
+      - "boards/battery.dts"
+      - "boards/guren.dts"
+    extra_conf_files:
+      - "prj.conf"
+    extra_configs:
+      - CONFIG_TEST_NISSA_GUREN=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSO=n
+      - CONFIG_PLATFORM_EC_ACCEL_LIS2DW12=n
+      - CONFIG_PLATFORM_EC_CHARGER=n
+      - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
+      - CONFIG_PLATFORM_EC_LID_SWITCH=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_BMI_COMM_I2C=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_BMI3XX=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_ICM42607=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_ICM_COMM_I2C=y
+      - CONFIG_PLATFORM_EC_ACCEL_BMA4XX=y
+      - CONFIG_PLATFORM_EC_DYNAMIC_MOTION_SENSOR_COUNT=y
+      - CONFIG_PLATFORM_EC_TABLET_MODE=y
+      - CONFIG_PLATFORM_EC_GMR_TABLET_MODE=y

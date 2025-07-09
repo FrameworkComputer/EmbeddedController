@@ -1,0 +1,149 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config COMMON_LIBC_MALLOC_ARENA_SIZE
+	default 1024 if USB_DEVICE_STACK_NEXT
+
+choice USBD_LOG_LEVEL_CHOICE
+	default USBD_LOG_LEVEL_WRN
+endchoice
+
+choice USBD_HID_LOG_LEVEL_CHOICE
+	default USBD_HID_LOG_LEVEL_WRN
+endchoice
+
+choice UDC_DRIVER_LOG_LEVEL_CHOICE
+	default UDC_DRIVER_LOG_LEVEL_WRN
+endchoice
+
+config USBD_HID_KEYBOARD
+	bool "Enable support USB HID keyboard"
+	depends on USB_DEVICE_STACK_NEXT
+	default n
+	help
+	  Enable keyboard support.
+
+config USBD_HID_KEYBOARD_QUEUE_SIZE
+	int "Keyboard report queue size"
+	depends on USBD_HID_KEYBOARD
+	default 32
+	help
+	  The report queue size for Keyboard device.
+
+config USBD_HID_VIVALDI
+	bool "Enable support vivaldi keyboard"
+	depends on USBD_HID_KEYBOARD
+	default n
+	help
+	  Enable code for Vivaldi keyboard (standard for new Chromium OS
+	  devices).
+
+config USBD_KEYBOARD_NUM_TOP_ROW_KEYS
+	int "Keyboard top raw key number"
+	depends on USBD_HID_VIVALDI
+	default 10
+	range 10 15
+	help
+	  The number of top raw keys.
+	  The number should be between 10 and 15.
+
+config USBD_KEYBOARD_ASSISTANT_KEY
+	bool "Enable support assistant key"
+	depends on USBD_HID_KEYBOARD
+	default n
+	help
+	  Enable assistant key for keyboard device.
+
+config USBD_KEYBOARD_TABLET_MODE_SWITCH
+	bool "Enable support tablet mode switch key"
+	depends on USBD_HID_KEYBOARD
+	default n
+	help
+	  Enable tablet mode switch for keyboard device.
+
+config USBD_HID_TOUCHPAD
+	bool "Enable support USB HID touchpad"
+	depends on USB_DEVICE_STACK_NEXT
+	default n
+	help
+	  Enable touchpad support.
+
+config USBD_HID_TOUCHPAD_QUEUE_SIZE
+	int "Touchpad report queue size"
+	depends on USBD_HID_TOUCHPAD
+	default 8
+	help
+	  The report queue size for Touchpad device.
+
+menu "USB device options"
+	depends on USB_DEVICE_STACK_NEXT
+
+config USB_DEVICE_MANUFACTURER
+	string "USB device manufacturer string"
+	default "Google LLC"
+	help
+	  USB device manufacturer string.
+
+config USB_DEVICE_PRODUCT
+	string "USB device product string"
+	default "HID KB and TP Sample"
+	help
+	  USB device product stringa.
+
+config USB_DEVICE_SN
+	string "USB device serial number string"
+	default "0123456789ABCDEF"
+	help
+	  Placeholder for USB device serial number string.
+
+config USB_DEVICE_VID
+	hex "USB device Vendor ID"
+	default 0x18D1
+	help
+	  USB device Vendor ID.
+
+config USB_DEVICE_PID
+	hex "USB device Product ID"
+	default 0x0000
+	help
+	  USB device Product ID.
+
+config USB_DEVICE_SELF_POWERED
+	bool "USB device HID Self-powered attribute"
+	default n
+	help
+	  Set the Self-powered attribute in the HID configuration.
+
+config USB_DEVICE_REMOTE_WAKEUP
+	bool "USB device HID Remote Wakeup attribute"
+	default y
+	help
+	  Set the Remote Wakeup attribute in the HID configuration.
+
+config USB_DEVICE_MAX_POWER
+	int "USB device HID bMaxPower value"
+	default 125
+	range 0 250
+	help
+	  bMaxPower value in the HID configuration in 2 mA units.
+
+if CROS_EC_RW
+
+config USBD_HID_SUPPORT
+	default y if USBD_HID_KEYBOARD || USBD_HID_TOUCHPAD
+	default n
+
+endif # CROS_EC_RW
+
+if CROS_EC_RO
+
+config USBD_HID_SUPPORT
+	default n
+
+endif # CROS_EC_RO
+
+endmenu
+
+rsource "Kconfig.gupdate"
+rsource "Kconfig.gi2c"

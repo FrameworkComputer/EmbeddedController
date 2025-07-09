@@ -6,7 +6,7 @@
 """Tests for Stack Analyzer classes and functions."""
 
 # TODO: Clean up the lint errors and remove these disables.
-# pylint:disable=invalid-name,missing-function-docstring,no-self-use,too-many-lines
+# pylint:disable=invalid-name,missing-function-docstring,too-many-lines
 
 import os
 import subprocess
@@ -318,7 +318,9 @@ class StackAnalyzerTest(unittest.TestCase):
 
         self.analyzer.annotation = {
             "add": {
-                "touchpad_calc": [dict(name="__array", stride=8, offset=4)],
+                "touchpad_calc": [
+                    {"name": "__array", "stride": 8, "offset": 4}
+                ],
             }
         }
         (
@@ -917,7 +919,7 @@ class StackAnalyzerTest(unittest.TestCase):
     @mock.patch("stack_analyzer.ParseArgs")
     def testMain(
         self, parseargs_mock, checkoutput_mock
-    ):  # pylint:disable=no-self-use,invalid-name
+    ):  # pylint:disable=invalid-name
         symbol_text = (
             "1000 g     F .text  0000015c .hidden hook_task\n"
             "2000 g     F .text  0000051c .hidden console_task\n"

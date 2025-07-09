@@ -5,12 +5,6 @@
 
 /* USB Power delivery module */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #ifndef __CROS_EC_USB_PD_H
 #define __CROS_EC_USB_PD_H
 
@@ -117,6 +111,10 @@ enum pdo_peak_overcurrent {
 	PDO_PEAK_OVERCURR_150,
 };
 
+/* Note - macros for extracting PDO voltage, current, and power fields are
+ * provided in ec_commands.h.
+ */
+
 #define PDO_FIXED_SUSPEND BIT(28) /* USB Suspend supported */
 /* Higher capability in vSafe5V sink PDO */
 #define PDO_FIXED_SNK_HIGHER_CAP BIT(28)
@@ -126,32 +124,32 @@ enum pdo_peak_overcurrent {
 #define PDO_FIXED_FRS_CURR_3A0_AT_5V (3 << 23)
 #define PDO_FIXED_EPR_MODE_CAPABLE BIT(23)
 #define PDO_FIXED_PEAK_CURR(peak) ((peak & 3) << 20) /* Peak current */
-#define PDO_FIXED_VOLT(mv) (((mv) / 50) << 10) /* Voltage in 50mV units */
-#define PDO_FIXED_CURR(ma) (((ma) / 10) << 0) /* Max current in 10mA units */
-#define PDO_FIXED_GET_VOLT(pdo) (((pdo >> 10) & 0x3FF) * 50)
-#define PDO_FIXED_GET_CURR(pdo) ((pdo & 0x3FF) * 10)
+#define PDO_FIXED_SET_VOLTAGE(mv) \
+	(((mv) / 50) << 10) /* Voltage in 50mV units */
+#define PDO_FIXED_SET_CURRENT(ma) \
+	(((ma) / 10) << 0) /* Max current in 10mA units */
 #define PDO_FIXED_GET_DRP BIT(29)
 #define PDO_FIXED_GET_UNCONSTRAINED_PWR BIT(27)
 #define PDO_FIXED_GET_USB_COMM_CAPABLE BIT(26)
 
 #define PDO_FIXED(mv, ma, flags) \
-	(PDO_FIXED_VOLT(mv) | PDO_FIXED_CURR(ma) | (flags))
+	(PDO_FIXED_SET_VOLTAGE(mv) | PDO_FIXED_SET_CURRENT(ma) | (flags))
 
-#define PDO_VAR_MAX_VOLT(mv) ((((mv) / 50) & 0x3FF) << 20)
-#define PDO_VAR_MIN_VOLT(mv) ((((mv) / 50) & 0x3FF) << 10)
-#define PDO_VAR_OP_CURR(ma) ((((ma) / 10) & 0x3FF) << 0)
+#define PDO_VAR_SET_MAX_VOLTAGE(mv) ((((mv) / 50) & 0x3FF) << 20)
+#define PDO_VAR_SET_MIN_VOLTAGE(mv) ((((mv) / 50) & 0x3FF) << 10)
+#define PDO_VAR_SET_OP_CURRENT(ma) ((((ma) / 10) & 0x3FF) << 0)
 
-#define PDO_VAR(min_mv, max_mv, op_ma)                         \
-	(PDO_VAR_MIN_VOLT(min_mv) | PDO_VAR_MAX_VOLT(max_mv) | \
-	 PDO_VAR_OP_CURR(op_ma) | PDO_TYPE_VARIABLE)
+#define PDO_VAR(min_mv, max_mv, op_ma)                                       \
+	(PDO_VAR_SET_MIN_VOLTAGE(min_mv) | PDO_VAR_SET_MAX_VOLTAGE(max_mv) | \
+	 PDO_VAR_SET_OP_CURRENT(op_ma) | PDO_TYPE_VARIABLE)
 
-#define PDO_BATT_MAX_VOLT(mv) ((((mv) / 50) & 0x3FF) << 20)
-#define PDO_BATT_MIN_VOLT(mv) ((((mv) / 50) & 0x3FF) << 10)
-#define PDO_BATT_OP_POWER(mw) ((((mw) / 250) & 0x3FF) << 0)
+#define PDO_BATT_SET_MAX_VOLTAGE(mv) ((((mv) / 50) & 0x3FF) << 20)
+#define PDO_BATT_SET_MIN_VOLTAGE(mv) ((((mv) / 50) & 0x3FF) << 10)
+#define PDO_BATT_SET_MAX_POWER(mw) ((((mw) / 250) & 0x3FF) << 0)
 
-#define PDO_BATT(min_mv, max_mv, op_mw)                          \
-	(PDO_BATT_MIN_VOLT(min_mv) | PDO_BATT_MAX_VOLT(max_mv) | \
-	 PDO_BATT_OP_POWER(op_mw) | PDO_TYPE_BATTERY)
+#define PDO_BATT(min_mv, max_mv, op_mw)                                        \
+	(PDO_BATT_SET_MIN_VOLTAGE(min_mv) | PDO_BATT_SET_MAX_VOLTAGE(max_mv) | \
+	 PDO_BATT_SET_MAX_POWER(op_mw) | PDO_TYPE_BATTERY)
 
 /* Programmable power supply values for augmented PDOs. */
 enum pdo_augmented_pps {
@@ -162,13 +160,13 @@ enum pdo_augmented_pps {
 #define PDO_AUG_PPS(pps) ((pps & 3) << 28)
 #define PDO_AUG_GET_PPS(pdo) ((pdo >> 28) & 0x3)
 
-#define PDO_AUG_MAX_VOLT(mv) ((((mv) / 100) & 0xFF) << 17)
-#define PDO_AUG_MIN_VOLT(mv) ((((mv) / 100) & 0xFF) << 8)
-#define PDO_AUG_MAX_CURR(ma) ((((ma) / 50) & 0x7F) << 0)
+#define PDO_AUG_SET_MAX_VOLTAGE(mv) ((((mv) / 100) & 0xFF) << 17)
+#define PDO_AUG_SET_MIN_VOLTAGE(mv) ((((mv) / 100) & 0xFF) << 8)
+#define PDO_AUG_SET_MAX_CURRENT(ma) ((((ma) / 50) & 0x7F) << 0)
 
-#define PDO_AUG(min_mv, max_mv, max_ma)                        \
-	(PDO_AUG_MIN_VOLT(min_mv) | PDO_AUG_MAX_VOLT(max_mv) | \
-	 PDO_AUG_MAX_CURR(max_ma) | PDO_TYPE_AUGMENTED)
+#define PDO_AUG(min_mv, max_mv, max_ma)                                      \
+	(PDO_AUG_SET_MIN_VOLTAGE(min_mv) | PDO_AUG_SET_MAX_VOLTAGE(max_mv) | \
+	 PDO_AUG_SET_MAX_CURRENT(max_ma) | PDO_TYPE_AUGMENTED)
 
 #define PDO_AUG_EPR_MAX_VOLT(mv) ((((mv) / 100) & 0x1FF) << 17)
 #define PDO_AUG_EPR_MIN_VOLT(mv) ((((mv) / 100) & 0xFF) << 8)
@@ -200,6 +198,9 @@ enum pdo_augmented_pps {
 #define RDO_BATT(n, op_mw, max_mw, flags)                      \
 	(RDO_OBJ_POS(n) | (flags) | RDO_BATT_OP_POWER(op_mw) | \
 	 RDO_BATT_MAX_POWER(max_mw))
+
+#define RDO_FIXED_GET_VAR_OP_CURR(rdo) ((((rdo) >> 10) & 0x3FF) * 10)
+#define RDO_FIXED_GET_VAR_MAX_CURR(rdo) ((((rdo) >> 0) & 0x3FF) * 10)
 
 /* BDO : BIST Data Object
  * 31:28 BIST Mode
@@ -249,23 +250,24 @@ enum pdo_augmented_pps {
 #define PD_T_SOURCE_ACTIVITY (45 * MSEC) /* between 40ms and 50ms */
 #define PD_T_ENTER_EPR (500 * MSEC) /* between 450ms and 550ms */
 /*
- * Adjusting for TCPMv2 PD2 Compliance. In tests like TD.PD.SRC.E5 this
+ * Adjusting for TCPMv2 PD2 Compliance. In tests like TEST.PD.PROT.SRC.2 this
  * value is the duration before the Hard Reset can be sent. Setting the
- * timer value to the maximum will delay sending the HardReset until
- * after the window has closed instead of when it is desired at the
- * beginning of the window.
+ * timer value to the minimum to ensure that the TCPM actually sends any Hard
+ * Reset between tSenderResponse min and max.
  * Leaving TCPMv1 as it was as there are no current requests to adjust
- * for compliance on the old stack and making this change  breaks the
+ * for compliance on the old stack and making this change breaks the
  * usb_pd unit test.
  */
-#ifndef CONFIG_USB_PD_TCPMV2
+#ifdef CONFIG_USB_PD_TCPMV1
 #define PD_T_SENDER_RESPONSE (30 * MSEC) /* between 24ms and 30ms */
 #else
+/* PD R2.0 V1.3: between 24ms and 30ms */
+#define PD2_T_SENDER_RESPONSE (24 * MSEC)
 /*
- * In USB Power Delivery Specification Revision 3.1, Version 1.5,
- * the tSenderResponse have changed to min 26/ max 32 ms.
+ * PD R3.1 V1.5: between 26ms and 32ms
+ * PD R3.2 V1.0: between 27ms and 33ms
  */
-#define PD_T_SENDER_RESPONSE (26 * MSEC) /* between 26ms and 32ms */
+#define PD3_T_SENDER_RESPONSE (27 * MSEC)
 #endif
 #define PD_T_PS_TRANSITION (500 * MSEC) /* between 450ms and 550ms */
 /*
@@ -292,7 +294,11 @@ enum pdo_augmented_pps {
 #define PD_T_BIST_CONT_MODE (55 * MSEC) /* 30ms to 60ms */
 #define PD_T_VCONN_SOURCE_ON (100 * MSEC) /* 100ms */
 #define PD_T_DRP_TRY (125 * MSEC) /* between 75ms and 150ms */
-#define PD_T_TRY_TIMEOUT (550 * MSEC) /* between 550ms and 1100ms */
+/* TODO(b/390238808): Setting this to 550 ms can result in the observed time in
+ * Try.SRC being as low as 549 ms. As a workaround, increase it slightly.
+ * Ideally, timers should be at least millisecond-accurate.
+ */
+#define PD_T_TRY_TIMEOUT (560 * MSEC) /* between 550ms and 1100ms */
 #define PD_T_TRY_WAIT (600 * MSEC) /* Wait time for TryWait.SNK */
 #define PD_T_SINK_REQUEST (100 * MSEC) /* 100ms before next request */
 #define PD_T_PD_DEBOUNCE (15 * MSEC) /* between 10ms and 20ms */
@@ -351,8 +357,11 @@ enum pdo_augmented_pps {
 /* Maximum SPR voltage in mV offered by PD 3.0 Version 2.0 Spec */
 #define PD_REV3_MAX_VOLTAGE 20000
 
-/* Maximum SPR voltage in mV */
+/* Maximum fixed SPR voltage in mV */
 #define PD_MAX_SPR_VOLTAGE 20000
+
+/* Maximum variable SPR voltage in mV */
+#define PD_MAX_VARIABLE_VOLTAGE 21000
 
 /* Maximum EPR voltage in mV */
 #define PD_MAX_EPR_VOLTAGE 48000
@@ -502,9 +511,9 @@ enum pd_alternate_modes {
 #endif
 
 enum usb_pd_svdm_ver {
-	SVDM_VER_1_0,
-	SVDM_VER_2_0,
-	SVDM_VER_2_1,
+	SVDM_VER_1_0 = 0b0000,
+	SVDM_VER_2_0 = 0b0100,
+	SVDM_VER_2_1 = 0b0101,
 };
 
 /* Discovery results for a port partner (SOP) or cable plug (SOP') */
@@ -559,13 +568,12 @@ struct partner_active_modes {
 	(((vid) << 16) | ((type) << 15) | ((custom) & 0x7FFF))
 
 #define VDO_SVDM_TYPE BIT(15)
-#define VDO_SVDM_VERS_MAJOR(x) (x << 13)
-#define VDO_SVDM_VERS_MINOR(x) (x << 11)
+#define VDO_SVDM_VERS_MASK (0xF << 11)
+#define VDO_SVDM_VERS(x) (((x) << 11) & VDO_SVDM_VERS_MASK)
 #define VDO_OPOS(x) (x << 8)
 #define VDO_CMDT(x) (x << 6)
 #define VDO_OPOS_MASK VDO_OPOS(0x7)
 #define VDO_CMDT_MASK VDO_CMDT(0x3)
-#define VDO_SVDM_VERS_MASK (VDO_SVDM_VERS_MAJOR(0x3) | VDO_SVDM_VERS_MINOR(0x3))
 
 #define CMDT_INIT 0
 #define CMDT_RSP_ACK 1
@@ -606,8 +614,7 @@ struct partner_active_modes {
 #define PD_VDO_OPOS(vdo) (((vdo) >> 8) & 0x7)
 #define PD_VDO_CMD(vdo) ((vdo) & 0x1f)
 #define PD_VDO_CMDT(vdo) (((vdo) >> 6) & 0x3)
-#define PD_VDO_SVDM_VERS_MAJOR(vdo) (((vdo) >> 13) & 0x3)
-#define PD_VDO_SVDM_VERS_MINOR(vdo) (((vdo) >> 11) & 0x3)
+#define PD_VDO_SVDM_VERS(vdo) (((vdo) >> 11) & 0xF)
 
 /*
  * SVDM Identity request -> response
@@ -715,6 +722,28 @@ struct pd_ecdb {
 	uint8_t data;
 } __packed;
 
+/* Values for Source_Info Data Object, Port Type field */
+enum pd_source_port_type {
+	PD_SOURCE_PORT_CAPABILITY_MANAGED = 0,
+	PD_SOURCE_PORT_CAPABILITY_GUARANTEED,
+};
+
+/* PD Source_Info Data Object (SIDO) */
+union sido {
+	struct {
+		/* PDP values are the integer portion (floor) of the relevant
+		 * PDP rating in W.
+		 */
+		uint8_t port_reported_pdp;
+		uint8_t port_present_pdp;
+		uint8_t port_maximum_pdp;
+		unsigned reserved : 7;
+		/* 0 = Managed Capability, 1 = Guaranteed Capability */
+		unsigned port_type : 1;
+	};
+	uint32_t raw;
+};
+
 /* PD Rev 3.1 Revision Message Data Object (RMDO) */
 struct rmdo {
 	uint32_t reserved : 16;
@@ -726,6 +755,38 @@ struct rmdo {
 
 /* Confirm RMDO is 32 bits. */
 BUILD_ASSERT(sizeof(struct rmdo) == 4);
+
+/* Sink Capabilities Extended Data Block (SKEDB) */
+struct skedb {
+	uint16_t vid;
+	uint16_t pid;
+	uint32_t xid;
+	uint8_t fw_version;
+	uint8_t hw_version;
+	uint8_t skedb_version;
+	uint8_t load_step;
+	uint16_t sink_load_characteristics;
+	uint8_t compliance;
+	uint8_t touch_temp;
+	uint8_t battery_info;
+	uint8_t sink_modes;
+	uint8_t sink_minimum_pdp;
+	uint8_t sink_operational_pdp;
+	uint8_t sink_maximum_pdp;
+	uint8_t epr_sink_minimum_pdp;
+	uint8_t epr_sink_operational_pdp;
+	uint8_t epr_sink_maximum_pdp;
+} __packed;
+
+/* skedb.sink_modes bit field */
+#define SKEDB_SINK_PPS_CHARGING_SUPPORTED BIT(0)
+#define SKEDB_SINK_VBUS_POWERED BIT(1)
+#define SKEDB_SINK_MAINS_POWERED BIT(2)
+#define SKEDB_SINK_BATTERY_POWERED BIT(3)
+#define SKEDB_SINK_BATTERY_ESSENTIALLY_UNLIMITED BIT(4)
+#define SKEDB_SINK_AVS_SUPPORTED BIT(5)
+
+BUILD_ASSERT(sizeof(struct skedb) == 24);
 
 /*
  * Message id starts from 0 to 7. If last_msg_id is initialized to 0,
@@ -1615,6 +1676,7 @@ int pd_get_rev(int port, enum tcpci_msg_type type);
  * @param type USB-C port partner
  * @return SVDM_VER_1_0 for VDM Version 1.0
  *         SVDM_VER_2_0 for VDM Version 2.0
+ *         SVDM_VER_2_1 for VDM Version 2.1
  */
 int pd_get_vdo_ver(int port, enum tcpci_msg_type type);
 
@@ -2222,6 +2284,18 @@ uint16_t pd_get_identity_pid(int port);
  * @return      USB-C product type (hub,periph,cable,ama)
  */
 uint8_t pd_get_product_type(int port);
+
+/**
+ * Set the SVDM version for this type and port
+ * This will set the version to the minimum of the version passed in and the
+ * highest version supported.
+ *
+ * @param port  USB-C port number
+ * @param type  SOP* type to set
+ * @param ver   Structured VDM Version to set
+ */
+void pd_set_svdm_ver(int port, enum tcpci_msg_type type,
+		     enum usb_pd_svdm_ver ver);
 
 /**
  * Return the SVID count of port partner connected to a specified port

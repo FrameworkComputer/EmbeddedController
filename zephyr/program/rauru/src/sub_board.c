@@ -8,6 +8,7 @@
 #include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "rauru_sub_board.h"
+#include "usbc/usb_muxes.h"
 
 #include <zephyr/init.h>
 #include <zephyr/logging/log.h>
@@ -45,6 +46,9 @@ enum rauru_sub_board_type rauru_get_sb_type(void)
 		break;
 	case FW_SB_REDRIVER:
 		rauru_cached_sub_board = RAURU_SB_REDRIVER;
+#if DT_NODE_EXISTS(DT_NODELABEL(usb_mux_chain_tusb1046_port1))
+		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_chain_tusb1046_port1);
+#endif
 		LOG_INF("SB: USB Redriver");
 		break;
 

@@ -9,9 +9,6 @@
 #define SET_BIT(reg, bit) ((reg) |= (0x1 << (bit)))
 #define CLEAR_BIT(reg, bit) ((reg) &= (~(0x1 << (bit))))
 
-#undef IS_BIT_SET
-#define IS_BIT_SET(reg, bit) (((reg) >> (bit)) & (0x1))
-
 /******************************************************************************/
 /* Optional M4 Registers */
 #define CPU_MPU_CTRL REG32(0xE000ED94)

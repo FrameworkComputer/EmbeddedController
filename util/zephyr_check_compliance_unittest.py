@@ -6,7 +6,7 @@
 """Unit tests for check_zephyr_project_config.py"""
 
 # [VPYTHON:BEGIN]
-# python_version: "3.8"
+# python_version: "3.11"
 # wheel: <
 #   name: "infra/python/wheels/mock-py3"
 #   version: "version:4.0.3"
@@ -37,7 +37,7 @@
 # >
 # wheel: <
 #   name: "infra/python/wheels/lxml/${vpython_platform}"
-#   version: "version:4.6.3"
+#   version: "version:4.9.3"
 # >
 # wheel: <
 #   name: "infra/python/wheels/west-py3"
@@ -73,7 +73,11 @@
 # >
 # wheel: <
 #   name: "infra/python/wheels/ruamel_yaml_clib/${vpython_platform}"
-#   version: "version:0.2.6"
+#   version: "version:0.2.8"
+# >
+# wheel: <
+#   name: "infra/python/wheels/unidiff-py2_py3"
+#   version: "version:0.7.5"
 # >
 # [VPYTHON:END]
 
@@ -88,7 +92,7 @@ except ImportError:
 import zephyr_check_compliance
 
 
-# pylint:disable=protected-access,no-self-use
+# pylint:disable=protected-access
 
 
 class TestZephyrCheckCompliance(unittest.TestCase):

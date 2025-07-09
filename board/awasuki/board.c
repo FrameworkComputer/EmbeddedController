@@ -82,12 +82,67 @@ static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 	pd_handle_cc_overvoltage(0);
 }
 
-/* for G2176RB1U issue */
-static void backlight_interrupt(enum gpio_signal s)
+/* for G2176RB1U issue WA */
+static void bl_pg_handle(void)
 {
-	gpio_set_level(GPIO_EC_PPVAR_BLPWR, 0);
-	crec_usleep(10 * MSEC);
 	gpio_set_level(GPIO_EC_PPVAR_BLPWR, 1);
+	crec_msleep(50);
+	if (gpio_get_level(GPIO_VBL_PG_OD)) {
+		gpio_enable_interrupt(GPIO_VBL_PG_OD);
+	}
+}
+DECLARE_DEFERRED(bl_pg_handle);
+
+static void bl_pg_interrupt(enum gpio_signal s)
+{
+	/* G2176RB1U recovery action */
+	if (!gpio_get_level(GPIO_VBL_PG_OD)) {
+		gpio_disable_interrupt(GPIO_VBL_PG_OD);
+		gpio_set_level(GPIO_EC_PPVAR_BLPWR, 0);
+		hook_call_deferred(&bl_pg_handle_data, 10 * MSEC);
+	}
+}
+
+static void bl_pg_startup(void)
+{
+	gpio_set_level(GPIO_EC_PPVAR_BLPWR, 1);
+	gpio_enable_interrupt(GPIO_VBL_PG_OD);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, bl_pg_startup, HOOK_PRIO_DEFAULT);
+
+static void bl_pg_shutdown(void)
+{
+	gpio_disable_interrupt(GPIO_VBL_PG_OD);
+	gpio_set_level(GPIO_EC_PPVAR_BLPWR, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_HARD_OFF, bl_pg_shutdown, HOOK_PRIO_DEFAULT);
+
+static void check_audio_jack(void);
+DECLARE_DEFERRED(check_audio_jack);
+
+static void check_audio_jack(void)
+{
+	enum power_state powerstate;
+
+	powerstate = power_get_state();
+
+	if (powerstate == POWER_S0 || powerstate == POWER_S3S0) {
+		if (gpio_get_level(GPIO_JACK_DETECT))
+			gpio_set_level(GPIO_LOADING_ENABLE, 0);
+		else
+			gpio_set_level(GPIO_LOADING_ENABLE, 1);
+	} else {
+		gpio_set_level(GPIO_LOADING_ENABLE, 0);
+	}
+}
+
+DECLARE_HOOK(HOOK_INIT, check_audio_jack, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, check_audio_jack, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, check_audio_jack, HOOK_PRIO_DEFAULT);
+
+static void audio_jack_interrupt(enum gpio_signal s)
+{
+	hook_call_deferred(&check_audio_jack_data, INT_RECHECK_US);
 }
 
 /* Must come after other header files and interrupt handler declarations */
@@ -261,29 +316,6 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 	raa489000_set_output_current(port, rp);
 }
 
-void board_init(void)
-{
-	int on;
-
-	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
-
-	/*
-	 * If interrupt lines are already low, schedule them to be processed
-	 * after inits are completed.
-	 */
-	if (!gpio_get_level(GPIO_USB_C0_INT_ODL))
-		hook_call_deferred(&check_c0_line_data, 0);
-
-	gpio_enable_interrupt(GPIO_USB_C0_CCSBU_OVP_ODL);
-	gpio_enable_interrupt(GPIO_VBL_PD_OD);
-
-	/* Turn on 5V if the system is on, otherwise turn it off */
-	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
-			      CHIPSET_STATE_SOFT_OFF);
-	board_power_5v_enable(on);
-}
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_1] = { .name = "Ambient",
@@ -304,3 +336,182 @@ const struct temp_sensor_t temp_sensors[] = {
 			    .idx = ADC_TEMP_SENSOR_4 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+const static struct ec_thermal_config thermal_ambient = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(83),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(87),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+};
+
+const static struct ec_thermal_config thermal_charger = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(84),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(87),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(81),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+};
+
+const static struct ec_thermal_config thermal_aux = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(88),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(82),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+};
+
+const static struct ec_thermal_config thermal_usb = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(82),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(79),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+};
+struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
+
+static void setup_thermal(void)
+{
+	thermal_params[TEMP_SENSOR_1] = thermal_ambient;
+	thermal_params[TEMP_SENSOR_2] = thermal_charger;
+	thermal_params[TEMP_SENSOR_3] = thermal_aux;
+	thermal_params[TEMP_SENSOR_4] = thermal_usb;
+}
+
+void board_init(void)
+{
+	int on;
+
+	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
+
+	/*
+	 * If interrupt lines are already low, schedule them to be processed
+	 * after inits are completed.
+	 */
+	if (!gpio_get_level(GPIO_USB_C0_INT_ODL))
+		hook_call_deferred(&check_c0_line_data, 0);
+
+	gpio_enable_interrupt(GPIO_USB_C0_CCSBU_OVP_ODL);
+	gpio_enable_interrupt(GPIO_JACK_DETECT);
+
+	/* Turn on 5V if the system is on, otherwise turn it off */
+	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
+			      CHIPSET_STATE_SOFT_OFF);
+	board_power_5v_enable(on);
+
+	/* Initialize THERMAL */
+	setup_thermal();
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+static int svdm_identity(int port, uint32_t *payload)
+{
+	/* The SVID in the Discover Identity Command request Shall be set to the
+	 * PD SID */
+	if (PD_VDO_VID(payload[VDO_INDEX_HDR]) != USB_SID_PD) {
+		return 0;
+	}
+
+	payload[VDO_I(CSTAT)] = VDO_CSTAT(CONFIG_USB_PD_XID);
+	payload[VDO_I(PRODUCT)] =
+		VDO_PRODUCT(CONFIG_USB_PID, CONFIG_USB_BCD_DEV);
+
+	if (pd_get_rev(port, TCPCI_MSG_SOP) < PD_REV30) {
+		payload[VDO_I(IDH)] = VDO_IDH(1, /* USB host */
+					      0, /* Not a USB device */
+					      IDH_PTYPE_UNDEF, /* Not a UFP */
+					      0, /* No alt modes (not a UFP) */
+					      CONFIG_USB_VID);
+
+		return VDO_I(PRODUCT) + 1;
+	} else {
+		payload[VDO_I(IDH)] =
+			VDO_IDH_REV30(1, /* USB host */
+				      0, /* Not a USB device */
+				      IDH_PTYPE_UNDEF, /* Not a UFP */
+				      0, /* No alt modes (not a UFP) */
+				      IDH_PTYPE_DFP_HOST, /* PDUSB host */
+				      USB_TYPEC_RECEPTACLE, CONFIG_USB_VID);
+
+		/* Single VDO for DFP product type */
+		payload[VDO_I(PRODUCT) + 1] =
+			VDO_DFP(VDO_DFP_HOST_CAPABILITY_USB32,
+				USB_TYPEC_RECEPTACLE, port);
+
+		return VDO_I(PRODUCT) + 2;
+	}
+}
+
+/* 6.4.4.3.2 A Responder that does not support any SVIDs Shall return a NAK.*/
+static int svdm_svids(int port, uint32_t *payload)
+{
+	return 0;
+}
+
+__override const struct svdm_response svdm_rsp = {
+	.identity = svdm_identity,
+	.svids = svdm_svids,
+	/*
+	 * Discover Identity support is required for devices with more than one
+	 * DFP, but other SVDM commands are optional. We don't support operating
+	 * as Responder in any mode, so leave them unimplemented. See 6.13.5,
+	 * Applicability of Structured VDM Commands.
+	 */
+};
+
+static void awasuki_charge_mode_setting(void)
+{
+	int reg = 0;
+
+	if (extpower_is_present()) {
+		if (get_chg_ctrl_mode() == CHARGE_CONTROL_IDLE) {
+			if (i2c_read16(I2C_PORT_USB_C0, I2C_ADDR_CHARGER_FLAGS,
+				       ISL923X_REG_CONTROL0,
+				       &reg) == EC_SUCCESS) {
+				if (!(reg & RAA489000_C0_VSYS_OFFSET)) {
+					reg |= RAA489000_C0_VSYS_OFFSET;
+					if (i2c_write16(I2C_PORT_USB_C0,
+							I2C_ADDR_CHARGER_FLAGS,
+							ISL923X_REG_CONTROL0,
+							reg))
+						CPRINTF("C0 ISL9238_REG_CONTROL0 write fail!");
+				}
+			}
+		} else {
+			if (i2c_read16(I2C_PORT_USB_C0, I2C_ADDR_CHARGER_FLAGS,
+				       ISL923X_REG_CONTROL0,
+				       &reg) == EC_SUCCESS) {
+				if (reg & RAA489000_C0_VSYS_OFFSET) {
+					reg &= ~RAA489000_C0_VSYS_OFFSET;
+					if (i2c_write16(I2C_PORT_USB_C0,
+							I2C_ADDR_CHARGER_FLAGS,
+							ISL923X_REG_CONTROL0,
+							reg))
+						CPRINTF("C0 ISL9238_REG_CONTROL0 write fail!");
+				}
+			}
+		}
+	}
+}
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, awasuki_charge_mode_setting,
+	     HOOK_PRIO_DEFAULT);

@@ -1,0 +1,67 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig FINGERPRINT_SENSOR_FPC1025
+	bool "Fingerprint driver for FPC1025"
+	default y
+	depends on DT_HAS_FPC_FPC1025_ENABLED
+	help
+	  Driver for FPC1025 fingerprint sensor. It requires FPC private library
+	  to implement cros_fingerprint API. If the library is not available it
+	  only supports checking sensor hardware ID and entering low power mode.
+
+if FINGERPRINT_SENSOR_FPC1025
+
+config FINGERPRINT_SENSOR_FPC1025_HEAP_SIZE
+	int "Size of heap for FPC1025 driver"
+	default 65536
+	help
+	  Size of heap to be used by FPC private library. The heap must have
+	  enough size to keep finger templates during matching.
+	  64KB is enough to match 5 templates at once.
+
+config FINGERPRINT_SENSOR_FPC1025_PAL
+	bool "Platform Abstraction Layer for FPC private library"
+	default y if HAVE_FPC1025_PRIVATE_DRIVER
+	help
+	  If enabled, Platform Abstraction Layer for FPC private library will be
+	  compiled. The PAL is used to interact with the sensor (SPI, GPIO) and
+	  the system (heap allocations, printing messages, time functions).
+
+# Enabled in private driver Kconfig
+config HAVE_FPC1025_PRIVATE_DRIVER
+	bool
+	default n
+	help
+	  If enabled, it indicates that the private driver is present.
+
+endif # FINGERPRINT_SENSOR_FPC1025
+
+menuconfig FINGERPRINT_SENSOR_FPC1145
+	bool "Fingerprint driver for FPC1145"
+	default y
+	depends on DT_HAS_FPC_FPC1145_ENABLED
+	help
+	  Driver for FPC1145 fingerprint sensor. It requires FPC private library
+	  to implement cros_fingerprint API. If the library is not available it
+	  only supports checking sensor hardware ID.
+
+if FINGERPRINT_SENSOR_FPC1145
+
+config FINGERPRINT_SENSOR_FPC1145_PAL
+	bool "Platform Abstraction Layer for FPC private library"
+	default y if HAVE_FPC1145_PRIVATE_DRIVER
+	help
+	  If enabled, Platform Abstraction Layer for FPC private library will be
+	  compiled. The PAL is used to interact with the sensor (SPI, GPIO) and
+	  the system (heap allocations, printing messages, time functions).
+
+# Enabled in private driver Kconfig
+config HAVE_FPC1145_PRIVATE_DRIVER
+	bool
+	default n
+	help
+	  If enabled, it indicates that the private driver is present.
+
+endif # FINGERPRINT_SENSOR_FPC1145

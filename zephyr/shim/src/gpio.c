@@ -3,12 +3,6 @@
  * found in the LICENSE file.
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 11
-
 #ifdef __REQUIRE_ZEPHYR_GPIOS__
 #undef __REQUIRE_ZEPHYR_GPIOS__
 #endif
@@ -127,12 +121,12 @@ int gpio_get_ternary(enum gpio_signal signal)
 	/* Read GPIO with internal pull-down */
 	gpio_set_flags(signal, GPIO_INPUT | GPIO_PULL_DOWN);
 	pd = gpio_get_level(signal);
-	udelay(100);
+	k_busy_wait(100);
 
 	/* Read GPIO with internal pull-up */
 	gpio_set_flags(signal, GPIO_INPUT | GPIO_PULL_UP);
 	pu = gpio_get_level(signal);
-	udelay(100);
+	k_busy_wait(100);
 
 	/* Reset GPIO flags */
 	gpio_set_flags(signal, flags);

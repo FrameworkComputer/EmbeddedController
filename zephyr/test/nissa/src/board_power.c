@@ -21,12 +21,6 @@ extern bool s0_stable;
 int board_power_signal_get(enum power_signal);
 int board_power_signal_set(enum power_signal, int);
 
-DEFINE_FAKE_VALUE_FUNC(int, power_signal_get, enum power_signal);
-DEFINE_FAKE_VALUE_FUNC(int, power_signal_set, enum power_signal, int);
-DEFINE_FAKE_VALUE_FUNC(int, power_wait_mask_signals_timeout,
-		       power_signal_mask_t, power_signal_mask_t, int);
-FAKE_VALUE_FUNC(int, power_signal_enable, enum power_signal);
-FAKE_VALUE_FUNC(int, power_signal_disable, enum power_signal);
 FAKE_VOID_FUNC(ap_pwrseq_wake);
 
 LOG_MODULE_REGISTER(ap_pwrseq, LOG_LEVEL_INF);

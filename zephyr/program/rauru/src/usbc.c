@@ -7,6 +7,7 @@
 #include "charge_manager.h"
 #include "chipset.h"
 #include "console.h"
+#include "hooks.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
 #include "zephyr_adc.h"
@@ -24,8 +25,6 @@ int board_set_active_charge_port(int port)
 	}
 
 	if (port == CHARGE_PORT_NONE) {
-		CPRINTS("Disabling all charger ports");
-
 		/* Disable all ports. */
 		for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 			/*
@@ -76,6 +75,13 @@ int board_vbus_source_enabled(int port)
 	return ppc_is_sourcing_vbus(port);
 }
 
+static void notify_power_change(void)
+{
+	/* Notify host of power info change. */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+}
+DECLARE_DEFERRED(notify_power_change);
+
 int pd_set_power_supply_ready(int port)
 {
 	int rv;
@@ -94,8 +100,7 @@ int pd_set_power_supply_ready(int port)
 		return rv;
 	}
 
-	/* Notify host of power info change. */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+	hook_call_deferred(&notify_power_change_data, 0);
 
 	return EC_SUCCESS;
 }
@@ -114,8 +119,8 @@ void pd_power_supply_reset(int port)
 		pd_set_vbus_discharge(port, 1);
 	}
 
-	/* Notify host of power info change. */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+	/* defer pd_send_host_event to save ~2ms for PD compliance */
+	hook_call_deferred(&notify_power_change_data, 0);
 }
 
 void board_reset_pd_mcu(void)
@@ -152,7 +157,6 @@ enum adc_channel board_get_vbus_adc(int port)
 	CPRINTS("Unknown vbus adc port id: %d", port);
 	return ADC_VBUS_C0;
 }
-#endif /* CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT */
 
 __override int pd_snk_is_vbus_provided(int port)
 {
@@ -163,3 +167,4 @@ __override int pd_snk_is_vbus_provided(int port)
 	return adc_read_channel(board_get_vbus_adc(port)) >=
 	       PD_V_SINK_DISCONNECT_MAX;
 }
+#endif /* CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT */

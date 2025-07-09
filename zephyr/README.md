@@ -88,7 +88,7 @@ rm -rf /tmp/artifact_bundles /tmp/artifact_bundle_metadata \
 ( cd ~/chromiumos/src/platform/ec/zephyr ; \
 ./firmware_builder.py --metrics /tmp/metrics-build build && \
 ./firmware_builder.py --metrics /tmp/metrics-test test && \
-./firmware_builder.py --metrics /tmp/metrics-bundle bundle && \
+./firmware_builder.py --metrics /tmp/metrics-bundle --metadata /tmp/artifact_bundle_metadata bundle && \
 echo PASSED )
 cat /tmp/artifact_bundle_metadata
 cat /tmp/metrics-build

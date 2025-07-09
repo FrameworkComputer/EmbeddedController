@@ -34,6 +34,13 @@ properties:
     description: |
         Time between scans when keyboard scan task runs in polling mode.
 
+  stable-scan-period:
+    type: int
+    default: 9000
+    description: |
+        Time between scans when keyboard scan task runs in polling mode but
+        there's keys to debounce.
+
   min-post-scan-delay:
     type: int
     default: 1000

@@ -121,7 +121,7 @@ DECLARE_DEFERRED(enable_input_devices);
 
 void tablet_mode_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(&enable_input_devices_data, LID_DEBOUNCE_US);
+	hook_call_deferred(&enable_input_devices_data, CONFIG_LID_DEBOUNCE_US);
 }
 
 /* Must come after other header files and interrupt handler declarations */
@@ -658,6 +658,18 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
  */
 void chipset_do_shutdown(void)
 {
+	/*
+	 * We want the processor to be reset before dropping the PP3300_A rail
+	 * below, otherwise the PP3300_LDO and PP3300_EC rails can be overloaded
+	 */
+	if (gpio_get_level(GPIO_PCH_SLP_S4_L)) {
+		/* assert RSMRST to PCH */
+		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
+		/* Wait SLP_S4 goes low; would rather watchdog than continue */
+		while (gpio_get_level(GPIO_PCH_SLP_S4_L))
+			;
+	}
+
 	/* Disable PMIC */
 	gpio_set_level(GPIO_PMIC_EN, 0);
 
@@ -997,16 +1009,11 @@ __override uint32_t board_get_sku_id(void)
 
 /* Keyboard scan setting */
 __override struct keyboard_scan_config keyscan_config = {
-	/*
-	 * F3 key scan cycle completed but scan input is not
-	 * charging to logic high when EC start scan next
-	 * column for "T" key, so we set .output_settle_us
-	 * to 80us from 50us.
-	 */
-	.output_settle_us = 80,
+	.output_settle_us = 50,
 	.debounce_down_us = 9 * MSEC,
 	.debounce_up_us = 30 * MSEC,
 	.scan_period_us = 3 * MSEC,
+	.stable_scan_period_us = 9 * MSEC,
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {

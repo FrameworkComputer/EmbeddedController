@@ -3,12 +3,6 @@
  * found in the LICENSE file.
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 11
-
 #ifndef __CROS_EC_CHARGE_MANAGER_H
 #define __CROS_EC_CHARGE_MANAGER_H
 
@@ -27,13 +21,6 @@ extern "C" {
 #define CHARGE_CURRENT_UNINITIALIZED -1
 #define CHARGE_VOLTAGE_UNINITIALIZED -1
 
-/* Only track BC1.2 charge current if we support BC1.2 charging */
-#if defined(HAS_TASK_USB_CHG) || defined(HAS_TASK_USB_CHG_P0) || \
-	defined(CONFIG_PLATFORM_EC_USB_CHARGER_SINGLE_TASK) ||   \
-	defined(TEST_BUILD)
-#define CHARGE_MANAGER_BC12
-#endif
-
 /**
  * Time to delay for detecting the charger type (must be long enough for BC1.2
  * driver to get supplier information and notify charge manager).
@@ -49,7 +36,7 @@ enum charge_supplier {
 	CHARGE_SUPPLIER_PD,
 	CHARGE_SUPPLIER_TYPEC,
 	CHARGE_SUPPLIER_TYPEC_DTS,
-#ifdef CHARGE_MANAGER_BC12
+#ifdef CONFIG_USB_CHARGER
 	CHARGE_SUPPLIER_BC12_DCP,
 	CHARGE_SUPPLIER_BC12_CDP,
 	CHARGE_SUPPLIER_BC12_SDP,
@@ -57,14 +44,14 @@ enum charge_supplier {
 	CHARGE_SUPPLIER_TYPEC_UNDER_1_5A,
 	CHARGE_SUPPLIER_OTHER,
 	CHARGE_SUPPLIER_VBUS,
-#endif /* CHARGE_MANAGER_BC12 */
+#endif /* CONFIG_USB_CHARGER */
 #if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 	CHARGE_SUPPLIER_DEDICATED,
 #endif
 	CHARGE_SUPPLIER_COUNT
 };
 
-#ifdef CHARGE_MANAGER_BC12
+#ifdef CONFIG_USB_CHARGER
 #define CHARGE_SUPPLIER_NAME_BC12                          \
 	[CHARGE_SUPPLIER_BC12_DCP] = "BC12_DCP",           \
 	[CHARGE_SUPPLIER_BC12_CDP] = "BC12_CDP",           \
@@ -255,6 +242,21 @@ int charge_manager_get_charger_voltage(void);
  * @return	enum charge_supplier
  */
 enum charge_supplier charge_manager_get_supplier(void);
+
+/**
+ * Set the initial charge port and supplier during initialization.
+ *
+ * This is used by the PDC support to indicate which port is currently
+ * supplying power to the system.  In a batteryless configuration, we can't
+ * switch the charge supplier.
+ *
+ * If the charge manager has already selected a port and supplier, this
+ * routine is a no-op.
+ *
+ * @param port - Port supplying power at boot.
+ * @param supplier - Supplier type at boot.
+ */
+void charge_manager_set_supplier(int port, enum charge_supplier supplier);
 
 /**
  * Get the current VBUS voltage.

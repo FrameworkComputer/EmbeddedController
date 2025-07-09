@@ -75,6 +75,11 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "button_interrupt";
 		};
+		int_lid_accel: lid_accel {
+			irq-pin = <&gpio_acc_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lis2dw12_interrupt";
+		};
 	};
 
 	named-gpios {
@@ -290,8 +295,8 @@
 				gpio-controller;
 				#gpio-cells = <2>;
 				ngpios = <8>;
-				pin_mask = <0xdc>;
-				pinmux_mask = <0xff>;
+				pin-mask = <0xdc>;
+				pinmux-mask = <0xff>;
 			};
 		};
 	};
@@ -331,8 +336,8 @@
 				gpio-controller;
 				#gpio-cells = <2>;
 				ngpios = <8>;
-				pin_mask = <0xdc>;
-				pinmux_mask = <0xff>;
+				pin-mask = <0xdc>;
+				pinmux-mask = <0xff>;
 			};
 		};
 	};
@@ -353,13 +358,6 @@
 		 */
 		irq-gpios = <&gpio4 3 GPIO_ACTIVE_LOW>;
 	};
-};
-
-&i2c4_1 {
-	label = "I2C_USB_C1_TCPC";
-	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
-
-	status = "okay";
 };
 
 &i2c5_1 {

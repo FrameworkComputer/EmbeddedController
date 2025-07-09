@@ -330,10 +330,10 @@ static void battery_led_tick(void)
 }
 DECLARE_HOOK(HOOK_TICK, battery_led_tick, HOOK_PRIO_DEFAULT);
 
-#define PWR_LED_PULSE_US (1500 * MSEC)
-#define PWR_LED_OFF_TIME_US (1500 * MSEC)
+#define PWR_LED_PULSE_US (1500 * USEC_PER_MSEC)
+#define PWR_LED_OFF_TIME_US (1500 * USEC_PER_MSEC)
 /* 30 msec for nice and smooth transition. */
-#define PWR_LED_PULSE_TICK_US (30 * MSEC)
+#define PWR_LED_PULSE_TICK_US (30 * USEC_PER_MSEC)
 
 enum power_led_mode {
 	MODE_NO_CHANGE = 0,

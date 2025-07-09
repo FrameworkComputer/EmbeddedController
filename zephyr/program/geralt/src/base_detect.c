@@ -18,7 +18,7 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
-#define BASE_DETECT_INTERVAL (200 * MSEC)
+#define BASE_DETECT_INTERVAL (200 * USEC_PER_MSEC)
 #define ATTACH_MAX_THRESHOLD_MV 300
 #define DETACH_MIN_THRESHOLD_MV 3000
 

@@ -20,11 +20,15 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
 		node_id, prop)
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
+#if RVP_ID_HAS_BOM_GPIOS
 const struct gpio_dt_spec bom_id_config[] = { RVP_ID_CONFIG_LIST(DT_DRV_INST(0),
 								 bom_gpios) };
+#endif
 
+#if RVP_ID_HAS_FAB_GPIOS
 const struct gpio_dt_spec fab_id_config[] = { RVP_ID_CONFIG_LIST(DT_DRV_INST(0),
 								 fab_gpios) };
+#endif
 
 const struct gpio_dt_spec board_id_config[] = { RVP_ID_CONFIG_LIST(
 	DT_DRV_INST(0), board_gpios) };

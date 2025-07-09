@@ -13,6 +13,7 @@
 #include "hooks.h"
 #include "system.h"
 #include "usb_mux.h"
+#include "usb_pd.h"
 #include "usbc_ppc.h"
 
 #include <zephyr/logging/log.h>
@@ -102,11 +103,11 @@ void reset_nct38xx_port(int port)
 	}
 
 	gpio_pin_set_dt(reset_gpio_l, 1);
-	crec_msleep(NCT38XX_RESET_HOLD_DELAY_MS);
+	k_msleep(NCT38XX_RESET_HOLD_DELAY_MS);
 	gpio_pin_set_dt(reset_gpio_l, 0);
 	nct38xx_reset_notify(port);
 	if (NCT3807_RESET_POST_DELAY_MS != 0) {
-		crec_msleep(NCT3807_RESET_POST_DELAY_MS);
+		k_msleep(NCT3807_RESET_POST_DELAY_MS);
 	}
 
 	/* Re-enable the IO expander pins */
@@ -173,4 +174,13 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 		LOG_WRN("Failed to set source ilimit on port %d to %d: %d",
 			port, current, rv);
 	}
+}
+
+int board_tcpc_post_init(int port)
+{
+	/* Alert register bits may be set during TCPM initialization.
+	 * Need to process and clear alert register after TCPM initilaztion,
+	 * otherwise the alert# pin stays low indefinitely */
+	schedule_deferred_pd_interrupt(port);
+	return EC_SUCCESS;
 }

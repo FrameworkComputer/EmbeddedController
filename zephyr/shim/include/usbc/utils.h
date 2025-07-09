@@ -20,14 +20,14 @@
  *
  * @param id: node id
  */
-#define USBC_PORT(id) DT_REG_ADDR(DT_PARENT(id))
+#define USBC_PORT(id) DT_REG_ADDR_RAW(DT_PARENT(id))
 
 /*
  * Get the port number from a `named-usbc-port` node.
  *
  * @param id: `named-usbc-port` node id
  */
-#define USBC_PORT_NEW(id) DT_REG_ADDR(id)
+#define USBC_PORT_NEW(id) DT_REG_ADDR_RAW(id)
 
 /*
  * Get the port number from a child of `named-usbc-port` node.
@@ -70,43 +70,6 @@
 	DT_FOREACH_STATUS_OKAY_VARGS(named_usbc_port,                       \
 				     DEVICE_GET_USBC_BINDING_IF_PORT_MATCH, \
 				     port, chip)
-
-#define NODE_MATCHES(node1, node2) IS_EQ(DT_DEP_ORD(node1), DT_DEP_ORD(node2))
-
-#define GET_USBC_PORT_IF_MATCHES_PROP(usbc_id, nodeid, prop)         \
-	COND_CODE_1(NODE_MATCHES(DT_PHANDLE(usbc_id, prop), nodeid), \
-		    (USBC_PORT_NEW(usbc_id)), ())
-
-/**
- * @brief Given a devicetree node, return the USB-C port number that references
- * the devicetree node.
- *
- * Usage:
- *	usbc_port0: port0@0 {
- *		compatible = "named-usbc-port";
- *		reg = < 0x0 >;
- *		chg = < &charger >;
- *		pdc = < &pdc_power_p0 >;
- *	};
- *	usbc_port1: port1@1 {
- *		compatible = "named-usbc-port";
- *		reg = < 0x1 >;
- *		pdc = < &pdc_power_p1 >;
- *	};
- *	&i2c{
- *		pdc_power_p1: driver@88 {
- *			compatible = "my-driver";
- *		}
- *
- *
- *
- * @param nodeid Devicetree node to search for
- * @param prop named-usbc-port property to check
- * @returns USB-C port number
- */
-#define USBC_PORT_FROM_DRIVER_NODE(nodeid, prop) \
-	DT_FOREACH_STATUS_OKAY_VARGS(            \
-		named_usbc_port, GET_USBC_PORT_IF_MATCHES_PROP, nodeid, prop)
 
 /*
  * Check that the TCPC interrupt flag defined in the devicetree is the same as

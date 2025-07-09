@@ -1,0 +1,56 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		bga_pina5 {
+			enum-names = "I2C_PORT_SMB_PCH";
+		};
+		wc_usbc_pd_clk_aic1_r {
+			enum-names = "I2C_PORT_WC_USBC_PD";
+		};
+		wc_usbc_pd_clk_aic2_r {
+			enum-names = "I2C_PORT_AIC2";
+		};
+		i2c_smb_bs: smb_bs_clk_r {
+			enum-names = "I2C_PORT_SMB_BS";
+		};
+		c_ish_ec_clk_r {
+			enum-names = "I2C_PORT_ISH_EC";
+		};
+	};
+};
+
+&i2c0 {
+	label = "I2C_PORT_SMB_PCH";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+pd_pow_i2c: &i2c1 {
+};
+
+&i2c3 {
+	label = "I2C_PORT_AIC2";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+charger_i2c: &i2c4 {
+};
+
+&i2c5 {
+	label = "I2C_PORT_ISH_EC";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+#include "../../intelrvp/ptlrvp/i2c.dtsi"
+
+/*
+ * Using IT8801 MFD driver
+ * These lines can be deleted after all PTL platforms support the MFD driver.
+ * b/386325459
+ */
+/delete-node/ &kb_discrete;

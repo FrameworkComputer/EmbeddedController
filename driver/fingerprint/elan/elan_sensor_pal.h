@@ -4,10 +4,14 @@
  */
 /* ELAN Platform Abstraction Layer callbacks */
 
-#ifndef ELAN_SENSOR_PAL_H_
-#define ELAN_SENSOR_PAL_H_
+#ifndef __CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SENSOR_PAL_H_
+#define __CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SENSOR_PAL_H_
 
 #include "common.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* ELAN error codes */
 enum elan_error_code {
@@ -121,7 +125,7 @@ __staticlib_hook int elan_write_reg_vector(const uint8_t *reg_table,
  * @return 0 on success.
  *         negative value on error.
  */
-__staticlib_hook int raw_capture(uint16_t *short_raw);
+__staticlib_hook int elan_raw_capture(uint16_t *short_raw);
 
 /**
  * Execute calibrate ELAN fingerprint sensor flow.
@@ -144,7 +148,7 @@ __staticlib void elan_execute_reset(void);
  * @return 0 on success.
  *         negative value on error.
  */
-__staticlib int fp_sensor_maintenance(fp_sensor_info_t *fp_sensor_info);
+__staticlib int elan_fp_sensor_maintenance(fp_sensor_info_t *fp_sensor_info);
 
 /**
  * @brief Set sensor reset state.
@@ -171,4 +175,16 @@ __staticlib_hook void elan_sensor_set_rst(bool state);
  */
 int elan_set_hv_chip(bool state);
 
+/**
+ * @brief Sleep
+ *
+ * @param[in] us    Number of microseconds to sleep.
+ * @return 0 on success, negative on error
+ */
+__staticlib_hook int elan_usleep(unsigned int us);
+
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* __CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SENSOR_PAL_H_ */

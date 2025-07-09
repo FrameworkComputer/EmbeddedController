@@ -6,7 +6,7 @@ description: TI TPS6699X PDC
 
 compatible: "ti,tps6699-pdc"
 
-include: ["i2c-device.yaml"]
+include: ["i2c-device.yaml", "pdc-device.yaml"]
 
 properties:
   irq-gpios:

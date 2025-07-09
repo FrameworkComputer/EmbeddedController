@@ -11,6 +11,7 @@
 #include "emul/emul_pdc.h"
 #include "i2c.h"
 #include "pdc_trace_msg.h"
+#include "usbc/utils.h"
 #include "zephyr/sys/util.h"
 #include "zephyr/sys/util_macro.h"
 
@@ -30,6 +31,8 @@ LOG_MODULE_REGISTER(test_pdc_api, LOG_LEVEL_INF);
 
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
 static const struct device *dev = DEVICE_DT_GET(RTS5453P_NODE);
+static const uint8_t connector_number =
+	USBC_PORT_FROM_PDC_DRIVER_NODE(RTS5453P_NODE) + 1;
 static bool test_cc_cb_called;
 static union cci_event_t test_cc_cb_cci;
 
@@ -59,17 +62,12 @@ ZTEST_USER(pdc_api, test_get_ucsi_version)
 	zassert_equal(version, UCSI_VERSION);
 }
 
-/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
-
 ZTEST_USER(pdc_api, test_reset)
 {
 	zassert_ok(pdc_reset(dev), "Failed to reset PDC");
 
 	k_sleep(K_MSEC(500));
 }
-
-#endif /* CONFIG_TODO_B_345292002 */
 
 ZTEST_USER(pdc_api, test_connector_reset)
 {
@@ -89,9 +87,6 @@ ZTEST_USER(pdc_api, test_connector_reset)
 
 	zassert_equal(in.reset_type, out.reset_type);
 }
-
-/* TODO(b/345292002): The tests below fail with the TPS6699x emulator/driver. */
-#ifndef CONFIG_TODO_B_345292002
 
 ZTEST_USER(pdc_api, test_get_capability)
 {
@@ -159,9 +154,9 @@ ZTEST_USER(pdc_api, test_get_error_status)
 
 ZTEST_USER(pdc_api, test_get_connector_status)
 {
-	union connector_status_t in, out;
-	union conn_status_change_bits_t in_conn_status_change_bits;
-	union conn_status_change_bits_t out_conn_status_change_bits;
+	union connector_status_t in = { 0 }, out = { 0 };
+	union conn_status_change_bits_t in_conn_status_change_bits = { 0 };
+	union conn_status_change_bits_t out_conn_status_change_bits = { 0 };
 
 	in_conn_status_change_bits.external_supply_change = 1;
 	in_conn_status_change_bits.connector_partner = 1;
@@ -209,6 +204,7 @@ ZTEST_USER(pdc_api, test_set_uor)
 
 	in.accept_dr_swap = 1;
 	in.swap_to_ufp = 1;
+	in.connector_number = connector_number;
 
 	zassert_ok(pdc_set_uor(dev, in), "Failed to set uor");
 
@@ -227,6 +223,7 @@ ZTEST_USER(pdc_api, test_set_pdr)
 
 	in.accept_pr_swap = 1;
 	in.swap_to_src = 1;
+	in.connector_number = connector_number;
 
 	zassert_ok(pdc_set_pdr(dev, in), "Failed to set pdr");
 
@@ -236,6 +233,8 @@ ZTEST_USER(pdc_api, test_set_pdr)
 	zassert_equal(out.raw_value, in.raw_value);
 }
 
+/* TODO(b/345292002): TPS6699x driver set_rdo is not supported yet. */
+#ifndef CONFIG_TODO_B_345292002
 ZTEST_USER(pdc_api, test_rdo)
 {
 	uint32_t in, out = 0;
@@ -249,6 +248,7 @@ ZTEST_USER(pdc_api, test_rdo)
 	k_sleep(K_MSEC(SLEEP_MS));
 	zassert_equal(in, out);
 }
+#endif
 
 ZTEST_USER(pdc_api, test_set_power_level)
 {
@@ -270,6 +270,8 @@ ZTEST_USER(pdc_api, test_set_power_level)
 		emul_pdc_get_requested_power_level(emul, &out);
 		zassert_equal(in[i], out);
 	}
+
+	zassert_equal(pdc_set_power_level(dev, 0xF), -EINVAL);
 }
 
 ZTEST_USER(pdc_api, test_get_bus_voltage)
@@ -277,7 +279,7 @@ ZTEST_USER(pdc_api, test_get_bus_voltage)
 	uint32_t mv_units = 50;
 	uint32_t expected_voltage_mv = 5000;
 	uint16_t out = 0;
-	union connector_status_t in;
+	union connector_status_t in = { 0 };
 
 	in.voltage_scale = 10; /* 50 mv units*/
 	in.voltage_reading = expected_voltage_mv / mv_units;
@@ -312,15 +314,26 @@ ZTEST_USER(pdc_api, test_set_drp_mode)
 {
 	int i;
 	enum drp_mode_t dm_in[] = { DRP_NORMAL, DRP_TRY_SRC, DRP_TRY_SNK };
+	uint8_t num_modes = ARRAY_SIZE(dm_in);
 	enum drp_mode_t dm_out;
+
+	/* Emulator may not support this so defaults above should be used. */
+	(void)emul_pdc_get_supported_drp_modes(emul, dm_in, ARRAY_SIZE(dm_in),
+					       &num_modes);
 
 	k_sleep(K_MSEC(SLEEP_MS));
 
-	for (i = 0; i < ARRAY_SIZE(dm_in); i++) {
+	for (i = 0; i < num_modes; i++) {
 		zassert_ok(pdc_set_drp_mode(dev, dm_in[i]));
 
 		k_sleep(K_MSEC(SLEEP_MS));
 		zassert_ok(emul_pdc_get_drp_mode(emul, &dm_out));
+		zassert_equal(dm_in[i], dm_out);
+
+		/* Check PDC driver API if supported */
+		dm_out = DRP_INVALID;
+		zassert_ok(pdc_get_drp_mode(dev, &dm_out));
+		k_sleep(K_MSEC(SLEEP_MS));
 		zassert_equal(dm_in[i], dm_out);
 	}
 }
@@ -333,12 +346,101 @@ ZTEST_USER(pdc_api, test_set_sink_path)
 	for (i = 0; i < ARRAY_SIZE(in); i++) {
 		zassert_ok(pdc_set_sink_path(dev, in[i]));
 
-		k_sleep(K_MSEC(SLEEP_MS));
+		k_sleep(K_MSEC(SLEEP_MS * 10));
 		zassert_ok(emul_pdc_get_sink_path(emul, &out));
 
 		zassert_equal(in[i], out);
 	}
 }
+
+ZTEST_USER(pdc_api, test_get_current_pdo)
+{
+	uint32_t in = 0x01234567;
+	uint32_t out = 0;
+	int rv;
+
+	rv = emul_pdc_set_current_pdo(emul, in);
+	if (rv == -ENOSYS)
+		ztest_test_skip();
+	zassert_ok(rv);
+
+	rv = emul_pdc_set_cmd_error(emul, true);
+	if (rv != -ENOSYS) {
+		zassert_ok(pdc_get_current_pdo(dev, &out));
+		k_sleep(K_MSEC(SLEEP_MS));
+		zassert_equal(0, out);
+		emul_pdc_set_cmd_error(emul, false);
+	}
+	zassert_ok(pdc_get_current_pdo(dev, &out));
+	k_sleep(K_MSEC(SLEEP_MS));
+	zassert_equal(in, out, "Got 0x%x, expected 0x%x", out, in);
+}
+
+ZTEST_USER(pdc_api, test_get_current_flash_bank)
+{
+	uint8_t in = 0;
+	uint8_t out = 0xff;
+	int rv;
+
+	rv = emul_pdc_set_current_flash_bank(emul, in);
+	if (rv == -ENOSYS)
+		ztest_test_skip();
+	rv = emul_pdc_set_cmd_error(emul, true);
+	if (rv != -ENOSYS) {
+		zassert_not_ok(pdc_get_current_flash_bank(dev, &out));
+		k_sleep(K_MSEC(SLEEP_MS));
+		zassert_equal(0xff, out, "Got 0x%x, expected 0x%x", out, 0xff);
+		emul_pdc_set_cmd_error(emul, false);
+	}
+	zassert_ok(rv);
+	zassert_ok(pdc_get_current_flash_bank(dev, &out));
+	k_sleep(K_MSEC(SLEEP_MS));
+	zassert_equal(in, out, "Got 0x%x, expected 0x%x", out, in);
+}
+
+ZTEST_USER(pdc_api, test_is_vconn_sourcing)
+{
+	int i;
+	bool in[] = { false, true, false }, out;
+	int rv;
+
+	rv = emul_pdc_set_cmd_error(emul, true);
+	if (rv != -ENOSYS) {
+		out = false;
+		zassert_ok(emul_pdc_set_vconn_sourcing(emul, true));
+		zassert_ok(pdc_is_vconn_sourcing(dev, &out));
+		k_sleep(K_MSEC(SLEEP_MS));
+		zassert_equal(false, out, "Got 0x%x, expected 0x%x", out,
+			      false);
+		emul_pdc_set_cmd_error(emul, false);
+	}
+
+	for (i = 0; i < ARRAY_SIZE(in); i++) {
+		zassert_ok(emul_pdc_set_vconn_sourcing(emul, in[i]));
+		zassert_ok(pdc_is_vconn_sourcing(dev, &out));
+		k_sleep(K_MSEC(SLEEP_MS));
+		zassert_equal(in[i], out, "[%d] Got 0x%x, expected 0x%x", i,
+			      out, in[i]);
+	}
+}
+
+/* TODO(b/345292002): TPS6699x set_frs not implemented */
+#ifndef CONFIG_TODO_B_345292002
+ZTEST_USER(pdc_api, test_set_frs)
+{
+	bool frs_state[] = { true, false }, out;
+
+	for (int i = 0; i < ARRAY_SIZE(frs_state); i++) {
+		zassert_ok(pdc_set_frs(dev, frs_state[i]));
+
+		k_sleep(K_MSEC(SLEEP_MS));
+		zassert_ok(emul_pdc_get_frs(emul, &out));
+
+		zassert_equal(frs_state[i], out, "Got %d, expected %d (i=%d)",
+			      out, frs_state[i], i);
+	}
+}
+#endif
 
 ZTEST_USER(pdc_api, test_reconnect)
 {
@@ -356,19 +458,40 @@ ZTEST_USER(pdc_api, test_reconnect)
  */
 void helper_clear_cached_chip_info(void)
 {
-	struct pdc_info_t zero = { 0 }, out;
+	struct pdc_info_t init = { 0 }, out;
 
-	emul_pdc_set_info(emul, &zero);
+	init.fw_version = PDC_FWVER_INVALID;
+	emul_pdc_set_info(emul, &init);
 	zassert_ok(pdc_get_info(dev, &out, true));
 	k_sleep(K_MSEC(SLEEP_MS));
 }
 
+#define ZEPHYR_USER_NODE DT_PATH(zephyr_user)
+#if DT_NODE_EXISTS(ZEPHYR_USER_NODE)
+static const struct pdc_info_t info_in1 = {
+	.fw_version = 0x001a2b3c,
+	.pd_version = DT_PROP(ZEPHYR_USER_NODE, pd_version),
+	.pd_revision = DT_PROP(ZEPHYR_USER_NODE, pd_revision),
+	.vid = 0x1234,
+	.pid = 0x5678,
+	.project_name = DT_PROP(ZEPHYR_USER_NODE, project_name),
+};
+static const struct pdc_info_t info_in2 = {
+	.fw_version = 0x002a3b4c,
+	.pd_version = DT_PROP(ZEPHYR_USER_NODE, pd_version),
+	.pd_revision = DT_PROP(ZEPHYR_USER_NODE, pd_revision),
+	.vid = 0x9abc,
+	.pid = 0xdef0,
+	.project_name = DT_PROP(ZEPHYR_USER_NODE, project_name),
+};
+#else
 /* Two sets of chip info to test against */
 static const struct pdc_info_t info_in1 = {
 	.fw_version = 0x001a2b3c,
 	.pd_version = 0xabcd,
 	.pd_revision = 0x1234,
-	.vid_pid = 0x12345678,
+	.vid = 0x1234,
+	.pid = 0x5678,
 	.project_name = "ProjectName",
 };
 
@@ -376,9 +499,11 @@ static const struct pdc_info_t info_in2 = {
 	.fw_version = 0x002a3b4c,
 	.pd_version = 0xef01,
 	.pd_revision = 0x5678,
-	.vid_pid = 0x9abcdef0,
+	.vid = 0x9abc,
+	.pid = 0xdef0,
 	.project_name = "MyProj",
 };
+#endif /* DT_NODE_EXISTS(ZEPHYR_USER_NODE) */
 
 ZTEST_USER(pdc_api, test_get_info)
 {
@@ -403,8 +528,11 @@ ZTEST_USER(pdc_api, test_get_info)
 		      info_in1.fw_version, out.fw_version);
 	zassert_equal(info_in1.pd_version, out.pd_version);
 	zassert_equal(info_in1.pd_revision, out.pd_revision);
-	zassert_equal(info_in1.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
-		      info_in1.vid_pid, out.vid_pid);
+	zassert_equal(info_in1.vid, out.vid, "in=0x%X, out=0x%X", info_in1.vid,
+		      out.vid);
+	zassert_equal(info_in1.pid, out.pid, "in=0x%X, out=0x%X", info_in1.pid,
+		      out.pid);
+
 	zassert_mem_equal(info_in1.project_name, out.project_name,
 			  sizeof(info_in1.project_name));
 
@@ -420,8 +548,10 @@ ZTEST_USER(pdc_api, test_get_info)
 		      info_in1.fw_version, out.fw_version);
 	zassert_equal(info_in1.pd_version, out.pd_version);
 	zassert_equal(info_in1.pd_revision, out.pd_revision);
-	zassert_equal(info_in1.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
-		      info_in1.vid_pid, out.vid_pid);
+	zassert_equal(info_in1.vid, out.vid, "in=0x%X, out=0x%X", info_in1.vid,
+		      out.vid);
+	zassert_equal(info_in1.pid, out.pid, "in=0x%X, out=0x%X", info_in1.pid,
+		      out.pid);
 	zassert_mem_equal(info_in1.project_name, out.project_name,
 			  sizeof(info_in1.project_name));
 
@@ -436,8 +566,10 @@ ZTEST_USER(pdc_api, test_get_info)
 		      info_in2.fw_version, out.fw_version);
 	zassert_equal(info_in2.pd_version, out.pd_version);
 	zassert_equal(info_in2.pd_revision, out.pd_revision);
-	zassert_equal(info_in2.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
-		      info_in2.vid_pid, out.vid_pid);
+	zassert_equal(info_in2.vid, out.vid, "in=0x%X, out=0x%X", info_in2.vid,
+		      out.vid);
+	zassert_equal(info_in2.pid, out.pid, "in=0x%X, out=0x%X", info_in2.pid,
+		      out.pid);
 	zassert_mem_equal(info_in2.project_name, out.project_name,
 			  sizeof(info_in2.project_name));
 }
@@ -453,6 +585,10 @@ ZTEST_USER(pdc_api, test_get_lpm_ppm_info)
 		.fw_ver_sub = 456,
 		.hw_ver = 0xa5b6c7de,
 	};
+
+	if (pdc_get_lpm_ppm_info(dev, NULL) == -ENOSYS) {
+		ztest_test_skip();
+	}
 
 	/* Test output param NULL check */
 	zassert_equal(-EINVAL, pdc_get_lpm_ppm_info(dev, NULL));
@@ -485,14 +621,56 @@ ZTEST_USER(pdc_api, test_get_pdo)
 	zassert_ok(pdc_get_pdos(dev, SOURCE_PDO, PDO_OFFSET_0, 1, false,
 				&fixed_pdo));
 	k_sleep(K_MSEC(SLEEP_MS));
-	zassert_equal(PDO_FIXED_GET_VOLT(fixed_pdo), 12000);
+	zassert_equal(PDO_FIXED_VOLTAGE(fixed_pdo), 12000);
 
 	/* Test sink fixed pdo. */
 	fixed_pdo = 0;
 	zassert_ok(pdc_get_pdos(dev, SINK_PDO, PDO_OFFSET_0, 1, false,
 				&fixed_pdo));
 	k_sleep(K_MSEC(SLEEP_MS));
-	zassert_equal(PDO_FIXED_GET_VOLT(fixed_pdo), 5000);
+	zassert_equal(PDO_FIXED_VOLTAGE(fixed_pdo), 5000);
+}
+
+ZTEST_USER(pdc_api, test_set_pdos)
+{
+	/* Arbitrary set of test PDOs */
+	static uint32_t pdos_in[] = {
+		PDO_FIXED(9000, 3000, 0),
+		PDO_FIXED(15000, 3000, 0),
+		PDO_FIXED(20000, 5000, 0),
+	};
+
+	uint32_t pdos_out[ARRAY_SIZE(pdos_in)] = { 0 };
+
+	/* Error case - bad count */
+	zassert_equal(-ERANGE, pdc_set_pdos(dev, SINK_PDO, pdos_in, 8));
+	zassert_equal(-ERANGE, pdc_set_pdos(dev, SINK_PDO, pdos_in, 0));
+	zassert_equal(-ERANGE, pdc_set_pdos(dev, SINK_PDO, pdos_in, -1));
+
+	/* Error case - PDO array is NULL */
+	zassert_equal(-EINVAL, pdc_set_pdos(dev, SINK_PDO, NULL, 1));
+
+	/* Set PDOs */
+	zassert_ok(pdc_set_pdos(dev, SINK_PDO, pdos_in, ARRAY_SIZE(pdos_in)));
+	k_sleep(K_MSEC(SLEEP_MS));
+
+	/* Read back PDOs */
+	zassert_ok(pdc_get_pdos(dev, SINK_PDO, PDO_OFFSET_0,
+				ARRAY_SIZE(pdos_out), false, pdos_out));
+	k_sleep(K_MSEC(SLEEP_MS));
+
+/* TODO(b/345292002): Incorrect PDOs returned by TI driver or emulator. */
+#ifndef CONFIG_TODO_B_345292002
+	zassert_equal(pdos_in[0], pdos_out[0],
+		      "PDO_0 mismatch. Got %08x, expected %08x", pdos_out[0],
+		      pdos_in[0]);
+	zassert_equal(pdos_in[1], pdos_out[1],
+		      "PDO_1 mismatch. Got %08x, expected %08x", pdos_out[1],
+		      pdos_in[1]);
+	zassert_equal(pdos_in[2], pdos_out[2],
+		      "PDO_2 mismatch. Got %08x, expected %08x", pdos_out[2],
+		      pdos_in[2]);
+#endif /* !defined(CONFIG_TODO_B_345292002) */
 }
 
 ZTEST_USER(pdc_api, test_get_cable_property)
@@ -552,44 +730,6 @@ ZTEST_USER(pdc_api, test_execute_ucsi_cmd)
 	zassert_equal(out->raw_value, in.raw_value);
 }
 
-ZTEST_USER(pdc_api, test_execute_ucsi_cmd_get_connector_status)
-{
-	struct ucsi_memory_region ucsi_data;
-	struct ucsi_control_t *control = &ucsi_data.control;
-	struct pdc_callback callback;
-	union connector_status_t in;
-	union connector_status_t *out =
-		(union connector_status_t *)ucsi_data.message_in;
-
-	memset(&ucsi_data, 0, sizeof(ucsi_data));
-	memset(in.raw_value, 0, sizeof(in.raw_value));
-	in.connect_status = 1;
-	zassert_ok(emul_pdc_set_connector_status(emul, &in));
-
-	/* Trigger IRQ to clear the cache. */
-	emul_pdc_pulse_irq(emul);
-	k_sleep(K_MSEC(SLEEP_MS));
-
-	callback.handler = test_cc_cb;
-	zassert_ok(pdc_execute_ucsi_cmd(dev, UCSI_GET_CONNECTOR_STATUS, 0,
-					control->command_specific,
-					ucsi_data.message_in, &callback));
-	k_sleep(K_MSEC(SLEEP_MS));
-	zassert_equal(out->connect_status, 1);
-
-	/*
-	 * Expect the command to ignore the emul status and return the previous
-	 * status (from the cache).
-	 */
-	in.connect_status = 0;
-	zassert_ok(emul_pdc_set_connector_status(emul, &in));
-	zassert_ok(pdc_execute_ucsi_cmd(dev, UCSI_GET_CONNECTOR_STATUS, 0,
-					control->command_specific,
-					ucsi_data.message_in, &callback));
-	k_sleep(K_MSEC(SLEEP_MS));
-	zassert_equal(out->connect_status, 1);
-}
-
 /*
  * Suspended tests - ensure API calls behave correctly when PDC communication
  * is suspended.
@@ -643,8 +783,10 @@ ZTEST_USER(pdc_api_suspended, test_get_info)
 		      info_in1.fw_version, out.fw_version);
 	zassert_equal(info_in1.pd_version, out.pd_version);
 	zassert_equal(info_in1.pd_revision, out.pd_revision);
-	zassert_equal(info_in1.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
-		      info_in1.vid_pid, out.vid_pid);
+	zassert_equal(info_in1.vid, out.vid, "in=0x%X, out=0x%X", info_in1.vid,
+		      out.vid);
+	zassert_equal(info_in1.pid, out.pid, "in=0x%X, out=0x%X", info_in1.pid,
+		      out.pid);
 	zassert_mem_equal(info_in1.project_name, out.project_name,
 			  sizeof(info_in1.project_name));
 }
@@ -653,8 +795,10 @@ ZTEST_USER(pdc_api_suspended, test_get_lpm_ppm_info)
 {
 	struct lpm_ppm_info_t out;
 
+	if (pdc_get_lpm_ppm_info(dev, NULL) == -ENOSYS) {
+		ztest_test_skip();
+	}
+
 	/* Read should return busy because comms are blocked */
 	zassert_equal(-EBUSY, pdc_get_lpm_ppm_info(dev, &out));
 }
-
-#endif /* CONFIG_TODO_B_345292002 */

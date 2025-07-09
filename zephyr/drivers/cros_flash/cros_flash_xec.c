@@ -558,7 +558,7 @@ static int cros_flash_xec_get_status(const struct device *dev, uint8_t *sr1,
 }
 
 /* cros ec flash driver registration */
-static const struct cros_flash_driver_api cros_flash_xec_driver_api = {
+static DEVICE_API(cros_flash, cros_flash_xec_driver_api) = {
 	.init = cros_flash_xec_init,
 	.physical_write = cros_flash_xec_write,
 	.physical_erase = cros_flash_xec_erase,

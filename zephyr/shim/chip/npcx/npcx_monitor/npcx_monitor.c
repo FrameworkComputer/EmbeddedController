@@ -5,7 +5,6 @@
  * NPCX SoC spi flash update tool - monitor firmware
  */
 
-#include "config_chip.h"
 #include "npcx_monitor.h"
 #include "registers.h"
 
@@ -34,6 +33,11 @@
  * more than one FIU modules.
  */
 #define MAPPED_STORAGE_BASE_MULTI_FIU_FIU0 0x60000000
+
+#define NPCX_MONITOR_FLASH_WRITE_SIZE 256
+
+/* Use 4k sector erase for NPCX monitor flash erase operations. */
+#define NPCX_MONITOR_FLASH_ERASE_SIZE 0x1000
 
 /*****************************************************************************/
 /* spi flash internal functions */
@@ -177,7 +181,11 @@ int sspi_flash_physical_clear_stsreg(void)
 	if (NPCX_UMA_DB0 != 0x00)
 		return 0;
 	sspi_flash_execute_cmd(CMD_READ_STATUS_REG2, MASK_CMD_RD_1BYTE);
-	if (NPCX_UMA_DB0 != 0x00)
+	/* Ignore any one-time-programmable bits that might be set.
+	 * These bits only affect the security register region and not the main
+	 * flash memory.
+	 */
+	if ((NPCX_UMA_DB0 & ~SPI_FLASH_SR2_OTP_MASK) != 0x00)
 		return 0;
 	/* Enable tri-state */
 	sspi_flash_tristate(1);
@@ -188,12 +196,12 @@ int sspi_flash_physical_clear_stsreg(void)
 void sspi_flash_physical_write(int offset, int size, const char *data)
 {
 	int dest_addr = offset;
-	const int sz_page = CONFIG_FLASH_WRITE_IDEAL_SIZE;
+	const int sz_page = NPCX_MONITOR_FLASH_WRITE_SIZE;
 
 	/* Disable tri-state */
 	sspi_flash_tristate(0);
 
-	/* Write the data per CONFIG_FLASH_WRITE_IDEAL_SIZE bytes */
+	/* Write the data per NPCX_MONITOR_FLASH_WRITE_SIZE bytes */
 	for (; size >= sz_page; size -= sz_page) {
 		/* Enable write */
 		sspi_flash_write_enable();
@@ -279,23 +287,6 @@ int sspi_flash_verify(int offset, int size, const char *data)
 	return result;
 }
 
-int sspi_flash_get_image_used(const char *fw_base)
-{
-	const uint8_t *image;
-	int size = MAX(CONFIG_RO_SIZE, CONFIG_RW_SIZE); /* max size is 128KB */
-
-	image = (const uint8_t *)fw_base;
-	/*
-	 * Scan backwards looking for 0xea byte, which is by definition the
-	 * last byte of the image.  See ec.lds.S for how this is inserted at
-	 * the end of the image.
-	 */
-	for (size--; size > 0 && image[size] != 0xea; size--)
-		;
-
-	return size ? size + 1 : 0; /* 0xea byte IS part of the image */
-}
-
 /* Entry function of spi upload function */
 uint32_t __attribute__((section(".startup_text")))
 sspi_flash_upload(int spi_offset, int spi_size)
@@ -319,8 +310,9 @@ sspi_flash_upload(int spi_offset, int spi_size)
 		spi_offset = monitor_header->dest_addr;
 		image_base = (const char *)(monitor_header->src_addr);
 	} else {
-		sz_image = spi_size;
-		image_base = (const char *)CONFIG_PROGRAM_MEMORY_BASE;
+		/* Indicate that there is no UUT Tag in the header */
+		*flag_upload |= 0x80;
+		return *flag_upload;
 	}
 
 	/* Unlock & stop watchdog */
@@ -346,10 +338,6 @@ sspi_flash_upload(int spi_offset, int spi_size)
 	 * defult value is not zero.
 	 */
 	SET_FIELD(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_ADDR_SIZE, 0);
-
-	/* Get size of image automatically */
-	if (sz_image == 0)
-		sz_image = sspi_flash_get_image_used(image_base);
 
 	/* Clear status reg of spi flash for protection */
 	if (sspi_flash_physical_clear_stsreg()) {

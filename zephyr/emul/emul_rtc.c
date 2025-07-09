@@ -113,7 +113,7 @@ static int cros_rtc_emul_set_alarm(const struct device *dev, uint32_t seconds,
 	return EC_SUCCESS;
 }
 
-static const struct cros_rtc_driver_api emul_cros_rtc_driver_api = {
+static DEVICE_API(cros_rtc, emul_cros_rtc_driver_api) = {
 	.configure = cros_rtc_emul_configure,
 	.get_value = cros_rtc_emul_get_value,
 	.set_value = cros_rtc_emul_set_value,

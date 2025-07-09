@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+import "nanopb.proto";
+
+package pw.transport;
+
+message Status
+{
+	bytes flags_mask = 1;
+	uint32 response_length = 2;
+}

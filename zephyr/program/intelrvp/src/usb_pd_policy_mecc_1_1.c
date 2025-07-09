@@ -83,7 +83,7 @@ int pd_check_vconn_swap(int port)
 	return gpio_get_level(GPIO_EN_PP3300_A);
 }
 
-int pd_snk_is_vbus_provided(int port)
+test_mockable int pd_snk_is_vbus_provided(int port)
 {
 	if (board_port_has_ppc(port)) {
 		return ppc_is_vbus_present(port);

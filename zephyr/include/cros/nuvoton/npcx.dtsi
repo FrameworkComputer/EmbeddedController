@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cros/binman.dtsi>
 #include <nuvoton/npcx/npcx.dtsi>
+#include <cros/nuvoton/npcx_cros.dtsi>
 
 / {
 	chosen {

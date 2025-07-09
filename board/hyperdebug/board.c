@@ -5,7 +5,9 @@
 /* HyperDebug board configuration */
 
 #include "adc.h"
+#include "clock_chip.h"
 #include "common.h"
+#include "dfu_bootmanager_shared.h"
 #include "ec_version.h"
 #include "queue_policies.h"
 #include "registers.h"
@@ -179,6 +181,154 @@ struct adc_t adc_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /******************************************************************************
+ * Allow changing of system and peripheral clock frequency at runtime.
+ *
+ * Changing clock frequency may disrupt speed settings of SPI ports or PWMs
+ * already set up, so one should preferably choose the clock speed before
+ * setting up anything else.
+ */
+
+/* Default divisors, resulting in maximum 110MHz system clock. */
+int stm32_pllm = 4;
+int stm32_plln = 55;
+int stm32_pllr = 2;
+
+/* Change system/core clock frequency and peripheral clock frequency. */
+static void change_frequencies(int m, int n, int r, uint32_t rcc_cfgr_prescaler)
+{
+	/*
+	 * There are a few concerns: We must not use the PLL as source of
+	 * system clock, while modifying its parameters.  Also, the peripheral
+	 * clock must never drop below 10MHz, or the USB controller might not
+	 * be able to keep up with the bus.
+	 */
+
+	/* Peripheral clock equal to system core clock (no division). */
+	STM32_RCC_CFGR = (STM32_RCC_CFGR & ~STM32_RCC_CFGR_PPRE1_MSK &
+			  ~STM32_RCC_CFGR_PPRE2_MSK) |
+			 STM32_RCC_CFGR_PPRE1_DIV1 | STM32_RCC_CFGR_PPRE2_DIV1;
+
+	/* Temporarily use 16MHz clock source, rather than PLL. */
+	clock_set_osc(OSC_HSI, OSC_INIT);
+
+	/*
+	 * Now we are free to modify PLL parameters.
+	 */
+
+	/* HSI (16MHz) / M must stay within 4MHz - 16MHz. */
+	stm32_pllm = m;
+
+	/* Above frequency * N must stay within 64MHz - 344MHz. */
+	stm32_plln = n;
+
+	/* Above frequency / R must not exceed 110MHz. */
+	stm32_pllr = r;
+
+	/*
+	 * Switch to PLL clock source, using newly updated parameters, waiting
+	 * for the new source to stabilize.
+	 */
+	clock_set_osc(OSC_PLL, OSC_HSI);
+
+	/* Now apply the desired divisor to peripheral clock. */
+	hook_notify(HOOK_PRE_FREQ_CHANGE);
+	STM32_RCC_CFGR = (STM32_RCC_CFGR & ~STM32_RCC_CFGR_PPRE1_MSK &
+			  ~STM32_RCC_CFGR_PPRE2_MSK) |
+			 rcc_cfgr_prescaler;
+	hook_notify(HOOK_FREQ_CHANGE);
+}
+
+static int command_clock_set(int argc, const char **argv)
+{
+	if (argc < 3)
+		return EC_ERROR_PARAM_COUNT;
+
+	char *e;
+	int req_freq = strtoi(argv[1], &e, 0);
+	int plln, pllr;
+	if (*e)
+		return EC_ERROR_PARAM1;
+
+	/*
+	 * We restrict ourselves to a PLL input frequency of 4MHz, which is
+	 * then multiplied by a value N in the range 16 though 86 and divided
+	 * by R: 2, 4, or 8.  This allows producing any frequency between
+	 * 10MHz and 110MHz with no more than +/- 1.5% deviation.
+	 */
+	if (req_freq > 110000000 || req_freq < 10000000) {
+		ccprintf("Error: Clock frequency out of range\n");
+		return EC_ERROR_PARAM1;
+	}
+	if (req_freq >= 32000000 && req_freq % 2000000 == 0) {
+		plln = req_freq / 2000000;
+		pllr = 2;
+	} else if (req_freq >= 16000000 && req_freq % 1000000 == 0) {
+		plln = req_freq / 1000000;
+		pllr = 4;
+	} else if (req_freq >= 8000000 && req_freq % 500000 == 0) {
+		plln = req_freq / 500000;
+		pllr = 8;
+	} else {
+		ccprintf("Error: Clock frequency not supported\n");
+		return EC_ERROR_PARAM1;
+	}
+
+	if (plln > 86) {
+		ccprintf("Error: Clock frequency not supported\n");
+	}
+
+	int peripheral_clock_div = strtoi(argv[2], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM2;
+	if (req_freq / peripheral_clock_div < 10000000) {
+		/*
+		 * The STM32L5 USB peripheral requires an APB1 clock frequency
+		 * of at least 10MHz for correct operation.
+		 */
+		ccprintf(
+			"Error: Peripheral frequency must be at least 10000000,"
+			" reduce the divisor\n");
+		return EC_ERROR_PARAM2;
+	}
+
+	uint32_t rcc_cfgr;
+	switch (peripheral_clock_div) {
+	case 1:
+		rcc_cfgr = STM32_RCC_CFGR_PPRE1_DIV1 |
+			   STM32_RCC_CFGR_PPRE2_DIV1;
+		break;
+	case 2:
+		rcc_cfgr = STM32_RCC_CFGR_PPRE1_DIV2 |
+			   STM32_RCC_CFGR_PPRE2_DIV2;
+		break;
+	case 4:
+		rcc_cfgr = STM32_RCC_CFGR_PPRE1_DIV4 |
+			   STM32_RCC_CFGR_PPRE2_DIV4;
+		break;
+	case 8:
+		rcc_cfgr = STM32_RCC_CFGR_PPRE1_DIV8 |
+			   STM32_RCC_CFGR_PPRE2_DIV8;
+		break;
+	case 16:
+		rcc_cfgr = STM32_RCC_CFGR_PPRE1_DIV16 |
+			   STM32_RCC_CFGR_PPRE2_DIV16;
+		break;
+	default:
+		ccprintf("Error: Divisor must be power of two, at most 16\n");
+		return EC_ERROR_PARAM2;
+	}
+
+	change_frequencies(4, plln, pllr, rcc_cfgr);
+	return EC_SUCCESS;
+}
+
+DECLARE_CONSOLE_COMMAND_FLAGS(
+	clock_set, command_clock_set, "clock_set [Hz] [divisor]",
+	"Valid range: Hz: 10,000,000 to 110,000,000 (with restrictions)\n"
+	"             divisor: 1, 2, 4, 8",
+	CMD_FLAG_RESTRICTED);
+
+/******************************************************************************
  * Initialize board.  (More initialization done by hooks in other files.)
  */
 
@@ -222,8 +372,20 @@ DECLARE_HOOK(HOOK_REINIT, usart_reinit_all, HOOK_PRIO_DEFAULT);
 
 static int command_reinit(int argc, const char **argv)
 {
+	/* Switch back to power-on clock configuration. */
+	change_frequencies(4, 55, 2,
+			   STM32_RCC_CFGR_PPRE1_DIV4 |
+				   STM32_RCC_CFGR_PPRE2_DIV4);
+
 	/* Let every module know to re-initialize to power-on state. */
 	hook_notify(HOOK_REINIT);
+
+	/*
+	 * Since we apparently have some communication with OpenTitanTool,
+	 * rewind "repeating reset" counter, which would otherwise trigger DFU
+	 * mode after a certain number of resets.
+	 */
+	dfu_bootmanager_clear();
 	return EC_SUCCESS;
 }
 

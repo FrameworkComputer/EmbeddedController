@@ -159,19 +159,19 @@
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
 
 /* Define typical operating power and max power */
-#define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW 60000
-#define PD_MAX_CURRENT_MA 3000
-#define PD_MAX_VOLTAGE_MV 20000
+#define CONFIG_USB_PD_OPERATING_POWER_MW 15000
+#define CONFIG_USB_PD_MAX_POWER_MW 60000
+#define CONFIG_USB_PD_MAX_CURRENT_MA 3000
+#define CONFIG_USB_PD_MAX_VOLTAGE_MV 20000
 /*
  * Define PDO selection logic for SourceCap.
  * On a 45W PD charger, it might provide PDOs with 15V/3A and 20V/2.25A.
- * In this case, pd_find_pdo_index() would always prefer 15V/3A rather than
+ * In this case, pd_select_best_pdo() would always prefer 15V/3A rather than
  * 20V/2.25A and such that the 20V PDO will be disappeared when servo-v4
- * advertise the SrcCap. We define PD_PREFER_HIGH_VOLTAGE so that all the
- * PDOs could be advertised by servo-v4.
+ * advertise the SrcCap. We define CONFIG_USB_PD_PREFER_HIGH_VOLTAGE so that
+ * all the PDOs could be advertised by servo-v4.
  */
-#define PD_PREFER_HIGH_VOLTAGE
+#define CONFIG_USB_PD_PREFER_HIGH_VOLTAGE
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect

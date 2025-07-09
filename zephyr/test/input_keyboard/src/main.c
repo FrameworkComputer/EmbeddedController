@@ -13,23 +13,48 @@
 #include <zephyr/fff.h>
 #include <zephyr/input/input.h>
 #include <zephyr/input/input_kbd_matrix.h>
+#include <zephyr/pm/device.h>
+#include <zephyr/pm/device_runtime.h>
 #include <zephyr/shell/shell_dummy.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/ztest.h>
 
 DEFINE_FFF_GLOBALS;
 
-static const struct input_kbd_matrix_common_config kbd_cfg = {
-	.col_size = 88,
-	.row_size = 99,
+#define TEST_KBD_SCAN_NODE DT_NODELABEL(fake_input_device)
+
+INPUT_KBD_MATRIX_DT_DEFINE(TEST_KBD_SCAN_NODE);
+
+FAKE_VOID_FUNC(test_drive_column, const struct device *, int);
+FAKE_VALUE_FUNC(kbd_row_t, test_read_row, const struct device *);
+FAKE_VOID_FUNC(test_set_detect_mode, const struct device *, bool);
+
+static const struct input_kbd_matrix_api test_api = {
+	.drive_column = test_drive_column,
+	.read_row = test_read_row,
+	.set_detect_mode = test_set_detect_mode,
 };
 
-static const struct device *const fake_dev =
-	DEVICE_DT_GET(DT_NODELABEL(fake_input_device));
+static const struct input_kbd_matrix_common_config kbd_cfg =
+	INPUT_KBD_MATRIX_DT_COMMON_CONFIG_INIT(TEST_KBD_SCAN_NODE, &test_api);
 
-DEVICE_DT_DEFINE(DT_INST(0, vnd_keyboard_input_device), NULL, NULL, NULL,
-		 &kbd_cfg, PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_DEVICE,
-		 NULL);
+static struct input_kbd_matrix_common_data kbd_data;
+
+static const struct device *const fake_dev = DEVICE_DT_GET(TEST_KBD_SCAN_NODE);
+
+static int vnd_keyboard_pm_action(const struct device *dev,
+				  enum pm_device_action action)
+{
+	return 0;
+}
+
+#define VND_KEYBOARD_NODE DT_INST(0, vnd_keyboard_input_device)
+
+PM_DEVICE_DT_DEFINE(VND_KEYBOARD_NODE, vnd_keyboard_pm_action);
+
+DEVICE_DT_DEFINE(VND_KEYBOARD_NODE, input_kbd_matrix_common_init,
+		 PM_DEVICE_DT_GET(VND_KEYBOARD_NODE), &kbd_data, &kbd_cfg,
+		 POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEVICE, NULL);
 
 FAKE_VALUE_FUNC(int, system_is_locked);
 FAKE_VOID_FUNC(keyboard_state_changed, int, int, int);
@@ -59,41 +84,34 @@ ZTEST(keyboard_input, test_keyboard_input_events)
 
 ZTEST(keyboard_input, test_keyboard_input_enable_disable)
 {
-	zassert_equal(keyboard_state_changed_fake.call_count, 0);
+	enum pm_device_state state;
 
-	input_report_abs(fake_dev, INPUT_ABS_X, 1, false, K_FOREVER);
-	input_report_abs(fake_dev, INPUT_ABS_Y, 2, false, K_FOREVER);
-	input_report_key(fake_dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
-
-	zassert_equal(keyboard_state_changed_fake.call_count, 1);
+	pm_device_state_get(fake_dev, &state);
+	zassert_equal(state, PM_DEVICE_STATE_ACTIVE);
 
 	/* disable A */
 	keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_CLOSED);
 
-	input_report_key(fake_dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
-
-	zassert_equal(keyboard_state_changed_fake.call_count, 1);
+	pm_device_state_get(fake_dev, &state);
+	zassert_equal(state, PM_DEVICE_STATE_SUSPENDED);
 
 	/* disable B */
 	keyboard_scan_enable(0, KB_SCAN_DISABLE_POWER_BUTTON);
 
-	input_report_key(fake_dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
-
-	zassert_equal(keyboard_state_changed_fake.call_count, 1);
+	pm_device_state_get(fake_dev, &state);
+	zassert_equal(state, PM_DEVICE_STATE_SUSPENDED);
 
 	/* enable A */
 	keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_CLOSED);
 
-	input_report_key(fake_dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
-
-	zassert_equal(keyboard_state_changed_fake.call_count, 1);
+	pm_device_state_get(fake_dev, &state);
+	zassert_equal(state, PM_DEVICE_STATE_SUSPENDED);
 
 	/* enable B */
 	keyboard_scan_enable(1, KB_SCAN_DISABLE_POWER_BUTTON);
 
-	input_report_key(fake_dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
-
-	zassert_equal(keyboard_state_changed_fake.call_count, 2);
+	pm_device_state_get(fake_dev, &state);
+	zassert_equal(state, PM_DEVICE_STATE_ACTIVE);
 }
 
 ZTEST(keyboard_input, test_kso_gpio)
@@ -130,14 +148,14 @@ uint8_t keyboard_get_cols(void);
 
 ZTEST(keyboard_input, test_get_cols)
 {
-	zassert_equal(keyboard_get_cols(), 88);
+	zassert_equal(keyboard_get_cols(), 10);
 }
 
 uint8_t keyboard_get_rows(void);
 
 ZTEST(keyboard_input, test_get_rows)
 {
-	zassert_equal(keyboard_get_rows(), 99);
+	zassert_equal(keyboard_get_rows(), 8);
 }
 
 extern uint8_t keyboard_cols;
@@ -210,8 +228,19 @@ INPUT_CALLBACK_DEFINE(fake_dev, test_input_cb_handler, NULL);
 ZTEST(keyboard_input, test_kbpress)
 {
 	const struct shell *shell_zephyr = shell_backend_dummy_get_ptr();
+	const char *outbuffer;
+	size_t buffer_size;
 
-	zassert_equal(shell_execute_cmd(shell_zephyr, "kbpress"), -EINVAL);
+	/* Give the shell time to initialize */
+	k_sleep(K_MSEC(100));
+
+	shell_backend_dummy_clear_output(shell_zephyr);
+	zassert_ok(shell_execute_cmd(shell_zephyr, "kbpress"));
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+	zassert_true(buffer_size > 0, NULL);
+	zassert_ok(strcmp(outbuffer, "\r\nSimulated keys:\r\n"),
+		   "outbuffer = '%s'", outbuffer);
+
 	zassert_equal(shell_execute_cmd(shell_zephyr, "kbpress x 2 3"),
 		      -EINVAL);
 	zassert_equal(shell_execute_cmd(shell_zephyr, "kbpress 1 x 3"),
@@ -225,6 +254,22 @@ ZTEST(keyboard_input, test_kbpress)
 	zassert_equal(last_evt.y, 5);
 	zassert_equal(last_evt.touch, 1);
 	zassert_equal(last_evt.count, 3);
+
+	shell_backend_dummy_clear_output(shell_zephyr);
+	zassert_ok(shell_execute_cmd(shell_zephyr, "kbpress"));
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+	zassert_true(buffer_size > 0, NULL);
+	zassert_ok(strcmp(outbuffer, "\r\nSimulated keys:\r\n\t3 5\r\n"),
+		   "outbuffer = '%s'", outbuffer);
+
+	zassert_ok(shell_execute_cmd(shell_zephyr, "kbpress clear"));
+
+	shell_backend_dummy_clear_output(shell_zephyr);
+	zassert_ok(shell_execute_cmd(shell_zephyr, "kbpress"));
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+	zassert_true(buffer_size > 0, NULL);
+	zassert_ok(strcmp(outbuffer, "\r\nSimulated keys:\r\n"),
+		   "outbuffer = '%s'", outbuffer);
 }
 
 ZTEST(keyboard_input, test_mkbp_command_simulate_key)
@@ -233,14 +278,14 @@ ZTEST(keyboard_input, test_mkbp_command_simulate_key)
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND_PARAMS(EC_CMD_MKBP_SIMULATE_KEY, 0, param);
 
-	param.col = 10;
-	param.row = 11;
+	param.col = 9;
+	param.row = 7;
 	param.pressed = 1;
 
 	zassert_ok(host_command_process(&args));
 
-	zassert_equal(last_evt.x, 10);
-	zassert_equal(last_evt.y, 11);
+	zassert_equal(last_evt.x, 9);
+	zassert_equal(last_evt.y, 7);
 	zassert_equal(last_evt.touch, 1);
 	zassert_equal(last_evt.count, 3);
 
@@ -248,8 +293,8 @@ ZTEST(keyboard_input, test_mkbp_command_simulate_key)
 
 	zassert_ok(host_command_process(&args));
 
-	zassert_equal(last_evt.x, 10);
-	zassert_equal(last_evt.y, 11);
+	zassert_equal(last_evt.x, 9);
+	zassert_equal(last_evt.y, 7);
 	zassert_equal(last_evt.touch, 0);
 	zassert_equal(last_evt.count, 6);
 }
@@ -282,6 +327,12 @@ ZTEST(keyboard_input, test_mkbp_command_simulate_key_invalid_param)
 
 	param.col = 0;
 	param.row = kbd_cfg.row_size;
+}
+
+ZTEST(keyboard_input, test_keyboard_input_priority)
+{
+	zassert_equal(k_thread_priority_get(&kbd_data.thread),
+		      EC_TASK_PRIORITY(EC_TASK_KEYSCAN_PRIO));
 }
 
 static void reset(void *fixture)

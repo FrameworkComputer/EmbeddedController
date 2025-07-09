@@ -50,6 +50,16 @@
 				value = <3>;
 				default;
 			};
+			sub-board-4 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_4";
+				value = <4>;
+			};
+			sub-board-5 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_5";
+				value = <5>;
+			};
 		};
 		/*
 		 * FW_CONFIG field to enable TypeC BC1.2.
@@ -90,5 +100,95 @@
 				value = <1>;
 			};
 		};
+		/*
+		 * FW_CONFIG field to describe Clamshell/Convertible.
+		 */
+		form_factor {
+			enum-name = "FORM_FACTOR";
+			start = <15>;
+			size = <1>;
+			clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CLAMSHELL";
+				value = <0>;
+				default;
+			};
+			covertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CONVERTIBLE";
+				value = <1>;
+			};
+		};
+
+                /*
+                 * FW_CONFIG field to change scancode setting for special
+                 * keyboard type.
+                 */
+                kb-type {
+                        enum-name = "FW_KB_TYPE";
+                        start = <18>;
+                        size = <1>;
+
+                        kb-type-default {
+                                compatible = "cros-ec,cbi-fw-config-value";
+                                enum-name = "FW_KB_TYPE_DEFAULT";
+                                value = <0>;
+                        };
+                        kb-type-ca-fr {
+                                compatible = "cros-ec,cbi-fw-config-value";
+                                enum-name = "FW_KB_TYPE_CA_FR";
+                                value = <1>;
+                        };
+                };
+	};
+
+	/* Glassway-specific ssfc fields. */
+        cbi-ssfc {
+                compatible = "cros-ec,cbi-ssfc";
+                /*
+                 * SSFC field to panel type.
+                 */
+                panel-type {
+			enum-name = "PANEL_TYPE";
+			size = <3>;
+		};
+
+                /*
+                 * SSFC field to identify BASE motion sensor.
+                 */
+                base-sensor {
+                        enum-name = "BASE_SENSOR";
+                        size = <2>;
+                        base_sensor_bmi323: bmi323 {
+                                compatible = "cros-ec,cbi-ssfc-value";
+                                status = "okay";
+                                value = <0>;
+                                default;
+                        };
+                        base_sensor_icm42607: icm42607 {
+                                compatible = "cros-ec,cbi-ssfc-value";
+                                status = "okay";
+                                value = <1>;
+                        };
+                };
+
+                /*
+                 * SSFC field to set USB MUX EQ for different DB FFC.
+                 */
+                ffc_type {
+                        enum-name = "USB_SS_MUX";
+                        size = <2>;
+                        ffc1: ffc1 {
+                                compatible = "cros-ec,cbi-ssfc-value";
+                                status = "okay";
+                                value = <0>;
+                                default;
+                        };
+                        ffc2: ffc2 {
+                                compatible = "cros-ec,cbi-ssfc-value";
+                                status = "okay";
+                                value = <1>;
+                        };
+                };
 	};
 };

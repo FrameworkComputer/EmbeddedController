@@ -145,12 +145,19 @@ int rwsig_check_signature(void)
 	}
 
 #ifdef CONFIG_RWSIG_TYPE_USBPD1
-	key = (const struct rsa_public_key *)CONFIG_RO_PUBKEY_ADDR;
-	sig = (const uint8_t *)CONFIG_RW_SIG_ADDR;
+	key = (const struct rsa_public_key *)(CONFIG_MAPPED_STORAGE_BASE +
+					      CONFIG_RO_PUBKEY_OFF);
+	sig = (const uint8_t *)(CONFIG_MAPPED_STORAGE_BASE + CONFIG_RW_SIG_OFF);
 	rwlen = CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE;
 #elif defined(CONFIG_RWSIG_TYPE_RWSIG)
 	vb21_key = vb21_get_packed_key();
-	vb21_sig = (const struct vb21_signature *)CONFIG_RWSIG_READ_ADDR;
+
+#ifdef CONFIG_MAPPED_STORAGE
+	vb21_sig = (const struct vb21_signature *)(CONFIG_MAPPED_STORAGE_BASE +
+						   CONFIG_RW_SIG_OFF);
+#elif defined(CONFIG_ZTEST)
+	vb21_sig = (const struct vb21_signature *)(rwdata + RW_SIG_OFFSET);
+#endif
 
 	if (vb21_key->c.magic != VB21_MAGIC_PACKED_KEY ||
 	    vb21_key->key_size != sizeof(struct rsa_public_key)) {

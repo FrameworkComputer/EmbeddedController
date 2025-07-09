@@ -3,7 +3,8 @@
 # found in the LICENSE file.
 
 common:
-  platform_allow: native_sim
+  platform_allow:
+  - native_sim
 tests:
   fpmcu.bloonchipper.transport_spi:
     extra_configs:

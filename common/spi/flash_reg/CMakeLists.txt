@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 3.20.0)
 
 # Create the library
-if(BOARD STREQUAL unit_testing)
+if(BOARD STREQUAL "unit_testing" OR BOARD STREQUAL "unit_testing/unit_testing")
   find_package(Zephyr COMPONENTS unittest REQUIRED HINTS $ENV{ZEPHYR_BASE})
   add_library(spi_flash_reg)
 else()
@@ -43,7 +43,7 @@ target_sources(spi_flash_reg
 # Include the public directory
 target_include_directories(spi_flash_reg PUBLIC public)
 
-if(BOARD STREQUAL unit_testing)
+if(BOARD STREQUAL "unit_testing" OR BOARD STREQUAL "unit_testing/unit_testing")
   project(flash_reg)
 
   # Set the sources for the test

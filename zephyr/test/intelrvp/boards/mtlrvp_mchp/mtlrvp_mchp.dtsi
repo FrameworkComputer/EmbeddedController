@@ -1,0 +1,27 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <mchp_emul.dts>
+#include <zephyr/dt-bindings/pwm/pwm.h>
+#include "board.h"
+#include "../mtlrvp/gpio.dtsi"
+#include "../mtlrvp/adc.dtsi"
+#include "../mtlrvp/i2c.dtsi"
+#include "../mtlrvp/interrupts.dtsi"
+#include "../mtlrvp/tcpc_i2c.dtsi"
+#include "../mtlrvp/keyboard.dtsi"
+#include "../mtlrvp/battery.dtsi"
+#include "../mtlrvp/board_id.dtsi"
+//#include "../mtlrvp/ioex.dtsi"
+#include "../mtlrvp/power_signals.dtsi"
+#include "../mtlrvp/tcpc_interrupts.dtsi"
+#include "../mtlrvp/tcpc_ioex.dtsi"
+#include "../mtlrvp/usbc.dtsi"
+
+/ {
+        chosen {
+		cros-ec,espi = &espi0;
+	};
+};

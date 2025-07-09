@@ -40,6 +40,7 @@ const struct i2c_port_t i2c_ports[] = { DT_FOREACH_CHILD_STATUS_OKAY(
 	NAMED_I2C_PORTS_NODE, I2C_PORT_INIT) };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 static const int i2c_remote_ports[I2C_PORT_COUNT] = {
+	[0 ...(I2C_PORT_COUNT - 1)] = -1, /* default -1 for unnamed ports */
 	DT_FOREACH_CHILD_STATUS_OKAY(NAMED_I2C_PORTS_NODE, INIT_REMOTE_PORTS)
 };
 

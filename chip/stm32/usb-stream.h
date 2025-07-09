@@ -22,25 +22,21 @@
 
 #include <stdint.h>
 
+enum usb_stream_state_flags_t {
+	/*
+	 * Set if the producer has requested flush(), and we have not yet
+	 * completely emptied the TX queue.
+	 */
+	USB_STREAM_TX_FLUSH = BIT(0),
+};
+
 /*
  * Per-USB stream state stored in RAM.  Zero initialization of this structure
  * by the BSS initialization leaves it in a valid and correctly initialized
  * state, so there is no need currently for a usb_stream_init style function.
  */
 struct usb_stream_state {
-	/*
-	 * Flag indicating that there is a full RX buffer in the USB packet RAM
-	 * that we were not able to move into the RX queue because there was
-	 * not enough room when the packet was initially received.  The
-	 * producer read operation checks this flag so that once there is
-	 * room in the queue it can copy the RX buffer into the queue and
-	 * restart USB reception by marking the RX buffer as VALID.
-	 */
-	int rx_waiting;
-	/*
-	 * Flag indicating that the incoming data on the USB link are discarded.
-	 */
-	int rx_disabled;
+	enum usb_stream_state_flags_t flags;
 };
 
 /*

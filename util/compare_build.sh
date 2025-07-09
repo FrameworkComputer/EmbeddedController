@@ -17,6 +17,7 @@
 # * stm32f0   - All boards that use an STM32F0 family of chip
 # * stm32f4   - All boards that use an STM32F4 family of chip
 # * stm32h7   - All boards that use an STM32H7 family of chip
+# * stm32l    - All boards that use an STM32Lx family of chip
 # * npcx      - "
 # * mchp      - "
 # * ish       - "
@@ -119,9 +120,11 @@ parse-boards() {
     dartmonkey
     bloonchipper
     buccaneer
+    gwendolin
     helipilot
     nucleo-dartmonkey
     nucleo-h743zi
+    rosalia
   )
 
   # Board groups
@@ -137,6 +140,7 @@ parse-boards() {
     [stm32f0]="$(boards-with 'CHIP_VARIANT[[:space:]:=]*stm32f0')"
     [stm32f4]="$(boards-with 'CHIP_VARIANT[[:space:]:=]*stm32f4')"
     [stm32h7]="$(boards-with 'CHIP_VARIANT[[:space:]:=]*stm32h7')"
+    [stm32l]="$(boards-with 'CHIP_VARIANT[[:space:]:=]*stm32l')"
     [npcx]="$(boards-with 'CHIP[[:space:]:=]*npcx')"
     [mchp]="$(boards-with 'CHIP[[:space:]:=]*mchp')"
     [ish]="$(boards-with 'CHIP[[:space:]:=]*ish')"
@@ -223,6 +227,16 @@ if [[ "${FLAGS_private}" == "${FLAGS_TRUE}" ]]; then
   LINKS+=( fingerprint )
 fi
 
+# This link is outside the new makefile's. vpython3 files in utils/ link here.
+ln -s "$(realpath ../../third_party)" "${TMP_DIR}"/third_party
+
+# TODO support changing toolchains between versions
+echo "# Adding coreboot-sdk to env."
+TOOLCHAIN_VARS=$(./util/coreboot_sdk.py)
+declare -A toolchain_dict
+eval "toolchain_dict=(${TOOLCHAIN_VARS})"
+
+
 ##########################################################################
 # Runtime                                                                #
 ##########################################################################
@@ -241,6 +255,14 @@ EIGEN3_DIR ?= $(realpath ../../third_party/eigen3)
 ZEPHYR_BASE ?= $(realpath ../../../src/third_party/zephyr/main)
 BOARDS ?= ${BOARDS[*]}
 LINKS ?= ${LINKS[*]}
+HEREDOC
+
+# Add the variables to the environment
+for key in "${!toolchain_dict[@]}"; do
+    echo "${key} ?= ${toolchain_dict[${key}]}" >> "${TMP_DIR}/Makefile"
+done
+
+cat >> "${TMP_DIR}/Makefile" <<HEREDOC
 
 .PHONY: all
 all: build-${OLD_REF} build-${NEW_REF}
@@ -259,6 +281,14 @@ build-%: ec-%
 		CRYPTOC_DIR=\$(CRYPTOC_DIR)                                   \\
 		EIGEN3_DIR=\$(EIGEN3_DIR)                                     \\
 		ZEPHYR_BASE=\$(ZEPHYR_BASE)                                   \\
+HEREDOC
+
+# Add the variables to the environment
+for key in "${!toolchain_dict[@]}"; do
+    echo "		${key}=\$(${key})       \\" >> "${TMP_DIR}/Makefile"
+done
+
+cat >> "${TMP_DIR}/Makefile" <<HEREDOC
 		\$(addprefix proj-,\$(BOARDS))
 	@printf "  MKDIR   %s\n" "\$@"
 	@mkdir -p \$@

@@ -1,0 +1,14 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* This is the IOEX/KBD IC present on GCS AIC */
+&charger_i2c {
+	it8801_mfd: it8801@39 {
+		compatible = "ite,it8801-mfd";
+		reg = <0x39>;
+	};
+};
+
+#include <ite/it8801-common-cfg.dtsi>

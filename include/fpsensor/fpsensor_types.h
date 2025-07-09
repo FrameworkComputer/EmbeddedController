@@ -30,10 +30,15 @@ enum fp_sensor_spi_select {
 	FP_SENSOR_SPI_SELECT_PRODUCTION
 };
 
+/**
+ * @brief This enum represents the different states of finger detection on the
+ * fingerprint sensor.
+ *
+ */
 enum finger_state {
-	FINGER_NONE = 0,
-	FINGER_PARTIAL = 1,
-	FINGER_PRESENT = 2,
+	FINGER_NONE = 0, /**< No finger detected. */
+	FINGER_PARTIAL = 1, /**< Partial finger detected. */
+	FINGER_PRESENT = 2, /**< Finger fully present on the sensor. */
 };
 
 #ifdef __cplusplus

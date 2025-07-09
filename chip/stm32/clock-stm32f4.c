@@ -24,12 +24,6 @@
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
 #define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
 
-enum clock_osc {
-	OSC_HSI = 0, /* High-speed internal oscillator */
-	OSC_HSE, /* High-speed external oscillator */
-	OSC_PLL, /* PLL */
-};
-
 /*
  * NOTE: Sweetberry requires MCO2 <- HSE @ 24MHz
  * MCO outputs are selected here but are not changeable later.
@@ -99,10 +93,12 @@ static void clock_enable_osc(enum clock_osc osc, bool enabled)
 		ready = STM32_RCC_CR_HSIRDY;
 		on = STM32_RCC_CR_HSION;
 		break;
+#ifdef CONFIG_STM32_CLOCK_HSE_HZ
 	case OSC_HSE:
 		ready = STM32_RCC_CR_HSERDY;
 		on = STM32_RCC_CR_HSEON;
 		break;
+#endif
 	case OSC_PLL:
 		ready = STM32_RCC_CR_PLLRDY;
 		on = STM32_RCC_CR_PLLON;
@@ -132,10 +128,12 @@ static void clock_switch_osc(enum clock_osc osc)
 		sw = STM32_RCC_CFGR_SW_HSI | RCC_CFGR_DIVIDERS_NO_PLL;
 		sws = STM32_RCC_CFGR_SWS_HSI;
 		break;
+#ifdef CONFIG_STM32_CLOCK_HSE_HZ
 	case OSC_HSE:
 		sw = STM32_RCC_CFGR_SW_HSE | RCC_CFGR_DIVIDERS_NO_PLL;
 		sws = STM32_RCC_CFGR_SWS_HSE;
 		break;
+#endif
 	case OSC_PLL:
 		sw = STM32_RCC_CFGR_SW_PLL | RCC_CFGR_DIVIDERS_WITH_PLL;
 		sws = STM32_RCC_CFGR_SWS_PLL;
@@ -149,7 +147,7 @@ static void clock_switch_osc(enum clock_osc osc)
 		;
 }
 
-void clock_set_osc(enum clock_osc osc)
+void clock_set_osc(enum clock_osc osc, enum clock_osc pll_osc)
 {
 	volatile uint32_t unused __attribute__((unused));
 

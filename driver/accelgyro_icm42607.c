@@ -394,7 +394,7 @@ static int __maybe_unused icm42607_load_fifo(struct motion_sensor_t *s,
  * This is a "top half" interrupt handler, it just asks motion sense ask
  * to schedule the "bottom half", ->icm42607_irq_handler().
  */
-void icm42607_interrupt(enum gpio_signal signal)
+test_mockable void icm42607_interrupt(enum gpio_signal signal)
 {
 	last_interrupt_timestamp = __hw_clock_source_read();
 

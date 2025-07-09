@@ -61,7 +61,8 @@ DECLARE_DEFERRED(panel_power_change_deferred);
 void panel_power_change_interrupt(enum gpio_signal signal)
 {
 	/* Reset lid debounce time */
-	hook_call_deferred(&panel_power_change_deferred_data, 1 * MSEC);
+	hook_call_deferred(&panel_power_change_deferred_data,
+			   1 * USEC_PER_MSEC);
 }
 
 /*
@@ -94,7 +95,7 @@ test_export_static void lcd_reset_change_deferred(void)
 DECLARE_DEFERRED(lcd_reset_change_deferred);
 void lcd_reset_change_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(&lcd_reset_change_deferred_data, 45 * MSEC);
+	hook_call_deferred(&lcd_reset_change_deferred_data, 45 * USEC_PER_MSEC);
 }
 
 /**

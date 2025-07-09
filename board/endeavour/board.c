@@ -136,8 +136,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  * Thermal limits for each temp sensor.  All temps are in degrees K.  Must be in
  * same order as enum temp_sensor_id.  To always ignore any temp, use 0.
  */
-static const int temp_fan_off = C_TO_K(35);
-static const int temp_fan_max = C_TO_K(55);
+static const int temp_fan_off = C_TO_K(0);
+static const int temp_fan_max = C_TO_K(56);
 struct ec_thermal_config thermal_params[] = {
 	/* {Twarn, Thigh, Thalt}, <on>
 	 * {Twarn, Thigh, X    }, <off>
@@ -323,27 +323,21 @@ const struct pwm_t pwm_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 static const struct fan_step_1_1 fan_table0[] = {
-	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(35),
-	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(41),
-	  .rpm = 2500 },
-	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(40),
-	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(44),
-	  .rpm = 2900 },
-	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(42),
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(30),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(33),
+	  .rpm = 3200 },
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(32),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(38),
+	  .rpm = 3800 },
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(37),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(42),
+	  .rpm = 4200 },
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(41),
 	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(46),
-	  .rpm = 3400 },
-	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(44),
-	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(48),
-	  .rpm = 3900 },
-	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(46),
-	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(50),
-	  .rpm = 4400 },
-	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(48),
-	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(52),
-	  .rpm = 4900 },
-	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(50),
-	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(55),
-	  .rpm = 5400 },
+	  .rpm = 4800 },
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(45),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(56),
+	  .rpm = 5200 },
 };
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan_table0)
 

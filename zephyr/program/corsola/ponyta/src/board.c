@@ -18,9 +18,12 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
 
-/* Vol-up key matrix */
-#define VOL_UP_KEY_ROW 1
-#define VOL_UP_KEY_COL 5
+/* Vol-up key matrix for clamshell */
+#define VOL_UP_CLAMSHELL_KEY_ROW 1
+#define VOL_UP_CLAMSHELL_KEY_COL 5
+/* Vol-up key matrix for convertible */
+#define VOL_UP_CONVERTIBLE_KEY_ROW 2
+#define VOL_UP_CONVERTIBLE_KEY_COL 9
 
 LOG_MODULE_REGISTER(board_init, LOG_LEVEL_ERR);
 
@@ -40,10 +43,12 @@ static void board_setup_init(void)
 		board_is_clamshell = true;
 		motion_sensor_count = 0;
 		gmr_tablet_switch_disable();
+		set_vol_up_key(VOL_UP_CLAMSHELL_KEY_ROW,
+			       VOL_UP_CLAMSHELL_KEY_COL);
 	}
-
-	/* Update vol up key */
-	set_vol_up_key(VOL_UP_KEY_ROW, VOL_UP_KEY_COL);
+	if (val == CONVERTIBLE)
+		set_vol_up_key(VOL_UP_CONVERTIBLE_KEY_ROW,
+			       VOL_UP_CONVERTIBLE_KEY_COL);
 }
 DECLARE_HOOK(HOOK_INIT, board_setup_init, HOOK_PRIO_PRE_DEFAULT);
 

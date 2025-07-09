@@ -519,6 +519,7 @@ static void tcpci_partner_common_reset(struct tcpci_partner_data *data)
 	data->in_soft_reset = false;
 	tcpci_partner_stop_sender_response_timer(data);
 	tcpci_partner_common_clear_ams_ctrl_msg(data);
+	memset(&data->skedb, 0, sizeof(data->skedb));
 }
 
 /**
@@ -776,6 +777,35 @@ tcpci_partner_enter_usb_handler(struct tcpci_partner_data *data,
 		tcpci_partner_send_control_msg(data, PD_CTRL_ACCEPT, 0);
 	else
 		tcpci_partner_send_control_msg(data, PD_CTRL_REJECT, 0);
+
+	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+}
+
+static enum tcpci_partner_handler_res
+tcpci_partner_source_info_handler(struct tcpci_partner_data *data,
+				  const struct tcpci_emul_msg *message)
+{
+	data->tcpm_sido = *(union sido *)(message->buf + TCPCI_MSG_HEADER_LEN);
+
+	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+}
+
+static enum tcpci_partner_handler_res
+tcpci_partner_revision_handler(struct tcpci_partner_data *data,
+			       const struct tcpci_emul_msg *message)
+{
+	data->tcpm_rmdo = *(uint32_t *)(message->buf + TCPCI_MSG_HEADER_LEN);
+
+	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+}
+
+static enum tcpci_partner_handler_res
+tcpci_partner_sink_cap_extended_handler(struct tcpci_partner_data *data,
+					const struct tcpci_emul_msg *message)
+{
+	memcpy(&data->skedb,
+	       message->buf + TCPCI_MSG_HEADER_LEN + TCPCI_MSG_EXT_HEADER_LEN,
+	       sizeof(data->skedb));
 
 	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 }
@@ -1114,6 +1144,10 @@ tcpci_partner_common_sop_msg_handler(struct tcpci_partner_data *data,
 
 			return tcpci_partner_common_battery_capability_handler(
 				data, tx_msg);
+		case PD_EXT_SINK_CAP:
+			LOG_INF("Got PD_EXT_SINK_CAP");
+			return tcpci_partner_sink_cap_extended_handler(data,
+								       tx_msg);
 		default:
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
 		}
@@ -1126,6 +1160,10 @@ tcpci_partner_common_sop_msg_handler(struct tcpci_partner_data *data,
 			return tcpci_partner_common_vdm_handler(data, tx_msg);
 		case PD_DATA_ENTER_USB:
 			return tcpci_partner_enter_usb_handler(data, tx_msg);
+		case PD_DATA_SOURCE_INFO:
+			return tcpci_partner_source_info_handler(data, tx_msg);
+		case PD_DATA_REVISION:
+			return tcpci_partner_revision_handler(data, tx_msg);
 		default:
 			/* No other common handlers for data messages */
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;

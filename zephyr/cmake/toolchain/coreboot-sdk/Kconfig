@@ -1,0 +1,19 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config TOOLCHAIN_COREBOOT_SDK
+	def_bool y
+	select HAS_NEWLIB_LIBC_NANO
+
+config TOOLCHAIN_COREBOOT_SDK_SUPPORTS_THREAD_LOCAL_STORAGE
+   def_bool y
+   select TOOLCHAIN_SUPPORTS_THREAD_LOCAL_STORAGE
+
+config TOOLCHAIN_COREBOOT_SDK_SUPPORTS_GNU_EXTENSIONS
+	def_bool y
+	select TOOLCHAIN_SUPPORTS_GNU_EXTENSIONS
+
+config TOOLCHAIN_COREBOOT_SDK_PICOLIBC_SUPPORTED
+   def_bool y
+   select PICOLIBC_SUPPORTED

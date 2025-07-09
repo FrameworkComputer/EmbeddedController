@@ -3,12 +3,13 @@
 # found in the LICENSE file.
 
 common:
-  platform_allow: native_sim
+  platform_allow:
+    - native_sim
 tests:
   system_safe_mode.default:
     tags:
-      common
-      system
+      - common
+      - system
   system_safe_mode.disabled:
     extra_configs:
       - CONFIG_PLATFORM_EC_SYSTEM_SAFE_MODE=n

@@ -1,0 +1,15 @@
+# Copyright 2024 Google LLC
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+properties:
+  # TODO: http://b/323371550
+  # Revisit this property when we support PDC port groupings
+  no-fw-update:
+    type: boolean
+    description: |
+      If set, do NOT consider this node to be an independent PD chip and
+      instruct Depthcharge to NOT apply firmware updates to this device. For
+      two-port PDC devices where each port has its own DT node, one of them
+      should have this property set to avoid updating the same chip twice
+      through each port.

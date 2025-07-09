@@ -66,6 +66,12 @@ config BOARD_PUJJOGA
 	  Build Google Pujjoga board. Pujjoga has Intel ADL-N SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_PUJJOGATWIN
+	bool "Google PujjogaTwin Board"
+	help
+	  Build Google PujjogaTwin board. PujjogaTwin has Intel ADL-N SoC
+	  with NPCX993FA0BX EC.
+
 config BOARD_XIVU
         bool "Google Xivu Board"
         help
@@ -132,6 +138,12 @@ config BOARD_QUANDISO
 	  Build Google Quandiso board. Quandiso has Intel ADL-N SoC
 	  with IT81302 EC.
 
+config BOARD_QUANDISO2
+	bool "Google Quandiso2 Board"
+	help
+	  Build Google Quandiso2 board. Quandiso2 has Intel ADL-N SoC
+	  with IT81302 EC.
+
 config BOARD_PIRRHA
 	bool "Google Pirrha Board"
 	help
@@ -173,6 +185,36 @@ config BOARD_TELIKS
 	help
 	  Build Google Teliks reference board. Teliks has Intel TWL SoC
 	  with IT81302 EC.
+
+config BOARD_RULL
+	bool "Google RULL Board"
+	help
+	  Build Google RULL reference board. RULL has Intel TWL SoC
+	  with IT81302 EC.
+
+config BOARD_TELITH
+	bool "Google Telith Board"
+	help
+	  Build Google Telith reference board. Telith has Intel TWL SoC
+	  with IT81302 EC.
+
+config BOARD_PUJJONIRU
+	bool "Google PUJJONIRU Board"
+	help
+	  Build Google PUJJONIRU reference board. PUJJONIRU has Intel TWL SoC
+	  with IT81302 EC.
+
+config BOARD_DIRKS
+	bool "Google Dirks Board"
+	help
+	  Build Google Dirks reference board. Dirks has Intel TWL SoC
+	  with IT81302 EC.
+
+config BOARD_GUREN
+	bool "Google GUREN Board"
+	help
+	  Build Google GUREN reference board. Nivviks has Intel TWL SoC
+	  with NPCX993FA0BX EC.
 
 module = NISSA
 module-str = Nissa board-specific code

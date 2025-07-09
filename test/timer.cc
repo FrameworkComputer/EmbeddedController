@@ -32,7 +32,6 @@ test_static int test_usleep(void)
 	 * us on 12345 us. This is considerably lower resolution and higher
 	 * error than the stm32 boards and may result in higher deltas.
 	 */
-	DISABLE_CLANG_WARNING("-Wignored-attributes"); // TODO(b/346419141)
 	if (IS_ENABLED(BASEBOARD_HELIPILOT)) {
 		double max_error = expected_duration * 0.02;
 		double clock_tick_us = (1.0 / 32768.0) * 1000000.0;
@@ -40,7 +39,6 @@ test_static int test_usleep(void)
 		/* Assume a worst case error of max_error + 1 clock tick */
 		error_threshold = static_cast<int>(max_error + clock_tick_us);
 	}
-	ENABLE_CLANG_WARNING("-Wignored-attributes"); // TODO(b/346419141)
 
 	TEST_NEAR(expected_duration, sleep_duration, error_threshold, "%d");
 

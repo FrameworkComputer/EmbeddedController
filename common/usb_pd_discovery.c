@@ -69,14 +69,7 @@ void dfp_consume_identity(int port, enum tcpci_msg_type type, int cnt,
 	/* Note: only store VDOs, not the VDM header */
 	memcpy(disc->identity.raw_value, payload + 1, identity_size);
 	disc->identity_cnt = identity_size / sizeof(uint32_t);
-
-	if (PD_VDO_SVDM_VERS_MAJOR(payload[0]) &&
-	    PD_VDO_SVDM_VERS_MINOR(payload[0]))
-		disc->svdm_vers = SVDM_VER_2_1;
-	else if (PD_VDO_SVDM_VERS_MAJOR(payload[0]))
-		disc->svdm_vers = SVDM_VER_2_0;
-	else
-		disc->svdm_vers = SVDM_VER_1_0;
+	pd_set_svdm_ver(port, type, PD_VDO_SVDM_VERS(payload[0]));
 
 	switch (ptype) {
 	case IDH_PTYPE_AMA:
@@ -97,6 +90,15 @@ void dfp_consume_identity(int port, enum tcpci_msg_type type, int cnt,
 		break;
 	}
 	pd_set_identity_discovery(port, type, PD_DISC_COMPLETE);
+}
+
+void pd_set_svdm_ver(int port, enum tcpci_msg_type type,
+		     enum usb_pd_svdm_ver ver)
+{
+	struct pd_discovery *disc =
+		pd_get_am_discovery_and_notify_access(port, type);
+
+	disc->svdm_vers = MIN(SVDM_VER_2_1, ver);
 }
 
 void dfp_consume_svids(int port, enum tcpci_msg_type type, int cnt,

@@ -169,10 +169,10 @@
 #define CONFIG_USBC_VCONN_SWAP
 
 /* Define typical operating power and max power. */
-#define PD_MAX_VOLTAGE_MV 20000
-#define PD_MAX_CURRENT_MA 3000
-#define PD_MAX_POWER_MW 45000
-#define PD_OPERATING_POWER_MW 15000
+#define CONFIG_USB_PD_MAX_VOLTAGE_MV 20000
+#define CONFIG_USB_PD_MAX_CURRENT_MA 3000
+#define CONFIG_USB_PD_MAX_POWER_MW 45000
+#define CONFIG_USB_PD_OPERATING_POWER_MW 15000
 
 /* TODO(aaboagye): Verify these timings. */
 /*

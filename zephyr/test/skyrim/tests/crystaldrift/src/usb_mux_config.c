@@ -167,4 +167,9 @@ ZTEST(usb_mux_config, test_setup_mux)
 	alt_retimer = true;
 	setup_mux();
 	zassert_equal(usb_mux_enable_alternative_fake.call_count, 1);
+
+	cros_cbi_get_fw_config_fake.custom_fake = NULL;
+	cros_cbi_get_fw_config_fake.return_val = -EINVAL;
+	setup_mux();
+	zassert_equal(usb_mux_enable_alternative_fake.call_count, 1);
 }

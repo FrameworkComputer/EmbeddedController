@@ -1,0 +1,16 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "usbc.dtsi"
+#include "../../../../program/rex/kanix/battery.dtsi"
+
+/ {
+	named-i2c-ports {
+		i2c_ec_i2c_bat: ec_i2c_bat {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_BATTERY";
+		};
+	};
+};

@@ -240,10 +240,10 @@
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY (461 * MSEC)
 
 /* Define typical operating power and max power */
-#define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW 100000
-#define PD_MAX_CURRENT_MA 5000
-#define PD_MAX_VOLTAGE_MV 20000
+#define CONFIG_USB_PD_OPERATING_POWER_MW 15000
+#define CONFIG_USB_PD_MAX_POWER_MW 100000
+#define CONFIG_USB_PD_MAX_CURRENT_MA 5000
+#define CONFIG_USB_PD_MAX_VOLTAGE_MV 20000
 
 /* Add the raw option to the i2c_xfer command */
 #define CONFIG_CMD_I2C_XFER_RAW

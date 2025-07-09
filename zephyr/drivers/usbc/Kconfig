@@ -92,6 +92,12 @@ config USBC_PDC_TRACE_MSG
 	  Messages between the EC and PDC are saved in a pre-allocated
 	  FIFO so they can be retrieved by EC host and console commands.
 
+config PDC_DRIVER_INIT_PRIORITY
+	int "PDC driver init priority"
+	default 90
+	help
+	  Initialization priority of the PDC device driver(s) in POST_KERNEL.
+
 rsource "Kconfig.pdc_trace"
 
 endif # PLATFORM_EC_USBC

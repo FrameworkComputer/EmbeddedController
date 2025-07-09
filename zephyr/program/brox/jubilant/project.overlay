@@ -16,11 +16,10 @@
 
 #include "../binman.dtsi"
 #include "../brox.dtsi"
-#include "../fan.dtsi"
+
 #include "gpio.dtsi"
 #include "../i2c.dtsi"
 #include "../interrupts.dtsi"
-#include "../motionsense.dtsi"
 #include "../power_signals.dtsi"
 #include "../power_signals_gpios.dtsi"
 #include "../pwm.dtsi"
@@ -28,6 +27,8 @@
 #include "../usba.dtsi"
 
 /* Jubilant project DTS includes */
+#include "cbi.dtsi"
+#include "fan.dtsi"
 #include "keyboard.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
@@ -46,6 +47,9 @@
                 panasonic_ap23a5l {
                         compatible = "panasonic,ap23a5l", "battery-smart";
                 };
+                panasonic_ap23a5l_2 {
+                        compatible = "panasonic,ap23a5l-2", "battery-smart";
+                };
                 lges-ap23a8l {
                         compatible = "lges,ap23a8l", "battery-smart";
                 };
@@ -62,3 +66,5 @@
 &gpio_ec_i2c_pmc_pd_int_odl {
 	no-auto-init;
 };
+
+/delete-node/ &int_lid_imu;

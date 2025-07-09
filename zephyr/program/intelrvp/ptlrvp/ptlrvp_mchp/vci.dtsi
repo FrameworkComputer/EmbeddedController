@@ -1,0 +1,37 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	vci-pins{
+		#address-cells = <1>;
+		#size-cells = <0>;
+		/**
+		 * Plaform supports two wake-up sources:
+		 * VCI_IN0: Power Button
+		 * VCI_OVRD_IN: AC Present (using default register values)
+		 *
+		 * VCI_IN1: BATT_ID is enabled to allow system to reset when
+		 *          only battery is power source
+		 *
+		 * Note: Lid is not a wake-up source.
+		*/
+		vci_power_btn: vci_input_0@0 {
+			compatible = "cros-ec,hibernate-vci-pin";
+			reg = <0>;
+			vci-polarity = "Active_Low";
+			vci-latch-enable;
+			wakeup;
+			status = "okay";
+		};
+		vci_batt_id: vci_input_1@1 {
+			compatible = "cros-ec,hibernate-vci-pin";
+			reg = <1>;
+			vci-polarity = "Active_Low";
+			vci-latch-enable;
+			preserve;
+			status = "okay";
+		};
+	};
+};

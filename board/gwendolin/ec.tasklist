@@ -1,0 +1,11 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "base_ec.tasklist"
+
+/**
+ * See CONFIG_TASK_LIST in config.h for details.
+ */
+#define CONFIG_TASK_LIST BASEBOARD_CONFIG_TASK_LIST

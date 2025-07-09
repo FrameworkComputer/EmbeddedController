@@ -43,16 +43,20 @@ config PLATFORM_EC_USB_PD_USB4
 	  flexible multiplexing of data on the cable for different purposes,
 	  e.g. attaching multiple displays and storage devices on the same bus.
 
-config PLATFORM_EC_CONFIG_USB_PD_3A_PORTS
+config PLATFORM_EC_USB_PD_3A_PORTS
 	int "Number of USBC ports that can supply 3A"
 	default 1
 	help
-	 Ensure that CONFIG_USB_PD_TCPMV2 is not being used with charge_manager source
-	 defines, and define a default number of 3.0 A ports if not selected. Note
-	 that the functionality of this default of 1 is equivalent to both previous
-	 defines, which only ever allocated one 3.0 A port.
+	  Specifies the number of ports the platform can source 3.0A on
+	  simultaneously.  When this setting is lower than the total number
+	  of USB Type-C ports on the platform, the source policy logic
+	  provides 3.0A to connected partners in this order.
 
-	 To turn off the TCPMv2 3.0 A current allocation from the DPM, set
-	 CONFIG_USB_PD_3A_PORTS to 0.
+	  1. PD capabable sinks that request more than 1.5A in their Get Sink
+	     Caps response.
+	  2. FRS capable sources that request 3.0A FRS current.
+	  3. Non-PD sinks
+
+	  To turn off 3.0A current allocation, set this field to 0.
 
 endif # PLATFORM_EC_USB_POWER_DELIVERY || PLATFORM_EC_USB_PD_CONTROLLER

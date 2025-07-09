@@ -34,7 +34,7 @@ ZTEST_SUITE(pdc_pmc_debug_api, NULL, pdc_pmc_setup, NULL, NULL, NULL);
 
 ZTEST_USER(pdc_pmc_debug_api, test_data_connection)
 {
-	union connector_status_t connector_status;
+	union connector_status_t connector_status = { 0 };
 	static union data_status_reg status;
 
 	zassert_false(pd_is_connected(CONFIG_USB_PD_PORT_MAX_COUNT));

@@ -46,4 +46,26 @@
 			};
 		};
 	};
+	/* gothrax-specific fw_config fields. */
+	nissa-fw-config {
+		/*
+		 * FW_CONFIG field to extern charger max voltage select 15v/20v
+		 */
+		adapter_voltage_limit {
+			enum-name = "ADAPTER_VOLTAGE_LIMIT";
+			start = <10>;
+			size = <1>;
+			limit15  {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "MAX15";
+				value = <0>;
+				default;
+			};
+			limit20 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "MAX20";
+				value = <1>;
+			};
+		};
+	};
 };

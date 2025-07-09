@@ -3,9 +3,11 @@
  * found in the LICENSE file.
  */
 
+#include "adc.h"
 #include "gpio/gpio.h"
 #include "gpio_signal.h"
 #include "system_boot_time.h"
+#include "zephyr_adc.h"
 
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
@@ -62,4 +64,23 @@ bool board_ap_power_check_power_rails_enabled(void)
 {
 	return power_signal_get(PWR_EN_PP3300_A);
 }
+
+#ifdef CONFIG_POWER_BUTTON_INIT_IDLE
+/*
+ * The system supply specification is 17.1 to 21V. 17.1V less 20% is 13.68V.
+ * use 13.5V as the minimum power voltage. Report power failure when system
+ * supply voltage is less than 13.5V.
+ */
+#define MINIMUM_POWER_IN_MV 13500
+
+__override bool board_is_power_good(void)
+{
+	/* ADC read = System supply voltage * (R482 / (R481 + R482)) */
+	if (adc_read_channel(ADC_PSYS) <
+	    (MINIMUM_POWER_IN_MV * 100 / (100 + 715)))
+		return false;
+
+	return true;
+}
+#endif
 #endif /* CONFIG_X86_NON_DSX_PWRSEQ_MTL */

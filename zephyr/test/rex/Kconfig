@@ -17,16 +17,16 @@ choice TEST_PROJECT_TYPE
 		help
 		Enable tests for screebo variant.
 
+	config TEST_PROJECT_KANIX
+		bool "Enable kanix-specific tests"
+		help
+		Enable tests for kanix variant.
+
 	config TEST_PROJECT_KARIS
 		bool "Enable karis-specific tests"
 		help
 		Enable tests for karis variant.
 
-	config TEST_PROJECT_REX_ISH
-		bool "Enable rex ISH tests"
-		help
-		Enable tests for rex ISH project. Rex ISH handles motion
-		sensors.
 endchoice # TEST_PROJECT_TYPE
 
 config TEST_PROJECT_NAME
@@ -51,6 +51,19 @@ config TEST_PROJECT_KEYBOARD
 	help
 	  Include project specific keyboard.c into the binary and test
 	  their functions.
+
+config TEST_PROJECT_KEYBOARD_CUSTOMIZATION
+	bool "Run the tests intended for keyboard_customization.c"
+	help
+	  Include project specific keyboard_customization.c into the
+	  binary and test their functions.
+
+config PLATFORM_EC_KEYBOARD_DEBUG
+	  bool "Enable keyboard debug prints"
+	  help
+	    Enable keyboard debug prints to show up in early bringup, for example
+	    if the board is currently headless and keyboard functionality is being
+	    checked.
 
 config TEST_PROJECT_BOARD
 	bool "Run the tests intended for board.c"
@@ -121,6 +134,11 @@ config TEST_PROJECT_TOUCH_PANEL
 	bool "Run the tests intended for touch_panel.c"
 	help
 	  Include touch_panel.c into the binary and test their functions.
+
+config TEST_BOARD_FAN_CUSTOM
+	bool "Run the tests intended for thermal.c"
+	help
+	  Include thermal.c into the binary and test their functions.
 
 module = REX
 module-str = Rex board-specific code

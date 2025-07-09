@@ -78,16 +78,11 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 #ifdef BOARD_MAGOLOR
 /* Keyboard scan setting */
 __override struct keyboard_scan_config keyscan_config = {
-	/*
-	 * F3 key scan cycle completed but scan input is not
-	 * charging to logic high when EC start scan next
-	 * column for "T" key, so we set .output_settle_us
-	 * to 80us from 50us.
-	 */
-	.output_settle_us = 80,
+	.output_settle_us = 50,
 	.debounce_down_us = 9 * MSEC,
 	.debounce_up_us = 30 * MSEC,
 	.scan_period_us = 3 * MSEC,
+	.stable_scan_period_us = 9 * MSEC,
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
@@ -168,14 +163,7 @@ static const struct ec_response_keybd_config magma_keybd = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
 };
 
-__override uint8_t board_keyboard_row_refresh(void)
-{
-	if (gpio_get_level(GPIO_EC_VIVALDIKEYBOARD_ID))
-		return 3;
-	else
-		return 2;
-}
-
+BUILD_ASSERT(IS_ENABLED(CONFIG_KEYBOARD_VIVALDI));
 __override const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void)
 {
@@ -192,6 +180,56 @@ board_vivaldi_keybd_config(void)
 	}
 }
 #endif
+
+#define MAGOLOR_KEYBOARD_COL_DOWN 11
+#define MAGOLOR_KEYBOARD_ROW_DOWN 6
+#define MAGOLOR_KEYBOARD_COL_ESC 1
+#define MAGOLOR_KEYBOARD_ROW_ESC 1
+#define MAGOLOR_KEYBOARD_COL_KEY_H 6
+#define MAGOLOR_KEYBOARD_ROW_KEY_H 1
+#define MAGOLOR_KEYBOARD_COL_KEY_R 3
+#define MAGOLOR_KEYBOARD_ROW_KEY_R 7
+#define MAGOLOR_KEYBOARD_COL_LEFT_ALT 10
+#define MAGOLOR_KEYBOARD_ROW_LEFT_ALT 6
+#define MAGOLOR_KEYBOARD_COL_REFRESH 2
+#define MAGOLOR_KEYBOARD_ROW_REFRESH 2
+#define MAGOLOR_KEYBOARD_COL_RIGHT_ALT 10
+#define MAGOLOR_KEYBOARD_ROW_RIGHT_ALT 0
+#define MAGOLOR_KEYBOARD_COL_LEFT_SHIFT 7
+#define MAGOLOR_KEYBOARD_ROW_LEFT_SHIFT 5
+
+struct boot_key_entry boot_key_list[] = {
+	[BOOT_KEY_ESC] = { MAGOLOR_KEYBOARD_COL_ESC, MAGOLOR_KEYBOARD_ROW_ESC },
+	[BOOT_KEY_DOWN_ARROW] = { MAGOLOR_KEYBOARD_COL_DOWN,
+				  MAGOLOR_KEYBOARD_ROW_DOWN },
+	[BOOT_KEY_LEFT_SHIFT] = { MAGOLOR_KEYBOARD_COL_LEFT_SHIFT,
+				  MAGOLOR_KEYBOARD_ROW_LEFT_SHIFT },
+	[BOOT_KEY_REFRESH] = { MAGOLOR_KEYBOARD_COL_REFRESH,
+			       MAGOLOR_KEYBOARD_ROW_REFRESH },
+};
+BUILD_ASSERT(ARRAY_SIZE(boot_key_list) == BOOT_KEY_COUNT);
+
+struct keyboard_type key_typ = {
+	.col_esc = MAGOLOR_KEYBOARD_COL_ESC,
+	.row_esc = MAGOLOR_KEYBOARD_ROW_ESC,
+	.col_down = MAGOLOR_KEYBOARD_COL_DOWN,
+	.row_down = MAGOLOR_KEYBOARD_ROW_DOWN,
+	.col_left_shift = MAGOLOR_KEYBOARD_COL_LEFT_SHIFT,
+	.row_left_shift = MAGOLOR_KEYBOARD_ROW_LEFT_SHIFT,
+	.col_refresh = MAGOLOR_KEYBOARD_COL_REFRESH,
+	.row_refresh = MAGOLOR_KEYBOARD_ROW_REFRESH,
+	.col_right_alt = MAGOLOR_KEYBOARD_COL_RIGHT_ALT,
+	.row_right_alt = MAGOLOR_KEYBOARD_ROW_RIGHT_ALT,
+	.col_left_alt = MAGOLOR_KEYBOARD_COL_LEFT_ALT,
+	.row_left_alt = MAGOLOR_KEYBOARD_ROW_LEFT_ALT,
+	.col_key_r = MAGOLOR_KEYBOARD_COL_KEY_R,
+	.row_key_r = MAGOLOR_KEYBOARD_ROW_KEY_R,
+	.col_key_h = MAGOLOR_KEYBOARD_COL_KEY_H,
+	.row_key_h = MAGOLOR_KEYBOARD_ROW_KEY_H,
+};
+
+/* TODO(b/219051027): Add assert to check that key_typ.{row,col}_refresh == the
+ * row/col in the tables above. */
 
 /*
  * We have total 30 pins for keyboard connecter {-1, -1} mean
@@ -1035,6 +1073,14 @@ void board_init(void)
 	/* Support Keyboard Pad */
 	board_update_no_keypad_by_fwconfig();
 #endif
+
+	if (gpio_get_level(GPIO_EC_VIVALDIKEYBOARD_ID)) {
+		key_typ.row_refresh = 3;
+		boot_key_list[BOOT_KEY_REFRESH].row = 3;
+	} else {
+		key_typ.row_refresh = 2;
+		boot_key_list[BOOT_KEY_REFRESH].row = 2;
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -1231,32 +1277,6 @@ static void adc_vol_key_press_check(void)
 	}
 }
 DECLARE_HOOK(HOOK_TICK, adc_vol_key_press_check, HOOK_PRIO_DEFAULT);
-
-/* This callback disables keyboard when convertibles are fully open */
-__override void lid_angle_peripheral_enable(int enable)
-{
-	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
-
-	/*
-	 * If the lid is in tablet position via other sensors,
-	 * ignore the lid angle, which might be faulty then
-	 * disable keyboard.
-	 */
-	if (tablet_get_mode())
-		enable = 0;
-
-	if (enable) {
-		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
-	} else {
-		/*
-		 * Ensure that the chipset is off before disabling the keyboard.
-		 * When the chipset is on, the EC keeps the keyboard enabled and
-		 * the AP decides whether to ignore input devices or not.
-		 */
-		if (!chipset_in_s0)
-			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
-	}
-}
 
 __override int board_get_leave_safe_mode_delay_ms(void)
 {

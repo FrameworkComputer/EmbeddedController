@@ -612,7 +612,7 @@ static const struct cros_system_npcx_config cros_system_dev_cfg = {
 		DT_REG_ADDR_BY_NAME(DT_INST(0, nuvoton_npcx_host_sub), mswc),
 };
 
-static const struct cros_system_driver_api cros_system_driver_npcx_api = {
+static DEVICE_API(cros_system, cros_system_driver_npcx_api) = {
 	.get_reset_cause = cros_system_npcx_get_reset_cause,
 	.soc_reset = cros_system_npcx_soc_reset,
 	.hibernate = cros_system_npcx_hibernate,

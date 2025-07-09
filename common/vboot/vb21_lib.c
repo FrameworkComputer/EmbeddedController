@@ -49,13 +49,13 @@ int vb21_is_signature_valid(const struct vb21_signature *sig,
 const struct vb21_packed_key *vb21_get_packed_key(void)
 {
 #ifdef CONFIG_MAPPED_STORAGE
-	return (const struct vb21_packed_key *)(CONFIG_RO_PUBKEY_READ_ADDR);
-#else
-	static struct vb21_packed_key key;
+	return (const struct vb21_packed_key *)(CONFIG_MAPPED_STORAGE_BASE +
+						CONFIG_RO_PUBKEY_OFF);
+#elif defined(CONFIG_ZTEST)
+	static char key[CONFIG_RO_PUBKEY_SIZE];
 
-	crec_flash_read(CONFIG_RO_PUBKEY_STORAGE_OFF, sizeof(key),
-			(char *)&key);
-	return &key;
+	crec_flash_read(CONFIG_RO_PUBKEY_STORAGE_OFF, sizeof(key), key);
+	return (struct vb21_packed_key *)key;
 #endif
 }
 

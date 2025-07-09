@@ -381,7 +381,7 @@ def main(argv):
     if opts.baseboard:
         # If a zephyr board, no baseboard allowed
         if opts.zephyr:
-            raise Exception("--baseboard not allowed for Zephyr boards")
+            raise ValueError("--baseboard not allowed for Zephyr boards")
         # Dereference symlinks so "git log" works as expected.
         baseboard_dir = os.path.relpath("baseboard/" + opts.baseboard)
         baseboard_dir = os.path.relpath(os.path.realpath(baseboard_dir))
@@ -396,7 +396,7 @@ def main(argv):
         boards = [opts.board]
     else:
         # With no board or baseboard, not sure whether this should proceed
-        raise Exception("no board or baseboard specified")
+        raise ValueError("no board or baseboard specified")
 
     print("Gathering relevant paths...")
     relevant_paths = []

@@ -244,6 +244,12 @@ static int ec_readmem_lpc(int offset, int bytes, void *dest)
 	return cnt;
 }
 
+static int memmap_iio_read_byte(char offset)
+{
+	outb(offset, EC_LPC_ADDR_MEMMAP_INDEXED_IO);
+	return inb(EC_LPC_ADDR_MEMMAP_INDEXED_IO + 1);
+}
+
 int comm_init_lpc(void)
 {
 	int i;
@@ -279,8 +285,10 @@ int comm_init_lpc(void)
 	 * seeing whether the EC sets the EC_HOST_ARGS_FLAG_FROM_HOST flag
 	 * in args when it responds.
 	 */
-	if (inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_ID) != 'E' ||
-	    inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_ID + 1) != 'C') {
+	if ((inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_ID) != 'E' ||
+	     inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_ID + 1) != 'C') &&
+	    (memmap_iio_read_byte(EC_MEMMAP_ID) != 'E' ||
+	     memmap_iio_read_byte(EC_MEMMAP_ID + 1) != 'C')) {
 		fprintf(stderr, "Missing Chromium EC memory map.\n");
 		return -5;
 	}

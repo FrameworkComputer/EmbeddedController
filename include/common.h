@@ -5,12 +5,6 @@
 
 /* common.h - Common includes for Chrome EC */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #ifndef __CROS_EC_COMMON_H
 #define __CROS_EC_COMMON_H
 
@@ -28,12 +22,6 @@
 #define TEST_BUILD
 #endif /* CONFIG_ZTEST */
 #endif /* CONFIG_ZEPHYR */
-
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 37
 
 #ifndef __THROW
 #define __THROW
@@ -503,15 +491,24 @@ enum ec_error_list {
  * call an undefined method that will raise a compiler error. This
  * technique requires that the optimizer be enabled so it can remove
  * the undefined function call.
+ *
+ * The unique arg is used to derive an imaginary function name that
+ * is scoped to the config name. This ensures that we create a unique function
+ * prototype for each specific config. This is important because clang
+ * does not allow overriding the error message attribute for a given function,
+ * with a differing message. Our error message includes the config name, so
+ * we simply need one function prototype per config name. This argument must
+ * be altered before being provided as "unique" to avoid macro expansion of the
+ * config token.
  */
-#define __config_enabled(cfg, value)                                           \
+#define __config_enabled(cfg, value, unique)                                   \
 	__cfg_select(value, 1, ({                                              \
 			     int __undefined =                                 \
 				     __builtin_strcmp(cfg, #value) == 0;       \
-			     extern int IS_ENABLED_BAD_ARGS(void) __error(     \
+			     int IS_ENABLED_BAD_ARGS##unique(void) __error(    \
 				     cfg " must be <blank>, or not defined."); \
 			     if (!__undefined)                                 \
-				     IS_ENABLED_BAD_ARGS();                    \
+				     IS_ENABLED_BAD_ARGS##unique();            \
 			     0;                                                \
 		     }))
 
@@ -530,7 +527,7 @@ enum ec_error_list {
  * it checks for unknown values.
  */
 #ifndef CONFIG_ZEPHYR
-#define IS_ENABLED(option) __config_enabled(#option, option)
+#define IS_ENABLED(option) __config_enabled(#option, option, _##option)
 #else
 /* IS_ENABLED previously defined in sys/util.h */
 #undef IS_ENABLED

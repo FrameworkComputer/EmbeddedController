@@ -1,0 +1,241 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * This file is auto-generated - do not edit!
+ */
+
+/ {
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_temp_ambient: temp_ambient {
+			enum-name = "ADC_TEMP_SENSOR_2_AMBIENT";
+			io-channels = <&adc0 0>;
+		};
+		adc_temp_skin: temp_skin {
+			enum-name = "ADC_TEMP_SENSOR_4";
+			io-channels = <&adc0 1>;
+		};
+		adc_temp_vr: temp_vr {
+			enum-name = "ADC_TEMP_SENSOR_PP3300_REGULATOR";
+			io-channels = <&adc0 10>;
+		};
+		adc_temp_memory: temp_memory {
+			enum-name = "ADC_TEMP_SENSOR_1_DDR_SOC";
+			io-channels = <&adc0 3>;
+		};
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_acok_od: acok_od {
+			gpios = <&gpiod 2 (GPIO_INPUT)>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_adp_det: adp_det {
+			gpios = <&gpio6 2 (GPIO_INPUT)>;
+		};
+		gpio_all_sys_pwrgd: all_sys_pwrgd {
+			gpios = <&gpio6 3 (GPIO_INPUT)>;
+			enum-name = "GPIO_PG_EC_ALL_SYS_PWRGD";
+		};
+		gpio_ccd_mode_odl: ccd_mode_odl {
+			gpios = <&gpio4 3 (GPIO_INPUT)>;
+			enum-name = "GPIO_CCD_MODE_ODL";
+		};
+		gpio_cpu_c10_gate_l: cpu_c10_gate_l {
+			gpios = <&gpioa 5 (GPIO_INPUT)>;
+		};
+		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
+			gpios = <&gpiod 4 (GPIO_INPUT)>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		gpio_ec_edp_bl_en: ec_edp_bl_en {
+			gpios = <&gpiob 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_ec_kb_bl_pwm: ec_kb_bl_pwm {
+			gpios = <&gpioc 2 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
+		};
+		gpio_ec_mech_pwr_btn_l: ec_mech_pwr_btn_l {
+			gpios = <&gpio0 0 (GPIO_INPUT)>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_ec_pch_sys_pwrok: ec_pch_sys_pwrok {
+			gpios = <&gpio9 7 (GPIO_INPUT)>;
+		};
+		gpio_ec_prochot_ls_odl: ec_prochot_ls_odl {
+			gpios = <&gpio3 5 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_ec_rsmrst_odl: ec_rsmrst_odl {
+			gpios = <&gpio7 2 (GPIO_INPUT)>;
+			enum-name = "GPIO_PG_EC_RSMRST_ODL";
+		};
+		gpio_ec_soc_int_odl: ec_soc_int_odl {
+			gpios = <&gpioc 6 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+			enum-name = "GPIO_EC_INT_L";
+		};
+		gpio_ec_soc_pwr_btn_odl: ec_soc_pwr_btn_odl {
+			gpios = <&gpioa 0 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		gpio_ec_soc_rec_switch_odl: ec_soc_rec_switch_odl {
+			gpios = <&gpiof 5 (GPIO_INPUT)>;
+		};
+		gpio_ec_soc_rsmrst_l_r: ec_soc_rsmrst_l_r {
+			gpios = <&gpio9 5 (GPIO_INPUT)>;
+			enum-name = "GPIO_PCH_RSMRST_L";
+		};
+		gpio_ec_soc_rtcrst_odl: ec_soc_rtcrst_odl {
+			gpios = <&gpioc 7 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_ec_soc_wake_ls_odl: ec_soc_wake_ls_odl {
+			gpios = <&gpio3 2 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		gpio_ec_voldn_btn_odl: ec_voldn_btn_odl {
+			gpios = <&gpiof 1 (GPIO_INPUT)>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		};
+		gpio_ec_volup_btn_odl: ec_volup_btn_odl {
+			gpios = <&gpio5 0 (GPIO_INPUT)>;
+			enum-name = "GPIO_VOLUME_UP_L";
+		};
+		gpio_en_pp5000_fan: en_pp5000_fan {
+			gpios = <&gpio7 3 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		gpio_en_pp5000_s5: en_pp5000_s5 {
+			gpios = <&gpio7 6 (GPIO_INPUT)>;
+		};
+		gpio_en_s5_rails: en_s5_rails {
+			gpios = <&gpio4 1 (GPIO_INPUT)>;
+			enum-name = "GPIO_TEMP_SENSOR_POWER";
+		};
+		gpio_ioex_kbd_int_odl: ioex_kbd_int_odl {
+			gpios = <&gpio7 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_KB_DISCRETE_INT";
+		};
+		gpio_lid_open: lid_open {
+			gpios = <&gpio0 1 (GPIO_INPUT)>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		gpio_pca_int_l: pca_int_l {
+			gpios = <&gpiod 3 (GPIO_INPUT)>;
+		};
+		gpio_slp_a_l: slp_a_l {
+			gpios = <&gpioc 1 (GPIO_INPUT)>;
+		};
+		gpio_slp_s3_ls: slp_s3_ls {
+			gpios = <&gpio9 4 (GPIO_INPUT)>;
+		};
+		gpio_slp_s4_ls_l: slp_s4_ls_l {
+			gpios = <&gpioa 6 (GPIO_INPUT)>;
+		};
+		gpio_soc_pwrok_r: soc_pwrok_r {
+			gpios = <&gpio6 1 (GPIO_INPUT)>;
+			enum-name = "GPIO_PCH_PWROK";
+		};
+		gpio_sys_rst_odl: sys_rst_odl {
+			gpios = <&gpioc 5 (GPIO_INPUT)>;
+		};
+		gpio_sys_slp_s0ix_l: sys_slp_s0ix_l {
+			gpios = <&gpiob 0 (GPIO_INPUT)>;
+			enum-name = "GPIO_PCH_SLP_S0_L";
+		};
+		gpio_tablet_mode_l: tablet_mode_l {
+			gpios = <&gpio7 4 (GPIO_INPUT | GPIO_PULL_UP)>;
+		};
+		gpio_usb_pd_int_ls_odl: usb_pd_int_ls_odl {
+			gpios = <&gpiof 0 (GPIO_INPUT)>;
+		};
+		gpio_virtual_battery: virtual_battery {
+			gpios = <&gpio8 0 (GPIO_INPUT)>;
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_pd_scl_r: ec_i2c_pd_scl_r {
+			i2c-port = <&i2c0_0>;
+		};
+		i2c_ec_i2c_mi: ec_i2c_mi {
+			i2c-port = <&i2c2_0>;
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_chan0_gp45
+		&adc0_chan1_gp44
+		&adc0_chan10_gpe0
+		&adc0_chan3_gp42>;
+	pinctrl-names = "default";
+};
+
+&i2c0_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
+	pinctrl-names = "default";
+};
+
+&i2c2_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
+	pinctrl-names = "default";
+};
+
+&i2c_ctrl0 {
+	status = "okay";
+};
+
+&i2c_ctrl2 {
+	status = "okay";
+};
+
+&pwm0 {
+	status = "okay";
+	pinctrl-0 = <&pwm0_gpc3>;
+	pinctrl-names = "default";
+};
+
+&tach1 {
+	status = "okay";
+	pinctrl-0 = <&ta1_1_in_gp40>;
+	pinctrl-names = "default";
+	port = <NPCX_TACH_PORT_A>;
+	sample-clk = <NPCX_TACH_FREQ_LFCLK>;
+	pulses-per-round = <2>;
+};
+
+&cros_kb_raw {
+	status = "okay";
+	/* No KSO2 (it's inverted and implemented by GPIO) */
+	pinctrl-0 = <
+		&ksi0_gp31
+		&ksi1_gp30
+		&ksi2_gp27
+		&ksi3_gp26
+		&ksi4_gp25
+		&ksi5_gp24
+		&ksi6_gp23
+		&ksi7_gp22
+		&kso00_gp21
+		&kso01_gp20
+		&kso03_gp16
+		&kso04_gp15
+		&kso05_gp14
+		&kso06_gp13
+		&kso07_gp12
+		&kso08_gp11
+		&kso09_gp10
+		&kso10_gp07
+		&kso11_gp06
+		&kso12_gp05
+		&kso13_gp04
+		&kso14_gp82
+	>;
+	pinctrl-names = "default";
+};

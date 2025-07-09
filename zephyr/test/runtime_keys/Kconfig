@@ -5,4 +5,7 @@
 config INPUT_KBD_MATRIX
 	default y
 
+config CROS_EC_RUNTIME_KEYS
+	default y
+
 source "Kconfig.zephyr"

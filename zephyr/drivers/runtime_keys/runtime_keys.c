@@ -13,6 +13,7 @@
 #include <zephyr/sys/util.h>
 
 #include <chipset.h>
+#include <drivers/vivaldi_kbd.h>
 #include <dt-bindings/kbd.h>
 #include <keyboard_protocol.h>
 #include <system.h>
@@ -33,7 +34,8 @@ enum {
 };
 
 static const uint32_t runtime_keys[] = {
-	[RUNTIME_KEY_VOL_UP] = DT_INST_PROP(0, vol_up_rc),
+	[RUNTIME_KEY_VOL_UP] = UINT32_MAX, /* placeholder, determined in runtime
+					    */
 	[RUNTIME_KEY_LEFT_ALT] = DT_INST_PROP(0, left_alt_rc),
 	[RUNTIME_KEY_RIGHT_ALT] = DT_INST_PROP(0, right_alt_rc),
 	[RUNTIME_KEY_H] = DT_INST_PROP(0, h_rc),
@@ -67,7 +69,15 @@ static void process_key(uint8_t row, uint8_t col, bool pressed)
 	}
 
 	for (uint8_t i = 0; i < ARRAY_SIZE(runtime_keys); i++) {
-		if (runtime_keys[i] == KBD_RC(row, col)) {
+		bool key_match;
+
+		if (i == RUNTIME_KEY_VOL_UP) {
+			key_match = vivaldi_kbd_is_vol_up(row, col);
+		} else {
+			key_match = runtime_keys[i] == KBD_RC(row, col);
+		}
+
+		if (key_match) {
 			WRITE_BIT(runtime_keys_mask, i, pressed);
 		}
 	}

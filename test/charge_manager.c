@@ -11,10 +11,20 @@
 #include "ec_commands.h"
 #include "test_util.h"
 #include "timer.h"
+#include "usb_charge.h"
 #include "usb_pd.h"
 #include "util.h"
 
 #define CHARGE_MANAGER_SLEEP_MS 50
+
+/* Mock bc12_ports[] array to make linker happy */
+struct bc12_config bc12_ports[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+/* Mock pd_vbus_low() for the BC12 charge support. */
+void pd_vbus_low(int port)
+{
+	(void)port;
+}
 
 /* Charge supplier priority: lower number indicates higher priority. */
 const int supplier_priority[] = {
@@ -134,15 +144,17 @@ static int test_initialization(void)
 	charge.current = 1000;
 	charge.voltage = 5000;
 
-	/* Initialize all supplier/port pairs, except for the last one */
+	/* Initialize all supplier/port pairs, except for a type-C supplier. */
 	for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i)
 		for (j = 0; j < board_get_usb_pd_port_count(); ++j) {
 			if (i == 0)
 				charge_manager_update_dualrole(j,
 							       CAP_DEDICATED);
-			if (i == CHARGE_SUPPLIER_COUNT - 1 &&
-			    j == board_get_usb_pd_port_count() - 1)
-				break;
+
+			if (i == CHARGE_SUPPLIER_TYPEC && j == 0) {
+				/* Skip first type-C supplier. */
+				continue;
+			}
 			charge_manager_update_charge(i, j, &charge);
 		}
 
@@ -151,9 +163,7 @@ static int test_initialization(void)
 	TEST_ASSERT(active_charge_port == CHARGE_PORT_NONE);
 
 	/* Update last pair and verify a charge port has been selected */
-	charge_manager_update_charge(CHARGE_SUPPLIER_COUNT - 1,
-				     board_get_usb_pd_port_count() - 1,
-				     &charge);
+	charge_manager_update_charge(CHARGE_SUPPLIER_TYPEC, 0, &charge);
 	wait_for_charge_manager_refresh();
 	TEST_ASSERT(active_charge_port != CHARGE_PORT_NONE);
 

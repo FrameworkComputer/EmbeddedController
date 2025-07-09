@@ -71,12 +71,12 @@ static void tcpc_alert_event(enum gpio_signal signal)
 /* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
-/* Keyboard scan. Increase output_settle_us to 80us from default 50us. */
 __override struct keyboard_scan_config keyscan_config = {
-	.output_settle_us = 80,
+	.output_settle_us = 50,
 	.debounce_down_us = 9 * MSEC,
 	.debounce_up_us = 30 * MSEC,
 	.scan_period_us = 3 * MSEC,
+	.stable_scan_period_us = 9 * MSEC,
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
@@ -536,7 +536,7 @@ static void board_charger_init(void)
 {
 	charger_set_input_current_limit(
 		CHARGER_SOLO,
-		PD_MAX_CURRENT_MA *
+		CONFIG_USB_PD_MAX_CURRENT_MA *
 			(100 - CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT) / 100);
 }
 DECLARE_HOOK(HOOK_INIT, board_charger_init, HOOK_PRIO_DEFAULT);

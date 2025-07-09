@@ -26,7 +26,7 @@ def cat_file(args, filename) -> str:
             check=True,
         ).stdout
     except ValueError as err:
-        raise Exception(f"filename = {filename}") from err
+        raise ValueError(f"filename = {filename}") from err
 
 
 def argument_parser(description=None):

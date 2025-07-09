@@ -2,9 +2,10 @@
 
 add_subdirectory(ap_pwrseq)
 add_subdirectory(emul)
-add_subdirectory(usb_dc)
 add_subdirectory_ifdef(CONFIG_PLATFORM_EC_USB_PD_CONTROLLER pd_controller)
 add_subdirectory_ifdef(CONFIG_HOST_SERVICE host_service)
 add_subdirectory_ifdef(CONFIG_PLATFORM_EC_ROLLBACK rollback)
 add_subdirectory_ifdef(CONFIG_PLATFORM_EC_FINGERPRINT fingerprint)
 add_subdirectory_ifdef(CONFIG_UCSI_PPM ucsi)
+add_subdirectory_ifdef(CONFIG_USB_DEVICE_STACK usb_dc)
+add_subdirectory_ifdef(CONFIG_USB_DEVICE_STACK_NEXT usbd_service)

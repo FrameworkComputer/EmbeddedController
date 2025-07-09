@@ -56,8 +56,8 @@ def test_two_function_executor_one_fails():
     step = [0]
     executor = zmake.multiproc.Executor()
     executor.append(
-        lambda: _lock_step(cond=cond, predicate=0, step=step, return_value=-1)
+        lambda: _lock_step(cond=cond, predicate=0, step=step, return_value=1)
     )
     executor.append(lambda: _lock_step(cond=cond, predicate=1, step=step))
-    assert executor.wait() == -1
+    assert executor.wait() == 1
     assert step[0] == 2

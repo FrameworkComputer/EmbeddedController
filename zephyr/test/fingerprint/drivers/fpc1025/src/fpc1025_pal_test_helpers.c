@@ -5,7 +5,7 @@
 
 #include "fpc1025_pal_test_helpers.h"
 
-#include <fpc1025_pal.h>
+#include <fingerprint_fpc1025_pal.h>
 
 int z_impl_fpc1025_pal_spi_write_read(uint8_t *write, uint8_t *read,
 				      size_t size, bool leave_cs_asserted)

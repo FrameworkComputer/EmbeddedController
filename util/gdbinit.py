@@ -15,7 +15,6 @@ Environment Variables:
     USING_CLION=[FALSE|TRUE]
 """
 
-import distutils.util  # pylint:disable=no-name-in-module,import-error
 import os
 import pathlib
 import textwrap
@@ -23,13 +22,21 @@ import textwrap
 import gdb  # pylint:disable=import-error
 
 
+def strtobool(val):
+    """Converts string to bool."""
+    val = val.lower()
+    if val in ("y", "yes", "t", "true", "on", "1"):
+        return True
+    if val in ("n", "no", "f", "false", "off", "0"):
+        return False
+    raise ValueError(f"invalid truth value {val}")
+
+
 BOARD = os.getenv("BOARD", "")
 # PROJECT can be changed to be the name of a unit test, such as "sha256"
 PROJECT = os.getenv("PROJECT", "ec")
 GDBSERVER = os.getenv("GDBSERVER", "openocd")
-USING_CLION = distutils.util.strtobool(  # pylint:disable=no-member
-    os.getenv("USING_CLION", "FALSE")
-)
+USING_CLION = strtobool(os.getenv("USING_CLION", "FALSE"))
 
 if GDBSERVER == "openocd":
     DEFAULT_GDB_PORT = "3333"

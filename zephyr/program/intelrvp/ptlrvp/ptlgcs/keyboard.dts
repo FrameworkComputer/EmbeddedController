@@ -1,0 +1,184 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	chosen {
+		cros-ec,keyboard = &kbd0;
+	};
+};
+
+&vivaldi_kbd {
+	vivaldi-keys = <
+		/* KISx, KSOx */
+		KBD_RC(6, 2)   /* T1 */
+		KBD_RC(6, 3)   /* T2 */
+		KBD_RC(1, 3)   /* T3 */
+		KBD_RC(3, 3)   /* T4 */
+		KBD_RC(7, 0)   /* T5 */
+		KBD_RC(3, 6)   /* T6 */
+		KBD_RC(1, 7)   /* T7 */
+		KBD_RC(6, 7)   /* T8 */
+		KBD_RC(6, 10)  /* T9 */
+		KBD_RC(7, 10)  /* T10 */
+		KBD_RC(3, 10)  /* T11 */
+		KBD_RC(5, 10)  /* T12 */
+	>;
+
+	kbd_config_0: kbd-config-0 {
+		vivaldi-codes = <
+			VIVALDI_TK_VOL_MUTE           /* T1 */
+			VIVALDI_TK_VOL_DOWN           /* T2 */
+			VIVALDI_TK_VOL_UP             /* T3 */
+			VIVALDI_TK_PLAY_PAUSE         /* T4 */
+			VIVALDI_TK_FULLSCREEN         /* T5 */
+			VIVALDI_TK_SNAPSHOT           /* T6 */
+			VIVALDI_TK_BACK               /* T7 */
+			VIVALDI_TK_REFRESH            /* T8 */
+			VIVALDI_TK_BRIGHTNESS_DOWN    /* T9 */
+			VIVALDI_TK_BRIGHTNESS_UP      /* T10 */
+			VIVALDI_TK_DONOTDISTURB       /* T11 */
+			VIVALDI_TK_DICTATE            /* T12 */
+		>;
+		capabilities = <
+			(VIVALDI_KEYBD_CAP_FUNCTION_KEYS |
+			 VIVALDI_KEYBD_CAP_ASSISTANT_KEY)
+		>;
+	};
+};
+
+&kbd0 {
+	status = "okay";
+
+	pinctrl-0 = <
+		&ksi0_gpio017
+		&ksi1_gpio020
+		&ksi2_gpio021
+		&ksi3_gpio026
+		&ksi4_gpio027
+		&ksi5_gpio030
+		&ksi6_gpio031
+		&ksi7_gpio032
+		&kso00_gpio040
+		&kso01_gpio045
+		/* KSO2 is inverted and implemented by GPIO */
+		&kso03_gpio047
+		&kso04_gpio107
+		&kso05_gpio112
+		&kso06_gpio113
+		&kso07_gpio120
+		&kso08_gpio121
+		&kso09_gpio122
+		&kso10_gpio123
+		&kso11_gpio124
+		&kso12_gpio125
+		&kso13_gpio126
+		&kso14_gpio152
+		&kso15_gpio151
+	>;
+        pinctrl-1 = <
+		&ksi0_gpio017_sleep
+		&ksi1_gpio020_sleep
+		&ksi2_gpio021_sleep
+		&ksi3_gpio026_sleep
+		&ksi4_gpio027_sleep
+		&ksi5_gpio030_sleep
+		&ksi6_gpio031_sleep
+		&ksi7_gpio032_sleep
+		&kso00_gpio040_sleep
+		&kso01_gpio045_sleep
+		/* KSO2 is inverted and implemented by GPIO */
+		&kso03_gpio047_sleep
+		&kso04_gpio107_sleep
+		&kso05_gpio112_sleep
+		&kso06_gpio113_sleep
+		&kso07_gpio120_sleep
+		&kso08_gpio121_sleep
+		&kso09_gpio122_sleep
+		&kso10_gpio123_sleep
+		&kso11_gpio124_sleep
+		&kso12_gpio125_sleep
+		&kso13_gpio126_sleep
+		&kso14_gpio152_sleep
+		&kso15_gpio151_sleep
+	>;
+        pinctrl-names = "default", "sleep";
+
+	row-size = <8>;
+	col-size = <16>;
+	debounce-down-ms = <15>;
+	debounce-up-ms = <15>;
+	actual-key-mask = <
+		0xc0 /* C0 */
+		0xdf /* C1 */
+		0xd7 /* C2 */
+		0xdf /* C3 */
+		0xff /* C4 */
+		0xff /* C5 */
+		0xdf /* C6 */
+		0xf7 /* C7 */
+		0xff /* C8 */
+		0x28 /* C9 */
+		0xfe /* C10 */
+		0x68 /* C11 */
+		0x20 /* C12 */
+		0x02 /* C13 */
+		0x28 /* C14 */
+		0x06 /* C15 */
+	 >;
+
+	kso-gpio {
+		compatible = "cros-ec,col-gpio";
+		col-num = <2>;
+		col-gpios = <MCHP_GPIO_DECODE_046 GPIO_ACTIVE_HIGH>;
+	};
+
+	boot-keys {
+		compatible = "cros-ec,boot-keys";
+		down-arrow-rc = <KBD_RC(5, 11)>;
+		esc-rc = <KBD_RC(3, 1)>;
+		left-shift-rc = <KBD_RC(1, 15)>;
+		refresh-rc = <KBD_RC(6, 7)>;
+	};
+
+	runtime-keys {
+		compatible = "cros-ec,runtime-keys";
+		left-alt-rc = <KBD_RC(3, 9)>;
+		right-alt-rc = <KBD_RC(5, 9)>;
+		h-rc = <KBD_RC(3, 5)>;
+		r-rc = <KBD_RC(0, 4)>;
+	};
+};
+
+&ksi0_gpio017 {
+	bias-pull-up;
+};
+
+&ksi1_gpio020 {
+	bias-pull-up;
+};
+
+&ksi2_gpio021 {
+	bias-pull-up;
+};
+
+&ksi3_gpio026 {
+	bias-pull-up;
+};
+
+&ksi4_gpio027 {
+	bias-pull-up;
+};
+
+&ksi5_gpio030 {
+	bias-pull-up;
+};
+
+&ksi6_gpio031 {
+	bias-pull-up;
+};
+
+&ksi7_gpio032 {
+	bias-pull-up;
+};

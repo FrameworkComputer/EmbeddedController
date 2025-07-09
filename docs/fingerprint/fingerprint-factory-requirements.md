@@ -159,7 +159,7 @@ values of the individual pixels do not deviate from the median.
 Use `ectool` to capture the first checkerboard pattern image:
 
 ```bash
-(dut) $ ectool --name=cros_fp fpmode capture pattern0; ectool --name=cros_fp waitevent 5 500
+(dut) $ ectool --name=cros_fp waitevent FINGERPRINT 500 fpmode capture pattern0
 FP mode: (0x20000008) capture
 MKBP event 5 data: 00 00 00 80
 ```
@@ -173,7 +173,7 @@ Copy the first checkerboard image to a file:
 Use `ectool` to capture the second checkerboard pattern image:
 
 ```bash
-(dut) $ ectool --name=cros_fp fpmode capture pattern1; ectool --name=cros_fp waitevent 5 500
+(dut) $ ectool --name=cros_fp waitevent FINGERPRINT 500 fpmode capture pattern1
 FP mode: (0x30000008) capture
 MKBP event 5 data: 00 00 00 80
 ```
@@ -273,7 +273,7 @@ does this in [`fingerprint_mcu.py`][ProcessResetPixelImage].
 Switch to correct capture mode and wait:
 
 ```bash
-(dut) $ ectool --name=cros_fp fpmode capture test_reset; ectool --name=cros_fp waitevent 5 500
+(dut) $ ectool --name=cros_fp waitevent FINGERPRINT 500 fpmode capture test_reset
 FP mode: (0x50000008) capture
 MKBP event 5 data: 00 00 00 80
 ```
@@ -302,21 +302,17 @@ encouraged to perform it.
 
 ##### Implementation
 
-Capture the image when the rubber stamp is applied:
+Ensure that nothing is on the fingerprint sensor and then run the following:
 
 ```bash
-(dut) $ ectool --name=cros_fp fpmode capture qual
-FP mode: (0x40000008) capture
+(dut) $ ectool --name=cros_fp waitevent FINGERPRINT 10000 fpmode capture qual
 ```
 
-Wait for the capture to be finished, timeout after 10s:
+Touch the rubber stamp to the fingerprint sensor within 10 seconds of the last
+command, otherwise a timeout will occur. If done successfully, a message similar
+to `MKBP event 5 data: 00 00 00 80` will be printed.
 
-```bash
-(dut) $ ectool --name=cros_fp waitevent 5 10000
-MKBP event 5 data: 00 00 00 80
-```
-
-Copy the raw captured from to the AP:
+To retrieve the fingerprint frame from the MCU, run the following command:
 
 ```bash
 (dut) $ ectool --name=cros_fp fpframe raw > /tmp/fp.raw
@@ -402,11 +398,12 @@ protection is not enabled, so the test should check the following command works
 enabled:
 
 ```bash
-(dut) $ ectool --name=cros_fp fpframe raw
+(dut) $ ectool --name=cros_fp fpframe
+# When write protection is disabled, the exit code is 0 and a large text
+# block will be printed, starting with the letters "P2".
 
-# write protection disabled, exit code 0 and output will be raw bytes
-
-# write protection enabled, exit code 1 and output will be
+# When write protection is enabled, the exit code is 1 and the output will
+# mention ACCESS_DENIED, like the example below:
 EC result 4 (ACCESS_DENIED)
 Failed to get FP sensor frame
 ```
@@ -440,21 +437,17 @@ Tool version:  v2.0.2144-1524c164f 2019-09-09 06:50:36 @chromeos-ci-legacy-us-ce
 
 ### Capture Raw Images
 
-Put your finger on the sensor, then run:
+Ensure that nothing is on the fingerprint sensor and then run the following:
 
 ```bash
-(dut) $ ectool --name=cros_fp fpmode capture vendor
+(dut) $ ectool --name=cros_fp waitevent FINGERPRINT 10000 fpmode capture vendor
 ```
 
-Wait for the capture to be finished, timeout after 10s:
+Touch sensor once and remove within 10 seconds of the last command, otherwise a
+timeout will occur. If done successfully, a message similar to `MKBP event 5
+data: 00 00 00 80` will be printed.
 
-```bash
-(dut) $ ectool --name=cros_fp waitevent 5 10000
-MKBP event 5 data: 00 00 00 80
-```
-
-Remove the finger from the sensor, then start the retrieval of the frame from
-the MCU to the AP:
+To retrieve the fingerprint frame from the MCU, run the following command:
 
 ```bash
 (dut) $ ectool --name=cros_fp fpframe raw > /tmp/fp.raw

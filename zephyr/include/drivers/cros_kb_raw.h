@@ -19,12 +19,6 @@
  * the Zephyr kscan API.
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 27
-
 #ifndef ZEPHYR_INCLUDE_DRIVERS_CROS_KB_RAW_H_
 #define ZEPHYR_INCLUDE_DRIVERS_CROS_KB_RAW_H_
 

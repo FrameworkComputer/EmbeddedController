@@ -15,9 +15,6 @@ set -e
 # cd to the ec directory.
 cd "$(dirname "$(realpath -e "${BASH_SOURCE[0]}")")"/..
 
-# Run pytest
-pytest util "$@"
-
 # Run shell tests
 cd util
 ./test-inject-keys.sh
@@ -28,5 +25,6 @@ cd util
 pytest check_zephyr_project_config_unittest.py
 
 # Run the Zephyr check_compliance wrapper test.
-# NOTE: this uses vpython so it does not run correctly through pytest.
+# NOTE: these use vpython so they do not run correctly through pytest.
 ./zephyr_check_compliance_unittest.py
+./kconfig_check_unittest.py

@@ -125,6 +125,8 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+static int i2c_port_ready_pin[ARRAY_SIZE(i2c_ports)];
+
 struct i2c_state_t {
 	/* Current clock speed setting used in I2C host mode. */
 	uint32_t bits_per_second;
@@ -178,6 +180,11 @@ const uint8_t I2C_REQ_PREPARE_READ = 0x01;
  * condition.
  */
 const uint8_t ADDR_NOSTOP = 0x80;
+
+/*
+ * Bitfield in the sixth I2C header byte.
+ */
+const uint8_t AWAIT_GSC_READY = 0x80;
 
 /* Bitfield, Prepare read data request, I2C port field */
 const uint8_t PREPARE_READ_FLAG_STICKY = BIT(7);
@@ -259,6 +266,42 @@ static int16_t usb_i2c_map_error(int error)
 	}
 }
 
+static int board_i2c_xfer(int portindex, uint16_t addr_flags,
+			  const uint8_t *out, int out_bytes, uint8_t *in,
+			  int in_bytes, bool no_stop, bool await_gsc_ready)
+{
+	int port = i2c_ports[portindex].port;
+	if (!await_gsc_ready) {
+		return i2c_xfer_unlocked(
+			port, addr_flags, out, out_bytes, in, in_bytes,
+			I2C_XFER_START | (no_stop ? 0 : I2C_XFER_STOP));
+	}
+
+	timestamp_t deadline;
+	deadline.val = get_time().val + 100000;
+
+	int gsc_ready_pin = i2c_port_ready_pin[portindex];
+	if (gsc_ready_pin == GPIO_COUNT)
+		return USB_I2C_UNSUPPORTED_COMMAND;
+
+	/* Enable polling from fast timer interrupt. */
+	start_monitoring_for_falling_edge(gsc_ready_pin);
+
+	int ret = i2c_xfer_unlocked(port, addr_flags, out, out_bytes, NULL, 0,
+				    I2C_XFER_START | I2C_XFER_STOP);
+	if (ret == EC_SUCCESS)
+		ret = wait_for_falling_edge(deadline);
+	if (in_bytes > 0 && ret == EC_SUCCESS) {
+		ret = i2c_xfer_unlocked(port, addr_flags, NULL, 0, in, in_bytes,
+					I2C_XFER_START |
+						(no_stop ? 0 : I2C_XFER_STOP));
+	}
+
+	/* Disable fast timer interrupt. */
+	stop_monitoring_for_falling_edge();
+	return ret;
+}
+
 static void usb_i2c_execute(unsigned int expected_size)
 {
 	uint32_t count = queue_remove_units(&cmsis_dap_rx_queue, rx_buffer,
@@ -269,6 +312,7 @@ static void usb_i2c_execute(unsigned int expected_size)
 	int portindex = rx_buffer[1] & 0xf;
 	uint16_t addr_flags = rx_buffer[2] & 0x7f;
 	bool no_stop = rx_buffer[2] & ADDR_NOSTOP;
+	bool await_gsc_ready = false;
 	int write_count = ((rx_buffer[1] << 4) & 0xf00) | rx_buffer[3];
 	int read_count = rx_buffer[4];
 	int offset = 0; /* Offset for extended reading header. */
@@ -280,6 +324,7 @@ static void usb_i2c_execute(unsigned int expected_size)
 
 	if (read_count & 0x80) {
 		read_count = (rx_buffer[5] << 7) | (read_count & 0x7f);
+		await_gsc_ready = rx_buffer[6] & AWAIT_GSC_READY;
 		offset = 2;
 	}
 
@@ -297,11 +342,10 @@ static void usb_i2c_execute(unsigned int expected_size)
 		i2c_status = USB_I2C_PORT_INVALID;
 	} else {
 		i2c_lock(i2c_ports[portindex].port, 1);
-		int ret = i2c_xfer_unlocked(
-			i2c_ports[portindex].port, addr_flags,
-			rx_buffer + 5 + offset, write_count, rx_buffer + 5,
-			read_count,
-			I2C_XFER_START | (no_stop ? 0 : I2C_XFER_STOP));
+		int ret = board_i2c_xfer(portindex, addr_flags,
+					 rx_buffer + 5 + offset, write_count,
+					 rx_buffer + 5, read_count, no_stop,
+					 await_gsc_ready);
 		i2c_lock(i2c_ports[portindex].port, 0);
 		i2c_status = usb_i2c_map_error(ret);
 	}
@@ -870,6 +914,26 @@ static int command_i2c_set_mode(int argc, const char **argv)
 	return EC_SUCCESS;
 }
 
+static int command_i2c_set_ready_pin(int argc, const char **argv)
+{
+	int index;
+	int desired_gpio;
+	if (argc < 5)
+		return EC_ERROR_PARAM_COUNT;
+
+	index = find_i2c_by_name(argv[3]);
+	if (index < 0)
+		return EC_ERROR_PARAM3;
+
+	desired_gpio = gpio_find_by_name(argv[4]);
+	if (desired_gpio == GPIO_COUNT)
+		return EC_ERROR_PARAM4;
+
+	i2c_port_ready_pin[index] = desired_gpio;
+
+	return EC_SUCCESS;
+}
+
 static int command_i2c_set(int argc, const char **argv)
 {
 	if (argc < 3)
@@ -878,6 +942,8 @@ static int command_i2c_set(int argc, const char **argv)
 		return command_i2c_set_speed(argc, argv);
 	if (!strcasecmp(argv[2], "mode"))
 		return command_i2c_set_mode(argc, argv);
+	if (!strcasecmp(argv[2], "ready"))
+		return command_i2c_set_ready_pin(argc, argv);
 	return EC_ERROR_PARAM2;
 }
 
@@ -893,13 +959,17 @@ static int command_i2c(int argc, const char **argv)
 }
 DECLARE_CONSOLE_COMMAND_FLAGS(i2c, command_i2c,
 			      "info [PORT]"
-			      "\nset speed PORT BPS",
+			      "\nset speed PORT BPS"
+			      "\nset mode PORT host"
+			      "\nset mode PORT device ADDR"
+			      "\nset ready PORT PIN",
 			      "I2C bus manipulation", CMD_FLAG_RESTRICTED);
 
 /* Reconfigure I2C ports to power-on default values. */
 static void i2c_reinit(void)
 {
 	for (unsigned int i = 0; i < i2c_ports_used; i++) {
+		i2c_port_ready_pin[i] = GPIO_COUNT;
 		board_i2c_set_speed(i, i2c_ports[i].kbps * 1000);
 		i2c_port_state[i].bits_per_second = i2c_ports[i].kbps * 1000;
 		/* Switch to host-only mode. */
@@ -920,6 +990,7 @@ static void board_i2c_init(void)
 	task_enable_irq(STM32_IRQ_I2C3_ER);
 	task_enable_irq(STM32_IRQ_I2C4_ER);
 	for (unsigned int i = 0; i < i2c_ports_used; i++) {
+		i2c_port_ready_pin[i] = GPIO_COUNT;
 		i2c_port_state[i].bits_per_second = i2c_ports[i].kbps * 1000;
 		i2c_port_state[i].prepared_read_len = 0;
 		i2c_port_state[i].blocked_read_addr = 0;

@@ -20,7 +20,7 @@ child-binding:
       required: true
       description: Any offset to add to raw channel data
     coeff:
-      type: array
+      type: string-array
       required: true
       description: Clear, R, G, and B coefficients for this channel
 
@@ -34,29 +34,29 @@ child-binding:
 #
 #        rgb-cal-x {
 #                offset = <0>;
-#                coeff = <0 0 0 0>;
+#                coeff = "0.0f", "0", "0", "0";
 #                als-channel-scale {
 #                compatible = "cros-ec,accelgyro-als-channel-scale";
 #                        k-channel-scale = <1>;
-#                        cover-scale = <1>;
+#                        cover-scale = "1.0f";
 #                };
 #        };
 #        rgb-cal-y {
 #                offset = <0>;
-#                coeff = <0 0 0 0>;
+#                coeff = "0", "-1.0f", "0", "0";
 #                als-channel-scale {
 #                compatible = "cros-ec,accelgyro-als-channel-scale";
 #                        k-channel-scale = <1>;
-#                        cover-scale = <1>;
+#                        cover-scale = "1.0f";
 #                };
 #        };
 #        rgb-cal-z {
 #                offset = <0>;
-#                coeff = <0 0 0 0>;
+#                coeff = "0", "0", "0", "0";
 #                als-channel-scale {
 #                compatible = "cros-ec,accelgyro-als-channel-scale";
 #                        k-channel-scale = <1>;
-#                        cover-scale = <1>;
+#                        cover-scale = "1.0f";
 #                };
 #        };
 # };

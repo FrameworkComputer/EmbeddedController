@@ -24,10 +24,10 @@
 
 #define LED_OFF -1
 
-#define LED_PULSE_TICK (125 * MSEC)
+#define LED_PULSE_TICK (125 * USEC_PER_MSEC)
 
 #define LED_FAST_PULSE_PERIOD (250 / 125) /* 250 ms */
-#define LED_SLOW_PULSE_PERIOD ((2 * MSEC) / 125) /* 2 sec  */
+#define LED_SLOW_PULSE_PERIOD ((2 * USEC_PER_MSEC) / 125) /* 2 sec  */
 
 struct led_pulse_data {
 	bool led_is_pulsing;

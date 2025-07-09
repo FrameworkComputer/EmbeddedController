@@ -27,6 +27,7 @@ FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
 FAKE_VOID_FUNC(bmi3xx_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(lsm6dsm_interrupt, enum gpio_signal);
+FAKE_VOID_FUNC(icm42607_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(bma4xx_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(lis2dw12_interrupt, enum gpio_signal);
 
@@ -34,10 +35,6 @@ static void test_before(void *fixture)
 {
 	RESET_FAKE(cros_cbi_get_fw_config);
 	RESET_FAKE(cbi_get_ssfc);
-	RESET_FAKE(bmi3xx_interrupt);
-	RESET_FAKE(lsm6dsm_interrupt);
-	RESET_FAKE(bma4xx_interrupt);
-	RESET_FAKE(lis2dw12_interrupt);
 }
 
 ZTEST_SUITE(teliks, NULL, NULL, test_before, NULL, NULL);
@@ -74,10 +71,18 @@ ZTEST(teliks, test_board_setup_init_clamshell)
 		DT_GPIO_PIN(DT_NODELABEL(gpio_acc_int_l), gpios);
 	int interrupt_count;
 
+	/* Clear base and lid sensor interrupt call count before test */
+	RESET_FAKE(bmi3xx_interrupt);
+	RESET_FAKE(lsm6dsm_interrupt);
+	RESET_FAKE(icm42607_interrupt);
+	RESET_FAKE(bma4xx_interrupt);
+	RESET_FAKE(lis2dw12_interrupt);
+
 	/* CBI config error */
 	cros_cbi_get_fw_config_fake.custom_fake =
 		cbi_get_form_factor_config_error;
 	board_setup_init();
+	alt_sensor_init();
 
 	/* reset tablet mode for initialize status.
 	 * enable int_imu and int_tablet_mode before clashell_init
@@ -93,6 +98,8 @@ ZTEST(teliks, test_board_setup_init_clamshell)
 
 	clamshell_mode = true;
 	board_setup_init();
+	/* Clamshel mode */
+	alt_sensor_init();
 
 	/* Verify gmr_tablet_switch is disabled, by checking the side effects
 	 * of calling tablet_set_mode, and setting gpio_tablet_mode_l.
@@ -113,12 +120,6 @@ ZTEST(teliks, test_board_setup_init_clamshell)
 	tablet_set_mode(1, TABLET_TRIGGER_LID);
 	zassert_equal(0, tablet_get_mode(), NULL);
 
-	/* Clear base and lid sensor interrupt call count before test */
-	bmi3xx_interrupt_fake.call_count = 0;
-	lsm6dsm_interrupt_fake.call_count = 0;
-	bma4xx_interrupt_fake.call_count = 0;
-	lis2dw12_interrupt_fake.call_count = 0;
-
 	/* Verify base and lid sensor interrupt is disabled. */
 	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 1), NULL);
 	k_sleep(K_MSEC(100));
@@ -131,6 +132,7 @@ ZTEST(teliks, test_board_setup_init_clamshell)
 
 	interrupt_count = bmi3xx_interrupt_fake.call_count +
 			  lsm6dsm_interrupt_fake.call_count +
+			  icm42607_interrupt_fake.call_count +
 			  bma4xx_interrupt_fake.call_count +
 			  lis2dw12_interrupt_fake.call_count;
 	zassert_equal(interrupt_count, 0);
@@ -160,9 +162,16 @@ ZTEST(teliks, test_board_setup_init_convertible)
 		DT_GPIO_PIN(DT_NODELABEL(gpio_acc_int_l), gpios);
 	int interrupt_count;
 
+	/* Clear base and lid sensor interrupt call count before test */
+	RESET_FAKE(bmi3xx_interrupt);
+	RESET_FAKE(lsm6dsm_interrupt);
+	RESET_FAKE(icm42607_interrupt);
+	RESET_FAKE(bma4xx_interrupt);
+	RESET_FAKE(lis2dw12_interrupt);
+
 	/* Initial ssfc data for BMA422 and BMI323. */
 	cbi_get_ssfc_fake.custom_fake = cbi_get_ssfc_mock;
-	ssfc_data = 0x5;
+	ssfc_data = 0x9;
 	cros_cbi_ssfc_init();
 
 	/* reset tablet mode for initialize status.
@@ -200,12 +209,6 @@ ZTEST(teliks, test_board_setup_init_convertible)
 	tablet_set_mode(1, TABLET_TRIGGER_LID);
 	zassert_equal(1, tablet_get_mode(), NULL);
 
-	/* Clear base and lid sensor interrupt call count before test */
-	bmi3xx_interrupt_fake.call_count = 0;
-	lsm6dsm_interrupt_fake.call_count = 0;
-	bma4xx_interrupt_fake.call_count = 0;
-	lis2dw12_interrupt_fake.call_count = 0;
-
 	/* Verify base and lid sensor interrupt is disabled. */
 	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 1), NULL);
 	k_sleep(K_MSEC(100));
@@ -218,12 +221,14 @@ ZTEST(teliks, test_board_setup_init_convertible)
 
 	interrupt_count = bmi3xx_interrupt_fake.call_count +
 			  lsm6dsm_interrupt_fake.call_count +
+			  icm42607_interrupt_fake.call_count +
 			  bma4xx_interrupt_fake.call_count +
 			  lis2dw12_interrupt_fake.call_count;
 	zassert_equal(interrupt_count, 2);
 
 	zassert_equal(bmi3xx_interrupt_fake.call_count, 1);
 	zassert_equal(lsm6dsm_interrupt_fake.call_count, 0);
+	zassert_equal(icm42607_interrupt_fake.call_count, 0);
 	zassert_equal(bma4xx_interrupt_fake.call_count, 1);
 	zassert_equal(lis2dw12_interrupt_fake.call_count, 0);
 }
@@ -239,9 +244,16 @@ ZTEST(teliks, test_alt_sensor)
 	const gpio_port_pins_t lid_accel_pin =
 		DT_GPIO_PIN(DT_NODELABEL(gpio_acc_int_l), gpios);
 
+	/* Clear base and lid sensor interrupt call count before test */
+	RESET_FAKE(bmi3xx_interrupt);
+	RESET_FAKE(lsm6dsm_interrupt);
+	RESET_FAKE(icm42607_interrupt);
+	RESET_FAKE(bma4xx_interrupt);
+	RESET_FAKE(lis2dw12_interrupt);
+
 	/* Initial ssfc data for LSM6DSM and LIS2DW. */
 	cbi_get_ssfc_fake.custom_fake = cbi_get_ssfc_mock;
-	ssfc_data = 0xa;
+	ssfc_data = 0x12;
 	cros_cbi_ssfc_init();
 
 	/* Enable the interrupt int_imu and int_lid_imu */
@@ -249,12 +261,6 @@ ZTEST(teliks, test_alt_sensor)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_lid_imu));
 
 	alt_sensor_init();
-
-	/* Clear base and lid sensor interrupt call count before test */
-	bmi3xx_interrupt_fake.call_count = 0;
-	lsm6dsm_interrupt_fake.call_count = 0;
-	bma4xx_interrupt_fake.call_count = 0;
-	lis2dw12_interrupt_fake.call_count = 0;
 
 	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 1), NULL);
 	k_sleep(K_MSEC(100));
@@ -267,6 +273,52 @@ ZTEST(teliks, test_alt_sensor)
 
 	zassert_equal(bmi3xx_interrupt_fake.call_count, 0);
 	zassert_equal(lsm6dsm_interrupt_fake.call_count, 1);
+	zassert_equal(icm42607_interrupt_fake.call_count, 0);
+	zassert_equal(bma4xx_interrupt_fake.call_count, 0);
+	zassert_equal(lis2dw12_interrupt_fake.call_count, 1);
+}
+
+ZTEST(teliks, test_alt_sensor_icm42607)
+{
+	const struct device *base_imu_gpio = DEVICE_DT_GET(
+		DT_GPIO_CTLR(DT_NODELABEL(gpio_imu_int_l), gpios));
+	const gpio_port_pins_t base_imu_pin =
+		DT_GPIO_PIN(DT_NODELABEL(gpio_imu_int_l), gpios);
+	const struct device *lid_accel_gpio = DEVICE_DT_GET(
+		DT_GPIO_CTLR(DT_NODELABEL(gpio_acc_int_l), gpios));
+	const gpio_port_pins_t lid_accel_pin =
+		DT_GPIO_PIN(DT_NODELABEL(gpio_acc_int_l), gpios);
+
+	/* Clear base and lid sensor interrupt call count before test */
+	RESET_FAKE(bmi3xx_interrupt);
+	RESET_FAKE(lsm6dsm_interrupt);
+	RESET_FAKE(icm42607_interrupt);
+	RESET_FAKE(bma4xx_interrupt);
+	RESET_FAKE(lis2dw12_interrupt);
+
+	/* Initial ssfc data for ICM42607 and LIS2DW. */
+	cbi_get_ssfc_fake.custom_fake = cbi_get_ssfc_mock;
+	ssfc_data = 0x13;
+	cros_cbi_ssfc_init();
+
+	/* Enable the interrupt int_imu and int_lid_imu */
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_imu));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_lid_imu));
+
+	alt_sensor_init();
+
+	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 1), NULL);
+	k_sleep(K_MSEC(100));
+	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 0), NULL);
+	k_sleep(K_MSEC(100));
+	zassert_ok(gpio_emul_input_set(lid_accel_gpio, lid_accel_pin, 1), NULL);
+	k_sleep(K_MSEC(100));
+	zassert_ok(gpio_emul_input_set(lid_accel_gpio, lid_accel_pin, 0), NULL);
+	k_sleep(K_MSEC(100));
+
+	zassert_equal(bmi3xx_interrupt_fake.call_count, 0);
+	zassert_equal(lsm6dsm_interrupt_fake.call_count, 0);
+	zassert_equal(icm42607_interrupt_fake.call_count, 1);
 	zassert_equal(bma4xx_interrupt_fake.call_count, 0);
 	zassert_equal(lis2dw12_interrupt_fake.call_count, 1);
 }

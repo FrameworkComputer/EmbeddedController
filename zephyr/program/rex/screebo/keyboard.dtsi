@@ -24,3 +24,7 @@
 	>;
 	capabilities = <0>;
 };
+
+&boot_keys {
+	refresh-rc = <KBD_RC(3, 2)>;
+};

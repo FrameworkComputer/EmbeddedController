@@ -3,12 +3,6 @@
  * found in the LICENSE file.
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 11
-
 #define DT_DRV_COMPAT nuvoton_npcx_cros_kb_raw
 
 #include "ec_tasks.h"
@@ -28,7 +22,6 @@
 #include <soc.h>
 #include <soc/nuvoton_npcx/reg_def_cros.h>
 
-#line 32
 LOG_MODULE_REGISTER(cros_kb_raw, LOG_LEVEL_ERR);
 
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED
@@ -229,7 +222,7 @@ static int cros_kb_raw_npcx_config_alt(const struct device *dev, bool enable)
 }
 #endif
 
-static const struct cros_kb_raw_driver_api cros_kb_raw_npcx_driver_api = {
+static DEVICE_API(cros_kb_raw, cros_kb_raw_npcx_driver_api) = {
 	.init = cros_kb_raw_npcx_init,
 	.drive_colum = cros_kb_raw_npcx_drive_column,
 	.read_rows = cros_kb_raw_npcx_read_row,

@@ -33,6 +33,8 @@ typedef union {
 	};
 } task_;
 
+#define IDIVZE BIT(30)
+
 /* Value to store in unused stack */
 #define STACK_UNUSED_VALUE 0xdeadd00d
 
@@ -205,16 +207,39 @@ static inline task_ *__task_id_to_ptr(task_id_t id)
  */
 void __ram_code interrupt_disable(void)
 {
-	/* Mask all interrupts, only keep division by zero exception */
-	uint32_t val = BIT(30);
+	/* Mask all interrupts, except division by zero */
+	uint32_t val = IDIVZE;
+
 	asm volatile("mtsr %0, $INT_MASK" : : "r"(val));
 	asm volatile("dsb");
+
+#ifdef CONFIG_IT83XX_PREWDT_ALWAYS_ENABLED
+	/* Group 3: No need to interrupt */
+	/* Group 7: unused */
+	/* Group 10: bit0 is pre-watchdog, keep it */
+	/* Group 19: disable interrupt without clear pending status */
+	IT83XX_INTC_EXT_IER19 &= ~GROUP19_TO_INT3_MASK;
+	/* Mask all interrupts, except division by zero and timer-related */
+	val = IDIVZE | BIT(3);
+	asm volatile("mtsr %0, $INT_MASK" : : "r"(val));
+	asm volatile("dsb");
+#endif
 }
 
 void __ram_code interrupt_enable(void)
 {
+	/* Mask all interrupts, except division by zero */
+	uint32_t val = IDIVZE;
+
+#ifdef CONFIG_IT83XX_PREWDT_ALWAYS_ENABLED
+	asm volatile("mtsr %0, $INT_MASK" : : "r"(val));
+	asm volatile("dsb");
+	/* Enable interrupt groups in reverse order, starting with group 19 */
+	IT83XX_INTC_EXT_IER19 = BRAM_EC_EXT_REG19;
+	/* Skip group 3, 10 and group 7, same as in interrupt_disable() */
+#endif
 	/* Enable HW2 ~ HW15 and division by zero exception interrupts */
-	uint32_t val = (BIT(30) | 0xFFFC);
+	val = (IDIVZE | 0xFFFC);
 	asm volatile("mtsr %0, $INT_MASK" : : "r"(val));
 }
 
@@ -224,8 +249,8 @@ inline bool is_interrupt_enabled(void)
 
 	asm volatile("mfsr %0, $INT_MASK" : "=r"(val));
 
-	/* Interrupts are enabled if any of HW2 ~ HW15 is enabled */
-	return val & 0xFFFC;
+	/* Interrupts are enabled if any of HW2, HW4 ~ HW15 is enabled */
+	return val & 0xFFF4;
 }
 
 inline bool in_interrupt_context(void)
@@ -475,7 +500,7 @@ uint32_t __ram_code task_wait_event_mask(uint32_t event_mask, int timeout_us)
 
 uint32_t __ram_code read_clear_int_mask(void)
 {
-	uint32_t int_mask, int_dis = BIT(30);
+	uint32_t int_mask, int_dis = IDIVZE;
 
 	asm volatile("mfsr %0, $INT_MASK\n\t"
 		     "mtsr %1, $INT_MASK\n\t"

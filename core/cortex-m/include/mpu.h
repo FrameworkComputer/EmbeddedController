@@ -141,9 +141,4 @@ int mpu_lock_rollback(int lock);
  */
 int mpu_pre_init(void);
 
-/**
- * Protects Code RAM if CONFIG_PROTECT_CODE_RAM is enabled.
- */
-void mpu_post_init(void);
-
 #endif /* __CROS_EC_MPU_H */

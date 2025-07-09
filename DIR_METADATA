@@ -15,3 +15,16 @@ buganizer_public {
 }
 
 team_email: "cros-ec@google.com"
+
+chromeos {
+  cq {
+    source_test_plans {
+      test_plan_starlark_files {
+        host: "chrome-internal.googlesource.com"
+        project: "chromeos/config-internal"
+        path: "test/plans/v2/ctpv1_compatible/fingerprint_cq.star"
+      }
+      path_regexps: "util/flash_fp_mcu"
+    }
+  }
+}

@@ -18,7 +18,7 @@
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
-#define ADT_RATING_W (PD_MAX_POWER_MW / 1000)
+#define ADT_RATING_W (CONFIG_USB_PD_MAX_POWER_MW / 1000)
 #define PROCHOT_EVENT_200MS_TICK TASK_EVENT_CUSTOM_BIT(0)
 
 struct batt_para {

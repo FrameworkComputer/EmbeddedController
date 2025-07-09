@@ -236,6 +236,14 @@ void pe_snk_epr_explicit_exit(int port);
  */
 bool pe_snk_can_enter_epr_mode(int port);
 
+/**
+ * Checks whether the port vbus is valid for bist mode.
+ *
+ * @param port USB-C port number
+ * @return true if the port can enter bist mode or false.
+ */
+bool pd_vbus_valid_for_bist(int port);
+
 #ifdef __cplusplus
 }
 #endif

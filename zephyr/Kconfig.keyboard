@@ -46,6 +46,7 @@ config CROS_EC_KEYBOARD_INPUT
 	bool "Input subsystem based Keyboard"
 	depends on $(dt_chosen_enabled,$(CHOSEN_CROS_EC_KEYBOARD))
 	depends on INPUT
+	select PM_DEVICE_RUNTIME if !BOARD_NATIVE_SIM
 	help
 	  Input subsystem based Keyboard implementation, requires a
 	  `cros-ec,keyboard` chosen property pointing at the desired input
@@ -143,6 +144,24 @@ config PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 	  Note that if your board has the standard chromeos keyboard layout other
 	  than the top row, and you are looking only for top row customization,
 	  then you should be looking at overriding board_vivaldi_keybd_config() instead.
+
+config PLATFORM_EC_KEYBOARD_ROW_VOL_UP
+	int "Row position of volume-up key"
+	default 0
+	range 0 7
+	depends on !PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+        depends on PLATFORM_EC_KEYBOARD_RUNTIME_KEYS
+	help
+	  Row position of volume-up key
+
+config PLATFORM_EC_KEYBOARD_COL_VOL_UP
+	int "Column position of volume-up key"
+	default 4
+	range 0 17
+	depends on !PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+        depends on PLATFORM_EC_KEYBOARD_RUNTIME_KEYS
+	help
+	  Column position of volume-up key
 
 choice PLATFORM_EC_KEYBOARD_PWRBTN_MODE
 	prompt "Select the impact of pressing the power button"
@@ -290,8 +309,12 @@ config PLATFORM_KEYBOARD_SCANCODE_CALLBACK
 	help
 	  Enable callback support, board-specific 8042 keyboard callback
 	  when a key state is changed.
-
 endif # PLATFORM_EC_KEYBOARD
+
+config PLATFORM_EC_KEYBOARD_STRAUSS
+	bool "Enable Strauss keyboard"
+	help
+	  Enable Strauss keyboard.
 
 config PLATFORM_EC_KEYBOARD_BOOT_KEYS
 	bool "Support for boot key combinations"

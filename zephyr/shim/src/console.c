@@ -138,6 +138,11 @@ void uart_shell_rx_bypass(bool enable)
 	rx_bypass_enabled = enable;
 }
 
+int uart_init_done(void)
+{
+	return uart_shell_dev->state->initialized;
+}
+
 int uart_shell_stop(void)
 {
 	struct k_poll_event event = K_POLL_EVENT_INITIALIZER(
@@ -230,10 +235,14 @@ void uart_shell_start(void)
 static void print_console_help(const char *name,
 			       const struct zephyr_console_command *command)
 {
-	if (command->help)
-		printk("%s\n", command->help);
-	if (command->argdesc)
-		printk("Usage: %s %s\n", name, command->argdesc);
+	if (command->help) {
+		shell_fprintf(shell_zephyr, SHELL_NORMAL, "%s\n",
+			      command->help);
+	}
+	if (command->argdesc) {
+		shell_fprintf(shell_zephyr, SHELL_NORMAL, "Usage: %s %s\n",
+			      name, command->argdesc);
+	}
 }
 #endif
 
@@ -263,12 +272,17 @@ int zshim_run_ec_console_command(const struct zephyr_console_command *command,
 		return ret;
 
 	/* Print common parameter error conditions and help on error */
-	if (ret >= EC_ERROR_PARAM1 && ret < EC_ERROR_PARAM_COUNT)
-		printk("Parameter %d invalid\n", ret - EC_ERROR_PARAM1 + 1);
-	else if (ret == EC_ERROR_PARAM_COUNT)
-		printk("Wrong number of parameters\n");
-	else
-		printk("Command returned error: %d\n", ret);
+	if (ret >= EC_ERROR_PARAM1 && ret < EC_ERROR_PARAM_COUNT) {
+		shell_fprintf(shell_zephyr, SHELL_NORMAL,
+			      "Parameter %d invalid\n",
+			      ret - EC_ERROR_PARAM1 + 1);
+	} else if (ret == EC_ERROR_PARAM_COUNT) {
+		shell_fprintf(shell_zephyr, SHELL_NORMAL,
+			      "Wrong number of parameters\n");
+	} else {
+		shell_fprintf(shell_zephyr, SHELL_NORMAL,
+			      "Command returned error: %d\n", ret);
+	}
 
 #ifdef CONFIG_SHELL_HELP
 	print_console_help(argv[0], command);
@@ -297,7 +311,11 @@ SYS_INIT(init_ec_console, PRE_KERNEL_1,
 	 CONFIG_PLATFORM_EC_CONSOLE_INIT_PRIORITY);
 #endif /* CONFIG_PLATFORM_EC_CONSOLE_CHANNEL */
 
-#ifdef CONFIG_LOG_MODE_MINIMAL
+#if defined(CONFIG_LOG_MODE_MINIMAL) && \
+	!defined(CONFIG_PIGWEED_LOG_TOKENIZED_LIB)
+/* Tokenized logging backend handles updating the AP console buffer
+ *  see - zephyr/shim/src/pw_log_zephyr_tokenized.cc
+ */
 static int zephyr_shim_console_out(int c)
 {
 	/* Always capture EC output into the AP console buffer. */
@@ -311,6 +329,10 @@ static int zephyr_shim_console_out(int c)
 	 * Zephyr printk() backend when using CONFIG_LOG_MODE_MINIMAL.
 	 * No legacy cputs/cprints calls use this directly, but the "chan"
 	 * console command can be used to turn Zephyr logging on and off.
+	 *
+	 * Other logging modes (LOG_MODE_IMMEDIATE, LOG_MODE_DEFERRED)
+	 * should enable CONFIG_PLATFORM_EC_LOG_BACKEND_CONSOLE_BUFFER to
+	 * capture Zephyr log messages into the console buffer.
 	 */
 	if (console_channel_is_disabled(CC_ZEPHYR_LOG)) {
 		return c;
@@ -339,7 +361,8 @@ static int init_ec_shell(void)
 	 * CONFIG_PLATFORM_EC_LOG_BACKEND_CONSOLE_BUFFER to capture log
 	 * output into the AP console buffer.
 	 */
-#ifdef CONFIG_LOG_MODE_MINIMAL
+#if defined(CONFIG_LOG_MODE_MINIMAL) && \
+	!defined(CONFIG_PIGWEED_LOG_TOKENIZED_LIB)
 	zephyr_char_out = __printk_get_hook();
 	__printk_hook_install(zephyr_shim_console_out);
 #endif
@@ -457,7 +480,13 @@ static void handle_sprintf_rv(int rv, size_t *len)
 	}
 }
 
-static void zephyr_print(const char *buff, size_t size, bool is_shell_output)
+static bool shell_is_active(void)
+{
+	return shell_zephyr != NULL &&
+	       shell_zephyr->ctx->state == SHELL_STATE_ACTIVE;
+}
+
+static void zephyr_print(const char *buff, size_t size)
 {
 	/*
 	 * shell_* functions can not be used in ISRs so optionally use
@@ -469,44 +498,26 @@ static void zephyr_print(const char *buff, size_t size, bool is_shell_output)
 	 */
 	bool in_isr = k_is_in_isr();
 
-	if (in_isr || shell_stopped ||
-	    shell_zephyr->ctx->state != SHELL_STATE_ACTIVE) {
+	if (in_isr || shell_stopped || !shell_is_active()) {
 		if (IS_ENABLED(CONFIG_PLATFORM_EC_ISR_CONSOLE_OUTPUT) ||
 		    !in_isr) {
 			printk("!%s", buff);
-			return;
 		}
+		return;
 	}
 
-	if (is_shell_output) {
-		/* Always send CC_COMMAND tagged output directly to the shell.
-		 * This also skips sending console command output to the AP
-		 * console buffer.
-		 */
-		shell_fprintf(shell_zephyr, SHELL_NORMAL, "%s", buff);
-	} else if (IS_ENABLED(CONFIG_LOG_MODE_MINIMAL)) {
-		/*
-		 * The shell UART backend uses uart_fifo_fill() while
-		 * the LOG_MODE_MINIMAL uses printk() and calls
-		 * uart_poll_out().
-		 *
-		 * When LOG_MODE_MINIMAL enabled, send all output
-		 * to the logging subsystem to minimize mixing output
-		 * messages.  AP console buffer is handled above
-		 * with a custom printk hook.
-		 */
-		LOG_RAW("%s", buff);
-	} else {
-		/*
-		 * LOGGING disabled, or uses a mode besides
-		 * CONFIG_LOG_MODE_MINIMAL. Send the output to the shell
-		 * backend and also copy in to the AP console buffer.
-		 */
-		shell_fprintf(shell_zephyr, SHELL_NORMAL, "%s", buff);
-		if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE)) {
-			console_buf_notify_chars(buff, size);
-		}
+	/* Send all legacy output directly to the shell.  The shell UART
+	 * backend uses uart_fifo_fill(), while LOG_MODE_MINIMAL uses
+	 * printk() and calls uart_poll_out().
+	 */
+	shell_fprintf(shell_zephyr, SHELL_NORMAL, "%s", buff);
+
+	/* Capture legacy output into the console buffer read by the AP.
+	 */
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE)) {
+		console_buf_notify_chars(buff, size);
 	}
+
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_CONSOLE_DEBUG)) {
 		printk("%s", buff);
 	}
@@ -524,8 +535,7 @@ int cputs(enum console_channel channel, const char *outstr)
 	if (console_channel_is_disabled(channel))
 		return EC_SUCCESS;
 
-	zephyr_print(outstr, strlen(outstr),
-		     channel == CC_COMMAND ? true : false);
+	zephyr_print(outstr, strlen(outstr));
 
 	return 0;
 }
@@ -543,7 +553,7 @@ int cvprintf(enum console_channel channel, const char *format, va_list args)
 	rv = crec_vsnprintf(buff, CONFIG_SHELL_PRINTF_BUFF_SIZE, format, args);
 	handle_sprintf_rv(rv, &len);
 
-	zephyr_print(buff, len, channel == CC_COMMAND ? true : false);
+	zephyr_print(buff, len);
 
 	return rv > 0 ? EC_SUCCESS : rv;
 }
@@ -588,7 +598,7 @@ int cvprints(enum console_channel channel, const char *format, va_list args)
 			   "]\n");
 	handle_sprintf_rv(rv, &len);
 
-	zephyr_print(buff, len, channel == CC_COMMAND ? true : false);
+	zephyr_print(buff, len);
 
 	return rv > 0 ? EC_SUCCESS : rv;
 }

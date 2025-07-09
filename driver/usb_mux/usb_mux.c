@@ -137,7 +137,9 @@ static int init_mux_mutex(void)
 
 	return 0;
 }
-SYS_INIT(init_mux_mutex, POST_KERNEL, 50);
+SYS_INIT(init_mux_mutex, POST_KERNEL,
+	 COND_CODE_1(IS_ENABLED(CONFIG_PDC_POWER_MGMT_USB_MUX),
+		     (CONFIG_USB_MUX_SYS_INIT_PRIORITY), (50)));
 #endif /* CONFIG_ZEPHYR */
 
 __maybe_unused static void
@@ -182,7 +184,21 @@ static void init_queue_structs(void)
 		mux_queue[i].buffer = (uint8_t *)&queue_buffers[i][0];
 	}
 }
+#ifndef CONFIG_PDC_POWER_MGMT_USB_MUX
 DECLARE_HOOK(HOOK_INIT, init_queue_structs, HOOK_PRIO_FIRST);
+#else
+static int queue_structs_sys_init(void)
+{
+	init_queue_structs();
+	return 0;
+}
+
+SYS_INIT(queue_structs_sys_init, POST_KERNEL, CONFIG_USB_MUX_SYS_INIT_PRIORITY);
+BUILD_ASSERT(CONFIG_USB_MUX_SYS_INIT_PRIORITY <
+		     CONFIG_PDC_POWER_MGMT_INIT_PRIORITY,
+	     "The usb mux initialization must be higher priortity than "
+	     "the PDC power management");
+#endif
 #endif
 
 __maybe_unused void usb_mux_task(void *u)

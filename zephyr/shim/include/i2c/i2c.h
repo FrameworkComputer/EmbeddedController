@@ -3,12 +3,6 @@
  * found in the LICENSE file.
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 11
-
 #ifndef ZEPHYR_CHROME_I2C_I2C_H
 #define ZEPHYR_CHROME_I2C_I2C_H
 
@@ -186,7 +180,10 @@ BUILD_ASSERT(I2C_PORT_COUNT != 0, "No I2C devices defined");
  * enum i2c_ports_chip above for every I2C port devicetree node.
  */
 enum i2c_ports {
+	/* clang-format off */
 	DT_FOREACH_CHILD_STATUS_OKAY(NAMED_I2C_PORTS_NODE, NAMED_I2C_PORT_COMMA)
+	NAMED_I2C_PORT_COUNT,
+	/* clang-format on */
 };
 
 /**

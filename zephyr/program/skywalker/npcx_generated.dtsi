@@ -1,0 +1,301 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * This file is auto-generated - do not edit!
+ */
+
+/ {
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_charger_pmon_q: charger_pmon_q {
+			enum-name = "ADC_PMON";
+			io-channels = <&adc0 0>;
+		};
+		adc_temp_sensor1: temp_sensor1 {
+			enum-name = "ADC_TEMP_SENSOR_1";
+			io-channels = <&adc0 1>;
+		};
+		adc_usbc_sub_detect: usbc_sub_detect {
+			enum-name = "ADC_EVB_CH_2";
+			io-channels = <&adc0 2>;
+		};
+		adc_charger_amon_q: charger_amon_q {
+			enum-name = "ADC_AMON_BMON";
+			io-channels = <&adc0 3>;
+		};
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_acok_od_z5: acok_od_z5 {
+			gpios = <&gpio0 0 (GPIO_INPUT)>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_ap_ec_sysrst_odl: ap_ec_sysrst_odl {
+			gpios = <&gpioa 1 (GPIO_INPUT)>;
+			enum-name = "GPIO_AP_EC_SYSRST_ODL";
+		};
+		gpio_ap_ec_warm_rst_req: ap_ec_warm_rst_req {
+			gpios = <&gpio5 1 (GPIO_INPUT)>;
+			enum-name = "GPIO_AP_EC_WARM_RST_REQ";
+		};
+		gpio_ap_ec_wdtrst_l: ap_ec_wdtrst_l {
+			gpios = <&gpio5 2 (GPIO_INPUT)>;
+			enum-name = "GPIO_AP_EC_WDTRST_L";
+		};
+		gpio_ap_in_sleep_l: ap_in_sleep_l {
+			gpios = <&gpio5 4 (GPIO_INPUT)>;
+			enum-name = "GPIO_AP_IN_SLEEP_L";
+		};
+		gpio_ap_xhci_init_done_r: ap_xhci_init_done_r {
+			gpios = <&gpioa 3 (GPIO_INPUT)>;
+		};
+		gpio_charger_prochot_odl: charger_prochot_odl {
+			gpios = <&gpio6 7 (GPIO_INPUT)>;
+		};
+		gpio_dp_aux_path_sel: dp_aux_path_sel {
+			gpios = <&gpio7 2 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		gpio_ec_ap_dpoc_en_odl: ec_ap_dpoc_en_odl {
+			gpios = <&gpio5 7 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_ec_ap_dp_hpd_l: ec_ap_dp_hpd_l {
+			gpios = <&gpio6 1 (GPIO_OUTPUT | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_ec_ap_int_odl: ec_ap_int_odl {
+			gpios = <&gpioc 1 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+			enum-name = "GPIO_EC_INT_L";
+		};
+		gpio_ec_ap_sys_rst_odl: ec_ap_sys_rst_odl {
+			gpios = <&gpioc 5 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+			enum-name = "GPIO_SYS_RST_ODL";
+		};
+		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
+			gpios = <&gpioe 0 (GPIO_INPUT)>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		gpio_ec_bl_en_od: ec_bl_en_od {
+			gpios = <&gpio4 0 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		gpio_ec_flash_wp_odl: ec_flash_wp_odl {
+			gpios = <&gpioe 3 (GPIO_INPUT)>;
+		};
+		gpio_ec_gsc_packet_mode_en: ec_gsc_packet_mode_en {
+			gpios = <&gpiod 4 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+			enum-name = "GPIO_PACKET_MODE_EN";
+		};
+		gpio_ec_i2c_pdc0_sm_int_odl: ec_i2c_pdc0_sm_int_odl {
+			gpios = <&gpioe 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_i2c_pdc0_s_int_odl: ec_i2c_pdc0_s_int_odl {
+			gpios = <&gpiof 1 (GPIO_INPUT)>;
+		};
+		gpio_ec_i2c_pdc1_sm_int_odl: ec_i2c_pdc1_sm_int_odl {
+			gpios = <&gpio6 2 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_i2c_pdc1_s_int_odl: ec_i2c_pdc1_s_int_odl {
+			gpios = <&gpio6 3 (GPIO_INPUT)>;
+		};
+		gpio_ec_kso_02_inv: ec_kso_02_inv {
+			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_ec_led1_odl: ec_led1_odl {
+			gpios = <&gpioc 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_ec_led2_odl: ec_led2_odl {
+			gpios = <&gpioc 2 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_ec_led3_odl: ec_led3_odl {
+			gpios = <&gpioc 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_ec_pen_chg_dis_odl: ec_pen_chg_dis_odl {
+			gpios = <&gpioe 4 (GPIO_OUTPUT | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_ec_pmic_en_odl_r: ec_pmic_en_odl_r {
+			gpios = <&gpio7 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+			enum-name = "GPIO_EC_PMIC_EN_ODL";
+		};
+		gpio_ec_voldn_btn_odl: ec_voldn_btn_odl {
+			gpios = <&gpioe 2 (GPIO_INPUT)>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		};
+		gpio_ec_volup_btn_odl: ec_volup_btn_odl {
+			gpios = <&gpiod 5 (GPIO_INPUT)>;
+			enum-name = "GPIO_VOLUME_UP_L";
+		};
+		gpio_en_pp3700_s5: en_pp3700_s5 {
+			gpios = <&gpiod 3 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		gpio_en_pp5000_usba_vbus: en_pp5000_usba_vbus {
+			gpios = <&gpio6 0 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		gpio_en_pp5000_z1: en_pp5000_z1 {
+			gpios = <&gpio3 4 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_en_usb_c0_dev_mode: en_usb_c0_dev_mode {
+			gpios = <&gpioc 6 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
+			gpios = <&gpioa 6 (GPIO_INPUT)>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_imu_int_ec_l: imu_int_ec_l {
+			gpios = <&gpio5 6 (GPIO_INPUT)>;
+		};
+		gpio_lid_360_l: lid_360_l {
+			gpios = <&gpiob 2 (GPIO_INPUT)>;
+		};
+		gpio_lid_accel_int_ec_l: lid_accel_int_ec_l {
+			gpios = <&gpiob 3 (GPIO_INPUT)>;
+		};
+		gpio_lid_open_3v3_z5: lid_open_3v3_z5 {
+			gpios = <&gpiod 2 (GPIO_INPUT)>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		gpio_mech_pwr_btn_odl_z5: mech_pwr_btn_odl_z5 {
+			gpios = <&gpio0 1 (GPIO_INPUT)>;
+		};
+		gpio_pg_pp3700_s5_od: pg_pp3700_s5_od {
+			gpios = <&gpio7 3 (GPIO_INPUT)>;
+			enum-name = "GPIO_PG_PP4200_S5_OD";
+		};
+		gpio_pg_pp5000_z1_od: pg_pp5000_z1_od {
+			gpios = <&gpio7 0 (GPIO_INPUT)>;
+		};
+		gpio_pmic_ec_resetb: pmic_ec_resetb {
+			gpios = <&gpio9 5 (GPIO_INPUT)>;
+			enum-name = "GPIO_PMIC_EC_RESETB";
+		};
+		gpio_usb_c0_dp_hpd: usb_c0_dp_hpd {
+			gpios = <&gpiob 6 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		gpio_usb_c1_dp_hpd: usb_c1_dp_hpd {
+			gpios = <&gpiob 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_sensor_scl_1v8: ec_i2c_sensor_scl_1v8 {
+			i2c-port = <&i2c0_0>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+		i2c_ec_i2c_pdc_sm_scl_3v3: ec_i2c_pdc_sm_scl_3v3 {
+			i2c-port = <&i2c1_0>;
+			enum-names = "I2C_PORT_PDC_SM";
+		};
+		i2c_ec_i2c_pdc_s_scl_3v3: ec_i2c_pdc_s_scl_3v3 {
+			i2c-port = <&i2c2_0>;
+			enum-names = "I2C_PORT_PDC_S";
+		};
+		i2c_ec_i2c_charger_scl_3v3: ec_i2c_charger_scl_3v3 {
+			i2c-port = <&i2c3_0>;
+			enum-names = "I2C_PORT_CHARGER";
+		};
+		i2c_ec_smb_batt_scl_3v3: ec_smb_batt_scl_3v3 {
+			i2c-port = <&i2c5_0>;
+			enum-names = "I2C_PORT_BATTERY";
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_chan0_gp45
+		&adc0_chan1_gp44
+		&adc0_chan2_gp43
+		&adc0_chan3_gp42>;
+	pinctrl-names = "default";
+};
+
+&i2c0_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
+	pinctrl-names = "default";
+};
+
+&i2c1_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
+	pinctrl-names = "default";
+};
+
+&i2c2_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
+	pinctrl-names = "default";
+};
+
+&i2c3_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
+	pinctrl-names = "default";
+};
+
+&i2c5_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c5_0_sda_scl_gp36_33>;
+	pinctrl-names = "default";
+};
+
+&i2c_ctrl0 {
+	status = "okay";
+};
+
+&i2c_ctrl1 {
+	status = "okay";
+};
+
+&i2c_ctrl2 {
+	status = "okay";
+};
+
+&i2c_ctrl3 {
+	status = "okay";
+};
+
+&i2c_ctrl5 {
+	status = "okay";
+};
+
+&pwm3 {
+	status = "okay";
+	pinctrl-0 = <&pwm3_gp80>;
+	pinctrl-names = "default";
+};
+
+&cros_kb_raw {
+	status = "okay";
+	/* No KSO2 (it's inverted and implemented by GPIO) */
+	pinctrl-0 = <
+		&ksi0_gp31
+		&ksi1_gp30
+		&ksi2_gp27
+		&ksi3_gp26
+		&ksi4_gp25
+		&ksi5_gp24
+		&ksi6_gp23
+		&ksi7_gp22
+		&kso00_gp21
+		&kso01_gp20
+		&kso03_gp16
+		&kso04_gp15
+		&kso05_gp14
+		&kso08_gp11
+		&kso09_gp10
+		&kso10_gp07
+		&kso11_gp06
+		&kso12_gp05
+		&kso13_gp04
+		&kso14_gp82
+		&kso15_gp83
+		&kso16_gp03
+		&kso17_gpb1
+	>;
+	pinctrl-names = "default";
+};

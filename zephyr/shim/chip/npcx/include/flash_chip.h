@@ -29,7 +29,4 @@
 
 #define CONFIG_RW_STORAGE_OFF 0
 
-/* Use 4k sector erase for NPCX monitor flash erase operations. */
-#define NPCX_MONITOR_FLASH_ERASE_SIZE 0x1000
-
 #endif /* __CROS_EC_FLASH_CHIP_H */

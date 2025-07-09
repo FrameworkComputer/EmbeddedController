@@ -8,7 +8,6 @@
 #include "gpio.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_config.h"
-#include "keyboard_customization.h"
 #include "keyboard_protocol.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
@@ -92,22 +91,22 @@ void board_keyboard_drive_col(int col)
 }
 
 struct keyboard_type key_typ = {
-	.col_esc = KEYBOARD_COL_ESC,
-	.row_esc = KEYBOARD_ROW_ESC,
-	.col_down = KEYBOARD_COL_DOWN,
-	.row_down = KEYBOARD_ROW_DOWN,
-	.col_left_shift = KEYBOARD_COL_LEFT_SHIFT,
-	.row_left_shift = KEYBOARD_ROW_LEFT_SHIFT,
-	.col_refresh = KEYBOARD_COL_REFRESH,
-	.row_refresh = KEYBOARD_ROW_REFRESH,
-	.col_right_alt = KEYBOARD_COL_RIGHT_ALT,
-	.row_right_alt = KEYBOARD_ROW_RIGHT_ALT,
-	.col_left_alt = KEYBOARD_COL_LEFT_ALT,
-	.row_left_alt = KEYBOARD_ROW_LEFT_ALT,
-	.col_key_r = KEYBOARD_COL_KEY_R,
-	.row_key_r = KEYBOARD_ROW_KEY_R,
-	.col_key_h = KEYBOARD_COL_KEY_H,
-	.row_key_h = KEYBOARD_ROW_KEY_H,
+	.col_esc = DELBIN_KEYBOARD_COL_ESC,
+	.row_esc = DELBIN_KEYBOARD_ROW_ESC,
+	.col_down = DELBIN_KEYBOARD_COL_DOWN,
+	.row_down = DELBIN_KEYBOARD_ROW_DOWN,
+	.col_left_shift = DELBIN_KEYBOARD_COL_LEFT_SHIFT,
+	.row_left_shift = DELBIN_KEYBOARD_ROW_LEFT_SHIFT,
+	.col_refresh = DELBIN_KEYBOARD_COL_REFRESH,
+	.row_refresh = DELBIN_KEYBOARD_ROW_REFRESH,
+	.col_right_alt = DELBIN_KEYBOARD_COL_RIGHT_ALT,
+	.row_right_alt = DELBIN_KEYBOARD_ROW_RIGHT_ALT,
+	.col_left_alt = DELBIN_KEYBOARD_COL_LEFT_ALT,
+	.row_left_alt = DELBIN_KEYBOARD_ROW_LEFT_ALT,
+	.col_key_r = DELBIN_KEYBOARD_COL_KEY_R,
+	.row_key_r = DELBIN_KEYBOARD_ROW_KEY_R,
+	.col_key_h = DELBIN_KEYBOARD_COL_KEY_H,
+	.row_key_h = DELBIN_KEYBOARD_ROW_KEY_H,
 };
 
 int keyboard_choose(void)
@@ -118,55 +117,70 @@ int keyboard_choose(void)
 	return 0;
 }
 
+struct boot_key_entry boot_key_list[] = {
+	[BOOT_KEY_ESC] = { DELBIN_KEYBOARD_COL_ESC, DELBIN_KEYBOARD_ROW_ESC },
+	[BOOT_KEY_DOWN_ARROW] = { DELBIN_KEYBOARD_COL_DOWN,
+				  DELBIN_KEYBOARD_ROW_DOWN },
+	[BOOT_KEY_LEFT_SHIFT] = { DELBIN_KEYBOARD_COL_LEFT_SHIFT,
+				  DELBIN_KEYBOARD_ROW_LEFT_SHIFT },
+	[BOOT_KEY_REFRESH] = { DELBIN_KEYBOARD_COL_REFRESH,
+			       DELBIN_KEYBOARD_ROW_REFRESH },
+};
+BUILD_ASSERT(ARRAY_SIZE(boot_key_list) == BOOT_KEY_COUNT);
+
 void key_choose(void)
 {
 	if (keyboard_choose() == 1) {
-		key_typ.col_esc = KEYBOARD2_COL_ESC;
-		key_typ.row_esc = KEYBOARD2_ROW_ESC;
-		key_typ.col_down = KEYBOARD2_COL_DOWN;
-		key_typ.row_down = KEYBOARD2_ROW_DOWN;
-		key_typ.col_left_shift = KEYBOARD2_COL_LEFT_SHIFT;
-		key_typ.row_left_shift = KEYBOARD2_ROW_LEFT_SHIFT;
-		key_typ.col_refresh = KEYBOARD2_COL_REFRESH;
-		key_typ.row_refresh = KEYBOARD2_ROW_REFRESH;
-		key_typ.col_right_alt = KEYBOARD2_COL_RIGHT_ALT;
-		key_typ.row_right_alt = KEYBOARD2_ROW_RIGHT_ALT;
-		key_typ.col_left_alt = KEYBOARD2_COL_LEFT_ALT;
-		key_typ.row_left_alt = KEYBOARD2_ROW_LEFT_ALT;
-		key_typ.col_key_r = KEYBOARD2_COL_KEY_R;
-		key_typ.row_key_r = KEYBOARD2_ROW_KEY_R;
-		key_typ.col_key_h = KEYBOARD2_COL_KEY_H;
-		key_typ.row_key_h = KEYBOARD2_ROW_KEY_H;
+		key_typ.col_esc = DELBIN_KEYBOARD2_COL_ESC;
+		key_typ.row_esc = DELBIN_KEYBOARD2_ROW_ESC;
+		key_typ.col_down = DELBIN_KEYBOARD2_COL_DOWN;
+		key_typ.row_down = DELBIN_KEYBOARD2_ROW_DOWN;
+		key_typ.col_left_shift = DELBIN_KEYBOARD2_COL_LEFT_SHIFT;
+		key_typ.row_left_shift = DELBIN_KEYBOARD2_ROW_LEFT_SHIFT;
+		key_typ.col_refresh = DELBIN_KEYBOARD2_COL_REFRESH;
+		key_typ.row_refresh = DELBIN_KEYBOARD2_ROW_REFRESH;
+		key_typ.col_right_alt = DELBIN_KEYBOARD2_COL_RIGHT_ALT;
+		key_typ.row_right_alt = DELBIN_KEYBOARD2_ROW_RIGHT_ALT;
+		key_typ.col_left_alt = DELBIN_KEYBOARD2_COL_LEFT_ALT;
+		key_typ.row_left_alt = DELBIN_KEYBOARD2_ROW_LEFT_ALT;
+		key_typ.col_key_r = DELBIN_KEYBOARD2_COL_KEY_R;
+		key_typ.row_key_r = DELBIN_KEYBOARD2_ROW_KEY_R;
+		key_typ.col_key_h = DELBIN_KEYBOARD2_COL_KEY_H;
+		key_typ.row_key_h = DELBIN_KEYBOARD2_ROW_KEY_H;
 
-		boot_key_list[BOOT_KEY_ESC].col = KEYBOARD2_COL_ESC;
-		boot_key_list[BOOT_KEY_ESC].row = KEYBOARD2_ROW_ESC;
-		boot_key_list[BOOT_KEY_DOWN_ARROW].col = KEYBOARD2_COL_DOWN;
-		boot_key_list[BOOT_KEY_DOWN_ARROW].row = KEYBOARD2_ROW_DOWN;
+		boot_key_list[BOOT_KEY_ESC].col = DELBIN_KEYBOARD2_COL_ESC;
+		boot_key_list[BOOT_KEY_ESC].row = DELBIN_KEYBOARD2_ROW_ESC;
+		boot_key_list[BOOT_KEY_DOWN_ARROW].col =
+			DELBIN_KEYBOARD2_COL_DOWN;
+		boot_key_list[BOOT_KEY_DOWN_ARROW].row =
+			DELBIN_KEYBOARD2_ROW_DOWN;
 		boot_key_list[BOOT_KEY_LEFT_SHIFT].col =
-			KEYBOARD2_COL_LEFT_SHIFT;
+			DELBIN_KEYBOARD2_COL_LEFT_SHIFT;
 		boot_key_list[BOOT_KEY_LEFT_SHIFT].row =
-			KEYBOARD2_ROW_LEFT_SHIFT;
-		boot_key_list[BOOT_KEY_REFRESH].col = KEYBOARD2_COL_REFRESH;
-		boot_key_list[BOOT_KEY_REFRESH].row = KEYBOARD2_ROW_REFRESH;
+			DELBIN_KEYBOARD2_ROW_LEFT_SHIFT;
+		boot_key_list[BOOT_KEY_REFRESH].col =
+			DELBIN_KEYBOARD2_COL_REFRESH;
+		boot_key_list[BOOT_KEY_REFRESH].row =
+			DELBIN_KEYBOARD2_ROW_REFRESH;
 
 		scancode_set2 = KB2scancode_set2;
 	} else {
-		key_typ.col_esc = KEYBOARD_COL_ESC;
-		key_typ.row_esc = KEYBOARD_ROW_ESC;
-		key_typ.col_down = KEYBOARD_COL_DOWN;
-		key_typ.row_down = KEYBOARD_ROW_DOWN;
-		key_typ.col_left_shift = KEYBOARD_COL_LEFT_SHIFT;
-		key_typ.row_left_shift = KEYBOARD_ROW_LEFT_SHIFT;
-		key_typ.col_refresh = KEYBOARD_COL_REFRESH;
-		key_typ.row_refresh = KEYBOARD_ROW_REFRESH;
-		key_typ.col_right_alt = KEYBOARD_COL_RIGHT_ALT;
-		key_typ.row_right_alt = KEYBOARD_ROW_RIGHT_ALT;
-		key_typ.col_left_alt = KEYBOARD_COL_LEFT_ALT;
-		key_typ.row_left_alt = KEYBOARD_ROW_LEFT_ALT;
-		key_typ.col_key_r = KEYBOARD_COL_KEY_R;
-		key_typ.row_key_r = KEYBOARD_ROW_KEY_R;
-		key_typ.col_key_h = KEYBOARD_COL_KEY_H;
-		key_typ.row_key_h = KEYBOARD_ROW_KEY_H;
+		key_typ.col_esc = DELBIN_KEYBOARD_COL_ESC;
+		key_typ.row_esc = DELBIN_KEYBOARD_ROW_ESC;
+		key_typ.col_down = DELBIN_KEYBOARD_COL_DOWN;
+		key_typ.row_down = DELBIN_KEYBOARD_ROW_DOWN;
+		key_typ.col_left_shift = DELBIN_KEYBOARD_COL_LEFT_SHIFT;
+		key_typ.row_left_shift = DELBIN_KEYBOARD_ROW_LEFT_SHIFT;
+		key_typ.col_refresh = DELBIN_KEYBOARD_COL_REFRESH;
+		key_typ.row_refresh = DELBIN_KEYBOARD_ROW_REFRESH;
+		key_typ.col_right_alt = DELBIN_KEYBOARD_COL_RIGHT_ALT;
+		key_typ.row_right_alt = DELBIN_KEYBOARD_ROW_RIGHT_ALT;
+		key_typ.col_left_alt = DELBIN_KEYBOARD_COL_LEFT_ALT;
+		key_typ.row_left_alt = DELBIN_KEYBOARD_ROW_LEFT_ALT;
+		key_typ.col_key_r = DELBIN_KEYBOARD_COL_KEY_R;
+		key_typ.row_key_r = DELBIN_KEYBOARD_ROW_KEY_R;
+		key_typ.col_key_h = DELBIN_KEYBOARD_COL_KEY_H;
+		key_typ.row_key_h = DELBIN_KEYBOARD_ROW_KEY_H;
 
 		scancode_set2 = KB1scancode_set2;
 	}

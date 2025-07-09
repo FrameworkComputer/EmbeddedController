@@ -29,6 +29,9 @@ struct keyboard_scan_config {
 	uint16_t debounce_up_us;
 	/* Time between start of scans when in polling mode */
 	uint16_t scan_period_us;
+	/* Time between start of scans when in polling mode when not debouncing
+	 */
+	uint16_t stable_scan_period_us;
 	/*
 	 * Minimum time between end of one scan and start of the next one.
 	 * This ensures keyboard scanning doesn't starve the rest of the system

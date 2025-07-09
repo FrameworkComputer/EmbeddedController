@@ -26,10 +26,12 @@ static void opm_notify(void *context)
 }
 
 /* Sort of main */
-static int eppm_init(void)
+test_export_static int eppm_init(void)
 {
 	const struct ucsi_pd_driver *drv;
 	const struct device *pdc_dev;
+
+	ppm_dev = NULL;
 
 	pdc_dev = DEVICE_DT_GET(DT_INST(0, ucsi_ppm));
 	if (!device_is_ready(pdc_dev)) {
@@ -37,13 +39,8 @@ static int eppm_init(void)
 		return -ENODEV;
 	}
 
-	drv = pdc_dev->api;
-	if (!drv) {
-		LOG_ERR("Failed to open PDC");
-		return -ENODEV;
-	}
-
 	/* Start a PPM task. */
+	drv = pdc_dev->api;
 	if (drv->init_ppm(pdc_dev)) {
 		LOG_ERR("Failed to init PPM");
 		return -ENODEV;
@@ -53,6 +50,9 @@ static int eppm_init(void)
 	LOG_INF("Initialized PPM num_ports=%u",
 		drv->get_active_port_count(pdc_dev));
 	ucsi_ppm_register_notify(ppm_dev, opm_notify, NULL);
+
+	/* Signal the OPM that the PPM just initialized */
+	pd_send_host_event(PD_EVENT_INIT);
 
 	return 0;
 }

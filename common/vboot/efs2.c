@@ -313,7 +313,8 @@ void vboot_main(void)
 			system_set_reboot_at_shutdown(&p);
 		}
 		if (!IS_ENABLED(CONFIG_BATTERY) &&
-		    !IS_ENABLED(HAS_TASK_KEYSCAN)) {
+		    !(IS_ENABLED(HAS_TASK_KEYSCAN) ||
+		      IS_ENABLED(CONFIG_CROS_EC_KEYBOARD_INPUT))) {
 			/*
 			 * For Chromeboxes, we relax security by allowing PD in
 			 * RO. Attackers don't gain meaningful advantage on

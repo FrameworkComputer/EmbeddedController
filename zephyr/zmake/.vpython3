@@ -3,15 +3,23 @@
 # found in the LICENSE file.
 
 # Include all packages needed to run the zmake unit tests.
-python_version: "3.8"
+python_version: "3.11"
 
 wheel: <
   name: "infra/python/wheels/attrs-py2_py3"
   version: "version:21.4.0"
 >
 wheel: <
+  name: "infra/python/wheels/colorama-py3"
+  version: "version:0.4.1"
+>
+wheel: <
   name: "infra/python/wheels/coverage/${vpython_platform}"
-  version: "version:5.5.chromium.3"
+  version: "version:7.3.1"
+>
+wheel: <
+  name: "infra/python/wheels/docopt-py2_py3"
+  version: "version:0.6.2"
 >
 wheel: <
   name: "infra/python/wheels/hypothesis-py3"
@@ -35,7 +43,15 @@ wheel: <
 >
 wheel: <
   name: "infra/python/wheels/py-py2_py3"
-  version: "version:1.10.0"
+  version: "version:1.11.0"
+>
+wheel: <
+  name: "infra/python/wheels/pyelftools-py2_py3"
+  version: "version:0.29"
+>
+wheel: <
+  name: "infra/python/wheels/pykwalify-py2_py3"
+  version: "version:1.8.0"
 >
 wheel: <
   name: "infra/python/wheels/pyparsing-py3"
@@ -43,11 +59,27 @@ wheel: <
 >
 wheel: <
   name: "infra/python/wheels/pytest-py3"
-  version: "version:6.2.2"
+  version: "version:7.3.1"
 >
 wheel: <
   name: "infra/python/wheels/pytest-cov-py2_py3"
   version: "version:2.11.1"
+>
+wheel: <
+  name: "infra/python/wheels/python-dateutil-py2_py3"
+  version: "version:2.8.1"
+>
+wheel: <
+  name: "infra/python/wheels/pyyaml-py3"
+  version: "version:5.3.1"
+>
+wheel: <
+  name: "infra/python/wheels/ruamel_yaml-py3"
+  version: "version:0.17.16"
+>
+wheel: <
+  name: "infra/python/wheels/ruamel_yaml_clib/${vpython_platform}"
+  version: "version:0.2.8"
 >
 wheel: <
   name: "infra/python/wheels/six-py2_py3"

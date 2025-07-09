@@ -1,0 +1,35 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+/ {
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_lid_open: lid_open {
+			irq-pin = <&smc_lid>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+		int_power_button: power_button {
+			irq-pin = <&smc_onoff_n>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+		int_ac_present: ac_present {
+			irq-pin = <&bc_acok>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
+		int_ioex_kbd_intr_n: ioex_kbd_intr_n {
+			irq-pin = <&ioex_kbd_intr_n>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "io_expander_it8801_interrupt";
+		};
+		int_dc_jack_present: dc_jack_present {
+			irq-pin = <&std_adp_prsnt>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "board_dc_jack_interrupt";
+		};
+	};
+};

@@ -1,0 +1,65 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_sim.dts>
+#include <cros/binman.dtsi>
+
+/ {
+	chosen {
+		cros-ec,flash-controller = &cros_flash;
+		/delete-property/ zephyr,code-partition;
+	};
+
+	cros_flash: cros-flash {
+		compatible = "cros-ec,flash-emul";
+	};
+
+	aliases {
+		gpio-wp = &gpio_wp_l;
+		/delete-property/ led0;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+		gpio_wp_l: wp_l {
+			gpios = <&gpio0 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+	};
+
+	/delete-node/ leds;
+
+	flash-controller@0 {
+		reg = <0 DT_SIZE_M(1)>;
+
+		flash@0 {
+			reg = <0 DT_SIZE_M(1)>;
+
+			/delete-node/ partitions;
+
+			partitions {
+				compatible = "fixed-partitions";
+				#address-cells = <1>;
+				#size-cells = <1>;
+
+				ro: ro@800000 {
+					label = "ro";
+					reg = <0 DT_SIZE_K(256)>;
+				};
+				rw: rw@840000 {
+					label = "rw";
+					reg = <0x40000 DT_SIZE_K(256)>;
+				};
+				rollback0: rollback0@880000 {
+					label = "rollback0";
+					reg = <0x80000 DT_SIZE_K(4)>;
+				};
+				rollback1: rollback1@881000 {
+					label = "rollback1";
+					reg = <0x81000 DT_SIZE_K(4)>;
+				};
+			};
+		};
+	};
+};

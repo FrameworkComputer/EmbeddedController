@@ -385,16 +385,6 @@ int battery_device_name(char *dest, int size);
 int battery_device_chemistry(char *dest, int size);
 
 /**
- * Read device manufacture date.
- *
- * @param year		Destination for year
- * @param month		Destination for month
- * @param day		Destination for day
- * @return non-zero if error.
- */
-int battery_manufacturer_date(int *year, int *month, int *day);
-
-/**
  * Read battery manufacturer data.
  *
  * @param dest		Destination buffer.

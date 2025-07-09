@@ -137,7 +137,7 @@ static int gpio_mock_controller_init(const struct device *dev)
 	return -ENOTSUP;
 }
 
-static const struct gpio_driver_api gpio_mock_controller_driver = {
+static DEVICE_API(gpio, gpio_mock_controller_driver) = {
 	.pin_configure = gpio_mock_controller_pin_configure,
 #ifdef CONFIG_GPIO_GET_CONFIG
 	.pin_get_config = gpio_mock_controller_pin_get_config,

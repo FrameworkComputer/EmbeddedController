@@ -53,12 +53,11 @@
 
 /* Keyboard scan setting */
 __override struct keyboard_scan_config keyscan_config = {
-	/* Increase from 50 us, because KSO_02 passes through the H1. */
-	.output_settle_us = 80,
-	/* Other values should be the same as the default configuration. */
+	.output_settle_us = 50,
 	.debounce_down_us = 9 * MSEC,
 	.debounce_up_us = 30 * MSEC,
 	.scan_period_us = 3 * MSEC,
+	.stable_scan_period_us = 9 * MSEC,
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
@@ -178,7 +177,7 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	 * b/166728543
 	 * Set different AC_PROCHOT value when using different wattage ADT.
 	 */
-	if (max_ma * charge_mv == PD_MAX_POWER_MW * 1000)
+	if (max_ma * charge_mv == CONFIG_USB_PD_MAX_POWER_MW * 1000)
 		isl9241_set_ac_prochot(0, 3840);
 	else
 		isl9241_set_ac_prochot(0, 3328);

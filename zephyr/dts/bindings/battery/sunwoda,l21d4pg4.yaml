@@ -38,7 +38,7 @@ properties:
   voltage_min:
     default: 6000
   precharge_current:
-    default: 330
+    default: 128
   start_charging_min_c:
     default: 0
   start_charging_max_c:

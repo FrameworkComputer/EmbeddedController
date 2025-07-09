@@ -131,9 +131,9 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	 * Guard adapter plug/ un-plug here.
 	 */
 
-	if (((max_ma == PD_MAX_CURRENT_MA) &&
+	if (((max_ma == CONFIG_USB_PD_MAX_CURRENT_MA) &&
 	     chipset_in_state(CHIPSET_STATE_ANY_OFF)) ||
-	    (max_ma != PD_MAX_CURRENT_MA))
+	    (max_ma != CONFIG_USB_PD_MAX_CURRENT_MA))
 		charge_ma = charge_ma * 97 / 100;
 	else
 		charge_ma = charge_ma * 93 / 100;
@@ -153,7 +153,7 @@ static void configure_input_current_limit(void)
 	adapter_current_mv = charge_manager_get_charger_voltage();
 	adapter_current_ma = charge_manager_get_charger_current();
 
-	if ((adapter_current_ma == PD_MAX_CURRENT_MA) &&
+	if ((adapter_current_ma == CONFIG_USB_PD_MAX_CURRENT_MA) &&
 	    chipset_in_or_transitioning_to_state(CHIPSET_STATE_SUSPEND))
 		adapter_current_ma = PD_MAX_SUSPEND_CURRENT_MA;
 	else

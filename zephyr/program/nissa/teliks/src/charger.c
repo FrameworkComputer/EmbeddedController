@@ -60,7 +60,7 @@ static void bq25710_min_input_voltage(void)
 		i2c_write16(chg_chips[0].i2c_port, chg_chips[0].i2c_addr_flags,
 			    BQ25710_REG_INPUT_VOLTAGE,
 			    BQ25710_MIN_INPUT_VOLTAGE_MV);
-		hook_call_deferred(&delay_bq25710_data, 2 * SECOND);
+		hook_call_deferred(&delay_bq25710_data, 2 * USEC_PER_SEC);
 	} else {
 		int reg;
 

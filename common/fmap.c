@@ -174,9 +174,7 @@ const struct _ec_fmap {
 			/* RO public key address, for RW verification */
 			.area_name = "KEY_RO",
 			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
-				       FMAP_REGION_START +
-				       CONFIG_RO_PUBKEY_ADDR -
-				       CONFIG_PROGRAM_MEMORY_BASE,
+				       FMAP_REGION_START + CONFIG_RO_PUBKEY_OFF,
 			.area_size = CONFIG_RO_PUBKEY_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
@@ -232,8 +230,7 @@ const struct _ec_fmap {
 			/* RW image signature */
 			.area_name = "SIG_RW",
 			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
-				       FMAP_REGION_START + CONFIG_RW_SIG_ADDR -
-				       CONFIG_PROGRAM_MEMORY_BASE,
+				       FMAP_REGION_START + CONFIG_RW_SIG_OFF,
 			.area_size = CONFIG_RW_SIG_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
@@ -254,9 +251,7 @@ const struct _ec_fmap {
 			/* RW_B image signature */
 			.area_name = "SIG_RW_B",
 			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
-				       FMAP_REGION_START +
-				       CONFIG_RW_B_SIG_ADDR -
-				       CONFIG_PROGRAM_MEMORY_BASE,
+				       FMAP_REGION_START + CONFIG_RW_B_SIG_OFF,
 			.area_size = CONFIG_RW_SIG_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},

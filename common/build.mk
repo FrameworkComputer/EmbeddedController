@@ -54,9 +54,9 @@ common-$(CONFIG_BLUETOOTH_LE_STACK)+=btle_hci_controller.o btle_ll.o
 common-$(CONFIG_BODY_DETECTION)+=body_detection.o
 common-$(CONFIG_CAPSENSE)+=capsense.o
 common-$(CONFIG_CEC)+=cec.o
-common-$(CONFIG_CBI_EEPROM)+=cbi.o cbi_config.o cbi_eeprom.o
+common-$(CONFIG_CBI_EEPROM)+=cbi.o cbi_common.o cbi_config.o cbi_eeprom.o
 common-$(CONFIG_USB_PD_FLAGS)+=usb_pd_flags.o
-common-$(CONFIG_CBI_GPIO)+=cbi.o cbi_config.o cbi_gpio.o
+common-$(CONFIG_CBI_GPIO)+=cbi.o cbi_common.o cbi_config.o cbi_gpio.o
 ifeq ($(HAS_MOCK_CHARGE_MANAGER),)
 common-$(CONFIG_CHARGE_MANAGER)+=charge_manager.o
 endif
@@ -118,13 +118,14 @@ common-$(CONFIG_KEYBOARD_PROTOCOL_MKBP)+=keyboard_mkbp.o mkbp_fifo.o \
 	mkbp_info.o
 common-$(CONFIG_KEYBOARD_TEST)+=keyboard_test.o
 common-$(CONFIG_KEYBOARD_VIVALDI)+=keyboard_vivaldi.o
+common-$(CONFIG_KEYBOARD_STRAUSS)+=keyboard_strauss.o
 common-$(CONFIG_MKBP_INPUT_DEVICES)+=mkbp_input_devices.o mkbp_fifo.o \
 	mkbp_info.o
 common-$(CONFIG_LED_COMMON)+=led_common.o
 common-$(CONFIG_LED_PWM)+=led_pwm.o
 common-$(CONFIG_LED_ONOFF_STATES)+=led_onoff_states.o
 common-$(CONFIG_LID_ANGLE)+=motion_lid.o math_util.o
-common-$(CONFIG_LID_ANGLE_UPDATE)+=lid_angle.o
+common-$(CONFIG_LID_ANGLE_UPDATE)+=lid_angle.o lid_angle_common.o
 common-$(CONFIG_LID_SWITCH)+=lid_switch.o
 common-$(CONFIG_HOSTCMD_X86)+=acpi.o port80.o ec_features.o
 common-$(CONFIG_MAG_CALIBRATE)+= mag_cal.o math_util.o vec3.o mat33.o mat44.o \

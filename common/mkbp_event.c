@@ -5,12 +5,6 @@
  * Event handling in MKBP keyboard protocol
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #include "atomic.h"
 #include "chipset.h"
 #include "gpio.h"

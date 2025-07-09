@@ -23,7 +23,7 @@
 /* wait time to evaluate charger thermal status */
 static timestamp_t thermal_wait_until;
 /* input current bound when charger throttled */
-static int throttled_ma = PD_MAX_CURRENT_MA;
+static int throttled_ma = CONFIG_USB_PD_MAX_CURRENT_MA;
 /* charge_ma in last board_set_charge_limit call */
 static int prev_charge_limit;
 /* charge_mv in last board_set_charge_limit call */
@@ -66,7 +66,7 @@ static void battery_thermal_control(struct charge_state_data *curr)
 			return;
 		skip_reset = 1;
 		thermal_wait_until.val = 0;
-		throttled_ma = PD_MAX_CURRENT_MA;
+		throttled_ma = CONFIG_USB_PD_MAX_CURRENT_MA;
 		board_set_charge_limit_throttle(prev_charge_limit,
 						prev_charge_mv);
 		return;
@@ -92,7 +92,7 @@ static void battery_thermal_control(struct charge_state_data *curr)
 	 * If input current limit is maximum, and we are under thermal budget,
 	 * just skip.
 	 */
-	if (input_current == PD_MAX_CURRENT_MA &&
+	if (input_current == CONFIG_USB_PD_MAX_CURRENT_MA &&
 	    jc_temp < thermal_bound.target + thermal_bound.err)
 		return;
 
@@ -106,7 +106,7 @@ static void battery_thermal_control(struct charge_state_data *curr)
 	 * and operates on only P value.
 	 */
 	throttled_ma = MIN(
-		PD_MAX_CURRENT_MA,
+		CONFIG_USB_PD_MAX_CURRENT_MA,
 		/*
 		 * Should not pass the previously set input current by
 		 * charger manager.  This value might be related the charger's
@@ -199,7 +199,7 @@ void mt6370_charger_profile_override(struct charge_state_data *curr)
 	    curr->batt.current < 1000 && power_get_state() != POWER_S0)
 		chg_limit_mv = 5500;
 	else
-		chg_limit_mv = PD_MAX_VOLTAGE_MV;
+		chg_limit_mv = CONFIG_USB_PD_MAX_VOLTAGE_MV;
 
 	if (chg_limit_mv != previous_chg_limit_mv)
 		CPRINTS("VBUS limited to %dmV", chg_limit_mv);

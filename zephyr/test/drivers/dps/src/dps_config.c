@@ -233,7 +233,7 @@ ZTEST(dps_config, test_console_cmd__settcheck)
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "dps settcheck 5"), NULL);
 
-	zassert_equal(5 * SECOND, config->t_check, "t_check is %d",
+	zassert_equal(5 * USEC_PER_SEC, config->t_check, "t_check is %d",
 		      config->t_check);
 }
 
@@ -248,7 +248,7 @@ ZTEST(dps_config, test_console_cmd__settstable)
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "dps settstable 6"), NULL);
 
-	zassert_equal(6 * SECOND, config->t_stable, "t_stable is %d",
+	zassert_equal(6 * USEC_PER_SEC, config->t_stable, "t_stable is %d",
 		      config->t_stable);
 }
 

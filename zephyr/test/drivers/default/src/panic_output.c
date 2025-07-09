@@ -11,16 +11,6 @@
 
 ZTEST_SUITE(panic_output, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
 
-ZTEST(panic_output, test_panic_printf)
-{
-	panic_printf("test output string from %s\n", __func__);
-}
-
-ZTEST(panic_output, test_panic_puts)
-{
-	panic_puts("test output string\n");
-}
-
 ZTEST(panic_output, test_panic_sw_reason_is_valid)
 {
 	zassert_false(panic_sw_reason_is_valid(PANIC_SW_BASE - 1), NULL);

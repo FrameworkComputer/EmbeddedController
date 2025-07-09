@@ -1,0 +1,50 @@
+tests:
+  cros.dsp.level_trigger.buffered_i2c:
+    harness: gtest
+    extra_dtc_overlay_files:
+      - boards/native_sim.overlay
+      - boards/native_sim.buffered_i2c.overlay
+    extra_args:
+      - TEST_LIB=cros.dsp.test
+    platform_allow:
+      - native_sim
+  cros.dsp.level_trigger.pio_i2c:
+    harness: gtest
+    extra_dtc_overlay_files:
+      - boards/native_sim.overlay
+    extra_args:
+      - TEST_LIB=cros.dsp.test
+    platform_allow:
+      - native_sim
+  cros.dsp.edge_trigger.buffered_i2c:
+    harness: gtest
+    extra_dtc_overlay_files:
+      - boards/native_sim.overlay
+      - boards/native_sim.buffered_i2c.overlay
+      - boards/native_sim.edge_trigger.overlay
+    extra_args:
+      - TEST_LIB=cros.dsp.test
+    platform_allow:
+      - native_sim
+  cros.dsp.edge_trigger.pio_i2c:
+    harness: gtest
+    extra_dtc_overlay_files:
+      - boards/native_sim.overlay
+      - boards/native_sim.edge_trigger.overlay
+    extra_args:
+      - TEST_LIB=cros.dsp.test
+    platform_allow:
+      - native_sim
+  pw_fsm.state_machine:
+    harness: gtest
+    extra_args:
+      - TEST_LIB=pw_fsm.fsm_test
+    platform_allow:
+      - native_sim
+  pw_transport.service:
+    harness: gtest
+    extra_args:
+      - TEST_LIB=pw_transport.service_test
+      - PW_TRANSPORT_STATUS_FLAGS_SIZE=2
+    platform_allow:
+      - native_sim

@@ -92,7 +92,7 @@ static void connect_partner_to_port(const struct emul *tcpc_emul,
 		   NULL);
 
 	isl923x_emul_set_adc_vbus(charger_emul,
-				  PDO_FIXED_GET_VOLT(src_ext->pdo[0]));
+				  PDO_FIXED_VOLTAGE(src_ext->pdo[0]));
 
 	/* Wait for PD negotiation and current ramp. */
 	k_sleep(K_SECONDS(10));

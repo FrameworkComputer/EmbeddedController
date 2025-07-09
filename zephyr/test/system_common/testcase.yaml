@@ -1,5 +1,6 @@
 common:
-  platform_allow: native_sim
+  platform_allow:
+    - native_sim
 tests:
   system.default:
     extra_configs:
@@ -7,5 +8,5 @@ tests:
       - CONFIG_SHELL_BACKEND_DUMMY_BUF_SIZE=1000
       - CONFIG_SHELL_BACKEND_SERIAL=n
     tags:
-      common
-      system
+      - common
+      - system

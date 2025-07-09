@@ -44,6 +44,12 @@ static atomic_t motion_sense_task_loops;
 /* When we started the task the last time */
 static timestamp_t ts_begin_task;
 
+/* motion_sense_task status flag
+ * motion_sense_task is running : true
+ * motion_sense_task is not running : false
+ */
+static bool motion_sense_task_status;
+
 /* Minimum time in between running motion sense task loop. */
 unsigned int motion_min_interval = CONFIG_MOTION_MIN_SENSE_WAIT_TIME * MSEC;
 STATIC_IF(CONFIG_CMD_ACCEL_INFO) int accel_disp;
@@ -113,7 +119,7 @@ enum sensor_config motion_sense_get_ec_config(void)
 #define CONFIG_ACCEL_FORCE_MODE_MASK 0
 #endif
 
-static bool motion_sensor_in_forced_mode(const struct motion_sensor_t *sensor)
+bool motion_sensor_in_forced_mode(const struct motion_sensor_t *sensor)
 {
 	/* Sensor in force mode */
 	if ((CONFIG_ACCEL_FORCE_MODE_MASK & (1 << (sensor - motion_sensors)))) {
@@ -371,18 +377,14 @@ static void motion_sense_switch_sensor_rate(void)
 					tablet_set_mode(0, TABLET_TRIGGER_LID);
 			}
 		} else {
-			/* The sensors are being powered off */
-			if ((sensor->state == SENSOR_INITIALIZED) ||
-			    (sensor->state == SENSOR_READY)) {
-				/*
-				 * Use mutex to be sure we are not changing the
-				 * ODR in MOTIONSENSE, in case it is running.
-				 */
-				mutex_lock(&g_sensor_mutex);
-				sensor->collection_rate = 0;
-				mutex_unlock(&g_sensor_mutex);
-				sensor->state = SENSOR_NOT_INITIALIZED;
-			}
+			/*
+			 * Use mutex to be sure we are not changing the
+			 * ODR in MOTIONSENSE, in case it is running.
+			 */
+			mutex_lock(&g_sensor_mutex);
+			sensor->collection_rate = 0;
+			mutex_unlock(&g_sensor_mutex);
+			sensor->state = SENSOR_NOT_INITIALIZED;
 		}
 	}
 	if (sensor_setup_mask) {
@@ -473,6 +475,9 @@ static void motion_sense_shutdown(void)
 	sensor_active = SENSOR_ACTIVE_S5;
 	for (i = 0; i < motion_sensor_count; i++) {
 		sensor = &motion_sensors[i];
+		if (!SENSOR_ACTIVE(sensor)) {
+			sensor->state = SENSOR_NOT_INITIALIZED;
+		}
 		/* Forget about changes made by the AP */
 		sensor->config[SENSOR_CONFIG_AP].odr = 0;
 		sensor->config[SENSOR_CONFIG_AP].ec_rate = 0;
@@ -481,7 +486,7 @@ static void motion_sense_shutdown(void)
 
 	/*
 	 * Run motion_sense_switch_sensor_rate_data in the HOOK task,
-	 * To be sure no 2 rate changes happens in parralell.
+	 * To be sure no 2 rate changes happens in parrallel.
 	 */
 	hook_call_deferred(&motion_sense_switch_sensor_rate_data, 0);
 }
@@ -490,6 +495,9 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, motion_sense_shutdown,
 
 static void motion_sense_suspend(void)
 {
+	struct motion_sensor_t *sensor;
+	int i;
+
 	motion_sense_print_stats("suspend");
 
 	/*
@@ -500,7 +508,16 @@ static void motion_sense_suspend(void)
 		return;
 
 	sensor_active = SENSOR_ACTIVE_S3;
-
+	/*
+	 *  Disable the sensor as soon as possible if it is going to lose power.
+	 *  It does not prevent current sensor task to run, but next iteration
+	 *  will ignore work to do.
+	 */
+	for (i = 0; i < motion_sensor_count; ++i) {
+		sensor = &motion_sensors[i];
+		if (!SENSOR_ACTIVE(sensor))
+			sensor->state = SENSOR_NOT_INITIALIZED;
+	}
 	/*
 	 * During shutdown sequence sensor rails can be powered down
 	 * asynchronously to the EC hence EC cannot interlock the sensor
@@ -615,9 +632,6 @@ static void update_sense_data(uint8_t *lpc_status, int *psample_id)
 
 static int motion_sense_read(struct motion_sensor_t *sensor)
 {
-	ASSERT(sensor->state == SENSOR_READY);
-	ASSERT(sensor->drv->get_data_rate(sensor) != 0);
-
 	/*
 	 * If the sensor is in spoof mode, the readings are already present in
 	 * spoof_xyz.
@@ -901,6 +915,8 @@ void motion_sense_task(void *u)
 	if (IS_ENABLED(CONFIG_MOTION_FILL_LPC_SENSE_DATA)) {
 		lpc_status = host_get_memmap(EC_MEMMAP_ACC_STATUS);
 		set_present(lpc_status);
+	} else if (IS_ENABLED(CONFIG_HOST_INTERFACE_HECI)) {
+		motion_sense_task_status = true;
 	}
 
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
@@ -1077,11 +1093,15 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 	switch (in->cmd) {
 	case MOTIONSENSE_CMD_DUMP:
-		out->dump.module_flags =
-			(*(host_get_memmap(EC_MEMMAP_ACC_STATUS)) &
-			 EC_MEMMAP_ACC_STATUS_PRESENCE_BIT) ?
-				MOTIONSENSE_MODULE_FLAG_ACTIVE :
-				0;
+		if (IS_ENABLED(CONFIG_MOTION_FILL_LPC_SENSE_DATA)) {
+			out->dump.module_flags =
+				(*(host_get_memmap(EC_MEMMAP_ACC_STATUS)) &
+				 EC_MEMMAP_ACC_STATUS_PRESENCE_BIT) ?
+					MOTIONSENSE_MODULE_FLAG_ACTIVE :
+					0;
+		} else if (IS_ENABLED(CONFIG_HOST_INTERFACE_HECI)) {
+			out->dump.module_flags = motion_sense_task_status;
+		}
 		out->dump.sensor_count = ALL_MOTION_SENSORS;
 		args->response_size = sizeof(out->dump);
 		reported = MIN(ALL_MOTION_SENSORS, in->dump.max_sensor_count);

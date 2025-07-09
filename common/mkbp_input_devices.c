@@ -21,6 +21,8 @@
 #include "tablet_mode.h"
 #include "util.h"
 
+#include <string.h>
+
 #define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ##args)
 
 /* Buttons state. */
@@ -190,17 +192,26 @@ static void simulate_key(int row, int col, int pressed)
 static int command_mkbp_keyboard_press(int argc, const char **argv)
 {
 	if (argc == 1) {
-		int i, j;
+		int c, r;
 
 		ccputs("Simulated keys:\n");
-		for (i = 0; i < keyboard_cols; ++i) {
-			if (simulated_key[i] == 0)
+		for (c = 0; c < keyboard_cols; ++c) {
+			if (simulated_key[c] == 0)
 				continue;
-			for (j = 0; j < KEYBOARD_ROWS; ++j)
-				if (simulated_key[i] & BIT(j))
-					ccprintf("\t%d %d\n", i, j);
+			for (r = 0; r < KEYBOARD_ROWS; ++r)
+				if (simulated_key[c] & BIT(r))
+					ccprintf("\t%d %d\n", c, r);
 		}
+	} else if (argc == 2 && !strncmp(argv[1], "clear", 6)) {
+		int c, r;
 
+		for (c = 0; c < keyboard_cols; ++c) {
+			if (simulated_key[c] == 0)
+				continue;
+			for (r = 0; r < KEYBOARD_ROWS; ++r)
+				if (simulated_key[c] & BIT(r))
+					simulate_key(r, c, 0);
+		}
 	} else if (argc == 3 || argc == 4) {
 		int r, c, p;
 		char *e;

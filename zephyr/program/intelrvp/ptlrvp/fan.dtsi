@@ -1,0 +1,20 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	fans {
+		compatible = "cros-ec,fans";
+
+		fan_0 {
+			pwms = <&pwm_fan 0 PWM_KHZ(30) PWM_POLARITY_NORMAL>;
+			rpm_min = <3200>;
+			rpm_start = <2200>;
+			rpm_max = <6600>;
+			tach = <&tach_fan>;
+			pgood_gpio = <&all_sys_pwrgd>;
+			enable_gpio = <&gpio_fan_control>;
+		};
+	};
+};

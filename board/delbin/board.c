@@ -22,7 +22,7 @@
 #include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "keyboard_customization.h"
+#include "keyboard_config.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
@@ -48,12 +48,11 @@
 
 /* Keyboard scan setting */
 __override struct keyboard_scan_config keyscan_config = {
-	/* Increase from 50 us, because KSO_02 passes through the H1. */
-	.output_settle_us = 80,
-	/* Other values should be the same as the default configuration. */
+	.output_settle_us = 50,
 	.debounce_down_us = 9 * MSEC,
 	.debounce_up_us = 30 * MSEC,
 	.scan_period_us = 3 * MSEC,
+	.stable_scan_period_us = 9 * MSEC,
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
@@ -384,6 +383,14 @@ static const struct ec_response_keybd_config delbin_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
 };
 
+/* TK_REFRESH is always T2 above, vivaldi_keys[1] is overridden above to 3/2. */
+BUILD_ASSERT(DELBIN_KEYBOARD_ROW_REFRESH == 3 &&
+	     DELBIN_KEYBOARD_COL_REFRESH == 2);
+/* Keyboard 2 uses the same vivaldi_keys[1]. */
+BUILD_ASSERT(DELBIN_KEYBOARD2_ROW_REFRESH == 3 &&
+	     DELBIN_KEYBOARD2_COL_REFRESH == 2);
+
+BUILD_ASSERT(IS_ENABLED(CONFIG_KEYBOARD_VIVALDI));
 __override const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void)
 {

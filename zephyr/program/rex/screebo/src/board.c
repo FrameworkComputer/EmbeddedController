@@ -33,6 +33,6 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_usb_port_startup, HOOK_PRIO_DEFAULT);
 void board_usb_port_shutdown(void)
 {
 	/* Turn USB ports off as we go back to S5. */
-	hook_call_deferred(&shutdown_usb_a_deferred_data, 2 * SECOND);
+	hook_call_deferred(&shutdown_usb_a_deferred_data, 2 * USEC_PER_SEC);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_usb_port_shutdown, HOOK_PRIO_DEFAULT);

@@ -75,13 +75,13 @@
 /*
  * Passive USB-C cables only support up to 60W.
  */
-#define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW 45000
-#define PD_MAX_CURRENT_MA 3000
-#define PD_MAX_VOLTAGE_MV 20000
+#define CONFIG_USB_PD_OPERATING_POWER_MW 15000
+#define CONFIG_USB_PD_MAX_POWER_MW 45000
+#define CONFIG_USB_PD_MAX_CURRENT_MA 3000
+#define CONFIG_USB_PD_MAX_VOLTAGE_MV 20000
 
 /* The lower the input voltage, the higher the power efficiency. */
-#define PD_PREFER_LOW_VOLTAGE
+#define CONFIG_USB_PD_PREFER_LOW_VOLTAGE
 
 /*
  * Macros for GPIO signals used in common code that don't match the

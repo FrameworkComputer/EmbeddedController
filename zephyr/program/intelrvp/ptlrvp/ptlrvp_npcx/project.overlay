@@ -1,0 +1,46 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "include/board.h"
+
+#include <cros/cbi_flash.dtsi>
+#include <cros/integrated_fwid.dtsi>
+
+#include "adc.dtsi"
+#include "fan.dtsi"
+#include "gpio.dtsi"
+#include "i2c.dts"
+#include "psl.dtsi"
+#include "keyboard.dtsi"
+#include "../battery.dtsi"
+#include "../gsc_board.dtsi"
+#include "../i2c.dtsi"
+#include "../ioex_gpio.dtsi"
+#include "../interrupts.dtsi"
+#include "../pd.dtsi"
+#include "../power_signals.dtsi"
+#include "../temp_sensor.dts"
+#include "../usbc.dtsi"
+
+/*
+ * Using IT8801 MFD driver
+ * These lines can be deleted after all PTL platforms support the MFD driver.
+ * b/386325459
+ */
+/delete-node/ &kb_discrete;
+/delete-node/ &int_ioex_kbd_intr_n;
+
+&it8801_mfd {
+	irq-gpios = <&gpio7 0 GPIO_ACTIVE_HIGH>;
+};
+
+&cbi_flash {
+    /*
+     * CBI section size is 0x1000 bytes, the CBI portion lies at the end of
+     * EC_RO section. EC_RO section ends at 0x50000 byte which is the offset
+     */
+    offset = <0x50000>;
+    size = <0x1000>;
+};

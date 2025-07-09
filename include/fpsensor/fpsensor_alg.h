@@ -61,6 +61,9 @@ int fp_enrollment_begin(void);
  */
 int fp_enrollment_finish(void *templ);
 
+/*
+ * TODO(b/378543814): Clean up the API for fp_finger_enroll.
+ */
 /**
  * Adds fingerprint image to the current enrollment session.
  *
@@ -76,6 +79,10 @@ int fp_enrollment_finish(void *templ);
  * low image quality
  * @return EC_MKBP_FP_ERR_ENROLL_LOW_COVERAGE when image could not be used
  * due to finger covering too little area of the sensor
+ * @return a negative value on error. A negative return value indicates an
+ * internal error occurred during the fingerprint enrollment process. This may
+ * be caused by factors such as failure to generate a valid fingerprint template
+ * from the captured images.
  */
 int fp_finger_enroll(uint8_t *image, int *completion);
 

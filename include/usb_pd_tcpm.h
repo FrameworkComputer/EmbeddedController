@@ -5,12 +5,6 @@
 
 /* USB Power delivery port management */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #ifndef __CROS_EC_USB_PD_TCPM_H
 #define __CROS_EC_USB_PD_TCPM_H
 
@@ -600,6 +594,7 @@ struct tcpm_drv {
 #define TCPC_FLAGS_CONTROL_VCONN BIT(6)
 #define TCPC_FLAGS_CONTROL_FRS BIT(7)
 #define TCPC_FLAGS_VBUS_MONITOR BIT(8)
+#define TCPC_FLAGS_SET_VCONN_IN_SYNC BIT(9)
 
 #endif /* !CONFIG_ZEPHYR */
 

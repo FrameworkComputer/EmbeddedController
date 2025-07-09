@@ -64,7 +64,7 @@ bool board_ap_power_is_startup_ok(void)
 		if (power_ok)
 			return true;
 
-		crec_msleep(100);
+		k_msleep(100);
 	}
 	return false;
 }

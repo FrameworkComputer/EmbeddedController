@@ -298,12 +298,12 @@ extern "C" void fp_task(void)
 						global_context.sensor_mode &=
 							~FP_MODE_ENROLL_SESSION;
 				} else {
-					fp_enrollment_finish(NULL);
+					fp_enrollment_finish(nullptr);
 				}
 				enroll_session = global_context.sensor_mode &
 						 FP_MODE_ENROLL_SESSION;
 			}
-			if (is_test_capture(mode)) {
+			if (!is_finger_needed(mode)) {
 				fp_acquire_image_with_mode(
 					fp_buffer, FP_CAPTURE_TYPE(mode));
 				global_context.sensor_mode &= ~FP_MODE_CAPTURE;
@@ -465,7 +465,7 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 		 * the embedded/offset image bytes, like simple, pattern0,
 		 * pattern1, and reset_test.
 		 */
-		if (!is_raw_capture(global_context.sensor_mode))
+		if (skip_image_offset(global_context.sensor_mode))
 			offset += FP_SENSOR_IMAGE_OFFSET;
 
 		ret = validate_fp_buffer_offset(sizeof(fp_buffer), offset,

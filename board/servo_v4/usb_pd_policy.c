@@ -141,7 +141,7 @@ static uint8_t allow_dr_swap = 1;
 static uint32_t max_supported_voltage(void)
 {
 	int board_max_mv = board_get_version() >= BOARD_VERSION_BLACK ?
-				   PD_MAX_VOLTAGE_MV :
+				   CONFIG_USB_PD_MAX_VOLTAGE_MV :
 				   MAX_MV_RED_BLUE;
 
 	return board_max_mv < user_limited_max_mv ? board_max_mv :
@@ -280,7 +280,7 @@ static void update_ports(void)
 					break;
 
 				/* Find the 'best' PDO <= voltage */
-				pdo_index = pd_find_pdo_index(
+				pdo_index = pd_select_best_pdo(
 					pd_get_src_cap_cnt(CHG),
 					pd_get_src_caps(CHG),
 					pd_src_voltages_mv[i], &pdo);
@@ -295,8 +295,8 @@ static void update_ports(void)
 				pd_extract_pdo_power(pdo, &max_ma, &max_mv,
 						     &unused);
 				pd_src_chg_pdo[src_index] =
-					PDO_FIXED_VOLT(max_mv) |
-					PDO_FIXED_CURR(max_ma);
+					PDO_FIXED_SET_VOLTAGE(max_mv) |
+					PDO_FIXED_SET_CURRENT(max_ma);
 
 				if (src_index == 0) {
 					/*
@@ -332,10 +332,10 @@ static void update_ports(void)
 			chg_pdo_cnt = src_index;
 		} else {
 			/* 5V PDO */
-			pd_src_chg_pdo[0] = PDO_FIXED_VOLT(PD_MIN_MV) |
-					    PDO_FIXED_CURR(vbus[CHG].ma) |
-					    DUT_PDO_FIXED_FLAGS |
-					    PDO_FIXED_UNCONSTRAINED;
+			pd_src_chg_pdo[0] =
+				PDO_FIXED_SET_VOLTAGE(PD_MIN_MV) |
+				PDO_FIXED_SET_CURRENT(vbus[CHG].ma) |
+				DUT_PDO_FIXED_FLAGS | PDO_FIXED_UNCONSTRAINED;
 			/*
 			 * TODO: Keep Unconstrained Power knobs
 			 * exposed and well-defined.
@@ -1141,12 +1141,15 @@ static int command_cc(int argc, const char **argv)
 			return EC_ERROR_PARAM2;
 	}
 
-	if (!strcasecmp(argv[2], "cc1"))
-		cc_config_new &= ~CC_POLARITY;
-	else if (!strcasecmp(argv[2], "cc2"))
-		cc_config_new |= CC_POLARITY;
-	else if (argc >= 3)
-		return EC_ERROR_PARAM3;
+	if (argc >= 3) {
+		/* Set the CC polarity */
+		if (!strcasecmp(argv[2], "cc1"))
+			cc_config_new &= ~CC_POLARITY;
+		else if (!strcasecmp(argv[2], "cc2"))
+			cc_config_new |= CC_POLARITY;
+		else
+			return EC_ERROR_PARAM3;
+	}
 
 	do_cc(cc_config_new);
 	print_cc_mode();

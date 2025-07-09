@@ -1,0 +1,65 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+rsource "Kconfig.service"
+rsource "Kconfig.client"
+
+config PLATFORM_EC_DSP_COMMS
+	bool
+	default y
+	depends on PLATFORM_EC_DSP_SERVICE || PLATFORM_EC_DSP_CLIENT
+
+if PLATFORM_EC_DSP_COMMS
+
+module = DSP_COMMS
+module-str = DSP_COMMS
+source "subsys/logging/Kconfig.template.log_config"
+
+config PLATFORM_EC_DSP_INIT_PRIORITY
+	int "Initialization priority for the DSP comms drivers"
+	default 99
+	help
+	  Initialization priority for the DSP comms drivers (service and
+	  clients).
+
+config PLATFORM_EC_DSP_REMOTE_CBI
+	bool "DSP client implements local CBI read operations"
+	default y if !TEST
+	depends on PLATFORM_EC_CBI
+	help
+	  When enabled, functions such as cbi_get_board_info() will be routed
+	  to the DSP client instead of their local implementation. The
+	  Kconfig is needed to allow tests which implement both the
+	  client and the service to function.
+
+config PLATFORM_EC_DSP_REMOTE_LID_SWITCH
+	bool "Lid switch GMR is on another MCU"
+	default y if !TEST
+	depends on !PLATFORM_EC_LID_SWITCH || PLATFORM_EC_DSP_SERVICE
+	help
+		Use the lid switch logic but the source of truth of the GMR is on another
+		MCU.
+
+config PLATFORM_EC_DSP_REMOTE_TABLET_SWITCH
+	bool "Tablet switch GMR is on another MCU"
+	default y if !TEST
+	help
+		Use the tablet switch logic but the source of truth of the GMR is on
+		another MCU.
+
+config PLATFORM_EC_DSP_REMOTE_LID_ANGLE
+	bool "Lid angle based tablet/clamshell mode is done on the DSP core"
+	default y if !TEST
+	help
+	  Handle lid angle based tablet/clamshell mode swaps from the DSP core.
+
+config PLATFORM_EC_DSP_RESPONSE_BUFFER_SIZE
+	int "Size of the response buffer"
+	default 128
+	help
+	  When a result is generated from the DSP service, this is the buffer
+	  that is used to store it until the client reads it. It must be big
+	  enough for the largest encoded response.
+
+endif # PLATFORM_EC_DSP_COMMS

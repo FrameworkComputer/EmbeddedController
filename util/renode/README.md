@@ -3,34 +3,91 @@
 This directory holds the configuration files for Renode and this doc, which
 provides a quick-start for Renode and EC.
 
-## Installing Latest Renode
+## Installing Renode
 
-Outside of the chroot, on gLinux or Debian, please run the
-`util/renode-deb-install.sh` script.
+The ChromeOS chroot has a [`renode` ebuild] that is considered the "stable"
+version in ChromeOS. You can install `renode` inside the chroot with:
+
+```bash
+(chroot) $ sudo emerge renode
+```
+
+Alternatively, you can download a prebuilt version of the `renode` ebuild using
+[CIPD]. The following command will download the latest prebuilt version into a
+directory called `renode`:
+
+```bash
+(chroot) $ echo "chromiumos/infra/tools/renode latest" | cipd ensure -ensure-file - --root renode
+```
+
+Note that the prebuilt version is not automatically in your `PATH`.
+
+[`renode` ebuild]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/chromiumos-overlay/app-emulation/renode/
+
+[CIPD]: http://go/luci-cipd
+
+### Latest Version
+
+Before updating the [`renode` ebuild] to a new version or to test out a bug fix
+in Renode, you may want to use the latest nightly version of Renode. You can
+either download and extract the tarball or use the `.deb` package.
+
+#### Tarball
+
+```bash
+(inside/outside) $ wget https://builds.renode.io/renode-latest.linux-portable.tar.gz
+```
+
+This version works both inside and outside the chroot, but is not automatically
+in your `PATH`.
+
+#### Debian package
+
+```bash
+(outside) $ ./util/renode-deb-install.sh
+```
 
 ## Launching Renode
 
-Outside of the chroot, you can use the `util/renode-ec-launch` script to start
-Renode.
+The [`renode-ec-launch`] script is a convenient wrapper to configure and
+run Renode for specific boards. It works both inside and outside the chroot and
+configures the console as `/tmp/renode-uart`.
 
-The script will utiize the optional `BOARD` and `PROJECT` environment variables
-to adjust these respective EC parameters. The project parameter selects whether
-you want to run the default "ec" firmware image, or whether you want to run a
-unittest image, like "aes".
+The script lets you run both EC and Zephyr images, including the "default" image
+or a unit test image. For complete details, refer to the `--help` output.
 
-Here are some examples:
+### Examples
 
 ```bash
-# Just launch bloonchipper normal ec image.
-make BOARD=bloonchipper all
-BOARD=bloonchipper ./util/renode-ec-launch
+# Build bloonchipper EC image.
+(chroot) $ make BOARD=bloonchipper -j
+# Run the image in Renode.
+(chroot) $ ./util/renode-ec-launch -b bloonchipper
+# Connect to the console.
+(chroot) $ screen /tmp/renode-uart
 ```
 
 ```bash
-# Let's run the aes unittest image.
-make BOARD=bloonchipper test-aes
-BOARD=bloonchipper PROJECT=aes ./util/renode-ec-launch
+# Build the AES unit test image.
+(chroot) $ make BOARD=bloonchipper test-aes -j
+# Run the unit test image in Renode.
+(chroot) $ ./util/renode-ec-launch -b bloonchipper --ec aes
+# Connect to the console.
+(chroot) $ screen /tmp/renode-uart
+# Run the test from the console.
+> runtest
 ```
+
+```bash
+# Build the bloonchipper Zephyr image.
+(chroot) $ zmake build bloonchipper
+# Run the image in Renode.
+(chroot) $ ./util/renode-ec-launch -b bloonchipper --zephyr
+# Connect to the console.
+(chroot) $ screen /tmp/renode-uart
+```
+
+[`renode-ec-launch`]: ../renode-ec-launch
 
 ## Connecting GDB to Renode
 

@@ -1,0 +1,47 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/cbi_flash.dtsi>
+#include "../npcx_generated.dtsi"
+#include "../interrupts.dtsi"
+#include "../npcx_common.dtsi"
+#include "../npcx_keyboard.dtsi"
+#include "../npcx_overlay.dtsi"
+#include "../npcx_usbc.dtsi"
+#include "../power_signal.dtsi"
+#include "../usba.dtsi"
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
+#include "motionsense.dtsi"
+
+/ {
+	batteries {
+		default_battery: placeholder {
+			compatible = "smp,c31n2005", "battery-smart";
+		};
+	};
+
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+
+		actual-key-mask = <
+			0x48	/* C0 */
+			0xff	/* C1 */
+			0xff	/* C2 */
+			0xff	/* C3 */
+			0xff	/* C4 */
+			0xff	/* C5 */
+			0xff	/* C6 */
+			0xa4	/* C7 */
+			0xff	/* C8 */
+			0xff	/* C9 */
+			0x55	/* C10 */
+			0xff	/* C11 */
+			0xff	/* C12 */
+			0x40    /* C13 */
+			0x0a    /* C14 */
+		>;
+	};
+};

@@ -146,7 +146,7 @@ static inline void connect_charger_to_port(struct led_driver_fixture *fixture)
 						  fixture->tcpci_emul),
 		   NULL);
 	isl923x_emul_set_adc_vbus(fixture->charger_emul,
-				  PDO_FIXED_GET_VOLT(fixture->src_ext.pdo[1]));
+				  PDO_FIXED_VOLTAGE(fixture->src_ext.pdo[1]));
 	k_sleep(K_SECONDS(10));
 }
 

@@ -1,0 +1,26 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		c_chrg_amon_bmon_r {
+			enum-name = "ADC_AMON_BMON";
+		};
+		vr_temp_v_1p05_pch_ec_r {
+			enum-name = "ADC_PP1050_PROC";
+		};
+		skin_therm_in_r {
+			enum-name = "ADC_TEMP_SENSOR_FAN";
+		};
+		ddr_temp_ec_5v_r {
+			enum-name = "ADC_TEMP_SENSOR_MEMORY";
+		};
+		ambient_therm_in0_r {
+			enum-name = "ADC_TEMP_SENSOR_2_AMBIENT";
+		};
+	};
+};

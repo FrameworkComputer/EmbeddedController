@@ -24,6 +24,7 @@ test/fp_transport.c
 test/fpsensor_auth_crypto_stateful.cc
 test/fpsensor_auth_crypto_stateless.cc
 test/fpsensor_crypto.cc
+test/fpsensor_debug.cc
 test/fpsensor_hw.cc
 test/fpsensor_utils.cc
 test/ftrapv.c
@@ -48,7 +49,8 @@ test/timer.cc
 test/tpm_seed_clear.cc
 test/unaligned_access.cc
 test/utils_str.c
-test/utils.c"
+test/utils.c
+test/watchdog.cc"
 
 for file in "$@"; do
   ec_file="${file##**/platform/ec/}"

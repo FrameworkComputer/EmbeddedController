@@ -36,12 +36,6 @@
 #include "usb_tbt_alt_mode.h"
 #include "usb_tc_sm.h"
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 44
-
 #ifdef CONFIG_ZEPHYR
 #include "temp_sensor/temp_sensor.h"
 #endif
@@ -873,32 +867,6 @@ void dpm_add_non_pd_sink(int port)
 	balance_source_ports();
 }
 
-void dpm_evaluate_request_rdo(int port, uint32_t rdo)
-{
-	int idx;
-	int op_ma;
-
-	if (CONFIG_USB_PD_3A_PORTS == 0)
-		return;
-
-	idx = RDO_POS(rdo);
-	/* Check for invalid index */
-	if (!idx)
-		return;
-
-	op_ma = (rdo >> 10) & 0x3FF;
-	if ((BIT(port) & sink_max_pdo_requested) && (op_ma <= 150)) {
-		/*
-		 * sink_max_pdo_requested will be set when we get 5V/3A sink
-		 * capability from port partner. If port partner only request
-		 * 5V/1.5A, we need to provide 5V/1.5A.
-		 */
-		atomic_clear_bits(&sink_max_pdo_requested, BIT(port));
-
-		balance_source_ports();
-	}
-}
-
 void dpm_remove_sink(int port)
 {
 	if (CONFIG_USB_PD_3A_PORTS == 0)
@@ -1127,9 +1095,10 @@ static uint8_t get_status_power_state_change(void)
 int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len)
 {
 	struct pd_sdb sdb;
-	struct rmdo partner_rmdo;
 
 	/* TODO(b/227236917): Fill in fields of Status message */
+
+	/* See USB PD r3.1 ss 6.5.2 Status Message */
 
 	/* Internal Temp */
 	sdb.internal_temp = get_status_internal_temp();
@@ -1149,20 +1118,72 @@ int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len)
 	/* Power Status */
 	sdb.power_status = 0x0;
 
-	partner_rmdo = pd_get_partner_rmdo(port);
-	if ((partner_rmdo.major_rev == 3 && partner_rmdo.minor_rev >= 1) ||
-	    partner_rmdo.major_rev > 3) {
-		/* USB PD Rev 3.1: 6.5.2 Status Message */
-		sdb.power_state_change = get_status_power_state_change();
-		*len = 7;
-	} else {
-		/* USB PD Rev 3.0: 6.5.2 Status Message */
-		sdb.power_state_change = 0;
-		*len = 6;
-	}
+	/* Power State Change */
+	sdb.power_state_change = get_status_power_state_change();
+
+	/* PD r3.1 added the Power State Change byte to SDB and also added the
+	 * requirement that, "Additional bytes that might be added to existing
+	 * Messages in [a] future revision of this specification Shall be
+	 * Ignored." Plausibly, a PD 3.0 implementation could react poorly to
+	 * receiving this 7th byte. However, the PD r3.1 CTS (2024 Q1),
+	 * COMMON.CHECK.PD3.10 Check Extended Message Header requires that the
+	 * SDB be 7 bytes long. Always send a 7-byte Status. See b/366241394.
+	 */
+	*len = 7;
 
 	memcpy(msg, &sdb, *len);
 	return EC_SUCCESS;
+}
+
+union sido dpm_get_source_info_msg(int port)
+{
+	/* This implementation makes the following simplifying assumptions:
+	 * 1. The TCPM will only ever offer fixed 5V PDOs in its Source Caps.
+	 * 2. The TCPM will only offer 1.5A or 3A PDOs, so it will not be
+	 *    limited by any cable capabilities.
+	 */
+
+	union sido source_info; /* LCOV_EXCL_LINE: b/375430524 */
+	const uint32_t *pdos; /* LCOV_EXCL_LINE: b/375430524 */
+	int pdo_count = dpm_get_source_pdo(&pdos, port);
+
+	source_info.port_type = (CONFIG_USB_PD_3A_PORTS > 0) ?
+					PD_SOURCE_PORT_CAPABILITY_MANAGED :
+					PD_SOURCE_PORT_CAPABILITY_GUARANTEED;
+
+	source_info.reserved = 0;
+
+	/* Max PDP: 5V * 3A = 15W; floor(5V * 1.5A = 7W */
+	source_info.port_maximum_pdp = (CONFIG_USB_PD_3A_PORTS > 0) ? 15 : 7;
+
+	/* Reported PDP: voltage * current offered in Source Caps. */
+	if (pdo_count <= 0) {
+		/* This should never happen, but 0 is the most plausible
+		 * default.
+		 */
+		source_info.port_reported_pdp = 0;
+	} else {
+		uint32_t highest_pdo = pdos[pdo_count - 1];
+
+		source_info.port_reported_pdp = PDO_FIXED_VOLTAGE(highest_pdo) *
+						PDO_FIXED_CURRENT(highest_pdo) /
+						1000000;
+	}
+
+	/* Present PDP:
+	 * Max current allocated to this port: Same as max PDP (and also
+	 * reported PDP)
+	 * Max current not fully allocated: Same as max PDP
+	 * Max current otherwise fully allocated: Same as reported PDP
+	 */
+	if (max_current_claimed & BIT(port) ||
+	    count_port_bits(max_current_claimed) < CONFIG_USB_PD_3A_PORTS) {
+		source_info.port_present_pdp = source_info.port_maximum_pdp;
+	} else {
+		source_info.port_present_pdp = source_info.port_reported_pdp;
+	}
+
+	return source_info;
 }
 
 enum ec_status pd_set_bist_share_mode(uint8_t enable)

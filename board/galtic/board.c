@@ -384,6 +384,7 @@ static const struct ec_response_keybd_config galtic_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
+BUILD_ASSERT(IS_ENABLED(CONFIG_KEYBOARD_VIVALDI));
 __override const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void)
 {
@@ -392,6 +393,9 @@ board_vivaldi_keybd_config(void)
 	else
 		return &galtic_kb;
 }
+
+/* TODO(b/219051027): Add assert to check that key_typ.{row,col}_refresh == the
+ * row/col in the tables above. */
 
 void board_init(void)
 {
@@ -845,32 +849,6 @@ struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_3] = thermal_ambient,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
-
-/* This callback disables keyboard when convertibles are fully open */
-__override void lid_angle_peripheral_enable(int enable)
-{
-	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
-
-	/*
-	 * If the lid is in tablet position via other sensors,
-	 * ignore the lid angle, which might be faulty then
-	 * disable keyboard.
-	 */
-	if (tablet_get_mode())
-		enable = 0;
-
-	if (enable) {
-		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
-	} else {
-		/*
-		 * Ensure that the chipset is off before disabling the keyboard.
-		 * When the chipset is on, the EC keeps the keyboard enabled and
-		 * the AP decides whether to ignore input devices or not.
-		 */
-		if (!chipset_in_s0)
-			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
-	}
-}
 
 __override void board_pulse_entering_rw(void)
 {

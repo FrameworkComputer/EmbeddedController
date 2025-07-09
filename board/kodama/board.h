@@ -69,7 +69,7 @@
 /* Define the host events which are allowed to wakeup AP in S3. */
 #define CONFIG_MKBP_INPUT_DEVICES
 
-#define PD_OPERATING_POWER_MW 15000
+#define CONFIG_USB_PD_OPERATING_POWER_MW 15000
 
 /* Free up flash in RO. */
 #ifdef SECTION_IS_RO

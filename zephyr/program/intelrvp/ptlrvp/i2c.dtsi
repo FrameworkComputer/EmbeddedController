@@ -8,7 +8,7 @@
 		compatible = "named-i2c-ports";
 
 		i2c_charger: charger {
-			i2c-port = <&CHARGER_I2C>;
+			i2c-port = <&charger_i2c>;
 			enum-names = "I2C_PORT_CHARGER",
 				"I2C_PORT_BATTERY",
 				"I2C_PORT_KB_DISCRETE",
@@ -17,14 +17,14 @@
 				"I2C_PORT_RAA2250";
 		};
 		ec_pd_power: typec-aic1-power {
-			i2c-port = <&PD_POW_I2C>;
+			i2c-port = <&pd_pow_i2c>;
 			enum-names = "I2C_PORT_TYPEC_AIC_1";
 		};
 	};
 };
 
 /* charger */
-&CHARGER_I2C {
+&charger_i2c {
 	label = "I2C_CHARGER";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 	status = "okay";
@@ -33,14 +33,6 @@
 		compatible = "intersil,isl9241";
 		status = "okay";
 		reg = <0x9>;
-	};
-	cbi_eeprom: eeprom@50 {
-		compatible = "atmel,at24";
-		reg = <0x50>;
-		size = <2048>;
-		pagesize = <16>;
-		address-width = <8>;
-		timeout = <5>;
 	};
 	kb_discrete: ite-it8801@39 {
 		compatible = "ite,it8801";
@@ -81,8 +73,16 @@
 };
 
 /* typec-aic1-power */
-&PD_POW_I2C {
+&pd_pow_i2c {
 	label = "I2C_PD_POWER";
 	clock-frequency = <I2C_BITRATE_FAST>;
 	status = "okay";
+};
+
+/*
+ * b/392207109
+ * This chip is not powered when the EC boots
+ */
+&pca95xx_0 {
+	zephyr,deferred-init;
 };

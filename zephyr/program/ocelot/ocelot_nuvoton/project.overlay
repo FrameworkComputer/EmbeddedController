@@ -1,0 +1,35 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* ocelot program common DTS includes */
+
+#include <cros/integrated_fwid.dtsi>
+
+/* ocelot_nuvoton project DTS includes */
+#include "generated.dtsi"
+#include "i2c.dtsi"
+
+/* ocelot_nuvoton overrides follow... */
+/ {
+	aliases {
+		gpio-wp = &gpio_c_ec_wp_odl;
+	};
+
+	named-gpios {
+		/* Fix the write protect pin assignement */
+		/delete-node/ ec_soc_rtcrst_odl;
+		gpio_c_ec_wp_odl: c_ec_wp_odl {
+			gpios = <&gpioc 7 GPIO_INPUT>;
+		};
+		/* unimplemented GPIOs */
+		entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+};
+
+
+/* Disable nodes for features not yet enabled. */
+/delete-node/ &{/named-adc-channels};

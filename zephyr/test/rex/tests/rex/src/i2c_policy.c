@@ -4,7 +4,9 @@
  */
 
 #include "cros_cbi.h"
+#include "hooks.h"
 #include "i2c.h"
+#include "rex_fakes.h"
 
 #include <stdbool.h>
 
@@ -15,40 +17,11 @@
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
 
-static int
-mock_cros_cbi_get_fw_config_fail(enum cbi_fw_config_field_id field_id,
-				 uint32_t *value)
+static void update_usb_db(int (*m)(enum cbi_fw_config_field_id field_id,
+				   uint32_t *value))
 {
-	return EC_ERROR_UNKNOWN;
-}
-
-static int mock_cros_cbi_get_fw_config_nc(enum cbi_fw_config_field_id field_id,
-					  uint32_t *value)
-{
-	*value = FW_USB_DB_NOT_CONNECTED;
-	return 0;
-}
-
-static int
-mock_cros_cbi_get_fw_config_usb3(enum cbi_fw_config_field_id field_id,
-				 uint32_t *value)
-{
-	*value = FW_USB_DB_USB3;
-	return EC_SUCCESS;
-}
-
-static int mock_cros_cbi_get_fw_config_hb(enum cbi_fw_config_field_id field_id,
-					  uint32_t *value)
-{
-	*value = FW_USB_DB_USB4_HB;
-	return EC_SUCCESS;
-}
-
-static int mock_cros_cbi_get_fw_config_anx(enum cbi_fw_config_field_id field_id,
-					   uint32_t *value)
-{
-	*value = FW_USB_DB_USB4_ANX7452_V2;
-	return EC_SUCCESS;
+	cros_cbi_get_fw_config_fake.custom_fake = m;
+	hook_notify(HOOK_INIT);
 }
 
 ZTEST_USER(i2c_policy, test_deny_no_cbi)
@@ -62,8 +35,7 @@ ZTEST_USER(i2c_policy, test_deny_no_cbi)
 		.addr_flags = 0x10,
 	};
 
-	cros_cbi_get_fw_config_fake.custom_fake =
-		mock_cros_cbi_get_fw_config_fail;
+	update_usb_db(mock_cros_cbi_get_fw_config_fail);
 
 	zassert_equal(board_allow_i2c_passthru(&cmd_desc_ps), false);
 	zassert_equal(board_allow_i2c_passthru(&cmd_desc_anx), false);
@@ -101,8 +73,7 @@ ZTEST_USER(i2c_policy, test_deny_hb)
 		.addr_flags = 0x56,
 	};
 
-	cros_cbi_get_fw_config_fake.custom_fake =
-		mock_cros_cbi_get_fw_config_hb;
+	update_usb_db(mock_cros_cbi_get_fw_config_hb);
 
 	zassert_equal(board_allow_i2c_passthru(&cmd_desc_hb0), false);
 	zassert_equal(board_allow_i2c_passthru(&cmd_desc_hb1), false);
@@ -117,8 +88,7 @@ ZTEST_USER(i2c_policy, test_allow_c1_anx_only)
 
 	zassert_equal(board_allow_i2c_passthru(&cmd_desc_anx), false);
 
-	cros_cbi_get_fw_config_fake.custom_fake =
-		mock_cros_cbi_get_fw_config_anx;
+	update_usb_db(mock_cros_cbi_get_fw_config_anx7452_v2);
 
 	zassert_equal(board_allow_i2c_passthru(&cmd_desc_anx), true);
 }
@@ -132,16 +102,17 @@ ZTEST_USER(i2c_policy, test_allow_c1_usb3_only)
 
 	zassert_equal(board_allow_i2c_passthru(&cmd_desc_ps), false);
 
-	cros_cbi_get_fw_config_fake.custom_fake =
-		mock_cros_cbi_get_fw_config_usb3;
+	update_usb_db(mock_cros_cbi_get_fw_config_usb3);
 
 	zassert_equal(board_allow_i2c_passthru(&cmd_desc_ps), true);
 }
 
 static void i2c_policy_before(void *fixture)
 {
+	RESET_FAKE(cros_cbi_get_fw_config);
+
 	cros_cbi_get_fw_config_fake.custom_fake =
-		mock_cros_cbi_get_fw_config_nc;
+		mock_cros_cbi_get_fw_config_no_usb_db;
 }
 
 ZTEST_SUITE(i2c_policy, NULL, NULL, i2c_policy_before, NULL, NULL);

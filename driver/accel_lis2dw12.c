@@ -14,6 +14,7 @@
 #include "hooks.h"
 #include "hwtimer.h"
 #include "math_util.h"
+#include "motion_sense.h"
 #include "motion_sense_fifo.h"
 #include "task.h"
 #include "util.h"
@@ -172,7 +173,8 @@ static int lis2dw12_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	int nsamples;
 
 	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
-	    (!(*event & CONFIG_ACCEL_LIS2DW12_INT_EVENT))) {
+	    (!(*event & CONFIG_ACCEL_LIS2DW12_INT_EVENT)) ||
+	    motion_sensor_in_forced_mode(s)) {
 		return EC_ERROR_NOT_HANDLED;
 	}
 

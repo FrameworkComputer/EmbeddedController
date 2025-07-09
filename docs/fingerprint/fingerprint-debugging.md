@@ -32,7 +32,7 @@ used for JTAG and SWD for ARM devices.
     is the only software required for flashing.
 *   In order to perform breakpoint debugging, you will need a tool that supports
     connecting `gdbserver`. This document will assume [CLion] \(Googlers see
-    [CLion for ChromeOS]) and was tested with `JLink v6.94a`. Alternatively, you
+    [CLion for ChromeOS]) and was tested with `JLink v8.10a`. Alternatively, you
     can use [Ozone], a standalone debugger from Segger.
 
 ## JLink Software {#software}
@@ -77,7 +77,7 @@ Icetower v3 with 20-pin SWD (0.05" / 1.27mm) on `CORESIGHT20 DB CONN`. |
 ---------------------------------------------------------------------- |
 ![Icetower with 20-pin SWD]                                            |
 
-### Quincy v3
+### Quincy v3 {#quincy}
 
 The connector for SWD is `J4`. It is labeled with `CORESIGHT20`.
 
@@ -85,7 +85,10 @@ The connector for SWD is `J4`. It is labeled with `CORESIGHT20`.
 *** note
 **NOTE**: `SW2` on the edge of Quincy must be set to `C-SGHT`, the `JEN#`
 switch (`SW7`) must be set low, and [`CONFIG_ENABLE_JTAG_SELECTION`] must be
-enabled for the board.
+enabled for the board. If the board has not been reworked, you must reset or
+toggle the power to the board after starting `servod` to work
+around http://b/372308953. You can press `SW10` (next to the servo connector) to
+reset.
 ***
 <!-- mdformat on -->
 
@@ -131,14 +134,14 @@ sensor runs at 1.8V. The pin is also not connected on the current designs.
 You should see the following:
 
 ```bash
-SEGGER J-Link Remote Server V6.94a
-Compiled Jan 14 2021 11:52:48
+SEGGER J-Link Remote Server V8.10a
+Compiled Oct  2 2024 14:20:10
 
 'q' to quit '?' for help
 
-Connected to J-Link with S/N 123456
-
-Waiting for client connections...
+2024-09-13 18:07:20 - Remote Server started
+2024-09-13 18:07:20 - Connected to J-Link with S/N 123456
+2024-09-13 18:07:20 - Waiting for client connections...
 ```
 
 *   Build the FPMCU image:
@@ -169,7 +172,7 @@ Start the JLink gdbserver for the appropriate MCU type and interface speed:
 
 *   Dragonclaw / [Nucleo STM32F412ZG]: `STM32F412CG`
 *   Icetower / [Nucleo STM32H743ZI]: `STM32H743ZI`
-*   Quincy / NPCX99FP: `NPCX9mnx`
+*   Quincy / NPCX99FP: `NPCX998F`
 
 Dragonclaw:
 
@@ -185,8 +188,16 @@ Icetower:
 
 Quincy:
 
+<!-- mdformat off(b/139308852) -->
+*** note
+**NOTE**: Make sure [correct switches are set](#quincy) and
+[`CONFIG_ENABLE_JTAG_SELECTION`] is enabled for the board
+([Example][config jtag example]).
+***
+<!-- mdformat on -->
+
 ```bash
-(chroot) $ JLinkGDBServerCLExe -select USB -device NPCX9mnx -endian little -if SWD -speed 4000 -noir -noLocalhostOnly
+(chroot) $ JLinkGDBServerCLExe -select USB -device NPCX998F -endian little -if SWD -speed 4000 -noir -noLocalhostOnly
 ```
 
 You should see the port that `gdbserver` is running on in the output:
@@ -275,6 +286,7 @@ STM32F412 package that does not have the synchronous trace pins, but the
 [fingerprint hardware]: ./fingerprint.md#hardware
 [`flash_jlink.py`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/util/flash_jlink.py
 [`CONFIG_ENABLE_JTAG_SELECTION`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/include/config.h;l=3084-3091;drc=a8b8b850ccc36b704f823094b62339662f6a7077
+[config jtag example]: https://crrev.com/c/5852491
 
 <!-- Images -->
 

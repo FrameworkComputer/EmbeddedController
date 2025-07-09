@@ -16,8 +16,8 @@ LOG_MODULE_DECLARE(rex, CONFIG_REX_LOG_LEVEL);
 
 /* touch panel power sequence control */
 
-#define TOUCH_ENABLE_DELAY_MS (500 * MSEC)
-#define TOUCH_DISABLE_DELAY_MS (0 * MSEC)
+#define TOUCH_ENABLE_DELAY_MS (500 * USEC_PER_MSEC)
+#define TOUCH_DISABLE_DELAY_MS (0 * USEC_PER_MSEC)
 
 static bool touch_sequence_enable;
 

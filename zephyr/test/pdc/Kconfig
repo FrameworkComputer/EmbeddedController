@@ -5,11 +5,26 @@
 config TEST_SUITE_PDC_GENERIC
 	bool "Enable generic PDC tests"
 
+config TEST_SUITE_PDC_UTILS
+	bool "Enable PDC utility tests"
+
 config TEST_SUITE_PDC_API_NULL_CHECK
 	bool "Enable PDC API null-protection checks"
 
 config TEST_SUITE_PDC_DEVICE_NOT_READY
 	bool "Enable PDC subsystem tests for device-not-ready"
+
+config TEST_SUITE_PDC_POLICY
+	bool "Enable PDC policy tests"
+
+config TEST_SUITE_PDC_POLICY_CLAMPED
+	bool "Enable PDC policy tests with clamped power"
+
+config TEST_SUITE_PDC_POLICY_VARIABLE
+	bool "Enable PDC policy tests to verify variabled PDOs"
+
+config TEST_SUITE_PDC_PMC_USB_MUX
+	bool "Enable PDC PMC USB mux tests"
 
 config TEST_SUITE_PDC_RTS54XX
 	bool "Enable RTS54xx PDC tests"
@@ -33,11 +48,39 @@ config TEST_SUITE_PDC_CONSOLE
 config TEST_SUITE_PDC_HOSTCMD
 	bool "Enable PDC host command tests"
 
+config TEST_SUITE_UCSI_HOSTCMD
+	bool "Enable UCSI host command tests"
+
+config TEST_SUITE_PPM
+	bool "Enable UCSI PPM tests"
+	help
+	  Enable tests for the PPM of the UCSI. This suite tests our PPM from
+	  the perspective of the UCSI spec. All layers use the actual code
+	  (ppm_common, ppm_driver, pdc_driver) and mocking is discouraged.
+	  Inputs to the tests are controlled through a PDC emulator.
+
+config TEST_SUITE_PPM_CONSOLE
+	bool "Enable tests for the `ppm` console command"
+	help
+	  Run a test suite covering the `ppm` console command, which sends
+	  various UCSI commands from the EC console for testing and debugging
+	  purposes.
+
+config TEST_SUITE_PPM_DRIVER
+	bool "Enable PPM driver tests"
+	help
+	  Enable tests for the lower layer (ppm_driver) of the PPM. This suite
+	  exercises the behaviors specific to the implementation. Mocking the
+	  upper layer (ppm_common) and lower layer (pdc driver) is used to cover
+	  corner cases.
+
 config TEST_SUITE_PDC_UCSI
 	bool "Enable UCSI tests"
 
-config TEST_SUITE_PPM
-	bool "Enable PPM tests"
+config TEST_SUITE_PPM_STATE_MACHINE
+	bool "Enable PPM state machine tests"
+	help
+	  Enable tests for the state machine (ppm_common) of the PPM.
 
 config TEST_PDC_MESSAGE_TRACING
 	bool "Enable PDC message tracing"

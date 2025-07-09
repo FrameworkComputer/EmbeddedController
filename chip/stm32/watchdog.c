@@ -41,6 +41,7 @@
 #define IWDG_PRESCALER 6
 #define IWDG_PRESCALER_DIV (4 << IWDG_PRESCALER)
 
+#if !defined(CONFIG_DFU_BOOTMANAGER_MAIN)
 void watchdog_reload(void)
 {
 	/* Reload the watchdog */
@@ -51,6 +52,7 @@ void watchdog_reload(void)
 #endif
 }
 DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
+#endif
 
 int watchdog_init(void)
 {

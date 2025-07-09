@@ -228,7 +228,7 @@ static bool ccg_is_init_done(const struct device *dev)
 	return false;
 }
 
-static const struct pdc_driver_api_t pdc_driver_api = {
+static DEVICE_API(pdc, pdc_driver_api) = {
 	.is_init_done = ccg_is_init_done,
 	.get_ucsi_version = ccg_get_ucsi_version,
 	.reset = ccg_reset,

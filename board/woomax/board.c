@@ -919,6 +919,10 @@ static const struct ec_response_keybd_config woomax_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
 };
 
+/* TK_REFRESH is always T2 above, vivaldi_keys are not overridden. */
+BUILD_ASSERT_REFRESH_RC(3, 2);
+
+BUILD_ASSERT(IS_ENABLED(CONFIG_KEYBOARD_VIVALDI));
 __override const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void)
 {

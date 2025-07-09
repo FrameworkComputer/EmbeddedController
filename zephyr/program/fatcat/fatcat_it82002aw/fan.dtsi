@@ -1,0 +1,13 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * Define nodelabel aliases needed for fan devicetree.
+ */
+gpio_fan_control: &gpio_ec_fan_pwr_disable_n_r {};
+pwm_fan: &pwm5 {};
+tach_fan: &tach0 {};
+
+#include "../../intelrvp/ptlrvp/fan.dtsi"

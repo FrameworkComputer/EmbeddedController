@@ -23,6 +23,8 @@ test-list-y = \
        abort \
        aes \
        always_memset \
+       assert_builtin \
+       assert_stdlib \
        benchmark \
        boringssl_crypto \
        compile_time_macros \
@@ -30,12 +32,14 @@ test-list-y = \
        crc \
        debug \
        exception \
+       exit \
        flash_physical \
        flash_write_protect \
        fp_transport \
        fpsensor_auth_crypto_stateful \
        fpsensor_auth_crypto_stateless \
        fpsensor_crypto \
+       fpsensor_debug \
        fpsensor_hw \
        fpsensor_utils \
        ftrapv \
@@ -74,7 +78,8 @@ test-list-y = \
        unaligned_access \
        unaligned_access_benchmark \
        utils \
-       utils_str
+       utils_str \
+       watchdog \
 
 # This is relative to the EC root directory.
 -include ../ec-private/board/hatch_fp/build.mk

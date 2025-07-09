@@ -88,7 +88,8 @@ static void host_cmd_motion_sense_before(void *fixture)
 	mock_get_offset_fake.custom_fake = mock_get_offset_custom;
 
 	motion_sensors[0].config[SENSOR_CONFIG_AP].odr = 0;
-	motion_sensors[0].config[SENSOR_CONFIG_AP].ec_rate = 1000 * MSEC;
+	motion_sensors[0].config[SENSOR_CONFIG_AP].ec_rate =
+		1000 * USEC_PER_MSEC;
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelinit 0"));
 	task_wake(TASK_ID_MOTIONSENSE);
 	k_sleep(K_MSEC(100));
@@ -108,7 +109,8 @@ static void host_cmd_motion_sense_after(void *fixture)
 	host_cmd_motion_sense_int_enable(0, &response);
 	motion_sensors[0].flags &= ~MOTIONSENSE_FLAG_IN_SPOOF_MODE;
 	motion_sensors[0].config[SENSOR_CONFIG_AP].odr = 0;
-	motion_sensors[0].config[SENSOR_CONFIG_AP].ec_rate = 1000 * MSEC;
+	motion_sensors[0].config[SENSOR_CONFIG_AP].ec_rate =
+		1000 * USEC_PER_MSEC;
 }
 
 ZTEST_SUITE(host_cmd_motion_sense, drivers_predicate_post_main,
@@ -318,7 +320,7 @@ ZTEST_USER(host_cmd_motion_sense, test_set_ec_rate)
 		      response.ec_rate.ret);
 	/* The sensor's AP config value should be updated */
 	zassert_equal(motion_sensors[0].config[SENSOR_CONFIG_AP].ec_rate,
-		      2000 * MSEC, NULL);
+		      2000 * USEC_PER_MSEC, NULL);
 }
 
 ZTEST_USER(host_cmd_motion_sense, test_odr_invalid_sensor_num)

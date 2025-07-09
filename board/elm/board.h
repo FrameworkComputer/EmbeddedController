@@ -239,13 +239,13 @@ enum sensor_id {
 /* delay to turn on/off vconn */
 
 /* Define typical operating power and max power */
-#define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW 45000
-#define PD_MAX_CURRENT_MA CONFIG_CHARGER_MAX_INPUT_CURRENT
-#define PD_MAX_VOLTAGE_MV 20000
+#define CONFIG_USB_PD_OPERATING_POWER_MW 15000
+#define CONFIG_USB_PD_MAX_POWER_MW 45000
+#define CONFIG_USB_PD_MAX_CURRENT_MA CONFIG_CHARGER_MAX_INPUT_CURRENT
+#define CONFIG_USB_PD_MAX_VOLTAGE_MV 20000
 
 /* The lower the input voltage, the higher the power efficiency. */
-#define PD_PREFER_LOW_VOLTAGE
+#define CONFIG_USB_PD_PREFER_LOW_VOLTAGE
 
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);

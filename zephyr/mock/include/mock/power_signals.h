@@ -23,6 +23,14 @@ DECLARE_FAKE_VALUE_FUNC(int, power_signal_set, enum power_signal, int);
 DECLARE_FAKE_VALUE_FUNC(int, power_signal_get, enum power_signal);
 DECLARE_FAKE_VALUE_FUNC(int, power_wait_mask_signals_timeout,
 			power_signal_mask_t, power_signal_mask_t, int);
+DECLARE_FAKE_VOID_FUNC(power_set_debug, power_signal_mask_t);
+DECLARE_FAKE_VALUE_FUNC(power_signal_mask_t, power_get_debug);
+DECLARE_FAKE_VALUE_FUNC(power_signal_mask_t, power_get_signals);
+DECLARE_FAKE_VOID_FUNC(power_signal_interrupt, enum power_signal, int);
+DECLARE_FAKE_VALUE_FUNC(int, power_signal_enable, enum power_signal);
+DECLARE_FAKE_VALUE_FUNC(int, power_signal_disable, enum power_signal);
+DECLARE_FAKE_VALUE_FUNC(const char *, power_signal_name, enum power_signal);
+DECLARE_FAKE_VOID_FUNC(power_signal_init);
 
 int power_signal_set_custom_fake(enum power_signal signal, int value);
 int power_signal_get_custom_fake(enum power_signal signal);

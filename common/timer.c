@@ -5,12 +5,6 @@
 
 /* Timer module for Chrome EC operating system */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #include "atomic.h"
 #include "builtin/assert.h"
 #include "common.h"
@@ -122,7 +116,8 @@ int timestamp_expired(timestamp_t deadline, const timestamp_t *now)
 	return ((int64_t)(now->val - deadline.val) >= 0);
 }
 
-#ifndef CONFIG_HW_SPECIFIC_UDELAY
+/* Zephyr provides its own implementation in hwtimer shim. */
+#ifndef CONFIG_ZEPHYR
 void udelay(unsigned int us)
 {
 	unsigned int t0 = __hw_clock_source_read();

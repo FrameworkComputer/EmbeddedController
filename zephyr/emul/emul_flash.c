@@ -213,7 +213,7 @@ static int cros_flash_emul_get_status(const struct device *dev, uint8_t *sr1,
 	return -EINVAL;
 }
 
-static const struct cros_flash_driver_api emul_cros_flash_driver_api = {
+static DEVICE_API(cros_flash, emul_cros_flash_driver_api) = {
 	.init = cros_flash_emul_init,
 	.physical_write = cros_flash_emul_write,
 	.physical_erase = cros_flash_emul_erase,

@@ -220,7 +220,7 @@ static int hid_i2c_target_unregister(const struct device *dev)
 	return i2c_target_unregister(cfg->bus.bus, &data->config);
 }
 
-static const struct i2c_target_driver_api api_funcs = {
+static DEVICE_API(i2c_target, api_funcs) = {
 	.driver_register = hid_i2c_target_register,
 	.driver_unregister = hid_i2c_target_unregister,
 };

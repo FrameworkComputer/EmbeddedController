@@ -20,3 +20,7 @@ disable=
     too-many-branches,
     too-many-locals
 
+[REPORTS]
+
+reports=no
+score=no

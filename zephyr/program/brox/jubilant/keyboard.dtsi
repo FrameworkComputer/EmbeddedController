@@ -10,27 +10,12 @@
 
 	kblight: kblight {
 		compatible = "cros-ec,kblight-pwm";
-		pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(2400) PWM_POLARITY_NORMAL>;
+		pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(324) PWM_POLARITY_NORMAL>;
 	};
 };
 
 &vivaldi_kbd {
-	vivaldi-keys = <
-		KBD_RC(0, 2)   /* T1 */
-		KBD_RC(3, 2)   /* T2 */
-		KBD_RC(2, 2)   /* T3 */
-		KBD_RC(1, 2)   /* T4 */
-		KBD_RC(4, 4)   /* T5 */
-		KBD_RC(2, 4)   /* T6 */
-		KBD_RC(1, 4)   /* T7 */
-		KBD_RC(2, 11)  /* T8 */
-		KBD_RC(1, 9)   /* T9 */
-		KBD_RC(0, 4)   /* T10 */
-		KBD_RC(0, 1)   /* T11 */
-		KBD_RC(1, 5)   /* T12 */
-		KBD_RC(3, 5)   /* T13 */
-		KBD_RC(0, 11)  /* T14 */
-	>;
+	vivaldi-keys = <VIVALDI_KEYS_STRAUSS_T14>;
 
 	kbd_config_0: kbd-config-0 {
 		vivaldi-codes = <
@@ -50,6 +35,30 @@
 			VIVALDI_TK_VOL_UP             /* T14 */
 		>;
 		capabilities = <(VIVALDI_KEYBD_CAP_FUNCTION_KEYS |
+				VIVALDI_KEYBD_CAP_NUMERIC_KEYPAD |
+				VIVALDI_KEYBD_CAP_SCRNLOCK_KEY |
+				VIVALDI_KEYBD_CAP_ASSISTANT_KEY)>;
+	};
+
+	kbd_config_1: kbd-config-1 {
+		vivaldi-codes = <
+			VIVALDI_TK_BACK             /* T1 */
+			VIVALDI_TK_REFRESH          /* T2 */
+			VIVALDI_TK_FULLSCREEN       /* T3 */
+			VIVALDI_TK_OVERVIEW         /* T4 */
+			VIVALDI_TK_SNAPSHOT         /* T5 */
+			VIVALDI_TK_BRIGHTNESS_DOWN  /* T6 */
+			VIVALDI_TK_BRIGHTNESS_UP    /* T7 */
+			VIVALDI_TK_DICTATE          /* T8 */
+			VIVALDI_TK_ACCESSIBILITY    /* T9 */
+			VIVALDI_TK_PLAY_PAUSE       /* T10 */
+			VIVALDI_TK_MICMUTE          /* T11 */
+			VIVALDI_TK_VOL_MUTE         /* T12 */
+			VIVALDI_TK_VOL_DOWN         /* T13 */
+			VIVALDI_TK_VOL_UP           /* T14 */
+		>;
+		capabilities = <(VIVALDI_KEYBD_CAP_FUNCTION_KEYS |
+				VIVALDI_KEYBD_CAP_NUMERIC_KEYPAD |
 				VIVALDI_KEYBD_CAP_SCRNLOCK_KEY |
 				VIVALDI_KEYBD_CAP_ASSISTANT_KEY)>;
 	};
@@ -81,8 +90,8 @@
 		&kso13_default
 		&kso14_default
 		&kso15_default
-		&kso16_gpc3_default
-		&kso17_gpc5_default>;
+		&kso16_default
+		&kso17_default>;
 	pinctrl-1 = <
 		&ksi0_sleep
 		&ksi1_sleep
@@ -108,13 +117,12 @@
 		&kso13_sleep
 		&kso14_sleep
 		&kso15_sleep
-		&kso16_gpc3_sleep
-		&kso17_gpc5_sleep>;
+		&kso16_sleep
+		&kso17_sleep>;
 
 	pinctrl-names = "default", "sleep";
 	row-size = <8>;
 	col-size = <18>;
-	settle-time-us = <80>;
 	debounce-down-ms = <15>;
 	debounce-up-ms = <15>;
 	actual-key-mask = <
@@ -137,6 +145,7 @@
 		0xff  /* C16 */
 		0xff  /* C17 */
 	>;
+	kso-ignore-mask = <04>;
 
 	kso-gpio {
 		compatible = "cros-ec,col-gpio";
@@ -154,11 +163,42 @@
 
 	runtime-keys {
 		compatible = "cros-ec,runtime-keys";
-		vol-up-rc = <KBD_RC(0, 11)>;
 		left-alt-rc = <KBD_RC(6, 13)>;
 		right-alt-rc = <KBD_RC(0, 10)>;
 		h-rc = <KBD_RC(1, 6)>;
 		r-rc = <KBD_RC(7, 9)>;
 	};
+	factory-test {
+		compatible = "cros-ec,keyboard-factory-test";
 
+		pin3-gpios = <&gpioksi 0 GPIO_ACTIVE_HIGH>;
+		pin4-gpios = <&gpioksi 1 GPIO_ACTIVE_HIGH>;
+		pin5-gpios = <&gpioksi 2 GPIO_ACTIVE_HIGH>;
+		pin6-gpios = <&gpioksi 3 GPIO_ACTIVE_HIGH>;
+		pin7-gpios = <&gpioksi 4 GPIO_ACTIVE_HIGH>;
+		pin8-gpios = <&gpioksi 5 GPIO_ACTIVE_HIGH>;
+		pin9-gpios = <&gpioksi 6 GPIO_ACTIVE_HIGH>;
+		pin10-gpios = <&gpioksi 7 GPIO_ACTIVE_HIGH>;
+
+		pin11-gpios = <&gpioksoh 7 GPIO_ACTIVE_HIGH>;
+		pin12-gpios = <&gpioksoh 6 GPIO_ACTIVE_HIGH>;
+		pin13-gpios = <&gpioksoh 5 GPIO_ACTIVE_HIGH>;
+		pin14-gpios = <&gpioksoh 4 GPIO_ACTIVE_HIGH>;
+		pin15-gpios = <&gpioksoh 3 GPIO_ACTIVE_HIGH>;
+		pin16-gpios = <&gpioksoh 2 GPIO_ACTIVE_HIGH>;
+		pin17-gpios = <&gpioksoh 1 GPIO_ACTIVE_HIGH>;
+		pin18-gpios = <&gpioksoh 0 GPIO_ACTIVE_HIGH>;
+
+		pin19-gpios = <&gpioksol 7 GPIO_ACTIVE_HIGH>;
+		pin20-gpios = <&gpioksol 6 GPIO_ACTIVE_HIGH>;
+		pin21-gpios = <&gpioksol 5 GPIO_ACTIVE_HIGH>;
+		pin22-gpios = <&gpioksol 4 GPIO_ACTIVE_HIGH>;
+		pin23-gpios = <&gpioksol 3 GPIO_ACTIVE_HIGH>;
+		pin24-gpios = <&gpioksol 2 GPIO_ACTIVE_HIGH>;
+		pin25-gpios = <&gpioksol 1 GPIO_ACTIVE_HIGH>;
+		pin26-gpios = <&gpioksol 0 GPIO_ACTIVE_HIGH>;
+
+		pin27-gpios = <&gpioc 5 GPIO_ACTIVE_HIGH>;
+		pin28-gpios = <&gpioc 3 GPIO_ACTIVE_HIGH>;
+	};
 };

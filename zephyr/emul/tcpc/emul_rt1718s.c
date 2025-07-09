@@ -111,7 +111,7 @@ int rt1718s_emul_get_reg(const struct emul *emul, int reg, uint16_t *val)
 		return tcpci_emul_get_reg(emul, reg, val);
 	}
 
-	if (val == NULL || reg_addr > RT1718S_EMUL_REG_COUNT_PER_PAGE) {
+	if (val == NULL || reg_addr > RT1718S_EMUL_MAX_REG_INDEX) {
 		return -EINVAL;
 	}
 
@@ -135,7 +135,7 @@ int rt1718s_emul_set_reg(const struct emul *emul, int reg, uint16_t val)
 		return tcpci_emul_set_reg(emul, reg, val);
 	}
 
-	if (reg_addr > RT1718S_EMUL_REG_COUNT_PER_PAGE) {
+	if (reg_addr > RT1718S_EMUL_MAX_REG_INDEX) {
 		return -EINVAL;
 	}
 
@@ -172,8 +172,7 @@ void rt1718s_emul_set_device_id(const struct emul *emul, uint16_t device_id)
 static int copy_reg_byte(uint8_t *dst, uint8_t src_reg[], int reg,
 			 int read_bytes)
 {
-	if ((reg + read_bytes) > RT1718S_EMUL_REG_COUNT_PER_PAGE ||
-	    dst == NULL) {
+	if ((reg + read_bytes) > RT1718S_EMUL_MAX_REG_INDEX || dst == NULL) {
 		return -EIO;
 	}
 	*dst = src_reg[reg + read_bytes];

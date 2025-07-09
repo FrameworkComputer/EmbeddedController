@@ -36,7 +36,7 @@ static int anx7447_mux_set(const struct usb_mux *me, mux_state_t mux_state,
 
 static struct anx_state anx[CONFIG_USB_PD_PORT_MAX_COUNT];
 static struct anx_usb_mux mux[CONFIG_USB_PD_PORT_MAX_COUNT];
-static bool anx7447_bist_test_mode[CONFIG_USB_PD_PORT_MAX_COUNT];
+test_export_static bool anx7447_bist_test_mode[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #ifdef CONFIG_USB_PD_FRS_TCPC
 /* an array to indicate which port is waiting for FRS disablement. */
@@ -915,7 +915,8 @@ static int anx7447_get_chip_info(int port, int live,
 	return EC_SUCCESS;
 }
 
-enum ec_error_list anx7447_set_bist_test_mode(const int port, const bool enable)
+test_export_static enum ec_error_list
+anx7447_set_bist_test_mode(const int port, const bool enable)
 {
 	/*
 	 * Set CC debounce type as millisecond if enable BIST mode,
@@ -935,7 +936,8 @@ enum ec_error_list anx7447_set_bist_test_mode(const int port, const bool enable)
 	return EC_SUCCESS;
 }
 
-enum ec_error_list anx7447_get_bist_test_mode(const int port, bool *enable)
+test_export_static enum ec_error_list anx7447_get_bist_test_mode(const int port,
+								 bool *enable)
 {
 	*enable = anx7447_bist_test_mode[port];
 

@@ -8,8 +8,6 @@ choice CROS_RTC_TYPE
 	prompt "Select the RTC to use"
 	# List standalone controllers before embedded once so that they get
 	# higher priority.
-	default CROS_RTC_NXP_PCF85063A if DT_HAS_NXP_RTC_PCF85063A_ENABLED
-	default CROS_RTC_RENESAS_IDT1337AG if DT_HAS_RENESAS_RTC_IDT1337AG_ENABLED
 	default CROS_RTC_NPCX if DT_HAS_NUVOTON_NPCX_CROS_MTC_ENABLED
 	default CROS_RTC_XEC if DT_HAS_MICROCHIP_XEC_CROS_RTC_ENABLED
 	help
@@ -28,20 +26,6 @@ config CROS_RTC_XEC
 	help
 	  This option enables a driver for providing the support of Real-Time
 	  Clock (RTC) on the MCHP XEC chip.
-
-config CROS_RTC_NXP_PCF85063A
-	bool "NXP PCF85063A Real-Time Clock (RTC) driver for the Zephyr shim"
-	depends on I2C
-	help
-	  This option enables a driver for providing the support of NXP
-	  Real-Time Clock (RTC) on the the I2C bus.
-
-config CROS_RTC_RENESAS_IDT1337AG
-	bool "RENESAS IDT1337AG Real-Time Clock (RTC) driver for the Zephyr shim"
-	depends on I2C
-	help
-	  This option enables a driver for providing the support of RENESAS
-	  Real-Time Clock (RTC) on the the I2C bus.
 
 endchoice # CROS_RTC_TYPE
 

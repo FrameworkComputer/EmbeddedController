@@ -1,5 +1,6 @@
 common:
-  platform_allow: native_sim
+  platform_allow:
+  - native_sim
 tests:
   qcom_power.default: {}
   qcom_power.power_gpio_keys:

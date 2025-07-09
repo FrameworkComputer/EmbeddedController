@@ -169,6 +169,27 @@
 		gpio_led_a_odl: led_a_odl {
 			gpios = <&gpioc 3 GPIO_OUTPUT_HIGH>;
 		};
+		gpio_acc_int_l: acc_int_l {
+			gpios = <&gpio5 0 GPIO_INPUT>;
+		};
+		gpio_imu_int_l: imu_int_l {
+			gpios = <&gpio5 6 GPIO_INPUT>;
+		};
+		gpio_tablet_mode_l: tablet_mode_l {
+			gpios = <&gpio9 5 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
+		};
+		gpio_voldn_btn_odl: voldn_btn_odl {
+			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		};
+		gpio_volup_btn_odl: volup_btn_odl {
+			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_VOLUME_UP_L";
+		};
+		gpio_ec_soc_hdmi_hpd: ec_soc_hdmi_hdp {
+			gpios = <&gpioe 4 GPIO_OUTPUT>;
+		};
 	};
 
 	named-i2c-ports {
@@ -207,6 +228,12 @@
 	pinctrl-names = "default";
 };
 
+&pinctrl {
+	/omit-if-no-ref/ i2c5_1_gpf4_f5: periph-i2c5-1-gpio {
+		pinmux = <&alt6_i2c5_1_sl>;
+		pinmux-gpio;
+	};
+};
 
 &i2c0_0 {
 	status = "okay";
@@ -229,7 +256,8 @@
 &i2c5_1 {
 	status = "okay";
 	pinctrl-0 = <&i2c5_1_sda_scl_gpf4_f5>;
-	pinctrl-names = "default";
+	pinctrl-1 = <&i2c5_1_gpf4_f5>;
+	pinctrl-names = "default", "sleep";
 };
 
 &i2c7_0 {

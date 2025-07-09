@@ -17,7 +17,7 @@
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "hooks.h"
-#include "keyboard_customization.h"
+#include "keyboard_config.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
@@ -78,6 +78,17 @@ void battery_present_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&board_set_charger_current_limit_deferred_data, 0);
 }
 
+struct boot_key_entry boot_key_list[] = {
+	[BOOT_KEY_ESC] = { BANSHEE_KEYBOARD_COL_ESC, BANSHEE_KEYBOARD_ROW_ESC },
+	[BOOT_KEY_DOWN_ARROW] = { BANSHEE_KEYBOARD_COL_DOWN,
+				  BANSHEE_KEYBOARD_ROW_DOWN },
+	[BOOT_KEY_LEFT_SHIFT] = { BANSHEE_KEYBOARD_COL_LEFT_SHIFT,
+				  BANSHEE_KEYBOARD_ROW_LEFT_SHIFT },
+	[BOOT_KEY_REFRESH] = { BANSHEE_KEYBOARD_COL_REFRESH,
+			       BANSHEE_KEYBOARD_ROW_REFRESH },
+};
+BUILD_ASSERT(ARRAY_SIZE(boot_key_list) == BOOT_KEY_COUNT);
+
 static uint32_t board_id;
 static void configure_keyboard(void)
 {
@@ -110,10 +121,12 @@ static void configure_keyboard(void)
 		gpio_set_flags(GPIO_EC_KSO_04_INV, GPIO_ODR_HIGH);
 		gpio_set_alternate_function(GPIO_PORT_1, (BIT(5) | BIT(7)),
 					    GPIO_ALT_FUNC_DEFAULT);
-		key_typ.col_refresh = KEYBOARD_COL_ID2_REFRESH;
-		key_typ.row_refresh = KEYBOARD_ROW_ID2_REFRESH;
-		boot_key_list[BOOT_KEY_REFRESH].col = KEYBOARD_COL_ID2_REFRESH;
-		boot_key_list[BOOT_KEY_REFRESH].row = KEYBOARD_ROW_ID2_REFRESH;
+		key_typ.col_refresh = BANSHEE_KEYBOARD_COL_ID2_REFRESH;
+		key_typ.row_refresh = BANSHEE_KEYBOARD_ROW_ID2_REFRESH;
+		boot_key_list[BOOT_KEY_REFRESH].col =
+			BANSHEE_KEYBOARD_COL_ID2_REFRESH;
+		boot_key_list[BOOT_KEY_REFRESH].row =
+			BANSHEE_KEYBOARD_ROW_ID2_REFRESH;
 	}
 
 	board_id_keyboard_col_inverted((int)board_id);
@@ -140,12 +153,4 @@ __override void board_pre_task_i2c_peripheral_init(void)
 		CPRINTS("Add delay to check boot key");
 	}
 #endif
-}
-
-__override uint8_t board_keyboard_row_refresh(void)
-{
-	if (board_id < 2)
-		return KEYBOARD_ROW_REFRESH;
-	else
-		return KEYBOARD_ROW_ID2_REFRESH;
 }

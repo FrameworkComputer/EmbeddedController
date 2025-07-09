@@ -5,12 +5,6 @@
  * Common functions for battery charging.
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #include "battery_smart.h"
 #include "builtin/assert.h"
 #include "charge_state.h"

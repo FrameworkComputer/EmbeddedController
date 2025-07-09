@@ -103,7 +103,7 @@ ZTEST(mkbp_info, test_host_command_mkbp_info__current_keyboard_matrix)
 	zassert_equal(EC_SUCCESS, ret, "Host command failed: %d", ret);
 
 	zassert_true(response.key_matrix[KEYBOARD_COL_KEY_R] &
-			     KEYBOARD_MASK_KEY_R,
+			     KEYBOARD_ROW_TO_MASK(KEYBOARD_ROW_KEY_R),
 		     "Expected key is not pressed");
 }
 

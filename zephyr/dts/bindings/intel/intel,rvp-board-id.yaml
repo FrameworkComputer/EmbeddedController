@@ -9,13 +9,11 @@ compatible: "intel,rvp-board-id"
 properties:
   bom-gpios:
     type: phandle-array
-    required: true
     description: |
      A list contains GPIO pins corresponding to BOM ID bits.
 
   fab-gpios:
     type: phandle-array
-    required: true
     description: |
      A list contains GPIO pins corresponding to FAB ID bits.
 

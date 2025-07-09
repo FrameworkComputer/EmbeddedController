@@ -60,6 +60,9 @@ void keyboard_state_changed(int row, int col, int is_pressed);
  */
 int board_has_keyboard_backlight(void);
 
+#if defined(CONFIG_USB_HID_KEYBOARD_VIVALDI) || \
+	defined(CONFIG_KEYBOARD_VIVALDI) ||     \
+	defined(CONFIG_USB_DC_HID_VIVALDI) || defined(CONFIG_USBD_HID_VIVALDI)
 /*
  * This function can help change the keyboard top row layout as presented to the
  * AP. If changing the position of the "Refresh" key from T3, you may also need
@@ -68,6 +71,7 @@ int board_has_keyboard_backlight(void);
  */
 __override_proto const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void);
+#endif
 
 #ifdef __cplusplus
 }

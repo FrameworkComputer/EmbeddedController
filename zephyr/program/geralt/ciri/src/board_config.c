@@ -45,7 +45,7 @@ __override struct dps_config_t dps_config = {
 	.k_more_pwr = 91,
 	.k_sample = 1,
 	.k_window = 3,
-	.t_stable = 10 * SECOND,
-	.t_check = 5 * SECOND,
+	.t_stable = 10 * USEC_PER_SEC,
+	.t_check = 5 * USEC_PER_SEC,
 	.is_more_efficient = NULL,
 };

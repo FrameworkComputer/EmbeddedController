@@ -7,6 +7,7 @@
 #include "fpc_bep_matcher.h"
 #include "fpc_bep_sensor.h"
 #include "fpc_bio_algorithm.h"
+#include "fpc_private.h"
 #include "fpc_sensor.h"
 #include "fpsensor/fpsensor.h"
 #include "fpsensor/fpsensor_console.h"
@@ -16,6 +17,7 @@
 #include "task.h"
 #include "util.h"
 
+#include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -53,6 +55,26 @@ static struct ec_response_fp_info ec_fp_sensor_info = {
 	.height = FP_SENSOR_RES_Y_FPC,
 	.bpp = FP_SENSOR_RES_BPP_FPC,
 };
+
+static int convert_fp_capture_mode_to_fpc_get_image_type(int mode)
+{
+	switch (mode) {
+	case FP_CAPTURE_VENDOR_FORMAT:
+		return FPC_CAPTURE_VENDOR_FORMAT;
+	case FP_CAPTURE_SIMPLE_IMAGE:
+		return FPC_CAPTURE_SIMPLE_IMAGE;
+	case FP_CAPTURE_PATTERN0:
+		return FPC_CAPTURE_PATTERN0;
+	case FP_CAPTURE_PATTERN1:
+		return FPC_CAPTURE_PATTERN1;
+	case FP_CAPTURE_QUALITY_TEST:
+		return FPC_CAPTURE_QUALITY_TEST;
+	case FP_CAPTURE_RESET_TEST:
+		return FPC_CAPTURE_RESET_TEST;
+	default:
+		return -EINVAL;
+	}
+}
 
 typedef struct fpc_bep_sensor fpc_bep_sensor_t;
 
@@ -232,20 +254,14 @@ int fp_sensor_deinit(void)
 
 int fp_sensor_get_info(struct ec_response_fp_info *resp)
 {
-	int rc;
-
-	spi_buf[0] = FPC_CMD_HW_ID;
+	uint16_t sensor_id;
 
 	memcpy(resp, &ec_fp_sensor_info, sizeof(struct ec_response_fp_info));
 
-	fp_sensor_lock();
-	rc = spi_transaction(SPI_FP_DEVICE, spi_buf, 3, spi_buf,
-			     SPI_READBACK_ALL);
-	fp_sensor_unlock();
-	if (rc)
+	if (fpc_get_hwid(&sensor_id))
 		return EC_RES_ERROR;
 
-	resp->model_id = (spi_buf[1] << 8) | spi_buf[2];
+	resp->model_id = sensor_id;
 	resp->errors = errors;
 
 	return EC_SUCCESS;
@@ -315,7 +331,14 @@ int fp_maintenance(void)
 
 int fp_acquire_image_with_mode(uint8_t *image_data, int mode)
 {
-	return fp_sensor_acquire_image_with_mode(image_data, mode);
+	int rc = convert_fp_capture_mode_to_fpc_get_image_type(mode);
+
+	if (rc < 0) {
+		CPRINTS("Unsupported mode %d provided", mode);
+		return rc;
+	}
+
+	return fp_sensor_acquire_image_with_mode(image_data, rc);
 }
 
 int fp_acquire_image(uint8_t *image_data)

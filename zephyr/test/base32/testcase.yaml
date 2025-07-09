@@ -1,4 +1,5 @@
 common:
-  platform_allow: native_sim
+  platform_allow:
+    - native_sim
 tests:
   base32.default: {}

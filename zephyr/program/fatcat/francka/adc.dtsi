@@ -1,0 +1,37 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_ec_vsense_pp3300_s5: ec_vsense_pp3300_s5 {
+			enum-name = "ADC_PP3300_S5";
+			io-channels = <&adc0 6>;
+		};
+		adc_temp_sensor_1: temp_sensor_1 {
+			enum-name = "ADC_TEMP_SENSOR_1";
+			io-channels = <&adc0 0>;
+		};
+		adc_temp_sensor_2: temp_sensor_2 {
+			enum-name = "ADC_TEMP_SENSOR_2";
+			io-channels = <&adc0 1>;
+		};
+		adc_temp_sensor_3: temp_sensor_3 {
+			enum-name = "ADC_TEMP_SENSOR_3";
+			io-channels = <&adc0 10>;
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_chan0_gp45
+		     &adc0_chan1_gp44
+		     &adc0_chan4_gp41
+		     &adc0_chan6_gp34
+		     &adc0_chan10_gpe0>;
+	pinctrl-names = "default";
+};

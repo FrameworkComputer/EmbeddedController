@@ -1,0 +1,28 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * Define nodelabel aliases needed for fan devicetree.
+ */
+pwm_fan: &pwm0 {};
+tach_fan: &tach1 {};
+
+#include "../fan.dtsi"
+
+/* Tachometer for fan speed measurement */
+&tach1 {
+	status = "okay";
+	pinctrl-0 = <&ta1_1_in_gp40>; /* TA1 input on GPIO40 */
+	pinctrl-names = "default";
+	port = <NPCX_TACH_PORT_A>; /* port-A is selected */
+	sample-clk = <NPCX_TACH_FREQ_LFCLK>; /* Use LFCLK as sampling clock */
+	pulses-per-round = <2>; /* number of pulses per round of encoder */
+};
+
+&pwm0 {
+	status = "okay";
+	pinctrl-0 = <&pwm0_gpc3>;
+	pinctrl-names = "default";
+};

@@ -12,6 +12,7 @@
 #include "cros_board_info.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "timer.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
@@ -67,7 +68,6 @@ test_export_static bool authenticate_battery_type(int index,
 			return false;
 	}
 
-	CPRINTS("found batt:%s", conf->manuf_name);
 	return true;
 }
 
@@ -111,10 +111,9 @@ static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 
 		rv = cbi_get_board_info(tag, buf, &size);
 		if (rv) {
-			BCFGPRT("No more configs (%d)", rv);
 			return rv;
 		}
-		BCFGPRT("Checking config #%d (size=%d)...",
+		BCFGPRT("Checking config_cbi[%d] (size=%d)...",
 			tag - CBI_TAG_BATTERY_CONFIG, size);
 		tag++;
 
@@ -161,8 +160,6 @@ static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 			continue;
 		}
 
-		BCFGPRT("Matched");
-
 		/* Save config in cache. */
 		memset(batt->manuf_name, 0, SBS_MAX_STR_OBJ_SIZE);
 		memset(batt->device_name, 0, SBS_MAX_STR_OBJ_SIZE);
@@ -175,13 +172,39 @@ static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 	}
 }
 
+/* The host command EC_CMD_BATTERY_GET_STATIC v0 and v1 truncate the battery
+ * strings to 7 and 11 chars respectively. Since the battery names in CBI
+ * will be set later, we don't know if 7 chars is enough for unique names in
+ * the future. Therefore, always enable V2 if BCIC is enabled.
+ */
+#if defined(CONFIG_BATTERY_CONFIG_IN_CBI)
+#if !defined(CONFIG_HOSTCMD_BATTERY_V2)
+#error CONFIG_HOSTCMD_BATTERY_V2 is required if \
+CONFIG_BATTERY_CONFIG_IN_CBI is enabled.
+#endif
+#endif
+
 void init_battery_type(void)
 {
 	int type;
 	int dflt = board_get_default_battery_type();
+	int ret;
 
-	if (battery_manufacturer_name(batt_manuf_name,
-				      sizeof(batt_manuf_name))) {
+	ret = battery_manufacturer_name(batt_manuf_name,
+					sizeof(batt_manuf_name));
+
+	for (int i = 0; i < CONFIG_BATTERY_INIT_TYPE_RETRY_COUNT; i++) {
+		if (ret == EC_SUCCESS) {
+			break;
+		}
+		CPRINTS("Manuf name not found, wait 100ms then retry (attempt %d)",
+			i);
+		crec_msleep(100);
+		ret = battery_manufacturer_name(batt_manuf_name,
+						sizeof(batt_manuf_name));
+	}
+
+	if (ret) {
 		BCFGPRT("Manuf name not found");
 		battery_conf = &board_battery_info[dflt];
 		return;
@@ -189,7 +212,20 @@ void init_battery_type(void)
 
 	/* Don't carry over any previous name (in case i2c fail). */
 	memset(batt_device_name, 0, sizeof(batt_device_name));
-	if (battery_device_name(batt_device_name, sizeof(batt_device_name))) {
+	ret = battery_device_name(batt_device_name, sizeof(batt_device_name));
+
+	for (int i = 0; i < CONFIG_BATTERY_INIT_TYPE_RETRY_COUNT; i++) {
+		if (ret == EC_SUCCESS) {
+			break;
+		}
+		CPRINTS("Device name not found, wait 100ms then retry (attempt %d)",
+			i);
+		crec_msleep(100);
+		ret = battery_device_name(batt_device_name,
+					  sizeof(batt_device_name));
+	}
+
+	if (ret) {
 		BCFGPRT("Device name not found");
 		memset(batt_device_name, 0, sizeof(batt_device_name));
 		/* Battery name is optional. Proceed. */
@@ -197,27 +233,27 @@ void init_battery_type(void)
 
 	BCFGPRT("Battery says %s,%s", batt_manuf_name, batt_device_name);
 
-	if (IS_ENABLED(CONFIG_BATTERY_CONFIG_IN_CBI) &&
-	    board_batt_conf_enabled()) {
-		BCFGPRT("Searching in CBI");
+	type = get_battery_type();
+	if (type != BATTERY_TYPE_COUNT) {
+		BCFGPRT("Found config_fw[%d]", type);
+		battery_conf = &board_battery_info[type];
+		return;
+	}
+
+	BCFGPRT("Config not found in FW");
+
+	if (IS_ENABLED(CONFIG_BATTERY_CONFIG_IN_CBI)) {
 		if (bcfg_search_in_cbi(&battery_conf_cache) == EC_SUCCESS) {
+			BCFGPRT("Found config in CBI");
 			battery_conf = &battery_conf_cache;
 			return;
 		}
+		BCFGPRT("Config not found in CBI");
 	}
 
 	/* Battery config isn't in CBI. */
-	BCFGPRT("Searching in FW");
-
-	type = get_battery_type();
-	if (type == BATTERY_TYPE_COUNT) {
-		BCFGPRT("Config not found. Fall back to config #%d", dflt);
-		type = dflt;
-	} else {
-		BCFGPRT("Found config #%d", type);
-	}
-
-	battery_conf = &board_battery_info[type];
+	BCFGPRT("Fall back to config_fw[%d]", dflt);
+	battery_conf = &board_battery_info[dflt];
 }
 DECLARE_HOOK(HOOK_INIT, init_battery_type, HOOK_PRIO_BATTERY_INIT);
 
@@ -234,11 +270,6 @@ test_export_static const struct board_batt_params *get_batt_params(void)
 const struct battery_info *battery_get_info(void)
 {
 	return &get_batt_params()->batt_info;
-}
-
-__overridable bool board_batt_conf_enabled(void)
-{
-	return true;
 }
 
 #ifndef CONFIG_FUEL_GAUGE

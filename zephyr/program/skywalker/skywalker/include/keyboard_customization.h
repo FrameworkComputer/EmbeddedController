@@ -1,0 +1,34 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Custom keyboard configuration */
+
+#ifndef __KEYBOARD_CUSTOMIZATION_H
+#define __KEYBOARD_CUSTOMIZATION_H
+
+#define KEYBOARD_COLS_MAX 15
+#define KEYBOARD_ROWS 8
+
+/* Columns and Rows for keys we particularly care about */
+#define KEYBOARD_COL_DOWN 11
+#define KEYBOARD_ROW_DOWN 6
+#define KEYBOARD_COL_ESC 1
+#define KEYBOARD_ROW_ESC 1
+#define KEYBOARD_COL_KEY_H 6
+#define KEYBOARD_ROW_KEY_H 1
+#define KEYBOARD_COL_KEY_R 3
+#define KEYBOARD_ROW_KEY_R 7
+#define KEYBOARD_COL_LEFT_ALT 13
+#define KEYBOARD_ROW_LEFT_ALT 6
+#define KEYBOARD_COL_REFRESH 2
+#define KEYBOARD_ROW_REFRESH 3
+#define KEYBOARD_COL_RIGHT_ALT 10
+#define KEYBOARD_ROW_RIGHT_ALT 0
+#define KEYBOARD_DEFAULT_COL_VOL_UP 4
+#define KEYBOARD_DEFAULT_ROW_VOL_UP 0
+#define KEYBOARD_COL_LEFT_SHIFT 7
+#define KEYBOARD_ROW_LEFT_SHIFT 5
+
+#endif /* __KEYBOARD_CUSTOMIZATION_H */

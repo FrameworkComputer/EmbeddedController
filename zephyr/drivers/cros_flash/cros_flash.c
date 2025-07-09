@@ -563,7 +563,7 @@ static int cros_flash_driver_init(const struct device *dev)
 }
 
 /* CrOS EC flash driver registration. */
-static const struct cros_flash_driver_api cros_flash_driver_api = {
+static DEVICE_API(cros_flash, cros_flash_driver_api) = {
 	.init = cros_flash_driver_init,
 	.physical_write = cros_flash_write,
 	.physical_erase = cros_flash_erase,

@@ -66,8 +66,13 @@ test_mockable int system_set_bbram(enum system_bbram_idx idx, uint8_t value)
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
+extern void sedi_pm_reset(void);
+
 test_mockable void system_reset(int flags)
 {
+	if (IS_ENABLED(CONFIG_REBOOT) && IS_ENABLED(CONFIG_PM)) {
+		sedi_pm_reset();
+	}
 	__builtin_unreachable();
 }
 

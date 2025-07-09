@@ -489,6 +489,29 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define WRITE_ISS_OVERRIDE BIT(1)
 #define READ_ISS_OVERRIDE BIT(0)
 
+/* --- SAI --- */
+struct sai_channel_registers_t {
+	volatile uint32_t cr1;
+	volatile uint32_t cr2;
+	volatile uint32_t frcr;
+	volatile uint32_t slotr;
+	volatile uint32_t im;
+	volatile uint32_t sr;
+	volatile uint32_t clrfr;
+	volatile uint32_t dr;
+};
+
+struct sai_registers_t {
+	volatile uint32_t cgr;
+	struct sai_channel_registers_t a, b;
+};
+
+#define STM32_SAI_CR1_SAIEN BIT(16)
+#define STM32_SAI_CR1_NODIV BIT(19)
+#define STM32_SAI_CR1_MCKDEV_POS 20
+#define STM32_SAI_CR1_MCKDEV_MASK (0x3F << STM32_SAI_CR1_MCKDEV_POS)
+#define STM32_SAI_CR1_MCEN BIT(27)
+
 /* --- MISC --- */
 #define STM32_UNIQUE_ID_ADDRESS REG32_ADDR(STM32_UNIQUE_ID_BASE)
 #define STM32_UNIQUE_ID_LENGTH (3 * 4)

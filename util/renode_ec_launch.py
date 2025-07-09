@@ -19,16 +19,31 @@ from typing import List, Optional
 DEFAULT_BOARD = "bloonchipper"
 DEFAULT_PROJECT = "ec"
 
+DARTMONKEY_CONSOLE = "sysbus.usart1"
+
 CONSOLE_MAP: dict[str, str] = {
     "bloonchipper": "sysbus.usart2",
     "buccaneer": "sysbus.cr_uart1",
-    "dartmonkey": "sysbus.usart1",
+    "dartmonkey": DARTMONKEY_CONSOLE,
+    "gwendolin": "sysbus.cr_uart1",
     "helipilot": "sysbus.cr_uart1",
+    "nami_fp": DARTMONKEY_CONSOLE,
+    "nocturne_fp": DARTMONKEY_CONSOLE,
+    "rosalia": "sysbus.cr_uart1",
 }
+
+DARTMONKEY_GPIO_WP = "sysbus.gpioPortB.GPIO_WP"
+HELIPILOT_GPIO_WP = "sysbus.gpioa.GPIO_WP"
 
 GPIO_WP_MAP: dict[str, str] = {
     "bloonchipper": "sysbus.gpioPortB.GPIO_WP",
-    "dartmonkey": "sysbus.gpioPortB.GPIO_WP",
+    "buccaneer": HELIPILOT_GPIO_WP,
+    "dartmonkey": DARTMONKEY_GPIO_WP,
+    "helipilot": HELIPILOT_GPIO_WP,
+    "gwendolin": HELIPILOT_GPIO_WP,
+    "nami_fp": DARTMONKEY_GPIO_WP,
+    "nocturne_fp": DARTMONKEY_GPIO_WP,
+    "rosalia": HELIPILOT_GPIO_WP,
 }
 
 GPIO_WP_ENABLE = "Release"
@@ -45,38 +60,50 @@ def msg_run(cmd: List[str]) -> None:
     subprocess.run(cmd, check=True)
 
 
-def launch(opts: argparse.Namespace) -> int:
+def launch(
+    board: str,
+    enable_write_protect: bool,
+    zephyr: bool,
+    zephyr_bin: str,
+    ec_project: str,
+) -> int:
     """Launches an EC image in Renode.
 
     This image can be the actual firmware image or an on-board test image.
 
     Args:
-        opts: The argparse options provided to the program, described below.
-
-    Opts:
-        board: The name of the EC board.
-        project: The name of the EC project.
-
+        board: The name of the EC/Zephyr board.
+        enable_write_protect: Whether to enable hardware write protection.
+        zephyr: True if running EC-based Zephyr image.
+        zephyr_bin: Path to Zephyr binary.
+        ec_project: The name of the EC project.
     Returns:
         0 on success, otherwise non-zero.
     """
-
-    board = opts.board
-    project = opts.project
-    enable_write_protect = opts.enable_write_protect
 
     # Since we are going to cd later, we need to determine the absolute path
     # of EC.
     script_path = pathlib.Path(__file__).parent.resolve()
     ec_dir = script_path.parent
 
-    out_dir = ec_dir / "build" / board
-    if project != "ec":
-        out_dir /= project
+    if zephyr_bin:
+        bin_file = pathlib.Path(zephyr_bin)
+        elf_ro_file = pathlib.Path(os.path.dirname(zephyr_bin)) / "zephyr.elf"
+        # There is only a single ELF file in upstream Zephyr builds.
+        elf_rw_file = elf_ro_file
+    elif zephyr:
+        out_dir = ec_dir / "build" / "zephyr" / board / "output"
+        bin_file = out_dir / "ec.bin"
+        elf_ro_file = out_dir / "zephyr.ro.elf"
+        elf_rw_file = out_dir / "zephyr.rw.elf"
+    else:
+        out_dir = ec_dir / "build" / board
+        if ec_project != "ec":
+            out_dir /= ec_project
 
-    bin_file = out_dir / f"{project}.bin"
-    elf_ro_file = out_dir / "RO" / f"{project}.RO.elf"
-    elf_rw_file = out_dir / "RW" / f"{project}.RW.elf"
+        bin_file = out_dir / f"{ec_project}.bin"
+        elf_ro_file = out_dir / "RO" / f"{ec_project}.RO.elf"
+        elf_rw_file = out_dir / "RW" / f"{ec_project}.RW.elf"
 
     if not bin_file.exists():
         print(f"Error - The bin file '{bin_file}' does not exist.")
@@ -91,6 +118,10 @@ def launch(opts: argparse.Namespace) -> int:
     # Change directory to the EC root for Renode internal relative includes,
     # like "include @util/renode/${board}.resc".
     os.chdir(ec_dir)
+
+    # Outside the chroot, we may not have libicu
+    # https://aka.ms/dotnet-missing-libicu
+    os.environ["DOTNET_SYSTEM_GLOBALIZATION_INVARIANT"] = "1"
 
     renode_execute: List[str] = []
     # We set the machine name to the exact board name, since we might be
@@ -140,29 +171,49 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
     """The mainest function."""
 
     parser = argparse.ArgumentParser(
-        description="""Launch an EC image in Renode.
-        This can be the actual firmware image or an on-board test image.
-        """,
+        description="Launch an EC/Zephyr image in Renode.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.epilog = """
-    Use the BOARD and PROJECT environment variables to set a default for one or
-    both equivalent arguments.
-    """
 
     parser.add_argument(
-        "board",
-        nargs="?",
+        "-b",
+        "--board",
+        choices=CONSOLE_MAP.keys(),
         default=os.environ.get("BOARD", DEFAULT_BOARD),
-        help="Name of the EC board",
+        help="""
+        Name of the EC/Zephyr board.
+
+        The BOARD environment variable can be used instead of this flag.
+        """,
     )
-    parser.add_argument(
-        "project",
-        nargs="?",
+
+    group = parser.add_argument_group(
+        "Image Options", "Only one of the following arguments may be used."
+    )
+    exclusive_group = group.add_mutually_exclusive_group()
+    exclusive_group.add_argument(
+        "--ec",
+        type=str,
         default=os.environ.get("PROJECT", DEFAULT_PROJECT),
         help="""
-        Name of the EC project. This is normally just 'ec', but could be a test
-        name for on-board test images
+        Name of the EC project. This is normally just 'ec', but
+        could be a test name for on-board test images.
+
+        The PROJECT environment variable can be used instead of this flag.
+        """,
+    )
+
+    exclusive_group.add_argument(
+        "--zephyr", action="store_true", help="Run Zephyr."
+    )
+
+    exclusive_group.add_argument(
+        "--zephyr-bin",
+        type=str,
+        help="""
+        Full path to a Zephyr binary.
+
+        Used for running upstream Zephyr binaries.
         """,
     )
 
@@ -174,7 +225,13 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
     )
 
     opts = parser.parse_args(argv)
-    return launch(opts)
+    return launch(
+        board=opts.board,
+        enable_write_protect=opts.enable_write_protect,
+        zephyr=opts.zephyr,
+        zephyr_bin=opts.zephyr_bin,
+        ec_project=opts.ec,
+    )
 
 
 if __name__ == "__main__":

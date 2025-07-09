@@ -99,7 +99,13 @@ all:
 # rw -> ro
 #    -> y
 # usage: common-$(call not_cfg,$(CONFIG_FOO))+=bar.o
-not_cfg = $(subst ro rw,y,$(filter-out $(1:y=ro rw),ro rw))
+not_cfg = $(notdir $(filter $(strip $(1))/%, y/ ro/rw rw/ro /y))
+
+# Returns the logical conjuction of two configuration variables
+# usage: common-$(call and_cfg,$(CONFIG_FOO),$(CONFIG_BAR))+=foobar.o
+and_cfg = $(notdir $(filter $(strip $(1))_$(strip $(2))/%, \
+	y_y/y y_ro/ro y_rw/rw y_/ ro_y/ro ro_ro/ro ro_rw/ ro_/ \
+	rw_y/rw rw_ro/ rw_rw/rw rw_/ _y/ _ro/ _rw/ _/))
 
 # Run the given shell command and capture the output, but echo the command
 # itself, if V is not 0 or empty.
@@ -144,6 +150,33 @@ include chip/$(CHIP)/build.mk
 # is set in the CHIP build file, so this include must come after including the
 # CHIP build file.
 include core/$(CORE)/toolchain.mk
+
+-include build/Makefile.sdk
+
+CROSS_COMPILE_TARGET_arm:=arm-eabi
+CROSS_COMPILE_TARGET_riscv:=riscv64-elf
+CROSS_COMPILE_TARGET_x86:=i386-elf
+CROSS_COMPILE_TARGET_nds32:=nds32le-elf
+
+CROSS_COMPILE_TOOLCHAIN:=$(CROSS_COMPILE_TARGET_$(COREBOOT_TOOLCHAIN))
+CROSS_COREBOOT:=$(CROSS_COMPILE_TARGET_$(COREBOOT_TOOLCHAIN))
+
+ifeq (riscv,$(COREBOOT_TOOLCHAIN))
+CROSS_COMPILE_TOOLCHAIN:=riscv-elf
+endif
+ifneq (,$(COREBOOT_SDK_ROOT_$(COREBOOT_TOOLCHAIN)))
+CROSS_COMPILE:=$(COREBOOT_SDK_ROOT_$(COREBOOT_TOOLCHAIN))/bin/$(CROSS_COREBOOT)-
+else
+ifneq (,$(USE_COREBOOT_SDK))
+ifeq ($(shell bazel --project fwsdk >/dev/null 2>&1; echo $$?),0)
+BAZEL_SUPPORTED=1
+CROSS_COMPILE:=$(shell bazel --project fwsdk run \
+	@ec-coreboot-sdk-$(CROSS_COMPILE_TOOLCHAIN)//:get_path)/bin/$(CROSS_COREBOOT)-
+else
+CROSS_COMPILE:=/opt/coreboot-sdk/bin/$(CROSS_COREBOOT)-
+endif
+endif
+endif
 
 # Create uppercase config variants, to avoid mixed case constants.
 # Also translate '-' to '_', so 'cortex-m' turns into 'CORTEX_M'.  This must

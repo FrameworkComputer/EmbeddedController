@@ -8,12 +8,6 @@
  * Refer to USB PD 3.0 spec, version 2.0, sections 8.2 and 8.3
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 16
-
 #ifndef __CROS_EC_USB_DPM_H
 #define __CROS_EC_USB_DPM_H
 
@@ -146,14 +140,6 @@ void dpm_evaluate_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo);
 void dpm_add_non_pd_sink(int port);
 
 /*
- * Evaluates the request from port partner
- *
- * @param port		USB-C port number
- * @param rdo		Request from port partner
- */
-void dpm_evaluate_request_rdo(int port, uint32_t rdo);
-
-/*
  * Remove this port as a sink, and reallocate maximum current as needed.
  *
  * @param port		USB-C port number
@@ -175,7 +161,8 @@ void dpm_remove_source(int port);
  * @param port		USB-C port number
  * @return		Number of PDOs
  */
-int dpm_get_source_pdo(const uint32_t **src_pdo, const int port);
+__override_proto int dpm_get_source_pdo(const uint32_t **src_pdo,
+					const int port);
 
 /*
  * Report offered source current for this port
@@ -208,6 +195,7 @@ enum ec_status pd_set_bist_share_mode(uint8_t enable);
  * Get BIST Shared Test Mode status
  */
 uint8_t pd_get_bist_share_mode(void);
+
 /*
  * Build SOP Status Data Block (SDB)
  *
@@ -216,6 +204,14 @@ uint8_t pd_get_bist_share_mode(void);
  * @param *len		pointer to uint32_t holding length of SDB
  */
 int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len);
+
+/*
+ * Build Source_Info Data Object (SIDO).
+ *
+ * @param port		USB-C port number
+ * @return Source_Info Data Object
+ */
+union sido dpm_get_source_info_msg(int port);
 
 /*
  * DPM function to handle a received alert message

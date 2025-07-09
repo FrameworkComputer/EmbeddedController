@@ -1,0 +1,188 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_sim.dts>
+#include <dt-bindings/gpio_defines.h>
+#include <cros/binman.dtsi>
+
+/ {
+	chosen {
+		cros-ec,flash-controller = &cros_flash;
+	};
+	aliases {
+		gpio-wp = &gpio_wp_l;
+	};
+	cros_flash: cros-flash {
+		compatible = "cros-ec,flash-emul";
+	};
+
+	/*
+	 * Keep these GPIOs in pin order.
+	 * If you need to add one, make sure you increase
+	 * ngpios in the gpio0 node further down.
+	 */
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_acok_od: acok_od {
+			gpios = <&gpio0 0 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		ec_bl_disable_l {
+			gpios = <&gpio0 1 GPIO_INPUT>;
+			enum-name = "GPIO_ENABLE_BACKLIGHT";
+		};
+		gpio_en_pp5000_s5: en_pp5000_s5 {
+			gpios = <&gpio0 2 GPIO_OUTPUT_HIGH>;
+			enum-name = "GPIO_EN_PP5000";
+		};
+		gpio_wp_l: wp_l {
+			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_pmic_en_odl: ec_pmic_en_odl_r {
+			gpios = <&gpio0 15 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+			enum-name = "GPIO_EC_PMIC_EN_ODL";
+		};
+		gpio_ec_ap_sys_rst_odl: ec_ap_sys_rst_odl {
+			gpios = <&gpio0 16 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+			enum-name = "GPIO_SYS_RST_ODL";
+		};
+		gpio_ap_ec_sysrst_odl: ap_ec_sysrst_odl {
+			gpios = <&gpio0 17 (GPIO_INPUT)>;
+			enum-name = "GPIO_AP_EC_SYSRST_ODL";
+		};
+		gpio_ap_ec_warm_rst_req: ap_ec_warm_rst_req {
+			gpios = <&gpio0 18 (GPIO_INPUT)>;
+			enum-name = "GPIO_AP_EC_WARM_RST_REQ";
+		};
+		gpio_ap_ec_wdtrst_l: ap_ec_wdtrst_l {
+			gpios = <&gpio0 19 (GPIO_INPUT)>;
+			enum-name = "GPIO_AP_EC_WDTRST_L";
+		};
+		gpio_ap_in_sleep_l: ap_in_sleep_l {
+			gpios = <&gpio0 20 (GPIO_INPUT)>;
+			enum-name = "GPIO_AP_IN_SLEEP_L";
+		};
+		gpio_pmic_ec_resetb: pmic_ec_resetb {
+			gpios = <&gpio0 21 (GPIO_INPUT)>;
+			enum-name = "GPIO_PMIC_EC_RESETB";
+		};
+		/* a label to prevent build break in power sequencing */
+		en_pp4200_s5: en_pp3700_s5 {
+			gpios = <&gpio0 22 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		gpio_lid_open_ec: lid_open_ec {
+			/* GPIO_PULL_UP will cause this start asserted. */
+			gpios = <&gpio0 23 (GPIO_INPUT | GPIO_PULL_UP)>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		gpio_pg_pp3700_s5_od: pg_pp3700_s5_od {
+			gpios = <&gpio0 24 (GPIO_INPUT)>;
+			enum-name = "GPIO_PG_PP4200_S5_OD";
+		};
+		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
+			/* GPIO_PULL_UP will cause this start asserted,
+			 * i.e. not pressed.
+			 */
+			gpios = <&gpio0 25 (GPIO_INPUT | GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+	};
+
+	power_signal_list: power-signal-list {
+		compatible = "mediatek,mt8188-power-signal-list";
+
+		ap_in_rst {
+			power-enum-name = "AP_IN_RST";
+			power-gpio-pin = <&gpio_ap_ec_sysrst_odl>;
+		};
+		ap_in_s3 {
+			power-enum-name = "AP_IN_S3";
+			power-gpio-pin = <&gpio_ap_in_sleep_l>;
+		};
+		ap_wdt_asserted {
+			power-enum-name = "AP_WDT_ASSERTED";
+			power-gpio-pin = <&gpio_ap_ec_wdtrst_l>;
+		};
+		ap_warm_rst_req {
+			power-enum-name = "AP_WARM_RST_REQ";
+			power-gpio-pin = <&gpio_ap_ec_warm_rst_req>;
+		};
+		pg_pp4200_s5 {
+			/*
+			 * It's actually PP3700, but we don't change it and
+			 * follow the legacy naming.
+			 */
+			power-enum-name = "PG_PP4200_S5";
+			power-gpio-pin = <&gpio_pg_pp3700_s5_od>;
+		};
+		pmic_ap_reset {
+			power-enum-name = "PMIC_AP_RST";
+			power-gpio-pin = <&gpio_pmic_ec_resetb>;
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_ap_in_sleep: ap-in-sleep {
+			irq-pin = <&gpio_ap_in_sleep_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_ap_wdtrst: ap-wdtrst {
+			irq-pin = <&gpio_ap_ec_wdtrst_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "chipset_watchdog_interrupt";
+		};
+		int_pg_pp3700_s5: pg-pp3700-s5 {
+			irq-pin = <&gpio_pg_pp3700_s5_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_warm_rst: warm-rst {
+			irq-pin = <&gpio_ap_ec_warm_rst_req>;
+			flags = <GPIO_INT_EDGE_RISING>;
+			handler = "chipset_reset_request_interrupt";
+		};
+		int_pmic_ec_resetb: pmic-ec-resetb {
+			irq-pin = <&gpio_pmic_ec_resetb>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_ap_in_rst: ap-in-rst {
+			irq-pin = <&gpio_ap_ec_sysrst_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "chipset_warm_reset_interrupt";
+		};
+		int_lid_open_ec: lid_open_ec {
+			irq-pin = <&gpio_lid_open_ec>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+		int_power_button: power_button {
+			irq-pin = <&gpio_ec_pwr_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+	};
+
+	gpio1: gpio@101 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x101 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <7>;
+	};
+};
+
+&gpio0 {
+	ngpios = <32>;
+};

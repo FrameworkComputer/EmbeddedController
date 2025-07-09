@@ -53,6 +53,7 @@ INTERFACE_SPEED_AUTO = "auto"
 INTERFACE_SPEED_4_MHZ = "4000"
 STM32_DEFAULT_FLASH_ADDRESS = "0x8000000"
 NPCX_DEFAULT_FLASH_ADDRESS = "0x64000000"
+VERIFY_FLASH_DEFAULT = True
 DRAGONCLAW_CONFIG = BoardConfig(
     interface=SWD_INTERFACE,
     device="STM32F412CG",
@@ -67,7 +68,7 @@ ICETOWER_CONFIG = BoardConfig(
 )
 HELIPILOT_CONFIG = BoardConfig(
     interface=SWD_INTERFACE,
-    device="NPCX9mnx",
+    device="NPCX998F",
     speed=INTERFACE_SPEED_4_MHZ,
     flash_address=NPCX_DEFAULT_FLASH_ADDRESS,
 )
@@ -115,7 +116,8 @@ def create_jlink_command_file(firmware_file, config):
     tmp = tempfile.NamedTemporaryFile()  # pylint:disable=consider-using-with
     tmp.write(
         JLINK_COMMANDS.format(
-            FIRMWARE=firmware_file, FLASH_ADDRESS=config.flash_address
+            FIRMWARE=firmware_file,
+            FLASH_ADDRESS=config.flash_address,
         ).encode("utf-8")
     )
     tmp.flush()
@@ -190,7 +192,7 @@ def main(argv: list):
     """Main function."""
     parser = argparse.ArgumentParser()
 
-    default_jlink = "./JLink_Linux_V684a_x86_64/JLinkExe"
+    default_jlink = "./JLink_Linux_V810a_x86_64/JLinkExe"
     if shutil.which(default_jlink) is None:
         default_jlink = "JLinkExe"
     parser.add_argument(

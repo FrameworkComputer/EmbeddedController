@@ -41,6 +41,12 @@ int mock_cros_cbi_get_fw_config_error(enum cbi_fw_config_field_id field_id,
 	return -1;
 }
 
+static void chinchou_before(void *fixture)
+{
+	RESET_FAKE(cbi_get_ssfc);
+	RESET_FAKE(cros_cbi_get_fw_config);
+}
+
 static void *clamshell_setup(void)
 {
 	int val;
@@ -56,7 +62,8 @@ static void *clamshell_setup(void)
 	return NULL;
 }
 
-ZTEST_SUITE(chinchou_clamshell, NULL, clamshell_setup, NULL, NULL, NULL);
+ZTEST_SUITE(chinchou_clamshell, NULL, clamshell_setup, chinchou_before, NULL,
+	    NULL);
 
 ZTEST(chinchou_clamshell, test_gmr_tablet_switch_disabled)
 {
@@ -148,7 +155,8 @@ static void *alt_sensor_use_setup(void)
 	return NULL;
 }
 
-ZTEST_SUITE(alt_sensor_use, NULL, alt_sensor_use_setup, NULL, NULL, NULL);
+ZTEST_SUITE(alt_sensor_use, NULL, alt_sensor_use_setup, chinchou_before, NULL,
+	    NULL);
 
 ZTEST(alt_sensor_use, test_alt_sensor_use)
 {
@@ -182,7 +190,8 @@ static void *alt_sensor_no_use_setup(void)
 	return NULL;
 }
 
-ZTEST_SUITE(alt_sensor_no_use, NULL, alt_sensor_no_use_setup, NULL, NULL, NULL);
+ZTEST_SUITE(alt_sensor_no_use, NULL, alt_sensor_no_use_setup, chinchou_before,
+	    NULL, NULL);
 
 ZTEST(alt_sensor_no_use, test_alt_sensor_no_use)
 {

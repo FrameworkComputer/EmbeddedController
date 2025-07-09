@@ -51,6 +51,18 @@ extern struct queue_policy const queue_policy_null;
 #define QUEUE_NULL(SIZE, TYPE) QUEUE(SIZE, TYPE, queue_policy_null)
 
 /*
+ * Bitmap of mode flags.
+ */
+enum queue_flags {
+	/*
+	 * If set, this queue makes use of `queue_flush()`.  That is, any
+	 * enqueued data may sit in the queue indefinitely, until explicitly
+	 * flushed.
+	 */
+	QUEUE_BUFFERED_MODE = BIT(0),
+};
+
+/*
  * RAM state for a queue.
  */
 struct queue_state {
@@ -69,6 +81,7 @@ struct queue_state {
 	 */
 	size_t head; /* head: next to dequeue */
 	size_t tail; /* tail: next to enqueue */
+	enum queue_flags flags;
 };
 
 /*
@@ -102,6 +115,18 @@ struct queue {
 
 /* Initialize the queue to empty state. */
 void queue_init(struct queue const *q);
+
+/*
+ * Signal that this queue makes use of `queue_flush()`.  That is, any enqueued
+ * data may sit in the queue indefinitely, until explicitly flushed.
+ */
+void queue_enable_buffered_mode(struct queue const *q);
+
+/* Query whether this queue makes use of `queue_flush()`. */
+inline bool is_queue_buffered(struct queue const *q)
+{
+	return q->state->flags & QUEUE_BUFFERED_MODE;
+}
 
 /* Return TRUE if the queue is empty. */
 int queue_is_empty(struct queue const *q);
@@ -212,6 +237,13 @@ size_t queue_add_units(struct queue const *q, const void *src, size_t count);
 /* Add multiple units to queue using supplied memcpy. */
 size_t queue_add_memcpy(struct queue const *q, const void *src, size_t count,
 			void *(*memcpy)(void *dest, const void *src, size_t n));
+
+/*
+ * Signal that all previously added units should be processed by consumer
+ * without further delay.  Depending on queue policies and buffer space, the
+ * consumer may process data even in absence of calls to this.
+ */
+void queue_flush(struct queue const *q);
 
 /* Remove one unit from the begin of the queue. */
 size_t queue_remove_unit(struct queue const *q, void *dest);

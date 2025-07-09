@@ -399,7 +399,7 @@ ZTEST(power_host_sleep, test_set_get_host_sleep_state)
 		      HOST_SLEEP_EVENT_S0IX_RESUME);
 }
 
-ZTEST(power_host_sleep, test_verify_increment_change_state)
+ZTEST(power_host_sleep, test_increment_change_state)
 {
 	struct ec_params_s0ix_cnt params = { .flags = EC_S0IX_COUNTER_RESET };
 	struct ec_response_s0ix_cnt rsp;

@@ -19,6 +19,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "keyboard_8042.h"
+#include "keyboard_config.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -276,6 +277,10 @@ static const struct ec_response_keybd_config main_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
+/* TK_REFRESH is the 3rd above, vivaldi_keys are not overridden. */
+BUILD_ASSERT_REFRESH_RC(2, 2);
+
+BUILD_ASSERT(IS_ENABLED(CONFIG_KEYBOARD_VIVALDI));
 __override const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void)
 {

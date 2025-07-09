@@ -115,13 +115,19 @@ BOARDS_NPCX_7M7X_JTAG=(
 
 BOARDS_NPCX_SPI=(
 	buccaneer
+	gwendolin
 	helipilot
+	rosalia
 )
 
 BOARDS_NPCX_INT_SPI=(
 	adlrvpp_npcx
 	mtlrvpp_npcx
 	mtlrvpp_pd
+)
+
+BOARDS_NPCX_INT_SPI_UUT=(
+	ptlrvp_npcx
 )
 
 BOARDS_SPI_1800MV=(
@@ -147,9 +153,11 @@ BOARDS_RAIDEN=(
 	soraka
 )
 
-BOARDS_MCHP_INT_SPI=(
+BOARDS_MCHP_INT_UART=(
 	mtlrvpp_mchp
+	ptlrvp_mchp
 )
+
 DEFAULT_PORT="${SERVOD_PORT:-9999}"
 BITBANG_RATE="57600"  # Could be overwritten by a command line option.
 
@@ -366,6 +374,10 @@ if in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}"; then
 	SUPPORTED_CHIPS+=("npcx_int_spi")
 fi
 
+if in_array "${BOARDS_NPCX_INT_SPI_UUT[@]}" "${BOARD}"; then
+	SUPPORTED_CHIPS+=("npcx_uut")
+fi
+
 if in_array "${BOARDS_IT83XX[@]}" "${BOARD}"; then
 	SUPPORTED_CHIPS+=("it83xx")
 fi
@@ -374,8 +386,8 @@ if in_array "${BOARDS_IT83XX_SPI_PROGRAMMING[@]}" "${BOARD}"; then
 	SUPPORTED_CHIPS+=("ite_spi")
 fi
 
-if in_array "${BOARDS_MCHP_INT_SPI[@]}" "${BOARD}"; then
-	SUPPORTED_CHIPS+=("mchp_int_spi")
+if in_array "${BOARDS_MCHP_INT_UART[@]}" "${BOARD}"; then
+	SUPPORTED_CHIPS+=("mchp_int_uart")
 fi
 
 if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 && -n "${FLAGS_chip}" ]]; then
@@ -428,7 +440,8 @@ case "${BOARD}" in
 	chocodile_bec ) MCU="usbpd" ;;
 	oak_pd|strago_pd ) MCU="usbpd" ;;
 	chell_pd|glados_pd ) MCU="usbpd" ;;
-	bloonchipper|buccaneer|dartmonkey|hatch_fp|helipilot|nami_fp|nocturne_fp )
+	bloonchipper|buccaneer|dartmonkey|gwendolin|hatch_fp|helipilot| \
+				 nami_fp|nocturne_fp|rosalia )
 		MCU="fpmcu"
 		;;
 	dingdong|hoho|twinkie ) DUT_CONTROL_CMD=( "true" ); MCU="ec" ;;
@@ -437,7 +450,7 @@ esac
 
 case "${CHIP}" in
 	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"ite_i2c"|"npcx_uut"|"ite_spi"| \
-			"ite_spi_ccd_i2c"|"ite_uart"|"ite_uart_3m"| \
+			"ite_spi_ccd_i2c"|"ite_spi_ccd_uart"|"ite_uart"|"ite_uart_3m"| \
 			"it8xxx2"|"mchp_int_spi")
 		;;
 	*)
@@ -1148,6 +1161,7 @@ function flash_flashrom() {
 			SPI_VOLTAGE="pp1800"
 		elif [[ "${CHIP}" == "ite_spi" ||
 		        "${CHIP}" == "ite_spi_ccd_i2c" ||
+		        "${CHIP}" == "ite_spi_ccd_uart" ||
 			"${CHIP}" == "it8xxx2" ]]; then
 			SPI_VOLTAGE="pp1800"
 		else
@@ -1181,6 +1195,7 @@ function flash_flashrom() {
 		# Enable SPI programming mode.
 		if [[ "${CHIP}" == "ite_spi" ||
 			"${CHIP}" == "ite_spi_ccd_i2c" ||
+			"${CHIP}" == "ite_spi_ccd_uart" ||
 			"${CHIP}" == "it8xxx2" ]]; then
 					# Set hardware strap pin (GPG6) of SPI
 					# programming as low then start ec
@@ -1249,6 +1264,7 @@ function flash_flashrom() {
 
 		if [[ "${CHIP}" =~ ^npcx(|_int)_spi$ ]] || \
 		   [[ "${CHIP}" =~ "ite_spi_ccd_i2c" ]] ||
+		   [[ "${CHIP}" =~ "ite_spi_ccd_uart" ]] ||
 		   [[ "${CHIP}" =~ "it8xxx2" ]] ||
 		   [[ "${CHIP}" =~ "ite_spi" ]] ; then
 		{	# Patch temp image up to SPI_SIZE
@@ -1684,6 +1700,17 @@ function flash_ite_spi_ccd_i2c() {
 }
 
 # Flash ITE chips over SPI when using the servod debug connector
+# and over uart whn using CCD.
+function flash_ite_spi_ccd_uart() {
+	if [[ "${SERVO_TYPE}" =~ "servo_micro" || \
+	      "${SERVO_TYPE}" =~ "servo_v2" ]] ; then
+		flash_flashrom
+	else
+		flash_ite_uart_3m
+	fi
+}
+
+# Flash ITE chips over SPI when using the servod debug connector
 # and over I2C whn using CCD.
 function flash_it8xxx2() {
 	flash_ite_spi_ccd_i2c
@@ -1729,7 +1756,8 @@ function flash_npcx_uut() {
 		"${EC_DIR}/build/${BOARD}/chip/npcx/spiflashfw" \
 		"${EC_DIR}/build/zephyr/${BOARD}/output" \
 		"$(dirname "${LOCAL_BUILD}")" \
-		"$(dirname "${EMERGE_BUILD}")" ;
+		"$(dirname "${EMERGE_BUILD}")" \
+		"/usr/share/ec-devutils" ;
 	do
 		if [ -f "${dir}/npcx_monitor.bin" ] ; then
 			MON="${dir}/npcx_monitor.bin"
@@ -1888,7 +1916,7 @@ function flash_npcx_int_spi() {
 	flash_flashrom
 }
 
-function flash_mchp_int_spi() {
+function flash_mchp_int_uart() {
 	EC_UART="$(servo_ec_uart)"
 	EC_UART_PREFIX="$(servo_ec_uart_prefix)"
 	MCHP_DIR="${EC_DIR}/util/mchp"
@@ -1914,17 +1942,38 @@ function flash_mchp_int_spi() {
 	# Reset chip in firmware update mode
 	dut_control cold_reset:on fw_up:on cold_reset:off
 
-	# Set 9600 baudrate to program Second loader image
+	info "Programming EC firmware using MCHP UART interface"
+	info "EC UART = ${EC_UART}"
+
+	servo_save_add "${EC_UART_PREFIX}_baudrate"
+	servo_save_add "${EC_UART_PREFIX}_parity"
+
+	claim_pty "${EC_UART}"
+
 	sec_load_baudrate=9600
-	if [ "${current_baudrate}" != "${sec_load_baudrate}" ] ; then
-	   dut_control "${EC_UART_PREFIX}"_baudrate:"${sec_load_baudrate}"
+	info "Using ${sec_load_baudrate} baudrate for the second loader"
+	dut_control_or_die "${EC_UART_PREFIX}_baudrate:${sec_load_baudrate}"
+	dut_control_or_die "${EC_UART_PREFIX}_parity:none"
+
+	if servo_is_ccd ; then
+		info "Servo is CCD"
+		servo_save_add "${EC_UART_PREFIX}_bitbang_en"
+		dut_control "${EC_UART_PREFIX}_bitbang_en:on"
 	fi
+
 	# Load Second loader image into SRAM
 	"${MCHP_DIR}"/crisis_rcvry_util.py -s "${MCHP_LOADER}" -p "${EC_UART}"
 
 	# Set 57600 baudrate to program EC image
 	image_load_baudrate=57600
-	dut_control "${EC_UART_PREFIX}"_baudrate:"${image_load_baudrate}"
+	info "Using ${image_load_baudrate} baudrate for the image load"
+	dut_control_or_die "${EC_UART_PREFIX}_baudrate:${image_load_baudrate}"
+
+	if servo_is_ccd ; then
+		info "Servo is CCD"
+		servo_save_add "${EC_UART_PREFIX}_bitbang_en"
+		dut_control "${EC_UART_PREFIX}_bitbang_en:on"
+	fi
 
 	# Flash EC image into the internal flash
 	"${MCHP_DIR}"/crisis_rcvry_util.py -e "${EC_IMAGE}" -p "${EC_UART}"

@@ -7,20 +7,11 @@
 #include "charge_manager.h"
 #include "common.h"
 #include "cros_version.h"
-#include "sysjump.h"
 #include "system.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
-
-/* When CONFIG_RAM_SIZE is defined, this is provided by common/system.c */
-#ifndef CONFIG_RAM_SIZE
-struct jump_data *get_jump_data(void)
-{
-	return (struct jump_data *)&mock_jump_data;
-}
-#endif
 
 __attribute__((weak)) void system_reset(int flags)
 {

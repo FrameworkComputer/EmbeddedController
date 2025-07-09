@@ -254,8 +254,33 @@ ZTEST(keyboard_scan, test_console_command_kbpress__noargs)
 
 	/* Check for an expected line */
 	zassert_true(buffer_size > 0);
-	zassert_ok(!strstr(outbuffer, "Simulated keys:"), "Output was: `%s`",
-		   outbuffer);
+	zassert_ok(strcmp(outbuffer, "\r\nSimulated keys:\r\n"),
+		   "Output was: `%s`", outbuffer);
+
+	/* Hold a key down */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "kbpress 3 4 1"));
+
+	shell_backend_dummy_clear_output(get_ec_shell());
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "kbpress"));
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+
+	/* Check for an expected line */
+	zassert_true(buffer_size > 0);
+	zassert_ok(strcmp(outbuffer, "\r\nSimulated keys:\r\n\t3 4\r\n"),
+		   "Output was: `%s`", outbuffer);
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "kbpress clear"));
+
+	shell_backend_dummy_clear_output(get_ec_shell());
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "kbpress"));
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+
+	/* Check for an expected line */
+	zassert_true(buffer_size > 0);
+	zassert_ok(strcmp(outbuffer, "\r\nSimulated keys:\r\n"),
+		   "Output was: `%s`", outbuffer);
 }
 
 ZTEST(keyboard_scan, test_console_command_kbpress__invalid)

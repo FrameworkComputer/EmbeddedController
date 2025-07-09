@@ -1,0 +1,16 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "../ite_espi.dtsi"
+#include "../cbi.dtsi"
+
+#include "cbi.dtsi"
+#include "generated.dtsi"
+#include "pwm_leds.dtsi"
+#include "keyboard.dtsi"
+#include "overlay.dtsi"
+#include "power_signals.dtsi"
+#include "pwm.dtsi"
+#include "motionsense.dtsi"

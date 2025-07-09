@@ -51,10 +51,24 @@ int svdm_get_hpd_gpio(int port)
 
 void svdm_set_hpd_gpio_irq(int port)
 {
+	/*  Record the start timestamp for debounce timing */
+	const uint64_t debounce_start_time = get_time().val;
+
 	svdm_set_hpd_gpio(port, 0);
 
 	if (IS_ENABLED(CONFIG_USB_PD_DP_HPD_GPIO_IRQ_ACCURATE)) {
-		udelay(HPD_DSTREAM_DEBOUNCE_IRQ);
+		/*
+		 * Use a more accurate delay loop to ensure HPD debounce timing.
+		 * This loop actively checks the elapsed time to compensate for
+		 * scheduling latencies and clock variations, unlike a simple
+		 * udelay.
+		 */
+		while (get_time().val <
+		       debounce_start_time + HPD_DSTREAM_DEBOUNCE_IRQ) {
+			/* Small delay to reduce CPU usage in the loop */
+			crec_usleep(50);
+		}
+
 	} else {
 		crec_usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
 	}

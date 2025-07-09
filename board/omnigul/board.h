@@ -92,10 +92,10 @@
 /*
  * Passive USB-C cables only support up to 65W.
  */
-#define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW 65000
-#define PD_MAX_CURRENT_MA 3250
-#define PD_MAX_VOLTAGE_MV 20000
+#define CONFIG_USB_PD_OPERATING_POWER_MW 15000
+#define CONFIG_USB_PD_MAX_POWER_MW 65000
+#define CONFIG_USB_PD_MAX_CURRENT_MA 3250
+#define CONFIG_USB_PD_MAX_VOLTAGE_MV 20000
 
 /*
  * Because of b:279526032, modify monitor Vbus from Charger to TCPC.

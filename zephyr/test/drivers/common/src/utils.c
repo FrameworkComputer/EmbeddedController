@@ -137,7 +137,7 @@ void connect_source_to_port(struct tcpci_partner_data *partner,
 	zassert_ok(tcpci_partner_connect_to_tcpci(partner, tcpci_emul));
 
 	isl923x_emul_set_adc_vbus(charger_emul,
-				  PDO_FIXED_GET_VOLT(src->pdo[pdo_index]));
+				  PDO_FIXED_VOLTAGE(src->pdo[pdo_index]));
 
 	k_sleep(K_SECONDS(10));
 }

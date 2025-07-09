@@ -8,6 +8,10 @@
 	named-adc-channels {
 		compatible = "named-adc-channels";
 
+		adc_prochot: prochot {
+			enum-name = "ADC_PROCHOT";
+			io-channels = <&adc0 0>;
+		};
 		adc_charger_amon: charger_amon {
 			enum-name = "ADC_AMON_BMON";
 			io-channels = <&adc0 1>;
@@ -37,9 +41,6 @@
 		};
 		gpio_amp_mute_l: amp_mute_l {
 			gpios = <&gpioj 6 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
-		};
-		gpio_bat_disconnect_ec_odl: bat_disconnect_ec_odl {
-			gpios = <&gpioc 0 GPIO_ODR_LOW>;
 		};
 		gpio_ccd_mode_odl: ccd_mode_odl {
 			gpios = <&gpioe 6 GPIO_INPUT>;
@@ -112,6 +113,12 @@
 		};
 		gpio_ec_slp_sus_l: ec_slp_sus_l {
 			gpios = <&gpioe 5 GPIO_INPUT>;
+		};
+		gpio_soc_edp_bl_en: soc_edp_bl_en {
+			gpios = <&gpioa 4 GPIO_INPUT>;
+		};
+		gpio_ec_touch_en: ec_touch_en {
+			gpios = <&gpioc 0 GPIO_OUTPUT>;
 		};
 		gpio_ec_voldn_btn_odl: ec_voldn_btn_odl {
 			gpios = <&gpiod 4 GPIO_INPUT>;
@@ -230,7 +237,8 @@
 };
 
 &adc0 {
-	pinctrl-0 = <&adc0_ch1_gpi1_default
+	pinctrl-0 = <&adc0_ch0_gpi0_default
+		     &adc0_ch1_gpi1_default
 		     &adc0_ch4_gpi4_default
 		     &adc0_ch5_gpi5_default
 		     &adc0_ch7_gpi7_default>;

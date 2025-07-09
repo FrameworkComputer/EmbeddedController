@@ -126,8 +126,8 @@ class BuildConfig:
             )
 
         return BuildConfig(
-            cmake_defs=dict(**self.cmake_defs, **other.cmake_defs),
-            kconfig_defs=dict(**self.kconfig_defs, **other.kconfig_defs),
+            cmake_defs={**self.cmake_defs, **other.cmake_defs},
+            kconfig_defs={**self.kconfig_defs, **other.kconfig_defs},
             kconfig_files=[*self.kconfig_files, *other.kconfig_files],
         )
 

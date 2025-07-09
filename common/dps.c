@@ -117,7 +117,7 @@ static void update_timeout(int us)
  */
 static void dps_reset(void)
 {
-	dynamic_mv = PD_MAX_VOLTAGE_MV;
+	dynamic_mv = CONFIG_USB_PD_MAX_VOLTAGE_MV;
 	dps_port = CHARGE_PORT_NONE;
 }
 
@@ -406,7 +406,7 @@ test_mockable_static bool has_new_power_request(struct pdo_candidate *cand)
 			if (mv > max_mv)
 				continue;
 
-			mw = MIN(ma, PD_MAX_CURRENT_MA) * mv / 1000;
+			mw = MIN(ma, CONFIG_USB_PD_MAX_CURRENT_MA) * mv / 1000;
 			efficient = is_more_efficient(mv, cand->mv, batt_mv,
 						      batt_pwr, input_pwr_avg);
 

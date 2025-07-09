@@ -16,11 +16,14 @@
 #include <zephyr/pm/policy.h>
 #include <zephyr/ztest.h>
 
+#include <stm32f4xx_ll_rcc.h>
+
 static uint32_t hook_chip_resume_cnt;
 static uint32_t hook_chip_suspend_cnt;
 
 FAKE_VALUE_FUNC(enum fp_transport_type, get_fp_transport_type);
 FAKE_VOID_FUNC(LL_TIM_DisableCounter, void *);
+FAKE_VOID_FUNC(LL_RCC_ConfigMCO, uint32_t, uint32_t);
 FAKE_VALUE_FUNC(int, stm32_clock_control_off, const struct device *,
 		clock_control_subsys_t);
 FAKE_VALUE_FUNC(int, pm_device_action_run, const struct device *,
@@ -85,15 +88,15 @@ ZTEST(power, test_slp_event)
 	/* Set init state */
 	gpio_emul_input_set(slp_alt_l_gpio, slp_alt_l_pin, 0);
 	gpio_emul_input_set(slp_l_gpio, slp_l_pin, 0);
-	crec_sleep(1);
+	k_sleep(K_SECONDS(1));
 	hook_chip_suspend_cnt = 0;
 	hook_chip_resume_cnt = 0;
 
 	/* Set AP S0 */
 	gpio_emul_input_set(slp_alt_l_gpio, slp_alt_l_pin, 1);
-	crec_sleep(1);
+	k_sleep(K_SECONDS(1));
 	gpio_emul_input_set(slp_l_gpio, slp_l_pin, 1);
-	crec_sleep(1);
+	k_sleep(K_SECONDS(1));
 	/* One call for enabling slp_alt_l */
 	zassert_equal(hook_chip_suspend_cnt, 1,
 		      "Incorrect suspend chip hook call count");
@@ -105,7 +108,7 @@ ZTEST(power, test_slp_event)
 
 	/* Suspend */
 	gpio_emul_input_set(slp_l_gpio, slp_l_pin, 0);
-	crec_sleep(1);
+	k_sleep(K_SECONDS(1));
 	zassert_equal(hook_chip_suspend_cnt, 2,
 		      "Incorrect suspend chip hook call count");
 	zassert_equal(hook_chip_resume_cnt, 1,
@@ -115,7 +118,7 @@ ZTEST(power, test_slp_event)
 		      0, "Incorrect pm lock state");
 
 	gpio_emul_input_set(slp_alt_l_gpio, slp_alt_l_pin, 0);
-	crec_sleep(1);
+	k_sleep(K_SECONDS(1));
 	zassert_equal(hook_chip_suspend_cnt, 3,
 		      "Incorrect suspend chip hook call count");
 	zassert_equal(hook_chip_resume_cnt, 1,
@@ -125,7 +128,7 @@ ZTEST(power, test_slp_event)
 		      0, "Incorrect pm lock state");
 
 	gpio_emul_input_set(slp_alt_l_gpio, slp_alt_l_pin, 1);
-	crec_sleep(1);
+	k_sleep(K_SECONDS(1));
 	zassert_equal(hook_chip_suspend_cnt, 4,
 		      "Incorrect suspend chip hook call count");
 	zassert_equal(hook_chip_resume_cnt, 1,
@@ -136,7 +139,7 @@ ZTEST(power, test_slp_event)
 
 	/* Resume */
 	gpio_emul_input_set(slp_l_gpio, slp_l_pin, 1);
-	crec_sleep(1);
+	k_sleep(K_SECONDS(1));
 	zassert_equal(hook_chip_suspend_cnt, 4,
 		      "Incorrect suspend chip hook call count");
 	zassert_equal(hook_chip_resume_cnt, 2,
@@ -162,15 +165,15 @@ ZTEST(power, test_slp_event_broken_slp_l)
 	/* Set init state */
 	gpio_emul_input_set(slp_alt_l_gpio, slp_alt_l_pin, 0);
 	gpio_emul_input_set(slp_l_gpio, slp_l_pin, 0);
-	crec_sleep(1);
+	k_sleep(K_SECONDS(1));
 	hook_chip_suspend_cnt = 0;
 	hook_chip_resume_cnt = 0;
 
 	/* Set AP S0 */
 	gpio_emul_input_set(slp_alt_l_gpio, slp_alt_l_pin, 1);
-	crec_sleep(1);
+	k_sleep(K_SECONDS(1));
 	gpio_emul_input_set(slp_l_gpio, slp_l_pin, 1);
-	crec_sleep(1);
+	k_sleep(K_SECONDS(1));
 	/* One call for enabling slp_alt_l */
 	zassert_equal(hook_chip_suspend_cnt, 0,
 		      "Incorrect suspend chip hook call count");
@@ -182,7 +185,7 @@ ZTEST(power, test_slp_event_broken_slp_l)
 
 	/* Suspend */
 	gpio_emul_input_set(slp_l_gpio, slp_l_pin, 0);
-	crec_sleep(1);
+	k_sleep(K_SECONDS(1));
 	zassert_equal(hook_chip_suspend_cnt, 0,
 		      "Incorrect suspend chip hook call count");
 	zassert_equal(hook_chip_resume_cnt, 3,
@@ -192,7 +195,7 @@ ZTEST(power, test_slp_event_broken_slp_l)
 		      1, "Incorrect pm lock state");
 
 	gpio_emul_input_set(slp_alt_l_gpio, slp_alt_l_pin, 0);
-	crec_sleep(1);
+	k_sleep(K_SECONDS(1));
 	zassert_equal(hook_chip_suspend_cnt, 1,
 		      "Incorrect suspend chip hook call count");
 	zassert_equal(hook_chip_resume_cnt, 3,
@@ -202,7 +205,7 @@ ZTEST(power, test_slp_event_broken_slp_l)
 		      0, "Incorrect pm lock state");
 
 	gpio_emul_input_set(slp_alt_l_gpio, slp_alt_l_pin, 1);
-	crec_sleep(1);
+	k_sleep(K_SECONDS(1));
 	zassert_equal(hook_chip_suspend_cnt, 1,
 		      "Incorrect suspend chip hook call count");
 	zassert_equal(hook_chip_resume_cnt, 4,
@@ -213,7 +216,7 @@ ZTEST(power, test_slp_event_broken_slp_l)
 
 	/* Resume */
 	gpio_emul_input_set(slp_l_gpio, slp_l_pin, 1);
-	crec_sleep(1);
+	k_sleep(K_SECONDS(1));
 	zassert_equal(hook_chip_suspend_cnt, 1,
 		      "Incorrect suspend chip hook call count");
 	zassert_equal(hook_chip_resume_cnt, 5,
@@ -230,4 +233,12 @@ ZTEST(power, test_gpio_suspend)
 
 	zassert_equal(pm_device_action_run_fake.arg0_history[0], gpioc_dev);
 	zassert_equal(pm_device_action_run_fake.arg0_history[1], gpioh_dev);
+}
+
+ZTEST(power, test_mco2)
+{
+	zassert_equal(LL_RCC_ConfigMCO_fake.call_count, 1);
+	zassert_equal(LL_RCC_ConfigMCO_fake.arg0_history[0],
+		      LL_RCC_MCO2SOURCE_HSE);
+	zassert_equal(LL_RCC_ConfigMCO_fake.arg1_history[0], LL_RCC_MCO2_DIV_1);
 }

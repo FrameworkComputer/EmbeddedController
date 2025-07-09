@@ -156,6 +156,8 @@ struct tcpci_partner_data {
 	enum tcpc_cc_voltage_status tcpm_cc1;
 	enum tcpc_cc_voltage_status tcpm_cc2;
 
+	/* Responses to be sent by the partner. */
+
 	/* VDMs with which the partner responds to discovery REQs. The VDM
 	 * buffers include the VDM header, and the VDO counts include 1 for the
 	 * VDM header. This structure has space for the mode response for a
@@ -199,6 +201,11 @@ struct tcpci_partner_data {
 	/* Used to control accept/reject for partner port of Enter_USB msg */
 	bool enter_usb_accept;
 
+	/* Responses received from the TCPM. */
+	union sido tcpm_sido;
+	/* RMDO received from the TCPM. */
+	uint32_t tcpm_rmdo;
+
 	/*
 	 * Cable which is "plugged in" to this port partner
 	 * Note: Much as in real life, cable should be attached before the port
@@ -207,6 +214,9 @@ struct tcpci_partner_data {
 	 * the source or sink partner.
 	 */
 	struct tcpci_cable_data *cable;
+	/* SKEDB returned by partner in response to a Get_Sink_Cap_Extended
+	 * message */
+	struct skedb skedb;
 };
 
 struct tcpci_cable_data {

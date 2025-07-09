@@ -76,6 +76,8 @@ static void *clamshell_reset(void)
 {
 	uint32_t val;
 
+	RESET_FAKE(cros_cbi_get_fw_config);
+
 	base_interrupt_id = 0;
 	lid_interrupt_id = 0;
 	interrupt_count = 0;
@@ -105,6 +107,8 @@ ZTEST_SUITE(tentacruel_clamshell, NULL, NULL, clamshell_reset, NULL, teardown);
 static void *main_sensor_reset(void)
 {
 	uint32_t val;
+
+	RESET_FAKE(cros_cbi_get_fw_config);
 
 	base_interrupt_id = 0;
 	lid_interrupt_id = 0;
@@ -136,6 +140,8 @@ ZTEST_SUITE(tentacruel_main_sensor, NULL, NULL, main_sensor_reset, NULL,
 static void *alt_sensor_reset(void)
 {
 	uint32_t val;
+
+	RESET_FAKE(cros_cbi_get_fw_config);
 
 	base_interrupt_id = 0;
 	lid_interrupt_id = 0;

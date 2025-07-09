@@ -47,6 +47,9 @@
 		default_battery: gfl_nb0299-485489 {
 			compatible = "gfl,nb0299-485489", "battery-smart";
 		};
+		ult_u485496phr {
+			compatible = "utl,hq24u3s1p3i", "battery-smart";
+		};
 	};
 
 
@@ -96,7 +99,6 @@
 			rot-standard-ref = <&lid_rot_ref>;
 			default-range = <2>;
 			drv-data = <&lis2dw12_data>;
-			i2c-spi-addr-flags = "LIS2DWL_ADDR0_FLAGS";
 			alternate-for = <&lid_accel>;
 			alternate-ssfc-indicator = <&lid_sensor_1>;
 			configs {
@@ -167,12 +169,12 @@
 			0xff	/* C4 */
 			0xf7	/* C5 */
 			0xff	/* C6 */
-			0xa4	/* C7 */
+			0xa5	/* C7 */
 			0xff	/* C8 */
-			0xfe	/* C9 */
+			0xff	/* C9 */
 			0x55	/* C10 */
 			0xfa	/* C11 */
-			0xca	/* C12 */
+			0xcb	/* C12 */
 			>;
 	};
 
@@ -438,8 +440,8 @@
 
 /* inherit the rot_ref from Kingler and overwrite it */
 &lid_rot_ref {
-	mat33 = <0 1 0
-		1 0 0
+	mat33 = <(-1) 0 0
+		0 1 0
 		0 0 (-1)>;
 };
 

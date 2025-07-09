@@ -54,7 +54,7 @@
  * The Maximum input voltage is 13.5V, need another 5% tolerance.
  * 12.85V * 1.05 = 13.5V
  */
-#define PD_MAX_VOLTAGE_MV 12850
+#define CONFIG_USB_PD_MAX_VOLTAGE_MV 12850
 #elif defined(VARIANT_KUKUI_CHARGER_ISL9238)
 #define CONFIG_CHARGER_ISL9238C
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20 /* BOARD_RS1 */
@@ -68,7 +68,7 @@
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 
 /* b/2230219: 15V has better charging performance than 20V */
-#define PD_MAX_VOLTAGE_MV 15000
+#define CONFIG_USB_PD_MAX_VOLTAGE_MV 15000
 #else
 #error Must define a VARIANT_KUKUI_CHARGER
 #endif /* VARIANT_KUKUI_CHARGER */
@@ -94,6 +94,7 @@
 
 /* define this if the board is jacuzzi family */
 #ifdef VARIANT_KUKUI_JACUZZI
+#define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_HOSTCMD_AP_SET_SKUID
 /*
  * IT81202 based boards are variant of jacuzzi and I/O expander isn't required
@@ -113,7 +114,7 @@
 #define CONFIG_TABLET_MODE
 #define CONFIG_TABLET_MODE_SWITCH
 
-#define PD_OPERATING_POWER_MW 30000
+#define CONFIG_USB_PD_OPERATING_POWER_MW 30000
 
 #define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK            \
 	(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) | \
@@ -240,11 +241,12 @@
 #define CONFIG_BATTERY_PRESENT_CUSTOM
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 
-#define PD_MAX_POWER_MW ((PD_MAX_VOLTAGE_MV * PD_MAX_CURRENT_MA) / 1000)
+#define CONFIG_USB_PD_MAX_POWER_MW \
+	((CONFIG_USB_PD_MAX_VOLTAGE_MV * CONFIG_USB_PD_MAX_CURRENT_MA) / 1000)
 #ifdef BOARD_KODAMA
-#define PD_MAX_CURRENT_MA 2000
+#define CONFIG_USB_PD_MAX_CURRENT_MA 2000
 #else
-#define PD_MAX_CURRENT_MA 3000
+#define CONFIG_USB_PD_MAX_CURRENT_MA 3000
 #endif
 
 /* Optional for testing */

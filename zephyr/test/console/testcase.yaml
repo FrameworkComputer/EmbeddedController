@@ -1,5 +1,6 @@
 common:
-  platform_allow: native_sim
+  platform_allow:
+  - native_sim
 tests:
   # The UART API provides both interrupt driven and modes.
   console.output.interrupt:
@@ -12,6 +13,17 @@ tests:
     - CONFIG_TEST_CONSOLE_OUTPUT=y
     - CONFIG_SHELL_BACKEND_SERIAL_API_INTERRUPT_DRIVEN=y
     - CONFIG_SHELL_BACKEND_SERIAL_API_POLLING=n
+  console.output.interrupt.noisr:
+    extra_conf_files:
+    - console_output.conf
+    extra_dtc_overlay_files:
+    - boards/native_sim.overlay
+    - console_output.dts
+    extra_configs:
+    - CONFIG_TEST_CONSOLE_OUTPUT=y
+    - CONFIG_SHELL_BACKEND_SERIAL_API_INTERRUPT_DRIVEN=y
+    - CONFIG_SHELL_BACKEND_SERIAL_API_POLLING=n
+    - CONFIG_PLATFORM_EC_ISR_CONSOLE_OUTPUT=n
   console.output.polling:
     extra_conf_files:
     - console_output.conf
@@ -23,6 +35,18 @@ tests:
     - CONFIG_UART_ASYNC_API=y
     - CONFIG_SHELL_BACKEND_SERIAL_API_INTERRUPT_DRIVEN=n
     - CONFIG_SHELL_BACKEND_SERIAL_API_POLLING=y
+  console.output.polling.noisr:
+    extra_conf_files:
+    - console_output.conf
+    extra_dtc_overlay_files:
+    - boards/native_sim.overlay
+    - console_output.dts
+    extra_configs:
+    - CONFIG_TEST_CONSOLE_OUTPUT=y
+    - CONFIG_UART_ASYNC_API=y
+    - CONFIG_SHELL_BACKEND_SERIAL_API_INTERRUPT_DRIVEN=n
+    - CONFIG_SHELL_BACKEND_SERIAL_API_POLLING=y
+    - CONFIG_PLATFORM_EC_ISR_CONSOLE_OUTPUT=n
   console.restricted:
     extra_configs:
     - CONFIG_TEST_CONSOLE_RESTRICTED=y

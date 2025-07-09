@@ -584,6 +584,12 @@ config PLATFORM_EC_LID_SWITCH
 
 	  This requires a GPIO named GPIO_LID_OPEN to be defined or aliased.
 
+config PLATFORM_EC_LID_DEBOUNCE_US
+	int "Lid switch debounce delay (microseconds)"
+	default 30000
+	help
+	  Delay between seeing a lid switch change and sampling the new state.
+
 config PLATFORM_EC_CONSOLE_CMD_MMAPINFO
 	bool "Console command: mmapinfo"
 	default y
@@ -716,6 +722,17 @@ config PLATFORM_EC_POWER_BUTTON_IGNORE_LID
 	  Don't check for lid_is_open when processing power button presses.
 	  This option should be used when power button support is required,
 	  but there is no lid switch present.
+
+config PLATFORM_EC_POWER_BUTTON_INIT_IDLE
+	bool "Remain in S5 with AC connect following gracefule shutdown"
+	depends on PLATFORM_EC_POWER_BUTTON
+	help
+	  Set/clear AP_IDLE flag. It's set when the system gracefully shuts
+	  down and it's cleared when the system boots up. The result is the
+	  system tries to go back to the previous state upon AC plug-in. If
+	  the system uncleanly shuts down, it boots immediately. If the system
+	  shuts down gracefully, it'll stay at S5 and wait for power button
+	  press.
 
 config PLATFORM_EC_BUTTON_DEBOUNCE
 	int "button debounce in us"

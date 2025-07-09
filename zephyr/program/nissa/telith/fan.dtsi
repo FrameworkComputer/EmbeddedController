@@ -1,0 +1,36 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	fans {
+		compatible = "cros-ec,fans";
+		fan_0 {
+			pwms = <&pwm3 PWM_CHANNEL_3 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+			tach = <&tach1>;
+			rpm_min = <1500>;
+			rpm_start = <1500>;
+			rpm_max = <4000>;
+			rpm_deviation = <1>;
+			enable_gpio = <&gpio_en_pp5000_fan>;
+		};
+	};
+ };
+
+/* pwm for fan */
+&pwm3 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C6>;
+	pinctrl-0 = <&pwm3_gpa3_default>;
+	pinctrl-names = "default";
+};
+
+/* fan tachometer sensor */
+&tach1 {
+	status = "okay";
+	channel = <IT8XXX2_TACH_CHANNEL_A>;
+	pulses-per-round = <2>;
+	pinctrl-0 = <&tach1a_gpd7_default>;
+	pinctrl-names = "default";
+};

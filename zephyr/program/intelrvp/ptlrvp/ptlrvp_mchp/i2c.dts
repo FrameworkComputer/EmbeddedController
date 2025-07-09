@@ -4,15 +4,15 @@
  */
 
 /* charger */
-&CHARGER_I2C {
+charger_i2c: &i2c_smb_0 {
 	pinctrl-0 = <&i2c00_scl_gpio004 &i2c00_sda_gpio003>;
 	pinctrl-names = "default";
-	port_sel = <0>;
+	port-sel = <0>;
 };
 
 /* typec-aic1-power */
-&PD_POW_I2C {
+pd_pow_i2c: &i2c_smb_1 {
 	pinctrl-0 = <&i2c06_scl_gpio140 &i2c06_sda_gpio132>;
 	pinctrl-names = "default";
-	port_sel = <6>;
+	port-sel = <6>;
 };

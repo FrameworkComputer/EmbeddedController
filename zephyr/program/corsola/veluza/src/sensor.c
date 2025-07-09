@@ -6,6 +6,7 @@
 #include "accelgyro.h"
 #include "cros_cbi.h"
 #include "driver/accel_bma422.h"
+#include "driver/accelgyro_bmi260.h"
 #include "driver/accelgyro_bmi323.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
@@ -13,13 +14,19 @@
 #include "motionsense_sensors.h"
 #include "tablet_mode.h"
 
+static bool base_use_alt_sensor;
+
 void base_sensor_interrupt(enum gpio_signal signal)
 {
 	uint32_t val;
 
 	cros_cbi_get_fw_config(FW_FORM_FACTOR, &val);
-	if (val == FW_FORM_FACTOR_CONVERTIBLE)
-		bmi3xx_interrupt(signal);
+	if (val == FW_FORM_FACTOR_CONVERTIBLE) {
+		if (base_use_alt_sensor)
+			bmi3xx_interrupt(signal);
+		else
+			bmi260_interrupt(signal);
+	}
 }
 
 void lid_sensor_interrupt(enum gpio_signal signal)
@@ -62,3 +69,12 @@ static void board_sensor_init(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_sensor_init, HOOK_PRIO_DEFAULT);
+
+static void alt_sensor_init(void)
+{
+	base_use_alt_sensor = cros_cbi_ssfc_check_match(
+		CBI_SSFC_VALUE_ID(DT_NODELABEL(base_sensor_bmi323)));
+
+	motion_sensors_check_ssfc();
+}
+DECLARE_HOOK(HOOK_INIT, alt_sensor_init, HOOK_PRIO_POST_I2C);

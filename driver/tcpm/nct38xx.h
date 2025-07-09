@@ -9,6 +9,8 @@
 #ifndef __CROS_EC_USB_PD_TCPM_NCT38XX_H
 #define __CROS_EC_USB_PD_TCPM_NCT38XX_H
 
+#include "common.h"
+
 /* Chip variant ID (Part number)  */
 #define NCT38XX_VARIANT_MASK 0x1C
 #define NCT38XX_VARIANT_3807 0x0

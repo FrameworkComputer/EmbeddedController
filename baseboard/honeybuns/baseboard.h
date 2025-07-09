@@ -196,10 +196,10 @@ enum usb_strings {
 #define CONFIG_SHA256_SW
 
 /* Define typical operating power and max power. */
-#define PD_MAX_VOLTAGE_MV 5000
-#define PD_MAX_CURRENT_MA 3000
-#define PD_MAX_POWER_MW 15000
-#define PD_OPERATING_POWER_MW 15000
+#define CONFIG_USB_PD_MAX_VOLTAGE_MV 5000
+#define CONFIG_USB_PD_MAX_CURRENT_MA 3000
+#define CONFIG_USB_PD_MAX_POWER_MW 15000
+#define CONFIG_USB_PD_OPERATING_POWER_MW 15000
 
 /* TODO(b:147314141): Verify these timings */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */

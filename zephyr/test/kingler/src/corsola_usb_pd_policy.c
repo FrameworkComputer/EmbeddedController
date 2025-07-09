@@ -77,6 +77,7 @@ ZTEST(corsola_usb_pd_policy, test_pd_power_supply_reset)
 
 	ppc_is_sourcing_vbus_fake.return_val = 1;
 	pd_power_supply_reset(port);
+	k_sleep(K_MSEC(100)); /* sleep to trigger deferred hooks */
 	zassert_equal(ppc_is_sourcing_vbus_fake.arg0_history[count], port);
 	zassert_equal(ppc_vbus_source_enable_fake.arg0_history[count], port);
 	zassert_equal(ppc_vbus_source_enable_fake.arg1_history[count], 0);
@@ -87,6 +88,7 @@ ZTEST(corsola_usb_pd_policy, test_pd_power_supply_reset)
 
 	ppc_is_sourcing_vbus_fake.return_val = 0;
 	pd_power_supply_reset(port);
+	k_sleep(K_MSEC(100)); /* sleep to trigger deferred hooks */
 	count++;
 	zassert_equal(ppc_is_sourcing_vbus_fake.arg0_history[count], port);
 	zassert_equal(ppc_vbus_source_enable_fake.arg0_history[count], port);
@@ -104,6 +106,7 @@ ZTEST(corsola_usb_pd_policy, test_pd_set_power_supply_ready_success)
 	ppc_vbus_source_enable_fake.return_val = 0;
 
 	zassert_ok(pd_set_power_supply_ready(port));
+	k_sleep(K_MSEC(100)); /* sleep to trigger deferred hooks */
 
 	zassert_equal(ppc_vbus_sink_enable_fake.arg0_history[0], port);
 	zassert_equal(ppc_vbus_sink_enable_fake.arg1_history[0], 0);

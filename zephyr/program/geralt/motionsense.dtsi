@@ -70,7 +70,7 @@
 			mutex = <&lid_mutex>;
 			port = <&i2c_sensor>;
 			rot-standard-ref = <&lid_rot_ref>;
-			default-range = <2>;
+			default-range = <4>; /* to meet CDD 7.3.1/C-1-4 reqs. */
 			drv-data = <&bmi323_data>;
 			configs {
 				compatible =

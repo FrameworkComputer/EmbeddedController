@@ -24,7 +24,7 @@ FAKE_VOID_FUNC(system_reset, int);
 static void system_before(void *data)
 {
 	RESET_FAKE(system_reset);
-	set_system_safe_mode(false);
+	reset_system_safe_mode();
 	get_panic_data_write()->flags = 0;
 	system_set_shrspi_image_copy(EC_IMAGE_RW);
 	shell_start(get_ec_shell());

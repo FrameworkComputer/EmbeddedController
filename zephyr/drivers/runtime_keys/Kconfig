@@ -5,8 +5,10 @@
 config CROS_EC_RUNTIME_KEYS
 	bool "Runtime keys support"
 	depends on DT_HAS_CROS_EC_RUNTIME_KEYS_ENABLED
+	depends on DT_HAS_CROS_EC_VIVALDI_KBD_ENABLED
 	depends on INPUT
 	default y
 	help
 	  Enable support for detecting runtime keys combination to make the AP
-	  reboot or enter hibernate mode.
+	  reboot or enter hibernate mode. This requries a vivaldi-kbd node to
+	  be configured as well.

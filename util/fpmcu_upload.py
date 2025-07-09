@@ -35,6 +35,7 @@ Run unit tests
 """
 
 import argparse
+from contextlib import ExitStack
 from dataclasses import dataclass
 from enum import Enum
 import io
@@ -45,7 +46,6 @@ from typing import List, Optional, Tuple
 import unittest
 
 # pylint: disable=import-error
-from contextlib2 import ExitStack
 from PIL import Image
 
 

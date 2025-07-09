@@ -1,0 +1,31 @@
+/* Copyright 2024 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	cros-keyscan {
+		compatible = "cros-keyscan";
+
+		output-settle = <80>;
+		debounce-down = <9000>;
+		debounce-up = <30000>;
+		poll-timeout = <100000>;
+
+		actual-key-mask = <
+			0x14	/* C0 */
+			0xff	/* C1 */
+			0xff	/* C2 */
+			0xff	/* C3 */
+			0xff	/* C4 */
+			0xf5	/* C5 */
+			0xff	/* C6 */
+			0xa4	/* C7 */
+			0xff	/* C8 */
+			0xfe	/* C9 */
+			0x55	/* C10 */
+			0xfa	/* C11 */
+			0xca	/* C12 */
+			>;
+	};
+};

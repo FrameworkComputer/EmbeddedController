@@ -10,12 +10,11 @@
 
 /* Keyboard scan setting */
 __override struct keyboard_scan_config keyscan_config = {
-	/* Increase from 50 us, because KSO_02 passes through the H1. */
-	.output_settle_us = 80,
-	/* Other values should be the same as the default configuration. */
+	.output_settle_us = 50,
 	.debounce_down_us = 9 * MSEC,
 	.debounce_up_us = 30 * MSEC,
 	.scan_period_us = 3 * MSEC,
+	.stable_scan_period_us = 9 * MSEC,
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
@@ -63,6 +62,7 @@ static const struct ec_response_keybd_config banshee_kb_id2 = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
+BUILD_ASSERT(IS_ENABLED(CONFIG_KEYBOARD_VIVALDI));
 __override const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void)
 {
@@ -98,3 +98,6 @@ __override const struct key {
 	{ .row = 0, .col = 11 }, /* T15 */
 };
 BUILD_ASSERT(ARRAY_SIZE(vivaldi_keys) == MAX_TOP_ROW_KEYS);
+
+/* TODO(b/219051027): Add assert to check that key_typ.{row,col}_refresh == the
+ * row/col in this table. */

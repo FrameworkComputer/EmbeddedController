@@ -1,0 +1,134 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+/* Francka-specific fw_config fields. */
+	francka-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+		/*
+		 * FW_CONFIG field to defined for pdc control.
+		 */
+		pdc-control {
+			enum-name = "FW_PDC_CONTROL";
+			start = <0>;
+			size = <2>;
+			pdc-control-rts-bypass {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_PDC_CONTROL_RTS_BYPASS";
+				value = <0>;
+				default;
+			};
+			pdc-control-ti-bypass {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_PDC_CONTROL_TI_BYPASS";
+				value = <1>;
+			};
+			pdc-control-gothic-bypass {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_PDC_CONTROL_GOTHIC_BYPASS";
+				value = <2>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for charger chip.
+		 */
+		charger-chip {
+			enum-name = "FW_CHARGER_CHIP";
+			start = <2>;
+			size = <1>;
+
+			bq25720 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_CHARGER_BQ25720";
+				value = <0>;
+				default;
+			};
+			isl9538c {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_CHARGER_ISL9538C";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for audio codec.
+		 */
+		audio-codec {
+			enum-name = "FW_AUDIO_CODEC";
+			start = <3>;
+			size = <3>;
+
+			amp-alc256 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_AUDIO_CODEC_AMP_ALC256";
+				value = <0>;
+				default;
+			};
+			amp-alc721 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_AUDIO_CODEC_AMP_ALC721";
+				value = <1>;
+			};
+			amp-cs42l43-cs35l56 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_AUDIO_CODEC_AMP_CS42L43_CS35L56";
+				value = <2>;
+			};
+			amp-alc722-alc1320 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_AUDIO_CODEC_AMP_ALC722_ALC1320";
+				value = <3>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for bridge.
+		 */
+		bridge-chip {
+			enum-name = "FW_BRIDGE_CHIP";
+			start = <6>;
+			size = <2>;
+
+			bridge-hayden {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BRIDGE_HAYDEN";
+				value = <0>;
+				default;
+			};
+			bridge-barlow {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BRIDGE_BARLOW";
+				value = <1>;
+			};
+			bridge-gothic {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BRIDGE_GOTHIC";
+				value = <2>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for WWAN.
+		 */
+		wwan {
+			enum-name = "FW_WWAN";
+			start = <8>;
+			size = <1>;
+
+			wwan-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_WWAN_PRESENT";
+				value = <0>;
+				default;
+			};
+			wwan-absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_WWAN_ABSENT";
+				value = <1>;
+			};
+		};
+	};
+};

@@ -52,6 +52,8 @@ void chip_pd_irq(enum usbpd_port port)
 		/* check TX status, clear by TX_DONE status too */
 		if (USBPD_IS_TX_ERR(port))
 			it8xxx2_get_tx_error_status(port);
+		else
+			pd_transmit_complete(port, TCPC_TX_COMPLETE_SUCCESS);
 #endif
 		/* clear TX done interrupt */
 		IT83XX_USBPD_ISR(port) = USBPD_REG_MASK_MSG_TX_DONE;

@@ -99,4 +99,22 @@ void restore_host_wake_alarm(void);
 void low_power_init(void);
 #endif
 
+enum clock_osc {
+	OSC_INIT = 0, /* Uninitialized */
+	OSC_HSI, /* High-speed internal oscillator */
+	OSC_MSI, /* Multi-speed internal oscillator */
+#ifdef CONFIG_STM32_CLOCK_HSE_HZ /* Catch absence of HSE at compile time */
+	OSC_HSE, /* High-speed external oscillator */
+#endif
+	OSC_PLL, /* PLL */
+};
+
+/**
+ * Switch system clock source.
+ *
+ * @param osc     The source to begin using as system clock
+ * @param pll_osc Input to the PLL, (if osc == OSC_PLL)
+ */
+void clock_set_osc(enum clock_osc osc, enum clock_osc pll_osc);
+
 #endif /* __CROS_EC_CLOCK_L4_H */

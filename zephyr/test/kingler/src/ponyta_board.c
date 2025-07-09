@@ -31,13 +31,22 @@ extern uint8_t board_is_clamshell;
 #define SSFC_MAIM_SENSORS (SSFC_LID_MAIN_SENSOR | SSFC_BASE_MAIN_SENSOR)
 #define SSFC_ALT_SENSORS (SSFC_LID_ALT_SENSOR | SSFC_BASE_ALT_SENSOR)
 
-/* Vol-up key matrix */
-#define VOL_UP_KEY_ROW 1
-#define VOL_UP_KEY_COL 5
+/* Vol-up key matrix for clamshell */
+#define VOL_UP_CLAMSHELL_KEY_ROW 1
+#define VOL_UP_CLAMSHELL_KEY_COL 5
+/* Vol-up key matrix for convertible */
+#define VOL_UP_CONVERTIBLE_KEY_ROW 2
+#define VOL_UP_CONVERTIBLE_KEY_COL 9
 
 FAKE_VALUE_FUNC(int, clock_get_freq);
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
+
+static void ponyta_before(void *fixture)
+{
+	RESET_FAKE(clock_get_freq);
+	RESET_FAKE(cros_cbi_get_fw_config);
+}
 
 int mock_cros_cbi_get_fw_config_clamshell(enum cbi_fw_config_field_id field_id,
 					  uint32_t *value)
@@ -80,7 +89,8 @@ static void *clamshell_setup(void)
 	return NULL;
 }
 
-ZTEST_SUITE(ponyta_clamshell, NULL, clamshell_setup, NULL, NULL, teardown);
+ZTEST_SUITE(ponyta_clamshell, NULL, clamshell_setup, ponyta_before, NULL,
+	    teardown);
 
 ZTEST(ponyta_clamshell, test_gmr_tablet_switch_disabled)
 {
@@ -164,7 +174,8 @@ static void *use_alt_sensor_setup(void)
 	return NULL;
 }
 
-ZTEST_SUITE(use_alt_sensor, NULL, use_alt_sensor_setup, NULL, NULL, teardown);
+ZTEST_SUITE(use_alt_sensor, NULL, use_alt_sensor_setup, ponyta_before, NULL,
+	    teardown);
 
 ZTEST(use_alt_sensor, test_use_alt_sensor)
 {
@@ -200,7 +211,8 @@ static void *no_alt_sensor_setup(void)
 	return NULL;
 }
 
-ZTEST_SUITE(no_alt_sensor, NULL, no_alt_sensor_setup, NULL, NULL, teardown);
+ZTEST_SUITE(no_alt_sensor, NULL, no_alt_sensor_setup, ponyta_before, NULL,
+	    teardown);
 
 ZTEST(no_alt_sensor, test_no_alt_sensor)
 {
@@ -217,15 +229,34 @@ ZTEST(no_alt_sensor, test_no_alt_sensor)
 	zassert_equal(interrupt_id, 1, "interrupt_id=%d", interrupt_id);
 }
 
-ZTEST_SUITE(customize_vol_up_key, NULL, NULL, NULL, NULL, teardown);
+ZTEST_SUITE(customize_vol_up_key, NULL, NULL, ponyta_before, NULL, teardown);
 
-ZTEST(customize_vol_up_key, test_customize_vol_up_key)
+ZTEST(customize_vol_up_key, test_customize_vol_up)
 {
-	zassert_equal(KEYBOARD_DEFAULT_ROW_VOL_UP, key_vol_up_row);
+	int val;
+
+	zassert_equal(KEYBOARD_DEFAULT_COL_VOL_UP, key_vol_up_col);
 	zassert_equal(KEYBOARD_DEFAULT_COL_VOL_UP, key_vol_up_col);
 
+	cros_cbi_get_fw_config_fake.custom_fake =
+		mock_cros_cbi_get_fw_config_clamshell;
 	hook_notify(HOOK_INIT);
 
-	zassert_equal(VOL_UP_KEY_ROW, key_vol_up_row);
-	zassert_equal(VOL_UP_KEY_COL, key_vol_up_col);
+	/* Check if CBI write worked. */
+	zassert_ok(cros_cbi_get_fw_config(FORM_FACTOR, &val), NULL);
+	zassert_equal(CLAMSHELL, val, "val=%d", val);
+
+	zassert_equal(VOL_UP_CLAMSHELL_KEY_ROW, key_vol_up_row);
+	zassert_equal(VOL_UP_CLAMSHELL_KEY_COL, key_vol_up_col);
+
+	cros_cbi_get_fw_config_fake.custom_fake =
+		mock_cros_cbi_get_fw_config_converible;
+	hook_notify(HOOK_INIT);
+
+	/* Check if CBI write worked. */
+	zassert_ok(cros_cbi_get_fw_config(FORM_FACTOR, &val), NULL);
+	zassert_equal(CONVERTIBLE, val, "val=%d", val);
+
+	zassert_equal(VOL_UP_CONVERTIBLE_KEY_ROW, key_vol_up_row);
+	zassert_equal(VOL_UP_CONVERTIBLE_KEY_COL, key_vol_up_col);
 }

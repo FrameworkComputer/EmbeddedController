@@ -39,11 +39,11 @@ void ap_bl_en_interrupt(enum gpio_signal signal)
 	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ap_bl_en_odl))) {
 		value_en = true;
 		hook_call_deferred(&set_bl_en_pin_data, 0);
-		hook_call_deferred(&set_tp_en_pin_data, 30 * MSEC);
+		hook_call_deferred(&set_tp_en_pin_data, 30 * USEC_PER_MSEC);
 	} else {
 		value_en = false;
 		hook_call_deferred(&set_tp_en_pin_data, 0);
-		hook_call_deferred(&set_bl_en_pin_data, 102 * MSEC);
+		hook_call_deferred(&set_bl_en_pin_data, 102 * USEC_PER_MSEC);
 	}
 }
 

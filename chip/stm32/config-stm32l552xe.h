@@ -23,6 +23,10 @@
 /* Number of IRQ vectors on the NVIC */
 #define CONFIG_IRQ_COUNT 109
 
+/* Lots of RAM, so use bigger UART buffer */
+#undef CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE 4096
+
 /* USB packet ram config */
 #define CONFIG_USB_RAM_BASE 0x4000D800
 #define CONFIG_USB_RAM_SIZE 1024

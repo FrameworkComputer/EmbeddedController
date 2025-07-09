@@ -1,0 +1,30 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	gpio-led-pins {
+		compatible = "cros-ec,gpio-led-pins";
+
+		batt_leds: batt-leds {
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pins = <&pm_bat_status_led1 &pm_bat_status_led2>;
+			color-off {
+				led-color = "LED_OFF";
+				led-values = <0 0>;
+			};
+
+			color-amber {
+				led-color = "LED_AMBER";
+				led-values = <1 0>;
+			};
+
+			color-white {
+				led-color = "LED_GREEN";
+				led-values = <0 1>;
+			};
+		};
+
+	};
+};

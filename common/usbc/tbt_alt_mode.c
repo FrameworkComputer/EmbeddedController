@@ -4,12 +4,6 @@
  */
 
 /*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 11
-
-/*
  * Thunderbolt alternate mode support
  * Refer to USB Type-C Cable and Connector Specification Release 2.0 Section F
  */
@@ -29,8 +23,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-
-#line 34
 
 /*
  * Enter/Exit TBT mode with active cable
@@ -531,14 +523,13 @@ enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
 		/* DPM will only call this after safe state set is done */
 		vdm[0] = VDO(USB_VID_INTEL, 1, CMD_EXIT_MODE) |
 			 VDO_OPOS(tbt_opos) | VDO_CMDT(CMDT_INIT) |
-			 VDO_SVDM_VERS_MAJOR(
-				 pd_get_vdo_ver(port, TCPCI_MSG_SOP));
+			 VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP));
 		vdo_count_ret = 1;
 		break;
 	case TBT_EXIT_SOP_PRIME_PRIME:
 		vdm[0] = VDO(USB_VID_INTEL, 1, CMD_EXIT_MODE) |
 			 VDO_OPOS(tbt_opos) | VDO_CMDT(CMDT_INIT) |
-			 VDO_SVDM_VERS_MAJOR(pd_get_vdo_ver(
+			 VDO_SVDM_VERS(pd_get_vdo_ver(
 				 port, TCPCI_MSG_SOP_PRIME_PRIME));
 		vdo_count_ret = 1;
 		*tx_type = TCPCI_MSG_SOP_PRIME_PRIME;
@@ -546,7 +537,7 @@ enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
 	case TBT_EXIT_SOP_PRIME:
 		vdm[0] = VDO(USB_VID_INTEL, 1, CMD_EXIT_MODE) |
 			 VDO_OPOS(tbt_opos) | VDO_CMDT(CMDT_INIT) |
-			 VDO_SVDM_VERS_MAJOR(
+			 VDO_SVDM_VERS(
 				 pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME));
 		vdo_count_ret = 1;
 		*tx_type = TCPCI_MSG_SOP_PRIME;
@@ -699,7 +690,7 @@ int enter_tbt_compat_mode(int port, enum tcpci_msg_type sop, uint32_t *payload)
 	payload[0] =
 		VDO(USB_VID_INTEL, 1, CMD_ENTER_MODE | VDO_OPOS(tbt_opos)) |
 		VDO_CMDT(CMDT_INIT) |
-		VDO_SVDM_VERS_MAJOR(pd_get_vdo_ver(port, enter_mode_sop));
+		VDO_SVDM_VERS(pd_get_vdo_ver(port, enter_mode_sop));
 
 	/* For TBT3 Cable Enter Mode Command, number of Objects is 1 */
 	if ((sop == TCPCI_MSG_SOP_PRIME) || (sop == TCPCI_MSG_SOP_PRIME_PRIME))

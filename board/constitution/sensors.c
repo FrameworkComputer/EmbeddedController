@@ -78,12 +78,13 @@ const struct temp_sensor_t temp_sensors[] = {
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /*
- * TODO(b/180681346): update for Alder Lake/brya
- *
  * Tiger Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
  * 130 C.  However, sensor is located next to DDR, so we need to use the lower
  * DDR temperature limit (85 C)
  */
+static const int temp_fan_off = C_TO_K(35);
+static const int temp_fan_max = C_TO_K(55);
+
 static const struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
@@ -92,13 +93,10 @@ static const struct ec_thermal_config thermal_cpu = {
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
 	},
-	.temp_fan_off = C_TO_K(37),
-	.temp_fan_max = C_TO_K(90),
+	.temp_fan_off = temp_fan_off,
+	.temp_fan_max = temp_fan_max,
 };
 
-/*
- * TODO(b/197478860): add the thermal sensor setting
- */
 /* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_CPU] = thermal_cpu,

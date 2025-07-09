@@ -150,8 +150,8 @@ int rts5453_get_info(struct ucsi_pd_driver *pd)
 	       status.code_location ? "Flash" : "ROM", status.flash_bank);
 	printf("Fw version: %d.%d.%d\n", status.major_version,
 	       status.minor_version, status.patch_version);
-	printf("VID:PID: %02x%02x:%02x%02x\n", status.vid_pid[1],
-	       status.vid_pid[0], status.vid_pid[3], status.vid_pid[2]);
+	printf("VID: %02x%02x\n", status.vid[1], status.vid[0]);
+	printf("PID: %02x%02x\n", status.pid[1], status.pid[0]);
 
 	return 0;
 }

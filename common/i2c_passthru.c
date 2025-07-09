@@ -203,6 +203,10 @@ static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 		if (resp->num_msgs == params->num_msgs - 1)
 			xferflags |= I2C_XFER_STOP;
 
+		/* More than one transactions, do a restart */
+		if (resp->num_msgs > 0)
+			xferflags |= I2C_XFER_RESTART;
+
 #ifdef CONFIG_I2C_VIRTUAL_BATTERY
 		if (is_i2c_port_virtual_battery(port) &&
 		    addr_flags == VIRTUAL_BATTERY_ADDR_FLAGS) {

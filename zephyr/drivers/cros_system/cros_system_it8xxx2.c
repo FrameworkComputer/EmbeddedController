@@ -259,7 +259,7 @@ static int cros_system_it8xxx2_hibernate(const struct device *dev,
 	return 0;
 }
 
-static const struct cros_system_driver_api cros_system_driver_it8xxx2_api = {
+static DEVICE_API(cros_system, cros_system_driver_it8xxx2_api) = {
 	.get_reset_cause = cros_system_it8xxx2_get_reset_cause,
 	.soc_reset = cros_system_it8xxx2_soc_reset,
 	.hibernate = cros_system_it8xxx2_hibernate,

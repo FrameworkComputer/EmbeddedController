@@ -51,10 +51,11 @@
 /* TODO(b/197702356): Set the max PD to 60W now and change it
  * to 100W after we verify it.
  */
-#define PD_OPERATING_POWER_MW CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
-#define PD_MAX_POWER_MW 100000
-#define PD_MAX_CURRENT_MA 5000
-#define PD_MAX_VOLTAGE_MV 20000
+#define CONFIG_USB_PD_OPERATING_POWER_MW \
+	CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
+#define CONFIG_USB_PD_MAX_POWER_MW 100000
+#define CONFIG_USB_PD_MAX_CURRENT_MA 5000
+#define CONFIG_USB_PD_MAX_VOLTAGE_MV 20000
 
 /*
  * Macros for GPIO signals used in common code that don't match the

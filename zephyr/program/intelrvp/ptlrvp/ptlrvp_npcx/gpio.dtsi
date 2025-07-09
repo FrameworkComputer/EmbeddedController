@@ -1,0 +1,369 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/*
+	 * Notes:
+	 * 1. GPIOs are labeled as they are presented in the schematics
+	 *    (counterclockwise).
+	 * 2. Alternate function GPIOs are commented out but retained for
+	 *    readability.
+	 * 3. Discrete keyboard IC is used on the PTL RVP.
+	 */
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		/* GPIOC3: (Alternate function) NB_CPU_PWM_FAN */
+
+		kbd-bklt-ctrl {
+			gpios = <&gpioc 2 GPIO_INPUT>;
+		};
+
+		/* Charger status LED */
+		caps-lock {
+			gpios = <&gpioc 4 GPIO_INPUT>;
+		};
+
+		virtual-battery {
+			gpios = <&gpio8 0 GPIO_INPUT>;
+		};
+		c-edp-bklt-en {
+			gpios = <&gpiob 7 GPIO_INPUT>;
+		};
+
+		/* Battery status LED */
+		num-lock {
+			gpios = <&gpioc 0 GPIO_INPUT>;
+		};
+
+		nb-boot-stall {
+			gpios = <&gpio6 0 GPIO_INPUT>;
+		};
+
+		/* GPIO40: (Alternate function) NB_CPU_TACHO_FAN */
+
+		gpio_fan_control: ec-fan-pwr-disable-n  {
+			gpios = <&gpio7 3 GPIO_OUTPUT_LOW>;
+		};
+		io-exp-int-mecc {
+			gpios = <&gpiod 3 GPIO_INPUT>;
+		};
+		wc_usbc_pd_i2c0_clk {
+			gpios = <&gpiob 5 GPIO_INPUT>;
+		};
+		wc_usbc_pd_i2c0_data {
+			gpios = <&gpiob 4 GPIO_INPUT>;
+		};
+		usbc-pd-i2c1-clk {
+			gpios = <&gpio9 0 GPIO_INPUT>;
+		};
+		usbc-pd-i2c1-data {
+			gpios = <&gpio8 7 GPIO_INPUT>;
+		};
+		smb-bs-clk {
+			gpios = <&gpio9 2 GPIO_INPUT>;
+		};
+		smb-bs-data {
+			gpios = <&gpio9 1 GPIO_INPUT>;
+		};
+		c-ec-pdb-ctrl {
+			gpios = <&gpiod 1 GPIO_INPUT>;
+		};
+		c-ec-ish-alrt {
+			gpios = <&gpiod 0 GPIO_ODR_LOW>;
+		};
+		smb-pck-ck {
+			gpios = <&gpiof 3 GPIO_INPUT>;
+		};
+		smb-pch-data {
+			gpios = <&gpiof 2 GPIO_INPUT>;
+		};
+		c-ish-ec-clk {
+			gpios = <&gpio3 3 GPIO_INPUT>;
+		};
+		c-ish-ec-data {
+			gpios = <&gpio3 6 GPIO_INPUT>;
+		};
+		cse_early_rec_sw: c-mecc-cse-early-sw {
+			gpios = <&gpiof 5 GPIO_INPUT>;
+		};
+		gpiof4 {
+			gpios = <&gpiof 4 GPIO_INPUT>;
+		};
+		gpioe4 {
+			gpios = <&gpioe 4 GPIO_INPUT>;
+		};
+		gpioe3 {
+			gpios = <&gpioe 3 GPIO_INPUT>;
+		};
+		c-usbc-pd-clk-aic3_4 {
+			gpios = <&gpiob 3 GPIO_INPUT>;
+		};
+		c-usbc-pd-data-aic3_4 {
+			gpios = <&gpiob 2 GPIO_INPUT>;
+		};
+		c-usbc-pd-alrt-aic4 {
+			gpios = <&gpio6 7 GPIO_INPUT>;
+		};
+		c-ioex-kbd-intr {
+			gpios = <&gpio7 0 GPIO_INPUT>;
+		};
+		std_adp_prsnt: mecc-std-adp-prsnt {
+			gpios = <&gpio6 2 GPIO_INPUT>;
+		};
+		all_sys_pwrgd: mecc-all-sys-pwrgd {
+			gpios = <&gpio6 3 GPIO_INPUT>;
+			enum-name = "GPIO_PG_EC_ALL_SYS_PWRGD";
+		};
+		c-chrg-amon-bmon {
+			gpios = <&gpio3 7 GPIO_INPUT>;
+		};
+		c-usbc-pd-alrt-aic3 {
+			gpios = <&gpio3 4 GPIO_INPUT>;
+		};
+
+		/* GPIO45: (Alternate function) NB_C_AMBIENT_THERM_IN0 */
+		/* GPIO44: (Alternate function) DT_C_SKIN_THERM_IN */
+
+		ccd_mode_odl: nb-c-ccd-mode-odl {
+			gpios = <&gpio4 3 GPIO_INPUT>;
+			enum-name = "GPIO_CCD_MODE_ODL";
+		};
+
+		/* GPIO42: (Alternate function) DT_C_DDR_THERM_IN */
+
+		en_pp3300_a: nb-c-ec-ds3 {
+			gpios = <&gpio4 1 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_EN_PP3300_A";
+			alias = "GPIO_TEMP_SENSOR_POWER";
+		};
+		gpioe1 {
+			gpios = <&gpioe 1 GPIO_INPUT>;
+		};
+		vol_dn_ec: mecc-vol-dn-ec {
+			gpios = <&gpiof 1 GPIO_INPUT>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		};
+		gpio_pdc_pow_irq: mecc-tcss-alrt-aic1 {
+			gpios = <&gpiof 0 GPIO_INPUT>;
+		};
+
+		/* GPIOE0: (Alternate function) DT_C_VR_TEMP/V_1P05_PCH_EC */
+
+		c-ec-wp-odl {
+			gpios = <&gpioc 7 GPIO_INPUT>;
+		};
+		pm-slp-a-n {
+			gpios = <&gpioc 1 GPIO_INPUT>;
+		};
+		ec_slatemode_hallout_snsr {
+			gpios = <&gpio7 4 GPIO_INPUT>;
+		};
+
+		/*
+		 * Keyboard pins
+		 * KSO04
+		 * KSO05
+		 * KSO06
+		 * KSO08
+		 * KSO09
+		 * KSO10
+		 * KSO11
+		 * KSO12
+		 * KSO13
+		 * KSO14
+		 * KSO15
+		 * KSO16
+		 * KSO17
+		 * KSI7
+		 * KSI6
+		 */
+
+		bc_acok: bc-acok {
+			gpios = <&gpiod 2 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		pwrbtn: rvp-pwrbtn-115 {
+			gpios = <&gpio0 0 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		smc_lid_n: smc-lid {
+			gpios = <&gpio0 1 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		wc-usbc-pd-alrt-aic2 {
+			gpios = <&gpio0 2 GPIO_INPUT>;
+		};
+
+		/* GPIO85: (Alternate function) PSL_OUT */
+
+		c-en-5v-typea {
+			gpios = <&gpiod 7 GPIO_INPUT>;
+		};
+
+		/* Keep low to prioritize AC brick power source selection */
+		std-adpt-cntrl-gpio {
+			gpios = <&gpio6 6 GPIO_OUTPUT_LOW>;
+		};
+
+
+		peci-data-gpio81 {
+			gpios = <&gpio8 1 GPIO_INPUT>;
+		};
+		gpio-b6 {
+			gpios = <&gpiob 6 GPIO_INPUT>;
+		};
+		nb-c-prochot-ec-n {
+			gpios = <&gpio3 5 GPIO_INPUT>;
+		};
+		gpio_ec_pch_wake_odl: smc-wake-sci-n {
+			gpios = <&gpio3 2 GPIO_ODR_HIGH>;
+		};
+		c32kxout {
+			gpios = <&gpio7 1 GPIO_INPUT>;
+		};
+		clock32 {
+			gpios = <&gpioe 7 GPIO_INPUT>;
+		};
+		vol_up_ec: volume-up {
+			enum-name = "GPIO_VOLUME_UP_L";
+			gpios = <&gpio5 0 GPIO_INPUT>;
+		};
+		gpio56 {
+			gpios = <&gpio5 6 GPIO_INPUT>;
+		};
+		smc-extsmi-n-c-ec-pch-int-odl {
+			gpios = <&gpioc 6 GPIO_INPUT>;
+		};
+		rst-push-n-d {
+			gpios = <&gpioc 5 GPIO_INPUT>;
+		};
+
+		/* GPIO77: VCC1_RST# */
+
+		en_pp5000_s5: dt-nv-usba-5v-vr-en {
+			gpios = <&gpio7 6 GPIO_INPUT>;
+		};
+		rsmrst_pwrgd: rsmrst-pwrgd-n {
+			gpios = <&gpio7 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			enum-name = "GPIO_PG_EC_RSMRST_ODL";
+		};
+		ec_pch_pwrok_od: pch-pwrok-ec {
+			gpios = <&gpio6 1 GPIO_ODR_LOW>;
+			enum-name = "GPIO_PCH_PWROK";
+		};
+		gpio75 {
+			gpios = <&gpio7 5 GPIO_INPUT>;
+		};
+		gpio86 {
+			gpios = <&gpio8 6 GPIO_INPUT>;
+		};
+
+		/* GPIO64: (Alternate function) EC_UART_RX_R */
+		/* GPIO65: (Alternate function) EC_UART_TX_R */
+
+		gpiod6 {
+			gpios = <&gpiod 6 GPIO_INPUT>;
+		};
+		ec-spi-sclk {
+			gpios = <&gpioa 2 GPIO_INPUT>;
+		};
+		gpioa6 {
+			gpios = <&gpioa 6 GPIO_INPUT>;
+		};
+		nb-pm-pwrbtn-n {
+			gpios = <&gpioa 0 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		ec-spi-dio3 {
+			gpios = <&gpioa 7 GPIO_INPUT>;
+		};
+		ec-spi-dio2 {
+			gpios = <&gpio9 3 GPIO_INPUT>;
+		};
+		ec-spi-miso {
+			gpios = <&gpio9 6 GPIO_INPUT>;
+		};
+		ec-spi-mosi {
+			gpios = <&gpioa 4 GPIO_INPUT>;
+		};
+		f-alt-sclk {
+			gpios = <&gpioa 1 GPIO_INPUT>;
+		};
+		nb-c-cpu-c10-gate {
+			gpios = <&gpioa 5 GPIO_INPUT>;
+		};
+		dt-c-sys-pwrok-ec {
+			gpios = <&gpio9 7 GPIO_INPUT>;
+		};
+		pch_slp_s0_n: mecc-pch-slp-s0-n {
+			gpios = <&gpiob 0 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S0_L";
+		};
+		mecc-pch-slp-s3-n {
+			gpios = <&gpio9 4 GPIO_INPUT>;
+		};
+		ec_pch_rsmrst_l: f-alt-miso {
+			gpios = <&gpio9 5 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_RSMRST_L";
+		};
+		f-alt-mosi {
+			gpios = <&gpioa 3 GPIO_INPUT>;
+		};
+
+		/*
+		 * Keyboard pins
+		 * KSO07
+		 * KSI5
+		 * KSI4
+		 * KSI0
+		 * KSI1
+		 * KSI2
+		 * KSI3
+		 */
+
+		gpiod5 {
+			gpios = <&gpiod 5 GPIO_INPUT>;
+		};
+		gpioe5 {
+			gpios = <&gpioe 5 GPIO_INPUT>;
+		};
+		mecc-bat-det {
+			gpios = <&gpiod 4 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		gpioe2 {
+			gpios = <&gpioe 2 GPIO_INPUT>;
+		};
+
+		/*
+		 * Keyboard pins
+		 * KSO00
+		 * KSO01
+		 * KSO03
+		 */
+		c-ec-kso-02-inv {
+			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
+		};
+
+		/* eSPI pins */
+		/* GPIO54: MECC_ESPI_RST_N */
+		/* GPIO57: MECC_ESPI_ALERT_N */
+		/* GPIO52: MECC_ESPI_IO[3] */
+		/* GPIO51: MECC_ESPI_IO[2] */
+		/* GPIO47: MECC_ESPI_IO[1] */
+		/* GPIO46: MECC_ESPI_IO[0] */
+		/* GPIO53: MECC_ESPI_CS_N */
+		/* GPIO55: MECC_ESPI_CLK */
+	};
+};
+
+/* eSPI interface */
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
+};

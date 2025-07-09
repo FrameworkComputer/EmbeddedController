@@ -1,0 +1,28 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/usb_pd_tcpm.h>
+
+/ {
+	usbc {
+		port0@0 {
+			compatible = "named-usbc-port";
+			tcpc = <&raa489000_emul>;
+		};
+	};
+};
+
+&i2c2 {
+	status="okay";
+
+	raa489000_emul: raa489000@22 {
+		compatible = "renesas,raa489000";
+		status = "okay";
+		reg = <0x22>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_VBUS_MONITOR)>;
+	};
+};

@@ -7,7 +7,9 @@ cmake_minimum_required(VERSION 3.13.1)
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 
 zephyr_include_directories(include)
-zephyr_library_sources("src/common.c")
+if(NOT DEFINED CONFIG_BOARD_INTEL_ISH_5_4_1)
+	zephyr_library_sources("src/common.c")
+endif()
 zephyr_library_sources_ifdef(CONFIG_NISSA_SUB_BOARD "src/sub_board.c")
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ "src/board_power.c")
 
@@ -52,7 +54,6 @@ if(DEFINED CONFIG_BOARD_NAKTAL)
 endif()
 if(DEFINED CONFIG_BOARD_CRAASK)
 	zephyr_library_sources(
-			"craask/src/battery.c"
 			"craask/src/fan.c"
 			"craask/src/form_factor.c"
 			"craask/src/keyboard.c"
@@ -214,6 +215,19 @@ if(DEFINED CONFIG_BOARD_QUANDISO)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "quandiso/src/fan.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "quandiso/src/usbc.c")
 endif()
+if(DEFINED CONFIG_BOARD_QUANDISO2)
+	project(quandiso2)
+	zephyr_library_sources(
+			"quandiso2/src/board.c"
+			"quandiso2/src/sub_board.c"
+			"quandiso2/src/keyboard.c"
+			"quandiso2/src/led.c"
+			"quandiso2/src/thermal.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "quandiso2/src/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "quandiso2/src/fan.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "quandiso2/src/usbc.c")
+endif()
 if(DEFINED CONFIG_BOARD_PIRRHA)
 	project(pirrha)
 	zephyr_include_directories("pirrha/include")
@@ -244,6 +258,9 @@ if(DEFINED CONFIG_BOARD_GLASSWAY)
 	zephyr_library_sources(
 			"glassway/src/sub_board.c"
 			"glassway/src/kb_backlight.c"
+			"glassway/src/board.c"
+			"glassway/src/usb_mux_config.c"
+			"glassway/src/keyboard.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "glassway/src/fan.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "glassway/src/usbc.c")
@@ -270,12 +287,24 @@ if(DEFINED CONFIG_BOARD_PUJJOGA)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "pujjoga/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "pujjoga/src/charger.c")
 endif()
+if(DEFINED CONFIG_BOARD_PUJJOGATWIN)
+	project(pujjogatwin)
+	zephyr_library_sources(
+			"pujjogatwin/src/board.c"
+			"pujjogatwin/src/led.c"
+			"pujjogatwin/src/hdmi.c"
+			"pujjogatwin/src/sub_board.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "pujjogatwin/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "pujjogatwin/src/charger.c")
+endif()
 if(DEFINED CONFIG_BOARD_RIVEN)
 	zephyr_include_directories("riven/include")
 	zephyr_library_sources(
 			"riven/src/form_factor.c"
 			"riven/src/led.c"
 			"riven/src/touch_panel.c"
+			"riven/src/usb_mux_config.c"
 	)
 	project(riven)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "riven/src/usbc.c")
@@ -310,4 +339,74 @@ if(DEFINED CONFIG_BOARD_TELIKS)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 			"teliks/src/keyboard_customization.c"
 	)
+endif()
+if(DEFINED CONFIG_BOARD_RULL)
+	project(rull)
+	zephyr_include_directories("rull/include")
+	zephyr_library_sources(
+			"rull/src/board.c"
+			"rull/src/sub_board.c"
+			"rull/src/usb_mux_config.c"
+			"rull/src/board_touchpanal.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "rull/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "rull/src/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+			"rull/src/keyboard_customization.c"
+	)
+endif()
+if(DEFINED CONFIG_BOARD_TELITH)
+	project(telith)
+	zephyr_include_directories("telith/include")
+	zephyr_library_sources(
+			"telith/src/board_als.c"
+			"telith/src/board.c"
+			"telith/src/prochot.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "telith/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "telith/src/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+			"telith/src/keyboard_customization.c"
+	)
+endif()
+if(DEFINED CONFIG_BOARD_PUJJONIRU)
+	project(pujjoniru)
+	zephyr_include_directories("pujjoniru/include")
+	zephyr_library_sources(
+			"pujjoniru/src/board.c"
+			"pujjoniru/src/sub_board.c"
+			"pujjoniru/src/board_touchpanel.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "pujjoniru/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "pujjoniru/src/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+			"pujjoniru/src/keyboard_customization.c"
+	)
+endif()
+if(DEFINED CONFIG_BOARD_GUREN)
+	project(guren)
+	zephyr_library_sources(
+			"guren/src/sub_board.c"
+			"guren/src/kb_backlight.c"
+			"guren/src/board.c"
+			"guren/src/usb_mux_config.c"
+			"guren/src/keyboard.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "guren/src/fan.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "guren/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "guren/src/charger.c")
+endif()
+if(DEFINED CONFIG_BOARD_INTEL_ISH_5_4_1)
+	project(orisa-ish)
+	add_subdirectory(orisa-ish)
+endif()
+if(DEFINED CONFIG_BOARD_DIRKS)
+	project(dirks)
+	zephyr_include_directories("dirks/include")
+	zephyr_library_sources(
+			"dirks/src/barrel_jack.c"
+			"dirks/src/led.c"
+			"dirks/src/hdmi.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "dirks/src/usbc.c")
 endif()

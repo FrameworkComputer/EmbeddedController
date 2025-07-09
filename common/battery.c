@@ -444,8 +444,9 @@ static void ac_change(void)
 	static bool was_ac_on;
 	bool key = false;
 
-	if (IS_ENABLED(HAS_TASK_KEYSCAN))
-		key = keyboard_scan_get_boot_keys() & BIT(BOOT_KEY_REFRESH);
+	if (IS_ENABLED(HAS_TASK_KEYSCAN) ||
+	    IS_ENABLED(CONFIG_CROS_EC_KEYBOARD_INPUT))
+		key = keyboard_scan_get_boot_keys() == BIT(BOOT_KEY_REFRESH);
 
 #ifdef CONFIG_VOLUME_BUTTONS
 	if (!key)
@@ -740,8 +741,9 @@ __overridable enum battery_disconnect_state battery_get_disconnect_state(void)
 #ifdef CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV
 
 #if CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV < 5000 || \
-	CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV >= PD_MAX_VOLTAGE_MV
-#error "Voltage limit must be between 5000 and PD_MAX_VOLTAGE_MV"
+	CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV >=    \
+		CONFIG_USB_PD_MAX_VOLTAGE_MV
+#error "Voltage limit must be between 5000 and CONFIG_USB_PD_MAX_VOLTAGE_MV"
 #endif
 
 #if !((defined(CONFIG_USB_PD_TCPMV1) && defined(CONFIG_USB_PD_DUAL_ROLE)) || \

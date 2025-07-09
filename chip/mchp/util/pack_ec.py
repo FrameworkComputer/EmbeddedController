@@ -101,6 +101,7 @@ def GetPublicKey(pem_file):
     )
     modulus_raw = []
     in_modulus = False
+    exp = 0
     for line in result.stdout.splitlines():
         if line.startswith("modulus"):
             in_modulus = True

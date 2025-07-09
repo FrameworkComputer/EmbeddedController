@@ -24,7 +24,7 @@
 /* Charger */
 #define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_CHARGER_RAA489000
-#define PD_MAX_VOLTAGE_MV 20000
+#define CONFIG_USB_PD_MAX_VOLTAGE_MV 20000
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_OCPC_DEF_RBATT_MOHMS               \
@@ -86,6 +86,9 @@
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 
+/* Keyboard */
+#define CONFIG_KEYBOARD_STRICT_DEBOUNCE
+
 /* Variant references the TCPCs to determine Vbus sourcing */
 #define CONFIG_USB_PD_5V_EN_CUSTOM
 
@@ -103,6 +106,9 @@
 
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 #define CONFIG_BUTTONS_RUNTIME_CONFIG
+
+/* watchdog warning always on */
+#define CONFIG_IT83XX_PREWDT_ALWAYS_ENABLED
 
 #ifndef __ASSEMBLER__
 

@@ -1,0 +1,189 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "../native_sim.overlay"
+
+#include <cros/binman.dtsi>
+#include <dt-bindings/gpio_defines.h>
+#include <dt-bindings/usb_pd_tcpm.h>
+
+/ {
+	chosen {
+		cros-ec,espi = &espi0;
+	};
+
+	/* Unused Stub */
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		named_i2c0: i2c0 {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_USB_MUX";
+		};
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		usbc_port0: port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+
+			bc12 = <&pi3usb9201_emul0>;
+			tcpc = <&tcpci_emul0>;
+			ppc = <&ppc0_emul>;
+			chg = <&charger_emul>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c0_hb_retimer
+					     &virtual_mux_c0>;
+			};
+		};
+		port0-muxes {
+			virtual_mux_c0: virtual-mux-c0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+		usbc_port1: port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+
+			bc12 = <&pi3usb9201_emul1>;
+			tcpc = <&tcpci_emul1>;
+			ppc = <&ppc1_emul>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_c1>;
+			};
+			usb_mux_chain_hbr_port1: usb-mux-chain-1-hbr {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c1_hb_retimer
+					     &virtual_mux_c1>;
+				alternative-chain;
+			};
+		};
+		port1-muxes {
+			virtual_mux_c1: virtual-mux-c1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
+			gpios = <&gpio1 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
+		};
+		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
+			gpios = <&gpio1 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
+		};
+		gpio_usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
+			gpios = <&gpio1 8 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
+		};
+		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
+			gpios = <&gpio1 9 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C1_TCPC_INT_ODL";
+		};
+		gpio_usb_c0_rt_3p3_sx_en: usb_c0_rt_3p3_sx_en {
+			gpios = <&gpio1 10 GPIO_ODR_LOW>;
+		};
+		gpio_usb_c0_rt_int_odl: usb_c0_rt_int_odl {
+			gpios = <&gpio1 11 GPIO_INPUT>;
+		};
+		gpio_usb_c0_rt_rst_odl: usb_c0_rt_rst_odl {
+			gpios = <&gpio1 12 GPIO_OUTPUT>;
+		};
+	};
+
+	aliases {
+		hbr-usb-c1-rt-pwr-en = &gpio_usb_c1_rst_odl;
+
+		hbr-usb-c1-rt-int-odl = &gpio_usb_c1_rt_int_odl;
+
+		hbr-usb-c1-rt-rst-odl = &gpio_usb_c1_rt_rst_r_odl;
+
+		syv-usb-c1-frs-en = &gpio_usb_c1_frs_en;
+	};
+};
+
+&i2c0 {
+	status = "okay";
+
+	charger_emul: isl9241@9 {
+		compatible = "intersil,isl9241";
+		status = "okay";
+		reg = <0x9>;
+	};
+	tcpci_emul0: tcpci_emul@83 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x83>;
+	};
+	tcpci_emul1: tcpci_emul@82 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x82>;
+	};
+	tcpc_rt1716_port1: rt1716@4e {
+		compatible = "richtek,rt1715-tcpc", "cros,i2c-mock";
+		reg = <0x4e>;
+		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
+		irq-gpios = <&gpio1 9 GPIO_ACTIVE_LOW>;
+		is-alt;
+	};
+	ppc0_emul: syv682x@42 {
+		compatible = "silergy,syv682x", "cros,i2c-mock";
+		status = "okay";
+		reg = <0x42>;
+		frs_en_gpio = <&gpio_usb_c1_frs_en>;
+		irq-gpios = <&gpio1 6 GPIO_ACTIVE_LOW>;
+	};
+	ppc1_emul: syv682x@43 {
+		compatible = "silergy,syv682x", "cros,i2c-mock";
+		status = "okay";
+		reg = <0x43>;
+		frs_en_gpio = <&gpio_usb_c1_frs_en>;
+		irq-gpios = <&gpio1 7 GPIO_ACTIVE_LOW>;
+	};
+	ppc_syv_port1: syv682x@40 {
+		compatible = "silergy,syv682x", "cros,i2c-mock";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&gpio_usb_c1_frs_en>;
+		irq-gpios = <&gpio1 7 GPIO_ACTIVE_LOW>;
+		is-alt;
+	};
+	pi3usb9201_emul0: pi3usb9201@5d {
+		compatible = "pericom,pi3usb9201";
+		status = "okay";
+		reg = <0x5d>;
+	};
+
+	pi3usb9201_emul1: pi3usb9201@5e {
+		compatible = "pericom,pi3usb9201";
+		status = "okay";
+		reg = <0x5e>;
+	};
+	usb_c0_hb_retimer: jhl9040r-c1@56 {
+		compatible = "intel,jhl8040r";
+		reg = <0x56>;
+		ls-en-pin = <&gpio_usb_c0_rt_3p3_sx_en>;
+		int-pin = <&gpio_usb_c0_rt_int_odl>;
+		reset-pin = <&gpio_usb_c0_rt_rst_odl>;
+	};
+	usb_c1_hb_retimer: jhl9040r-c1@54 {
+		compatible = "intel,jhl8040r";
+		reg = <0x54>;
+		ls-en-pin = <&gpio_usb_c1_rst_odl>;
+		int-pin = <&gpio_usb_c1_rt_int_odl>;
+		reset-pin = <&gpio_usb_c1_rt_rst_r_odl>;
+	};
+};

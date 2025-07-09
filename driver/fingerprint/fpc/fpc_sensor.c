@@ -7,6 +7,7 @@
 #include "fpsensor/fpsensor_console.h"
 #include "fpsensor/fpsensor_state_driver.h"
 #include "timer.h"
+#include "util.h"
 
 #include <stddef.h>
 #if defined(CONFIG_FP_SENSOR_FPC1025) || defined(CONFIG_FP_SENSOR_FPC1035)
@@ -47,7 +48,13 @@ int fpc_fp_maintenance(uint16_t *error_state)
 		return EC_ERROR_HW_INTERNAL;
 	}
 
-	*error_state |= FP_ERROR_DEAD_PIXELS(sensor_info.num_defective_pixels);
+	/*
+	 * Reset the number of dead pixels before any update.
+	 */
+	*error_state &= ~FP_ERROR_DEAD_PIXELS_MASK;
+	*error_state |= FP_ERROR_DEAD_PIXELS(MIN(
+		sensor_info.num_defective_pixels, FP_ERROR_DEAD_PIXELS_MAX));
+
 	CPRINTS("num_defective_pixels: %d", sensor_info.num_defective_pixels);
 
 	return EC_SUCCESS;

@@ -7,4 +7,4 @@
  * See CONFIG_TASK_LIST in config.h for details.
  */
 #define CONFIG_TEST_TASK_LIST \
-  TASK_TEST(TEST, task_test, NULL, TASK_STACK_SIZE)
+  TASK_TEST(TEST, task_test, NULL, TRENTA_TASK_STACK_SIZE)

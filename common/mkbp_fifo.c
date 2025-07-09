@@ -52,7 +52,7 @@ static K_MUTEX_DEFINE(fifo_remove_mutex);
 static int get_data_size(enum ec_mkbp_event e)
 {
 	switch (e) {
-#ifdef HAS_TASK_KEYSCAN
+#if defined(HAS_TASK_KEYSCAN) || defined(CONFIG_CROS_EC_KEYBOARD_INPUT)
 	case EC_MKBP_EVENT_KEY_MATRIX:
 		return keyboard_get_cols();
 #endif

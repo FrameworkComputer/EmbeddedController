@@ -1,0 +1,194 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+  /* Guren-specific fw_config fields. */
+	nissa-fw-config {
+		/*
+		 * FW_CONFIG field to enable fan or not.
+		 */
+		thermal_solution {
+			enum-name = "FW_THERMAL_SOLUTION";
+			start = <0>;
+			size = <1>;
+
+			passive {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_SOLUTION_PASSIVE";
+				value = <0>;
+			};
+			active {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_SOLUTION_ACTIVE";
+				value = <1>;
+				default;
+			};
+		};
+		/*
+		 * FW_CONFIG field to describe sub board.
+		 */
+		sub-board {
+			enum-name = "FW_SUB_BOARD";
+			start = <5>;
+			size = <4>;
+
+			sub-board-1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_1";
+				value = <1>;
+			};
+			sub-board-2 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_2";
+				value = <2>;
+			};
+			sub-board-3 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_3";
+				value = <3>;
+				default;
+			};
+			sub-board-4 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_4";
+				value = <4>;
+			};
+			sub-board-5 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_5";
+				value = <5>;
+			};
+		};
+		/*
+		 * FW_CONFIG field to enable TypeC BC1.2.
+		 */
+		typec-bc12 {
+			enum-name = "FW_TYPEC_BC12";
+			start = <10>;
+			size = <1>;
+
+			absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TYPEC_BC12_ABSENT";
+				value = <0>;
+				default;
+			};
+			present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TYPEC_BC12_PRESENT";
+				value = <1>;
+			};
+		};
+		/*
+		 * FW_CONFIG field to enable keyboard backlight.
+		 */
+		kb_bl {
+			enum-name = "FW_KB_BL";
+			start = <14>;
+			size = <1>;
+
+			kb-bl-absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_ABSENT";
+				value = <0>;
+			};
+			kb-bl-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_PRESENT";
+				value = <1>;
+			};
+		};
+		/*
+		 * FW_CONFIG field to describe Clamshell/Convertible.
+		 */
+		form_factor {
+			enum-name = "FORM_FACTOR";
+			start = <16>;
+			size = <1>;
+			clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CLAMSHELL";
+				value = <0>;
+				default;
+			};
+			covertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CONVERTIBLE";
+				value = <1>;
+			};
+		};
+
+                /*
+                 * FW_CONFIG field to change scancode setting for special
+                 * keyboard type.
+                 */
+                kb-type {
+                        enum-name = "FW_KB_TYPE";
+                        start = <19>;
+                        size = <1>;
+
+                        kb-type-default {
+                                compatible = "cros-ec,cbi-fw-config-value";
+                                enum-name = "FW_KB_TYPE_DEFAULT";
+                                value = <0>;
+                        };
+                        kb-type-ca-fr {
+                                compatible = "cros-ec,cbi-fw-config-value";
+                                enum-name = "FW_KB_TYPE_CA_FR";
+                                value = <1>;
+                        };
+                };
+	};
+
+	/* Guren-specific ssfc fields. */
+        cbi-ssfc {
+                compatible = "cros-ec,cbi-ssfc";
+                /*
+                 * SSFC field to panel type.
+                 */
+                panel-type {
+			enum-name = "PANEL_TYPE";
+			size = <3>;
+		};
+
+                /*
+                 * SSFC field to identify BASE motion sensor.
+                 */
+                base-sensor {
+                        enum-name = "BASE_SENSOR";
+                        size = <2>;
+                        base_sensor_bmi323: bmi323 {
+                                compatible = "cros-ec,cbi-ssfc-value";
+                                status = "okay";
+                                value = <0>;
+                                default;
+                        };
+                        base_sensor_icm42607: icm42607 {
+                                compatible = "cros-ec,cbi-ssfc-value";
+                                status = "okay";
+                                value = <1>;
+                        };
+                };
+
+                /*
+                 * SSFC field to set USB MUX EQ for different DB FFC.
+                 */
+                ffc_type {
+                        enum-name = "USB_SS_MUX";
+                        size = <2>;
+                        ffc1: ffc1 {
+                                compatible = "cros-ec,cbi-ssfc-value";
+                                status = "okay";
+                                value = <0>;
+                                default;
+                        };
+                        ffc2: ffc2 {
+                                compatible = "cros-ec,cbi-ssfc-value";
+                                status = "okay";
+                                value = <1>;
+                        };
+                };
+	};
+};

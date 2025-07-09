@@ -63,7 +63,8 @@ static void update_src_pdo_deferred(void)
 	} else if (chipset_in_state(CHIPSET_STATE_SUSPEND) &&
 		   (charge_get_percent() >= BATT_LVL_CURRENT_LIMITED)) {
 		/* In S3, battery >= 30%, check the battery every 60s */
-		hook_call_deferred(&update_src_pdo_deferred_data, 60 * SECOND);
+		hook_call_deferred(&update_src_pdo_deferred_data,
+				   60 * USEC_PER_SEC);
 	} else if (chipset_in_state(CHIPSET_STATE_ON)) {
 		/* Resume src pdo to 3A */
 		current_limited = false;
@@ -77,7 +78,8 @@ static void update_src_pdo_deferred(void)
 	} else if (check_cnt < 3) {
 		/* Check 3 times for stable power state */
 		check_cnt++;
-		hook_call_deferred(&update_src_pdo_deferred_data, 10 * SECOND);
+		hook_call_deferred(&update_src_pdo_deferred_data,
+				   10 * USEC_PER_SEC);
 	} else {
 		check_cnt = 0;
 		current_limited = false;
@@ -93,7 +95,7 @@ static void check_src_port(void)
 		if (tc_is_attached_src(i)) {
 			/* Deferred 2s to avoid pd state conflict */
 			hook_call_deferred(&update_src_pdo_deferred_data,
-					   2 * SECOND);
+					   2 * USEC_PER_SEC);
 			break;
 		}
 	}
@@ -103,6 +105,6 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, check_src_port, HOOK_PRIO_DEFAULT);
 static void resume_src_port(void)
 {
 	/* Deferred 5s to avoid pd state conflict */
-	hook_call_deferred(&update_src_pdo_deferred_data, 5 * SECOND);
+	hook_call_deferred(&update_src_pdo_deferred_data, 5 * USEC_PER_SEC);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, resume_src_port, HOOK_PRIO_DEFAULT);

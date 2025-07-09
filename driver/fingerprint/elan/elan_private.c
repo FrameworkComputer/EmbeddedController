@@ -27,7 +27,7 @@ static uint16_t errors;
 /* Sensor description */
 static struct ec_response_fp_info ec_fp_sensor_info = {
 	/* Sensor identification */
-	.vendor_id = VID,
+	.vendor_id = FOURCC('E', 'L', 'A', 'N'),
 	.product_id = PID,
 	.model_id = MID,
 	.version = VERSION,
@@ -86,13 +86,18 @@ int fp_sensor_init(void)
 {
 	CPRINTF("========%s=======\n", __func__);
 
-	errors = 0;
+	errors = FP_ERROR_DEAD_PIXELS_UNKNOWN;
 	elan_execute_reset();
-	algorithm_parameter_setting();
+	elan_alg_param_setting();
 	if (IC_SELECTION == EFSA80SG)
 		elan_set_hv_chip(1);
 
-	errors |= elan_check_hwid();
+	int rc = elan_check_hwid();
+	if (rc != EC_SUCCESS) {
+		errors |= rc;
+		return EC_SUCCESS;
+	}
+
 	if (elan_execute_calibration() < 0)
 		errors |= FP_ERROR_INIT_FAIL;
 	if (elan_woe_mode() != 0)
@@ -115,7 +120,8 @@ int fp_sensor_deinit(void)
  *
  * @param[out] resp      retrieve the version, sensor and template information
  *
- * @return EC_SUCCESS on success otherwise error.
+ * @return EC_SUCCESS on success.
+ * @return EC_RES_ERROR on error.
  */
 int fp_sensor_get_info(struct ec_response_fp_info *resp)
 {
@@ -123,7 +129,10 @@ int fp_sensor_get_info(struct ec_response_fp_info *resp)
 
 	CPRINTF("========%s=======\n", __func__);
 	memcpy(resp, &ec_fp_sensor_info, sizeof(struct ec_response_fp_info));
-	elan_get_hwid(&id);
+
+	if (elan_get_hwid(&id)) {
+		return EC_RES_ERROR;
+	}
 
 	resp->model_id = id;
 	resp->errors = errors;
@@ -156,9 +165,13 @@ int fp_sensor_get_info(struct ec_response_fp_info *resp)
 int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,
 		    int32_t *match_index, uint32_t *update_bitmap)
 {
+	int res;
 	CPRINTF("========%s=======\n", __func__);
-	return elan_match(templ, templ_count, image, match_index,
-			  update_bitmap);
+	res = elan_match(templ, templ_count, image, match_index, update_bitmap);
+	if (res == EC_MKBP_FP_ERR_MATCH_YES)
+		res = elan_template_update(templ, *match_index);
+
+	return res;
 }
 
 /**
@@ -278,22 +291,4 @@ int fp_maintenance(void)
 {
 	CPRINTF("========%s=======\n", __func__);
 	return elan_fp_maintenance(&errors);
-}
-
-/**
- * Provides the init_trng function required by the elan library using the EC
- * trng API
- */
-void init_trng(void)
-{
-	trng_init();
-}
-
-/**
- * Provides the exit_trng function required by the elan library using the EC
- * trng API
- */
-void exit_trng(void)
-{
-	trng_exit();
 }

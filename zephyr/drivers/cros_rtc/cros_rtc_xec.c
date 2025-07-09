@@ -100,7 +100,7 @@ static int cros_rtc_xec_reset_alarm(const struct device *dev)
 }
 
 /* cros ec RTC driver registration */
-static const struct cros_rtc_driver_api cros_rtc_xec_driver_api = {
+static DEVICE_API(cros_rtc, cros_rtc_xec_driver_api) = {
 	.configure = cros_rtc_xec_configure,
 	.get_value = cros_rtc_xec_get_value,
 	.set_value = cros_rtc_xec_set_value,

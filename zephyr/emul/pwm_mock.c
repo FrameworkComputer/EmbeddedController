@@ -66,7 +66,7 @@ pwm_flags_t pwm_mock_get_flags(const struct device *dev, uint32_t channel)
 	return data->pwm_flags;
 }
 
-static const struct pwm_driver_api pwm_mock_api = {
+static DEVICE_API(pwm, pwm_mock_api) = {
 	.set_cycles = pwm_mock_set_cycles,
 	.get_cycles_per_sec = pwm_mock_get_cycles_per_sec,
 };

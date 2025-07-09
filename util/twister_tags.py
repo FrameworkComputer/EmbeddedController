@@ -10,7 +10,7 @@ testcase.yaml files to see if they only used predefined tags.
 """
 
 # [VPYTHON:BEGIN]
-# python_version: "3.8"
+# python_version: "3.11"
 # wheel: <
 #   name: "infra/python/wheels/pyyaml-py3"
 #   version: "version:5.3.1"
@@ -67,13 +67,11 @@ def main(args):
         def test_tags_generator(root):
             """Returns space separated tags denoted by a tags key"""
             if "tags" in root:
-                for tag in root["tags"].split(" "):
-                    yield tag
+                yield from root["tags"]
 
             for val in root.values():
                 if isinstance(val, dict):
-                    for found in test_tags_generator(val):
-                        yield found
+                    yield from test_tags_generator(val)
 
         for testcase_yaml in testcase_yamls:
             logger.info("Validating test tags in %s", testcase_yaml)

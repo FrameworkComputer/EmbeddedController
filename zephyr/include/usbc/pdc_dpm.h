@@ -41,11 +41,12 @@ void pdc_dpm_remove_sink(int port);
 void pdc_dpm_remove_source(int port);
 
 /**
- * @brief Check current requested from port partner
+ * @brief Get the source current that is provided by the PDC port.
  *
  * @param port USBC port number
- * @param rdo Requested Data Object from port partner
+ *
+ * @returns The source current provided on the port in mA.
  */
-void pdc_dpm_evaluate_request_rdo(int port, uint32_t rdo);
+int pdc_dpm_get_source_current(const int port);
 
 #endif /* __CROS_EC_PDC_DPM_H */

@@ -33,6 +33,7 @@ __override struct keyboard_scan_config keyscan_config = {
 	.debounce_down_us = DT_INST_PROP(0, debounce_down),
 	.debounce_up_us = DT_INST_PROP(0, debounce_up),
 	.scan_period_us = DT_INST_PROP(0, scan_period),
+	.stable_scan_period_us = DT_INST_PROP(0, stable_scan_period),
 	.min_post_scan_delay_us = DT_INST_PROP(0, min_post_scan_delay),
 	.poll_timeout_us = DT_INST_PROP(0, poll_timeout),
 	.actual_key_mask = DT_INST_PROP(0, actual_key_mask),

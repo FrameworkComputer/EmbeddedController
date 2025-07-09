@@ -39,19 +39,19 @@ class JobHandle:
 class JobClient:
     """Abstract base class for all job clients."""
 
-    def get_job(self):  # pylint: disable=no-self-use
+    def get_job(self):
         """Claim a job."""
         raise NotImplementedError("Abstract method not implemented")
 
-    def env(self):  # pylint: disable=no-self-use
+    def env(self):
         """Get the environment variables necessary to share the job server."""
         return {}
 
-    def is_sequential(self):  # pylint: disable=no-self-use
+    def is_sequential(self):
         """Returns True if the jobserver is using -j1."""
         return False
 
-    def pass_fds(self):  # pylint: disable=no-self-use
+    def pass_fds(self):
         """Returns the file descriptors that should be passed to subprocesses."""
         return []
 

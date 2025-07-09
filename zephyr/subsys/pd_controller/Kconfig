@@ -20,7 +20,7 @@ menuconfig USB_PDC_POWER_MGMT
 
 config PDC_POWER_MGMT_INIT_PRIORITY
 	int "USB-C stack init priority"
-	default 90
+	default 91
 	help
 	  Initialization priority of the USB-C in POST_KERNEL.
 
@@ -43,6 +43,67 @@ config PDC_POWER_MGMT_STACK_SIZE
 	default 1024
 	help
 	  Stack size of thread created for each instance.
+
+choice PDC_POWER_MGMT_SRC_PDO_PEAK_OCP
+	prompt "Peak overcurrent capability advertised in the source PDO"
+	default PDC_POWER_MGMT_SRC_PDO_PEAK_OCP_100
+	help
+	  Set the allowable peak overcurrent as a percentage of the normal
+	  current limit. See USB-PD Spec, ver 3.2, Table 6.10 for a full
+	  explanation of the settings.
+
+config PDC_POWER_MGMT_SRC_PDO_PEAK_OCP_100
+	bool "Peak overcurrent of 100%"
+	help
+	  The PDC does not support any peak current beyond normal operating
+	  levels
+
+config PDC_POWER_MGMT_SRC_PDO_PEAK_OCP_110
+	bool "Peak overcurrent of 110%"
+	help
+	  The PDC supports 110% for 10ms, 125% for 2ms, 150% for 1ms (relative
+	  to normal operating current)
+
+config PDC_POWER_MGMT_SRC_PDO_PEAK_OCP_125
+	bool "Peak overcurrent of 125%"
+	help
+	  The PDC supports 125% for 10ms, 150% for 2ms, 200% for 1ms (relative
+	  to normal operating current)
+
+config PDC_POWER_MGMT_SRC_PDO_PEAK_OCP_150
+	bool "Peak overcurrent of 150%"
+	help
+	  The PDC supports 150% for 10ms, 175% for 2ms, 200% for 1ms (relative
+	  to normal operating current)
+
+endchoice # PDC_POWER_MGMT_SRC_PDO_PEAK_OCP
+
+config PDC_POWER_MGMT_STATE_MACHINE_SETTLED_TIMEOUT_MS
+	int "PDC_SM_SETTLED_TIMEOUT_MS timeout duration (ms)"
+	default 2000 # milliseconds
+	help
+	  Set the timeout duration, in milliseconds, when waiting on the PDC
+	  state machine to settle on a resting state in the function
+	  pdc_power_mgmt_wait_for_sync(). The default of 2000ms
+	  matches the PDC command processing timeout (PDC_CMD_TIMEOUT_MS).
+
+config PDC_POWER_MGMT_USB_MUX
+	bool "Enable USB mux control"
+	depends on PLATFORM_EC_USB_MUX && USB_PDC_POWER_MGMT
+	help
+	  Enable USB mux control in PDC power manager.  This needs to be
+	  enabled if the USB3/DP mux control is managed by the EC rather than
+	  the SoC.
+
+if PDC_POWER_MGMT_USB_MUX
+config USB_MUX_SYS_INIT_PRIORITY
+	int "USB mux module init priority"
+	default 89
+	help
+	  Initialization priority of the usb mux module when using the PDC
+	  power management subsystem.  This must be higher priority than the
+	  PDC power management initialization priority.
+endif
 
 module = USB_PDC
 module-str = USB PDC

@@ -63,7 +63,7 @@ static int count_port_bits(uint32_t bitmask)
  * This function is called when new port partners are either added or removed
  * that could affect how source current limits per port are allocated. The
  * number of ports capable of sourcing 3.0A current will be defined by
- * CONFIG_PLATFORM_EC_CONFIG_USB_PD_3A_PORTS.
+ * CONFIG_PLATFORM_EC_USB_PD_3A_PORTS.
  *
  * Note that this function is called both from a PDC thread when new ports or
  * added/removed and from the system workqueue when the current
@@ -97,7 +97,7 @@ static void pdc_dpm_balance_source_ports(struct k_work *work)
 		int new_max_port = LOWEST_PORT(new_ports);
 
 		if (count_port_bits(max_current_claimed) <
-		    CONFIG_PLATFORM_EC_CONFIG_USB_PD_3A_PORTS) {
+		    CONFIG_PLATFORM_EC_USB_PD_3A_PORTS) {
 			max_current_claimed |= BIT(new_max_port);
 			pdc_power_mgmt_set_current_limit(new_max_port,
 							 TC_CURRENT_3_0A);
@@ -120,6 +120,8 @@ static void pdc_dpm_balance_source_ports(struct k_work *work)
 						  max_current_claimed);
 
 			pdc_power_mgmt_frs_enable(rem_frs, false);
+			rp = pdc_power_mgmt_get_default_current_limit(rem_frs);
+			pdc_power_mgmt_set_current_limit(rem_frs, rp);
 			max_current_claimed &= ~BIT(rem_frs);
 
 			/* Give 50 ms for the PD task to process DPM flag */
@@ -138,10 +140,12 @@ static void pdc_dpm_balance_source_ports(struct k_work *work)
 		int new_frs_port = LOWEST_PORT(new_ports);
 
 		if (count_port_bits(max_current_claimed) <
-		    CONFIG_PLATFORM_EC_CONFIG_USB_PD_3A_PORTS) {
+		    CONFIG_PLATFORM_EC_USB_PD_3A_PORTS) {
 			max_current_claimed |= BIT(new_frs_port);
 			/* Enable FRS for this port */
 			pdc_power_mgmt_frs_enable(new_frs_port, true);
+			pdc_power_mgmt_set_current_limit(new_frs_port,
+							 TC_CURRENT_3_0A);
 		} else if (non_pd_sink_max_requested & max_current_claimed) {
 			int rem_non_pd = LOWEST_PORT(non_pd_sink_max_requested &
 						     max_current_claimed);
@@ -167,7 +171,7 @@ static void pdc_dpm_balance_source_ports(struct k_work *work)
 		int new_max_port = LOWEST_PORT(new_ports);
 
 		if (count_port_bits(max_current_claimed) <
-		    CONFIG_PLATFORM_EC_CONFIG_USB_PD_3A_PORTS) {
+		    CONFIG_PLATFORM_EC_USB_PD_3A_PORTS) {
 			max_current_claimed |= BIT(new_max_port);
 			pdc_power_mgmt_set_current_limit(new_max_port,
 							 TC_CURRENT_3_0A);
@@ -192,7 +196,7 @@ void pdc_dpm_eval_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo)
 		return;
 
 	if (pdc_power_mgmt_get_power_role(port) == PD_ROLE_SOURCE) {
-		if (CONFIG_PLATFORM_EC_CONFIG_USB_PD_3A_PORTS == 0)
+		if (CONFIG_PLATFORM_EC_USB_PD_3A_PORTS == 0)
 			return;
 
 		/* Valid PDO to process, so evaluate whether >1.5A is needed */
@@ -203,7 +207,7 @@ void pdc_dpm_eval_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo)
 	} else {
 		int frs_current = vsafe5v_pdo & PDO_FIXED_FRS_CURR_MASK;
 
-		if (!IS_ENABLED(CONFIG_USB_PD_FRS))
+		if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS))
 			return;
 
 		/* FRS is only supported in PD 3.0 and higher */
@@ -218,7 +222,7 @@ void pdc_dpm_eval_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo)
 				return;
 			}
 
-			if (CONFIG_PLATFORM_EC_CONFIG_USB_PD_3A_PORTS == 0)
+			if (CONFIG_PLATFORM_EC_USB_PD_3A_PORTS == 0)
 				return;
 
 			atomic_set_bit(&source_frs_max_requested, port);
@@ -232,44 +236,18 @@ void pdc_dpm_eval_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo)
 
 void pdc_dpm_add_non_pd_sink(int port)
 {
-	if (CONFIG_PLATFORM_EC_CONFIG_USB_PD_3A_PORTS == 0)
+	if (CONFIG_PLATFORM_EC_USB_PD_3A_PORTS == 0)
 		return;
 
 	atomic_set_bit(&non_pd_sink_max_requested, port);
 	pdc_dpm_balance_source_ports(&dpm_work.work);
 }
 
-void pdc_dpm_evaluate_request_rdo(int port, uint32_t rdo)
-{
-	int idx;
-	int op_ma;
-
-	if (CONFIG_PLATFORM_EC_CONFIG_USB_PD_3A_PORTS == 0)
-		return;
-
-	idx = RDO_POS(rdo);
-	/* Check for invalid index */
-	if (!idx)
-		return;
-
-	/* Extract the requested current which is report in mA/10 units */
-	op_ma = 10 * ((rdo >> 10) & 0x3FF);
-	if (atomic_test_bit(&sink_max_pdo_requested, port) && (op_ma <= 1500)) {
-		/*
-		 * sink_max_pdo_requested will be set when we get 5V/3A sink
-		 * capability from port partner. If port partner only request
-		 * 5V/1.5A, we need to provide 5V/1.5A.
-		 */
-		atomic_clear_bit(&sink_max_pdo_requested, port);
-		pdc_dpm_balance_source_ports(&dpm_work.work);
-	}
-}
-
 void pdc_dpm_remove_sink(int port)
 {
 	enum usb_typec_current_t rp;
 
-	if (CONFIG_PLATFORM_EC_CONFIG_USB_PD_3A_PORTS == 0)
+	if (CONFIG_PLATFORM_EC_USB_PD_3A_PORTS == 0)
 		return;
 
 	if (!atomic_test_bit(&sink_max_pdo_requested, port) &&
@@ -287,15 +265,37 @@ void pdc_dpm_remove_sink(int port)
 
 void pdc_dpm_remove_source(int port)
 {
-	if (CONFIG_PLATFORM_EC_CONFIG_USB_PD_3A_PORTS == 0)
+	enum usb_typec_current_t rp;
+
+	if (CONFIG_PLATFORM_EC_USB_PD_3A_PORTS == 0)
 		return;
 
-	if (!IS_ENABLED(CONFIG_USB_PD_FRS))
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS))
 		return;
 
 	if (!(BIT(port) & (uint32_t)source_frs_max_requested))
 		return;
 
 	atomic_clear_bit(&source_frs_max_requested, port);
+
+	/* Restore selected default Rp on the port */
+	rp = pdc_power_mgmt_get_default_current_limit(port);
+	pdc_power_mgmt_set_current_limit(port, rp);
 	pdc_dpm_balance_source_ports(&dpm_work.work);
+}
+
+int pdc_dpm_get_source_current(const int port)
+{
+	if (pd_get_power_role(port) == PD_ROLE_SINK) {
+		return 0;
+	}
+
+	if (max_current_claimed & BIT(port)) {
+		return 3000;
+	}
+
+	/* PDC implementations default to sourcing 1.5A unless this
+	 * module allocates 3A to the port via max_current_claimed.
+	 */
+	return 1500;
 }

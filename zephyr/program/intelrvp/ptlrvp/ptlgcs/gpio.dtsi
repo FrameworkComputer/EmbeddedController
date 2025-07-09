@@ -1,0 +1,206 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	aliases {
+		gpio-wp = &wp_test;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		ec_spi_oe_mecc: ec-gpio154-dummy {
+			gpios = <MCHP_GPIO_DECODE_154 GPIO_INPUT>;
+		};
+		bc_acok: bc-acok-ec-in {
+			gpios = <MCHP_GPIO_DECODE_155 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		board_id0: board-id0 {
+			gpios = <MCHP_GPIO_DECODE_007 GPIO_INPUT>;
+		};
+		board_id1: board-id1 {
+			gpios = <MCHP_GPIO_DECODE_010 GPIO_INPUT>;
+		};
+		gpio_pdc_pow_irq: typec-ec-smbus-alert {
+			gpios = <MCHP_GPIO_DECODE_143 GPIO_INPUT>;
+		};
+		ec_wake: ec-gpio144-wake {
+			gpios = <MCHP_GPIO_DECODE_144 GPIO_INPUT>;
+		};
+		m2-ssd-ec-i2c05-data {
+			gpios = <MCHP_GPIO_DECODE_141 GPIO_INPUT>;
+		};
+		m2-ssd-ec-i2c05-clk {
+			gpios = <MCHP_GPIO_DECODE_142 GPIO_INPUT>;
+		};
+		ec-jtag-tdi {
+			gpios = <MCHP_GPIO_DECODE_145 GPIO_INPUT>;
+		};
+		ec-jtag-tdo {
+			gpios = <MCHP_GPIO_DECODE_146 GPIO_INPUT>;
+		};
+		ec-jtag-tck {
+			gpios = <MCHP_GPIO_DECODE_147 GPIO_INPUT>;
+		};
+		ec-jtag-tms {
+			gpios = <MCHP_GPIO_DECODE_150 GPIO_INPUT>;
+		};
+		board_id2: board-id2 {
+			gpios = <MCHP_GPIO_DECODE_114 GPIO_INPUT>;
+		};
+		board_id3: board-id3 {
+			gpios = <MCHP_GPIO_DECODE_115 GPIO_INPUT>;
+		};
+		ccd_mode_odl_ec:ec-tcpc-aic-reset-n {
+			gpios = <MCHP_GPIO_DECODE_043 GPIO_INPUT>;
+		};
+		pm_bat_status_led2: ec-pm-bat-status-led2 {
+			gpios = <MCHP_GPIO_DECODE_157 GPIO_OUTPUT_LOW>;
+		};
+		pm_bat_status_led1: ec-pm-bat-status-led1 {
+			gpios = <MCHP_GPIO_DECODE_156 GPIO_OUTPUT_LOW>;
+		};
+		board_id5: board-id5 {
+			gpios = <MCHP_GPIO_DECODE_203 GPIO_INPUT>;
+		};
+		board_id4: board-id4 {
+			gpios = <MCHP_GPIO_DECODE_202 GPIO_INPUT>;
+		};
+		ec-jtag-strap {
+			gpios = <MCHP_GPIO_DECODE_170 GPIO_INPUT>;
+		};
+		prochot-ec-r {
+			gpios = <MCHP_GPIO_DECODE_171 GPIO_INPUT>;
+			enum-name = "GPIO_CPU_PROCHOT";
+		};
+		all_sys_pwrgd: all-sys-pwrgd {
+			gpios = <MCHP_GPIO_DECODE_057 GPIO_INPUT>;
+			enum-name = "GPIO_PG_EC_ALL_SYS_PWRGD";
+		};
+
+		/* KSO02 is inverted */
+		kbc-scanout-2 {
+			gpios = <MCHP_GPIO_DECODE_046 GPIO_OUTPUT_HIGH>;
+		};
+		pwrbtn: pwrbtn-ec-in-n {
+			gpios = <MCHP_GPIO_DECODE_106 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		en_pp3300_a: ec-pg3-r {
+			gpios = <MCHP_GPIO_DECODE_226 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_EN_PP3300_A";
+			alias = "GPIO_TEMP_SENSOR_POWER";
+		};
+		pm-pwrbtn-led {
+			gpios = <MCHP_GPIO_DECODE_241 GPIO_INPUT>;
+		};
+		btp-ec-r {
+			gpios = <MCHP_GPIO_DECODE_221 GPIO_INPUT>;
+		};
+
+		/* Keep low to prioritize AC brick power source selection */
+		std-adpt-cntrl-gpio-r {
+			gpios = <MCHP_GPIO_DECODE_254 GPIO_OUTPUT_LOW>;
+		};
+		tp-ec-m12 {
+			gpios = <MCHP_GPIO_DECODE_025 GPIO_OUTPUT_LOW>;
+		};
+		gpio_fan_control: fan-pwr-disable {
+			gpios = <MCHP_GPIO_DECODE_060 GPIO_OUTPUT_LOW>;
+		};
+		en_pp5000_s5: ec-gppc-b14 {
+			gpios = <MCHP_GPIO_DECODE_244 GPIO_OUTPUT_LOW>;
+		};
+		nc-b2 {
+			gpios = <MCHP_GPIO_DECODE_033 GPIO_INPUT>;
+		};
+		std_adp_prsnt: std-adp-prsnt-ec {
+			gpios = <MCHP_GPIO_DECODE_243 GPIO_INPUT>;
+		};
+		ec-m2-ssd-pln-delay {
+			gpios = <MCHP_GPIO_DECODE_022 GPIO_INPUT>;
+		};
+		recvry-indicator-n {
+			gpios = <MCHP_GPIO_DECODE_023 GPIO_INPUT>;
+		};
+		gpio_ec_pch_wake_odl: smc-wake-sci-n {
+			gpios = <MCHP_GPIO_DECODE_130 GPIO_INPUT>;
+		};
+		h-caterr-ec-n {
+			gpios = <MCHP_GPIO_DECODE_131 GPIO_INPUT>;
+		};
+		cpu-c10-gate-n-r {
+			gpios = <MCHP_GPIO_DECODE_013 GPIO_INPUT>;
+		};
+		pch_slp_s0_n: pm-slp-s0-r-n {
+			gpios = <MCHP_GPIO_DECODE_052 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S0_L";
+		};
+		edp-bklt-ec {
+			gpios = <MCHP_GPIO_DECODE_016 GPIO_INPUT>;
+		};
+		sys_rst_odl: sys-reset-r-n {
+			gpios = <MCHP_GPIO_DECODE_224 (GPIO_ODR_HIGH |
+				 GPIO_ACTIVE_LOW)>;
+		};
+		cse_early_rec_sw: cse-early-sw-r {
+			gpios = <MCHP_GPIO_DECODE_223 GPIO_INPUT>;
+		};
+		rsmrst_pwrgd: rsmrst-pwrgd-ec-n {
+			gpios = <MCHP_GPIO_DECODE_227 GPIO_INPUT>;
+			enum-name = "GPIO_PG_EC_RSMRST_ODL";
+		};
+		ec_pch_rsmrst_l: pm-rsmrst-ec-n {
+			gpios = <MCHP_GPIO_DECODE_055 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_RSMRST_L";
+		};
+		boot-halt {
+			gpios = <MCHP_GPIO_DECODE_056 GPIO_INPUT>;
+		};
+		ec-gpp-b14-topswap-ov {
+			gpios = <MCHP_GPIO_DECODE_002 GPIO_INPUT>;
+		};
+		hall-0deg-int-n {
+			gpios = <MCHP_GPIO_DECODE_014 GPIO_INPUT>;
+		};
+		gpio_mic_privacy_ec: mic-privacy-ec {
+			gpios = <MCHP_GPIO_DECODE_053 GPIO_INPUT>;
+		};
+		sys-pwrok-ec-r {
+			gpios = <MCHP_GPIO_DECODE_015 GPIO_INPUT>;
+		};
+		ec-slatemode-hallout-snsr-r {
+			gpios = <MCHP_GPIO_DECODE_222 GPIO_INPUT>;
+		};
+		bat-id-r {
+			gpios = <MCHP_GPIO_DECODE_162 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		smc_lid_n: hall-0deg-int-vci-n {
+			gpios = <MCHP_GPIO_DECODE_161 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		ec-h1-packet-mode-r {
+			gpios = <MCHP_GPIO_DECODE_101 GPIO_INPUT>;
+			enum-name = "GPIO_PACKET_MODE_EN";
+		};
+		wp_test: tp-bgp2 {
+			gpios = <MCHP_GPIO_DECODE_102 GPIO_INPUT>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		pm-bat-low {
+			gpios = <MCHP_GPIO_DECODE_063 GPIO_INPUT>;
+		};
+		prwbtn: pm-pwrbtn-n-r {
+			gpios = <MCHP_GPIO_DECODE_011 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		ec_pch_pwrok_od: ec-pm-pch-pwrok {
+			gpios = <MCHP_GPIO_DECODE_100 GPIO_ODR_LOW>;
+			enum-name = "GPIO_PCH_PWROK";
+		};
+	};
+};

@@ -24,7 +24,7 @@
 /*
  * For host tests, use a static area for panic data.
  */
-#ifdef CONFIG_BOARD_NATIVE_POSIX
+#if defined(CONFIG_BOARD_NATIVE_POSIX) || defined(CONFIG_BOARD_NATIVE_SIM)
 static struct panic_data zephyr_panic_data;
 #undef PANIC_DATA_PTR
 #undef CONFIG_PANIC_DATA_BASE
@@ -79,6 +79,18 @@ static int panic_txchar(void *context, int c)
 
 void panic_puts(const char *outstr)
 {
+#if defined(CONFIG_USB_CONSOLE) || defined(CONFIG_USB_CONSOLE_STREAM)
+	/*
+	 * Send the message to the USB console
+	 * on platforms which support it.
+	 */
+	usb_puts(outstr);
+#endif
+
+	/* Don't write to uart before it's initialized */
+	if (!uart_init_done())
+		return;
+
 	/* Flush the output buffer */
 	uart_flush_output();
 
@@ -86,13 +98,6 @@ void panic_puts(const char *outstr)
 	while (*outstr) {
 		/* Send the message to the UART console */
 		panic_txchar(NULL, *outstr);
-#if defined(CONFIG_USB_CONSOLE) || defined(CONFIG_USB_CONSOLE_STREAM)
-		/*
-		 * Send the message to the USB console
-		 * on platforms which support it.
-		 */
-		usb_puts(outstr);
-#endif
 		++outstr;
 	}
 
@@ -103,6 +108,10 @@ void panic_puts(const char *outstr)
 void panic_printf(const char *format, ...)
 {
 	va_list args;
+
+	/* Don't write to uart before it's initialized */
+	if (!uart_init_done())
+		return;
 
 	/* Flush the output buffer */
 	uart_flush_output();
@@ -189,7 +198,8 @@ uintptr_t get_panic_data_start(void)
 	if (pdata_ptr->magic != PANIC_DATA_MAGIC)
 		return 0;
 
-	if (IS_ENABLED(CONFIG_BOARD_NATIVE_POSIX))
+	if (IS_ENABLED(CONFIG_BOARD_NATIVE_POSIX) ||
+	    IS_ENABLED(CONFIG_BOARD_NATIVE_SIM))
 		return (uintptr_t)pdata_ptr;
 
 	/* LCOV_EXCL_START - Can't cover non posix lines (yet) */
@@ -212,7 +222,7 @@ static uint32_t get_panic_data_size(void)
  * It can also delete panic data from previous boot, so this function
  * should be used when we are sure that we don't need it.
  */
-#ifdef CONFIG_BOARD_NATIVE_POSIX
+#if defined(CONFIG_BOARD_NATIVE_POSIX) || defined(CONFIG_BOARD_NATIVE_SIM)
 struct panic_data *test_get_panic_data_pointer(void)
 {
 	return pdata_ptr;
@@ -420,15 +430,17 @@ static int command_crash(int argc, const char **argv)
 	if (!strcasecmp(argv[1], "assert")) {
 		ASSERT(0);
 	} else if (!strcasecmp(argv[1], "divzero")) {
+		volatile int one = 1;
 		volatile int zero = 0;
 
 		cflush();
-		ccprintf("%08x", 1 / zero);
+		ccprintf("%08x", one / zero);
 	} else if (!strcasecmp(argv[1], "udivzero")) {
+		volatile unsigned int one = 1;
 		volatile int zero = 0;
 
 		cflush();
-		ccprintf("%08x", 1U / zero);
+		ccprintf("%08x", one / zero);
 	} else if (!strcasecmp(argv[1], "stack")) {
 		stack_overflow_recurse(1);
 #ifndef CONFIG_ALLOW_UNALIGNED_ACCESS

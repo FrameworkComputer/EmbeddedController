@@ -10,10 +10,6 @@
 #include "test_util.h"
 #include "timer.h"
 
-/*
- * b/328779928: If you increase this value to 2, the test fails when run with
- * run_device_tests.py, but passes when run on the console manually.
- */
 static const int rtc_delay_seconds = 1;
 static atomic_t interrupt_counter;
 static atomic_t rtc_fired;

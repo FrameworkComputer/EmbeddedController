@@ -1,0 +1,36 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# Generated with https://sequencediagram.googleplex.com/
+
+Title: PDC Attach Call Flow
+participant Power Mgmt as PMGMT
+participant DRIVER as DRIVER
+participant PDC
+
+Note over PMGMT: 1. State: Unattached
+Note over PDC: 2. Port Attach
+
+PDC->DRIVER: 3. IRQ
+
+Note over DRIVER: 4. CCI Event\nconnector_change\nvendor_defined_indicator
+DRIVER->PMGMT: 5. pdc_ci_handler_cb
+
+Note over PMGMT: 6. Queue\nGET_CONNECTOR_STATUS
+Note over PMGMT: 7. Post\nSM_EVENT
+Note over PMGMT: 8. State: SEND_CMD_START
+PMGMT->DRIVER: 9. pdc_get_connector_status(&port->cs)
+DRIVER-->PMGMT: 10. return 0
+
+Note over PMGMT: 11. State: SEND_CMD_WAIT
+
+DRIVER->PDC: 12. GET_CONNECTOR_STATUS
+DRIVER->PDC: 13. Read(&port->cs)
+Note over DRIVER: 14. CCI Event\ncommand_completed
+DRIVER->PMGMT: 15. pdc_cc_handler_cb
+Note over PMGMT: 16. Post\nSM_EVENT
+
+Note over PMGMT: 17. State: (port->cs.power_direction ?\nSRC_ATTACHED :\nSNK_ATTACHED)
+
+Note over PMGMT: 18. Apply Policy

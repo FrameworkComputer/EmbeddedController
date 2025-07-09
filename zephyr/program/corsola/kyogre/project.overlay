@@ -28,7 +28,6 @@
 		 * its own <>_INT_EVENT.
 		 */
 		lsm6dso-int = &base_accel;
-		lis2dw12-int = &lid_accel;
 	};
 
 	gpio-interrupts {
@@ -40,11 +39,10 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "lsm6dso_interrupt";
 		};
-
-		int_lid_imu: lid_imu {
-			irq-pin = <&lid_accel_int_l>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "lis2dw12_interrupt";
+		int_pen_fault: pen_fault {
+			irq-pin = <&pen_fault_od>;
+			flags = <GPIO_INT_EDGE_RISING>;
+			handler = "pen_fault_interrupt";
 		};
 	};
 
@@ -60,8 +58,15 @@
 		charger_prochot_odl {
 			gpios = <&gpiof 2 GPIO_INPUT>;
 		};
-		pen_fault_od {
+		ec_pen_chg_dis_odl: ec_pen_chg_dis_odl {
+ 			gpios = <&gpioe 4 GPIO_ODR_HIGH>;
+		};
+		pen_fault_od: pen_fault_od {
 			gpios = <&gpiof 3 GPIO_INPUT>;
+		};
+		ec_batt_pres_odl: ec_batt_pres_odl {
+			gpios = <&gpioe 0 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
 		};
 	};
 
@@ -108,10 +113,10 @@
 				compatible =
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
-					odr = <(10000 | ROUND_UP_FLAG)>;
+					odr = <(12500 | ROUND_UP_FLAG)>;
 				};
 				ec-s3 {
-					odr = <(10000 | ROUND_UP_FLAG)>;
+					odr = <(12500 | ROUND_UP_FLAG)>;
 				};
 			};
 		};
@@ -131,10 +136,11 @@
 				compatible =
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
-					odr = <(10000 | ROUND_UP_FLAG)>;
+					odr = <(12500 | ROUND_UP_FLAG)>;
 				};
 				ec-s3 {
-					odr = <(10000 | ROUND_UP_FLAG)>;
+					odr = <(12500 | ROUND_UP_FLAG)>;
+					ec-rate = <(100 * USEC_PER_MSEC)>;
 				};
 			};
 		};
@@ -161,7 +167,9 @@
 		 * list of GPIO interrupts that have to
 		 * be enabled at initial stage
 		 */
-		sensor-irqs = <&int_base_imu &int_lid_imu>;
+		sensor-irqs = <&int_base_imu>;
+		/* list of sensors in force mode */
+		accel-force-mode-sensors = <&lid_accel>;
 	};
 
 	/* Rotation matrix used by drivers. */

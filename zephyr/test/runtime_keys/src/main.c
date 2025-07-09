@@ -21,11 +21,17 @@ FAKE_VOID_FUNC(chipset_reset, enum chipset_shutdown_reason);
 FAKE_VOID_FUNC(keyboard_clear_buffer);
 FAKE_VOID_FUNC(system_enter_hibernate, uint32_t, uint32_t);
 
+#define VOL_UP_ROW 0
+#define VOL_UP_COL 1
+
+bool vivaldi_kbd_is_vol_up(uint8_t row, uint8_t col)
+{
+	return row == VOL_UP_ROW && col == VOL_UP_COL;
+}
+
 #define CROS_EC_KEYBOARD_NODE DT_CHOSEN(cros_ec_keyboard)
 
 #define TEST_BOOT_KEYS_NODE DT_NODELABEL(test_runtime_keys)
-#define VOL_UP_ROW KBD_RC_ROW(DT_PROP(TEST_BOOT_KEYS_NODE, vol_up_rc))
-#define VOL_UP_COL KBD_RC_COL(DT_PROP(TEST_BOOT_KEYS_NODE, vol_up_rc))
 
 #define LEFT_ALT_ROW KBD_RC_ROW(DT_PROP(TEST_BOOT_KEYS_NODE, left_alt_rc))
 #define LEFT_ALT_COL KBD_RC_COL(DT_PROP(TEST_BOOT_KEYS_NODE, left_alt_rc))

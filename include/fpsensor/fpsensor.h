@@ -34,7 +34,33 @@ extern "C" {
 /* --- functions provided by the sensor-specific driver --- */
 
 /**
- * Initialize the connected sensor hardware and put it in a low power mode.
+ * @brief Initialize the connected sensor hardware and put it in a low power
+ * mode.
+ *
+ * It is expected that @ref fp_sensor_init and @ref fp_sensor_deinit may be
+ * called multiple times during runtime to clear the active user session. For
+ * example, on user logout, @ref fp_sensor_deinit is called and then @ref
+ * fp_sensor_init is called.
+ *
+ * This function updates a static error variable with the following error codes
+ * (whenever detected), which is read using the @ref fp_sensor_get_info function
+ * defined in the same source file. The errors are ultimately read from the
+ * application processor using the host command EC_CMD_FP_INFO:
+ *
+ * FP_ERROR_DEAD_PIXELS: The number of dead pixels detected on the sensor during
+ * maintenance.
+ *
+ * FP_ERROR_DEAD_PIXELS_UNKNOWN: The number of dead pixels has not been tested
+ * yet.
+ *
+ * FP_ERROR_NO_IRQ: No interrupt signal received from the sensor.
+ *
+ * FP_ERROR_SPI_COMM: Error in SPI communication with the sensor.
+ *
+ * FP_ERROR_BAD_HWID: Invalid sensor hardware ID.
+ *
+ * FP_ERROR_INIT_FAIL: Sensor initialization failed.
+ *
  *
  * @return EC_SUCCESS always
  */
@@ -43,8 +69,16 @@ int fp_sensor_init(void);
 /**
  * De-initialize the sensor hardware.
  *
+ * This function closes the fingerprint sensor. It also shuts down any ongoing
+ * biometric algorithm processes. It is called as part of the sensor reset
+ * process.
+ *
+ * @warning This function **must be called before** releasing the resources used
+ * by the matching algorithm including @p fp_buffer.
+ *
  * @return 0 on success
- * @return negative value on error
+ * @return negative value on error including failures to properly exit from the
+ * biometric algorithm or close the fingerprint sensor.
  */
 int fp_sensor_deinit(void);
 
@@ -53,7 +87,7 @@ int fp_sensor_deinit(void);
  * as required by the EC_CMD_FP_INFO host command.
  *
  * Fills both the static information and information read from the sensor at
- * runtime.
+ * runtime such as sensor_id, errors, etc.
  *
  * @param[out] resp sensor info
  *
@@ -82,7 +116,7 @@ void fp_configure_detect(void);
  * Returns the status of the finger on the sensor.
  * (assumes fp_configure_detect was called before)
  *
- * @return finger_state
+ * @return finger_state A value from @ref finger_state enum.
  */
 enum finger_state fp_finger_status(void);
 
@@ -134,11 +168,18 @@ int fp_acquire_image(uint8_t *image_data);
  */
 int fp_acquire_image_with_mode(uint8_t *image_data, int mode);
 
+/*
+ * TODO(b/378523729): Refactor fpsensor API so that error_state is maintained by
+ * our code.
+ */
 /**
  * Runs a test for defective pixels.
  *
  * Should be triggered periodically by the client. The maintenance command can
- * take several hundred milliseconds to run.
+ * take several hundred milliseconds to run. The function updates the
+ * `error_state`, which is a uint16_t variable where the error state will be
+ * stored. The function must update error_state about dead pixels by setting
+ * bits in the FP_ERROR_DEAD_PIXELS field.
  *
  * @return EC_ERROR_HW_INTERNAL on error (such as finger on sensor)
  * @return EC_SUCCESS on success

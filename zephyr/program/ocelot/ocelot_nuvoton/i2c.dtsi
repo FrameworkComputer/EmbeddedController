@@ -1,0 +1,22 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Setup the lecacy EC driver port names */
+&i2c_ec_i2c_pd_scl_r {
+	enum-names = "I2C_PORT_PD";
+};
+&i2c_ec_i2c_mi {
+	enum-names = "I2C_PORT_CHARGER";
+};
+
+&i2c0_0 {
+	label = "I2C_PORT_PD";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c2_0 {
+	label = "I2C_PORT_CHARGER";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};

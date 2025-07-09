@@ -7,8 +7,89 @@
 
 #include <cros/integrated_fwid.dtsi>
 
-#include "../fatcat_stub.dts"
-
 /* fatcat_it82002aw project DTS includes */
 
+/* TODO(b/358612639)
+ * Arbitrage generates an incorrect node label when using alternate pins.
+ * Create a 2nd node label on I2C3 as a workaround.
+ */
+i2c3ALT: &i2c3 {
+};
+
+#include "generated.dtsi"
+#include "include/board.h"
+
+#define PD_POW_IRQ_GPIO &gpiof 5
+
+/ {
+	named-gpios {
+		/*
+		 * Aliases for power signal names
+		 */
+		en_pp3300_a: ec_ds3_r {};
+		en_pp5000_s5: bga_pinf4 {};
+		rsmrst_pwrgd: rsmrst_pwrgd_n_r {};
+		/*
+		 * TODO: b/386856132 - update schematics net names
+		 */
+		ec_pch_rsmrst_l: cpu_c10_gate_r {};
+		pch_slp_s0_n: pch_slp_s0_n_r {};
+		ec_pch_pwrok_od: pch_pwrok_ec_r {};
+		all_sys_pwrgd: all_sys_pwrgd_r {};
+		pwrbtn: bga_pinb4 {};
+	};
+};
+
+#include "adc.dtsi"
+#include "console.dtsi"
+#include "fan.dtsi"
+#include "gpios.dtsi"
+#include "i2c.dtsi"
+#include "interrupts.dtsi"
+#include "keyboard.dtsi"
+#include "pwm.dtsi"
+#include "temp_sensors.dtsi"
+
+#include "../../intelrvp/ptlrvp/gsc_board.dtsi"
+
+&it8801_mfd {
+	irq-gpios = <&gpioi 6 GPIO_ACTIVE_LOW>;
+};
+
+#include "../../intelrvp/ptlrvp/ioex_gpio.dtsi"
+#include "../../intelrvp/ptlrvp/power_signals.dtsi"
+#include "../../intelrvp/ptlrvp/battery.dtsi"
+#include "../../intelrvp/ptlrvp/pd.dtsi"
+#include "../../intelrvp/ptlrvp/usbc.dtsi"
+
+/* these need to be promoted to program.conf */
+
+#include "binman.dtsi"
+
 /* fatcat_it82002aw overrides follow... */
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+
+		c_ioex_kbd_intr_r {
+			enum-name = "GPIO_KB_DISCRETE_INT";
+		};
+		bga_pine5 {
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		/* override since arb does not support GPIO_VOLTAGE_1P8 */
+		gpio_rsmrst_pwrgd_n_r: rsmrst_pwrgd_n_r {
+			gpios = <&gpiof 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+	};
+};
+
+/* AP interface */
+&espi0 {
+	status = "okay";
+};
+
+&sha0 {
+	status = "okay";
+};

@@ -39,14 +39,32 @@ def translate_status(status):
     return ret_status
 
 
-def translate_expected(status):
+def translate_expected(status, suite_name, test_id):
     """Translates ZTEST status to ResultDB expected"""
-    flag = False
 
-    if status in ["passed", "filtered"]:
-        flag = True
+    if status in ["passed", "filtered", "not run"]:
+        return True
+    if status == "skipped":
+        # A list of zephyr/main suites that are known to skip.
+        # Please don't use skips in EC tests.
+        if suite_name in [
+            "pdc/pdc.generic",
+            "pdc/pdc.generic.tps6699x",
+            "pdc/pdc.policy",
+            "pdc/pdc.policy.no_frs",
+            "pdc/pdc.policy.only_fixed_pdos",
+            "pdc/pdc.policy.low_voltage",
+            "pdc/pdc.policy.high_voltage",
+            "tests/drivers/counter/counter_basic_api/drivers.counter.basic_api",
+            "tests/drivers/gpio/gpio_api_1pin/drivers.gpio.1pin",
+            "tests/subsys/pm/policy_api/pm.policy.api.default",
+            "tests/subsys/pm/policy_api/pm.policy.api.app",
+        ]:
+            return True
+        print(f"Unexpected SKIP: suite {suite_name} test {test_id}")
+        return False
 
-    return flag
+    return False
 
 
 def translate_duration(testcase):
@@ -106,7 +124,9 @@ def testcase_to_result(testsuite, testcase, base_tags, config_tags):
     result = {
         "testId": testcase["identifier"],
         "status": translate_status(testcase["status"]),
-        "expected": translate_expected(testcase["status"]),
+        "expected": translate_expected(
+            testcase["status"], testsuite["name"], testcase["identifier"]
+        ),
         "summaryHtml": testcase_summary(testcase),
         "artifacts": {
             "test_log": {
@@ -250,7 +270,7 @@ def main():
         if args.upload:
             upload_results(rdb_results)
     else:
-        raise Exception("Missing test result file for conversion")
+        raise ValueError("Missing test result file for conversion")
 
 
 if __name__ == "__main__":

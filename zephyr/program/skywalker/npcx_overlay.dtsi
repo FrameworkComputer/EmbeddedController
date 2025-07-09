@@ -1,0 +1,76 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ */
+
+/ {
+	aliases {
+		gpio-wp = &gpio_ec_flash_wp_odl;
+	};
+
+	named-gpios {
+		entering_rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		en_pp4200_s5: en_pp3700_s5 {};
+		ap_ec_sysrst_odl {
+			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+						GPIO_ACTIVE_LOW)>;
+		};
+		ap_ec_wdtrst_l {
+			gpios = <&gpio5 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+						GPIO_ACTIVE_LOW)>;
+		};
+		ap_in_sleep_l {
+			gpios = <&gpio5 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+						GPIO_ACTIVE_LOW)>;
+		};
+		pmic_ec_resetb {
+			gpios = <&gpio9 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+		};
+	};
+
+	named-i2c-ports {
+		ec_smb_batt_scl_3v3 {
+			enum-names = "I2C_PORT_BATTERY", "I2C_PORT_VIRTUAL_BATTERY";
+		};
+	};
+};
+
+&i2c0_0 {
+	label = "I2C_SENSOR";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c1_0 {
+	label = "I2C_PDC_SM";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c2_0 {
+	label = "I2C_PDC_S";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c3_0 {
+	label = "I2C_CHARGER";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c5_0 {
+	label = "I2C_SMB_BATT";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	/* Upstream zephyr uses an irregular name here */
+	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
+};
+
+&cbi_flash {
+	/*
+	 * CBI section size is 0x1000 bytes, the CBI portion lies at the end of
+	 * EC_RO section.
+	 */
+	offset = <0x3e000>;
+	size = <0x1000>;
+};

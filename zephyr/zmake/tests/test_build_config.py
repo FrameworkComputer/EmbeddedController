@@ -98,7 +98,7 @@ class FakeJobClient(zmake.jobserver.JobClient):
         self.captured_argv = []
         self.captured_env = {}
 
-    def get_job(self):  # pylint: disable=no-self-use
+    def get_job(self):
         """See base class."""
         return zmake.jobserver.JobHandle(lambda: None)
 

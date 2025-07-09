@@ -56,9 +56,6 @@ You might also find these files useful (using read-only as an example):
 For a complete list of `zmake` commands and options, see the
 [Zmake Documentation].
 
-Googlers may be interested in setting up [building with Goma](../goma.md)
-as well.
-
 ### Building from Portage
 
 There is also a [an ebuild] for integration into the larger Chromium

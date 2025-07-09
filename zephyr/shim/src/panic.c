@@ -95,6 +95,20 @@
 #define PANIC_REG_EXCEPTION(pdata) (pdata->riscv.mcause)
 #define PANIC_REG_REASON(pdata) (pdata->riscv.regs[11])
 #define PANIC_REG_INFO(pdata) (pdata->riscv.regs[10])
+#elif defined(CONFIG_X86)
+#define PANIC_ARCH PANIC_ARCH_X86
+#define PANIC_REG_LIST(M, M_GPR) \
+	M(eax, x86.eax, eax)     \
+	M(ebx, x86.ebx, ebx)     \
+	M(ecx, x86.ecx, ecx)     \
+	M(edx, x86.edx, edx)     \
+	M(esi, x86.esi, esi)     \
+	M(edi, x86.edi, edi)     \
+	M(cs, x86.cs, cs)        \
+	M(eip, x86.eip, eip)
+#define PANIC_REG_EXCEPTION(pdata) (pdata->x86.eflags)
+#define PANIC_REG_REASON(pdata) (pdata->x86.vector)
+#define PANIC_REG_INFO(pdata) (pdata->x86.error_code)
 #else
 /* Not implemented for this arch */
 #define PANIC_ARCH 0
@@ -130,6 +144,7 @@ void panic_data_print(const struct panic_data *pdata)
 static void copy_esf_to_panic_data(const struct arch_esf *esf,
 				   struct panic_data *pdata)
 {
+	memset(pdata, 0, CONFIG_PANIC_DATA_SIZE);
 	pdata->arch = PANIC_ARCH;
 	pdata->struct_version = 2;
 	pdata->flags = (PANIC_ARCH == PANIC_ARCH_CORTEX_M) ?

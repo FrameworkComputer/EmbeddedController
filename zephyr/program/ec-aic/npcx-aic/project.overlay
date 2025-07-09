@@ -1,0 +1,166 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/integrated_fwid.dtsi>
+#include <cros/cbi_flash.dtsi>
+
+/ {
+	aliases {
+		gpio-wp = &ec_wp_l;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		/* TODO - need to define a shared pin on the MECC
+		 * connector for write-protect when used with the EC AIC
+		 * Tester board.  On RVPs, the write-protect is provided on
+		 * an I/O expander.
+		 * For now, mapped to PD alert pin for port 0.
+		 */
+		ec_wp_l: write-protect {
+			gpios = <&gpiof 0 GPIO_INPUT>;
+		};
+		/* unimplemented GPIOs */
+		entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+
+	aic-pins {
+		compatible = "cros,aic-pins";
+		io-gpios = <&gpio4 3 GPIO_ACTIVE_HIGH>,
+			   <&gpio7 3 GPIO_ACTIVE_HIGH>,
+			   <&gpio6 7 GPIO_ACTIVE_HIGH>,
+
+			   /* KSI */
+			   <&gpio3 1 GPIO_ACTIVE_HIGH>,
+			   <&gpio3 0 GPIO_ACTIVE_HIGH>,
+			   <&gpio2 7 GPIO_ACTIVE_HIGH>,
+			   <&gpio2 6 GPIO_ACTIVE_HIGH>,
+			   <&gpio2 5 GPIO_ACTIVE_HIGH>,
+			   <&gpio2 4 GPIO_ACTIVE_HIGH>,
+			   <&gpio2 3 GPIO_ACTIVE_HIGH>,
+			   <&gpio2 2 GPIO_ACTIVE_HIGH>,
+
+			   /* KSO */
+			   <&gpio2 1 GPIO_ACTIVE_HIGH>,
+			   <&gpio2 0 GPIO_ACTIVE_HIGH>,
+			   <&gpio1 6 GPIO_ACTIVE_HIGH>,
+			   <&gpio1 5 GPIO_ACTIVE_HIGH>,
+			   <&gpio1 4 GPIO_ACTIVE_HIGH>,
+			   <&gpio1 3 GPIO_ACTIVE_HIGH>,
+			   <&gpio1 2 GPIO_ACTIVE_HIGH>,
+			   <&gpio1 1 GPIO_ACTIVE_HIGH>,
+			   <&gpio1 0 GPIO_ACTIVE_HIGH>,
+			   <&gpio0 7 GPIO_ACTIVE_HIGH>,
+			   <&gpio0 6 GPIO_ACTIVE_HIGH>,
+			   <&gpio0 5 GPIO_ACTIVE_HIGH>,
+			   <&gpio0 4 GPIO_ACTIVE_HIGH>,
+			   <&gpio8 2 GPIO_ACTIVE_HIGH>,
+			   <&gpio8 3 GPIO_ACTIVE_HIGH>,
+			   <&gpio0 3 GPIO_ACTIVE_HIGH>,
+			   <&gpiob 1 GPIO_ACTIVE_HIGH>;
+	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		ambient {
+			enum-name = "ADC_TEMP_SENSOR_2_AMBIENT";
+			io-channels = <&adc0 0>;
+		};
+
+		amon {
+			enum-name = "ADC_AMON_BMON";
+			io-channels = <&adc0 5>;
+		};
+       };
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_chan0_gp45 &adc0_chan5_gp37>;
+	pinctrl-names = "default";
+};
+
+&cbi_flash {
+	/*
+	 * CBI section size is 0x1000 bytes, the CBI portion lies at the end of
+	 * EC_RO section. EC_RO section ends at 0x50000 byte which is the offset
+	 */
+	offset = <0x50000>;
+	size = <0x1000>;
+};
+
+&i2c_ctrl0 {
+	status = "okay";
+};
+
+&i2c_ctrl1 {
+	status = "okay";
+};
+
+&i2c_ctrl2 {
+	status = "okay";
+};
+
+&i2c_ctrl7 {
+	status = "okay";
+};
+
+&i2c_ctrl5 {
+	status = "okay";
+};
+
+&i2c_ctrl4 {
+	status = "okay";
+};
+
+/* First mux (U9) */
+
+&i2c0_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
+	pinctrl-names = "default";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c1_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
+	pinctrl-names = "default";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c7_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
+	pinctrl-names = "default";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c2_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
+	pinctrl-names = "default";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+/* Second mux (U11) */
+
+&i2c5_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
+	pinctrl-names = "default";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c4_1 {
+	status = "okay";
+	pinctrl-0 = <&i2c4_1_sda_scl_gpf2_f3>;
+	pinctrl-names = "default";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};

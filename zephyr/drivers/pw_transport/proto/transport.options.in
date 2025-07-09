@@ -1,0 +1,7 @@
+# For compatibility replace the following 2 lines with:
+# pw.transport.Status.flags_mask callback_datatype:'struct flags_bytes_t { uint8_t size; uint8_t bytes[@PW_TRANSPORT_STATUS_FLAGS_SIZE@];}'
+# pw.transport.Status.flags_mask callback_function:'cros_dsp_comms_GetStatusResponse_flags_callback'
+
+pw.transport.Status.flags_mask max_size:@PW_TRANSPORT_STATUS_FLAGS_SIZE@
+pw.transport.Status.flags_mask fixed_length:True
+pw.transport.Status.response_length int_size:IS_8

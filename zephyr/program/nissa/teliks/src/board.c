@@ -15,6 +15,7 @@
 #include "driver/accel_bma4xx.h"
 #include "driver/accel_lis2dw12_public.h"
 #include "driver/accelgyro_bmi323.h"
+#include "driver/accelgyro_icm42607.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
@@ -26,6 +27,22 @@
 #include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(board_init, LOG_LEVEL_ERR);
+
+enum base_sensor_type {
+	base_none = 0,
+	base_bmi323,
+	base_lsm6dsm,
+	base_icm42607,
+};
+
+enum lid_sensor_type {
+	lid_none = 0,
+	lid_bma422,
+	lid_lis2dw12,
+};
+
+static int base_use_alt_sensor;
+static int lid_use_alt_sensor;
 
 test_export_static void board_setup_init(void)
 {
@@ -50,33 +67,53 @@ test_export_static void board_setup_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_setup_init, HOOK_PRIO_PRE_DEFAULT);
 
-static bool base_use_alt_sensor;
-static bool lid_use_alt_sensor;
-
 void motion_interrupt(enum gpio_signal signal)
 {
-	if (base_use_alt_sensor) {
+	if (base_use_alt_sensor == base_lsm6dsm)
 		lsm6dsm_interrupt(signal);
-	} else {
+	else if (base_use_alt_sensor == base_icm42607)
+		icm42607_interrupt(signal);
+	else
 		bmi3xx_interrupt(signal);
-	}
 }
 
 void lid_accel_interrupt(enum gpio_signal signal)
 {
-	if (lid_use_alt_sensor) {
+	if (lid_use_alt_sensor == lid_lis2dw12)
 		lis2dw12_interrupt(signal);
-	} else {
+	else
 		bma4xx_interrupt(signal);
-	}
 }
 
 test_export_static void alt_sensor_init(void)
 {
-	base_use_alt_sensor = cros_cbi_ssfc_check_match(
-		CBI_SSFC_VALUE_ID(DT_NODELABEL(base_sensor_lsm6dsm)));
-	lid_use_alt_sensor = cros_cbi_ssfc_check_match(
-		CBI_SSFC_VALUE_ID(DT_NODELABEL(lid_sensor_lis2dw12)));
+	int ret;
+	uint32_t val;
+
+	/* Check if it's clamshell or convertible */
+	ret = cros_cbi_get_fw_config(FORM_FACTOR, &val);
+	if (ret != 0) {
+		LOG_ERR("Error retrieving CBI FW_CONFIG field %d", FORM_FACTOR);
+		return;
+	}
+	if (val == CLAMSHELL)
+		return;
+
+	/* Check which motion sensors are used */
+	if (cros_cbi_ssfc_check_match(
+		    CBI_SSFC_VALUE_ID(DT_NODELABEL(base_sensor_lsm6dsm))))
+		base_use_alt_sensor = base_lsm6dsm;
+	else if (cros_cbi_ssfc_check_match(
+			 CBI_SSFC_VALUE_ID(DT_NODELABEL(base_sensor_icm42607))))
+		base_use_alt_sensor = base_icm42607;
+	else
+		base_use_alt_sensor = base_bmi323;
+
+	if (cros_cbi_ssfc_check_match(
+		    CBI_SSFC_VALUE_ID(DT_NODELABEL(lid_sensor_lis2dw12))))
+		lid_use_alt_sensor = lid_lis2dw12;
+	else
+		lid_use_alt_sensor = lid_bma422;
 
 	motion_sensors_check_ssfc();
 }

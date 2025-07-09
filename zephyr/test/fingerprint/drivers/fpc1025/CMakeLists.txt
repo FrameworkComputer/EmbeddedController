@@ -9,5 +9,5 @@ project(fpc1025_test)
 FILE(GLOB app_sources src/*.c)
 target_sources(app PRIVATE ${app_sources})
 
-# Add fingerprint drivers directory to include fpc1025_pal.h
+# Add fingerprint drivers directory to include fingerprint_fpc1025_pal.h
 target_include_directories(app PUBLIC ${PLATFORM_EC}/zephyr/drivers/fingerprint)

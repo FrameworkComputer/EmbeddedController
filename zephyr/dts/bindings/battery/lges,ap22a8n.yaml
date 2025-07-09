@@ -1,0 +1,57 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: "LGES KT0040G016 AP22A8N"
+compatible: "lges,ap22a8n"
+
+include: battery-smart.yaml
+
+properties:
+  enum-name:
+    type: string
+    default: "lges,ap22a8n"
+
+  # Fuel gauge
+  manuf_name:
+    default: "LGES KT0040G016"
+  device_name:
+    default: "AP22A8N"
+  ship_mode_reg_addr:
+    default: 0x3A
+  ship_mode_reg_data:
+    default: [0xC574, 0xC574]
+  flags:
+    default: 0
+  fet_reg_addr:
+    default: 0x0
+  fet_reg_mask:
+    default: 0x8000
+  fet_disconnect_val:
+    default: 0x0000
+  fet_cfet_mask:
+    default: 0x4000
+  fet_cfet_off_val:
+    default: 0x0000
+
+  # Battery info
+  voltage_max:
+    default: 17880
+  voltage_normal:
+    default: 15520
+  voltage_min:
+    default: 12000
+  precharge_current:
+    default: 256
+  start_charging_min_c:
+    default: 0
+  start_charging_max_c:
+    default: 50
+  charging_min_c:
+    default: 0
+  charging_max_c:
+    default: 60
+  discharging_min_c:
+    default: -20
+  discharging_max_c:
+    default: 75

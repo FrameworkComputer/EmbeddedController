@@ -106,6 +106,9 @@ config TEST_BOARD_USB_MUX_CONFIG_CUSTOM
 	bool "Enable USB mux config tests with a variant-specific test file"
 	select TEST_BOARD_USB_MUX_CONFIG
 
+config TEST_BOARD_KEYBOARD
+	bool "Enable keyboard specific tets"
+
 config SKYRIM_LOG_LEVEL
 	int "Fake config to allow building"
 	default 4 # Log level debug by default

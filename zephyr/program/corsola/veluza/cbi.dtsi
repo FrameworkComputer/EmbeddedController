@@ -107,4 +107,26 @@
 			};
 		};
 	};
+	cbi-ssfc {
+		compatible = "cros-ec,cbi-ssfc";
+		/*
+		 * SSFC field to identify BASE motion sensor.
+		 */
+		base-sensor {
+			enum-name = "BASE_SENSOR";
+			size = <1>;
+
+			base_sensor_bmi323: bmi323 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <0>;
+				default;
+			};
+			base_sensor_bmi260: bmi260 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+			};
+		};
+	};
 };

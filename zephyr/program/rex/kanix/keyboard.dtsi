@@ -1,0 +1,71 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	chosen {
+		cros-ec,keyboard = &kbd;
+	};
+
+	kblight: kblight {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm3 0 PWM_HZ(2400) PWM_POLARITY_NORMAL>;
+	};
+
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+
+		actual-key-mask = <
+			0x08  /* C0 */
+			0xff  /* C1 */
+			0xff  /* C2 */
+			0xff  /* C3 */
+			0xff  /* C4 */
+			0xff  /* C5 */
+			0xff  /* C6 */
+			0xa0  /* C7 */
+			0xff  /* C8 */
+			0xff  /* C9 */
+			0x01  /* C10 */
+			0xff  /* C11 */
+			0xff  /* C12 */
+			0x40  /* C13 */
+			0x0a  /* C14 */
+			0x40  /* C15 */
+			0x01  /* C16 */
+			0xc4  /* C17 */
+			>;
+	};
+};
+
+&vivaldi_kbd {
+	vivaldi-keys = <VIVALDI_KEYS_STRAUSS_T14>;
+
+	// with backlight
+	kbd_config_0: kbd-config-0 {
+		vivaldi-codes = <
+			VIVALDI_TK_BACK               /* T1 */
+			VIVALDI_TK_REFRESH            /* T2 */
+			VIVALDI_TK_FULLSCREEN         /* T3 */
+			VIVALDI_TK_OVERVIEW           /* T4 */
+			VIVALDI_TK_SNAPSHOT           /* T5 */
+			VIVALDI_TK_BRIGHTNESS_DOWN    /* T6 */
+			VIVALDI_TK_BRIGHTNESS_UP      /* T7 */
+			VIVALDI_TK_KBD_BKLIGHT_TOGGLE /* T8 */
+			VIVALDI_TK_DICTATE            /* T9 */
+			VIVALDI_TK_ACCESSIBILITY      /* T10 */
+			VIVALDI_TK_MICMUTE            /* T11 */
+			VIVALDI_TK_VOL_MUTE           /* T12 */
+			VIVALDI_TK_VOL_DOWN           /* T13 */
+			VIVALDI_TK_VOL_UP             /* T14 */
+		>;
+		capabilities = <(VIVALDI_KEYBD_CAP_FUNCTION_KEYS |
+				VIVALDI_KEYBD_CAP_SCRNLOCK_KEY |
+				VIVALDI_KEYBD_CAP_ASSISTANT_KEY)>;
+	};
+};
+
+&boot_keys {
+	refresh-rc = <KBD_RC(3, 2)>;
+};

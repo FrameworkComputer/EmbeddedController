@@ -21,7 +21,7 @@ DECLARE_DEFERRED(bkoff_on_deferred);
 void soc_signal_interrupt(enum gpio_signal signal)
 {
 	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_soc_enbkl)))
-		hook_call_deferred(&bkoff_on_deferred_data, 60 * MSEC);
+		hook_call_deferred(&bkoff_on_deferred_data, 60 * USEC_PER_MSEC);
 	else
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_edp_bl_en_od),
 				0);

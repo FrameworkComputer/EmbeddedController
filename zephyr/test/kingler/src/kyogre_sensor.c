@@ -12,6 +12,7 @@
 #include <zephyr/ztest.h>
 
 FAKE_VOID_FUNC(x_ec_interrupt);
+FAKE_VOID_FUNC(pen_fault_interrupt);
 
 static int interrupt_id;
 

@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "drivers/pdc.h"
 #include "drivers/ucsi_v3.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_pdc.h"
@@ -75,8 +76,7 @@ static int unsupported(struct rts5453p_emul_pdc_data *data,
 	LOG_ERR("cmd=0x%X, subcmd=0x%X is not supported",
 		req->req_subcmd.command_code, req->req_subcmd.sub_cmd);
 
-	set_ping_status(data, CMD_ERROR, 0);
-	return -EIO;
+	return -EINVAL;
 }
 
 static int vendor_cmd_enable(struct rts5453p_emul_pdc_data *data,
@@ -130,13 +130,10 @@ static int get_ic_status(struct rts5453p_emul_pdc_data *data,
 						 BIT_MASK(8);
 	data->response.ic_status.pd_version[1] = data->info.pd_version &
 						 BIT_MASK(8);
-
-	data->response.ic_status.vid[1] = data->info.vid_pid >> 24 &
-					  BIT_MASK(8);
-	data->response.ic_status.vid[0] = data->info.vid_pid >> 16 &
-					  BIT_MASK(8);
-	data->response.ic_status.pid[1] = data->info.vid_pid >> 8 & BIT_MASK(8);
-	data->response.ic_status.pid[0] = data->info.vid_pid & BIT_MASK(8);
+	data->response.ic_status.vid[1] = data->info.vid >> 8;
+	data->response.ic_status.vid[0] = data->info.vid;
+	data->response.ic_status.pid[1] = data->info.pid >> 8;
+	data->response.ic_status.pid[0] = data->info.pid;
 
 	data->response.ic_status.is_flash_code =
 		data->info.is_running_flash_code;
@@ -360,6 +357,7 @@ static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 	data->response.rtk_status.battery_charging_status =
 		data->connector_status.battery_charging_cap_status &
 		BIT_MASK(2);
+	data->response.rtk_status.pd_sourcing_vconn = data->vconn_sourcing;
 
 	/* BYTE 12 */
 	data->response.rtk_status.plug_direction =
@@ -415,9 +413,21 @@ static int set_uor(struct rts5453p_emul_pdc_data *data,
 static int set_pdr(struct rts5453p_emul_pdc_data *data,
 		   const union rts54_request *req)
 {
-	LOG_INF("SET_PDR port=%d", req->set_pdr.pdr.connector_number);
+	LOG_INF("SET_PDR port=%d, swap_to_src=%d, swap_to_snk=%d, accept_pr_swap=%d}",
+		req->set_pdr.pdr.connector_number, req->set_pdr.pdr.swap_to_src,
+		req->set_pdr.pdr.swap_to_snk, req->set_pdr.pdr.accept_pr_swap);
 
 	data->pdr = req->set_pdr.pdr;
+
+	if (data->connector_status.power_operation_mode == PD_OPERATION &&
+	    data->connector_status.connect_status &&
+	    data->set_ccom_mode.ccom == BIT(2)) {
+		if (data->pdr.swap_to_snk) {
+			data->connector_status.power_direction = 0;
+		} else if (data->pdr.swap_to_src) {
+			data->connector_status.power_direction = 1;
+		}
+	}
 
 	memset(&data->response, 0, sizeof(union rts54_response));
 	send_response(data);
@@ -431,7 +441,16 @@ static int set_rdo(struct rts5453p_emul_pdc_data *data,
 	LOG_INF("SET_RDO port=%d, rdo=0x%X", req->set_rdo.port_num,
 		req->set_rdo.rdo);
 
-	data->rdo = req->set_rdo.rdo;
+	/* The SET_RDO command triggers a Request Object to be sent
+	 * to the port partner when the LPM is a sink.
+	 * The command is only valid when acting as a sink.
+	 */
+	if (data->connector_status.power_direction == 1) {
+		/* We are a provider. Generate an error. */
+		return -EINVAL;
+	}
+
+	data->pdo.rdo = req->set_rdo.rdo;
 
 	memset(&data->response, 0, sizeof(union rts54_response));
 	send_response(data);
@@ -445,7 +464,16 @@ static int get_rdo(struct rts5453p_emul_pdc_data *data,
 	LOG_INF("GET_RDO port=%d", req->set_rdo.port_num);
 
 	data->response.get_rdo.byte_count = sizeof(struct get_rdo_response) - 1;
-	data->response.get_rdo.rdo = data->rdo;
+
+	if (data->connector_status.power_direction == 1) {
+		/* We are the provider, return the RDO set by the partner.
+		 */
+		data->response.get_rdo.rdo = data->pdo.partner_rdo;
+	} else {
+		/* We are the consumer, return the RDO set using SET_RDO */
+		data->response.get_rdo.rdo = data->pdo.rdo;
+	}
+
 	send_response(data);
 
 	return 0;
@@ -479,6 +507,22 @@ static int set_tpc_csd_operation_mode(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int get_tpc_csd_operation_mode(struct rts5453p_emul_pdc_data *data,
+				      const union rts54_request *req)
+{
+	LOG_INF("GET_TPC_CSD_OPERATION_MODE port=%d",
+		req->get_tpc_csd_operartion_mode.port_num);
+
+	memset(&data->response, 0, sizeof(data->response));
+
+	data->response.get_tpc_csd_operation_mode.byte_count =
+		sizeof(union csd_op_mode_t);
+	data->response.get_tpc_csd_operation_mode.op_mode = data->csd_op_mode;
+	send_response(data);
+
+	return 0;
+}
+
 static int set_ccom(struct rts5453p_emul_pdc_data *data,
 		    const union rts54_request *req)
 {
@@ -495,10 +539,17 @@ static int set_ccom(struct rts5453p_emul_pdc_data *data,
 static int force_set_power_switch(struct rts5453p_emul_pdc_data *data,
 				  const union rts54_request *req)
 {
-	LOG_INF("FORCE_SET_POWER_SWITCH port=%d",
-		req->force_set_power_switch.port_num);
+	bool sink_path_active =
+		req->force_set_power_switch.data.vbsin_en_control &&
+		req->force_set_power_switch.data.vbsin_en == 3;
+
+	LOG_INF("FORCE_SET_POWER_SWITCH port=%d, enabled=%d",
+		req->force_set_power_switch.port_num, sink_path_active);
 
 	data->set_power_switch_data = req->force_set_power_switch.data;
+
+	/* Update connector status with new sink path state */
+	data->connector_status.sink_path_status = sink_path_active;
 
 	memset(&data->response, 0, sizeof(data->response));
 	send_response(data);
@@ -530,103 +581,50 @@ static int read_power_level(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
-static uint32_t *get_pdo_data(struct rts5453p_emul_pdc_data *data,
-			      enum pdo_source_t source,
-			      enum pdo_type_t pdo_type)
+static int set_pdo(struct rts5453p_emul_pdc_data *data,
+		   const union rts54_request *req)
 {
-	if (!((source == LPM_PDO || source == PARTNER_PDO) &&
-	      (pdo_type == SOURCE_PDO || pdo_type == SINK_PDO))) {
-		return NULL;
-	}
+	enum pdo_type_t pdo_type = req->set_pdo.pdo_type ? SOURCE_PDO :
+							   SINK_PDO;
+	uint8_t pdo_count;
 
-	if (source == LPM_PDO) {
-		return (pdo_type == SOURCE_PDO) ? data->src_pdos :
-						  data->snk_pdos;
-	} else {
-		return (pdo_type == SOURCE_PDO) ? data->partner_src_pdos :
-						  data->partner_snk_pdos;
-	}
-}
-
-static bool is_epr_pdo(uint32_t pdo)
-{
-	uint32_t type = PDO_GET_TYPE(pdo);
-
-	return (type == PDO_GET_TYPE(PDO_TYPE_AUGMENTED) &&
-		PDO_AUG_GET_PPS(pdo) == PDO_AUG_PPS_EPR) ||
-	       (type == PDO_GET_TYPE(PDO_TYPE_FIXED) &&
-		(pdo & PDO_FIXED_EPR_MODE_CAPABLE) != 0);
-}
-
-static int set_pdos_direct(struct rts5453p_emul_pdc_data *data,
-			   enum pdo_type_t pdo_type,
-			   enum pdo_offset_t pdo_offset, uint8_t num_pdos,
-			   enum pdo_source_t source, const uint32_t *pdos)
-{
-	uint32_t *target_pdos = get_pdo_data(data, source, pdo_type);
-
-	if (!target_pdos) {
+	if (req->set_pdo.spr_pdo_number > PDO_OFFSET_MAX) {
+		/* TODO - can the emulator generate an error response? */
+		LOG_ERR("SET_PDO: SPR PDO count %d greater than %d",
+			req->set_pdo.spr_pdo_number, PDO_OFFSET_MAX);
 		return -EINVAL;
 	}
 
-	if (pdo_offset + num_pdos > PDO_OFFSET_MAX) {
-		LOG_ERR("PDO offset overflow at %d, num pdos: %d", pdo_offset,
-			num_pdos);
-		return -EINVAL;
-	}
+	pdo_count = req->set_pdo.spr_pdo_number;
 
-	if (source == LPM_PDO && pdo_offset == PDO_OFFSET_0) {
-		LOG_ERR("Attempt to set read-only PDO 0");
-		return -EINVAL;
-	}
+	LOG_INF("SET_PDO source type=%d, count=%d", pdo_type, pdo_count);
 
-	for (uint8_t i = 0; i < num_pdos; i++) {
-		/* EPR PDOs are only supported in offsets 1-4. */
-		if (is_epr_pdo(pdos[i]) &&
-		    pdo_offset + i > RTS5453P_MAX_EPR_PDO_OFFSET) {
-			LOG_ERR("Only PDOs 1-4 support EPR");
-			return -EINVAL;
-		}
-	}
+	emul_pdc_pdo_set_direct(&data->pdo, pdo_type, 0, pdo_count, LPM_PDO,
+				req->set_pdo.pdos);
 
-	memcpy(&target_pdos[pdo_offset], pdos, sizeof(uint32_t) * num_pdos);
+	memset(&data->response, 0, sizeof(union rts54_response));
+	send_response(data);
 
-	/* TODO b/317065172: handle renegotiation if we have a port partner. */
-	return 0;
-}
-
-static int get_pdos_direct(struct rts5453p_emul_pdc_data *data,
-			   enum pdo_type_t pdo_type,
-			   enum pdo_offset_t pdo_offset, uint8_t num_pdos,
-			   enum pdo_source_t source, uint32_t *pdos)
-{
-	const uint32_t *target_pdos = get_pdo_data(data, source, pdo_type);
-
-	if (pdo_offset + num_pdos > PDO_OFFSET_MAX) {
-		LOG_ERR("GET PDO offset overflow at %d, num pdos: %d",
-			pdo_offset, num_pdos);
-		return -EINVAL;
-	}
-
-	pdo_offset = MIN(pdo_offset, PDO_OFFSET_MAX);
-	memcpy(pdos, &target_pdos[pdo_offset], num_pdos * sizeof(uint32_t));
 	return 0;
 }
 
 static int get_pdos(struct rts5453p_emul_pdc_data *data,
 		    const union rts54_request *req)
 {
-	enum pdo_type_t pdo_type = req->get_pdos.src ? SOURCE_PDO : SINK_PDO;
-	enum pdo_offset_t pdo_offset = req->get_pdos.offset;
-	/* GET_PDOS stops at the end if there's a requested overflow. */
-	uint8_t pdo_count = MIN(PDO_OFFSET_MAX - pdo_offset, req->get_pdos.num);
+	enum pdo_type_t pdo_type = req->get_pdos.ucsi.pdo_type;
+	enum pdo_source_t pdo_source = req->get_pdos.ucsi.pdo_source;
+	enum pdo_offset_t pdo_offset = req->get_pdos.ucsi.pdo_offset;
+	uint8_t pdo_count = req->get_pdos.ucsi.number_of_pdos + 1;
 
-	LOG_INF("GET_PDO type=%d, offset=%d, count=%d", pdo_type, pdo_offset,
-		pdo_count);
+	/* GET_PDOS stops at the end if there's a requested overflow. */
+	pdo_count = MIN(PDO_OFFSET_MAX - pdo_offset, pdo_count);
+
+	LOG_INF("GET_PDO source %d, type=%d, offset=%d, count=%d", pdo_source,
+		pdo_type, pdo_offset, pdo_count);
 
 	memset(&data->response, 0, sizeof(data->response));
-	get_pdos_direct(data, pdo_type, pdo_offset, pdo_count,
-			req->get_pdos.partner, data->response.get_pdos.pdos);
+	emul_pdc_pdo_get_direct(&data->pdo, pdo_type, pdo_offset, pdo_count,
+				pdo_source, data->response.get_pdos.pdos);
 	data->response.get_pdos.byte_count = sizeof(uint32_t) * pdo_count;
 
 	send_response(data);
@@ -661,6 +659,15 @@ static int get_vdo(struct rts5453p_emul_pdc_data *data,
 {
 	LOG_INF("GET_VDO = %x", req->get_vdo.vdo_req.raw_value);
 	memset(&data->response, 0, sizeof(data->response));
+
+	if (req->get_vdo.vdo_req.num_vdos > PDC_DISC_IDENTITY_VDO_COUNT) {
+		LOG_ERR("Too many VDOs requested in GET_VDO.");
+		return -EINVAL;
+	}
+
+	for (uint8_t i = 0; i < req->get_vdo.vdo_req.num_vdos; i++) {
+		data->response.get_vdo.vdo[i] = data->vdos[i];
+	}
 
 	data->response.get_vdo.byte_count =
 		sizeof(uint32_t) * req->get_vdo.vdo_req.num_vdos;
@@ -712,6 +719,34 @@ static int get_pch_data_status(struct rts5453p_emul_pdc_data *data,
 		(pch_data_status_output >> 24) & 0xFF;
 	LOG_INF("GET_PCH_DATA_STATUS PORT_NUM:%d data_status:0x%x",
 		req->get_pch_data_status.port_num, pch_data_status_output);
+
+	send_response(data);
+	return 0;
+}
+
+static int set_frs_function(struct rts5453p_emul_pdc_data *data,
+			    const union rts54_request *req)
+{
+	LOG_INF("SET_FRS_FUNCTION port=%d, setting %d",
+		req->set_frs_function.port_num, req->set_frs_function.enable);
+
+	data->frs_configured = true;
+	data->frs_enabled = req->set_frs_function.enable;
+
+	memset(&data->response, 0, sizeof(union rts54_response));
+	send_response(data);
+	return 0;
+}
+
+static int get_attention_vdo(struct rts5453p_emul_pdc_data *data,
+			     const union rts54_request *req)
+{
+	LOG_INF("GET_ATTENTION_VDO = %x", req->get_attention_vdo.port_num);
+	memset(&data->response, 0, sizeof(data->response));
+
+	data->response.get_attention_vdo.byte_count =
+		sizeof(union get_attention_vdo_t);
+	data->response.get_attention_vdo.attention_vdo = data->attention_vdo;
 
 	send_response(data);
 	return 0;
@@ -769,7 +804,7 @@ const struct commands sub_cmd_x01[] = {
 const struct commands sub_cmd_x08[] = {
 	{ .code = 0x00, HANDLER_DEF(tcpm_reset) },
 	{ .code = 0x01, HANDLER_DEF(set_notification_enable) },
-	{ .code = 0x03, HANDLER_DEF(unsupported) },
+	{ .code = 0x03, HANDLER_DEF(set_pdo) },
 	{ .code = 0x04, HANDLER_DEF(set_rdo) },
 	{ .code = 0x44, HANDLER_DEF(unsupported) },
 	{ .code = 0x05, HANDLER_DEF(set_tpc_rp) },
@@ -785,12 +820,12 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0x27, HANDLER_DEF(unsupported) },
 	{ .code = 0x28, HANDLER_DEF(unsupported) },
 	{ .code = 0x2B, HANDLER_DEF(unsupported) },
-	{ .code = 0x83, HANDLER_DEF(get_pdos) },
+	{ .code = 0x83, HANDLER_DEF(unsupported) },
 	{ .code = 0x84, HANDLER_DEF(get_rdo) },
 	{ .code = 0x85, HANDLER_DEF(unsupported) },
 	{ .code = 0x99, HANDLER_DEF(unsupported) },
 	{ .code = 0x9A, HANDLER_DEF(get_vdo) },
-	{ .code = 0x9D, HANDLER_DEF(unsupported) },
+	{ .code = 0x9D, HANDLER_DEF(get_tpc_csd_operation_mode) },
 	{ .code = 0xA2, HANDLER_DEF(unsupported) },
 	{ .code = 0xF0, HANDLER_DEF(unsupported) },
 	{ .code = 0xA6, HANDLER_DEF(unsupported) },
@@ -799,6 +834,7 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0xA9, HANDLER_DEF(unsupported) },
 	{ .code = 0xAA, HANDLER_DEF(unsupported) },
 	{ .code = 0xE0, HANDLER_DEF(get_pch_data_status) },
+	{ .code = 0xE1, HANDLER_DEF(set_frs_function) },
 };
 
 const struct commands sub_cmd_x0E[] = {
@@ -813,10 +849,11 @@ const struct commands sub_cmd_x0E[] = {
 	{ .code = 0x0D, HANDLER_DEF(unsupported) },
 	{ .code = 0x0E, HANDLER_DEF(unsupported) },
 	{ .code = 0x0F, HANDLER_DEF(unsupported) },
-	{ .code = 0x10, HANDLER_DEF(unsupported) },
+	{ .code = 0x10, HANDLER_DEF(get_pdos) },
 	{ .code = 0x11, HANDLER_DEF(get_cable_property) },
 	{ .code = 0x12, HANDLER_DEF(get_connector_status) },
 	{ .code = 0x13, HANDLER_DEF(get_error_status) },
+	{ .code = 0x16, HANDLER_DEF(get_attention_vdo) },
 	{ .code = 0x1E, HANDLER_DEF(read_power_level) },
 	{ .code = 0x22, HANDLER_DEF(get_lpm_ppm_info) },
 };
@@ -859,6 +896,7 @@ int process_request(struct rts5453p_emul_pdc_data *data,
 			if (cmds[i].type == HANDLER) {
 				return cmds[i].fn(data, req);
 			} else {
+				/* Recurse through subcommands */
 				return process_request(data, req,
 						       req->req_subcmd.sub_cmd,
 						       cmds[i].sub_cmd,
@@ -867,6 +905,7 @@ int process_request(struct rts5453p_emul_pdc_data *data,
 		}
 	}
 
+	/* Unsupported command. Call the stub handler */
 	return unsupported(data, req);
 }
 
@@ -928,12 +967,26 @@ static int rts5453p_emul_finish_write(const struct emul *emul, int reg,
 				      int bytes)
 {
 	struct rts5453p_emul_pdc_data *data = rts5453p_emul_get_pdc_data(emul);
+	int ret;
 
 	LOG_DBG("finish_write reg=%d, bytes=%d", reg, bytes);
 
-	return process_request(data, &data->request,
-			       data->request.request.command_code,
-			       rts54_commands, num_rts54_commands);
+	ret = process_request(data, &data->request,
+			      data->request.request.command_code,
+			      rts54_commands, num_rts54_commands);
+
+	if (ret) {
+		LOG_ERR("process_request (command_code=0x%02x) failed: %d",
+			data->request.request.command_code, ret);
+
+		set_ping_status(data, CMD_ERROR, 0);
+	}
+
+	/* Always return zero, because the I2C write transaction did complete
+	 * successfully. If the command was invalid or an error occurred while
+	 * while processing it, this will be communicated by setting the ping
+	 * status code to CMD_ERROR (see above). */
+	return 0;
 }
 
 /**
@@ -1050,17 +1103,10 @@ static int emul_realtek_rts54xx_reset(const struct emul *target)
 		rts5453p_emul_get_pdc_data(target);
 
 	/* Reset PDOs. */
-	memset(data->src_pdos, 0x0, sizeof(data->src_pdos));
-	memset(data->snk_pdos, 0x0, sizeof(data->snk_pdos));
-	memset(data->partner_src_pdos, 0x0, sizeof(data->partner_src_pdos));
-	memset(data->partner_snk_pdos, 0x0, sizeof(data->partner_snk_pdos));
+	emul_pdc_pdo_reset(&data->pdo);
 
-	data->src_pdos[0] = RTS5453P_FIXED1_SRC;
-	data->src_pdos[1] = RTS5453P_FIXED2_SRC;
-
-	data->snk_pdos[0] = RTS5453P_FIXED_SNK;
-	data->snk_pdos[1] = RTS5453P_BATT_SNK;
-	data->snk_pdos[2] = RTS5453P_VAR_SNK;
+	data->set_ccom_mode.ccom = BIT(2); /* Realtek DRP bit 2 */
+	data->frs_configured = false;
 
 	return 0;
 }
@@ -1177,8 +1223,17 @@ static int emul_realtek_rts54xx_set_connector_status(
 {
 	struct rts5453p_emul_pdc_data *data =
 		rts5453p_emul_get_pdc_data(target);
+	union conn_status_change_bits_t change_bits;
 
 	data->connector_status = *connector_status;
+
+	change_bits.raw_value = connector_status->raw_conn_status_change_bits;
+
+	if (change_bits.supported_provider_caps) {
+		/* Turn off the sink path */
+		data->set_power_switch_data.vbsin_en_control = 0;
+		data->set_power_switch_data.vbsin_en = 0;
+	}
 
 	return 0;
 }
@@ -1201,6 +1256,31 @@ static int emul_realtek_rts54xx_get_pdr(const struct emul *target,
 		rts5453p_emul_get_pdc_data(target);
 
 	*pdr = data->pdr;
+
+	return 0;
+}
+
+static int emul_realtek_rts54xx_get_rdo(const struct emul *target,
+					uint32_t *rdo)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	/* Always return the RDO configured using SET_RDO or
+	 * pdc_power_mgmt_set_new_power_request().
+	 */
+	*rdo = data->pdo.rdo;
+
+	return 0;
+}
+
+static int emul_realtek_rts54xx_set_partner_rdo(const struct emul *target,
+						uint32_t rdo)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	data->pdo.partner_rdo = rdo;
 
 	return 0;
 }
@@ -1272,13 +1352,13 @@ static int emul_realtek_rts54xx_get_ccom(const struct emul *target,
 		rts5453p_emul_get_pdc_data(target);
 
 	switch (data->set_ccom_mode.ccom) {
-	case 0x1:
+	case BIT(0):
 		*ccom = CCOM_RP;
 		break;
-	case 0x2:
+	case BIT(1):
 		*ccom = CCOM_RD;
 		break;
-	case 0x4:
+	case BIT(2):
 		*ccom = CCOM_DRP;
 		break;
 	default:
@@ -1352,6 +1432,38 @@ emul_realtek_rts54xx_set_lpm_ppm_info(const struct emul *target,
 	return 0;
 }
 
+static int emul_realtek_rts54xx_set_vdo(const struct emul *target,
+					uint8_t num_vdos, uint32_t *vdos)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	if (num_vdos > PDC_DISC_IDENTITY_VDO_COUNT) {
+		return -EINVAL;
+	}
+
+	for (uint8_t i = 0; i < num_vdos; i++) {
+		data->vdos[i] = vdos[i];
+	}
+
+	return 0;
+}
+
+static int emul_realtek_rts54xx_get_frs(const struct emul *target,
+					bool *enabled)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	if (!data->frs_configured) {
+		return -EIO;
+	}
+
+	*enabled = data->frs_enabled;
+
+	return 0;
+}
+
 static int emul_realtek_rts54xx_get_pdos(const struct emul *target,
 					 enum pdo_type_t pdo_type,
 					 enum pdo_offset_t pdo_offset,
@@ -1361,8 +1473,8 @@ static int emul_realtek_rts54xx_get_pdos(const struct emul *target,
 {
 	struct rts5453p_emul_pdc_data *data =
 		rts5453p_emul_get_pdc_data(target);
-	return get_pdos_direct(data, pdo_type, pdo_offset, num_pdos, source,
-			       pdos);
+	return emul_pdc_pdo_get_direct(&data->pdo, pdo_type, pdo_offset,
+				       num_pdos, source, pdos);
 }
 
 static int emul_realtek_rts54xx_set_pdos(const struct emul *target,
@@ -1374,8 +1486,8 @@ static int emul_realtek_rts54xx_set_pdos(const struct emul *target,
 {
 	struct rts5453p_emul_pdc_data *data =
 		rts5453p_emul_get_pdc_data(target);
-	return set_pdos_direct(data, pdo_type, pdo_offset, num_pdos, source,
-			       pdos);
+	return emul_pdc_pdo_set_direct(&data->pdo, pdo_type, pdo_offset,
+				       num_pdos, source, pdos);
 }
 
 static int
@@ -1411,7 +1523,27 @@ static int emul_realtek_rts54xx_idle_wait(const struct emul *target)
 	return -ETIMEDOUT;
 }
 
-struct emul_pdc_api_t emul_realtek_rts54xx_api = {
+static int emul_realtek_rts54xx_set_vconn_sourcing(const struct emul *target,
+						   bool enabled)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+	data->vconn_sourcing = enabled;
+	return 0;
+}
+
+static int
+emul_realtek_rts54xx_set_attention_vdo(const struct emul *target,
+				       union get_attention_vdo_t attention_vdo)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	data->attention_vdo = attention_vdo;
+	return 0;
+}
+
+static DEVICE_API(emul_pdc, emul_realtek_rts54xx_api) = {
 	.reset = emul_realtek_rts54xx_reset,
 	.set_response_delay = emul_realtek_rts54xx_set_response_delay,
 	.get_connector_reset = emul_realtek_rts54xx_get_connector_reset,
@@ -1422,6 +1554,8 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.set_connector_status = emul_realtek_rts54xx_set_connector_status,
 	.get_uor = emul_realtek_rts54xx_get_uor,
 	.get_pdr = emul_realtek_rts54xx_get_pdr,
+	.get_rdo = emul_realtek_rts54xx_get_rdo,
+	.set_partner_rdo = emul_realtek_rts54xx_set_partner_rdo,
 	.get_requested_power_level =
 		emul_realtek_rts54xx_get_requested_power_level,
 	.get_ccom = emul_realtek_rts54xx_get_ccom,
@@ -1435,7 +1569,11 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.get_pdos = emul_realtek_rts54xx_get_pdos,
 	.get_cable_property = emul_realtek_rts54xx_get_cable_property,
 	.set_cable_property = emul_realtek_rts54xx_set_cable_property,
+	.set_vdo = emul_realtek_rts54xx_set_vdo,
+	.get_frs = emul_realtek_rts54xx_get_frs,
 	.idle_wait = emul_realtek_rts54xx_idle_wait,
+	.set_vconn_sourcing = emul_realtek_rts54xx_set_vconn_sourcing,
+	.set_attention_vdo = emul_realtek_rts54xx_set_attention_vdo,
 };
 
 #define RTS5453P_EMUL_DEFINE(n)                                             \
@@ -1452,7 +1590,7 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 		.pdc_data = {						\
 			.irq_gpios = GPIO_DT_SPEC_INST_GET(n, irq_gpios), \
 		},							\
-		.port = USBC_PORT_FROM_DRIVER_NODE(DT_DRV_INST(n), pdc),  \
+		.port = USBC_PORT_FROM_PDC_DRIVER_NODE(DT_DRV_INST(n)),  \
 		.ara_emul = EMUL_DT_GET(DT_NODELABEL(smbus_ara_emul)),       \
 	};       \
 	static const struct i2c_common_emul_cfg rts5453p_emul_cfg_##n = {   \

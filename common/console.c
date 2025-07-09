@@ -7,9 +7,6 @@
 
 #include "clock.h"
 #include "console.h"
-#ifdef CONFIG_EXPERIMENTAL_CONSOLE
-#include "crc8.h"
-#endif /* defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 #include "link_defs.h"
 #include "system.h"
 #include "task.h"
@@ -19,17 +16,10 @@
 
 #define MAX_ARGS_PER_COMMAND 10
 
-#ifdef CONFIG_EXPERIMENTAL_CONSOLE
-#define EC_SYN 0xEC
-#define EC_ACK 0xC0
-#else /* defined(CONFIG_EXPERIMENTAL_CONSOLE) */
-
 #define PROMPT "> "
 
 /* ASCII control character; for example, CTRL('C') = ^C */
 #define CTRL(c) ((c) - '@')
-
-#endif /* defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 
 #ifdef CONFIG_CONSOLE_HISTORY
 /* History buffers */
@@ -49,7 +39,6 @@ static int input_pos;
 /* Was last received character a carriage return? */
 static int last_rx_was_cr;
 
-#ifndef CONFIG_EXPERIMENTAL_CONSOLE
 /* State of input escape code */
 static enum {
 	ESC_OUTSIDE, /* Not in escape code */
@@ -61,7 +50,6 @@ static enum {
 	ESC_BRACKET_4, /* Got ESC [ 4 */
 	ESC_O, /* Got ESC O */
 } esc_state;
-#endif /* !defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 
 /* Extended key code values, from multi-byte escape sequences */
 enum extended_key_code {
@@ -170,60 +158,8 @@ test_export_static enum ec_error_list handle_command(char *input)
 	const char *argv[MAX_ARGS_PER_COMMAND];
 	int argc = 0;
 	int rv;
-#ifdef CONFIG_EXPERIMENTAL_CONSOLE
-	char *e = NULL;
-	int i = 0;
-	int j = 0;
-	int command_len = 0;
-	uint8_t packed_crc8 = 0;
 
-	/* Need to perform some checking to see if our command is intact. */
-
-	/* There's nothing to do if the buffer is empty. */
-	if (!input_len)
-		return EC_SUCCESS;
-
-	/*
-	 * Scan the first two characters in the command string looking for
-	 * ampersands.  We need at least one to continue.
-	 */
-	if ((input_len < 2) || (input[0] != '&' && input[1] != '&'))
-		goto command_has_error;
-
-	/*
-	 * Okay, we've found at least one.  We need to see if we actually got
-	 * 2 ampersands in order to adjust our position properly.
-	 */
-	i = input[1] == '&' ? 2 : 1;
-
-	/* Next, there should be 4 hex digits: XXYY + '&' */
-	if (i + 5 > input_len)
-		goto command_has_error;
-	/* Replace the '&' with null so we can call strtoi(). */
-	input[i + 4] = 0;
-	j = strtoi(input + i, &e, 16);
-	if (*e)
-		goto command_has_error;
-	/* command length = XX, CRC8 = YY */
-	command_len = j >> 8;
-	packed_crc8 = (uint8_t)j;
-	i += 5;
-
-	/* Lastly, verify the CRC8 of the command. */
-	if (i + command_len > input_len)
-		goto command_has_error;
-	if (packed_crc8 != cros_crc8(&input[i], command_len)) {
-	command_has_error:
-		/* Send back the error string. */
-		ccprintf("&&EE\n");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	/* Split input into words.  Ignore words past our limit. */
-	split_words(&input[i], &argc, argv);
-#else
 	split_words(input, &argc, argv);
-#endif /* defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 
 	/* If no command, nothing to do */
 	if (!argc)
@@ -251,7 +187,7 @@ test_export_static enum ec_error_list handle_command(char *input)
 		ccprintf("Parameter %d invalid\n", rv - EC_ERROR_PARAM1 + 1);
 	else if (rv == EC_ERROR_PARAM_COUNT)
 		ccputs("Wrong number of params\n");
-	else if (rv != EC_SUCCESS)
+	else
 		ccprintf("Command returned error %d\n", rv);
 
 #ifdef CONFIG_CONSOLE_CMDHELP
@@ -264,12 +200,8 @@ test_export_static enum ec_error_list handle_command(char *input)
 static void console_init(void)
 {
 	*input_buf = '\0';
-#ifdef CONFIG_EXPERIMENTAL_CONSOLE
-	ccprintf("Enhanced Console is enabled (v1.0.0); type HELP for help.\n");
-#else
 	ccprintf("Console is enabled; type HELP for help.\n");
 	ccputs(PROMPT);
-#endif /* defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 }
 
 static int console_putc(int c)
@@ -280,7 +212,6 @@ static int console_putc(int c)
 	return rv1 == EC_SUCCESS ? rv2 : rv1;
 }
 
-#ifndef CONFIG_EXPERIMENTAL_CONSOLE
 static void move_cursor_right(void)
 {
 	if (input_pos == input_len)
@@ -316,7 +247,6 @@ static void move_cursor_begin(void)
 	ccprintf("\x1b[%dD", input_pos);
 	input_pos = 0;
 }
-#endif /* !defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 
 static void repeat_char(char c, int cnt)
 {
@@ -360,7 +290,6 @@ static void save_history(void)
 
 #endif /* CONFIG_CONSOLE_HISTORY */
 
-#ifndef CONFIG_EXPERIMENTAL_CONSOLE
 static void handle_backspace(void)
 {
 	if (!input_pos)
@@ -459,22 +388,9 @@ static int handle_esc(int c)
 
 	return -1;
 }
-#endif /* !defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 
 static void console_handle_char(int c)
 {
-#ifdef CONFIG_EXPERIMENTAL_CONSOLE
-	/*
-	 * If we receive a EC_SYN, we should respond immediately with a EC_ACK.
-	 * This handshake lets the interpreter know that this is an enhanced
-	 * image.
-	 */
-	if (c == EC_SYN) {
-		console_putc(EC_ACK);
-		return;
-	}
-#endif /* defined(CONFIG_EXPERIMENTAL_CONSOLE) */
-
 	/* Translate CR and CRLF to LF (newline) */
 	if (c == '\r') {
 		last_rx_was_cr = 1;
@@ -486,7 +402,6 @@ static void console_handle_char(int c)
 		last_rx_was_cr = 0;
 	}
 
-#ifndef CONFIG_EXPERIMENTAL_CONSOLE
 	/* Handle terminal escape sequences (ESC [ ...) */
 	if (c == 0x1B) {
 		esc_state = ESC_START;
@@ -496,10 +411,8 @@ static void console_handle_char(int c)
 		if (c != -1)
 			esc_state = ESC_OUTSIDE;
 	}
-#endif /* !defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 
 	switch (c) {
-#ifndef CONFIG_EXPERIMENTAL_CONSOLE
 	case KEY_DEL:
 		if (input_pos == input_len)
 			break; /* Already at end */
@@ -524,13 +437,10 @@ static void console_handle_char(int c)
 		/* Reprint prompt */
 		ccputs(PROMPT);
 		break;
-#endif /* !defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 
 	case '\n':
-#ifndef CONFIG_EXPERIMENTAL_CONSOLE
 		/* Terminate this line */
 		console_putc('\n');
-#endif /* !defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 
 #ifdef CONFIG_CONSOLE_HISTORY
 		/* Save command in history buffer */
@@ -549,13 +459,10 @@ static void console_handle_char(int c)
 		input_pos = input_len = 0;
 		input_buf[0] = '\0';
 
-#ifndef CONFIG_EXPERIMENTAL_CONSOLE
 		/* Reprint prompt */
 		ccputs(PROMPT);
-#endif /* !defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 		break;
 
-#ifndef CONFIG_EXPERIMENTAL_CONSOLE
 	case CTRL('A'):
 	case KEY_HOME:
 		move_cursor_begin();
@@ -621,21 +528,18 @@ static void console_handle_char(int c)
 		break;
 
 #endif /* CONFIG_CONSOLE_HISTORY */
-#endif /* !defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 
 	default:
 		/* Ignore non-printing characters */
 		if (!isprint((unsigned char)c))
 			break;
 
-#ifndef CONFIG_EXPERIMENTAL_CONSOLE
 		/* Ignore if line is full (leaving room for terminating null) */
 		if (input_len >= sizeof(input_buf) - 1)
 			break;
 
 		/* Print character */
 		console_putc(c);
-#endif /* !defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 
 		/* If not at end of line, print rest of line and move it down */
 		if (input_pos != input_len) {

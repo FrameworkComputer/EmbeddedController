@@ -15,6 +15,7 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
+#include "tcpm/tcpm.h"
 #include "timer.h"
 #include "usb_common.h"
 #include "usb_pd.h"
@@ -47,6 +48,10 @@ bool rx_en[IT83XX_USBPD_PHY_PORT_COUNT];
 STATIC_IF(CONFIG_USB_PD_DECODE_SOP)
 bool sop_prime_en[IT83XX_USBPD_PHY_PORT_COUNT];
 static uint8_t tx_error_status[IT83XX_USBPD_PHY_PORT_COUNT] = { 0 };
+__maybe_unused static bool allow_vconn_dis[IT83XX_USBPD_PHY_PORT_COUNT] = {
+	/* Set init value 1 to allow Vconn disable */
+	[0 ...(IT83XX_USBPD_PHY_PORT_COUNT - 1)] = 1
+};
 
 const struct usbpd_ctrl_t usbpd_ctrl_regs[] = {
 	{ &IT83XX_GPIO_GPCRF4, &IT83XX_GPIO_GPCRF5, IT83XX_IRQ_USBPD0 },
@@ -296,10 +301,10 @@ static void it8xxx2_set_power_role(enum usbpd_port port, int power_role)
 		/*
 		 * Bit[0:6] BMC Rx threshold setting
 		 * 000 1000b: power neutral
-		 * 010 0000b: sinking power =>
+		 * 010 0000b: sourcing power =>
 		 *      High to low Y3Rx threshold = 0.38,
 		 *      Low to high Y3Rx threshold = 0.54.
-		 * 000 0010b: sourcing power =>
+		 * 000 0010b: sinking power =>
 		 *      High to low Y3Rx threshold = 0.64,
 		 *      Low to high Y3Rx threshold = 0.79.
 		 */
@@ -312,10 +317,10 @@ static void it8xxx2_set_power_role(enum usbpd_port port, int power_role)
 		/*
 		 * Bit[0:6] BMC Rx threshold setting
 		 * 000 1000b: power neutral
-		 * 010 0000b: sinking power =>
+		 * 010 0000b: sourcing power =>
 		 *      High to low Y3Rx threshold = 0.38,
 		 *      Low to high Y3Rx threshold = 0.54.
-		 * 000 0010b: sourcing power =>
+		 * 000 0010b: sinking power =>
 		 *      High to low Y3Rx threshold = 0.64,
 		 *      Low to high Y3Rx threshold = 0.79.
 		 */
@@ -473,7 +478,11 @@ static int it8xxx2_tcpm_set_vconn(int port, int enable)
 						    USBPD_CC_PIN_2 :
 						    USBPD_CC_PIN_1,
 					    enable);
+			allow_vconn_dis[port] = 1;
 		} else {
+			if (!allow_vconn_dis[port]) {
+				return EC_SUCCESS;
+			}
 			/*
 			 * If the pd port has previous connection and supplies
 			 * Vconn, then RO jumping to RW reset the system,
@@ -493,12 +502,13 @@ static int it8xxx2_tcpm_set_vconn(int port, int enable)
 			 * dropped below 3.3v (>500us) to avoid the potential
 			 * risk of voltage fed back into Vcore.
 			 */
-			crec_usleep(IT83XX_USBPD_T_VCONN_BELOW_3_3V);
+			udelay(IT83XX_USBPD_T_VCONN_BELOW_3_3V);
 			/*
 			 * Since our cc are not Vconn SRC, enable cc analog
 			 * module (ex.UP/RD/DET/Tx/Rx) and disable 5v tolerant.
 			 */
 			it8xxx2_enable_vconn(port, enable);
+			allow_vconn_dis[port] = 0;
 		}
 	}
 
@@ -562,6 +572,19 @@ static enum tcpc_transmit_complete it8xxx2_tx_data(enum usbpd_port port,
 		memcpy((uint32_t *)&IT83XX_USBPD_TDO(port), buf, length * 4);
 
 	for (r = 0; r <= retry_count; r++) {
+		/*
+		 * The PRL_RX state machine should force a discard of PRL_TX any
+		 * time a new message comes in.  However, since most of the
+		 * PRL_RX runs on the TCPC, we may receive a RX interrupt
+		 * between the EC PRL_RX and PRL_TX state machines running.  In
+		 * this case, mark the message discarded and don't tell the TCPC
+		 * to transmit.
+		 */
+		if (tcpm_has_pending_message(port)) {
+			restore_sop_header_pwr_data_role(port, type);
+			return TCPC_TX_COMPLETE_DISCARDED;
+		}
+
 		/* Start Tx */
 		USBPD_KICK_TX_START(port);
 		evt = task_wait_event_mask(TASK_EVENT_PHY_TX_DONE,
@@ -592,7 +615,7 @@ static enum tcpc_transmit_complete it8xxx2_tx_data(enum usbpd_port port,
 				continue;
 			} else if (tx_error_status[port] &
 				   USBPD_REG_MASK_TX_NO_RESPONSE_STAT) {
-				/* HW had automatically resent message twice */
+				/* HW had automatically resent nRetry times */
 				tx_error_status[port] &=
 					~USBPD_REG_MASK_TX_NO_RESPONSE_STAT;
 				/*
@@ -655,6 +678,7 @@ static int it8xxx2_tcpm_transmit(int port, enum tcpci_msg_type type,
 				 uint16_t header, const uint32_t *data)
 {
 	int status = TCPC_TX_COMPLETE_FAILED;
+	bool pd_transmit_complete_called = false;
 
 	switch (type) {
 	case TCPCI_MSG_SOP:
@@ -663,6 +687,12 @@ static int it8xxx2_tcpm_transmit(int port, enum tcpci_msg_type type,
 	case TCPCI_MSG_SOP_DEBUG_PRIME:
 	case TCPCI_MSG_SOP_DEBUG_PRIME_PRIME:
 		status = it8xxx2_tx_data(port, type, header, data);
+		/* To improve the SendResponseTimer accuracy,
+		 * pd_transmit_complete() is call inside irq handler if the
+		 * message is successfully transmitted.
+		 */
+		pd_transmit_complete_called =
+			(status == TCPC_TX_COMPLETE_SUCCESS);
 		break;
 	case TCPCI_MSG_TX_BIST_MODE_2:
 		it8xxx2_send_bist_mode2_pattern(port);
@@ -678,7 +708,9 @@ static int it8xxx2_tcpm_transmit(int port, enum tcpci_msg_type type,
 		status = TCPC_TX_COMPLETE_FAILED;
 		break;
 	}
-	pd_transmit_complete(port, status);
+	if (!pd_transmit_complete_called) {
+		pd_transmit_complete(port, status);
+	}
 
 	return EC_SUCCESS;
 }
@@ -846,6 +878,10 @@ static void it8xxx2_init(enum usbpd_port port, int role)
 	it8xxx2_set_data_role(port, role);
 	/* Set default power role and assert Rp/Rd */
 	it8xxx2_set_power_role(port, role);
+	/* Set value 1 to allow Vconn disable */
+	if (IS_ENABLED(CONFIG_USBC_VCONN)) {
+		allow_vconn_dis[port] = 1;
+	}
 	/* Disable vconn: connect cc analog module, disable cc 5v tolerant */
 	it8xxx2_tcpm_set_vconn(port, 0);
 	/* Enable tx done and hard reset detect interrupt */

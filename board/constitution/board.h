@@ -49,10 +49,11 @@
 /* Not support typec adapter. */
 /* TODO(b/293975611): Set the max PD to 0W.
  */
-#define PD_OPERATING_POWER_MW CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
-#define PD_MAX_POWER_MW 0
-#define PD_MAX_CURRENT_MA 0
-#define PD_MAX_VOLTAGE_MV 5000
+#define CONFIG_USB_PD_OPERATING_POWER_MW \
+	CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
+#define CONFIG_USB_PD_MAX_POWER_MW 0
+#define CONFIG_USB_PD_MAX_CURRENT_MA 0
+#define CONFIG_USB_PD_MAX_VOLTAGE_MV 5000
 
 /*
  * Macros for GPIO signals used in common code that don't match the

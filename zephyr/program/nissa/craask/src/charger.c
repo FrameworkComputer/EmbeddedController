@@ -72,7 +72,7 @@ __override int board_get_leave_safe_mode_delay_ms(void)
 		return 500;
 }
 
-test_export_static void update_charger_config(void)
+void update_charger_config(void)
 {
 	uint32_t board_version;
 	int ret;

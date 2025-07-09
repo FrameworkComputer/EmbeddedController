@@ -16,6 +16,12 @@ extern const char __flash_dma_start;
 /* This symbol is the begin address of the __ilm0_ram_code section. */
 extern const char __ilm0_ram_code;
 
+#ifdef CONFIG_IT83XX_EXTENDED_ILM
+extern const uint8_t __nds32_flash_ilm_start[];
+extern const uint8_t __nds32_flash_ilm_size[];
+extern const uint8_t __nds32_flash_dlm_start[];
+#endif
+
 /* This symbol is the begin address of the text section. */
 extern const char __flash_text_start;
 

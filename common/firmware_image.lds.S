@@ -90,7 +90,7 @@ SECTIONS
 	} > FLASH =0xff
 
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
-	.image.RO.key : AT(CONFIG_RO_PUBKEY_ADDR) {
+	.image.RO.key : AT(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RO_PUBKEY_OFF) {
 		*(.image.RO.key)
 	} > FLASH =0xff
 #endif
@@ -112,7 +112,7 @@ SECTIONS
 		*(.image.RW)
 	} > FLASH =0xff
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
-	.image.RW.sign : AT(CONFIG_RW_SIG_ADDR) {
+	.image.RW.sign : AT(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_SIG_OFF) {
 		*(.image.RW.sign)
 	} > FLASH =0xff
 #endif
@@ -121,7 +121,7 @@ SECTIONS
 		*(.image.RW_B)
 	} > FLASH =0xff
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
-	.image.RW_B.sign : AT(CONFIG_RW_B_SIG_ADDR) {
+	.image.RW_B.sign : AT(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_B_SIG_OFF) {
 		*(.image.RW_B.sign)
 	} > FLASH =0xff
 #endif

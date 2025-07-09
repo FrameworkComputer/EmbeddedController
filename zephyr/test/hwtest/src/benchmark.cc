@@ -69,7 +69,7 @@ ZTEST(benchmark, test_long_benchmark)
 
 	auto result = benchmark.run("call_counter", [&] {
 		++num_calls;
-		udelay(10000);
+		k_busy_wait(10000);
 	});
 	zassert_true(result.has_value());
 	zassert_equal(num_calls, 100);
@@ -120,7 +120,7 @@ ZTEST(benchmark, test_min_max_time)
 	int delay_us = 1000;
 
 	auto result = benchmark.run("delay", [&delay_us] {
-		udelay(delay_us);
+		k_busy_wait(delay_us);
 		delay_us *= 2;
 	});
 	zassert_true(result.has_value());

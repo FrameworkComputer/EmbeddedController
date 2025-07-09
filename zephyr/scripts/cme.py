@@ -373,6 +373,8 @@ def find_ssfc_default(edt, ssfc_map, node, prop):
             enum_name = "LID_SENSOR"
         else:
             return None
+    else:
+        return None
 
     for snode in ssfc_node_list:
         if (

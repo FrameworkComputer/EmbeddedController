@@ -5,12 +5,6 @@
  * Battery charging task and state machine.
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #include "battery.h"
 #include "battery_fuel_gauge.h"
 #include "battery_smart.h"
@@ -39,12 +33,6 @@
 #include "usb_common.h"
 #include "usb_pd.h"
 #include "util.h"
-
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 48
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
@@ -1558,7 +1546,7 @@ void charger_task(void *u)
 {
 	int sleep_usec;
 	int battery_critical;
-	int need_static = 1;
+	int need_static = 0;
 	const struct charger_info *const info = charger_get_info();
 	int chgnum = 0;
 	bool is_full = false; /* battery not accepting current */
@@ -1601,7 +1589,7 @@ void charger_task(void *u)
 				prev_bf & BATT_FLAG_RESPONSIVE,
 				curr.batt.flags & BATT_FLAG_RESPONSIVE);
 			process_battery_present_change(info, chgnum);
-			need_static = 1;
+			need_static = (curr.batt.is_present == BP_YES);
 		}
 		prev_bf = curr.batt.flags;
 
@@ -1924,18 +1912,19 @@ int charge_set_input_current_limit(int ma, int mv)
 		charger_get_input_current_limit(chgnum, &prev_input);
 
 #ifdef CONFIG_USB_POWER_DELIVERY
-#if ((PD_MAX_POWER_MW * 1000) / PD_MAX_VOLTAGE_MV != PD_MAX_CURRENT_MA)
+#if ((CONFIG_USB_PD_MAX_POWER_MW * 1000) / CONFIG_USB_PD_MAX_VOLTAGE_MV != \
+     CONFIG_USB_PD_MAX_CURRENT_MA)
 		/*
 		 * If battery is not present, input current is set to
-		 * PD_MAX_CURRENT_MA. If the input power set is greater than
-		 * the maximum allowed system power, system might get damaged.
-		 * Hence, limit the input current to meet maximum allowed
-		 * input system power.
+		 * CONFIG_USB_PD_MAX_CURRENT_MA. If the input power set is
+		 * greater than the maximum allowed system power, system might
+		 * get damaged. Hence, limit the input current to meet maximum
+		 * allowed input system power.
 		 */
 
-		if (mv > 0 &&
-		    mv * curr.desired_input_current > PD_MAX_POWER_MW * 1000) {
-			ma = (PD_MAX_POWER_MW * 1000) / mv;
+		if (mv > 0 && mv * curr.desired_input_current >
+				      CONFIG_USB_PD_MAX_POWER_MW * 1000) {
+			ma = (CONFIG_USB_PD_MAX_POWER_MW * 1000) / mv;
 			ma = derate_input_current(ma);
 		}
 		/*
@@ -2136,6 +2125,7 @@ charge_command_charge_state(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_charge_state *in = args->params;
 	struct ec_response_charge_state *out = args->response;
+	const struct charger_info *info = charger_get_info();
 	uint32_t val;
 	int rv = EC_RES_SUCCESS;
 	int chgnum = 0;
@@ -2203,6 +2193,33 @@ charge_command_charge_state(struct host_cmd_handler_args *args)
 #endif
 					val = 0;
 				break;
+			case CS_PARAM_CHG_VOLTAGE_MIN:
+				val = info->voltage_min;
+				break;
+			case CS_PARAM_CHG_VOLTAGE_MAX:
+				val = info->voltage_max;
+				break;
+			case CS_PARAM_CHG_VOLTAGE_STEP:
+				val = info->voltage_step;
+				break;
+			case CS_PARAM_CHG_CURRENT_MIN:
+				val = info->current_min;
+				break;
+			case CS_PARAM_CHG_CURRENT_MAX:
+				val = info->current_max;
+				break;
+			case CS_PARAM_CHG_CURRENT_STEP:
+				val = info->current_step;
+				break;
+			case CS_PARAM_CHG_INPUT_CURRENT_MIN:
+				val = info->input_current_min;
+				break;
+			case CS_PARAM_CHG_INPUT_CURRENT_MAX:
+				val = info->input_current_max;
+				break;
+			case CS_PARAM_CHG_INPUT_CURRENT_STEP:
+				val = info->input_current_step;
+				break;
 			default:
 				rv = EC_RES_INVALID_PARAM;
 			}
@@ -2239,6 +2256,15 @@ charge_command_charge_state(struct host_cmd_handler_args *args)
 				break;
 			case CS_PARAM_CHG_STATUS:
 			case CS_PARAM_LIMIT_POWER:
+			case CS_PARAM_CHG_VOLTAGE_MIN:
+			case CS_PARAM_CHG_VOLTAGE_MAX:
+			case CS_PARAM_CHG_VOLTAGE_STEP:
+			case CS_PARAM_CHG_CURRENT_MIN:
+			case CS_PARAM_CHG_CURRENT_MAX:
+			case CS_PARAM_CHG_CURRENT_STEP:
+			case CS_PARAM_CHG_INPUT_CURRENT_MIN:
+			case CS_PARAM_CHG_INPUT_CURRENT_MAX:
+			case CS_PARAM_CHG_INPUT_CURRENT_STEP:
 				/* Can't set this */
 				rv = EC_RES_ACCESS_DENIED;
 				break;

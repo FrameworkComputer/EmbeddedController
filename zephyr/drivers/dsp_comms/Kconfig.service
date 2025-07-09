@@ -1,0 +1,16 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_DSP_SERVICE
+	bool "Communication driver for EC"
+	default y
+	depends on DT_HAS_CROS_DSP_SERVICE_ENABLED
+	depends on NANOPB
+	depends on I2C
+	depends on I2C_TARGET
+	help
+	  Allow proto based communication between the EC and DSP core.
+
+	  If enabled, the core will enable a service which is used to
+	  serve the DSP core (this should be done on the EC).

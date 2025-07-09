@@ -41,6 +41,14 @@
 /* Configures GPIO pin as output and initializes it to a high state. */
 #define GPIO_OUTPUT_HIGH (GPIO_OUTPUT | GPIO_OUTPUT_INIT_HIGH)
 
+/* Configures GPIO pin as output and initializes it to a logic 0. */
+#define GPIO_OUTPUT_INACTIVE \
+	(GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW | GPIO_OUTPUT_INIT_LOGICAL)
+
+/* Configures GPIO pin as output and initializes it to a logic 1. */
+#define GPIO_OUTPUT_ACTIVE \
+	(GPIO_OUTPUT | GPIO_OUTPUT_INIT_HIGH | GPIO_OUTPUT_INIT_LOGICAL)
+
 /* Configures GPIO pin as input with pull-up. */
 #define GPIO_INPUT_PULL_UP (GPIO_INPUT | GPIO_PULL_UP)
 

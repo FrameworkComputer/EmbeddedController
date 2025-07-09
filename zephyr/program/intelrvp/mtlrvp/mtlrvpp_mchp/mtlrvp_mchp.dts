@@ -63,7 +63,7 @@
 	label = "I2C_CHARGER";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
-	port_sel = <0>;
+	port-sel = <0>;
 	pinctrl-0 = <&i2c00_scl_gpio004 &i2c00_sda_gpio003>;
 	pinctrl-names = "default";
 
@@ -129,7 +129,7 @@
 	label = "I2C_USB_C0_C1_TCPC";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
-	port_sel = <6>;
+	port-sel = <6>;
 	pinctrl-0 = <&i2c06_scl_gpio140 &i2c06_sda_gpio132>;
 	pinctrl-names = "default";
 
@@ -158,8 +158,8 @@
 				gpio-controller;
 				#gpio-cells = <2>;
 				ngpios = <8>;
-				pin_mask = <0xdc>;
-				pinmux_mask = <0xff>;
+				pin-mask = <0xdc>;
+				pinmux-mask = <0xff>;
 			};
 		};
 	};
@@ -187,8 +187,8 @@
 				gpio-controller;
 				#gpio-cells = <2>;
 				ngpios = <8>;
-				pin_mask = <0xdc>;
-				pinmux_mask = <0xff>;
+				pin-mask = <0xdc>;
+				pinmux-mask = <0xff>;
 			};
 		};
 	};
@@ -235,7 +235,7 @@
 	label = "I2C_USB_C2_C3_TCPC";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
-	port_sel = <7>;
+	port-sel = <7>;
 	pinctrl-0 = <&i2c07_scl_gpio013 &i2c07_sda_gpio012>;
 	pinctrl-names = "default";
 

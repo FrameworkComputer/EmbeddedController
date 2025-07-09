@@ -3,7 +3,8 @@
 # found in the LICENSE file.
 
 common:
-  platform_allow: native_sim
+  platform_allow:
+  - native_sim
 tests:
   # Baseboard tests
   brox.baseboard:
@@ -57,8 +58,30 @@ tests:
     - CONFIG_TEST_BOARD_JUBILANT_KEYBOARD=y
     - CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION=y
     - CONFIG_PLATFORM_EC_KEYBOARD_DEBUG=y
+    - CONFIG_POSIX_ARCH_CONSOLE_INIT_PRIORITY=98
+    - CONFIG_PLATFORM_EC_CONSOLE_INIT_PRIORITY=99
+    - CONFIG_LOG=y
+    - CONFIG_LOG_MODE_MINIMAL=y
     extra_dtc_overlay_files:
-    - boards/baseboard/baseboard.overlay
+    - boards/jubilant/keyboard.dtsi
+
+  brox.jubilant.fan:
+    extra_configs:
+    - CONFIG_TEST_BOARD_JUBILANT=y
+    - CONFIG_TEST_BOARD_JUBILANT_FAN=y
+    - CONFIG_PLATFORM_EC_CUSTOM_FAN_CONTROL=y
+    - CONFIG_POSIX_ARCH_CONSOLE_INIT_PRIORITY=98
+    - CONFIG_PLATFORM_EC_CONSOLE_INIT_PRIORITY=99
+    extra_dtc_overlay_files:
+    - boards/jubilant/fan.dtsi
+
+  brox.jubilant.touch_panel:
+    extra_configs:
+    - CONFIG_TEST_BOARD_JUBILANT=y
+    - CONFIG_TEST_BOARD_JUBILANT_TOUCH_PANEL=y
+    - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
+    extra_dtc_overlay_files:
+    - boards/jubilant/touch.dtsi
 
   brox.lotso.sensor:
     extra_configs:

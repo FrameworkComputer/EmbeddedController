@@ -21,6 +21,7 @@
 	pinctrl-0 = <&i2c0_clk_gpb3_default
 		     &i2c0_data_gpb4_default>;
 	pinctrl-names = "default";
+	data-hold-time = <10>;
 
 	touchpad@15 {
 		compatible = "elan,ekth3000";

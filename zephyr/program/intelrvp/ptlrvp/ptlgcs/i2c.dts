@@ -1,0 +1,26 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* charger */
+charger_i2c: &i2c_smb_0 {
+	label = "I2C_CHARGER";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c00_scl_gpio004 &i2c00_sda_gpio003>;
+	pinctrl-names = "default";
+	port-sel = <0>;
+	status = "okay";
+
+	gcs_seven_seg_display: max695x-seven-seg-display@71 {
+		compatible = "maxim,max695x";
+		reg = <0x71>;
+		label = "MAX695X_SEVEN_SEG_DISPLAY";
+	};
+};
+
+pd_pow_i2c: &i2c_smb_1 {
+	pinctrl-0 = <&i2c06_scl_gpio140 &i2c06_sda_gpio132>;
+	pinctrl-names = "default";
+	port-sel = <6>;
+};

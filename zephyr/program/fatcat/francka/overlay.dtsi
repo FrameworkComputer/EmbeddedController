@@ -1,0 +1,117 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&adc_ec_vsense_pp3300_s5 {
+	/*
+	 * Voltage divider on input has 47k upper and 220k lower legs with
+	 * 2714 mV full-scale reading on the ADC. Apply the largest possible
+	 * multiplier (without overflowing int32) to get the best possible
+	 * approximation of the actual ratio, but derate by a factor of two to
+	 * ensure unexpectedly high values won't overflow.
+	 */
+	mul = <(791261 / 2)>;
+	div = <(651975 / 2)>;
+};
+
+/* Set bus speeds for I2C */
+&i2c0_0 {
+	label = "I2C_EEPROM";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+};
+
+&i2c1_0 {
+	label = "I2C_SENSOR";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c2_0 {
+	label = "I2C_THERMAL";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c3_0 {
+	label = "I2C_PORT_PD";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+
+	pdc_power_p0: rts54-pdc@67 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x67>;
+		irq-gpios = <&gpioc 1 GPIO_ACTIVE_LOW>;
+	};
+	pdc_power_p1: rts54-pdc@66 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x66>;
+		irq-gpios = <&gpioc 1 GPIO_ACTIVE_LOW>;
+		no-fw-update;
+	};
+};
+
+&i2c4_1 {
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c7_0 {
+	label = "I2C_BATTERY";
+	label = "I2C_PORT_CHARGER";
+
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	charger: bq25710@9 {
+		compatible = "ti,bq25710";
+		status = "okay";
+		reg = <0x9>;
+	};
+
+	alt_charger: isl9538@9 {
+		compatible = "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
+	};
+};
+
+&pwm5_gpb7 {
+	drive-open-drain;
+};
+
+&pwm5 {
+	status = "okay";
+	pinctrl-0 = <&pwm5_gpb7>;
+	pinctrl-names = "default";
+};
+
+/* Tachometer for fan speed measurement */
+&tach2 {
+	status = "okay";
+	pinctrl-0 = <&ta2_1_in_gp73>;
+	pinctrl-names = "default";
+	port = <NPCX_TACH_PORT_A>; /* port-A is selected */
+	sample-clk = <NPCX_TACH_FREQ_LFCLK>; /* Use LFCLK as sampling clock */
+	pulses-per-round = <2>; /* number of pulses per round of encoder */
+};
+
+/* host interface */
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
+};
+
+/*
+ * Declare GPIOs that have leakage current caused by board issues here. NPCX ec
+ * will disable their input buffers before entering deep sleep and restore them
+ * after waking up automatically for better power consumption.
+ */
+&power_leakage_io {
+	leak-gpios = <&gpioa 4 (GPIO_OUTPUT | GPIO_VOLTAGE_1P8)
+		      &gpiof 1 GPIO_OPEN_DRAIN>;
+};

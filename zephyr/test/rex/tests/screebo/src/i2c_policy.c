@@ -113,6 +113,8 @@ ZTEST_USER(i2c_policy, test_deny_hb)
 
 static void i2c_policy_before(void *fixture)
 {
+	RESET_FAKE(cros_cbi_get_fw_config);
+
 	cros_cbi_get_fw_config_fake.custom_fake =
 		mock_cros_cbi_get_fw_config_nc;
 }

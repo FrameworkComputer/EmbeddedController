@@ -8,9 +8,3 @@ description: |
 compatible: "ucsi-ppm"
 
 include: base.yaml
-
-properties:
-  lpm:
-    type: phandles
-    description: |
-      List of LPMs connected to the PPM driver.

@@ -465,16 +465,11 @@ int board_set_active_charge_port(int port)
 
 /* Keyboard scan setting */
 __override struct keyboard_scan_config keyscan_config = {
-	/*
-	 * F3 key scan cycle completed but scan input is not
-	 * charging to logic high when EC start scan next
-	 * column for "T" key, so we set .output_settle_us
-	 * to 80us
-	 */
-	.output_settle_us = 80,
+	.output_settle_us = 50,
 	.debounce_down_us = 6 * MSEC,
 	.debounce_up_us = 30 * MSEC,
 	.scan_period_us = 1500,
+	.stable_scan_period_us = 1500,
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = SECOND,
 	.actual_key_mask = {

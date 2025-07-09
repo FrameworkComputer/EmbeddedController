@@ -100,6 +100,9 @@ static void test_setup(void)
 
 	cbi_create();
 	cbi_write();
+
+	manuf_in_batt = "AS1GUXd3KB";
+	device_in_batt = "C214-43";
 }
 
 static void test_teardown(void)
@@ -129,78 +132,135 @@ static void cbi_set_batt_conf(const struct board_batt_params *conf,
 	size = sizeof(*head) + head->manuf_name_size + head->device_name_size +
 	       sizeof(*conf);
 	cbi_set_board_info(CBI_TAG_BATTERY_CONFIG, buf, size);
+	ccprintf("CBI conf is set to '%s,%s'\n", manuf_name, device_name);
 }
 
-DECLARE_EC_TEST(test_batt_conf_main)
+DECLARE_EC_TEST(test_power_on_reset)
 {
-	const struct board_batt_params *conf;
-
+	ccprintf("\ntest_power_on_reset\n");
 	/* On POR, no config in CBI. Legacy mode should choose conf[0]. */
 	zassert_equal_ptr(get_batt_params(), &board_battery_info[0].config);
 
-	ccprintf("sizeof(struct batt_batt_params) = %lu)\n", sizeof(*conf));
+	return EC_SUCCESS;
+}
 
+DECLARE_EC_TEST(test_manuf_name_mismatch)
+{
 	/*
 	 * manuf_name != manuf_name
 	 */
-	ccprintf("\nmanuf_name != manuf_name\n");
+	ccprintf("\ntest_manuf_name_mismatch\n");
+	manuf_in_batt = "xyz";
 	cbi_set_batt_conf(&conf_in_cbi, "foo", "");
 	init_battery_type();
 	zassert_equal_ptr(get_batt_params(), &board_battery_info[0].config);
 
+	return EC_SUCCESS;
+}
+
+DECLARE_EC_TEST(test_empty_device_name)
+{
+	const struct board_batt_params *conf;
+
 	/*
 	 * manuf_name == manuf_name && device_name == ""
 	 */
-	ccprintf("\nmanuf_name == manuf_name && device_name == \"\"\n");
-	cbi_set_batt_conf(&conf_in_cbi, "AS1GUXd3KB", "");
+	ccprintf("\ntest_empty_device_name\n");
+	manuf_in_batt = "xyz";
+	cbi_set_batt_conf(&conf_in_cbi, manuf_in_batt, "");
 	init_battery_type();
 	conf = get_batt_params();
 	zassert_equal(memcmp(conf, &conf_in_cbi, sizeof(*conf)), 0);
-	zassert_equal(strcmp(get_batt_conf()->manuf_name, "AS1GUXd3KB"), 0);
+	zassert_equal(strcmp(get_batt_conf()->manuf_name, manuf_in_batt), 0);
 
+	return EC_SUCCESS;
+}
+
+DECLARE_EC_TEST(test_device_name_mismatch)
+{
 	/*
 	 * manuf_name == manuf_name && device_name != device_name
 	 */
-	ccprintf("\nmanuf_name == manuf_name && device_name != device_name\n");
-	cbi_set_batt_conf(&conf_in_cbi, "AS1GUXd3KB", "foo");
+	ccprintf("\ntest_device_name_mismatch\n");
+	manuf_in_batt = "xyz";
+	cbi_set_batt_conf(&conf_in_cbi, manuf_in_batt, "foo");
 	init_battery_type();
 	zassert_equal_ptr(get_batt_params(), &board_battery_info[0].config);
+
+	return EC_SUCCESS;
+}
+
+DECLARE_EC_TEST(test_match_in_cbi)
+{
+	const struct board_batt_params *conf;
 
 	/*
 	 * manuf_name == manuf_name && device_name == device_name
 	 */
-	ccprintf("\nmanuf_name == manuf_name && device_name == device_name\n");
-	cbi_set_batt_conf(&conf_in_cbi, "AS1GUXd3KB", "C214-43");
+	ccprintf("\ntest_match_in_cbi\n");
+	manuf_in_batt = "xyz";
+	cbi_set_batt_conf(&conf_in_cbi, manuf_in_batt, device_in_batt);
 	init_battery_type();
 	conf = get_batt_params();
 	zassert_equal(memcmp(conf, &conf_in_cbi, sizeof(*conf)), 0);
-	zassert_equal(strcmp(get_batt_conf()->manuf_name, "AS1GUXd3KB"), 0);
-	zassert_equal(strcmp(get_batt_conf()->device_name, "C214-43"), 0);
+	zassert_equal(strcmp(get_batt_conf()->manuf_name, manuf_in_batt), 0);
+	zassert_equal(strcmp(get_batt_conf()->device_name, device_in_batt), 0);
+
+	return EC_SUCCESS;
+}
+
+DECLARE_EC_TEST(test_search_fw_first)
+{
+	ccprintf("\ntest_search_fw_first\n");
+	/* Create duplicate entry in CBI. */
+	cbi_set_batt_conf(&conf_in_cbi, manuf_in_batt, device_in_batt);
+	init_battery_type();
+	/* Verify config_fw[0] is selected. */
+	zassert_equal_ptr(get_batt_params(), &board_battery_info[0].config);
+
+	return EC_SUCCESS;
+}
+
+DECLARE_EC_TEST(test_device_name_as_prefix)
+{
+	const struct board_batt_params *conf;
 
 	/*
 	 * Battery's device name contains extra chars.
 	 */
-	ccprintf("\nmanuf_name == manuf_name && device_name has extra chars\n");
-	device_in_batt = "C214-43 xyz";
+	ccprintf("\ntest_device_name_as_prefix\n");
+	manuf_in_batt = "xyz";
+	cbi_set_batt_conf(&conf_in_cbi, manuf_in_batt, "C214-43");
+	device_in_batt = "C214-43 123";
 	init_battery_type();
 	conf = get_batt_params();
 	zassert_equal(memcmp(conf, &conf_in_cbi, sizeof(*conf)), 0);
-	zassert_equal(strcmp(get_batt_conf()->manuf_name, "AS1GUXd3KB"), 0);
+	zassert_equal(strcmp(get_batt_conf()->manuf_name, manuf_in_batt), 0);
 	zassert_equal(strcmp(get_batt_conf()->device_name, "C214-43"), 0);
 
+	return EC_SUCCESS;
+}
+
+DECLARE_EC_TEST(test_manuf_name_not_found)
+{
 	/*
 	 * Manuf name not found in battery.
 	 */
-	ccprintf("\nManuf name not found.\n");
+	ccprintf("\ntest_manuf_name_not_found\n");
 	manuf_in_batt = NULL;
 	init_battery_type();
 	zassert_equal_ptr(get_batt_params(), &board_battery_info[0].config);
 	manuf_in_batt = "AS1GUXd3KB";
 
+	return EC_SUCCESS;
+}
+
+DECLARE_EC_TEST(test_device_name_not_found)
+{
 	/*
 	 * Device name not found in battery.
 	 */
-	ccprintf("\nDevice name not found.\n");
+	ccprintf("\ntest_device_name_not_found\n");
 	device_in_batt = NULL;
 	init_battery_type();
 	zassert_equal_ptr(get_batt_params(), &board_battery_info[0].config);
@@ -239,8 +299,24 @@ TEST_SUITE(test_suite_battery_config)
 {
 	ztest_test_suite(
 		test_battery_config,
-		ztest_unit_test_setup_teardown(test_batt_conf_main, test_setup,
+		ztest_unit_test_setup_teardown(test_power_on_reset, test_setup,
 					       test_teardown),
+		ztest_unit_test_setup_teardown(test_manuf_name_mismatch,
+					       test_setup, test_teardown),
+		ztest_unit_test_setup_teardown(test_empty_device_name,
+					       test_setup, test_teardown),
+		ztest_unit_test_setup_teardown(test_device_name_mismatch,
+					       test_setup, test_teardown),
+		ztest_unit_test_setup_teardown(test_match_in_cbi, test_setup,
+					       test_teardown),
+		ztest_unit_test_setup_teardown(test_search_fw_first, test_setup,
+					       test_teardown),
+		ztest_unit_test_setup_teardown(test_device_name_as_prefix,
+					       test_setup, test_teardown),
+		ztest_unit_test_setup_teardown(test_manuf_name_not_found,
+					       test_setup, test_teardown),
+		ztest_unit_test_setup_teardown(test_device_name_not_found,
+					       test_setup, test_teardown),
 		ztest_unit_test_setup_teardown(test_batt_conf_main_invalid,
 					       test_setup, test_teardown));
 	ztest_run_test_suite(test_battery_config);

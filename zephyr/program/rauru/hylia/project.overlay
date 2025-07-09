@@ -1,0 +1,92 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/cbi_flash.dtsi>
+#include <dt-bindings/motionsense/utils.h>
+
+#include "../arbitrage.dtsi"
+#include "../common.dtsi"
+#include "../usba.dtsi"
+#include "../interrupts.dtsi"
+#include "../motionsense.dtsi"
+#include "../power_signal.dtsi"
+#include "cbi.dtsi"
+#include "fan.dtsi"
+#include "generated.dtsi"
+#include "i2c.dtsi"
+#include "keyboard.dtsi"
+#include "led.dtsi"
+#include "motionsense.dtsi"
+#include "temp.dtsi"
+#include "../pdc.dtsi"
+
+/ {
+	gpio-interrupts {
+		/delete-node/ volume-up;
+		/delete-node/ volume-down;
+		/delete-node/ hdmi-ec-hpd;
+		/delete-node/ ec_als_rgb;
+		/delete-node/ ec-imu;
+		int_lid_accel: lid-accel {
+				irq-pin = <&gpio_lid_accel_int_ec_l>;
+				flags = <GPIO_INT_EDGE_FALLING>;
+				handler = "bma4xx_interrupt";
+		};
+		int_tablet_mode: tablet_mode {
+			irq-pin = <&gpio_lid_360_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "gmr_tablet_switch_isr";
+		};
+	};
+
+	batteries {
+		default_battery: cosmx-ap23cbp {
+			compatible = "cosmx,ap23cbp", "battery-smart";
+		};
+	};
+
+	kb_bl_pwm {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm3 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
+		status = "okay";
+	};
+};
+
+/*
+ * When CBI in flash is enabled, setup RO flash layout as follows:
+ *   RO binary:    0x00000:0x5DFFF
+ *   FMAP:         0x5DC00:0x5DFFF
+ *   CBI flash:    0x5E000:0x5EFFF
+ *   PSTATE block: 0x5F000:0x5FFFF
+ */
+&binman {
+	wp-ro {
+		/*
+		 * Delete the pstate node so that we can force it to be the
+		 * last sub-section. binman doesn't handle sub-sections with
+		 * out of order offsets.
+		 */
+		 /delete-node/ pstate;
+
+		 ec-ro {
+			fmap {
+				offset =  <(0x60000 - (0x1000 * 2) - 0x400)>;
+				/*
+				* don't specify 'size = <0x400>' here so
+				* it is auto-assigned to the fmap size.
+				*/
+			};
+		};
+		cbi {
+			offset = <(0x60000 - (0x1000 * 2))>;
+			size = <0x1000>;
+		};
+		pstate {
+			type = "section";
+			offset = <(0x60000 - (0x1000 * 1))>;
+			size = <0x1000>;
+		};
+	};
+};

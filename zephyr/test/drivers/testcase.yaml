@@ -1,5 +1,6 @@
 common:
-  platform_allow: native_sim
+  platform_allow:
+  - native_sim
 tests:
   drivers.default:
     timeout: 360
@@ -91,6 +92,8 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS=y
     - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+    - CONFIG_SHELL_BACKEND_DUMMY_BUF_SIZE=4096
+    - CONFIG_PLATFORM_EC_KEYBOARD_STRAUSS=y
     extra_conf_files:
     - prj.conf
     - default/prj.conf
@@ -103,6 +106,7 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS=y
     - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+    - CONFIG_SHELL_BACKEND_DUMMY_BUF_SIZE=4096
     extra_conf_files:
     - prj.conf
     - default/prj.conf
@@ -115,6 +119,7 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS=y
     - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+    - CONFIG_SHELL_BACKEND_DUMMY_BUF_SIZE=4096
     extra_conf_files:
     - prj.conf
     - default/prj.conf
@@ -125,6 +130,7 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS=y
     - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+    - CONFIG_SHELL_BACKEND_DUMMY_BUF_SIZE=4096
     extra_conf_files:
     - prj.conf
     - default/prj.conf
@@ -137,6 +143,7 @@ tests:
     - CONFIG_LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS=y
     - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
     - CONFIG_PLATFORM_EC_POWER_BUTTON=n
+    - CONFIG_SHELL_BACKEND_DUMMY_BUF_SIZE=4096
     extra_conf_files:
     - prj.conf
     - default/prj.conf
@@ -149,6 +156,7 @@ tests:
     - CONFIG_LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS=y
     - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
     - CONFIG_PLATFORM_EC_POWER_BUTTON=n
+    - CONFIG_SHELL_BACKEND_DUMMY_BUF_SIZE=4096
     extra_conf_files:
     - prj.conf
     - default/prj.conf
@@ -862,7 +870,9 @@ tests:
     - CONFIG_PLATFORM_EC_MKBP_EVENT=y
     - CONFIG_PLATFORM_EC_MKBP_USE_GPIO=y
     - CONFIG_PLATFORM_EC_KEYBOARD_KEYPAD=y
-    tags: common mkbp
+    tags:
+    - common
+    - mkbp
   drivers.mkbp.ec_host_cmd:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_MKBP=y
@@ -874,7 +884,9 @@ tests:
     extra_conf_files:
     - prj.conf
     - ec_host_cmd.conf
-    tags: common mkbp
+    tags:
+    - common
+    - mkbp
   drivers.nct38xx:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_NCT38XX=y
@@ -1021,6 +1033,15 @@ tests:
     extra_dtc_overlay_files:
     - ./boards/native_sim.overlay
     - ./ps8xxx/usbc.dts"
+  drivers.raa489000:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_RAA489000=y
+    extra_conf_files:
+    - prj.conf
+    - raa489000/prj.conf
+    extra_dtc_overlay_files:
+    - ./boards/native_sim.overlay
+    - ./raa489000/raa489000.dts
   drivers.rt1715:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_RT1715=y
@@ -1179,12 +1200,16 @@ tests:
     - sm5803/sm5803.dts
     timeout: 120
   drivers.system:
-    tags: common system
+    tags:
+    - common
+    - system
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_SYSTEM=y
     - CONFIG_POWER_SEQUENCE_MOCK=y
   drivers.system.ec_host_cmd:
-    tags: common system
+    tags:
+    - common
+    - system
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_SYSTEM=y
     - CONFIG_POWER_SEQUENCE_MOCK=y
@@ -1192,13 +1217,17 @@ tests:
     - prj.conf
     - ec_host_cmd.conf
   drivers.system_board_version_cbi:
-    tags: common system
+    tags:
+    - common
+    - system
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_SYSTEM=y
     - CONFIG_PLATFORM_EC_BOARD_VERSION_CBI=y
     - CONFIG_POWER_SEQUENCE_MOCK=y
   drivers.system_board_version_cbi.ec_host_cmd:
-    tags: common system
+    tags:
+    - common
+    - system
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_SYSTEM=y
     - CONFIG_PLATFORM_EC_BOARD_VERSION_CBI=y
@@ -1510,6 +1539,9 @@ tests:
     extra_conf_files:
     - prj.conf
     - ec_host_cmd.conf
+  drivers.usbc_fake_pdos:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_USBC_FAKE_PDOS=y
   drivers.host_cmd_thread:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_HOST_CMD_THREAD=y

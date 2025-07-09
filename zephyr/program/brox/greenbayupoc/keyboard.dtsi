@@ -79,10 +79,10 @@
 	pinctrl-names = "default";
 	row-size = <8>;
 	col-size = <16>;
-	settle-time-us = <80>;
 	debounce-down-ms = <15>;
 	actual-key-mask = <0x14 0xff 0xff 0x02 0xff 0xff 0xf4 0x08
 			   0xff 0xa0 0xff 0xff 0xff 0x41 0xfa 0xff>;
+	kso-ignore-mask = <04>;
 
 	kso-gpio {
 		compatible = "cros-ec,col-gpio";
@@ -100,7 +100,6 @@
 
 	runtime-keys {
 		compatible = "cros-ec,runtime-keys";
-		vol-up-rc = <KBD_RC(1, 5)>;
 		left-alt-rc = <KBD_RC(6, 13)>;
 		right-alt-rc = <KBD_RC(0, 13)>;
 		h-rc = <KBD_RC(1, 8)>;

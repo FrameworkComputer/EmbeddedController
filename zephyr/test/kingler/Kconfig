@@ -81,6 +81,11 @@ config TEST_VOLTORB
 	  Include voltorb_usbc.c into the binary to test the type-c output
 	  current limit function.
 
+config TEST_VOLTORB_DPS
+	bool "Run the tests intended for voltorb"
+	help
+	  Include voltorb_dps.c into the binary to test DPS change.
+
 config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	bool "Disable chipset_in_state inline method"
 	help
@@ -118,6 +123,18 @@ config TEST_KYOGRE_SENSOR_PROBE
 	help
 	  Include kyogre_sensor.c into the binary to test the kyogre sensor probe
 	  with GPIO interrupt.
+
+config TEST_KYOGRE_BATTERY_DETECTION_PROBE
+	bool "Run the tests intended for kyogre battery detection probe"
+	help
+	  Include kyogre_battery_detection.c into the binary to test the kyogre
+	  battery detection probe.
+
+config TEST_KYOGRE_PEN_CHARGE_PROBE
+	bool "Run the tests intended for kyogre pen charge probe"
+	help
+	  Include kyogre_pen_charge.c into the binary to test the kyogre pen charge
+	  probe with GPIO interrupt.
 
 config TEST_BUILD_FAKE
 	bool "Build fakes.c"

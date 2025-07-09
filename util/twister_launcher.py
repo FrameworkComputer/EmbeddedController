@@ -11,7 +11,7 @@ parameters that may be used, please consult the Twister documentation.
 """
 
 # [VPYTHON:BEGIN]
-# python_version: "3.8"
+# python_version: "3.11"
 # wheel: <
 #   name: "infra/python/wheels/anytree-py2_py3"
 #   version: "version:2.8.0"
@@ -23,6 +23,14 @@ parameters that may be used, please consult the Twister documentation.
 # wheel: <
 #   name: "infra/python/wheels/docopt-py2_py3"
 #   version: "version:0.6.2"
+# >
+# wheel: <
+#   name: "infra/python/wheels/future-py2_py3"
+#   version: "version:0.18.2"
+# >
+# wheel: <
+#   name: "infra/python/wheels/junitparser-py2_py3"
+#   version: "version:2.8.0"
 # >
 # wheel: <
 #   name: "infra/python/wheels/natsort-py3"
@@ -66,7 +74,7 @@ parameters that may be used, please consult the Twister documentation.
 # >
 # wheel: <
 #   name: "infra/python/wheels/ruamel_yaml_clib/${vpython_platform}"
-#   version: "version:0.2.6"
+#   version: "version:0.2.8"
 # >
 # wheel: <
 #   name: "infra/python/wheels/ruamel_yaml-py3"
@@ -80,10 +88,21 @@ parameters that may be used, please consult the Twister documentation.
 #   name: "infra/python/wheels/west-py3"
 #   version: "version:0.14.0"
 # >
+# wheel: <
+#   name: "infra/python/wheels/pytest-py3"
+#   version: "version:7.3.1"
+# >
+# wheel: <
+#   name: "infra/python/wheels/iniconfig-py3"
+#   version: "version:1.1.1"
+# >
+# wheel: <
+#   name: "infra/python/wheels/pluggy-py3"
+#   version: "version:0.13.1"
+# >
 # [VPYTHON:END]
 
 import argparse
-import hashlib
 import os
 import pathlib
 from pathlib import Path
@@ -96,8 +115,6 @@ import subprocess
 import sys
 import tempfile
 import time
-from typing import List
-import uuid
 
 
 # Paths under the EC base dir that contain tests. This is used to define
@@ -115,6 +132,7 @@ ZEPHYR_TEST_PATHS = [
     Path("tests/drivers/fuel_gauge/sbs_gauge"),
     Path("tests/drivers/gpio"),
     Path("tests/kernel/poll"),
+    Path("tests/lib/cpp/cxx"),
     Path("tests/subsys/pm"),
     Path("tests/subsys/shell"),
 ]
@@ -276,167 +294,8 @@ def in_cros_sdk() -> bool:
     return Path("/etc/cros_chroot_version").is_file()
 
 
-def running_in_bazel() -> bool:
-    """Detect if we're running as inside of a Bazel build already.
-
-    Returns:
-        True if it looks like we're running from a Bazel rule, False otherwise.
-    """
-    return "BAZEL_TWISTER_CWD" in os.environ
-
-
-def in_fwsdk() -> bool:
-    """Detect if the development environment is Firmware SDK.
-
-    Returns:
-        True if the environment looks like Firmware SDK, False otherwise.
-    """
-    # CrOS SDK cannot be FWSDK.  Check early and stop to prevent us from
-    # breaking anything in CrOS SDK.
-    if in_cros_sdk():
-        return False
-
-    # If we're already re-launched under Bazel, we're in Firmware SDK.
-    if running_in_bazel():
-        return True
-
-    # Otherwise, ask Bazel to see if it knows about Firmware SDK rules.
-    try:
-        subprocess.run(
-            [
-                "bazel",
-                "query",
-                "//platform/rules_cros_firmware/cros_firmware:*",
-            ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=True,
-        )
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return False
-    return True
-
-
-def maybe_relaunch_in_bazel(
-    argv: List[str], cwd: Path, sandbox_debug: bool = False
-):
-    """If Firmware SDK environment is detected, relaunch in Bazel.
-
-    Args:
-        argv: The command line to re-launch with.
-        cwd: The directory to run inside.
-        sandbox_debug: If True, run bazel with --sandbox_debug.
-    """
-    if not in_fwsdk():
-        return False
-
-    if running_in_bazel():
-        return False
-
-    # We want to parse args specially handled in fwsdk
-    parser = argparse.ArgumentParser(add_help=False)
-
-    # We intercept build-only/test-only because bazel should handle whether we build or not
-    parser.add_argument("--test-only", action="store_true")
-    parser.add_argument("-b", "--build-only", action="store_true")
-    parser.add_argument("--prep-artifacts-for-testing", action="store_true")
-    # We intercept testsuite-root to resolve paths.
-    parser.add_argument("-T", "--testsuite-root", action="append")
-
-    known_args, unknown_args = parser.parse_known_args(args=argv)
-    args_from_fwsdk = []
-
-    if known_args.test_only:
-        print(
-            "--test-only is not compatible with Bazel twister_launcher, remove it.",
-            file=sys.stderr,
-        )
-        sys.exit(22)  # UNIX Invalid Argument error code
-
-    if known_args.testsuite_root:
-        for arg in known_args.testsuite_root:
-            args_from_fwsdk.extend(["-T", str(Path(arg).resolve())])
-
-    argv = args_from_fwsdk + unknown_args
-
-    gen_starlark = f"""
-load(
-    "//platform/ec/bazel:twister.bzl",
-    "twister_test",
-)
-twister_test(
-    name = "run_twister",
-    args = {argv!r},
-    cwd = {str(cwd)!r},
-)"""
-    run_hash = hashlib.md5(gen_starlark.encode("utf-8")).hexdigest()
-    build_dir = Path(__file__).resolve().parent.parent / "build"
-    twister_bzl_dir = build_dir / "twister-bzl"
-    run_dir = twister_bzl_dir / run_hash
-
-    if not run_dir.is_dir():
-        run_dir.mkdir(parents=True)
-        (run_dir / "BUILD.bazel").write_text(gen_starlark, encoding="utf-8")
-
-    # Twister users are used to seeing `twister-out`; symlink it to bazel twister-out
-    bazel_bin = Path(
-        subprocess.run(
-            ["bazel", "info", "bazel-bin"],
-            cwd=Path(__file__).resolve().parent,
-            check=True,
-            stdout=subprocess.PIPE,
-            encoding="utf-8",
-        ).stdout.strip()
-    )
-
-    ec_twister_out = Path("twister-out_build")
-    bazel_twister_out = (
-        # TODO b/293119619: Create symlink for test execution output too.
-        bazel_bin
-        / "platform/ec/build/twister-bzl"
-        / run_hash
-        / "twister-out_build"
-    )
-
-    # Atomically symlink to twister out/build directory
-    # Largely taken from chromite.osutils.SafeSymlink()
-    tmp_twister_out = ec_twister_out.with_name(
-        f".tmp-{ec_twister_out.name}-{uuid.uuid4().hex}"
-    )
-    try:
-        tmp_twister_out.symlink_to(bazel_twister_out)
-        tmp_twister_out.rename(ec_twister_out)
-    except OSError:
-        # Clean up temporary symlink if rename failed
-        tmp_twister_out.unlink(missing_ok=True)
-
-    # Bazel likes to cache test executions, we're not interested in this behavior.
-    bazel_cmd = ["bazel", "test", ":run_twister"]
-
-    bazel_cmd.append("--test_output=all")
-    # Bazel likes to cache test results in addition to builds.
-    bazel_cmd.append("--nocache_test_results")
-    # By default be as verbose as twister is.
-    bazel_cmd.append("--test_output=streamed")
-    if sandbox_debug:
-        bazel_cmd.append("--sandbox_debug")
-
-    result = subprocess.run(bazel_cmd, cwd=run_dir, check=False)
-    sys.exit(result.returncode)
-
-
 def main():
     """Run Twister using defaults for the EC project."""
-
-    bazel_outdir = None
-    if "BAZEL_TWISTER_CWD" in os.environ:
-        # Resolve any paths relative to the execroot prior to changing
-        # directories.
-        bazel_outdir = Path(os.environ["BAZEL_TWISTER_OUTDIR"]).resolve()
-        os.environ["TOOLCHAIN_ROOT"] = str(
-            Path(os.environ["TOOLCHAIN_ROOT"]).resolve()
-        )
-        os.chdir(os.environ["BAZEL_TWISTER_CWD"])
 
     # Get paths for the build.
     ec_base, zephyr_base, zephyr_modules_dir, pigweed_dir = find_paths()
@@ -462,6 +321,7 @@ def main():
         f"-x=ZEPHYR_BASE={zephyr_base}",
         f"-x=ZEPHYR_MODULES={';'.join([str(p) for p in zephyr_modules])}",
         f"-x=Python3_EXECUTABLE={sys.executable}",
+        f"-x=PW_ROOT={str(pigweed_dir)}",
     ]
 
     # `-T` flags (used for specifying test directories to build and run)
@@ -484,7 +344,7 @@ def main():
     parser.add_argument(
         "-O",
         "--outdir",
-        default=bazel_outdir or os.path.join(os.getcwd(), "twister-out"),
+        default=os.path.join(os.getcwd(), "twister-out"),
     )
     parser.add_argument(
         "--toolchain",
@@ -504,12 +364,6 @@ def main():
         const="llvm",
     )
     parser.add_argument(
-        "--sandbox-debug",
-        action="store_true",
-        default=False,
-        help="When running under Bazel, enable sandbox debugging mode.",
-    )
-    parser.add_argument(
         "-h",
         "--help",
         action="store_true",
@@ -525,12 +379,6 @@ def main():
     # We allow help to run outside the sandbox.
     if intercepted_args.help:
         twister_cli.append("--help")
-    else:
-        maybe_relaunch_in_bazel(
-            sys.argv[1:],
-            Path.cwd(),
-            sandbox_debug=intercepted_args.sandbox_debug,
-        )
 
     # Zephyr upstream defaults to using gcovr, but this isn't
     # available in the chroot.  Force our runs to use lcov.
@@ -579,6 +427,7 @@ def main():
         # native_sim and unit_testing when nothing was requested by user.
         twister_cli.extend(["-p", "native_sim"])
         twister_cli.extend(["-p", "unit_testing"])
+        twister_cli.extend(["-p", "unit_testing/unit_testing"])
 
     twister_cli.extend(["--outdir", intercepted_args.outdir])
 
@@ -599,7 +448,15 @@ def main():
             # Zephyr calls verify-toolchain.cmake
             "ZEPHYR_TOOLCHAIN_VARIANT": intercepted_args.toolchain,
             "PARSETAB_DIR": parsetab_dir,
+            "PW_ROOT": str(pigweed_dir),
         }
+        protoc_path = shutil.which("protoc")
+        if protoc_path:
+            protoc_path_obj = Path(protoc_path)
+            assert protoc_path_obj.parent.name == "bin"
+            extra_env_vars["PW_PIGWEED_CIPD_INSTALL_DIR"] = str(
+                protoc_path_obj.parent.parent
+            )
         gcov_tool = None
         if intercepted_args.toolchain == "host":
             gcov_tool = "gcov"

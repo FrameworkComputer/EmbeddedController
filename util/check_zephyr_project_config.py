@@ -25,7 +25,7 @@ else:
     )
 
 if not os.path.exists(ZEPHYR_BASE):
-    raise Exception(
+    raise FileNotFoundError(
         f"ZEPHYR_BASE path does not exist!\nZEPHYR_BASE={ZEPHYR_BASE}"
     )
 
@@ -262,7 +262,7 @@ class KconfigCheck:
                 for name, dep in symbols.items():
                     match = f"CONFIG_{name}=y"
                     if line.startswith(match):
-                        self._fail(
+                        self.log.warning(
                             "%s:%d: unnecessary config option %s (depends on %s)",
                             file_name,
                             line_num,

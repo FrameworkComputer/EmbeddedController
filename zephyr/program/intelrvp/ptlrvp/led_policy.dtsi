@@ -1,0 +1,143 @@
+#include <dt-bindings/battery.h>
+
+/ {
+	led-colors {
+		compatible = "cros-ec,led-policy";
+
+		power-state-near-full {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+
+			led-color {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				/* Turn on Green LED */
+				color-0 {
+					led-color = "LED_GREEN";
+				};
+			};
+		};
+
+		power-state-charging-mid-high {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery percent range 30..100 */
+			batt-lvl = <30 100>;
+
+			led-color {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				/* Blink Green LED at 0.5 Hz */
+				color-0 {
+					led-color = "LED_GREEN";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
+			};
+		};
+		power-state-charging-mid-low {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery percent range 0..29 */
+			batt-lvl = <0 29>;
+
+			led-color {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				/* Blink Amber LED at 0.5 Hz */
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
+			};
+		};
+		power-state-discharge {
+			charge-state = "LED_PWRS_DISCHARGE";
+			/* Battery percent range (> Low, <= Full) */
+			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
+
+			/* Turn off both LED's */
+			led-color {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+		power-state-discharge-low {
+			charge-state = "LED_PWRS_DISCHARGE";
+			/* Battery percent range (>= Empty, <= Low) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
+
+			/* Blink Amber LED at 1 Hz */
+			led-color {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <500>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <500>;
+				};
+			};
+		};
+		power-state-error {
+			charge-state = "LED_PWRS_ERROR";
+
+			/* Blink Amber LED at 0.25 Hz */
+			led-color {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <2000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <2000>;
+				};
+			};
+		};
+		power-state-idle {
+			charge-state = "LED_PWRS_IDLE";
+
+			/* Blink Amber LED at 0.8 Hz with 80% duty cycle */
+			led-color {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <250>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
+			};
+		};
+		power-state-force-idle {
+			charge-state = "LED_PWRS_FORCED_IDLE";
+
+			/* Blink Amber LED at 0.8 Hz with 20% duty cycle */
+			led-color {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <250>;
+				};
+			};
+		};
+	};
+};

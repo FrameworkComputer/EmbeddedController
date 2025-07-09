@@ -16,6 +16,7 @@
 #include "builtin/assert.h"
 #include "chipset.h"
 #include "clock.h"
+#include "clock_chip.h"
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
@@ -40,13 +41,6 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
 #define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ##args)
-
-enum clock_osc {
-	OSC_HSI = 0, /* High-speed internal oscillator */
-	OSC_CSI, /* Multi-speed internal oscillator: NOT IMPLEMENTED */
-	OSC_HSE, /* High-speed external oscillator: NOT IMPLEMENTED */
-	OSC_PLL, /* PLL */
-};
 
 enum voltage_scale {
 	VOLTAGE_SCALE0 = 0,
@@ -320,7 +314,7 @@ static void switch_voltage_scale(enum voltage_scale vos)
 		;
 }
 
-static void clock_set_osc(enum clock_osc osc)
+void clock_set_osc(enum clock_osc osc, enum clock_osc pll_osc)
 {
 	enum freq target_sysclk_freq = FREQ_64MHZ;
 	enum voltage_scale target_voltage_scale = VOLTAGE_SCALE3;
@@ -392,7 +386,7 @@ test_mockable void clock_enable_module(enum module_id module, int enable)
 			disable_sleep(SLEEP_MASK_PLL);
 		else
 			enable_sleep(SLEEP_MASK_PLL);
-		clock_set_osc(enable ? OSC_PLL : OSC_HSI);
+		clock_set_osc(enable ? OSC_PLL : OSC_HSI, OSC_HSI);
 	}
 }
 
@@ -407,7 +401,7 @@ static int dsleep_recovery_margin_us = 1000000;
 /* STOP_MODE_LATENCY: delay to wake up from STOP mode with flash off in SVOS5 */
 #define STOP_MODE_LATENCY 50 /* us */
 
-static void low_power_init(void)
+void low_power_init(void)
 {
 	/* Clock LPTIM1 on the 32-kHz LSI for STOP mode time keeping */
 	STM32_RCC_D2CCIP2R =
@@ -661,9 +655,9 @@ static int command_clock(int argc, const char **argv)
 {
 	if (argc >= 2) {
 		if (!strcasecmp(argv[1], "hsi"))
-			clock_set_osc(OSC_HSI);
+			clock_set_osc(OSC_HSI, OSC_INIT);
 		else if (!strcasecmp(argv[1], "pll"))
-			clock_set_osc(OSC_PLL);
+			clock_set_osc(OSC_PLL, OSC_HSI);
 		else
 			return EC_ERROR_PARAM1;
 	}

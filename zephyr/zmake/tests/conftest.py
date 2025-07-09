@@ -25,9 +25,11 @@ hypothesis.settings.load_profile("cq")
 def zmake_factory_from_dir(tmp_path):
     """Creates module dirs and returns a Zmake object factory."""
 
-    os.mkdir(tmp_path / "ec")
-    os.mkdir(tmp_path / "ec" / "zephyr")
-    (tmp_path / "ec" / "zephyr" / "module.yml").write_text("")
+    for module in ["ec", "pigweed", "nanopb"]:
+        os.mkdir(tmp_path / module)
+        os.mkdir(tmp_path / module / "zephyr")
+        (tmp_path / module / "zephyr" / "module.yml").write_text("")
+
     zephyr_base = tmp_path / "zephyr_base"
 
     def _zmake_factory(**kwargs):

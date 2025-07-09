@@ -1,0 +1,16 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * Aliases to common names
+ */
+gpio_ec_pch_wake_odl: &gpio_smc_wake_sci_n_r {};
+cse_early_rec_sw: &gpio_x00085 {};
+std_adp_prsnt: &gpio_std_adp_prsnt_r {};
+gpio_pdc_pow_irq: &gpio_wc_usbc_pd_alrt_aic1_r {};
+bc_acok: &gpio_bga_pine5 {};
+
+vol_up_ec: &gpio_volume_up_r {};
+vol_dn_ec: &gpio_vol_dn_ec_r {};

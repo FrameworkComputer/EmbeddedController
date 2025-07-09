@@ -5,15 +5,21 @@
 """Define zmake projects for nissa."""
 
 # Nivviks and Craask, Pujjo, Xivu, Xivur, Uldren has NPCX993F, Nereid
-# and Joxer, Yaviks, Yavilla, Yavista, Quandiso, Domika has ITE81302
+# and Joxer, Yaviks, Yavilla, Yavista, Quandiso, Quandiso2, Domika has
+# ITE81302
 
 
 def register_nissa_project(
     project_name,
     chip="it8xxx2/it81302bx",
     kconfig_files=None,
+    modules=None,
 ):
     """Register a variant of nissa."""
+    kwargs = {}
+    if modules:
+        kwargs["modules"] = modules
+
     register_func = register_binman_project
     if chip.startswith("npcx"):
         register_func = register_npcx_project
@@ -35,6 +41,8 @@ def register_nissa_project(
         dts_overlays=[here / project_name / "project.overlay"],
         kconfig_files=kconfig_files,
         inherited_from=["nissa"],
+        supported_toolchains=["coreboot-sdk", "zephyr"],
+        **kwargs,
     )
 
 
@@ -105,6 +113,11 @@ pujjoga = register_nissa_project(
     chip="npcx9/npcx9m3f",
 )
 
+pujjogatwin = register_nissa_project(
+    project_name="pujjogatwin",
+    chip="npcx9/npcx9m3f",
+)
+
 xivu = register_nissa_project(
     project_name="xivu",
     chip="npcx9/npcx9m3f",
@@ -150,6 +163,13 @@ craaskov = register_nissa_project(
 orisa = register_nissa_project(
     project_name="orisa",
     chip="npcx9/npcx9m3f",
+    kconfig_files=[
+        here / "program.conf",
+        here / "npcx_program.conf",
+        here / "orisa" / "project.conf",
+        here / "orisa.conf",
+    ],
+    modules=["ec", "cmsis", "pigweed", "nanopb"],
 )
 
 orisa_ti = register_nissa_project(
@@ -168,6 +188,9 @@ pirrha = register_nissa_project(
 )
 quandiso = register_nissa_project(
     project_name="quandiso",
+)
+quandiso2 = register_nissa_project(
+    project_name="quandiso2",
 )
 anraggar = register_nissa_project(
     project_name="anraggar",
@@ -196,11 +219,53 @@ teliks = register_nissa_project(
     project_name="teliks",
     chip="it8xxx2/it81302bx",
 )
+
+telith = register_nissa_project(
+    project_name="telith",
+    chip="it8xxx2/it81302bx",
+)
+
+register_ish_project(
+    project_name="orisa-ish",
+    zephyr_board="intel_ish_5_4_1",
+    dts_overlays=[
+        here / "orisa-ish" / "project.overlay",
+    ],
+    kconfig_files=[
+        here / "orisa-ish" / "prj.conf",
+        # Uncomment the following line for UART support
+        # here / "orisa-ish" / "debug.conf",
+        here / "orisa.conf",
+    ],
+    modules=["ec", "cmsis", "hal_intel_public", "pigweed", "nanopb"],
+)
+
+rull = register_nissa_project(
+    project_name="rull",
+    chip="it8xxx2/it81302bx",
+)
+
+pujjoniru = register_nissa_project(
+    project_name="pujjoniru",
+    chip="it8xxx2/it81302bx",
+)
+
+dirks = register_nissa_project(
+    project_name="dirks",
+    chip="it8xxx2/it81302bx",
+)
+
+guren = register_nissa_project(
+    project_name="guren",
+    chip="npcx9/npcx9m3f",
+)
+
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release.
 assert_rw_fwid_DO_NOT_EDIT(project_name="anraggar", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="craask", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="craaskov", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="dirks", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="orisa", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="orisa_ti", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="gothrax", addr=0xBFFE0)
@@ -213,7 +278,9 @@ assert_rw_fwid_DO_NOT_EDIT(project_name="nokris", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="pirrha", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="pujjo", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="pujjoga", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="pujjogatwin", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="quandiso", addr=0xB7FE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="quandiso2", addr=0xB7FE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="uldren", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="xivu", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="xivur", addr=0x7FFE0)
@@ -225,3 +292,7 @@ assert_rw_fwid_DO_NOT_EDIT(project_name="sundance", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="riven", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="domika", addr=0xB7FE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="teliks", addr=0xBFFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="rull", addr=0xBFFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="telith", addr=0xBFFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="pujjoniru", addr=0xBFFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="guren", addr=0x7FFE0)

@@ -199,7 +199,7 @@ static int cros_rtc_npcx_reset_alarm(const struct device *dev)
 }
 
 /* cros ec RTC driver registration */
-static const struct cros_rtc_driver_api cros_rtc_npcx_driver_api = {
+static DEVICE_API(cros_rtc, cros_rtc_npcx_driver_api) = {
 	.configure = cros_rtc_npcx_configure,
 	.get_value = cros_rtc_npcx_get_value,
 	.set_value = cros_rtc_npcx_set_value,

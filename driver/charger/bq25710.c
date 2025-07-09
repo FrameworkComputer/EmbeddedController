@@ -303,8 +303,6 @@ static int bq25710_set_low_power_mode(int chgnum, int enable)
 	return EC_SUCCESS;
 }
 
-#if defined(CONFIG_CHARGE_RAMP_HW) || \
-	defined(CONFIG_USB_PD_VBUS_MEASURE_CHARGER)
 static int bq25710_get_low_power_mode(int chgnum, int *mode)
 {
 	int rv;
@@ -365,7 +363,6 @@ static int bq25710_adc_start(int chgnum, int adc_en_mask)
 
 	return EC_SUCCESS;
 }
-#endif
 
 static int co1_set_psys_sensing(int reg, bool enable)
 {
@@ -513,6 +510,11 @@ static int bq257x0_init_charge_option_2(int chgnum)
 	if (IS_ENABLED(CONFIG_CHARGER_BQ25710_BATOC_VTH_MINIMUM)) {
 		/* Set battery over-current threshold to minimum. */
 		reg = SET_CO2_BY_NAME(BATOC_VTH, 1P33, reg);
+	}
+
+	/* Set ILIM pin disabled if it is currently enabled. */
+	if (IS_ENABLED(CONFIG_CHARGER_ILIM_PIN_DISABLED)) {
+		reg = SET_CO2_BY_NAME(EN_EXTILIM, DISABLE, reg);
 	}
 
 	return raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_2, reg);
@@ -809,6 +811,38 @@ static enum ec_error_list bq25710_get_input_current_limit(int chgnum,
 		*input_current = iin_dpm_reg_to_current(
 			reg >> BQ257X0_IIN_DPM_CURRENT_SHIFT);
 
+	return rv;
+}
+
+static int reg_adc_input_current_to_ma(int reg)
+{
+	/*
+	 * LSB => 50mA.
+	 */
+	return reg * BQ25710_IIN_DPM_CODE0_OFFSET;
+}
+
+static enum ec_error_list bq25710_get_input_current(int chgnum,
+						    int *input_current)
+{
+	int reg, rv;
+
+	rv = bq25710_adc_start(chgnum,
+			       BQ_FIELD_MASK(BQ257X0, ADC_OPTION, EN_ADC_IIN));
+	if (rv)
+		goto error;
+
+	/* Read ADC value */
+	rv = raw_read16(chgnum, BQ25710_REG_ADC_CMPIN_IIN, &reg);
+	if (rv)
+		goto error;
+
+	reg >>= BQ257X0_ADC_IIN_CMPIN_IIN_SHIFT;
+	*input_current = reg_adc_input_current_to_ma(reg);
+
+error:
+	if (rv)
+		CPRINTF("Could not read IIN ADC! Error: %d\n", rv);
 	return rv;
 }
 
@@ -1127,6 +1161,7 @@ const struct charger_drv bq25710_drv = {
 #endif
 	.set_input_current_limit = &bq25710_set_input_current_limit,
 	.get_input_current_limit = &bq25710_get_input_current_limit,
+	.get_input_current = &bq25710_get_input_current,
 	.manufacturer_id = &bq25710_manufacturer_id,
 	.device_id = &bq25710_device_id,
 	.get_option = &bq25710_get_option,

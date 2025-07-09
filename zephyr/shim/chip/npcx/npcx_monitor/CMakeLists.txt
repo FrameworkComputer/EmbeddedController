@@ -38,10 +38,17 @@ target_link_options(npcx_monitor BEFORE PRIVATE
 set(npcx_monitor_elf ${CMAKE_CURRENT_BINARY_DIR}/npcx_monitor.elf)
 set(npcx_monitor_bin ${CMAKE_BINARY_DIR}/npcx_monitor.bin)
 
+if (NOT DEFINED CONFIG_COVERAGE)
 add_custom_target(generate_npcx_monitor
   COMMAND ${CMAKE_OBJCOPY} -O binary ${npcx_monitor_elf} ${npcx_monitor_bin}
   BYPRODUCTS ${npcx_monitor_bin}
   DEPENDS npcx_monitor
   )
+add_custom_target(check_monitor_hash
+  COMMAND ${CMAKE_COMMAND} -DZEPHYR_TOOLCHAIN_VARIANT=${ZEPHYR_TOOLCHAIN_VARIANT}
+  -DINPUT_FILE=${npcx_monitor_bin} -P ${CMAKE_CURRENT_SOURCE_DIR}/check_hash.cmake
+  DEPENDS ${npcx_monitor_bin}
+  )
 
-add_dependencies(zephyr generate_npcx_monitor)
+add_dependencies(zephyr check_monitor_hash)
+endif()

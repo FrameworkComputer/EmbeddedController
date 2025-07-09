@@ -37,7 +37,7 @@ child-binding:
 #                als-channel-scale {
 #                compatible = "cros-ec,accelgyro-als-channel-scale";
 #                        k-channel-scale = <1>;
-#                        cover-scale = <1>;
+#                        cover-scale = "1.0f";
 #                };
 #        };
 # };

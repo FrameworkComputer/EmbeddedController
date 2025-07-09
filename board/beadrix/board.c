@@ -344,7 +344,8 @@ void board_init(void)
 	/* Enable C0 interrupt and check if it needs processing */
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
 
-	if (get_cbi_fw_config_db() != DB_NONE) {
+	if (get_cbi_fw_config_db() != DB_NONE &&
+	    get_cbi_fw_config_db() != DB_LTE) {
 		/* Enable C1 interrupt and check if it needs processing */
 		gpio_enable_interrupt(GPIO_USB_C1_INT_V1_ODL);
 		check_c1_line();
@@ -393,6 +394,7 @@ __override void board_power_5v_enable(int enable)
 	gpio_set_level(GPIO_EN_PP5000, !!enable);
 	gpio_set_level(GPIO_EN_USB_A0_VBUS, !!enable);
 	if ((get_cbi_fw_config_db() != DB_NONE) &&
+	    (get_cbi_fw_config_db() != DB_LTE) &&
 	    (isl923x_set_comparator_inversion(1, !!enable)))
 		CPRINTS("Failed to %sable sub rails!", enable ? "en" : "dis");
 }
@@ -575,6 +577,10 @@ static const struct ec_response_keybd_config keybd1 = {
 	/* No function keys, no numeric keypad and no screenlock key */
 };
 
+/* TK_REFRESH is always T2 above, vivaldi_keys are not overridden. */
+BUILD_ASSERT_REFRESH_RC(3, 2);
+
+BUILD_ASSERT(IS_ENABLED(CONFIG_KEYBOARD_VIVALDI));
 __override const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void)
 {
@@ -587,7 +593,8 @@ board_vivaldi_keybd_config(void)
 
 __override uint8_t board_get_usb_pd_port_count(void)
 {
-	if (get_cbi_fw_config_db() == DB_NONE)
+	if ((get_cbi_fw_config_db() == DB_NONE) ||
+	    (get_cbi_fw_config_db() == DB_LTE))
 		return 1;
 	else
 		return 2;
@@ -595,8 +602,28 @@ __override uint8_t board_get_usb_pd_port_count(void)
 
 __override uint8_t board_get_charger_chip_count(void)
 {
-	if (get_cbi_fw_config_db() == DB_NONE)
+	if ((get_cbi_fw_config_db() == DB_NONE) ||
+	    (get_cbi_fw_config_db() == DB_LTE))
 		return 1;
 	else
 		return 2;
 }
+
+/* Called on AP S0 -> S3 transition */
+static void board_chipset_suspend(void)
+{
+	if ((get_cbi_fw_config_db() == DB_NONE) ||
+	    (get_cbi_fw_config_db() == DB_LTE))
+		gpio_set_flags(GPIO_EC_I2C_SUB_USB_C1_SDA, GPIO_ODR_LOW);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S3 -> S0 transition */
+static void board_chipset_resume(void)
+{
+	if ((get_cbi_fw_config_db() == DB_NONE) ||
+	    (get_cbi_fw_config_db() == DB_LTE))
+		gpio_set_flags(GPIO_EC_I2C_SUB_USB_C1_SDA,
+			       GPIO_INPUT | GPIO_PULL_UP);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);

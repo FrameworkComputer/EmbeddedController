@@ -7,7 +7,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/usb/class/usb_hid.h>
 #include <zephyr/usb/usb_device.h>
-LOG_MODULE_DECLARE(usb_dc, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(usb_dc, LOG_LEVEL_INF);
 
 struct usb_controller_status {
 	bool suspended;

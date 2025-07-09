@@ -15,6 +15,28 @@ static void usart_rx_init(struct usart_config const *config)
 {
 	intptr_t base = config->hw->base;
 
+#ifdef STM32_USART_CR2_RTOEN
+	/*
+	 * Enable RX timeout interrupt if the RX line stays idle for the time it
+	 * takes to transfer 20 bits (two characters) at the current baud rate.
+	 *
+	 * This is long enough that we can be quite sure that MCU at the other
+	 * end has emptied its FIFO and does not immediately have more data to
+	 * send, and short enough to not introduce significant delay
+	 * transmitting the USB data.
+	 */
+	STM32_USART_CR1(base) |= STM32_USART_CR1_RTOIE;
+	STM32_USART_RTOR(base) = 20;
+	STM32_USART_CR2(base) |= STM32_USART_CR2_RTOEN;
+
+	/*
+	 * Signal that the consumer is allowed to buffer characters
+	 * indefinitely, and is only strictly required to empty the queue when
+	 * queue_flush() is invoked in the future.
+	 */
+	queue_enable_buffered_mode(config->producer.queue);
+#endif
+
 	STM32_USART_CR1(base) |= STM32_USART_CR1_RXNEIE;
 	STM32_USART_CR1(base) |= STM32_USART_CR1_RE;
 }
@@ -76,6 +98,23 @@ static void usart_rx_interrupt_handler(struct usart_config const *config)
 		break;
 #endif
 	}
+
+#ifdef STM32_USART_CR2_RTOEN
+	if (status & (STM32_USART_SR_RTOF | STM32_USART_SR_FE)) {
+		/*
+		 * RTOF means that the RX line has been idle (high) for a while,
+		 * that is, the sender has stopped/paused transmission.  FE
+		 * (framing error) means that the RX line sat low for longer
+		 * than a full character frame.  In either case, tell the
+		 * consumer to immediately process the queue of previously
+		 * received characters, as it is quite possible we will not
+		 * receive any more characters for a while.
+		 */
+		STM32_USART_ICR(base) = STM32_USART_ICR_RTOCF |
+					STM32_USART_ICR_FECF;
+		queue_flush(config->producer.queue);
+	}
+#endif
 }
 
 struct usart_rx const usart_rx_interrupt = {

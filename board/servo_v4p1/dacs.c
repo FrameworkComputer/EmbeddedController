@@ -79,9 +79,9 @@ int write_dac(enum dac_t dac, uint16_t value)
 	 * Data are MSB aligned in straight binary format, and
 	 * use the following format: DATA[13:0], 0, 0
 	 */
+	value <<= 2;
 	tmp = (value << 8) & 0xff00;
 	tmp |= (value >> 8) & 0xff;
-	tmp <<= 2;
 
 	switch (dac) {
 	case CC1_DAC:

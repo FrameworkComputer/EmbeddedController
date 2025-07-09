@@ -64,7 +64,7 @@ SHELL_STATIC_SUBCMD_SET_CREATE(sub_altmode_cmds,
 
 SHELL_CMD_REGISTER(altmode, &sub_altmode_cmds, "PD Altmode commands", NULL);
 
-#ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_TYPEC
+#ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_PDC_TYPEC
 static int command_typec(const struct shell *sh, int argc, const char **argv)
 {
 	char *e;

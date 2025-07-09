@@ -9,11 +9,12 @@
 
 	named-adc-channels {
 		compatible = "named-adc-channels";
-
+		
 		adc_ec_vsense_pp1050_proc: ec_vsense_pp1050_proc {
 			enum-name = "ADC_PP1050_PROC";
 			io-channels = <&adc0 4>;
 		};
+		
 		adc_ec_vsense_pp3300_s5: ec_vsense_pp3300_s5 {
 			enum-name = "ADC_PP3300_S5";
 			io-channels = <&adc0 6>;

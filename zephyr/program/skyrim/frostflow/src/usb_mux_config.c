@@ -185,7 +185,8 @@ test_export_static void board_resume_change(struct ap_power_ev_callback *cb,
 
 	case AP_POWER_STARTUP:
 		/* Any retimer tuning can be done after the retimer turns on */
-		hook_call_deferred(&baseboard_a1_retimer_setup_data, 20 * MSEC);
+		hook_call_deferred(&baseboard_a1_retimer_setup_data,
+				   20 * USEC_PER_MSEC);
 		break;
 	}
 }

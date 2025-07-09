@@ -199,19 +199,19 @@ ZTEST(one_wire_uart_driver, test_tx)
 	zassert_equal(ring_buf_size_get(data->tx_ring_buf), sizeof(msg.header));
 
 	ring_buf_reset(data->tx_ring_buf);
-	fake_time.val = MSEC;
+	fake_time.val = USEC_PER_MSEC;
 	process_tx_irq(dev);
 	/* resend timer not expired, shouldn't enqueue any data here */
 	zassert_equal(ring_buf_size_get(data->tx_ring_buf), 0);
 
 	ring_buf_reset(data->tx_ring_buf);
-	fake_time.val = 3 * MSEC;
+	fake_time.val = 3 * USEC_PER_MSEC;
 	process_tx_irq(dev);
 	/* resend timer expired, resend the same message */
 	zassert_equal(ring_buf_size_get(data->tx_ring_buf), sizeof(msg.header));
 
 	ring_buf_get(data->tx_ring_buf, NULL, 1);
-	fake_time.val = 6 * MSEC;
+	fake_time.val = 6 * USEC_PER_MSEC;
 	process_tx_irq(dev);
 	/* resend timer expired, but tx_ring_buf not fully consumed,
 	 * don't queue the next pending message.
@@ -221,7 +221,7 @@ ZTEST(one_wire_uart_driver, test_tx)
 
 	ring_buf_reset(data->tx_ring_buf);
 	data->ack = 0;
-	fake_time.val = 10 * MSEC;
+	fake_time.val = 10 * USEC_PER_MSEC;
 	process_tx_irq(dev);
 	/* ACK'ed, nothing queued this time */
 	zassert_equal(ring_buf_size_get(data->tx_ring_buf), 0);

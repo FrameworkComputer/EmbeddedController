@@ -12,7 +12,7 @@
 		 * Interrupt bindings for sensor devices.
 		 */
 		bmi3xx-int = &base_accel;
-		bma4xx-int = &lid_accel;
+		bma4xx-int = &lid_accel_alt;
 	};
 
 	/*
@@ -25,6 +25,9 @@
 	motionsense-mutex {
 		compatible = "cros-ec,motionsense-mutex";
 		lid_mutex: lid-mutex {
+		};
+
+		lid_mutex_bma422: bma422-mutex {
 		};
 
 		base_mutex: base-mutex {
@@ -64,6 +67,11 @@
 
 		kx022_data: kx022-drv-data {
 			compatible = "cros-ec,drvdata-kionix";
+			status = "okay";
+		};
+
+		bma422_data: bma4xx-drv-data {
+			compatible = "cros-ec,drvdata-bma4xx";
 			status = "okay";
 		};
 	};
@@ -136,6 +144,34 @@
 		};
 	};
 
+	motionsense-sensor-alt {
+			lid_accel_alt: lid-accel-alt {
+			compatible = "cros-ec,bma4xx";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex_bma422>;
+			port = <&i2c_ec_i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref>;
+			default-range = <2>;
+			drv-data = <&bma422_data>;
+			i2c-spi-addr-flags = "BMA4_I2C_ADDR_SECONDARY";
+			alternate-for = <&lid_accel>;
+			alternate-ssfc-indicator = <&lid_sensor_1>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+	};
+
 	motionsense-sensor-info {
 		compatible = "cros-ec,motionsense-sensor-info";
 
@@ -143,7 +179,7 @@
 		 * list of GPIO interrupts that have to
 		 * be enabled at initial stage
 		 */
-		sensor-irqs = <&int_imu>;
+		sensor-irqs = <&int_imu &int_acc>;
 		/* list of sensors in force mode */
 		accel-force-mode-sensors = <&lid_accel>;
 	};

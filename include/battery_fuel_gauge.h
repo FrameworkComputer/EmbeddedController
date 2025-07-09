@@ -71,18 +71,6 @@ int battery_is_charge_fet_disabled(void);
 enum ec_error_list battery_sleep_fuel_gauge(void);
 
 /**
- * Return whether BCIC is enabled or not.
- *
- * This is a callback used by boards which share the same FW but need to enable
- * BCIC for one board and disable it for another. This is needed because without
- * this callback, BCIC can't tell battery config is missing because it's an old
- * unit or because the default config is applicable.
- *
- * @return true if board supports BCIC or false otherwise.
- */
-__override_proto bool board_batt_conf_enabled(void);
-
-/**
  * Report the absolute difference between the highest and lowest cell voltage in
  * the battery pack, in millivolts.  On error or unimplemented, returns '0'.
  */

@@ -436,7 +436,7 @@ ZTEST(rt1739_ppc, test_set_polarity)
 	test_polarity_reg_settings(1);
 }
 
-ZTEST(rt1939_ppc, test_vconn_settings)
+ZTEST(rt1739_ppc, test_vconn_settings)
 {
 	rt1739_ppc_drv.set_vconn(RT1739_PORT, true);
 	test_vconn_enable_reg_settings(true);

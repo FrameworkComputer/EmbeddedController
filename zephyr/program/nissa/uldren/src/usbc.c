@@ -36,8 +36,6 @@ int board_set_active_charge_port(int port)
 
 	old_port = charge_manager_get_active_charge_port();
 
-	LOG_INF("New chg p%d", port);
-
 	/* Disable all ports. */
 	if (port == CHARGE_PORT_NONE) {
 		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
@@ -127,13 +125,21 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
+static void notify_power_change(void)
+{
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+}
+DECLARE_DEFERRED(notify_power_change);
+
 void pd_power_supply_reset(int port)
 {
 	/* Disable VBUS */
 	tcpc_write(port, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SRC_CTRL_LOW);
 
-	/* Notify host of power info change. */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+	/* Notify host of power info change. Defer call to avoid delaying Error
+	 * Recovery path.
+	 */
+	hook_call_deferred(&notify_power_change_data, 10 * USEC_PER_MSEC);
 }
 
 __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
@@ -169,8 +175,10 @@ int pd_set_power_supply_ready(int port)
 	if (rv)
 		return rv;
 
-	/* Notify host of power info change. */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+	/* Notify host of power info change. Defer call to avoid delaying Error
+	 * Recovery path.
+	 */
+	hook_call_deferred(&notify_power_change_data, 10 * USEC_PER_MSEC);
 
 	return EC_SUCCESS;
 }

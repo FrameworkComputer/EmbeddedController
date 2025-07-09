@@ -114,8 +114,8 @@
 				gpio-controller;
 				#gpio-cells = <2>;
 				ngpios = <8>;
-				pin_mask = <0xff>;
-				pinmux_mask = <0xf7>;
+				pin-mask = <0xff>;
+				pinmux-mask = <0xf7>;
 			};
 			ioex_c0_port1: gpio@1 {
 				compatible = "nuvoton,nct38xx-gpio-port";
@@ -124,7 +124,7 @@
 				gpio-controller;
 				#gpio-cells = <2>;
 				ngpios = <8>;
-				pin_mask = <0xff>;
+				pin-mask = <0xff>;
 			};
 		};
 	};
@@ -201,8 +201,8 @@
 				gpio-controller;
 				#gpio-cells = <2>;
 				ngpios = <8>;
-				pin_mask = <0xff>;
-				pinmux_mask = <0xf7>;
+				pin-mask = <0xff>;
+				pinmux-mask = <0xf7>;
 			};
 			ioex_c1_port1: gpio@1 {
 				compatible = "nuvoton,nct38xx-gpio-port";
@@ -211,7 +211,7 @@
 				gpio-controller;
 				#gpio-cells = <2>;
 				ngpios = <8>;
-				pin_mask = <0xff>;
+				pin-mask = <0xff>;
 			};
 		};
 	};

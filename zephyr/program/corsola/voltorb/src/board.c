@@ -14,8 +14,9 @@
 
 LOG_MODULE_REGISTER(board_init, LOG_LEVEL_ERR);
 
-bool voltorb_is_more_efficient(int curr_mv, int prev_mv, int batt_mv,
-			       int batt_mw, int input_mw)
+test_export_static bool voltorb_is_more_efficient(int curr_mv, int prev_mv,
+						  int batt_mv, int batt_mw,
+						  int input_mw)
 {
 	int batt_state;
 
@@ -35,7 +36,7 @@ __override struct dps_config_t dps_config = {
 	.k_more_pwr = 96,
 	.k_sample = 1,
 	.k_window = 3,
-	.t_stable = 10 * SECOND,
-	.t_check = 5 * SECOND,
+	.t_stable = 10 * USEC_PER_SEC,
+	.t_check = 5 * USEC_PER_SEC,
 	.is_more_efficient = &voltorb_is_more_efficient,
 };

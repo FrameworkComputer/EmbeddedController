@@ -1,0 +1,60 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "include/board.h"
+
+#include <cros/cbi_flash.dtsi>
+#include <cros/integrated_fwid.dtsi>
+
+#include "adc.dtsi"
+#include "fan.dtsi"
+#include "gpio.dtsi"
+#include "vci.dtsi"
+#include "i2c.dts"
+#include "keyboard.dts"
+#include "../battery.dtsi"
+#include "../i2c.dtsi"
+#include "../interrupts.dtsi"
+#include "../pd.dtsi"
+#include "../power_signals.dtsi"
+#include "../temp_sensor.dts"
+#include "../usbc.dtsi"
+#include "../led_pins.dtsi"
+#include "../led_policy.dtsi"
+
+/* I2C_CHARGER */
+/delete-node/ &kb_discrete;
+/delete-node/ &pca95xx_0;
+/delete-node/ &pca95xx_1;
+/delete-node/ &rvp_board_id;
+/delete-node/ &seven_seg_display;
+
+/* gpio-interrupts */
+/delete-node/ &int_ioex_kbd_intr_n;
+/delete-node/ &int_vol_up;
+/delete-node/ &int_vol_dn;
+
+/* PTLGCS has 2 Type-C ports */
+/delete-node/ &pd_pow_port2;
+&usbc {
+	/delete-node/ port2@2;
+};
+
+/ {
+	gcs_board_id: gcs-board-id {
+		compatible = "intel,rvp-board-id";
+		board-gpios = <MCHP_GPIO_DECODE_007 0>,
+			      <MCHP_GPIO_DECODE_010 0>,
+			      <MCHP_GPIO_DECODE_114 0>,
+			      <MCHP_GPIO_DECODE_115 0>,
+			      <MCHP_GPIO_DECODE_202 0>,
+			      <MCHP_GPIO_DECODE_203 0>;
+	};
+};
+
+&cbi_flash {
+	offset = <0x3F000>;
+	size = <0x1000>;
+};

@@ -14,6 +14,8 @@
 #include <zephyr/kernel.h>
 #include <zephyr/kernel/thread_stack.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/byteorder.h>
+#include <zephyr/types.h>
 
 #include <builtin/assert.h>
 #include <usbc/ppm.h>
@@ -69,7 +71,7 @@ struct ucsi_ppm_device {
 
 	/* Port number is 7 bits. */
 	uint8_t last_connector_changed;
-	uint8_t last_connector_alerted;
+	uint8_t alerted_connectors_map;
 
 	/* Data dedicated to UCSI operation. */
 	struct ucsi_memory_region ucsi_data;
@@ -78,8 +80,8 @@ struct ucsi_ppm_device {
 	enum last_error_type last_error;
 	union error_status_t ppm_error_result;
 
-	/** Notification mask */
-	union notification_enable_t notif_mask;
+	/** Connection status change mask */
+	union conn_status_change_bits_t change_mask;
 };
 
 const char *ppm_state_strings[] = {
@@ -103,9 +105,13 @@ const char *ppm_state_to_string(int state)
 	return ppm_state_strings[state];
 }
 
-static void clear_cci(struct ucsi_ppm_device *dev)
+/* We always keep the connector change bit active until an explicit ack arrives
+ * to reset |last_connector_changed| to zero.
+ */
+static void clear_cci_except_connector(struct ucsi_ppm_device *dev)
 {
 	memset(&dev->ucsi_data.cci, 0, sizeof(union cci_event_t));
+	dev->ucsi_data.cci.connector_change = dev->last_connector_changed;
 }
 
 static void clear_last_error(struct ucsi_ppm_device *dev)
@@ -114,10 +120,26 @@ static void clear_last_error(struct ucsi_ppm_device *dev)
 	memset(&dev->ppm_error_result, 0, sizeof(union error_status_t));
 }
 
+/* When the busy bit is set, all other bits must be set to 0 according to the
+ * spec.
+ */
+inline static void set_cci_busy(struct ucsi_ppm_device *dev)
+{
+	memset(&dev->ucsi_data.cci, 0, sizeof(union cci_event_t));
+	dev->ucsi_data.cci.busy = 1;
+}
+
 inline static void set_cci_error(struct ucsi_ppm_device *dev)
 {
-	clear_cci(dev);
+	clear_cci_except_connector(dev);
 	dev->ucsi_data.cci.error = 1;
+	dev->ucsi_data.cci.command_completed = 1;
+}
+
+inline static void set_cci_not_supported(struct ucsi_ppm_device *dev)
+{
+	clear_cci_except_connector(dev);
+	dev->ucsi_data.cci.not_supported = 1;
 	dev->ucsi_data.cci.command_completed = 1;
 }
 
@@ -182,7 +204,7 @@ static int ppm_common_execute_command_unlocked(struct ucsi_ppm_device *dev,
 
 static void ppm_common_handle_async_event(struct ucsi_ppm_device *dev)
 {
-	uint8_t port = 0;
+	uint8_t port;
 	union connector_status_t *port_status;
 	bool alert_port = false;
 
@@ -205,19 +227,20 @@ static void ppm_common_handle_async_event(struct ucsi_ppm_device *dev)
 	/* Read per-port status if this is a fresh async event from an
 	 * LPM alert.
 	 */
-	if (dev->last_connector_alerted != 0) {
-		LOG_DBG("Calling GET_CONNECTOR_STATUS on port %d",
-			dev->last_connector_alerted);
-
+	if (dev->alerted_connectors_map != 0) {
 		struct ucsi_control_t get_cs_cmd;
-		memset((void *)&get_cs_cmd, 0, sizeof(struct ucsi_control_t));
+		/* Gets 1-indexed lsb and subtracts 1 to get 0-indexed port. */
+		port = find_lsb_set(dev->alerted_connectors_map) - 1;
 
+		LOG_DBG("Calling GET_CONNECTOR_STATUS on port %d (alerts=0x%x)",
+			port, dev->alerted_connectors_map);
+
+		memset((void *)&get_cs_cmd, 0, sizeof(struct ucsi_control_t));
 		get_cs_cmd.command = UCSI_GET_CONNECTOR_STATUS;
 		get_cs_cmd.data_length = 0x0;
-		get_cs_cmd.command_specific[0] = dev->last_connector_alerted;
+		get_cs_cmd.command_specific[0] = port + 1;
 
 		/* Clear port status before reading. */
-		port = dev->last_connector_alerted - 1;
 		port_status = &dev->per_port_status[port];
 		memset(port_status, 0, sizeof(union connector_status_t));
 
@@ -234,36 +257,32 @@ static void ppm_common_handle_async_event(struct ucsi_ppm_device *dev)
 		 * sent notifications for but which has not yet acked.
 		 * Resend the notification.
 		 */
-		if (dev->last_connector_alerted ==
-		    dev->last_connector_changed) {
+		if (port + 1 == dev->last_connector_changed) {
 			alert_port = true;
 		}
 
-		dev->last_connector_alerted = 0;
+		dev->alerted_connectors_map &= ~BIT(port);
 	}
 
 	/* If we are not already acting on an existing connector change,
 	 * notify the OS if there are any other connector changes.
 	 */
 	if (dev->last_connector_changed == 0) {
-		/* Find the first port with any pending change. */
+		/* Find the first port with any pending change we are masked to
+		 * notify on. Handle events in order by setting CCI and
+		 * notifying OPM.
+		 */
 		for (port = 0; port < dev->num_ports; ++port) {
-			if (dev->per_port_status[port]
-				    .raw_conn_status_change_bits != 0) {
+			port_status = &dev->per_port_status[port];
+			if (dev->change_mask.raw_value &
+			    port_status->raw_conn_status_change_bits) {
+				port_status = &dev->per_port_status[port];
+				alert_port = true;
 				break;
 			}
 		}
 
-		/* Handle events in order by setting CCI and notifying
-		 * OPM.
-		 */
-		if (port < dev->num_ports) {
-			/* Let through only enabled notifications. */
-			port_status = &dev->per_port_status[port];
-			if (dev->notif_mask.raw_value &
-			    port_status->raw_conn_status_change_bits)
-				alert_port = true;
-		} else {
+		if (port >= dev->num_ports) {
 			LOG_DBG("No more ports needing OPM alerting");
 		}
 	}
@@ -294,8 +313,8 @@ static void ppm_common_reset_data(struct ucsi_ppm_device *dev)
 {
 	clear_last_error(dev);
 	dev->last_connector_changed = 0;
-	dev->last_connector_alerted = 0;
-	dev->notif_mask.raw_value = 0;
+	dev->alerted_connectors_map = 0;
+	dev->change_mask.raw_value = 0;
 	memset(&dev->pending, 0, sizeof(dev->pending));
 	memset(dev->per_port_status, 0,
 	       sizeof(union connector_status_t) * dev->num_ports);
@@ -308,17 +327,15 @@ static int ppm_common_execute_pending_cmd(struct ucsi_ppm_device *dev)
 	uint8_t *message_in = (uint8_t *)&dev->ucsi_data.message_in;
 	uint8_t ucsi_command = control->command;
 	union ack_cc_ci_t *ack_cmd;
+	union notification_enable_t notify;
 	int ret = -1;
 	bool ack_ci = false;
 
 	if (control->command == 0 || control->command >= UCSI_CMD_MAX) {
 		LOG_ERR("Invalid command 0x%x", control->command);
 
-		/* Set error condition to invalid command. */
-		clear_last_error(dev);
-		dev->last_error = ERROR_PPM;
-		dev->ppm_error_result.unrecognized_command = 1;
-		set_cci_error(dev);
+		/* Set cci to not supported command. */
+		set_cci_not_supported(dev);
 		return -1;
 	}
 
@@ -344,10 +361,15 @@ static int ppm_common_execute_pending_cmd(struct ucsi_ppm_device *dev)
 		ret = 0;
 		goto success;
 	case UCSI_SET_NOTIFICATION_ENABLE:
-		/* Save the notification mask. */
-		memcpy(&dev->notif_mask, control->command_specific,
-		       sizeof(dev->notif_mask));
+		/* Save the notification as a connection status change mask.
+		 * Read via sys api since this is unaligned read of uint32_t.
+		 */
+		notify.raw_value = sys_get_le32(
+			(const uint8_t *)control->command_specific);
+		dev->change_mask = conn_status_mask_from_notification(notify);
 		ret = 0;
+		goto success;
+	case UCSI_CANCEL:
 		goto success;
 	default:
 		break;
@@ -363,15 +385,41 @@ static int ppm_common_execute_pending_cmd(struct ucsi_ppm_device *dev)
 		LOG_ERR("Error with UCSI command 0x%x. Return was %d",
 			ucsi_command, ret);
 		clear_last_error(dev);
-		if (ret == -ENOTSUP) {
-			dev->last_error = ERROR_PPM;
-			dev->ppm_error_result.unrecognized_command = 1;
-		} else if (ret == -EBUSY || ret == -ETIMEDOUT) {
-			dev->last_error = ERROR_PPM;
-			dev->ppm_error_result.ppm_policy_conflict = 1;
-		} else {
+		dev->last_error = ERROR_PPM;
+
+		union error_status_t *err_status = &dev->ppm_error_result;
+
+		/* Some errors are sent back by the PPM itself. */
+		switch (ret) {
+		case -ENOTSUP:
+			err_status->unrecognized_command = 1;
+			break;
+		case -EBUSY:
+		case -ETIMEDOUT:
+			err_status->ppm_policy_conflict = 1;
+			break;
+		case -ERANGE:
+			err_status->non_existent_connector_number = 1;
+			break;
+		case -EINVAL:
+			/* Invalid commands may have specific error conditions.
+			 */
+			switch (ucsi_command) {
+			case UCSI_SET_SINK_PATH:
+				err_status->set_sink_path_rejected = 1;
+				break;
+			default:
+				err_status->invalid_command_specific_param = 1;
+				break;
+			}
+			break;
+
+		/* All other errors are considered LPM errors. */
+		default:
 			dev->last_error = ERROR_LPM;
+			break;
 		}
+
 		set_cci_error(dev);
 		return ret;
 	}
@@ -379,7 +427,6 @@ static int ppm_common_execute_pending_cmd(struct ucsi_ppm_device *dev)
 success:
 	LOG_DBG("Completed UCSI command 0x%x (%s). Read %d bytes.",
 		ucsi_command, get_ucsi_command_name(ucsi_command), ret);
-	clear_cci(dev);
 
 	if (ret > 0) {
 		LOG_DBG("Command 0x%x (%s) response", ucsi_command,
@@ -400,10 +447,17 @@ success:
 		dev->pending.async_event = 1;
 	}
 
+	clear_cci_except_connector(dev);
+
 	/* If we reset, we only surface up the reset completed event after busy.
+	 * If the current executing command was replaced with UCSI_CANCEL, we
+	 * should also set the cancel completed bit.
 	 */
 	if (ucsi_command == UCSI_PPM_RESET) {
 		cci->reset_completed = 1;
+	} else if (dev->ucsi_data.control.command == UCSI_CANCEL) {
+		cci->command_completed = 1;
+		cci->cancel_completed = 1;
 	} else {
 		cci->data_len = ret & 0xFF;
 		cci->command_completed = 1;
@@ -443,10 +497,18 @@ static void invalid_ack_notify(struct ucsi_ppm_device *dev)
 {
 	union ack_cc_ci_t *cmd =
 		(union ack_cc_ci_t *)dev->ucsi_data.control.command_specific;
-	LOG_ERR("Invalid ack usage (CI=%d CC=%d last_connector_changed=%d) in "
-		"state %d",
-		cmd->connector_change_ack, cmd->command_complete_ack,
-		dev->last_connector_changed, dev->ppm_state);
+
+	if (match_pending_command(dev, UCSI_ACK_CC_CI)) {
+		LOG_ERR("Invalid ack usage (CI=%d CC=%d "
+			"last_connector_changed=%d) in state %d",
+			cmd->connector_change_ack, cmd->command_complete_ack,
+			dev->last_connector_changed, dev->ppm_state);
+	} else {
+		LOG_ERR("Invalid cmd (0x%x) %s when ACK was expected in state %d",
+			dev->ucsi_data.control.command,
+			get_ucsi_command_name(dev->ucsi_data.control.command),
+			dev->ppm_state);
+	}
 
 	clear_last_error(dev);
 	dev->last_error = ERROR_PPM;
@@ -485,9 +547,7 @@ static void ppm_common_handle_pending_command(struct ucsi_ppm_device *dev)
 		 * notify OPM and then continue.
 		 */
 		dev->ppm_state = PPM_STATE_PROCESSING_COMMAND;
-		clear_cci(dev);
-		dev->ucsi_data.cci.busy = 1;
-		ppm_common_opm_notify(dev);
+		set_cci_busy(dev);
 		/* Intentional fallthrough since we are now processing.
 		 */
 		__attribute__((fallthrough));
@@ -521,7 +581,7 @@ static void ppm_common_handle_pending_command(struct ucsi_ppm_device *dev)
 			 */
 			dev->ppm_state = PPM_STATE_IDLE_NOTIFY;
 
-			clear_cci(dev);
+			clear_cci_except_connector(dev);
 			dev->ucsi_data.cci.acknowledge_command = 1;
 		} else {
 			dev->ppm_state = PPM_STATE_WAITING_CC_ACK;
@@ -546,7 +606,7 @@ static void ppm_common_handle_pending_command(struct ucsi_ppm_device *dev)
 		} else if (ret >= 0) {
 			dev->ppm_state = PPM_STATE_IDLE_NOTIFY;
 
-			clear_cci(dev);
+			clear_cci_except_connector(dev);
 			dev->ucsi_data.cci.acknowledge_command = 1;
 		}
 
@@ -719,6 +779,7 @@ static void ppm_common_thread_init(struct ucsi_ppm_device *dev)
 		&dev->ppm_task_data, ppm_stack, CONFIG_UCSI_PPM_STACK_SIZE,
 		(void *)ppm_common_task, (void *)dev, 0, 0,
 		CONFIG_UCSI_PPM_THREAD_PRIORITY, K_ESSENTIAL, K_NO_WAIT);
+	k_thread_name_set(dev->ppm_task_id, "UCSI PPM");
 }
 
 int ucsi_ppm_init_and_wait(struct ucsi_ppm_device *dev)
@@ -744,7 +805,7 @@ int ucsi_ppm_init_and_wait(struct ucsi_ppm_device *dev)
 	memset(dev->per_port_status, 0,
 	       dev->num_ports * sizeof(union connector_status_t));
 	dev->last_connector_changed = 0;
-	dev->last_connector_alerted = 0;
+	dev->alerted_connectors_map = 0;
 
 	LOG_DBG("Ready to initialize PPM task!");
 
@@ -807,7 +868,7 @@ int ucsi_ppm_read(struct ucsi_ppm_device *dev, unsigned int offset, void *buf,
 static int ppm_common_handle_control_message(struct ucsi_ppm_device *dev,
 					     const void *buf, size_t length)
 {
-	const uint8_t *cmd = (const uint8_t *)buf;
+	const struct ucsi_control_t *cmd = (const struct ucsi_control_t *)buf;
 	uint8_t prev_cmd;
 	uint8_t busy = 0;
 
@@ -818,7 +879,8 @@ static int ppm_common_handle_control_message(struct ucsi_ppm_device *dev,
 	}
 
 	/* If we're currently sending a command, we should immediately discard
-	 * this call.
+	 * this call. The exception is if this is a cancel command, which should
+	 * replace the current command.
 	 */
 	{
 		k_mutex_lock(&dev->ppm_lock, K_FOREVER);
@@ -826,28 +888,32 @@ static int ppm_common_handle_control_message(struct ucsi_ppm_device *dev,
 		prev_cmd = dev->ucsi_data.control.command;
 		k_mutex_unlock(&dev->ppm_lock);
 	}
-	if (busy) {
+
+	if (busy && cmd->command != UCSI_CANCEL) {
 		LOG_ERR("Tried to send control message (cmd=0x%x) when one "
 			"is already pending (cmd=0x%x).",
-			cmd[0], prev_cmd);
+			cmd->command, prev_cmd);
 		return -EBUSY;
+	} else if (!busy && cmd->command == UCSI_CANCEL) {
+		LOG_ERR("Tried to cancel a command when not busy");
+		return -EINVAL;
 	}
 
-	/* If we didn't get a full CONTROL message, zero the region before
-	 * copying.
-	 */
-	if (length != sizeof(struct ucsi_control_t)) {
-		memset(&dev->ucsi_data.control, 0,
-		       sizeof(struct ucsi_control_t));
-	}
-	memcpy(&dev->ucsi_data.control, cmd, length);
-
-	LOG_DBG("Got valid control message: 0x%x (%s)", cmd[0],
-		get_ucsi_command_name(cmd[0]));
+	LOG_DBG("Got valid control message: 0x%x (%s)", cmd->command,
+		get_ucsi_command_name(cmd->command));
 
 	/* Schedule command send. */
 	{
 		k_mutex_lock(&dev->ppm_lock, K_FOREVER);
+
+		/* If we didn't get a full CONTROL message, zero the region
+		 * before copying.
+		 */
+		if (length != sizeof(struct ucsi_control_t)) {
+			memset(&dev->ucsi_data.control, 0,
+			       sizeof(struct ucsi_control_t));
+		}
+		memcpy(&dev->ucsi_data.control, cmd, length);
 
 		/* Mark command pending. */
 		dev->pending.command = 1;
@@ -938,10 +1004,10 @@ void ucsi_ppm_lpm_alert(struct ucsi_ppm_device *dev, uint8_t lpm_id)
 
 	k_mutex_lock(&dev->ppm_lock, K_FOREVER);
 
-	if (lpm_id <= dev->num_ports) {
+	if (lpm_id != 0 && lpm_id <= dev->num_ports) {
 		/* Set async event and mark port status as not read. */
 		dev->pending.async_event = 1;
-		dev->last_connector_alerted = lpm_id;
+		dev->alerted_connectors_map |= BIT(lpm_id - 1);
 
 		k_condvar_signal(&dev->ppm_condvar);
 	} else {
@@ -972,7 +1038,7 @@ struct ucsi_ppm_device *ppm_data_init(const struct ucsi_pd_driver *pd_driver,
 	return &dev;
 }
 
-#ifdef CONFIG_TEST_SUITE_PPM
+#ifdef CONFIG_ZTEST
 
 enum ppm_states ppm_test_get_state(const struct ucsi_ppm_device *dev)
 {

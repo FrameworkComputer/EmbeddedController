@@ -25,7 +25,10 @@
 #ifdef CONFIG_IT83XX_I2C_CMD_QUEUE
 
 #ifdef CHIP_CORE_NDS32
-#error "Remapping DLM base is required on it8320 series"
+#define I2C_CQ_ATTRIBUTE \
+	__aligned(4) __attribute__((section(".h2ram.pool.i2c_cq")))
+#else
+#define I2C_CQ_ATTRIBUTE __aligned(4)
 #endif
 
 /* It is allowed to configure the size up to 2K bytes. */
@@ -33,9 +36,9 @@
 /* reserved 5 bytes for ID and CMD_x */
 #define I2C_CQ_MODE_TX_MAX_PAYLOAD_SIZE (I2C_CQ_MODE_MAX_PAYLOAD_SIZE - 5)
 uint8_t i2c_cq_mode_tx_dlm[I2C_ENHANCED_PORT_COUNT]
-			  [I2C_CQ_MODE_MAX_PAYLOAD_SIZE] __aligned(4);
+			  [I2C_CQ_MODE_MAX_PAYLOAD_SIZE] I2C_CQ_ATTRIBUTE;
 uint8_t i2c_cq_mode_rx_dlm[I2C_ENHANCED_PORT_COUNT]
-			  [I2C_CQ_MODE_MAX_PAYLOAD_SIZE] __aligned(4);
+			  [I2C_CQ_MODE_MAX_PAYLOAD_SIZE] I2C_CQ_ATTRIBUTE;
 
 /* Repeat Start */
 #define I2C_CQ_CMD_L_RS BIT(7)
@@ -634,13 +637,21 @@ static void enhanced_i2c_set_cmd_addr_regs(int p)
 
 	/* set "Address Register" to store the I2C data */
 	dlm_base = (uint32_t)&i2c_cq_mode_rx_dlm[dlm_index] & 0xffffff;
-	IT83XX_I2C_RAMH2A(p_ch) = (dlm_base >> 16) & 0xff;
+	if (IS_ENABLED(CHIP_CORE_NDS32)) {
+		dlm_base &= 0x0fff;
+	} else {
+		IT83XX_I2C_RAMH2A(p_ch) = (dlm_base >> 16) & 0xff;
+	}
 	IT83XX_I2C_RAMHA(p_ch) = (dlm_base >> 8) & 0xff;
 	IT83XX_I2C_RAMLA(p_ch) = dlm_base & 0xff;
 
 	/* Set "Command Address Register" to get commands */
 	dlm_base = (uint32_t)&i2c_cq_mode_tx_dlm[dlm_index] & 0xffffff;
-	IT83XX_I2C_CMD_ADDH2(p_ch) = (dlm_base >> 16) & 0xff;
+	if (IS_ENABLED(CHIP_CORE_NDS32)) {
+		dlm_base &= 0x0fff;
+	} else {
+		IT83XX_I2C_CMD_ADDH2(p_ch) = (dlm_base >> 16) & 0xff;
+	}
 	IT83XX_I2C_CMD_ADDH(p_ch) = (dlm_base >> 8) & 0xff;
 	IT83XX_I2C_CMD_ADDL(p_ch) = dlm_base & 0xff;
 }

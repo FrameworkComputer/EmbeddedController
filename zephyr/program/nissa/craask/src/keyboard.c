@@ -37,10 +37,11 @@ test_export_static void kb_init(void)
 	uint32_t val;
 
 	ret = cros_cbi_get_fw_config(FW_KB_NUMERIC_PAD, &val);
-
 	if (ret != 0) {
-		LOG_ERR("Error retrieving CBI FW_CONFIG field %d",
+		LOG_ERR("Error retrieving CBI FW_CONFIG field %d, "
+			"assuming FW_KB_NUMERIC_PAD_ABSENT",
 			FW_KB_NUMERIC_PAD);
+		val = FW_KB_NUMERIC_PAD_ABSENT;
 	}
 
 	if (val == FW_KB_NUMERIC_PAD_ABSENT) {
@@ -57,9 +58,11 @@ test_export_static void kb_init(void)
 	}
 
 	ret = cros_cbi_get_fw_config(FW_KB_TYPE, &val);
-
 	if (ret != 0) {
-		LOG_ERR("Error retrieving CBI FW_CONFIG field %d", FW_KB_TYPE);
+		LOG_ERR("Error retrieving CBI FW_CONFIG field %d, "
+			"assuming FW_KB_TYPE_DEFAULT",
+			FW_KB_TYPE);
+		val = FW_KB_TYPE_DEFAULT;
 	}
 
 	if (val == FW_KB_TYPE_CA_FR) {
@@ -73,6 +76,12 @@ test_export_static void kb_init(void)
 		set_scancode_set2(4, 0, get_scancode_set2(2, 7));
 		set_scancode_set2(2, 7, tmp);
 	}
+
+	/*
+	 * Increase delay before the next key scan to prevent from WDT reset
+	 * under some specific condition (b:323454321).
+	 */
+	keyscan_config.min_post_scan_delay_us = 2 * USEC_PER_MSEC;
 }
 DECLARE_HOOK(HOOK_INIT, kb_init, HOOK_PRIO_POST_FIRST);
 

@@ -44,18 +44,41 @@ config BOARD_MTLRVP_PD
 	  Build Intel MTLRVP_PD reference board. This board is Intel MTL RVP
 	  SOC with NPCX_NPCX9M3F and CCG8 PD.
 
+config BOARD_PTLRVP_COMMON
+	bool "Intel PTLRVP common"
+	help
+	  Build Intel PTLRVP common files. This config can be used by different
+	  MECC vendors using PTLRVP for the EC enablement.
+
+config BOARD_PTLRVP_NPCX
+	bool "Intel PTLRVP_NPCX board"
+	depends on SOC_NPCX9M7F
+	select BOARD_PTLRVP_COMMON
+	help
+	  Build Intel PTLRVP_NPCX reference board. This board is Intel PTL RVP
+	  SOC with SOC_NPCX9M7F.
+
 config BOARD_PTLRVP_MCHP
 	bool "Intel PTLRVP_MCHP board"
 	depends on SOC_MEC172X_NSZ
+	select BOARD_PTLRVP_COMMON
 	help
 	  Build Intel PTLRVP_MCHP reference board. This board is Intel PTL RVP
 	  SOC with SOC_MEC172X_NSZ.
+
+config BOARD_PTLGCS
+	bool "Intel PTLRVP_MCHP board"
+	depends on SOC_MEC172X_NSZ
+	select BOARD_PTLRVP_COMMON
+	help
+	  Build Intel PTL Generic Chassis System (GCS). This board is Intel PTL
+	  GCS SOC with SOC_MEC172X_NSZ.
 
 # Override the default USB-C stack choice baseed on the board type.
 # This must be done before including Kconfig.zephyr below.
 choice PLATFORM_EC_USBC_STACK
 	default PLATFORM_EC_USB_PD_CONTROLLER \
-		if BOARD_MTLRVP_PD || BOARD_PTLRVP_MCHP
+		if BOARD_MTLRVP_PD || BOARD_PTLRVP_COMMON
 endchoice
 
 source "Kconfig.zephyr"

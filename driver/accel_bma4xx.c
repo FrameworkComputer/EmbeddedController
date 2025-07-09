@@ -17,6 +17,7 @@
 #include "hwtimer.h"
 #include "i2c.h"
 #include "math_util.h"
+#include "motion_sense.h"
 #include "spi.h"
 #include "task.h"
 #include "util.h"
@@ -586,6 +587,7 @@ static uint32_t last_irq_timestamp;
 static int bma4xx_enable_interrupt(const struct motion_sensor_t *s, bool enable)
 {
 	int ret;
+	int interrupt_status_reg;
 
 	mutex_lock(s->mutex);
 
@@ -595,6 +597,10 @@ static int bma4xx_enable_interrupt(const struct motion_sensor_t *s, bool enable)
 	/* Configure INT1 pin */
 	GOTO_ON_ERROR(out, bma4_write8(s, BMA4_INT1_IO_CTRL_ADDR,
 				       enable ? BMA4_INT1_OUTPUT_EN : 0));
+
+	/* Read interrupt status, to clears any pending IRQs */
+	GOTO_ON_ERROR(out,
+		      bma4_read8(s, BMA4_INT_STATUS_1, &interrupt_status_reg));
 out:
 	mutex_unlock(s->mutex);
 	return ret;
@@ -650,6 +656,12 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		__atomic_load_n(&last_irq_timestamp, __ATOMIC_RELAXED);
 	bool read_any_data = false;
 	int interrupt_status_reg, fifo_depth;
+
+	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
+	    (!(*event & CONFIG_ACCEL_BMA4XX_INT_EVENT)) ||
+	    motion_sensor_in_forced_mode(s)) {
+		return EC_ERROR_NOT_HANDLED;
+	}
 
 	/* Read interrupt status, also clears pending IRQs */
 	RETURN_ERROR(bma4_read8(s, BMA4_INT_STATUS_1, &interrupt_status_reg));

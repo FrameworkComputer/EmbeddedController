@@ -69,6 +69,10 @@ config HW_TEST_FPSENSOR_CRYPTO
 	bool "FP sensor crypto test"
 	select ZTEST
 
+config HW_TEST_FPSENSOR_DEBUG
+	bool "FP sensor debug test"
+	select ZTEST
+
 config HW_TEST_FPSENSOR_HW
 	bool "FP sensor hw test"
 	select ZTEST
@@ -237,6 +241,12 @@ config HW_TEST_UTILS_STR
 	select ZTEST
 	help
 	  The test verifies util string functions.
+
+config HW_TEST_WATCHDOG
+	bool "Watchdog test"
+	select ZTEST
+	help
+	  The test verifies that the watchdog fires on a busy loop.
 
 config MOCK_ROLLBACK
 	bool "Mock rollback for tests"

@@ -163,7 +163,7 @@ struct panic_data *panic_get_data(void);
  */
 uintptr_t get_panic_data_start(void);
 
-#ifdef CONFIG_BOARD_NATIVE_POSIX
+#if defined(CONFIG_BOARD_NATIVE_POSIX) || defined(CONFIG_BOARD_NATIVE_SIM)
 /**
  * @brief Test-only function for accessing the pdata_ptr object.
  *

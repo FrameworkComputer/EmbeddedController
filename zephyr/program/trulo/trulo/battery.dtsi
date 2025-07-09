@@ -1,0 +1,18 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	batteries {
+		default_battery: cosmx_ap20cbl-4 {
+			compatible = "cosmx,ap20cbl-4", "battery-smart";
+		};
+		lges_ap23a8l {
+			compatible = "lges,ap23a8l", "battery-smart";
+		};
+		panasonic_ap23a5l {
+			compatible = "panasonic,ap23a5l", "battery-smart";
+		};
+	};
+};

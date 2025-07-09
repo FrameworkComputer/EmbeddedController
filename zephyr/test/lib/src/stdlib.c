@@ -377,7 +377,7 @@ ZTEST(stdlib, test_memmove_benchmark)
 	int i;
 	char *buf;
 	const int buf_size = 1000;
-	timestamp_t t0, t1, t2, t3;
+	int64_t t0, t1, t2, t3;
 	const int iteration = 1000;
 	const int len = 400;
 
@@ -386,29 +386,29 @@ ZTEST(stdlib, test_memmove_benchmark)
 	for (int i = 0; i < buf_size; ++i)
 		buf[i] = i & 0x7f;
 
-	t0 = get_time();
+	t0 = k_uptime_ticks();
 	for (i = 0; i < iteration; ++i)
 		memmove(buf + 101, buf, len); /* unaligned */
-	t1 = get_time();
+	t1 = k_uptime_ticks();
 
-	t2 = get_time();
+	t2 = k_uptime_ticks();
 	for (i = 0; i < iteration; ++i)
 		memmove(buf + 100, buf, len); /* aligned */
-	t3 = get_time();
+	t3 = k_uptime_ticks();
 
 	shared_mem_release(buf);
 	if (!IS_ENABLED(CONFIG_ARCH_POSIX)) {
 		ccprintf("Unaligned memmove: %" PRId64 " us\n",
-			 t1.val - t0.val);
+			 k_ticks_to_us_near64(t1 - t0));
 		ccprintf("Aligned memmove  : %" PRId64 " us\n",
-			 t3.val - t2.val);
+			 k_ticks_to_us_near64(t3 - t2));
 
 		/* TODO(b/356094145): If memory overlaps, newlib performs byte
 		 * by byte coping. If there is no overlap and memory is aligned,
 		 * memmove is ~3x faster than unaligned, but it is just memcpy.
 		 */
 		if (!IS_ENABLED(CONFIG_NEWLIB_LIBC)) {
-			zassert_true((t1.val - t0.val) > (t3.val - t2.val));
+			zassert_true((t1 - t0) > (t3 - t2));
 		}
 	}
 }
@@ -416,7 +416,7 @@ ZTEST(stdlib, test_memmove_benchmark)
 ZTEST(stdlib, test_memcpy)
 {
 	int i;
-	timestamp_t t0, t1, t2, t3;
+	int64_t t0, t1, t2, t3;
 	char *buf;
 	const int buf_size = 1000;
 	const int len = 400;
@@ -430,23 +430,25 @@ ZTEST(stdlib, test_memcpy)
 	for (i = len; i < buf_size; ++i)
 		buf[i] = 0;
 
-	t0 = get_time();
+	t0 = k_uptime_ticks();
 	for (i = 0; i < iteration; ++i)
 		memcpy(buf + dest_offset + 1, buf, len); /* unaligned */
-	t1 = get_time();
+	t1 = k_uptime_ticks();
 	zassert_mem_equal(buf + dest_offset + 1, buf, len);
 
-	t2 = get_time();
+	t2 = k_uptime_ticks();
 	for (i = 0; i < iteration; ++i)
 		memcpy(buf + dest_offset, buf, len); /* aligned */
-	t3 = get_time();
+	t3 = k_uptime_ticks();
 	zassert_mem_equal(buf + dest_offset, buf, len);
 
 	if (!IS_ENABLED(CONFIG_ARCH_POSIX)) {
-		ccprintf("Unaligned memcpy: %" PRId64 " us\n", t1.val - t0.val);
-		ccprintf("Aligned memcpy  : %" PRId64 " us\n", t3.val - t2.val);
+		ccprintf("Unaligned memcpy: %" PRId64 " us\n",
+			 k_ticks_to_us_near64(t1 - t0));
+		ccprintf("Aligned memcpy  : %" PRId64 " us\n",
+			 k_ticks_to_us_near64(t3 - t2));
 
-		zassert_true((t1.val - t0.val) > (t3.val - t2.val));
+		zassert_true((t1 - t0) > (t3 - t2));
 	}
 
 	memcpy(buf + dest_offset + 1, buf + 1, len - 1);
@@ -482,7 +484,7 @@ static void *dumb_memset(void *dest, int c, int len)
 ZTEST(stdlib, test_memset)
 {
 	int i;
-	timestamp_t t0, t1, t2, t3;
+	int64_t t0, t1, t2, t3;
 	char *buf;
 	const int buf_size = 1000;
 	const int len = 400;
@@ -490,26 +492,26 @@ ZTEST(stdlib, test_memset)
 
 	zassert_true(shared_mem_acquire(buf_size, &buf) == EC_SUCCESS);
 
-	t0 = get_time();
+	t0 = k_uptime_ticks();
 	for (i = 0; i < iteration; ++i)
 		dumb_memset(buf, 1, len);
-	t1 = get_time();
+	t1 = k_uptime_ticks();
 	for (int i = 0; i < len; i++) {
 		zassert_equal(buf[i], (char)1);
 	}
-	ccprintf(" (speed gain: %" PRId64 " ->", t1.val - t0.val);
+	ccprintf(" (speed gain: %" PRId64 " ->", k_ticks_to_us_near64(t1 - t0));
 
-	t2 = get_time();
+	t2 = k_uptime_ticks();
 	for (i = 0; i < iteration; ++i)
 		memset(buf, 1, len);
-	t3 = get_time();
+	t3 = k_uptime_ticks();
 	for (int i = 0; i < len; i++) {
 		zassert_equal(buf[i], (char)1);
 	}
-	ccprintf(" %" PRId64 " us) ", t3.val - t2.val);
+	ccprintf(" %" PRId64 " us) ", k_ticks_to_us_near64(t3 - t2));
 
 	if (!IS_ENABLED(CONFIG_ARCH_POSIX)) {
-		zassert_true((t1.val - t0.val) > (t3.val - t2.val));
+		zassert_true((t1 - t0) > (t3 - t2));
 	}
 
 	memset(buf, 128, len);

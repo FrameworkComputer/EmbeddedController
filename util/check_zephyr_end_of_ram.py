@@ -56,8 +56,8 @@ class BuildInfo:
         used_ram_end = self.get_symbol("_image_ram_end")
 
         # How the RAM size is indicated varies by SOC
-        if self.get_symbol("CONFIG_BOARD_NPCX9") or self.get_symbol(
-            "CONFIG_BOARD_IT8XXX2"
+        if self.get_symbol("CONFIG_SOC_SERIES_NPCX9") or self.get_symbol(
+            "CONFIG_SOC_SERIES_IT8XXX2"
         ):
             ram_base = self.get_symbol("CONFIG_SRAM_BASE_ADDRESS")
             assert (

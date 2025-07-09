@@ -5,17 +5,10 @@
 
 /* Port 80 module for Chrome EC */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 13
-
 #include "common.h"
 #include "console.h"
 #include "chipset.h"
 #include "display_7seg.h"
-#line 18
 #include "hooks.h"
 #include "host_command.h"
 #include "port80.h"
@@ -41,6 +34,16 @@ static int scroll;
 #undef CONFIG_PORT80_PRINT_IN_INT
 #define CONFIG_PORT80_PRINT_IN_INT 1
 #endif
+
+#define PORT80_CODES_PER_LINE 20
+
+/* Required buffer size for port80 output.
+ *   number nibbles per code (2 * port80_code_t size)
+ *   1 space
+ *   1 trailing NUL
+ */
+#define PORT80_LINE_LENGTH \
+	((PORT80_CODES_PER_LINE * ((2 * sizeof(port80_code_t)) + 1)) + 1)
 
 static int print_in_int = CONFIG_PORT80_PRINT_IN_INT;
 
@@ -138,6 +141,8 @@ static void port80_dump_buffer(void)
 	int i;
 	int head, tail;
 	int last_e = 0;
+	char buffer[PORT80_LINE_LENGTH];
+	int buf_offset = 0;
 
 	/*
 	 * Print the port 80 writes so far, clipped to the length of our
@@ -153,28 +158,45 @@ static void port80_dump_buffer(void)
 	else
 		tail = 0;
 
-	ccputs("Port 80 writes:");
+	ccputs("Port 80 writes:\n");
 	for (i = tail; i < head; i++) {
 		int e = history[i % ARRAY_SIZE(history)];
 		switch (e) {
 		case PORT_80_EVENT_RESUME:
-			ccprintf("\n(S3->S0)");
-			printed = 0;
+			if (buf_offset != 0) {
+				ccprintf("%s\n", buffer);
+				printed = 0;
+				buf_offset = 0;
+			}
+			ccputs("(S3->S0)\n");
 			break;
 		case PORT_80_EVENT_RESET:
-			ccprintf("\n(RESET)");
-			printed = 0;
+			if (buf_offset != 0) {
+				ccprintf("%s\n", buffer);
+				printed = 0;
+				buf_offset = 0;
+			}
+			ccputs("(RESET)\n");
 			break;
 		default:
-			if (!(printed++ % 20)) {
-				ccputs("\n ");
+			buf_offset += snprintf(&buffer[buf_offset],
+					       sizeof(buffer) - buf_offset,
+					       " %02x", e);
+			if (++printed >= PORT80_CODES_PER_LINE) {
+				ccprintf("%s\n", buffer);
 				cflush();
+				printed = 0;
+				buf_offset = 0;
 			}
-			ccprintf(" %02x", e);
 			last_e = e;
 		}
 	}
-	ccputs(" <--new\n");
+
+	if (buf_offset != 0) {
+		ccprintf("%s <--new\n", buffer);
+	} else {
+		ccputs(" <--new\n");
+	}
 
 	/* Displaying last port80 msg on 7-segment if it is enabled */
 	if (IS_ENABLED(CONFIG_SEVEN_SEG_DISPLAY) && last_e)

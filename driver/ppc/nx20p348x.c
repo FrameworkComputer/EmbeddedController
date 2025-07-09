@@ -300,7 +300,27 @@ static int nx20p348x_init(int port)
 	int mask;
 	int mode;
 	int rv;
+	int device_id;
 	enum tcpc_rp_value initial_current_limit;
+
+	rv = read_reg(port, NX20P348X_DEVICE_ID_REG, &device_id);
+	if (rv)
+		return rv;
+
+	/* Verify device ID*/
+	switch (device_id) {
+	case NX20P3481_DEVICE_ID:
+		CPRINTS("ppc%d: NX20P3481", port);
+		break;
+	case NX20P3483_DEVICE_ID:
+		CPRINTS("ppc%d: NX20P3483", port);
+		break;
+	case HL5099_DEVICE_ID:
+		CPRINTS("ppc%d: HL5099", port);
+		break;
+	default:
+		CPRINTS("ppc%d: unknown", port);
+	}
 
 	/* Mask interrupts for interrupt 2 register */
 	mask = ~NX20P348X_INT2_EN_ERR;

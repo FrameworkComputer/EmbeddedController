@@ -121,7 +121,7 @@ DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, manage_source_port, HOOK_PRIO_DEFAULT);
 static void manage_source_port_power_change(void)
 {
 	/* for FRS device status change check */
-	hook_call_deferred(&update_src_pdo_deferred_data, 500 * MSEC);
+	hook_call_deferred(&update_src_pdo_deferred_data, 500 * USEC_PER_MSEC);
 }
 DECLARE_HOOK(HOOK_POWER_SUPPLY_CHANGE, manage_source_port_power_change,
 	     HOOK_PRIO_DEFAULT);

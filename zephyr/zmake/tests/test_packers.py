@@ -32,9 +32,7 @@ class FakePacker(packers.BasePacker):
     def _get_max_image_bytes(self, _dir_map):
         return self.max_size
 
-    def pack_firmware(  # pylint: disable=no-self-use
-        self, _work_dir, _jobclient, _dir_map, version_string=""
-    ):
+    def pack_firmware(self, _work_dir, _jobclient, _dir_map, version_string=""):
         """See base class."""
         del version_string
         assert False

@@ -1,7 +1,8 @@
 common:
-  platform_allow: native_sim
+  platform_allow:
+  - native_sim
   tags:
-    system
+  - system
 tests:
   system_shim.default:
     extra_dtc_overlay_files:
@@ -9,3 +10,12 @@ tests:
   system_shim.ish:
     extra_configs:
     - CONFIG_SYSTEM_SHIM_TEST_ISH=y
+  system_shim.power_btn:
+    extra_configs:
+    - CONFIG_PLATFORM_EC_BACKLIGHT_LID=n
+    - CONFIG_PLATFORM_EC_SWITCH=n
+    - CONFIG_PLATFORM_EC_VBOOT_HASH=n
+    - CONFIG_PLATFORM_EC_HOSTCMD=y
+    - CONFIG_PLATFORM_EC_LID_SWITCH=y
+    - CONFIG_PLATFORM_EC_POWER_BUTTON=y
+    - CONFIG_PLATFORM_EC_POWER_BUTTON_INIT_IDLE=y

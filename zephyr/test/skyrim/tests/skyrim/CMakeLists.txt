@@ -2,7 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-target_sources(app PRIVATE src/common.c)
 target_sources_ifdef(CONFIG_TEST_BOARD_FORM_FACTOR app PRIVATE
 	src/form_factor.c ${PLATFORM_EC_PROGRAM_DIR}/skyrim/${CONFIG_TEST_BOARD_NAME}/src/form_factor.c)
 

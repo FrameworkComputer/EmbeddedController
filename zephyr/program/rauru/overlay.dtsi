@@ -14,6 +14,22 @@
 	rauru-fw-config {
 		compatible = "cros-ec,cbi-fw-config";
 
+		pdc {
+			enum-name = "FW_PDC";
+			start = <12>;
+			size = <1>;
+			pdc-not-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_PDC_NOT_PRESENT";
+				value = <0>;
+				default;
+			};
+			pdc-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_PDC_PRESENT";
+				value = <1>;
+			};
+		};
 		hdmi {
 			enum-name = "FW_HDMI";
 			start = <13>;
@@ -76,7 +92,7 @@
 		panel {
 			enum-name = "FW_PANEL";
 			start = <18>;
-			size = <5>;
+			size = <4>;
 			default-panel {
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "FW_PANEL_DEFAULT";
@@ -86,6 +102,22 @@
 			old {
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "FW_PANEL_OLD";
+				value = <1>;
+			};
+		};
+		kb_bl {
+			enum-name = "FW_KB_BL";
+			start = <22>;
+			size = <1>;
+			kb-bl-absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_ABSENT";
+				value = <0>;
+				default;
+			};
+			kb-bl-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_PRESENT";
 				value = <1>;
 			};
 		};
@@ -180,10 +212,15 @@
 				enum-name = "FW_STORAGE_UFS_31";
 				value = <1>;
 			};
+			ufs-40-hs-lss {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_UFS_40_HS_LSS";
+				value = <2>;
+			};
 			nvme {
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "FW_STORAGE_NVME";
-				value = <2>;
+				value = <3>;
 			};
 		};
 	};
@@ -248,6 +285,9 @@
 		};
 		ec_flash_wp_odl {
 			gpios = <&gpioc 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ap_xhci_init_done_r: ap_xhci_init_done_r {
+			gpios = <&gpioj 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		/* Adapt generated nodelabel to the current nodelabel. */
 		gpio_ec_pmic_en_odl: ec_pmic_en_odl_r {

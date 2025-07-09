@@ -25,7 +25,7 @@ class BasePacker:
         self.project = project
         self.rw_fwid_addr = -1
 
-    def configs(self):  # pylint: disable=no-self-use
+    def configs(self):
         """Get all of the build configurations necessary.
 
         Yields:
@@ -79,9 +79,7 @@ class BasePacker:
                 f"{self}: Abstract method not implemented"
             )
 
-    def _get_max_image_bytes(  # pylint: disable=no-self-use
-        self, dir_map
-    ) -> Optional[int]:
+    def _get_max_image_bytes(self, dir_map) -> Optional[int]:
         """Get the maximum allowed image size (in bytes).
 
         This value will generally be found in CONFIG_FLASH_SIZE but may vary

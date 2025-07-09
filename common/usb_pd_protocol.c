@@ -1596,7 +1596,8 @@ static void pd_update_pdo_flags(int port, int pdo_cnt, uint32_t *pdos)
 		 * Get max power that the partner offers (not necessarily what
 		 * this board will request)
 		 */
-		pd_find_pdo_index(pdo_cnt, pdos, PD_REV3_MAX_VOLTAGE, &max_pdo);
+		pd_select_best_pdo(pdo_cnt, pdos, PD_REV3_MAX_VOLTAGE,
+				   &max_pdo);
 		pd_extract_pdo_power(max_pdo, &max_ma, &max_mv, &unused);
 		max_mw = max_ma * max_mv / 1000;
 
@@ -2133,7 +2134,7 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 					   (PD_VDO_CMD(cmd) <= CMD_ATTENTION),
 				   cmd);
 #ifdef CONFIG_USB_PD_REV30
-	pd[port].vdo_data[0] |= VDO_SVDM_VERS_MAJOR(vdo_ver[pd[port].rev]);
+	pd[port].vdo_data[0] |= VDO_SVDM_VERS(vdo_ver[pd[port].rev]);
 #endif
 	queue_vdm(port, pd[port].vdo_data, data, count, TCPCI_MSG_SOP);
 

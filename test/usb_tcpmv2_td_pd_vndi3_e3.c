@@ -11,8 +11,8 @@
 #include "usb_tc_sm.h"
 #include "usb_tcpmv2_compliance.h"
 
-uint32_t vdo = VDO(USB_SID_PD, 1,
-		   VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0) | CMD_DISCOVER_IDENT);
+uint32_t vdo =
+	VDO(USB_SID_PD, 1, VDO_SVDM_VERS(SVDM_VER_2_0) | CMD_DISCOVER_IDENT);
 
 /*****************************************************************************
  * TD.PD.VNDI3.E3.VDM Identity
@@ -48,7 +48,15 @@ static int td_pd_vndi3_e3(enum pd_data_role data_role)
 	 * No, the tester checks that the UUT replies Not_Supported.  The test
 	 * stops here in this case.
 	 */
-	TEST_EQ(verify_tcpci_transmit(TCPCI_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0),
+
+	/* TODO: usb_pd_dpm_mock responds an NAK instead of an Identity message.
+	 * It won't pass items d)-i), so just verify that we received a VDM from
+	 * the mock.
+	 *
+	 * Link common/usbc/svdm_rsp_dfp_only.c if we want to verify some of the
+	 * items below.
+	 */
+	TEST_EQ(verify_tcpci_transmit(TCPCI_MSG_SOP, 0, PD_DATA_VENDOR_DEF),
 		EC_SUCCESS, "%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 

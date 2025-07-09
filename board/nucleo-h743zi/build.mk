@@ -39,3 +39,4 @@ test-list-y=\
        timer_dos \
        utils \
        utils_str \
+       watchdog \

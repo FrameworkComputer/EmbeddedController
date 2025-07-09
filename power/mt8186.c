@@ -28,6 +28,7 @@
 #include "hooks.h"
 #include "lid_switch.h"
 #include "power.h"
+#include "power/mt8186.h"
 #include "power_button.h"
 #include "system.h"
 #include "task.h"
@@ -73,9 +74,9 @@
 #define NORMAL_SHUTDOWN_DELAY (150 * MSEC)
 #define RESET_FLAG_TIMEOUT (2 * SECOND)
 
-#if defined(CONFIG_PLATFORM_EC_POWERSEQ_MT8188) && \
+#if defined(CONFIG_PLATFORM_EC_POWERSEQ_MTK_S5_EN_CONTROL) && \
 	!DT_NODE_EXISTS(DT_NODELABEL(en_pp4200_s5))
-#error Must have dt node en_pp4200_s5 for MT8188 power sequence
+#error Must have dt node en_pp4200_s5 for S5 rail contorl
 #endif
 
 /* The timeout of the check if the system can boot AP */
@@ -101,6 +102,7 @@ static bool is_exiting_off;
 /* forward declaration */
 static enum power_state power_get_signal_state(void);
 
+#ifdef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
 static bool power_is_enough(void)
 {
 	timestamp_t poll_deadline;
@@ -114,6 +116,7 @@ static bool power_is_enough(void)
 
 	return system_can_boot_ap();
 }
+#endif /* CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON */
 
 /* Turn on the PMIC power source to AP, this also boots AP. */
 static void set_pmic_pwron(void)
@@ -167,6 +170,10 @@ static void reset_request_interrupt_deferred(void)
 }
 DECLARE_DEFERRED(reset_request_interrupt_deferred);
 
+/*
+ * TODO(b/391746217): Fix chipset_reset_request_interrupt and
+ * chipset_warm_reset_interrupt. The function names should be swapped.
+ **/
 void chipset_reset_request_interrupt(enum gpio_signal signal)
 {
 	power_signal_interrupt(signal);
@@ -175,9 +182,15 @@ void chipset_reset_request_interrupt(enum gpio_signal signal)
 
 static void watchdog_interrupt_deferred(void)
 {
-	/* If it's a real WDT, it must be in S0. */
-	if (!(power_get_signals() & (IN_AP_RST | IN_SUSPEND_ASSERTED)))
+	uint32_t flags = IN_AP_RST;
+
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_POWERSEQ_MTK_ALLOW_S3_WDT)) {
+		flags |= IN_SUSPEND_ASSERTED;
+	}
+
+	if (!(power_get_signals() & flags)) {
 		chipset_reset(CHIPSET_RESET_AP_WATCHDOG);
+	}
 }
 DECLARE_DEFERRED(watchdog_interrupt_deferred);
 
@@ -302,8 +315,24 @@ static enum power_state power_get_signal_state(void)
 			return POWER_G3;
 		return POWER_S5;
 	}
-	if (power_get_signals() & IN_SUSPEND_ASSERTED)
-		return POWER_S3;
+	if (power_get_signals() & IN_SUSPEND_ASSERTED) {
+		/*
+		 * (b:339210285#comment77) This is a cold boot from S5/G3. We
+		 * ignore the intermediate SUSPEND state, and treat it as S0.
+		 * This is necessary because on some platforms, the signal that
+		 * controls the system's power state is managed by firmware, and
+		 * it takes some time for that firmware to fully release control
+		 * of the power-related hardware pins.  The system should only
+		 * try to enter a deeper sleep state (S3) after the main
+		 * processor (AP) has fully booted up.
+		 */
+		if (IS_ENABLED(CONFIG_PLATFORM_EC_POWERSEQ_MTK_FW_SUSPEND) &&
+		    is_exiting_off) {
+			return POWER_S0;
+		} else {
+			return POWER_S3;
+		}
+	}
 	return POWER_S0;
 }
 
@@ -403,6 +432,10 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S0:
+#ifdef CONFIG_PLATFORM_EC_POWERSEQ_MTK_FW_SUSPEND
+		/* Off state exited. */
+		is_exiting_off = false;
+#endif
 		if (next_state != POWER_S0)
 			return POWER_S0S3;
 		break;
@@ -425,8 +458,10 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5;
 
 	case POWER_S5S3:
+#ifndef CONFIG_PLATFORM_EC_POWERSEQ_MTK_FW_SUSPEND
 		/* Off state exited. */
 		is_exiting_off = false;
+#endif
 		is_s5g3_passed = false;
 		is_resetting = false;
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
@@ -573,9 +608,27 @@ static void power_button_changed(void)
 DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, power_button_changed, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
+__overridable void board_handle_host_sleep_event(enum host_sleep_event state)
+{
+	/*
+	 * This hook can be overridden to customize the handling of sleep hang
+	 * events. By default, it does nothing.
+	 */
+}
+
+__overridable void board_handle_sleep_hang(enum sleep_hang_type hang_type)
+{
+	/*
+	 * This hook can be overridden to customize the handling of sleep hang
+	 * events. By default, it does nothing.
+	 */
+}
+
 __override void power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
 {
-	CPRINTS("Warning: Detected sleep hang! Waking host up!");
+	CPRINTS("Warning: Detected sleep hang (%d)! Waking host up!",
+		hang_type);
+	board_handle_sleep_hang(hang_type);
 	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
 }
 
@@ -603,6 +656,7 @@ power_chipset_handle_host_sleep_event(enum host_sleep_event state,
 		task_wake(TASK_ID_CHIPSET);
 		sleep_complete_resume(ctx);
 	}
+	board_handle_host_sleep_event(state);
 }
 #endif /* CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
 

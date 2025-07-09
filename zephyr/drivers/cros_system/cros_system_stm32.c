@@ -129,7 +129,7 @@ static int cros_system_stm32_init(const struct device *dev)
 
 static struct cros_system_stm32_data cros_system_stm32_dev_data;
 
-static const struct cros_system_driver_api cros_system_driver_stm32_api = {
+static DEVICE_API(cros_system, cros_system_driver_stm32_api) = {
 	.get_reset_cause = cros_system_stm32_get_reset_cause,
 	.soc_reset = cros_system_stm32_soc_reset,
 	.chip_vendor = cros_system_stm32_get_chip_vendor,

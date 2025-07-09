@@ -117,6 +117,9 @@
 #define ISL923X_C0_ENABLE_BUCK BIT(1)
 #define ISL923X_C0_DISABLE_VREG BIT(2)
 
+/* Control0: Vsys Regulation Offset Voltage Adder */
+#define RAA489000_C0_VSYS_OFFSET BIT(1)
+
 /* Control0: battery DCHOT reference for RS2 == 20mOhm */
 #define ISL923X_C0_DCHOT_6A (0 << 3)
 #define ISL923X_C0_DCHOT_5A BIT(3)

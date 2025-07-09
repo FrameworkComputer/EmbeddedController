@@ -113,6 +113,7 @@ config X86_NON_DSX_PWRSEQ
 	select AP_PWRSEQ_POWER_SIGNALS
 	select HAS_TASK_POWERBTN
 	select GPIO_GET_CONFIG
+	select ESPI_NPCX_RESET_SLP_SX_VW_ON_ESPI_RST if ESPI_NPCX
 	help
 	  This option enables Non Deep Sleep Well power sequencing for
 	  Intel x86 chips.

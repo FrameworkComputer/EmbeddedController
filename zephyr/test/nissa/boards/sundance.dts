@@ -80,6 +80,9 @@
 		gpio_led_2_odl: led_2_odl {
 			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
 		};
+		gpio_acc_int_l: acc_int_l {
+			gpios = <&gpio5 0 (GPIO_INPUT)>;
+		};
 	};
 
 	named-i2c-ports {
@@ -111,6 +114,11 @@
 			irq-pin = <&gpio_usb_c1_tcpc_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "usb_interrupt_c1";
+		};
+		int_lid_accel: lid_accel {
+			irq-pin = <&gpio_acc_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lis2dw12_interrupt";
 		};
 	};
 

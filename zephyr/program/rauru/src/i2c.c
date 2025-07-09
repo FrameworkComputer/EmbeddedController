@@ -12,5 +12,9 @@ board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)
 #if DT_NODE_EXISTS(DT_NODELABEL(dp_bridge))
 	       || (cmd_desc->port == I2C_PORT_BY_DEV(DT_NODELABEL(dp_bridge)))
 #endif
+#if DT_NODE_EXISTS(DT_NODELABEL(pdc_power_p0))
+	       ||
+	       (cmd_desc->port == I2C_PORT_BY_DEV(DT_NODELABEL(pdc_power_p0)))
+#endif
 		;
 }

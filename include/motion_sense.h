@@ -3,12 +3,6 @@
  * found in the LICENSE file.
  */
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 11
-
 /* Header for motion_sense.c */
 
 #ifndef __CROS_EC_MOTION_SENSE_H
@@ -328,6 +322,13 @@ int sensor_board_is_lid_angle_available(void);
  * @param s Pointer to the sensor.
  */
 void motion_sense_push_raw_xyz(struct motion_sensor_t *s);
+
+/**
+ * Check whether the given sensor is in force mode or not.
+ *
+ * @param s Pointer to the sensor.
+ */
+bool motion_sensor_in_forced_mode(const struct motion_sensor_t *s);
 
 /*
  * There are 4 variables that represent the number of sensors:
