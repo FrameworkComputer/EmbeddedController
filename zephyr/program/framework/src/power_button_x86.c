@@ -366,7 +366,19 @@ static void state_machine(uint64_t tnow)
 				tnext_state = tnow + PWRBTN_DELAY_T0;
 				pwrbtn_state = PWRBTN_STATE_T0;
 				set_pwrbtn_to_pch(0, 0);
-				cancel_diagnostics();
+				if (chipset_in_state(CHIPSET_STATE_ON)) {
+					/**
+					 * System in EFI mode (S0), press power button to shutdown
+					 * the system and cancel the diagnostics.
+					 */
+					cancel_diagnostics();
+				} else if (chipset_in_state(CHIPSET_STATE_SOFT_OFF))
+					/**
+					 * System in S5 state, press power button to start up the
+					 * system and reset the diagnostics.
+					 */
+					reset_diagnostics();
+
 			}
 		}
 		break;
