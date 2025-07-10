@@ -685,8 +685,25 @@ void set_gpu_gpio_powerstate(enum gpu_gpio_idx idx, enum power_state ps)
 		if (gpu_gpio_cfgs[idx].function ==GPIO_FUNC_HIGH) {
 			if (gpu_verbose)
 				CPRINTS("GPU %s=HIGH", gpu_gpio_idx_to_name(gpu_gpio_cfgs[idx].gpio));
-			if (idx == GPU_3V_5V_EN)
+			if (idx == GPU_3V_5V_EN) {
+#ifdef CONFIG_BOARD_LOTUS
 				control_5valw_power(POWER_REQ_GPU_3V_5V, 1);
+#else
+				bool turn_on_5valwc = true;
+
+				if (ps == POWER_G3)
+					turn_on_5valwc = false;
+
+#ifdef CONFIG_BOARD_TULIP
+				/* Only turn on 5VALW_C if the board is DVT1 or lower on Tulip */
+				if (board_get_version() < BOARD_VERSION_8)
+					turn_on_5valwc = true;
+#endif /* CONFIG_BOARD_TULIP */
+
+				control_5valw_power(POWER_REQ_GPU_3V_5V, turn_on_5valwc);
+
+#endif /* CONFIG_BOARD_LOTUS */
+			}
 			gpio_pin_set_dt(dt_gpio, 1);
 
 		}
