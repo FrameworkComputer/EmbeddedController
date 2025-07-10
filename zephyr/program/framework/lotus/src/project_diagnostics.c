@@ -71,7 +71,7 @@ void check_device_deferred(void)
 	if (gpu_module_fault())
 		set_diagnostic(DIAGNOSTICS_GPU_MODULE_FAULT, true);
 
-	if (get_deck_state() != DECK_ON && !get_standalone_mode())
+	if (!input_deck_is_fully_populated() && !get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_INPUT_MODULE_FAULT, true);
 
 	if (amd_ddr_initialized_check())
