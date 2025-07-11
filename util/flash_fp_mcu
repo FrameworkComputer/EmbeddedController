@@ -6,8 +6,19 @@
 # Disable check that incorrectly detects the "config_*" functions as unreachable.
 # shellcheck disable=SC2317
 
+shflags_path=""
+for path in \
+  "/usr/share/misc/shflags" \
+  "/system/usr/share/misc/shflags"
+do
+  if [ -f "${path}" ]; then
+    shflags_path="${path}"
+    break
+  fi
+done
+
 # shellcheck source=../../../scripts/lib/shflags/shflags
-. "${SHFLAGS:-/usr/share/misc/shflags}" || exit 1
+. "${SHFLAGS:-${shflags_path}}" || exit 1
 
 readonly DEFAULT_RETRIES=${DEFAULT_RETRIES:-4}
 readonly STM32MON_CONNECT_RETRIES=${STM32MON_CONNECT_RETRIES:-6}
