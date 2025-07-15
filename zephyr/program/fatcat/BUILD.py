@@ -190,6 +190,17 @@ register_ish_project(
     inherited_from=["fatcat"],
 )
 
+register_ish_project(
+    project_name="fatcat-ish-idle",
+    zephyr_board="intel_ish_5_8_0",
+    dts_overlays=[
+        here / "fatcat-ish-idle" / "project.overlay",
+    ],
+    kconfig_files=[
+        here / "fatcat-ish-idle" / "project.conf",
+    ],
+)
+
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release.
 assert_rw_fwid_DO_NOT_EDIT(project_name="fatcatrvp-npcx", addr=0x80144)
