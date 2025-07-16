@@ -242,8 +242,8 @@
 /*  CCG8 special setting                        */
 /************************************************/
 #ifdef CONFIG_PD_CCG8_EPR
-#define EXIT_EPR BIT(4)
-#define ENTER_EPR BIT(5)
+#define EXIT_EPR BIT(6)
+#define ENTER_EPR BIT(7)
 #define EPR_PROCESS_MASK (EXIT_EPR + ENTER_EPR)
 #endif
 

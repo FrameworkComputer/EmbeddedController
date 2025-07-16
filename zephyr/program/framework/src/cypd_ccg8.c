@@ -510,6 +510,9 @@ void enter_epr_mode(void)
 	int port_idx;
 	int ret;
 
+	__ASSERT(BIT(PD_PORT_COUNT) < EXIT_EPR,
+			"PD port bits must not exceed EXIT_EPR bit in %s.", __func__);
+
 	/**
 	 * Only enter EPR mode when the system in S0 state.
 	 * 1. Resume from S0i3 mode
@@ -530,7 +533,7 @@ void enter_epr_mode(void)
 			(pd_port_states[port_idx].epr_active == 0) &&
 			(pd_port_states[port_idx].epr_support == 1)) {
 
-			/* BIT(4): epr in progress, BIT(1) - BIT(3) which port */
+			/* BIT(6),BIT(7): epr in progress, BIT(0) - BIT(5) which port */
 			pd_epr_in_progress |= (BIT(port_idx) + ENTER_EPR);
 
 			/* avoid the pmf is higher when the system resume from S0ix */
@@ -591,10 +594,13 @@ void exit_epr_mode(void)
 	int port_idx;
 	int ret;
 
+	__ASSERT(BIT(PD_PORT_COUNT) < EXIT_EPR,
+			"PD port bits must not exceed EXIT_EPR bit in %s.", __func__);
+
 	for (port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
 		if (pd_port_states[port_idx].epr_active == 1) {
 
-			/* BIT(4): epr in progress, BIT(1) - BIT(3) which port */
+			/* BIT(6),BIT(7): epr in progress, BIT(0) - BIT(5) which port */
 			pd_epr_in_progress |= (BIT(port_idx) + EXIT_EPR);
 
 			/* do not set learn mode when battery is cut off */
