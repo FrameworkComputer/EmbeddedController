@@ -562,9 +562,11 @@ int update_static_battery_info(void);
  * @param params Pointer to the struct containing current battery data.
  * @param ac_present True if AC power is connected, false otherwise.
  * @param is_charging True if the battery is currently charging.
+ * @param sustainer_idle True if charge state is ST_IDLE, meaning the battery
+ *                       could be charged but is not currently charging.
  */
 void battery_set_dynamic_info(const struct batt_params *params, bool ac_present,
-			      bool is_charging);
+			      bool is_charging, bool sustainer_idle);
 
 #ifdef __cplusplus
 }

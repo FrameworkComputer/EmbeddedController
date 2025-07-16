@@ -1504,7 +1504,8 @@ static int process_charge_state(int *need_staticp, int sleep_usec)
 	/* Wait on the dynamic info until the static info is good. */
 	if (!*need_staticp)
 		battery_set_dynamic_info(&curr.batt, curr.ac,
-					 curr.batt_is_charging);
+					 curr.batt_is_charging,
+					 curr.state == ST_IDLE);
 
 	notify_host_of_low_battery_charge();
 	notify_host_of_low_battery_voltage();
