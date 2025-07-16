@@ -657,18 +657,59 @@ void set_gpu_gpios_configuration(void)
 {
 	int i;
 	const struct gpio_dt_spec * dt_gpio;
+	enum power_state ps = power_get_state();
+	uint32_t flags;
+
+	switch (ps) {
+	case POWER_G3S5:
+	case POWER_S3S5:
+		ps = POWER_S5;
+		break;
+	case POWER_S5S3:
+	case POWER_S0S3:
+	case POWER_S0ixS3:
+		ps = POWER_S3;
+		break;
+	case POWER_S3S0:
+	case POWER_S0ixS0:
+	case POWER_S3S0ix:
+		ps = POWER_S0;
+		break;
+	case POWER_S5G3:
+	case POWER_G3:
+		ps = POWER_G3;
+		break;
+	default:
+		break;
+	}
 
 	for(i = 0; i < GPU_GPIO_MAX; i++) {
 		dt_gpio = gpu_gpio_to_dt(gpu_gpio_cfgs[i].gpio);
 		if (dt_gpio == NULL)
 			continue;
+
+		/**
+		 * Ensure the gpio will not set to low if the current chipset state
+		 * is above the power_domain.
+		 */
+		flags = gpu_gpio_cfgs[i].flags;
+
+		if ((gpu_gpio_cfgs[i].function == GPIO_FUNC_HIGH) &&
+			ps >= gpu_gpio_cfgs[i].power_domain) {
+			if (gpu_gpio_cfgs[i].flags == GPIO_OUT_LOW)
+				flags = GPIO_OUT_HIGH;
+
+			if (gpu_gpio_cfgs[i].flags == GPIO_ODR_LOW)
+				flags = GPIO_ODR_HIGH;
+		}
+
 		if (gpu_verbose)
 			CPRINTS("GPUGPIO CFG:%s %s=0x%X %s",
-						gpu_gpio_idx_to_name(gpu_gpio_cfgs[i].gpio),
-						gpu_gpio_fn_to_name(gpu_gpio_cfgs[i].function),
-						gpu_gpio_cfgs[i].flags,
-						gpu_gpio_powerdomain_to_name(gpu_gpio_cfgs[i].power_domain));
-		gpio_pin_configure(dt_gpio->port, dt_gpio->pin, gpu_gpio_cfgs[i].flags);
+				gpu_gpio_idx_to_name(gpu_gpio_cfgs[i].gpio),
+				gpu_gpio_fn_to_name(gpu_gpio_cfgs[i].function),
+				flags,
+				gpu_gpio_powerdomain_to_name(gpu_gpio_cfgs[i].power_domain));
+		gpio_pin_configure(dt_gpio->port, dt_gpio->pin, flags);
 	}
 }
 
