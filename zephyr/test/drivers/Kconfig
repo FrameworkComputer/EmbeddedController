@@ -413,4 +413,9 @@ config LINK_TEST_SUITE_TABLETMODE_INTERRUPT
 	  Verifies a singleton driver which handles an external interrupt
 	  signaling to the EC when to switch in or out of tablet mode.
 
+config LINK_TEST_SUITE_WRITE_PROTECTION_CUSTOM
+	bool "Link and test the write protection tests"
+	help
+	  Verifies functionality of custom write protection
+
 source "Kconfig.zephyr"
