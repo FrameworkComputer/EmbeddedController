@@ -31,6 +31,7 @@ endif()
 
 if(DEFINED CONFIG_BOARD_OJAL)
 	project(ojal)
+	zephyr_library_sources("ojal/src/board_power.c")
 endif()
 
 if(DEFINED CONFIG_BOARD_MATSU)

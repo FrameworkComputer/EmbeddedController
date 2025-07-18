@@ -35,6 +35,10 @@
 			gpios = <&gpiob 6 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
+		gpio_vr_mem_vccst_pg: vr_mem_vccst_pg {
+			gpios = <&gpiob 10 GPIO_INPUT>;
+			no-auto-init;
+		};
 		gpio_ec_i2c_pd_int_l: ec_i2c_pd_int_l {
 			gpios = <&gpiob 11 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
@@ -105,6 +109,10 @@
 		};
 		gpio_vcout1_prochot_odl: ec_vcout1_prochot_odl { /*Reserve for process hot function*/
 			gpios = <&gpioh 10 GPIO_ODR_HIGH>;
+		};
+		gpio_ec_soc_pwr_btn_odl: ec_soc_pwr_btn_odl {
+			gpios = <&gpioh 12 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		gpio_soc_caterr: soc_caterr {
 			gpios = <&gpioh 15 GPIO_INPUT>;

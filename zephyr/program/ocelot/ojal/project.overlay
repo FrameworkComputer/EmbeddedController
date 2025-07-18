@@ -10,5 +10,14 @@
 /* ojal project DTS includes */
 
 #include "gpio.dtsi"
+#include "power_signals.dtsi"
 
 /* ojal overrides follow... */
+
+&espi0 {
+	status = "okay";
+};
+
+&sha0 {
+	status = "okay";
+};
