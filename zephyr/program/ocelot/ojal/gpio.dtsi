@@ -15,8 +15,138 @@
 		gpio_ec_entering_rw: ec_entering_rw {
 			enum-name = "GPIO_ENTERING_RW";
 		};
+
+		gpio_pm_batlow_l: pm_batlow_l {
+			gpios = <&gpioa 2 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_pwr_1p25v_pg: pwr_1p25v_pg {
+			gpios = <&gpioa 13 GPIO_INPUT>;
+		};
+		gpio_ec_hall_int: ec_hall_int {
+			gpios = <&gpioa 14 GPIO_INPUT>;
+		};
+		cse_early_rec_sw: ec-cse-early-sw {
+			gpios = <&gpioa 15 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		gpio_soc_ec_int_l: soc_ec_int_l {
+			gpios = <&gpiob 5 GPIO_ODR_HIGH>;
+		};
+		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
+			gpios = <&gpiob 6 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_PACKET_MODE_EN";
+		};
+		gpio_ec_i2c_pd_int_l: ec_i2c_pd_int_l {
+			gpios = <&gpiob 11 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
 		gpio_ec_wp_odl: ec_wp_odl { /* SPI_WP_H1 */
 			gpios = <&gpiob 14 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
+		gpio_cpu_c10_gate_l: cpu_c10_gate_l { /* SOC_GATE# */
+			gpios = <&gpiob 15 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_en_z1_rails: en_z1_rails {	/* PRIM_VR_EN, EN_PP3300_Z1 */
+			gpios = <&gpioc 8 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_soc_kb_matrix: soc_kb_matrix {
+			gpios = <&gpiof 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_ec_mic_privacy_out: ec_mic_privacy_out {
+			gpios = <&gpiof 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_ec_smc_wake_l: ec_smc_wake_l {
+			gpios = <&gpiof 6 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_ec_pwrbtn_led: ec_pwrbtn_led {
+			gpios = <&gpiof 7 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_pwr_led: ec_pwr_led { /* PM_BAT_STATUS_LED2 */
+			gpios = <&gpiof 8 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_ssd_pln: ec_ssd_pln {
+			gpios = <&gpiof 9 GPIO_ODR_HIGH>;
+		};
+		gpio_ec_en_edp_bl: ec_en_edp_bl { /* EC_BKOFF# */
+			gpios = <&gpiof 11 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_ENABLE_BACKLIGHT";
+		};
+		gpio_ec_p1_sink_en: ec_p1_sink_en {	/* reserve */
+			gpios = <&gpiof 12 GPIO_INPUT>;
+		};
+		gpio_ec_p0_sink_en: ec_p0_sink_en {	/* reserve */
+			gpios = <&gpiof 13 GPIO_INPUT>;
+		};
+		gpio_ec_amp_mute_l: ec_amp_mute_l {
+			gpios = <&gpiog 0 GPIO_ODR_LOW>;
+		};
+		gpio_ec_batt_led: ec_batt_led { /* PM_BAT_STATUS_LED1 */
+			gpios = <&gpiog 1 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_ccd_mode_odl: ccd_mode_odl {
+			gpios = <&gpiog 7 GPIO_INPUT>;
+			enum-name = "GPIO_CCD_MODE_ODL";
+		};
+		gpio_ec_fan_en: ec_fan_en {
+			gpios = <&gpiog 9 GPIO_OUTPUT_LOW>;
+		};
+		gpio_soc_enbkl: soc_enbkl {
+			gpios = <&gpiog 15 GPIO_INPUT>;
+		};
+		gpio_ec_acok_od: ec_acok_od {
+			gpios = <&gpioh 0 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
+			gpios = <&gpioh 3 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_lid_open: lid_open {
+			gpios = <&gpioh 5 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		gpio_vcout1_prochot_odl: ec_vcout1_prochot_odl { /*Reserve for process hot function*/
+			gpios = <&gpioh 10 GPIO_ODR_HIGH>;
+		};
+		gpio_soc_caterr: soc_caterr {
+			gpios = <&gpioh 15 GPIO_INPUT>;
+		};
+		gpio_bi_in: bi_in {
+			gpios = <&gpioi 3 GPIO_OUTPUT_LOW>;
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+		int_ac_present: ac_present {
+			irq-pin = <&gpio_ec_acok_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
+		int_power_button: power_button {
+			irq-pin = <&gpio_ec_pwr_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+		int_lid_open: lid_open {
+			irq-pin = <&gpio_lid_open>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpioa 1 0>,
+			<&gpioa 3 0>,
+			<&gpiob 0 0>,
+			<&gpiof 5 0>,
+			<&gpiof 10 0>,
+			<&gpiog 11 0>,
+			<&gpioh 8 0>,
+			<&gpioh 9 0>,
+			<&gpioh 11 0>;
 	};
 };
+
+/* The eSPI shim requires this GPIO nodelabel */
+gpio_ec_pch_wake_odl: &gpio_ec_smc_wake_l {};
