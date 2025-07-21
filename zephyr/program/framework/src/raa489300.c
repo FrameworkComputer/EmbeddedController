@@ -182,22 +182,17 @@ void board_level_buck_update(void)
 		} else if (pd_voltage > 20000) {
 			level_buck_switch_epr();
 		}
-		/* TODO: Need to be replaced with 3level-buck function and macro */
-		if (pd_voltage <= 20000) {
-			i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
-				RAA489300_REG_VINOK_REFERENCE, 0x3800);
-			i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
-				RAA489300_REG_MIN_INPUT_VOLTAGE, 0x3800);
-		} else if (pd_voltage <= 28000) {
-			i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
-				RAA489300_REG_VINOK_REFERENCE, 0x4F00);
-			i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
-				RAA489300_REG_MIN_INPUT_VOLTAGE, 0x4F00);
+
+		if (pd_voltage < 9000) {
+			level_buck_set_acok_reference(3900); /* 0x0F00 */
+		} else if (pd_voltage < 20000) {
+			level_buck_set_acok_reference(7000); /* 0x1B00 */
+		} else if (pd_voltage < 28000) {
+			level_buck_set_acok_reference(14500); /* 0x3800 */
+		} else if (pd_voltage < 36000) {
+			level_buck_set_acok_reference(20400); /* 0x4F00 */
 		} else {
-			i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
-				RAA489300_REG_VINOK_REFERENCE, 0x6500);
-			i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
-				RAA489300_REG_MIN_INPUT_VOLTAGE, 0x6500);
+			level_buck_set_acok_reference(26000); /* 0x6500 */
 		}
 
 		pre_pd_voltage = pd_voltage;
@@ -205,6 +200,18 @@ void board_level_buck_update(void)
 }
 DECLARE_HOOK(HOOK_POWER_SUPPLY_CHANGE, board_level_buck_update, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_INIT, board_level_buck_update, HOOK_PRIO_POST_I2C + 1);
+
+void level_buck_set_acok_reference(int mv)
+{
+	uint16_t reg;
+
+	reg = RAA489300_MV_TO_VIN(mv);
+
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+		RAA489300_REG_VINOK_REFERENCE, reg);
+	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+		RAA489300_REG_MIN_INPUT_VOLTAGE, reg);
+}
 
 void level_buck_set_input_current_limit(int ma)
 {

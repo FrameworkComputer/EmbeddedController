@@ -343,10 +343,7 @@ __override int board_confirm_buck_transition_ready(bool is_epr)
 		return rv;
 
 	if (((val >> 8) & 0x3F) == (is_epr ? 0x35 : 0x26)) {
-		rv = i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
-			RAA489300_REG_VINOK_REFERENCE, 0x3800);
-		rv = i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
-			RAA489300_REG_MIN_INPUT_VOLTAGE, 0x3800);
+		level_buck_set_acok_reference(14500);
 		return EC_SUCCESS;
 	} else {
 		return EC_ERROR_UNKNOWN;

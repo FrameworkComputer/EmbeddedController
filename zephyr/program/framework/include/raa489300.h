@@ -30,6 +30,13 @@
 #define RAA489300_REG_DEVICE_ID				0xFF
 
 /*
+ * VINOK_REFERENCE Register (0x40)
+ * MinInputVoltage Register (0x4B)
+ * Maximum [15:8] = 10110100 = 180 decimal
+ */
+#define RAA489300_MV_TO_VIN(mv) ((MIN((mv) / 257, 180) << 8))
+
+/*
  * OutputVoltage Register (0x15)
  */
 #define PPS_VOLTAGE_STEP_MV 12
@@ -40,6 +47,8 @@
 int write_level_buck_registers(bool is_epr);
 
 void board_level_buck_update(void);
+
+void level_buck_set_acok_reference(int mv);
 
 void level_buck_set_input_current_limit(int ma);
 
