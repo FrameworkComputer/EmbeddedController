@@ -11,6 +11,7 @@
 
 #include "gpio.dtsi"
 #include "power_signals.dtsi"
+#include "i2c.dtsi"
 
 /* ojal overrides follow... */
 
