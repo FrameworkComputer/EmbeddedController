@@ -18,6 +18,11 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
+#define DEVICE_CHECK_TIME (2 * SECOND)
+#define FAN_DETECT_INTERVAL (500 * MSEC)
+#define DIAGNOSTIC_TIMER (DIAGNOSTIC_TIMER_SECONDS * SECOND)
+#define FAN_DETECT_TIMER ((DIAGNOSTIC_TIMER - DEVICE_CHECK_TIME) / FAN_DETECT_INTERVAL)
+
 static void check_fan_ready_deferred(void);
 DECLARE_DEFERRED(check_fan_ready_deferred);
 
@@ -43,9 +48,9 @@ static void check_fan_ready_deferred(void)
 		flag_right_fan_ready = 0;
 		flag_left_fan_ready = 0;
 		set_device_complete(true);
-	} else if (count < 15) {
+	} else if (count < FAN_DETECT_TIMER) {
 		count++;
-		hook_call_deferred(&check_fan_ready_deferred_data, 500 * MSEC);
+		hook_call_deferred(&check_fan_ready_deferred_data, FAN_DETECT_INTERVAL);
 	} else {
 		dptf_set_fan_duty_target(-1);
 		count = 0;
@@ -89,5 +94,5 @@ DECLARE_DEFERRED(check_device_deferred);
 void project_diagnostics(void)
 {
 	hook_call_deferred(&start_fan_deferred_data, 500 * MSEC);
-	hook_call_deferred(&check_device_deferred_data, 2000 * MSEC);
+	hook_call_deferred(&check_device_deferred_data, DEVICE_CHECK_TIME);
 }
