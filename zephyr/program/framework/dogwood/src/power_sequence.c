@@ -301,6 +301,13 @@ static int check_s0ix_statsus(void)
 	return 0;
 }
 
+static void power_clear_s0ix_flag(void)
+{
+	resume_ms_flag = 0;
+	enter_ms_flag = 0;
+	system_in_s0ix = 0;
+}
+
 void s0ix_status_handle(void)
 {
 	int s0ix_state_change;
@@ -613,11 +620,8 @@ enum power_state power_handle_state(enum power_state state)
 			 * If abnormal/force shutdown happens in s0i3 state, EC needs to
 			 * clear the flags run the shutdown sequence.
 			 */
-			if (system_in_s0ix) {
-				resume_ms_flag = 0;
-				enter_ms_flag = 0;
-				system_in_s0ix = 0;
-			}
+			if (system_in_s0ix)
+				power_clear_s0ix_flag();
 
 			/* Power down to next state */
 			return POWER_S3S5;
@@ -632,9 +636,7 @@ enum power_state power_handle_state(enum power_state state)
 				/* clear the enter 5VSB timer if over upper current */
 				hook_call_deferred(&power_5vsb_enter_deferred_data, -1);
 				if (!has_exited_5vsb && !power_5vsb_exit()) {
-					resume_ms_flag = 0;
-					enter_ms_flag = 0;
-					system_in_s0ix = 0;
+					power_clear_s0ix_flag();
 					chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 					return POWER_S3S5;
 				}
@@ -725,9 +727,7 @@ enum power_state power_handle_state(enum power_state state)
 			 * clear the all s0ix flags
 			 */
 			if (resume_ms_flag > 0) {
-				resume_ms_flag = 0;
-				enter_ms_flag = 0;
-				system_in_s0ix = 0;
+				power_clear_s0ix_flag();
 				return POWER_S0ixS0;
 			}
 
@@ -761,9 +761,7 @@ enum power_state power_handle_state(enum power_state state)
 				 * Therefore, EC should clear the flags and return power state to
 				 * S0 to run the shutdown sequence.
 				 */
-				resume_ms_flag = 0;
-				enter_ms_flag = 0;
-				system_in_s0ix = 0;
+				power_clear_s0ix_flag();
 				chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 				return POWER_S0;
 			}
@@ -783,9 +781,7 @@ enum power_state power_handle_state(enum power_state state)
 			/* clear the enter 5VSB timer if resume to s0ix */
 			hook_call_deferred(&power_5vsb_enter_deferred_data, -1);
 			if (!has_exited_5vsb && !power_5vsb_exit()) {
-				resume_ms_flag = 0;
-				enter_ms_flag = 0;
-				system_in_s0ix = 0;
+				power_clear_s0ix_flag();
 				chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 				/**
 				 * If happens something wrong, transfer the state to POWER_S0ixS3.
@@ -800,9 +796,7 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* wait VS power good. If something wrong, turn off power and force to g3 */
 		if (power_wait_signals(IN_VS_POWER)) {
-			resume_ms_flag = 0;
-			enter_ms_flag = 0;
-			system_in_s0ix = 0;
+			power_clear_s0ix_flag();
 			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 			/**
 			 * If happens something wrong, transfer the state to POWER_S0ixS3.
@@ -816,9 +810,7 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* wait VR power good. If something wrong, turn off power and force to g3 */
 		if (power_wait_signals(IN_VR_PGOOD)) {
-			resume_ms_flag = 0;
-			enter_ms_flag = 0;
-			system_in_s0ix = 0;
+			power_clear_s0ix_flag();
 			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 			/**
 			 * If happens something wrong, transfer the state to POWER_S0ixS3.
