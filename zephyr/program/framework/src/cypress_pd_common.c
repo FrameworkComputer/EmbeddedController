@@ -369,13 +369,13 @@ static void cypd_get_version(int controller)
 
 static void pdo_init_deferred(void)
 {
-	task_set_event(TASK_ID_CYPD, CCG_EVT_PDO_INIT_0);
+	task_set_event(TASK_ID_CYPD, CCG_EVT_CHANGE_P0_PDO_LIST);
 }
 DECLARE_DEFERRED(pdo_init_deferred);
 
-static void cypd_pdo_init(int controller, int port, uint8_t profile)
+static void cypd_changing_source_pdo_list(int controller, int port, int profile)
 {
-	int rv;
+	int fail_step;
 
 #ifndef CONFIG_SELECT_3A_TYPEC_OUTPUT_CURRENT
 	return;
@@ -401,22 +401,35 @@ static void cypd_pdo_init(int controller, int port, uint8_t profile)
 	if (!cypd_contoller_is_powered(controller))
 		return;
 
-	rv = cypd_write_reg_block(controller, CCG_WRITE_DATA_MEMORY_REG(port, 0),
-		pdos_reg, sizeof(pdos_reg));
-	if (rv != EC_SUCCESS)
-		CPRINTS("SET CCG_MEMORY failed");
+	if (cypd_write_reg_block(controller, CCG_WRITE_DATA_MEMORY_REG(port, 0),
+			pdos_reg, sizeof(pdos_reg))) {
+		fail_step = 1;
+		goto change_pdo_list_fail;
+	}
 
-	rv = cypd_write_reg8_wait_ack(controller, CCG_SELECT_SOURCE_PDO_REG(port), profile);
-	if (rv != EC_SUCCESS)
-		CPRINTS("SET CCG_SELECT_REG failed");
+	/**
+	 * When the SELECT_SOURCE_PDO register is written, CCG will check the write data area for
+	 * a valid Source PDO signature (“SRCP”). If the valid signature is found, CCG will copy
+	 * the 28 bytes of Source PDO data from bytes 4 to 31 of the write data area into the
+	 * active Source PDO set
+	 */
+	if (cypd_write_reg8_wait_ack(controller, CCG_SELECT_SOURCE_PDO_REG(port), BIT(profile))) {
+		fail_step = 2;
+		goto change_pdo_list_fail;
+	}
 
 	memset(pdos_reg, 0, sizeof(pdos_reg));
 
 	/* Clear Signature “SRCP” for PDO update finish */
-	rv = cypd_write_reg_block(controller, CCG_WRITE_DATA_MEMORY_REG(port, 0),
-		pdos_reg, sizeof(pdos_reg));
-	if (rv != EC_SUCCESS)
-		CPRINTS("CLEAR CCG_MEMORY failed");
+	if (cypd_write_reg_block(controller, CCG_WRITE_DATA_MEMORY_REG(port, 0),
+			pdos_reg, sizeof(pdos_reg))) {
+		fail_step = 3;
+		goto change_pdo_list_fail;
+	}
+
+change_pdo_list_fail:
+	if (fail_step)
+		CPRINTS("CYPD: change PDOs list fail at step %d", fail_step);
 }
 
 static int cypd_select_rp(int port, uint8_t profile)
@@ -2004,23 +2017,33 @@ void cypd_interrupt_handler_task(void *p)
 			task_wait_event_mask(TASK_EVENT_TIMER, 10);
 		}
 
-		if (evt & CCG_EVT_PDO_INIT_0) {
+		if (evt & CCG_EVT_CHANGE_P0_PDO_LIST) {
 			/* update new PDO format to select pdo register */
 			for (i = 0; i < PD_CHIP_COUNT; i++) {
-				if (cypd_contoller_is_powered(i))
-					cypd_pdo_init(i, 0, CCG_PD_CMD_SET_TYPEC_3A);
+				if (cypd_contoller_is_powered(i)) {
+					struct pd_port_current_state_t states =
+						pd_port_states[PDPORT(i, 0)];
+					int profile = states.safety_table[TYPEC_SAFETY_LEVEL_0];
+
+					cypd_changing_source_pdo_list(i, 0, profile);
+				}
 			}
 
 			task_wait_event_mask(TASK_EVENT_TIMER, 10);
-			task_set_event(TASK_ID_CYPD, CCG_EVT_PDO_INIT_1);
+			task_set_event(TASK_ID_CYPD, CCG_EVT_CHANGE_P1_PDO_LIST);
 		}
 
-		if (evt & CCG_EVT_PDO_INIT_1) {
+		if (evt & CCG_EVT_CHANGE_P1_PDO_LIST) {
 			/* update new PDO format to select pdo register */
 			for (i = 0; i < PD_CHIP_COUNT; i++) {
 				if (cypd_contoller_is_powered(i) &&
-				    pd_chip_config[i].support_max_port == 2)
-					cypd_pdo_init(i, 1, CCG_PD_CMD_SET_TYPEC_3A);
+				    pd_chip_config[i].support_max_port == 2) {
+					struct pd_port_current_state_t states =
+						pd_port_states[PDPORT(i, 1)];
+					int profile = states.safety_table[TYPEC_SAFETY_LEVEL_0];
+
+					cypd_changing_source_pdo_list(i, 1, profile);
+				}
 			}
 
 			task_wait_event_mask(TASK_EVENT_TIMER, 10);

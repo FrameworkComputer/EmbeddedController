@@ -225,6 +225,7 @@
 /************************************************/
 #define PORT_TO_CONTROLLER(x) ((x) >> 1)
 #define PORT_TO_CONTROLLER_PORT(x) ((x) & 0x01)
+#define PDPORT(controller, port) ((controller * 2) + port)
 
 /************************************************/
 /*  CCG6 special setting                        */
@@ -294,8 +295,8 @@ enum pd_task_evt {
 	CCG_EVT_CFET_VBUS_OFF = BIT(17),
 	CCG_EVT_CFET_VBUS_ON = BIT(18),
 	CCG_EVT_DPALT_DISABLE = BIT(19),
-	CCG_EVT_PDO_INIT_0 = BIT(20),
-	CCG_EVT_PDO_INIT_1 = BIT(21),
+	CCG_EVT_CHANGE_P0_PDO_LIST = BIT(20),
+	CCG_EVT_CHANGE_P1_PDO_LIST = BIT(21),
 	CCG_EVT_PDO_C0P0 = BIT(22),
 	CCG_EVT_PDO_C0P1 = BIT(23),
 	CCG_EVT_PDO_C1P0 = BIT(24),
@@ -529,6 +530,14 @@ enum pd_progress {
 	PD_PROGRESS_EXIT_EPR_MODE,
 };
 
+enum typec_safety_level {
+	TYPEC_SAFETY_LEVEL_0,
+	TYPEC_SAFETY_LEVEL_1,
+	TYPEC_SAFETY_LEVEL_2,
+	TYPEC_SAFETY_LEVEL_3,
+	TYPEC_SAFETY_LEVEL_COUNT,
+};
+
 struct pd_chip_config_t {
 	uint16_t i2c_port;
 	uint16_t addr_flags;
@@ -555,6 +564,7 @@ struct pd_port_current_state_t {
 	uint8_t epr_active;
 	uint8_t epr_support;
 	uint8_t epr_retry_count;
+	int safety_table[TYPEC_SAFETY_LEVEL_COUNT];
 
 	enum pd_power_role power_role;
 	enum pd_data_role data_role;
