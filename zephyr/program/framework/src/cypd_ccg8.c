@@ -455,11 +455,6 @@ void clear_erp_progress(void)
 	pd_epr_in_progress &= EPR_PROCESS_MASK;
 }
 
-__overridable int board_confirm_buck_transition_ready(enum level_buck_mode mode)
-{
-	return EC_SUCCESS;
-}
-
 static void epr_flow_pending_deferred(void)
 {
 	int port_idx;
@@ -506,10 +501,114 @@ static void epr_flow_pending_deferred(void)
 }
 DECLARE_DEFERRED(epr_flow_pending_deferred);
 
+#ifdef CONFIG_PLATFORM_EC_CHARGER_RAA489300
+/*****************************************************************
+ * Raa489300 3-level-buck transition EPR mode function
+ ****************************************************************/
+static struct epr_buck_transition_ctx epr_buck_ctx;
+
+__overridable int board_set_buck_mode(enum level_buck_mode mode)
+{
+	return EC_SUCCESS;
+}
+
+__overridable int board_confirm_buck_transition_ready(enum level_buck_mode mode)
+{
+	return EC_SUCCESS;
+}
+
+static void buck_ready_for_epr(void);
+DECLARE_DEFERRED(buck_ready_for_epr);
+
+static void handle_pd_epr_mode(bool is_enter_epr)
+{
+	int port_idx;
+
+	uint8_t pd_cmd = is_enter_epr
+		? CCG_PD_CMD_INITIATE_EPR_ENTRY
+		: CCG_PD_CMD_INITIATE_EPR_EXIT;
+
+	for (port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
+		if (pd_epr_in_progress & BIT(port_idx)) {
+			cypd_write_reg8(PORT_TO_CONTROLLER(port_idx),
+				CCG_PD_CONTROL_REG(PORT_TO_CONTROLLER_PORT(port_idx)),
+				pd_cmd);
+		}
+	}
+
+	hook_call_deferred(&epr_flow_pending_deferred_data,
+		is_enter_epr ? 200 * MSEC : 500 * MSEC);
+}
+
+#define WAIT_TRANSITION_TIME (200 * MSEC)
+static void buck_ready_for_epr(void)
+{
+	bool is_enter_epr = (epr_buck_ctx.progress == PD_PROGRESS_ENTER_EPR_MODE);
+	int mode = is_enter_epr ? LEVEL_BUCK_ENTER_EPR : LEVEL_BUCK_EXIT_EPR;
+
+	/* make sure enter EPR mode only process in S0 state */
+	if (is_enter_epr && (!chipset_in_state(CHIPSET_STATE_ON) ||
+		!extpower_is_present())) {
+		CPRINTS("Enter EPR aborted: not in S0 or no power");
+		epr_buck_ctx.phase = BUCK_PHASE_IDLE;
+		return;
+	}
+
+	/* STEP 1: Buck mode transition handling */
+	if (epr_buck_ctx.phase == BUCK_PHASE_SET_MODE) {
+		/*
+		 * For multi port EPR + EPR.
+		 * Enter EPR: When PSM is already in buck mode, do nothing.
+		 */
+		if (is_enter_epr && level_buck_check_expected_state(mode) == EC_SUCCESS) {
+			goto ready_success;
+		}
+
+		/* Attempt to set buck mode */
+		if (board_set_buck_mode(mode) == EC_SUCCESS) {
+			epr_buck_ctx.retry_count = 0;
+			epr_buck_ctx.phase = BUCK_PHASE_CHECK_READY;
+		}
+	}
+
+	/* STEP 2: Check if the buck regulator is ready */
+	if (epr_buck_ctx.phase == BUCK_PHASE_CHECK_READY) {
+		if (board_confirm_buck_transition_ready(mode) == EC_SUCCESS) {
+			goto ready_success;
+		}
+	}
+
+	/* Retry mechanism */
+	if (++epr_buck_ctx.retry_count > 4) {
+		if (is_enter_epr) {
+			CPRINTS("3Level-Buck enter epr failed, reverting to SPR mode");
+			board_set_buck_mode(LEVEL_BUCK_SPR);
+		} else {
+			CPRINTS("3Level-Buck exit epr failed, reverting to EPR mode");
+			board_set_buck_mode(LEVEL_BUCK_EPR);
+		}
+		epr_buck_ctx.retry_count = 0;
+		epr_buck_ctx.phase = BUCK_PHASE_IDLE;
+		return;
+	}
+
+	CPRINTS("3Level-Buck %s retry %d",
+		is_enter_epr ? "enter epr" : "exit epr", epr_buck_ctx.retry_count);
+	hook_call_deferred(&buck_ready_for_epr_data, WAIT_TRANSITION_TIME);
+	return;
+
+	/* STEP 3: Execute the CCG command to enter the EPR mode */
+ready_success:
+	CPRINTS("3Level-Buck %s ready", is_enter_epr ? "enter epr" : "exit epr");
+	epr_buck_ctx.retry_count = 0;
+	epr_buck_ctx.phase = BUCK_PHASE_IDLE;
+	handle_pd_epr_mode(is_enter_epr);
+}
+#endif
+
 void enter_epr_mode(void)
 {
 	int port_idx;
-	int ret;
 
 	__ASSERT(BIT(PD_PORT_COUNT) < EXIT_EPR,
 			"PD port bits must not exceed EXIT_EPR bit in %s.", __func__);
@@ -549,30 +648,19 @@ void enter_epr_mode(void)
 				/* Set input current to 0mA */
 				charger_set_input_current_limit(0, 0);
 			}
-
-			/* Try to set to Buck mode, retry up to 5 times */
-			for (int retry = 0; retry < 5; retry++) {
-				ret = board_confirm_buck_transition_ready(LEVEL_BUCK_ENTER_EPR);
-				if (ret == EC_SUCCESS) {
-					CPRINTS("3Level-Buck enter epr ready");
-					break;
-				}
-				CPRINTS("3Level-Buck transition retry");
-				crec_msleep(200);
+#ifdef CONFIG_PLATFORM_EC_CHARGER_RAA489300
+			if (epr_buck_ctx.phase == BUCK_PHASE_IDLE) {
+				epr_buck_ctx.phase = BUCK_PHASE_SET_MODE;
+				epr_buck_ctx.progress = PD_PROGRESS_ENTER_EPR_MODE;
+				hook_call_deferred(&buck_ready_for_epr_data, 0);
 			}
-
-			/* If all retries fail, fallback to PTM mode */
-			if (ret != EC_SUCCESS) {
-				CPRINTS("Buck mode transition failed, reverting to SPR mode");
-				board_confirm_buck_transition_ready(LEVEL_BUCK_SPR);
-				return;
-			}
-
+#else
 			cypd_write_reg8(PORT_TO_CONTROLLER(port_idx),
 					CCG_PD_CONTROL_REG(PORT_TO_CONTROLLER_PORT(port_idx)),
 					CCG_PD_CMD_INITIATE_EPR_ENTRY);
 
 			hook_call_deferred(&epr_flow_pending_deferred_data, 200 * MSEC);
+#endif
 		}
 	}
 }
@@ -594,7 +682,6 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, enter_epr_mode_without_battery, HOOK_PRIO_DEF
 void exit_epr_mode(void)
 {
 	int port_idx;
-	int ret;
 
 	__ASSERT(BIT(PD_PORT_COUNT) < EXIT_EPR,
 			"PD port bits must not exceed EXIT_EPR bit in %s.", __func__);
@@ -619,22 +706,19 @@ void exit_epr_mode(void)
 						!!(pd_epr_in_progress & ~EPR_PROCESS_MASK));
 			}
 
-			/* Try to set to Buck mode, retry up to 5 times */
-			for (int retry = 0; retry < 5; retry++) {
-				ret = board_confirm_buck_transition_ready(LEVEL_BUCK_EXIT_EPR);
-				if (ret == EC_SUCCESS) {
-					CPRINTS("3Level-Buck exit epr ready");
-					break;
-				}
-				CPRINTS("3Level-Buck transition retry");
-				crec_msleep(200);
+#ifdef CONFIG_PLATFORM_EC_CHARGER_RAA489300
+			if (epr_buck_ctx.phase == BUCK_PHASE_IDLE) {
+				epr_buck_ctx.phase = BUCK_PHASE_SET_MODE;
+				epr_buck_ctx.progress = PD_PROGRESS_EXIT_EPR_MODE;
+				hook_call_deferred(&buck_ready_for_epr_data, 0);
 			}
-
+#else
 			cypd_write_reg8(PORT_TO_CONTROLLER(port_idx),
 					CCG_PD_CONTROL_REG(PORT_TO_CONTROLLER_PORT(port_idx)),
 					CCG_PD_CMD_INITIATE_EPR_EXIT);
 
 			hook_call_deferred(&epr_flow_pending_deferred_data, 500 * MSEC);
+#endif
 		}
 	}
 }
@@ -671,8 +755,10 @@ void cypd_update_epr_state(int controller, int port, int response_len)
 		default:
 			/* see epr_event_failure_type*/
 			CPRINTS("EPR failed %d", data[1]);
+#ifdef CONFIG_PLATFORM_EC_CHARGER_RAA489300
 			/* EPR fail, switch to PTM mode */
-			board_confirm_buck_transition_ready(LEVEL_BUCK_SPR);
+			board_set_buck_mode(LEVEL_BUCK_SPR);
+#endif
 			/* EPR fail, do not retry */
 			pd_port_states[port_idx].epr_active = 0xff;
 		}

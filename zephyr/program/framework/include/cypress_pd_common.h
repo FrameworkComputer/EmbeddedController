@@ -940,6 +940,32 @@ void update_power_state_deferred(void);
 
 #ifdef CONFIG_PD_CCG8_EPR
 
+#ifdef CONFIG_PLATFORM_EC_CHARGER_RAA489300
+enum buck_transition_phase {
+	BUCK_PHASE_IDLE = 0,
+	BUCK_PHASE_SET_MODE,
+	BUCK_PHASE_CHECK_READY,
+};
+
+struct epr_buck_transition_ctx {
+	int retry_count;
+	enum pd_progress progress;
+	enum buck_transition_phase phase;
+};
+
+/**
+ * Board-specific callback to confirm if the 3-Level Buck transition is ready.
+ *
+ * This function checks whether the system is prepared to transition
+ * to Buck mode, with additional handling based on EPR mode support.
+ *
+ * @param mode	Select the mode you want to set.
+ * @return EC_SUCCESS if set mode or transition is ready, error code otherwise.
+ */
+__override_proto int board_set_buck_mode(enum level_buck_mode mode);
+__override_proto int board_confirm_buck_transition_ready(enum level_buck_mode mode);
+#endif
+
 /**
  * Command PD exit EPR mode
  */
@@ -982,17 +1008,6 @@ void clear_erp_progress(void);
  * @param response_len	EPR event response len
  */
 void cypd_update_epr_state(int controller, int port, int response_len);
-
-/**
- * Board-specific callback to confirm if the 3-Level Buck transition is ready.
- *
- * This function checks whether the system is prepared to transition
- * to Buck mode, with additional handling based on EPR mode support.
- *
- * @param is_epr	Set to true if transitioning for EPR mode.
- * @return EC_SUCCESS if the transition is ready, error code otherwise.
- */
-__override_proto int board_confirm_buck_transition_ready(enum level_buck_mode mode);
 
 #endif /* CONFIG_PD_CCG8_EPR */
 
