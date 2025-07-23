@@ -39,19 +39,39 @@ BUILD_ASSERT(ARRAY_SIZE(pd_chip_config) == CONFIG_PLATFORM_EC_PD_CHIP_MAX_COUNT)
 
 struct pd_port_current_state_t pd_port_states[] = {
 	[PD_PORT_0] = {
-
+		.safety_table = {
+			CCG_PD_CMD_SET_TYPEC_3A,
+			CCG_PD_CMD_SET_TYPEC_3A,
+			CCG_PD_CMD_SET_TYPEC_1_5A,
+			CCG_PD_CMD_SET_TYPEC_1_5A},
 	},
 	[PD_PORT_1] = {
-
+		.safety_table = {
+			CCG_PD_CMD_SET_TYPEC_3A,
+			CCG_PD_CMD_SET_TYPEC_3A,
+			CCG_PD_CMD_SET_TYPEC_1_5A,
+			CCG_PD_CMD_SET_TYPEC_DEFAULT},
 	},
 	[PD_PORT_2] = {
-
+		.safety_table = {
+			CCG_PD_CMD_SET_TYPEC_3A,
+			CCG_PD_CMD_SET_TYPEC_3A,
+			CCG_PD_CMD_SET_TYPEC_1_5A,
+			CCG_PD_CMD_SET_TYPEC_DEFAULT},
 	},
 	[PD_PORT_3] = {
-
+		.safety_table = {
+			CCG_PD_CMD_SET_TYPEC_3A,
+			CCG_PD_CMD_SET_TYPEC_3A,
+			CCG_PD_CMD_SET_TYPEC_1_5A,
+			CCG_PD_CMD_SET_TYPEC_1_5A},
 	},
 	[PD_PORT_4] = {
-
+		.safety_table = {
+			CCG_PD_CMD_SET_TYPEC_1_5A,
+			CCG_PD_CMD_SET_TYPEC_DEFAULT,
+			CCG_PD_CMD_SET_TYPEC_DEFAULT,
+			CCG_PD_CMD_SET_TYPEC_DEFAULT},
 	}
 };
 BUILD_ASSERT(ARRAY_SIZE(pd_port_states) == CONFIG_USB_PD_PORT_MAX_COUNT);
