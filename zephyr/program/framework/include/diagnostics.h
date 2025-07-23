@@ -12,6 +12,13 @@
 #include "diagnostics_minipc.h"
 #endif
 
+/**
+ * CROS_EC_HOOK_TICK_INTERVAL = 200 ms
+ * DIAGNOSTIC_TICKS_PER_SEC = 1000 ms / 200 ms = 5
+ */
+#define DIAGNOSTIC_TICKS_PER_SEC	5
+#define DIAGNOSTIC_TIMER_SECONDS 90
+
 /*
  * If there is an error with this diagnostic, then set error=true
  * this is used as a bitmask to flash out any error codes

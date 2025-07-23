@@ -18,11 +18,6 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
-/**
- * CROS_EC_HOOK_TICK_INTERVAL = 200 ms
- * TICK_PER_SEC = 1000 ms / 200 ms = 5
- */
-#define TICK_PER_SEC	5
 #define LED_ON 1
 #define LED_OFF 0
 
@@ -143,7 +138,7 @@ static bool diagnostics_tick(void)
 	 * We really want the system to start within 60 seconds,
 	 * but a complete init with lots of RAM and peripherals can take longer
 	 */
-	if (++diagnostic_tick < 90 * TICK_PER_SEC)
+	if (++diagnostic_tick < DIAGNOSTIC_TIMER_SECONDS * DIAGNOSTIC_TICKS_PER_SEC)
 		return false;
 
 	/* Everything is ok after minimum 90 seconds of checking */
@@ -153,7 +148,7 @@ static bool diagnostics_tick(void)
 	if (diagnostics_ctr == DIAGNOSTICS_START ||
 		diagnostics_ctr == DIAGNOSTICS_HW_FINISH) {
 		if (diagnostic_1sec_target == 0) {
-			diagnostic_1sec_target = diagnostic_tick + TICK_PER_SEC;
+			diagnostic_1sec_target = diagnostic_tick + DIAGNOSTIC_TICKS_PER_SEC;
 
 			if (diagnostics_ctr == DIAGNOSTICS_START) {
 				/* Print diagnostic info at first time */
