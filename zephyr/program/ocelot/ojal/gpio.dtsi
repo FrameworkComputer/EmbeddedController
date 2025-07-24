@@ -28,6 +28,10 @@
 		cse_early_rec_sw: ec-cse-early-sw {
 			gpios = <&gpioa 15 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
+		gpio_en_pp5000_s5: en_pp5000_s5 { /* ec_5valw_en */
+			gpios = <&gpiob 3 GPIO_OUTPUT_LOW>;
+			no-auto-init;
+		};
 		gpio_soc_ec_int_l: soc_ec_int_l {
 			gpios = <&gpiob 5 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_EC_INT_L";

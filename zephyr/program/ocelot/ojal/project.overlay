@@ -17,7 +17,7 @@
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
 #include "keyboard.dtsi"
-
+#include "fan.dtsi"
 
 /* ojal overrides follow... */
 
