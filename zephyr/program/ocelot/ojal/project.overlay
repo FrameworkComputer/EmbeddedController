@@ -4,11 +4,10 @@
  */
 
 /* ocelot program common DTS includes */
-
 #include <cros/integrated_fwid.dtsi>
 
-/* ojal project DTS includes */
 
+/* ojal project DTS includes */
 #include "gpio.dtsi"
 #include "power_signals.dtsi"
 #include "i2c.dtsi"
@@ -17,6 +16,8 @@
 #include "usbc.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
+#include "keyboard.dtsi"
+
 
 /* ojal overrides follow... */
 

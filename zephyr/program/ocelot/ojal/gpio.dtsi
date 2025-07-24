@@ -30,10 +30,14 @@
 		};
 		gpio_soc_ec_int_l: soc_ec_int_l {
 			gpios = <&gpiob 5 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_EC_INT_L";
 		};
 		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
 			gpios = <&gpiob 6 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PACKET_MODE_EN";
+		};
+		gpio_kb_bl: kb_bl {
+			gpios = <&gpiob 7 GPIO_OUTPUT_LOW>;
 		};
 		gpio_vr_mem_vccst_pg: vr_mem_vccst_pg {
 			gpios = <&gpiob 10 GPIO_INPUT>;
