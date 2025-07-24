@@ -96,6 +96,7 @@ enum kb_fn_table {
     KB_FN_B = BIT(20),
     KB_FN_P = BIT(21),
     KB_FN_SPACE = BIT(22),
+	KB_FN_LEFT_WIN = BIT(24),
 };
 
 #ifdef CONFIG_KEYBOARD_BACKLIGHT
