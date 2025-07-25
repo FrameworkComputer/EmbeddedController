@@ -15,7 +15,8 @@
 #include "adc.dtsi"
 #include "battery.dtsi"
 #include "usbc.dtsi"
-
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
 
 /* ojal overrides follow... */
 
