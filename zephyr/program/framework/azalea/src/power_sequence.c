@@ -133,9 +133,7 @@ void clear_power_flags(void)
  * host resumes from S0ix, masks from backup variables are copied over to
  * lpc_host_event_mask for SCI.
  */
-static int enter_ms_flag;
-static int resume_ms_flag;
-static int system_in_s0ix;
+static bool enter_ms_flag, resume_ms_flag, system_in_s0ix;
 
 static int check_s0ix_statsus(void)
 {
@@ -148,14 +146,18 @@ static int check_s0ix_statsus(void)
 
 
 		/**
-		 * Sometimes PCH will set the enter and resume flag continuously
-		 * so clear the EMI when we read the flag.
+		 * Sometimes, the system will enter and resume S0ix several times within a
+		 * tick time (200ms).EC should set the flags in the correct state.
+		 *
+		 * E.g., If the EC chipset state is in S0ix and the system resumes S0ix and
+		 *     then enters again, the final memmap (EC_CUSTOMIZED_MEMMAP_POWER_STATE)
+		 *     is EC_PS_ENTER_S0ix. In this case, EC should not set the enter_ms_flag.
 		 */
-		if (power_status & EC_PS_ENTER_S0ix)
-			enter_ms_flag++;
+		if ((power_status & EC_PS_ENTER_S0ix) && !system_in_s0ix)
+			enter_ms_flag = true;
 
-		if (power_status & EC_PS_RESUME_S0ix)
-			resume_ms_flag++;
+		if ((power_status & EC_PS_RESUME_S0ix) && system_in_s0ix)
+			resume_ms_flag = true;
 
 		clear_flag = power_status & (EC_PS_ENTER_S0ix | EC_PS_RESUME_S0ix);
 
@@ -167,7 +169,14 @@ static int check_s0ix_statsus(void)
 		if (enter_ms_flag)
 			return CS_ENTER_S0ix;
 	}
-	return 0;
+	return CS_NONE;
+}
+
+static void power_clear_s0ix_flag(void)
+{
+	resume_ms_flag = false;
+	enter_ms_flag = false;
+	system_in_s0ix = false;
 }
 
 void s0ix_status_handle(void)
@@ -182,11 +191,6 @@ void s0ix_status_handle(void)
 		task_wake(TASK_ID_CHIPSET);
 }
 DECLARE_HOOK(HOOK_TICK, s0ix_status_handle, HOOK_PRIO_DEFAULT);
-
-int check_s0ix_status(void)
-{
-	return system_in_s0ix;
-}
 
 #endif
 
@@ -369,9 +373,7 @@ enum power_state power_handle_state(enum power_state state)
 		} else if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 0) {
 
 			if (system_in_s0ix) {
-				resume_ms_flag = 0;
-				enter_ms_flag = 0;
-				system_in_s0ix = 0;
+				power_clear_s0ix_flag();
 				lpc_s0ix_resume_restore_masks();
 				/* Call hooks now that rails are up */
 				hook_notify(HOOK_CHIPSET_RESUME);
@@ -453,9 +455,7 @@ enum power_state power_handle_state(enum power_state state)
 			 * clear the resume ms flag
 			 */
 			if (resume_ms_flag > 0) {
-				resume_ms_flag = 0;
-				enter_ms_flag = 0;
-				system_in_s0ix = 0;
+				power_clear_s0ix_flag();
 				return POWER_S0ixS0;
 			}
 			return POWER_S0ixS3;
@@ -482,8 +482,8 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S0ixS0:
 		CPRINTS("PH S0ixS0");
-		resume_ms_flag = 0;
-		system_in_s0ix = 0;
+		resume_ms_flag = false;
+		system_in_s0ix = false;
 		lpc_s0ix_resume_restore_masks();
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
@@ -500,8 +500,8 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S0S0ix:
-		enter_ms_flag = 0;
-		system_in_s0ix = 1;
+		enter_ms_flag = false;
+		system_in_s0ix = true;
 		CPRINTS("PH S0->S0ix");
 		lpc_s0ix_suspend_clear_masks();
 		/* Call hooks before we remove power rails */
