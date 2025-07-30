@@ -925,7 +925,11 @@ static void charge_manager_refresh(void)
 
 	/* Change the charge limit + charge port/supplier if modified. */
 	if (new_port != charge_port || new_charge_current != charge_current ||
-	    new_supplier != charge_supplier) {
+	    new_supplier != charge_supplier
+#ifdef CONFIG_CHARGER_HAS_VOLTAGE_REGULATOR
+		|| new_charge_voltage != charge_voltage
+#endif
+		) {
 #ifdef HAS_TASK_CHG_RAMP
 		chg_ramp_charge_supplier_change(new_port, new_supplier,
 						new_charge_current,

@@ -1341,6 +1341,12 @@
  */
 #undef CONFIG_CHARGER_ALLOW_LARGE_CURRENT
 
+/*
+ * Select this option if input voltage is change, charger manager
+ * should updates the input current limit.
+ */
+#undef CONFIG_CHARGER_HAS_VOLTAGE_REGULATOR
+
 /* Set this option when using a Narrow VDC (NVDC) charger, such as ISL9237/8. */
 #undef CONFIG_CHARGER_NARROW_VDC
 
