@@ -220,6 +220,9 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 {
 	int level_buck_ma;
 	int64_t calculate_ma;
+	static int64_t prev_calculate_ma = -1;
+
+	board_dynamic_acok_control();
 
 	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT) {
 		charge_ma = CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT;
@@ -237,6 +240,10 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 
 	level_buck_ma = charge_ma * 98 / 100;
 
+	/* Skip update current limit if no change in calculated value */
+	if (calculate_ma == prev_calculate_ma)
+		return;
+
 	CPRINTS("Updating charger with EPR correction: ma %d", (int16_t)calculate_ma);
 
 	if (charge_ma < prev_charge_ma) {
@@ -250,8 +257,7 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	}
 
 	prev_charge_ma = charge_ma;
-
-	board_dynamic_acok_control();
+	prev_calculate_ma = calculate_ma;
 }
 
 __overridable int extpower_is_present(void)
