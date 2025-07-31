@@ -2282,7 +2282,7 @@ void perform_error_recovery(int controller)
 		if (cypd_controller_port_to_charge_port(controller, port) ==
 			get_active_charge_pd_port() &&
 		    (battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED ||
-		    (get_system_percentage() / 10) < 1))
+		    (charge_get_percent() < 1)))
 			continue;
 #endif
 		data[0] = port;
