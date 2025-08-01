@@ -295,6 +295,7 @@ enum pd_task_evt {
 	CCG_EVT_PDO_C1P1 = BIT(22),
 	CCG_EVT_PERFORM_ERROR_RECOVERY = BIT(23),
 	CCG_EVT_PDO_RESET = BIT(24),
+	CCG_EVT_RDO_MISMATCH = BIT(25),
 };
 
 /************************************************
@@ -519,6 +520,7 @@ struct pd_port_current_state_t {
 	int voltage;
 	int current;
 	int ac_port;
+	bool rdo_mismatch;
 	enum ccg_c_state c_state; /* What device is attached on the other side */
 	uint8_t pd_state;
 	uint8_t cc;
@@ -812,6 +814,12 @@ int cypd_get_ac_power(void);
  * @return int
  */
 int cypd_get_active_port_voltage(void);
+
+/**
+ * Board can override the logic to allow PD chips to change
+ * the source PDO from 5V/1.5A to 5V/3A
+ */
+__override_proto bool cypd_allow_increase_rdo_profile(void);
 
 /**
  * Safety level LEVEL_TYPEC_1_5A trigger, modify sink 3A port to 1.5A

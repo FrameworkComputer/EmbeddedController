@@ -998,6 +998,7 @@ static void clear_port_state(int controller, int port)
 	pd_port_states[port_idx].c_state = 0;
 	pd_port_states[port_idx].current = 0;
 	pd_port_states[port_idx].voltage = 0;
+	pd_port_states[port_idx].rdo_mismatch = false;
 }
 
 void cypd_update_port_state(int controller, int port)
@@ -1470,6 +1471,11 @@ int cypd_get_active_port_voltage(void)
 	return pd_port_states[prev_charge_port].voltage;
 }
 
+__overridable bool cypd_allow_increase_rdo_profile(void)
+{
+	return false;
+}
+
 /*****************************************************************************/
 /* Interrupt handler */
 
@@ -1702,7 +1708,20 @@ void cypd_port_int(int controller, int port)
 	case CCG_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE:
 		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE %d", port_idx);
 		cypd_update_port_state(controller, port);
-		cypd_set_prepare_pdo(controller, port);
+
+		/* Read the contract information if we are the source */
+		int pd_port = ((controller << 2) + port);
+
+		if (pd_port_states[pd_port].pd_state == PD_ROLE_SOURCE) {
+			i2c_read_offset16_block(i2c_port, addr_flags,
+				CCG_READ_DATA_MEMORY_REG(port, 0), data2, MIN(response_len, 32));
+
+			if (data2[0] & BIT(1)) {
+				CPRINTS("RDO Mismatch, may provide more power for this device");
+				pd_port_states[pd_port].rdo_mismatch = true;
+				task_set_event(TASK_ID_CYPD, CCG_EVT_RDO_MISMATCH);
+			}
+		}
 #ifdef CONFIG_PD_CCG8_EPR
 		/* make sure enter EPR mode only process in S0 state */
 		if (chipset_in_state(CHIPSET_STATE_ON))
@@ -1713,7 +1732,6 @@ void cypd_port_int(int controller, int port)
 	case CCG_RESPONSE_PORT_CONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_CONNECT %d", port_idx);
 		record_ucsi_connector_change_event(controller, port);
-		cypd_set_typec_profile(controller, port);
 		cypd_update_port_state(controller, port);
 		break;
 	case CCG_RESPONSE_SOURCE_CAP_MSG_RX:
@@ -1931,6 +1949,17 @@ void cypd_interrupt_handler_task(void *p)
 			}
 
 			task_wait_event_mask(TASK_EVENT_TIMER, 10);
+		}
+
+		if (evt & CCG_EVT_RDO_MISMATCH) {
+			if (cypd_allow_increase_rdo_profile()) {
+				for (i = 0; i < PD_PORT_COUNT; i++) {
+					if (pd_port_states[i].rdo_mismatch)
+						cypd_select_pdo(PORT_TO_CONTROLLER(i),
+								PORT_TO_CONTROLLER_PORT(i),
+								CCG_PD_CMD_SET_TYPEC_3A);
+				}
+			}
 		}
 
 		if (evt & CCG_EVT_DPALT_DISABLE) {
