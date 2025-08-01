@@ -627,20 +627,13 @@ config PLATFORM_EC_CHARGER_BYPASS_MODE
 	  order to pass the input current from AC directly to the system
 	  power rail for efficiency.
 
-config PLATFORM_EC_CHARGER_ALLOW_LARGE_CURRENT
-	bool "enable large current limit"
-	default n
-	help
-	  Select this option if the charger needs to allow large current.
-	  Do not clamp the input current and allow to exceed the PD's
-	  limitation.
-
 config PLATFORM_EC_CHARGER_HAS_VOLTAGE_REGULATOR
 	bool "Board has voltage regulator"
 	default n
 	help
-	  Select this option if input voltage is change, charger manager
-	  should updates the input current limit.
+	  Select this option if the board has voltage regulator, which can allow
+	  large current and charger manager can update the current limit when
+	  the voltage changes.
 
 config PLATFORM_EC_CHARGER_NARROW_VDC
 	bool

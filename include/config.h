@@ -1335,15 +1335,10 @@
  */
 #undef CONFIG_CHARGER_BYPASS_MODE
 
-/*
- * Select this option if the charger needs to allow large current.
- * Do not clamp the input current and allow to exceed the PD's limitation.
- */
-#undef CONFIG_CHARGER_ALLOW_LARGE_CURRENT
 
 /*
- * Select this option if input voltage is change, charger manager
- * should updates the input current limit.
+ * Select this option if the board has voltage regulator, which can allow large
+ * current and charger manager can update the current limit when the voltage changes.
  */
 #undef CONFIG_CHARGER_HAS_VOLTAGE_REGULATOR
 
