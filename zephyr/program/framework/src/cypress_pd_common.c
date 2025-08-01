@@ -469,7 +469,7 @@ void cypd_release_port(int controller, int port)
 	return;
 #endif
 	cypd_select_rp(port_idx, CCG_PD_CMD_SET_TYPEC_1_5A);
-	cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_3A);
+	cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_1_5A);
 
 	if (cypd_port_3a_status(controller, port)) {
 		pd_3a_set = 0;
@@ -1916,7 +1916,7 @@ void cypd_interrupt_handler_task(void *p)
 			/* update new PDO format to select pdo register */
 			for (i = 0; i < PD_CHIP_COUNT; i++) {
 				if (cypd_contoller_is_powered(i))
-					cypd_pdo_init(i, 0, CCG_PD_CMD_SET_TYPEC_3A);
+					cypd_pdo_init(i, 0, CCG_PD_CMD_SET_TYPEC_1_5A);
 			}
 
 			task_wait_event_mask(TASK_EVENT_TIMER, 10);
@@ -1927,7 +1927,7 @@ void cypd_interrupt_handler_task(void *p)
 			/* update new PDO format to select pdo register */
 			for (i = 0; i < PD_CHIP_COUNT; i++) {
 				if (cypd_contoller_is_powered(i))
-					cypd_pdo_init(i, 1, CCG_PD_CMD_SET_TYPEC_3A);
+					cypd_pdo_init(i, 1, CCG_PD_CMD_SET_TYPEC_1_5A);
 			}
 
 			task_wait_event_mask(TASK_EVENT_TIMER, 10);
