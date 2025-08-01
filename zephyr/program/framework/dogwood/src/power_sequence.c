@@ -485,6 +485,12 @@ bool power_5vsb_exit(void)
 
 	power_check_12vb_apu();
 
+	/**
+	 * Call cypd event CCG_EVT_RDO_MISMATCH to check if we can provide more
+	 * power for RDO mismatch device.
+	 */
+	task_set_event(TASK_ID_CYPD, CCG_EVT_RDO_MISMATCH);
+
 	return true;
 }
 
@@ -999,6 +1005,15 @@ __override int chipset_in_low_power_mode(void)
 		in_low_power_mode = true;
 
 	return in_low_power_mode;
+}
+
+__override bool cypd_allow_increase_rdo_profile(void)
+{
+	/* Only allow the PD chips to increase the current when the PSU is on */
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pok_l)) == 1)
+		return true;
+	else
+		return false;
 }
 
 static int cmd_psu_s3_keep(int argc, const char **argv)
