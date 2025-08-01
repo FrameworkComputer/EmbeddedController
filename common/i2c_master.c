@@ -97,6 +97,7 @@ static int chip_i2c_xfer_with_notify(const int port,
 	int ret;
 	uint16_t addr_flags = slave_addr_flags;
 	const struct i2c_port_t *i2c_port = get_i2c_port(port);
+	ASSERT(i2c_port);
 
 	if (IS_ENABLED(CONFIG_I2C_XFER_BOARD_CALLBACK))
 		i2c_start_xfer_notify(port, slave_addr_flags);
@@ -1011,7 +1012,7 @@ int i2c_set_freq(int port, enum i2c_freq freq)
 {
 	int ret;
 
-	if (!(get_i2c_port(port)->flags & I2C_PORT_FLAG_DYNAMIC_SPEED))
+	if (get_i2c_port(port) && !(get_i2c_port(port)->flags & I2C_PORT_FLAG_DYNAMIC_SPEED))
 		return EC_ERROR_INVAL;
 
 	i2c_lock(port, 1);
