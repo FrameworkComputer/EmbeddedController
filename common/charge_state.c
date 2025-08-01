@@ -1263,9 +1263,16 @@ static void process_battery_present_change(const struct charger_info *info,
 	batt_info = battery_get_info();
 
 	curr.desired_input_current = get_desired_input_current(info);
-	if (curr.desired_input_current != CHARGE_CURRENT_UNINITIALIZED)
+
+	if (curr.desired_input_current != CHARGE_CURRENT_UNINITIALIZED) {
+#if defined(CONFIG_CHARGER_HAS_VOLTAGE_REGULATOR)
+		board_set_charge_limit(0, 0, charge_manager_get_charger_current(), 0,
+							charge_manager_get_charger_voltage());
+#else
 		charger_set_input_current_limit(chgnum,
 						curr.desired_input_current);
+#endif
+	}
 	hook_notify(HOOK_BATTERY_SOC_CHANGE);
 }
 
@@ -1952,7 +1959,7 @@ int charge_set_input_current_limit(int ma, int mv)
 
 #if !defined(CONFIG_CHARGER_BYPASS_MODE) || !defined(CONFIG_CUSTOMIZED_DESIGN)
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER) &&
-		!IS_ENABLED(CONFIG_CHARGER_ALLOW_LARGE_CURRENT)) {
+		!IS_ENABLED(CONFIG_CHARGER_HAS_VOLTAGE_REGULATOR)) {
 		int pd_current_uncapped =
 			charge_manager_get_pd_current_uncapped();
 
