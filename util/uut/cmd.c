@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "cmd.h"
 #include "lib_crc.h"
@@ -329,13 +330,13 @@ bool cmd_disp_write(uint8_t *resp_buf, uint32_t resp_size, uint32_t resp_num,
 {
 	if (resp_buf[0] == (uint8_t)(UFPP_WRITE_CMD)) {
 		display_color_msg(SUCCESS,
-			"\rTransmitted packet of size %u bytes, packet "
-			"[%u]out of [%u]",
+			"\rTransmitted packet of size %" PRIu32 " bytes, packet "
+			"[%" PRIu32 "]out of [%" PRIu32 "]",
 			resp_size, resp_num, total_size);
 		return true;
 	}
 
-	display_color_msg(FAIL, "\nWrite packet [%lu] Failed\n", resp_num);
+	display_color_msg(FAIL, "\nWrite packet [%" PRIu32 "] Failed\n", resp_num);
 	return false;
 }
 
@@ -356,13 +357,13 @@ bool cmd_disp_read(uint8_t *resp_buf, uint32_t resp_size, uint32_t resp_num,
 {
 	if (resp_buf[0] == (uint8_t)(UFPP_READ_CMD)) {
 		display_color_msg(SUCCESS,
-			"\rReceived packet of size %u bytes, packet [%u] out "
-			"of [%u]",
+			"\rReceived packet of size %" PRIu32 " bytes, packet [%" PRIu32 "] out "
+			"of [%" PRIu32 "]",
 			resp_size, resp_num, total_size);
 		return true;
 	}
 
-	display_color_msg(FAIL, "\nRead packet [%u] Failed\n", resp_num);
+	display_color_msg(FAIL, "\nRead packet [%" PRIu32 "] Failed\n", resp_num);
 	return false;
 }
 
@@ -412,10 +413,10 @@ void cmd_disp_flash_erase_dev(uint8_t *resp_buf, uint32_t dev_num)
 {
 	if (resp_buf[0] == (uint8_t)(UFPP_WRITE_CMD)) {
 		display_color_msg(SUCCESS,
-			"Flash Erase of device [%u] Passed\n", dev_num);
+			"Flash Erase of device [%" PRIu32 "] Passed\n", dev_num);
 	} else {
 		display_color_msg(
-			FAIL, "Flash Erase of device [%u] Failed\n", dev_num);
+			FAIL, "Flash Erase of device [%" PRIu32 "] Failed\n", dev_num);
 	}
 }
 
@@ -433,10 +434,10 @@ void cmd_disp_flash_erase_sect(uint8_t *resp_buf, uint32_t dev_num)
 {
 	if (resp_buf[0] == (uint8_t)(UFPP_WRITE_CMD)) {
 		display_color_msg(SUCCESS,
-			"Sector Erase of device [%lu] Passed\n", dev_num);
+			"Sector Erase of device [%" PRIu32 "] Passed\n", dev_num);
 	} else {
 		display_color_msg(
-			FAIL, "Sector Erase of device [%lu] Failed\n", dev_num);
+			FAIL, "Sector Erase of device [%" PRIu32 "] Failed\n", dev_num);
 	}
 }
 
@@ -472,11 +473,11 @@ void cmd_disp_exec_ret(uint8_t *resp_buf)
 {
 	if (resp_buf[1] == (uint8_t)(UFPP_FCALL_RSLT_CMD)) {
 		display_color_msg(SUCCESS,
-			"Execute Command Passed, execution result is [0x%X]\n",
+			"Execute Command Passed, execution result is [0x%" PRIX8 "]\n",
 			resp_buf[2]);
 	} else {
 		display_color_msg(FAIL,
-			"Execute Command Failed  [0x%X]  [0x%X], rslt=[0x%X]\n",
+			"Execute Command Failed  [0x%" PRIX8 "]  [0x%" PRIX8 "], rslt=[0x%" PRIX8 "]\n",
 			resp_buf[0], resp_buf[1], resp_buf[2]);
 	}
 }
