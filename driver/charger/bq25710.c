@@ -163,18 +163,16 @@ static struct mutex bq25710_perf_mode_mutex;
 #endif
 
 #if defined(CONFIG_CHARGER_BQ25770)
-/* 10mOhm sense resistor, there is 400mA offset at code 0.. */
-#define BQ257X0_IIN_DPM_CODE0_OFFSET REG_TO_CHARGING_CURRENT(400)
 #define BQ257X0_IIN_HOST_CURRENT_STEP_MA REG_TO_CHARGING_CURRENT_AC(25)
 #define BQ25770_IIN_HOST_CURRENT_SCALING \
 	CONFIG_CHARGER_BQ25770_CURRENT_SCALING
-#else
-/*
- * 10mOhm sense resistor, there is 50mA offset at code 0.
- * 5mOhm sense resistor, there is 100mA offset at code 0.
- */
-#define BQ257X0_IIN_DPM_CODE0_OFFSET REG_TO_CHARGING_CURRENT(50)
 #endif
+
+/*
+ * 10mOhm sense resistor, there is INPUT_I_MIN mA offset at code 0.
+ * 5mOhm sense resistor, there is INPUT_I_MIN * 2 mA offset at code 0.
+ */
+#define BQ257X0_IIN_DPM_CODE0_OFFSET REG_TO_CHARGING_CURRENT_AC(INPUT_I_MIN)
 
 /* Charger parameters */
 static const struct charger_info bq25710_charger_info = {
