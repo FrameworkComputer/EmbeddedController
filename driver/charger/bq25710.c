@@ -118,6 +118,9 @@
 	 CONFIG_CHARGER_BQ25710_SENSE_RESISTOR_AC)
 #define CHARGING_CURRENT_TO_REG(CUR) \
 	((CUR) * CONFIG_CHARGER_BQ25710_SENSE_RESISTOR / DEFAULT_SENSE_RESISTOR)
+#define CHARGING_CURRENT_AC_TO_REG(CUR)   \
+	((CUR) * CONFIG_CHARGER_BQ25710_SENSE_RESISTOR_AC / \
+	 DEFAULT_SENSE_RESISTOR)
 
 #if defined(CONFIG_CHARGER_BQ25710) || defined(CONFIG_CHARGER_BQ25720)
 #define CHARGER_NAME "bq25710"
@@ -162,12 +165,6 @@ static uint32_t bq25710_perf_mode_req;
 static struct mutex bq25710_perf_mode_mutex;
 #endif
 
-#if defined(CONFIG_CHARGER_BQ25770)
-#define BQ257X0_IIN_HOST_CURRENT_STEP_MA REG_TO_CHARGING_CURRENT_AC(25)
-#define BQ25770_IIN_HOST_CURRENT_SCALING \
-	CONFIG_CHARGER_BQ25770_CURRENT_SCALING
-#endif
-
 /*
  * 10mOhm sense resistor, there is INPUT_I_MIN mA offset at code 0.
  * 5mOhm sense resistor, there is INPUT_I_MIN * 2 mA offset at code 0.
@@ -183,19 +180,6 @@ static const struct charger_info bq25710_charger_info = {
 	.current_max = REG_TO_CHARGING_CURRENT(CHARGE_I_MAX),
 	.current_min = REG_TO_CHARGING_CURRENT(CHARGE_I_MIN),
 	.current_step = REG_TO_CHARGING_CURRENT(CHARGE_I_STEP),
-	.input_current_max = REG_TO_CHARGING_CURRENT_AC(INPUT_I_MAX),
-	.input_current_min = REG_TO_CHARGING_CURRENT_AC(INPUT_I_MIN),
-	.input_current_step = REG_TO_CHARGING_CURRENT_AC(INPUT_I_STEP),
-};
-
-static const struct charger_info bq25770_charger_info = {
-	.name = CHARGER_NAME,
-	.voltage_max = CHARGE_V_MAX,
-	.voltage_min = CHARGE_V_MIN,
-	.voltage_step = CHARGE_V_STEP,
-	.current_max = CHARGE_I_MAX,
-	.current_min = CHARGE_I_MIN,
-	.current_step = CHARGE_I_STEP,
 	.input_current_max = REG_TO_CHARGING_CURRENT_AC(INPUT_I_MAX),
 	.input_current_min = REG_TO_CHARGING_CURRENT_AC(INPUT_I_MIN),
 	.input_current_step = REG_TO_CHARGING_CURRENT_AC(INPUT_I_STEP),
@@ -222,12 +206,8 @@ static inline int iin_dpm_reg_to_current(int reg)
 
 static inline int iin_host_current_to_reg(int current)
 {
-	int reg = (REG_TO_CHARGING_CURRENT_AC(current) /
+	return (CHARGING_CURRENT_AC_TO_REG(current) /
 		BQ257X0_IIN_HOST_CURRENT_STEP_MA);
-#if defined(CONFIG_CHARGER_BQ25770)
-	reg /= BQ25770_IIN_HOST_CURRENT_SCALING;
-#endif
-	return reg;
 }
 
 static inline enum ec_error_list raw_read16(int chgnum, int offset, int *value)
@@ -662,10 +642,7 @@ static void bq25710_init(int chgnum)
 /* Charger interfaces */
 static const struct charger_info *bq25710_get_info(int chgnum)
 {
-	if (IS_ENABLED(CONFIG_CHARGER_BQ25770))
-		return &bq25770_charger_info;
-	else
-		return &bq25710_charger_info;
+	return &bq25710_charger_info;
 }
 
 static enum ec_error_list bq25710_post_init(int chgnum)
@@ -783,8 +760,8 @@ static enum ec_error_list bq25710_discharge_on_ac(int chgnum, int enable)
 static enum ec_error_list bq25710_set_input_current_limit(int chgnum,
 							  int input_current)
 {
-	if (IS_ENABLED(CONFIG_CHARGER_BQ25770) && input_current <= INPUT_I_MIN) {
-		input_current = INPUT_I_MIN;
+	if (input_current < bq25710_charger_info.input_current_min) {
+		input_current = bq25710_charger_info.input_current_min;
 	}
 
 	int num_steps = iin_host_current_to_reg(input_current);

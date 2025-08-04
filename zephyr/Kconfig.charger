@@ -513,16 +513,6 @@ config PLATFORM_EC_CHARGER_BQ257X0_ILIM2_VTH
 	  26 - 30: 250% - 450%, step is 50%.
 	  31: Out of range (ignored).
 
-config PLATFORM_EC_CHARGER_BQ25770_CURRENT_SCALING
-	int "IIN_HOST CURRENT_SCALING"
-	default 1
-	depends on PLATFORM_EC_CHARGER_BQ25770
-	help
-	  Set the scaling factor for IIN_HOST current when RSNS_RAC
-	  differs from the default. This compensates the IIN_HOST register
-	  values for accurate current measurement.
-	  Only 1 or 2 are valid since BQ25770 supports 10mΩ or 5mΩ sensing.
-
 config PLATFORM_EC_CHARGER_BQ25720_VSYS_TH2_CUSTOM
 	bool "VSYS_TH2 override"
 	depends on PLATFORM_EC_CHARGER_BQ25720 || PLATFORM_EC_CHARGER_BQ25770
