@@ -999,6 +999,7 @@ static void clear_port_state(int controller, int port)
 	pd_port_states[port_idx].current = 0;
 	pd_port_states[port_idx].voltage = 0;
 	pd_port_states[port_idx].rdo_mismatch = false;
+	pd_port_states[port_idx].first_pd_device = false;
 }
 
 void cypd_update_port_state(int controller, int port)
@@ -1711,6 +1712,7 @@ void cypd_port_int(int controller, int port)
 
 		/* Read the contract information if we are the source */
 		int pd_port = ((controller << 2) + port);
+		int another_pd_port = ((controller << 2) + (port ? 0 : 1));
 
 		if (pd_port_states[pd_port].pd_state == PD_ROLE_SOURCE) {
 			i2c_read_offset16_block(i2c_port, addr_flags,
@@ -1721,6 +1723,12 @@ void cypd_port_int(int controller, int port)
 				pd_port_states[pd_port].rdo_mismatch = true;
 				task_set_event(TASK_ID_CYPD, CCG_EVT_RDO_MISMATCH);
 			}
+
+			/* check if the device is the first 3A pd device or not */
+			if (pd_port_states[another_pd_port].pd_state != PD_ROLE_SOURCE ||
+				(pd_port_states[another_pd_port].pd_state == PD_ROLE_SOURCE &&
+				 pd_port_states[another_pd_port].current != 3000))
+				pd_port_states[pd_port].first_pd_device = true;
 		}
 #ifdef CONFIG_PD_CCG8_EPR
 		/* make sure enter EPR mode only process in S0 state */
@@ -1954,7 +1962,8 @@ void cypd_interrupt_handler_task(void *p)
 		if (evt & CCG_EVT_RDO_MISMATCH) {
 			if (cypd_allow_increase_rdo_profile()) {
 				for (i = 0; i < PD_PORT_COUNT; i++) {
-					if (pd_port_states[i].rdo_mismatch)
+					if (pd_port_states[i].rdo_mismatch &&
+						pd_port_states[i].first_pd_device)
 						cypd_select_pdo(PORT_TO_CONTROLLER(i),
 								PORT_TO_CONTROLLER_PORT(i),
 								CCG_PD_CMD_SET_TYPEC_3A);

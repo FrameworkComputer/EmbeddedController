@@ -521,6 +521,7 @@ struct pd_port_current_state_t {
 	int current;
 	int ac_port;
 	bool rdo_mismatch;
+	bool first_pd_device;
 	enum ccg_c_state c_state; /* What device is attached on the other side */
 	uint8_t pd_state;
 	uint8_t cc;
