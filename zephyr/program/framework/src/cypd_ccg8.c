@@ -541,7 +541,8 @@ void enter_epr_mode(void)
 			update_pmf_events(BIT(PD_PROGRESS_ENTER_EPR_MODE),
 				!!(pd_epr_in_progress & ~EPR_PROCESS_MASK));
 
-			if (battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED) {
+			if (battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED
+				&& get_active_charge_pd_port() == port_idx) {
 				/* Enable learn mode to discharge on AC */
 				board_discharge_on_ac(1);
 
@@ -606,7 +607,8 @@ void exit_epr_mode(void)
 
 			/* do not set learn mode when battery is cut off */
 			if (!battery_cutoff_in_progress() && !battery_is_cut_off() &&
-				(battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED)) {
+				(battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED)
+				&& get_active_charge_pd_port() == port_idx) {
 				/* Enable learn mode to discharge on AC */
 				board_discharge_on_ac(1);
 

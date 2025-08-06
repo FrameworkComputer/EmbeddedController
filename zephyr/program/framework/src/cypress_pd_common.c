@@ -1121,16 +1121,19 @@ void cypd_update_port_state(int controller, int port)
 		 */
 		calculate_ma = calculate_input_current(pd_current, pd_voltage,
 							240000000, 95, 95, 98);
+		level_buck_ma = pd_current * 98 / 100;
 #endif
 
-		board_discharge_on_ac(0);
+		if (get_active_charge_pd_port() == port_idx) {
+			board_discharge_on_ac(0);
 
-		if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGER_RAA489300)) {
-			level_buck_ma = pd_current * 98 / 100;
-			level_buck_set_input_current_limit(level_buck_ma);
+			if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGER_RAA489300)) {
+				level_buck_set_input_current_limit(level_buck_ma);
+			}
+
+			charger_set_input_current_limit(0, (int)calculate_ma);
 		}
 
-		charger_set_input_current_limit(0, (int)calculate_ma);
 		clear_erp_progress_mask();
 	}
 #endif
