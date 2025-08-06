@@ -315,7 +315,7 @@ static void tune_PLs(int delta)
 					+ delta, 20000);
 }
 
-static void update_safety_power_limit(int active_mpower)
+static int update_safety_power_limit(int active_mpower)
 {
 	static uint8_t safety_level;
 	static uint8_t level_increase;
@@ -330,7 +330,7 @@ static void update_safety_power_limit(int active_mpower)
 
 	if (!timestamp_expired(wait_stable_time, &now) ||
 		!timestamp_expired(update_safety_timer, &now))
-		return;
+		return -1;
 
 	if (my_test_current != 0)
 		average_current = my_test_current;
@@ -341,7 +341,7 @@ static void update_safety_power_limit(int active_mpower)
 	else if (average_current > (battery_current_limit_mA * 75 / 100))
 		level_increase = 0;
 	else
-		return;
+		return -1;
 
 	switch (safety_level) {
 	case LEVEL_NORMAL:
@@ -496,6 +496,8 @@ static void update_safety_power_limit(int active_mpower)
 					power_limit[FUNCTION_SAFETY].mwatt[TYPE_P3T],
 					power_limit[FUNCTION_SAFETY].mwatt[TYPE_APU_ONLY_SPPT]);
 	}
+
+	return safety_level;
 }
 
 void force_clear_pmf_prochot(void)
@@ -574,25 +576,27 @@ void clear_prochot(enum clear_reasons reason)
 	}
 }
 
-void update_d_notify(int active_mpower, bool with_dc, uint8_t gpu_vendor)
+static uint8_t update_d_notify(int active_mpower, uint8_t gpu_vendor,
+					enum power_safety_level safety_level)
 {
 	static uint8_t pre_d_notify;
 	uint8_t d_notify;
 	int active_power;
 
 	if (gpu_is_working() && gpu_vendor == GPU_NV_GN22) {
-		active_power = active_mpower/1000;
-		if (active_power >= 180)
-			d_notify = 1;
-		else if (active_power < 180 && active_power >= 140)
-			d_notify = 2;
-		else if (active_power < 140 && active_power >= 100 && with_dc)
-			d_notify = 3;
-		else if (active_power < 100 && active_power >= 1 && with_dc)
+		if (safety_level == LEVEL_TUNE_PLS) {
 			d_notify = 4;
-		else
+		} else if (safety_level >= LEVEL_DISABLE_GPU) {
 			d_notify = 5;
-
+		} else {
+			active_power = active_mpower / 1000;
+			if (active_power >= 180)
+				d_notify = 1;
+			else if (active_power < 180 && active_power >= 140)
+				d_notify = 2;
+			else
+				d_notify = 3;
+		}
 	} else
 		d_notify = 0;
 
@@ -600,6 +604,8 @@ void update_d_notify(int active_mpower, bool with_dc, uint8_t gpu_vendor)
 		pre_d_notify = d_notify;
 		*host_get_memmap(EC_MEMMAP_DGPU_DX_STATUS) = d_notify;
 	}
+
+	return d_notify;
 }
 
 enum power_slide_mode best_performance_power_plan(int battery_percent,
@@ -651,6 +657,10 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	static int set_pl_limit;
 	static uint32_t old_ao_sppt;
 	uint8_t gpu_vendor;
+	uint8_t d_notify;
+	static uint8_t old_d_notify;
+	int safety_level;
+	static uint8_t old_safety_level;
 	static int old_stt_table;
 	int mode = *host_get_memmap(EC_MEMMAP_POWER_SLIDE);
 	int active_mpower = cypd_get_ac_power();
@@ -690,13 +700,18 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	}
 
 	if (func_ctl & 0x4) {
-		update_safety_power_limit(active_mpower);
+		safety_level = update_safety_power_limit(active_mpower);
+		if (safety_level != -1)
+			old_safety_level = safety_level;
+
+		d_notify = update_d_notify(active_mpower, gpu_vendor, old_safety_level);
 	}
 
-	if ((mode != 0) && (old_stt_table != thermal_stt_table) && (thermal_stt_table != 0)) {
+	if (((mode != 0) && (old_stt_table != thermal_stt_table) && (thermal_stt_table != 0))
+		|| (old_d_notify != d_notify)) {
 		*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER) = thermal_stt_table;
 		old_stt_table = thermal_stt_table;
-		update_d_notify(active_mpower, with_dc, gpu_vendor);
+		old_d_notify = d_notify;
 		host_set_single_event(EC_HOST_EVENT_STT_UPDATE);
 	}
 
