@@ -1816,3 +1816,12 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_WRITE_PROTECTION_CUSTOM=y
     - CONFIG_PLATFORM_EC_WP_CUSTOM=y
+  drivers.rt3645:
+    extra_conf_files:
+    - prj.conf
+    - rt3645/prj.conf
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_RT3645=y
+    extra_dtc_overlay_files:
+    - ./boards/native_sim.overlay
+    - ./rt3645/imvp.dts

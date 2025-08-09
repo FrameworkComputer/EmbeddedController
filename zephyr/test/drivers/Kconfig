@@ -428,4 +428,9 @@ config LINK_TEST_SUITE_WRITE_PROTECTION_CUSTOM
 	help
 	  Verifies functionality of custom write protection
 
+config LINK_TEST_SUITE_RT3645
+	bool "Link and test rt3645 tests"
+	help
+	  Verifies functionality of rt3645 IMVP driver
+
 source "Kconfig.zephyr"
