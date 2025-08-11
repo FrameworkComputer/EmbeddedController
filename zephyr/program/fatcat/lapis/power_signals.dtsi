@@ -16,13 +16,6 @@
 		sys-reset-delay = <60>;
 	};
 
-	pwr-en-pp3300-s5 {
-		compatible = "intel,ap-pwrseq-gpio";
-		dbg-label = "PP3300_S5 enable output to LS";
-		enum-name = "PWR_EN_PP3300_A";
-		gpios = <&gpiof 11 GPIO_ACTIVE_HIGH>;
-		output;
-	};
 	pwr-en-pp5000-s5 {
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "PP5000_S5 enable output to LS";
