@@ -51,6 +51,11 @@ static bool firmware_update;
 static bool alert_press;
 static int pre_safety_level = TYPEC_SAFETY_LEVEL_0;
 
+#ifdef CONFIG_BOARD_TULIP
+static int max_pdo_current;
+static int max_pdo_voltage;
+#endif
+
 /**
  * Delay 500 ms to start updating the battery information
  */
@@ -2009,6 +2014,15 @@ void cypd_port_int(int controller, int port)
 	case CCG_RESPONSE_SOURCE_CAP_MSG_RX:
 		i2c_read_offset16_block(i2c_port, addr_flags,
 				CCG_READ_DATA_MEMORY_REG(port, 0), data2, MIN(response_len, 32));
+#ifdef CONFIG_BOARD_TULIP
+		max_pdo_current = ((data2[response_len - 4] +
+		    (data2[response_len - 3] << 8)) & 0x3FF) * 10;
+		max_pdo_voltage = (((data2[response_len - 3] >> 2) +
+		    (data2[response_len - 2] << 6)) & 0x3FF) * 50;
+		if (max_pdo_voltage == 5000 && max_pdo_current == 0) {
+			cypd_cfet_vbus_control(port_idx, false, true);
+		}
+#endif
 
 		if (data2[6] & BIT(7)) {
 			pd_port_states[port_idx].epr_support = 1;
@@ -2375,8 +2389,14 @@ void pd_set_new_power_request(int port)
 	 * eg: after PD send again CCG_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE
 	 * will set a new power request, the VBUS port need to open again.
 	 */
-	if (get_active_charge_pd_port() == port && pd_is_connected(port))
+	if (get_active_charge_pd_port() == port && pd_is_connected(port)) {
+#ifdef CONFIG_BOARD_TULIP
+		if (max_pdo_voltage == 5000 && max_pdo_current == 0) {
+			return;
+		}
+#endif
 		board_set_active_charge_port(port);
+	}
 	return;
 }
 
@@ -2395,7 +2415,17 @@ __override uint8_t board_get_usb_pd_port_count(void)
 	return CONFIG_USB_PD_PORT_MAX_COUNT;
 }
 
+#ifdef CONFIG_BOARD_TULIP
+int cypd_get_max_pdo_voltage(void)
+{
+	return max_pdo_voltage;
+}
 
+int cypd_get_max_pdo_current(void)
+{
+	return max_pdo_current;
+}
+#endif
 
 uint8_t *get_pd_version(int controller)
 {

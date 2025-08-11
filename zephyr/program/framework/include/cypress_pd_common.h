@@ -1111,4 +1111,12 @@ int cypd_get_active_pd_chip_count(void);
  */
 void cypd_update_safety_table(int safety_level);
 
+#ifdef CONFIG_BOARD_TULIP
+/**
+ * return max pdo voltage/current
+ */
+int cypd_get_max_pdo_voltage(void);
+int cypd_get_max_pdo_current(void);
+#endif
+
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */
