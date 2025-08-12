@@ -10,6 +10,7 @@ target_sources(app PRIVATE
     src/battery_info.c
     src/console_print.c
     src/charge_manager.c
+    src/enter_bootloader.c
     src/get_cmd_versions.c
     src/get_panic_info.c
     src/get_pd_port_caps.c

@@ -148,4 +148,11 @@ config PLATFORM_EC_HOST_COMMAND_MEMORY_DUMP
 	  debugging panics. May not dump all memory, e.g. sensitive memory will
 	  not be dumped.
 
+config PLATFORM_EC_HOST_COMMAND_ENTER_BOOTLOADER
+	bool "Enable Enter Bootloader Host Command"
+	help
+	  Enables entering bootloader mode via host command.
+	  If the config is enabled, the chip_enter_bootloader function
+	  has to be implemented.
+
 endif # PLATFORM_EC

@@ -39,6 +39,9 @@ extern "C" {
 void chip_save_reset_flags(uint32_t flags);
 uint32_t chip_read_reset_flags(void);
 
+/* Per chip implementation to enter bootloader mode. */
+void chip_enter_bootloader(uint8_t mode);
+
 /**
  * Checks if running image is RW or not
  *
