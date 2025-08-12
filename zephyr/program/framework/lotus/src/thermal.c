@@ -4,9 +4,11 @@
  */
 
 #include "amd_stt.h"
+#include "board_host_command.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "customized_shared_memory.h"
 #include "fan.h"
 #include "gpu.h"
 #include "hooks.h"
@@ -301,3 +303,76 @@ static int thermallog_cmd(int argc, const char **argv)
 }
 DECLARE_CONSOLE_COMMAND(thermallog, thermallog_cmd, "[en/dis]",
 			"Enable or disable thermal logging");
+
+
+static const struct ec_thermal_config dsc_amd_temp_gpu_table = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(71),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(97),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(105),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(60),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+	},
+	.temp_fan_off = C_TO_K(50),
+	.temp_fan_max = C_TO_K(74),
+};
+
+static const struct ec_thermal_config dsc_amd_temp_dgpu_table = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(87),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(105),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(108),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(60),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(60),
+	},
+	.temp_fan_off = C_TO_K(50),
+	.temp_fan_max = C_TO_K(80),
+};
+
+static const struct ec_thermal_config dsc_nv_temp_gpu_table = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(71),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(105),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(60),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(60),
+	},
+	.temp_fan_off = C_TO_K(50),
+	.temp_fan_max = C_TO_K(74),
+};
+
+static const struct ec_thermal_config dsc_nv_temp_dgpu_table = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(87),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(97),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(100),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(60),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(60),
+	},
+	.temp_fan_off = C_TO_K(50),
+	.temp_fan_max = C_TO_K(80),
+};
+
+#define TEMP_GPU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_gpu))
+#define TEMP_DGPU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_gpu_die))
+
+void thermal_table_switch_by_gpu_type(void)
+{
+	uint8_t gpu_vendor = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE);
+
+	if (gpu_vendor == GPU_AMD_R23M) {
+		thermal_params[TEMP_GPU] = dsc_amd_temp_gpu_table;
+		thermal_params[TEMP_DGPU] = dsc_amd_temp_dgpu_table;
+	} else {
+		thermal_params[TEMP_GPU] = dsc_nv_temp_gpu_table;
+		thermal_params[TEMP_DGPU] = dsc_nv_temp_dgpu_table;
+	}
+}
