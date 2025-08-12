@@ -103,8 +103,9 @@ int ucsi_write_tunnel(void)
 	uint8_t *message_out = host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_MESSAGE_OUT);
 	uint8_t *command = host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND);
 	uint8_t change_connector_indicator = 0;
+	bool cmd_need_broadcast = false;
 	int controller = 0;
-	int offset = 0;
+	int connector_number_offset = 0;
 	int rv = EC_SUCCESS;
 	int new_port = 0;
 
@@ -122,58 +123,40 @@ int ucsi_write_tunnel(void)
 	for (int i = 0; i < active_pd_chip_count; i++)
 		pd_chip_ucsi_info[i].read_tunnel_complete = 0;
 
-	switch (*command) {
-	case UCSI_CMD_GET_CONNECTOR_STATUS:
-	case UCSI_CMD_GET_CONNECTOR_CAPABILITY:
-	case UCSI_CMD_CONNECTOR_RESET:
-	case UCSI_CMD_SET_CCOM:
-	case UCSI_CMD_SET_UOR:
-	case UCSI_CMD_SET_PDR:
-	case UCSI_CMD_GET_CAM_SUPPORTED:
-	case UCSI_CMD_SET_NEW_CAM:
-	case UCSI_CMD_GET_PDOS:
-	case UCSI_CMD_GET_CABLE_PROPERTY:
-	case UCSI_CMD_GET_ALTERNATE_MODES:
-	case UCSI_CMD_GET_CURRENT_CAM:
-	case UCSI_CMD_GET_CAM_CS:
-	case UCSI_CMD_SET_POWER_LEVEL:
-	case UCSI_CMD_GET_PD_MESSAGE:
-	case UCSI_CMD_GET_ERROR_STATUS:
-	case UCSI_CMD_GET_ATTENTION_VDO:
+	/* The connector number offset is 24 bits in GET_ALTERNATE_MODES command */
+	if (*command == UCSI_CMD_GET_ALTERNATE_MODES)
+		connector_number_offset = 1;
 
-		if (*command == UCSI_CMD_GET_ALTERNATE_MODES) {
-			offset = 1;
-		}
+	change_connector_indicator =
+		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC +
+				 connector_number_offset) & 0x7f;
 
-		/**
-		 * those command will control specific pd port,
-		 * so we need to check the command connector number.
-		 */
-		change_connector_indicator =
-			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset) & 0x7f;
+	/* This command does not have a connector number field; it needs to broadcast. */
+	if (*command == UCSI_CMD_SET_NOTIFICATION_ENABLE || *command == UCSI_CMD_ACK_CC_CI)
+		change_connector_indicator = 0;
 
-		if (change_connector_indicator > valid_ucsi_port_count ||
-			change_connector_indicator == 0) {
-			/* Print the invalid port for debugging */
-			if (ucsi_debug_enable && change_connector_indicator > valid_ucsi_port_count)
-				CPRINTS("UCSI write invalid type-c port:%d",
-					change_connector_indicator);
+	/* Print the invalid port for debugging */
+	if (ucsi_debug_enable && change_connector_indicator > valid_ucsi_port_count)
+		CPRINTS("UCSI write invalid type-c port:%d", change_connector_indicator);
+	else {
+		if (change_connector_indicator == 0) {
+			/* The command should broadcast to all PD chips */
+			cmd_need_broadcast = true;
 		} else {
+			/* Map the UCSI Port to the PD port */
 			new_port =
 				ucsi_pd_port_map[change_connector_indicator-1].pd_controller_port;
 			if (new_port != change_connector_indicator) {
-				*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset) =
-				(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC + offset)
-				& 0x80)	| new_port;
+				int connector_number = EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC +
+						connector_number_offset;
+				*host_get_memmap(connector_number) =
+					(*host_get_memmap(connector_number) & 0x80) | new_port;
 			}
 			controller = ucsi_pd_port_map[change_connector_indicator-1].pd_controller;
 		}
+	}
 
-		pd_chip_ucsi_info[controller].wait_ack = 1;
-		rv = cypd_write_reg_block(controller, ucsi_message_out_offset(), message_out, 16);
-		rv = cypd_write_reg_block(controller, CCG_CONTROL_REG, command, 8);
-		break;
-	default:
+	if (cmd_need_broadcast) {
 		for (int i = 0; i < active_pd_chip_count; i++) {
 
 			/**
@@ -199,19 +182,29 @@ int ucsi_write_tunnel(void)
 			 * ACK_CC_CI command is the end of the UCSI command,
 			 * does not need to wait ack.
 			 */
-			if (*command == UCSI_CMD_ACK_CC_CI)
+			if (*command == UCSI_CMD_ACK_CC_CI || *command == UCSI_CMD_PPM_RESET)
 				pd_chip_ucsi_info[i].wait_ack = 0;
 			else
 				pd_chip_ucsi_info[i].wait_ack = 1;
 		}
-		break;
+	} else {
+		rv = cypd_write_reg_block(controller, ucsi_message_out_offset(), message_out, 16);
+		rv = cypd_write_reg_block(controller, CCG_CONTROL_REG, command, 8);
+		pd_chip_ucsi_info[controller].wait_ack = 1;
 	}
 
 	if (ucsi_debug_enable) {
-		CPRINTS("UCSI Write P:%d Cmd 0x%016llx %s",
-			change_connector_indicator,
-			*(uint64_t *)command,
-			command_names(*command));
+		if (cmd_need_broadcast) {
+			CPRINTS("UCSI Broadcast Cmd 0x%016llx %s",
+				*(uint64_t *)command,
+				command_names(*command));
+		} else {
+			CPRINTS("UCSI Write Connector:%d Cmd 0x%016llx %s",
+				change_connector_indicator,
+				*(uint64_t *)command,
+				command_names(*command));
+		}
+
 		if (command[1])
 			cypd_print_buff("UCSI Msg Out: ", message_out, 6);
 	}
@@ -433,14 +426,9 @@ int ucsi_read_tunnel(int controller)
 
 		break;
 	case UCSI_CMD_ACK_CC_CI:
-		if (ucsi_check_all_pd_status(OPERATOR_AND)) {
+		if (ucsi_check_all_pd_status(OPERATOR_AND))
 			read_complete = 1;
-
-			/* workaround for linux driver */
-			if ((pd_chip_ucsi_info[controller].cci & CCI_ACKNOWLEDGE_FLAG) !=
-				pd_chip_ucsi_info[controller].cci)
-				pd_chip_ucsi_info[controller].wait_ack = 1;
-		} else
+		else
 			read_complete = 0;
 		break;
 	default:
@@ -496,6 +484,7 @@ void check_ucsi_event_from_host(void)
 	void *message_in;
 	uint32_t *cci;
 	uint16_t *version = (uint16_t *)host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_VERSION);
+	uint8_t command = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND);
 	int message_in_length;
 	int message_in_offset;
 	int i;
@@ -536,12 +525,9 @@ void check_ucsi_event_from_host(void)
 	}
 
 	if (read_complete) {
-		if (ucsi_debug_enable) {
-			CPRINTS("%s Complete",
-				command_names(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND)));
-		}
 
-		for (i = 0; i < active_pd_chip_count; i++) {
+		/* The highest priority of the PD chip is pd 0 */
+		for (i = (active_pd_chip_count - 1); i >= 0; i--) {
 			if (pd_chip_ucsi_info[i].read_tunnel_complete) {
 				message_in = pd_chip_ucsi_info[i].message_in;
 				cci = &pd_chip_ucsi_info[i].cci;
@@ -558,16 +544,26 @@ void check_ucsi_event_from_host(void)
 		 */
 		if (ucsi_check_all_pd_status(OPERATOR_AND)) {
 			for (i = 0; i < active_pd_chip_count; i++) {
-				if (pd_chip_ucsi_info[i].cci & 0xFE) {
-					message_in = pd_chip_ucsi_info[i].message_in;
-					cci = &pd_chip_ucsi_info[i].cci;
-					break;
+				if (command == UCSI_CMD_GET_ERROR_STATUS) {
+					uint16_t error_information =
+						(pd_chip_ucsi_info[i].message_in[1] << 8) |
+						pd_chip_ucsi_info[i].message_in[1];
+					if (error_information) {
+						message_in = pd_chip_ucsi_info[i].message_in;
+						cci = &pd_chip_ucsi_info[i].cci;
+					}
+				} else {
+					/* This will cause rear typec port fail */
+					if (pd_chip_ucsi_info[i].cci & 0xFE) {
+						message_in = pd_chip_ucsi_info[i].message_in;
+						cci = &pd_chip_ucsi_info[i].cci;
+						break;
+					}
 				}
 			}
 		}
 
-		if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND) ==
-		    UCSI_CMD_GET_CONNECTOR_STATUS &&
+		if (command == UCSI_CMD_GET_CONNECTOR_STATUS &&
 		    (((uint8_t *)message_in)[8] & 0x03) > 1) {
 			CPRINTS("Overriding Slow charger status");
 			/* Override not charging value with nominal charging */
@@ -586,12 +582,8 @@ void check_ucsi_event_from_host(void)
 		memcpy(host_get_memmap(message_in_offset), message_in, message_in_length);
 		memcpy(host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CONN_CHANGE), cci, 4);
 
-		/**
-		 * TODO: process the two pd results for one response.
-		 */
-
 		/* override bNumConnectors to the total number of connectors on the system */
-		if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND) == UCSI_CMD_GET_CAPABILITY)
+		if (command == UCSI_CMD_GET_CAPABILITY)
 			*host_get_memmap(message_in_offset + 4) = valid_ucsi_port_count;
 
 		for (i = 0; i < active_pd_chip_count; i++)
@@ -602,6 +594,28 @@ void check_ucsi_event_from_host(void)
 			if (!(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & UCSI_EVENT))
 				*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND) = 0;
 		}
+
+		if (ucsi_debug_enable) {
+			CPRINTS("%s Complete", command_names(command));
+
+			CPRINTS("CCI (Host): 0x%08x Port%d, %s%s%s%s%s%s%s",
+				*cci,
+				(*cci >> 1) & 0x07F,
+				*cci & CCI_NOT_SUPPORTED_FLAG ? "Not Support " : "",
+				*cci & CCI_CANCELED_FLAG ? "Canceled " : "",
+				*cci & CCI_RESET_FLAG ? "Reset " : "",
+				*cci & CCI_BUSY_FLAG ? "Busy " : "",
+				*cci & CCI_ACKNOWLEDGE_FLAG ? "Acknowledge " : "",
+				*cci & CCI_ERROR_FLAG ? "Error " : "",
+				*cci & CCI_COMPLETE_FLAG ? "Complete " : ""
+				);
+			if (*cci & 0xFF00) {
+				cypd_print_buff("Message In (Host) ",
+					message_in,
+					message_in_length);
+			}
+		}
+
 		host_set_single_event(EC_HOST_EVENT_UCSI);
 	}
 }

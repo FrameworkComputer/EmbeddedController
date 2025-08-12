@@ -260,11 +260,11 @@ void cypd_print_buff(const char *msg, void *buff, int len)
 	int i;
 	uint8_t *data = (uint8_t *)buff;
 
-	CPRINTF("%s 0x", msg);
+	CPRINTF("[           %s 0x", msg);
 	for (i = len-1; i >= 0; i--) {
 		CPRINTF("%02x", data[i]);
 	}
-	CPRINTF("\n");
+	CPRINTF(" ]\n");
 }
 
 #ifdef CONFIG_BOARD_LOTUS
