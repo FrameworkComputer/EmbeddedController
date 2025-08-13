@@ -557,11 +557,37 @@ void check_ucsi_event_from_host(void)
 			}
 		}
 
-		if (command == UCSI_CMD_GET_CONNECTOR_STATUS &&
-		    (((uint8_t *)message_in)[8] & 0x03) > 1) {
-			CPRINTS("Overriding Slow charger status");
-			/* Override not charging value with nominal charging */
-			((uint8_t *)message_in)[8] = (((uint8_t *)message_in)[8] & 0xFC) + 1;
+		/* Clear the ACK_CC_CI connector change indicator field */
+		if (command == UCSI_CMD_ACK_CC_CI)
+			*cci &= 0xffffff00;
+
+		if (command == UCSI_CMD_GET_CONNECTOR_STATUS) {
+
+			int connect_status = (((uint8_t *)message_in)[2] & 0x08) >> 3;
+			int negotiated_power_level_change =
+				(((uint8_t *)message_in)[0] & 0x40) >> 6;
+
+			if ((((uint8_t *)message_in)[8] & 0x03) > 1) {
+				CPRINTS("Overriding Slow charger status");
+				/* Override not charging value with nominal charging */
+				((uint8_t *)message_in)[8] =
+					(((uint8_t *)message_in)[8] & 0xFC) + 1;
+			}
+
+			/**
+			 * PD chip will set the negotiated_power_level_change when the port
+			 * is disconnected. But the UCSI specification describes that this
+			 * bit shall be set by the PPM whenever a Power contract is established
+			 * or renegotiated.
+			 *
+			 * This is a workaround to clear the invalid data format to pass the
+			 * HLK test item: "UCSI Get Connector Status - Negotiated Power Level
+			 * Change [Type-C MUTT]"
+			 */
+			if (negotiated_power_level_change && !connect_status) {
+				((uint8_t *)message_in)[0] =
+					(((uint8_t *)message_in)[0] & 0xBF);
+			}
 		}
 
 		crec_msleep(2);
