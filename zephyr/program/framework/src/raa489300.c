@@ -18,6 +18,7 @@
 
 static int pd_voltage;
 static int target_mode = -1;
+static bool enable_low_power_mode;
 
 static K_MUTEX_DEFINE(level_buck_mutex);
 
@@ -113,6 +114,11 @@ int write_level_buck_registers(enum level_buck_mode mode)
 	for (size_t i = 0; i < size; i++) {
 		uint8_t reg = reg_values[i].reg;
 		uint16_t val = reg_values[i].val;
+
+		if (mode == LEVEL_BUCK_SPR && reg == RAA489300_REG_CONTROL2 &&
+		    enable_low_power_mode) {
+			val |= RAA489300_C2_LOW_POWER_PTM_MODE;
+		}
 
 		rv = i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, reg, val);
 		if (rv != EC_SUCCESS) {
@@ -325,9 +331,26 @@ int level_buck_set_output_voltage(int mv)
 				RAA489300_REG_OUTPUT_VOLTAGE, reg_value);
 }
 
+void raa489300_enter_low_power_ptm_mode(bool enabled)
+{
+	int rv;
+
+	mutex_lock(&level_buck_mutex);
+	rv = i2c_update16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+			  RAA489300_REG_CONTROL2, RAA489300_C2_LOW_POWER_PTM_MODE,
+			  enabled ? MASK_SET : MASK_CLR);
+	mutex_unlock(&level_buck_mutex);
+
+	enable_low_power_mode = enabled;
+
+	CPRINTS("raa489300 %sables low power PTM mode %s",
+		enabled ? "en" : "dis",
+		(rv == EC_SUCCESS) ? "" : "failed");
+}
+
 static int raa489300_cmd(int argc, const char **argv)
 {
-	int i, val;
+	int i, val, mode;
 	uint8_t reg;
 	uint16_t value;
 	char *e;
@@ -382,6 +405,12 @@ static int raa489300_cmd(int argc, const char **argv)
 		}
 
 		ccprintf("raa489300 REG 0x%02x set to 0x%04x\n", reg, value);
+	} else if (argc == 3 && !strncmp(argv[1], "lpm", 3)) {
+		mode = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM1;
+
+		raa489300_enter_low_power_ptm_mode(mode);
 	} else {
 		return EC_ERROR_PARAM_COUNT;
 	}
