@@ -67,6 +67,7 @@
  */
 /* [13] CSIN/CSOP discharge current: 0=20mA, 1=30mA */
 #define RAA489300_C2_DISCHARGE_CURR_30MA		BIT(13)
+#define RAA489300_C2_LOW_POWER_PTM_MODE			BIT(12)
 #define RAA489300_C2_ENABLE_AUTO_DISCHARGE		BIT(11)
 #define RAA489300_C2_PGOOD_WINDOW_5				(0 << 8)
 #define RAA489300_C2_PGOOD_WINDOW_10			(1 << 8)
@@ -182,5 +183,12 @@ int level_buck_set_input_current_limit(int ma);
 int level_buck_set_output_current_limit(int ma);
 
 int level_buck_set_output_voltage(int mv);
+
+/**
+ * Enabled low power PTM mode to reduces the power consumed.
+ *
+ * @param enabled 1: enabled, 0: disabled
+ */
+void raa489300_enter_low_power_ptm_mode(bool enabled);
 
 #endif	/* __CROS_EC_RAA489300_H */
