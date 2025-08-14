@@ -49,6 +49,7 @@ static int prev_charge_port = -1;
 static bool verbose_msg_logging;
 static bool firmware_update;
 static bool alert_press;
+static int pre_safety_level = TYPEC_SAFETY_LEVEL_0;
 
 /**
  * Delay 500 ms to start updating the battery information
@@ -435,7 +436,9 @@ change_pdo_list_fail:
 static int cypd_select_rp(int port, uint8_t profile)
 {
 	int rv;
-	CPRINTF("P:%d SET TYPEC RP=%d", port, profile);
+
+	if (verbose_msg_logging)
+		CPRINTS("Set typec port %d to profile:%d", port, profile);
 
 	rv = cypd_write_reg8_wait_ack(PORT_TO_CONTROLLER(port),
 			CCG_PD_CONTROL_REG(PORT_TO_CONTROLLER_PORT(port)),
@@ -450,11 +453,175 @@ static int cypd_select_pdo(int controller, int port, uint8_t profile)
 {
 	int rv;
 
+	if (verbose_msg_logging)
+		CPRINTS("Set typec port %d to PDO:%d", PDPORT(controller, port), profile);
+
 	rv = cypd_write_reg8_wait_ack(controller, CCG_SELECT_SOURCE_PDO_REG(port), BIT(profile));
 	if (rv != EC_SUCCESS)
 		CPRINTS("SET CCG_SELECT_REG failed");
 
 	return rv;
+}
+
+void cypd_evaluate_port_profile(int controller, int port, int ccg_event)
+{
+	int pd_port = PDPORT(controller, port);
+	int shared_pd_port = PDPORT(controller, (port ? 0 : 1));
+	bool first_port = false;
+	bool all_ports_disconnect = false;
+	bool profile_is_changed = false;
+	static uint8_t ignore_evaluate_reason;
+
+#ifndef CONFIG_SELECT_3A_TYPEC_OUTPUT_CURRENT
+	return
+#endif
+
+	/* Skip to evaluate the port profile if the PD chip only one type-c port */
+	if (pd_chip_config[controller].support_max_port < 2)
+		return;
+
+	/* Skip to evaluate the port profile if the port is a source */
+	if (pd_port_states[pd_port].c_state == CCG_STATUS_SOURCE)
+		return;
+
+	/* Skip to evaluate the port profile if the safety level is 2 or more */
+	if (pre_safety_level >= TYPEC_SAFETY_LEVEL_2)
+		return;
+
+	if ((ccg_event == CCG_RESPONSE_PORT_DISCONNECT) &&
+	    (pd_port_states[shared_pd_port].c_state == CCG_STATUS_NOTHING))
+		all_ports_disconnect = true;
+	else {
+		/* Avoid the infinite loop if the ports reset or exchange profile */
+		if (ignore_evaluate_reason & BIT(controller))
+			return;
+
+		if (pd_port_states[pd_port].c_state == CCG_STATUS_SINK) {
+
+			if (pd_port_states[shared_pd_port].c_state != CCG_STATUS_SINK ||
+			    (!pd_port_states[shared_pd_port].pd_state &&
+			    pd_port_states[shared_pd_port].current < 3000))
+				first_port = true;
+		}
+	}
+
+	/* Shared 3A type-c port with the one PD chip */
+	if (first_port) {
+
+		/* Non-PD device and the Rp value is 1.5A or 0.9A */
+		if (!pd_port_states[pd_port].pd_state && pd_port_states[pd_port].current != 3000)
+			return;
+
+		/* Override the safety table if the current should reduce to 1.5A */
+		for (int level = 0; level < TYPEC_SAFETY_LEVEL_2; level++) {
+
+			if (pd_port_states[shared_pd_port].safety_table[level] ==
+			    CCG_PD_CMD_SET_TYPEC_3A) {
+				pd_port_states[shared_pd_port].safety_table[level] =
+					CCG_PD_CMD_SET_TYPEC_1_5A;
+				profile_is_changed = true;
+			}
+		}
+
+		if (profile_is_changed) {
+			k_msleep(100);
+
+			/* Reduce the typec Rp value and PDO current to 1.5A */
+			if ((shared_pd_port == PD_PORT_0 || shared_pd_port == PD_PORT_3)) {
+				cypd_select_rp(shared_pd_port,	CCG_PD_CMD_SET_TYPEC_1_5A);
+			}
+
+			cypd_select_pdo(controller, (port ? 0 : 1), CCG_PD_CMD_SET_TYPEC_1_5A);
+		}
+	} else if (all_ports_disconnect) {
+
+		for (int idx = 0; idx < pd_chip_config[controller].support_max_port; idx++) {
+			int port_idx = PDPORT(controller, idx);
+
+			for (int level = 0; level < TYPEC_SAFETY_LEVEL_2; level++) {
+				int profile = pd_port_states[port_idx].safety_table[level];
+
+				if (profile == CCG_PD_CMD_SET_TYPEC_1_5A) {
+					pd_port_states[port_idx].safety_table[level] =
+						CCG_PD_CMD_SET_TYPEC_3A;
+					profile_is_changed = true;
+				}
+			}
+
+			if (profile_is_changed) {
+				/* Restore the typec Rp value and PDO current to 3A */
+				if (port_idx == PD_PORT_0 || port_idx == PD_PORT_3)
+					cypd_select_rp(port_idx, CCG_PD_CMD_SET_TYPEC_3A);
+
+				cypd_select_pdo(controller, idx, CCG_PD_CMD_SET_TYPEC_3A);
+			}
+		}
+
+		ignore_evaluate_reason &= ~(BIT(controller));
+	} else {
+		if ((pd_port_states[pd_port].safety_table[pre_safety_level] ==
+		     pd_port_states[shared_pd_port].safety_table[pre_safety_level]) &&
+		    (pd_port_states[pd_port].safety_table[pre_safety_level] ==
+		     CCG_PD_CMD_SET_TYPEC_3A)) {
+			int target_port = controller ? PD_PORT_2 : PD_PORT_1;
+
+			/* Force reduce port 2 or port5 to 1.5A after resetting the pd ports */
+			for (int level = 0; level < TYPEC_SAFETY_LEVEL_2; level++) {
+				pd_port_states[target_port].safety_table[level] =
+					CCG_PD_CMD_SET_TYPEC_1_5A;
+				profile_is_changed = true;
+			}
+
+			if (profile_is_changed) {
+				k_msleep(100);
+				cypd_select_pdo(controller, PORT_TO_CONTROLLER_PORT(target_port),
+					CCG_PD_CMD_SET_TYPEC_1_5A);
+				ignore_evaluate_reason |= BIT(controller);
+			}
+		} else if ((pre_safety_level < TYPEC_SAFETY_LEVEL_2) &&
+		    ((pd_port_states[shared_pd_port].pd_state) &&
+		    (pd_port_states[shared_pd_port].current <= 1500)) &&
+		    (((pd_port_states[pd_port].pd_state) &&
+		    (pd_port_states[pd_port].max_operating_current > 1500)) ||
+		     pd_port_states[pd_port].rdo_mismatch)) {
+			/**
+			 * Another port maximum operating current less than 1.5A
+			 * EC allows PD chip provide more current if the RDO capabilities mismatch
+			 * flag is set or the maximum operating current is 3A.
+			 */
+			CPRINTS("Allow port%d requests more power.", pd_port);
+
+			/* Exchange the typec profile */
+			for (int level = 0; level < TYPEC_SAFETY_LEVEL_2; level++) {
+				int temp;
+
+				temp = pd_port_states[pd_port].safety_table[level];
+				pd_port_states[pd_port].safety_table[level] =
+					pd_port_states[shared_pd_port].safety_table[level];
+				pd_port_states[shared_pd_port].safety_table[level] = temp;
+				profile_is_changed = true;
+			}
+
+			if (profile_is_changed) {
+				int pd_port_profile =
+				  pd_port_states[pd_port].safety_table[pre_safety_level];
+				int shared_pd_port_profile =
+				  pd_port_states[shared_pd_port].safety_table[pre_safety_level];
+
+				cypd_select_pdo(controller, port, pd_port_profile);
+				/* Wait for the first port */
+				k_msleep(100);
+				cypd_select_pdo(controller, (port ? 0 : 1),
+					shared_pd_port_profile);
+
+				/**
+				 * Exchange the profile, ignore the next negotiation until
+				 * all port is disconnected
+				 */
+				ignore_evaluate_reason |= BIT(controller);
+			}
+		}
+	}
 }
 
 static int pd_3a_flag;
@@ -1756,7 +1923,7 @@ void cypd_port_int(int controller, int port)
 	switch (data2[0]) {
 	case CCG_RESPONSE_PORT_DISCONNECT:
 		record_ucsi_connector_change_event(controller, port);
-		cypd_release_port(controller, port);
+		cypd_evaluate_port_profile(controller, port, data2[0]);
 		/* release the button if device disconnect and not sent release ado */
 		if (alert_press) {
 			power_button_simulate_press(1);
@@ -1799,7 +1966,7 @@ void cypd_port_int(int controller, int port)
 	case CCG_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE:
 		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE %d", port_idx);
 		cypd_update_port_state(controller, port);
-		cypd_set_prepare_pdo(controller, port);
+		cypd_evaluate_port_profile(controller, port, data2[0]);
 #ifdef CONFIG_PD_CCG8_EPR
 		/* make sure enter EPR mode only process in S0 state */
 		if (chipset_in_state(CHIPSET_STATE_ON))
@@ -1810,8 +1977,8 @@ void cypd_port_int(int controller, int port)
 	case CCG_RESPONSE_PORT_CONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_CONNECT %d", port_idx);
 		record_ucsi_connector_change_event(controller, port);
-		cypd_set_typec_profile(controller, port);
 		cypd_update_port_state(controller, port);
+		cypd_evaluate_port_profile(controller, port, data2[0]);
 		break;
 	case CCG_RESPONSE_SOURCE_CAP_MSG_RX:
 		i2c_read_offset16_block(i2c_port, addr_flags,
@@ -2028,7 +2195,7 @@ void cypd_interrupt_handler_task(void *p)
 				if (cypd_contoller_is_powered(i)) {
 					struct pd_port_current_state_t states =
 						pd_port_states[PDPORT(i, 0)];
-					int profile = states.safety_table[TYPEC_SAFETY_LEVEL_0];
+					int profile = states.safety_table[pre_safety_level];
 
 					cypd_changing_source_pdo_list(i, 0, profile);
 				}
@@ -2045,7 +2212,7 @@ void cypd_interrupt_handler_task(void *p)
 				    pd_chip_config[i].support_max_port == 2) {
 					struct pd_port_current_state_t states =
 						pd_port_states[PDPORT(i, 1)];
-					int profile = states.safety_table[TYPEC_SAFETY_LEVEL_0];
+					int profile = states.safety_table[pre_safety_level];
 
 					cypd_changing_source_pdo_list(i, 1, profile);
 				}
