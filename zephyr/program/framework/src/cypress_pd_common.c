@@ -624,6 +624,29 @@ void cypd_evaluate_port_profile(int controller, int port, int ccg_event)
 	}
 }
 
+void cypd_update_safety_table(int safety_level)
+{
+	if (pre_safety_level != safety_level) {
+		for (int port = 0; port < PD_PORT_COUNT; port++) {
+			struct pd_port_current_state_t states = pd_port_states[port];
+			int pre_profile = states.safety_table[pre_safety_level];
+			int profile = states.safety_table[safety_level];
+
+			if (pd_chip_config[PORT_TO_CONTROLLER(port)].state != CCG_STATE_READY)
+				continue;
+
+			if (pre_profile != profile) {
+				cypd_select_pdo(
+					PORT_TO_CONTROLLER(port),
+					PORT_TO_CONTROLLER_PORT(port),
+					profile);
+			}
+		}
+
+		pre_safety_level = safety_level;
+	}
+}
+
 static int pd_3a_flag;
 static int pd_3a_set;
 static int pd_3a_controller;

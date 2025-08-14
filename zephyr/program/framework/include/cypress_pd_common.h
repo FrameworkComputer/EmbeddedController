@@ -1088,4 +1088,11 @@ void ccg8s_interrupt(enum gpio_signal signal);
  */
 int cypd_get_active_pd_chip_count(void);
 
+/**
+ * Call this function to update the safety table with the different safety level.
+ *
+ * @param safety_level The safety level. Refer enum typec_safety_level
+ */
+void cypd_update_safety_table(int safety_level);
+
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

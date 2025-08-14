@@ -322,10 +322,10 @@ static int update_safety_power_limit(int active_mpower)
 	int delta;
 	int average_current = get_average_battery_current();
 	int battery_voltage = battery_dynamic[BATT_IDX_MAIN].actual_voltage;
-	int rv;
 	int mw_apu = power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT];
 	static timestamp_t wait_stable_time;
 	static timestamp_t update_safety_timer;
+	static int typec_safety_level = TYPEC_SAFETY_LEVEL_0;
 	timestamp_t now = get_time();
 
 	if (!timestamp_expired(wait_stable_time, &now) ||
@@ -455,23 +455,15 @@ static int update_safety_power_limit(int active_mpower)
 		break;
 	case LEVEL_TYPEC_1_5A:
 		if (level_increase) {
-			force_typec_1_5a_flag = 1;
-			for (int controller = 0; controller < PD_CHIP_COUNT; controller++) {
-				for (int port = 0; port < 2; port++) {
-					if (cypd_port_3a_status(controller, port)) {
-						/*if device is 3A sink device
-						 * foce current to 1.5A
-						 */
-						rv = cypd_modify_safety_power_1_5A(controller,
-							port);
-					}
-				}
-			}
-			safety_level++;
+			typec_safety_level++;
+			if (typec_safety_level == TYPEC_SAFETY_LEVEL_3)
+				safety_level++;
 		} else {
-			force_typec_1_5a_flag = 0;
-			safety_level--;
+			typec_safety_level--;
+			if (typec_safety_level == TYPEC_SAFETY_LEVEL_0)
+				safety_level--;
 		}
+		cypd_update_safety_table(typec_safety_level);
 		break;
 	case LEVEL_COUNT:
 		thermal_stt_table = (gpu_is_working() ? 7 : 14);
