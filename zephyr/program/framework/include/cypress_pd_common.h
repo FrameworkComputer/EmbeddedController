@@ -565,6 +565,8 @@ struct pd_port_current_state_t {
 	uint8_t epr_support;
 	uint8_t epr_retry_count;
 	int safety_table[TYPEC_SAFETY_LEVEL_COUNT];
+	bool rdo_mismatch;
+	int max_operating_current;
 
 	enum pd_power_role power_role;
 	enum pd_data_role data_role;

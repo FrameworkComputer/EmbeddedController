@@ -973,7 +973,9 @@ void cypd_update_port_state(int controller, int port)
 	int typec_status_reg;
 	int pd_current = 0;
 	int pd_voltage = 0;
-	int rdo_max_current = 0;
+	int rdo_operating_current = 0;
+	int rdo_max_operating_current = 0;
+	bool capability_mismatch = false;
 	int type_c_current = 0;
 	int port_idx = (controller << 1) + port;
 #ifdef CONFIG_PD_CCG8_EPR
@@ -1042,7 +1044,9 @@ void cypd_update_port_state(int controller, int port)
 	}
 
 	cypd_read_reg_block(controller, CCG_CURRENT_RDO_REG(port), rdo_reg, 4);
-	rdo_max_current = (((rdo_reg[1]>>2) + (rdo_reg[2]<<6)) & 0x3FF)*10;
+	rdo_operating_current = (((rdo_reg[1] >> 2) + (rdo_reg[2] << 6)) & 0x3FF) * 10;
+	rdo_max_operating_current = ((rdo_reg[0] + (rdo_reg[1] << 8)) & 0x3FF) * 10;
+	capability_mismatch = (rdo_reg[3] >> 3) & 0x01;
 
 	/*
 	 * The port can have several states active:
@@ -1103,7 +1107,8 @@ void cypd_update_port_state(int controller, int port)
 				pd_set_input_current_limit(port_idx, 0, 0);
 			}
 			/*Source*/
-			pd_port_states[port_idx].current = rdo_max_current;
+			pd_port_states[port_idx].current = rdo_operating_current;
+			pd_port_states[port_idx].max_operating_current = rdo_max_operating_current;
 			pd_port_states[port_idx].voltage = TYPE_C_VOLTAGE;
 
 		}
@@ -2423,9 +2428,9 @@ static int cmd_cypd_get_status(int argc, const char **argv)
 						data & 0x2 ? "On" : "Off");
 				cypd_read_reg_block(i, CCG_CURRENT_RDO_REG(p), data16, 4);
 				CPRINTS("             RDO : Current:%dmA MaxCurrent%dmA 0x%08x",
-						((data16[0] + (data16[1]<<8)) & 0x3FF)*10,
-						(((data16[1]>>2) + (data16[2]<<6)) & 0x3FF)*10,
-						*(uint32_t *)data16);
+					(((data16[1] >> 2) + (data16[2] << 6)) & 0x3FF) * 10,
+					((data16[0] + (data16[1] << 8)) & 0x3FF) * 10,
+					*(uint32_t *)data16);
 
 				cypd_read_reg_block(i, CCG_CURRENT_PDO_REG(p), data16, 4);
 				CPRINTS("             PDO : MaxCurrent:%dmA Voltage%dmA 0x%08x",
