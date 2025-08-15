@@ -6,6 +6,8 @@
 
 #include <zephyr/drivers/gpio.h>
 
+#include "battery.h"
+#include "battery_fuel_gauge.h"
 #include "board_host_command.h"
 #include "board_function.h"
 #include "chipset.h"
@@ -148,4 +150,22 @@ __override int board_temp_smi_evet(void)
 
 __overridable void board_enter_non_acpi_mode(void)
 {
+}
+
+enum framework_battery_type board_get_battery_type(void)
+{
+	const struct batt_conf_embed *const batt = get_batt_conf();
+
+	int compare_len = EC_MEMMAP_TEXT_MAX - 1; /* EC code force set 0x00 in the end */
+
+	if (!strncmp(batt->device_name, "Framework Laptop", compare_len))
+		return FWK_BATT_NVT_55W;
+	else if (!strncmp(batt->device_name, "FRANGWAT01", compare_len))
+		return FWK_BATT_NVT_61W;
+	else if (!strncmp(batt->device_name, "FRANDBAT01", compare_len))
+		return FWK_BATT_NVT_85W;
+	else if (!strncmp(batt->device_name, "FRANEDA", compare_len))
+		return FWK_BATT_ATC_75W;
+
+	return FWK_BATT_UNKNOWN;
 }

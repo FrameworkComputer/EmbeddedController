@@ -15,6 +15,15 @@ enum function_type {
 	TYPE_FLASH	= 2,
 };
 
+enum framework_battery_type {
+	FWK_BATT_UNKNOWN,
+	FWK_BATT_NVT_55W,
+	FWK_BATT_NVT_61W,
+	FWK_BATT_ATC_75W,
+	FWK_BATT_NVT_85W,
+	FWK_BATT_COUNT,
+};
+
 enum bios_option {
 	/* for bios option switch */
 	ALS_AUTO_FP	= BIT(0),
@@ -31,5 +40,12 @@ __override_proto void project_chassis_function(enum gpio_signal signal);
 __override_proto void board_enter_non_acpi_mode(void);
 
 uint32_t get_system_percentage(void);
+
+/**
+ * return the current battery type
+ *
+ * @return the battery type
+ */
+enum framework_battery_type board_get_battery_type(void);
 
 #endif	/* __CROS_EC_BOARD_FUNCTION_H */
