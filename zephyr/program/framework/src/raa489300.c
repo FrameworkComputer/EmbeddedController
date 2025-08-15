@@ -333,12 +333,15 @@ int level_buck_set_output_voltage(int mv)
 
 void raa489300_enter_low_power_ptm_mode(bool enabled)
 {
-	int rv;
+	int rv = EC_ERROR_INVAL;
 
 	mutex_lock(&level_buck_mutex);
-	rv = i2c_update16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
-			  RAA489300_REG_CONTROL2, RAA489300_C2_LOW_POWER_PTM_MODE,
-			  enabled ? MASK_SET : MASK_CLR);
+
+	if (level_buck_check_expected_state(LEVEL_BUCK_SPR, NULL) == EC_SUCCESS) {
+		rv = i2c_update16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+				RAA489300_REG_CONTROL2, RAA489300_C2_LOW_POWER_PTM_MODE,
+				enabled ? MASK_SET : MASK_CLR);
+	}
 	mutex_unlock(&level_buck_mutex);
 
 	enable_low_power_mode = enabled;
