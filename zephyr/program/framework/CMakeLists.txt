@@ -118,9 +118,14 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 
 endif()
 
-if(DEFINED CONFIG_BOARD_MARIGOLD)
-	project(marigold)
-	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_MARIGOLD include)
+if(DEFINED CONFIG_BOARD_MARIGOLD OR DEFINED CONFIG_BOARD_SAKURA)
+	if(DEFINED CONFIG_BOARD_MARIGOLD)
+		project(marigold)
+		cros_ec_library_include_directories_ifdef(CONFIG_BOARD_MARIGOLD include)
+	elseif(DEFINED CONFIG_BOARD_SAKURA)
+		project(sakura)
+		cros_ec_library_include_directories_ifdef(CONFIG_BOARD_SAKURA include)
+	endif()
 	zephyr_include_directories("include/marigold")
 	zephyr_library_sources(
 			"src/battery_13.c"

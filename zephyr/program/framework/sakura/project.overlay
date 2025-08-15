@@ -1,0 +1,16 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "../marigold/adc.dtsi"
+#include "../marigold/battery.dtsi"
+#include "../marigold/fan.dtsi"
+#include "../marigold/gpio.dtsi"
+#include "../marigold/i2c.dtsi"
+#include "../marigold/interrupts.dtsi"
+#include "../marigold/keyboard.dtsi"
+#include "../marigold/led_pins.dtsi"
+#include "../marigold/led_policy.dtsi"
+#include "../marigold/overlay.dtsi"
+#include "../marigold/power_signal.dtsi"
