@@ -26,3 +26,4 @@ powertech	Battery vendor
 pow-tech	Battery vendor
 smp	Battery vendor
 sunwoda	Battery vendor
+atc	Battery vendor
