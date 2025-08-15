@@ -150,6 +150,7 @@ properties:
       - "atl,framework55w"
       - "atl,framework61w"
       - "atl,framework85w"
+      - "atc,framework75w"
       - "swd,swd-atl4-106"
       - "swd,swd-cos4-122"
       - "utl,hq24u3s1p3i"
