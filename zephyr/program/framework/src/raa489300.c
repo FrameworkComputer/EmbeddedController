@@ -80,6 +80,19 @@ static const struct reg_val dc_values[] = {
 	{RAA489300_REG_CONTROL0, 0x0000},
 };
 
+static const struct reg_val five_voltage_buck_values[] = {
+	{RAA489300_REG_OUTPUT_CURRENT_LIMIT, RAA489300_REG_OUTPUT_CURRENT_LIMIT_7A},
+	{RAA489300_REG_OUTPUT_VOLTAGE, RAA489300_REG_OUTPUT_VOLTAGE_4P8V},
+	{RAA489300_REG_CONTROL5, RAA489300_C5_VALUE},
+	{RAA489300_REG_CONTROL2, RAA489300_C2_VALUE_SPR
+							| RAA489300_C2_ENABLE_CFLY_PRECHARGE},
+	{RAA489300_REG_CONTROL1, RAA489300_C1_HIGH_SIDE_PHASE_8MV
+							| RAA489300_C1_IMON_SELECT},
+	{RAA489300_REG_CONTROL4, RAA489300_C4_VALUE},
+	{RAA489300_REG_CONTROL3, RAA489300_C3_VALUE},
+	{RAA489300_REG_CONTROL0, RAA489300_C0_VALUE},
+};
+
 int write_level_buck_registers(enum level_buck_mode mode)
 {
 	int rv;
@@ -106,6 +119,10 @@ int write_level_buck_registers(enum level_buck_mode mode)
 	case LEVEL_BUCK_DC:
 		reg_values = dc_values;
 		size = ARRAY_SIZE(dc_values);
+		break;
+	case LEVEL_BUCK_GRL_5V_BUCK:
+		reg_values = five_voltage_buck_values;
+		size = ARRAY_SIZE(five_voltage_buck_values);
 		break;
 	default:
 		return EC_ERROR_INVAL;
@@ -256,6 +273,8 @@ void board_level_buck_update(void)
 	/* AC is unplugged and battery is present, switch to DC mode */
 	if (!extpower_is_present() && battery_is_present() == BP_YES) {
 		target_mode = LEVEL_BUCK_DC;
+	} else if (pd_voltage == 5000 && cypd_get_max_pdo_current() == 500) {
+		target_mode = LEVEL_BUCK_GRL_5V_BUCK;
 	} else if (pd_voltage <= 20000) {
 		target_mode = LEVEL_BUCK_SPR;
 	} else {
@@ -376,6 +395,9 @@ static int raa489300_cmd(int argc, const char **argv)
 			break;
 		case LEVEL_BUCK_DC:
 			ccprintf("DC\n");
+			break;
+		case LEVEL_BUCK_GRL_5V_BUCK:
+			ccprintf("5V_BUCK\n");
 			break;
 		default:
 			ccprintf("UNKNOWN\n");
