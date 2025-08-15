@@ -217,6 +217,26 @@ static void board_dynamic_acok_control(void)
 	}
 }
 
+static void board_charger_lpm_control(void)
+{
+	bool batt_is_present = (battery_is_present() == BP_YES) ? true : false;
+	int batt_soc = charge_get_percent();
+	static bool charger_in_lpm;
+
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF) &&
+		batt_soc > 3 && batt_is_present && !charger_in_lpm) {
+		raa489300_enter_low_power_ptm_mode(true);
+		charger_in_lpm = true;
+	} else if ((chipset_in_or_transitioning_to_state(CHIPSET_STATE_SUSPEND) ||
+		batt_soc <= 3 || !batt_is_present) && charger_in_lpm) {
+		raa489300_enter_low_power_ptm_mode(false);
+		charger_in_lpm = false;
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_charger_lpm_control, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_charger_lpm_control, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, board_charger_lpm_control, HOOK_PRIO_DEFAULT);
+
 __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
