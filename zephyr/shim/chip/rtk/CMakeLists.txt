@@ -8,3 +8,4 @@ zephyr_library_sources(clock.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_EXTERNAL_STORAGE
         system_external_storage.c
         system_download_from_flash.c)
+zephyr_library_sources_ifdef(CONFIG_PM_POLICY_CUSTOM  power_policy.c)
