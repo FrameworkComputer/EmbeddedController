@@ -26,14 +26,32 @@
 	named-gpios {
 		compatible = "named-gpios";
 		/delete-node/ mux_sub_uart_flip;
+		/delete-node/ ec_beep;
+		/delete-node/ power_vr_id;
 		/delete-node/ me_en;
+		/delete-node/ unused-pins;
 
 		gpio_tp_board_id_pug: tp_board_id_pug {
 			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;
 		};
 
+		gpio_ec_ssd_pwr_en: ec_ssd_pwr_en {
+			gpios = <&gpio4 2 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_amp_pwr_en: ec_amp_pwr_en {
+			gpios = <&gpio3 3 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_ts_pwr_en: ec_ts_pwr_en {
+			gpios = <&gpio3 6 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_fp_led_pwr_en: ec_fp_led_pwr_en {
+			gpios = <&gpiof 4 GPIO_OUTPUT_LOW>;
+		};
 		gpio_me_en_l: me_en_l {
 			gpios = <&gpio7 4 GPIO_ODR_HIGH>;
+		};
+		gpio_ec_on_5v: ec_on_5v {
+			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>; /* Reserved */
 		};
 	};
 };

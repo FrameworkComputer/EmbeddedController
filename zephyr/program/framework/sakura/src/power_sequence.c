@@ -35,7 +35,7 @@
 
 static int power_s5_up;		/* Chipset is sequencing up or down */
 static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
-static int force_g3_flags;	/* Chipset force to g3 immediately when chipset force shutdown */
+static int force_shutdown_flags;
 static int me_change;
 
 static int keep_pch_power(void)
@@ -207,34 +207,21 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 	/* unused function, EC doesn't control GPIO_SYS_RESET_L */
 }
 
-static void chipset_force_g3(void)
-{
-	input_c_deck_powerdown();
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wlan_en), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ac_present_cpu), 0);
-}
-
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s(%d)", __func__, reason);
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		report_ap_reset(reason);
-		force_g3_flags = 1;
-		chipset_force_g3();
+		force_shutdown_flags = 1;
 		clear_rtcwake();
+		task_wake(TASK_ID_CHIPSET);
 	}
 }
 
 enum power_state power_chipset_init(void)
 {
 	/* If we don't need to image jump to RW, always start at G3 state */
-	chipset_force_g3();
+	chipset_force_shutdown(CHIPSET_SHUTDOWN_G3);
 	return POWER_G3;
 }
 
@@ -248,6 +235,7 @@ enum power_state power_handle_state(enum power_state state)
 
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wlan_en), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_fp_led_pwr_en), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 1);
 
 		k_msleep(10);
@@ -275,8 +263,8 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S5:
 
-		if (force_g3_flags) {
-			force_g3_flags = 0;
+		if (force_shutdown_flags) {
+			force_shutdown_flags = 0;
 			return POWER_S5G3;
 		}
 
@@ -318,9 +306,11 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3:
-		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 1)
+		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 1 &&
+			!force_shutdown_flags)
 			return POWER_S3S0;
-		else if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s4_l)) == 0) {
+		else if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s4_l)) == 0 ||
+			force_shutdown_flags) {
 			/* de-asserted the syson < 0.2 ms */
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 0);
 			return POWER_S3S5;
@@ -331,6 +321,9 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S3S0:
 
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_ssd_pwr_en), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_amp_pwr_en), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_ts_pwr_en), 1);
 		k_msleep(35);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 1);
 
@@ -338,7 +331,7 @@ enum power_state power_handle_state(enum power_state state)
 		if (power_wait_signals(IN_VR_PGOOD)) {
 			/* something wrong, turn off power and force to g3 */
 			set_diagnostic(DIAGNOSTICS_HW_PGOOD_VR, 1);
-			chipset_force_g3();
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_WAIT);
 			return POWER_G3;
 		}
 
@@ -365,7 +358,8 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S0:
 
-		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 0) {
+		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 0 ||
+		    force_shutdown_flags) {
 			/* Power down to next state */
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
 			return POWER_S0S3;
@@ -380,7 +374,8 @@ enum power_state power_handle_state(enum power_state state)
 #ifdef CONFIG_PLATFORM_EC_POWERSEQ_S0IX
 	case POWER_S0ix:
 		CPRINTS("PH S0ix");
-		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 0) {
+		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 0 ||
+		    force_shutdown_flags) {
 			/*
 			 * If power signal lose, we need to resume to S0 and
 			 * clear the resume ms flag
@@ -432,6 +427,9 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0S3:
 		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_ssd_pwr_en), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_amp_pwr_en), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_ts_pwr_en), 0);
 		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_me_en_l), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwrok_ls), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrok_ls), 0);
@@ -475,6 +473,7 @@ enum power_state power_handle_state(enum power_state state)
 		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wlan_en), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_fp_led_pwr_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ac_present_cpu), 0);
 		k_msleep(1);
@@ -498,13 +497,13 @@ static void peripheral_power_startup(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_rt_gpio6_ctrl), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, peripheral_power_startup, HOOK_PRIO_DEFAULT);
 
 static void peripheral_power_resume(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mute_l), 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, peripheral_power_resume, HOOK_PRIO_DEFAULT);
 
@@ -520,6 +519,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, peripheral_power_shutdown, HOOK_PRIO_DEFAULT
 static void peripheral_power_suspend(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mute_l), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, peripheral_power_suspend, HOOK_PRIO_DEFAULT);
 
