@@ -14,10 +14,6 @@
 		lsm6dsm-int = &base_accel;
 		bma4xx-int = &lid_accel;
 		lis2dw12-int = &base_accel;
-		bmi3xx-int = &base_accel;
-
-		/* Use base accelerometer for on-body sensor */
-		on-body-sensor = &base_accel;
 	};
 
 	/*
@@ -31,9 +27,6 @@
 		compatible = "cros-ec,motionsense-mutex";
 
 		lid_mutex_bma422: bma422-mutex {
-		};
-
-		base_mutex_bmi323: bmi323-mutex {
 		};
 
 		base_mutex: base-mutex {
@@ -61,11 +54,6 @@
 		base_rot_ref_lis2dw12: base-rotation-ref-lis2dw12 {
 			mat33 = <(-1) 0 0
 				 0 (-1) 0
-				 0 0 1>;
-		};
-		base_rot_bmi323: base-rotation-bmi {
-			mat33 = <0 1 0
-				 (-1) 0 0
 				 0 0 1>;
 		};
 	};
@@ -98,10 +86,6 @@
 			compatible = "cros-ec,drvdata-lis2dw12";
 			status = "okay";
 		};
-		bmi323_data: bmi323-drv-data {
-			compatible = "cros-ec,drvdata-bmi3xx";
-			status = "okay";
-		};
 	};
 
 	/*
@@ -114,31 +98,6 @@
 	 */
 	motionsense-sensor {
 		lid_accel: lid-accel {
-			compatible = "cros-ec,bma4xx";
-			status = "okay";
-
-			active-mask = "SENSOR_ACTIVE_S0_S3";
-			location = "MOTIONSENSE_LOC_LID";
-			mutex = <&lid_mutex_bma422>;
-			port = <&i2c_ec_i2c_sensor_r>;
-			rot-standard-ref = <&lid_rot_bma422>;
-			default-range = <2>;
-			drv-data = <&bma422_data>;
-			i2c-spi-addr-flags = "BMA4_I2C_ADDR_PRIMARY";
-			configs {
-				compatible =
-					"cros-ec,motionsense-sensor-config";
-				ec-s0 {
-					odr = <(10000 | ROUND_UP_FLAG)>;
-				};
-				ec-s3 {
-					odr = <(10000 | ROUND_UP_FLAG)>;
-					ec-rate = <(100 * USEC_PER_MSEC)>;
-				};
-			};
-		};
-
-		base_accel: base-accel {
 			compatible = "cros-ec,lis2dw12";
 			status = "okay";
 
@@ -150,6 +109,37 @@
 			default-range = <4>; /* to meet CDD 7.3.1/C-1-4 reqs. */
 			drv-data = <&lis2dw12_data>;
 			i2c-spi-addr-flags = "LIS2DWL_ADDR1_FLAGS";
+			bodydetect {
+				compatible = "cros-ec,motionsense-bodydetect";
+				status = "okay";
+				var_noise_factor = <150>;
+				var_threshold = <4000>;
+				confidence_delta = <3000>;
+			};
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				/* 50 Hz to support body detection. */
+				ec-s0 {
+					odr = <(50000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+					ec-rate = <(100 * USEC_PER_MSEC)>;
+				};
+			};
+		};
+
+		base_accel: base-accel {
+			compatible = "cros-ec,lsm6dsm-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex>;
+			port = <&i2c_ec_i2c_sensor_r>;
+			rot-standard-ref = <&base_rot_ref>;
+			drv-data = <&lsm6dsm_data_accel>;
 			bodydetect {
 				compatible = "cros-ec,motionsense-bodydetect";
 				status = "okay";
@@ -185,99 +175,32 @@
 		};
 	};
 
+
 	motionsense-sensor-alt {
-		alt_base_accel: alt-base-accel {
-			compatible = "cros-ec,lsm6dsm-accel";
+		alt_lid_accel: alt-lid-accel {
+			compatible = "cros-ec,bma4xx";
 			status = "okay";
 
 			active-mask = "SENSOR_ACTIVE_S0_S3";
-			location = "MOTIONSENSE_LOC_BASE";
-			mutex = <&base_mutex>;
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex_bma422>;
 			port = <&i2c_ec_i2c_sensor_r>;
-			rot-standard-ref = <&base_rot_ref>;
-			drv-data = <&lsm6dsm_data_accel>;
-			alternate-for = <&base_accel>;
-			alternate-ssfc-indicator = <&base_sensor_1>;
-			bodydetect {
-				compatible = "cros-ec,motionsense-bodydetect";
-				status = "okay";
-				var_noise_factor = <150>;
-				var_threshold = <4000>;
-				confidence_delta = <3000>;
-			};
+			rot-standard-ref = <&lid_rot_bma422>;
+			default-range = <2>;
+			drv-data = <&bma422_data>;
+			i2c-spi-addr-flags = "BMA4_I2C_ADDR_PRIMARY";
+			alternate-for = <&lid_accel>;
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
-					odr = <(50000 | ROUND_UP_FLAG)>;
+					odr = <(10000 | ROUND_UP_FLAG)>;
 				};
 				ec-s3 {
 					odr = <(10000 | ROUND_UP_FLAG)>;
 					ec-rate = <(100 * USEC_PER_MSEC)>;
 				};
 			};
-		};
-
-		alt_base_gyro: alt-base-gyro {
-			compatible = "cros-ec,lsm6dsm-gyro";
-			status = "okay";
-
-			active-mask = "SENSOR_ACTIVE_S0_S3";
-			location = "MOTIONSENSE_LOC_BASE";
-			mutex = <&base_mutex>;
-			port = <&i2c_ec_i2c_sensor_r>;
-			rot-standard-ref = <&base_rot_ref>;
-			default-range = <(1000 | ROUND_UP_FLAG)>; /* dps */
-			drv-data = <&lsm6dsm_data_gyro>;
-			alternate-for = <&base_gyro>;
-			alternate-ssfc-indicator = <&base_sensor_1>;
-		};
-
-		alt_base_accel_2: alt-base-accel-2 {
-			compatible = "cros-ec,bmi3xx-accel";
-			status = "okay";
-
-			active-mask = "SENSOR_ACTIVE_S0_S3";
-			location = "MOTIONSENSE_LOC_BASE";
-			mutex = <&base_mutex>;
-			port = <&i2c_ec_i2c_sensor_r>;
-			rot-standard-ref = <&base_rot_bmi323>;
-			drv-data = <&bmi323_data>;
-			alternate-for = <&base_accel>;
-			alternate-ssfc-indicator = <&base_sensor_2>;
-			bodydetect {
-				compatible = "cros-ec,motionsense-bodydetect";
-				status = "okay";
-				var_noise_factor = <150>;
-				var_threshold = <4000>;
-				confidence_delta = <3000>;
-			};
-			configs {
-				compatible =
-					"cros-ec,motionsense-sensor-config";
-				ec-s0 {
-					odr = <(50000 | ROUND_UP_FLAG)>;
-				};
-				ec-s3 {
-					odr = <(10000 | ROUND_UP_FLAG)>;
-					ec-rate = <(100 * USEC_PER_MSEC)>;
-				};
-			};
-		};
-
-		alt_base_gyro_2: alt-base-gyro-2 {
-			compatible = "cros-ec,bmi3xx-gyro";
-			status = "okay";
-
-			active-mask = "SENSOR_ACTIVE_S0_S3";
-			location = "MOTIONSENSE_LOC_BASE";
-			mutex = <&base_mutex>;
-			port = <&i2c_ec_i2c_sensor_r>;
-			rot-standard-ref = <&base_rot_bmi323>;
-			default-range = <(1000 | ROUND_UP_FLAG)>; /* dps */
-			drv-data = <&bmi323_data>;
-			alternate-for = <&base_gyro>;
-			alternate-ssfc-indicator = <&base_sensor_2>;
 		};
 	};
 

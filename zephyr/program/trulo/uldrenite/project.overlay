@@ -24,7 +24,6 @@
 #include "temp_sensors.dtsi"
 #include "usb_typec.dtsi"
 #include "usba.dtsi"
-#include "motionsense.dtsi"
 
 
 /* Trulo overrides follow... */

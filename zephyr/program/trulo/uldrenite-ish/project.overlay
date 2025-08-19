@@ -7,7 +7,7 @@
 #include "../uldrenite/cbi.dtsi"
 #include "gpio.dtsi"
 #include "i2c.dtsi"
-#include "../uldrenite/motionsense.dtsi"
+#include "motionsense.dtsi"
 
 / {
 	chosen {
