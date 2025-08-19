@@ -63,6 +63,23 @@
 			io-channels = <&adc0 1>;
 		};
 	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		/**
+		 * For EVT SMT, set the fan_max to the environment temperature to
+		 * turn the fan on full.
+		 */
+		temp_sensor_cpu: cpu-f75303 {
+			temp_host_high = <88>;
+			temp_host_halt = <98>;
+			temp_host_release_high = <78>;
+			temp_fan_off = <15>;
+			temp_fan_max = <20>;
+			power-good-pin = <&gpio_slp_s3_l>;
+			sensor = <&cpu_f75303>;
+		};
+	};
 };
 
 &i2c3_0 {
