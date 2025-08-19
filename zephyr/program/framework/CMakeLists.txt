@@ -122,16 +122,17 @@ if(DEFINED CONFIG_BOARD_MARIGOLD OR DEFINED CONFIG_BOARD_SAKURA)
 	if(DEFINED CONFIG_BOARD_MARIGOLD)
 		project(marigold)
 		cros_ec_library_include_directories_ifdef(CONFIG_BOARD_MARIGOLD include)
+		zephyr_library_sources("marigold/src/charger.c")
 	elseif(DEFINED CONFIG_BOARD_SAKURA)
 		project(sakura)
 		cros_ec_library_include_directories_ifdef(CONFIG_BOARD_SAKURA include)
+		zephyr_library_sources("sakura/src/charger.c")
 	endif()
 	zephyr_include_directories("include/marigold")
 	zephyr_library_sources(
 			"src/battery_13.c"
 			"src/ucsi_port_13.c"
 			"src/battery_present_adc.c"
-			"marigold/src/charger.c"
 			"marigold/src/cpu_power.c"
 			"marigold/src/power_sequence.c"
 			"src/keyboard_customization_13.c"

@@ -14,3 +14,13 @@
 #include "../marigold/led_policy.dtsi"
 #include "../marigold/overlay.dtsi"
 #include "../marigold/power_signal.dtsi"
+
+&i2c3_0 {
+	/delete-node/ isl9241@9;
+
+	charger: raa489108@9 {
+		compatible = "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
+	};
+};
