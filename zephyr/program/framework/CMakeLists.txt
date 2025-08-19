@@ -124,6 +124,7 @@ if(DEFINED CONFIG_BOARD_MARIGOLD OR DEFINED CONFIG_BOARD_SAKURA)
 		cros_ec_library_include_directories_ifdef(CONFIG_BOARD_MARIGOLD include)
 		zephyr_library_sources("marigold/src/charger.c")
 		zephyr_library_sources("marigold/src/power_sequence.c")
+		zephyr_library_sources("marigold/src/usbc.c")
 	elseif(DEFINED CONFIG_BOARD_SAKURA)
 		project(sakura)
 		cros_ec_library_include_directories_ifdef(CONFIG_BOARD_SAKURA include)
@@ -140,7 +141,6 @@ if(DEFINED CONFIG_BOARD_MARIGOLD OR DEFINED CONFIG_BOARD_SAKURA)
 			"marigold/src/project_diagnostics.c"
 			"marigold/src/temperature.c"
 			"marigold/src/thermal.c"
-			"marigold/src/usbc.c"
 			"src/usbc_4port_config.c"
 	)
 
