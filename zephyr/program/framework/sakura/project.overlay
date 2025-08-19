@@ -24,7 +24,11 @@
 	named-gpios {
 		compatible = "named-gpios";
 		/delete-node/ mux_sub_uart_flip;
+		/delete-node/ me_en;
 
+		gpio_me_en_l: me_en_l {
+			gpios = <&gpio7 4 GPIO_ODR_HIGH>;
+		};
 	};
 };
 
