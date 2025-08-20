@@ -17,7 +17,6 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "power.h"
-#include "raa489300.h"
 #include "task.h"
 #include "ucsi.h"
 #include "usb_pd.h"
@@ -455,7 +454,7 @@ void clear_erp_progress(void)
 	pd_epr_in_progress &= EPR_PROCESS_MASK;
 }
 
-__overridable int board_confirm_buck_transition_ready(enum level_buck_mode mode)
+__overridable int board_confirm_buck_transition_ready(bool is_epr)
 {
 	return EC_SUCCESS;
 }
@@ -552,7 +551,7 @@ void enter_epr_mode(void)
 
 			/* Try to set to Buck mode, retry up to 5 times */
 			for (int retry = 0; retry < 5; retry++) {
-				ret = board_confirm_buck_transition_ready(LEVEL_BUCK_ENTER_EPR);
+				ret = board_confirm_buck_transition_ready(1);
 				if (ret == EC_SUCCESS) {
 					CPRINTS("3Level-Buck enter epr ready");
 					break;
@@ -564,7 +563,7 @@ void enter_epr_mode(void)
 			/* If all retries fail, fallback to PTM mode */
 			if (ret != EC_SUCCESS) {
 				CPRINTS("Buck mode transition failed, reverting to SPR mode");
-				board_confirm_buck_transition_ready(LEVEL_BUCK_SPR);
+				board_confirm_buck_transition_ready(0);
 				return;
 			}
 
@@ -621,7 +620,7 @@ void exit_epr_mode(void)
 
 			/* Try to set to Buck mode, retry up to 5 times */
 			for (int retry = 0; retry < 5; retry++) {
-				ret = board_confirm_buck_transition_ready(LEVEL_BUCK_EXIT_EPR);
+				ret = board_confirm_buck_transition_ready(1);
 				if (ret == EC_SUCCESS) {
 					CPRINTS("3Level-Buck exit epr ready");
 					break;
@@ -672,7 +671,7 @@ void cypd_update_epr_state(int controller, int port, int response_len)
 			/* see epr_event_failure_type*/
 			CPRINTS("EPR failed %d", data[1]);
 			/* EPR fail, switch to PTM mode */
-			board_confirm_buck_transition_ready(LEVEL_BUCK_SPR);
+			board_confirm_buck_transition_ready(0);
 			/* EPR fail, do not retry */
 			pd_port_states[port_idx].epr_active = 0xff;
 		}

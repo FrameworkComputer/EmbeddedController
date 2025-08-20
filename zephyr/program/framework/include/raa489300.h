@@ -29,27 +29,6 @@
 #define RAA489300_REG_MANUFACTURER_ID		0xFE
 #define RAA489300_REG_DEVICE_ID				0xFF
 
-/* Operating Mode [bits 13:12]*/
-#define OPER_MASK						GENMASK(13, 12)
-#define OPER_MODE_OFF					0
-#define OPER_MODE_REVERSE_PTM			(1 << 12)
-#define OPER_MODE_FORWARD_PTM			(2 << 12)
-#define OPER_MODE_FORWARD_BUCK			(3 << 12)
-/* Power State Machine states [bits 11:8] */
-#define PSM_MASK						GENMASK(11, 8)
-#define PSM_RESET_STATE					0
-#define PSM_SLEEP_STATE					(1 << 8)
-#define PSM_PRECHARGE_STATE				(2 << 8)
-#define PSM_READY_STATE					(3 << 8)
-#define PSM_REVERSE_PTM_STATE			(4 << 8)
-#define PSM_FORWARD_SWITCHING_STATE		(5 << 8)
-#define PSM_FORWARD_PTM_STATE			(6 << 8)
-#define PSM_FAULT_LATCHOFF_STATE		(7 << 8)
-#define PSM_RETRY_FAULT_STATE			(8 << 8)
-#define PSM_AUTO_DISCHARGE_STATE		(9 << 8)
-
-#define RAA489300_STATE_MASK		(OPER_MASK | PSM_MASK)
-
 /*
  * VINOK_REFERENCE Register (0x40)
  * MinInputVoltage Register (0x4B)
@@ -65,17 +44,7 @@
 #define AVS_VOLTAGE_STEP_MV 24
 #define AVS_VOLTAGE_MAX 54912
 
-enum level_buck_mode {
-	LEVEL_BUCK_SPR,
-	LEVEL_BUCK_EPR,
-	LEVEL_BUCK_ENTER_EPR,
-	LEVEL_BUCK_EXIT_EPR,
-	LEVEL_BUCK_DC,
-};
-
-int write_level_buck_registers(enum level_buck_mode mode);
-
-int level_buck_check_expected_state(enum level_buck_mode mode);
+int write_level_buck_registers(bool is_epr);
 
 void board_level_buck_update(void);
 

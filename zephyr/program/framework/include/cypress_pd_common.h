@@ -9,7 +9,6 @@
 #define __CROS_EC_CYPRESS_PD_COMMON_H
 
 #include "usb_pd.h"
-#include "raa489300.h"
 
 /* 7 bit address  */
 #define PRODUCT_ID	CONFIG_PD_USB_PID
@@ -992,7 +991,7 @@ void cypd_update_epr_state(int controller, int port, int response_len);
  * @param is_epr	Set to true if transitioning for EPR mode.
  * @return EC_SUCCESS if the transition is ready, error code otherwise.
  */
-__override_proto int board_confirm_buck_transition_ready(enum level_buck_mode mode);
+__override_proto int board_confirm_buck_transition_ready(bool is_epr);
 
 #endif /* CONFIG_PD_CCG8_EPR */
 

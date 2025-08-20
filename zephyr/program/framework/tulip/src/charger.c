@@ -319,7 +319,7 @@ __override void board_check_extpower(void)
 	pre_active_port = pd_active_port;
 }
 
-__override int board_confirm_buck_transition_ready(enum level_buck_mode mode)
+__override int board_confirm_buck_transition_ready(bool is_epr)
 {
 	int rv;
 	int val = 0x0000;
@@ -335,21 +335,23 @@ __override int board_confirm_buck_transition_ready(enum level_buck_mode mode)
 	}
 
 	/* check the regulator has gone to the reset state */
-	if ((val & PSM_MASK) == PSM_RESET_STATE) {
+	if (((val >> 8) & 0xF) == 0)
 		crec_msleep(150);
-	}
 
-	/* attempt to set mode */
-	rv = write_level_buck_registers(mode);
+	rv = write_level_buck_registers(is_epr);
 	if (rv)
 		return rv;
 
-	/* check the regulator is ready */
-	rv = level_buck_check_expected_state(mode);
 
-	if (rv == EC_SUCCESS) {
+	rv = i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+					RAA489300_REG_INFORMATION1, &val);
+	if (rv)
+		return rv;
+
+	if (((val >> 8) & 0x3F) == (is_epr ? 0x35 : 0x26)) {
 		level_buck_set_acok_reference(14500);
+		return EC_SUCCESS;
+	} else {
+		return EC_ERROR_UNKNOWN;
 	}
-
-	return rv;
 }
