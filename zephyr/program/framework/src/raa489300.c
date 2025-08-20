@@ -120,7 +120,6 @@ int write_level_buck_registers(enum level_buck_mode mode)
 			mutex_unlock(&level_buck_mutex);
 			return rv;
 		}
-		crec_msleep(1);
 	}
 
 	mutex_unlock(&level_buck_mutex);
@@ -312,7 +311,7 @@ void level_buck_set_input_current_limit(int ma)
 
 static int raa489300_cmd(int argc, const char **argv)
 {
-	int i, val, mode;
+	int i, val;
 	uint8_t reg;
 	uint16_t value;
 	char *e;
@@ -352,7 +351,9 @@ static int raa489300_cmd(int argc, const char **argv)
 				continue;
 			ccprintf("raa489300 REG 0x%02x:  0x%04x\n", regs[i], val);
 		}
-	} else if (argc >= 4 && !strncmp(argv[1], "set", 3)) {
+	}
+
+	if (argc >= 4 && !strncmp(argv[1], "set", 3)) {
 		reg = strtoi(argv[2], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM1;
@@ -367,18 +368,9 @@ static int raa489300_cmd(int argc, const char **argv)
 		}
 
 		ccprintf("raa489300 REG 0x%02x set to 0x%04x\n", reg, value);
-	} else if (argc == 3 && !strncmp(argv[1], "mode", 3)) {
-		mode = strtoi(argv[2], &e, 0);
-		if (*e)
-			return EC_ERROR_PARAM1;
-
-		write_level_buck_registers(mode);
-		ccprintf("raa489300 set mode %d\n", mode);
-	} else {
-		return EC_ERROR_PARAM_COUNT;
 	}
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(raa489300, raa489300_cmd,
-			"[get | set <reg> <value> | mode <0=SPR,1=EPR,4=DC>]",
-			"Get/set raa489300 register");
+			"raa489300 set/get reg value",
+			"Set/Get raa489300 register");
