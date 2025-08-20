@@ -260,13 +260,19 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 		calculate_ma = (int64_t)charge_ma * 98 / 100;
 	}
 
-	level_buck_ma = charge_ma * 98 / 100;
+	if (charge_mv == 5000 && charge_ma == 500) {
+		/* For GRL 5V/0.5A setting a lower current limit*/
+		level_buck_ma = charge_ma * 80 / 100;
+	} else {
+		level_buck_ma = charge_ma * 98 / 100;
+	}
 
 	/* Skip update current limit if no change in calculated value */
 	if (calculate_ma == prev_calculate_ma)
 		return;
 
-	CPRINTS("Updating charger with EPR correction: ma %d", (int16_t)calculate_ma);
+	CPRINTS("Updating charger with EPR correction: ma %d, 3lvl_buck ma %d",
+			(int16_t)calculate_ma, level_buck_ma);
 
 	if (charge_ma < prev_charge_ma) {
 		/* adjusting the limit down */
