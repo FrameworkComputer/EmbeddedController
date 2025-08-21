@@ -64,11 +64,12 @@
  * sudo screen -c ${HOME}/.screenrc /dev/pts/NN 115200
  *
  */
-test_export_static enum ec_error_list upload_pgm_image(uint8_t *frame,
-						       uint8_t bpp)
+test_export_static enum ec_error_list
+upload_pgm_image(uint8_t *frame,
+		 const struct fp_image_frame_params &image_frame_params)
 {
 	uint8_t *ptr = frame;
-	uint8_t bytes_per_pixel = DIV_ROUND_UP(bpp, 8);
+	uint8_t bytes_per_pixel = DIV_ROUND_UP(image_frame_params.bpp, 8);
 
 	if (bytes_per_pixel != 1 && bytes_per_pixel != 2) {
 		return EC_ERROR_UNKNOWN;
@@ -79,12 +80,13 @@ test_export_static enum ec_error_list upload_pgm_image(uint8_t *frame,
 	crec_msleep(2000); /* let the download program start */
 
 	/* Print 8-bpp or 16-bpp PGM ASCII header */
-	CPRINTF("P2\n%d %d\n%d\n", FP_SENSOR_RES_X, FP_SENSOR_RES_Y,
+	CPRINTF("P2\n%d %d\n%d\n", image_frame_params.width,
+		image_frame_params.height,
 		(bytes_per_pixel == 2) ? 65535 : 255);
 
-	for (int y = 0; y < FP_SENSOR_RES_Y; y++) {
+	for (int y = 0; y < image_frame_params.height; y++) {
 		watchdog_reload();
-		for (int x = 0; x < FP_SENSOR_RES_X;
+		for (int x = 0; x < image_frame_params.width;
 		     x++, ptr += bytes_per_pixel) {
 			CPRINTF("%d ", (bytes_per_pixel == 2) ?
 					       *(uint16_t *)ptr :
@@ -126,20 +128,7 @@ static enum ec_error_list fp_console_action(uint32_t mode)
 	return EC_ERROR_TIMEOUT;
 }
 
-test_export_static uint8_t get_sensor_bpp(void)
-{
-#if defined(HAVE_FP_PRIVATE_DRIVER) || defined(BOARD_HOST)
-	ec_response_fp_info info;
-	if (fp_sensor_get_info(&info) < 0) {
-		return EC_ERROR_UNKNOWN;
-	}
-	return info.bpp;
-#else
-	return EC_ERROR_UNKNOWN;
-#endif
-}
-
-__maybe_unused test_export_static int
+test_export_static int
 get_image_frame_params(struct fp_image_frame_params &image_frame_params)
 {
 #if defined(HAVE_FP_PRIVATE_DRIVER) || defined(BOARD_HOST)
@@ -186,9 +175,17 @@ static int command_fpcapture(int argc, const char **argv)
 			       FP_MODE_CAPTURE_TYPE_MASK);
 
 	const enum ec_error_list rc = fp_console_action(mode);
-	if (rc == EC_SUCCESS)
+	if (rc == EC_SUCCESS) {
+		struct fp_image_frame_params image_frame_params{};
+		int ret = get_image_frame_params(image_frame_params);
+		if (ret != EC_RES_SUCCESS) {
+			CPRINTF("Failed to get image frame params, error: %d\n",
+				ret);
+			return ret;
+		}
 		return upload_pgm_image(fp_buffer + FP_SENSOR_IMAGE_OFFSET,
-					get_sensor_bpp());
+					image_frame_params);
+	}
 
 	return rc;
 }
@@ -243,8 +240,14 @@ static int command_fpdownload(int argc, const char **argv)
 	if (system_is_locked())
 		return EC_ERROR_ACCESS_DENIED;
 
+	struct fp_image_frame_params image_frame_params{};
+	int ret = get_image_frame_params(image_frame_params);
+	if (ret != EC_RES_SUCCESS) {
+		CPRINTF("Failed to get image frame params, error: %d\n", ret);
+		return ret;
+	}
 	return upload_pgm_image(fp_buffer + FP_SENSOR_IMAGE_OFFSET,
-				get_sensor_bpp());
+				image_frame_params);
 }
 DECLARE_CONSOLE_COMMAND(fpdownload, command_fpdownload, nullptr,
 			"Copy fp image from fpmcu fpsensor buffer");
