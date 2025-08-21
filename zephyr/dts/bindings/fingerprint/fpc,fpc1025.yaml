@@ -6,7 +6,7 @@ description: FPC1025 fingerprint sensor
 
 compatible: "fpc,fpc1025"
 
-include: [spi-device.yaml, fingerprint-sensor.yaml]
+include: [spi-device.yaml]
 
 properties:
   irq-gpios:

@@ -1,0 +1,58 @@
+# Copyright 2025 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+  Image frame parameters for a single fingerprint sensor
+  configuration.
+
+compatible: "fingerprint-image-frame-params"
+
+child-binding:
+  properties:
+    width:
+      type: int
+      required: true
+      description: Fingerprint sensor width in pixels for this mode.
+
+    height:
+      type: int
+      required: true
+      description: Fingerprint sensor height in pixels for this mode.
+
+    bits-per-pixel:
+      type: int
+      required: true
+      description: Pixel resolution in bits for this mode.
+
+    frame-size:
+      type: int
+      required: true
+      description: Frame size (bytes) of captured fingerprint image.
+
+    v4l2-pixel-format:
+      type: string
+      required: true
+      enum:
+        # Grey-scale image. It's a Y'CbCr format which contains no Cb or Cr data.
+        # https://docs.kernel.org/userspace-api/media/v4l/pixfmt-yuv-luma.html
+        - V4L2_PIX_FMT_GREY
+      description: |
+        Video4Linux2 pixel format type for this mode.
+        See https://docs.kernel.org/userspace-api/media/v4l/pixfmt.html
+
+    capture-type:
+      type: string
+      required: true
+      description: |
+        Type of image capture.
+      enum:
+        - FINGERPRINT_CAPTURE_TYPE_VENDOR_FORMAT
+        - FINGERPRINT_CAPTURE_TYPE_DEFECT_PXL_TEST
+        - FINGERPRINT_CAPTURE_TYPE_ABNORMAL_TEST
+        - FINGERPRINT_CAPTURE_TYPE_NOISE_TEST
+        - FINGERPRINT_CAPTURE_TYPE_SIMPLE_IMAGE
+        - FINGERPRINT_CAPTURE_TYPE_PATTERN0
+        - FINGERPRINT_CAPTURE_TYPE_PATTERN1
+        - FINGERPRINT_CAPTURE_TYPE_QUALITY_TEST
+        - FINGERPRINT_CAPTURE_TYPE_RESET_TEST

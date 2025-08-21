@@ -6,7 +6,7 @@ description: EGIS630 fingerprint sensor
 
 compatible: "egis,egis630"
 
-include: [spi-device.yaml, fingerprint-sensor.yaml]
+include: [spi-device.yaml]
 
 properties:
   irq-gpios:

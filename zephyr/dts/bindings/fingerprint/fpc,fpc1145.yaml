@@ -6,7 +6,7 @@ description: FPC1145 fingerprint sensor
 
 compatible: "fpc,fpc1145"
 
-include: [spi-device.yaml, fingerprint-sensor.yaml]
+include: [spi-device.yaml]
 
 properties:
   irq-gpios:

@@ -5,5 +5,3 @@
 description: Fingerprint sensor simulator
 
 compatible: "cros-ec,fingerprint-sensor-sim"
-
-include: fingerprint-sensor.yaml
