@@ -48,8 +48,12 @@ int __unused fpc_sensor_spi_write_read(uint8_t *write, uint8_t *read,
 	 * CS asserted when size is real image size.
 	 */
 	if (leave_cs_asserted &&
+	    /*
+	     * For FPC all of the configs have the same image size, so just
+	     * choose index 0.
+	     */
 	    size == FINGERPRINT_SENSOR_REAL_IMAGE_SIZE(
-			    DT_CHOSEN(cros_fp_fingerprint_sensor))) {
+			    0, DT_CHOSEN(cros_fp_fingerprint_sensor))) {
 		LOG_WRN("FPC library asked to keep CS asserted when size of "
 			"the buffer is FP_SENSOR_REAL_IMAGE_SIZE");
 	}

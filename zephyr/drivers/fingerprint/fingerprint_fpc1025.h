@@ -15,7 +15,8 @@ struct fpc1025_cfg {
 	struct spi_dt_spec spi;
 	struct gpio_dt_spec interrupt;
 	struct gpio_dt_spec reset_pin;
-	struct fingerprint_info info;
+	struct fingerprint_sensor_info sensor_info;
+	struct fingerprint_image_frame_params sensor_image_configs[];
 };
 
 struct fpc1025_data {
