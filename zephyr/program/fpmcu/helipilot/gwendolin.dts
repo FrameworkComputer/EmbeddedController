@@ -9,6 +9,20 @@
 
 #include <cros/integrated_fwid.dtsi>
 
+#define EGIG630_DEFAULT_IMAGE_PROPS \
+	width = <80>; \
+	height = <64>; \
+	bits-per-pixel = <8>; \
+	frame-size = <5120>; \
+	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+
+#define EGIG630_TEST_IMAGE_PROPS \
+	width = <80>; \
+	height = <64>; \
+	bits-per-pixel = <16>; \
+	frame-size = <10240>; \
+	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+
 / {
 	chosen {
 		cros-fp,fingerprint-sensor = &fp_sensor;
@@ -133,10 +147,37 @@
 		reg = <0>;
 		spi-max-frequency = <4000000>;
 
-		width = <80>;
-		height = <64>;
-		bits-per-pixel = <8>;
-		v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+		configs {
+			compatible = "fingerprint-image-frame-params";
+			config0 {
+				EGIG630_DEFAULT_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_SIMPLE_IMAGE";
+			};
+			config1 {
+				EGIG630_TEST_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN0";
+			};
+			config2 {
+				EGIG630_TEST_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN1";
+			};
+			config3 {
+				EGIG630_TEST_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_DEFECT_PXL_TEST";
+			};
+			config4 {
+				EGIG630_TEST_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_ABNORMAL_TEST";
+			};
+			config5 {
+				EGIG630_TEST_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_NOISE_TEST";
+			};
+			config6 {
+				EGIG630_TEST_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_QUALITY_TEST";
+			};
+		};
 
 		irq-gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>;
 		reset-gpios = <&gpio9 6 GPIO_ACTIVE_LOW>;
