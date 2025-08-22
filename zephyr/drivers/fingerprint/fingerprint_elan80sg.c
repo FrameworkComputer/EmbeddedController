@@ -15,6 +15,7 @@
 #include <zephyr/drivers/spi.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/pm/device.h>
+#include <zephyr/sys/util.h>
 
 #include <drivers/fingerprint.h>
 #include <fingerprint/v4l2_types.h>
@@ -155,21 +156,45 @@ static int elan80sg_deinit(const struct device *dev)
 	return 0;
 }
 
-static int elan80sg_get_info(const struct device *dev,
-			     struct fingerprint_info *info)
+static int elan80sg_get_info(
+	const struct device *dev, struct fingerprint_sensor_info *sensor_info,
+	struct fingerprint_image_frame_params image_frame_params_array[],
+	uint8_t *num_params)
 {
 	const struct elan80sg_cfg *cfg = dev->config;
 	struct elan80sg_data *data = dev->data;
 	uint16_t id = 0;
 
-	memcpy(info, &cfg->info, sizeof(struct fingerprint_info));
+	if (sensor_info == NULL || num_params == NULL ||
+	    image_frame_params_array == NULL) {
+		return -EINVAL;
+	}
+
+	uint8_t capacity = *num_params;
+	uint8_t num_defined_configs = cfg->sensor_info.num_capture_types;
+
+	if (capacity < num_defined_configs) {
+		return -EINVAL;
+	}
+
+	BUILD_ASSERT(sizeof(cfg->sensor_info) == sizeof(*sensor_info),
+		     "struct fingerprint_sensor_info size mismatch");
+
+	memcpy(sensor_info, &cfg->sensor_info,
+	       sizeof(struct fingerprint_sensor_info));
+
+	memcpy(image_frame_params_array, cfg->sensor_image_configs,
+	       num_defined_configs *
+		       sizeof(struct fingerprint_image_frame_params));
+
+	*num_params = num_defined_configs;
 
 	if (elan80sg_get_hwid(dev, &id)) {
 		return -EINVAL;
 	}
 
-	info->model_id = id;
-	info->errors = data->errors;
+	sensor_info->model_id = id;
+	sensor_info->errors = data->errors;
 
 	return 0;
 }
@@ -392,37 +417,58 @@ static int elan80sg_init_driver(const struct device *dev)
 	return 0;
 }
 
-#define ELAN80SG_SENSOR_INFO(inst)                                     \
-	{                                                              \
-		.vendor_id = FOURCC('E', 'L', 'A', 'N'),               \
-		.product_id = PID,                                     \
-		.model_id = MID,                                       \
-		.version = VERSION,                                    \
-		.frame_size = CONFIG_FINGERPRINT_SENSOR_IMAGE_SIZE,    \
-		.pixel_format = FINGERPRINT_SENSOR_V4L2_PIXEL_FORMAT(  \
-			DT_DRV_INST(inst)),                            \
-		.width = FINGERPRINT_SENSOR_RES_X(DT_DRV_INST(inst)),  \
-		.height = FINGERPRINT_SENSOR_RES_Y(DT_DRV_INST(inst)), \
-		.bpp = FINGERPRINT_SENSOR_RES_BPP(DT_DRV_INST(inst)),  \
+#define ELAN80SG_SENSOR_INFO(inst)                                         \
+	{                                                                  \
+		.vendor_id = FOURCC('E', 'L', 'A', 'N'),                   \
+		.product_id = PID,                                         \
+		.model_id = MID,                                           \
+		.version = VERSION,                                        \
+		.num_capture_types =                                       \
+			FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)), \
 	}
 
-#define ELAN80SG_DEFINE(inst)                                                  \
-	static struct elan80sg_data elan80sg_data_##inst;                      \
-	static const struct elan80sg_cfg elan80sg_cfg_##inst = {               \
-		.spi = SPI_DT_SPEC_INST_GET(                                   \
-			inst, SPI_OP_MODE_MASTER | SPI_WORD_SET(8), 0),        \
-		.interrupt = GPIO_DT_SPEC_INST_GET(inst, irq_gpios),           \
-		.reset_pin = GPIO_DT_SPEC_INST_GET(inst, reset_gpios),         \
-		.info = ELAN80SG_SENSOR_INFO(inst),                            \
-	};                                                                     \
+#define ELAN80SG_IMAGE_PARAM_INITIALIZER(idx, inst)                            \
+	{                                                                      \
+		.frame_size =                                                  \
+			FINGERPRINT_SENSOR_FRAME_SIZE(idx, DT_DRV_INST(inst)), \
+		.pixel_format = FINGERPRINT_SENSOR_V4L2_PIXEL_FORMAT(          \
+			idx, DT_DRV_INST(inst)),                               \
+		.width = FINGERPRINT_SENSOR_RES_X(idx, DT_DRV_INST(inst)),     \
+		.height = FINGERPRINT_SENSOR_RES_Y(idx, DT_DRV_INST(inst)),    \
+		.bpp = FINGERPRINT_SENSOR_RES_BPP(idx, DT_DRV_INST(inst)),     \
+		.fp_capture_type = FINGERPRINT_SENSOR_CAPTURE_TYPE(            \
+			idx, DT_DRV_INST(inst)),                               \
+		.reserved = 0,                                                 \
+	}
+
+#define ELAN80SG_BUILD_ASSERT_IMAGE_SIZE(idx, inst)                            \
 	BUILD_ASSERT(                                                          \
 		CONFIG_FINGERPRINT_SENSOR_IMAGE_SIZE >=                        \
-			FINGERPRINT_SENSOR_REAL_IMAGE_SIZE(DT_DRV_INST(inst)), \
-		"FP image buffer size is smaller than raw image size");        \
-	DEVICE_DT_INST_DEFINE(inst, elan80sg_init_driver, NULL,                \
-			      &elan80sg_data_##inst, &elan80sg_cfg_##inst,     \
-			      POST_KERNEL,                                     \
-			      CONFIG_FINGERPRINT_SENSOR_INIT_PRIORITY,         \
+			FINGERPRINT_SENSOR_FRAME_SIZE(idx, DT_DRV_INST(inst)), \
+		"FP image buffer size smaller than raw image size at index " #idx);
+
+#define ELAN80SG_DEFINE(inst)                                                         \
+	static struct elan80sg_data elan80sg_data_##inst;                             \
+	static const struct elan80sg_cfg elan80sg_cfg_##inst = {                      \
+		.spi = SPI_DT_SPEC_INST_GET(                                          \
+			inst, SPI_OP_MODE_MASTER | SPI_WORD_SET(8), 0),               \
+		.interrupt = GPIO_DT_SPEC_INST_GET(inst, irq_gpios),                  \
+		.reset_pin = GPIO_DT_SPEC_INST_GET(inst, reset_gpios),                \
+		.sensor_info = ELAN80SG_SENSOR_INFO(inst),                            \
+		.sensor_image_configs = { LISTIFY(                                    \
+			FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)),            \
+			ELAN80SG_IMAGE_PARAM_INITIALIZER, (, ), inst) },              \
+	};                                                                            \
+	LISTIFY(FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)),                    \
+		ELAN80SG_BUILD_ASSERT_IMAGE_SIZE, (;), inst)                          \
+	BUILD_ASSERT(                                                                 \
+		FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)) <=                  \
+			NUM_IMAGE_CAPTURE_TYPES,                                      \
+		"ELAN80SG: Number of image configs exceeds NUM_IMAGE_CAPTURE_TYPES"); \
+	DEVICE_DT_INST_DEFINE(inst, elan80sg_init_driver, NULL,                       \
+			      &elan80sg_data_##inst, &elan80sg_cfg_##inst,            \
+			      POST_KERNEL,                                            \
+			      CONFIG_FINGERPRINT_SENSOR_INIT_PRIORITY,                \
 			      &cros_fp_elan80sg_driver_api)
 
 DT_INST_FOREACH_STATUS_OKAY(ELAN80SG_DEFINE);

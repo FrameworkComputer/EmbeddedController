@@ -9,6 +9,13 @@
 
 #include <cros/integrated_fwid.dtsi>
 
+#define ELAN80SG_COMMON_IMAGE_PROPS \
+	width = <80>; \
+	height = <80>; \
+	bits-per-pixel = <14>; \
+	frame-size = <12800>; \
+	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+
 / {
 	chosen {
 		cros-fp,fingerprint-sensor = &fp_sensor;
@@ -133,10 +140,33 @@
 		reg = <0>;
 		spi-max-frequency = <4000000>;
 
-		width = <80>;
-		height = <80>;
-		bits-per-pixel = <16>;
-		v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+		configs {
+			compatible = "fingerprint-image-frame-params";
+			config0 {
+				ELAN80SG_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_VENDOR_FORMAT";
+			};
+			config1 {
+				ELAN80SG_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_SIMPLE_IMAGE";
+			};
+			config2 {
+				ELAN80SG_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN0";
+			};
+			config3 {
+				ELAN80SG_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN1";
+			};
+			config4 {
+				ELAN80SG_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_QUALITY_TEST";
+			};
+			config5 {
+				ELAN80SG_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_RESET_TEST";
+			};
+		};
 
 		irq-gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>;
 		reset-gpios = <&gpio9 6 GPIO_ACTIVE_LOW>;
