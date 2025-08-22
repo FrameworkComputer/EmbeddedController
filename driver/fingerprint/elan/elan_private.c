@@ -27,21 +27,6 @@
 static uint16_t errors;
 
 /* Sensor description */
-static struct ec_response_fp_info ec_fp_sensor_info = {
-	/* Sensor identification */
-	.vendor_id = FOURCC('E', 'L', 'A', 'N'),
-	.product_id = PID,
-	.model_id = MID,
-	.version = VERSION,
-	/* Image frame characteristics */
-	.frame_size = FP_SENSOR_RES_X_ELAN * FP_SENSOR_RES_Y_ELAN * 2,
-	.pixel_format = V4L2_PIX_FMT_GREY,
-	.width = FP_SENSOR_RES_X_ELAN,
-	.height = FP_SENSOR_RES_Y_ELAN,
-	.bpp = FP_SENSOR_RES_BPP_ELAN,
-};
-
-/* Sensor description */
 static struct fp_sensor_info elan_sensor_info = {
 	/* Sensor identification */
 	.vendor_id = FOURCC('E', 'L', 'A', 'N'),
@@ -192,31 +177,14 @@ int fp_sensor_deinit(void)
 }
 
 /**
- * Fill the 'ec_response_fp_info' buffer with the sensor information
+ * Fill the 'ec_response_fp_info_v2' buffer with the sensor information
  *
- * @param[out] resp      retrieve the version, sensor and template information
+ * @param[out] resp retrieve the version, sensor and template information
  *
  * @return EC_SUCCESS on success.
  * @return EC_RES_ERROR on error.
  */
-int fp_sensor_get_info(struct ec_response_fp_info *resp)
-{
-	uint16_t id = 0;
-
-	CPRINTF("========%s=======\n", __func__);
-	memcpy(resp, &ec_fp_sensor_info, sizeof(struct ec_response_fp_info));
-
-	if (elan_get_hwid(&id)) {
-		return EC_RES_ERROR;
-	}
-
-	resp->model_id = id;
-	resp->errors = errors;
-
-	return EC_SUCCESS;
-}
-
-int fp_sensor_get_info_v2(struct ec_response_fp_info_v2 *resp, size_t resp_size)
+int fp_sensor_get_info(struct ec_response_fp_info_v2 *resp, size_t resp_size)
 {
 	CPRINTF("========%s=======\n", __func__);
 

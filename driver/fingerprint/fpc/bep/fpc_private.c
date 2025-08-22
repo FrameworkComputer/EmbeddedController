@@ -42,21 +42,6 @@ __staticlib const char *fp_sensor_get_version(void);
 __staticlib const char *fp_sensor_get_build_info(void);
 
 /* Sensor description */
-static struct ec_response_fp_info ec_fp_sensor_info = {
-	/* Sensor identification */
-	.vendor_id = FOURCC('F', 'P', 'C', ' '),
-	.product_id = 9,
-	.model_id = 1,
-	.version = 1,
-	/* Image frame characteristics */
-	.frame_size = FP_SENSOR_IMAGE_SIZE_FPC,
-	.pixel_format = V4L2_PIX_FMT_GREY,
-	.width = FP_SENSOR_RES_X_FPC,
-	.height = FP_SENSOR_RES_Y_FPC,
-	.bpp = FP_SENSOR_RES_BPP_FPC,
-};
-
-/* Sensor description */
 static struct fp_sensor_info fpc1025_sensor_info = {
 	/* Sensor identification */
 	.vendor_id = FOURCC('F', 'P', 'C', ' '),
@@ -300,22 +285,7 @@ int fp_sensor_deinit(void)
 	return rc;
 }
 
-int fp_sensor_get_info(struct ec_response_fp_info *resp)
-{
-	uint16_t sensor_id;
-
-	memcpy(resp, &ec_fp_sensor_info, sizeof(struct ec_response_fp_info));
-
-	if (fpc_get_hwid(&sensor_id))
-		return EC_RES_ERROR;
-
-	resp->model_id = sensor_id;
-	resp->errors = errors;
-
-	return EC_SUCCESS;
-}
-
-int fp_sensor_get_info_v2(struct ec_response_fp_info_v2 *resp, size_t resp_size)
+int fp_sensor_get_info(struct ec_response_fp_info_v2 *resp, size_t resp_size)
 {
 	if (sizeof(struct ec_response_fp_info_v2) +
 		    sizeof(fpc1025_image_frame_params) >

@@ -138,7 +138,7 @@ get_image_frame_params(struct fp_image_frame_params &image_frame_params)
 	std::vector<uint8_t> buffer(fp_sensor_get_info_v2_size);
 	auto *info = reinterpret_cast<ec_response_fp_info_v2 *>(buffer.data());
 
-	if (fp_sensor_get_info_v2(info, buffer.size()) < 0) {
+	if (fp_sensor_get_info(info, buffer.size()) < 0) {
 		return EC_ERROR_UNKNOWN;
 	}
 
@@ -294,41 +294,6 @@ DECLARE_CONSOLE_COMMAND(fpenroll, command_fpenroll, nullptr,
 
 static int command_fpinfo(int argc, const char **argv)
 {
-	ec_response_fp_info info;
-
-#if defined(HAVE_FP_PRIVATE_DRIVER) || defined(BOARD_HOST)
-	if (fp_sensor_get_info(&info) < 0)
-		return EC_ERROR_UNKNOWN;
-#else
-	return EC_ERROR_UNKNOWN;
-#endif
-
-	constexpr int align = 15;
-
-	ccprintf("%*s: 0x%X (%s)\n", align, "Vendor ID", info.vendor_id,
-		 fourcc_to_string(info.vendor_id).c_str());
-	ccprintf("%*s: 0x%X\n", align, "Product ID", info.product_id);
-	ccprintf("%*s: 0x%X\n", align, "Model ID", info.model_id);
-	ccprintf("%*s: 0x%X\n", align, "Version", info.version);
-
-	ccprintf("%*s: %u x %u %ubpp\n", align, "Sensor (w x h)", info.width,
-		 info.height, info.bpp);
-	ccprintf("%*s: %u\n", align, "Frame Size", info.frame_size);
-	ccprintf("%*s: 0x%X (%s)\n", align, "Pixel Format", info.pixel_format,
-		 fourcc_to_string(info.pixel_format).c_str());
-
-	ccprintf("%*s: 0x%X\n", align, "Error State", info.errors);
-
-	ccprintf("%*s: %s\n", align, "Sensor Strap",
-		 fp_sensor_type_to_str(fpsensor_detect_get_type()));
-
-	return EC_SUCCESS;
-}
-DECLARE_SAFE_CONSOLE_COMMAND(fpinfo, command_fpinfo, nullptr,
-			     "Print fingerprint system info");
-
-static int command_fpinfo_v2(int argc, const char **argv)
-{
 #if defined(HAVE_FP_PRIVATE_DRIVER) || defined(BOARD_HOST)
 	size_t fp_sensor_get_info_v2_size =
 		sizeof(struct ec_response_fp_info_v2) +
@@ -336,7 +301,7 @@ static int command_fpinfo_v2(int argc, const char **argv)
 	std::vector<uint8_t> buffer(fp_sensor_get_info_v2_size);
 	auto *info = reinterpret_cast<ec_response_fp_info_v2 *>(buffer.data());
 
-	if (fp_sensor_get_info_v2(info, fp_sensor_get_info_v2_size) < 0) {
+	if (fp_sensor_get_info(info, buffer.size()) < 0) {
 		ccprintf("Failed to get fp_info_v2\n");
 		return EC_ERROR_UNKNOWN;
 	}
@@ -374,11 +339,11 @@ static int command_fpinfo_v2(int argc, const char **argv)
 
 	return EC_SUCCESS;
 #else
-	ccprintf("fpinfo2 command not supported on this firmware.\n");
+	ccprintf("fpinfo command not supported on this firmware.\n");
 	return EC_ERROR_UNKNOWN;
 #endif
 }
-DECLARE_SAFE_CONSOLE_COMMAND(fpinfo2, command_fpinfo_v2, nullptr,
+DECLARE_SAFE_CONSOLE_COMMAND(fpinfo, command_fpinfo, nullptr,
 			     "Print fingerprint system info");
 
 static int command_fpmatch(int argc, const char **argv)

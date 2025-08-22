@@ -84,20 +84,6 @@ int fp_sensor_init(void);
 int fp_sensor_deinit(void);
 
 /**
- * Fill the @p ec_response_fp_info buffer with the sensor information
- * as required by the EC_CMD_FP_INFO host command.
- *
- * Fills both the static information and information read from the sensor at
- * runtime such as sensor_id, errors, etc.
- *
- * @param[out] resp sensor info
- *
- * @return EC_SUCCESS on success
- * @return EC_RES_ERROR on error
- */
-int fp_sensor_get_info(struct ec_response_fp_info *resp);
-
-/**
  * Fill the @p ec_response_fp_info_v2 buffer with the sensor information
  * as required by the EC_CMD_FP_INFO host command.
  *
@@ -110,8 +96,7 @@ int fp_sensor_get_info(struct ec_response_fp_info *resp);
  * @return EC_SUCCESS on success
  * @return EC_RES_ERROR on error
  */
-int fp_sensor_get_info_v2(struct ec_response_fp_info_v2 *resp,
-			  size_t resp_size);
+int fp_sensor_get_info(struct ec_response_fp_info_v2 *resp, size_t resp_size);
 
 /**
  * Put the sensor in its lowest power state.
