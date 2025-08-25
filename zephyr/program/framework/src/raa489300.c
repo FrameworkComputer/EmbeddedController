@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "battery.h"
 #include "console.h"
 #include "cypress_pd_common.h"
 #include "extpower.h"
@@ -16,6 +17,7 @@
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
 static int pd_voltage;
+static int target_mode = -1;
 
 static K_MUTEX_DEFINE(level_buck_mutex);
 
@@ -25,19 +27,41 @@ struct reg_val {
 };
 
 static const struct reg_val spr_values[] = {
-	{RAA489300_REG_OUTPUT_CURRENT_LIMIT, 0x1580},
+	{RAA489300_REG_OUTPUT_CURRENT_LIMIT, 0x1580}, /* 5.5A */
 	{RAA489300_REG_CONTROL5, 0x0801},
 	{RAA489300_REG_CONTROL2, 0x2B10},
 	{RAA489300_REG_CONTROL1, 0x80A0},
 	{RAA489300_REG_CONTROL4, 0x0140},
 	{RAA489300_REG_CONTROL3, 0x1001},
-	{RAA489300_REG_OUTPUT_VOLTAGE, 0x3410},
+	{RAA489300_REG_OUTPUT_VOLTAGE, 0x3410}, /* 20V */
 	{RAA489300_REG_CONTROL0, 0x5003},
 };
 
 static const struct reg_val epr_values[] = {
-	{RAA489300_REG_OUTPUT_CURRENT_LIMIT, 0x1B58},
-	{RAA489300_REG_OUTPUT_VOLTAGE, 0x2EE0},
+	{RAA489300_REG_OUTPUT_CURRENT_LIMIT, 0x1B58}, /* 7A */
+	{RAA489300_REG_CONTROL5, 0x0001},
+	{RAA489300_REG_CONTROL2, 0x2B10},
+	{RAA489300_REG_CONTROL1, 0x80A4},
+	{RAA489300_REG_CONTROL4, 0x0140},
+	{RAA489300_REG_CONTROL3, 0x1001},
+	{RAA489300_REG_OUTPUT_VOLTAGE, 0x3e80}, /* 24V */
+	{RAA489300_REG_CONTROL0, 0x5001},
+};
+
+static const struct reg_val enter_epr_values[] = {
+	{RAA489300_REG_OUTPUT_CURRENT_LIMIT, 0x1B58}, /* 7A */
+	{RAA489300_REG_OUTPUT_VOLTAGE, 0x2EE0},	/* 18V */
+	{RAA489300_REG_CONTROL5, 0x0801},
+	{RAA489300_REG_CONTROL2, 0x2B90},
+	{RAA489300_REG_CONTROL1, 0x80A4},
+	{RAA489300_REG_CONTROL4, 0x0140},
+	{RAA489300_REG_CONTROL3, 0x1001},
+	{RAA489300_REG_CONTROL0, 0x5001},
+};
+
+static const struct reg_val exit_epr_values[] = {
+	{RAA489300_REG_OUTPUT_CURRENT_LIMIT, 0x1B58}, /* 7A */
+	{RAA489300_REG_OUTPUT_VOLTAGE, 0x2EE0}, /* 18V */
 	{RAA489300_REG_CONTROL5, 0x0001},
 	{RAA489300_REG_CONTROL2, 0x2B10},
 	{RAA489300_REG_CONTROL1, 0x80A4},
@@ -46,27 +70,13 @@ static const struct reg_val epr_values[] = {
 	{RAA489300_REG_CONTROL0, 0x5001},
 };
 
-static int level_buck_set_output_voltage(int mv)
-{
-	uint16_t reg_value = 0;
+static const struct reg_val dc_values[] = {
+	{RAA489300_REG_CONTROL3, 0x1000},
+	{RAA489300_REG_CONTROL2, 0x0B00},
+	{RAA489300_REG_CONTROL0, 0x0000},
+};
 
-	if (mv > AVS_VOLTAGE_MAX) {
-		mv = AVS_VOLTAGE_MAX;
-	}
-
-	if (mv > PPS_VOLTAGE_MAX) {
-		/* AVS mode */
-		reg_value = ((mv / AVS_VOLTAGE_STEP_MV) << 4);
-	} else {
-		/* PPS mode */
-		reg_value = ((mv / PPS_VOLTAGE_STEP_MV) << 3);
-	}
-
-	return i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
-				RAA489300_REG_OUTPUT_VOLTAGE, reg_value);
-}
-
-int write_level_buck_registers(bool is_epr)
+int write_level_buck_registers(enum level_buck_mode mode)
 {
 	int rv;
 	const struct reg_val *reg_values;
@@ -74,12 +84,30 @@ int write_level_buck_registers(bool is_epr)
 
 	mutex_lock(&level_buck_mutex);
 
-	if (is_epr) {
-		reg_values = epr_values;
-		size = ARRAY_SIZE(epr_values);
-	} else {
+	switch (mode) {
+	case LEVEL_BUCK_SPR:
 		reg_values = spr_values;
 		size = ARRAY_SIZE(spr_values);
+		break;
+	case LEVEL_BUCK_EPR:
+		reg_values = epr_values;
+		size = ARRAY_SIZE(epr_values);
+		break;
+	case LEVEL_BUCK_ENTER_EPR:
+		reg_values = enter_epr_values;
+		size = ARRAY_SIZE(enter_epr_values);
+		break;
+	case LEVEL_BUCK_EXIT_EPR:
+		reg_values = exit_epr_values;
+		size = ARRAY_SIZE(exit_epr_values);
+		break;
+	case LEVEL_BUCK_DC:
+		reg_values = dc_values;
+		size = ARRAY_SIZE(dc_values);
+		break;
+	default:
+		mutex_unlock(&level_buck_mutex);
+		return EC_ERROR_INVAL;
 	}
 
 	for (size_t i = 0; i < size; i++) {
@@ -92,7 +120,6 @@ int write_level_buck_registers(bool is_epr)
 			mutex_unlock(&level_buck_mutex);
 			return rv;
 		}
-		crec_msleep(2);
 	}
 
 	mutex_unlock(&level_buck_mutex);
@@ -105,82 +132,139 @@ DECLARE_DEFERRED(level_buck_switch_spr);
 static void level_buck_switch_epr(void);
 DECLARE_DEFERRED(level_buck_switch_epr);
 
-static void configure_buck_mode(bool is_epr)
+int level_buck_check_expected_state(enum level_buck_mode mode)
 {
+	int rv;
+	int val = 0x0000;
+	uint16_t expected;
+
+	rv = i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+			RAA489300_REG_INFORMATION1, &val);
+
+	if (rv)
+		return rv;
+
+	if (mode == LEVEL_BUCK_DC) {
+		/* DC mode [11:8]=0001 */
+		expected = PSM_SLEEP_STATE;
+	} else if (mode == LEVEL_BUCK_SPR) {
+		/* PTM mode [13:12]=10, [11:8]=0110 */
+		expected = OPER_MODE_FORWARD_PTM | PSM_FORWARD_PTM_STATE;
+	} else {
+		/* BUCK mode [13:12]=11, [11:8]=0101 */
+		expected = OPER_MODE_FORWARD_BUCK | PSM_FORWARD_SWITCHING_STATE;
+	}
+
+	/* Check whether the state machine status is as expected */
+	if ((val & RAA489300_STATE_MASK) == expected) {
+		CPRINTS("3Level-Buck is %s mode", mode == LEVEL_BUCK_DC  ? "DC" :
+			mode == LEVEL_BUCK_SPR ? "PTM" : "BUCK");
+		return EC_SUCCESS;
+	}
+
+	return EC_ERROR_INVAL;
+}
+
+static void configure_buck_mode(enum level_buck_mode mode)
+{
+	int rv;
 	int val = 0x0000;
 
-	if (is_epr) {
-		if ((!extpower_is_present()) || (pd_voltage <= 20000))
+	/*
+	 * Early exit if the system state does not match the requested mode.
+	 *
+	 * - SPR mode: only valid if AC is present and PD voltage <= 20V
+	 * - EPR mode: only valid if PD voltage > 20V
+	 * - DC mode:  only valid if AC is not present
+	 */
+	switch (mode) {
+	case LEVEL_BUCK_SPR:
+		if ((!extpower_is_present()) || pd_voltage > 20000)
 			return;
-	} else {
-		if (pd_voltage > 20000)
+		break;
+	case LEVEL_BUCK_EPR:
+		if (pd_voltage <= 20000)
 			return;
+		break;
+	case LEVEL_BUCK_DC:
+		if (extpower_is_present())
+			return;
+		break;
+	default:
+		break;
 	}
 
 	if (i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
 		RAA489300_REG_INFORMATION1, &val)) {
-		CPRINTS("3Level-Buck not ready");
-		hook_call_deferred(is_epr ? &level_buck_switch_epr_data :
-				   &level_buck_switch_spr_data, 500 * MSEC);
+		CPRINTS("3Level-Buck read register fail");
 		return;
 	}
 
 	/* check the regulator has gone to the reset state */
-	if (((val >> 8) & 0xF) == 0)
+	if ((val & PSM_MASK) == PSM_RESET_STATE) {
 		crec_msleep(150);
+	}
 
-	if (write_level_buck_registers(is_epr)) {
+	/* attempt to set mode */
+	if (write_level_buck_registers(mode)) {
 		return;
 	}
 
 	mutex_lock(&level_buck_mutex);
 
-	if (is_epr) {
-		if (level_buck_set_output_voltage(24000))
-			goto unlock;
-	}
+	/* check the regulator is ready */
+	rv = level_buck_check_expected_state(mode);
 
-	if (i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
-		RAA489300_REG_INFORMATION1, &val)) {
-		CPRINTS("read raa489300 info1 reg fail");
-		goto unlock;
-	}
-
-	if (((val >> 8) & 0x3F) == (is_epr ? 0x35 : 0x26)) {
-		CPRINTS("3Level-Buck Success %s", is_epr ? "EPR" : "SPR");
-		goto unlock;
-	}
-
-	if (is_epr) {
+	if ((rv != EC_SUCCESS) && (mode == LEVEL_BUCK_EPR)) {
 		hook_call_deferred(&level_buck_switch_epr_data, 200 * MSEC);
 	}
 
-unlock:
 	mutex_unlock(&level_buck_mutex);
 }
 
 static void level_buck_switch_spr(void)
 {
-	configure_buck_mode(false);
+	configure_buck_mode(LEVEL_BUCK_SPR);
 }
 static void level_buck_switch_epr(void)
 {
-	configure_buck_mode(true);
+	configure_buck_mode(LEVEL_BUCK_EPR);
+}
+static void level_buck_switch_dc(void)
+{
+	configure_buck_mode(LEVEL_BUCK_DC);
 }
 
 void board_level_buck_update(void)
 {
-	static int pre_pd_voltage;
+	static int pre_pd_voltage = -1;
 	int power_uw = cypd_get_ac_power();
 
 	pd_voltage = cypd_get_active_port_voltage();
 
+	/* AC is unplugged and battery is present, switch to DC mode */
+	if (!extpower_is_present() && battery_is_present() == BP_YES) {
+		target_mode = LEVEL_BUCK_DC;
+	} else if (pd_voltage <= 20000) {
+		target_mode = LEVEL_BUCK_SPR;
+	} else {
+		target_mode = LEVEL_BUCK_EPR;
+	}
+
 	if (pre_pd_voltage != pd_voltage) {
 		CPRINTS("3lv-buck update! V:%dmV,W:%dmW", pd_voltage, power_uw);
-		if (pd_voltage <= 20000) {
+		switch (target_mode) {
+		case LEVEL_BUCK_SPR:
 			level_buck_switch_spr();
-		} else if (pd_voltage > 20000) {
+			break;
+		case LEVEL_BUCK_EPR:
 			level_buck_switch_epr();
+			break;
+		case LEVEL_BUCK_DC:
+			level_buck_switch_dc();
+			break;
+		default:
+			break;
 		}
 
 		if (pd_voltage < 9000) {
@@ -199,7 +283,6 @@ void board_level_buck_update(void)
 	}
 }
 DECLARE_HOOK(HOOK_POWER_SUPPLY_CHANGE, board_level_buck_update, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_INIT, board_level_buck_update, HOOK_PRIO_POST_I2C + 1);
 
 void level_buck_set_acok_reference(int mv)
 {
@@ -216,9 +299,6 @@ void level_buck_set_acok_reference(int mv)
 void level_buck_set_input_current_limit(int ma)
 {
 	int rv;
-
-	if (!extpower_is_present())
-		return;
 
 	mutex_lock(&level_buck_mutex);
 	rv = i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
@@ -237,6 +317,28 @@ static int raa489300_cmd(int argc, const char **argv)
 	char *e;
 
 	if (argc == 2 && !strncmp(argv[1], "get", 3)) {
+		/* Print last target mode */
+		ccprintf("Last Buck Mode: ");
+		switch (target_mode) {
+		case LEVEL_BUCK_SPR:
+			ccprintf("SPR\n");
+			break;
+		case LEVEL_BUCK_EPR:
+			ccprintf("EPR\n");
+			break;
+		case LEVEL_BUCK_ENTER_EPR:
+			ccprintf("ENTER_EPR\n");
+			break;
+		case LEVEL_BUCK_EXIT_EPR:
+			ccprintf("EXIT_EPR\n");
+			break;
+		case LEVEL_BUCK_DC:
+			ccprintf("DC\n");
+			break;
+		default:
+			ccprintf("UNKNOWN\n");
+			break;
+		}
 		/* Dump all readable registers*/
 		static const uint8_t regs[] = {
 			0x14, 0x15, 0x39, 0x3a, 0x3c, 0x3d, 0x3f, 0x40, 0x43,
