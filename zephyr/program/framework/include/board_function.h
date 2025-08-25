@@ -6,6 +6,8 @@
 #ifndef __CROS_EC_BOARD_FUNCTION_H
 #define __CROS_EC_BOARD_FUNCTION_H
 
+#include "common.h"
+
 enum function_type {
 	/* type for function switch */
 	TYPE_MEMMAP	= 0,
@@ -25,6 +27,8 @@ void bios_function_detect(void);
 int ac_boot_status(void);
 
 __override_proto void project_chassis_function(enum gpio_signal signal);
+
+__override_proto void board_enter_non_acpi_mode(void);
 
 uint32_t get_system_percentage(void);
 
