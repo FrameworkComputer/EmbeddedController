@@ -14,6 +14,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/pm/device.h>
 #include <zephyr/sys/byteorder.h>
+#include <zephyr/sys/util.h>
 
 #include <drivers/fingerprint.h>
 #include <fingerprint/v4l2_types.h>
@@ -347,16 +348,39 @@ static int fpc1145_deinit(const struct device *dev)
 	return 0;
 }
 
-static int fpc1145_get_info(const struct device *dev,
-			    struct fingerprint_info *info)
+static int fpc1145_get_info(
+	const struct device *dev, struct fingerprint_sensor_info *sensor_info,
+	struct fingerprint_image_frame_params image_frame_params_array[],
+	uint8_t *num_params)
 {
 	const struct fpc1145_cfg *cfg = dev->config;
 	struct fpc1145_data *data = dev->data;
 	uint16_t id = 0;
 	int rc;
 
-	/* Copy immutable sensor information to the structure. */
-	memcpy(info, &cfg->info, sizeof(struct fingerprint_info));
+	if (sensor_info == NULL || num_params == NULL ||
+	    image_frame_params_array == NULL) {
+		return -EINVAL;
+	}
+
+	uint8_t capacity = *num_params;
+	uint8_t num_defined_configs = cfg->sensor_info.num_capture_types;
+
+	if (capacity < num_defined_configs) {
+		return -EINVAL;
+	}
+
+	BUILD_ASSERT(sizeof(cfg->sensor_info) == sizeof(*sensor_info),
+		     "struct fingerprint_sensor_info size mismatch");
+
+	memcpy(sensor_info, &cfg->sensor_info,
+	       sizeof(struct fingerprint_sensor_info));
+
+	memcpy(image_frame_params_array, cfg->sensor_image_configs,
+	       num_defined_configs *
+		       sizeof(struct fingerprint_image_frame_params));
+
+	*num_params = num_defined_configs;
 
 	rc = fpc1145_get_hwid(cfg, &id);
 	if (rc) {
@@ -364,8 +388,8 @@ static int fpc1145_get_info(const struct device *dev,
 		return rc;
 	}
 
-	info->model_id = id;
-	info->errors = data->errors;
+	sensor_info->model_id = id;
+	sensor_info->errors = data->errors;
 
 	return 0;
 }
@@ -549,19 +573,35 @@ static int fpc1145_init_driver(const struct device *dev)
 	return 0;
 }
 
-#define FPC1145_SENSOR_INFO(inst)                                      \
-	{                                                              \
-		.vendor_id = FOURCC('F', 'P', 'C', ' '),               \
-		.product_id = 9,                                       \
-		.model_id = 1,                                         \
-		.version = 1,                                          \
-		.frame_size = CONFIG_FINGERPRINT_SENSOR_IMAGE_SIZE,    \
-		.pixel_format = FINGERPRINT_SENSOR_V4L2_PIXEL_FORMAT(  \
-			DT_DRV_INST(inst)),                            \
-		.width = FINGERPRINT_SENSOR_RES_X(DT_DRV_INST(inst)),  \
-		.height = FINGERPRINT_SENSOR_RES_Y(DT_DRV_INST(inst)), \
-		.bpp = FINGERPRINT_SENSOR_RES_BPP(DT_DRV_INST(inst)),  \
+#define FPC1145_SENSOR_INFO(inst)                                          \
+	{                                                                  \
+		.vendor_id = FOURCC('F', 'P', 'C', ' '),                   \
+		.product_id = 9,                                           \
+		.model_id = 1,                                             \
+		.version = 1,                                              \
+		.num_capture_types =                                       \
+			FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)), \
 	}
+
+#define FPC1145_IMAGE_PARAM_INITIALIZER(idx, inst)                             \
+	{                                                                      \
+		.frame_size =                                                  \
+			FINGERPRINT_SENSOR_FRAME_SIZE(idx, DT_DRV_INST(inst)), \
+		.pixel_format = FINGERPRINT_SENSOR_V4L2_PIXEL_FORMAT(          \
+			idx, DT_DRV_INST(inst)),                               \
+		.width = FINGERPRINT_SENSOR_RES_X(idx, DT_DRV_INST(inst)),     \
+		.height = FINGERPRINT_SENSOR_RES_Y(idx, DT_DRV_INST(inst)),    \
+		.bpp = FINGERPRINT_SENSOR_RES_BPP(idx, DT_DRV_INST(inst)),     \
+		.fp_capture_type = FINGERPRINT_SENSOR_CAPTURE_TYPE(            \
+			idx, DT_DRV_INST(inst)),                               \
+		.reserved = 0,                                                 \
+	}
+
+#define FPC1145_BUILD_ASSERT_IMAGE_SIZE(idx, inst)                             \
+	BUILD_ASSERT(                                                          \
+		CONFIG_FINGERPRINT_SENSOR_IMAGE_SIZE >=                        \
+			FINGERPRINT_SENSOR_FRAME_SIZE(idx, DT_DRV_INST(inst)), \
+		"FP image buffer size smaller than raw image size at index " #idx);
 
 /* The sensor context is uncached as it contains the SPI buffers, which is
  * needed by DMA. Also, the binary library assumes that it is aligned.
@@ -569,27 +609,32 @@ static int fpc1145_init_driver(const struct device *dev)
  * Unlike FPC1025 driver, the FPC1145 driver doesn't need to keep CS asserted
  * between transactions, so SPI_HOLD_ON_CS in not needed here.
  */
-#define FPC1145_DEFINE(inst)                                                   \
-	static uint8_t ctx_##inst[FP_SENSOR_CONTEXT_SIZE] __nocache __aligned( \
-		4);                                                            \
-	static struct fpc1145_data fpc1145_data_##inst = {                     \
-		.ctx = ctx_##inst,                                             \
-	};                                                                     \
-	static const struct fpc1145_cfg fpc1145_cfg_##inst = {                 \
-		.spi = SPI_DT_SPEC_INST_GET(                                   \
-			inst, SPI_OP_MODE_MASTER | SPI_WORD_SET(8), 0),        \
-		.interrupt = GPIO_DT_SPEC_INST_GET(inst, irq_gpios),           \
-		.reset_pin = GPIO_DT_SPEC_INST_GET(inst, reset_gpios),         \
-		.info = FPC1145_SENSOR_INFO(inst),                             \
-	};                                                                     \
-	BUILD_ASSERT(                                                          \
-		CONFIG_FINGERPRINT_SENSOR_IMAGE_SIZE >=                        \
-			FINGERPRINT_SENSOR_REAL_IMAGE_SIZE(DT_DRV_INST(inst)), \
-		"FP image buffer size is smaller than raw image size");        \
-	DEVICE_DT_INST_DEFINE(inst, fpc1145_init_driver, NULL,                 \
-			      &fpc1145_data_##inst, &fpc1145_cfg_##inst,       \
-			      POST_KERNEL,                                     \
-			      CONFIG_FINGERPRINT_SENSOR_INIT_PRIORITY,         \
+#define FPC1145_DEFINE(inst)                                                         \
+	static uint8_t ctx_##inst[FP_SENSOR_CONTEXT_SIZE] __nocache __aligned(       \
+		4);                                                                  \
+	static struct fpc1145_data fpc1145_data_##inst = {                           \
+		.ctx = ctx_##inst,                                                   \
+	};                                                                           \
+	static const struct fpc1145_cfg fpc1145_cfg_##inst = {                       \
+		.spi = SPI_DT_SPEC_INST_GET(                                         \
+			inst, SPI_OP_MODE_MASTER | SPI_WORD_SET(8), 0),              \
+		.interrupt = GPIO_DT_SPEC_INST_GET(inst, irq_gpios),                 \
+		.reset_pin = GPIO_DT_SPEC_INST_GET(inst, reset_gpios),               \
+		.sensor_info = FPC1145_SENSOR_INFO(inst),                            \
+		.sensor_image_configs = { LISTIFY(                                   \
+			FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)),           \
+			FPC1145_IMAGE_PARAM_INITIALIZER, (, ), inst) },              \
+	};                                                                           \
+	LISTIFY(FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)),                   \
+		FPC1145_BUILD_ASSERT_IMAGE_SIZE, (;), inst)                          \
+	BUILD_ASSERT(                                                                \
+		FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)) <=                 \
+			NUM_IMAGE_CAPTURE_TYPES,                                     \
+		"FPC1145: Number of image configs exceeds NUM_IMAGE_CAPTURE_TYPES"); \
+	DEVICE_DT_INST_DEFINE(inst, fpc1145_init_driver, NULL,                       \
+			      &fpc1145_data_##inst, &fpc1145_cfg_##inst,             \
+			      POST_KERNEL,                                           \
+			      CONFIG_FINGERPRINT_SENSOR_INIT_PRIORITY,               \
 			      &cros_fp_fpc1145_driver_api)
 
 DT_INST_FOREACH_STATUS_OKAY(FPC1145_DEFINE);
