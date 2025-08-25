@@ -403,34 +403,37 @@ enum power_slide_mode best_performance_power_plan(int battery_percent,
 	 * For main board ERS best performance mode power plan define
 	 */
 
-	static bool force_balance;
+	static bool force_best_efficiency;
 
 	if (!with_dc) {
-		force_balance = false;
+		force_best_efficiency = false;
 		return mode;
-	} else if (!force_balance && battery_percent > 30) {
-		force_balance = false;
+	} else if (!force_best_efficiency && battery_percent > 30) {
+		force_best_efficiency = false;
 		return mode;
-	} else if (force_balance && battery_percent > 60) {
-		force_balance = false;
+	} else if (force_best_efficiency && battery_percent > 60) {
+		force_best_efficiency = false;
 		return mode;
-	} else if (force_balance && active_mpower == 0 && battery_percent >= 30) {
+	} else if (force_best_efficiency && active_mpower == 0
+				&& battery_percent >= 30) {
 		/*remove active power*/
-		force_balance = false;
+		force_best_efficiency = false;
 		return mode;
 	}
 
-	if (mode == EC_AC_BEST_PERFORMANCE || mode == EC_DC_BEST_PERFORMANCE) {
+	if (mode == EC_AC_BEST_PERFORMANCE || mode == EC_DC_BEST_PERFORMANCE
+		|| mode == EC_AC_BALANCED || mode == EC_DC_BALANCED) {
 		if (battery_percent < 30)
-			force_balance = true;
+			force_best_efficiency = true;
 	} else {
-		force_balance = false;
+		force_best_efficiency = false;
 	}
 
-	if (force_balance && mode == EC_AC_BEST_PERFORMANCE) {
-		return EC_AC_BALANCED;
-	} else if (force_balance && mode == EC_DC_BEST_PERFORMANCE) {
-		return EC_DC_BALANCED;
+	if (force_best_efficiency && (mode == EC_AC_BEST_PERFORMANCE || mode == EC_AC_BALANCED)) {
+		return EC_AC_BEST_EFFICIENCY;
+	} else if (force_best_efficiency && (mode == EC_DC_BEST_PERFORMANCE
+			|| mode == EC_DC_BALANCED)) {
+		return EC_DC_BEST_EFFICIENCY;
 	}
 
 	return mode;
