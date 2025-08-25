@@ -59,13 +59,16 @@ if(DEFINED CONFIG_BOARD_LOTUS OR DEFINED CONFIG_BOARD_TULIP)
 	if(DEFINED CONFIG_BOARD_LOTUS)
 		project(lotus)
 		cros_ec_library_include_directories_ifdef(CONFIG_BOARD_LOTUS include)
+		zephyr_library_sources("lotus/src/pmf.c")
 	elseif(DEFINED CONFIG_BOARD_TULIP)
 		project(tulip)
 		cros_ec_library_include_directories_ifdef(CONFIG_BOARD_TULIP include)
+		zephyr_library_sources("tulip/src/pmf.c")
 	endif()
 	zephyr_include_directories("include/lotus")
 	zephyr_library_sources(
 			"lotus/src/battery.c"
+			"lotus/src/board_function.c"
 			"lotus/src/cpu_power.c"
 			"lotus/src/input_module.c"
 			"lotus/src/gpu.c"

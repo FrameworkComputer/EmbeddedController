@@ -145,3 +145,7 @@ __override int board_temp_smi_evet(void)
 
 	return false;
 }
+
+__overridable void board_enter_non_acpi_mode(void)
+{
+}
