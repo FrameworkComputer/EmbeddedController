@@ -991,6 +991,20 @@ static void power_select_power_signal(void)
 }
 DECLARE_HOOK(HOOK_INIT, power_select_power_signal, HOOK_PRIO_INIT_CHIPSET - 1);
 
+static void apu_ram_select(void)
+{
+	/* We needed an extra MEM_ID toward the APU. Since we can't
+	 * change the schematic, the only other way to do this is
+	 * for the EC to act like a proxy. */
+
+	/* The EC will know the state of MEM_ID3 depending
+	 * on the board version that the EC sees (9 vs 10) */
+
+	if (board_get_version() >= BOARD_VERSION_10)
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_mem_id3), GPIO_ODR_LOW);
+}
+DECLARE_HOOK(HOOK_INIT, apu_ram_select, HOOK_PRIO_INIT_ADC + 1);
+
 __override int chipset_in_low_power_mode(void)
 {
 	volatile uint32_t *address;

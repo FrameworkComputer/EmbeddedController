@@ -6,6 +6,7 @@
 / {
 	aliases {
 		gpio-diagnostic-led4 = &gpio_led4_drv;
+		gpio-mem-id3 = &gpio_mem_id3;
 	};
 
 	named-gpios {
@@ -54,10 +55,15 @@
 			gpios = <&gpio2 7 GPIO_ODR_LOW>;
 		};
 		gpio_apu_ec_int2_l: apu_ec_int2_l {
-			gpios = <&gpio1 5 GPIO_ODR_HIGH>;	/* reserved for HID interrupt */
+			/* originally reserved for HID interrupt */
+			/* unused currently */
+			gpios = <&gpio1 5 GPIO_ODR_HIGH>;
 		};
-		gpio_apu_ec_int_l: apu_ec_int_l {
-			gpios = <&gpio1 4 GPIO_ODR_HIGH>;	/* reserved for HID interrupt */
+		gpio_mem_id3: mem_id3 {
+			/* On the schematic: APU_EC_INT#_Q */
+			/* originally reserved for HID interrupt, never used for that */
+			/* now used as a 4th RAM_ID bit */
+			gpios = <&gpio1 4 GPIO_ODR_HIGH>;
 		};
 		gpio_argb_dir: argb_dir {
 			gpios = <&gpio3 5 GPIO_OUTPUT_HIGH>;	/* ARGB_DIR */
