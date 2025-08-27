@@ -513,6 +513,7 @@ void battery_get_params(struct batt_params *batt)
 	/* Hardware can tell us for certain */
 	batt_new.is_present = battery_is_present();
 	if (batt_new.is_present != BP_YES) {
+		batt->voltage = 0;
 		batt->is_present = BP_NO;
 		batt->flags = BATT_FLAG_BAD_ANY;
 		return;
