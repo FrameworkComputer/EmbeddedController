@@ -1,0 +1,40 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: >
+  Properties for a APL6012 I2C temperature sensor
+
+compatible: "cros-ec,temp-sensor-apl6012"
+
+include: i2c-device.yaml
+
+child-binding:
+  description: APL6012 ADC channels
+
+  properties:
+    temperature-type:
+      type: string
+      required: true
+      description: Temperature source type (e.g. APL6012_IDX_CH1)
+      enum:
+      - APL6012_IDX_CH1
+      - APL6012_IDX_CH2
+      - APL6012_IDX_CH3
+      - APL6012_IDX_CH4
+      - APL6012_IDX_CH5
+      - APL6012_IDX_CH6
+      - APL6012_IDX_CH7
+      - APL6012_IDX_CH8
+      - APL6012_IDX_CH9
+      - APL6012_IDX_CH10
+      - APL6012_IDX_CH11
+      - APL6012_IDX_CH12
+      - APL6012_IDX_CH13
+      - APL6012_IDX_CH14
+      - APL6012_IDX_CH15
+
+    thermistor:
+      type: phandle
+      required: true
+      description: Reference to thermistor config node

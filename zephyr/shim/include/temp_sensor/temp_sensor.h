@@ -20,6 +20,7 @@ extern "C" {
 #define PCT2075_COMPAT nxp_pct2075
 #define TMP112_COMPAT cros_ec_temp_sensor_tmp112
 #define F75303_COMPAT cros_ec_temp_sensor_f75303
+#define APL6012_COMPAT cros_ec_temp_sensor_apl6012
 #define SB_TSI_COMPAT cros_ec_temp_sensor_sb_tsi
 #define THERMISTOR_COMPAT cros_ec_temp_sensor_thermistor
 #define TEMP_SENSORS_COMPAT cros_ec_temp_sensors
@@ -33,6 +34,7 @@ extern "C" {
 	DT_FOREACH_STATUS_OKAY(PCT2075_COMPAT, fn)                          \
 	DT_FOREACH_STATUS_OKAY(TMP112_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(F75303_COMPAT, fn)                           \
+	DT_FOREACH_STATUS_OKAY(APL6012_COMPAT, fn)                          \
 	DT_FOREACH_STATUS_OKAY_VARGS(RT9490_CHG_COMPAT, TEMP_RT9490_FN, fn) \
 	DT_FOREACH_STATUS_OKAY(SB_TSI_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(THERMISTOR_COMPAT, fn)
@@ -162,6 +164,18 @@ enum tmp112_sensor {
  * @param node_id: node id of a hardware F75303 sensor node
  */
 #define F75303_SENSOR_ID(node_id) DT_STRING_TOKEN(node_id, temperature_type)
+
+/* APL6012 access array */
+/*
+ * Get the APL6012 sensor ID.
+ *
+ * The APL6012 driver only supports a single device instance on the board. Each
+ * device supports 15 channel temperature sensor types: ch1, ..., ch15.
+ * Use the temperature sensor type as the sensor ID.
+ *
+ * @param node_id: node id of a hardware APL6012 sensor node
+ */
+#define APL6012_SENSOR_ID(node_id) DT_STRING_TOKEN(node_id, temperature_type)
 
 struct zephyr_temp_sensor {
 	/* Read sensor value in K into temp_ptr; return non-zero if error. */

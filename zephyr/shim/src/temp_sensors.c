@@ -8,6 +8,7 @@
 #include "driver/charger/rt9490.h"
 #include "hooks.h"
 #include "temp_sensor.h"
+#include "temp_sensor/apl6012.h"
 #include "temp_sensor/f75303.h"
 #include "temp_sensor/pct2075.h"
 #include "temp_sensor/sb_tsi.h"
@@ -238,6 +239,48 @@ const struct f75303_sensor_t f75303_sensors[F75303_IDX_COUNT] = {
 	DT_FOREACH_STATUS_OKAY(F75303_COMPAT, DEFINE_F75303_DATA)
 };
 
+#if DT_HAS_COMPAT_STATUS_OKAY(APL6012_COMPAT)
+/* The function maybe unused because a temperature sensor can be added to dts
+ * without a reference in the cros_ec_temp_sensors node.
+ */
+__maybe_unused static int apl6012_get_temp(const struct temp_sensor_t *sensor,
+					   int *temp_ptr)
+{
+	return apl6012_get_val_k(sensor->idx, temp_ptr);
+}
+
+#define DEFINE_APL6012_DATA(sensor_id)                               \
+	[APL6012_SENSOR_ID(sensor_id)] = {                           \
+		.i2c_port = I2C_PORT_BY_DEV(DT_PARENT(sensor_id)),   \
+		.i2c_addr_flags = DT_REG_ADDR(DT_PARENT(sensor_id)), \
+	},
+
+const struct apl6012_sensor_t apl6012_sensors[APL6012_IDX_COUNT] = {
+	DT_FOREACH_CHILD_STATUS_OKAY(DT_NODELABEL(apl6012), DEFINE_APL6012_DATA)
+};
+#endif /* apl6012_COMPAT */
+
+#define GET_ZEPHYR_TEMP_SENSOR_APL6012(named_id, sensor_id)       \
+	(&(const struct zephyr_temp_sensor){                      \
+		.read = &apl6012_get_temp,                        \
+		.thermistor = GET_THERMISTOR_INFO(                \
+			DT_PHANDLE(sensor_id, thermistor)),       \
+		.update_temperature = apl6012_update_temperature, \
+		FILL_POWER_GOOD(named_id) })
+
+#define TEMP_APL6012(named_id, sensor_id)                                    \
+	[TEMP_SENSOR_ID(named_id)] = {                                       \
+		.name = DT_NODE_FULL_NAME(sensor_id),                        \
+		.idx = APL6012_SENSOR_ID(sensor_id),                         \
+		.type = TEMP_SENSOR_TYPE_BOARD,                              \
+		.zephyr_info =                                               \
+			GET_ZEPHYR_TEMP_SENSOR_APL6012(named_id, sensor_id), \
+	}
+
+#define CHECK_COMPAT_APL6012(compat, named_id, sensor_id, config_fn)  \
+	COND_CODE_1(DT_NODE_HAS_COMPAT(DT_PARENT(sensor_id), compat), \
+		    (config_fn(named_id, sensor_id)), ())
+
 /* There can be only one thermistor on RT9490 with current driver */
 #define ADD_ONE(node_id) 1 +
 #if DT_FOREACH_STATUS_OKAY_VARGS(RT9490_CHG_COMPAT, TEMP_RT9490_FN, \
@@ -276,7 +319,8 @@ const struct f75303_sensor_t f75303_sensors[F75303_IDX_COUNT] = {
 	CHECK_COMPAT(SB_TSI_COMPAT, named_id, sensor_id, TEMP_SB_TSI)         \
 	CHECK_COMPAT(TMP112_COMPAT, named_id, sensor_id, TEMP_TMP112)         \
 	CHECK_COMPAT(RT9490_CHG_COMPAT, named_id, sensor_id, TEMP_RT9490)     \
-	CHECK_COMPAT(F75303_COMPAT, named_id, sensor_id, TEMP_F75303)
+	CHECK_COMPAT(F75303_COMPAT, named_id, sensor_id, TEMP_F75303)         \
+	CHECK_COMPAT_APL6012(APL6012_COMPAT, named_id, sensor_id, TEMP_APL6012)
 
 #define TEMP_SENSOR_ENTRY(named_id) \
 	TEMP_SENSOR_FIND(named_id, DT_PHANDLE(named_id, sensor))
