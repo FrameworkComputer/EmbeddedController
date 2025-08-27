@@ -28,6 +28,7 @@
 #include "power.h"
 #include "raa489300.h"
 #include "system.h"
+#include "task.h"
 #include "throttle_ap.h"
 #include "util.h"
 
@@ -37,6 +38,7 @@
 #define VINDPM_TO_REG(mv) (((mv) < 3200) ? 160 : ((mv) / 20))
 #define IDCHG_TH1_CURRENT_TO_REG(CUR) (((CUR) <= 1500) ? 0 : (((CUR) - 1500) / 500))
 
+static K_MUTEX_DEFINE(level_buck_mutex);
 static int last_extpower_present;
 static int prev_charge_ma;
 
@@ -328,9 +330,11 @@ __override int board_set_buck_mode(enum level_buck_mode mode)
 		return EC_ERROR_NOT_POWERED;
 	}
 
+	mutex_lock(&level_buck_mutex);
+
 	if (i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
 		RAA489300_REG_INFORMATION1, &val) != EC_SUCCESS) {
-		CPRINTS("3Level-Buck not ready");
+		mutex_unlock(&level_buck_mutex);
 		return EC_ERROR_NOT_POWERED;
 	}
 
@@ -342,6 +346,8 @@ __override int board_set_buck_mode(enum level_buck_mode mode)
 	/* attempt to set mode */
 	rv = write_level_buck_registers(mode);
 
+	mutex_unlock(&level_buck_mutex);
+
 	return rv;
 }
 
@@ -349,10 +355,14 @@ __override int board_confirm_buck_transition_ready(enum level_buck_mode mode)
 {
 	int rv;
 
-	rv = level_buck_check_expected_state(mode);
+	mutex_lock(&level_buck_mutex);
+
+	rv = level_buck_check_expected_state(mode, NULL);
 
 	if (rv == EC_SUCCESS)
 		level_buck_set_acok_reference(14500);
+
+	mutex_unlock(&level_buck_mutex);
 
 	return rv;
 }

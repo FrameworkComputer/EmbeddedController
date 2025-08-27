@@ -82,8 +82,6 @@ int write_level_buck_registers(enum level_buck_mode mode)
 	const struct reg_val *reg_values;
 	size_t size;
 
-	mutex_lock(&level_buck_mutex);
-
 	switch (mode) {
 	case LEVEL_BUCK_SPR:
 		reg_values = spr_values;
@@ -106,7 +104,6 @@ int write_level_buck_registers(enum level_buck_mode mode)
 		size = ARRAY_SIZE(dc_values);
 		break;
 	default:
-		mutex_unlock(&level_buck_mutex);
 		return EC_ERROR_INVAL;
 	}
 
@@ -117,23 +114,17 @@ int write_level_buck_registers(enum level_buck_mode mode)
 		rv = i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS, reg, val);
 		if (rv != EC_SUCCESS) {
 			CPRINTS("3Level-Buck write failed reg 0x%02X", reg);
-			mutex_unlock(&level_buck_mutex);
 			return rv;
 		}
 		crec_msleep(1);
 	}
-
-	mutex_unlock(&level_buck_mutex);
 	return EC_SUCCESS;
 }
 
-static void level_buck_switch_spr(void);
-DECLARE_DEFERRED(level_buck_switch_spr);
+static void level_buck_switch_mode(void);
+DECLARE_DEFERRED(level_buck_switch_mode);
 
-static void level_buck_switch_epr(void);
-DECLARE_DEFERRED(level_buck_switch_epr);
-
-int level_buck_check_expected_state(enum level_buck_mode mode)
+int level_buck_check_expected_state(enum level_buck_mode mode, int *data)
 {
 	int rv;
 	int val = 0x0000;
@@ -144,6 +135,9 @@ int level_buck_check_expected_state(enum level_buck_mode mode)
 
 	if (rv)
 		return rv;
+
+	if (data)
+		*data = val;
 
 	if (mode == LEVEL_BUCK_DC) {
 		/* DC mode [11:8]=0001 */
@@ -195,45 +189,43 @@ static void configure_buck_mode(enum level_buck_mode mode)
 		break;
 	}
 
-	if (i2c_read16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
-		RAA489300_REG_INFORMATION1, &val)) {
-		CPRINTS("3Level-Buck read register fail");
-		return;
-	}
-
-	/* check the regulator has gone to the reset state */
-	if ((val & PSM_MASK) == PSM_RESET_STATE) {
-		crec_msleep(150);
-	}
-
-	/* attempt to set mode */
-	if (write_level_buck_registers(mode)) {
-		return;
-	}
-
 	mutex_lock(&level_buck_mutex);
 
-	/* check the regulator is ready */
-	rv = level_buck_check_expected_state(mode);
+	/* check state machine status and read Info1 register */
+	rv = level_buck_check_expected_state(mode, &val);
+
+	if (rv != EC_SUCCESS) {
+		/* check the regulator has gone to the reset state */
+		if ((val & PSM_MASK) == PSM_RESET_STATE) {
+			crec_msleep(150);
+		/* Do nothing in auto discharge state */
+		} else if ((val & PSM_MASK) == PSM_AUTO_DISCHARGE_STATE) {
+			if (mode == LEVEL_BUCK_SPR || mode == LEVEL_BUCK_EPR) {
+				hook_call_deferred(&level_buck_switch_mode_data, 200 * MSEC);
+				mutex_unlock(&level_buck_mutex);
+				return;
+			}
+		}
+
+		/* attempt to set mode */
+		if (write_level_buck_registers(mode)) {
+			mutex_unlock(&level_buck_mutex);
+			return;
+		}
+		/* check the regulator is ready */
+		rv = level_buck_check_expected_state(mode, NULL);
+	}
 
 	if ((rv != EC_SUCCESS) && (mode == LEVEL_BUCK_EPR)) {
-		hook_call_deferred(&level_buck_switch_epr_data, 200 * MSEC);
+		hook_call_deferred(&level_buck_switch_mode_data, 200 * MSEC);
 	}
 
 	mutex_unlock(&level_buck_mutex);
 }
 
-static void level_buck_switch_spr(void)
+static void level_buck_switch_mode(void)
 {
-	configure_buck_mode(LEVEL_BUCK_SPR);
-}
-static void level_buck_switch_epr(void)
-{
-	configure_buck_mode(LEVEL_BUCK_EPR);
-}
-static void level_buck_switch_dc(void)
-{
-	configure_buck_mode(LEVEL_BUCK_DC);
+	configure_buck_mode(target_mode);
 }
 
 void board_level_buck_update(void)
@@ -254,19 +246,7 @@ void board_level_buck_update(void)
 
 	if (pre_pd_voltage != pd_voltage) {
 		CPRINTS("3lv-buck update! V:%dmV,W:%dmW", pd_voltage, power_uw);
-		switch (target_mode) {
-		case LEVEL_BUCK_SPR:
-			level_buck_switch_spr();
-			break;
-		case LEVEL_BUCK_EPR:
-			level_buck_switch_epr();
-			break;
-		case LEVEL_BUCK_DC:
-			level_buck_switch_dc();
-			break;
-		default:
-			break;
-		}
+		level_buck_switch_mode();
 
 		if (pd_voltage < 9000) {
 			level_buck_set_acok_reference(3900); /* 0x0F00 */
@@ -288,31 +268,54 @@ DECLARE_HOOK(HOOK_POWER_SUPPLY_CHANGE, board_level_buck_update, HOOK_PRIO_DEFAUL
 void level_buck_set_acok_reference(int mv)
 {
 	uint16_t reg;
+	static int pre_reg;
 
 	reg = RAA489300_MV_TO_VIN(mv);
 
-	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
-		RAA489300_REG_VINOK_REFERENCE, reg);
-	i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
-		RAA489300_REG_MIN_INPUT_VOLTAGE, reg);
+	if (pre_reg != reg) {
+		i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+			RAA489300_REG_VINOK_REFERENCE, reg);
+		i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+			RAA489300_REG_MIN_INPUT_VOLTAGE, reg);
+		pre_reg = reg;
+	}
 }
 
-void level_buck_set_input_current_limit(int ma)
+int level_buck_set_input_current_limit(int ma)
 {
-	int rv;
+	return i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+				RAA489300_REG_INPUT_CURRENT_LIMIT, ma);
+}
 
-	mutex_lock(&level_buck_mutex);
-	rv = i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
-					 RAA489300_REG_INPUT_CURRENT_LIMIT, ma);
-	mutex_unlock(&level_buck_mutex);
+int level_buck_set_output_current_limit(int ma)
+{
+	return i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+				RAA489300_REG_OUTPUT_CURRENT_LIMIT, ma);
+}
 
-	if (rv != EC_SUCCESS)
-		CPRINTS("raa489300 write current limit fail");
+int level_buck_set_output_voltage(int mv)
+{
+	uint16_t reg_value;
+
+	if (mv > AVS_VOLTAGE_MAX) {
+		mv = AVS_VOLTAGE_MAX;
+	}
+
+	if (mv > PPS_VOLTAGE_MAX) {
+		/* AVS mode */
+		reg_value = ((mv / AVS_VOLTAGE_STEP_MV) << 4);
+	} else {
+		/* PPS mode */
+		reg_value = ((mv / PPS_VOLTAGE_STEP_MV) << 3);
+	}
+
+	return i2c_write16(I2C_PORT_CHARGER, RAA489300_ADDR_FLAGS,
+				RAA489300_REG_OUTPUT_VOLTAGE, reg_value);
 }
 
 static int raa489300_cmd(int argc, const char **argv)
 {
-	int i, val, mode;
+	int i, val;
 	uint8_t reg;
 	uint16_t value;
 	char *e;
@@ -367,18 +370,11 @@ static int raa489300_cmd(int argc, const char **argv)
 		}
 
 		ccprintf("raa489300 REG 0x%02x set to 0x%04x\n", reg, value);
-	} else if (argc == 3 && !strncmp(argv[1], "mode", 3)) {
-		mode = strtoi(argv[2], &e, 0);
-		if (*e)
-			return EC_ERROR_PARAM1;
-
-		write_level_buck_registers(mode);
-		ccprintf("raa489300 set mode %d\n", mode);
 	} else {
 		return EC_ERROR_PARAM_COUNT;
 	}
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(raa489300, raa489300_cmd,
-			"[get | set <reg> <value> | mode <0=SPR,1=EPR,4=DC>]",
+			"[get | set <reg> <value>]",
 			"Get/set raa489300 register");

@@ -75,12 +75,24 @@ enum level_buck_mode {
 
 int write_level_buck_registers(enum level_buck_mode mode);
 
-int level_buck_check_expected_state(enum level_buck_mode mode);
+/**
+ * Check the expected state machine for a given mode.
+ *
+ * @param mode	Target mode (e.g., SPR / EPR / DC).
+ * @param data	Output pointer; returns the INFORMATION1 register value
+ *
+ * @return EC_SUCCESS if the state matches the expectation
+ */
+int level_buck_check_expected_state(enum level_buck_mode mode, int *data);
 
 void board_level_buck_update(void);
 
 void level_buck_set_acok_reference(int mv);
 
-void level_buck_set_input_current_limit(int ma);
+int level_buck_set_input_current_limit(int ma);
+
+int level_buck_set_output_current_limit(int ma);
+
+int level_buck_set_output_voltage(int mv);
 
 #endif	/* __CROS_EC_RAA489300_H */

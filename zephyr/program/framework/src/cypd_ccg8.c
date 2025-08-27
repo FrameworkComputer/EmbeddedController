@@ -560,7 +560,7 @@ static void buck_ready_for_epr(void)
 		 * For multi port EPR + EPR.
 		 * Enter EPR: When PSM is already in buck mode, do nothing.
 		 */
-		if (is_enter_epr && level_buck_check_expected_state(mode) == EC_SUCCESS) {
+		if (is_enter_epr && level_buck_check_expected_state(mode, NULL) == EC_SUCCESS) {
 			goto ready_success;
 		}
 
