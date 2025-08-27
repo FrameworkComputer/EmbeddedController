@@ -4,18 +4,9 @@
  */
 
 /* lapis program common DTS includes */
-
 #include <cros/integrated_fwid.dtsi>
 
 /* lapis project DTS includes */
-
-#include "gpios.dtsi"
-
-/*
- * Aliases to common names
- */
-gpio_ec_pch_wake_odl: &gpio_soc_wake_odl {};
-
 #include "battery.dtsi"
 #include "console.dtsi"
 #include "fan.dtsi"
@@ -28,9 +19,15 @@ gpio_ec_pch_wake_odl: &gpio_soc_wake_odl {};
 #include "temp_sensors.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
+#include "thermistor.dtsi"
 #include "usb_typec.dtsi"
 #include "usba.dtsi"
 #include "rtk_ulpm.dtsi"
+
+/*
+ * Aliases to common names
+ */
+gpio_ec_pch_wake_odl: &gpio_soc_wake_odl {};
 
 /* AP interface */
 &espi0 {

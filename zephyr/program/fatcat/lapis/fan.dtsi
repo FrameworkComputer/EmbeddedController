@@ -9,9 +9,9 @@
 		fan_0 {
 			pwms = <&pwm5 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
 			tach = <&tach0>;
-			rpm-min = <1100>;
-			rpm-start = <1100>;
-			rpm-max = <4000>;
+			rpm-min = <1925>;
+			rpm-start = <1925>;
+			rpm-max = <4650>;
 			rpm-deviation = <1>;
 			pgood-gpio = <&gpio_all_sys_pwrgd>;
 		};

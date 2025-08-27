@@ -1,0 +1,75 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	apl_NTC_5V_12K_47K: apl-NTC-5V-12K-47K {
+		status = "okay";
+		compatible = "cros-ec,thermistor";
+		scaling-factor = <15>;
+		num-pairs = <10>;
+		steinhart-reference-mv = <5000>;
+		steinhart-reference-res = <12000>;
+
+		sample-datum-0 {
+			milivolt = <(3581 / 15)>;
+			temp = <35>;
+			sample-index = <0>;
+		};
+
+		sample-datum-1 {
+			milivolt = <(3358 / 15)>;
+			temp = <40>;
+			sample-index = <1>;
+		};
+
+		sample-datum-2 {
+			milivolt = <(2890 / 15)>;
+			temp = <50>;
+			sample-index = <2>;
+		};
+
+		sample-datum-3 {
+			milivolt = <(2420 / 15)>;
+			temp = <60>;
+			sample-index = <3>;
+		};
+
+		sample-datum-4 {
+			milivolt = <(1983 / 15)>;
+			temp = <70>;
+			sample-index = <4>;
+		};
+
+		sample-datum-5 {
+			milivolt = <(1597 / 15)>;
+			temp = <80>;
+			sample-index = <5>;
+		};
+
+		sample-datum-6 {
+			milivolt = <(1427 / 15)>;
+			temp = <85>;
+			sample-index = <6>;
+		};
+
+		sample-datum-7 {
+			milivolt = <(1272 / 15)>;
+			temp = <90>;
+			sample-index = <7>;
+		};
+
+		sample-datum-8 {
+			milivolt = <(1132 / 15)>;
+			temp = <95>;
+			sample-index = <8>;
+		};
+
+		sample-datum-9 {
+			milivolt = <(1006 / 15)>;
+			temp = <100>;
+			sample-index = <9>;
+		};
+	};
+};

@@ -2,11 +2,84 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include <cros/thermistor/thermistor.dtsi>
 
 / {
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		status = "disabled";
-		/* … */
+
+		vr {
+			temp-fan-off = <50>;
+			temp-fan-max = <70>;
+			temp-host-high = <88>;
+			temp-host-halt = <91>;
+			temp-host-release-high = <85>;
+			power-good-pin = <&gpio_all_sys_pwrgd>;
+			sensor = <&apl6012_ch10>;
+		};
+		ddr {
+			temp-fan-off = <50>;
+			temp-fan-max = <70>;
+			temp-host-high = <88>;
+			temp-host-halt = <91>;
+			temp-host-release-high = <85>;
+			power-good-pin = <&gpio_all_sys_pwrgd>;
+			sensor = <&apl6012_ch11>;
+		};
+		top {
+			temp-fan-off = <50>;
+			temp-fan-max = <70>;
+			temp-host-high = <88>;
+			temp-host-halt = <91>;
+			temp-host-release-high = <85>;
+			power-good-pin = <&gpio_all_sys_pwrgd>;
+			sensor = <&apl6012_ch12>;
+		};
+		ssd {
+			temp-fan-off = <50>;
+			temp-fan-max = <70>;
+			temp-host-high = <88>;
+			temp-host-halt = <91>;
+			temp-host-release-high = <85>;
+			power-good-pin = <&gpio_all_sys_pwrgd>;
+			sensor = <&apl6012_ch13>;
+		};
+		charger {
+			temp-fan-off = <50>;
+			temp-fan-max = <70>;
+			temp-host-high = <88>;
+			temp-host-halt = <91>;
+			temp-host-release-high = <85>;
+			power-good-pin = <&gpio_all_sys_pwrgd>;
+			sensor = <&apl6012_ch14>;
+		};
+	};
+};
+
+&i2c_2 {
+	apl6012: apl6012@38 {
+		compatible = "cros-ec,temp-sensor-apl6012";
+		reg = <0x38>;
+
+		apl6012_ch10: vr {
+			temperature-type = "APL6012_IDX_CH10";
+			thermistor = <&apl_NTC_5V_12K_47K>;
+		};
+		apl6012_ch11: ddr {
+			temperature-type = "APL6012_IDX_CH11";
+			thermistor = <&apl_NTC_5V_12K_47K>;
+		};
+		apl6012_ch12: top {
+			temperature-type = "APL6012_IDX_CH12";
+			thermistor = <&apl_NTC_5V_12K_47K>;
+		};
+		apl6012_ch13: ssd {
+			temperature-type = "APL6012_IDX_CH13";
+			thermistor = <&apl_NTC_5V_12K_47K>;
+		};
+		apl6012_ch14: charger {
+			temperature-type = "APL6012_IDX_CH14";
+			thermistor = <&apl_NTC_5V_12K_47K>;
+		};
 	};
 };
