@@ -3,3 +3,6 @@ common:
   - native_sim
 tests:
   mtk_power.default: {}
+  mtk_power.double_wdt:
+    extra_configs:
+      - CONFIG_PLATFORM_EC_POWERSEQ_MTK_DOUBLE_WDT=y
