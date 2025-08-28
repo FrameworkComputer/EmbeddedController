@@ -40,6 +40,25 @@ static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts *
 static int force_shoutdown_flags;
 static int d3cold_is_entry;	/* check the d3cold status */
 
+static void control_ssd_power(bool enable)
+{
+	if (enable) {
+#ifdef CONFIG_BOARD_TULIP
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd1_pwr_en), 1);
+#endif
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 1);
+		set_gpu_gpio(GPIO_FUNC_SSD1_POWER, 1);
+		set_gpu_gpio(GPIO_FUNC_SSD2_POWER, 1);
+	} else {
+#ifdef CONFIG_BOARD_TULIP
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd1_pwr_en), 0);
+#endif
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 0);
+		set_gpu_gpio(GPIO_FUNC_SSD1_POWER, 0);
+		set_gpu_gpio(GPIO_FUNC_SSD2_POWER, 0);
+	}
+}
+
 static void peripheral_power_startup(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wlan_en), 1);
@@ -72,12 +91,7 @@ static void peripheral_power_suspend(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mute_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_invpwr), 0);
-#ifdef CONFIG_BOARD_TULIP
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd1_pwr_en), 0);
-#endif
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 0);
-	set_gpu_gpio(GPIO_FUNC_SSD1_POWER, 0);
-	set_gpu_gpio(GPIO_FUNC_SSD2_POWER, 0);
+	control_ssd_power(0);
 }
 
 static int keep_pch_power(void)
@@ -442,13 +456,8 @@ enum power_state power_handle_state(enum power_state state)
 			if (system_in_s0ix)
 				return POWER_S3S0ix;
 
-			/* enable the ssd2 power when the system power on from S5 */
-#ifdef CONFIG_BOARD_TULIP
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd1_pwr_en), 1);
-#endif
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 1);
-			set_gpu_gpio(GPIO_FUNC_SSD1_POWER, 1);
-			set_gpu_gpio(GPIO_FUNC_SSD2_POWER, 1);
+			/* enable the ssd power when the system power on from S5 */
+			control_ssd_power(1);
 
 			/* Power up to next state */
 			k_msleep(10);
@@ -471,13 +480,8 @@ enum power_state power_handle_state(enum power_state state)
 
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 0);
 
-			/* disable the ssd2 power when the system shutdown to S5 */
-#ifdef CONFIG_BOARD_TULIP
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd1_pwr_en), 0);
-#endif
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 0);
-			set_gpu_gpio(GPIO_FUNC_SSD1_POWER, 0);
-			set_gpu_gpio(GPIO_FUNC_SSD2_POWER, 0);
+			/* disable the ssd power when the system shutdown to S5 */
+			control_ssd_power(0);
 			k_msleep(55);
 			/* Power down to next state */
 			return POWER_S3S5;
@@ -742,12 +746,7 @@ static void usb30_hub_reset(void)
 	 * adding the delay time to filter the cold boot condition.
 	 */
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
-#ifdef CONFIG_BOARD_TULIP
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd1_pwr_en), 1);
-#endif
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 1);
-		set_gpu_gpio(GPIO_FUNC_SSD1_POWER, 1);
-		set_gpu_gpio(GPIO_FUNC_SSD2_POWER, 1);
+		control_ssd_power(1);
 		crec_msleep(200);
 		/* do not reset the hub when the system shutdown */
 		if (!chipset_in_state(CHIPSET_STATE_ON))
