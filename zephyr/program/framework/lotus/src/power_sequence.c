@@ -74,6 +74,7 @@ static void peripheral_power_resume(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mute_l), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_invpwr), 1);
+	control_ssd_power(1);
 }
 
 static void peripheral_power_shutdown(void)
