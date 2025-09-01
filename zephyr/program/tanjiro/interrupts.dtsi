@@ -1,0 +1,81 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_ac_present: ac-present {
+			irq-pin = <&gpio_gsc_acok_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
+		int_power_button: power_button {
+			irq-pin = <&gpio_gsc_ec_pwr_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+		int_volume_up: volume-up {
+			irq-pin = <&gpio_gsc_ec_volup_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
+		int_volume_down: volume-down {
+			irq-pin = <&gpio_gsc_ec_voldn_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
+		int_lid_open: lid-open {
+			irq-pin = <&gpio_lid_open_3v3>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+		int_ap_in_sleep: ap-in-sleep {
+			irq-pin = <&gpio_ap_in_sleep_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_ap_wdtrst: ap-wdtrst {
+			irq-pin = <&gpio_ap_ec_wdtrst_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "chipset_watchdog_interrupt";
+		};
+		int_pg_pp4200_s5: pg-pp4200-s5 {
+			irq-pin = <&gpio_pg_pp4200_s5_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_warm_rst: warm-rst {
+			irq-pin = <&gpio_ap_ec_warm_rst_req>;
+			flags = <GPIO_INT_EDGE_RISING>;
+			handler = "chipset_warm_reset_interrupt";
+		};
+		int_pmic_ec_resetb: pmic-ec-resetb {
+			irq-pin = <&gpio_pmic_ec_resetb>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_ap_in_rst: ap-in-rst {
+			irq-pin = <&gpio_ap_ec_sysrst_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "chipset_reset_request_interrupt";
+		};
+		int_imu: ec-imu {
+			irq-pin = <&gpio_imu_int_ec_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bmi3xx_interrupt";
+		};
+		int_als_rgb: ec_als_rgb {
+			irq-pin = <&gpio_als_int_ec_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcs3400_interrupt";
+		};
+		int_ap_xhci_init_done: ap-xhci-init-done {
+			irq-pin = <&gpio_ap_xhci_init_done_r>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "xhci_interrupt";
+		};
+	};
+};

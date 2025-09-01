@@ -1,0 +1,230 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ */
+
+/ {
+	aliases {
+		gpio-wp = &gpio_ec_flash_wp_odl;
+	};
+
+	named-adc-channels {
+		ec_adc0 {
+			enum-name = "ADC_EVB_CH_0";
+		};
+		ec_adc1 {
+			enum-name = "ADC_EVB_CH_1";
+		};
+		cc_lid_base_adc {
+			enum-name = "ADC_BASE_DET";
+		};
+	};
+
+	named-i2c-ports {
+		ec_smb_batt_scl_3v3 {
+			remote-port = <7>;
+		};
+	};
+
+	named-gpios {
+		/* unimplemented GPIOs */
+		entering_rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		/* a label to prevent build break in power sequencing */
+		en_pp4200_s5: en_pp4200_s5 {
+		};
+		/* Arbitrage doesn't support INPUT | ACTIVE_LOW gpios */
+		als_int_ec_odl {
+			gpios = <&gpiob 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+		};
+		ap_ec_sysrst_odl {
+			gpios = <&gpioj 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+		};
+		ap_ec_wdtrst_l {
+			gpios = <&gpioj 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+		};
+		ap_in_sleep_l {
+			gpios = <&gpiom 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+		};
+		pmic_ec_resetb {
+			gpios = <&gpioj 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+		};
+		ec_flash_wp_odl {
+			gpios = <&gpioc 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		ap_xhci_init_done_r {
+			gpios = <&gpioj 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+	};
+
+	hibernate-wake-pins {
+		compatible = "cros-ec,hibernate-wake-pins";
+		wakeup-irqs = <
+			&int_ac_present
+			&int_power_button
+			&int_lid_open
+		>;
+	};
+};
+
+&pinctrl {
+	/* I2C property setting */
+	i2c0_clk_gpb3_default {
+		gpio-voltage = "3v3";
+		drive-strength = "low";
+	};
+	i2c0_data_gpb4_default {
+		gpio-voltage = "3v3";
+		drive-strength = "low";
+	};
+	i2c1_clk_gpc1_default {
+		gpio-voltage = "3v3";
+		drive-strength = "low";
+	};
+	i2c1_data_gpc2_default {
+		gpio-voltage = "3v3";
+		drive-strength = "low";
+	};
+	i2c2_clk_gpf6_default {
+		gpio-voltage = "3v3";
+		drive-strength = "low";
+	};
+	i2c2_data_gpf7_default {
+		gpio-voltage = "3v3";
+		drive-strength = "low";
+	};
+	i2c3_clk_gpb2_default {
+		gpio-voltage = "1v8";
+		drive-strength = "low";
+	};
+	i2c3_data_gpb5_default {
+		gpio-voltage = "1v8";
+		drive-strength = "low";
+	};
+	i2c3_clk_gpb2_sleep: i2c3_clk_gpb2_sleep {
+		pinmuxs = <&pinctrlb 2 IT8XXX2_ALT_DEFAULT>;
+		gpio-voltage = "1v8";
+	};
+	i2c3_data_gpb5_sleep: i2c3_data_gpb5_sleep {
+		pinmuxs = <&pinctrlb 5 IT8XXX2_ALT_DEFAULT>;
+		gpio-voltage = "1v8";
+	};
+	i2c4_clk_gpe0_default {
+		gpio-voltage = "3v3";
+		drive-strength = "low";
+	};
+	i2c4_data_gpe7_default {
+		gpio-voltage = "3v3";
+		drive-strength = "low";
+	};
+	i2c5_clk_gpe1_default {
+		gpio-voltage = "1v8";
+	};
+	i2c5_data_gpe2_default {
+		gpio-voltage = "1v8";
+	};
+};
+
+/*
+ * When CBI in flash is enabled, setup RO flash layout as follows:
+ *   RO binary:    0x00000:0x5DBFF
+ *   FMAP:         0x5DC00:0x5DFFF
+ *   CBI flash:    0x5E000:0x5EFFF
+ *   PSTATE block: 0x5F000:0x5FFFF
+ */
+&binman {
+	wp-ro {
+		/*
+		 * Delete the pstate node so that we can force it to be the
+		 * last sub-section. binman doesn't handle sub-sections with
+		 * out of order offsets.
+		 */
+		 /delete-node/ pstate;
+
+		ec-ro {
+			fmap {
+				offset =  <(0x60000 - (0x1000 * 2) - 0x400)>;
+				/*
+				* don't specify 'size = <0x400>' here so
+				* it is auto-assigned to the fmap size.
+				*/
+			};
+		};
+		cbi {
+			offset = <(0x60000 - (0x1000 * 2))>;
+			size = <0x1000>;
+		};
+		pstate {
+			type = "section";
+			offset = <(0x60000 - (0x1000 * 1))>;
+			size = <0x1000>;
+		};
+	};
+};
+
+&i2c0 {
+	label = "I2C_MISC";
+	prescale-scl-low = <8>;
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c1 {
+	label = "SMB_BATT";
+	/* Only i2c1 uses 100kHz SMBus which needs data-hold-time */
+	data-hold-time = <10>;
+	prescale-scl-low = <8>;
+	clock-frequency = <100000>;
+};
+
+&i2c2 {
+	label = "I2C_PDC_S";
+	prescale-scl-low = <8>;
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c3 {
+	label = "I2C_SENSOR";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	scl-gpios = <&gpiob 2 0>;
+	sda-gpios = <&gpiob 5 0>;
+	pinctrl-1 = <&i2c3_clk_gpb2_sleep
+			&i2c3_data_gpb5_sleep>;
+	pinctrl-names = "default", "sleep";
+	prescale-scl-low = <8>;
+};
+
+&i2c4 {
+	label = "I2C_PDC_SM";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	prescale-scl-low = <8>;
+};
+
+&i2c5 {
+	scl-gpios = <&gpioe 1 0>;
+	sda-gpios = <&gpioe 2 0>;
+	target-enable;
+};
+
+&i2c5 {
+	label = "I2C_DETACHABLE_BASE";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&pwm2 {
+	prescaler-cx = <PWM_PRESCALER_C4>;
+};
+
+&pwm3 {
+	prescaler-cx = <PWM_PRESCALER_C4>;
+};
+
+&sha0 {
+	status = "okay";
+};

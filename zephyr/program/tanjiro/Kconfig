@@ -1,0 +1,15 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_TANJIRO
+	bool "Google Tanjiro Board"
+	help
+	  Build Google Rauru reference board. Tanjiro has MediaTek SoC
+	  with ITE it82202-bw EC.
+
+module = TANJIRO
+module-str = Tanjiro board-specific code
+source "subsys/logging/Kconfig.template.log_config"
+
+source "Kconfig.zephyr"
