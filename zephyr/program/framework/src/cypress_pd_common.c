@@ -1397,6 +1397,9 @@ int cypd_get_ac_power(void)
 
 int cypd_get_active_port_voltage(void)
 {
+	if (prev_charge_port == -1)
+		return 0;
+
 	return pd_port_states[prev_charge_port].voltage;
 }
 
