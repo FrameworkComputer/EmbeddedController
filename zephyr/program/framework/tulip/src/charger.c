@@ -359,8 +359,11 @@ __override int board_confirm_buck_transition_ready(enum level_buck_mode mode)
 
 	rv = level_buck_check_expected_state(mode, NULL);
 
-	if (rv == EC_SUCCESS)
+	if (rv == EC_SUCCESS) {
+		level_buck_set_output_current_limit(7000);
+		crec_msleep(1);
 		level_buck_set_acok_reference(14500);
+	}
 
 	mutex_unlock(&level_buck_mutex);
 
