@@ -83,6 +83,7 @@ if(DEFINED CONFIG_BOARD_LOTUS OR DEFINED CONFIG_BOARD_TULIP)
 			"lotus/src/gpu_f75303.c"
 			"lotus/src/gpu_temp.c"
 			"lotus/src/nv_gn22.c"
+			"lotus/src/led.c"
 			"src/usbc_5port_config.c"
 			"src/ucsi_port_16.c"
 			"src/temperature_filter.c"
