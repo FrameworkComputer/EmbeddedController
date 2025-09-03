@@ -1,0 +1,21 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/dts-v1/;
+
+#include <ite/it82000.dtsi>
+#include <ite/it82000-pinctrl-map.dts>
+#include "it8xxx2.dtsi"
+
+&i2c0 {
+	pinctrl-0 = <&i2c0_clk_gpf2_default &i2c0_data_gpf3_default>;
+	scl-gpios = <&gpiof 0x2 0x0>;
+	sda-gpios = <&gpiof 0x3 0x0>;
+};
+
+&ite_uart1_wrapper {
+	pinctrl-0 = <&uart1_rx_gpc7_default &uart1_tx_gpe6_default>;
+	gpios = <&gpioc 0x7 0x0>;
+};
