@@ -24,6 +24,13 @@
 			pd-retimer;
 			policy = <&cros_policy>;
 		};
+		usbc_port2: port2@2 {
+			compatible = "named-usbc-port";
+			reg = <2>;
+			pdc = <&pdc_power_p2>;
+			pd-retimer;
+			policy = <&cros_policy>;
+		};
 		ppm-driver {
 			compatible = "ucsi-ppm";
 		};
@@ -44,6 +51,12 @@
 		port-index-on-chip = <0x2>;
 		no-fw-update;
 		ccd;
+	};
+	pdc_power_p2: tps6699-pdc@21 {
+		compatible = "ti,tps6699-pdc";
+		reg = <0x21>;
+		irq-gpios = <&gpioj 6 GPIO_ACTIVE_LOW>;
+		port-index-on-chip = <0x1>;
 	};
 };
 

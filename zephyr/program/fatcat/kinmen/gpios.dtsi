@@ -189,6 +189,10 @@
 			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			no-auto-init;
 		};
+		gpio_usb_pd2_int_odl: usb_pd2_int_odl {
+			gpios = <&gpioj 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			no-auto-init;
+		};
 		gpio_cse_early_rec_sw: cse_early_rec_sw {
 			gpios = <&gpioj 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
@@ -224,8 +228,7 @@
 			<&gpiog 7 0>,
 			<&gpioh 1 GPIO_INPUT>,
 			<&gpioh 2 GPIO_INPUT>,
-			<&gpioj 4 0>,
-			<&gpioj 6 0>;
+			<&gpioj 4 0>;
 	};
 };
 
