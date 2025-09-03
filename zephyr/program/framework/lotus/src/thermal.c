@@ -29,6 +29,10 @@ uint16_t board_fan_min[2];
 
 #define FAN_STOP_DELAY_S (5 * SECOND)
 
+#define TEMP_APU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_apu))
+#define TEMP_GPU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_gpu))
+#define TEMP_GPU_DIE TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_gpu_die))
+#define TEMP_APU_DIE TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_apu_die))
 
 /*coeff in the form b0, b1, b2, A0, a1, a2 note: drop a0*/
 /* 1590,-3130,1590,-31527,15193,14 */
@@ -123,10 +127,6 @@ int fan_percent_to_rpm(int fan_index, int temp_ratio)
 }
 
 bool log_thermal;
-#define TEMP_APU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_apu))
-#define TEMP_GPU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_gpu))
-#define TEMP_GPU_DIE TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_gpu_die))
-#define TEMP_APU_DIE TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_apu_die))
 void board_override_fan_control(int fan, int *temp)
 {
 	int actual_rpm, new_rpm;
@@ -319,7 +319,7 @@ static const struct ec_thermal_config dsc_amd_temp_gpu_table = {
 	.temp_fan_max = C_TO_K(74),
 };
 
-static const struct ec_thermal_config dsc_amd_temp_dgpu_table = {
+static const struct ec_thermal_config dsc_amd_temp_gpu_die_table = {
 	.temp_host = {
 		[EC_TEMP_THRESH_WARN] = C_TO_K(87),
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(105),
@@ -347,7 +347,7 @@ static const struct ec_thermal_config dsc_nv_temp_gpu_table = {
 	.temp_fan_max = C_TO_K(74),
 };
 
-static const struct ec_thermal_config dsc_nv_temp_dgpu_table = {
+static const struct ec_thermal_config dsc_nv_temp_gpu_die_table = {
 	.temp_host = {
 		[EC_TEMP_THRESH_WARN] = C_TO_K(87),
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(97),
@@ -361,18 +361,26 @@ static const struct ec_thermal_config dsc_nv_temp_dgpu_table = {
 	.temp_fan_max = C_TO_K(80),
 };
 
-#define TEMP_GPU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_gpu))
-#define TEMP_DGPU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_gpu_die))
-
 void thermal_table_switch_by_gpu_type(void)
 {
 	uint8_t gpu_vendor = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE);
 
-	if (gpu_vendor == GPU_AMD_R23M) {
+	switch (gpu_vendor) {
+	case GPU_AMD_R23M:
 		thermal_params[TEMP_GPU] = dsc_amd_temp_gpu_table;
-		thermal_params[TEMP_DGPU] = dsc_amd_temp_dgpu_table;
-	} else {
+		thermal_params[TEMP_GPU_DIE] = dsc_amd_temp_gpu_die_table;
+		break;
+
+	case GPU_NV_GN22:
 		thermal_params[TEMP_GPU] = dsc_nv_temp_gpu_table;
-		thermal_params[TEMP_DGPU] = dsc_nv_temp_dgpu_table;
+		thermal_params[TEMP_GPU_DIE] = dsc_nv_temp_gpu_die_table;
+		break;
+
+	default:
+		thermal_params[TEMP_APU].temp_fan_off =
+			C_TO_K(DT_PROP_OR(TEMP_APU, temp_fan_off, -273));
+		thermal_params[TEMP_APU].temp_fan_max =
+			C_TO_K(DT_PROP_OR(TEMP_APU, temp_fan_max, -273));
+		break;
 	}
 }
