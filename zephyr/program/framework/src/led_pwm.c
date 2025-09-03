@@ -113,6 +113,36 @@ void led_set_color(enum led_color color, enum ec_led_id led_id)
 	}
 }
 
+const struct led_pins_node_t *led_get_node(enum led_color color, enum ec_led_id led_id)
+{
+	const struct led_pins_node_t *pin_node = NULL;
+
+	for (int i = 0; i < ARRAY_SIZE(pins_node); i++) {
+		if (pins_node[i]->led_id == led_id &&
+		    pins_node[i]->led_color == color) {
+			pin_node = pins_node[i];
+			break;
+		}
+	}
+
+	return pin_node;
+}
+
+void led_change_color(enum led_color color, enum ec_led_id led_id, int pins_count, uint8_t *duty)
+{
+	const struct led_pins_node_t *pin_node = led_get_node(color, led_id);
+	uint64_t pulse_ns;
+
+	if (pin_node->pins_count != pins_count)
+		LOG_ERR("LED change color: Wrong pins count");
+
+	for (int j = 0; j < pins_count; j++) {
+		pulse_ns = DIV_ROUND_NEAREST(BOARD_LED_PWM_PERIOD_NS * duty[j], 100);
+		pin_node->pwm_pins[j].pulse_ns = pulse_ns;
+	}
+
+}
+
 /*
  * Set value for exponential pulsing as a minimum of 10,
  * because 0 to the power of anything is still 0.
