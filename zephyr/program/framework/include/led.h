@@ -235,6 +235,16 @@ void auto_als_led_reset(void);
  */
 int led_get_current_tick_time(void);
 
+/**
+ * Allow the project changes the LED duty.
+ *
+ * @param color which LED color would like to change
+ * @param led_id which LED ID would like to change
+ * @param pins_count how many pwm pin to control the color
+ * @param duty the array of the duty that you want to change
+ */
+void led_change_color(enum led_color color, enum ec_led_id led_id, int pins_count, uint8_t *duty);
+
 #ifdef TEST_BUILD
 const struct led_pins_node_t *led_get_node(enum led_color color,
 					   enum ec_led_id led_id);
