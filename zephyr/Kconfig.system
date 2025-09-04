@@ -29,6 +29,7 @@ choice PLATFORM_EC_HIBERNATE_TYPE
 	prompt "Choose a hibernate type"
 	default PLATFORM_EC_HIBERNATE_PSL if DT_HAS_NUVOTON_NPCX_POWER_PSL_ENABLED && SOC_FAMILY_NPCX
 	default PLATFORM_EC_HIBERNATE_VCI if DT_HAS_CROS_EC_HIBERNATE_VCI_PIN_ENABLED
+	default PLATFORM_EC_HIBERNATE_ELPM if DT_HAS_ITE_IT8XXX2_POWER_ELPM_ENABLED
 	default PLATFORM_EC_HIBERNATE_WAKE_PINS if DT_HAS_CROS_EC_HIBERNATE_WAKE_PINS_ENABLED
 	default PLATFORM_EC_HIBERNATE_Z5 if DT_HAS_CROS_EC_HIBERNATE_Z5_ENABLED
 	help
@@ -53,6 +54,14 @@ config PLATFORM_EC_HIBERNATE_VCI
 	  Use VCI (VBAT-Powered Control Interface) for hibernating. It turns off
 	  VTR power rail for ultra-low power consumption and uses VCI inputs which
 	  rely on VBAT power rail to wake up ec and the whole system.
+
+config PLATFORM_EC_HIBERNATE_ELPM
+	bool "System hibernating with ELPM (Extreme Low Power) mechanism"
+	depends on DT_HAS_ITE_IT8XXX2_POWER_ELPM_ENABLED
+	help
+	  Use ELPM (Extreme Low Power) for hibernating. It turns off chip's main
+	  power(VSTBY) for extreme low power consumption and uses XLP inputs rely
+	  on VBAT power rail to wake up ec and the whole system.
 
 config PLATFORM_EC_HIBERNATE_WAKE_PINS
 	bool "System hibernating with wake-source pins"
