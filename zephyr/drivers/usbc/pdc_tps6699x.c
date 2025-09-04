@@ -91,10 +91,6 @@ LOG_MODULE_REGISTER(tps6699x, CONFIG_USBC_LOG_LEVEL);
  */
 #define NUM_PDC_TPS6699X_PORTS DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT)
 
-/* TODO: b/323371550 */
-BUILD_ASSERT(NUM_PDC_TPS6699X_PORTS <= 2,
-	     "tps6699x driver supports a maximum of 2 ports");
-
 /* Make sure pdc_info_t::project_name has enough space for the config identifier
  * string stored in the customer-use register plus a NUL-terminator byte.
  */
