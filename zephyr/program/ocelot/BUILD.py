@@ -31,6 +31,7 @@ def register_npcx9_project(
             # Additional project-specific KConfig customization.
             *extra_kconfig_proj_files,
         ],
+        modules=["cmsis", "cmsis_6", "ec", "pigweed", "nanopb"],
         inherited_from=inherited_from,
     )
 
@@ -62,6 +63,7 @@ def register_it8xxx2_project(
             # Additional project-specific KConfig customization.
             *extra_kconfig_proj_files,
         ],
+        modules=["cmsis", "cmsis_6", "ec", "pigweed", "nanopb"],
         inherited_from=inherited_from,
     )
 
@@ -128,6 +130,7 @@ register_npcx9_project(
     project_name="ocelotrvp-npcx",
     extra_kconfig_base_files=[
         here / "rvp_program.conf",
+        here / "dsp_comms.conf",
     ],
 )
 
@@ -136,6 +139,7 @@ register_it8xxx2_project(
     project_name="ocelotrvp-ite",
     extra_kconfig_base_files=[
         here / "rvp_program.conf",
+        here / "dsp_comms.conf",
     ],
 )
 

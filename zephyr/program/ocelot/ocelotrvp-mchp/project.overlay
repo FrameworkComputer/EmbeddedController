@@ -52,3 +52,5 @@
 };
 
 /* Disable nodes for features not yet enabled. */
+/delete-node/ &int_tablet_mode;
+/delete-node/ &i2c_port_ish;

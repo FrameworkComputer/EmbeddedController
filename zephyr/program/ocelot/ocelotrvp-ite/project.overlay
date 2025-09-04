@@ -121,3 +121,9 @@ tach_fan0: &tach0 {};
 &kblight {
 	pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(324) PWM_POLARITY_NORMAL>;
 };
+
+&dsp_service {
+	int-gpios = <&gpioh 6 (GPIO_ACTIVE_LOW |
+				GPIO_VOLTAGE_1P8 |
+				GPIO_OPEN_DRAIN)>;
+};

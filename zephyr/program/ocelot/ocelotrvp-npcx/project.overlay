@@ -120,3 +120,7 @@ tach_fan0: &tach1 {};
 	offset = <0x50000>;
 	size = <0x1000>;
 };
+
+&dsp_service {
+	int-gpios = <&gpiod 0 (GPIO_ACTIVE_LOW | GPIO_VOLTAGE_1P8)>;
+};
