@@ -17,10 +17,5 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "bmi3xx_interrupt";
 		};
-		int_lid_open: int-lid-open {
-			irq-pin = <&gpio_lid_open>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "lid_interrupt";
-		};
 	};
 };
