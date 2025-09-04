@@ -1684,6 +1684,18 @@ bool charge_prevent_power_on(bool power_button_pressed)
 			prevent_power_on = 0;
 #endif
 	}
+
+	/*
+	 * Prevent power on if there is no battery and the minimum mW to
+	 * power on is not met. This should only be hit in edge cases, however
+	 * it needs to be checked to prevent brown outs
+	 */
+
+	if (!current_batt_params->is_present &&
+	    charge_manager_get_power_limit_uw() <
+		    CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON * 1000)
+		prevent_power_on = 1;
+
 #endif /* CONFIG_CHARGE_MANAGER && CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON */
 #endif /* CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON */
 

@@ -10,6 +10,7 @@
 
 /* Test external variable defined in charge_state_v2 */
 extern int charge_prevent_power_on_automatic_power_on;
+
 extern const struct battery_info *batt_info;
 
 struct charge_state_prevent_power_on_fixture {
@@ -117,6 +118,21 @@ ZTEST(charge_state_prevent_power_on, test_extreme_temperature)
 
 	/* Below freezing, the battery won't operate well. */
 	params->temperature = 2700;
+	zassert_true(charge_prevent_power_on(true));
+	zassert_true(charge_prevent_power_on(false));
+}
+
+ZTEST(charge_state_prevent_power_on, test_no_battery_insufficient_charger)
+{
+	struct batt_params *params = &charge_get_status()->batt;
+
+	/* Set battery to not connected */
+	params->is_present = false;
+
+	/* Remove global power on prevention */
+	charge_prevent_power_on_automatic_power_on = 0;
+
+	/* since there is no battery and 0mW power on should be prevented */
 	zassert_true(charge_prevent_power_on(true));
 	zassert_true(charge_prevent_power_on(false));
 }
