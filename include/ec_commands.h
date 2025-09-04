@@ -8658,6 +8658,20 @@ struct ec_params_fp_read_match_secret {
 	uint16_t fgr;
 } __ec_align4;
 
+/*
+ * Fingerprint vendor defined command.
+ *
+ * A custom per fingerprint vendor host command. It can be used to fetch some
+ * custom data during testing, manufacturing etc.
+ *
+ * This command should be handled only if the system is unlocked.
+ */
+#define EC_CMD_FP_VENDOR 0x040B
+struct ec_params_fp_vendor {
+	/* Parameter to be used by FP vendors. */
+	uint32_t param1;
+} __ec_align4;
+
 /* The positive match secret has the length of the SHA256 digest. */
 #define FP_POSITIVE_MATCH_SECRET_BYTES 32
 struct ec_response_fp_read_match_secret {

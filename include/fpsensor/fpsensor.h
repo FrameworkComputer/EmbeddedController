@@ -191,6 +191,18 @@ int fp_acquire_image(uint8_t *image_data, enum fp_capture_type capture_type);
  */
 int fp_maintenance(void);
 
+/**
+ * FP vendor defined routine for the FP vendor host command
+ *
+ * @param[in] param Vendor-specific parameter passed via the host command
+ * @param[out] buf Buffer for response
+ * @param[in] buf_size Size of the response buffer
+
+ * @return number of bytes written to the response buffer
+ * @return negative value on error
+ */
+int fp_vendor_command(uint32_t param, uint8_t *buf, size_t buf_size);
+
 #ifdef CONFIG_ZEPHYR
 /**
  * Put the sensor into idle state

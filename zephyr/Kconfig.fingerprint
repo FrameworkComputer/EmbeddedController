@@ -20,4 +20,12 @@ config FINGERPRINT_SHELL
 	  This option adds fingerprint console commands that can be used to
 	  verify fingerpint functionality.
 
+config PLATFORM_EC_FINGERPRINT_VENDOR_COMMAND
+	bool "Enable fingerprint vendor defined host command"
+	help
+	  Enables support for FP vendor defined host command. The command can
+	  be handled only if the system is not locked.
+
+	  If enabled, the fp_vendor_command function has to be defined.
+
 endif # PLATFORM_EC_FINGERPRINT

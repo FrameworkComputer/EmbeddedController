@@ -60,3 +60,10 @@ tests:
     - CONFIG_FINGERPRINT_SHELL=y
     extra_conf_files:
     - prj.conf
+
+  fingerprint.task.commands:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FINGERPRINT_COMMANDS=y
+    - CONFIG_PLATFORM_EC_FINGERPRINT_VENDOR_COMMAND=y
+    extra_conf_files:
+    - prj.conf
