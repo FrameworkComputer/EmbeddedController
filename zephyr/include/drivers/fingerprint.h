@@ -183,20 +183,57 @@ extern "C" {
 /** Sensor initialization failed. */
 #define FINGERPRINT_ERROR_INIT_FAIL BIT(15)
 
-/** Fingerprint sensor information structure. */
-struct fingerprint_info {
-	/* Sensor identification */
+/**
+ * @brief Fingerprint sensor identification.
+ *
+ * This structure holds information that is constant after sensor
+ * initialization, except for the errors field which can change at runtime.
+ */
+struct fingerprint_sensor_info {
+	/** @brief Sensor vendor ID. */
 	uint32_t vendor_id;
+	/** @brief Sensor product ID. */
 	uint32_t product_id;
+	/** @brief Sensor model ID. */
 	uint32_t model_id;
+	/** @brief Sensor hardware/firmware version. */
 	uint32_t version;
-	/* Image frame characteristics */
-	uint32_t frame_size;
-	uint32_t pixel_format; /* using V4L2_PIX_FMT_ */
-	uint16_t width;
-	uint16_t height;
-	uint16_t bpp;
+	/**
+	 * @brief Number of image capture types supported by the sensor.
+	 * @see enum fingerprint_capture_type
+	 */
+	uint16_t num_capture_types;
+	/** @brief Current sensor error flags (bitmask of FINGERPRINT_ERROR_*).
+	 */
 	uint16_t errors;
+};
+
+/**
+ * @brief Parameters for a single fingerprint image frame.
+ *
+ * This structure describes the properties of a captured image frame.
+ */
+struct fingerprint_image_frame_params {
+	/** @brief Total size of the frame data in bytes. */
+	uint32_t frame_size;
+	/**
+	 * @brief Pixel format of the image.
+	 * It is recommended to use V4L2_PIX_FMT_* definitions where applicable.
+	 */
+	uint32_t pixel_format;
+	/** @brief Image width in pixels. */
+	uint16_t width;
+	/** @brief Image height in pixels. */
+	uint16_t height;
+	/** @brief Bits per pixel for the image. */
+	uint16_t bpp;
+	/**
+	 * @brief Type of image capture.
+	 * @see enum fingerprint_capture_type
+	 */
+	uint8_t fp_capture_type;
+	/** @brief Reserved for padding and alignment. Should be zero. */
+	uint8_t reserved;
 };
 
 /** Fingerprint sensor operation mode. */
@@ -302,10 +339,18 @@ typedef int (*fingerprint_api_config_t)(const struct device *dev,
  * @brief Callback API for getting information about fingerprint sensor.
  *
  * @param dev Fingerprint sensor device.
- * @param info Pointer to fingerprint_info structure where data will be stored.
+ * @param sensor_info Pointer to a struct where the sensor's static information
+ * will be stored.
+ * @param image_frame_params_array Pointer to a struct where the sensor's
+ * image frame parameters (e.g., width, height, format) will be stored.
+ * @param[in,out] num_params On input, contains the number of elements allocated
+ * in image_frame_params_array. On output, contains the actual number of
+ * elements written to image_frame_params_array.
  */
-typedef int (*fingerprint_api_get_info_t)(const struct device *dev,
-					  struct fingerprint_info *info);
+typedef int (*fingerprint_api_get_info_t)(
+	const struct device *dev, struct fingerprint_sensor_info *sensor_info,
+	struct fingerprint_image_frame_params image_frame_params_array[],
+	uint8_t *num_params);
 
 /**
  * @typedef fingerprint_api_maintenance_t
@@ -441,18 +486,27 @@ static inline int z_impl_fingerprint_config(const struct device *dev,
  *
  * @param dev  Pointer to the device structure for the fingerprint sensor driver
  *	       instance.
- * @param info Pointer to 'fingerprint_info' structure where data will be
- *	       stored.
- *
+ * @param sensor_info Pointer to 'fingerprint_sensor_info' structure where the
+ * sensor's static information will be stored.
+ * @param image_frame_params Pointer to 'fingerprint_image_frame_params'
+ * structure where the sensor's image frame parameters (e.g., width, height,
+ * format) will be stored.
+ * @param[in,out] num_params On input, contains the number of elements allocated
+ * in image_frame_params_array. On output, contains the actual number of
+ * elements written to image_frame_params_array.
  * @retval 0 If successful.
  * @retval -ENOTSUP Not supported api function.
  * @retval other negative values indicates driver specific error.
  */
-__syscall int fingerprint_get_info(const struct device *dev,
-				   struct fingerprint_info *info);
+__syscall int fingerprint_get_info(
+	const struct device *dev, struct fingerprint_sensor_info *sensor_info,
+	struct fingerprint_image_frame_params *image_frame_params_array,
+	uint8_t *num_params);
 
-static inline int z_impl_fingerprint_get_info(const struct device *dev,
-					      struct fingerprint_info *info)
+static inline int z_impl_fingerprint_get_info(
+	const struct device *dev, struct fingerprint_sensor_info *sensor_info,
+	struct fingerprint_image_frame_params image_frame_params_array[],
+	uint8_t *num_params)
 {
 	const struct fingerprint_driver_api *api =
 		(const struct fingerprint_driver_api *)dev->api;
@@ -461,7 +515,8 @@ static inline int z_impl_fingerprint_get_info(const struct device *dev,
 		return -ENOTSUP;
 	}
 
-	return api->get_info(dev, info);
+	return api->get_info(dev, sensor_info, image_frame_params_array,
+			     num_params);
 }
 
 /**
