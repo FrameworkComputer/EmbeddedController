@@ -25,3 +25,21 @@ config PLATFORM_EC_DSP_CLIENT_TIMEOUT_MS
 	  to assert which will signal that we can read the status. This config
 	  specifies the maximum duration (in milliseconds) to wait for that
 	  interrupt.
+
+config PLATFORM_EC_DSP_CLIENT_TX_RETRY_MAX
+	int "Maximum number of TX retries"
+	default 20
+	depends on PLATFORM_EC_DSP_CLIENT
+	help
+	  When a TX call fails, a retry should happen up to this many times. Failures
+	  on the TX could happen if the service is in low power mode and is in the
+	  process of waking up as a result of this TX.
+
+config PLATFORM_EC_DSP_CLIENT_TX_RETRY_INTERVAL_MS
+	int "Milliseconds to wait between TX retries"
+	default 5
+	depends on PLATFORM_EC_DSP_CLIENT
+	help
+	  When a TX call fails a retry should happen this many milliseconds later.
+	  Failures on the TX could happen if the service is in low power mode and is
+	  in the process of waking up as a result of this TX.

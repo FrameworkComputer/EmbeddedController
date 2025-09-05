@@ -46,7 +46,8 @@ static void lid_angle_remote_peripheral_enable() {
 
   /* Write the message */
   LOG_DBG("Writing %zu bytes", stream.bytes_written);
-  int rc = i2c_write_dt(&cfg->i2c, data->request_buffer, stream.bytes_written);
+  int rc = dsp_client_i2c_write_dt(
+      &cfg->i2c, data->request_buffer, stream.bytes_written);
   if (rc != 0) {
     LOG_ERR("Failed to send request (%d)", rc);
   }

@@ -33,6 +33,23 @@ int dsp_client_get_cbi_flags(const struct device* dev,
                              cros_dsp_comms_GetCbiFlagsResponse* mem);
 
 /**
+ * Perform an i2c write with a retry
+ *
+ * This function will try to send the data up to
+ * CONFIG_PLATFORM_EC_DSP_CLIENT_TX_RETRY_MAX number of times with a delay of
+ * CONFIG_PLATFORM_EC_DSP_CLIENT_TX_RETRY_INTERVAL_MS.
+ *
+ * @param spec The I2C spec to use for the write
+ * @param buf The data to write
+ * @param num_bytes The number of bytes to write
+ * @return 0 on success
+ * @return < 0 on error
+ */
+int dsp_client_i2c_write_dt(const struct i2c_dt_spec* spec,
+                            const uint8_t* buf,
+                            uint32_t num_bytes);
+
+/**
  * A shim entry point to the DSP client.
  *
  * Calls dsp_client_get_cbi_flags() by converting the tag to the correct flag
