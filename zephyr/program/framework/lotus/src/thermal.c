@@ -378,9 +378,9 @@ void thermal_table_switch_by_gpu_type(void)
 
 	default:
 		thermal_params[TEMP_APU].temp_fan_off =
-			C_TO_K(DT_PROP_OR(TEMP_APU, temp_fan_off, -273));
+			C_TO_K(DT_PROP_OR(DT_NODELABEL(temp_sensor_apu), temp_fan_off, -273));
 		thermal_params[TEMP_APU].temp_fan_max =
-			C_TO_K(DT_PROP_OR(TEMP_APU, temp_fan_max, -273));
+			C_TO_K(DT_PROP_OR(DT_NODELABEL(temp_sensor_apu), temp_fan_max, -273));
 		break;
 	}
 }
