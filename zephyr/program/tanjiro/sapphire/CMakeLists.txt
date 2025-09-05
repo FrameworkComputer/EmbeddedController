@@ -4,3 +4,4 @@
 
 zephyr_library_sources("src/backlight.c")
 zephyr_library_sources("src/board_config.c")
+zephyr_library_sources("src/pen_control.c")
