@@ -20,7 +20,6 @@ gpio_ec_pch_wake_odl: &gpio_soc_wake_odl {};
 #include "console.dtsi"
 #include "fan.dtsi"
 #include "gpios.dtsi"
-#include "hibernate.dtsi"
 #include "i2c.dtsi"
 #include "interrupts.dtsi"
 #include "keyboard.dtsi"
@@ -31,6 +30,7 @@ gpio_ec_pch_wake_odl: &gpio_soc_wake_odl {};
 #include "led_policy.dtsi"
 #include "usb_typec.dtsi"
 #include "usba.dtsi"
+#include "rtk_ulpm.dtsi"
 
 /* AP interface */
 &espi0 {

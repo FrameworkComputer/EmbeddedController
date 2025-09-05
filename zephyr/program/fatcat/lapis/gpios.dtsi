@@ -46,8 +46,8 @@
 		};
 
 		/* PS_ON_EC slp_z */
-		gpio_ps_on_ec: ps_on_ec {
-			gpios = <&gpioi 3 (GPIO_OUTPUT | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+		gpio_en_slp_z: en_slp_z {
+			gpios = <&gpioi 3 GPIO_OUTPUT_HIGH>;
 		};
 		/* 5VSUS_ON */
 		gpio_5vsus_on: 5vsus_on {
