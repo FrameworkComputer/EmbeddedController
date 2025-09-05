@@ -319,6 +319,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_RAMP_SW
                                                 "${PLATFORM_EC}/common/charge_ramp_sw.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CPS8100
                                                 "${PLATFORM_EC}/driver/wpc/cps8100.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CTN730
+                                                "${PLATFORM_EC}/driver/nfc/ctn730.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CURVE25519
                                                 "${PLATFORM_EC}/third_party/boringssl/common/curve25519.c")
 if (NOT DEFINED CONFIG_CPU_CORTEX_M0)
