@@ -168,10 +168,16 @@ struct charger_drv {
 	void (*dump_prochot)(int chgnum);
 };
 
+/* Value when charger doesn't require a minimum voltage. */
+#define CHARGER_NO_MINIMUM_CHARGING_MV 0
+
 struct charger_config_t {
 	int i2c_port;
 	uint16_t i2c_addr_flags;
 	const struct charger_drv *drv;
+#ifdef CONFIG_PLATFORM_EC_CHARGER_HYBRID_POWER_BOOST
+	uint32_t minimum_charging_mv;
+#endif /* CONFIG_PLATFORM_EC_CHARGER_HYBRID_POWER_BOOST */
 };
 
 #ifndef CONFIG_CHARGER_RUNTIME_CONFIG
@@ -299,6 +305,15 @@ enum ec_error_list charger_get_vbus_voltage(int port, int *voltage);
 
 /* Get the Vsys voltage (mV) from the charger */
 enum ec_error_list charger_get_vsys_voltage(int port, int *voltage);
+
+/**
+ * @brief Get the minimum required voltage (mv) to charge battery.
+ *
+ * @return EC_ERROR_INVAL upon invalid arguments
+ * @return EC_ERROR_UNIMPLEMENTED if charger IC does not require a min voltage
+ * @return EC_SUCCESS upon success, with mv populated.
+ */
+enum ec_error_list charger_get_minimum_charging_mv(int chgnum, uint32_t *mv);
 
 /* Custom board function to discharge battery when on AC power */
 int board_discharge_on_ac(int enable);

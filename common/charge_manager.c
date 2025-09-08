@@ -788,6 +788,17 @@ static bool is_battery_disconnected(void)
 		  battery_is_cut_off() != BATTERY_CUTOFF_STATE_NORMAL)));
 }
 
+static inline bool is_charge_available(const struct charge_port_info *info)
+{
+	return !(info->current == 0 || info->voltage == 0);
+}
+
+static inline bool is_voltage_sufficient(const struct charge_port_info *info,
+					 const uint32_t min_required_mv)
+{
+	return info->voltage >= min_required_mv;
+}
+
 /**
  * Select the best charge port or the override port, as defined by the supplier
  * hierarchy and the available power.
@@ -801,11 +812,21 @@ static void charge_manager_get_best_port(int *new_port, int *new_supplier)
 	int best_port = CHARGE_PORT_NONE;
 	int best_port_power = -1, candidate_port_power;
 	int sup_idx, port_idx;
+	uint32_t min_required_mv = 0;
+	bool verify_min_required_mv = false;
 
 	if (override_port == OVERRIDE_DONT_CHARGE) {
 		*new_port = CHARGE_PORT_NONE;
 		*new_supplier = CHARGE_SUPPLIER_NONE;
 		return;
+	}
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGER_HYBRID_POWER_BOOST)) {
+		/* This only needs to be queried once. */
+		int chg_chip = charge_get_active_chg_chip();
+		verify_min_required_mv = charger_get_minimum_charging_mv(
+						 chg_chip, &min_required_mv) ==
+					 EC_SUCCESS;
 	}
 
 	/*
@@ -828,9 +849,20 @@ static void charge_manager_get_best_port(int *new_port, int *new_supplier)
 			 * Skip this supplier if there is no
 			 * available charge.
 			 */
-			if (available_charge[sup_idx][port_idx].current == 0 ||
-			    available_charge[sup_idx][port_idx].voltage == 0)
+			if (!is_charge_available(
+				    &available_charge[sup_idx][port_idx]))
 				continue;
+
+			/*
+			 * If supported, skip supplier that doesn't meet minimum
+			 * required voltage of charger IC.
+			 */
+			if (verify_min_required_mv &&
+			    !is_voltage_sufficient(
+				    &available_charge[sup_idx][port_idx],
+				    min_required_mv)) {
+				continue;
+			}
 
 			/*
 			 * Don't select this port if we have a

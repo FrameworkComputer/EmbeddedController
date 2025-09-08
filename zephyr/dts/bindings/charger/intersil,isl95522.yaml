@@ -6,4 +6,4 @@ description: Intersil ISL95522 Charger IC
 
 compatible: "intersil,isl95522"
 
-include: chg-chip.yaml
+include: [chg-chip.yaml, hpb-charger.yaml]

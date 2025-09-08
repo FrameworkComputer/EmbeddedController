@@ -1,0 +1,12 @@
+# Copyright 2025 The ChromiumOS Authors
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Properties common to all Hybrid Power Boost (HBP) charger chips
+
+properties:
+  minimum-charging-mv:
+    type: int
+    description: |
+      Minimum voltage (in millivolts) required to charge battery for hybrid
+      boost chargers.

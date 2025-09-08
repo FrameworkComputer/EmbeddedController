@@ -183,13 +183,15 @@ config PLATFORM_EC_ISL9238C_INPUT_VOLTAGE_MV
 
 config PLATFORM_EC_CHARGER_ISL95522
 	bool "Use the ISL95522 charger"
+	default y if DT_HAS_INTERSIL_ISL95522_ENABLED
 	depends on PLATFORM_EC_I2C
+	select PLATFORM_EC_CHARGER_HYBRID_POWER_BOOST
 	help
 	  Enables a driver for the ISL95522 Battery Charger. This is a
 	  highly versatile combination battery charger configurable for
 	  operating as either a Hybrid Power Boost (HPB) charger or a
 	  Narrow VDC (NVDC) charger and switch between the modes under
-	  firmware control, supporting 2-, 3-, or 4-cell batteries.It provides
+	  firmware control, supporting 2-, 3-, or 4-cell batteries. It provides
 	  an I2C interface for configuration.
 
 config PLATFORM_EC_CHARGER_BQ25710
@@ -617,6 +619,19 @@ config PLATFORM_EC_CHARGER_NARROW_VDC
 	  narrowing the VDC range. This in turn enables DC/DC converter
 	  optimisations in the system and allows the removal of the power-path
 	  switch, saving additional power, board area, and cost.
+
+	  This should be enabled by charger drivers which need it. It cannot
+	  be set otherwise, even in prj.conf
+
+config PLATFORM_EC_CHARGER_HYBRID_POWER_BOOST
+	bool
+	help
+	  Select this if the charger uses Hybrid Power Boost Charging.
+	  Hybrid Power Boost (HPB) charger is a feature in the battery charging
+	  circuitry that allows the battery and the AC adapter to simultaneously
+	  supply power to the system. HPB charger charges the battery by buck
+	  voltage converter. It can only convert the input voltage to a lower
+	  voltage, but cannot boost it.
 
 	  This should be enabled by charger drivers which need it. It cannot
 	  be set otherwise, even in prj.conf
