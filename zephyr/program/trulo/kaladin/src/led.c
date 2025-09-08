@@ -40,6 +40,10 @@ LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_INF);
 #define PWR_LED_CPU_DELAY K_MSEC(2000)
 #define PWR_LED_CPU_DELAY_S5 K_MSEC(4500)
 
+#define MINIMUM_CHARGING_MV 15000
+
+int blink_cnt, low_adp_blink;
+
 const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED,
 					     EC_LED_ID_POWER_LED };
 
@@ -229,8 +233,32 @@ static void led_set_battery(void)
 		break;
 	case LED_PWRS_DISCHARGE:
 		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
-			if (charge_get_percent() <= BATTERY_LEVEL_CRITICAL &&
-			    !battery_critical_triggeied) {
+			if (low_adp_blink) {
+				battery_low_triggeied = 0;
+				battery_critical_triggeied = 0;
+				hook_call_deferred(
+					&battery_set_pwm_led_tick_data, -1);
+
+				/* 500ms on, 500ms off, blink three times, then
+				 * off 2 sec, loop */
+				switch (blink_cnt % 10) {
+				case 0:
+				case 2:
+				case 4:
+					led_set_color_battery_duty(LED_AMBER,
+								   100);
+					break;
+				default:
+					led_set_color_battery_duty(LED_OFF, 0);
+					break;
+				}
+				blink_cnt++;
+				if (blink_cnt >= 10)
+					blink_cnt = 0;
+
+			} else if (charge_get_percent() <=
+					   BATTERY_LEVEL_CRITICAL &&
+				   !battery_critical_triggeied) {
 				battery_low_triggeied = 0;
 				battery_critical_triggeied = 1;
 				BATT_CRI_LED_CONFIG_TICK(BATT_LED_PULSE_TICK_MS,
@@ -493,6 +521,9 @@ static void pwr_led_init(void)
 		pwr_led_suspend_hook();
 	else
 		pwr_led_shutdown_hook();
+
+	blink_cnt = 0;
+	low_adp_blink = 0;
 }
 DECLARE_HOOK(HOOK_INIT, pwr_led_init, HOOK_PRIO_DEFAULT);
 
@@ -513,3 +544,21 @@ void board_led_auto_control(void)
 		pwr_led_shutdown_hook();
 	}
 }
+
+static void low_adp_check(void)
+{
+	int active_port, charger_voltage;
+
+	active_port = charge_manager_get_active_charge_port();
+	charger_voltage = charge_manager_get_charger_voltage();
+
+	LOG_INF("kaladin: low_adp_check: active_port %d, charger_voltage: %d",
+		active_port, charger_voltage);
+	if (active_port != -1 && charger_voltage < MINIMUM_CHARGING_MV &&
+	    charger_voltage > 0)
+		low_adp_blink = 1;
+	else
+		low_adp_blink = 0;
+	blink_cnt = 0;
+}
+DECLARE_HOOK(HOOK_POWER_SUPPLY_CHANGE, low_adp_check, HOOK_PRIO_DEFAULT);
