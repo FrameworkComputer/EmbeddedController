@@ -29,10 +29,9 @@ jobs:
         platform: [
           # Starting with 2.05, tulip is released from fwk-tulip-29169
           { name: tulip, folder: lotus, ver: "2.0.5", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
-          # Starting with 4.00, lotus is released from fwk-tulip-29169
-          { name: lotus, folder: lotus, ver: "4.0.0", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           # Just for reference, not releasing from this branch
           { name: marigold, folder: lotus, ver: "0.0.0", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
+          { name: lotus, folder: lotus, ver: "0.0.0", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           { name: azalea, folder: lotus, ver: "0.0.0", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
         ]
 
