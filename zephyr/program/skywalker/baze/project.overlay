@@ -4,6 +4,7 @@
  */
 
 #include <cros/cbi_flash.dtsi>
+#include <cros/thermistor/thermistor.dtsi>
 #include "../ite_generated.dtsi"
 #include "../interrupts.dtsi"
 #include "../ite_common.dtsi"
@@ -99,6 +100,28 @@
 			0xc6  /* C17 */
 		>;
 	};
+
+	temp_charger: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&adc_temp_sensor1>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		charger {
+			temp-host-high = <85>;
+			temp-host-halt = <90>;
+			temp-host-release-high = <80>;
+			temp-host-release-halt = <85>;
+			sensor = <&temp_charger>;
+		};
+	};
+};
+
+
+&thermistor_3V3_100K_100K_4250B {
+	status = "okay";
 };
 
 &cros_kb_raw {
