@@ -559,17 +559,14 @@ static int init(struct motion_sensor_t *s)
 
 	/* Configure interrupt-driven acquisition if desired */
 	if (IS_ENABLED(BMA4XX_USE_INTERRUPTS)) {
-		GOTO_ON_ERROR(out,
-			      bma4_write8(s, BMA4_CMD_ADDR, BMA4_FIFO_FLUSH));
+		/* Configure INT1 pin */
+		GOTO_ON_ERROR(out, bma4_write8(s, BMA4_INT1_IO_CTRL_ADDR,
+					       BMA4_INT1_OUTPUT_EN));
 		/*
-		 * Enable all interrupts on INT1 pin, active-low push-pull
-		 * output, latched until status register read.
+		 * Enable latched until status register read.
 		 */
 		GOTO_ON_ERROR(out, bma4_write8(s, BMA4_INT_LATCH_ADDR,
 					       BMA4_INT_LATCH));
-		GOTO_ON_ERROR(out, bma4_write8(s, BMA4_INT_MAP_DATA_ADDR,
-					       BMA4_INT1_DRDY | BMA4_INT1_FWM |
-						       BMA4_INT1_FFULL));
 		/* Enable FIFO in headerless mode, accel data only */
 		GOTO_ON_ERROR(out, bma4_write8(s, BMA4_FIFO_CONFIG_1_ADDR,
 					       BMA4_FIFO_ACC_EN));
@@ -598,9 +595,12 @@ static int bma4xx_enable_interrupt(const struct motion_sensor_t *s, bool enable)
 	/* Flush the FIFO */
 	GOTO_ON_ERROR(out, bma4_write8(s, BMA4_CMD_ADDR, BMA4_FIFO_FLUSH));
 
-	/* Configure INT1 pin */
-	GOTO_ON_ERROR(out, bma4_write8(s, BMA4_INT1_IO_CTRL_ADDR,
-				       enable ? BMA4_INT1_OUTPUT_EN : 0));
+	/* Enable/Disable all interrupts on INT1 pin, active-low push-pull
+	 * output */
+	GOTO_ON_ERROR(out, bma4_write8(s, BMA4_INT_MAP_DATA_ADDR,
+				       enable ? BMA4_INT1_DRDY | BMA4_INT1_FWM |
+							BMA4_INT1_FFULL :
+						0));
 
 	/* Read interrupt status, to clears any pending IRQs */
 	GOTO_ON_ERROR(out,
