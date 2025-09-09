@@ -112,9 +112,6 @@
 /* Variant references the TCPCs to determine Vbus sourcing */
 #define CONFIG_USB_PD_5V_EN_CUSTOM
 
-/* Event-driven CC detection */
-#define CONFIG_USB_PD_EVENT_DRIVEN_CC_STATE
-
 /* I2C configuration */
 #define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
 #define I2C_PORT_BATTERY NPCX_I2C_PORT5_0
