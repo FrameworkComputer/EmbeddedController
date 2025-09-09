@@ -352,8 +352,9 @@
 		ec-spi-cs0-n {
 			gpios = <MCHP_GPIO_DECODE_055 GPIO_INPUT>;
 		};
-		ec-spi-clk {
-			gpios = <MCHP_GPIO_DECODE_056 GPIO_INPUT>;
+		mchp_wp_ex: ec-spi-clk {
+			gpios = <MCHP_GPIO_DECODE_056 0>;
+			no-auto-init;
 		};
 		ec-pd-usbc-i2c-int-n {
 			gpios = <MCHP_GPIO_DECODE_002 GPIO_INPUT>;

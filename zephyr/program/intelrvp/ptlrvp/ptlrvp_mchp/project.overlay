@@ -32,6 +32,9 @@
 };
 
 / {
+	aliases {
+		gpio-wp = &mchp_wp_ex;
+	};
 	chosen {
 		cros-ec,sha = &symcr;
                 cros-ec,keyboard = &ioex_it8801_kbd;
@@ -43,6 +46,12 @@
 	tabletmode_interrupt: tabletmode-interrupt {
 		compatible = "cros,tabletmode-interrupt";
 		irq-gpios = <MCHP_GPIO_DECODE_150 GPIO_ACTIVE_LOW>;
+	};
+
+	microchip-wp {
+		compatible ="microchip,write-protect";
+		wp-gpios = <MCHP_GPIO_DECODE_076 GPIO_ACTIVE_LOW>;
+		wp-ex-gpios = <MCHP_GPIO_DECODE_056 GPIO_ACTIVE_LOW>;
 	};
 };
 
