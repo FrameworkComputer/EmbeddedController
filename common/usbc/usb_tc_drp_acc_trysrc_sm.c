@@ -165,6 +165,18 @@ void print_flag(int port, int set_or_clear, int flag);
 #endif
 
 /*
+ * Maximum number of software DRP toggles allowed before giving
+ * control to TCPC AutoToggle or entering Low Power Mode.
+ *
+ * This safeguard ensures we try software toggling first
+ * (up to this limit) before falling back to hardware/idle states.
+ * It also helps maintain consistent toggle timing during marginal
+ * partner behavior (e.g. compliance tests), where strict tDRP
+ * enforcement is required.
+ */
+#define PD_DRP_SW_TOGGLE_LIMIT 10
+
+/*
  * The TypeC state machine uses this bit to disable/enable PD
  * This bit corresponds to bit-0 of pd_disabled_mask
  */
@@ -446,6 +458,9 @@ static struct type_c {
 	enum tcpc_cc_pull select_cc_pull;
 	enum tcpc_rp_value select_current_limit_rp;
 	enum tcpc_rp_value select_collision_rp;
+
+	/* Software-enforced DRP toggles */
+	uint8_t drp_sw_toggle_count;
 } tc[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Port dual-role state */
@@ -1559,6 +1574,9 @@ void tc_state_init(int port)
 	if (port >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		return;
 
+	/* Initialize DRP toggle counter */
+	tc[port].drp_sw_toggle_count = 0;
+
 	/* For test builds, replicate static initialization */
 	if (IS_ENABLED(TEST_BUILD)) {
 		memset(&tc[port], 0, sizeof(tc[port]));
@@ -2227,6 +2245,9 @@ static void tc_unattached_snk_entry(const int port)
 {
 	enum pd_data_role prev_data_role;
 
+	/* Initialize CC state tracking */
+	tc[port].cc_state = PD_CC_UNSET;
+
 	if (get_last_state_tc(port) != TC_UNATTACHED_SRC) {
 		tc_detached(port);
 		print_current_state(port);
@@ -2282,6 +2303,8 @@ static void tc_unattached_snk_entry(const int port)
 
 static void tc_unattached_snk_run(const int port)
 {
+	enum pd_cc_states new_cc_state;
+
 	/*
 	 * TODO(b/137498392): Add wait before sampling the CC
 	 * status after role changes
@@ -2300,6 +2323,23 @@ static void tc_unattached_snk_run(const int port)
 	if (!IS_ENABLED(CONFIG_USB_PD_EVENT_DRIVEN_CC_STATE))
 		tcpm_get_cc(port, &tc[port].cc1, &tc[port].cc2);
 
+	/* Determine new CC state */
+	if (cc_is_rp(tc[port].cc1) || cc_is_rp(tc[port].cc2))
+		new_cc_state = PD_CC_DFP_ATTACHED;
+	else
+		new_cc_state = PD_CC_NONE;
+
+	/* If CC state changed, restart debounce timer */
+	if (new_cc_state != tc[port].cc_state) {
+		tc[port].cc_state = new_cc_state;
+		pd_timer_enable(port, TC_TIMER_PD_DEBOUNCE, PD_T_PD_DEBOUNCE);
+		return;
+	}
+
+	/* Wait for debounce timer to expire */
+	if (!pd_timer_is_expired(port, TC_TIMER_PD_DEBOUNCE))
+		return;
+
 	/*
 	 * The port shall transition to AttachWait.SNK when a Source
 	 * connection is detected, as indicated by the SNK.Rp state
@@ -2309,7 +2349,7 @@ static void tc_unattached_snk_run(const int port)
 	 * after the state of both CC pins is SNK.Open for
 	 * tDRP − dcSRC.DRP ∙ tDRP.
 	 */
-	if (cc_is_rp(tc[port].cc1) || cc_is_rp(tc[port].cc2)) {
+	if (new_cc_state == PD_CC_DFP_ATTACHED) {
 		/* Connection Detected */
 		set_state_tc(port, TC_ATTACH_WAIT_SNK);
 		return;
@@ -2329,6 +2369,14 @@ static void tc_unattached_snk_run(const int port)
 	 */
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 		typec_set_input_current_limit(port, 0, 0);
+
+	/* Allow up to 10 SW toggles before auto toggle/low power modes */
+	if ((drp_state[port] == PD_DRP_TOGGLE_ON) &&
+	    tc[port].drp_sw_toggle_count < PD_DRP_SW_TOGGLE_LIMIT) {
+		tc[port].drp_sw_toggle_count++;
+		set_state_tc(port, TC_UNATTACHED_SRC);
+		return;
+	}
 
 	/*
 	 * Attempt TCPC auto DRP toggle if it is
@@ -2351,6 +2399,9 @@ static void tc_unattached_snk_run(const int port)
 static void tc_unattached_snk_exit(const int port)
 {
 	pd_timer_disable(port, TC_TIMER_NEXT_ROLE_SWAP);
+
+	/* Clear debounce timer */
+	pd_timer_disable(port, TC_TIMER_PD_DEBOUNCE);
 }
 
 /**
@@ -2365,6 +2416,8 @@ static void tc_attach_wait_snk_entry(const int port)
 {
 	print_current_state(port);
 
+	/* Reset SW toggle counter */
+	tc[port].drp_sw_toggle_count = 0;
 	tc[port].cc_state = PD_CC_UNSET;
 }
 
@@ -2806,6 +2859,9 @@ static void tc_unattached_src_entry(const int port)
 {
 	enum pd_data_role prev_data_role;
 
+	/* Initialize CC state tracking */
+	tc[port].cc_state = PD_CC_UNSET;
+
 	if (get_last_state_tc(port) != TC_UNATTACHED_SNK) {
 		tc_detached(port);
 		print_current_state(port);
@@ -2857,6 +2913,8 @@ static void tc_unattached_src_entry(const int port)
 
 static void tc_unattached_src_run(const int port)
 {
+	enum pd_cc_states new_cc_state;
+
 	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
 		if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED)) {
 			TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
@@ -2879,6 +2937,25 @@ static void tc_unattached_src_run(const int port)
 	if (!IS_ENABLED(CONFIG_USB_PD_EVENT_DRIVEN_CC_STATE))
 		tcpm_get_cc(port, &tc[port].cc1, &tc[port].cc2);
 
+	/* Determine new CC state */
+	if (cc_is_audio_acc(tc[port].cc1, tc[port].cc2))
+		new_cc_state = PD_CC_UFP_AUDIO_ACC;
+	else if (cc_is_at_least_one_rd(tc[port].cc1, tc[port].cc2))
+		new_cc_state = PD_CC_UFP_ATTACHED;
+	else
+		new_cc_state = PD_CC_NONE;
+
+	/* If CC state changed, restart debounce timer */
+	if (new_cc_state != tc[port].cc_state) {
+		tc[port].cc_state = new_cc_state;
+		pd_timer_enable(port, TC_TIMER_PD_DEBOUNCE, PD_T_PD_DEBOUNCE);
+		return;
+	}
+
+	/* Wait for debounce timer to expire */
+	if (!pd_timer_is_expired(port, TC_TIMER_PD_DEBOUNCE))
+		return;
+
 	/*
 	 * Transition to AttachWait.SRC when:
 	 *   1) The SRC.Rd state is detected on either CC1 or CC2 pin or
@@ -2887,30 +2964,47 @@ static void tc_unattached_src_run(const int port)
 	 * A DRP shall transition to Unattached.SNK within tDRPTransition
 	 * after dcSRC.DRP ∙ tDRP
 	 */
-	if (cc_is_at_least_one_rd(tc[port].cc1, tc[port].cc2) ||
-	    cc_is_audio_acc(tc[port].cc1, tc[port].cc2))
+	if (new_cc_state == PD_CC_UFP_ATTACHED ||
+	    new_cc_state == PD_CC_UFP_AUDIO_ACC) {
 		set_state_tc(port, TC_ATTACH_WAIT_SRC);
-	else if (pd_timer_is_expired(port, TC_TIMER_NEXT_ROLE_SWAP) &&
-		 drp_state[port] != PD_DRP_FORCE_SOURCE &&
-		 drp_state[port] != PD_DRP_FREEZE)
-		set_state_tc(port, TC_UNATTACHED_SNK);
+		return;
+	}
+
 	/*
-	 * Attempt TCPC auto DRP toggle
+	 * Wait to make sure the CC is open. Reuse the role toggle timer.
 	 */
-	else if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) &&
-		 drp_state[port] == PD_DRP_TOGGLE_ON &&
-		 tcpm_auto_toggle_supported(port) &&
-		 cc_is_open(tc[port].cc1, tc[port].cc2))
+	if (!pd_timer_is_expired(port, TC_TIMER_NEXT_ROLE_SWAP))
+		return;
+
+	/* Allow up to 10 SW toggles before auto toggle/low power modes */
+	if ((drp_state[port] == PD_DRP_TOGGLE_ON) &&
+	    tc[port].drp_sw_toggle_count < PD_DRP_SW_TOGGLE_LIMIT) {
+		tc[port].drp_sw_toggle_count++;
+		set_state_tc(port, TC_UNATTACHED_SNK);
+		return;
+	}
+
+	/* After 10 toggles decide the next state */
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) &&
+	    drp_state[port] == PD_DRP_TOGGLE_ON &&
+	    tcpm_auto_toggle_supported(port) && new_cc_state == PD_CC_NONE) {
 		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
-	else if (IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER) &&
-		 (drp_state[port] == PD_DRP_FORCE_SOURCE ||
-		  drp_state[port] == PD_DRP_TOGGLE_OFF))
+	} else if (drp_state[port] != PD_DRP_FORCE_SOURCE &&
+		   drp_state[port] != PD_DRP_FREEZE) {
+		set_state_tc(port, TC_UNATTACHED_SNK);
+	} else if (IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER) &&
+		   (drp_state[port] == PD_DRP_FORCE_SOURCE ||
+		    drp_state[port] == PD_DRP_TOGGLE_OFF)) {
 		set_state_tc(port, TC_LOW_POWER_MODE);
+	}
 }
 
 static void tc_unattached_src_exit(const int port)
 {
 	pd_timer_disable(port, TC_TIMER_NEXT_ROLE_SWAP);
+
+	/* Clear debounce timer */
+	pd_timer_disable(port, TC_TIMER_PD_DEBOUNCE);
 }
 
 /**
@@ -2925,6 +3019,8 @@ static void tc_attach_wait_src_entry(const int port)
 {
 	print_current_state(port);
 
+	/* Reset SW toggle counter */
+	tc[port].drp_sw_toggle_count = 0;
 	tc[port].cc_state = PD_CC_UNSET;
 }
 
@@ -3450,14 +3546,6 @@ __maybe_unused static void tc_drp_auto_toggle_entry(const int port)
 		assert(0);
 
 	print_current_state(port);
-
-	/*
-	 * We need to ensure that we are waiting in the previous Rd or Rp state
-	 * for the minimum of DRP SNK or SRC so the first toggle cause by
-	 * transition into auto toggle doesn't violate spec timing.
-	 */
-	pd_timer_enable(port, TC_TIMER_TIMEOUT,
-			MAX(PD_T_DRP_SNK, PD_T_DRP_SRC));
 }
 
 __maybe_unused static void tc_drp_auto_toggle_run(const int port)
@@ -3466,17 +3554,13 @@ __maybe_unused static void tc_drp_auto_toggle_run(const int port)
 		assert(0);
 
 	/*
-	 * A timer is running, but if a connection comes in while waiting
-	 * then allow that to take higher priority.
+	 * TODO(b/436338613): This flag will probably never be set.
+	 * If so, remove this check and simplify this state.
 	 */
 	if (TC_CHK_FLAG(port, TC_FLAGS_CHECK_CONNECTION))
 		check_drp_connection(port);
 
-	else if (!pd_timer_is_disabled(port, TC_TIMER_TIMEOUT)) {
-		if (!pd_timer_is_expired(port, TC_TIMER_TIMEOUT))
-			return;
-
-		pd_timer_disable(port, TC_TIMER_TIMEOUT);
+	else {
 		tcpm_enable_drp_toggle(port);
 
 		if (IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER)) {
@@ -3487,7 +3571,8 @@ __maybe_unused static void tc_drp_auto_toggle_run(const int port)
 
 __maybe_unused static void tc_drp_auto_toggle_exit(const int port)
 {
-	pd_timer_disable(port, TC_TIMER_TIMEOUT);
+	/* Reset SW toggle counter */
+	tc[port].drp_sw_toggle_count = 0;
 }
 
 __maybe_unused static void tc_low_power_mode_entry(const int port)
@@ -3537,6 +3622,8 @@ __maybe_unused static void tc_low_power_mode_exit(const int port)
 {
 	pd_timer_disable(port, TC_TIMER_LOW_POWER_TIME);
 	pd_timer_disable(port, TC_TIMER_LOW_POWER_EXIT_TIME);
+	/* Reset SW toggle counter */
+	tc[port].drp_sw_toggle_count = 0;
 }
 
 /**
