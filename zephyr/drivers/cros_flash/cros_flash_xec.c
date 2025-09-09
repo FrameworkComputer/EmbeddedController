@@ -17,6 +17,7 @@
 #include <zephyr/logging/log.h>
 
 #include <drivers/cros_flash.h>
+#include <drivers/microchip_wp.h>
 #include <soc.h>
 
 LOG_MODULE_REGISTER(cros_flash, LOG_LEVEL_ERR);
@@ -194,19 +195,28 @@ static int cros_flash_xec_write_protection_set(const struct device *dev,
 	int ret = 0;
 
 	/* Write protection can be cleared only by core domain reset */
+
+#ifdef CONFIG_CROS_FLASH_MCHP_INTERNAL_WP
+	/* For MCHP1727, Set internal wp to turn on flash protection */
+	if (enable) {
+		sync_wp_assert_status();
+	} else {
+		LOG_ERR("cros_flash_xec_write_protection_set to High -- not allowed\n");
+	}
+#else
 	if (!enable) {
 		LOG_ERR("WP can be disabled only via core domain reset ");
 		return -ENOTSUP;
 	}
 	/* MCHP TODO need API call to set flash WP# pin active: GPIO driver? */
+#endif
 
 	return ret;
 }
 
 static int cros_flash_xec_write_protection_is_set(const struct device *dev)
 {
-	/* MCHP TODO - Read WP# pin state: GPIO driver? */
-	return 0;
+	return gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_wp));
 }
 
 static int cros_flash_xec_uma_lock(const struct device *dev, bool enable)
@@ -286,6 +296,11 @@ static void flash_uma_lock(const struct device *dev, int enable)
 
 static int flash_set_status_for_prot(const struct device *dev, int reg1)
 {
+	/* For MEC1727, Sync up mchp_wp state with gpio_wp state */
+#ifdef CONFIG_CROS_FLASH_MCHP_INTERNAL_WP
+	sync_wp_assert_status();
+
+#endif
 	/*
 	 * Writing SR regs will fail if our UMA lock is enabled. If WP
 	 * is deasserted then remove the lock and allow the write.
@@ -305,9 +320,7 @@ static int flash_set_status_for_prot(const struct device *dev, int reg1)
 	 * internal spi-flash, protect it now before setting them.
 	 */
 	flash_protect_int_flash(dev, write_protect_is_asserted());
-
 	flash_set_status(dev, reg1);
-
 	spi_flash_reg_to_protect(reg1, 0, &addr_prot_start, &addr_prot_length);
 
 	return EC_SUCCESS;
@@ -349,14 +362,14 @@ static int flash_write_prot_reg(const struct device *dev, unsigned int offset,
 {
 	int rv;
 	uint8_t sr1;
-
+	uint8_t sr2;
 	/* Invalid values */
 	if (offset + bytes > CONFIG_FLASH_SIZE_BYTES)
 		return EC_ERROR_INVAL;
 
 	/* Compute desired protect range */
 	flash_get_status(dev, &sr1);
-	rv = spi_flash_protect_to_reg(offset, bytes, &sr1, 0);
+	rv = spi_flash_protect_to_reg(offset, bytes, &sr1, &sr2);
 	if (rv)
 		return rv;
 
@@ -387,6 +400,11 @@ static int cros_flash_xec_init(const struct device *dev)
 	/* Initialize UMA to unlocked */
 	flash_uma_lock(dev, 0);
 
+	/* For MEC1727, Sync up mchp_wp state with gpio_wp state */
+#ifdef CONFIG_CROS_FLASH_MCHP_INTERNAL_WP
+	sync_wp_assert_status();
+	LOG_INF("cros_flash_xec_init ASSERT OK\n");
+#endif
 	/*
 	 * Protect status registers of internal spi-flash if WP# is active
 	 * during ec initialization.

@@ -44,6 +44,14 @@ config CROS_FLASH_XEC
 	  SPI flash in the MEC1727 or external shared or private ports on
 	  MEC1723, etc.
 
+config CROS_FLASH_MCHP_INTERNAL_WP
+	bool "Microchip Internal WP pin is present"
+	default n
+	depends on CROS_FLASH_XEC
+	help
+	  This option enables keeping the internal and external Microchip WP
+	  gpios in the same state to allow for HW Write Protect on MEC172x chips.
+
 config CROS_FLASH_RTK
 	bool "REALTEK RTS5915 flash driver for the Zephyr shim"
 	depends on DT_HAS_REALTEK_RTK_CROS_FLASH_ENABLED

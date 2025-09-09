@@ -1,0 +1,22 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Microchip Internal Write Protect gpios
+
+compatible: "microchip,write-protect"
+
+properties:
+  wp-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      Internal GPIO that controls WP status for the internal EC SPI Flash.
+      For MEC1727 this should be MCHP_GPIO_DECODE_076 and configured to
+      Active Low.
+
+  wp-ex-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      External GPIO that connects to the write protect signal from the GSC.
