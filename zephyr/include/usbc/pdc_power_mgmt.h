@@ -791,4 +791,11 @@ bool pdc_power_mgmt_is_pdc_port_valid(int port);
  */
 int pdc_power_mgmt_set_ap_power_state(enum power_state state);
 
+/**
+ * @brief Simulate a power button press from the PDC power manager
+ *
+ * @param ms simulated power button press length in milliseconds
+ */
+void pdc_power_mgmt_simulate_power_button_press(int ms);
+
 #endif /* __CROS_EC_PDC_POWER_MGMT_H */

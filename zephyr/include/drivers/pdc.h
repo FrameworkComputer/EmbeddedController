@@ -119,6 +119,19 @@ struct pdc_info_t {
 };
 
 /**
+ * Connector status changes that PDCs can report through vendor defined
+ * interfaces. These events are not supported by GET_CONNECTOR_STATUS.
+ */
+union vendor_status_change_bits_t {
+	struct {
+		/* Set to 1 when PDC reports receiving a PD Alert message */
+		uint32_t alert_received : 1;
+		uint32_t reserved : 31;
+	};
+	uint32_t raw_value;
+};
+
+/**
  * The type of interface used to access the PDC
  */
 enum pdc_bus_type {
@@ -288,6 +301,10 @@ typedef int (*pdc_set_battery_capability_t)(const struct device *dev,
 typedef int (*pdc_set_battery_status_t)(const struct device *dev,
 					union battery_status_t *bstat);
 typedef int (*pdc_set_bbr_cts_t)(const struct device *dev, bool enable);
+typedef int (*pdc_get_vendor_status_t)(
+	const struct device *dev,
+	union vendor_status_change_bits_t *vendor_status);
+typedef int (*pdc_get_alert_t)(const struct device *dev, uint32_t *ado);
 
 /**
  * @cond INTERNAL_HIDDEN
@@ -341,6 +358,8 @@ __subsystem struct pdc_driver_api {
 	pdc_set_battery_capability_t set_battery_capability;
 	pdc_set_battery_status_t set_battery_status;
 	pdc_set_bbr_cts_t set_bbr_cts;
+	pdc_get_vendor_status_t get_vendor_status;
+	pdc_get_alert_t get_alert;
 };
 /**
  * @endcond
@@ -1592,6 +1611,34 @@ static inline int pdc_set_bbr_cts(const struct device *dev, bool enable)
 	}
 
 	return api->set_bbr_cts(dev, enable);
+}
+
+static inline int
+pdc_get_vendor_status(const struct device *dev,
+		      union vendor_status_change_bits_t *vendor_status)
+{
+	const struct pdc_driver_api *api =
+		(const struct pdc_driver_api *)dev->api;
+
+	/* This is an optional feature, so it might not be implemented */
+	if (api->get_vendor_status == NULL) {
+		return -ENOSYS;
+	}
+
+	return api->get_vendor_status(dev, vendor_status);
+}
+
+static inline int pdc_get_alert(const struct device *dev, uint32_t *ado)
+{
+	const struct pdc_driver_api *api =
+		(const struct pdc_driver_api *)dev->api;
+
+	/* This is an optional feature, so it might not be implemented */
+	if (api->get_alert == NULL) {
+		return -ENOSYS;
+	}
+
+	return api->get_alert(dev, ado);
 }
 
 #ifdef __cplusplus

@@ -241,7 +241,7 @@ ZTEST_USER_F(src_policy, test_src_policy_pr_swap)
 				      &connector_status);
 	emul_pdc_pulse_irq(fixture->emul_pdc[TEST_USBC_PORT0]);
 
-	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_USBC_PORT0, -1));
+	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_USBC_PORT0, 3000));
 
 	zassert_ok(verify_lpm_source_pdo(fixture, TEST_USBC_PORT0, 5000, 1500,
 					 PDO_PEAK_OCP),

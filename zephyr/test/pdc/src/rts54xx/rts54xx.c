@@ -254,6 +254,38 @@ ZTEST_USER(rts54xx, test_irq)
 				   IRQ_TEST_TIMEOUT_MS));
 }
 
+ZTEST_USER(rts54xx, test_alert_received)
+{
+	uint32_t ado = 0;
+	union vendor_status_change_bits_t vendor_status = { 0 };
+
+	/* Clear alert in PDC emulator */
+	zassert_ok(emul_pdc_set_alert(emul, 0x0));
+
+	/* Verify PDC reports no alert received */
+	zassert_ok(pdc_get_vendor_status(dev, &vendor_status));
+	k_sleep(K_MSEC(1000));
+	zassert_equal(vendor_status.alert_received, 0);
+
+	/* Verify GET_ALERT returns empty ADO */
+	zassert_ok(pdc_get_alert(dev, &ado));
+	k_sleep(K_MSEC(1000));
+	zassert_equal(ado, 0x0);
+
+	/* Set power button press alert in PDC emulator */
+	zassert_ok(emul_pdc_set_alert(emul, 0x80000002));
+
+	/* Verify PDC reports alert received */
+	zassert_ok(pdc_get_vendor_status(dev, &vendor_status));
+	k_sleep(K_MSEC(1000));
+	zassert_equal(vendor_status.alert_received, 1);
+
+	/* Verify GET_ALERT returns empty ADO */
+	zassert_ok(pdc_get_alert(dev, &ado));
+	k_sleep(K_MSEC(1000));
+	zassert_equal(ado, 0x80000002);
+}
+
 /* UCSI command callback handler. */
 void ucsi_cc_callback(const struct device *port, struct pdc_callback *cb,
 		      union cci_event_t cci_event)

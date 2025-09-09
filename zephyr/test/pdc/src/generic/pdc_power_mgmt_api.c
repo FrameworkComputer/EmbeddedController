@@ -56,9 +56,9 @@ FAKE_VALUE_FUNC(int, system_jumped_late);
 FAKE_VALUE_FUNC(int, chipset_in_state, int);
 FAKE_VOID_FUNC(board_unattached_cb_stub, int);
 FAKE_VOID_FUNC(board_dp_attention_cb_stub, int, uint32_t);
+FAKE_VOID_FUNC(pdc_power_mgmt_simulate_power_button_press, int);
 
 static enum chipset_state_mask fake_chipset_state = CHIPSET_STATE_ON;
-
 static int custom_fake_chipset_in_state(int mask)
 {
 	LOG_DBG("MOCK: chipset_in_state");
@@ -69,6 +69,7 @@ static void reset_fakes(void)
 {
 	RESET_FAKE(system_jumped_late);
 	RESET_FAKE(chipset_in_state);
+	RESET_FAKE(pdc_power_mgmt_simulate_power_button_press);
 
 	fake_chipset_state = CHIPSET_STATE_ON;
 	chipset_in_state_fake.custom_fake = custom_fake_chipset_in_state;
@@ -2663,6 +2664,83 @@ ZTEST_USER(pdc_power_mgmt_api, test_pdc_power_mgmt_pd_get_polarity)
 	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
 
 	zassert_equal(POLARITY_CC2, pdc_power_mgmt_pd_get_polarity(TEST_PORT));
+}
+
+ZTEST_USER(pdc_power_mgmt_api, test_pd_power_button)
+{
+	union connector_status_t in_conn_status = {};
+	union conn_status_change_bits_t in_conn_status_change_bits = { 0 };
+
+	/* Clear alert in PDC emulator */
+	if (emul_pdc_set_alert(emul, 0x0) == -ENOSYS) {
+		ztest_test_skip();
+	}
+
+	/* Verify power button press has not been called */
+	zassert_equal(
+		0, pdc_power_mgmt_simulate_power_button_press_fake.call_count,
+		"Unexpected PD power button press.");
+
+	/* Connect partner. */
+	in_conn_status_change_bits.connect_change = 1;
+	in_conn_status.raw_conn_status_change_bits =
+		in_conn_status_change_bits.raw_value;
+	in_conn_status.power_operation_mode = PD_OPERATION;
+	emul_pdc_configure_src(emul, &in_conn_status);
+	emul_pdc_connect_partner(emul, &in_conn_status);
+	zassert_true(TEST_WAIT_FOR(pdc_power_mgmt_is_connected(TEST_PORT),
+				   PDC_TEST_TIMEOUT));
+
+	emul_pdc_set_connector_status(emul, &in_conn_status);
+	emul_pdc_pulse_irq(emul);
+	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+
+	/* Set power button press alert in PDC emulator */
+	emul_pdc_set_alert(emul, 0x80000002);
+
+	/* Pulse IRQ for the EC to check received alert message */
+	in_conn_status_change_bits.connect_change = 0;
+	in_conn_status.raw_conn_status_change_bits =
+		in_conn_status_change_bits.raw_value;
+	emul_pdc_set_connector_status(emul, &in_conn_status);
+	emul_pdc_pulse_irq(emul);
+	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+
+	/* Check no simulated press until release alert is received */
+	zassert_equal(
+		0, pdc_power_mgmt_simulate_power_button_press_fake.call_count,
+		"Power button press not simulated.");
+
+	/* Set power button release alert in PDC emulator, then pulse IRQ */
+	emul_pdc_set_alert(emul, 0x80000003);
+	emul_pdc_pulse_irq(emul);
+	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+
+	/* Check simulated press on release ADO following a press */
+	zassert_equal(
+		1, pdc_power_mgmt_simulate_power_button_press_fake.call_count,
+		"Unexpected PD power button press.");
+
+	/* Clear emulated ADO, then pulse IRQ. */
+	emul_pdc_set_alert(emul, 0x0);
+	emul_pdc_pulse_irq(emul);
+	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+
+	/* Check no simulated press on empty ADO */
+	zassert_equal(
+		1, pdc_power_mgmt_simulate_power_button_press_fake.call_count,
+		"Unexpected PD power button press.");
+
+	/* Set power button release alert in PDC emulator, then pulse IRQ */
+	emul_pdc_set_alert(emul, 0x80000003);
+	emul_pdc_pulse_irq(emul);
+	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+
+	/* Check for simulated press on release ADO without preceding press ADO
+	 */
+	zassert_equal(
+		2, pdc_power_mgmt_simulate_power_button_press_fake.call_count,
+		"Power button press not simulated.");
 }
 
 /*

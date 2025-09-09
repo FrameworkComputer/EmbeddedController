@@ -401,7 +401,7 @@ static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 		    req->get_rtk_status.sts_len);
 
 	/* Massage PD status into RTS54 response */
-	/* BYTE 1-4 */
+	/* BYTE 1-2 (UCSI status change bits) */
 	data->response.rtk_status.pd_status.external_supply_charge =
 		conn_status_change_bits.external_supply_change;
 	data->response.rtk_status.pd_status.power_operation_mode_change =
@@ -424,6 +424,12 @@ static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 		conn_status_change_bits.connect_change;
 	data->response.rtk_status.pd_status.error =
 		conn_status_change_bits.error;
+
+	/* BYTE 3-4 (RTK status change bits) */
+	if (data->ado == 0)
+		data->response.rtk_status.pd_status.alert_received = 0;
+	else
+		data->response.rtk_status.pd_status.alert_received = 1;
 
 	/* BYTE 5 */
 	data->response.rtk_status.supply = 0;
@@ -932,6 +938,19 @@ static int set_sys_pwr_state(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int get_alert(struct rts5453p_emul_pdc_data *data,
+		     const union rts54_request *req)
+{
+	LOG_INF("GET_ALERT = %x", req->get_alert.port_num);
+	memset(&data->response, 0, sizeof(data->response));
+
+	data->response.get_alert.byte_count = sizeof(uint32_t);
+	data->response.get_alert.ado = data->ado;
+
+	send_response(data);
+	return 0;
+}
+
 struct commands {
 	uint8_t code;
 	enum {
@@ -992,6 +1011,7 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0xA8, HANDLER_DEF(unsupported) },
 	{ .code = 0xA9, HANDLER_DEF(unsupported) },
 	{ .code = 0xAA, HANDLER_DEF(unsupported) },
+	{ .code = 0xB5, HANDLER_DEF(get_alert) },
 	{ .code = 0xE0, HANDLER_DEF(get_pch_data_status) },
 	{ .code = 0xE1, HANDLER_DEF(set_frs_function) },
 };
@@ -1859,6 +1879,21 @@ static int emul_realtek_rts54xx_get_sys_power_state(const struct emul *target,
 	return 0;
 }
 
+static int emul_realtek_rts54xx_set_alert(const struct emul *target,
+					  uint32_t ado)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	data->ado = ado;
+
+	/* No response data */
+	memset(&data->response, 0, sizeof(union rts54_response));
+	send_response(data);
+
+	return 0;
+}
+
 static DEVICE_API(emul_pdc, emul_realtek_rts54xx_api) = {
 	.reset = emul_realtek_rts54xx_reset,
 	.set_response_delay = emul_realtek_rts54xx_set_response_delay,
@@ -1899,6 +1934,7 @@ static DEVICE_API(emul_pdc, emul_realtek_rts54xx_api) = {
 	.get_battery_capability = emul_realtek_rts54xx_get_battery_capability,
 	.get_battery_status = emul_realtek_rts54xx_get_battery_status,
 	.get_sys_power_state = emul_realtek_rts54xx_get_sys_power_state,
+	.set_alert = emul_realtek_rts54xx_set_alert,
 };
 
 #define RTS5453P_EMUL_DEFINE(n)                                             \

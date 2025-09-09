@@ -18,7 +18,9 @@
 #include "drivers/ucsi_v3.h"
 #include "ec_commands.h"
 #include "hooks.h"
+#include "power_button.h"
 #include "test/util.h"
+#include "timer.h"
 #include "usb_common.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
@@ -159,6 +161,16 @@ test_mockable_static_inline int sniff_pdc_set_rdo(const struct device *dev,
 #define VBUS_READ_CACHE_MS 500
 
 /**
+ * @brief Minimum long button press in seconds.
+ */
+#define PD_POWER_BUTTON_LONG_PRESS 4
+
+/**
+ * @brief Button press timeout in seconds.
+ */
+#define PD_POWER_BUTTON_PRESS_TIMEOUT 8
+
+/**
  * @brief PDC driver commands
  */
 enum pdc_cmd_t {
@@ -232,6 +244,10 @@ enum pdc_cmd_t {
 	CMD_PDC_SET_BATTERY_STATUS,
 	/** CMD_PDC_SET_BATTERY_CAPABILITY*/
 	CMD_PDC_SET_BATTERY_CAPABILITY,
+	/** CMD_PDC_GET_VENDOR_STATUS */
+	CMD_PDC_GET_VENDOR_STATUS,
+	/** CMD_PDC_GET_ALERT */
+	CMD_PDC_GET_ALERT,
 	/** CMD_PDC_COUNT */
 	CMD_PDC_COUNT
 };
@@ -416,6 +432,8 @@ enum cci_flag_t {
 	CCI_CMD_COMPLETED,
 	/** CCI_EVENT: Used to trigger querying connector status */
 	CCI_EVENT,
+	/** Used to query vendor defined connector change bits */
+	CCI_VENDOR_EVENT,
 	/** CCI_CAM_CHANGE */
 	CCI_CAM_CHANGE,
 	/** CCI_ACK */
@@ -467,6 +485,8 @@ test_export_static const char *const pdc_cmd_names[] = {
 	[CMD_PDC_SET_BBR_CTS] = "PDC_SET_BBR_CTS",
 	[CMD_PDC_SET_BATTERY_STATUS] = "PDC_SET_BATTERY_STATUS",
 	[CMD_PDC_SET_BATTERY_CAPABILITY] = "PDC_SET_BATTERY_CAPABILITY",
+	[CMD_PDC_GET_VENDOR_STATUS] = "PDC_GET_VENDOR_STATUS",
+	[CMD_PDC_GET_ALERT] = "PDC_GET_ALERT",
 };
 const int pdc_cmd_types = CMD_PDC_COUNT;
 
@@ -498,6 +518,8 @@ BUILD_ASSERT(ARRAY_SIZE(pdc_state_names) == PDC_STATE_COUNT,
 enum policy_common_t {
 	/** COMMON_POLICY_SET_POWER_STATE */
 	COMMON_POLICY_SET_POWER_STATE,
+	/** COMMON_POLICY_GET_ALERT */
+	COMMON_POLICY_GET_ALERT,
 	/** COMMON_POLICY_COUNT */
 	COMMON_POLICY_COUNT,
 };
@@ -861,6 +883,8 @@ struct pdc_port_t {
 	bool hpd_wake_watch;
 	/** Additional change bits to report to PPM. */
 	union conn_status_change_bits_t overlay_ppm_changes;
+	/** non-UCSI status change reported by PDC */
+	union vendor_status_change_bits_t vendor_status_change;
 	/** LPM should enable FRS. */
 	bool frs_enable;
 	/** Store response to the GET_ATTENTION_VDO command */
@@ -875,6 +899,11 @@ struct pdc_port_t {
 	union battery_status_t bstat;
 	/** Battery capability */
 	union battery_capability_t bcap;
+	/* Store state of PD power button */
+	k_timepoint_t pb_long_press;
+	k_timepoint_t pb_press_timeout;
+	/* Alert Data Object */
+	uint32_t ado;
 };
 
 /**
@@ -1451,6 +1480,19 @@ static void handle_connector_status(struct pdc_port_t *port)
 }
 
 /**
+ * @brief Reads vendor defined connector status change bits, this should only
+ * be used to process events which are not supported by UCSI.
+ */
+static void handle_vendor_status(struct pdc_port_t *port)
+{
+	if (port->vendor_status_change.alert_received) {
+		atomic_set_bit(port->common_policy.flags,
+			       COMMON_POLICY_GET_ALERT);
+		k_event_post(&port->sm_event, PDC_SM_EVENT);
+	}
+}
+
+/**
  * @brief Trigger connector status change on PPM
  *
  * The UCSI spec says that certain commands with side-effects (like SET_PDR) do
@@ -1558,6 +1600,13 @@ static bool run_common_policies(struct pdc_port_t *port)
 				      COMMON_POLICY_SET_POWER_STATE)) {
 		/* Send new AP power state to PDC */
 		queue_internal_cmd(port, CMD_PDC_SET_AP_POWER_STATE);
+		return true;
+	}
+
+	if (atomic_test_and_clear_bit(port->common_policy.flags,
+				      COMMON_POLICY_GET_ALERT)) {
+		/* Read latest ADO */
+		queue_internal_cmd(port, CMD_PDC_GET_ALERT);
 		return true;
 	}
 
@@ -1672,6 +1721,43 @@ static void handle_attention_vdo(struct pdc_port_t *port)
 
 	if (port->board_dp_attention_cb) {
 		port->board_dp_attention_cb(port_num, port->attention_vdo.vdo);
+	}
+}
+
+static void handle_alert(struct pdc_port_t *port, uint32_t ado)
+{
+	const struct pdc_config_t *config = port->dev->config;
+	int port_num = config->connector_num;
+	enum ado_extended_alert_event_type event_type;
+
+	if (pdc_power_mgmt_pd_get_data_role(port_num) != PD_ROLE_DFP ||
+	    !(ado & ADO_EXTENDED_ALERT_EVENT)) {
+		return;
+	}
+
+	event_type = ado & ADO_EXTENDED_ALERT_EVENT_TYPE;
+	if (event_type == ADO_POWER_BUTTON_PRESS) {
+		port->pb_press_timeout = sys_timepoint_calc(
+			K_SECONDS(PD_POWER_BUTTON_PRESS_TIMEOUT));
+		port->pb_long_press = sys_timepoint_calc(
+			K_SECONDS(PD_POWER_BUTTON_LONG_PRESS));
+	} else if (event_type == ADO_POWER_BUTTON_RELEASE) {
+		/* If the device is on and a long power button press is received
+		 * shutdown the device. Otherwise, simulate a short power button
+		 * press. Release alerts without a corresponding press are
+		 * treated as short power button presses.
+		 */
+		if (!sys_timepoint_expired(port->pb_press_timeout)) {
+			if (sys_timepoint_expired(port->pb_long_press) &&
+			    (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) |
+			     chipset_in_state(CHIPSET_STATE_ON))) {
+				chipset_force_shutdown(CHIPSET_SHUTDOWN_BUTTON);
+			} else {
+				pdc_power_mgmt_simulate_power_button_press(500);
+			}
+		}
+		port->pb_press_timeout = sys_timepoint_calc(K_FOREVER);
+		port->pb_long_press = sys_timepoint_calc(K_FOREVER);
 	}
 }
 
@@ -1980,6 +2066,11 @@ static void pdc_unattached_entry(void *obj)
 	/* Clear VBUS cache timeout. */
 	port->vbus_expired = sys_timepoint_calc(K_NO_WAIT);
 
+	/* Reset PD button */
+	port->ado = 0;
+	port->pb_press_timeout = sys_timepoint_calc(K_FOREVER);
+	port->pb_long_press = sys_timepoint_calc(K_FOREVER);
+
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
 		invalidate_charger_settings(port, true);
 		port->unattached_local_state = UNATTACHED_SET_SINK_PATH_OFF;
@@ -2092,6 +2183,11 @@ static enum smf_state_result pdc_src_attached_run(void *obj)
 	 */
 	if (atomic_test_and_clear_bit(port->cci_flags, CCI_EVENT)) {
 		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_STATUS);
+		return SMF_EVENT_HANDLED;
+	}
+
+	if (atomic_test_and_clear_bit(port->cci_flags, CCI_VENDOR_EVENT)) {
+		queue_internal_cmd(port, CMD_PDC_GET_VENDOR_STATUS);
 		return SMF_EVENT_HANDLED;
 	}
 
@@ -2548,6 +2644,11 @@ static enum smf_state_result pdc_snk_attached_run(void *obj)
 		return SMF_EVENT_HANDLED;
 	}
 
+	if (atomic_test_and_clear_bit(port->cci_flags, CCI_VENDOR_EVENT)) {
+		queue_internal_cmd(port, CMD_PDC_GET_VENDOR_STATUS);
+		return SMF_EVENT_HANDLED;
+	}
+
 	if (atomic_test_and_clear_bit(port->cci_flags, CCI_ACK)) {
 		queue_internal_cmd(port, CMD_PDC_ACK_CC_CI);
 		return SMF_EVENT_HANDLED;
@@ -2993,6 +3094,13 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 	case CMD_PDC_SET_BATTERY_CAPABILITY:
 		rv = pdc_set_battery_capability(port->pdc, &port->bcap);
 		break;
+	case CMD_PDC_GET_VENDOR_STATUS:
+		rv = pdc_get_vendor_status(port->pdc,
+					   &port->vendor_status_change);
+		break;
+	case CMD_PDC_GET_ALERT:
+		rv = pdc_get_alert(port->pdc, &port->ado);
+		break;
 	default:
 		LOG_ERR("C%d: Invalid command: %d", config->connector_num,
 			port->cmd->cmd);
@@ -3132,6 +3240,12 @@ static enum smf_state_result pdc_send_cmd_wait_run(void *obj)
 			return SMF_EVENT_HANDLED;
 		case CMD_PDC_GET_ATTENTION_VDO:
 			handle_attention_vdo(port);
+			break;
+		case CMD_PDC_GET_VENDOR_STATUS:
+			handle_vendor_status(port);
+			break;
+		case CMD_PDC_GET_ALERT:
+			handle_alert(port, port->ado);
 			break;
 		default:
 			break;
@@ -3755,6 +3869,7 @@ static void pdc_ci_handler_cb(const struct device *dev,
 	/* Handle generic vendor defined event from driver */
 	if (cci_event.vendor_defined_indicator) {
 		atomic_set_bit(port->cci_flags, CCI_EVENT);
+		atomic_set_bit(port->cci_flags, CCI_VENDOR_EVENT);
 		post_event = true;
 	}
 
@@ -5768,6 +5883,14 @@ test_mockable int pdc_power_mgmt_set_ap_power_state(enum power_state state)
 	}
 
 	return 0;
+}
+
+test_mockable void pdc_power_mgmt_simulate_power_button_press(int ms)
+{
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_POWER_BUTTON))
+		return;
+
+	power_button_simulate_press(ms);
 }
 
 #ifdef CONFIG_ZTEST
