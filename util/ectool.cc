@@ -8067,6 +8067,7 @@ static const char *const base_params[] = {
 	"chg_input_current_min",
 	"chg_input_current_max",
 	"chg_input_current_step",
+	"chg_minimum_charging_mv",
 };
 BUILD_ASSERT(ARRAY_SIZE(base_params) == CS_NUM_BASE_PARAMS);
 

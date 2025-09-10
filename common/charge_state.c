@@ -2209,6 +2209,14 @@ charge_command_charge_state(struct host_cmd_handler_args *args)
 			case CS_PARAM_CHG_INPUT_CURRENT_STEP:
 				val = info->input_current_step;
 				break;
+#ifdef CONFIG_PLATFORM_EC_CHARGER_HYBRID_POWER_BOOST
+			case CS_PARAM_CHG_MIN_REQUIRED_MV:
+				if (charger_get_minimum_charging_mv(chgnum,
+								    &val)) {
+					rv = EC_RES_INVALID_PARAM;
+				};
+				break;
+#endif /* CONFIG_PLATFORM_EC_CHARGER_HYBRID_POWER_BOOST */
 			default:
 				rv = EC_RES_INVALID_PARAM;
 			}
@@ -2254,6 +2262,9 @@ charge_command_charge_state(struct host_cmd_handler_args *args)
 			case CS_PARAM_CHG_INPUT_CURRENT_MIN:
 			case CS_PARAM_CHG_INPUT_CURRENT_MAX:
 			case CS_PARAM_CHG_INPUT_CURRENT_STEP:
+#ifdef CONFIG_PLATFORM_EC_CHARGER_HYBRID_POWER_BOOST
+			case CS_PARAM_CHG_MIN_REQUIRED_MV:
+#endif /* CONFIG_PLATFORM_EC_CHARGER_HYBRID_POWER_BOOST */
 				/* Can't set this */
 				rv = EC_RES_ACCESS_DENIED;
 				break;

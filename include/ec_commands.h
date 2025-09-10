@@ -5014,6 +5014,9 @@ enum charge_state_params {
 	/* step value of charger input current limit (READ ONLY) */
 	CS_PARAM_CHG_INPUT_CURRENT_STEP,
 
+	/* Minimum required voltage for hybrid boost chargers (READ ONLY) */
+	CS_PARAM_CHG_MIN_REQUIRED_MV,
+
 	/* How many so far? */
 	CS_NUM_BASE_PARAMS,
 
