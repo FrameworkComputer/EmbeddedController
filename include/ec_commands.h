@@ -5017,6 +5017,11 @@ enum charge_state_params {
 	/* Minimum required voltage for hybrid boost chargers (READ ONLY) */
 	CS_PARAM_CHG_MIN_REQUIRED_MV,
 
+	/* For hybrid boost chargers returns !=0 when attached charger is
+	 * capable of charging the battery
+	 */
+	CS_PARAM_CHG_IS_ADAPTER_SUFFICIENT,
+
 	/* How many so far? */
 	CS_NUM_BASE_PARAMS,
 

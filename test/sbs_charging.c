@@ -31,6 +31,16 @@ test_static int override_voltage, override_current, override_usec;
 test_static int display_soc;
 test_static int is_full;
 
+int charge_manager_get_active_charge_port(void)
+{
+	return 0;
+}
+
+int charge_manager_get_charger_voltage(void)
+{
+	return 25000;
+}
+
 /* The simulation doesn't really hibernate, so we must reset this ourselves */
 extern timestamp_t shutdown_target_time;
 bool battery_sustainer_enabled(void);
@@ -580,6 +590,7 @@ test_static int test_hc_charge_state(void)
 		case CS_PARAM_CHG_INPUT_CURRENT_MAX:
 		case CS_PARAM_CHG_INPUT_CURRENT_STEP:
 		case CS_PARAM_CHG_MIN_REQUIRED_MV:
+		case CS_PARAM_CHG_IS_ADAPTER_SUFFICIENT:
 			/* These ones can't be set */
 			break;
 		case CS_PARAM_CHG_OPTION:
@@ -594,7 +605,7 @@ test_static int test_hc_charge_state(void)
 					    sizeof(resp));
 		if (i == CS_PARAM_CHG_STATUS ||
 		    (CS_PARAM_LIMIT_POWER <= i &&
-		     i <= CS_PARAM_CHG_MIN_REQUIRED_MV))
+		     i <= CS_PARAM_CHG_IS_ADAPTER_SUFFICIENT))
 			TEST_ASSERT(rv == EC_RES_ACCESS_DENIED);
 		else
 			TEST_ASSERT(rv == EC_RES_SUCCESS);
