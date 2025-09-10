@@ -136,9 +136,10 @@ int ucsi_write_tunnel(void)
 		change_connector_indicator = 0;
 
 	/* Print the invalid port for debugging */
-	if (ucsi_debug_enable && change_connector_indicator > valid_ucsi_port_count)
-		CPRINTS("UCSI write invalid type-c port:%d", change_connector_indicator);
-	else {
+	if (change_connector_indicator > valid_ucsi_port_count) {
+		if (ucsi_debug_enable)
+			CPRINTS("UCSI write invalid type-c port:%d", change_connector_indicator);
+	} else {
 		if (change_connector_indicator == 0) {
 			/* The command should broadcast to all PD chips */
 			cmd_need_broadcast = true;
