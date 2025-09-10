@@ -14,7 +14,7 @@
 #include <cstddef>
 
 #include "ap_power/ap_power.h"
-#include "body_detection.h"
+#include "body_detection_client.h"
 #include "cros/dsp/service/cros_transport.hh"
 #include "cros/dsp/service/driver.hh"
 #include "cros_board_info.h"
@@ -256,11 +256,10 @@ bool cros::dsp::service::Driver::HandleDecodedRequest() {
 #ifdef CONFIG_PLATFORM_EC_DSP_REMOTE_BODY_DETECTION
     case cros_dsp_comms_EcService_notify_body_detection_change_tag:
       LOG_DBG("GOT: NotifyBodyDetectionChangeRequest");
-      body_detect_change_state(
+      body_detect_change_state_extern(
           pending_service_request_.request.notify_body_detection_change.on_body
               ? BODY_DETECTION_ON_BODY
-              : BODY_DETECTION_OFF_BODY,
-          false);
+              : BODY_DETECTION_OFF_BODY);
       return false;
 #endif
     case cros_dsp_comms_EcService_get_cbi_flags_tag:

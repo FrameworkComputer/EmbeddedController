@@ -189,6 +189,7 @@ config PLATFORM_EC_GESTURE_HOST_DETECTION
 	  Enable gesture host interface
 
 rsource "Kconfig.sensor_devices"
-rsource "Kconfig.body_detection"
 
 endif # PLATFORM_EC_MOTIONSENSE
+
+rsource "Kconfig.body_detection"

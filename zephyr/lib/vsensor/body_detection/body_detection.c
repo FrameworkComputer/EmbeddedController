@@ -48,9 +48,13 @@ static const struct body_detect_params default_body_detect_params = {
 static bool body_detect_enable = IS_ENABLED(CONFIG_BODY_DETECTION);
 static bool body_detect_initialized;
 static bool body_detect_rate_is_set;
-static enum body_detect_states motion_state = BODY_DETECTION_ON_BODY;
-static uint64_t onbody_lasttime;
 STATIC_IF(CONFIG_ACCEL_SPOOF_MODE) bool spoof_enable;
+
+/* Depends on body_detect_common.c */
+extern uint64_t onbody_lasttime;
+
+/* Depends on body_detect_common.c */
+uint64_t onbody_get_curtime(void);
 
 /* The decimator using ALGORITHM_FREQ_OPTIMAL*/
 static int decimator_valid;
@@ -58,16 +62,6 @@ static IIR_DECIMATOR(decimator, ALGORITHM_FREQ_OPTIMAL, 3);
 
 static struct iir_filter_t main_filter;
 static struct exp_smooth_t smooth_x, smooth_y, smooth_z, smooth_var;
-
-/* Clock */
-test_export_static timestamp_t (*get_time_ptr)() = get_time;
-
-static uint64_t get_curtime(void)
-{
-	timestamp_t time = get_time_ptr();
-
-	return time.val;
-}
 
 static void body_detect_get_params(void)
 {
@@ -96,52 +90,6 @@ static void body_detect_get_params(void)
 		(int)confidence_delta);
 }
 
-static void print_body_detect_mode(void)
-{
-	if (body_detect_get_state()) {
-		LOG_INF("On body");
-	} else {
-		LOG_INF("Off body");
-	}
-}
-
-/* Change the motion state and commit the change to AP. */
-void body_detect_change_state(enum body_detect_states state, bool spoof)
-{
-	if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE) && spoof_enable && !spoof) {
-		return;
-	}
-	if (IS_ENABLED(CONFIG_GESTURE_HOST_DETECTION)) {
-		struct ec_response_motion_sensor_data vector = {
-			.flags = MOTIONSENSE_SENSOR_FLAG_BYPASS_FIFO,
-			.activity_data = {
-				.activity = MOTIONSENSE_ACTIVITY_BODY_DETECTION,
-				.state = state,
-			},
-			.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID,
-		};
-		motion_sense_fifo_stage_data(&vector, NULL, 0,
-					     __hw_clock_source_read());
-		motion_sense_fifo_commit_data();
-	}
-	/* change the motion state */
-	motion_state = state;
-	if (state == BODY_DETECTION_ON_BODY) {
-		/* reset time counting of stationary */
-		onbody_lasttime = get_curtime();
-	}
-
-	/* state changing log */
-	print_body_detect_mode();
-
-	if (IS_ENABLED(CONFIG_BODY_DETECTION_NOTIFY_MODE_CHANGE) &&
-	    motion_sense_get_ec_config() == SENSOR_CONFIG_EC_S0) {
-		host_set_single_event(EC_HOST_EVENT_BODY_DETECT_CHANGE);
-	}
-
-	hook_notify(HOOK_BODY_DETECT_CHANGE);
-}
-
 void body_detect_set_enable(int enable)
 {
 	body_detect_enable = enable;
@@ -151,11 +99,6 @@ void body_detect_set_enable(int enable)
 int body_detect_get_enable(void)
 {
 	return body_detect_enable;
-}
-
-enum body_detect_states body_detect_get_state(void)
-{
-	return motion_state;
 }
 
 static void body_detect_set_update_rate(int odr)
@@ -292,13 +235,13 @@ test_export_static void body_detect_step(float x, float y, float z,
 
 	LOG_DBG("time=%lld conf=%d var=%d x=%d/%d y=%d/%d z=%d/%d [%d %d %d]",
 		curtime, (int)motion_confidence, (int)var, (int)x, (int)x_avg,
-		(int)y, (int)y_avg, (int)z, (int)z_avg, motion_state,
+		(int)y, (int)y_avg, (int)z, (int)z_avg, body_detect_get_state(),
 		(int)var_threshold, (int)confidence_delta);
 
 	/*
 	 * Body detection
 	 */
-	if (motion_state == BODY_DETECTION_ON_BODY) {
+	if (body_detect_get_state() == BODY_DETECTION_ON_BODY) {
 		if (motion_confidence > CONFIG_BODY_DETECTION_ON_BODY_CON) {
 			LOG_DBG("Confidence(%d) is above threshold(%d), "
 				"updating timestamp to %llu",
@@ -348,7 +291,7 @@ void body_detect(void)
 		(body_sensor->xyz[X] * body_sensor->current_range * 1000) >> 15,
 		(body_sensor->xyz[Y] * body_sensor->current_range * 1000) >> 15,
 		(body_sensor->xyz[Z] * body_sensor->current_range * 1000) >> 15,
-		get_curtime());
+		onbody_get_curtime());
 }
 
 void body_detect_reset(void)
@@ -359,8 +302,8 @@ void body_detect_reset(void)
 	int odr = body_sensor->drv->get_data_rate(body_sensor);
 
 	LOG_DBG("Resetting body detection");
-	if (motion_state == BODY_DETECTION_ON_BODY) {
-		onbody_lasttime = get_curtime();
+	if (body_detect_get_state() == BODY_DETECTION_ON_BODY) {
+		onbody_lasttime = onbody_get_curtime();
 	} else if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE)) {
 		body_detect_change_state(BODY_DETECTION_ON_BODY, spoof_enable);
 	}
@@ -368,55 +311,3 @@ void body_detect_reset(void)
 	body_detect_get_params();
 	body_detect_set_update_rate(odr);
 }
-
-#ifdef CONFIG_ACCEL_SPOOF_MODE
-void body_detect_set_spoof(int enable)
-{
-	spoof_enable = enable;
-	/* After disabling spoof mode, commit current state. */
-	if (!enable) {
-		body_detect_change_state(motion_state, false);
-	}
-}
-
-bool body_detect_get_spoof(void)
-{
-	return spoof_enable;
-}
-
-static int command_setbodydetectionmode(int argc, const char **argv)
-{
-	if (argc == 1) {
-		print_body_detect_mode();
-		return EC_SUCCESS;
-	}
-
-	if (argc != 2) {
-		return EC_ERROR_PARAM_COUNT;
-	}
-
-	/* |+1| to also make sure the strings the same length. */
-	if (strncmp(argv[1], "on", strlen("on") + 1) == 0) {
-		body_detect_change_state(BODY_DETECTION_ON_BODY, true);
-		spoof_enable = true;
-	} else if (strncmp(argv[1], "off", strlen("off") + 1) == 0) {
-		body_detect_change_state(BODY_DETECTION_OFF_BODY, true);
-		spoof_enable = true;
-	} else if (strncmp(argv[1], "reset", strlen("reset") + 1) == 0) {
-		body_detect_reset();
-		/*
-		 * Don't call body_detect_set_spoof(), since
-		 * body_detect_change_state() was already called by
-		 * body_detect_reset().
-		 */
-		spoof_enable = false;
-	} else {
-		return EC_ERROR_PARAM1;
-	}
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(
-	bodydetectmode, command_setbodydetectionmode, "[on | off | reset]",
-	"Manually force body detect mode to on (body), off (body) or reset.");
-#endif /* CONFIG_ACCEL_SPOOF_MODE */

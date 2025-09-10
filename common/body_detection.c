@@ -29,26 +29,19 @@ test_export_static struct motion_sensor_t *body_sensor;
 
 static int window_size = CONFIG_BODY_DETECTION_MAX_WINDOW_SIZE;
 test_export_static uint64_t var_threshold_scaled, confidence_delta_scaled;
-static int stationary_timeframe;
+/* Depends on body_detect_common.c */
+extern int onbody_stationary_timeframe;
 
 static int history_idx;
-static enum body_detect_states motion_state = BODY_DETECTION_OFF_BODY;
 
 static bool history_initialized;
 static bool body_detect_enable;
-STATIC_IF(CONFIG_ACCEL_SPOOF_MODE) bool spoof_enable;
 
 static struct body_detect_motion_data {
 	int history[CONFIG_BODY_DETECTION_MAX_WINDOW_SIZE]; /* acceleration */
 	int sum; /* sum(history) */
 	uint64_t n2_variance; /* n^2 * var(history) */
 } data[2]; /* motion data for X-axis and Y-axis */
-
-static void print_body_detect_mode(void)
-{
-	CPRINTS("body detect mode %sabled",
-		body_detect_get_state() ? "en" : "dis");
-}
 
 /*
  * This function will update new variance and new sum according to incoming
@@ -100,72 +93,6 @@ static int calculate_motion_confidence(uint64_t var)
 		return 100;
 	return 100 * (var - var_threshold_scaled + confidence_delta_scaled) /
 	       (2 * confidence_delta_scaled);
-}
-
-static bool body_detect_is_remote(void)
-{
-	return (IS_ENABLED(CONFIG_PLATFORM_EC_DSP_REMOTE_BODY_DETECTION) &&
-		motion_sensor_count == 0);
-}
-
-static void body_detect_send_host_event(enum body_detect_states state)
-{
-	if (!IS_ENABLED(CONFIG_GESTURE_HOST_DETECTION)) {
-		/* Not configured for host events. */
-		return;
-	}
-	if (body_detect_is_remote()) {
-		/* Remote on-body detection is enabled and sensor count is 0,
-		 * this means we disabled motion_sense at runtime.
-		 */
-		return;
-	}
-	struct ec_response_motion_sensor_data vector = {
-			.flags = MOTIONSENSE_SENSOR_FLAG_BYPASS_FIFO,
-			.activity_data = {
-				.activity = MOTIONSENSE_ACTIVITY_BODY_DETECTION,
-				.state = state,
-			},
-			.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID,
-		};
-	motion_sense_fifo_stage_data(&vector, NULL, 0,
-				     __hw_clock_source_read());
-	motion_sense_fifo_commit_data();
-}
-
-/* Change the motion state and commit the change to AP.
- *
- * If on-body detection is enabled remotely (on a DSP core) this logic instead
- * just caches the current state locally and relies on the DSP core to notify
- * the AP.
- */
-void body_detect_change_state(enum body_detect_states state, bool spoof)
-{
-	if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE) && spoof_enable && !spoof) {
-		return;
-	}
-	body_detect_send_host_event(state);
-
-	/* change the motion state */
-	motion_state = state;
-	if (state == BODY_DETECTION_ON_BODY) {
-		/* reset time counting of stationary */
-		stationary_timeframe = 0;
-	}
-
-	/* state changing log */
-	print_body_detect_mode();
-
-	if (IS_ENABLED(CONFIG_BODY_DETECTION_NOTIFY_MODE_CHANGE) {
-		host_set_single_event(EC_HOST_EVENT_BODY_DETECT_CHANGE);
-	}
-
-	hook_notify(HOOK_BODY_DETECT_CHANGE);
-}
-
-enum body_detect_states body_detect_get_state(void)
-{
-	return motion_state;
 }
 
 /* Determine window size for 1 second by sensor data rate. */
@@ -223,8 +150,8 @@ void body_detect_reset(void)
 	int rms_noise = body_sensor->drv->get_rms_noise(body_sensor);
 	int var_threshold, confidence_delta, var_noise_factor;
 
-	if (motion_state == BODY_DETECTION_ON_BODY)
-		stationary_timeframe = 0;
+	if (body_detect_get_state() == BODY_DETECTION_ON_BODY)
+		onbody_stationary_timeframe = 0;
 	else
 		body_detect_change_state(BODY_DETECTION_ON_BODY, false);
 	/*
@@ -283,18 +210,18 @@ void body_detect(void)
 
 	motion_var = get_motion_variance();
 	motion_confidence = calculate_motion_confidence(motion_var);
-	switch (motion_state) {
+	switch (body_detect_get_state()) {
 	case BODY_DETECTION_OFF_BODY:
 		if (motion_confidence > CONFIG_BODY_DETECTION_ON_BODY_CON)
 			body_detect_change_state(BODY_DETECTION_ON_BODY, false);
 		break;
 	case BODY_DETECTION_ON_BODY:
-		stationary_timeframe += 1;
+		onbody_stationary_timeframe += 1;
 		/* confidence exceeds the limit, reset time counting */
 		if (motion_confidence >= CONFIG_BODY_DETECTION_OFF_BODY_CON)
-			stationary_timeframe = 0;
+			onbody_stationary_timeframe = 0;
 		/* if no motion for enough time, change state to off_body */
-		if (stationary_timeframe >=
+		if (onbody_stationary_timeframe >=
 		    CONFIG_BODY_DETECTION_STATIONARY_DURATION * window_size)
 			body_detect_change_state(BODY_DETECTION_OFF_BODY,
 						 false);
@@ -312,53 +239,3 @@ int body_detect_get_enable(void)
 {
 	return body_detect_enable;
 }
-
-#ifdef CONFIG_ACCEL_SPOOF_MODE
-void body_detect_set_spoof(int enable)
-{
-	spoof_enable = enable;
-	/* After disabling spoof mode, commit current state. */
-	if (!enable)
-		body_detect_change_state(motion_state, false);
-}
-
-bool body_detect_get_spoof(void)
-{
-	return spoof_enable;
-}
-
-static int command_setbodydetectionmode(int argc, const char **argv)
-{
-	if (argc == 1) {
-		print_body_detect_mode();
-		return EC_SUCCESS;
-	}
-
-	if (argc != 2)
-		return EC_ERROR_PARAM_COUNT;
-
-	/* |+1| to also make sure the strings the same length. */
-	if (strncmp(argv[1], "on", strlen("on") + 1) == 0) {
-		body_detect_change_state(BODY_DETECTION_ON_BODY, true);
-		spoof_enable = true;
-	} else if (strncmp(argv[1], "off", strlen("off") + 1) == 0) {
-		body_detect_change_state(BODY_DETECTION_OFF_BODY, true);
-		spoof_enable = true;
-	} else if (strncmp(argv[1], "reset", strlen("reset") + 1) == 0) {
-		body_detect_reset();
-		/*
-		 * Don't call body_detect_set_spoof(), since
-		 * body_detect_change_state() was already called by
-		 * body_detect_reset().
-		 */
-		spoof_enable = false;
-	} else {
-		return EC_ERROR_PARAM1;
-	}
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(
-	bodydetectmode, command_setbodydetectionmode, "[on | off | reset]",
-	"Manually force body detect mode to on (body), off (body) or reset.");
-#endif /* CONFIG_ACCEL_SPOOF_MODE */

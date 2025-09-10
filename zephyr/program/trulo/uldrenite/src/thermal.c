@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "body_detection.h"
+#include "body_detection_client.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "lid_switch.h"

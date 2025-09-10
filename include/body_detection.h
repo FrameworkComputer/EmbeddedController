@@ -6,6 +6,8 @@
 #ifndef __CROS_EC_BODY_DETECTION_H
 #define __CROS_EC_BODY_DETECTION_H
 
+#include "body_detection_client.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -19,10 +21,11 @@ struct body_detect_params {
 	int confidence_delta;
 };
 
-enum body_detect_states { BODY_DETECTION_OFF_BODY, BODY_DETECTION_ON_BODY };
-
-/* get/set the state of body detection */
-enum body_detect_states body_detect_get_state(void);
+/*
+ * Implement what needs to be done when a body change is detected
+ * on the EC that implement the algorithm. It is implied the motion
+ * sense stack runs on the same EC.
+ */
 void body_detect_change_state(enum body_detect_states state, bool spoof);
 
 /* Reset the data. This should be called when ODR is changed*/

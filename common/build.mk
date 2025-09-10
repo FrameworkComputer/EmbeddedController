@@ -49,7 +49,8 @@ common-$(CONFIG_BATTERY_INFO)+=battery_info.o
 common-$(CONFIG_BATTERY_FUEL_GAUGE)+=battery_fuel_gauge.o
 common-$(CONFIG_BLUETOOTH_LE)+=bluetooth_le.o
 common-$(CONFIG_BLUETOOTH_LE_STACK)+=btle_hci_controller.o btle_ll.o
-common-$(CONFIG_BODY_DETECTION)+=body_detection.o
+common-$(CONFIG_BODY_DETECTION)+=body_detection.o body_detect_common.o \
+	body_detect_client.o
 common-$(CONFIG_CAPSENSE)+=capsense.o
 common-$(CONFIG_CEC)+=cec.o
 common-$(CONFIG_CBI_EEPROM)+=cbi.o cbi_common.o cbi_config.o cbi_eeprom.o

@@ -6,7 +6,7 @@
 #include <pb_encode.h>
 #include <zephyr/logging/log.h>
 
-#include "body_detection.h"
+#include "body_detection_client.h"
 #include "cros/dsp/client.h"
 #include "hooks.h"
 #include "proto/ec_dsp.pb.h"

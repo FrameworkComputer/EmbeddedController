@@ -6,7 +6,7 @@
 /* Input devices using Matrix Keyboard Protocol [MKBP] events for Chrome EC */
 
 #include "base_state.h"
-#include "body_detection.h"
+#include "body_detection_client.h"
 #include "button.h"
 #include "console.h"
 #include "hooks.h"

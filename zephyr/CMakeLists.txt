@@ -246,8 +246,14 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCEL_FIFO
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STB_DUMP
                                                 "${PLATFORM_EC}/driver/amd_stb.c")
 # On body detection implementation
+if(CONFIG_PLATFORM_EC_DSP_REMOTE_BODY_DETECTION AND NOT CONFIG_PLATFORM_EC_BODY_DETECTION)
+   zephyr_library_sources("${PLATFORM_EC}/common/body_detect_client.c")
+endif()
+
 zephyr_library_sources_ifdef(CONFIG_BODY_DETECTION_ALOGIRTHM_V1
-                                                "${PLATFORM_EC}/common/body_detection.c")
+                                                "${PLATFORM_EC}/common/body_detection.c"
+                                                "${PLATFORM_EC}/common/body_detect_client.c"
+                                                "${PLATFORM_EC}/common/body_detect_common.c")
 zephyr_library_link_libraries_ifdef(CONFIG_BODY_DETECTION_ALOGIRTHM_V2
                                                 vsensor.body_detection)
 

@@ -5,7 +5,7 @@
 
 #include "acpi.h"
 #include "battery.h"
-#include "body_detection.h"
+#include "body_detection_client.h"
 #include "common.h"
 #include "console.h"
 #include "dptf.h"
