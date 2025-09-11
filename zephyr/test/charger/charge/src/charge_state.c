@@ -20,6 +20,11 @@ BUILD_ASSERT(!IS_ENABLED(CONFIG_PLATFORM_EC_OCPC),
 
 test_export_static bool charge_is_adapter_sufficient(int chgnum);
 
+int extpower_is_present(void)
+{
+	return 1;
+}
+
 #define RTS5453P_NODE DT_NODELABEL(pdc_emul1)
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
 
@@ -36,6 +41,7 @@ ZTEST(charge_state, test_sufficient_adapter)
 {
 	union connector_status_t connector_status = {};
 	int chgnum = 0;
+	enum led_pwr_state led;
 
 	charge_manager_leave_safe_mode();
 
@@ -46,12 +52,18 @@ ZTEST(charge_state, test_sufficient_adapter)
 
 	chgnum = charge_get_active_chg_chip();
 	zassert_true(charge_is_adapter_sufficient(chgnum));
+
+	led = led_pwr_get_state();
+	zassert_equal(led, LED_PWRS_CHARGE, "Returned led=%d, expected=%d", led,
+		      LED_PWRS_CHARGE);
 }
 
 ZTEST(charge_state, test_insufficient_adapter)
 {
 	union connector_status_t connector_status = {};
 	int chgnum = 0;
+	enum led_pwr_state led;
+
 	uint32_t partner_pdos[] = {
 		PDO_FIXED(5000, 3000, 0),
 		PDO_FIXED(7200, 3000, 0),
@@ -68,4 +80,9 @@ ZTEST(charge_state, test_insufficient_adapter)
 
 	chgnum = charge_get_active_chg_chip();
 	zassert_false(charge_is_adapter_sufficient(chgnum));
+
+	led = led_pwr_get_state();
+	zassert_equal(led, LED_PWRS_INSUFFICIENT_ADAPTER,
+		      "Returned led=%d, expected=%d", led,
+		      LED_PWRS_INSUFFICIENT_ADAPTER);
 }

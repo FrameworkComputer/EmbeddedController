@@ -1781,6 +1781,13 @@ test_export_static bool charge_is_adapter_sufficient(int chgnum)
 enum led_pwr_state led_pwr_get_state(void)
 {
 	uint32_t chflags = charge_get_led_flags();
+#ifdef CONFIG_PLATFORM_EC_CHARGER_HYBRID_POWER_BOOST
+	int chgnum = 0;
+
+	if (IS_ENABLED(CONFIG_OCPC)) {
+		chgnum = charge_get_active_chg_chip();
+	}
+#endif /* CONFIG_PLATFORM_EC_CHARGER_HYBRID_POWER_BOOST */
 
 	switch (curr.state) {
 	case ST_IDLE:
@@ -1802,12 +1809,22 @@ enum led_pwr_state led_pwr_get_state(void)
 	case ST_CHARGE:
 		/* The only difference here is what the LEDs display. */
 		if (IS_ENABLED(CONFIG_CHARGE_MANAGER) &&
-		    charge_manager_get_active_charge_port() == CHARGE_PORT_NONE)
-			return LED_PWRS_DISCHARGE;
-		else if (battery_near_full())
+		    charge_manager_get_active_charge_port() ==
+			    CHARGE_PORT_NONE) {
+#ifdef CONFIG_PLATFORM_EC_CHARGER_HYBRID_POWER_BOOST
+			if (!charge_is_adapter_sufficient(chgnum)) {
+				return LED_PWRS_INSUFFICIENT_ADAPTER;
+			} else
+#endif /* CONFIG_PLATFORM_EC_CHARGER_HYBRID_POWER_BOOST */
+			{
+				return LED_PWRS_DISCHARGE;
+			}
+		} else if (battery_near_full()) {
 			return LED_PWRS_CHARGE_NEAR_FULL;
-		else
+		} else {
 			return LED_PWRS_CHARGE;
+		}
+
 	case ST_PRECHARGE:
 		/* we're in battery discovery mode */
 		if (chflags & CHARGE_LED_FLAG_FORCE_IDLE)

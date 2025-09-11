@@ -83,6 +83,7 @@ tests:
       - CONFIG_PLATFORM_EC_CHARGER_ISL95522=y
       - CONFIG_TEST_CHARGE_STATE=y
       - CONFIG_TEST_BOARD_NATIVE_SIM=y
+      - CONFIG_SHIMMED_TASKS=y
 
   charge.state_prevent_power_on:
     extra_dtc_overlay_files:
