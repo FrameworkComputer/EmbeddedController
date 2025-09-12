@@ -8,17 +8,8 @@
 	named-gpios {
 		compatible = "named-gpios";
 
-		gpio_accel_db_int_l: accel_db_int_l {
-			gpios = <&gpio0 6 GPIO_INPUT>;
-		};
-
-		gpio_accel_mb_int_l: accel_mb_int_l {
+		gpio_acc_int_l: acc_int_l {
 			gpios = <&gpio0 5 GPIO_INPUT>;
-		};
-
-		gpio_lid_open: lid_open {
-			gpios = <&gpio0 9 GPIO_INPUT>;
-			enum-name = "GPIO_LID_OPEN";
 		};
 
 		ec_entering_rw {
