@@ -2038,6 +2038,7 @@ struct framework_dp_ids {
 	{0x32AC, 0x000B}, /* Phihong 60w adapter vid and pid */
 	{0x32AC, 0x0022}, /* Chicony 240w adapter vid and pid */
 	{0x32AC, 0x002D}, /* 100w adapter vid and pid */
+	{0x32AC, 0x0034}, /* Framework Dongle Adapter VID and PID */
 };
 struct match_vdm_header {
 	uint8_t idx;
