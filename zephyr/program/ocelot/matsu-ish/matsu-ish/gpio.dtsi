@@ -1,0 +1,28 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include <dt-bindings/gpio_defines.h>
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_accel_db_int_l: accel_db_int_l {
+			gpios = <&gpio0 6 GPIO_INPUT>;
+		};
+
+		gpio_accel_mb_int_l: accel_mb_int_l {
+			gpios = <&gpio0 5 GPIO_INPUT>;
+		};
+
+		gpio_lid_open: lid_open {
+			gpios = <&gpio0 9 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+
+		ec_entering_rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+};

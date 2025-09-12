@@ -1,0 +1,20 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* wcl-ish project DTSI includes */
+#include "gpio.dtsi"
+#include "../i2c.dtsi"
+#include "../interrupts.dtsi"
+#include "../ish.dtsi"
+#include "../../rvp_motionsense.dtsi"
+
+&i2c_ish_sensor {
+	i2c-port = <&i2c2>;
+};
+
+&i2c2 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
