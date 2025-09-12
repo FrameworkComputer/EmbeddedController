@@ -5,6 +5,7 @@
 
 /* DC Jack configuration */
 
+#include "charge_manager.h"
 #include "gpio.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"

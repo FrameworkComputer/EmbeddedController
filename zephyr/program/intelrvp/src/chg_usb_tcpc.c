@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "charge_manager.h"
 #include "hooks.h"
 #include "intelrvp.h"
 #include "tcpm/tcpci.h"

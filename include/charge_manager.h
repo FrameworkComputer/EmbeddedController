@@ -441,6 +441,15 @@ int is_pd_port(int port);
  */
 __override_proto int board_get_leave_safe_mode_delay_ms(void);
 
+/**
+ * @brief Board-provided function to determine whether a DC jack (dedicated)
+ *        charge provider is attached.
+ *
+ * @return 1 if DC barrel jack is present
+ * @return 0 if no DC barrel jack
+ */
+__override_proto int board_is_dc_jack_present(void);
+
 #ifdef __cplusplus
 }
 #endif
