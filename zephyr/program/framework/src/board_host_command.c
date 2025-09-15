@@ -72,6 +72,7 @@ static void sci_enable(void)
 		gpu_typec_detect();
 
 		set_nv_gpu_throttle(THROTTLE_OFF, 60);
+		host_set_single_event(EC_HOST_EVENT_STT_UPDATE);
 #endif
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);

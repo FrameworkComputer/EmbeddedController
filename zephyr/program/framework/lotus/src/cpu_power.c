@@ -28,7 +28,7 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-static int battery_current_limit_mA;
+static int battery_current_limit_mA = -5490;
 static int thermal_stt_table;
 static int safety_stt;
 static uint8_t events;
@@ -489,8 +489,8 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 
 	if (func_ctl & 0x1) {
 		mode = best_performance_power_plan(battery_percent, active_mpower, with_dc, mode);
-		update_thermal_power_limit(battery_percent, active_mpower, with_dc, mode,
-					gpu_vendor);
+		update_thermal_power_limit(battery_percent, active_mpower, with_dc,
+			 mode, gpu_vendor);
 	}
 
 	if (func_ctl & 0x4) {
@@ -501,7 +501,25 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		d_notify = update_d_notify(active_mpower, gpu_vendor, old_safety_level);
 	}
 
-	if (((mode != 0) && (old_stt_table != thermal_stt_table) && (thermal_stt_table != 0))
+	/*
+	 * AMD confirmed PMF driver architecture underwent significant changes from
+	 * Strix platform, The PHX PMF driver calls PMF8 during D0 Entry, but the PMF
+	 * drivers after STX do not. This might be the difference between the two.
+	 * This is by design, and there are currently no plans for change. We add a
+	 * workaround to ensure the EC updates the PMF and STT tables (default set
+	 * the balance mode).
+	 */
+	if (mode == 0) {
+		if (active_mpower > 0) {
+			update_thermal_power_limit(battery_percent, active_mpower, with_dc,
+				EC_AC_BALANCED,	gpu_vendor);
+		} else {
+			update_thermal_power_limit(battery_percent, active_mpower, with_dc,
+				EC_DC_BALANCED,	gpu_vendor);
+		}
+	}
+
+	if (((old_stt_table != thermal_stt_table) && (thermal_stt_table != 0))
 		|| (old_d_notify != d_notify)) {
 		*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER) = thermal_stt_table;
 		old_stt_table = thermal_stt_table;
@@ -574,15 +592,6 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		}
 	}
 }
-
-static void initial_soc_power_limit(void)
-{
-	battery_current_limit_mA = -5490;
-
-	/* initial thermal table to battery balance as default */
-	update_thermal_value(UMA_PMF_TABLE, 0, 1, EC_DC_BALANCED);
-}
-DECLARE_HOOK(HOOK_INIT, initial_soc_power_limit, HOOK_PRIO_INIT_I2C);
 
 bool safety_force_typec_1_5A(void)
 {
