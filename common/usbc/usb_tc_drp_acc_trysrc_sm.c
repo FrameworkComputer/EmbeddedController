@@ -1361,8 +1361,19 @@ static bool tc_perform_src_hard_reset(int port)
 		/* Update the Rp Value */
 		typec_update_cc(port);
 
-		/* Turn off VCONN */
-		set_vconn(port, 1);
+		/*
+		 * Turn on VCONN
+		 *
+		 * USB Type-C spec v2.3,
+		 * 4.5.2.2.17.1 UnorientedDebugAccessory.SRC State Requirements
+		 * & 4.5.2.2.18.1 OrientedDebugAccessory.SRC State Requirements
+		 * & 4.5.2.2.19.1 DebugAccessory.SNK State Requirements,
+		 * indicate that the port shall not drive VCONN.
+		 */
+		if (IS_ENABLED(CONFIG_USBC_VCONN) &&
+		    !TC_CHK_FLAG(port, TC_FLAGS_TS_DTS_PARTNER)) {
+			set_vconn(port, 1);
+		}
 
 		tc[port].ps_reset_state = PS_STATE2;
 		pd_timer_enable(port, TC_TIMER_TIMEOUT,
