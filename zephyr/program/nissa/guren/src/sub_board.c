@@ -100,6 +100,11 @@ enum guren_sub_board_type guren_get_sb_type(void)
 		guren_cached_sub_board = GUREN_SB_HDMI_1A;
 		LOG_INF("SB: HDMI, USB type A");
 		break;
+
+	case FW_SUB_BOARD_8:
+		guren_cached_sub_board = GUREN_SB_1C_5G;
+		LOG_INF("SB: USB type A, 5G");
+		break;
 	}
 	return guren_cached_sub_board;
 }
@@ -118,6 +123,7 @@ test_export_static void board_usb_pd_count_init(void)
 	case GUREN_SB_1C_1A:
 	case GUREN_SB_1C:
 	case GUREN_SB_1C_LTE:
+	case GUREN_SB_1C_5G:
 		cached_usb_pd_port_count = 2;
 		break;
 	}
@@ -230,7 +236,7 @@ static void guren_subboard_config(void)
 	 */
 #if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 	if (sb == GUREN_SB_1C_1A || sb == GUREN_SB_1C ||
-	    sb == GUREN_SB_1C_LTE) {
+	    sb == GUREN_SB_1C_LTE || sb == GUREN_SB_1C_5G) {
 		/* Configure interrupt input */
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl),
 				      GPIO_INPUT | GPIO_PULL_UP);
@@ -280,7 +286,8 @@ static void guren_subboard_config(void)
 		irq_unlock(irq_key);
 	}
 
-	if ((sb == GUREN_SB_1C_LTE) || (sb == GUREN_SB_HDMI_LTE)) {
+	if (sb == GUREN_SB_1C_LTE || sb == GUREN_SB_HDMI_LTE ||
+	    sb == GUREN_SB_1C_5G) {
 		/*
 		 * LTE: Set up callbacks for enabling/disabling
 		 * sub-board power on S5 state.

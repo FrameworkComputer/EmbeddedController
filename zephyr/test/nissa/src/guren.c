@@ -565,6 +565,16 @@ ZTEST(guren, test_db_with_c)
 
 	ASSERT_GPIO_FLAGS(GPIO_DT_FROM_NODELABEL(gpio_sb_1),
 			  GPIO_PULL_UP | GPIO_INPUT | GPIO_INT_EDGE_FALLING);
+
+	/* Set the sub-board, reported configuration is correct. */
+	set_sb_config(FW_SUB_BOARD_8);
+	zassert_equal(guren_get_sb_type(), GUREN_SB_1C_5G);
+	zassert_equal(board_get_usb_pd_port_count(), 2);
+
+	init_gpios(NULL);
+
+	ASSERT_GPIO_FLAGS(GPIO_DT_FROM_NODELABEL(gpio_sb_1),
+			  GPIO_PULL_UP | GPIO_INPUT | GPIO_INT_EDGE_FALLING);
 }
 
 static int gpio_emul_output_get_dt(const struct gpio_dt_spec *dt)
@@ -614,6 +624,15 @@ ZTEST(guren, test_db_with_hdmi)
 	/* Set the sub-board, reported configuration is correct. */
 	set_sb_config(FW_SUB_BOARD_4);
 	zassert_equal(guren_get_sb_type(), GUREN_SB_1C_LTE);
+
+	init_gpios(NULL);
+	hook_notify(HOOK_INIT);
+
+	zassert_equal(nissa_configure_hdmi_rails_fake.call_count, 0);
+
+	/* Set the sub-board, reported configuration is correct. */
+	set_sb_config(FW_SUB_BOARD_8);
+	zassert_equal(guren_get_sb_type(), GUREN_SB_1C_5G);
 
 	init_gpios(NULL);
 	hook_notify(HOOK_INIT);
@@ -684,6 +703,21 @@ ZTEST_F(guren_sub_board, test_db_with_lte)
 
 	set_sb_config(FW_SUB_BOARD_5);
 	zassert_equal(guren_get_sb_type(), GUREN_SB_HDMI_LTE);
+
+	/* GPIOs are configured as expected. */
+	ASSERT_GPIO_FLAGS(fixture->sb_2 /* Standby power enable */,
+			  GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW);
+
+	/* LTE power gets enabled on S5. */
+	ap_power_ev_send_callbacks(AP_POWER_PRE_INIT);
+	zassert_equal(get_gpio_output(fixture->sb_2), 1);
+	/* And disabled on G3. */
+	ap_power_ev_send_callbacks(AP_POWER_HARD_OFF);
+	zassert_equal(get_gpio_output(fixture->sb_2), 0);
+	hook_notify(HOOK_INIT);
+
+	set_sb_config(FW_SUB_BOARD_8);
+	zassert_equal(guren_get_sb_type(), GUREN_SB_1C_5G);
 
 	/* GPIOs are configured as expected. */
 	ASSERT_GPIO_FLAGS(fixture->sb_2 /* Standby power enable */,

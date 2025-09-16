@@ -18,6 +18,7 @@ enum guren_sub_board_type {
 	GUREN_SB_HDMI_LTE = 5, /* HDMI, LTE */
 	GUREN_SB_HDMI = 6, /* HDMI */
 	GUREN_SB_HDMI_1A = 7, /* HDMI, USB type A */
+	GUREN_SB_1C_5G = 8, /* USB type C, LTE-5G */
 };
 
 enum guren_sub_board_type guren_get_sb_type(void);
