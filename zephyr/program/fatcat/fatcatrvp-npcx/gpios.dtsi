@@ -43,7 +43,7 @@ rsmrst_pwrgd: &gpio_ec_rsmrst_odl {};
 		gpio_charger_amon: charger_amon {
 			gpios = <&gpio3 7 GPIO_INPUT>;
 		};
-		gpio_adp_en_q: adp_en_q {
+		gpio_adp_en_q: std_adp_cntrl: adp_en_q {
 			/* Keep low to prioritize AC brick power source selection */
 			gpios = <&gpio6 6 (GPIO_OUTPUT_LOW)>;
 		};

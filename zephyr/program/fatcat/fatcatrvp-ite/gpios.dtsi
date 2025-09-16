@@ -9,6 +9,7 @@
 gpio_ec_pch_wake_odl: &gpio_smc_wake_sci_n_r {};
 cse_early_rec_sw: &gpio_c_mecc_cse_early_sw_r {};
 std_adp_prsnt: &gpio_std_adp_prsnt_r {};
+std_adp_cntrl: &gpio_std_adpt_cntrl_gpio_r {};
 gpio_pdc_pow_irq: &gpio_wc_usbc_pd_alrt_aic1_r {};
 bc_acok: &gpio_bc_acok {};
 gpio_en_slp_z: &gpio_en_slp_z_r {};

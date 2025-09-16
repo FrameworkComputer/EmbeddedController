@@ -205,7 +205,7 @@
 		};
 
 		/* Keep low to prioritize AC brick power source selection */
-		std-adpt-cntrl-gpio {
+		std_adp_cntrl: std-adpt-cntrl-gpio {
 			gpios = <&gpio6 6 GPIO_OUTPUT_LOW>;
 		};
 

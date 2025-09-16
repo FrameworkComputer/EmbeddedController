@@ -252,7 +252,7 @@
 			gpios = <MCHP_GPIO_DECODE_165 GPIO_INPUT>;
 		};
 		/* Keep low to prioritize AC brick power source selection */
-		std-adpt-cntrl-gpio-r {
+		std_adp_cntrl: std-adpt-cntrl-gpio-r {
 			gpios = <MCHP_GPIO_DECODE_254 GPIO_OUTPUT_LOW>;
 		};
 		usb-pb-ppc-int-od-n {
