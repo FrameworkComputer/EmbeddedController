@@ -6,4 +6,3 @@
 zephyr_include_directories("include")
 zephyr_library_sources("src/board.c")
 zephyr_library_sources("src/kb_backlight.c")
-zephyr_library_sources("src/thermal.c")
