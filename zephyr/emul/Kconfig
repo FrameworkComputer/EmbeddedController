@@ -59,6 +59,16 @@ config EMUL_CHARGER_ISL9241
 	  battery charger which can communicate over I2C, and utilizes the
 	  emulated I2C bus.
 
+config EMUL_CHARGER_ISL95522
+	bool "Renesas hybrid power boost battery charger emulator"
+	default y
+	depends on ZTEST && DT_HAS_INTERSIL_ISL95522_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable the ISL95522 emulator.  This chip is a hybrid power boost
+	  battery charger which can communicate over I2C, and utilizes the
+	  emulated I2C bus.
+
 config EMUL_PPC_NX20P348X
 	bool "NXP PPC emulator"
 	default y

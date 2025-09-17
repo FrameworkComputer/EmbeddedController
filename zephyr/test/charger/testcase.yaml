@@ -74,6 +74,16 @@ tests:
       - CONFIG_PLATFORM_EC_CHARGE_RAMP_SW=y
       - CONFIG_TEST_BOARD_NATIVE_SIM=y
 
+  charge.state:
+    extra_dtc_overlay_files:
+      - boards/native_sim.overlay
+      - boards/isl95522.overlay
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_CHARGE=y
+      - CONFIG_PLATFORM_EC_CHARGER_ISL95522=y
+      - CONFIG_TEST_CHARGE_STATE=y
+      - CONFIG_TEST_BOARD_NATIVE_SIM=y
+
   charge.state_prevent_power_on:
     extra_dtc_overlay_files:
       - boards/native_sim.overlay

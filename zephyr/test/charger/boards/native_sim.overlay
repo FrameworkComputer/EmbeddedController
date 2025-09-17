@@ -18,7 +18,6 @@
 			reg = <0>;
 			chg = <&charger>;
 			pdc = <&pdc_emul1>;
-			chg = <&isl923x_emul>;
 			policy = <&cros_policy>;
 			pd-retimer;
 			usb-mux-chain-0 {
@@ -90,7 +89,7 @@
 		dev-name = "AP18C8K";
 	};
 
-	isl923x_emul: isl923x@9 {
+	charger: isl923x@9 {
 		compatible = "cros,isl923x-emul";
 		status = "okay";
 		reg = <0x09>;
@@ -100,13 +99,6 @@
 	smbus_ara_emul: smbus_ara@c {
 		compatible = "zephyr,smbus-ara-emul";
 		reg = <0xc>;
-	};
-
-	charger: isl9238@9 {
-		compatible = "cros,isl923x-emul";
-		status = "okay";
-		reg = <0x9>;
-		battery = <&battery>;
 	};
 
 	pdc_emul1: rts5453p@66 {
