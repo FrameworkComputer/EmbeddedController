@@ -12,4 +12,7 @@ target_sources(app PRIVATE
 
 if(DEFINED CONFIG_BOARD_TANJIRO)
 	project(tanjiro)
+
+elseif(DEFINED CONFIG_BOARD_SAPPHIRE)
+	project(sapphire)
 endif()

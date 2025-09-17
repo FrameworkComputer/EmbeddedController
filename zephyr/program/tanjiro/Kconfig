@@ -8,6 +8,12 @@ config BOARD_TANJIRO
 	  Build Google Rauru reference board. Tanjiro has MediaTek SoC
 	  with ITE it82202-bw EC.
 
+config BOARD_SAPPHIRE
+        bool "Google Sapphire Board"
+        help
+          Build Google Sapphire board. This board has MediaTek SoC
+          with ITE it82202-ax EC.
+
 module = TANJIRO
 module-str = Tanjiro board-specific code
 source "subsys/logging/Kconfig.template.log_config"
