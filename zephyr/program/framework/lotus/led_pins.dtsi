@@ -64,7 +64,7 @@
 
 			color_amber: color-amber {
 				led-color = "LED_AMBER";
-				led-values = <9 1 0>;
+				led-values = <100 17 0>;
 			};
 
 		};
