@@ -58,12 +58,18 @@
 		gpio_ec_fan_tach_od: ec_fan_tach_od {
 			gpios = <&gpio7 3 (GPIO_INPUT | GPIO_PULL_UP)>;
 		};
+		gpio_ec_led_c1_charging: ec_led_c1_charging {
+			gpios = <&gpio7 5 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
+		};
 		gpio_ec_soc_int_odl: ec_soc_int_odl {
 			gpios = <&gpio7 6 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
 			enum-name = "GPIO_EC_INT_L";
 		};
 		gpio_fp_led_ca: fp_led_ca {
 			gpios = <&gpio8 0 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
+		};
+		gpio_ec_led_c1_full_chg: ec_led_c1_full_chg {
+			gpios = <&gpio8 6 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
 		};
 		gpio_sys_rst_odl: sys_rst_odl {
 			gpios = <&gpio9 3 (GPIO_INPUT)>;
@@ -132,6 +138,12 @@
 			gpios = <&gpioc 1 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
 			enum-name = "GPIO_PMIC_KPD_PWR";
 		};
+		gpio_ec_led_c0_charging: ec_led_c0_charging {
+			gpios = <&gpioc 2 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		gpio_ec_led_c0_full_chg: ec_led_c0_full_chg {
+			gpios = <&gpioc 3 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
+		};
 		gpio_gsc_ec_pwr_btn_odl_r: gsc_ec_pwr_btn_odl_r {
 			gpios = <&gpioc 6 (GPIO_INPUT)>;
 		};
@@ -150,14 +162,14 @@
 			gpios = <&gpiod 7 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
 		};
 		gpio_smb2360_b_chg_led_pg_odl: smb2360_b_chg_led_pg_odl {
-			gpios = <&gpioe 0 (GPIO_INPUT)>;
+			gpios = <&gpioe 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_ccd_mode_odl: ccd_mode_odl {
 			gpios = <&gpioe 5 (GPIO_INPUT)>;
 			enum-name = "GPIO_CCD_MODE_ODL";
 		};
 		gpio_smb2360_a_chg_led_pg_odl: smb2360_a_chg_led_pg_odl {
-			gpios = <&gpiof 0 (GPIO_INPUT)>;
+			gpios = <&gpiof 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_led_ec_do_argb_di: led_ec_do_argb_di {
 			gpios = <&gpio3 5 (GPIO_OUTPUT)>;

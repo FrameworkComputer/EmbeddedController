@@ -5,4 +5,4 @@
 # Quartz Makefile
 zephyr_include_directories("include")
 
-zephyr_library_sources("src/chipset.c")
+zephyr_library_sources("src/chipset.c" "src/led.c")
