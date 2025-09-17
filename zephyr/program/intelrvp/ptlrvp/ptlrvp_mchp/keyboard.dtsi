@@ -1,0 +1,48 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/{
+	chosen {
+		cros-ec,keyboard = &ioex_it8801_kbd;
+	};
+};
+&vivaldi_kbd {
+	vivaldi-keys = <
+		/* KISx, KSOx */
+		KBD_RC(6, 2)   /* T1 */
+		KBD_RC(6, 3)   /* T2 */
+		KBD_RC(1, 3)   /* T3 */
+		KBD_RC(3, 3)   /* T4 */
+		KBD_RC(7, 0)   /* T5 */
+		KBD_RC(3, 6)   /* T6 */
+		KBD_RC(1, 7)   /* T7 */
+		KBD_RC(2, 2)   /* T8 */
+		KBD_RC(6, 10)  /* T9 */
+		KBD_RC(7, 10)  /* T10 */
+		KBD_RC(3, 10)  /* T11 */
+		KBD_RC(5, 10)  /* T12 */
+	>;
+
+	kbd_config_0: kbd-config-0 {
+		vivaldi-codes = <
+			VIVALDI_TK_VOL_MUTE           /* T1 */
+			VIVALDI_TK_VOL_DOWN           /* T2 */
+			VIVALDI_TK_VOL_UP             /* T3 */
+			VIVALDI_TK_PLAY_PAUSE         /* T4 */
+			VIVALDI_TK_FULLSCREEN         /* T5 */
+			VIVALDI_TK_SNAPSHOT           /* T6 */
+			VIVALDI_TK_BACK               /* T7 */
+			VIVALDI_TK_REFRESH            /* T8 */
+			VIVALDI_TK_BRIGHTNESS_DOWN    /* T9 */
+			VIVALDI_TK_BRIGHTNESS_UP      /* T10 */
+			VIVALDI_TK_DONOTDISTURB       /* T11 */
+			VIVALDI_TK_DICTATE            /* T12 */
+		>;
+		capabilities = <
+			(VIVALDI_KEYBD_CAP_FUNCTION_KEYS |
+			 VIVALDI_KEYBD_CAP_ASSISTANT_KEY)
+		>;
+	};
+};

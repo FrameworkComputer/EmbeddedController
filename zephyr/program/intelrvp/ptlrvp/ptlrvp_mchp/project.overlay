@@ -12,13 +12,13 @@
 #include "fan.dtsi"
 #include "gpio.dtsi"
 #include "i2c.dts"
+#include "keyboard.dtsi"
 #include "vci.dtsi"
 #include "../battery.dtsi"
 #include "../gsc_board.dtsi"
 #include "../i2c.dtsi"
 #include "../ioex_gpio.dtsi"
 #include "../interrupts.dtsi"
-#include "../keyboard.dtsi"
 #include "../pd.dtsi"
 #include "../power_signals.dtsi"
 #include "../temp_sensor.dts"
@@ -37,7 +37,6 @@
 	};
 	chosen {
 		cros-ec,sha = &symcr;
-                cros-ec,keyboard = &ioex_it8801_kbd;
 	};
 	named-gpios {
 		/delete-node/  ec-jtag-tms;
@@ -74,4 +73,3 @@
           row-size = <8>;
           col-size = <13>;
 };
-
