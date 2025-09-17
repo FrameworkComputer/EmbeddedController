@@ -149,6 +149,7 @@ static enum charge_supplier active_charge_supplier;
 static uint8_t vbus_rp = TYPEC_RP_RESERVED;
 
 static int cc_config = CC_ALLOW_SRC;
+bool cc_poweron_suzyq_alike = false;
 
 /* Voltage thresholds for no connect in DTS mode */
 static int pd_src_vnc_dts[TYPEC_RP_RESERVED][2] = {
@@ -1276,6 +1277,11 @@ void set_cc_flag(int flag, bool set)
 	else
 		cc_config_new &= ~flag;
 	do_cc(cc_config_new);
+}
+
+void set_cc_poweron_suzyq_alike(bool state)
+{
+	cc_poweron_suzyq_alike = state;
 }
 
 static int command_cc(int argc, const char **argv)

@@ -23,15 +23,15 @@ struct servo_poweron_conf {
 	/* A1 */
 	uint8_t bottom_usb;
 	uint8_t uservo_usb;
-	uint8_t cc_config;
+	uint8_t cc_poweron_config;
 };
 
 const static struct servo_poweron_conf default_poweron_conf = {
 	.top_usb = USB_PORT_MUX_TO_DUT | USB_PORT_POWER_EN | USB_PORT_MUX_EN,
 	.bottom_usb = USB_PORT_MUX_TO_DUT | USB_PORT_POWER_EN | USB_PORT_MUX_EN,
 	.uservo_usb = USB_PORT_POWER_EN | USB_PORT_MUX_EN,
-	/* DTS ON by default */
-	.cc_config = 0,
+	/* DTS ON, suzyq OFF by default, so no flags needed */
+	.cc_poweron_config = 0,
 };
 
 static void servo_print_usb_poweron_conf(const char *port, uint8_t bitmask)
@@ -51,8 +51,11 @@ static void servo_print_usb_poweron_conf(const char *port, uint8_t bitmask)
 
 static void servo_print_cc_poweron_conf(uint8_t bitmask)
 {
-	ccprintf("CC settings - dts:%s\n",
-		 (bitmask & CC_DISABLE_DTS) ? "off" : "on");
+	ccprintf("CC settings - dts:%s ",
+		 (bitmask & CC_POWERON_DISABLE_DTS) ? "off" : "on");
+
+	ccprintf("suzyq:%s\n",
+		 (bitmask & CC_POWERON_SUZYQ_ALIKE) ? "on" : "off");
 }
 
 static int
@@ -188,6 +191,7 @@ static int servo_subcommand_usb_poweron_conf(int argc, const char *argv[])
 
 /*
  * poweron_conf cc [dts (on|off)]
+ * poweron_conf cc [suzyq (on|off)]
  * Further options to be implemented in future, if needed.
  */
 static int servo_subcommand_cc_poweron_conf(int argc, const char *argv[])
@@ -200,14 +204,25 @@ static int servo_subcommand_cc_poweron_conf(int argc, const char *argv[])
 		return ret;
 
 	if (argc == 2) {
-		servo_print_cc_poweron_conf(current_config.cc_config);
+		servo_print_cc_poweron_conf(current_config.cc_poweron_config);
 		return EC_SUCCESS;
 	} else if (argc == 4) {
 		if (!strcasecmp(argv[2], "dts")) {
 			if (!strcasecmp(argv[3], "on"))
-				current_config.cc_config &= ~CC_DISABLE_DTS;
+				current_config.cc_poweron_config &=
+					~CC_POWERON_DISABLE_DTS;
 			else if (!strcasecmp(argv[3], "off"))
-				current_config.cc_config |= CC_DISABLE_DTS;
+				current_config.cc_poweron_config |=
+					CC_POWERON_DISABLE_DTS;
+			else
+				return EC_ERROR_PARAM4;
+		} else if (!strcasecmp(argv[2], "suzyq")) {
+			if (!strcasecmp(argv[3], "off"))
+				current_config.cc_poweron_config &=
+					~CC_POWERON_SUZYQ_ALIKE;
+			else if (!strcasecmp(argv[3], "on"))
+				current_config.cc_poweron_config |=
+					CC_POWERON_SUZYQ_ALIKE;
 			else
 				return EC_ERROR_PARAM4;
 		} else {
@@ -258,7 +273,7 @@ static int command_poweron_conf(int argc, const char *argv[])
 					     current_config.bottom_usb);
 		servo_print_usb_poweron_conf("uservo_usb",
 					     current_config.uservo_usb);
-		servo_print_cc_poweron_conf(current_config.cc_config);
+		servo_print_cc_poweron_conf(current_config.cc_poweron_config);
 	} else if (argc <= 8) {
 		if (!strcasecmp(argv[1], "top_usb") ||
 		    !strcasecmp(argv[1], "bottom_usb") ||
@@ -351,8 +366,12 @@ void apply_poweron_conf(void)
 		gl3590_enable_ports(0, GL3590_DFP4, 0);
 	}
 
-	/* Init CCD config */
-	if (servo_poweron_conf.cc_config & CC_DISABLE_DTS) {
+	/* Init CC config */
+	if (servo_poweron_conf.cc_poweron_config & CC_POWERON_SUZYQ_ALIKE) {
+		set_cc_poweron_suzyq_alike(true);
+	}
+
+	if (servo_poweron_conf.cc_poweron_config & CC_POWERON_DISABLE_DTS) {
 		set_cc_flag(CC_DISABLE_DTS, true);
 	} else {
 		/* Start SuzyQ detection */

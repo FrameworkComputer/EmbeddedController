@@ -8,6 +8,8 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "gpio.h"
+#include "usb_common.h"
+#include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
 /* USB Power delivery board configuration */
@@ -53,11 +55,11 @@
 #define CC_ENABLE_DRP BIT(3) /* Enable dual-role port */
 #define CC_SNK_WITH_PD BIT(4) /* Force enabling PD comm for sink role */
 #define CC_POLARITY BIT(5) /* CC polarity */
-#define CC_EMCA_SERVO                                          \
-	BIT(6) /*                                              \
-		* Emulate Electronically Marked Cable Assembly \
-		* (EMCA) servo (or non-EMCA)                   \
-		*/
+/*
+ * Emulate Electronically Marked Cable Assembly
+ * (EMCA) servo (or non-EMCA)
+ */
+#define CC_EMCA_SERVO BIT(6)
 #define CC_FASTBOOT_DFP BIT(7) /* Allow mux uServo->Fastboot on DFP */
 #define CC_SRC_WITHOUT_PD BIT(8) /* Force disable PD comm for source role */
 #define CC_SRC_1A5 BIT(9) /* Use 1A5 Rp when PD comm is disabled */
@@ -108,6 +110,12 @@ static inline void spi_enable_clock(int port)
 
 /* DMA for receive uses DMA_CH2 for CHG and DMA_CH6 for DUT */
 #define DMAC_TIM_RX(p) ((p) ? STM32_DMAC_CH6 : STM32_DMAC_CH2)
+
+/*
+ * For specific DUTs we need servo to be able to present 1.5A
+ * power profile on CC resistors, this matches SuzyQ config.
+ */
+extern bool cc_poweron_suzyq_alike;
 
 /* the pins used for communication need to be hi-speed */
 static inline void pd_set_pins_speed(int port)
@@ -238,6 +246,32 @@ static inline void pd_tx_init(void)
 	gpio_set_flags_by_mask(d1->port, d1->mask, GPIO_INPUT);
 }
 
+/* Check if the CHG port has a PD contract with SrcCaps at least 5V 1.5A. */
+static inline int chg_port_pd_supports_1a5(void)
+{
+	const uint32_t *src_caps = pd_get_src_caps(CHG);
+	int src_cap_cnt = pd_get_src_cap_cnt(CHG);
+	int i;
+
+	if (src_cap_cnt == 0 || src_caps == NULL)
+		return 0;
+
+	for (i = 0; i < src_cap_cnt; i++) {
+		uint32_t pdo = src_caps[i];
+		uint32_t max_ma, max_mv, unused;
+
+		/* Only care about Fixed 5V PDOs. */
+		if ((pdo & PDO_TYPE_MASK) != PDO_TYPE_FIXED)
+			continue;
+
+		pd_extract_pdo_power(pdo, &max_ma, &max_mv, &unused);
+		if (max_mv == 5000 && max_ma >= 1500)
+			return 1;
+	}
+
+	return 0;
+}
+
 static inline void pd_set_host_mode(int port, int enable)
 {
 	/*
@@ -249,18 +283,34 @@ static inline void pd_set_host_mode(int port, int enable)
 		return;
 
 	if (enable) {
+		int rp_val = TYPEC_RP_USB;
+
 		/*
 		 * Servo_v4 in SRC mode acts as a DTS (debug test
-		 * accessory) and needs to present Rp on both CC
-		 * lines. In order to support orientation detection, and
+		 * accessory) and needs to present Rp on both CC lines.
+		 *
+		 * In order to support orientation detection, and
 		 * advertise the correct TypeC current level, the
-		 * values of Rp1/Rp2 need to asymmetric with Rp1 > Rp2. This
-		 * function is called without a specified Rp value so assume the
-		 * servo_v4 default of USB level current. If a higher current
-		 * can be supported, then the Rp value will get adjusted when
-		 * VBUS is enabled.
+		 * values of Rp1/Rp2 need to asymmetric with Rp1 > Rp2.
+		 *
+		 * By default this function is called without a specified Rp
+		 * value so assume the servo_v4 default of USB level current.
+		 *
+		 * Second option is when:
+		 *  - the CHG port has a PD source that can provide
+		 *    at least 1.5A / 5V
+		 *  - we specifed special SuzyQ flag in cc_config
+		 * Then advertise 1.5A on the DUT port,
+		 * which matches what the Suzy-Q cable advertises.
+		 * Otherwise, fall back to the safe default USB current level.
+		 *
+		 * If a higher current can be supported, then the Rp value will
+		 * get adjusted when VBUS is enabled.
 		 */
-		pd_set_rp_rd(port, TYPEC_CC_RP, TYPEC_RP_USB);
+		if (chg_port_pd_supports_1a5() && cc_poweron_suzyq_alike)
+			rp_val = TYPEC_RP_1A5;
+
+		pd_set_rp_rd(port, TYPEC_CC_RP, rp_val);
 
 		gpio_set_flags(GPIO_USB_DUT_CC1_TX_DATA, GPIO_INPUT);
 		gpio_set_flags(GPIO_USB_DUT_CC2_TX_DATA, GPIO_INPUT);
@@ -302,5 +352,12 @@ int pd_adc_read(int port, int cc);
  * @param set         true to set, false to clear flag
  */
 void set_cc_flag(int flag, bool set);
+
+/**
+ * External function to allow setting cc_poweron_suzyq_alike.
+ *
+ * @param state        bool
+ */
+void set_cc_poweron_suzyq_alike(bool state);
 
 #endif /* __CROS_EC_USB_PD_CONFIG_H */

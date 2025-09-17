@@ -10,6 +10,9 @@
 #define USB_PORT_POWER_EN BIT(1)
 #define USB_PORT_MUX_EN BIT(2)
 
+#define CC_POWERON_SUZYQ_ALIKE BIT(0)
+#define CC_POWERON_DISABLE_DTS BIT(1)
+
 /* Read config and set usb ports as expected in poweron config */
 void apply_poweron_conf(void);
 
