@@ -11,6 +11,7 @@
 
 #include <drivers/fingerprint.h>
 #include <fingerprint/v4l2_types.h>
+#include <fpsensor_driver.h>
 
 LOG_MODULE_REGISTER(fp_sensor_simulator, LOG_LEVEL_INF);
 
@@ -35,16 +36,39 @@ static int fp_simulator_deinit(const struct device *dev)
 	return data->state.deinit_result;
 }
 
-static int fp_simulator_get_info(const struct device *dev,
-				 struct fingerprint_info *info)
+static int fp_simulator_get_info(
+	const struct device *dev, struct fingerprint_sensor_info *sensor_info,
+	struct fingerprint_image_frame_params image_frame_params_array[],
+	uint8_t *num_params)
 {
 	const struct fp_simulator_cfg *cfg = dev->config;
 	struct fp_simulator_data *data = dev->data;
 
-	/* Copy immutable sensor information to the structure. */
-	memcpy(info, &cfg->info, sizeof(struct fingerprint_info));
+	if (sensor_info == NULL || num_params == NULL ||
+	    image_frame_params_array == NULL) {
+		return -EINVAL;
+	}
 
-	info->errors = data->errors;
+	uint8_t capacity = *num_params;
+	uint8_t num_defined_configs = cfg->sensor_info.num_capture_types;
+
+	if (capacity < num_defined_configs) {
+		return -EINVAL;
+	}
+
+	BUILD_ASSERT(sizeof(cfg->sensor_info) == sizeof(*sensor_info),
+		     "struct fingerprint_sensor_info size mismatch");
+
+	memcpy(sensor_info, &cfg->sensor_info,
+	       sizeof(struct fingerprint_sensor_info));
+
+	memcpy(image_frame_params_array, cfg->sensor_image_configs,
+	       num_defined_configs *
+		       sizeof(struct fingerprint_image_frame_params));
+
+	*num_params = num_defined_configs;
+
+	sensor_info->errors = data->errors;
 
 	return data->state.get_info_result;
 }
@@ -104,7 +128,16 @@ static int fp_simulator_acquire_image(const struct device *dev,
 {
 	const struct fp_simulator_cfg *config = dev->config;
 	struct fp_simulator_data *data = dev->data;
-	size_t size = min(config->info.frame_size, image_buf_size);
+	uint32_t frame_size = 0;
+
+	for (uint8_t i = 0; i < config->sensor_info.num_capture_types; ++i) {
+		if (config->sensor_image_configs[i].fp_capture_type == mode) {
+			frame_size = config->sensor_image_configs[i].frame_size;
+			break;
+		}
+	}
+
+	size_t size = min(frame_size, image_buf_size);
 
 	data->state.last_acquire_image_mode = mode;
 
@@ -137,33 +170,45 @@ static int fp_simulator_init_driver(const struct device *dev)
 	return 0;
 }
 
-#define FP_SIMULATOR_SENSOR_INFO(inst)                                         \
-	{                                                                      \
-		.vendor_id = FOURCC('C', 'r', 'O', 'S'),                       \
-		.product_id = 0,                                               \
-		.model_id = 0,                                                 \
-		.version = 0,                                                  \
-		.frame_size =                                                  \
-			FINGERPRINT_SENSOR_REAL_IMAGE_SIZE(DT_DRV_INST(inst)), \
-		.pixel_format = FINGERPRINT_SENSOR_V4L2_PIXEL_FORMAT(          \
-			DT_DRV_INST(inst)),                                    \
-		.width = FINGERPRINT_SENSOR_RES_X(DT_DRV_INST(inst)),          \
-		.height = FINGERPRINT_SENSOR_RES_Y(DT_DRV_INST(inst)),         \
-		.bpp = FINGERPRINT_SENSOR_RES_BPP(DT_DRV_INST(inst)),          \
+#define FP_SIMULATOR_SENSOR_INFO(inst)                                     \
+	{                                                                  \
+		.vendor_id = FOURCC('C', 'r', 'O', 'S'),                   \
+		.product_id = 0,                                           \
+		.model_id = 0,                                             \
+		.version = 0,                                              \
+		.num_capture_types =                                       \
+			FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)), \
 	}
 
-#define FP_SIMULATOR_DEFINE(inst)                                        \
-	static uint8_t fp_simulator_image_buffer_##inst                  \
-		[FINGERPRINT_SENSOR_REAL_IMAGE_SIZE(DT_DRV_INST(inst))]; \
-	static struct fp_simulator_data fp_simulator_data_##inst;        \
-	static const struct fp_simulator_cfg fp_simulator_cfg_##inst = { \
-		.info = FP_SIMULATOR_SENSOR_INFO(inst),                  \
-		.image_buffer = fp_simulator_image_buffer_##inst,        \
-	};                                                               \
-	DEVICE_DT_INST_DEFINE(inst, fp_simulator_init_driver, NULL,      \
-			      &fp_simulator_data_##inst,                 \
-			      &fp_simulator_cfg_##inst, POST_KERNEL,     \
-			      CONFIG_FINGERPRINT_SENSOR_INIT_PRIORITY,   \
+#define FP_SIMULATOR_IMAGE_PARAM_INITIALIZER(idx, inst)                        \
+	{                                                                      \
+		.frame_size =                                                  \
+			FINGERPRINT_SENSOR_FRAME_SIZE(idx, DT_DRV_INST(inst)), \
+		.pixel_format = FINGERPRINT_SENSOR_V4L2_PIXEL_FORMAT(          \
+			idx, DT_DRV_INST(inst)),                               \
+		.width = FINGERPRINT_SENSOR_RES_X(idx, DT_DRV_INST(inst)),     \
+		.height = FINGERPRINT_SENSOR_RES_Y(idx, DT_DRV_INST(inst)),    \
+		.bpp = FINGERPRINT_SENSOR_RES_BPP(idx, DT_DRV_INST(inst)),     \
+		.fp_capture_type = FINGERPRINT_SENSOR_CAPTURE_TYPE(            \
+			idx, DT_DRV_INST(inst)),                               \
+		.reserved = 0,                                                 \
+	}
+
+#define FP_SIMULATOR_DEFINE(inst)                                            \
+	static uint8_t fp_simulator_image_buffer_##inst[MAX_FRAME_SIZE(      \
+		DT_DRV_INST(inst))];                                         \
+	static struct fp_simulator_data fp_simulator_data_##inst;            \
+	static const struct fp_simulator_cfg fp_simulator_cfg_##inst = {     \
+		.image_buffer = fp_simulator_image_buffer_##inst,            \
+		.sensor_info = FP_SIMULATOR_SENSOR_INFO(inst),               \
+		.sensor_image_configs = { LISTIFY(                           \
+			FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)),   \
+			FP_SIMULATOR_IMAGE_PARAM_INITIALIZER, (, ), inst) }, \
+	};                                                                   \
+	DEVICE_DT_INST_DEFINE(inst, fp_simulator_init_driver, NULL,          \
+			      &fp_simulator_data_##inst,                     \
+			      &fp_simulator_cfg_##inst, POST_KERNEL,         \
+			      CONFIG_FINGERPRINT_SENSOR_INIT_PRIORITY,       \
 			      &fp_simulator_driver_api)
 
 DT_INST_FOREACH_STATUS_OKAY(FP_SIMULATOR_DEFINE);
@@ -198,7 +243,7 @@ void z_impl_fingerprint_load_image(const struct device *dev, uint8_t *image,
 				   size_t image_size)
 {
 	const struct fp_simulator_cfg *config = dev->config;
-	size_t size = min(config->info.frame_size, image_size);
+	size_t size = min(FP_SENSOR_IMAGE_SIZE, image_size);
 
 	memcpy(config->image_buffer, image, size);
 }

@@ -7,6 +7,13 @@
 #include <dt-bindings/gpio_defines.h>
 #include <cros/binman.dtsi>
 
+#define FP_SIMULATOR_COMMON_IMAGE_PROPS \
+	width = <160>; \
+	height = <160>; \
+	bits-per-pixel = <8>; \
+	frame-size = <25600>; \
+	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+
 / {
 	chosen {
 		cros-ec,flash-controller = &cros_flash;
@@ -39,10 +46,33 @@
 
 	fpsensor_sim: fpsensor-sim {
 		compatible = "cros-ec,fingerprint-sensor-sim";
-		width = <160>;
-		height = <160>;
-		bits-per-pixel = <8>;
-		v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+		configs {
+			compatible = "fingerprint-image-frame-params";
+			config0 {
+				FP_SIMULATOR_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_VENDOR_FORMAT";
+			};
+			config1 {
+				FP_SIMULATOR_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_SIMPLE_IMAGE";
+			};
+			config2 {
+				FP_SIMULATOR_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN0";
+			};
+			config3 {
+				FP_SIMULATOR_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN1";
+			};
+			config4 {
+				FP_SIMULATOR_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_QUALITY_TEST";
+			};
+			config5 {
+				FP_SIMULATOR_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_RESET_TEST";
+			};
+		};
 	};
 };
 

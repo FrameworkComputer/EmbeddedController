@@ -10,8 +10,9 @@
 #include <drivers/fingerprint_sim.h>
 
 struct fp_simulator_cfg {
-	struct fingerprint_info info;
 	uint8_t *image_buffer;
+	struct fingerprint_sensor_info sensor_info;
+	struct fingerprint_image_frame_params sensor_image_configs[];
 };
 
 struct fp_simulator_data {

@@ -24,9 +24,10 @@ DEFINE_FFF_GLOBALS;
 FAKE_VALUE_FUNC(int, mkbp_send_event, uint8_t);
 
 #define fp_sim DEVICE_DT_GET(DT_CHOSEN(cros_fp_fingerprint_sensor))
-#define IMAGE_SIZE                          \
-	FINGERPRINT_SENSOR_REAL_IMAGE_SIZE( \
-		DT_CHOSEN(cros_fp_fingerprint_sensor))
+#define IMAGE_SIZE                                                 \
+	MAX_FROM_LIST(LISTIFY(NUM_IMAGE_CAPTURE_TYPES,             \
+			      FINGERPRINT_SENSOR_FRAME_SIZE, (, ), \
+			      DT_CHOSEN(cros_fp_fingerprint_sensor)))
 static uint8_t image_buffer[IMAGE_SIZE];
 static uint8_t frame_buffer[IMAGE_SIZE];
 
