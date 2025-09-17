@@ -19,6 +19,7 @@
 #include "battery.dtsi"
 #include "fan.dtsi"
 #include "keyboard.dtsi"
+#include "temp_sensors.dtsi"
 
 /* quartz overrides follow... */
 
