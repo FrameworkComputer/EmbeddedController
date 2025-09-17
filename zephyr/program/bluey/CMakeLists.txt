@@ -16,6 +16,7 @@ endif()
 
 if(DEFINED CONFIG_BOARD_QUARTZ)
 	project(quartz)
+	add_subdirectory(quartz)
 endif()
 
 zephyr_library_sources("src/switchcap.c")
