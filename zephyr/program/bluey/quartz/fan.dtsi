@@ -13,6 +13,7 @@
 			rpm-start = <2700>;
 			rpm-max = <7800>;
 			tach = <&tach2>;
+			rpm-deviation = <1>;
 			enable-gpio = <&gpio_ec_en_pp5000_fan>;
 		};
 		fan2: fan_2 {
@@ -21,9 +22,49 @@
 			rpm-start = <1800>;
 			rpm-max = <5500>;
 			tach = <&tach1>;
+			rpm-deviation = <1>;
 			enable-gpio = <&gpio_ec_en_pp5000_fan>;
 		};
 
+	};
+
+	fan_steps: fan-steps {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp-on = <42 0 46 55>;
+			temp-off = <99 0 99 99>;
+			rpm-target = <0 0>;
+		};
+		level_1 {
+			temp-on = <44 0 46 55>;
+			temp-off = <39 0 99 99>;
+			rpm-target = <2700 3100>;
+		};
+		level_2 {
+			temp-on = <46 0 46 55>;
+			temp-off = <41 0 99 99>;
+			rpm-target = <3700 3200>;
+		};
+		level_3 {
+			temp-on = <48 0 46 55>;
+			temp-off = <43 0 99 99>;
+			rpm-target = <4200 3800>;
+		};
+		level_4 {
+			temp-on = <50 0 46 55>;
+			temp-off = <45 0 99 99>;
+			rpm-target = <4700 4200>;
+		};
+		level_5 {
+			temp-on = <52 0 48 57>;
+			temp-off = <47 0 41 52>;
+			rpm-target = <5000 4700>;
+		};
+		level_6 {
+			temp-on = <99 0 99 99>;
+			temp-off = <49 0 43 54>;
+			rpm-target = <6000 5000>;
+		};
 	};
 };
 
