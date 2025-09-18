@@ -193,4 +193,8 @@ config PWM_SHELL
 config WDT_SHELL
 	default y if WATCHDOG
 
+# Realtek ULPM support requires POWEROFF
+config POWEROFF
+	default y if SOC_RTS5912_ULPM
+
 endif # CROS_EC

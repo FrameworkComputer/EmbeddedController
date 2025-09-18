@@ -244,6 +244,11 @@ static int cros_system_rtk_hibernate(const struct device *dev, uint32_t seconds,
 	if (board_hibernate_late)
 		board_hibernate_late();
 
+#ifdef CONFIG_POWEROFF
+	/* For the board support ULPM, go power_off to turn off the power. */
+	sys_poweroff();
+#endif
+
 	return 0;
 }
 
