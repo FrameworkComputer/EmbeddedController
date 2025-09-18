@@ -16,14 +16,8 @@ __overridable void board_check_extpower(void)
 {
 }
 
-test_mockable void extpower_handle_update(int is_present)
+void extpower_update_host_events(int is_present)
 {
-	hook_notify(HOOK_AC_CHANGE);
-
-	if (!IS_ENABLED(HAS_TASK_HOSTCMD)) {
-		return;
-	}
-
 	uint8_t *memmap_batt_flags;
 	memmap_batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
 	host_event_t mask;
@@ -42,4 +36,15 @@ test_mockable void extpower_handle_update(int is_present)
 	/* Clear the mask depending upon the charging status. */
 	host_clear_events_b(mask);
 	host_clear_events(mask);
+}
+
+test_mockable void extpower_handle_update(int is_present)
+{
+	hook_notify(HOOK_AC_CHANGE);
+
+	if (!IS_ENABLED(HAS_TASK_HOSTCMD)) {
+		return;
+	}
+
+	extpower_update_host_events(is_present);
 }
