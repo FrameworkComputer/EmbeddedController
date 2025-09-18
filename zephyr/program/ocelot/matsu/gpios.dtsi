@@ -187,7 +187,10 @@
 			gpios = <&gpioh 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		gpio_ec_touch_en: ec_touch_en {
-			gpios = <&gpioj 4 GPIO_OUTPUT_LOW>;
+			gpios = <&gpioj 4 (GPIO_OUTPUT_LOW | GPIO_OPEN_DRAIN)>;
+		};
+		gpio_soc_tchscr_report_en: soc_tchscr_report_en {
+			gpios = <&gpiob 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		/* The legacy system code requires GPIO_ENTERING_RW symbol */
 		ec-entering-rw {
@@ -211,7 +214,6 @@
 			<&gpioa 4 0>, /* LED_3_R_L */
 			<&gpioa 5 0>, /* LED_4_R_L */
 			<&gpiog 0 0>, /* SPARE GPG0 */
-			<&gpiob 2 0>, /* SPARE GPB2 */
 			<&gpiog 3 0>, /* SPARE GPG3 */
 			<&gpiog 4 0>, /* SPARE GPG4 */
 			<&gpiog 5 0>, /* SPARE GPG5 */
