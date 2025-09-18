@@ -389,3 +389,25 @@ __override int board_confirm_buck_transition_ready(enum level_buck_mode mode)
 
 	return rv;
 }
+
+static void charger_chipset_suspend(void)
+{
+	int batt_soc = charge_get_percent();
+	bool batt_is_present = (battery_is_present() == BP_YES) ? true : false;
+
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF |
+		CHIPSET_STATE_ANY_SUSPEND) && extpower_is_present() &&
+		batt_is_present && batt_soc == 100) {
+		bq25710_set_ooa(CHARGER_SOLO, 0);
+	} else {
+		bq25710_set_ooa(CHARGER_SOLO, 1);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, charger_chipset_suspend, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_chipset_suspend, HOOK_PRIO_DEFAULT);
+
+static void charger_chipset_resume(void)
+{
+	bq25710_set_ooa(CHARGER_SOLO, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, charger_chipset_resume, HOOK_PRIO_DEFAULT);
