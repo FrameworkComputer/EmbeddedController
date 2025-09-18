@@ -77,6 +77,7 @@ typedef enum {
 	EGIS_API_ERROR_MATCHER_LIB_FAIL = -18,
 	EGIS_API_ERROR_EMFP_LIB_FAIL = -19,
 	EGIS_API_ERROR = -20,
+	EGIS_API_ERROR_NOT_SUPPORTED = -21,
 } egis_api_return_t;
 
 /**
@@ -322,6 +323,8 @@ egis_api_return_t egis_finger_enroll(uint8_t *image, int *completion);
  * @return EGIS_API_ERROR_GENERAL : on other operation fail
  * @return EGIS_API_ERROR_SENSOR_GENERAL : on sensor operation fail
  * @return EGIS_API_ERROR_PARAMETER : on incorrect parameter
+ * @return EGIS_API_ERROR_NOT_SUPPORTED : when the feature is not supported by
+ * the library
  */
 egis_api_return_t egis_apply_calibration_data(uint8_t *data_addr,
 					      uint32_t data_len);
