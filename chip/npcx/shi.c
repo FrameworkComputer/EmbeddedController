@@ -569,11 +569,11 @@ static void shi_bad_received_data(void)
 	shi_fill_out_status(EC_SPI_RX_BAD_DATA);
 	state = SHI_STATE_BAD_RECEIVED_DATA;
 
-	CPRINTF("BAD-");
-	CPRINTF("in_msg=[");
+	DEBUG_CPRINTF("BAD-");
+	DEBUG_CPRINTF("in_msg=[");
 	for (i = 0; i < shi_params.sz_received; i++)
-		CPRINTF("%02x ", in_msg[i]);
-	CPRINTF("]\n");
+		DEBUG_CPRINTF("%02x ", in_msg[i]);
+	DEBUG_CPRINTF("]\n");
 
 	/* Reset shi's state machine for error recovery */
 	shi_reset_prepare();
