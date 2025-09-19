@@ -22,9 +22,8 @@ using TestTransportBase =
 
 class TestTransport : public TestTransportBase {
  public:
-  TestTransport() : TestTransportBase() {
-    SetNotifyClientCallback([this](bool has_data) { has_data_ = has_data; });
-  }
+  TestTransport()
+      : TestTransportBase([this](bool has_data) { has_data_ = has_data; }) {}
 
   inline bool HasPendingStatus() const { return has_data_; }
 

@@ -71,11 +71,7 @@ class Driver {
   Driver(uint16_t target_address,
          const struct i2c_target_callbacks* target_callbacks,
          const struct device* bus,
-         struct gpio_dt_spec interrupt)
-      : target_cfg_{}, bus_(bus), interrupt_(interrupt), transport_() {
-    target_cfg_.address = target_address;
-    target_cfg_.callbacks = target_callbacks;
-  }
+         struct gpio_dt_spec interrupt);
 
   pw::Status Init();
 

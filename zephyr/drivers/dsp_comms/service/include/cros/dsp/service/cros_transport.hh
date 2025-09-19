@@ -45,7 +45,8 @@ inline constexpr auto kBitsToKeep =
 class CrosTransport : public CrosTransportParent {
  private:
  public:
-  constexpr CrosTransport() : CrosTransportParent() {}
+  constexpr CrosTransport(pw::Function<void(bool has_data)>&& notify_client_fn)
+      : CrosTransportParent(std::move(notify_client_fn)) {}
   ~CrosTransport() = default;
 
   pw::Status StageResponse(const cros_dsp_comms_GetCbiFlagsResponse& response) {
@@ -65,8 +66,6 @@ class CrosTransport : public CrosTransportParent {
           return pw::StatusWithSize(response_ostream.bytes_written);
         });
   }
-
-  using CrosTransportParent::SetNotifyClientCallback;
 
  protected:
   using CrosTransportParent::StageResponse;

@@ -73,29 +73,13 @@ class Transport {
    * Construct a new Transport object.
    *
    */
-  constexpr Transport()
-      : status_{}, response_buffer_(), status_buffer_(), state_machine_() {}
+  constexpr Transport(pw::Function<void(bool has_data)>&& notify_client_fn)
+      : status_{},
+        response_buffer_(),
+        status_buffer_(),
+        state_machine_(std::move(notify_client_fn)) {}
 
   virtual ~Transport() = default;
-
-  /**
-   * Set a listener for then data becomes available.
-   *
-   * When new status bits are set, notify the callback that there's data. When
-   * the status bits are cleared by a client read, notify the client. This is
-   * generally used to control a GPIO being level active when there's data and
-   * inactive when there's none.
-   *
-   * Note that this will only be called on the first status bit being set.
-   * Setting 2 bits will not result in 2 callbacks.
-   *
-   * @param notify_client_fn A function to call when the status bits are set or
-   * cleared.
-   */
-  void SetNotifyClientCallback(
-      pw::Function<void(bool has_data)>&& notify_client_fn) {
-    state_machine_.SetNotifyClientCallback(std::move(notify_client_fn));
-  }
 
   /**
    * Stage a response if possible.
@@ -372,14 +356,10 @@ class Transport {
   class TransportStateMachine
       : public pw::fsm::StateMachine<impl::ServiceState> {
    public:
-    constexpr TransportStateMachine()
+    constexpr TransportStateMachine(
+        pw::Function<void(bool has_data)>&& notify_client_fn)
         : pw::fsm::StateMachine<impl::ServiceState>(impl::kTransportFsmConfig),
-          notify_client_fn_(nullptr) {}
-
-    void SetNotifyClientCallback(
-        pw::Function<void(bool has_data)>&& notify_client_fn) {
-      notify_client_fn_ = std::move(notify_client_fn);
-    }
+          notify_client_fn_(std::move(notify_client_fn)) {}
 
     void NotifyClient() { OnEnter(current_state()); }
 
