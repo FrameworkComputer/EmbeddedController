@@ -52,7 +52,7 @@ void ina236_alert_current(int voltage, int current)
 
 	watt = (int64_t)current * (int64_t)voltage / 1000000;
 
-	if (watt == 180)
+	if (watt >= 180)
 		value = current * 4 * 12 / 10;
 	else
 		value = current * 4;
