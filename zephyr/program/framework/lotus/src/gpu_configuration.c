@@ -278,8 +278,9 @@ static struct default_gpu_cfg nv_gpu_cfg = {
 	.gpio0 = {.gpio = GPU_1G1_GPIO0_EC, .function = GPIO_FUNC_TEMPFAULT, .flags = GPIO_INPUT, .power_domain = POWER_S3},
 	/* DP HPD status from PD */
 	.gpio1 = {.gpio = GPU_1H1_GPIO1_EC, .function = GPIO_FUNC_HPD, .flags = GPIO_INPUT, .power_domain = POWER_S5},
-	/* output from the GPU if it is throttling */
-	.gpio2 = {.gpio = GPU_2A2_GPIO2_EC, .function = GPIO_FUNC_IS_THROTTLING, .flags = GPIO_INPUT, .power_domain = POWER_S0},
+	/* output to the GPU if AC-to-battery power change event or a system power overdraw event */
+	.gpio2 = {.gpio = GPU_2A2_GPIO2_EC, .function = GPIO_FUNC_GPU_PWR_LEVEL,
+				.flags = GPIO_OUTPUT_HIGH, .power_domain = POWER_G3},
 	/* DDS Mux CTRL  from dGPU */
 	.gpio3 = {.gpio = GPU_2L7_GPIO3_EC, .function = GPIO_FUNC_UNUSED, .flags = GPIO_INPUT, .power_domain = POWER_S0},
 	/* GPU_VSYS_EN */
@@ -513,6 +514,8 @@ const char * gpu_gpio_fn_to_name(enum gpu_gpio_purpose p)
 		return "GPUPWR";
 	case GPIO_FUNC_IS_THROTTLING:
 		return "THROTTLING";
+	case GPIO_FUNC_GPU_PWR_LEVEL:
+		return "GPU_PWR_LEVEL";
 	default: 
 		return "UNKNOWN IDX";
 	}
