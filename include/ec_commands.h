@@ -274,7 +274,8 @@ extern "C" {
  * EC_MEMMAP_BATT_LFCC if the actual value is unknown.
  *
  * This corresponds with the unknown value specified by ACPI release 6.5
- * §10.2.2 (and earlier versions), to match expectations of ACPI firmware.
+ * Section 10.2.2 (and earlier versions), to match expectations of ACPI
+ * firmware.
  */
 #define EC_MEMMAP_BATT_UNKNOWN_VALUE (-1)
 
@@ -534,7 +535,7 @@ extern "C" {
 	(((x) & 0xf0) >> USB_RETIMER_FW_UPDATE_OP_SHIFT)
 
 /*
- * Offset 0x15 is reserved for PBOK, added to Coreboot in
+ * Offset 0x15 is reserved for PBOK, added to coreboot in
  * https://crrev.com/c/3840943 and proposed for inclusion here
  * in https://crrev.com/c/3547317.
  */
