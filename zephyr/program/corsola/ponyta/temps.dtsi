@@ -10,17 +10,31 @@
 			enum-name = "ADC_TEMP_SENSOR_1";
 			io-channels = <&adc0 8>;
 		};
+		adc_temp_sensor2: adc-temp-sensor2 {
+			enum-name = "ADC_TEMP_SENSOR_2";
+			io-channels = <&adc0 9>;
+		};
 	};
+
 	temp_charger: charger {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_51K1_47K_4100B>;
 		adc = <&adc_temp_sensor1>;
 	};
 
+	temp_cpu: cpu {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4100B>;
+		adc = <&adc_temp_sensor2>;
+	};
+
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
 		charger {
 			sensor = <&temp_charger>;
+		};
+		cpu {
+			sensor = <&temp_cpu>;
 		};
 	};
 };
@@ -35,6 +49,7 @@
 		     &adc0_chan1_gp44
 		     &adc0_chan2_gp43
 		     &adc0_chan3_gp42
-		     &adc0_chan8_gpf1>;
+		     &adc0_chan8_gpf1
+		     &adc0_chan9_gpf0>;
 	pinctrl-names = "default";
 };
