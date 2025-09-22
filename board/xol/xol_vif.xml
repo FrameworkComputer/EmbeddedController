@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vif:VIF xmlns:opt="http://usb.org/VendorInfoFileOptionalContent.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:vif="http://usb.org/VendorInfoFile.xsd">
-  <vif:VIF_Specification>3.35</vif:VIF_Specification>
+  <vif:VIF_Specification>3.36</vif:VIF_Specification>
   <vif:VIF_App>
     <vif:Vendor>USB-IF</vif:Vendor>
     <vif:Name>VIF Editor</vif:Name>
-    <vif:Version>3.13.0.0</vif:Version>
+    <vif:Version>3.14.0.0</vif:Version>
   </vif:VIF_App>
   <vif:Vendor_Name>Google</vif:Vendor_Name>
   <vif:Model_Part_Number>xol</vif:Model_Part_Number>
