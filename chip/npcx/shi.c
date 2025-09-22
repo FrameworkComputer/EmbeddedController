@@ -575,8 +575,18 @@ static void shi_bad_received_data(void)
 		DEBUG_CPRINTF("%02x ", in_msg[i]);
 	DEBUG_CPRINTF("]\n");
 
-	/* Reset shi's state machine for error recovery */
-	shi_reset_prepare();
+	/*
+	 * SHI version 1 (for NPCX5) cannot detect CS de-assertion if there is
+	 * no clock toggle. In the case, it should perform the reset and prepare
+	 * here for next transaction.
+	 * SHI version 2 can detect CS de-assertion event by CSNRE bit even if
+	 * there no clock toggle. In this case, the reset and prepare can defer
+	 * to the CS de-assertion ISR.
+	 */
+	if (!IS_ENABLED(NPCX_SHI_V2)) {
+		/* Reset shi's state machine for error recovery */
+		shi_reset_prepare();
+	}
 
 	DEBUG_CPRINTF("END\n");
 }
