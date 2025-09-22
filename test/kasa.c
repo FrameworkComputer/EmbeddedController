@@ -5,13 +5,7 @@
 
 #include "common.h"
 #include "kasa.h"
-#include "motion_sense.h"
 #include "test_util.h"
-
-#include <stdio.h>
-
-struct motion_sensor_t motion_sensors[] = {};
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 static int test_kasa_reset(void)
 {
@@ -71,12 +65,4 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_kasa_calculate);
 
 	test_print_result();
-}
-
-/* Mock out mkbp_send_event. Rarely, but occasionally, mkbp_send_event gets
- * called and the coverage is thrown off.
- */
-int mkbp_send_event(uint8_t event_type)
-{
-	return 1;
 }

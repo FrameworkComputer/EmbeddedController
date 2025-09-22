@@ -152,6 +152,7 @@ enum battery_type {
 #define CONFIG_MAG_CALIBRATE
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
+#undef CONFIG_MOTION_FILL_LPC_SENSE_DATA
 #endif
 
 #ifdef TEST_RGB_KEYBOARD
