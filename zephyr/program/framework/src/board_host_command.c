@@ -70,6 +70,8 @@ static void sci_enable(void)
 #ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 		/* hook_call_deferred(&gpu_typec_detect_data, 500 * MSEC); */
 		gpu_typec_detect();
+
+		set_nv_gpu_throttle(THROTTLE_OFF, 60);
 #endif
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
