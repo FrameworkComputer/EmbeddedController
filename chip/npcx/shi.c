@@ -599,7 +599,7 @@ static int last_error_state = -1;
 
 static void log_unexpected_state(char *isr_name)
 {
-#if !(DEBUG_SHI)
+#if DEBUG_SHI
 	if (state != last_error_state)
 		CPRINTS("Unexpected state %d in %s ISR", state, isr_name);
 #endif
