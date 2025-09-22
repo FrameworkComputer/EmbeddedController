@@ -29,6 +29,13 @@ test_mockable int cbi_get_fw_config(uint32_t *fw_config)
 				  &size);
 }
 
+test_mockable int cbi_get_ufsc(struct cbi_ufsc *ufsc)
+{
+	uint8_t size = sizeof(*ufsc);
+
+	return cbi_get_board_info(CBI_TAG_UFSC, (uint8_t *)ufsc, &size);
+}
+
 static enum ec_status hc_cbi_get(struct host_cmd_handler_args *args)
 {
 	const struct __ec_align4 ec_params_get_cbi *p = args->params;

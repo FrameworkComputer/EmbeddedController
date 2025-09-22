@@ -596,6 +596,55 @@ ZTEST_USER(common_cbi, test_board_id_fails_when_set)
 	zassert_equal(hc_get_response.data[0], board_id);
 }
 
+ZTEST_USER(common_cbi, test_cbi_get_ufsc__read_write)
+{
+	const struct cbi_ufsc ufsc_to_write = {
+		.data = { 0x11223344, 0x55667788, 0x99aabbcc, 0xddeeff00,
+			  0x12345678 }
+	};
+	struct actual_set_params {
+		struct ec_params_set_cbi params;
+		struct cbi_ufsc data;
+	};
+	struct actual_set_params hc_params = {
+		.params = {
+			.tag = CBI_TAG_UFSC,
+			.size = sizeof(ufsc_to_write),
+		},
+		.data = ufsc_to_write,
+	};
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_SET_CROS_BOARD_INFO, 0, hc_params);
+	struct cbi_ufsc ufsc_read;
+
+	/* Turn off write-protect so we can actually write. */
+	gpio_wp_l_set(1);
+
+	zassert_ok(host_command_process(&args), "Failed to set UFSC data");
+
+	/* Invalidate cache to force a read from storage. */
+	cbi_invalidate_cache();
+
+	zassert_ok(cbi_get_ufsc(&ufsc_read), "cbi_get_ufsc failed");
+	zassert_mem_equal(&ufsc_to_write, &ufsc_read, sizeof(struct cbi_ufsc),
+			  "Read UFSC data does not match written data");
+}
+
+ZTEST_USER(common_cbi, test_cbi_get_ufsc__not_found)
+{
+	struct cbi_ufsc ufsc_read;
+	int rv;
+
+	/* Clear CBI to ensure the tag is not present. */
+	gpio_wp_l_set(1);
+	zassert_ok(cbi_clear(), "cbi_clear failed");
+
+	rv = cbi_get_ufsc(&ufsc_read);
+	zassert_equal(rv, EC_ERROR_UNKNOWN,
+		      "Expected EC_ERROR_UNKNOWN for missing tag, but got %d",
+		      rv);
+}
+
 static void test_common_cbi_before_after(void *test_data)
 {
 	RESET_FAKE(eeprom_load);

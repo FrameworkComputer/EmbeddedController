@@ -100,8 +100,8 @@ extern const struct cbi_storage_config_t *cbi_config;
 /**
  * Board info accessors
  *
- * @param version/sku_id/oem_id/id/fw_config/pcb_supplier/ssfc/rework_id [OUT]
- *        Data_read from EEPROM.
+ * @param out Pointer to the destination variable to store the read data.
+ *            This is an output parameter for all functions in this group.
  * @return EC_SUCCESS on success or EC_ERROR_* otherwise.
  *         EC_ERROR_BUSY to indicate data is not ready.
  */
@@ -110,6 +110,7 @@ int cbi_get_sku_id(uint32_t *sku_id);
 int cbi_get_oem_id(uint32_t *oem_id);
 int cbi_get_model_id(uint32_t *id);
 int cbi_get_fw_config(uint32_t *fw_config);
+int cbi_get_ufsc(struct cbi_ufsc *ufsc);
 int cbi_get_pcb_supplier(uint32_t *pcb_supplier);
 int cbi_get_ssfc(uint32_t *ssfc);
 int cbi_get_rework_id(uint64_t *id);

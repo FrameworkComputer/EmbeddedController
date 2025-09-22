@@ -6652,8 +6652,20 @@ enum cbi_data_tag {
 	 */
 	CBI_TAG_PROVISION_MATRIX_VERSION = 28, /* uint32_t bit field */
 
+	/* Unified Firmware and Second-source Config:
+	 * A fixed-size array of 5 uint32_t values.
+	 */
+	CBI_TAG_UFSC = 29,
+
 	/* Last entry */
 	CBI_TAG_COUNT,
+};
+
+#define CBI_UFSC_DATA_COUNT 5
+
+/* Unified Firmware and Second-source Config (UFSC) data structure */
+struct cbi_ufsc {
+	uint32_t data[CBI_UFSC_DATA_COUNT];
 };
 
 /*
