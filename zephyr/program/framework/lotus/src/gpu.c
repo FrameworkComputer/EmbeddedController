@@ -43,6 +43,7 @@ static int gpu_id_0;
 static int gpu_id_1;
 static int switch_status;
 static enum gpu_pd pd_type = PD_TYPE_INVALID;
+static bool curr_throttle_level;
 
 bool gpu_power_enable(void)
 {
@@ -364,5 +365,33 @@ void gpu_update_pd_vdm(int controller, int port, uint8_t *data, int len)
 			LOG_DBG("GPU HPD wake");
 			host_set_single_event(EC_HOST_EVENT_DGPU_TYPEC_NOTIFY);
 		}
+	}
+}
+
+static void nv_gpu_throttle_apply(void)
+{
+	if (curr_throttle_level == THROTTLE_ON) {
+		if (get_gpu_gpio(GPIO_FUNC_GPU_PWR_LEVEL)) {
+			set_gpu_gpio(GPIO_FUNC_GPU_PWR_LEVEL, 0);
+		}
+	} else {
+		if (!get_gpu_gpio(GPIO_FUNC_GPU_PWR_LEVEL)) {
+			set_gpu_gpio(GPIO_FUNC_GPU_PWR_LEVEL, 1);
+		}
+	}
+}
+DECLARE_DEFERRED(nv_gpu_throttle_apply);
+
+void set_nv_gpu_throttle(enum throttle_level level, int delay)
+{
+	/* Cancel pending deferred call. */
+	hook_call_deferred(&nv_gpu_throttle_apply_data, -1);
+
+	curr_throttle_level = level;
+
+	if (delay == 0) {
+		nv_gpu_throttle_apply();
+	} else {
+		hook_call_deferred(&nv_gpu_throttle_apply_data, delay * SECOND);
 	}
 }

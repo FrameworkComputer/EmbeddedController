@@ -8,6 +8,7 @@
 
 #include <gpu_configuration.h>
 #include "common_cpu_power.h"
+#include "throttle_ap.h"
 
 
 bool gpu_power_enable(void);
@@ -51,5 +52,13 @@ void gpu_set_pd_state(void);
  */
 
 void gpu_update_pd_vdm(int controller, int port, uint8_t *data, int len);
+
+/**
+ * Set the NV GPU throttle
+ *
+ * @param level    Level of throttling desired
+ * @param delay    Delay (in seconds) before applying the throttle.
+ */
+void set_nv_gpu_throttle(enum throttle_level level, int delay);
 
 #endif /* __BOARD_GPU_H__ */
