@@ -130,6 +130,7 @@ if(DEFINED CONFIG_BOARD_MARIGOLD OR DEFINED CONFIG_BOARD_SAKURA)
 		cros_ec_library_include_directories_ifdef(CONFIG_BOARD_SAKURA include)
 		zephyr_library_sources("sakura/src/charger.c")
 		zephyr_library_sources("sakura/src/power_sequence.c")
+		zephyr_library_sources("src/input_module.c")
 	endif()
 	zephyr_include_directories("include/marigold")
 	zephyr_library_sources(

@@ -18,6 +18,7 @@
 #include "gpio_signal.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
+#include "input_module.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_protocol.h"
 #include "lpc.h"
@@ -36,7 +37,6 @@ static int power_s5_up;		/* Chipset is sequencing up or down */
 static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int force_g3_flags;	/* Chipset force to g3 immediately when chipset force shutdown */
 static int me_change;
-static bool module_pwr_control;
 
 static int keep_pch_power(void)
 {
@@ -209,6 +209,7 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 
 static void chipset_force_g3(void)
 {
+	input_c_deck_powerdown();
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 0);
@@ -235,36 +236,6 @@ enum power_state power_chipset_init(void)
 	/* If we don't need to image jump to RW, always start at G3 state */
 	chipset_force_g3();
 	return POWER_G3;
-}
-
-static void control_module_power(void)
-{
-	static int pre_touchpad;
-#ifdef CONFIG_PLATFORM_IGNORED_TOUCHPAD_ID
-	int touchpad = BOARD_VERSION_10;
-#else
-	int touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
-#endif /* CONFIG_PLATFORM_IGNORED_TOUCHPAD_ID */
-
-	if (!module_pwr_control)
-		return;
-
-	if (pre_touchpad != touchpad) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on),
-			(touchpad >= BOARD_VERSION_1 && touchpad <= BOARD_VERSION_13) ? 1 : 0);
-
-		pre_touchpad = touchpad;
-	}
-}
-DECLARE_HOOK(HOOK_TICK, control_module_power, HOOK_PRIO_DEFAULT);
-
-static void module_pwr_control_enable(bool state)
-{
-	module_pwr_control = state;
-	if (module_pwr_control)
-		control_module_power();
-	else
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on), 0);
 }
 
 enum power_state power_handle_state(enum power_state state)
@@ -389,7 +360,6 @@ enum power_state power_handle_state(enum power_state state)
 		cypd_set_power_active();
 
 		clear_rtcwake();
-		module_pwr_control_enable(true);
 
 		return POWER_S0;
 
@@ -543,7 +513,7 @@ static void peripheral_power_shutdown(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_rt_gpio6_ctrl), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 0);
-	module_pwr_control_enable(false);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on), 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, peripheral_power_shutdown, HOOK_PRIO_DEFAULT);
 

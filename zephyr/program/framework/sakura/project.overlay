@@ -19,12 +19,18 @@
 / {
 	aliases {
 		/delete-property/ gpio-mux-uart-flip;
+		gpio-tp-board-id-detect = &gpio_tp_board_id_pug;
+		gpio-module-power = &gpio_module_pwr_on;
 	};
 
 	named-gpios {
 		compatible = "named-gpios";
 		/delete-node/ mux_sub_uart_flip;
 		/delete-node/ me_en;
+
+		gpio_tp_board_id_pug: tp_board_id_pug {
+			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;
+		};
 
 		gpio_me_en_l: me_en_l {
 			gpios = <&gpio7 4 GPIO_ODR_HIGH>;
