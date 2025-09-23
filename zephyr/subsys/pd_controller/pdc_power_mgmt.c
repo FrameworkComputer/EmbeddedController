@@ -1454,6 +1454,9 @@ static void trigger_ppm_status_change(struct pdc_port_t *port)
 	case CMD_PDC_SET_SINK_PATH:
 		status.sink_path_status_change = 1;
 		break;
+	case CMD_PDC_READ_POWER_LEVEL:
+		status.negotiated_power_level = 1;
+		break;
 
 	/* For all other commands, no need to trigger as there shouldn't be
 	 * side-effects to connector status.
@@ -3112,6 +3115,7 @@ static void pdc_send_cmd_wait_exit(void *obj)
 	case CMD_PDC_SET_UOR:
 	case CMD_PDC_SET_PDOS:
 	case CMD_PDC_SET_SINK_PATH:
+	case CMD_PDC_READ_POWER_LEVEL:
 		trigger_ppm_status_change(port);
 		break;
 	default:
