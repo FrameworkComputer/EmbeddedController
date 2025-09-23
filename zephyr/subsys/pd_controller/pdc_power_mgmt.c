@@ -2279,9 +2279,14 @@ pdc_snk_attached_send_set_rdo(struct pdc_port_t *port,
 			RDO_FIXED(snk_policy->pdo_index, max_ma, max_ma, flags);
 	}
 
-	LOG_INF("C%d: Send RDO: %d, battery_is_present=%d",
+	LOG_INF("C%d: Send RDO: %d (%08x), battery_is_present=%d, mismatch=%d",
 		config->connector_num, RDO_POS(snk_policy->rdo_to_send),
-		battery_is_present());
+		snk_policy->rdo_to_send, battery_is_present(),
+		!!(flags & RDO_CAP_MISMATCH));
+	LOG_INF("C%d: Power request: %umA, %umV, %umW, "
+		"pdo_max=%umW, board_max=%umW",
+		config->connector_num, max_ma, max_mv, max_mw, max_mw_pdo,
+		pdc_max_operating_power);
 	queue_internal_cmd(port, CMD_PDC_SET_RDO);
 }
 
