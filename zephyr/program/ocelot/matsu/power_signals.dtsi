@@ -46,7 +46,7 @@
 		enum-name = "PWR_SLP_S0";
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
                 /* PCH_SLP_S0_N_R net */
-	        gpios = <&gpioj 5 GPIO_ACTIVE_LOW>;
+	        gpios = <&gpioj 5 (GPIO_ACTIVE_LOW | GPIO_VOLTAGE_1P8)>;
 	};
 	pwr_pch_pwrok: ec-pm-pch-pwrok {
 		compatible = "intel,ap-pwrseq-gpio";
@@ -91,13 +91,13 @@
 		enum-name = "PWR_ALL_SYS_PWRGD";
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
                 /* ALL_SYS_PWRGD_R net */
-	        gpios = <&gpiod 5 GPIO_ACTIVE_HIGH>;
+	        gpios = <&gpiod 5 (GPIO_ACTIVE_HIGH | GPIO_VOLTAGE_1P8)>;
 	};
 	pwr_sys_rst: pwr-sys-rst-l {
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "SYS_RESET# output to PCH";
 		enum-name = "PWR_SYS_RST";
-                gpios = <&gpioj 7 (GPIO_ACTIVE_LOW|GPIO_OPEN_DRAIN)>;
+                gpios = <&gpioj 7 (GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN)>;
 		output;
 	};
 	ap-power {
