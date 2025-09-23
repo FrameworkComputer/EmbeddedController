@@ -777,7 +777,7 @@ static int cypd_enable_retimer_update_mode(int controller, uint8_t data)
 		return EC_ERROR_PARAM1;
 
 	/**
-	 * On the AMD platform, EC needs to send the HIP vendor specific command
+	 * On the AMD platform, EC needs to send the HPI vendor specific command
 	 * 0x0043 data 0x01 to enable retimer update mode.
 	 * 0x0043 data 0x00 to disable retimer update mode.
 	 */
