@@ -1,0 +1,58 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include <cros/thermistor/thermistor.dtsi>
+
+ / {
+	temp_memory: memory {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_1>;
+	};
+	temp_charger: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_2>;
+	};
+	temp_ambient: ambient {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_3>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		memory {
+			temp-fan-off = <35>;
+			temp-fan-max = <70>;
+			power-good-pin = <&gpio_pg_pp1250_soc_s5_od>;
+			sensor = <&temp_memory>;
+		};
+		charger {
+			power-good-pin = <&gpio_pg_pp1250_soc_s5_od>;
+			sensor = <&temp_charger>;
+		};
+		ambient {
+			power-good-pin = <&gpio_pg_pp1250_soc_s5_od>;
+			sensor = <&temp_ambient>;
+		};
+	};
+
+	fans {
+		compatible = "cros-ec,fans";
+
+		fan_0 {
+			pwms = <&pwm5 5 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+			rpm-min = <2200>;
+			rpm-start = <2200>;
+			rpm-max = <6900>;
+			tach = <&tach1>;
+			enable-gpio = <&gpio_en_pp5000_fan>;
+		};
+	};
+ };
+
+&thermistor_3V3_51K1_47K_4050B {
+	status = "okay";
+};

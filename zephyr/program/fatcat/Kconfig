@@ -52,6 +52,12 @@ config BOARD_MOONSTONE
 	  Build Google Moonstone board. Moonstone has Intel PTL SoC
 	  with it82002aw EC.
 
+config BOARD_RUBY
+	bool "Google ruby"
+	help
+	  Build Google Ruby board. Ruby has Intel PTL SoC
+	  with NPCX997FB0BX EC.
+
 module = Fatcat
 module-str = Fatcat board-specific code
 source "subsys/logging/Kconfig.template.log_config"

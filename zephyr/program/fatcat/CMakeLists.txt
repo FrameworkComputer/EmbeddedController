@@ -71,3 +71,13 @@ if(DEFINED CONFIG_BOARD_MOONSTONE)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 					"moonstone/src/keyboard_customization.c")
 endif()
+
+if(DEFINED CONFIG_BOARD_RUBY)
+	project(ruby)
+	add_subdirectory(ruby)
+	zephyr_include_directories("ruby/include")
+	zephyr_library_sources("ruby/src/touch_panel.c")
+	zephyr_library_sources("ruby/src/board_power.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+					"ruby/src/keyboard_customization.c")
+endif()
