@@ -15,8 +15,12 @@ STATIC_IF_NOT(CONFIG_ZTEST) int cros_cbi_ec_init(void)
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_CBI_TRANSFER_EEPROM_FLASH)) {
 		cros_cbi_transfer_eeprom_to_flash();
 	}
-	cros_cbi_ssfc_init();
-	cros_cbi_fw_config_init();
+	if (IS_ENABLED(CONFIG_CROS_EC_CBI_SSFC_PARSER)) {
+		cros_cbi_ssfc_init();
+	}
+	if (IS_ENABLED(CONFIG_CROS_EC_CBI_FW_CONFIG_PARSER)) {
+		cros_cbi_fw_config_init();
+	}
 
 	return 0;
 }

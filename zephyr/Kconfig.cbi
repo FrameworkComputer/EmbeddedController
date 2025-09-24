@@ -91,6 +91,20 @@ config PLATFORM_EC_CBI_GPIO
 	  CBI for AP to query.
 endchoice
 
+config CROS_EC_CBI_FW_CONFIG_PARSER
+	bool "CBI FW_CONFIG parser from devicetree"
+	default y if  DT_HAS_CROS_EC_CBI_FW_CONFIG_ENABLED
+	help
+	  Enables the driver that parses the FW_CONFIG fields from the
+	  devicetree and provides an API to access them.
+
+config CROS_EC_CBI_SSFC_PARSER
+	bool "CBI SSFC parser from devicetree"
+	default y if DT_HAS_CROS_EC_CBI_SSFC_ENABLED
+	help
+	  Enables the driver that parses the SSFC fields from the
+	  devicetree and provides an API to check for second-source components.
+
 config PLATFORM_EC_CONSOLE_CMD_CBI
 	bool "Console command: cbi"
 	default y
