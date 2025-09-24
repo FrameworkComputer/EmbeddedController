@@ -1,0 +1,72 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+include: base.yaml
+
+description: |
+  CBI Unified Firmware and Second-source Config fields (UFSC).
+
+  This node defines a collection of bit fields within the 5-DWORD (20-byte)
+  UFSC region of the Cros Board Info (CBI). It unifies the functionality
+  of the legacy fw-config and ssfc nodes.
+
+compatible: "cros-ec,cbi-ufsc"
+
+child-binding:
+  description:
+    Each child node represents a single logical field within the UFSC data.
+    A field can be composed of discontiguous bit segments.
+  properties:
+    enum-name:
+      type: string
+      required: true
+      description:
+        Name of the field used to generate a C enum for access.
+    start:
+      type: array
+      required: true
+      description: |
+        Array of starting bit positions for each segment of the field.
+        Positions are 0-indexed from the start of the 5-DWORD UFSC block
+        (valid range: 0-159).
+    size:
+      type: array
+      required: true
+      description: |
+        Array of sizes in bits for each corresponding segment in the 'start'
+        array. The length must match the length of the 'start' array.
+        Each size element must be <= 8.
+
+# Example:
+#
+# cbi-ufsc {
+#     compatible = "cros-ec,cbi-ufsc";
+#
+#     fan {
+#         enum-name = "UFSC_FAN";
+#         start = <0 4>;
+#         size = <1 1>;
+#         absent {
+#             compatible = "cros-ec,cbi-ufsc-value";
+#             status = "okay";
+#             value = <0>;
+#             default;
+#         };
+#         present {
+#             compatible = "cros-ec,cbi-ufsc-value";
+#             status = "okay";
+#             value = <1>;
+#         };
+#     };
+#     base-sensor {
+#         enum-name = "UFSC_BASE_SENSOR";
+#         start = <1>;
+#         size = <3>;
+#         bmi160 {
+#             compatible = "cros-ec,cbi-ufsc-value";
+#             status = "okay";
+#             value = <1>;
+#         };
+#     };
+# };

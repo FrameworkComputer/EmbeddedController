@@ -105,6 +105,14 @@ config CROS_EC_CBI_SSFC_PARSER
 	  Enables the driver that parses the SSFC fields from the
 	  devicetree and provides an API to check for second-source components.
 
+config CROS_EC_CBI_UFSC_PARSER
+	bool "CBI UFSC parser from devicetree"
+	default y if DT_HAS_CROS_EC_CBI_UFSC_ENABLED
+	help
+	  Enables the driver that parses the UFSC fields from the devicetree
+	  and provides an API to check if the field value matches the one in
+	  the CBI.
+
 config PLATFORM_EC_CONSOLE_CMD_CBI
 	bool "Console command: cbi"
 	default y
