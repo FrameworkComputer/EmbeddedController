@@ -320,7 +320,7 @@ static void gmr_tablet_switch_init(void)
 	if (IS_ENABLED(CONFIG_LID_ANGLE) && IS_ENABLED(CONFIG_LID_SWITCH))
 		tablet_mode_lid_event();
 }
-DECLARE_HOOK(HOOK_INIT, gmr_tablet_switch_init, HOOK_PRIO_POST_LID);
+DECLARE_HOOK(HOOK_INIT, gmr_tablet_switch_init, HOOK_PRIO_POST_DEFAULT);
 
 void gmr_tablet_switch_disable(void)
 {
