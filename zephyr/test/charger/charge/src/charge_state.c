@@ -86,3 +86,20 @@ ZTEST(charge_state, test_insufficient_adapter)
 		      "Returned led=%d, expected=%d", led,
 		      LED_PWRS_INSUFFICIENT_ADAPTER);
 }
+
+#define CHARGER_NODE DT_NODELABEL(charger)
+
+ZTEST(charge_state, test_get_minimum_charging_mv)
+{
+	uint32_t mv = 0;
+	const uint32_t expected_mv = DT_PROP(CHARGER_NODE, minimum_charging_mv);
+
+	zassert_equal(charger_get_minimum_charging_mv(-1, &mv), EC_ERROR_INVAL);
+	zassert_equal(charger_get_minimum_charging_mv(
+			      board_get_charger_chip_count(), &mv),
+		      EC_ERROR_INVAL);
+	zassert_equal(charger_get_minimum_charging_mv(
+			      charge_get_active_chg_chip(), &mv),
+		      EC_SUCCESS);
+	zassert_equal(expected_mv, mv);
+}
