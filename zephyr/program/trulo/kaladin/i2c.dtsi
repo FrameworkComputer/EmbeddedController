@@ -52,6 +52,7 @@
 		compatible = "cros,dsp-service";
 		reg = <0x21>;
 		int-gpios = <&gpiob 1 (GPIO_ACTIVE_LOW)>;
+		allow-runtime-disable;
 	};
 };
 
