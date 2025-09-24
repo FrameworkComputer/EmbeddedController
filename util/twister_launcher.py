@@ -17,6 +17,10 @@ parameters that may be used, please consult the Twister documentation.
 #   version: "version:2.8.0"
 # >
 # wheel: <
+#   name: "infra/python/wheels/attrs-py3"
+#   version: "version:25.3.0"
+# >
+# wheel: <
 #   name: "infra/python/wheels/colorama-py3"
 #   version: "version:0.4.1"
 # >
@@ -27,6 +31,10 @@ parameters that may be used, please consult the Twister documentation.
 # wheel: <
 #   name: "infra/python/wheels/future-py2_py3"
 #   version: "version:0.18.2"
+# >
+# wheel: <
+#   name: "infra/python/wheels/jsonschema-py2_py3"
+#   version: "version:3.2.0"
 # >
 # wheel: <
 #   name: "infra/python/wheels/junitparser-py2_py3"
@@ -59,6 +67,10 @@ parameters that may be used, please consult the Twister documentation.
 # wheel: <
 #   name: "infra/python/wheels/pyparsing-py3"
 #   version: "version:3.0.7"
+# >
+# wheel: <
+#   name: "infra/python/wheels/pyrsistent-py2_py3"
+#   version: "version:0.16.0"
 # >
 # wheel: <
 #   name: "infra/python/wheels/pyserial-py2_py3"
