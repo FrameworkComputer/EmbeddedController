@@ -61,6 +61,7 @@
 #define PAGE_SIZE 256 /* 256 bytes per page */
 #define PAGES_PER_ROUND 16 /* 16 pages per round */
 #define MAX_PACKET_A_SIZE (PACKET_HEADER_LENGTH + PAGE_SIZE + CHECKSUM_LENGTH)
+#define RETRY_COUNT_FOR_SEND_PAGES 10
 
 /* Command type opcode */
 enum command_type {
@@ -412,7 +413,7 @@ int send_pages(int uart_fd, FILE *file, uint32_t sram_address,
 	       size_t *total_bytes_sent, size_t *page)
 {
 	unsigned char data_buffer[PAGE_SIZE];
-	int retry = 0;
+	int retry_count = 0;
 	size_t bytes_read = fread(data_buffer, 1, PAGE_SIZE, file);
 
 	if (bytes_read == 0) {
@@ -423,26 +424,11 @@ int send_pages(int uart_fd, FILE *file, uint32_t sram_address,
 		return -1;
 	}
 
-	/* Send this page's data */
-	if (send_packet_a(uart_fd, WRITE_DATA_TO_SRAM, bytes_read, sram_address,
-			  data_buffer) != 0) {
-		return -1;
-	}
-
-	/* Wait for EC to respond with 0x09 (acknowledgment for
-	 * this page) */
-	if (wait_for_response(uart_fd, WRITE_DATA_TO_SRAM, RESPONSE_TIMEOUT) !=
-	    0) {
-		DBG_PRINT(
-			"Failed to receive expected response for data page %zu\n",
-			*page + 1);
-		retry = 1;
-	}
-
-	/* try again */
-	if (retry == 1) {
-		sleep(1);
+	while (1) {
+		retry_count++;
 		tcflush(uart_fd, TCIOFLUSH);
+
+		DBG_PRINT("Page %zu, try %d time.\n", *page + 1, retry_count);
 
 		/* Send this page's data */
 		if (send_packet_a(uart_fd, WRITE_DATA_TO_SRAM, bytes_read,
@@ -453,13 +439,20 @@ int send_pages(int uart_fd, FILE *file, uint32_t sram_address,
 		/* Wait for EC to respond with 0x09
 		 * (acknowledgment for this page) */
 		if (wait_for_response(uart_fd, WRITE_DATA_TO_SRAM,
-				      RESPONSE_TIMEOUT) != 0) {
-			fprintf(stderr,
-				"\nFailed to retry expected response for data page %zu\n",
+				      RESPONSE_TIMEOUT) == 0) {
+			break;
+		}
+
+		if (retry_count > RETRY_COUNT_FOR_SEND_PAGES) {
+			ERR_PRINT(
+				"Failed to receive expected response for data page %zu\n",
 				*page + 1);
 			return -1;
 		}
+
+		sleep(1);
 	}
+
 	*total_bytes_sent += bytes_read;
 	DBG_PRINT("Page %zu sent successfully. Total bytes sent: %zu\n",
 		  *page + 1, *total_bytes_sent);
