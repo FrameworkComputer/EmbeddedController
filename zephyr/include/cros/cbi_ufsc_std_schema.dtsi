@@ -1,0 +1,83 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#define UFSC_BIT(dword, bit) ((dword) * 32 + (bit))
+
+/ {
+	cbi_ufsc: cbi-ufsc {
+		compatible = "cros-ec,cbi-ufsc";
+
+		ufsc_sensor_hub: sensor-hub {
+			enum-name = "UFSC_SENSOR_HUB";
+			start = <UFSC_BIT(0, 28)>;
+			size = <1>;
+		};
+		ufsc_form_factor: form-factor {
+			enum-name = "UFSC_FORM_FACTOR";
+			start = <UFSC_BIT(1, 9)>;
+			size = <2>;
+		};
+		ufsc_kb_component_name: kb-component-name {
+			enum-name = "UFSC_KB_COMPONENT_NAME";
+			start = <UFSC_BIT(1, 11)>;
+			size = <3>;
+		};
+		ufsc_kb_backlight: kb-backlight {
+			enum-name = "UFSC_KB_BACKLIGHT";
+			start = <UFSC_BIT(2, 0)>;
+			size = <1>;
+		};
+		ufsc_kb_num_pad: kb-num-pad {
+			enum-name = "UFSC_KB_NUM_PAD";
+			start = <UFSC_BIT(2, 1)>;
+			size = <1>;
+		};
+		ufsc_thermal_fan: thermal-fan {
+			enum-name = "UFSC_THERMAL_FAN";
+			start = <UFSC_BIT(2, 2)>;
+			size = <1>;
+		};
+		ufsc_lid_sensor: lid-sensor {
+			enum-name = "UFSC_LID_SENSOR";
+			start = <UFSC_BIT(2, 3)>;
+			size = <3>;
+		};
+		ufsc_base_sensor: base-sensor {
+			enum-name = "UFSC_BASE_SENSOR";
+			start = <UFSC_BIT(2, 6)>;
+			size = <3>;
+		};
+		ufsc_tablet_mode_base_orientation: tablet-mode-base-orientation {
+			enum-name = "UFSC_TABLET_MODE_BASE_ORIENTATION";
+			start = <UFSC_BIT(2, 9)>;
+			size = <1>;
+		};
+		ufsc_charger_chip: charger-chip {
+			enum-name = "UFSC_CHARGER_CHIP";
+			start = <UFSC_BIT(2, 10)>;
+			size = <3>;
+		};
+		ufsc_pdc_chip_port_0: pdc-chip-port-0 {
+			enum-name = "UFSC_PDC_CHIP_PORT_0";
+			start = <UFSC_BIT(2, 13)>;
+			size = <2>;
+		};
+		ufsc_pdc_chip_port_1: pdc-chip-port-1 {
+			enum-name = "UFSC_PDC_CHIP_PORT_1";
+			start = <UFSC_BIT(2, 15)>;
+			size = <2>;
+		};
+		ufsc_pdc_chip_port_2: pdc-chip-port-2 {
+			enum-name = "UFSC_PDC_CHIP_PORT_2";
+			start = <UFSC_BIT(2, 17)>;
+			size = <2>;
+		};
+		ufsc_pdc_chip_port_3: pdc-chip-port-3 {
+			enum-name = "UFSC_PDC_CHIP_PORT_3";
+			start = <UFSC_BIT(2, 19)>;
+			size = <2>;
+		};
+	};
+};

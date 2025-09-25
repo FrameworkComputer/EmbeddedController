@@ -1,0 +1,48 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#define UFSC_BIT(dword, bit) ((dword) * 32 + (bit))
+
+/ {
+	cbi_ufsc: cbi-ufsc {
+		compatible = "cros-ec,cbi-ufsc";
+
+		oem-4bit-field-0 {
+			status = "disabled";
+			start = <UFSC_BIT(4, 0)>;
+			size = <4>;
+		};
+		oem-3bit-field-0 {
+			status = "disabled";
+			start = <UFSC_BIT(4, 4)>;
+			size = <3>;
+		};
+		oem-3bit-field-1 {
+			status = "disabled";
+			start = <UFSC_BIT(4, 7)>;
+			size = <3>;
+		};
+		oem-2bit-field-0 {
+			status = "disabled";
+			start = <UFSC_BIT(4, 10)>;
+			size = <2>;
+		};
+		oem-2bit-field-1 {
+			status = "disabled";
+			start = <UFSC_BIT(4, 12)>;
+			size = <2>;
+		};
+		oem-1bit-field-0 {
+			status = "disabled";
+			start = <UFSC_BIT(4, 14)>;
+			size = <1>;
+		};
+		oem-1bit-field-1 {
+			status = "disabled";
+			start = <UFSC_BIT(4, 15)>;
+			size = <1>;
+		};
+	};
+};
