@@ -63,6 +63,14 @@ config BOARD_SKYWALKER_SINGLE_USB_TYPEC
 	Enable board code for managing DP alt mode on
 	the board which has a single USB-C port.
 
+config BOARD_SKYWALKER_PMIC_RESETB_IRQ
+	bool "Forward PMIC_RESETB to EC_PWR_S3"
+	depends on $(dt_nodelabel_exists,gpio_en_pwr_s3)
+	default y
+	help
+	  Enable this to support the latest hardware design,
+	  which requires EC to forward PMIC_RESETB signal to EC_PWR_S3.
+
 module = SKYWALKER
 module-str = Skywalker board-specific code
 source "subsys/logging/Kconfig.template.log_config"

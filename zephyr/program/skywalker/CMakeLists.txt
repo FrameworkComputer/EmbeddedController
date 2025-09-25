@@ -13,6 +13,9 @@ target_sources(app PRIVATE
 target_sources_ifndef(CONFIG_BOARD_SKYWALKER_SINGLE_USB_TYPEC app PRIVATE
 	${PLATFORM_EC_PROGRAM_DIR}/skywalker/src/dp_alt_mode.c)
 
+target_sources_ifdef(CONFIG_BOARD_SKYWALKER_PMIC_RESETB_IRQ app PRIVATE
+	${PLATFORM_EC_PROGRAM_DIR}/skywalker/src/pmic_resetb_irq.c)
+
 if(DEFINED CONFIG_BOARD_SKYWALKER)
 	project(skywalker)
 	add_subdirectory(skywalker)
