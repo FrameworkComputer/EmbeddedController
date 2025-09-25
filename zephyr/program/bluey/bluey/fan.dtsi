@@ -12,7 +12,7 @@
 			rpm-min = <3850>;
 			rpm-start = <3850>;
 			rpm-max = <7700>;
-			tach = <&tach1>;
+			tach = <&tach2>;
 			enable-gpio = <&gpio_ec_en_pp5000_fan>;
 		};
 	};
@@ -24,7 +24,7 @@
 	pinctrl-names = "default";
 };
 
-&tach1 {
+&tach2 {
 	status = "okay";
 	pinctrl-0 = <&ta2_1_in_gp73>;
 	pinctrl-names = "default";
