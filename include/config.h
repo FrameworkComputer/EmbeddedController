@@ -639,12 +639,6 @@
 #define CONFIG_BATTERY_LOW_VOLTAGE_TIMEOUT (30 * 60 * SECOND)
 
 /*
- * Use memory mapped region to store battery information. It supports only
- * single battery systems. V2 should be used unless there is a reason not to.
- */
-#undef CONFIG_BATTERY_V1
-
-/*
  * Use an alternative method to store battery information: Instead of writing
  * directly to host memory mapped region, this keeps the battery information in
  * ec_response_battery_static/dynamic_info structures, that can then be fetched
