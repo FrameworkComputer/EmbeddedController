@@ -23,7 +23,7 @@
 void start_fan_deferred(void)
 {
 	/* force turn on the fan for diagnostic */
-	dptf_set_fan_duty_target(20);
+	dptf_set_fan_duty_target(30);
 }
 DECLARE_DEFERRED(start_fan_deferred);
 
