@@ -160,6 +160,11 @@
 				enum-name = "FW_KB_LAYOUT_US2";
 				value = <1>;
 			};
+			kb-type-jp {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_LAYOUT_JP";
+				value = <2>;
+			};
 		};
 		/*
 		 * FW_CONFIG field to defined for STORAGE TYPE.
