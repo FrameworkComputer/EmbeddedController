@@ -30,7 +30,7 @@
 #define BASE_DETECT_RETRY_US (500 * USEC_PER_MSEC)
 
 #define ATTACH_MAX_THRESHOLD_MV 400
-#define DETACH_MIN_THRESHOLD_MV 2700
+#define DETACH_MIN_THRESHOLD_MV 2900
 
 static uint64_t base_detect_debounce_time;
 static bool detect_base_enabled;
