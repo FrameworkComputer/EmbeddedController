@@ -178,8 +178,8 @@ static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
  * the future. Therefore, always enable V2 if BCIC is enabled.
  */
 #if defined(CONFIG_BATTERY_CONFIG_IN_CBI)
-#if !defined(CONFIG_HOSTCMD_BATTERY_V2)
-#error CONFIG_HOSTCMD_BATTERY_V2 is required if \
+#if !defined(CONFIG_HOSTCMD_BATTERY_INFO)
+#error CONFIG_HOSTCMD_BATTERY_INFO is required if \
 CONFIG_BATTERY_CONFIG_IN_CBI is enabled.
 #endif
 #endif

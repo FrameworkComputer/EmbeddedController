@@ -201,7 +201,7 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head, uint8_t *dest,
 	int bounded_read_len = MIN(read_len, 2);
 	const struct battery_static_info *bs;
 
-	if (IS_ENABLED(CONFIG_BATTERY_V2))
+	if (IS_ENABLED(CONFIG_BATTERY_INFO))
 		/*
 		 * TODO: To support multiple batteries, we need to translate
 		 * i2c address to a battery index.
@@ -310,21 +310,21 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head, uint8_t *dest,
 		memcpy(dest, &val, bounded_read_len);
 		break;
 	case SB_MANUFACTURER_NAME:
-		if (IS_ENABLED(CONFIG_BATTERY_V2))
+		if (IS_ENABLED(CONFIG_BATTERY_INFO))
 			copy_battery_info_string(dest, bs->manufacturer_ext,
 						 read_len);
 		else
 			copy_memmap_string(dest, EC_MEMMAP_BATT_MFGR, read_len);
 		break;
 	case SB_DEVICE_NAME:
-		if (IS_ENABLED(CONFIG_BATTERY_V2))
+		if (IS_ENABLED(CONFIG_BATTERY_INFO))
 			copy_battery_info_string(dest, bs->model_ext, read_len);
 		else
 			copy_memmap_string(dest, EC_MEMMAP_BATT_MODEL,
 					   read_len);
 		break;
 	case SB_DEVICE_CHEMISTRY:
-		if (IS_ENABLED(CONFIG_BATTERY_V2))
+		if (IS_ENABLED(CONFIG_BATTERY_INFO))
 			copy_battery_info_string(dest, bs->type_ext, read_len);
 		else
 			copy_memmap_string(dest, EC_MEMMAP_BATT_TYPE, read_len);

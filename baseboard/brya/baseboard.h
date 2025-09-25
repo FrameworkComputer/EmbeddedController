@@ -94,9 +94,9 @@
  * Enable support for battery hostcmd, supporting longer strings.
  * support for EC_CMD_BATTERY_GET_STATIC version 1.
  */
-#define CONFIG_BATTERY_V2
+#define CONFIG_BATTERY_INFO
 #define CONFIG_BATTERY_COUNT 1
-#define CONFIG_HOSTCMD_BATTERY_V2
+#define CONFIG_HOSTCMD_BATTERY_INFO
 
 /* Chipset config */
 #define CONFIG_CHIPSET_ALDERLAKE_SLG4BD44540

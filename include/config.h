@@ -647,10 +647,10 @@
  *
  * This is required on dual-battery systems and hostless bases with a battery.
  */
-#undef CONFIG_BATTERY_V2
+#undef CONFIG_BATTERY_INFO
 
 /*
- * Number of batteries, only matters when CONFIG_BATTERY_V2 is used.
+ * Number of batteries, only matters when CONFIG_BATTERY_INFO is used.
  */
 #undef CONFIG_BATTERY_COUNT
 
@@ -2642,9 +2642,9 @@
 /*
  * Include host commands to fetch battery information from
  * ec_response_battery_static/dynamic_info structures, only makes sense when
- * CONFIG_BATTERY_V2 is enabled.
+ * CONFIG_BATTERY_INFO is enabled.
  */
-#undef CONFIG_HOSTCMD_BATTERY_V2
+#undef CONFIG_HOSTCMD_BATTERY_INFO
 
 /* Default hcdebug mode, e.g. HCDEBUG_OFF or HCDEBUG_NORMAL */
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_NORMAL
@@ -6709,22 +6709,22 @@
 #ifdef CONFIG_EC_EC_COMM_BATTERY
 #ifdef CONFIG_EC_EC_COMM_CLIENT
 #define CONFIG_EC_EC_COMM_BATTERY_CLIENT
-#define CONFIG_BATTERY_V2
+#define CONFIG_BATTERY_INFO
 #define CONFIG_BATTERY_COUNT 2
 #endif
 
 #ifdef CONFIG_EC_EC_COMM_SERVER
 #define CONFIG_EC_EC_COMM_BATTERY_SERVER
-#define CONFIG_BATTERY_V2
+#define CONFIG_BATTERY_INFO
 #define CONFIG_BATTERY_COUNT 1
 #endif
 #endif /* CONFIG_EC_EC_COMM_BATTERY */
 
 /*****************************************************************************/
 /* Auto-enable battery v2 module with a single battery if battery is defined. */
-#if defined(CONFIG_BATTERY) && !defined(CONFIG_BATTERY_V2)
+#if defined(CONFIG_BATTERY) && !defined(CONFIG_BATTERY_INFO)
 #define CONFIG_BATTERY_COUNT 1
-#define CONFIG_BATTERY_V2
+#define CONFIG_BATTERY_INFO
 #endif
 
 /*

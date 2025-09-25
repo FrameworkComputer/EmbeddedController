@@ -31,9 +31,9 @@
 
 /* Battery */
 #define CONFIG_BATTERY_FUEL_GAUGE
-#define CONFIG_BATTERY_V2
+#define CONFIG_BATTERY_INFO
 #define CONFIG_BATTERY_COUNT 1
-#define CONFIG_HOSTCMD_BATTERY_V2
+#define CONFIG_HOSTCMD_BATTERY_INFO
 
 /* Charger */
 /* Set trickle charge current by taking integer value */

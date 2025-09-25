@@ -272,8 +272,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_DETACHABLE_BASE
                                                 "${PLATFORM_EC}/common/base_state.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
                                                 "${PLATFORM_EC}/common/battery.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_V2
-                                                "${PLATFORM_EC}/common/battery_v2.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_INFO
+                                                "${PLATFORM_EC}/common/battery_info.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_FUEL_GAUGE
                                                 "${PLATFORM_EC}/common/battery_fuel_gauge.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_SMART

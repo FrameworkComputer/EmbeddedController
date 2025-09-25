@@ -100,7 +100,7 @@ static void battery_update(enum battery_index i)
 	*memmap_flags = battery_dynamic[i].flags;
 }
 
-#ifdef CONFIG_HOSTCMD_BATTERY_V2
+#ifdef CONFIG_HOSTCMD_BATTERY_INFO
 static enum ec_status
 host_command_battery_get_static(struct host_cmd_handler_args *args)
 {
@@ -179,7 +179,7 @@ host_command_battery_get_dynamic(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_BATTERY_GET_DYNAMIC,
 		     host_command_battery_get_dynamic, EC_VER_MASK(0));
-#endif /* CONFIG_HOSTCMD_BATTERY_V2 */
+#endif /* CONFIG_HOSTCMD_BATTERY_INFO */
 
 void battery_memmap_refresh(enum battery_index index)
 {

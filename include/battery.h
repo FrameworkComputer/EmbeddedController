@@ -53,7 +53,7 @@ extern "C" {
 /* Full-capacity change reqd for host event */
 #define LFCC_EVENT_THRESH 5
 
-/* Battery index, only used with CONFIG_BATTERY_V2. */
+/* Battery index, only used with CONFIG_BATTERY_INFO. */
 enum battery_index {
 	BATT_IDX_INVALID = -1,
 	BATT_IDX_MAIN = 0,
@@ -469,7 +469,7 @@ void print_battery_debug(void);
  */
 enum battery_disconnect_state battery_get_disconnect_state(void);
 
-#ifdef CONFIG_BATTERY_V2
+#ifdef CONFIG_BATTERY_INFO
 /**
  * Refresh battery information in host memory mapped region, if index is
  * currently presented.
@@ -480,7 +480,7 @@ void battery_memmap_refresh(enum battery_index index);
  * Set which index to present in host memory mapped region.
  */
 void battery_memmap_set_index(enum battery_index index);
-#endif /* CONFIG_BATTERY_V2 */
+#endif /* CONFIG_BATTERY_INFO */
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_BATTERY
 extern struct i2c_stress_test_dev battery_i2c_stress_test_dev;

@@ -67,9 +67,9 @@
  * truncated in the memory mapped battery info; differentiating them requires
  * support for EC_CMD_BATTERY_GET_STATIC version 1.
  */
-#define CONFIG_BATTERY_V2
+#define CONFIG_BATTERY_INFO
 #define CONFIG_BATTERY_COUNT 1
-#define CONFIG_HOSTCMD_BATTERY_V2
+#define CONFIG_HOSTCMD_BATTERY_INFO
 
 #define CONFIG_BC12_DETECT_PI3USB9201
 

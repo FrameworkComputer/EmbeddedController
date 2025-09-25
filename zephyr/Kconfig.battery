@@ -301,13 +301,13 @@ config PLATFORM_EC_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV
 
 choice PLATFORM_EC_BATTERY_API
 	prompt "Battery API version"
-	default PLATFORM_EC_BATTERY_V2
+	default PLATFORM_EC_BATTERY_INFO
 	help
 	  Select the battery API version. V2 is required on dual-battery-systems
 	  and hostless bases with a battery. V1 should not be used except for
 	  testing on legacy boards.
 
-config PLATFORM_EC_BATTERY_V2
+config PLATFORM_EC_BATTERY_INFO
 	bool "Enable battery API v2"
 	help
 	  This enables battery API version 2. This version can support multiple
@@ -316,25 +316,25 @@ config PLATFORM_EC_BATTERY_V2
 
 endchoice
 
-if PLATFORM_EC_BATTERY_V2
+if PLATFORM_EC_BATTERY_INFO
 
 config PLATFORM_EC_BATTERY_COUNT
 	int "Battery count"
 	default 1
 	help
 	  The number of batteries in the system. It matters only when
-	  PLATFORM_EC_BATTERY_V2 is enabled. Note this is different from
+	  PLATFORM_EC_BATTERY_INFO is enabled. Note this is different from
 	  BATTERY_TYPE_COUNT.
 
-config PLATFORM_EC_HOSTCMD_BATTERY_V2
+config PLATFORM_EC_HOSTCMD_BATTERY_INFO
 	bool "Enable host command battery API v2"
 	default y
 	help
 	  Include host commands to fetch battery information from
 	  ec_response_battery_static/dynamic_info structures, only make sense
-	  when PLATFORM_EC_BATTERY_V2 is enabled.
+	  when PLATFORM_EC_BATTERY_INFO is enabled.
 
-endif # PLATFORM_EC_BATTERY_V2
+endif # PLATFORM_EC_BATTERY_INFO
 
 if PLATFORM_EC_I2C_VIRTUAL_BATTERY
 

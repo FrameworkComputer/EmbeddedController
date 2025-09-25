@@ -169,7 +169,7 @@ static int acpi_read(uint8_t addr)
 static uint8_t strings_fifo_index;
 static size_t strings_fifo_offset;
 
-#ifdef CONFIG_BATTERY_V2
+#ifdef CONFIG_BATTERY_INFO
 static char read_battery_string(size_t field_offset, size_t field_size,
 				size_t str_offset)
 {
@@ -194,7 +194,7 @@ static char strings_fifo_read_work(size_t offset)
 		}
 		return 0;
 
-#ifdef CONFIG_BATTERY_V2
+#ifdef CONFIG_BATTERY_INFO
 	case EC_ACPI_MEM_STRINGS_FIFO_ID_BATTERY_MODEL:
 		return read_battery_string(
 			offsetof(struct battery_static_info, model_ext),
@@ -379,7 +379,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 		case EC_ACPI_MEM_TEST:
 			acpi_mem_test = data;
 			break;
-#ifdef CONFIG_BATTERY_V2
+#ifdef CONFIG_BATTERY_INFO
 		case EC_ACPI_MEM_BATTERY_INDEX:
 			CPRINTS("ACPI battery %d", data);
 			battery_memmap_set_index(data);

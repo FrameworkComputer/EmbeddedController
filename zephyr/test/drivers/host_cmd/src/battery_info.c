@@ -10,7 +10,7 @@
 
 #include <zephyr/ztest.h>
 
-ZTEST(host_cmd_battery_v2, test_get_static__invalid_index)
+ZTEST(host_cmd_battery_info, test_get_static__invalid_index)
 {
 	struct ec_response_battery_static_info response;
 	struct ec_params_battery_static_info params = {
@@ -23,7 +23,7 @@ ZTEST(host_cmd_battery_v2, test_get_static__invalid_index)
 	zassert_equal(EC_RES_INVALID_PARAM, rv, "Got %d", rv);
 }
 
-ZTEST(host_cmd_battery_v2, test_get_static__v0)
+ZTEST(host_cmd_battery_info, test_get_static__v0)
 {
 	struct ec_params_battery_static_info params = {
 		.index = 0,
@@ -56,7 +56,7 @@ ZTEST(host_cmd_battery_v2, test_get_static__v0)
 	zassert_mem_equal(batt->type_ext, response.type, sizeof(response.type));
 }
 
-ZTEST(host_cmd_battery_v2, test_get_static__v1)
+ZTEST(host_cmd_battery_info, test_get_static__v1)
 {
 	/* Basically a repeat of the above test, but use the version 1 response
 	 * struct, which allows for longer string fields
@@ -95,7 +95,7 @@ ZTEST(host_cmd_battery_v2, test_get_static__v1)
 			  sizeof(response.type_ext));
 }
 
-ZTEST(host_cmd_battery_v2, test_get_static__v2)
+ZTEST(host_cmd_battery_info, test_get_static__v2)
 {
 	/* As above, now using the v2 response for longer strings yet. */
 	struct ec_params_battery_static_info params = {
@@ -127,7 +127,7 @@ ZTEST(host_cmd_battery_v2, test_get_static__v2)
 			  sizeof(response.chemistry));
 }
 
-ZTEST(host_cmd_battery_v2, test_get_dynamic__invalid_index)
+ZTEST(host_cmd_battery_info, test_get_dynamic__invalid_index)
 {
 	struct ec_response_battery_dynamic_info response;
 	struct ec_params_battery_dynamic_info params = {
@@ -140,7 +140,7 @@ ZTEST(host_cmd_battery_v2, test_get_dynamic__invalid_index)
 	zassert_equal(EC_RES_INVALID_PARAM, rv, "Got %d", rv);
 }
 
-ZTEST(host_cmd_battery_v2, test_get_dynamic)
+ZTEST(host_cmd_battery_info, test_get_dynamic)
 {
 	struct ec_response_battery_dynamic_info response;
 	struct ec_params_battery_dynamic_info params = {
@@ -157,5 +157,5 @@ ZTEST(host_cmd_battery_v2, test_get_dynamic)
 	zassert_mem_equal(batt, &response, sizeof(*batt));
 }
 
-ZTEST_SUITE(host_cmd_battery_v2, drivers_predicate_post_main, NULL, NULL, NULL,
-	    NULL);
+ZTEST_SUITE(host_cmd_battery_info, drivers_predicate_post_main, NULL, NULL,
+	    NULL, NULL);
