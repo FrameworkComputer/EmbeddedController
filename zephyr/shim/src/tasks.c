@@ -209,6 +209,11 @@ task_id_t thread_id_to_task_id(k_tid_t thread_id)
 
 task_id_t task_get_current(void)
 {
+	/* k_current_get() is not valid pre kernel */
+	if (k_is_pre_kernel()) {
+		return TASK_ID_INVALID;
+	}
+
 	return thread_id_to_task_id(k_current_get());
 }
 
@@ -462,6 +467,10 @@ inline bool in_interrupt_context(void)
 
 inline bool in_deferred_context(void)
 {
+	/* k_current_get() is not valid pre kernel */
+	if (k_is_pre_kernel()) {
+		return false;
+	}
 	/*
 	 * Deferred calls run in the sysworkq.
 	 */

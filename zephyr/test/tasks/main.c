@@ -301,4 +301,37 @@ ZTEST(test_task_shim, test_empty_set_mask)
 	run_test(&empty_set_mask1, &empty_set_mask2);
 }
 
+static bool pre_kernel_ran = false;
+static int pre_kernel(void)
+{
+	zassert_false(pre_kernel_ran);
+	zassert_true(k_is_pre_kernel());
+	zassert_equal(TASK_ID_INVALID, task_get_current());
+	zassert_false(in_deferred_context());
+	pre_kernel_ran = true;
+	return 0;
+}
+SYS_INIT(pre_kernel, PRE_KERNEL_2, 0);
+
+ZTEST(test_task_shim, test_task_get_current_pre_kernel)
+{
+	zassert_true(pre_kernel_ran);
+}
+
+static bool post_kernel_ran = false;
+static int post_kernel(void)
+{
+	zassert_false(post_kernel_ran);
+	zassert_false(k_is_pre_kernel());
+	zassert_equal(TASK_ID_MAIN, task_get_current());
+	post_kernel_ran = true;
+	return 0;
+}
+SYS_INIT(post_kernel, POST_KERNEL, 0);
+
+ZTEST(test_task_shim, test_task_get_current_post_kernel)
+{
+	zassert_true(post_kernel_ran);
+}
+
 ZTEST_SUITE(test_task_shim, NULL, tasks_setup, NULL, NULL, NULL);
