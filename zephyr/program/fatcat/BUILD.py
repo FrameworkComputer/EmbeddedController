@@ -7,6 +7,7 @@
 
 def register_npcx9_project(
     project_name,
+    zephyr_board,
     extra_kconfig_files=(),
     inherited_from=None,
 ):
@@ -16,7 +17,7 @@ def register_npcx9_project(
 
     register_npcx_project(
         project_name=project_name,
-        zephyr_board="npcx9/npcx9m7f",
+        zephyr_board=zephyr_board,
         dts_overlays=[
             here / project_name / "project.overlay",
         ],
@@ -85,6 +86,7 @@ def register_realtek_project(
 
 register_npcx9_project(
     project_name="fatcatrvp-npcx",
+    zephyr_board="npcx9/npcx9m7f",
     extra_kconfig_files=[
         here / ".." / "intelrvp" / "zephyr_ap_pwrseq.conf",
         here / ".." / "intelrvp" / "ptlrvp" / "pd.conf",
@@ -103,6 +105,7 @@ register_it8xxx2_project(
 
 register_npcx9_project(
     project_name="francka",
+    zephyr_board="npcx9/npcx9m7f",
 )
 
 register_it8xxx2_project(
