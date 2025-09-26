@@ -406,6 +406,34 @@ static void usbc_dp_mode_after(void *data)
 	tcpci_partner_common_clear_logged_msgs(&fix->partner);
 }
 
+static void assert_mux_state_is(int port, uint32_t expected_mux_state,
+				const char *message)
+{
+	struct ec_response_typec_status status = host_cmd_typec_status(port);
+	zassert_equal((status.mux_state & USB_MUX_CHECK_MASK),
+		      expected_mux_state, "%s. Actual mux_state: 0x%x", message,
+		      status.mux_state & USB_MUX_CHECK_MASK);
+}
+
+static void send_dp_attention_vdm(struct tcpci_partner_data *partner,
+				  uint32_t dp_status_vdo)
+{
+	uint32_t vdm_payload[2];
+
+	// VDO Header: DP SID, VDO Version 1, CMD_ATTENTION, OPoS=1
+	vdm_payload[0] =
+		VDO(USB_SID_DISPLAYPORT, 1, CMD_ATTENTION | VDO_OPOS(1));
+	vdm_payload[1] = dp_status_vdo;
+
+	zassert_ok(tcpci_partner_send_data_msg(partner, PD_DATA_VENDOR_DEF,
+					       vdm_payload,
+					       ARRAY_SIZE(vdm_payload), 50),
+		   "Failed to send DP Attention VDM");
+
+	// Wait for the message to be processed
+	k_sleep(K_MSEC(200));
+}
+
 ZTEST_SUITE(usbc_dp_mode_svdm_ver_21, drivers_predicate_post_main,
 	    usbc_dp_mode_setup_svdm_ver_21, usbc_dp_mode_before,
 	    usbc_dp_mode_after, NULL);
@@ -501,6 +529,66 @@ ZTEST_F(usbc_dp_mode_svdm_ver_21, test_discovery)
 		      SVDM_VER_2_1,
 		      "Expected SVDM version 2.1 for SOP', got %d",
 		      pd_get_vdo_ver(TEST_PORT, TCPCI_MSG_SOP_PRIME));
+}
+
+ZTEST_F(usbc_dp_mode_svdm_ver_21, test_discovery_send_config)
+{
+	setup_passive_cable(&fixture->partner);
+	/* Attention message fields definition:
+	 * <8>    : IRQ_HPD : 1 == irq arrived since last message otherwise 0.
+	 * <7>    : HPD state : 0 = HPD_LOW, 1 == HPD_HIGH
+	 * <6>    : Exit DP Alt mode: 0 == maintain, 1 == exit
+	 * <5>    : USB config : 0 == maintain current, 1 == switch to USB from
+	 * DP
+	 * <4>    : Multi-function preference : 0 == no pref, 1 == MF
+	 *          preferred.
+	 * <3>    : enabled : is DPout on/off.
+	 * <2>    : power low : 0 == normal or LPM disabled, 1 == DP disabled
+	 * for LPM <1:0>  : connect status : 00b ==  no (DFP|UFP)_D is connected
+	 * or disabled. 01b == DFP_D connected, 10b == UFP_D connected, 11b ==
+	 * both.
+	 */
+	/* Based on failing compliance test we state that UFP is disconnected */
+	fixture->partner.dp_status_vdm[1] =
+		VDO_DP_STATUS(0, 0, 0, 0, 0, 1, 0, 0);
+	connect_sink_to_port(&fixture->partner, fixture->tcpci_emul,
+			     fixture->charger_emul);
+
+	uint8_t response_buffer[EC_LPC_HOST_PACKET_SIZE];
+
+	/* Verify SOP discovery */
+	host_cmd_typec_discovery(TEST_PORT, TYPEC_PARTNER_SOP, response_buffer,
+				 sizeof(response_buffer));
+
+	/* Verify SOP' discovery */
+	host_cmd_typec_discovery(TEST_PORT, TYPEC_PARTNER_SOP_PRIME,
+				 response_buffer, sizeof(response_buffer));
+
+	host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);
+	k_sleep(K_MSEC(1000));
+
+	/* Verify initial mux state */
+	assert_mux_state_is(TEST_PORT, USB_PD_MUX_SAFE_MODE,
+			    "Failed to see safe mode");
+
+	/* Based on compliance test, we send attention mode 0x82 10000010 */
+	send_dp_attention_vdm(&fixture->partner,
+			      VDO_DP_STATUS(1, 0, 0, 0, 0, 0, 1, 0));
+
+	/* TODO(b:418824261) At this moment we expect DP_configure message from
+	 * the EC, need to add verification for this here but this message is
+	 * sent based on 10.3.13 DP compliance test */
+	/* Verify mux state did not change */
+	assert_mux_state_is(TEST_PORT, USB_PD_MUX_SAFE_MODE,
+			    "Failed to see safe mode");
+
+	/* Connect UFP */
+	send_dp_attention_vdm(&fixture->partner,
+			      VDO_DP_STATUS(1, 1, 0, 0, 0, 1, 0, 2));
+
+	assert_mux_state_is(TEST_PORT,
+			    USB_PD_MUX_DP_ENABLED | USB_PD_MUX_HPD_LVL,
+			    "Failed to see DP set");
 }
 
 ZTEST_F(usbc_dp_mode_svdm_ver_21, test_dp21_entry_passive_32)
