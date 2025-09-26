@@ -40,7 +40,7 @@
 			gpios = <&gpio6 0 (GPIO_OUTPUT)>;
 		};
 		gpio_pg_pp5000_s5_od: pg_pp5000_s5_od {
-			gpios = <&gpio6 3 (GPIO_INPUT | GPIO_OPEN_DRAIN)>;
+			gpios = <&gpio6 3 (GPIO_INPUT)>;
 		};
 		gpio_en_ppvar_oled: en_ppvar_oled {
 			gpios = <&gpio6 7 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
