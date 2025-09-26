@@ -13,7 +13,6 @@
 			rpm-start = <3850>;
 			rpm-max = <7700>;
 			tach = <&tach2>;
-			enable-gpio = <&gpio_ec_en_pp5000>;
 		};
 		fan2: fan_2 {
 			pwms = <&pwm4 0 PWM_KHZ(1) PWM_POLARITY_NORMAL>;
@@ -21,7 +20,6 @@
 			rpm-start = <3850>;
 			rpm-max = <7700>;
 			tach = <&tach1>;
-			enable-gpio = <&gpio_ec_en_pp5000>;
 		};
 
 	};

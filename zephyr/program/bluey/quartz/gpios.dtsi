@@ -33,7 +33,6 @@
 		};
 		gpio_ec_en_pp5000_s5: ec_en_pp5000_s5 {
 			gpios = <&gpio4 0 (GPIO_OUTPUT)>;
-			enum-name = "GPIO_EN_PP5000";
 		};
 		gpio_pp1800_l1i_s3_ec: pp1800_l1i_s3_ec {
 			gpios = <&gpio5 0 (GPIO_INPUT)>;
@@ -220,6 +219,7 @@ gpio_sys_rst_odl: &gpio_sys_rst_odl {};
  */
 gpio_ec_3v_s3_en: &gpio_ec_en_pp3300_s3 {};
 gpio_ec_en_ppvar_oled: &gpio_ec_enavdd_oled {};
+gpio_ec_en_pp5000: &gpio_ec_en_pp5000_s5 {};
 
 /*
  * Aliases switchcap to common names
