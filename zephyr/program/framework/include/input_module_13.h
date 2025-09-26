@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef __BOARD_INPUT_MODULE_H__
-#define __BOARD_INPUT_MODULE_H__
+#ifndef __BOARD_INPUT_MODULE_13_H__
+#define __BOARD_INPUT_MODULE_13_H__
 
 enum input_deck_state {
 	DECK_OFF,
@@ -18,4 +18,4 @@ enum input_deck_state {
 
 void input_c_deck_powerdown(void);
 
-#endif /*__BOARD_INPUT_MODULE_H__*/
+#endif /*__BOARD_INPUT_MODULE_13_H__*/

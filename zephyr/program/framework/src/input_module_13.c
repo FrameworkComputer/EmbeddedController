@@ -10,7 +10,7 @@
 #include "diagnostics.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "input_module.h"
+#include "input_module_13.h"
 #include "zephyr_console_shim.h"
 #include <zephyr/devicetree.h>
 #include <zephyr/logging/log.h>

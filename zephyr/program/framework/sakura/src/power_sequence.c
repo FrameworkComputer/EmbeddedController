@@ -18,7 +18,7 @@
 #include "gpio_signal.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
-#include "input_module.h"
+#include "input_module_13.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_protocol.h"
 #include "lpc.h"
