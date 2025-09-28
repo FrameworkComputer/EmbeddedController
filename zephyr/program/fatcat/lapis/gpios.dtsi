@@ -134,9 +134,12 @@
 			gpios = <&gpioa 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
 			enum-name = "GPIO_EC_INT_L";
 		};
-		/* SOC_WAKE#, use EC_MSPI_CS instead, need EE confirm design */
+		/* SOC_WAKE#, use EC_MSPI_CS instead.
+		 * Not to be marked as active low, the lpc_update_wake() already
+		 * has the logic to invert the value.
+		 */
 		gpio_soc_wake_odl: soc_wake_odl {
-			gpios = <&gpiof 10 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+			gpios = <&gpiof 10 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_OUTPUT_INIT_HIGH)>;
 		};
 		/* EC_RTC_RST */
 		gpio_ec_rtc_rst: ec_rtc_rst {
