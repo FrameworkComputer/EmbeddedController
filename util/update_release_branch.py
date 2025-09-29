@@ -427,7 +427,7 @@ def main(argv):
         boards = get_relevant_boards(opts.baseboard)
     elif opts.board:
         if opts.zephyr:
-            board_dir = os.path.relpath("zephyr/program/" + opts.board)
+            board_dir = os.path.relpath("zephyr/program/fpmcu/" + opts.board)
         else:
             board_dir = os.path.relpath("board/" + opts.board)
         board_dir = os.path.relpath(os.path.realpath(board_dir))
