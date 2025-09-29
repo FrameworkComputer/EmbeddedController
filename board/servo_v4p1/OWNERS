@@ -1,1 +1,3 @@
+set noparent
+
 include chromiumos/owners:v1:/platform/OWNERS.hwtools
