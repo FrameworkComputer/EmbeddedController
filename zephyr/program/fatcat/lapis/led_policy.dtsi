@@ -210,8 +210,14 @@
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 
+				/* White 1 sec on, 3 sec off */
 				color-0 {
 					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
 				};
 			};
 		};
