@@ -135,7 +135,7 @@
 			gpios = <&gpioi 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_pg_vccio_od: pg_vccio_od {
-			gpios = <&gpiof 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpiof 0 (GPIO_INPUT)>;
 			no-auto-init;
 		};
 		gpio_sys_rst_odl: sys_rst_odl {

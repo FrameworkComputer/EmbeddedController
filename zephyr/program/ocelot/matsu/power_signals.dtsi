@@ -46,7 +46,7 @@
 		enum-name = "PWR_SLP_S0";
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
                 /* PCH_SLP_S0_N_R net */
-	        gpios = <&gpioj 5 (GPIO_ACTIVE_LOW | GPIO_VOLTAGE_1P8)>;
+	        gpios = <&gpioj 5 (GPIO_ACTIVE_LOW)>;
 	};
 	pwr_pch_pwrok: ec-pm-pch-pwrok {
 		compatible = "intel,ap-pwrseq-gpio";
@@ -60,21 +60,21 @@
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "SYS_PWROK output to PCH";
 		enum-name = "PWR_EC_PCH_SYS_PWROK";
-		gpios = <&gpiof 1 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
+		gpios = <&gpiof 1 GPIO_ACTIVE_HIGH>;
 		output;
 	};
 	pwr-slp-s3 {
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "SLP_S3_L input from PCH";
 		enum-name = "PWR_SLP_S3";
-		gpios = <&gpioh 3 (GPIO_ACTIVE_LOW | GPIO_VOLTAGE_1P8)>;
+		gpios = <&gpioh 3 GPIO_ACTIVE_LOW>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
 	pwr-slp-s4 {
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "SLP_S4_L input from PCH";
 		enum-name = "PWR_SLP_S4";
-		gpios = <&gpioh 4 (GPIO_ACTIVE_LOW | GPIO_VOLTAGE_1P8)>;
+		gpios = <&gpioh 4 GPIO_ACTIVE_LOW>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
 	pwr-slp-s5 {
