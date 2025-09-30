@@ -831,7 +831,7 @@ config PLATFORM_EC_RTC
 DT_CHOSEN_CROS_EC_SHA := cros-ec,sha
 
 config PLATFORM_EC_SHA256_HW_ZEPHYR
-	bool
+	bool "Use Zephyr SHA256 API with HW accelerator"
 	default "$(dt_chosen_enabled,$(DT_CHOSEN_CROS_EC_SHA))"
 	select CRYPTO
 	help
