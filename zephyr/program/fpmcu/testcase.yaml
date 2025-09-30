@@ -199,8 +199,13 @@ tests:
     extra_conf_files:
     - prj_hw_tests.conf
   sha256_unrolled:
+    # This test specifically verifies the unrolled software SHA256 implementation.
+    # Hardware acceleration (PLATFORM_EC_SHA256_HW_ZEPHYR) is explicitly disabled.
     extra_configs:
     - CONFIG_HW_TEST_SHA256_UNROLLED=y
+    - CONFIG_PLATFORM_EC_SHA256_SW=y
+    - CONFIG_PLATFORM_EC_SHA256_UNROLLED=y
+    - CONFIG_PLATFORM_EC_SHA256_HW_ZEPHYR=n
     extra_conf_files:
     - prj_hw_tests.conf
   static_if:
