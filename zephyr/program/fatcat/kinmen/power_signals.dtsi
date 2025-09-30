@@ -56,7 +56,7 @@
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "SYS_PWROK output to PCH";
 		enum-name = "PWR_EC_PCH_SYS_PWROK";
-		gpios = <&gpiof 1 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
+		gpios = <&gpiof 1 (GPIO_ACTIVE_HIGH | GPIO_VOLTAGE_1P8)>;
 		output;
 	};
 	pwr-slp-s3 {
