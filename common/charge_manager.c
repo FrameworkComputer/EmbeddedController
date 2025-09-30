@@ -106,7 +106,8 @@ static enum dualrole_capabilities dualrole_capability[CHARGE_PORT_COUNT];
 static int save_log[CHARGE_PORT_COUNT];
 #endif
 
-#ifdef CONFIG_ZEPHYR
+/* Use mutexing to sync charge_manager_refresh and pdc_power_mgmt */
+#ifdef CONFIG_USB_PDC_POWER_MGMT
 K_MUTEX_DEFINE(cm_refresh);
 
 // #define CM_MUTEX_DEBUG
@@ -139,11 +140,12 @@ void charge_manager_dump_mutex_history()
 #define CM_MUTEX_LOCK(m) mutex_lock(m)
 #define CM_MUTEX_UNLOCK(m) mutex_unlock(m)
 #endif /* CM_MUTEX_DEBUG */
-#else
+
+#else /* CONFIG_USB_PDC_POWER_MGMT */
 /* TODO(b/427504021) - Legacy EC mutexes are not recursive */
 #define CM_MUTEX_LOCK(m)
 #define CM_MUTEX_UNLOCK(m)
-#endif /* CONFIG_ZEPHYR */
+#endif /* CONFIG_USB_PDC_POWER_MGMT */
 
 /* Store current state of port enable / charge current. */
 /* During charge_manager_refresh, the following data is considered stale. Make
