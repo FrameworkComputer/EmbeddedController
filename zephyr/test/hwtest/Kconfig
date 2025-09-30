@@ -121,6 +121,7 @@ config HW_TEST_OTP_KEY
 	select MOCK_OTP
 	help
 		The test verifies basic OTP key functionality
+
 config HW_TEST_NULL_POINTER
 	bool "null pointer test"
 	select ZTEST
