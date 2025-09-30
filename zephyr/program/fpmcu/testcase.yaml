@@ -123,6 +123,8 @@ tests:
   otp_key:
     extra_configs:
     - CONFIG_HW_TEST_OTP_KEY=y
+    extra_conf_files:
+    - prj_hw_tests.conf
   null_pointer:
     extra_configs:
     - CONFIG_HW_TEST_NULL_POINTER=y
