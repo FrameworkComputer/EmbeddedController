@@ -4,7 +4,10 @@
  */
 
 #include "accelgyro.h"
+#include "ap_power/ap_power.h"
+#include "chipset.h"
 #include "common.h"
+#include "console.h"
 #include "cros_cbi.h"
 #include "driver/accel_bma4xx.h"
 #include "driver/accel_lis2dw12_public.h"
@@ -17,7 +20,9 @@
 #include "tablet_mode.h"
 
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 LOG_MODULE_REGISTER(board_sensor, LOG_LEVEL_INF);
 
@@ -56,10 +61,30 @@ DECLARE_HOOK(HOOK_INIT, alt_sensor_init, HOOK_PRIO_POST_I2C);
 
 static bool board_is_clamshell;
 
+static void sense_startup_hook(struct ap_power_ev_callback *cb,
+			       struct ap_power_ev_data data)
+{
+	switch (data.event) {
+	case AP_POWER_STARTUP:
+		gpio_enable_dt_interrupt(
+			GPIO_INT_FROM_NODELABEL(int_lid_accel));
+		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_imu));
+		break;
+	case AP_POWER_SHUTDOWN:
+		gpio_disable_dt_interrupt(
+			GPIO_INT_FROM_NODELABEL(int_lid_accel));
+		gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_imu));
+		break;
+	default:
+		return;
+	}
+}
+
 static void board_setup_init(void)
 {
 	int ret;
 	uint32_t val;
+	static struct ap_power_ev_callback cb;
 
 	ret = cros_cbi_get_fw_config(FORM_FACTOR, &val);
 	if (ret != 0) {
@@ -70,6 +95,16 @@ static void board_setup_init(void)
 		board_is_clamshell = true;
 		motion_sensor_count = 0;
 		gmr_tablet_switch_disable();
+	}
+
+	ap_power_ev_init_callback(&cb, sense_startup_hook,
+				  AP_POWER_STARTUP | AP_POWER_SHUTDOWN);
+	ap_power_ev_add_callback(&cb);
+
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		gpio_enable_dt_interrupt(
+			GPIO_INT_FROM_NODELABEL(int_lid_accel));
+		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_imu));
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_setup_init, HOOK_PRIO_PRE_DEFAULT);
