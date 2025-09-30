@@ -382,15 +382,9 @@ ec_motion_sensor_fill_values(struct ec_response_motion_sensor_data *dst,
 	dst->data[2] = v[2];
 }
 
-/**
- * Get the current motionsense configuration state.
- *
- * This state should normally match the current power state, but allows the
- * sensor configuration indexing to be optimized.
- *
- * @return The current sensor configuration index for the current power state.
- */
+#ifdef CONFIG_TEST
 enum sensor_config motion_sense_get_ec_config(void);
+#endif
 
 #ifdef __cplusplus
 }
