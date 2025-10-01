@@ -435,28 +435,6 @@ ZTEST_USER(pdc_api, test_get_current_pdo)
 	zassert_equal(in, out, "Got 0x%x, expected 0x%x", out, in);
 }
 
-ZTEST_USER(pdc_api, test_get_current_flash_bank)
-{
-	uint8_t in = 0;
-	uint8_t out = 0xff;
-	int rv;
-
-	rv = emul_pdc_set_current_flash_bank(emul, in);
-	if (rv == -ENOSYS)
-		ztest_test_skip();
-	rv = emul_pdc_set_cmd_error(emul, true);
-	if (rv != -ENOSYS) {
-		zassert_not_ok(pdc_get_current_flash_bank(dev, &out));
-		k_sleep(K_MSEC(SLEEP_MS));
-		zassert_equal(0xff, out, "Got 0x%x, expected 0x%x", out, 0xff);
-		emul_pdc_set_cmd_error(emul, false);
-	}
-	zassert_ok(rv);
-	zassert_ok(pdc_get_current_flash_bank(dev, &out));
-	k_sleep(K_MSEC(SLEEP_MS));
-	zassert_equal(in, out, "Got 0x%x, expected 0x%x", out, in);
-}
-
 ZTEST_USER(pdc_api, test_is_vconn_sourcing)
 {
 	int i;

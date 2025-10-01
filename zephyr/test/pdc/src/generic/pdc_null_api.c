@@ -220,14 +220,6 @@ ZTEST(pdc_api_null_check, test_pdc_reconnect)
 		      -ENOSYS);
 }
 
-ZTEST(pdc_api_null_check, test_pdc_get_current_flash_bank)
-{
-	int rv = pdc_get_current_flash_bank(&fake_pdc, NULL);
-
-	zassert_equal(-ENOSYS, rv, "Got %d, expected -ENOSYS (%d)", rv,
-		      -ENOSYS);
-}
-
 ZTEST(pdc_api_null_check, test_pdc_update_retimer_fw)
 {
 	int rv = pdc_update_retimer_fw(&fake_pdc, false);
