@@ -9,6 +9,7 @@
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_utils.h>
 #include <zephyr/toolchain.h>
 
 #ifdef __cplusplus
@@ -123,8 +124,19 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(unused_gpios) <= 1,
 #define UNUSED_GPIO_CONFIG_LIST \
 	LISTIFY(UNUSED_GPIOS_LIST_LEN, UNUSED_GPIO_CONFIG_BY_IDX, (), _)
 
+#define BUILD_ASSERT_UNSUPPORTED_PIN(i, _)                                    \
+	BUILD_ASSERT((GPIO_PORT_PIN_MASK_FROM_DT_NODE(DT_GPIO_CTLR_BY_IDX(    \
+			      UNUSED_GPIOS_NODE, unused_gpios, i)) &          \
+		      BIT(DT_GPIO_PIN_BY_IDX(UNUSED_GPIOS_NODE, unused_gpios, \
+					     i))) != 0,                       \
+		     "Unsupported pin")
+
+#define UNUSED_GPIO_CONFIG_CHECK() \
+	LISTIFY(UNUSED_GPIOS_LIST_LEN, BUILD_ASSERT_UNSUPPORTED_PIN, (;), _)
+
 #else
 #define UNUSED_GPIO_CONFIG_LIST /* Nothing if no 'unused-pins' node */
+#define UNUSED_GPIO_CONFIG_CHECK() BUILD_ASSERT(true)
 #endif /* DT_NODE_EXISTS(UNUSED_GPIOS_NODE) */
 
 #ifdef __cplusplus

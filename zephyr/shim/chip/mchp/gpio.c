@@ -16,6 +16,8 @@ static const struct unused_pin_config unused_pin_configs[] = {
 	UNUSED_GPIO_CONFIG_LIST
 };
 
+UNUSED_GPIO_CONFIG_CHECK();
+
 int gpio_config_unused_pins(void)
 {
 	for (size_t i = 0; i < ARRAY_SIZE(unused_pin_configs); ++i) {
