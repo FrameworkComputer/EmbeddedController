@@ -1,0 +1,13 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* ISH BUP uses the last 64 KiB of RAM for its code. Reduce the effective
+ * RAM available to the ISH application code to avoid this area.
+ * TODO: Intel plans to fix this upstream. Remove this file once the
+ * upstream change is available.
+ */
+&sram {
+	reg = < 0xff200000 0x90000 >;
+};

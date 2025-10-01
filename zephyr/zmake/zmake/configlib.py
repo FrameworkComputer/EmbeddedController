@@ -9,9 +9,7 @@ import zmake.output_packers
 
 
 def _register_project(**kwargs):
-    kwargs.setdefault(
-        "project_dir", here  # noqa: F821 pylint: disable=undefined-variable
-    )
+    kwargs.setdefault("project_dir", globals()["here"])
     return register_project(  # noqa: F821 pylint: disable=undefined-variable
         **kwargs
     )
@@ -64,6 +62,16 @@ def register_ish_project(**kwargs):
     kwargs.setdefault("supported_toolchains", ["coreboot-sdk", "zephyr"])
     kwargs.setdefault("output_packer", zmake.output_packers.IshBinPacker)
     kwargs.setdefault("modules", ["ec", "cmsis", "cmsis_6", "hal_intel_public"])
+    # TODO: remove once upstream fixes the RAM map for ISH
+    kwargs["dts_overlays"].append(
+        globals()["here"]
+        / ".."
+        / ".."
+        / "include"
+        / "cros"
+        / "intel"
+        / "ish.overlay"
+    )
     return _register_project(**kwargs)
 
 

@@ -1,0 +1,8 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# ISH includes a data cache.  Ensure panic info is synced to memory before
+# rebooting.
+config CACHE_MANAGEMENT
+	default y

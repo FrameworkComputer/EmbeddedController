@@ -700,8 +700,6 @@ config PLATFORM_EC_NOINIT_END_OF_RAM_SECTION_OFFSET
 
 config PLATFORM_EC_PANIC
 	bool "Panic output"
-	# TODO - b/439591195. Enable by default once ISH panic is working
-	default n if SOC_FAMILY_INTEL_ISH
 	default y
 	help
 	  Enable support for collecting and reporting panic information,
