@@ -184,6 +184,9 @@ DEFINE_boolean use_i2c_pseudo "${FLAGS_FALSE}" \
 	"Ignored."
 DEFINE_boolean usbc_charging "${FLAGS_FALSE}" \
 	"For servo_v4p1, switch to USB-C (non-PD) charging during programming."
+DEFINE_boolean verify_ec_type "${FLAGS_FALSE}" \
+	"Validate that the EC image board variant matches the board variant" \
+	"identified from the EC chip."
 
 # Parse command line
 FLAGS_HELP="usage: $0 [flags]"
@@ -845,6 +848,156 @@ function ec_token_database() {
 		fi
 	fi
 	die "no token database found : specify one."
+}
+
+# Function to validate EC image compatibility with ec chip
+
+function validate_ec_image_compatibility() {
+	local EC_IMAGE="${1}"
+	local TEMP_DIR
+	local TEMP_SUFFIX
+	TEMP_SUFFIX=".$(basename "${SCRIPT}").validation.$$"
+
+	info "Validating firmware image compatibility with ec chip..."
+
+	# Create temporary directory for validation
+	TEMP_DIR="$(mktemp -d --suffix="${TEMP_SUFFIX}")"
+	DELETE_LIST+=("${TEMP_DIR}")
+
+	# Check if dump_fmap command is available
+	if ! command -v dump_fmap >/dev/null 2>&1; then
+		error "dump_fmap command not available,"
+		die "Aborting flash operation"
+	fi
+
+	# Convert to absolute path to avoid issues with relative paths
+	local ABS_EC_IMAGE
+	ABS_EC_IMAGE="$(readlink -f "${EC_IMAGE}")"
+
+	# Extract RO_FRID section from the firmware image
+	info "Extracting RO_FRID section from firmware image..."
+	local RO_FRID_FILE="${TEMP_DIR}/RO_FRID"
+	local FMAP_RESULT=0
+
+	# Check if the image has FMAP and RO_FRID section
+	if ! dump_fmap "${ABS_EC_IMAGE}" -p 2>/dev/null | grep -q "RO_FRID"; then
+		info "Available sections in image:"
+		dump_fmap "${ABS_EC_IMAGE}" -p 2>/dev/null || \
+		info "No FMAP found in image"
+		error "Could not find RO_FRID section in firmware image"
+		error "This could mean:"
+		error "  1. The image doesn't have FMAP structure"
+		error "  2. The image doesn't have RO_FRID section"
+		error "  3. The image is a different format (raw binary vs FMAP)"
+		die "Aborting flash operation"
+	fi
+
+	(
+		# Change to temp directory and extract RO_FRID section
+		cd "${TEMP_DIR}"
+		dump_fmap "${ABS_EC_IMAGE}" -F -x RO_FRID 2>/dev/null
+	)
+	FMAP_RESULT=$?
+
+	if [[ ${FMAP_RESULT} -ne 0 ]] || [[ ! -f "${RO_FRID_FILE}" ]]; then
+		error "Could not extract RO_FRID section from firmware image"
+		error "RO_FRID section exists but extraction failed"
+		die "Aborting flash operation"
+	fi
+
+	# Read the version string from RO_FRID file
+	local IMAGE_VERSION=""
+	local IMAGE_BOARD_NAME=""
+
+	IMAGE_VERSION="$(tr -d '\0' < "${RO_FRID_FILE}" | \
+		tr -d '\n\r' | sed 's/[[:space:]]*$//')"
+
+	IMAGE_BOARD_NAME="${IMAGE_VERSION%%-[0-9]*}"
+
+	if [[ -n "${IMAGE_BOARD_NAME}" ]]; then
+		info "Found version in firmware image: '${IMAGE_VERSION}'"
+		info "Extracted board name from image: '${IMAGE_BOARD_NAME}'"
+	else
+		error "Unable to extract board name from image"
+		die "Aborting flash operation"
+	fi
+
+	# Get EC board name from ec chip
+	local EC_BOARD_NAME=""
+
+	dut_control ec_uart_regexp:"['RO:\s+(\S+)\s']" 2>/dev/null
+	# Send version command to EC
+	dut_control ec_uart_cmd:'version' 2>/dev/null
+	sleep 0.5
+
+	local UART_OUTPUT
+	UART_OUTPUT="$(dut_control_get ec_uart_cmd 2>/dev/null || true)"
+	dut_control ec_uart_regexp:None 2>/dev/null
+
+	if [[ -n "${UART_OUTPUT}" && "${UART_OUTPUT}" != "None" ]]; then
+		# Extract the version string from the captured output
+		local RO_VERSION=""
+		RO_VERSION="$(echo "${UART_OUTPUT}" | \
+			grep -o "'[^']*'" | \
+			tail -1 | \
+			sed "s/'//g" | \
+			tr -d '\r\n\t')"
+
+		if [[ -n "${RO_VERSION}" ]]; then
+			info "Extracted RO version: ${RO_VERSION}"
+			# Extract board name part (before version numbers)
+			# e.g., "board-xyz-16364.66.0" -> "board-xyz"
+			EC_BOARD_NAME="${RO_VERSION%%-[0-9]*}"
+			info "Detected EC board name from uart: ${EC_BOARD_NAME}"
+		else
+			warn "Could not parse RO version from UART output"
+			warn "Raw output: ${UART_OUTPUT}"
+		fi
+	else
+		warn "Could not capture UART output or output is empty"
+	fi
+
+	# Check if we got a valid board name
+	if [[ -z "${EC_BOARD_NAME}" || "${EC_BOARD_NAME}" =~ "unknown" ]]; then
+		warn "Could not determine EC board name from ec chip," \
+		"**** Skipping EC image validation ****"
+		warn "This could be possible due to EC is unresponsive or" \
+		"not programmed before."
+		warn "Make sure, correct ec image is provided to flash EC chip."
+		warn "This flashing may fail or brick the device" \
+		"if EC image is incorrect."
+		return 0
+	fi
+
+	# Compare the board names
+	if [[ -n "${IMAGE_BOARD_NAME}" && \
+		"${EC_BOARD_NAME}" == "${IMAGE_BOARD_NAME}" ]]; then
+		info "EC firmware image compatibility validated:" \
+		"EC board name '${EC_BOARD_NAME}' matches with firmware" \
+		"image board name."
+		return 0
+	else
+		error "EC firmware image compatibility validation failed!"
+		error "Firmware Image RO_FRID contains: '${IMAGE_VERSION}'"
+		error ""
+		error "Expected EC board name: '${EC_BOARD_NAME}'"
+		error "Board name identified from FW image: '${IMAGE_BOARD_NAME}'"
+		error "The board names do not match!"
+		error ""
+		error "This could be possible due to the EC image provided" \
+			"does not match the connected EC board variant."
+		error "Force flashing may fail or brick the device."
+		error ""
+		error "Please verify:"
+		error "1. The firmware image is built for the correct" \
+			"EC board variant"
+		error "2. The servo can correctly detect the EC version via UART"
+		error "3. You have provided the correct EC firmware file" \
+			"w.r.t EC board variant"
+		error ""
+		die "Aborting flash operation due to EC firmware image" \
+			"and EC board variant mismatch"
+	fi
 }
 
 function load_token_db() {
@@ -2229,6 +2382,11 @@ if [[ -z "${FLAGS_read}" ]]; then
 	IMG="$(ec_image)"
 	info "Using ${MCU} image : ${IMG}"
 	IMG_SIZE=$(stat -c%s "${IMG}")
+
+	if [[ "${FLAGS_verify_ec_type}" == "${FLAGS_TRUE}" ]]; then
+		# Validate EC image compatibility with connected board variant
+		validate_ec_image_compatibility "${IMG}"
+	fi
 fi
 
 if [ "${NEED_SERVO}" != "no" ] ; then
