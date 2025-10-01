@@ -147,9 +147,6 @@
 			gpios = <&gpioc 1 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
 			enum-name = "GPIO_PMIC_KPD_PWR";
 		};
-		gpio_ec_fan1_tach: ec_fan1_tach {
-			gpios = <&gpio7 3 (GPIO_INPUT)>;
-		};
 		gpio_acok_od_z5: acok_od_z5 {
 			gpios = <&gpio0 1 (GPIO_INPUT)>;
 			enum-name = "GPIO_AC_PRESENT";
@@ -167,12 +164,6 @@
 		/* Reserve only: control USB-C1 port  */
 		gpio_usb_vbus_1_on_l: usb_vbus_1_on_l {
 			gpios = <&gpio7 2 (GPIO_OUTPUT)>;
-		};
-		gpio_ec_fan2_tach: ec_fan2_tach {
-			gpios = <&gpiod 3 (GPIO_INPUT)>;
-		};
-		gpio_vph_pwr_1a_pg: vph_pwr_1a_pg {
-			gpios = <&gpioc 7 (GPIO_INPUT)>;
 		};
 		gpio_forced_boot: forced_boot {
 			gpios = <&gpio9 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INACTIVE)>;
