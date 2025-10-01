@@ -58,7 +58,10 @@ DECLARE_HOOK(HOOK_INIT, kb_init, HOOK_PRIO_POST_I2C);
  */
 test_export_static void kb_layout_init(void)
 {
-	int ret;
+	int ret, tmp;
+#ifdef CONFIG_KEYBOARD_DEBUG
+	int label;
+#endif
 	uint32_t val;
 
 	ret = cros_cbi_get_fw_config(FW_KB_LAYOUT, &val);
@@ -77,6 +80,30 @@ test_export_static void kb_layout_init(void)
 		set_keycap_label(3, 14, get_keycap_label(2, 7));
 #endif
 		LOG_INF("CBI FW_CONFIG: FW_KB_LAYOUT_US2");
+	}
+
+	/*
+	 * If keyboard is JP(FW_KB_LAYOUT_JP), we need translate right alt,
+	 * right fn and henkan key.
+	 */
+	if (val == FW_KB_LAYOUT_JP) {
+		tmp = get_scancode_set2(0, 10);
+#ifdef CONFIG_KEYBOARD_DEBUG
+		label = get_keycap_label(0, 10);
+#endif
+		set_scancode_set2(0, 10, get_scancode_set2(5, 15));
+#ifdef CONFIG_KEYBOARD_DEBUG
+		set_keycap_label(0, 10, get_keycap_label(5, 15));
+#endif
+		set_scancode_set2(5, 15, get_scancode_set2(1, 12));
+#ifdef CONFIG_KEYBOARD_DEBUG
+		set_keycap_label(5, 15, get_keycap_label(1, 12));
+#endif
+		set_scancode_set2(1, 12, tmp);
+#ifdef CONFIG_KEYBOARD_DEBUG
+		set_keycap_label(1, 12, label);
+#endif
+		LOG_INF("CBI FW_CONFIG: FW_KB_LAYOUT_JP");
 	}
 }
 DECLARE_HOOK(HOOK_INIT, kb_layout_init, HOOK_PRIO_POST_I2C);
