@@ -40,16 +40,6 @@ int chipset_in_state(int mask)
 	return mask & CHIPSET_STATE_ON;
 }
 
-static int gpio_emul_output_get_dt(const struct gpio_dt_spec *dt)
-{
-	return gpio_emul_output_get(dt->port, dt->pin);
-}
-
-static int gpio_emul_input_set_dt(const struct gpio_dt_spec *dt, int value)
-{
-	return gpio_emul_input_set(dt->port, dt->pin, value);
-}
-
 /* Toggles the pin and checks that the interrupt handler was called. */
 int test_interrupt(const struct gpio_dt_spec *dt)
 {

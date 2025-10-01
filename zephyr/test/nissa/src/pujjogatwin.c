@@ -78,16 +78,6 @@ static void test_before(void *fixture)
 	RESET_FAKE(cros_cbi_get_fw_config);
 }
 
-static int gpio_emul_output_get_dt(const struct gpio_dt_spec *dt)
-{
-	return gpio_emul_output_get(dt->port, dt->pin);
-}
-
-static int gpio_emul_input_set_dt(const struct gpio_dt_spec *dt, int value)
-{
-	return gpio_emul_input_set(dt->port, dt->pin, value);
-}
-
 ZTEST_SUITE(pujjogatwin, NULL, NULL, test_before, NULL, NULL);
 
 ZTEST(pujjogatwin, test_hdmi_power)

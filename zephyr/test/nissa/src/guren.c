@@ -577,16 +577,6 @@ ZTEST(guren, test_db_with_c)
 			  GPIO_PULL_UP | GPIO_INPUT | GPIO_INT_EDGE_FALLING);
 }
 
-static int gpio_emul_output_get_dt(const struct gpio_dt_spec *dt)
-{
-	return gpio_emul_output_get(dt->port, dt->pin);
-}
-
-static int gpio_emul_input_set_dt(const struct gpio_dt_spec *dt, int value)
-{
-	return gpio_emul_input_set(dt->port, dt->pin, value);
-}
-
 ZTEST(guren, test_db_with_hdmi)
 {
 	const struct gpio_dt_spec *const hdmi_hpd_gpio =

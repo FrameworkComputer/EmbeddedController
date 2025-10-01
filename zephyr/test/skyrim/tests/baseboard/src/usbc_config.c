@@ -152,17 +152,6 @@ static enum ec_error_list charger_get_vbus_voltage_mock(int port, int *voltage)
 	return 0;
 }
 
-/* Helper functions for tests. */
-static int gpio_emul_output_get_dt(const struct gpio_dt_spec *dt)
-{
-	return gpio_emul_output_get(dt->port, dt->pin);
-}
-
-static int gpio_emul_input_set_dt(const struct gpio_dt_spec *dt, int value)
-{
-	return gpio_emul_input_set(dt->port, dt->pin, value);
-}
-
 static int toggle_pin_falling(const struct gpio_dt_spec *dt)
 {
 	int rv;

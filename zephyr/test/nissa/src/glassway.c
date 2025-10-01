@@ -913,16 +913,6 @@ ZTEST(glassway, test_alt_sensor)
 	zassert_equal(icm42607_interrupt_fake.call_count, 1);
 }
 
-static int gpio_emul_output_get_dt(const struct gpio_dt_spec *dt)
-{
-	return gpio_emul_output_get(dt->port, dt->pin);
-}
-
-static int gpio_emul_input_set_dt(const struct gpio_dt_spec *dt, int value)
-{
-	return gpio_emul_input_set(dt->port, dt->pin, value);
-}
-
 ZTEST(glassway, test_pen_detect_interrupt)
 {
 	const struct gpio_dt_spec *const pen_power_gpio =
