@@ -155,6 +155,9 @@
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
 
+/* Mutex for OPTION0 register, that can be updated from multiple tasks. */
+static K_MUTEX_DEFINE(bq25710_option_0_mutex);
+
 #ifdef CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA
 /*
  * If this config option is defined, then the bq25710 needs to remain in
@@ -682,9 +685,13 @@ static enum ec_error_list bq25710_set_mode(int chgnum, int mode)
 	int rv;
 	int option;
 
+	mutex_lock(&bq25710_option_0_mutex);
+
 	rv = bq25710_get_option(chgnum, &option);
-	if (rv)
+	if (rv) {
+		mutex_unlock(&bq25710_option_0_mutex);
 		return rv;
+	}
 
 	if (mode & CHARGER_CHARGE_INHIBITED)
 		option = SET_BQ_FIELD(BQ257X0, CHARGE_OPTION_0, CHRG_INHIBIT, 1,
@@ -693,7 +700,10 @@ static enum ec_error_list bq25710_set_mode(int chgnum, int mode)
 		option = SET_BQ_FIELD(BQ257X0, CHARGE_OPTION_0, CHRG_INHIBIT, 0,
 				      option);
 
-	return bq25710_set_option(chgnum, option);
+	rv = bq25710_set_option(chgnum, option);
+
+	mutex_unlock(&bq25710_option_0_mutex);
+	return rv;
 }
 
 static enum ec_error_list bq25710_enable_otg_power(int chgnum, int enabled)
@@ -743,9 +753,13 @@ static enum ec_error_list bq25710_discharge_on_ac(int chgnum, int enable)
 {
 	int rv, option;
 
+	mutex_lock(&bq25710_option_0_mutex);
+
 	rv = bq25710_get_option(chgnum, &option);
-	if (rv)
+	if (rv) {
+		mutex_unlock(&bq25710_option_0_mutex);
 		return rv;
+	}
 
 	if (enable)
 		option = SET_BQ_FIELD(BQ257X0, CHARGE_OPTION_0, EN_LEARN, 1,
@@ -754,7 +768,10 @@ static enum ec_error_list bq25710_discharge_on_ac(int chgnum, int enable)
 		option = SET_BQ_FIELD(BQ257X0, CHARGE_OPTION_0, EN_LEARN, 0,
 				      option);
 
-	return bq25710_set_option(chgnum, option);
+	rv = bq25710_set_option(chgnum, option);
+
+	mutex_unlock(&bq25710_option_0_mutex);
+	return rv;
 }
 
 static enum ec_error_list bq25710_set_input_current_limit(int chgnum,
@@ -915,6 +932,27 @@ int bq25710_set_min_system_voltage(int chgnum, int mv)
 	return raw_write16(chgnum, BQ25710_REG_MIN_SYSTEM_VOLTAGE, reg);
 }
 
+int bq25710_set_ooa(int chgnum, bool enable)
+{
+	int rv, option;
+
+	mutex_lock(&bq25710_option_0_mutex);
+
+	rv = bq25710_get_option(chgnum, &option);
+	if (rv) {
+		mutex_unlock(&bq25710_option_0_mutex);
+		return rv;
+	}
+
+	option = SET_BQ_FIELD(BQ257X0, CHARGE_OPTION_0, EN_OOA, enable,
+				option);
+
+	rv = bq25710_set_option(chgnum, option);
+
+	mutex_unlock(&bq25710_option_0_mutex);
+	return rv;
+}
+
 #ifdef CONFIG_CHARGE_RAMP_HW
 
 static void bq25710_chg_ramp_handle(void)
@@ -1042,8 +1080,13 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, bq25710_chipset_startup, HOOK_PRIO_DEFAULT);
 static void bq25710_chipset_suspend(void)
 {
 	int reg;
-	if (raw_read16(CHARGER_SOLO, BQ25710_REG_CHARGE_OPTION_0, &reg))
+
+	mutex_lock(&bq25710_option_0_mutex);
+
+	if (raw_read16(CHARGER_SOLO, BQ25710_REG_CHARGE_OPTION_0, &reg)) {
+		mutex_unlock(&bq25710_option_0_mutex);
 		return;
+	}
 
 	/*
 	 * Enable low power mode regardless of current performance mode.
@@ -1052,6 +1095,8 @@ static void bq25710_chipset_suspend(void)
 
 	reg = SET_BQ_FIELD(BQ257X0, CHARGE_OPTION_0, EN_LWPWR, true, reg);
 	raw_write16(CHARGER_SOLO, BQ25710_REG_CHARGE_OPTION_0, reg);
+
+	mutex_unlock(&bq25710_option_0_mutex);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, bq25710_chipset_suspend, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, bq25710_chipset_suspend, HOOK_PRIO_DEFAULT);

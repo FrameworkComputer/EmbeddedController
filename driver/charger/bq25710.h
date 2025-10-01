@@ -89,4 +89,13 @@ extern const struct charger_drv bq25710_drv;
  */
 int bq25710_set_min_system_voltage(int chgnum, int mv);
 
+/**
+ * Enable or disable Out-of-Audio.
+ *
+ * @param chgnum: Index into charger chips
+ * @param enable true to enable OOA, false to disable.
+ * @return EC_SUCCESS or error
+ */
+int bq25710_set_ooa(int chgnum, bool enable);
+
 #endif /* __CROS_EC_BQ25710_H */
