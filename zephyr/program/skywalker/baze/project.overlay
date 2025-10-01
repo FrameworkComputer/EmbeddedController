@@ -61,7 +61,6 @@
 	unused-pins {
 		compatible = "unused-gpios";
 		unused-gpios =
-			<&gpiob 7 GPIO_INPUT_PULL_DOWN>,
 			<&gpiof 0 GPIO_INPUT_PULL_DOWN>,
 			<&gpiof 1 GPIO_INPUT_PULL_DOWN>,
 			<&gpiof 4 GPIO_INPUT_PULL_DOWN>,

@@ -93,7 +93,6 @@
 			<&gpiob 2 GPIO_INPUT_PULL_DOWN>,
 			<&gpiob 5 GPIO_INPUT_PULL_DOWN>,
 			<&gpiob 6 GPIO_INPUT_PULL_DOWN>,
-			<&gpiob 7 GPIO_INPUT_PULL_DOWN>,
 			<&gpioc 7 GPIO_INPUT_PULL_DOWN>,
 			<&gpiod 0 GPIO_INPUT_PULL_DOWN>,
 			<&gpiod 1 GPIO_INPUT_PULL_DOWN>,
