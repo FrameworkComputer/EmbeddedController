@@ -12,6 +12,7 @@
 
 #define TEMP_BUFF_SIZE 60
 #define KEEP_TIME 5
+#define TEMP_NOT_READY -1
 
 BUILD_ASSERT(IS_ENABLED(CONFIG_BOARD_VELUZA) || IS_ENABLED(CONFIG_TEST));
 
@@ -24,8 +25,12 @@ static int average_tempature(void)
 	static int past_temp;
 	static int avg_temp;
 	int cur_temp, t;
+	int rv;
 
-	temp_sensor_read(TEMP_SENSOR_ID(DT_NODELABEL(temp_charger)), &t);
+	rv = temp_sensor_read(TEMP_SENSOR_ID(DT_NODELABEL(temp_charger)), &t);
+	if (rv)
+		return TEMP_NOT_READY;
+
 	cur_temp = K_TO_C(t);
 	past_temp = temp_history_buffer[buff_ptr];
 	temp_history_buffer[buff_ptr] = cur_temp;
@@ -70,6 +75,8 @@ static void current_update(void)
 	static uint8_t dntime;
 
 	temp = average_tempature();
+	if (temp == TEMP_NOT_READY)
+		return;
 #ifndef CONFIG_TEST
 	if (led_pwr_get_state() == LED_PWRS_DISCHARGE) {
 		current_level = 0;
