@@ -7,6 +7,7 @@
 #include "ap_power/ap_power_interface.h"
 #include "chipset.h"
 #include "ec_commands.h"
+#include "ec_tasks.h"
 #include "emul/emul_power_signals.h"
 #include "host_command.h"
 #include "lpc.h"
@@ -536,6 +537,41 @@ ZTEST(ap_pwrseq, test_insufficient_power_blocks_s5)
 	zassert_equal(40, system_can_boot_ap_fake.call_count);
 	zassert_true(
 		chipset_in_or_transitioning_to_state(CHIPSET_STATE_HARD_OFF));
+}
+
+/* Utilities for finding a Zephyr thread by name */
+static k_tid_t found_thread;
+static void find_thread_by_name_cb(const struct k_thread *thread,
+				   void *user_data)
+{
+	const char *name = (const char *)user_data;
+
+	if (strcmp(k_thread_name_get((k_tid_t)thread), name) == 0) {
+		found_thread = (k_tid_t)thread;
+	}
+}
+
+static k_tid_t find_thread_by_name(const char *name)
+{
+	found_thread = NULL;
+	k_thread_foreach_unlocked(find_thread_by_name_cb, (void *)name);
+	return found_thread;
+}
+
+ZTEST(ap_pwrseq, test_get_ap_pwrseq_thread)
+{
+	k_tid_t pwrseq_thread;
+	const char *pwrseq_name;
+
+	if (IS_ENABLED(CONFIG_AP_PWRSEQ_DRIVER))
+		pwrseq_name = "ap_pwrseq_tid";
+	else
+		pwrseq_name = "pwrseq_task";
+	pwrseq_thread = find_thread_by_name(pwrseq_name);
+	zassert_not_null(pwrseq_thread);
+	zassert_equal(pwrseq_thread, get_ap_pwrseq_thread());
+	zassert_equal(TASK_ID_AP_PWRSEQ, thread_id_to_task_id(pwrseq_thread));
+	zassert_equal(task_id_to_thread_id(TASK_ID_AP_PWRSEQ), pwrseq_thread);
 }
 
 void ap_pwrseq_after_test(void *data)

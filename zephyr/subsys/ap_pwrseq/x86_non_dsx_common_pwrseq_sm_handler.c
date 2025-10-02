@@ -779,6 +779,11 @@ static int pwrseq_init(void)
 	return 0;
 }
 
+k_tid_t get_ap_pwrseq_thread(void)
+{
+	return &pwrseq_thread_data;
+}
+
 /*
  * The initialization must occur after system I/O initialization that
  * the signals depend upon, such as GPIO, ADC etc.

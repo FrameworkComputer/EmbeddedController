@@ -225,6 +225,11 @@ static int ap_pwrseq_driver_init(const struct device *dev)
 	return 0;
 }
 
+k_tid_t get_ap_pwrseq_thread(void)
+{
+	return ap_pwrseq_tid;
+}
+
 /**
  *  Global functions definition.
  **/

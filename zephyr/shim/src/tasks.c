@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "ap_power/ap_power_interface.h"
 #include "common.h"
 #include "ec_tasks.h"
 #include "host_command.h"
@@ -154,6 +155,11 @@ k_tid_t task_id_to_thread_id(task_id_t task_id)
 
 		case TASK_ID_SHELL:
 			return get_shell_thread();
+
+#ifdef CONFIG_AP_PWRSEQ
+		case TASK_ID_AP_PWRSEQ:
+			return get_ap_pwrseq_thread();
+#endif /* CONFIG_AP_PWRSEQ */
 		}
 	}
 	__ASSERT(false, "Failed to map task %d to thread", task_id);
@@ -190,6 +196,12 @@ task_id_t thread_id_to_task_id(k_tid_t thread_id)
 	if (get_shell_thread() == thread_id) {
 		return TASK_ID_SHELL;
 	}
+
+#ifdef CONFIG_AP_PWRSEQ
+	if (get_ap_pwrseq_thread() == thread_id) {
+		return TASK_ID_AP_PWRSEQ;
+	}
+#endif /* CONFIG_AP_PWRSEQ */
 
 	for (size_t i = 0; i < TASK_ID_COUNT; ++i) {
 		if (task_to_k_tid[i] == thread_id) {

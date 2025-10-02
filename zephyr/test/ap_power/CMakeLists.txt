@@ -19,7 +19,7 @@ target_sources(app PRIVATE
   src/hibdelay.c
   src/hibernate.c
   src/host_command.c
-	src/test_mocks.c
+  src/test_mocks.c
   src/main.c)
 
 # Generic architecture tests

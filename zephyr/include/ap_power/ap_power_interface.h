@@ -25,6 +25,7 @@
 #ifndef __AP_POWER_AP_POWER_INTERFACE_H__
 #define __AP_POWER_AP_POWER_INTERFACE_H__
 
+#include <zephyr/kernel.h>
 #include <zephyr/sys/util.h>
 
 #ifndef CONFIG_AP_PWRSEQ_DRIVER
@@ -223,5 +224,10 @@ void ap_power_init_reset_log(void);
  * @brief Starts the AP power sequence thread.
  */
 void ap_pwrseq_task_start(void);
+
+/**
+ * @brief Returns the AP_PWRSEQ thread ID.
+ */
+k_tid_t get_ap_pwrseq_thread(void);
 
 #endif /* __AP_POWER_AP_POWER_INTERFACE_H__ */
