@@ -143,3 +143,13 @@ config CROS_FLASH_STM32_EC_JUMP_STRUCTURE
 	  between old and new formats.
 
 endif # CROS_FLASH
+
+config CROS_FLASH_EM32F967
+	bool "Elan EM32F967 flash driver for the Zephyr shim"
+	depends on DT_HAS_ELAN_EM32F967_CROS_FLASH_ENABLED
+	default y
+	select PLATFORM_EC_FLASH_CROS
+	help
+	  This option enables the flash driver for Elan EM32F967 chip. We can
+	  access the flash by read, write and erase. The flash size of EM32F967
+	  is 640k byte (536k byte for firmware).
