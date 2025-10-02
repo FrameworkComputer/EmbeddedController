@@ -14,7 +14,7 @@
 
 /* Use the single call variant for MIN in this file. */
 #undef MIN
-#define MIN Z_MIN
+#define MIN min
 
 #endif
 
