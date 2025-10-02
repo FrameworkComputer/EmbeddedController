@@ -72,7 +72,12 @@ ZTEST(led_pwm_fade, test_led_fade)
 	zassert_equal(pwm_mock_get_duty(pwm_white_right, 0), 0, NULL);
 
 	int old_duty = pwm_mock_get_duty(pwm_blue_left, 0);
-	k_sleep(K_MSEC(50));
+	/* pwm driver uses 30ms update intervals.
+	 * Because k_sleep does not necessarily line up with real time, changes
+	 * in execution speed may cause a desync and can cause this test to
+	 * fail. Change as necessary.
+	 */
+	k_sleep(K_MSEC(100));
 	/* Even in small time increments, color changes slightly */
 	zassert_true(pwm_mock_get_duty(pwm_blue_left, 0) < old_duty, NULL);
 
