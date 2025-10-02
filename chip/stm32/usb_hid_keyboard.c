@@ -230,8 +230,8 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_HID_KEYBOARD, 02) = {
 		0x09, 0xB5, /* Scan Next Track (0xB5) */                      \
 		0x09, 0xB6, /* Scan Previous Track (0xB6) */                  \
 		0x09, 0x7C, /* Keyboard Backlight OOC (0x7C) */               \
-		0x0B, 0x2F, 0x00, 0x0B, 0x00, /* Phone Mute (Page 0xB, Usage  \
-						 0x2F) */                     \
+		0x0B, 0xA9, 0x00, 0x01, 0x00, /* System Microphone Mute (Page \
+						 0x01, Usage 0xA9) */         \
 		0x09, 0x32, /* Sleep (0x32) */                                \
 		0x15, 0x00, /* Logical Minimum (0) */                         \
 		0x25, 0x01, /* Logical Maximum (1) */                         \
@@ -512,7 +512,7 @@ static const struct action_key_config action_key[] = {
 	[TK_NEXT_TRACK] = { .mask = BIT(15), .usage = 0x000C00B5 },
 	[TK_PREV_TRACK] = { .mask = BIT(16), .usage = 0x000C00B6 },
 	[TK_KBD_BKLIGHT_TOGGLE] = { .mask = BIT(17), .usage = 0x000C007C },
-	[TK_MICMUTE] = { .mask = BIT(18), .usage = 0x000B002F },
+	[TK_MICMUTE] = { .mask = BIT(18), .usage = 0x000100A9 },
 };
 
 /* TK_* is 1-indexed, so the next bit is at ARRAY_SIZE(action_key) - 1 */
