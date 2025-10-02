@@ -18,6 +18,10 @@
 #define CONFIG_LTO /* Link-Time Optimizations to reduce code size */
 #define CONFIG_EMULATED_SYSRQ
 
+/* Disable hcdebug because it is noisy */
+#undef CONFIG_HOSTCMD_DEBUG_MODE
+#define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
+
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
