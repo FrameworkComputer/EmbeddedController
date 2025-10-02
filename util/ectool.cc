@@ -2025,6 +2025,12 @@ int cmd_fp_mode(int argc, char *argv[])
 			capture_type = FP_CAPTURE_QUALITY_TEST;
 		else if (!strncmp(argv[i], "test_reset", 10))
 			capture_type = FP_CAPTURE_RESET_TEST;
+		else if (!strncmp(argv[i], "test_defect_pixel", 17))
+			capture_type = FP_CAPTURE_DEFECT_PXL_TEST;
+		else if (!strncmp(argv[i], "test_abnormal", 13))
+			capture_type = FP_CAPTURE_ABNORMAL_TEST;
+		else if (!strncmp(argv[i], "test_noise", 10))
+			capture_type = FP_CAPTURE_NOISE_TEST;
 	}
 	if (mode & FP_MODE_CAPTURE)
 		mode |= capture_type << FP_MODE_CAPTURE_TYPE_SHIFT;
