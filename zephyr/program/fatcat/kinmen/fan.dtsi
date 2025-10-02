@@ -17,6 +17,50 @@
 			enable-gpio = <&gpio_en_pp5000_fan>;
 		};
 	};
+
+	fan_steps: fan-steps {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp-on = <35 0 0>;
+			temp-off = <99 0 0>;
+			rpm-target = <0>;
+		};
+		level_1 {
+			temp-on = <38 0 0>;
+			temp-off = <31 0 0>;
+			rpm-target = <2900>;
+		};
+		level_2 {
+			temp-on = <41 0 0>;
+			temp-off = <34 0 0>;
+			rpm-target = <3300>;
+		};
+		level_3 {
+			temp-on = <44 0 0>;
+			temp-off = <37 0 0>;
+			rpm-target = <3580>;
+		};
+		level_4 {
+			temp-on = <48 0 0>;
+			temp-off = <40 0 0>;
+			rpm-target = <3900>;
+		};
+		level_5 {
+			temp-on = <51 0 0>;
+			temp-off = <45 0 0>;
+			rpm-target = <4250>;
+		};
+		level_6 {
+			temp-on = <54 0 0>;
+			temp-off = <47 0 0>;
+			rpm-target = <4770>;
+		};
+		level_7 {
+			temp-on = <100 0 0>;
+			temp-off = <50 0 0>;
+			rpm-target = <5300>;
+		};
+	};
 };
 
 &pwm6 {

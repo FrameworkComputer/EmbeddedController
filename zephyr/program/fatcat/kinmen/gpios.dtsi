@@ -15,20 +15,16 @@
 			enum-name = "ADC_AMON_BMON";
 			io-channels = <&adc0 1>;
 		};
-		adc_vr_temp_v_1p05_pch_ec_r: vr_temp_v_1p05_pch_ec_r {
-			enum-name = "ADC_PP1050_PROC";
+		adc_charger_therm: charger {
+			enum-name = "ADC_TEMP_SENSOR_CHARGER";
 			io-channels = <&adc0 2>;
 		};
-		adc_skin_therm_in_r: skin_therm_in_r {
-			enum-name = "ADC_TEMP_SENSOR_FAN";
+		adc_regulator_therm: regulator {
+			enum-name = "ADC_TEMP_SENSOR_PP3300_REGULATOR";
 			io-channels = <&adc0 3>;
 		};
-		adc_ddr_temp_ec_5v_r: ddr_temp_ec_5v_r {
-			enum-name = "ADC_TEMP_SENSOR_MEMORY";
-			io-channels = <&adc0 4>;
-		};
-		adc_ambient_therm_in0_r: ambient_therm_in0_r {
-			enum-name = "ADC_TEMP_SENSOR_2_AMBIENT";
+		adc_ddr_soc_therm: ddr_soc {
+			enum-name = "ADC_TEMP_SENSOR_DDR_SOC";
 			io-channels = <&adc0 5>;
 		};
 	};

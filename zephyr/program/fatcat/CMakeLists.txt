@@ -51,6 +51,7 @@ if(DEFINED CONFIG_BOARD_KINMEN)
 	zephyr_include_directories("kinmen/include")
 	zephyr_library_sources("kinmen/src/board_power.c")
 	zephyr_library_sources("kinmen/src/suspend_resume.c")
+	zephyr_library_sources("kinmen/src/thermal.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 					"kinmen/src/keyboard_customization.c")
 	zephyr_library_sources_ifdef(CONFIG_PDC_RUNTIME_PORT_CONFIG
