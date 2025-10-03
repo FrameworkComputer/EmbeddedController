@@ -5,18 +5,6 @@
 
 /* Printf-like functionality for Chrome EC */
 
-/*
- * Define _POSIX_C_SOURCE to 200809 to unlock strnlen() when using Newlib
- * libc. Newlib's CMakeLists.txt file intentionally disables POSIX definitions
- * from Newlib to avoid conflicts with Zephyr POSIX library and networking
- * subsystem.
- *
- * Refer to the Zephyr's Github issue #52739 for more details.
- */
-#if defined(CONFIG_NEWLIB_LIBC) || defined(CONFIG_EXTERNAL_LIBC)
-#define _POSIX_C_SOURCE 200809
-#endif /* CONFIG_NEWLIB_LIBC */
-
 #include "builtin/assert.h"
 #include "builtin/string.h"
 #include "console.h"
