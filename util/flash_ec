@@ -667,17 +667,37 @@ declare -a DELETE_LIST 	# Array of file/dir names to delete at exit
 # Put back the servo and the system in a clean state at exit
 FROZEN_PIDS=""
 cleanup() {
+	local exit_status=$?
+
 	for pid in ${FROZEN_PIDS}; do
 		info "Sending SIGCONT to process ${pid}!"
 		kill -CONT "${pid}"
 	done
 
 	# Delete all files or directories in DELETE_LIST.
-	for item in "${DELETE_LIST[@]}"; do
-		if [[ -e "${item}" ]]; then
-			print_or_run rm -rf "${item}" &> /dev/null
+	if [[ ${exit_status} -eq 0 ]]; then
+		for item in "${DELETE_LIST[@]}"; do
+			if [[ -e "${item}" ]]; then
+				print_or_run rm -rf "${item}" &> /dev/null
+			fi
+		done
+	else
+		local -a kept_items=()
+
+		for item in "${DELETE_LIST[@]}"; do
+			# Try to remove the item if it's an empty directory.
+			if ! print_or_run rmdir "${item}" &> /dev/null; then
+				kept_items+=("${item}")
+			fi
+		done
+		if [[ ${#kept_items[@]} -gt 0 ]]; then
+			warn "An error occurred. Temporary files were not removed."
+			warn "You may find them in the following locations:"
+			for item in "${kept_items[@]}"; do
+				warn "  ${item}"
+			done
 		fi
-	done
+	fi
 
 	if [ "${CHIP}" = "it83xx" ]; then
 		if [ "${SERVO_TYPE}" = "servo_v2" ]; then
