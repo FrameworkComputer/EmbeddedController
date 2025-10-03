@@ -1,0 +1,22 @@
+# Copyright 2026 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: FT98XX fingerprint sensor
+
+compatible: "focaltech,ft98xx"
+
+include: [spi-device.yaml]
+
+properties:
+  irq-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      This property specifies the connection for sensor interrupt.
+
+  reset-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      This property specifies the connection for sensor reset.

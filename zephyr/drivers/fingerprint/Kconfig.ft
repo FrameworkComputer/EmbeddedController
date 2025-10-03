@@ -1,0 +1,39 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config FINGERPRINT_SENSOR_FT98XX
+	bool "FT98XX sensor driver"
+	default y
+	depends on DT_HAS_FOCALTECH_FT98XX_ENABLED
+	help
+	  Enable driver for focaltech ft98 series sensor
+
+if FINGERPRINT_SENSOR_FT98XX
+
+config FINGERPRINT_SENSOR_FT98XX_HEAP_SIZE
+	int "Size of heap for FT98XX driver"
+	default 21504
+	help
+	  Size of heap to be used by FT98XX private library. The heap must have
+	  enough space to facilitate the generation of the finger templates
+	  during the enrollment process and to enable efficient runtime matching
+	  operations. For these operations, a 21KB heap is sufficient, currently
+	  this heap is for sensor raw data buffer, the biggest size of sensor
+	  raw data buffer is 20KB, so 21KB here is sufficient.
+
+config FINGERPRINT_SENSOR_FT98XX_PAL
+	bool "Platform Abstraction Layer for Focaltech private library"
+	default y
+	help
+	  If enabled, Platform Abstraction Layer for Focaltech private library will be
+	  compiled. The PAL is used to interact with the sensor (SPI, GPIO) and
+	  the system (heap allocations, printing messages, time functions).
+
+# Enabled in private driver Kconfig
+config HAVE_FT98XX_PRIVATE_DRIVER
+	bool
+	help
+	  If enabled, it indicates that focaltech private driver is present.
+
+endif # FINGERPRINT_SENSOR_FT98XX
