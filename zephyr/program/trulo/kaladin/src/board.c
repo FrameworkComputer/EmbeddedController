@@ -162,3 +162,11 @@ static void sensor_init(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, sensor_init, HOOK_PRIO_DEFAULT);
+
+static void ish_int_disable(void)
+{
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sen_mode2_ec_ish_int_odl),
+			1);
+	LOG_INF("ISH interrupt forced LOW (hard off)");
+}
+DECLARE_HOOK(HOOK_CHIPSET_HARD_OFF, ish_int_disable, HOOK_PRIO_DEFAULT);
