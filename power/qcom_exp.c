@@ -107,7 +107,7 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 #define CAN_BOOT_AP_CHECK_WAIT (200 * MSEC)
 
 /* The timeout of the check if the switchcap outputs good voltage */
-#define SWITCHCAP_PG_CHECK_TIMEOUT (100 * MSEC)
+#define SWITCHCAP_PG_CHECK_TIMEOUT (800 * MSEC)
 
 /* Wait for polling if the switchcap outputs good voltage */
 #define SWITCHCAP_PG_CHECK_WAIT (6 * MSEC)
