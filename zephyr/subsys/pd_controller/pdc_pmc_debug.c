@@ -88,10 +88,10 @@ static int command_typec(const struct shell *sh, int argc, const char **argv)
 
 	shell_fprintf(sh, SHELL_INFO,
 		      "Port %d: USB=%d DP=%d POLARITY=%s HPD_IRQ=%d "
-		      "HPD_LVL=%d TBT=%d USB4=%d\n",
+		      "HPD_LVL=%d TBT=%d USB4=%d DTS=%d\n",
 		      port, pd_altmode_is_usb_enabled(status), status.dp,
 		      status.conn_ori ? "INVERTED" : "NORMAL", status.dp_irq,
-		      status.hpd_lvl, status.tbt, status.usb4);
+		      status.hpd_lvl, status.tbt, status.usb4, status.dbg_acc);
 
 	return EC_SUCCESS;
 }
