@@ -140,6 +140,9 @@
 /* Include math_util for bitmask_uint64 used in pd_timers */
 #define CONFIG_MATH_UTIL
 
+/* Enable watchdog */
+#define CONFIG_AP_HANG_DETECT
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h" /* needed by registers.h */
