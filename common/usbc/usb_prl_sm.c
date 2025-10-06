@@ -1161,11 +1161,6 @@ static void prl_tx_wait_for_phy_response_run(const int port)
 		else
 			pe_message_sent(port);
 
-		/*
-		 * This event reduces the time of informing the policy engine of
-		 * the transmission by one state machine cycle
-		 */
-		task_wake(PD_PORT_TO_TASK_ID(port));
 		set_state_prl_tx(port, PRL_TX_WAIT_FOR_MESSAGE_REQUEST);
 	} else if (pd_timer_is_expired(port, PR_TIMER_TCPC_TX_TIMEOUT) ||
 		   prl_tx[port].xmit_status == TCPC_TX_COMPLETE_FAILED) {
