@@ -1766,6 +1766,16 @@ tests:
     - default/prj.conf
     extra_dtc_overlay_files:
     - default/boards/native_sim.overlay
+  drivers.smart_battery.present:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_SMART_BATTERY_PRESENT=y
+    - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+    - CONFIG_PLATFORM_EC_BATTERY_PRESENT_NONE=y
+    extra_conf_files:
+    - prj.conf
+    - default/prj.conf
+    extra_dtc_overlay_files:
+    - default/boards/native_sim.overlay
   drivers.tabletmode_interrupt:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_TABLETMODE_INTERRUPT=y

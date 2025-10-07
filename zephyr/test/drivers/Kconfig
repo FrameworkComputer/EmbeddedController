@@ -404,6 +404,9 @@ config LINK_TEST_SUITE_ONE_WIRE_UART
 config LINK_TEST_SUITE_SMART_BATTERY
 	bool "Link and test the smart battery driver tests"
 
+config LINK_TEST_SUITE_SMART_BATTERY_PRESENT
+	bool "Link and test the smart battery present driver tests"
+
 config LINK_TEST_SUITE_TABLETMODE_INTERRUPT
 	bool "Link and test the tabletmode interrupt driver tests"
 	help
