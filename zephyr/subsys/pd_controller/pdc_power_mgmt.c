@@ -933,7 +933,7 @@ static void pd_chipset_resume(void);
 static void pd_chipset_suspend(void);
 static void pd_chipset_shutdown(void);
 
-static void pdc_update_battery_status(struct pdc_port_t *port);
+static void pdc_update_battery_status(struct pdc_port_t *port, bool force);
 static void pdc_update_battery_capability(struct pdc_port_t *port);
 
 static bool should_suspend(struct pdc_port_t *port)
@@ -2044,7 +2044,7 @@ static void pdc_src_attached_entry(void *obj)
 
 		/* Update the PDC with the correct battery status. */
 		pdc_update_battery_capability(port);
-		pdc_update_battery_status(port);
+		pdc_update_battery_status(port, true);
 	}
 
 	/* Clear a piece of sink policy as it is no longer relevant in the
@@ -2169,7 +2169,7 @@ static void pdc_snk_attached_entry(void *obj)
 
 		/* Update the PDC with the correct battery status. */
 		pdc_update_battery_capability(port);
-		pdc_update_battery_status(port);
+		pdc_update_battery_status(port, true);
 	}
 }
 
@@ -4618,20 +4618,27 @@ static void pdc_battery_status_changed(void)
 {
 	for (int i = 0; i < pdc_power_mgmt_get_usb_pd_port_count(); i++) {
 		if (pdc_power_mgmt_is_pdc_port_valid(i)) {
-			pdc_update_battery_status(&pdc_data[i]->port);
+			pdc_update_battery_status(&pdc_data[i]->port, false);
 		}
 	}
 }
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, pdc_battery_status_changed,
 	     HOOK_PRIO_DEFAULT);
 
-static void pdc_update_battery_status(struct pdc_port_t *port)
+/**
+ * @brief Send updated battery status to the PDC
+ *
+ * @param port PDC port to update
+ * @param force If true, unconditionally send the battery status. Otherwise
+ * only send battery status if the battery information changed.
+ */
+static void pdc_update_battery_status(struct pdc_port_t *port, bool force)
 {
 	const struct pdc_config_t *config = port->dev->config;
 	int port_number = config->connector_num;
 	union battery_status_t bsdo = { 0 };
 
-	if (battery_is_present()) {
+	if (battery_is_present() == BP_YES) {
 		uint32_t v;
 		uint32_t c;
 
@@ -4673,7 +4680,12 @@ static void pdc_update_battery_status(struct pdc_port_t *port)
 			}
 		}
 	} else {
+		bsdo.battery_present = 0;
 		bsdo.present_capacity = BSDO_CAP_UNKNOWN;
+	}
+
+	if (!force && memcmp(&port->bstat, &bsdo, sizeof(bsdo)) == 0) {
+		return;
 	}
 
 	port->bstat = bsdo;
