@@ -554,6 +554,11 @@ enum power_state power_handle_state(enum power_state state)
 		power_signal_disable_interrupt(GPIO_AP_IN_SLEEP_L);
 		power_signal_disable_interrupt(GPIO_AP_EC_WDTRST_L);
 		power_signal_disable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
+		if (IS_ENABLED(CONFIG_PLATFORM_EC_POWERSEQ_MTK_DOUBLE_WDT)) {
+			first_wdt_received = false;
+			hook_call_deferred(&watchdog_interrupt_deferred_data,
+					   -1);
+		}
 
 		/* Only actively reset AP with hard shutdown.
 		 * For AP initiated shutdown, the AP has been reset by PMIC.
