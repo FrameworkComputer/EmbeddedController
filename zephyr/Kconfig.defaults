@@ -29,7 +29,7 @@ config SHELL_THREAD_PRIORITY_OVERRIDE
 	default y
 
 config SHELL_THREAD_PRIORITY
-	default 20
+	default 25
 
 config EXTRA_EXCEPTION_INFO
 	default y if ARCH_HAS_EXTRA_EXCEPTION_INFO

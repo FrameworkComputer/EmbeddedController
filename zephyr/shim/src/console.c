@@ -44,6 +44,9 @@
 #error Must select only one shell backend
 #endif
 
+BUILD_ASSERT(EC_TASK_PRIORITY(EC_SHELL_PRIO) == CONFIG_SHELL_THREAD_PRIORITY,
+	     "EC_SHELL_PRIO does not match CONFIG_SHELL_THREAD_PRIORITY.");
+
 #ifdef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
 char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 #endif
