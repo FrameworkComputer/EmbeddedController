@@ -532,7 +532,8 @@ config PLATFORM_EC_HOSTCMD_DEBUG_MODE
 choice PLATFORM_EC_HOSTCMD_DEBUG_MODE_CHOICE
 	prompt "Select method to use for HostCmd Debug Mode"
 	depends on PLATFORM_EC_HOSTCMD
-	default HCDEBUG_NORMAL
+	default HCDEBUG_NORMAL if PLATFORM_EC_BRINGUP
+	default HCDEBUG_OFF
 	help
 	  Sets the value of the host command debug mode to use on
 	  startup.

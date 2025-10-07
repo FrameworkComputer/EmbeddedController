@@ -72,12 +72,12 @@ protocol.
 The `CONFIG_PLATFORM_EC_HOSTCMD_DEBUG_MODE_CHOICE` choice selects the verbosity
 level of messages on the EC console.
 
-Kconfig debug verbosity | Default | Documentation
-:---------------------- | :-----: | :------------
-`CONFIG_HCDEBUG_OFF`    | n       | [Debug off]
-`CONFIG_HCDEBUG_NORMAL` | y       | [Debug normal]
-`CONFIG_HCDEBUG_EVERY`  | n       | [Debug every]
-`CONFIG_HCDEBUG_PARAMS` | n       | [Debug params]
+Kconfig debug verbosity | Default                  | Documentation
+:---------------------- | :----------------------: | :------------
+`CONFIG_HCDEBUG_OFF`    | y                        | [Debug off]
+`CONFIG_HCDEBUG_NORMAL` | y if PLATFORM_EC_BRINGUP | [Debug normal]
+`CONFIG_HCDEBUG_EVERY`  | n                        | [Debug every]
+`CONFIG_HCDEBUG_PARAMS` | n                        | [Debug params]
 
 ## Device Tree nodes
 

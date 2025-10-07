@@ -2646,9 +2646,6 @@
  */
 #undef CONFIG_HOSTCMD_BATTERY_INFO
 
-/* Default hcdebug mode, e.g. HCDEBUG_OFF or HCDEBUG_NORMAL */
-#define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_NORMAL
-
 /* If we have host command task, assume we also are using host events. */
 #ifdef HAS_TASK_HOSTCMD
 #define CONFIG_HOSTCMD_EVENTS
@@ -6166,6 +6163,15 @@
 #else
 #include "board.h"
 #endif
+
+/* Default hcdebug mode, e.g. HCDEBUG_OFF or HCDEBUG_NORMAL */
+#if !defined(CONFIG_HOSTCMD_DEBUG_MODE)
+#if defined(CONFIG_BRINGUP)
+#define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_NORMAL
+#else
+#define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
+#endif /* defined(CONFIG_BRINGUP) */
+#endif /* !defined(CONFIG_HOSTCMD_DEBUG_MODE) */
 
 /*
  * Define CONFIG_HOST_ESPI_VW_POWER_SIGNAL if any power signals from the host
