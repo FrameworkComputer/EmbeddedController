@@ -43,6 +43,12 @@ void i2c_common_emul_set_read_func(struct i2c_common_emul_data *common_data,
 	common_data->read_func_data = data;
 }
 
+void i2c_common_emul_set_fail_auto_clear(
+	struct i2c_common_emul_data *common_data, bool auto_clear)
+{
+	common_data->fail_auto_clear = auto_clear;
+}
+
 /** Check description in emul_common_i2c.h */
 void i2c_common_emul_set_read_fail_reg(struct i2c_common_emul_data *common_data,
 				       int reg)
@@ -183,6 +189,9 @@ static int i2c_common_emul_write_byte(const struct emul *target,
 
 	if (data->write_fail_reg == reg ||
 	    data->write_fail_reg == I2C_COMMON_EMUL_FAIL_ALL_REG) {
+		if (data->fail_auto_clear) {
+			data->write_fail_reg = I2C_COMMON_EMUL_NO_FAIL_REG;
+		}
 		return -EIO;
 	}
 
@@ -240,6 +249,9 @@ static int i2c_common_emul_read_byte(const struct emul *target,
 
 	if (data->read_fail_reg == reg ||
 	    data->read_fail_reg == I2C_COMMON_EMUL_FAIL_ALL_REG) {
+		if (data->fail_auto_clear) {
+			data->read_fail_reg = I2C_COMMON_EMUL_NO_FAIL_REG;
+		}
 		return -EIO;
 	}
 
@@ -427,6 +439,7 @@ void i2c_common_emul_init(struct i2c_common_emul_data *data)
 	data->write_func = NULL;
 	data->read_func = NULL;
 
+	data->fail_auto_clear = false;
 	data->write_fail_reg = I2C_COMMON_EMUL_NO_FAIL_REG;
 	data->read_fail_reg = I2C_COMMON_EMUL_NO_FAIL_REG;
 

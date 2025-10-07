@@ -247,6 +247,10 @@ struct i2c_common_emul_data {
 	/** Data passed to custom read function */
 	void *read_func_data;
 
+	/** Control if read/write failure on a register should automatically
+	 * clear after the failed transaction. */
+	bool fail_auto_clear;
+
 	/** Control if read should fail on given register */
 	int read_fail_reg;
 	/** Control if write should fail on given register */
@@ -322,6 +326,17 @@ void i2c_common_emul_set_write_func(struct i2c_common_emul_data *common_data,
  */
 void i2c_common_emul_set_read_func(struct i2c_common_emul_data *common_data,
 				   i2c_common_emul_read_func func, void *data);
+
+/**
+ * @brief Set the failure mode for i2c_common_emul_set_read_fail_reg() and
+ * i2c_common_emul_set_write_fail_reg().
+ *
+ * @param common_data Pointer to emulator common data
+ * @param auto_clear If true, the error register setting automatically
+ * clears after the corresponding register is read from or written to.
+ */
+void i2c_common_emul_set_fail_auto_clear(
+	struct i2c_common_emul_data *common_data, bool auto_clear);
 
 /**
  * @brief Setup fail on read of given register of emulator
