@@ -182,7 +182,7 @@
     <vif:USB_VID_SOP value="6353">18D1</vif:USB_VID_SOP>
     <vif:PID_SOP value="20594">5072</vif:PID_SOP>
     <!--BCD value below is for production FW. The main branch uses different PDC FW.-->
-    <vif:bcdDevice_SOP value="39">27</vif:bcdDevice_SOP>
+    <vif:bcdDevice_SOP value="41">29</vif:bcdDevice_SOP>
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;DP section-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
@@ -201,8 +201,8 @@
       </SOP_DP_Capabilities>
       <SOPP_DisplayPort_Capabilities>
         <SOPP_DP_Signaling_Rate value="1">HBR3</SOPP_DP_Signaling_Rate>
-        <SOPP_DP_Src_Pin_Assignments value="12">Pin Assignment C & D</SOPP_DP_Src_Pin_Assignments>
-        <SOPP_DP_Sink_Pin_Assignments value="12">Pin Assignment C & D</SOPP_DP_Sink_Pin_Assignments>
+        <SOPP_DP_Src_Pin_Assignments value="12">Pin Assignment C/D</SOPP_DP_Src_Pin_Assignments>
+        <SOPP_DP_Sink_Pin_Assignments value="12">Pin Assignment C/D</SOPP_DP_Sink_Pin_Assignments>
         <SOPP_DP_UHBR13p5_Support value="0">UHBR13.5 Not Supported</SOPP_DP_UHBR13p5_Support>
         <SOPP_DP_Active_Component value="0">Passive</SOPP_DP_Active_Component>
       </SOPP_DisplayPort_Capabilities>
@@ -380,7 +380,7 @@
     <vif:USB_VID_SOP value="6353">18D1</vif:USB_VID_SOP>
     <vif:PID_SOP value="20594">5072</vif:PID_SOP>
     <!--BCD value below is for production FW. The main branch uses different PDC FW.-->
-    <vif:bcdDevice_SOP value="39">27</vif:bcdDevice_SOP>
+    <vif:bcdDevice_SOP value="41">29</vif:bcdDevice_SOP>
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;DP section-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
@@ -399,8 +399,8 @@
       </SOP_DP_Capabilities>
       <SOPP_DisplayPort_Capabilities>
         <SOPP_DP_Signaling_Rate value="1">HBR3</SOPP_DP_Signaling_Rate>
-        <SOPP_DP_Src_Pin_Assignments value="12">Pin Assignment C & D</SOPP_DP_Src_Pin_Assignments>
-        <SOPP_DP_Sink_Pin_Assignments value="12">Pin Assignment C & D</SOPP_DP_Sink_Pin_Assignments>
+        <SOPP_DP_Src_Pin_Assignments value="12">Pin Assignment C/D</SOPP_DP_Src_Pin_Assignments>
+        <SOPP_DP_Sink_Pin_Assignments value="12">Pin Assignment C/D</SOPP_DP_Sink_Pin_Assignments>
         <SOPP_DP_UHBR13p5_Support value="0">UHBR13.5 Not Supported</SOPP_DP_UHBR13p5_Support>
         <SOPP_DP_Active_Component value="0">Passive</SOPP_DP_Active_Component>
       </SOPP_DisplayPort_Capabilities>
