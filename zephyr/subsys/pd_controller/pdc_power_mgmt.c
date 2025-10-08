@@ -2176,7 +2176,7 @@ static void pdc_snk_attached_entry(void *obj)
 static void pdc_print_pdo_info(int port, struct pdc_pdos_t *pdo)
 {
 	uint32_t max_ma, max_mv, max_mw, min_mv;
-	const char *type_str;
+	const char *type_str = NULL;
 
 	/* Prints a table of PDOs with key fields extracted
 	 *

@@ -204,7 +204,7 @@ static int ppm_common_execute_command_unlocked(struct ucsi_ppm_device *dev,
 
 static void ppm_common_handle_async_event(struct ucsi_ppm_device *dev)
 {
-	uint8_t port;
+	uint8_t port = 0;
 	union connector_status_t *port_status;
 	bool alert_port = false;
 

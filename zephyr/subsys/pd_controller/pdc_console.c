@@ -647,7 +647,7 @@ static int cmd_pdc_srccaps(const struct shell *sh, size_t argc, char **argv)
 	for (uint8_t i = 0; i < src_caps_count; i++) {
 		uint32_t src_cap = src_caps[i];
 		uint32_t max_ma = 0, max_mv = 0, min_mv = 0;
-		const char *type_str;
+		const char *type_str = NULL;
 
 		pd_extract_pdo_power_unclamped(src_cap, &max_ma, &max_mv,
 					       &min_mv);
