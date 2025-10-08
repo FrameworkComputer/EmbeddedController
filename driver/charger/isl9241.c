@@ -1037,8 +1037,22 @@ static enum ec_error_list isl9241_bypass_to_nvdc(int chgnum)
 		return rv;
 
 	/* 12*: Set MaxSysVoltage to full charge. */
-	return isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE,
+	rv = isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE,
 			     bi->voltage_max);
+
+	if (rv)
+		return rv;
+
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	rv = isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
+		      ISL9241_MV_TO_ACOK_REFERENCE(4000));
+#else
+	rv = isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
+		      ISL9241_MV_TO_ACOK_REFERENCE(
+			      ISL9241_ACOK_REF_LOW_VOLTAGE_ADAPTER_MV));
+#endif
+
+	return rv;
 }
 
 #ifdef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
