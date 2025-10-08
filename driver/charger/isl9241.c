@@ -1115,6 +1115,13 @@ static enum ec_error_list isl9241_rtb_chrg_to_rtb(int chgnum)
 }
 #endif
 
+static bool isl9241_in_bypass_mode;
+
+bool isl9241_is_in_bypass_mode(int chgnum)
+{
+	return isl9241_in_bypass_mode;
+}
+
 static enum ec_error_list isl9241_enable_bypass_mode(int chgnum, bool enable)
 {
 	enum ec_error_list rv = EC_ERROR_UNKNOWN;
@@ -1170,6 +1177,9 @@ static enum ec_error_list isl9241_enable_bypass_mode(int chgnum, bool enable)
 				CPRINTS("bypass -> RTB failed(%d)", rv);
 		}
 #endif
+		if (rv == EC_SUCCESS) {
+			isl9241_in_bypass_mode = true;
+		}
 		return rv;
 	}
 
@@ -1180,7 +1190,7 @@ static enum ec_error_list isl9241_enable_bypass_mode(int chgnum, bool enable)
 
 		rv = isl9241_read(chgnum, ISL9241_REG_CONTROL0, &reg);
 		if ((reg & ISL9241_CONTROL0_EN_BYPASS_GATE) != ISL9241_CONTROL0_EN_BYPASS_GATE) {
-			CPRINTS("Does not in bypass mode, ignore change");
+			CPRINTS("Not in bypass mode, ignore change");
 			return rv;
 		}
 
@@ -1202,6 +1212,10 @@ static enum ec_error_list isl9241_enable_bypass_mode(int chgnum, bool enable)
 		rv = isl9241_bypass_to_nvdc(chgnum);
 		if (rv)
 			CPRINTS("bypass -> nvdc failed(%d)", rv);
+
+		if (rv == EC_SUCCESS) {
+			isl9241_in_bypass_mode = false;
+		}
 		return rv;
 	} else {
 		/* AC removal */
@@ -1216,11 +1230,23 @@ static enum ec_error_list isl9241_enable_bypass_mode(int chgnum, bool enable)
 			if (rv)
 				CPRINTS("bypass -> bat failed(%d)", rv);
 		}
+
+		if (rv == EC_SUCCESS) {
+			isl9241_in_bypass_mode = false;
+		}
+
 		return rv;
 	}
 
 	return rv;
 }
+#else
+
+bool isl9241_is_in_bypass_mode(int chgnum)
+{
+	return false;
+}
+
 #endif /* CONFIG_CHARGER_BYPASS_MODE */
 
 /*****************************************************************************/
