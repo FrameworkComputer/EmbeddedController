@@ -23,13 +23,14 @@
 		gpio-module-power = &gpio_module_pwr_on;
 	};
 
+	/delete-node/ unused-pins;
+
 	named-gpios {
 		compatible = "named-gpios";
 		/delete-node/ mux_sub_uart_flip;
 		/delete-node/ ec_beep;
 		/delete-node/ power_vr_id;
 		/delete-node/ me_en;
-		/delete-node/ unused-pins;
 
 		gpio_tp_board_id_pug: tp_board_id_pug {
 			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;
