@@ -38,4 +38,10 @@ config PLATFORM_EC_WATCHDOG_HELPER
 	  Watchdog helper is used to trigger warning and gather debugging
 	  information before hardware watchdog resets the SoC.
 
+config PLATFORM_EC_WATCHDOG_DUMP_THREADS_CALL_STACK
+	bool "Dump thread call stack to log on watchdog"
+	depends on ARCH_STACKWALK
+	help
+	  Dump each thread's current call stack when watchdog is detected.
+
 endif # WATCHDOG

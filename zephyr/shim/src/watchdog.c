@@ -19,6 +19,11 @@
 
 LOG_MODULE_REGISTER(watchdog_shim, LOG_LEVEL_ERR);
 
+#ifdef CONFIG_PLATFORM_EC_WATCHDOG_DUMP_THREADS_CALL_STACK
+BUILD_ASSERT(CONFIG_AUX_TIMER_PERIOD_MS >= 500,
+	     "Make sure we have enough lead time to dump call stacks");
+#endif
+
 struct watchdog_info {
 	const struct device *wdt_dev;
 	struct wdt_timeout_cfg config;
@@ -157,6 +162,16 @@ void watchdog_reload(void)
 }
 DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
 
+static void get_thread_name(const struct k_thread *thread, char *name,
+			    size_t size)
+{
+#ifdef CONFIG_THREAD_NAME
+	snprintf(name, size, "%s", thread->name);
+#else
+	snprintf(name, size, "TASK_%d", thread_id_to_task_id((k_tid_t)thread));
+#endif
+}
+
 static uint32_t get_stack_ptr(const struct k_thread *thread)
 {
 #if defined(CONFIG_ARM64)
@@ -177,18 +192,13 @@ static uint32_t get_stack_ptr(const struct k_thread *thread)
 #endif
 }
 
-static void log_thread_info(const struct k_thread *thread, void *user_data)
+static void print_sp_pc(const struct k_thread *thread)
 {
 	uint32_t sp = get_stack_ptr(thread);
 	struct arch_esf *esf = (struct arch_esf *)sp;
 	char thread_name[16];
 
-#ifdef CONFIG_THREAD_NAME
-	snprintf(thread_name, sizeof(thread_name), "%s", thread->name);
-#else
-	snprintf(thread_name, sizeof(thread_name), "TASK_ID: %d",
-		 thread_id_to_task_id((k_tid_t)thread));
-#endif
+	get_thread_name(thread, thread_name, sizeof(thread_name));
 
 #if defined(CONFIG_ARM)
 	printk("%s [SP=%p, PC=%p, LR=%p]\n", thread_name, (void *)sp,
@@ -208,6 +218,55 @@ static void log_thread_info(const struct k_thread *thread, void *user_data)
 	/* Nothing useful within esf to be printed here */
 	ARG_UNUSED(esf);
 #endif
+}
+
+static bool print_trace_address(void *arg, unsigned long pc)
+{
+	int *frame_idx = (int *)arg;
+#ifdef CONFIG_SYMTAB
+	uint32_t offset = 0;
+	const char *name = symtab_find_symbol_name(pc, &offset);
+
+	printk(" #%d: %p [%s+0x%x]\n", *frame_idx, (void *)pc, name, offset);
+#else
+	printk(" #%d: %p\n", *frame_idx, (void *)pc);
+#endif
+
+	(*frame_idx)++;
+	return true;
+}
+
+static void print_stack_trace(const struct k_thread *thread)
+{
+	int frame_idx = 0;
+	char state[32];
+	uint32_t sp = 0;
+	struct arch_esf *esf = NULL;
+	bool is_current_thread = thread == k_current_get();
+	char thread_name[16];
+
+	get_thread_name(thread, thread_name, sizeof(thread_name));
+
+	printk("Thread: %s%s, state=%s\n", is_current_thread ? "*" : "",
+	       thread_name,
+	       k_thread_state_str((k_tid_t)thread, state, sizeof(state)));
+
+	/* Pass esf if this is the currently interrupted thread */
+	if (is_current_thread) {
+		sp = get_stack_ptr(thread);
+		esf = (struct arch_esf *)sp;
+	} else {
+		esf = NULL;
+	}
+	arch_stack_walk(print_trace_address, &frame_idx, thread, esf);
+}
+
+static void log_thread_info(const struct k_thread *thread, void *user_data)
+{
+	print_sp_pc(thread);
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG_DUMP_THREADS_CALL_STACK)) {
+		print_stack_trace(thread);
+	}
 }
 
 __maybe_unused static void wdt_warning_handler(const struct device *wdt_dev,
@@ -252,7 +311,7 @@ __maybe_unused static void wdt_warning_handler(const struct device *wdt_dev,
 #endif
 
 	if (IS_ENABLED(CONFIG_THREAD_MONITOR)) {
-		k_thread_foreach(log_thread_info, NULL);
+		k_thread_foreach_unlocked(log_thread_info, NULL);
 	}
 
 	/* Save the current task id in panic info.
