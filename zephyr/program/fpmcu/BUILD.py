@@ -161,3 +161,35 @@ niedzica = register_fpmcu_variant(
 # The address of RW_FWID is hardcoded in RO. You need to have REALLY
 # good reason to change it.
 assert_rw_fwid_DO_NOT_EDIT(project_name="niedzica", addr=0x24144)
+
+
+def register_ft9001_project(
+    project_name,
+):
+    """Register an fpmcu variant"""
+    dts_path = project_name + ".dts"
+    conf_path = project_name + ".conf"
+    return register_fpmcu_variant(
+        project_name=project_name,
+        zephyr_board="ft9001_eval",
+        register_func=register_binman_project,
+        variant_modules=["cmsis_6", "focaltech_module"],
+        variant_optional_modules=["focaltech_fp"],
+        variant_dts_overlays=[
+            here / "ft9001" / dts_path,
+        ],
+        variant_kconfig_files=[
+            here / "ft9001" / "prj.conf",
+            here / "ft9001" / conf_path,
+        ],
+        signer=signers.RwsigSigner(  # pylint: disable=undefined-variable
+            here / "ft9001" / "dev_key.pem",
+        ),
+    )
+
+
+chudow = register_ft9001_project("chudow")
+assert_rw_fwid_DO_NOT_EDIT(project_name="chudow", addr=0x82274)
+
+chobienia = register_ft9001_project("chobienia")
+assert_rw_fwid_DO_NOT_EDIT(project_name="chobienia", addr=0x82274)

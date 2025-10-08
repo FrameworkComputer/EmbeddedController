@@ -40,6 +40,11 @@ if (DEFINED CONFIG_BOARD_EM32F967)
 	project(em32f967)
 endif()
 
+if (DEFINED CONFIG_BOARD_FT9001)
+	add_subdirectory(ft9001)
+	project(ft9001)
+endif()
+
 if(NOT CONFIG_PLATFORM_EC_ROLLBACK_VERSION EQUAL EXPECTED_ROLLBACK_VERSION)
 	message(FATAL_ERROR "Rollback version has changed! Expected ${EXPECTED_ROLLBACK_VERSION}, but ${CONFIG_PLATFORM_EC_ROLLBACK_VERSION} is set.")
 endif()

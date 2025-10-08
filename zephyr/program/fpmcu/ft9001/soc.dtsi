@@ -1,0 +1,40 @@
+/* Copyright 2026 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/ft/ft.dtsi>
+
+/delete-node/ &sramd0;
+
+/ {
+	chosen {
+		cros-ec,bbram = &bbram;
+	};
+
+	sdcp: memory@1fff8000 {
+		device_type = "memory";
+		compatible = "mmio-sram";
+		reg = <0x1fff8000 225>;
+	};
+
+	memory@1fff80f0 {
+		compatible = "zephyr,memory-region", "mmio-sram";
+		reg = <0x1fff80f0 16>;
+		zephyr,memory-region = "RetainedMem";
+		status = "okay";
+
+		bbram: retained-ram {
+			compatible = "zephyr,retained-ram";
+			status = "okay";
+			#address-cells = <1>;
+			#size-cells = <1>;
+		};
+	};
+
+	sramd0: memory@1fff8400 {
+		compatible = "zephyr,memory-region", "mmio-sram";
+		reg = <0x1fff8400 DT_SIZE_K(31)>;
+		zephyr,memory-region = "DTCM";
+	};
+};

@@ -1,0 +1,130 @@
+/* Copyright 2026 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <ft/ft90/common_priv.dtsi>
+
+#include "soc.dtsi"
+#include "gpio.dtsi"
+#include "rwsig.dtsi"
+
+#include <cros/integrated_fwid.dtsi>
+
+/ {
+	chosen {
+		cros-fp,fingerprint-sensor = &fp_sensor;
+		cros-fp,fingerprint-memory-frame = &psram;
+		cros-fp,fingerprint-memory-template = &psram;
+		/* Reference the flash header not to omit it. */
+		flash-header = &flash_header;
+	};
+
+	named-bbram-regions {
+		compatible = "named-bbram-regions";
+
+		scratchpad {
+			offset = <0x00>;
+			size = <0x02>;
+		};
+		saved-reset-flags {
+			offset = <0x02>;
+			size = <0x04>;
+		};
+	};
+
+	binman {
+		/* The first 4kB of the flash is reserved for the config page */
+		wp-ro {
+			offset = <0x0>;
+			size = <0x80000>;
+			flash-header {
+				offset = <0x0>;
+				size = <0x1000>;
+				type = "blob";
+				filename = "../build-ro/config_page.bin";
+				pad-byte = <0xff>;
+			};
+			ec-ro {
+				offset = <0x1000>;
+				size = <0x7f000>;
+				/* SHA256 of RO firmware */
+				ro-checksum {
+					compatible = "cros-ec,flash-layout";
+					type = "section";
+					offset = <(0x7f000 - 32)>;
+					size = <32>;
+					pad-byte = <0xff>;
+				};
+				pad-byte = <0xff>;
+			};
+		};
+
+		rollback0 {
+			offset = <0x80000>;
+			size = <0x1000>;
+			type = "blob";
+			filename = "../build-rw/rollback_initial_data.bin";
+		};
+
+		rollback1 {
+			offset = <0x81000>;
+			size = <0x1000>;
+			type = "blob";
+			filename = "../build-rw/rollback_initial_data.bin";
+		};
+
+		ec-rw {
+			offset = <0x82000>;
+			size = <0x7e000>;
+			rw-fw {
+				/*
+				 * Clang doesn't emit STT_SECTION symbols (also
+				 * called 'section symbols'), so 'rom_start'
+				 * symbol is not available. Fortunately, Zephyr
+				 * linker scripts provide '__rom_start_address'
+				 * symbol which points to the beginning of
+				 * 'rom_start' section.
+				 */
+				zephyr-rw {
+					elf-base-sym = "__rom_start_address";
+				};
+			};
+		};
+		pad-byte = <0xff>;
+	};
+};
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		bootloader: partition@0 {
+			label = "bootloader";
+			reg = <0x0 DT_SIZE_K(512)>;
+		};
+
+		rollback0: partition@100000 {
+			label = "rollback0";
+			reg = <0x100000 DT_SIZE_K(4)>;
+		};
+
+		rollback1: partition@101000 {
+			label = "rollback1";
+			reg = <0x101000 DT_SIZE_K(4)>;
+		};
+	};
+};
+
+&spi2 {
+	fp_sensor: ft98xx@0 {
+		compatible = "focaltech,ft98xx";
+		reg = <0>;
+		spi-max-frequency = <4000000>;
+
+		irq-gpios = <&eport5 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+		reset-gpios = <&eport5 2 GPIO_ACTIVE_LOW>;
+	};
+};

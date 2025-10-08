@@ -1,0 +1,44 @@
+/* Copyright 2026 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "common.dtsi"
+
+#define FT9869_COMMON_IMAGE_PROPS \
+	width = <40>; \
+	height = <196>; \
+	bits-per-pixel = <12>; \
+	frame-size = <28320>; \
+	image-data-offset-bytes = <0>; \
+	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+
+&fp_sensor {
+	configs {
+		compatible = "fingerprint-image-frame-params";
+		config0 {
+			FT9869_COMMON_IMAGE_PROPS
+			capture-type = "FINGERPRINT_CAPTURE_TYPE_VENDOR_FORMAT";
+		};
+		config1 {
+			FT9869_COMMON_IMAGE_PROPS
+			capture-type = "FINGERPRINT_CAPTURE_TYPE_SIMPLE_IMAGE";
+		};
+		config2 {
+			FT9869_COMMON_IMAGE_PROPS
+			capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN0";
+		};
+		config3 {
+			FT9869_COMMON_IMAGE_PROPS
+			capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN1";
+		};
+		config4 {
+			FT9869_COMMON_IMAGE_PROPS
+			capture-type = "FINGERPRINT_CAPTURE_TYPE_QUALITY_TEST";
+		};
+		config5 {
+			FT9869_COMMON_IMAGE_PROPS
+			capture-type = "FINGERPRINT_CAPTURE_TYPE_RESET_TEST";
+		};
+	};
+};

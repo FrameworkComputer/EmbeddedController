@@ -129,6 +129,16 @@ known_modules = {
     "focaltech_fp": lambda name, checkout: (
         checkout / "src" / "platform" / "fingerprint" / "focaltech"
     ),
+    "focaltech_module": lambda name, checkout: (
+        checkout
+        / "src"
+        / "third_party"
+        / "zephyrproject"
+        / "modules"
+        / "hal"
+        / "focaltech_module"
+        / "focaltech"
+    ),
     "fpc": lambda name, checkout: (
         checkout / "src" / "platform" / "fingerprint" / "fpc"
     ),
