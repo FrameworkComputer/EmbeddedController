@@ -30,31 +30,32 @@ CBI data can be stored in several ways:
 
 ### Firmware-Relevant Configuration
 
-The CBI data contains two key pieces of firmware-relevant configuration
-information that are programmed during manufacturing:
+The CBI contains information that the firmware uses at runtime to adapt its
+behavior to the specific hardware present on a device. Different mechanisms
+exist depending on the age of the device platform.
 
-1) The Firmware Configuration [`FW_CONFIG`] stores information
-specifically for the firmware, such as whether the device has a backlit
-keyboard.  One can view [`FW_CONFIG`] as the firmware characteristic of a
-SKU, so a SKU only maps to a single [`FW_CONFIG`], but different SKUs can
-map to the same [`FW_CONFIG`].
-2) The Second Source Factory Cache [`SSFC`] also stores information about
-the device for the firmware to read. The [`SSFC`] describes later decisions
-for a board to indicate alternate second sourced hardware stuffing which
-can be used by the EC to know which drivers to load.
+#### Legacy FW_CONFIG and SSFC
 
-The difference between [`SSFC`] and [`FW_CONFIG`] is that [`SSFC`] doesn’t
-affect SKU. This prevents SKU explosion when a device has many second
-source components.
+Legacy devices utilize two distinct mechanisms for firmware configuration:
+*   **Firmware Configuration ([`FW_CONFIG`]):** A 32-bit field that stores
+    non-probeable characteristics tied to a specific SKU, such as the
+    presence of a backlit keyboard.
+*   **Second Source Factory Cache ([`SSFC`]):** A 32-bit field used to handle
+    probeable, second-source components (e.g., different codecs, sensors)
+    that do not affect the device's SKU.
 
-If a Second Source Component is probeable, this should be stored in
-[`SSFC`], which avoids creating a new SKU.  If it is not probeable,
-it must be added to [`FW_CONFIG`].
+#### Unified Firmware and Second-source Configuration (UFSC)
+
+Newer devices use a new unified system called **Unified Firmware and
+Second-source Configuration ([`UFSC`])**. This system replaces the separate
+`FW_CONFIG` and `SSFC` fields with a single, schema-driven 20-byte (5-DWORD)
+value.
 
 ## Kconfig Options
 
 Refer to [`Kconfig.cbi`] for all the Kconfig options that control [`CBI`]
-behavior.
+behavior. The appropriate configuration system (UFSC, FW_CONFIG, or SSFC) is
+typically enabled automatically based on the devicetree configuration.
 
 ## Testing and Debugging
 
@@ -69,4 +70,5 @@ the same thing from the EC console.
 [`CBI In Flash`]: ./zephyr_cbi_flash.md
 [`FW_CONFIG`]: ./zephyr_fw_config.md
 [`SSFC`]: ./zephyr_ssfc.md
+[`UFSC`]: ./zephyr_ufsc.md
 [`Kconfig.cbi`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.cbi
