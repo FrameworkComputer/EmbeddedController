@@ -48,7 +48,7 @@
 
 static void sci_enable(void);
 
-int ap_boot_delay;
+int ap_boot_delay = CONFIG_PWRSEQ_AP_BOOT_DELAY;
 int stress_test_enable;
 
 DECLARE_DEFERRED(sci_enable);

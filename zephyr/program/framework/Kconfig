@@ -221,6 +221,14 @@ config PD_ERROR_RECOVERY
 		to send the error recovery command to PD during powering up the
 		system.
 
+config PWRSEQ_AP_BOOT_DELAY
+	int "Set the default ap_boot_delay value"
+	default 0
+	help
+		Some platform asserts the slp_s4/slp_s5 more than 1 second. If set the
+		ap_boot_delay to 0 may hard to power on the system. Use this configuration
+		to allow the project to change the timer.
+
 # Driver configuration
 config PLATFORM_EC_WAKE_ON_LAN
 	bool "system can be waked on lan"
