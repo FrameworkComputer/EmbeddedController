@@ -717,7 +717,7 @@ void exit_epr_mode(void)
 					CCG_PD_CONTROL_REG(PORT_TO_CONTROLLER_PORT(port_idx)),
 					CCG_PD_CMD_INITIATE_EPR_EXIT);
 
-			hook_call_deferred(&epr_flow_pending_deferred_data, 500 * MSEC);
+			hook_call_deferred(&epr_flow_pending_deferred_data, 1000 * MSEC);
 #endif
 		}
 	}

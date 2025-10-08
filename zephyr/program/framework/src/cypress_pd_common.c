@@ -35,6 +35,7 @@
 #ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 #include "gpu.h"
 #include "cpu_power.h"
+#include "board_charger.h"
 #endif
 
 #include <zephyr/sys_clock.h>
@@ -1359,6 +1360,7 @@ void cypd_update_port_state(int controller, int port)
 	 */
 	cypd_ccd_mode_control();
 #endif
+	charge_wakeup();
 }
 
 void cypd_set_power_state(int power_state, int controller)
@@ -1618,6 +1620,9 @@ int board_set_active_charge_port(int charge_port)
 		 * so we need to turn on the vbus control again.
 		 */
 		cypd_cfet_vbus_control(charge_port, true, true);
+#ifdef CONFIG_BOARD_LOTUS
+		board_disable_bypass_oneshot();
+#endif
 		return EC_SUCCESS;
 	}
 
@@ -1626,6 +1631,19 @@ int board_set_active_charge_port(int charge_port)
 		prev_charge_port != charge_port) {
 		/* Turn off the previous charge port before turning on the next port */
 		cypd_cfet_vbus_control(prev_charge_port, false, true);
+#ifdef CONFIG_BOARD_LOTUS
+		board_disable_bypass_oneshot();
+
+		if (isl9241_is_in_bypass_mode(0)) {
+			CPRINTS("Force exit bypass mode for port switch");
+			if (chg_chips[0].drv->enable_bypass_mode)
+				chg_chips[0].drv->enable_bypass_mode(0, false);
+			/* ACOK threshold has been lowered, give the charger some time to
+			 * discharge the input caps before switching to the new port
+			 */
+			crec_usleep(8*MSEC);
+		}
+#endif
 	}
 
 	for (i = 0; i < PD_PORT_COUNT; i++) {
@@ -1669,7 +1687,12 @@ int cypd_get_ac_power(void)
 
 	ac_power_mW = (pd_port_states[prev_charge_port].current
 		* pd_port_states[prev_charge_port].voltage);
-
+#ifdef CONFIG_BOARD_LOTUS
+	if (!isl9241_is_in_bypass_mode(0)) {
+		/* limit to 100W if not in bypass mode */
+		ac_power_mW = MIN(100000000, ac_power_mW);
+	}
+#endif
 	return (ac_power_mW / 1000);
 }
 
