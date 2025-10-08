@@ -5,22 +5,33 @@
 ## Overview
 
 CrOS Board Info [`CBI`] is used to store static board information,
-such as BOARD_VERSION, SKU_ID and configuration information. With [`CBI`],
-the information is either hard coded as GPIO values or is stored in a
-writable [`EEPROM`] chip, so we can provision the correct SKU at RMA time.
+such as BOARD_VERSION, SKU_ID and configuration information. This
+information allows a single firmware image to support multiple
+hardware variants.
 
-Kconfig has a CONFIG_PLATFORM_EC_CBI_STORAGE_TYPE choice that lets the
-user select GPIOs or an EEPROM as the source of [`CBI`] data.
+### Storage Backends
 
-If your board uses GPIOs to hard code [`CBI`], then
-`CONFIG_PLATFORM_EC_CBI_GPIO` must be selected and the [`CBI`] data will be
-emulated and only the BOARD_VERSION and SKU_ID [`CBI`] fields are available.
+CBI data can be stored in several ways:
 
-If your board includes an [`EEPROM`] to store [`CBI`], then
-`CONFIG_PLATFORM_EC_CBI_EEPROM` must be selected and configured.
+*   **EC Flash (Recommended):** On recent devices, CBI data is stored in a
+    reserved region of the EC's internal flash memory. This approach
+    simplifies the hardware design and reduces cost by eliminating the
+    need for an external EEPROM chip. For detailed information, see the
+    [`CBI In Flash`] documentation.
+*   **External EEPROM (Deprecated):** Older devices stored CBI data in a
+    dedicated external EEPROM chip on the I2C bus. While this provides more
+    storage than GPIOs, it adds to the BOM cost and hardware complexity.
+    See the [`EEPROM`] documentation for details.
+*   **GPIO Strapping (Deprecated):** The simplest method, used on some
+    older cost-sensitive devices, involves reading GPIO values (strapping
+    resistors) to determine a limited set of information, typically just
+    the BOARD_VERSION and SKU_ID. This method is highly constrained in the
+    amount of data it can store.
 
-[`EEPROM`] [`CBI`] includes two additional pieces of firmware relevant
-configuration information that are programmed during manufacturing.
+### Firmware-Relevant Configuration
+
+The CBI data contains two key pieces of firmware-relevant configuration
+information that are programmed during manufacturing:
 
 1) The Firmware Configuration [`FW_CONFIG`] stores information
 specifically for the firmware, such as whether the device has a backlit
@@ -55,6 +66,7 @@ the same thing from the EC console.
 [`CBI`]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md
 [`ectool cbi`]: ./zephyr_cbi.md#testing-and-debugging
 [`EEPROM`]: ./zephyr_eeprom.md
+[`CBI In Flash`]: ./zephyr_cbi_flash.md
 [`FW_CONFIG`]: ./zephyr_fw_config.md
 [`SSFC`]: ./zephyr_ssfc.md
 [`Kconfig.cbi`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.cbi
