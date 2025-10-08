@@ -50,6 +50,12 @@ config BOARD_PADME
 	  Build Google Padme board. Padme has MediaTek SoC
 	  with ITE IT82002 EC.
 
+config BOARD_GROGU
+	bool "Google Grogu Board"
+	help
+	  Build Google Grogu board. Grogu has MediaTek SoC
+	  with ITE IT82002 EC.
+
 config BOARD_SKYWALKER_SINGLE_USB_TYPEC
 	bool "Boards have only one USB-C port"
 	default n

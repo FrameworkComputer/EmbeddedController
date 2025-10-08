@@ -43,6 +43,7 @@ register_skywalker_ite_project(project_name="anakin")
 register_skywalker_ite_project(project_name="baze")
 register_skywalker_ite_project(project_name="tarkin")
 register_skywalker_ite_project(project_name="padme")
+register_skywalker_ite_project(project_name="grogu")
 
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release.
@@ -55,3 +56,4 @@ assert_rw_fwid_DO_NOT_EDIT(project_name="anakin", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="baze", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="tarkin", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="padme", addr=0x60098)
+assert_rw_fwid_DO_NOT_EDIT(project_name="grogu", addr=0x60098)

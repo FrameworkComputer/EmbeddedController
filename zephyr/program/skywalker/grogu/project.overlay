@@ -1,0 +1,124 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/cbi_flash.dtsi>
+#include "../ite_generated.dtsi"
+#include "../interrupts.dtsi"
+#include "../ite_common.dtsi"
+#include "../ite_keyboard.dtsi"
+#include "../ite_overlay.dtsi"
+#include "../ite_usbc.dtsi"
+#include "../power_signal.dtsi"
+#include "../usba.dtsi"
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
+#include "motionsense.dtsi"
+
+/ {
+	aliases {
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
+	};
+
+	batteries {
+		default_battery: placeholder {
+			compatible = "smp,c31n2005", "battery-smart";
+		};
+	};
+
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+
+		actual-key-mask = <
+			0x48	/* C0 */
+			0xff	/* C1 */
+			0xff	/* C2 */
+			0xff	/* C3 */
+			0xff	/* C4 */
+			0xff	/* C5 */
+			0xff	/* C6 */
+			0xa4	/* C7 */
+			0xff	/* C8 */
+			0xff	/* C9 */
+			0x55	/* C10 */
+			0xff	/* C11 */
+			0xff	/* C12 */
+			0x40    /* C13 */
+			0x0a    /* C14 */
+		>;
+	};
+};
+
+&cros_kb_raw {
+	pinctrl-0 = <&ksi0_default
+		     &ksi1_default
+		     &ksi2_default
+		     &ksi3_default
+		     &ksi4_default
+		     &ksi5_default
+		     &ksi6_default
+		     &ksi7_default
+		     &kso0_default
+		     &kso1_default
+		     &kso3_default
+		     &kso4_default
+		     &kso5_default
+		     &kso6_default
+		     &kso7_default
+		     &kso8_default
+		     &kso9_default
+		     &kso10_default
+		     &kso11_default
+		     &kso12_default
+		     &kso13_default
+		     &kso14_default
+		     &kso15_default
+		     &kso16_default
+		     &kso17_default>;
+};
+
+&pwm3 {
+	prescaler-cx = <PWM_PRESCALER_C4>;
+};
+
+&sha0 {
+	status = "okay";
+};
+
+/*
+ * When CBI in flash is enabled, setup RO flash layout as follows:
+ *   RO binary:    0x00000:0x5DFFF
+ *   FMAP:         0x5DC00:0x5DFFF
+ *   CBI flash:    0x5E000:0x5EFFF
+ *   PSTATE block: 0x5F000:0x5FFFF
+ */
+&binman {
+	wp-ro {
+		/*
+		 * Delete the pstate node so that we can force it to be the
+		 * last sub-section. binman doesn't handle sub-sections with
+		 * out of order offsets.
+		 */
+		 /delete-node/ pstate;
+
+		 ec-ro {
+			fmap {
+				offset =  <(0x60000 - (0x1000 * 2) - 0x400)>;
+				/*
+				* don't specify 'size = <0x400>' here so
+				* it is auto-assigned to the fmap size.
+				*/
+			};
+		};
+		cbi {
+			offset = <(0x60000 - (0x1000 * 2))>;
+			size = <0x1000>;
+		};
+		pstate {
+			type = "section";
+			offset = <(0x60000 - (0x1000 * 1))>;
+			size = <0x1000>;
+		};
+	};
+};
