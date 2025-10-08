@@ -22,6 +22,8 @@ config UCSI_PPM_THREAD_PRIORITY
 
 config UCSI_PPM_CONSOLE
 	bool "UCSI PPM console commands"
+	default y
+	depends on UCSI_PPM
 	help
 	  Enable the `ppm` console command, which supports calling various
 	  UCSI commands through the PPM subsystem to the PDCs.
