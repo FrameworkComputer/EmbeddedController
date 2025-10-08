@@ -182,6 +182,35 @@
     <vif:PID_SOP value="20581">5065</vif:PID_SOP>
     <!--BCD value below is for production FW. The main branch uses different PDC FW.-->
     <vif:bcdDevice_SOP value="4096">013D</vif:bcdDevice_SOP>
+    <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
+    <!--;DP section-->
+    <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
+    <OptionalContent identifier="DPAM">
+      <DisplayPort_Product_Summary>
+        <DP_Alt_Mode_Device_Type value="2">DisplayPort Source</DP_Alt_Mode_Device_Type>
+        <DPAM_Version value="0">DPAM 2.0 or earlier</DPAM_Version>
+        <Max_DP_Signaling_Rate_Supported value="4">HBR3</Max_DP_Signaling_Rate_Supported>
+      </DisplayPort_Product_Summary>
+      <SOP_DP_Capabilities>
+        <SOP_DP_Capability value="2">DP Source Capable</SOP_DP_Capability>
+        <SOP_DP_Receptacle_Indication value="1">DP on USB-C Receptacle</SOP_DP_Receptacle_Indication>
+        <SOP_USB2_Not_Used value="0">USB2.0 may be needed</SOP_USB2_Not_Used>
+        <SOP_DP_Source_Pin_Assignments value="28">Pin Assignment C/D/E Supported</SOP_DP_Source_Pin_Assignments>
+        <SOP_DP_Sink_Pin_Assignments value="0">Not Supported</SOP_DP_Sink_Pin_Assignments>
+      </SOP_DP_Capabilities>
+      <SOPP_DisplayPort_Capabilities>
+        <SOPP_DP_Signaling_Rate value="1">HBR3</SOPP_DP_Signaling_Rate>
+        <SOPP_DP_Src_Pin_Assignments value="12">Pin Assignment C/D</SOPP_DP_Src_Pin_Assignments>
+        <SOPP_DP_Sink_Pin_Assignments value="12">Pin Assignment C/D</SOPP_DP_Sink_Pin_Assignments>
+        <SOPP_DP_UHBR13p5_Support value="0">UHBR13.5 Not Supported</SOPP_DP_UHBR13p5_Support>
+        <SOPP_DP_Active_Component value="0">Passive</SOPP_DP_Active_Component>
+      </SOPP_DisplayPort_Capabilities>
+      <DisplayPort_Status>
+        <SOP_DP_Src_Sink_Device_Connected value="1">DP Source Connected</SOP_DP_Src_Sink_Device_Connected>
+        <SOP_DP_Multifunction_Preferred value="0">No preference for multifunction</SOP_DP_Multifunction_Preferred>
+        <SOP_DP_Suspend_Support value="0">No Preference for Low Power Entry</SOP_DP_Suspend_Support>
+      </DisplayPort_Status>
+    </OptionalContent>
   </vif:Component>
   <vif:Component>
     <!--Component 1: Port 1-->
@@ -349,5 +378,34 @@
     <vif:PID_SOP value="20581">5065</vif:PID_SOP>
     <!--BCD value below is for production FW. The main branch uses different PDC FW.-->
     <vif:bcdDevice_SOP value="4096">1000</vif:bcdDevice_SOP>
+    <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
+    <!--;DP section-->
+    <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
+    <OptionalContent identifier="DPAM">
+      <DisplayPort_Product_Summary>
+        <DP_Alt_Mode_Device_Type value="2">DisplayPort Source</DP_Alt_Mode_Device_Type>
+        <DPAM_Version value="0">DPAM 2.0 or earlier</DPAM_Version>
+        <Max_DP_Signaling_Rate_Supported value="4">HBR3</Max_DP_Signaling_Rate_Supported>
+      </DisplayPort_Product_Summary>
+      <SOP_DP_Capabilities>
+        <SOP_DP_Capability value="2">DP Source Capable</SOP_DP_Capability>
+        <SOP_DP_Receptacle_Indication value="1">DP on USB-C Receptacle</SOP_DP_Receptacle_Indication>
+        <SOP_USB2_Not_Used value="0">USB2.0 may be needed</SOP_USB2_Not_Used>
+        <SOP_DP_Source_Pin_Assignments value="28">Pin Assignment C/D/E Supported</SOP_DP_Source_Pin_Assignments>
+        <SOP_DP_Sink_Pin_Assignments value="0">Not Supported</SOP_DP_Sink_Pin_Assignments>
+      </SOP_DP_Capabilities>
+      <SOPP_DisplayPort_Capabilities>
+        <SOPP_DP_Signaling_Rate value="1">HBR3</SOPP_DP_Signaling_Rate>
+        <SOPP_DP_Src_Pin_Assignments value="12">Pin Assignment C/D</SOPP_DP_Src_Pin_Assignments>
+        <SOPP_DP_Sink_Pin_Assignments value="12">Pin Assignment C/D</SOPP_DP_Sink_Pin_Assignments>
+        <SOPP_DP_UHBR13p5_Support value="0">UHBR13.5 Not Supported</SOPP_DP_UHBR13p5_Support>
+        <SOPP_DP_Active_Component value="0">Passive</SOPP_DP_Active_Component>
+      </SOPP_DisplayPort_Capabilities>
+      <DisplayPort_Status>
+        <SOP_DP_Src_Sink_Device_Connected value="1">DP Source Connected</SOP_DP_Src_Sink_Device_Connected>
+        <SOP_DP_Multifunction_Preferred value="0">No preference for multifunction</SOP_DP_Multifunction_Preferred>
+        <SOP_DP_Suspend_Support value="0">No Preference for Low Power Entry</SOP_DP_Suspend_Support>
+      </DisplayPort_Status>
+    </OptionalContent>
   </vif:Component>
 </vif:VIF>
