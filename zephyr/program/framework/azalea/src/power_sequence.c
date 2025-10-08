@@ -323,10 +323,7 @@ enum power_state power_handle_state(enum power_state state)
 				if (task_wait_event(SECOND) == TASK_EVENT_TIMER) {
 					if (++s5_exit_tries > ap_boot_delay) {
 						CPRINTS("timeout waiting for S5 exit");
-						/*
-						 * TODO: RTC reset function
-						 */
-						ap_boot_delay = 0;
+						ap_boot_delay = CONFIG_PWRSEQ_AP_BOOT_DELAY;
 						s5_exit_tries = 0;
 						stress_test_enable = 0;
 						clear_rtcwake();
