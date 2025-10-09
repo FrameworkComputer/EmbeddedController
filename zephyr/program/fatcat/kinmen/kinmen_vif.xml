@@ -59,7 +59,7 @@
     <vif:USB_PD_Support value="true" />
     <vif:PD_Port_Type value="4">DRP</vif:PD_Port_Type>
     <vif:Type_C_State_Machine value="2">DRP</vif:Type_C_State_Machine>
-    <vif:Port_Battery_Powered value="false" />
+    <vif:Port_Battery_Powered value="true" />
     <vif:BC_1_2_Support value="0">None</vif:BC_1_2_Support>
     <vif:Captive_Cable value="false" />
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
@@ -114,8 +114,8 @@
     <vif:Type_C_Port_On_Hub value="false" />
     <vif:Type_C_Power_Source value="2">Both</vif:Type_C_Power_Source>
     <vif:Type_C_Sources_VCONN value="true" />
-    <vif:Type_C_Is_Alt_Mode_Controller value="false" />
-    <vif:Type_C_Is_Alt_Mode_Adapter value="true" />
+    <vif:Type_C_Is_Alt_Mode_Controller value="true" />
+    <vif:Type_C_Is_Alt_Mode_Adapter value="false" />
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;USB4® Port-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
@@ -330,7 +330,7 @@
     <vif:USB_PD_Support value="true" />
     <vif:PD_Port_Type value="4">DRP</vif:PD_Port_Type>
     <vif:Type_C_State_Machine value="2">DRP</vif:Type_C_State_Machine>
-    <vif:Port_Battery_Powered value="false" />
+    <vif:Port_Battery_Powered value="true" />
     <vif:BC_1_2_Support value="0">None</vif:BC_1_2_Support>
     <vif:Captive_Cable value="false" />
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
@@ -385,8 +385,8 @@
     <vif:Type_C_Port_On_Hub value="false" />
     <vif:Type_C_Power_Source value="2">Both</vif:Type_C_Power_Source>
     <vif:Type_C_Sources_VCONN value="true" />
-    <vif:Type_C_Is_Alt_Mode_Controller value="false" />
-    <vif:Type_C_Is_Alt_Mode_Adapter value="true" />
+    <vif:Type_C_Is_Alt_Mode_Controller value="true" />
+    <vif:Type_C_Is_Alt_Mode_Adapter value="false" />
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;USB4® Port-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
