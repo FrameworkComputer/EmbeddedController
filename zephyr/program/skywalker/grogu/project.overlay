@@ -9,12 +9,12 @@
 #include "../ite_common.dtsi"
 #include "../ite_keyboard.dtsi"
 #include "../ite_overlay.dtsi"
-#include "../ite_usbc.dtsi"
 #include "../power_signal.dtsi"
 #include "../usba.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
 #include "motionsense.dtsi"
+#include "usbc.dtsi"
 
 / {
 	aliases {
@@ -25,6 +25,18 @@
 		default_battery: placeholder {
 			compatible = "smp,c31n2005", "battery-smart";
 		};
+	};
+
+	named-gpios {
+		/delete-node/ ec_i2c_pdc1_sm_int_odl;
+		/delete-node/ ec_i2c_pdc1_s_int_odl;
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpioa 7 GPIO_INPUT_PULL_DOWN>;
 	};
 
 	cros-keyscan {
