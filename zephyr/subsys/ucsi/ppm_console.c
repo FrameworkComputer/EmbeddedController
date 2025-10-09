@@ -3,7 +3,9 @@
  * found in the LICENSE file.
  */
 
+#include "drivers/pdc.h"
 #include "ppm_common.h"
+#include "zephyr/sys/util.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -316,6 +318,63 @@ static int cmd_set_new_cam(const struct shell *sh, int argc, char **argv)
 	return 0;
 }
 
+static int cmd_set_usb(const struct shell *sh, int argc, char **argv)
+{
+	const struct device *dev = get_ppm_dev();
+	const struct ucsi_pd_driver *ppm_api;
+	uint8_t port;
+	int rv;
+
+	__ASSERT(dev, "PPM device is not ready");
+
+	ppm_api = dev->api;
+
+	if (cmd_get_pd_port(sh, dev, argv[1], &port)) {
+		shell_error(sh, "Invalid port");
+		return -ERANGE;
+	}
+
+	/* Parse SET_USB fields */
+	rv = 0;
+	bool usb3_enable = shell_strtobool(argv[2], 0, &rv);
+	if (rv != 0) {
+		shell_error(sh, "Failed to parse usb3_enable: %d", rv);
+		return -EINVAL;
+	}
+	bool usb4_enable = shell_strtobool(argv[3], 0, &rv);
+	if (rv != 0) {
+		shell_error(sh, "Failed to parse usb4_enable: %d", rv);
+		return -EINVAL;
+	}
+	uint32_t eudo = shell_strtoul(argv[4], 0, &rv);
+	if (rv != 0) {
+		shell_error(sh, "Invalid EUDO param");
+		return -EINVAL;
+	}
+
+	struct ucsi_control_t set_usb = {
+                .command = UCSI_SET_USB,
+                .data_length = 0,
+                .command_specific = {
+                        /* Convert to 1-indexed port number */
+                        ((port + 1) & 0x7F) | (usb3_enable << 7),
+			(usb4_enable << 0 | ((eudo & GENMASK(2,0)) << 5)),
+			(eudo & GENMASK(10, 3)) >> 3,
+			(eudo & GENMASK(18, 11)) >> 11,
+			(eudo & GENMASK(26, 19)) >> 19,
+			(eudo & GENMASK(31, 27)) >> 27,
+                },
+        };
+
+	rv = ppm_api->execute_cmd(dev, &set_usb, NULL);
+	if (rv < 0) {
+		shell_error(sh, "Failed to execute UCSI command: %d", rv);
+		return 1;
+	}
+
+	return 0;
+}
+
 /* LCOV_EXCL_START */
 
 SHELL_STATIC_SUBCMD_SET_CREATE(
@@ -341,6 +400,11 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "Usage: ppm set_new_cam <port> <new_cam> <am_specific> "
 		      "<enter|exit>",
 		      cmd_set_new_cam, 5, 0),
+	SHELL_CMD_ARG(
+		set_usb, NULL,
+		"Run SET_USB command.\n"
+		"Usage: ppm set_usb <port> <usb3_enable> <usb4_enable> <eudo>",
+		cmd_set_usb, 5, 0),
 	SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(ppm, &sub_ppm_cmds, "PPM console commands", NULL);

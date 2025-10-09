@@ -548,3 +548,157 @@ ZTEST(ucsi_ppm_console, test_ppm_set_new_cam__success_exit)
 			SET_NEW_CAM_EXPECTED_AM_SPECIFIC) " exit");
 	zassert_ok(rv, "Expected success (0), but got %d", rv);
 }
+
+static uint8_t set_usb_expected_usb3 = 0;
+static uint8_t set_usb_expected_usb4 = 0;
+
+#define SET_USB_EXPECTED_EUDO 0xABCDEF01
+
+/**
+ * @brief Custom fake to check a new alt mode entry or exit (UCSI_SET_NEW_CAM)
+ */
+static int execute_ucsi_set_usb(const struct device *dev,
+				struct ucsi_control_t *cmd, uint8_t *out)
+{
+	zassert_equal(0, cmd->data_length, "UCSI_SET_USB length must be 0");
+	zassert_equal(UCSI_SET_USB, cmd->command,
+		      "Command must be UCSI_SET_USB");
+
+	/* UCSI ports are 1-indexed */
+	zassert_equal(1, cmd->command_specific[0] & 0x7F,
+		      "Incorrect port sent");
+
+	zassert_equal(set_usb_expected_usb3,
+		      (cmd->command_specific[0] >> 7) & 0x01,
+		      "USB3 enable bit incorrect");
+
+	zassert_equal(set_usb_expected_usb4,
+		      (cmd->command_specific[1] >> 0) & 0x01,
+		      "USB4 enable bit incorrect");
+
+	/* Construct the EUDO value. This is transmitted as 32-bit value
+	 * in little-endian byte order starting at bit offset 29 of the message
+	 * which is bit offset 13 of the command specific field.
+	 */
+	uint8_t eudo_bytes[4];
+	eudo_bytes[0] = ((cmd->command_specific[1] & 0xE0) >> 5) |
+			((cmd->command_specific[2] & 0x1F) << 3);
+	eudo_bytes[1] = ((cmd->command_specific[2] & 0xE0) >> 5) |
+			((cmd->command_specific[3] & 0x1F) << 3);
+	eudo_bytes[2] = ((cmd->command_specific[3] & 0xE0) >> 5) |
+			((cmd->command_specific[4] & 0x1F) << 3);
+	eudo_bytes[3] = ((cmd->command_specific[4] & 0xE0) >> 5) |
+			((cmd->command_specific[5] & 0x1F) << 3);
+	uint32_t eudo = eudo_bytes[0] | eudo_bytes[1] << 8 |
+			eudo_bytes[2] << 16 | eudo_bytes[3] << 24;
+
+	zassert_equal(SET_USB_EXPECTED_EUDO, eudo,
+		      "Wrong EUDO field: expected 0x%08x, actual 0x%08x",
+		      SET_USB_EXPECTED_EUDO, eudo);
+
+	/* No response */
+	return 0;
+}
+
+ZTEST(ucsi_ppm_console, test_ppm_set_usb__bad_port)
+{
+	int rv;
+
+	/* Note: emulated PPM driver returns 1 active port */
+
+	rv = shell_execute_cmd(get_ec_shell(), "ppm set_usb");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+	shell_backend_dummy_clear_output(get_ec_shell());
+
+	rv = shell_execute_cmd(get_ec_shell(), "ppm set_usb 2 0 0 0");
+	zassert_equal(rv, -ERANGE, "Expected %d, but got %d", -ERANGE, rv);
+	shell_backend_dummy_clear_output(get_ec_shell());
+
+	rv = shell_execute_cmd(get_ec_shell(), "ppm set_usb -1 0 0 0");
+	zassert_equal(rv, -ERANGE, "Expected %d, but got %d", -ERANGE, rv);
+	shell_backend_dummy_clear_output(get_ec_shell());
+}
+
+ZTEST(ucsi_ppm_console, test_ppm_set_usb__bad_usb3_enable)
+{
+	int rv;
+
+	rv = shell_execute_cmd(get_ec_shell(), "ppm set_usb 0");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+	shell_backend_dummy_clear_output(get_ec_shell());
+
+	rv = shell_execute_cmd(get_ec_shell(), "ppm set_usb 0 blah 0 0");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+	shell_backend_dummy_clear_output(get_ec_shell());
+}
+
+ZTEST(ucsi_ppm_console, test_ppm_set_usb__bad_usb4_enable)
+{
+	int rv;
+
+	rv = shell_execute_cmd(get_ec_shell(), "ppm set_usb 0 0");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+	shell_backend_dummy_clear_output(get_ec_shell());
+
+	rv = shell_execute_cmd(get_ec_shell(), "ppm set_usb 0 0 blah 0");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+	shell_backend_dummy_clear_output(get_ec_shell());
+}
+
+ZTEST(ucsi_ppm_console, test_ppm_set_usb__bad_eudo)
+{
+	int rv;
+
+	rv = shell_execute_cmd(get_ec_shell(), "ppm set_usb 0 0 0");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+	shell_backend_dummy_clear_output(get_ec_shell());
+
+	rv = shell_execute_cmd(get_ec_shell(), "ppm set_usb 0 0 0 blah");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+	shell_backend_dummy_clear_output(get_ec_shell());
+}
+
+ZTEST(ucsi_ppm_console, test_ppm_set_usb__success)
+{
+	int rv;
+
+	/* Disable USB3 and USB4 */
+	set_usb_expected_usb3 = 0;
+	set_usb_expected_usb4 = 0;
+	ppm_driver_mock_execute_cmd_sync_fake.custom_fake =
+		execute_ucsi_set_usb;
+
+	rv = shell_execute_cmd(get_ec_shell(), "ppm set_usb 0 0 0 " STRINGIFY(
+						       SET_USB_EXPECTED_EUDO));
+	zassert_ok(rv, "Expected success (0), but got %d", rv);
+
+	set_usb_expected_usb3 = 1;
+	set_usb_expected_usb4 = 0;
+	ppm_driver_mock_execute_cmd_sync_fake.custom_fake =
+		execute_ucsi_set_usb;
+
+	rv = shell_execute_cmd(get_ec_shell(), "ppm set_usb 0 1 0 " STRINGIFY(
+						       SET_USB_EXPECTED_EUDO));
+	zassert_ok(rv, "Expected success (0), but got %d", rv);
+
+	set_usb_expected_usb3 = 0;
+	set_usb_expected_usb4 = 1;
+	ppm_driver_mock_execute_cmd_sync_fake.custom_fake =
+		execute_ucsi_set_usb;
+
+	rv = shell_execute_cmd(get_ec_shell(), "ppm set_usb 0 0 1 " STRINGIFY(
+						       SET_USB_EXPECTED_EUDO));
+	zassert_ok(rv, "Expected success (0), but got %d", rv);
+}
+
+ZTEST(ucsi_ppm_console, test_ppm_set_usb__ucsi_fail)
+{
+	int rv;
+
+	/* Report an error running the UCSI command */
+	ppm_driver_mock_execute_cmd_sync_fake.return_val = -1;
+
+	rv = shell_execute_cmd(get_ec_shell(), "ppm set_usb 0 0 0 0");
+	zassert_equal(rv, 1, "Expected %d, but got %d", 1, rv);
+	shell_backend_dummy_clear_output(get_ec_shell());
+}
