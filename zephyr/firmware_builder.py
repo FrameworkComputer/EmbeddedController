@@ -352,13 +352,18 @@ def bundle_firmware(opts):
         # karis.EC.15709.192.0.tar.bz2
         if version:
             tarball_name = f"{project.config.project_name}.EC.{version}.tar.bz2"
+            elf_tarball_name = (
+                f"{project.config.project_name}.EC_elf.{version}.tar.bz2"
+            )
         else:
             tarball_name = f"{project.config.project_name}.EC.tar.bz2"
-        tarball_path = bundle_dir.joinpath(tarball_name)
+            elf_tarball_name = f"{project.config.project_name}.EC_elf.tar.bz2"
         for board in set(project.config.inherited_from):
             per_board_targets[board].append(
                 f"{project.config.project_name}/output"
             )
+        # Package the bin file
+        tarball_path = bundle_dir.joinpath(tarball_name)
         cmd = [
             "tar",
             "--exclude=*.elf",
@@ -378,6 +383,30 @@ def bundle_firmware(opts):
         meta = info.objects.add()
         meta.tarball_info.board.extend(set(project.config.inherited_from))
         meta.file_name = tarball_name
+        meta.tarball_info.type = (
+            firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.EC  # pylint: disable=no-member
+        )
+        # Package the elf files
+        elf_tarball_path = bundle_dir.joinpath(elf_tarball_name)
+        cmd = [
+            "tar",
+            "--exclude=*.bin",
+            "--exclude=*.lst",
+            "-cjf",
+            elf_tarball_path,
+        ]
+        cmd.extend(
+            [x.relative_to(artifacts_dir) for x in artifacts_dir.glob("*")]
+        )
+        log_cmd(cmd, cwd=artifacts_dir)
+        subprocesses.append(
+            subprocess.Popen(  # pylint: disable=consider-using-with
+                cmd, cwd=artifacts_dir, stdin=subprocess.DEVNULL
+            )
+        )
+        meta = info.objects.add()
+        meta.tarball_info.board.extend(set(project.config.inherited_from))
+        meta.file_name = elf_tarball_name
         meta.tarball_info.type = (
             firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.EC  # pylint: disable=no-member
         )
