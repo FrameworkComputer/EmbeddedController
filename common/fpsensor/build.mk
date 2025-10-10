@@ -22,6 +22,7 @@ _fpsensor_utils_obj:=$(_fpsensor_dir)fpsensor_utils.o
 _fpsensor_auth_commands_obj:=$(_fpsensor_dir)fpsensor_auth_commands.o
 _fpsensor_auth_crypto_stateful_obj:=$(_fpsensor_dir)fpsensor_auth_crypto_stateful.o
 _fpsensor_auth_crypto_stateless_obj:=$(_fpsensor_dir)fpsensor_auth_crypto_stateless.o
+_fpsensor_frame_size_obj:=$(_fpsensor_dir)fpsensor_frame_size.o
 
 $(out)/RW/$(_fpsensor_state_obj): CFLAGS+=$(fpsensor_CFLAGS)
 $(out)/RW/$(_fpsensor_crypto_obj): CFLAGS+=$(fpsensor_CFLAGS)
@@ -32,12 +33,14 @@ $(out)/RW/$(_fpsensor_utils_obj): CFLAGS+=$(fpsensor_CFLAGS)
 $(out)/RW/$(_fpsensor_auth_commands_obj): CFLAGS+=$(fpsensor_CFLAGS)
 $(out)/RW/$(_fpsensor_auth_crypto_stateful_obj): CFLAGS+=$(fpsensor_CFLAGS)
 $(out)/RW/$(_fpsensor_auth_crypto_stateless_obj): CFLAGS+=$(fpsensor_CFLAGS)
+$(out)/RW/$(_fpsensor_frame_size_obj): CFLAGS+=$(fpsensor_CFLAGS)
 
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_state_obj)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_obj)
 all-obj-$(HAS_TASK_CONSOLE)+=$(_fpsensor_detect_strings_obj)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_debug_obj)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_auth_commands_obj)
+all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_frame_size_obj)
 
 # Since we only include the FPSENSOR task in the RW image, HAS_TASK_FPSENSOR
 # will either be "rw" or empty.
