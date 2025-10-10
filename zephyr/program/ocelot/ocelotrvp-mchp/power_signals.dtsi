@@ -5,19 +5,6 @@
 
 #include "../power_signals.dtsi"
 
-/* TODO: b:430093425 - Currently, previous Revision RVP where gpio is
- * used to generate 5V signal. Remove this gpio - pwr_en_pp5000_a after
- * moving to new RVP version.
- */
-/ {
-	pwr_en_pp5000_a: ec-gppc-b14 {
-		compatible = "intel,ap-pwrseq-gpio";
-		dbg-label = "PP5000_S5 enable output to LS";
-		enum-name = "PWR_EN_PP5000_A";
-		gpios = <MCHP_GPIO_DECODE_244 GPIO_ACTIVE_HIGH>;
-		output;
-	};
-};
 &pwr_en_pp3300_a {
 	gpios = <MCHP_GPIO_DECODE_226 GPIO_ACTIVE_HIGH>;
 };
