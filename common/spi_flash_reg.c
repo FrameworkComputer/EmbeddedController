@@ -80,6 +80,15 @@ static const struct protect_range spi_flash_protect_ranges[] = {
 	{ 0, 0, 1, { 1, 0, 1 }, 0, 0x40000 }, /* Lower 1/4 */
 	{ 0, 0, 1, { 1, 1, 0 }, 0, 0x80000 }, /* Lower 1/2 */
 };
+#elif defined(CONFIG_SPI_FLASH_P25Q16)
+static const struct protect_range spi_flash_protect_ranges[] = {
+	/* CMP = 0 */
+	{ 0, IGN, IGN, { 0, 0, 0 }, 0, 0 }, /* No protection */
+	{ 0, 1, 1, { 0, 0, 1 }, 0, 0x1000 }, /* Lower 1/512 */
+	{ 0, 0, 1, { 0, 1, 1 }, 0, 0x40000 }, /* Lower 1/8 */
+	{ 0, 0, 1, { 1, 0, 0 }, 0, 0x80000 }, /* Lower 1/4 */
+	{ 0, 0, 1, { 1, 0, 1 }, 0, 0x100000 }, /* Lower 1/2 */
+};
 #endif
 
 /**
