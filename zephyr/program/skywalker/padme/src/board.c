@@ -76,3 +76,33 @@ static int install_backlight_handler(void)
 }
 
 SYS_INIT(install_backlight_handler, APPLICATION, 1);
+
+static void check_audio_jack(void)
+{
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)) {
+		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_jd1)))
+			gpio_pin_set_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_5p0va_pwr_mode), 0);
+		else
+			gpio_pin_set_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_5p0va_pwr_mode), 1);
+	} else {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_5p0va_pwr_mode), 0);
+	}
+}
+DECLARE_DEFERRED(check_audio_jack);
+
+DECLARE_HOOK(HOOK_INIT, check_audio_jack, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, check_audio_jack, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, check_audio_jack, HOOK_PRIO_DEFAULT);
+
+void audio_jack_interrupt(enum gpio_signal s)
+{
+	hook_call_deferred(&check_audio_jack_data, INT_RECHECK_US);
+}
+
+static void board_setup_init()
+{
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_jd1));
+}
+DECLARE_HOOK(HOOK_INIT, board_setup_init, HOOK_PRIO_PRE_DEFAULT);
