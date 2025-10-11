@@ -14,6 +14,7 @@
 #include <ap_power/ap_power.h>
 
 static bool value_en;
+static bool boot_flags;
 
 static void set_tp_vtsp_en_pin(void)
 {
@@ -37,9 +38,10 @@ DECLARE_DEFERRED(set_tp_en_pin);
 static void board_tp_startup(void)
 {
 	value_en = 1;
+	boot_flags = true;
 	hook_call_deferred(&set_tp_vtsp_en_pin_data, 0);
-	hook_call_deferred(&set_tp_rst_pin_data, 20 * USEC_PER_MSEC);
-	hook_call_deferred(&set_tp_en_pin_data, 200 * USEC_PER_MSEC);
+	hook_call_deferred(&set_tp_rst_pin_data, 10 * USEC_PER_MSEC);
+	hook_call_deferred(&set_tp_en_pin_data, 80 * USEC_PER_MSEC);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_tp_startup, HOOK_PRIO_DEFAULT);
 
@@ -56,6 +58,12 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_tp_shutdown, HOOK_PRIO_DEFAULT);
 /* Exit suspend */
 static void board_tp_resume(void)
 {
+	/* Avoid invoking HOOK_CHIPSET_RESUME callbacks during system boot */
+	if (boot_flags) {
+		boot_flags = false;
+		return;
+	}
+
 	value_en = 1;
 	hook_call_deferred(&set_tp_en_pin_data, 0);
 }
