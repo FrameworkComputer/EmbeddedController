@@ -72,7 +72,6 @@ static void average_temperature(void)
 
 	if (!extpower_is_present())
 		return;
-	return;
 	/*
 	 * Keep track of battery temperature range:
 	 *
@@ -100,7 +99,8 @@ static void average_temperature(void)
 		charger_temp_sum += thermals[i];
 
 	charger_temp_ave_bef = charger_temp_ave;
-	charger_temp_ave = (charger_temp_sum + 2.5) / THERMAL_SAMPLE_CNT;
+	charger_temp_ave =
+		DIV_ROUND_NEAREST(charger_temp_sum, THERMAL_SAMPLE_CNT);
 
 	if ((charger_temp_ave - charger_temp_ave_bef) > 0) {
 		temperature_increase = 1;
