@@ -22,7 +22,6 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 LOG_MODULE_REGISTER(board_sensor, LOG_LEVEL_INF);
 
