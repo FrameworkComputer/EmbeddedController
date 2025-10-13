@@ -9,3 +9,4 @@ zephyr_library_sources_ifdef(CONFIG_CROS_SYSTEM_NATIVE_POSIX	cros_system_native_
 zephyr_library_sources_ifdef(CONFIG_CROS_SYSTEM_STM32	cros_system_stm32.c)
 zephyr_library_sources_ifdef(CONFIG_CROS_SYSTEM_REALTEK cros_system_rtk.c)
 zephyr_library_sources_ifdef(CONFIG_CROS_SYSTEM_ET171	cros_system_et171.c)
+zephyr_library_sources_ifdef(CONFIG_CROS_SYSTEM_ELAN_EM32    cros_system_em32.c)

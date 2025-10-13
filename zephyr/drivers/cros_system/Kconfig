@@ -162,4 +162,26 @@ config CROS_SYSTEM_ET171_INIT_PRIORITY
 
 endif
 
+config CROS_SYSTEM_ELAN_EM32
+	bool "ELAN EM32 cros system driver"
+	depends on SOC_EM32F967
+	select HWINFO
+	default y
+	help
+	  This option enables the cros system driver for the elan em32 family of
+	  processors.
+
+if CROS_SYSTEM_ELAN_EM32
+
+config CROS_SYSTEM_EM32_INIT_PRIORITY
+	int "cros_system Elan EM32 initialization priority"
+	default 10
+	help
+	  This sets the elan em32 cros_system driver initialization priority.
+	  The cros_system driver provides access to the elan em32 reset cause
+	  and must be higher priority than
+	  CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY.
+
+endif # CROS_SYSTEM_ELAN_EM32
+
 endif # PLATFORM_EC
