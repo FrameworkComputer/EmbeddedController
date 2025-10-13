@@ -9,6 +9,7 @@
 
 static void board_change_cypd_init_state(void)
 {
+	pd_chip_config[PD_CHIP_0].state = CCG_STATE_NO_POWER;
 	pd_chip_config[PD_CHIP_1].state = CCG_STATE_WAIT_STABLE;
 }
 DECLARE_HOOK(HOOK_INIT, board_change_cypd_init_state, HOOK_PRIO_DEFAULT);
