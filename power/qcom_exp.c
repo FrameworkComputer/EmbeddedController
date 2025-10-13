@@ -664,6 +664,12 @@ static int power_on_seq(uint8_t poweron_event)
 {
 	int ret;
 
+	/* Reset all the Passthru signal to the PMIC.
+	 * This ensures that the AP powers on with the
+	 * intended flow.
+	 */
+	reset_all_passthru_pmic_signal();
+
 	ret = set_system_power(1);
 	if (ret != EC_SUCCESS)
 		return ret;
@@ -678,6 +684,10 @@ static int power_on_seq(uint8_t poweron_event)
 	}
 
 	CPRINTS("POWER_GOOD seen");
+	/* if power-on is a success passthru the signals again */
+	passthru_ac_on_to_pmic();
+	passthru_lid_open_to_pmic();
+
 	return EC_SUCCESS;
 }
 
