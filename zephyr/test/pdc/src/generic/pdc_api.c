@@ -902,3 +902,11 @@ ZTEST_USER(pdc_api_suspended, test_set_ap_power_state)
 	/* Set should return busy because comms are blocked */
 	zassert_equal(-EBUSY, pdc_set_ap_power_state(dev, POWER_S0));
 }
+
+ZTEST_USER(pdc_api_suspended, test_ack_cc_ci)
+{
+	union conn_status_change_bits_t ci = { 0 };
+
+	/* Set should return busy because comms are blocked */
+	zassert_equal(-EBUSY, pdc_ack_cc_ci(dev, ci, false, 0));
+}
