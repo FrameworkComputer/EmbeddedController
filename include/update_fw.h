@@ -228,6 +228,11 @@ struct touchpad_info {
 			uint16_t id;
 			uint16_t fw_version;
 			uint16_t fw_checksum;
+		} fts __packed;
+		struct {
+			uint16_t id;
+			uint16_t fw_version;
+			uint16_t fw_checksum;
 		} st __packed;
 	} __packed;
 } __packed;
