@@ -1471,22 +1471,20 @@ static void cypd_handle_state(int controller)
 		return;
 
 	switch (pd_chip_config[controller].state) {
-#ifdef CONFIG_PD_CHIP_CCG6
 	case CCG_STATE_WAIT_STABLE:
 		uint64_t timer = get_time().val;
 
-		if (timer > CONFIG_PD_CCG6_WAIT_STABLE_TIMER * MSEC)
+		if (timer > CONFIG_PD_WAIT_STABLE_TIMER * MSEC)
 			pd_chip_config[controller].state = CCG_STATE_POWER_ON;
 
 		if (controller == 0) {
 			hook_call_deferred(&pd0_update_state_deferred_data,
-				CONFIG_PD_CCG6_WAIT_STABLE_TIMER * MSEC);
+				CONFIG_PD_WAIT_STABLE_TIMER * MSEC);
 		} else {
 			hook_call_deferred(&pd1_update_state_deferred_data,
-				CONFIG_PD_CCG6_WAIT_STABLE_TIMER * MSEC);
+				CONFIG_PD_WAIT_STABLE_TIMER * MSEC);
 		}
 		break;
-#endif
 	case CCG_STATE_POWER_ON:
 		/* poll to see if the controller has booted yet */
 		if (cypd_read_reg8(controller, CCG_DEVICE_MODE, &data) == EC_SUCCESS) {
