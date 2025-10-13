@@ -122,7 +122,7 @@
 		};
 		gpio_ec_pmk_rst: ec_pmk_rst {
 			gpios = <&gpio9 6 (GPIO_OUTPUT)>;
-			enum-name = "GPIO_PMIC_RESIN_L";
+			enum-name = "GPIO_PMIC_RESIN";
 		};
 		gpio_kbl_pwr_en_odl: kbl_pwr_en_odl {
 			gpios = <&gpioe 2 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;

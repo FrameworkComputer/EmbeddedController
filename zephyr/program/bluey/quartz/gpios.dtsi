@@ -77,7 +77,7 @@
 		};
 		gpio_ec_pmk_rst_1v8: ec_pmk_rst_1v8 {
 			gpios = <&gpio9 6 (GPIO_OUTPUT)>;
-			enum-name = "GPIO_PMIC_RESIN_L";
+			enum-name = "GPIO_PMIC_RESIN";
 		};
 		gpio_bl_off_odl: bl_off_odl {
 			gpios = <&gpio9 7 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW | GPIO_OPEN_DRAIN )>;

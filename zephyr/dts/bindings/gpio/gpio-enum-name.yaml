@@ -77,6 +77,7 @@ properties:
       - GPIO_PMIC_EC_RESETB
       - GPIO_PMIC_KPD_PWR
       - GPIO_PMIC_KPD_PWR_ODL
+      - GPIO_PMIC_RESIN
       - GPIO_PMIC_RESIN_L
       - GPIO_POE_CS_OUT_L
       - GPIO_POWER_BUTTON_L

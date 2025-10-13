@@ -67,6 +67,7 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 /* Masks for power signals */
 #define IN_POWER_GOOD POWER_SIGNAL_MASK(QC_EXP_POWER_GOOD)
 #define IN_AP_RST_ASSERTED POWER_SIGNAL_MASK(QC_EXP_AP_RST_ASSERTED)
+#define IN_AP_PS_HOLD_DEASSERTED POWER_SIGNAL_MASK(QC_EXP_PS_HOLD)
 #define IN_SUSPEND POWER_SIGNAL_MASK(QC_EXP_AP_SUSPEND)
 
 /* Long power key press to force shutdown */
@@ -97,7 +98,7 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 /* Wait for polling the AP on signal */
 #define PMIC_POWER_AP_WAIT (1 * MSEC)
 
-/* The length of an issued low pulse to the PMIC_RESIN_L signal */
+/* The length of an issued low pulse to the PMIC_RESIN signal */
 #define PMIC_RESIN_PULSE_LENGTH (20 * MSEC)
 
 /* The timeout of the check if the system can boot AP */
@@ -564,13 +565,13 @@ static int set_pmic_pwron(int enable, uint8_t event)
 	 * 4. Release PMIC_KPD_PWR
 	 *
 	 * Power-off sequence:
-	 * 1. Hold PMIC_KPD_PWR and PMIC_RESIN_L high, which is a power-off
+	 * 1. Hold PMIC_KPD_PWR and PMIC_RESIN high, which is a power-off
 	 *    trigger (requiring reprogramming PMIC registers to make
-	 *    PMIC_KPD_PWR + PMIC_RESIN_L as a shutdown trigger)
+	 *    PMIC_KPD_PWR + PMIC_RESIN as a shutdown trigger)
 	 * 2. PMIC stops supplying power to POWER_GOOD (This requires
 	 *    reprogramming the PMIC to set the stage-1 reset timer to 0
 	 *    and the stage-2 reset timer to 10ms for debouncing)
-	 * 3. Release PMIC_KPD_PWR and PMIC_RESIN_L
+	 * 3. Release PMIC_KPD_PWR and PMIC_RESIN
 	 *
 	 * If the above PMIC registers not programmed or programmed wrong, it
 	 * falls back to the next functions, which cuts off the system power.
@@ -582,11 +583,11 @@ static int set_pmic_pwron(int enable, uint8_t event)
 	} else {
 		gpio_set_level(GPIO_PMIC_KPD_PWR, 1);
 		if (!enable)
-			gpio_set_level(GPIO_PMIC_RESIN_L, 1);
+			gpio_set_level(GPIO_PMIC_RESIN, 1);
 		ret = wait_pmic_pwron(enable, PMIC_POWER_AP_RESPONSE_TIMEOUT);
 		gpio_set_level(GPIO_PMIC_KPD_PWR, 0);
 		if (!enable)
-			gpio_set_level(GPIO_PMIC_RESIN_L, 0);
+			gpio_set_level(GPIO_PMIC_RESIN, 0);
 	}
 	return ret;
 }
@@ -886,24 +887,33 @@ static int warm_reset_seq(void)
 
 	/*
 	 * Warm reset sequence:
-	 * 1. Issue a low pulse to PMIC_RESIN_L, which triggers PMIC
+	 * 1. Issue a high pulse to PMIC_RESIN, which triggers PMIC
 	 *    to do a warm reset (requiring reprogramming PMIC registers
-	 *    to make PMIC_RESIN_L as a warm reset trigger).
-	 * 2. PMIC then issues a low pulse to AP_RST_L to reset AP.
-	 *    EC monitors the signal to see any low pulse.
-	 *    2.1. If a low pulse found, done.
-	 *    2.2. If a low pulse not found (the above PMIC registers
-	 *         not programmed or programmed wrong), issue a request
-	 *         to initiate a cold reset power sequence.
+	 *    to make PMIC_RESIN as a warm reset trigger).
+	 * 2. PMIC then issues a low pulse to AP_RST_L and high pulse to PS_HOLD
+	 *    to reset AP. EC monitors the signal to check for pulses.
+	 *    2.1. If both pulse found, done.
+	 *    2.2. If a pulse not found (the above PMIC registers not
+	 *         programmed or programmed wrong), issue a request to initiate
+	 *         a cold reset power sequence.
 	 */
 
-	gpio_set_level(GPIO_PMIC_RESIN_L, 0);
+	gpio_set_level(GPIO_PMIC_RESIN, 1);
 	crec_usleep(PMIC_RESIN_PULSE_LENGTH);
-	gpio_set_level(GPIO_PMIC_RESIN_L, 1);
+	gpio_set_level(GPIO_PMIC_RESIN, 0);
 
+	/* Check that the PMIC asserts PON_RESET_N*/
 	rv = power_wait_signals_timeout(IN_AP_RST_ASSERTED,
 					PMIC_POWER_AP_RESPONSE_TIMEOUT);
 
+	/* Exception case: PMIC not work as expected, request a cold reset */
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	CPRINTS("AP_RST asserted, checking PS_HOLD.");
+	/* Wait until ps_hold_ls goes back high*/
+	rv = power_wait_signals_timeout(IN_AP_PS_HOLD_DEASSERTED,
+					PMIC_POWER_AP_RESPONSE_TIMEOUT);
 	/* Exception case: PMIC not work as expected, request a cold reset */
 	if (rv != EC_SUCCESS)
 		return rv;

@@ -67,7 +67,7 @@
 		};
 		gpio_ec_pmk_rst_1v8: ec_pmk_rst_1v8 {
 			gpios = <&gpio9 6 (GPIO_OUTPUT)>;
-			enum-name = "GPIO_PMIC_RESIN_L";
+			enum-name = "GPIO_PMIC_RESIN";
 		};
 		gpio_sys_in_suspend: sys_in_suspend {
 			gpios = <&gpioa 0 (GPIO_INPUT)>;
