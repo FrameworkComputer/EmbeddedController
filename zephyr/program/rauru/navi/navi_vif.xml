@@ -157,7 +157,7 @@
         <vif:Snk_PDO_Supply_Type value="2">Variable</vif:Snk_PDO_Supply_Type>
         <vif:Snk_PDO_Min_Voltage value="95">4750 mV (Factor = 50)</vif:Snk_PDO_Min_Voltage>
         <vif:Snk_PDO_Max_Voltage value="400">20000 mV (Factor = 50)</vif:Snk_PDO_Max_Voltage>
-        <vif:Snk_PDO_Op_Current value="310">3100 mA (Factor = 10)</vif:Snk_PDO_Op_Current>
+        <vif:Snk_PDO_Op_Current value="315">3150 mA (Factor = 10)</vif:Snk_PDO_Op_Current>
       </vif:SnkPDO>
     </vif:SnkPdoList>
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
@@ -324,7 +324,7 @@
         <vif:Snk_PDO_Supply_Type value="2">Variable</vif:Snk_PDO_Supply_Type>
         <vif:Snk_PDO_Min_Voltage value="95">4750 mV (Factor = 50)</vif:Snk_PDO_Min_Voltage>
         <vif:Snk_PDO_Max_Voltage value="400">20000 mV (Factor = 50)</vif:Snk_PDO_Max_Voltage>
-        <vif:Snk_PDO_Op_Current value="310">3100 mA (Factor = 10)</vif:Snk_PDO_Op_Current>
+        <vif:Snk_PDO_Op_Current value="315">3150 mA (Factor = 10)</vif:Snk_PDO_Op_Current>
       </vif:SnkPDO>
     </vif:SnkPdoList>
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
