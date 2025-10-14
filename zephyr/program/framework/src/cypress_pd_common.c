@@ -1149,7 +1149,7 @@ static void clear_port_state(int controller, int port)
 	pd_port_states[port_idx].voltage = 0;
 }
 
-#ifdef CONFIG_PD_CCG8_EPR
+#ifdef CONFIG_CHARGER_HAS_VOLTAGE_REGULATOR
 static int64_t calculate_input_current(int pd_current, int pd_voltage, int scale_voltage,
 	int factor1, int factor2, int low_voltage_factor)
 {
@@ -1176,7 +1176,7 @@ void cypd_update_port_state(int controller, int port)
 	bool capability_mismatch = false;
 	int type_c_current = 0;
 	int port_idx = (controller << 1) + port;
-#ifdef CONFIG_PD_CCG8_EPR
+#ifdef CONFIG_CHARGER_HAS_VOLTAGE_REGULATOR
 	int64_t calculate_ma;
 	int level_buck_ma;
 #endif
@@ -1324,31 +1324,32 @@ void cypd_update_port_state(int controller, int port)
 	if (!!(epr_progress_status() & EPR_PROCESS_MASK) &&
 	    !(epr_progress_status() & ~EPR_PROCESS_MASK)) {
 
-#ifdef CONFIG_BOARD_LOTUS
-		/**
-		 * >20V: (charge_ma * charge_mv / 20000 ) * 0.9 * 0.94
-		 * <=20V: (charge_ma * 88 / 100)
-		 */
-		calculate_ma = calculate_input_current(pd_current, pd_voltage,
-							200000000, 90, 95, 88);
-#elif defined(CONFIG_BOARD_TULIP)
-		/**
-		 * >20V: (charge_ma * charge_mv / 24000 ) * 0.95 * 0.95
-		 * <=20V: (charge_ma * 98 / 100)
-		 */
-		calculate_ma = calculate_input_current(pd_current, pd_voltage,
-							240000000, 95, 95, 98);
-		level_buck_ma = pd_current * 98 / 100;
-#endif
-
 		if (get_active_charge_pd_port() == port_idx) {
 			board_discharge_on_ac(0);
 
+#ifdef CONFIG_CHARGER_HAS_VOLTAGE_REGULATOR
+#ifdef CONFIG_BOARD_LOTUS
+			/**
+			 * >20V: (charge_ma * charge_mv / 20000 ) * 0.9 * 0.94
+			 * <=20V: (charge_ma * 88 / 100)
+			 */
+			calculate_ma = calculate_input_current(pd_current, pd_voltage,
+								200000000, 90, 95, 88);
+#elif defined(CONFIG_BOARD_TULIP)
+			/**
+			 * >20V: (charge_ma * charge_mv / 24000 ) * 0.95 * 0.95
+			 * <=20V: (charge_ma * 98 / 100)
+			 */
+			calculate_ma = calculate_input_current(pd_current, pd_voltage,
+								240000000, 95, 95, 98);
+			level_buck_ma = pd_current * 98 / 100;
+#endif
 			if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGER_RAA489300)) {
 				level_buck_set_input_current_limit(level_buck_ma);
 			}
 
 			charger_set_input_current_limit(0, (int)calculate_ma);
+#endif
 		}
 
 		clear_epr_progress_mask();
