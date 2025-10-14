@@ -101,7 +101,7 @@ config AP_PWRSEQ_STACK_SIZE
 
 config AP_PWRSEQ_THREAD_PRIORITY
 	int "AP pwrseq thread priority"
-	default 13
+	default 14
 	help
 	  This option determines AP power sequence thread priority, this number
 	  must be selected in such way thread priority is in the middle of all

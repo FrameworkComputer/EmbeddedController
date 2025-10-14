@@ -3018,6 +3018,11 @@ static void rts54xx_thread(void *dev, void *unused1, void *unused2)
 
 #define PDC_DATA_STRUCT_NAME(inst) pdc_data_##inst
 
+BUILD_ASSERT(
+	EC_TASK_PRIORITY(EC_TASK_USBC_PDC_PRIO) ==
+		CONFIG_USBC_PDC_RTS54XX_THREAD_PRIORITY,
+	"EC_TASK_USBC_PDC_PRIO does not match USBC_PDC_RTS54XX_THREAD_PRIORITY.");
+
 #define RTS54xx_PDC_DEFINE(inst)                                              \
 	K_THREAD_STACK_DEFINE(rts54xx_thread_stack_area_##inst,               \
 			      CONFIG_USBC_PDC_RTS54XX_STACK_SIZE);            \

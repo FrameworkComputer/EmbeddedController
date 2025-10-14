@@ -3216,6 +3216,11 @@ static void tps_thread(void *dev, void *unused1, void *unused2)
 
 #define PDC_DATA_STRUCT_NAME(inst) pdc_data_##inst
 
+BUILD_ASSERT(
+	EC_TASK_PRIORITY(EC_TASK_USBC_PDC_PRIO) ==
+		CONFIG_USBC_PDC_TPS6699X_THREAD_PRIORITY,
+	"EC_TASK_USBC_PDC_PRIO does not match USBC_PDC_TPS6699X_THREAD_PRIORITY.");
+
 #define TPS6699X_PDC_DEFINE(inst)                                              \
 	K_THREAD_STACK_DEFINE(tps6699x_thread_stack_area_##inst,               \
 			      CONFIG_USBC_PDC_TPS6699X_STACK_SIZE);            \
