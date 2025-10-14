@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--USB VIF file for Hylia-->
 <vif:VIF xmlns:opt="http://usb.org/VendorInfoFileOptionalContent.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:vif="http://usb.org/VendorInfoFile.xsd">
-  <vif:VIF_Specification>3.32</vif:VIF_Specification>
+  <vif:VIF_Specification>3.33</vif:VIF_Specification>
   <vif:VIF_App>
     <vif:Vendor>USB-IF</vif:Vendor>
     <vif:Name>VIF Editor</vif:Name>
-    <vif:Version>3.10.0.0</vif:Version>
+    <vif:Version>3.11.0.0</vif:Version>
   </vif:VIF_App>
   <vif:Vendor_Name>Google</vif:Vendor_Name>
   <vif:Model_Part_Number>Yoda</vif:Model_Part_Number>
@@ -45,7 +45,7 @@
     <vif:SOP_PP_Debug_Capable value="false" />
     <vif:Manufacturer_Info_Supported_Port value="true" />
     <vif:Manufacturer_Info_VID_Port value="6353">18D1</vif:Manufacturer_Info_VID_Port>
-    <vif:Manufacturer_Info_PID_Port value="20581">5065</vif:Manufacturer_Info_PID_Port>
+    <vif:Manufacturer_Info_PID_Port value="20594">5072</vif:Manufacturer_Info_PID_Port>
     <vif:Chunking_Implemented_SOP value="true" />
     <vif:Unchunked_Extended_Messages_Supported value="true" />
     <vif:Security_Msgs_Supported_SOP value="false" />
@@ -120,7 +120,7 @@
       <vif:SrcPDO>
         <!--Source PDO 1-->
         <vif:Src_PDO_Supply_Type value="0">Fixed</vif:Src_PDO_Supply_Type>
-        <vif:Src_PDO_Peak_Current value="0">100% IOC</vif:Src_PDO_Peak_Current>
+        <vif:Src_PDO_Peak_Current value="1">130% IOC</vif:Src_PDO_Peak_Current>
         <vif:Src_PDO_Voltage value="100">5000 mV (Factor = 50)</vif:Src_PDO_Voltage>
         <vif:Src_PDO_Max_Current value="150">1500 mA (Factor = 10)</vif:Src_PDO_Max_Current>
         <vif:Src_PD_OCP_OC_Debounce value="0">0 msec</vif:Src_PD_OCP_OC_Debounce>
@@ -179,9 +179,9 @@
     <vif:DFP_VDO_Port_Number value="0">0</vif:DFP_VDO_Port_Number>
     <vif:Modal_Operation_Supported_SOP value="false" />
     <vif:USB_VID_SOP value="6353">18D1</vif:USB_VID_SOP>
-    <vif:PID_SOP value="20581">5065</vif:PID_SOP>
+    <vif:PID_SOP value="20594">5072</vif:PID_SOP>
     <!--BCD value below is for production FW. The main branch uses different PDC FW.-->
-    <vif:bcdDevice_SOP value="4096">013D</vif:bcdDevice_SOP>
+    <vif:bcdDevice_SOP value="327">0147</vif:bcdDevice_SOP>
   </vif:Component>
   <vif:Component>
     <!--Component 1: Port 1-->
@@ -212,7 +212,7 @@
     <vif:SOP_PP_Debug_Capable value="false" />
     <vif:Manufacturer_Info_Supported_Port value="true" />
     <vif:Manufacturer_Info_VID_Port value="6353">18D1</vif:Manufacturer_Info_VID_Port>
-    <vif:Manufacturer_Info_PID_Port value="20581">5065</vif:Manufacturer_Info_PID_Port>
+    <vif:Manufacturer_Info_PID_Port value="20594">5072</vif:Manufacturer_Info_PID_Port>
     <vif:Chunking_Implemented_SOP value="true" />
     <vif:Unchunked_Extended_Messages_Supported value="true" />
     <vif:Security_Msgs_Supported_SOP value="false" />
@@ -287,7 +287,7 @@
       <vif:SrcPDO>
         <!--Source PDO 1-->
         <vif:Src_PDO_Supply_Type value="0">Fixed</vif:Src_PDO_Supply_Type>
-        <vif:Src_PDO_Peak_Current value="0">100% IOC</vif:Src_PDO_Peak_Current>
+        <vif:Src_PDO_Peak_Current value="1">130% IOC</vif:Src_PDO_Peak_Current>
         <vif:Src_PDO_Voltage value="100">5000 mV (Factor = 50)</vif:Src_PDO_Voltage>
         <vif:Src_PDO_Max_Current value="150">1500 mA (Factor = 10)</vif:Src_PDO_Max_Current>
         <vif:Src_PD_OCP_OC_Debounce value="0">0 msec</vif:Src_PD_OCP_OC_Debounce>
@@ -346,8 +346,8 @@
     <vif:DFP_VDO_Port_Number value="1">1</vif:DFP_VDO_Port_Number>
     <vif:Modal_Operation_Supported_SOP value="false" />
     <vif:USB_VID_SOP value="6353">18D1</vif:USB_VID_SOP>
-    <vif:PID_SOP value="20581">5065</vif:PID_SOP>
+    <vif:PID_SOP value="20594">5072</vif:PID_SOP>
     <!--BCD value below is for production FW. The main branch uses different PDC FW.-->
-    <vif:bcdDevice_SOP value="4096">1000</vif:bcdDevice_SOP>
+    <vif:bcdDevice_SOP value="327">0147</vif:bcdDevice_SOP>
   </vif:Component>
 </vif:VIF>
