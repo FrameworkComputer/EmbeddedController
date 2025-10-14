@@ -2156,7 +2156,11 @@ static int rts54_get_info(const struct device *dev, struct pdc_info_t *info,
 
 	/* Post a command and perform a chip operation */
 	uint8_t payload[] = {
-		GET_IC_STATUS.cmd, GET_IC_STATUS.len, 0, 0x00, 38,
+		GET_IC_STATUS.cmd,
+		GET_IC_STATUS.len,
+		0,
+		0x00,
+		RTS54XX_GET_IC_STATUS_FULL_READ_LEN,
 	};
 
 	LOG_DBG("RTK%d: Get live chip info", cfg->connector_number);

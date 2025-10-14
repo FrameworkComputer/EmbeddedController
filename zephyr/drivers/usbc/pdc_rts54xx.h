@@ -42,6 +42,34 @@
 #define RTS54XX_GET_IC_STATUS_PROG_NAME_STR_LEN 12
 #define RTS54XX_GET_IC_STATUS_SBU_MUX_MODE_OFFSET 39
 
+/** Number of GET_IC_STATUS bytes that can be requested while running in ROM
+ *  code. ROM code does not support the full-length response.
+ *
+ *  Do not use as a receive buffer size because the RTK response includes an
+ *  extra length byte at response offset 0. Use RTS54XX_GET_IC_STATUS_RX_BUF_LEN
+ */
+#define RTS54XX_GET_IC_STATUS_SAFE_READ_LEN 20
+
+/** Number of GET_IC_STATUS bytes that can be requested while running flash
+ *  FW >= 0.3.0 that includes the project name string (all modern RTK PDC FW).
+ *  Used by rts54_get_info() for general chip info queries.
+ *
+ *  This skips the SBU mux mode byte at response offset 39, because not all FW
+ *  in circulation supports that. SBU mux mode is only queried by
+ *  rts54_get_sbu_mux_mode() when this feature is supported (per Kconfig).
+ *
+ *  Do not use as a receive buffer size because the RTK response includes an
+ *  extra length byte at response offset 0. Use RTS54XX_GET_IC_STATUS_RX_BUF_LEN
+ */
+#define RTS54XX_GET_IC_STATUS_FULL_READ_LEN 38
+
+/** Safe RX buffer size for a GET_IC_STATUS response, including the length byte
+ *  at response offset 0, and sized for the maximum possible response payload
+ *  length, which includes the SBU mux mode byte at response offset 39.
+ */
+#define RTS54XX_GET_IC_STATUS_RX_BUF_LEN \
+	(RTS54XX_GET_IC_STATUS_SBU_MUX_MODE_OFFSET + 1)
+
 static inline void
 rts54xx_unpack_get_ic_status_response(uint8_t *rx_buf, struct pdc_info_t *info)
 {
