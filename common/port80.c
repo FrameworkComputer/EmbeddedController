@@ -161,7 +161,7 @@ static void port80_dump_buffer(void)
 	}
 
 	/* Displaying last port80 msg on 7-segment if it is enabled */
-	if (IS_ENABLED(CONFIG_SEVEN_SEG_DISPLAY) && last_e)
+	if (IS_ENABLED(CONFIG_SEVEN_SEG_DISPLAY) && buf_offset)
 		display_7seg_write(SEVEN_SEG_PORT80_DISPLAY, last_e);
 }
 
