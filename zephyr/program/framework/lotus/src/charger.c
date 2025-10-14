@@ -420,6 +420,7 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 {
 	int prochot_ma;
 	int64_t calculate_ma;
+	static int64_t prev_calculate_ma = -1;
 
 	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT) {
 		charge_ma = CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT;
@@ -434,6 +435,10 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	} else {
 		calculate_ma = (int64_t)charge_ma * 88 / 100;
 	}
+
+	/* Skip update current limit if no change in calculated value */
+	if (calculate_ma == prev_calculate_ma)
+		return;
 
 	CPRINTS("Updating charger with EPR correction: ma %d", (int16_t)calculate_ma);
 
@@ -452,6 +457,8 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	charge_set_input_current_limit((int)calculate_ma, charge_mv);
 	/* sync-up ac prochot with current change */
 	isl9241_set_ac_prochot(0, prochot_ma);
+
+	prev_calculate_ma = calculate_ma;
 }
 
 bool log_ina236;
