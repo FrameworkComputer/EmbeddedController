@@ -24,7 +24,7 @@ orsource "chip/$(ARCH)/*/Kconfig.*"
 # Override the maximum number of preemptive priority levels.
 #
 config NUM_PREEMPT_PRIORITIES
-	default 28
+	default 29
 
 #
 # In Zephyr, the default system workqueue thread priority level is the lowest
@@ -32,7 +32,7 @@ config NUM_PREEMPT_PRIORITIES
 # priority. (i.e. NUM_PREEMPT_PRIORITIES - 1)
 #
 config SYSTEM_WORKQUEUE_PRIORITY
-	default 27
+	default 28
 
 # eSPI is chatty, so default to Error only
 choice ESPI_LOG_LEVEL_CHOICE
