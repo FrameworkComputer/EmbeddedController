@@ -128,10 +128,6 @@
 		};
 	};
 
-	named-i2c-ports {
-		/delete-node/ ec_i2c_pdc_s_scl_3v3;
-	};
-
 	unused-pins {
 		compatible = "unused-gpios";
 		unused-gpios =
@@ -166,9 +162,8 @@
 	};
 
 	named-i2c-ports {
-		/delete-node/ i2c_ec_i2c_pdc_s_scl_3v3;
 		i2c_detachable_base: detachable-base {
-			i2c-port = <&i2c4>;
+			i2c-port = <&i2c5>;
 			enum-names = "I2C_PORT_DETACHABLE_BASE";
 		};
 	};
@@ -191,6 +186,12 @@
 		gpio-voltage = "1v8";
 	};
 	i2c4_data_gpe7_default: i2c4_data_gpe7_default {
+		gpio-voltage = "1v8";
+	};
+	i2c5_clk_gpe1_default: i2c5_clk_gpe1_default {
+		gpio-voltage = "1v8";
+	};
+	i2c5_data_gpe2_default: i2c5_data_gpe2_default {
 		gpio-voltage = "1v8";
 	};
 	uart2_rx_gpf0_default {
@@ -217,14 +218,14 @@
 	/delete-node/ rts54-pdc@67;
 };
 
-&i2c4 {
+&i2c5 {
 	/delete-node/ ps8747-mux-1@10;
 	/delete-node/ tusb546-mux-0@44;
 	label = "I2C_DETACHABLE_BASE";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
-	pinctrl-0 = <&i2c4_clk_gpe0_default
-		     &i2c4_data_gpe7_default>;
+	pinctrl-0 = <&i2c5_clk_gpe1_default
+		     &i2c5_data_gpe2_default>;
 	pinctrl-names = "default";
 	prescale-scl-low = <1>;
 
@@ -241,7 +242,7 @@
 
 		/* TODO(b/301380459): allocate pid */
 		vid = <0x18d1>;
-		pid = <0x50ff>;
+		pid = <0x507a>;
 
 		/* Zephyr preferred style for specifying ec_ap_hid_int_odl */
 		irq-gpios = <&gpioi 6 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8 |
