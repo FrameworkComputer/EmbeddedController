@@ -69,13 +69,14 @@ test_export_static void kb_layout_init(void)
 	}
 	/*
 	 * If keyboard is US2(FW_KB_LAYOUT_US2), we need translate right ctrl
-	 * to backslash(\|) key.
+	 * to Europe2 key.
 	 */
 	if (val == FW_KB_LAYOUT_US2) {
-		set_scancode_set2(3, 14, get_scancode_set2(3, 11));
+		set_scancode_set2(3, 14, get_scancode_set2(2, 7));
 #ifdef CONFIG_KEYBOARD_DEBUG
-		set_keycap_label(3, 14, get_keycap_label(3, 11));
+		set_keycap_label(3, 14, get_keycap_label(2, 7));
 #endif
+		LOG_INF("CBI FW_CONFIG: FW_KB_LAYOUT_US2");
 	}
 }
 DECLARE_HOOK(HOOK_INIT, kb_layout_init, HOOK_PRIO_POST_I2C);
