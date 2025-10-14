@@ -734,6 +734,11 @@ static void pwrseq_loop_thread(void *p1, void *p2, void *p3)
 	}
 }
 
+BUILD_ASSERT(
+	EC_TASK_PRIORITY(EC_TASK_AP_PWRSEQ_PRIO) ==
+		CONFIG_AP_PWRSEQ_THREAD_PRIORITY,
+	"EC_TASK_AP_PWRSEQ_PRIO does not match CONFIG_AP_PWRSEQ_THREAD_PRIORITY.");
+
 static inline void create_pwrseq_thread(void)
 {
 	k_thread_create(&pwrseq_thread_data, pwrseq_thread_stack,
