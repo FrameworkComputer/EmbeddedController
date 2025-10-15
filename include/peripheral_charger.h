@@ -278,6 +278,7 @@ struct pchg_update {
 	/* Driver data for firmware update */
 	union {
 		struct cps8x00_update cps8200_update;
+		struct cps8x00_update cps8601_update;
 		/* other driver data follows in the future */
 	} driver_data;
 };

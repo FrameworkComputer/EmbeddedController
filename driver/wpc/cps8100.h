@@ -12,5 +12,6 @@
 
 extern struct pchg_drv cps8100_drv;
 extern struct pchg_drv cps8200_drv;
+extern struct pchg_drv cps8601_drv;
 
 #endif /* __CROS_EC_WPC_CPS8100_H */
