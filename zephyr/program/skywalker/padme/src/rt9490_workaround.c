@@ -12,7 +12,7 @@
 static void board_rt9490_workaround(void)
 {
 	/* disable ibus ADC and vbus ADC */
-	if (system_get_board_version() <= 1) {
+	if (system_get_board_version() == 0) {
 		i2c_write8(chg_chips[CHARGER_SOLO].i2c_port,
 			   chg_chips[CHARGER_SOLO].i2c_addr_flags, 0x2f, 0xa1);
 	}
