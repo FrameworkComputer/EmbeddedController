@@ -1,0 +1,56 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: "COSMX  AS3GXXH3KA CM32054"
+compatible: "cosmx,cm32054"
+
+include: battery-smart.yaml
+
+properties:
+  enum-name:
+    type: string
+    default: "cosmx,cm32054"
+
+  # Fuel gauge
+  manuf_name:
+    default: "AS3GXXH3KA"
+  device_name:
+    default: "CM32054"
+  ship_mode_reg_addr:
+    default: 0x00
+  ship_mode_reg_data:
+    default: [0x0010, 0x0010]
+  fet_reg_addr:
+    default: 0x99
+  fet_reg_mask:
+    default: 0x8
+  fet_disconnect_val:
+    default: 0x8
+  fet_cfet_mask:
+    default: 0x4
+  fet_cfet_off_val:
+    default: 0x4
+
+
+  # Battery info
+  voltage_max:
+    default: 8900
+  voltage_normal:
+    default: 7760
+  voltage_min:
+    default: 6000
+  precharge_current:
+    default: 256
+  start_charging_min_c:
+    default: 0
+  start_charging_max_c:
+    default: 45
+  charging_min_c:
+    default: 0
+  charging_max_c:
+    default: 60
+  discharging_min_c:
+    default: -20
+  discharging_max_c:
+    default: 60

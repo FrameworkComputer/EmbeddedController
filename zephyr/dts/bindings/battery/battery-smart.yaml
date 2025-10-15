@@ -49,6 +49,7 @@ properties:
       - "cosmx,ap25cbk"
       - "cosmx,c22n2505"
       - "cosmx,com-cos4-122"
+      - "cosmx,cm32054"
       - "cosmx,gg02047xl"
       - "cosmx,gh02047xl"
       - "cosmx,pg01lj3353"

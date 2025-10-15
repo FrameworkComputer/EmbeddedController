@@ -47,8 +47,11 @@
 	};
 
 	batteries {
-		default_battery: b300049 {
-			compatible = "celxpert,b300049", "battery-smart";
+		default_battery: cosmx_cm32054 {
+			compatible = "cosmx,cm32054", "battery-smart";
+		};
+		celxpert_b300049 {
+			compatible = "celxpert,b300049","battery-smart";
 		};
 	};
 
