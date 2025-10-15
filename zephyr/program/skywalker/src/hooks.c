@@ -18,6 +18,10 @@
 #include "driver/charger/bq257x0_regs.h"
 #endif
 
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(skywalker_hook, LOG_LEVEL_INF);
+
 static void skywalker_common_init(void)
 {
 	gpio_enable_dt_interrupt(
@@ -78,3 +82,8 @@ void update_bq25720_input_voltage(void)
 DECLARE_HOOK(HOOK_AC_CHANGE, update_bq25720_input_voltage, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_INIT, update_bq25720_input_voltage, HOOK_PRIO_DEFAULT);
 #endif
+
+void null_watchdog_interrupt(enum gpio_signal signal)
+{
+	LOG_INF("watchdog interrupt");
+}

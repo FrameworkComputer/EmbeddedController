@@ -40,7 +40,7 @@
 		int_ap_wdtrst: ap-wdtrst {
 			irq-pin = <&gpio_ap_ec_wdtrst_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "chipset_watchdog_interrupt";
+			handler = "null_watchdog_interrupt";
 		};
 		int_pg_pp3700_s5: pg-pp3700-s5 {
 			irq-pin = <&gpio_pg_pp3700_s5_od>;
