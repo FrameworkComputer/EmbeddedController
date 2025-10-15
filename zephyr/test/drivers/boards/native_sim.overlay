@@ -504,7 +504,7 @@
 		};
 		test-field-3 {
 			enum-name = "TEST_FIELD_3";
-			start = <130>; /* 130 = 4*32 + 2. In data[4], bit 2 */
+			start = <98>; /* 98 = 3*32 + 2. In data[3], bit 2 */
 			size = <1>;
 			value_d: value-d {
 				compatible = "cros-ec,cbi-ufsc-value";

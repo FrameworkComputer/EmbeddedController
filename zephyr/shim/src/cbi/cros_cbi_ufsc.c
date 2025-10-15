@@ -106,7 +106,6 @@ static const struct cbi_ufsc default_ufsc = { .data = {
 						      CBI_UFSC_DEFAULT_DATA(1),
 						      CBI_UFSC_DEFAULT_DATA(2),
 						      CBI_UFSC_DEFAULT_DATA(3),
-						      CBI_UFSC_DEFAULT_DATA(4),
 					      } };
 
 /* --- Internal Helper Functions --- */

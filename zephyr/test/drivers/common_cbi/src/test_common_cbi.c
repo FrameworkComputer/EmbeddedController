@@ -600,8 +600,7 @@ ZTEST_USER(common_cbi, test_board_id_fails_when_set)
 ZTEST_USER(common_cbi, test_cbi_get_ufsc__read_write)
 {
 	const struct cbi_ufsc ufsc_to_write = {
-		.data = { 0x11223344, 0x55667788, 0x99aabbcc, 0xddeeff00,
-			  0x12345678 }
+		.data = { 0x11223344, 0x55667788, 0x99aabbcc, 0xddeeff00 }
 	};
 	struct actual_set_params {
 		struct ec_params_set_cbi params;
@@ -669,10 +668,10 @@ ZTEST_USER(common_cbi, test_cros_cbi_ufsc_match)
 	 */
 	ufsc_to_write.data[0] = 0x16;
 	/*
-	 * data[4]: Set test-field-3 (start=130, size=1) to value 1.
-	 * Bit offset in data[4] is 130 % 32 = 2. Value = BIT(2).
+	 * data[3]: Set test-field-3 (start=98, size=1) to value 1.
+	 * Bit offset in data[3] is 98 % 32 = 2. Value = BIT(2).
 	 */
-	ufsc_to_write.data[4] = BIT(2);
+	ufsc_to_write.data[3] = BIT(2);
 	hc_params.data = ufsc_to_write;
 
 	gpio_wp_l_set(1);
