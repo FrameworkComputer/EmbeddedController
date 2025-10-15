@@ -48,7 +48,7 @@ Legacy devices utilize two distinct mechanisms for firmware configuration:
 
 Newer devices use a new unified system called **Unified Firmware and
 Second-source Configuration ([`UFSC`])**. This system replaces the separate
-`FW_CONFIG` and `SSFC` fields with a single, schema-driven 20-byte (5-DWORD)
+`FW_CONFIG` and `SSFC` fields with a single, schema-driven 128-bit (4-DWORD)
 value.
 
 ## Kconfig Options
