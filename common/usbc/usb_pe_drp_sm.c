@@ -3657,11 +3657,15 @@ static void pe_snk_apply_transition_current(int port)
 		 */
 		current_limit = PD_MIN_MA;
 	}
+	/* charge_manager_invalidate_suppliers makes sure that no other supplier
+	 * will keep the limit above 0. charge_manager_force_ceil makes sure the
+	 * change takes effect ASAP.
+	 */
 
 	if (current_limit == 0)
 		charge_manager_invalidate_suppliers(port);
-	else
-		charge_manager_force_ceil(port, current_limit);
+
+	charge_manager_force_ceil(port, current_limit);
 }
 
 static void pe_snk_select_capability_run(int port)
