@@ -44,8 +44,7 @@ if(DEFINED CONFIG_PLATFORM_EC AND EXISTS "${EDT_PICKLE}")
     message(FATAL_ERROR "led_policy.py failed with return code: ${ret}")
   endif()
 
-  if(NOT DEFINED CONFIG_PLATFORM_EC_DETACHABLE_BASE AND
-    NOT DEFINED CONFIG_FINGERPRINT_SENSOR AND
+  if(NOT DEFINED CONFIG_FINGERPRINT_SENSOR AND
     DEFINED CONFIG_PLATFORM_EC_I2C)
 
     message(STATUS "Generating component manifest file")
