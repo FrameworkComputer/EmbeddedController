@@ -129,6 +129,16 @@
 			};
 		};
 	};
+
+	fans {
+		compatible = "cros-ec,fans";
+
+		fan0: fan_0 {
+			rpm_min = <1800>;
+			rpm_start = <1800>;
+			rpm_max = <6100>;
+		};
+	};
 };
 
 &i2c3_0 {
