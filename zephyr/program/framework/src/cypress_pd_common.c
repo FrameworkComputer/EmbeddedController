@@ -468,9 +468,10 @@ void cypd_evaluate_port_profile(int controller, int port, int ccg_event)
 	int pd_port = PDPORT(controller, port);
 	int shared_pd_port = PDPORT(controller, (port ? 0 : 1));
 	bool first_port = false;
-	bool all_ports_disconnect = false;
+	bool restore_profile = false;
 	bool profile_is_changed = false;
 	static uint8_t ignore_evaluate_reason;
+	bool allow_profile_swap  = true;
 
 #ifndef CONFIG_SELECT_3A_TYPEC_OUTPUT_CURRENT
 	return
@@ -480,18 +481,23 @@ void cypd_evaluate_port_profile(int controller, int port, int ccg_event)
 	if (pd_chip_config[controller].support_max_port < 2)
 		return;
 
-	/* Skip to evaluate the port profile if the port is a source */
-	if (pd_port_states[pd_port].c_state == CCG_STATUS_SOURCE)
-		return;
-
 	/* Skip to evaluate the port profile if the safety level is 2 or more */
 	if (pre_safety_level >= TYPEC_SAFETY_LEVEL_2)
 		return;
 
-	if ((ccg_event == CCG_RESPONSE_PORT_DISCONNECT) &&
-	    (pd_port_states[shared_pd_port].c_state == CCG_STATUS_NOTHING))
-		all_ports_disconnect = true;
-	else {
+	/* Skip to evaluate the port profile if both are source ports */
+	if (pd_port_states[pd_port].c_state == CCG_STATUS_SOURCE &&
+		pd_port_states[shared_pd_port].c_state == CCG_STATUS_SOURCE)
+		return;
+
+	if (ccg_event == CCG_RESPONSE_PORT_DISCONNECT ||
+		pd_port_states[pd_port].c_state == CCG_STATUS_SOURCE) {
+		if (pd_port_states[shared_pd_port].c_state == CCG_STATUS_NOTHING)
+			restore_profile = true;
+
+		/* Only allow swapping profiles when both ports sink devices */
+		allow_profile_swap  = false;
+	} else {
 		/* Avoid the infinite loop if the ports reset or exchange profile */
 		if (ignore_evaluate_reason & BIT(controller))
 			return;
@@ -533,7 +539,7 @@ void cypd_evaluate_port_profile(int controller, int port, int ccg_event)
 
 			cypd_select_pdo(controller, (port ? 0 : 1), CCG_PD_CMD_SET_TYPEC_1_5A);
 		}
-	} else if (all_ports_disconnect) {
+	} else if (restore_profile) {
 
 		for (int idx = 0; idx < pd_chip_config[controller].support_max_port; idx++) {
 			int port_idx = PDPORT(controller, idx);
@@ -580,10 +586,12 @@ void cypd_evaluate_port_profile(int controller, int port, int ccg_event)
 			}
 		} else if ((pre_safety_level < TYPEC_SAFETY_LEVEL_2) &&
 		    ((pd_port_states[shared_pd_port].pd_state) &&
-		    (pd_port_states[shared_pd_port].current <= 1500)) &&
+		    (pd_port_states[shared_pd_port].current <= 1500) &&
+			(pd_port_states[shared_pd_port].safety_table[pre_safety_level] ==
+		     CCG_PD_CMD_SET_TYPEC_3A)) &&
 		    (((pd_port_states[pd_port].pd_state) &&
 		    (pd_port_states[pd_port].max_operating_current > 1500)) ||
-		     pd_port_states[pd_port].rdo_mismatch)) {
+		     pd_port_states[pd_port].rdo_mismatch) && allow_profile_swap) {
 			/**
 			 * Another port maximum operating current less than 1.5A
 			 * EC allows PD chip provide more current if the RDO capabilities mismatch
