@@ -38,6 +38,7 @@ static bool read_complete;
 static int pd_ucsi_port_map[PD_PORT_COUNT];
 static int active_pd_chip_count;
 static int valid_ucsi_port_count;
+static bool ucsi_has_enabled_notification;
 
 void ucsi_set_debug(bool enable)
 {
@@ -117,6 +118,7 @@ int ucsi_write_tunnel(void)
 
 	if (*command == UCSI_CMD_PPM_RESET) {
 		cypd_usci_ppm_reset();
+		ucsi_has_enabled_notification = false;
 		CPRINTS("UCSI PPM_RESET");
 	}
 
@@ -132,8 +134,12 @@ int ucsi_write_tunnel(void)
 				 connector_number_offset) & 0x7f;
 
 	/* This command does not have a connector number field; it needs to broadcast. */
-	if (*command == UCSI_CMD_SET_NOTIFICATION_ENABLE || *command == UCSI_CMD_ACK_CC_CI)
+	if (*command == UCSI_CMD_SET_NOTIFICATION_ENABLE || *command == UCSI_CMD_ACK_CC_CI) {
+
+		if (*command == UCSI_CMD_SET_NOTIFICATION_ENABLE)
+			ucsi_has_enabled_notification = true;
 		change_connector_indicator = 0;
+	}
 
 	/* Print the invalid port for debugging */
 	if (change_connector_indicator > valid_ucsi_port_count) {
@@ -247,8 +253,8 @@ static void resend_ucsi_connector_change_event(void)
 	static int process_port = 1;
 	static int resume_flag;
 
-	/* If no active pd chip, don't process the UCSI data */
-	if (active_pd_chip_count == 0)
+	/* If no active pd chip or no enable notification, don't process the UCSI data */
+	if (active_pd_chip_count == 0 || !ucsi_has_enabled_notification)
 		return;
 
 	if (s0ix_connector_change_indicator == 0) {
