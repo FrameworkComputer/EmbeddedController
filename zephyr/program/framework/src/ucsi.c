@@ -156,7 +156,7 @@ int ucsi_write_tunnel(void)
 	}
 
 	if (cmd_need_broadcast) {
-		for (int i = 0; i < PD_PORT_COUNT; i++) {
+		for (int i = 0; i < PD_CHIP_COUNT; i++) {
 
 			/**
 			 * If the controller does not needs to respond ACK,
@@ -336,9 +336,9 @@ int ucsi_read_tunnel(int controller)
 		CPRINTS("CCI_REG failed");
 	/* we need to offset the pd connector number to correct number */
 	port_indicator = (pd_chip_ucsi_info[controller].cci & 0xFE)>>1;
-	if (port_indicator <= 0 || port_indicator > PORTS_PER_CONTROLLER) {
+	if (port_indicator <= 0 || port_indicator > PD_PORT_COUNT) {
 		/* Print the invalid port for debugging */
-		if (ucsi_debug_enable && port_indicator > PORTS_PER_CONTROLLER)
+		if (ucsi_debug_enable && port_indicator > PD_PORT_COUNT)
 			CPRINTS("UCSI read invalid type-c port:%d", port_indicator);
 	} else {
 		new_port = (pd_ucsi_port_map[controller*2+port_indicator-1]);
@@ -522,7 +522,7 @@ void check_ucsi_event_from_host(void)
 	if (read_complete) {
 
 		/* The highest priority of the PD chip is pd 0 */
-		for (i = (PD_PORT_COUNT - 1); i >= 0; i--) {
+		for (i = (PD_CHIP_COUNT - 1); i >= 0; i--) {
 			if (pd_chip_ucsi_info[i].read_tunnel_complete) {
 				message_in = pd_chip_ucsi_info[i].message_in;
 				cci = &pd_chip_ucsi_info[i].cci;
@@ -538,7 +538,7 @@ void check_ucsi_event_from_host(void)
 		 * both controllers
 		 */
 		if (ucsi_check_all_pd_status(OPERATOR_AND)) {
-			for (i = 0; i < PD_PORT_COUNT; i++) {
+			for (i = 0; i < PD_CHIP_COUNT; i++) {
 				if (command == UCSI_CMD_GET_ERROR_STATUS) {
 					uint16_t error_information =
 						(pd_chip_ucsi_info[i].message_in[1] << 8) |
