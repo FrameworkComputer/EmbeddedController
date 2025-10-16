@@ -182,7 +182,7 @@
 			gpios = <&gpio7 7 GPIO_INPUT>;
 		};
 		gpio_en_pp5000_usba: en_pp5000_usba {
-			gpios = <&gpiod 7 GPIO_INPUT>;
+			gpios = <&gpiod 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
 		gpio_en_s5_rails: en_s5_rails {
 			gpios = <&gpiob 6 GPIO_OUTPUT>;
