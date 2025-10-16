@@ -856,10 +856,11 @@ class AllTests:
         """Return Zephyr upstream test configs."""
         # Make sure proper paths are added in the twister script, see ZEPHYR_TEST_PATHS
         tests = [
-            TestConfig(
-                zephyr_name="cpp.main.newlib",
-                test_name="zephyr_cpp_newlib",
-            ),
+            # TODO(b/452397735): Enable after CONFIG_COVERAGE_DUMP is fixed.
+            # TestConfig(
+            #    zephyr_name="cpp.main.newlib",
+            #    test_name="zephyr_cpp_newlib",
+            # ),
             # TODO(b/380491850): Test hangs.
             # TestConfig(
             #    zephyr_name="cpp.main.cpp20",
