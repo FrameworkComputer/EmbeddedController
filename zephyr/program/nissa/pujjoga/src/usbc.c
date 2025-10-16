@@ -7,6 +7,7 @@
 #include "chipset.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/tcpm/tcpci.h"
+#include "driver/tcpm/tcpm.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "nissa_sub_board.h"
@@ -176,4 +177,38 @@ int board_tcpc_post_init(int port)
 	 * otherwise the alert# pin stays low indefinitely */
 	schedule_deferred_pd_interrupt(port);
 	return EC_SUCCESS;
+}
+
+__override bool pd_check_vbus_level(int port, enum vbus_level level)
+{
+	int tcpc_vbus_voltage = 0;
+
+	/* Invalid argument guard */
+	if (level > VBUS_REMOVED)
+		return false;
+
+	/*
+	 * Attempt to read the VBUS voltage from the Type-C Port Controller
+	 * (TCPC). It helps in adjust thresholds to be more accurate during
+	 * VBUS Detection.
+	 */
+	tcpc_vbus_voltage = tcpc_get_vbus_voltage(port);
+
+	/* Check TCPC voltage path */
+	switch (level) {
+	case VBUS_PRESENT:
+		return tcpc_vbus_voltage >= PD_V_SAFE5V_MIN;
+	case VBUS_SAFE0V:
+		return tcpc_vbus_voltage <= PD_V_SAFE0V_MAX;
+	case VBUS_REMOVED:
+		/*
+		 * Experimentally, pujjoga requires an offset of at least 100 mV
+		 * to accurately detect VBUS disconnect in TD 4.6.3. 250 mV
+		 * accounts for the NCT3808's supposed maximum ADC error, 1% at
+		 * 20V.
+		 */
+		return tcpc_vbus_voltage <= PD_V_SINK_DISCONNECT_MAX - 250;
+	default:
+		return false;
+	}
 }

@@ -316,7 +316,7 @@ static inline int tcpm_set_src_ctrl(int port, int enable)
 		return EC_ERROR_UNIMPLEMENTED;
 }
 
-static inline int tcpc_get_vbus_voltage(int port)
+test_mockable_static_inline int tcpc_get_vbus_voltage(int port)
 {
 	int vbus;
 

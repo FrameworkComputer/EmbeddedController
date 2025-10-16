@@ -61,8 +61,9 @@ FAKE_VALUE_FUNC(int, ppc_vbus_sink_enable, int, int);
 FAKE_VOID_FUNC(nct38xx_reset_notify, int);
 FAKE_VALUE_FUNC(int, extpower_is_present);
 FAKE_VOID_FUNC(extpower_handle_update, int);
+FAKE_VALUE_FUNC(int, tcpc_get_vbus_voltage, int);
 
-int ppc_cnt = 2;
+unsigned int ppc_cnt = 2;
 
 static void test_before(void *fixture)
 {
@@ -76,6 +77,7 @@ static void test_before(void *fixture)
 	RESET_FAKE(extpower_is_present);
 	RESET_FAKE(extpower_handle_update);
 	RESET_FAKE(cros_cbi_get_fw_config);
+	RESET_FAKE(tcpc_get_vbus_voltage);
 }
 
 ZTEST_SUITE(pujjoga, NULL, NULL, test_before, NULL, NULL);
@@ -360,4 +362,47 @@ ZTEST(pujjoga, test_pen_power_control)
 	pen_detect_change(NULL, data);
 	gpio_disable_dt_interrupt(pen_detect_int);
 	zassert_equal(gpio_emul_output_get_dt(pen_power_gpio), 0);
+}
+
+static void set_tcpc_vbus_voltage(int port, int voltage)
+{
+	ARG_UNUSED(port);
+	tcpc_get_vbus_voltage_fake.return_val = voltage;
+}
+
+ZTEST(pujjoga, test_pd_check_vbus_level_tcpc)
+{
+	int port = 0;
+
+	/* Invalid level */
+	zassert_false(pd_check_vbus_level(port, VBUS_REMOVED + 1), NULL);
+
+	/* Case: VBUS_PRESENT → voltage above or below 4750 mV */
+	set_tcpc_vbus_voltage(port, PD_V_SAFE5V_MIN + 1);
+	zassert_true(pd_check_vbus_level(port, VBUS_PRESENT), NULL);
+	set_tcpc_vbus_voltage(port, PD_V_SAFE5V_MIN - 1);
+	zassert_false(pd_check_vbus_level(port, VBUS_PRESENT), NULL);
+
+	/* Case: VBUS_SAFE0V → voltage above or below 800 mV */
+	set_tcpc_vbus_voltage(port, PD_V_SAFE0V_MAX + 1);
+	zassert_false(pd_check_vbus_level(port, VBUS_SAFE0V), NULL);
+	set_tcpc_vbus_voltage(port, PD_V_SAFE0V_MAX - 1);
+	zassert_true(pd_check_vbus_level(port, VBUS_SAFE0V), NULL);
+
+	/*
+	 * Case: VBUS_REMOVED → Experimentally, pujjoga requires an offset of at
+	 * least 100 mV to accurately detect VBUS disconnect in TD 4.6.3. 250 mV
+	 * accounts for the NCT3808's supposed maximum ADC error, 1% at
+	 * 20V. This is accounted in the test by subtracting 300 mV from the
+	 * PD_V_SINK_DISCONNECT_MAX threshold to simulate the voltage being
+	 * slightly below the disconnect threshold.
+	 */
+	set_tcpc_vbus_voltage(port, PD_V_SINK_DISCONNECT_MAX - 300);
+	zassert_true(pd_check_vbus_level(port, VBUS_REMOVED), NULL);
+	set_tcpc_vbus_voltage(port, PD_V_SINK_DISCONNECT_MAX);
+	zassert_false(pd_check_vbus_level(port, VBUS_REMOVED), NULL);
+
+	/* Default case */
+	set_tcpc_vbus_voltage(port, 5000);
+	zassert_false(pd_check_vbus_level(port, 123), NULL);
 }
