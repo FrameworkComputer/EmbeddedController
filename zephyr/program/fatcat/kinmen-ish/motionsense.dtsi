@@ -7,13 +7,6 @@
 
 
 / {
-	aliases {
-		/*
-		 * Interrupt bindings for sensor devices.
-		 */
-		 lis2dw12-int = &lid_accel;
-	};
-
 	/*
 	 * Declare mutexes used by sensor drivers.
 	 * A mutex node is used to create an instance of mutex_t.
@@ -54,12 +47,12 @@
 	 * "struct als_drv_data_t" in accelgyro.h
 	 */
 	motionsense-sensor-data {
-		lis2dw12_base_data: lis2dw12-base-drv-data {
-			compatible = "cros-ec,drvdata-lis2dw12";
+		lis2de12_base_data: lis2de12-base-drv-data {
+			compatible = "cros-ec,drvdata-lis2de";
 			status = "okay";
 		};
-		lis2dw12_lid_data: lis2dw12-lid-drv-data {
-			compatible = "cros-ec,drvdata-lis2dw12";
+		lis2de12_lid_data: lis2de12-lid-drv-data {
+			compatible = "cros-ec,drvdata-lis2de";
 			status = "okay";
 		};
 	};
@@ -74,7 +67,7 @@
 	 */
 	motionsense-sensor {
 		lid_accel: lid-accel {
-			compatible = "cros-ec,lis2dw12";
+			compatible = "cros-ec,lis2de";
 			status = "okay";
 
 			active-mask = "SENSOR_ACTIVE_S0";
@@ -83,8 +76,8 @@
 			port = <&i2c_ec_i2c_sensor>;
 			rot-standard-ref = <&lid_rot_ref>;
 			default-range = <2>;
-			drv-data = <&lis2dw12_lid_data>;
-			i2c-spi-addr-flags = "LIS2DWL_ADDR1_FLAGS";
+			drv-data = <&lis2de12_lid_data>;
+			i2c-spi-addr-flags = "LIS2DH_ADDR1_FLAGS";
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";
@@ -94,7 +87,7 @@
 			};
 		};
 		base_accel: base-accel {
-			compatible = "cros-ec,lis2dw12";
+			compatible = "cros-ec,lis2de";
 			status = "okay";
 
 			active-mask = "SENSOR_ACTIVE_S0";
@@ -103,8 +96,8 @@
 			port = <&i2c_ec_i2c_sensor>;
 			rot-standard-ref = <&base_rot_ref>;
 			default-range = <2>;
-			drv-data = <&lis2dw12_base_data>;
-			i2c-spi-addr-flags = "LIS2DWL_ADDR0_FLAGS";
+			drv-data = <&lis2de12_base_data>;
+			i2c-spi-addr-flags = "LIS2DH_ADDR1_FLAGS";
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";
@@ -118,13 +111,7 @@
 	motionsense-sensor-info {
 		compatible = "cros-ec,motionsense-sensor-info";
 
-		/*
-		 * list of GPIO interrupts that have to
-		 * be enabled at initial stage
-		 */
-		sensor-irqs = <&int_lid_accel>;
-
 		/* list of sensors in force mode */
-		accel-force-mode-sensors = <&base_accel>;
+		accel-force-mode-sensors = <&lid_accel &base_accel>;
 	};
 };

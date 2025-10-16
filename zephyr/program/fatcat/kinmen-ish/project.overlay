@@ -6,6 +6,5 @@
  /* kinmen-ish project DTSI includes */
 #include "gpio.dtsi"
 #include "i2c.dtsi"
-#include "interrupts_motionsense.dtsi"
 #include "ish.dtsi"
 #include "motionsense.dtsi"
