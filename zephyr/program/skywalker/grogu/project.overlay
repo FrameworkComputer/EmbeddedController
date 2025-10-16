@@ -41,6 +41,7 @@
 	unused-pins {
 		compatible = "unused-gpios";
 		unused-gpios =
+			<&gpioa 0 GPIO_INPUT_PULL_DOWN>,
 			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
 			<&gpioa 7 GPIO_INPUT_PULL_DOWN>;
 	};
@@ -97,6 +98,10 @@
 		     &kso15_default
 		     &kso16_default
 		     &kso17_default>;
+};
+
+&pwm0 {
+	status = "disabled";
 };
 
 &pwm3 {

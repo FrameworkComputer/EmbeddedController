@@ -19,7 +19,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_RED";
+					led-color = "LED_AMBER";
 				};
 			};
 		};
@@ -34,7 +34,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = "LED_WHITE";
 				};
 			};
 		};
@@ -46,7 +46,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = "LED_WHITE";
 				};
 			};
 		};
@@ -61,7 +61,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_BLUE";
+					led-color = "LED_WHITE";
 				};
 			};
 		};
@@ -75,9 +75,9 @@
 			combo-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 
-				/* Blue 1 sec on, 3 sec off */
+				/* Amber 1 sec on, 3 sec off */
 				color-0 {
-					led-color = "LED_BLUE";
+					led-color = "LED_AMBER";
 					period-ms = <1000>;
 				};
 				color-1 {
@@ -94,14 +94,14 @@
 			combo-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 
-				/* White 1 sec on, 3 sec off */
+				/* White 2 sec on, 2 sec off */
 				color-0 {
 					led-color = "LED_WHITE";
-					period-ms = <1000>;
+					period-ms = <2000>;
 				};
 				color-1 {
 					led-color = "LED_OFF";
-					period-ms = <3000>;
+					period-ms = <2000>;
 				};
 			};
 		};
@@ -126,9 +126,9 @@
 			combo-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 
-				/* Red 1 sec on, 1 sec off */
+				/* Amber 1 sec on, 1 sec off */
 				color-0 {
-					led-color = "LED_RED";
+					led-color = "LED_AMBER";
 					period-ms = <1000>;
 				};
 				color-1 {
@@ -145,14 +145,14 @@
 			combo-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 
-				/* White 1 sec on, 3 sec off */
+				/* White 2 sec on, 2 sec off */
 				color-0 {
 					led-color = "LED_WHITE";
-					period-ms = <1000>;
+					period-ms = <2000>;
 				};
 				color-1 {
 					led-color = "LED_OFF";
-					period-ms = <3000>;
+					period-ms = <2000>;
 				};
 			};
 		};
@@ -176,13 +176,13 @@
 			combo-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 
-				/* Red 2 sec on, Green 2 sec on */
+				/* Amber 2 sec on, White 2 sec on */
 				color-0 {
-					led-color = "LED_RED";
+					led-color = "LED_AMBER";
 					period-ms = <2000>;
 				};
 				color-1 {
-					led-color = "LED_GREEN";
+					led-color = "LED_WHITE";
 					period-ms = <2000>;
 				};
 			};
@@ -210,7 +210,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_BLUE";
+					led-color = "LED_WHITE";
 				};
 			};
 		};
@@ -222,14 +222,14 @@
 			combo-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 
-				/* White 1 sec on, 3 sec off */
+				/* White 2 sec on, 2 sec off */
 				color-0 {
 					led-color = "LED_WHITE";
-					period-ms = <1000>;
+					period-ms = <2000>;
 				};
 				color-1 {
 					led-color = "LED_OFF";
-					period-ms = <3000>;
+					period-ms = <2000>;
 				};
 			};
 		};
