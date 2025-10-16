@@ -243,6 +243,10 @@ static void resend_ucsi_connector_change_event(void)
 	static int process_port = 1;
 	static int resume_flag;
 
+	/* If no active pd chip, don't process the UCSI data */
+	if (active_pd_chip_count == 0)
+		return;
+
 	if (s0ix_connector_change_indicator == 0) {
 		process_port = 1;
 		resume_flag = 0;
@@ -491,6 +495,10 @@ void check_ucsi_event_from_host(void)
 	int i;
 	int rv;
 
+	/* If no active pd chip, don't process the UCSI data */
+	if (active_pd_chip_count == 0)
+		return;
+
 	if (read_complete == 0 && !timestamp_expired(ucsi_wait_time, NULL)) {
 		if (ucsi_debug_enable)
 			CPRINTS("UCSI waiting for time expired");
@@ -667,13 +675,25 @@ void ucsi_pd_port_mapping(void)
 	}
 }
 
+/**
+ * CHIPSET_RESET for warmboot/coldboot
+ * CHIPSET_INIT for first power on
+ */
 void setup_ucsi_pd_mapping(void)
 {
-	active_pd_chip_count = cypd_get_active_pd_chip_count();
-	ucsi_pd_port_mapping();
-	if (ucsi_debug_enable) {
-		CPRINTS("PD mapping setup: active_chips=%d, valid_ports=%d",
-			active_pd_chip_count, valid_ucsi_port_count);
+	int pd_chip_count = cypd_get_active_pd_chip_count();
+
+	if (pd_chip_count == 0)
+		CPRINTS("WARNNING: No active PD chip");
+
+	if (active_pd_chip_count != pd_chip_count) {
+		active_pd_chip_count = pd_chip_count;
+		ucsi_pd_port_mapping();
+		if (ucsi_debug_enable) {
+			CPRINTS("PD mapping setup: active_chips=%d, valid_ports=%d",
+				active_pd_chip_count, valid_ucsi_port_count);
+		}
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, setup_ucsi_pd_mapping, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, setup_ucsi_pd_mapping, HOOK_PRIO_DEFAULT);
