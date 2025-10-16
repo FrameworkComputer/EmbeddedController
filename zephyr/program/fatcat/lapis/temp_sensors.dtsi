@@ -8,50 +8,64 @@
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
 
-		vr {
-			temp-fan-off = <50>;
-			temp-fan-max = <70>;
+		temp_vr: vr {
 			temp-host-high = <88>;
 			temp-host-halt = <91>;
 			temp-host-release-high = <85>;
 			power-good-pin = <&gpio_all_sys_pwrgd>;
 			sensor = <&apl6012_ch10>;
 		};
-		ddr {
-			temp-fan-off = <50>;
-			temp-fan-max = <70>;
+		temp_ddr: ddr {
 			temp-host-high = <88>;
 			temp-host-halt = <91>;
 			temp-host-release-high = <85>;
 			power-good-pin = <&gpio_all_sys_pwrgd>;
 			sensor = <&apl6012_ch11>;
 		};
-		top {
-			temp-fan-off = <50>;
-			temp-fan-max = <70>;
+		temp_top: top {
 			temp-host-high = <88>;
 			temp-host-halt = <91>;
 			temp-host-release-high = <85>;
 			power-good-pin = <&gpio_all_sys_pwrgd>;
 			sensor = <&apl6012_ch12>;
 		};
-		ssd {
-			temp-fan-off = <50>;
-			temp-fan-max = <70>;
+		temp_ssd: ssd {
 			temp-host-high = <88>;
 			temp-host-halt = <91>;
 			temp-host-release-high = <85>;
 			power-good-pin = <&gpio_all_sys_pwrgd>;
 			sensor = <&apl6012_ch13>;
 		};
-		charger {
-			temp-fan-off = <50>;
-			temp-fan-max = <70>;
+		temp_charger: charger {
 			temp-host-high = <88>;
 			temp-host-halt = <91>;
 			temp-host-release-high = <85>;
 			power-good-pin = <&gpio_all_sys_pwrgd>;
 			sensor = <&apl6012_ch14>;
+		};
+	};
+
+	fan_steps: fan-step {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp-on = <49 0 0 47 0>;
+			temp-off = <99 0 0 99 0>;
+			rpm-target = <0>;
+		};
+		level_1 {
+			temp-on = <52 0 0 51 0>;
+			temp-off = <48 0 0 46 0>;
+			rpm-target = <2600>;
+		};
+		level_2 {
+			temp-on = <66 0 0 68 0>;
+			temp-off = <51 0 0 50 0>;
+			rpm-target = <3700>;
+		};
+		level_3 {
+			temp-on = <99 0 0 99 0>;
+			temp-off = <63 0 0 65 0>;
+			rpm-target = <4600>;
 		};
 	};
 };
