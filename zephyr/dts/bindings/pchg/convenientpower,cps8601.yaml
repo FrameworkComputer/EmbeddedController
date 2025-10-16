@@ -1,0 +1,20 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: ConvenientPower CPS8601 driver
+compatible: "convenientpower,cps8601"
+include: wpc-chip.yaml
+properties:
+  irq-gpios:
+    type: phandle-array
+    description: |
+      Interrupt line from the WPC (zephyr standard GPIO format)
+  full-percent:
+    type: int
+    default: 96
+    description: full charge status is implied by capacity = 96
+  block-size:
+    type: int
+    default: 128
+    description: block size is 128
