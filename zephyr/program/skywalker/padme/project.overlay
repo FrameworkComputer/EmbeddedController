@@ -72,6 +72,11 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "base_detect_interrupt";
 		};
+		wpc_irq: wpc_irq{
+			irq-pin = <&gpio_wpc_irq>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "pchg_irq";
+		};
 	};
 
 	named-gpios {
@@ -84,6 +89,7 @@
 		/delete-node/ lid_accel_int_ec_l;
 		/delete-node/ dp_aux_path_sel;
 		/delete-node/ en_pp5000_usba_vbus;
+		/delete-node/ ec_pen_chg_dis_odl;
 
 		// POGO_PRSNT_INT_L  GPI5
 		pogo_prsnt_int_l: pogo_prsnt_int_l{
@@ -138,6 +144,15 @@
 		en_cc_lid_base_pu: en-cc-lid-base-pu {
 			gpios = <&gpioa 3 GPIO_INPUT>;
 		};
+		gpio_wpc_irq: gpio_wpc_irq{
+			gpios = <&gpiod 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			enum-name = "GPIO_WPC_IRQ";
+		};
+
+		gpio_ec_pen_dis: ec_pen_dis {
+			gpios = <&gpiof 5 (GPIO_OUTPUT_HIGH)>;
+			enum-name = "GPIO_QI_RESET_L";
+		};
 	};
 
 	unused-pins {
@@ -145,7 +160,6 @@
 		unused-gpios =
 			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
 			<&gpiob 6 GPIO_INPUT_PULL_DOWN>,
-			<&gpiod 4 GPIO_INPUT_PULL_DOWN>,
 			<&gpiof 2 GPIO_INPUT_PULL_DOWN>,
 			<&gpiog 0 GPIO_INPUT_PULL_DOWN>,
 			<&gpiog 1 GPIO_INPUT_PULL_DOWN>,
@@ -228,6 +242,14 @@
 
 &i2c2 {
 	/delete-node/ rts54-pdc@67;
+};
+
+&i2c4 {
+	scp8601@41 {
+		compatible = "convenientpower,cps8601";
+		reg = <0x41>;
+		irq-gpios=<&gpiod 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+	};
 };
 
 &i2c5 {
