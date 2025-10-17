@@ -332,7 +332,6 @@ static bool fts_fw_is_valid(void)
 /* Initialize the controller ICs after reset */
 test_export_static void fts_tp_init(void)
 {
-	int rv;
 	int ret = 0;
 
 	CPRINTS("%s", __func__);
@@ -344,8 +343,6 @@ test_export_static void fts_tp_init(void)
 
 	/* Enable interrupt to fetch reports */
 	gpio_enable_interrupt(GPIO_TOUCHPAD_INT);
-
-	CPRINTS("%s:%d", __func__, rv);
 
 	return;
 }
