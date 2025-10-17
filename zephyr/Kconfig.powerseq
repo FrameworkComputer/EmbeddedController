@@ -242,7 +242,6 @@ config PLATFORM_EC_POWERSEQ_MT8189
 	depends on AP_ARM_MTK_MT8189
 	select PLATFORM_EC_POWERSEQ_MTK_ALLOW_S3_WDT
 	select PLATFORM_EC_POWERSEQ_MTK_FW_SUSPEND
-	select PLATFORM_EC_POWERSEQ_MTK_DOUBLE_WDT
 	help
 	  Use the MT8189 code for power sequencing. Re-use MT8186 common
 	  code.
@@ -280,15 +279,6 @@ config PLATFORM_EC_POWERSEQ_MTK_FW_SUSPEND
 	  suspend signals can take up to a second to deactivate in a cold boot
 	  due to the firmware load time, using this configuration will speed up
 	  the process of entering the S0 state.
-
-config PLATFORM_EC_POWERSEQ_MTK_DOUBLE_WDT
-	bool "Handle dual WDT signals"
-	help
-	  On some platforms, the kernel sends an initial watchdog (WDT)
-	  signal to reset the PMIC. The EC should wait for a second WDT
-	  signal, triggered by coreboot after saving logs, before
-	  resetting the entire SoC. Enable this option to support this
-	  two-stage WDT reset mechanism.
 
 config PLATFORM_EC_PP3700_DISCHARGE_TIME_MS
 	int "Time(in millisecond) required for power-cycling PP3700_S5"

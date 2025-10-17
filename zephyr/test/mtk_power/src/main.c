@@ -93,25 +93,9 @@ void mtk_set_power_state(enum power_state target)
 ZTEST(mtk_power, test_watchdog_reset_in_s3)
 {
 	static const struct device *gpio_dev = GPIO_DEVICE;
-	int reset_count = test_chipset_get_ap_resets_since_ec_boot();
 
 	mtk_set_power_state(POWER_S3);
 
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_POWERSEQ_MTK_DOUBLE_WDT)) {
-		/*
-		 * CONFIG_PLATFORM_EC_POWERSEQ_MTK_DOUBLE_WDT=y
-		 * Verify that first WDT doesn't trigger reset
-		 */
-
-		zassert_ok(gpio_emul_input_set(gpio_dev, AP_WDGT_RST_REQ, 1));
-		k_sleep(K_MSEC(1));
-		zassert_ok(gpio_emul_input_set(gpio_dev, AP_WDGT_RST_REQ, 0));
-		k_sleep(K_MSEC(160));
-
-		zassert_equal(test_chipset_get_ap_resets_since_ec_boot(),
-			      reset_count);
-	}
-
 	/* Trigger AP watchdog. */
 	zassert_ok(gpio_emul_input_set(gpio_dev, AP_WDGT_RST_REQ, 1));
 	k_sleep(K_MSEC(1));
@@ -119,30 +103,6 @@ ZTEST(mtk_power, test_watchdog_reset_in_s3)
 
 	/* Wait 150+ms for debouncing fake AP watchdog interrupt */
 	k_sleep(K_MSEC(160));
-	zassert_equal(test_chipset_get_ap_resets_since_ec_boot(),
-		      reset_count + 1);
-	zassert_equal(chipset_get_shutdown_reason(), CHIPSET_RESET_AP_WATCHDOG);
-}
-
-ZTEST(mtk_power, test_double_wdt_timeout)
-{
-	Z_TEST_SKIP_IFNDEF(CONFIG_PLATFORM_EC_POWERSEQ_MTK_DOUBLE_WDT);
-
-	static const struct device *gpio_dev = GPIO_DEVICE;
-	int reset_count = test_chipset_get_ap_resets_since_ec_boot();
-
-	/* Trigger AP watchdog. */
-	zassert_ok(gpio_emul_input_set(gpio_dev, AP_WDGT_RST_REQ, 1));
-	k_sleep(K_MSEC(1));
-	zassert_ok(gpio_emul_input_set(gpio_dev, AP_WDGT_RST_REQ, 0));
-
-	/* Wait 150+ms for debouncing fake AP watchdog interrupt */
-	k_sleep(K_MSEC(160));
-	zassert_equal(test_chipset_get_ap_resets_since_ec_boot(), reset_count);
-
-	k_sleep(K_SECONDS(20));
-	zassert_equal(test_chipset_get_ap_resets_since_ec_boot(),
-		      reset_count + 1);
 	zassert_equal(chipset_get_shutdown_reason(), CHIPSET_RESET_AP_WATCHDOG);
 }
 
