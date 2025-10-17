@@ -18,9 +18,9 @@
 
 		fan_0 {
 			pwms = <&pwm6 6 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
-			rpm-min = <2200>;
-			rpm-start = <2200>;
-			rpm-max = <6900>;
+			rpm-min = <2800>;
+			rpm-start = <2800>;
+			rpm-max = <5000>;
 			tach = <&tach1>;
 			enable-gpio = <&gpio_fan_enable>;
 		};

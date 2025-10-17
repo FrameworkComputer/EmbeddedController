@@ -26,7 +26,7 @@
 		compatible = "cros-ec,temp-sensors";
 		memory {
 			temp-fan-off = <35>;
-			temp-fan-max = <70>;
+			temp-fan-max = <50>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 			sensor = <&temp_memory>;
 		};
