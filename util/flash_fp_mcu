@@ -425,7 +425,7 @@ get_fp_mcu_board() {
       board="$(cros_config /fingerprint board)"
       ;;
     "android")
-      board="$(halconfig_runtime Fingerprint board)"
+      board="$(dev_config Fingerprint board)"
       ;;
     *)
       echo "Unsupported operating system" 1>&2
