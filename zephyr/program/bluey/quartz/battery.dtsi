@@ -8,5 +8,8 @@
 		default_battery:smp_333-1d-2d-a {
 			compatible = "smp,333-1d-2d-a", "battery-smart";
 		};
+		atl_313-b7-2d-a {
+			compatible = "atl,313-b7-2d-a", "battery-smart";
+		};
 	};
 };
