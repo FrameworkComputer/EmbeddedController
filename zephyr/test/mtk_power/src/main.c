@@ -58,15 +58,11 @@ ASSERT_SAME_CONTROLLER(ap_ec_wdtrst_l);
 ASSERT_SAME_CONTROLLER(pg_pp3700_s5_od);
 #define LID_OPEN_EC_PIN DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(lid_open_ec), gpios)
 ASSERT_SAME_CONTROLLER(lid_open_ec);
-#define PMIC_EC_RESETB DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(pmic_ec_resetb), gpios)
-ASSERT_SAME_CONTROLLER(pmic_ec_resetb);
 
 DEFINE_FFF_GLOBALS;
 
 FAKE_VALUE_FUNC(int, system_can_boot_ap);
 FAKE_VALUE_FUNC(int, battery_wait_for_stable);
-
-extern bool is_held;
 
 static struct gpio_callback gpio_callback;
 
@@ -79,40 +75,13 @@ void mtk_set_power_state(enum power_state target)
 {
 	static const struct device *gpio_dev = GPIO_DEVICE;
 
-	if (target == POWER_S0) {
-		power_signal_enable_interrupt(GPIO_AP_EC_SYSRST_ODL);
-		power_signal_enable_interrupt(GPIO_AP_IN_SLEEP_L);
-		zassert_ok(gpio_emul_input_set(gpio_dev, AP_IN_RST, 0));
-		zassert_ok(gpio_emul_input_set(gpio_dev, AP_IN_SLEEP, 0));
-		zassert_ok(gpio_emul_input_set(gpio_dev, PG_PP3700_S5, 1));
-		zassert_ok(gpio_pin_set(gpio_dev, EC_AP_RST_L, 1));
-		zassert_ok(gpio_emul_input_set(gpio_dev, LID_OPEN_EC_PIN, 1));
-		zassert_ok(gpio_emul_input_set(gpio_dev, PMIC_EC_RESETB, 0));
-		power_signal_interrupt(GPIO_AP_IN_SLEEP_L);
-
-		task_wake(TASK_ID_CHIPSET);
-		/* Wait for power state transition. */
-		k_sleep(K_MSEC(500));
-		is_held = false;
-	} else if (target == POWER_S3) {
+	if (target == POWER_S3) {
 		/* preconditions */
 		power_signal_enable_interrupt(GPIO_AP_IN_SLEEP_L);
 		zassert_ok(gpio_emul_input_set(gpio_dev, AP_IN_SLEEP, 1));
 		task_wake(TASK_ID_CHIPSET);
 		/* wait for S3 processing */
 		k_sleep(K_MSEC(10));
-	} else if (target == POWER_G3) {
-		zassert_ok(gpio_emul_input_set(gpio_dev, AP_WDGT_RST_REQ, 1));
-		k_sleep(K_MSEC(1));
-		zassert_ok(gpio_emul_input_set(gpio_dev, AP_WDGT_RST_REQ, 0));
-		zassert_ok(gpio_emul_input_set(gpio_dev, AP_IN_RST, 1));
-		zassert_ok(gpio_emul_input_set(gpio_dev, AP_IN_SLEEP, 1));
-		zassert_ok(gpio_emul_input_set(gpio_dev, PMIC_EC_RESETB, 1));
-		zassert_ok(gpio_emul_input_set(gpio_dev, PG_PP3700_S5, 0));
-		/* simulate watchdog signal toggle during shutdown */
-		task_wake(TASK_ID_CHIPSET);
-		/* Wait for power state transition. */
-		k_sleep(K_SECONDS(11));
 	} else {
 		/* unsupported power state */
 		zassert_ok(false);
@@ -177,24 +146,27 @@ ZTEST(mtk_power, test_double_wdt_timeout)
 	zassert_equal(chipset_get_shutdown_reason(), CHIPSET_RESET_AP_WATCHDOG);
 }
 
-/* watchdog should be ignored during shutdown */
-ZTEST(mtk_power, test_shutdown)
-{
-	int reset_count = test_chipset_get_ap_resets_since_ec_boot();
-
-	mtk_set_power_state(POWER_G3);
-	mtk_set_power_state(POWER_S0);
-	k_sleep(K_SECONDS(20));
-
-	zassert_equal(test_chipset_get_ap_resets_since_ec_boot(), reset_count);
-}
-
 void start_in_s0(void *fixture)
 {
+	static const struct device *gpio_dev = GPIO_DEVICE;
+
 	RESET_FAKE(system_can_boot_ap);
 	system_can_boot_ap_fake.return_val = 1;
 
-	mtk_set_power_state(POWER_S0);
+	power_signal_enable_interrupt(GPIO_AP_EC_SYSRST_ODL);
+	power_signal_enable_interrupt(GPIO_AP_IN_SLEEP_L);
+	zassert_ok(gpio_emul_input_set(gpio_dev, AP_IN_RST, 0));
+	zassert_ok(gpio_emul_input_set(gpio_dev, AP_IN_SLEEP, 0));
+	zassert_ok(gpio_emul_input_set(gpio_dev, PG_PP3700_S5, 1));
+	zassert_ok(gpio_pin_set(gpio_dev, EC_AP_RST_L, 1));
+	zassert_ok(gpio_emul_input_set(gpio_dev, LID_OPEN_EC_PIN, 1));
+	power_signal_interrupt(GPIO_AP_IN_SLEEP_L);
+
+	task_wake(TASK_ID_CHIPSET);
+	/* Wait for power state transition. */
+	k_sleep(K_MSEC(500));
+	zassert_equal(power_get_state(), POWER_S0, "power_state=%d",
+		      power_get_state());
 	zassert_equal(power_has_signals(POWER_SIGNAL_MASK(0)), 0);
 }
 
