@@ -120,7 +120,7 @@ int ucsi_write_tunnel(void)
 		CPRINTS("UCSI PPM_RESET");
 	}
 
-	for (int i = 0; i < active_pd_chip_count; i++)
+	for (int i = 0; i < PD_CHIP_COUNT; i++)
 		pd_chip_ucsi_info[i].read_tunnel_complete = 0;
 
 	/* The connector number offset is 24 bits in GET_ALTERNATE_MODES command */
@@ -158,7 +158,11 @@ int ucsi_write_tunnel(void)
 	}
 
 	if (cmd_need_broadcast) {
-		for (int i = 0; i < active_pd_chip_count; i++) {
+		for (int i = 0; i < PD_CHIP_COUNT; i++) {
+
+			/* If PD chip state is CCG_STATE_NO_POWER, ignore the UCSI event */
+			if (!cypd_contoller_is_powered(i))
+				continue;
 
 			/**
 			 * If the controller does not needs to respond ACK,
@@ -300,7 +304,11 @@ static int ucsi_check_all_pd_status(int operator)
 
 	/* or operator = 0; and operator = 1 */
 	if (operator) {
-		for (controller = 0; controller < active_pd_chip_count; controller++) {
+		for (controller = 0; controller < PD_CHIP_COUNT; controller++) {
+
+			if (!cypd_contoller_is_powered(controller))
+				continue;
+
 			/**
 			 * In the and operator condition,
 			 * if one pd chip does not complete the read tunnel, return false
@@ -313,7 +321,11 @@ static int ucsi_check_all_pd_status(int operator)
 		return true;
 	}
 
-	for (controller = 0; controller < active_pd_chip_count; controller++) {
+	for (controller = 0; controller < PD_CHIP_COUNT; controller++) {
+
+		if (!cypd_contoller_is_powered(controller))
+			continue;
+
 		/**
 		 * In the or operator condition,
 		 * if one pd chip has completed the read tunnel, return true
@@ -508,7 +520,10 @@ void check_ucsi_event_from_host(void)
 	/* If the UCSI interface previously was busy then
 	 * poll to see if the busy bit cleared
 	 */
-	for (i = 0; i < active_pd_chip_count; i++) {
+	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		if (!cypd_contoller_is_powered(i))
+			continue;
+
 		if (pd_chip_ucsi_info[i].cci & CCI_BUSY_FLAG) {
 			ucsi_read_tunnel(i);
 		}
@@ -536,7 +551,10 @@ void check_ucsi_event_from_host(void)
 	if (read_complete) {
 
 		/* The highest priority of the PD chip is pd 0 */
-		for (i = (active_pd_chip_count - 1); i >= 0; i--) {
+		for (i = (PD_CHIP_COUNT - 1); i >= 0; i--) {
+			if (!cypd_contoller_is_powered(i))
+				continue;
+
 			if (pd_chip_ucsi_info[i].read_tunnel_complete) {
 				message_in = pd_chip_ucsi_info[i].message_in;
 				cci = &pd_chip_ucsi_info[i].cci;
@@ -552,7 +570,10 @@ void check_ucsi_event_from_host(void)
 		 * both controllers
 		 */
 		if (ucsi_check_all_pd_status(OPERATOR_AND)) {
-			for (i = 0; i < active_pd_chip_count; i++) {
+			for (i = 0; i <= PD_CHIP_COUNT; i++) {
+				if (!cypd_contoller_is_powered(i))
+					continue;
+
 				if (command == UCSI_CMD_GET_ERROR_STATUS) {
 					uint16_t error_information =
 						(pd_chip_ucsi_info[i].message_in[1] << 8) |
@@ -621,7 +642,7 @@ void check_ucsi_event_from_host(void)
 		if (command == UCSI_CMD_GET_CAPABILITY)
 			*host_get_memmap(message_in_offset + 4) = valid_ucsi_port_count;
 
-		for (i = 0; i < active_pd_chip_count; i++)
+		for (i = 0; i < PD_CHIP_COUNT; i++)
 			pd_chip_ucsi_info[i].read_tunnel_complete = 0;
 
 		/* clear the UCSI command if busy flag is not set */
