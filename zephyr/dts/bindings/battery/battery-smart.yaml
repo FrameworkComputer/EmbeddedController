@@ -12,6 +12,7 @@ properties:
     type: string
     enum:
       - "aec,5477109"
+      - "aec,598855"
       - "atl,313-b7-2d-a"
       - "atl,313-b7-32-a"
       - "atl,ap24cal"
