@@ -3,3 +3,4 @@
 # BSD-style license that can be found in the LICENSE file.
 
 zephyr_library_sources("src/backlight.c")
+zephyr_library_sources("src/board_config.c")
