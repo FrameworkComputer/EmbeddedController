@@ -1,0 +1,57 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: "ATL 313-B7-2D-A"
+compatible: "atl,313-b7-2d-a"
+
+include: battery-smart.yaml
+
+properties:
+  enum-name:
+    type: string
+    default: "atl,313-b7-2d-a"
+
+  # Fuel gauge
+  manuf_name:
+    default: "313-B7-2D-A"
+  device_name:
+    default: "GM04070XL"
+  ship_mode_reg_addr:
+    default: 0x00
+  ship_mode_reg_data:
+    default: [0x0010, 0x0010]
+  flags:
+    default: 0
+  fet_reg_addr:
+    default: 0x43
+  fet_reg_mask:
+    default: 0x0003
+  fet_disconnect_val:
+    default: 0x0000
+  fet_cfet_mask:
+    default: 0x0002
+  fet_cfet_off_val:
+    default: 0x0000
+
+  # Battery info
+  voltage_max:
+    default: 9020
+  voltage_normal:
+    default: 7800
+  voltage_min:
+    default: 6000
+  precharge_current:
+    default: 256
+  start_charging_min_c:
+    default: 0
+  start_charging_max_c:
+    default: 45
+  charging_min_c:
+    default: 0
+  charging_max_c:
+    default: 50
+  discharging_min_c:
+    default: -10
+  discharging_max_c:
+    default: 65
