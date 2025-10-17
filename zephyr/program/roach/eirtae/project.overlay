@@ -168,16 +168,17 @@
 	data-hold-time = <9>;
 	prescale-scl-low = <4>;
 
-	touchpad@15 {
-		logical-max-x = <2644>;
-		logical-max-y = <1440>;
-		physical-max-x = <839>;
-		physical-max-y = <457>;
+	/delete-node/ touchpad@15;
+	touchpad@38 {
+		compatible = "focaltech,fts";
+		status = "okay";
+		reg = <0x38>;
+		irq = <&int_tchpad>;
 	};
 };
 
 &touchpad_fw_hashes {
-	size = <((65536 / 1024) * 32)>;
+	size = <((55296 / 1024) * 32)>;
 };
 
 &{/binman/wp-ro/ec-ro} {
