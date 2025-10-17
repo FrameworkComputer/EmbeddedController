@@ -13,6 +13,7 @@
 #include "power_signals.dtsi"
 #include "i2c.dtsi"
 #include "adc.dtsi"
+#include "battery.dtsi"
 
 /* ojal overrides follow... */
 
