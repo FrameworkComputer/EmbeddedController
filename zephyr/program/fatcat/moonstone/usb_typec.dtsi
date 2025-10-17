@@ -1,0 +1,69 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <usbc-policy.dtsi>
+
+ /{
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		usbc_port0: port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			chg = <&charger>;
+			pdc = <&pdc_power_p0>;
+			pd-retimer;
+			policy = <&cros_policy>;
+		};
+		usbc_port1: port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			pdc = <&pdc_power_p1>;
+			pd-retimer;
+			policy = <&cros_policy>;
+		};
+		usbc_port2: port2@2 {
+			compatible = "named-usbc-port";
+			reg = <2>;
+			pdc = <&pdc_power_p2>;
+			pd-retimer;
+			policy = <&cros_policy>;
+		};
+		ppm-driver {
+			compatible = "ucsi-ppm";
+		};
+	};
+};
+
+&i2c1 {
+	pdc_power_p0: tps6699-pdc@20 {
+		compatible = "ti,tps6699-pdc";
+		reg = <0x20>;
+		irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
+		port-index-on-chip = <0x1>;
+	};
+	pdc_power_p1: tps6699-pdc@24 {
+		compatible = "ti,tps6699-pdc";
+		reg = <0x24>;
+		irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
+		port-index-on-chip = <0x2>;
+		no-fw-update;
+		ccd;
+	};
+	pdc_power_p2: tps6699-pdc@21 {
+		compatible = "ti,tps6699-pdc";
+		reg = <0x21>;
+		irq-gpios = <&gpioj 6 GPIO_ACTIVE_LOW>;
+		port-index-on-chip = <0x1>;
+	};
+};
+
+&i2c4 {
+	charger: isl9241@9 {
+		compatible = "intersil,isl9241";
+		status = "okay";
+		reg = <0x9>;
+	};
+};
