@@ -14,7 +14,7 @@ properties:
 
   # Fuel gauge
   manuf_name:
-    default: "333-B7-38-A"
+    default: "313-B7-38-A"
   device_name:
     default: "PM03068XL"
   ship_mode_reg_addr:
@@ -54,4 +54,4 @@ properties:
   discharging_min_c:
     default: -10
   discharging_max_c:
-    default: 60
+    default: 65
