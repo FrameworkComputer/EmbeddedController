@@ -475,7 +475,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		set_gpu_gpio(GPIO_FUNC_ACDC, 1);
 #endif
 
-	if (force_update)
+	if (force_update && !with_dc)
 		set_nv_gpu_throttle(THROTTLE_ON, 0);
 
 	if (mode_ctl)
