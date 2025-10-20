@@ -51,4 +51,18 @@ choice PLATFORM_EC_SHA256_MODE
 endchoice
 endif # PLATFORM_EC_VBOOT_HASH
 
+if SRAM_SIZE >= 128
+config LTO
+	default n
+
+config SOC_IT8XXX2_SERIAL_IN_RAM
+	default y if !LTO
+
+config SOC_IT8XXX2_KERNEL_IN_RAM
+	default y if !LTO
+
+config SOC_IT8XXX2_ZEPHYR_IN_RAM
+	default y if !LTO
+endif # SRAM_SIZE
+
 endif # BOARD_IT8XXX2
