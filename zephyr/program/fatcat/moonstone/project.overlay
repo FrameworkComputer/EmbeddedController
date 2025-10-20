@@ -21,9 +21,8 @@
 #include "../kinmen/led_policy.dtsi"
 #include "../kinmen/power_signals.dtsi"
 #include "../kinmen/pwm.dtsi"
+#include "../kinmen/usb_typec.dtsi"
 #include "../kinmen/usba.dtsi"
-
-#include "usb_typec.dtsi"
 
 / {
 	batteries {
