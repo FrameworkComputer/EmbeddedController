@@ -121,7 +121,8 @@
 	kso-gpio {
 		compatible = "cros-ec,col-gpio";
 		col-num = <2>;
-		col-gpios = <&gpio1 7 GPIO_ACTIVE_HIGH>;
+		col-gpios = <&gpio1 7 GPIO_ACTIVE_LOW>;
+		settle-time-us = <5>;
 	};
 
 	boot-keys {
