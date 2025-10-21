@@ -195,6 +195,7 @@ endchoice # PLATFORM_EC_KEYBOARD_PWRBTN_MODE
 
 config PLATFORM_EC_KEYBOARD_COL2_INVERTED
 	bool "A mechanism for passing KSO2 to H1 which inverts the signal"
+	depends on PLATFORM_EC_KEYBOARD_CROS_EC_RAW_KB
 	help
 	  This option enables a mechanism for passing the column 2
 	  to H1 which inverts the signal. The signal passing through H1
