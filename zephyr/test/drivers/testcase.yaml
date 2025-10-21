@@ -94,6 +94,7 @@ tests:
     - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
     - CONFIG_SHELL_BACKEND_DUMMY_BUF_SIZE=4096
     - CONFIG_PLATFORM_EC_KEYBOARD_STRAUSS=y
+    - CONFIG_PLATFORM_EC_CONSOLE_DEBUG=y
     extra_conf_files:
     - prj.conf
     - default/prj.conf
