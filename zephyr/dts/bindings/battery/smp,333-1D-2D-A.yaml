@@ -54,4 +54,4 @@ properties:
   discharging_min_c:
     default: -10
   discharging_max_c:
-    default: 60
+    default: 65
