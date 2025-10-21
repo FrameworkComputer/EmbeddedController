@@ -27,3 +27,5 @@ target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_DEBUG app PRIVATE
 	src/fpsensor_debug.cc)
 target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_COMMANDS app PRIVATE
 	src/fpsensor_vendor_command.cc)
+target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_FRAME_SIZE app PRIVATE
+	src/fpsensor_frame_size.cc)

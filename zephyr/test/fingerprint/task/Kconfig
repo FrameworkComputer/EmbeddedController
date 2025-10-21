@@ -62,4 +62,10 @@ config LINK_TEST_SUITE_FINGERPRINT_COMMANDS
 	  Link and execute fingerprint subsystem tests that focus
 	  on fingerprint host and console commands.
 
+config LINK_TEST_SUITE_FINGERPRINT_FRAME_SIZE
+	bool "Link fingerprint frame size tests"
+	help
+	  Link and execute fingerprint subsystem tests that focus
+	  on finger frame size.
+
 source "Kconfig.zephyr"

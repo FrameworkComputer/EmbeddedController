@@ -67,3 +67,9 @@ tests:
     - CONFIG_PLATFORM_EC_FINGERPRINT_VENDOR_COMMAND=y
     extra_conf_files:
     - prj.conf
+
+  fingerprint.task.frame.size:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FINGERPRINT_FRAME_SIZE=y
+    extra_conf_files:
+    - prj.conf
