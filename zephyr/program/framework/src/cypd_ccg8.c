@@ -637,7 +637,7 @@ void enter_epr_mode(void)
 			pd_epr_in_progress |= (BIT(port_idx) + ENTER_EPR);
 
 			/* avoid the pmf is higher when the system resume from S0ix */
-			update_pmf_events(BIT(PD_PROGRESS_ENTER_EPR_MODE),
+			update_cpu_power_limit_events(BIT(PD_PROGRESS_ENTER_EPR_MODE),
 				!!(pd_epr_in_progress & ~EPR_PROCESS_MASK));
 
 			if (battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED
@@ -702,7 +702,7 @@ void exit_epr_mode(void)
 				/* Set input current to 0mA */
 				charger_set_input_current_limit(0, 0);
 			} else {
-				update_pmf_events(BIT(PD_PROGRESS_EXIT_EPR_MODE),
+				update_cpu_power_limit_events(BIT(PD_PROGRESS_EXIT_EPR_MODE),
 						!!(pd_epr_in_progress & ~EPR_PROCESS_MASK));
 			}
 

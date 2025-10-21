@@ -1978,7 +1978,7 @@ void cypd_port_int(int controller, int port)
 		/* Assert prochot until the PMF is updated (Only sink role needs to do this) */
 		if (pd_port_states[(controller << 1) + port].power_role == PD_ROLE_SINK &&
 		   (prev_charge_port == (controller << 1) + port)) {
-			update_pmf_events(BIT(PD_PROGRESS_DISCONNECTED), 1);
+			update_cpu_power_limit_events(BIT(PD_PROGRESS_DISCONNECTED), 1);
 
 #ifdef CONFIG_PD_CCG8_EPR
 			/* clear the EPR progress when the adapter is removed */

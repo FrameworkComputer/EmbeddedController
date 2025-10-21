@@ -61,11 +61,10 @@ void update_apu_ready(int status);
 
 int get_apu_ready(void);
 
-
 int update_apu_only_sppt_limit(uint32_t mwatt);
 
 #ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
-void update_pmf_events(uint8_t pd_event, int enable);
+void update_cpu_power_limit_events(uint8_t pd_event, int enable);
 #endif
 
 extern bool thermal_warn_trigger(void);

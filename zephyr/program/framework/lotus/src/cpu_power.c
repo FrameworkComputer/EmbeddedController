@@ -291,11 +291,11 @@ static int update_safety_power_limit(int active_mpower)
 void force_clear_pmf_prochot(void)
 {
 	CPRINTS("pmf update timeout");
-	update_pmf_events(0, 255);
+	update_cpu_power_limit_events(0, 255);
 }
 DECLARE_DEFERRED(force_clear_pmf_prochot);
 
-void update_pmf_events(uint8_t pd_event, int enable)
+void update_cpu_power_limit_events(uint8_t pd_event, int enable)
 {
 	static uint8_t pre_events;
 	int power;
@@ -315,7 +315,7 @@ void update_pmf_events(uint8_t pd_event, int enable)
 		pre_events = 0;
 		pd_event = 0;
 		events = 0;
-		throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_UPDATE_PMF);
+		throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_UPDATE_POWER_LIMIT);
 		return;
 	}
 
@@ -327,12 +327,12 @@ void update_pmf_events(uint8_t pd_event, int enable)
 	if (pre_events != events) {
 		CPRINTS("events = %d, pre_events = %d", events, pre_events);
 		if (events) {
-			throttle_ap(THROTTLE_ON, THROTTLE_HARD, THROTTLE_SRC_UPDATE_PMF);
+			throttle_ap(THROTTLE_ON, THROTTLE_HARD, THROTTLE_SRC_UPDATE_POWER_LIMIT);
 			if (pd_event == BIT(PD_PROGRESS_ENTER_EPR_MODE))
 				set_gpu_gpio(GPIO_FUNC_ACDC, 0);
 			hook_call_deferred(&force_clear_pmf_prochot_data, 3 * SECOND);
 		} else {
-			throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_UPDATE_PMF);
+			throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_UPDATE_POWER_LIMIT);
 			if (pd_event == BIT(PD_PROGRESS_ENTER_EPR_MODE))
 				set_gpu_gpio(GPIO_FUNC_ACDC, 1);
 			hook_call_deferred(&force_clear_pmf_prochot_data, -1);
@@ -348,19 +348,19 @@ void clear_prochot(enum clear_reasons reason)
 		/* wait charger to entry the bypass mode */
 #ifdef CONFIG_BOARD_LOTUS
 		if (charger_in_bypass_mode())
-			update_pmf_events(BIT(PD_PROGRESS_ENTER_EPR_MODE), 0);
+			update_cpu_power_limit_events(BIT(PD_PROGRESS_ENTER_EPR_MODE), 0);
 #else
-		update_pmf_events(BIT(PD_PROGRESS_ENTER_EPR_MODE), 0);
+		update_cpu_power_limit_events(BIT(PD_PROGRESS_ENTER_EPR_MODE), 0);
 #endif
 
 	}
 
 	if (events & BIT(PD_PROGRESS_EXIT_EPR_MODE))
-		update_pmf_events(BIT(PD_PROGRESS_EXIT_EPR_MODE), 0);
+		update_cpu_power_limit_events(BIT(PD_PROGRESS_EXIT_EPR_MODE), 0);
 
 	if (events & BIT(PD_PROGRESS_DISCONNECTED)) {
 		/* if the adapter is disconnected, we should clear all events */
-		update_pmf_events(0xff, 0);
+		update_cpu_power_limit_events(0xff, 0);
 	}
 }
 
