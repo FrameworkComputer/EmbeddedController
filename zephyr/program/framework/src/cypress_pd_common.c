@@ -1974,19 +1974,19 @@ void cypd_port_int(int controller, int port)
 		if (data2[0] == CCG_RESPONSE_HARD_RESET_SENT)
 			CPRINTS("CCG_RESPONSE_HARD_RESET_SENT");
 
-#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 		/* Assert prochot until the PMF is updated (Only sink role needs to do this) */
 		if (pd_port_states[(controller << 1) + port].power_role == PD_ROLE_SINK &&
 		   (prev_charge_port == (controller << 1) + port)) {
-			update_cpu_power_limit_events(BIT(PD_PROGRESS_DISCONNECTED), 1);
-
 #ifdef CONFIG_PD_CCG8_EPR
+			update_cpu_power_limit_events(BIT(PD_PROGRESS_DISCONNECTED), 1);
 			/* clear the EPR progress when the adapter is removed */
 			clear_epr_progress();
-#endif /* CONFIG_PD_CCG8_EPR */
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_GPU
 			set_gpu_gpio(GPIO_FUNC_ACDC, 0);
+#endif
 		}
-#endif /* CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16 */
 
 		cypd_update_port_state(controller, port);
 		/* make sure the type-c state is cleared */
