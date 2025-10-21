@@ -101,7 +101,6 @@ int set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p3t)
 	return EC_SUCCESS;
 }
 
-#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 int update_apu_only_sppt_limit(uint32_t mwatt)
 {
 	uint32_t msgIn = 0;
@@ -111,7 +110,6 @@ int update_apu_only_sppt_limit(uint32_t mwatt)
 
 	return sb_rmi_mailbox_xfer(SB_RMI_WRITE_APU_ONLY_SPPT_CMD, msgIn, &msgOut);
 }
-#endif
 
 void update_soc_power_limit_hook(void)
 {
