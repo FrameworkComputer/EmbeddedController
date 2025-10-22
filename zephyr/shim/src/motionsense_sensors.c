@@ -400,16 +400,15 @@ BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 static void sensor_enable_irqs(void)
 {
 	if (motion_sensor_count == 0) {
-		/* Don't enable interrupts if there are no sensors. This is not
-		 * an optimal solution, it's possible that some sensors will be
-		 * disabled while others aren't. For now, we will use this
-		 * all-or-nothing approach which will be replaced eventually by
-		 * the Zephyr upstream drivers.
-		 */
+		/* Don't enable interrupts if there are no sensors. */
 		return;
 	}
-	__ASSERT_NO_MSG(DT_PROP_LEN(SENSOR_INFO_NODE, sensor_irqs) <=
-			motion_sensor_count);
+	/*
+	 * Note we may enable interrupt for sensors that are not present,
+	 * if the number of sensor is reduced.
+	 * This is not ideal but the related GPIO line is forced to HIGH
+	 * later in sensors.c, preventing it from floating.
+	 */
 	LISTIFY(DT_PROP_LEN(SENSOR_INFO_NODE, sensor_irqs),
 		SENSOR_GPIO_ENABLE_INTERRUPT, (), SENSOR_INFO_NODE)
 }
