@@ -33,9 +33,21 @@
 		};
 	};
 
+	gpio-interrupts {
+		int_pmic_ec_resetb: pmic-ec-resetb {
+			irq-pin = <&gpio_pmic_ec_resetb>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "pmic_ec_resetb_interrupt";
+		};
+	};
+
 	named-gpios {
 		/delete-node/ ec_i2c_pdc1_sm_int_odl;
 		/delete-node/ ec_i2c_pdc1_s_int_odl;
+
+		gpio_en_pwr_s3: en_pwr_s3 {
+			gpios = <&gpiob 6 (GPIO_OUTPUT_LOW)>;
+		};
 	};
 
 	unused-pins {
