@@ -101,10 +101,10 @@
 					"cros-ec,motionsense-sensor-config";
 				/* 50 Hz to support body detection. */
 				ec-s0 {
-					odr = <(50000 | ROUND_UP_FLAG)>;
+					odr = <(10000 | ROUND_UP_FLAG)>;
 				};
 				ec-s3 {
-					odr = <(50000 | ROUND_UP_FLAG)>;
+					odr = <(10000 | ROUND_UP_FLAG)>;
 					ec-rate = <(100 * USEC_PER_MSEC)>;
 				};
 			};
@@ -125,10 +125,10 @@
 					"cros-ec,motionsense-sensor-config";
 				/* 50 Hz to support body detection. */
 				ec-s0 {
-					odr = <(50000 | ROUND_UP_FLAG)>;
+					odr = <(10000 | ROUND_UP_FLAG)>;
 				};
 				ec-s3 {
-					odr = <(50000 | ROUND_UP_FLAG)>;
+					odr = <(10000 | ROUND_UP_FLAG)>;
 					ec-rate = <(100 * USEC_PER_MSEC)>;
 				};
 			};
