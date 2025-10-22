@@ -352,7 +352,7 @@ void set_ps2_mouse_emulation(bool disable)
 }
 void set_power(bool standby)
 {
-	uint16_t data = BIT(11) | (standby ? 0x01 : 0x0);
+	uint16_t data = HID_SET_POWER_U16 | (standby ? 0x01 : 0x0);
 
 	i2c_write_offset16(I2C_PORT_TOUCHPAD,
 		TOUCHPAD_I2C_HID_EP | I2C_FLAG_ADDR16_LITTLE_ENDIAN, PCT3854_COMMAND, data, 2);
@@ -360,7 +360,7 @@ void set_power(bool standby)
 
 void set_reset(void)
 {
-	uint16_t data = BIT(8);
+	uint16_t data = HID_RESET_U16;
 
 	i2c_write_offset16(I2C_PORT_TOUCHPAD,
 		TOUCHPAD_I2C_HID_EP | I2C_FLAG_ADDR16_LITTLE_ENDIAN, PCT3854_COMMAND, data, 2);
@@ -369,11 +369,27 @@ void set_reset(void)
 void setup_touchpad(void)
 {
 	int rv;
-	/* These are touchpad firmware dependent
-	 * They set the touchpad into the mouse device mode, instead of PTP mode
-	 * And are based on the HID descriptor for our unique device
+	/* Change reporting mode from PTP to mouse mode.
+	 * PTP reports absolute coordinates of each touch,
+	 * mouse mode reports relative movement of the "mouse cursor".
+	 * This is much easier to turn into PS2 compatible data, so we switch
+	 * into mouse mode for PS2 emulation. The OS will switch back to PTP
+	 * mode when it re-initializes the touchpad.
+	 *
+	 * This command is defined by Microsoft here:
+	 * https://learn.microsoft.com/en-us/windows-hardware/design/component-guidelines/touchpad-configuration-collection
+	 *
+	 * On different touchpads, the Report ID will likely be different.
+	 * The report ID is the one that includes Usage 0x52.
 	 */
-	static const uint16_t cmd[4] = {0x0336, 0x0023, 0x0004, 0x0006};
+	static const uint16_t cmd[4] = {
+		/* SetFeature(ReportId=6) */
+		HID_SET_REPORT_U16 | HID_FEATURE_REPORT | TOUCHPAD_REPORT_ID_MODE_SWITCH,
+		PCT3854_DATA,
+		/* Data Length (2 Bytes Length, 1 Byte Data, 1 Byte Report ID) */
+		0x0004,
+		(REPORTING_MODE_MOUSE << 8) | TOUCHPAD_REPORT_ID_MODE_SWITCH
+	};
 
 	rv = i2c_write_offset16_block(I2C_PORT_TOUCHPAD,
 			TOUCHPAD_I2C_HID_EP | I2C_FLAG_ADDR16_LITTLE_ENDIAN, PCT3854_COMMAND,
@@ -471,9 +487,9 @@ read_failed:
 	}
 
 	/* Packet structure:
-	 * first two bytes are length (LSB MSB) including length field?
+	 * First two bytes are length (LSB MSB), including length field
 	 * 3rd byte is report ID
-	 * rest of the packet is the input report
+	 * Rest of the packet is the input report
 	 */
 	if (rv == EC_SUCCESS && data[2] == TOUCHPAD_REPORT_ID_MOUSE_MODE) {
 		/* 0x0800 02 04 feff 0000

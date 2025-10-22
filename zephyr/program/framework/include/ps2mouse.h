@@ -81,6 +81,10 @@ enum ps2_mouse_report_mode {
 
 #define TOUCHPAD_REPORT_ID_PTP_MODE 0x01
 #define TOUCHPAD_REPORT_ID_MOUSE_MODE 0x02
+#define TOUCHPAD_REPORT_ID_MODE_SWITCH 0x06
+
+#define REPORTING_MODE_MOUSE 0x00
+#define REPORTING_MODE_PTP   0x03
 
 enum pixart_pct3854_regs {
 	PCT3854_DESCRIPTOR	= 0x0020,
@@ -92,6 +96,15 @@ enum pixart_pct3854_regs {
 	PCT3854_VID			= 0x093A,
 	PCT3854_PID			= 0x0255,
 };
+
+/* HID Opcodes */
+#define HID_RESET_U16      (0x01 << 8)
+#define HID_SET_REPORT_U16 (0x03 << 8)
+#define HID_SET_POWER_U16  (0x08 << 8)
+
+/* HID Report Types */
+#define HID_FEATURE_REPORT 0x30
+
 #define TOUCHPAD_I2C_HID_DESCRIPTOR 0x0020
 void set_ps2_mouse_emulation(bool disable);
 void tp_int_count_clear(void);
