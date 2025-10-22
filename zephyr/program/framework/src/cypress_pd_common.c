@@ -2046,7 +2046,7 @@ int cypd_handle_alert_msg(int controller, int port, int len)
 
 void cypd_port_int(int controller, int port)
 {
-	int i, rv, response_len;
+	int i, rv, response_len, response_code;
 	uint8_t data2[32] = {0};
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
 	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
@@ -2068,7 +2068,8 @@ void cypd_port_int(int controller, int port)
 	print_pd_response_code(controller, port, data2[0], data2[1]);
 
 	response_len = data2[1];
-	switch (data2[0]) {
+	response_code = data2[0];
+	switch (response_code) {
 	case CCG_RESPONSE_PORT_DISCONNECT:
 		record_ucsi_connector_change_event(controller, port);
 		cypd_evaluate_port_profile(controller, port, data2[0]);
@@ -2174,6 +2175,9 @@ void cypd_port_int(int controller, int port)
 	case CCG_RESPONSE_OVER_CURRENT:
 		CPRINTS("CCG_RESPONSE_OVER_CURRENT %d", port_idx);
 		break;
+	case CCG_RESPONSE_REVERSE_CURRENT_ERROR:
+		CPRINTS("CCG_RESPONSE_REVERSE_CURRENT_ERROR (RCP) %d", port_idx);
+		break;
 	case CCG_RESPONSE_ALERT_RX:
 		cypd_handle_alert_msg(controller, port, response_len);
 		CPRINTS("CCG_RESPONSE_ALERT_RX");
@@ -2197,6 +2201,8 @@ void cypd_port_int(int controller, int port)
 				CCG_READ_DATA_MEMORY_REG(port, 0), data2, MIN(response_len, 32));
 			for (i = 0; i < response_len; i++)
 				CPRINTF("%02x", data2[i]);
+			if (response_code >= CCG_RESPONSE_HARD_RESET_SENT)
+				CPRINTF(" - RESET or ERROR!!");
 			CPRINTF("\n");
 		}
 		break;
