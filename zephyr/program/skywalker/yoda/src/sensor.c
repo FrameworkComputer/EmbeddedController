@@ -18,29 +18,16 @@
 
 LOG_MODULE_REGISTER(yoda_sensor, LOG_LEVEL_INF);
 
-enum base_sensor_type {
-	BASE_LIS2DW12 = 0,
-	BASE_BMA422,
-};
-
 enum lid_sensor_type {
 	LID_LIS2DW12 = 0,
 	LID_BMA422,
 };
 
-static int base_use_alt_sensor;
 static int lid_use_alt_sensor;
 
-void motion_interrupt(enum gpio_signal signal)
-{
-	if (lid_use_alt_sensor == LID_LIS2DW12)
-		lis2dw12_interrupt(signal);
-	else
-		bma4xx_interrupt(signal);
-}
 void lid_accel_interrupt(enum gpio_signal signal)
 {
-	if (base_use_alt_sensor == BASE_LIS2DW12)
+	if (lid_use_alt_sensor == LID_LIS2DW12)
 		lis2dw12_interrupt(signal);
 	else
 		bma4xx_interrupt(signal);
@@ -49,14 +36,6 @@ void lid_accel_interrupt(enum gpio_signal signal)
 test_export_static void alt_sensor_init(void)
 {
 	/* Check which motion sensors are used */
-	if (cros_cbi_ssfc_check_match(
-		    CBI_SSFC_VALUE_ID(DT_NODELABEL(base_sensor_0)))) {
-		LOG_INF("Base : LIS2DWL");
-		base_use_alt_sensor = BASE_LIS2DW12;
-	} else {
-		LOG_INF("Base : BMA422");
-		base_use_alt_sensor = BASE_BMA422;
-	}
 	if (cros_cbi_ssfc_check_match(
 		    CBI_SSFC_VALUE_ID(DT_NODELABEL(lid_sensor_0)))) {
 		LOG_INF("Lid : LIS2DWL");

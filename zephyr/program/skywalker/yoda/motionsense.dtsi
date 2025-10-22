@@ -13,8 +13,6 @@
 		 */
 		lis2dw12-int = &lid_accel;
 		bma4xx-int = &alt_lid_accel;
-		lis2dw12-int = &base_accel;
-		bma4xx-int = &alt_base_accel;
 	};
 
 	/*
@@ -193,6 +191,9 @@
 	motionsense-sensor-info {
 		compatible = "cros-ec,motionsense-sensor-info";
 
-		sensor-irqs = <&int_lid_imu &int_imu>;
+		sensor-irqs = <&int_lid_accel>;
+
+		/* List of sensors in force mode */
+		accel-force-mode-sensors = <&base_accel &alt_base_accel>;
 	};
 };
