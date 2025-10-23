@@ -143,6 +143,13 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
  */
 #define AP_RST_TRANSITION_TIMEOUT (450 * MSEC)
 
+/*
+ * Duration to disable the AC_PRESENT interrupt to ignore the
+ * spurious toggle from the switchcap turning on/off.
+ * Based on o-scope measurements showing a ~500ms event.
+ */
+#define AC_IRQ_DISABLE_DURATION (750 * MSEC)
+
 /* TODO(crosbug.com/p/25047): move to HOOK_POWER_BUTTON_CHANGE */
 /* 1 if the power button was pressed last time we checked */
 static char power_button_was_pressed;
@@ -452,6 +459,37 @@ void chipset_sys_rst_interrupt(enum gpio_signal signal)
 	}
 }
 
+/*
+ * Re-enables the AC interrupt after the "ignore" period and processes
+ * any settled state change.
+ */
+void notify_ac_irq_re_enable_and_check(void)
+{
+	/* Re-enable the AC interrupt */
+	gpio_enable_interrupt(GPIO_AC_PRESENT);
+
+	/*
+	 * Manually invoke the handler to process any genuine AC state
+	 * changes that may have occurred while the interrupt was
+	 * disabled. This synchronizes the system to the settled state.
+	 */
+	extpower_interrupt(GPIO_AC_PRESENT);
+}
+DECLARE_DEFERRED(notify_ac_irq_re_enable_and_check);
+
+/*
+ * Disables the AC interrupt to ignore the spurious toggle from the
+ * switchcap and schedules a deferred task to re-enable it.
+ */
+void start_ac_filter_window(void)
+{
+	/* Disable AC_PRESENT interrupt */
+	gpio_disable_interrupt(GPIO_AC_PRESENT);
+	/* Schedule the interrupt to be re-enabled after the event passes */
+	hook_call_deferred(&notify_ac_irq_re_enable_and_check_data,
+			   AC_IRQ_DISABLE_DURATION);
+}
+
 /**
  * Set the state of the system power signals but without any check.
  *
@@ -480,6 +518,7 @@ static int set_system_power(int enable)
 	int ret;
 
 	CPRINTS("%s(%d)", __func__, enable);
+	start_ac_filter_window();
 	set_system_power_no_check(enable);
 
 	ret = wait_switchcap_power_good(enable);
