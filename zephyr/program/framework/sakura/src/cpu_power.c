@@ -4,6 +4,7 @@
  */
 
 #include "battery_fuel_gauge.h"
+#include "board_function.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "charge_manager.h"
@@ -19,84 +20,59 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define ROP 15
-#define batt_rating 61
-
-enum battery_wattage { none, battery_55w, battery_61w };
-enum battery_wattage get_battery_wattage(void)
-{
-	char device_name[32];
-	int curr_batt_present = battery_is_present();
-	static int pre_batt_present;
-	static enum battery_wattage curr_batt_watt;
-
-
-	if (pre_batt_present != curr_batt_present) {
-		/* read the battery device name */
-		if (battery_device_name(device_name, sizeof(device_name)))
-			curr_batt_watt = none;
-		else {
-			if (!strncmp(device_name, "Framework Laptop", 16))
-				curr_batt_watt = battery_55w;
-			else if (!strncmp(device_name, "FRANGWAT01", 10))
-				curr_batt_watt = battery_61w;
-		}
-		pre_batt_present = curr_batt_present;
-	}
-
-	return curr_batt_watt;
-}
-
 void update_soc_power_limit(bool force_update, bool force_no_adapter)
 {
-	int active_power;
-	int battery_percent;
-	enum battery_wattage battery_watt;
-
 	static int old_pl1_watt = -1;
 	static int old_pl2_watt = -1;
 	static int old_pl4_watt = -1;
 	static int old_psyspl2_watt = -1;
 	static bool communication_fail;
 
-	battery_watt = get_battery_wattage();
-	battery_percent = charge_get_percent();
-	active_power = charge_manager_get_power_limit_uw() / 1000000;
+	int batt_type = board_get_battery_type();
+	int active_power = charge_manager_get_power_limit_uw() / 1000000;
+	enum battery_present batt_status = battery_is_present();
 
 	if (force_no_adapter) {
 		active_power = 0;
 	}
 
-	if (!extpower_is_present()  || active_power == 0) {
-		/* Battery only, same for 61wh and 55wh battery */
-		pl1_watt = 28;
-		pl2_watt = batt_rating - ROP;
-		pl4_watt = 80;
-		psyspl2_watt = (batt_rating * 95) / 100;
-	} else if (battery_watt == none && active_power >= 60) {
-		/*Standalone mode AC only and AC >= 60W*/
+	if ((!extpower_is_present()  || active_power == 0)) {
+		/* DC mode Battery only */
 		pl1_watt = 30;
-		pl2_watt = 40;
-		pl4_watt = ((active_power * 95) / 100);
+		pl4_watt = 80;
+
+		if (batt_type == FWK_BATT_ATC_75W) {
+			pl2_watt = 60;
+			psyspl2_watt = 71;
+		} else if (batt_type == FWK_BATT_NVT_61W) {
+			pl2_watt = 46;
+			psyspl2_watt = 58;
+		} else {
+			pl2_watt = 40;
+			psyspl2_watt = 52;
+		}
+
+	} else if (batt_status == BP_NO) {
+		/*Standalone mode AC only, ERS does not clearly define ADP wattage*/
+		pl1_watt = 30;
+		pl2_watt = MAX(40, MIN(60, ((active_power * 60) / 100)));
+		pl4_watt = MIN(80, ((active_power * 95) / 100));
 		psyspl2_watt = ((active_power * 95) / 100);
-	} else if (battery_percent >= 30 && active_power >= 55) {
-		/* ADP >= 55W and Battery percentage >= 30% */
+
+	} else {
+		/* AC DC mode */
 		pl1_watt = 30;
 		pl2_watt = 60;
-		pl4_watt = 120;
-		psyspl2_watt = ((active_power * 95) / 100) + ((batt_rating * 70) / 100);
-	} else if (battery_percent < 30 && active_power >= 55) {
-		/* ADP >= 55W and Battery percentage < 30% */
-		pl1_watt = 30;
-		pl2_watt = MIN(((active_power * 90) / 100) - ROP, 60);
-		pl4_watt = MIN(((active_power * 90) / 100) + 80, 120);
-		psyspl2_watt = ((active_power * 95) / 100);
-	} else {
-		/*AC+DC and AC < 55W*/
-		pl1_watt = 28;
-		pl2_watt = batt_rating - ROP;
 		pl4_watt = 80;
-		psyspl2_watt = ((batt_rating * 95) / 100);
+
+		active_power = (active_power * 95) / 100;
+		if (batt_type == FWK_BATT_ATC_75W) {
+			psyspl2_watt = active_power + 52;
+		} else if (batt_type == FWK_BATT_NVT_61W) {
+			psyspl2_watt = active_power + 42;
+		} else {
+			psyspl2_watt = active_power + 38;
+		}
 	}
 
 	if (pl1_watt != old_pl1_watt || pl2_watt != old_pl2_watt || pl4_watt != old_pl4_watt ||
