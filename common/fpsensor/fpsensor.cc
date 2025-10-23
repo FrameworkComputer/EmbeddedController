@@ -195,12 +195,17 @@ static uint32_t fp_process_match(void)
 static void fp_process_finger(void)
 {
 	timestamp_t t0 = get_time();
+	enum fp_capture_type capture_type =
+		FP_CAPTURE_TYPE(global_context.sensor_mode);
+	global_context.current_frame_size = 0;
 
 	CPRINTS("Capturing ...");
-	int res = fp_acquire_image(fp_buffer,
-				   FP_CAPTURE_TYPE(global_context.sensor_mode));
+	int res = fp_acquire_image(fp_buffer, capture_type);
 	capture_time_us = time_since32(t0);
 	if (!res) {
+		global_context.current_frame_size =
+			global_context.fp_frame_size_cache.get_frame_size(
+				capture_type);
 		uint32_t evt = EC_MKBP_FP_IMAGE_READY;
 
 #ifndef CONFIG_ZEPHYR
@@ -241,6 +246,8 @@ extern "C" void fp_task(void)
 	/* Reset and initialize the sensor IC */
 	fp_sensor_init();
 
+	global_context.fp_frame_size_cache.populate_cache(sizeof(fp_buffer));
+
 	while (1) {
 		enum finger_state st = FINGER_NONE;
 
@@ -274,8 +281,17 @@ extern "C" void fp_task(void)
 						 FP_MODE_ENROLL_SESSION;
 			}
 			if (!is_finger_needed(mode)) {
-				fp_acquire_image(fp_buffer,
-						 FP_CAPTURE_TYPE(mode));
+				enum fp_capture_type capture_type =
+					FP_CAPTURE_TYPE(mode);
+				global_context.current_frame_size = 0;
+				if (!fp_acquire_image(fp_buffer,
+						      capture_type)) {
+					global_context.current_frame_size =
+						global_context
+							.fp_frame_size_cache
+							.get_frame_size(
+								capture_type);
+				}
 				global_context.sensor_mode &= ~FP_MODE_CAPTURE;
 				send_mkbp_event(EC_MKBP_FP_IMAGE_READY);
 				continue;
