@@ -145,6 +145,7 @@ properties:
       - "smp,l22m3pg1"
       - "smp,l23m4pg4"
       - "smp,l24m3pg2"
+      - "smp,l24m4pk5"
       - "smp,l25m3pg1"
       - "smp,byd_pc-vp-bp162"
       - "smp,cosmx_pc-vp-bp162"
