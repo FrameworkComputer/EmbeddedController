@@ -1,0 +1,57 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ #define FT98XX_TEST_IMAGE_PROPS \
+	width = <80>; \
+	height = <128>; \
+	bits-per-pixel = <12>; \
+	frame-size = <30720>; \
+	image-data-offset-bytes = <0>; \
+	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+
+/ {
+	chosen {
+		cros-fp,fingerprint-sensor = &ft98xx;
+	};
+};
+
+&spi0 {
+	ft98xx: ft98xx@0 {
+		compatible = "focaltech,ft98xx";
+		reg = <0>;
+		spi-max-frequency = <4000000>;
+
+		configs {
+			compatible = "fingerprint-image-frame-params";
+			config0 {
+				FT98XX_TEST_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_VENDOR_FORMAT";
+			};
+			config1 {
+				FT98XX_TEST_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_SIMPLE_IMAGE";
+			};
+			config2 {
+				FT98XX_TEST_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN0";
+			};
+			config3 {
+				FT98XX_TEST_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN1";
+			};
+			config4 {
+				FT98XX_TEST_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_QUALITY_TEST";
+			};
+			config5 {
+				FT98XX_TEST_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_RESET_TEST";
+			};
+		};
+
+		irq-gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
+	};
+};
