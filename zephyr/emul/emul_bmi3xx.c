@@ -262,7 +262,7 @@ static int bmi3xx_emul_access_reg(const struct emul *emul, int reg, int byte,
 		 * Ignore first two bytes which sets starting register when
 		 * reading
 		 */
-		byte = MAX(byte - 2, 0);
+		byte = max(byte - 2, 0);
 	}
 
 	/*

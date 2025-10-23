@@ -251,7 +251,7 @@ test_export_static void process_tx_irq(const struct device *dev)
 		int data_size = ring_buf_get_claim(tx_ring_buf, &data, 16);
 
 		filled = uart_fifo_fill(bus, data, data_size);
-		ring_buf_get_finish(tx_ring_buf, MAX(filled, 0));
+		ring_buf_get_finish(tx_ring_buf, max(filled, 0));
 	}
 
 	if (filled <= 0 && uart_irq_tx_complete(bus)) {

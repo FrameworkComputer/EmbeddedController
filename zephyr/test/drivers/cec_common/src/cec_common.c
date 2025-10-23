@@ -52,7 +52,7 @@ static uint8_t saved_msg_send_custom_fake[MAX_CEC_MSG_LEN];
 static int send_custom_fake(int port, const uint8_t *msg, uint8_t len)
 {
 	memcpy(saved_msg_send_custom_fake, msg,
-	       MIN(len, sizeof(saved_msg_send_custom_fake)));
+	       min(len, sizeof(saved_msg_send_custom_fake)));
 
 	return EC_SUCCESS;
 }
@@ -62,7 +62,7 @@ static uint8_t received_message_len_custom_fake;
 static void set_received_message_custom_fake(const uint8_t *msg, uint8_t len)
 {
 	memcpy(received_message_custom_fake, msg,
-	       MIN(len, sizeof(received_message_custom_fake)));
+	       min(len, sizeof(received_message_custom_fake)));
 	received_message_len_custom_fake = len;
 }
 static int get_received_message_custom_fake(int port, uint8_t **msg,

@@ -397,7 +397,7 @@ static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 		req->get_rtk_status.sts_len);
 
 	data->response.rtk_status.byte_count =
-		MIN(sizeof(struct get_rtk_status_response) - 1,
+		min(sizeof(struct get_rtk_status_response) - 1,
 		    req->get_rtk_status.sts_len);
 
 	/* Massage PD status into RTS54 response */
@@ -723,7 +723,7 @@ static int get_pdos(struct rts5453p_emul_pdc_data *data,
 	uint8_t pdo_count = req->get_pdos.ucsi.number_of_pdos + 1;
 
 	/* GET_PDOS stops at the end if there's a requested overflow. */
-	pdo_count = MIN(PDO_OFFSET_MAX - pdo_offset, pdo_count);
+	pdo_count = min(PDO_OFFSET_MAX - pdo_offset, pdo_count);
 
 	LOG_INF("GET_PDO source %d, type=%d, offset=%d, count=%d", pdo_source,
 		pdo_type, pdo_offset, pdo_count);

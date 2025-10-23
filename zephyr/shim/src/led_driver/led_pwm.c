@@ -203,16 +203,16 @@ void led_set_color_with_pattern(const struct led_pattern_node_t *pattern)
 			if (next_color[i].pulse_ns > prev_color[i].pulse_ns) {
 				int32_t scale =
 					next_color[i].pulse_ns /
-					MAX(prev_color[i].pulse_ns, PWM_MIN_NS);
+					max(prev_color[i].pulse_ns, PWM_MIN_NS);
 				cur_color[i].pulse_ns =
-					MAX(prev_color[i].pulse_ns, PWM_MIN_NS)
+					max(prev_color[i].pulse_ns, PWM_MIN_NS)
 					<< (MSB(scale) * pattern->elapsed_ms /
 					    duration_ms);
 			} else if (next_color[i].pulse_ns <
 				   prev_color[i].pulse_ns) {
 				int32_t scale =
 					prev_color[i].pulse_ns /
-					MAX(next_color[i].pulse_ns, PWM_MIN_NS);
+					max(next_color[i].pulse_ns, PWM_MIN_NS);
 				cur_color[i].pulse_ns =
 					prev_color[i].pulse_ns >>
 					(MSB(scale) * pattern->elapsed_ms /

@@ -80,7 +80,7 @@ static bool mock_pdc_trace_msg_req(int port, enum pdc_trace_chip_type msg_type,
 	};
 
 	memcpy(pcap_buf, &th, sizeof(th));
-	pl_size = MIN(count, sizeof(pcap_buf) - sizeof(th));
+	pl_size = min(count, sizeof(pcap_buf) - sizeof(th));
 	memcpy(&pcap_buf[sizeof(th)], buf, pl_size);
 
 	++msg_seq_num;
@@ -111,7 +111,7 @@ static bool mock_pdc_trace_msg_resp(int port, enum pdc_trace_chip_type msg_type,
 		.msg_type = msg_type,
 	};
 	memcpy(pcap_buf, &th, sizeof(th));
-	pl_size = MIN(count, sizeof(pcap_buf) - sizeof(th));
+	pl_size = min(count, sizeof(pcap_buf) - sizeof(th));
 	memcpy(&pcap_buf[sizeof(th)], buf, pl_size);
 
 	++msg_seq_num;

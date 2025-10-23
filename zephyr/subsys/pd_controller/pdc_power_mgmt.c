@@ -2298,7 +2298,7 @@ static void pdc_snk_seed_charge_manager(struct pdc_port_t *port, uint32_t pdo)
 	const struct pdc_config_t *const config = port->dev->config;
 	uint32_t max_ma, max_mv, max_mw;
 
-	max_ma = MIN(PDO_FIXED_CURRENT(pdo),
+	max_ma = min(PDO_FIXED_CURRENT(pdo),
 		     CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA);
 	max_mv = PDO_FIXED_VOLTAGE(pdo);
 	max_mw = max_ma * max_mv / 1000;
@@ -2773,7 +2773,7 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 	case CMD_PDC_GET_PDOS:
 		rv = pdc_get_pdos(port->pdc, port->get_pdo.pdo_type,
 				  port->get_pdo.pdo_offset,
-				  MIN(port->get_pdo.num_pdos,
+				  min(port->get_pdo.num_pdos,
 				      UCSI_GET_PDOS_MAX_NUM),
 				  port->get_pdo.pdo_source,
 				  get_pdc_pdos_ptr(port, &port->get_pdo)->pdos +

@@ -67,7 +67,7 @@ int fan_table_to_rpm(int fan, int *temp)
 	}
 
 	if (current_level < 0 || current_level >= ARRAY_SIZE(fan_step_table))
-		current_level = CLAMP(current_level, 0,
+		current_level = clamp(current_level, 0,
 				      (ARRAY_SIZE(fan_step_table) - 1));
 
 	if (current_level != prev_current_level) {

@@ -40,7 +40,7 @@ int power_button_wait_for_release(int timeout_us)
 
 	released =
 		WAIT_FOR(!(power_button_data.state), timeout_us,
-			 task_wait_event(MIN(timeout_us, check_interval_us)));
+			 task_wait_event(min(timeout_us, check_interval_us)));
 
 	return released ? 0 : -ETIMEDOUT;
 }

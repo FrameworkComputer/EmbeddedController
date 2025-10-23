@@ -138,11 +138,11 @@ int charger_profile_override(struct charge_state_data *curr)
 	switch (current_level) {
 	case 1:
 		curr->requested_current =
-			MIN(current, CHARGE_CURRENT_LIMIT_LEVEL1);
+			min(current, CHARGE_CURRENT_LIMIT_LEVEL1);
 		break;
 	case 2:
 		curr->requested_current =
-			MIN(current, CHARGE_CURRENT_LIMIT_LEVEL2);
+			min(current, CHARGE_CURRENT_LIMIT_LEVEL2);
 		break;
 	default:
 		curr->requested_current = current;

@@ -367,7 +367,7 @@ ZTEST_USER(tps6699x, test_set_rdo)
 	emul_pdc_get_autoneg_sink(emul, &max_voltage, &max_current);
 	zassert_equal(max_voltage, 20000 / 50);
 	zassert_equal(max_current,
-		      MIN(CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA, 5000) / 10);
+		      min(CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA, 5000) / 10);
 
 	/* Test Battery PDO selection */
 	pdos[PDO_OFFSET_0] = PDO_BATT(5000, 20000, 45000);

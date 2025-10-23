@@ -58,7 +58,7 @@ ZTEST(usb_update, test_rw_update)
 	for (int offset = 0; offset < sizeof(rx_buf);
 	     offset += USB_MAX_PACKET_SIZE) {
 		int chunk_size =
-			MIN(USB_MAX_PACKET_SIZE, sizeof(rx_buf) - offset);
+			min(USB_MAX_PACKET_SIZE, sizeof(rx_buf) - offset);
 
 		queue_add_units(rx_queue, rx_buf + offset, chunk_size);
 	}

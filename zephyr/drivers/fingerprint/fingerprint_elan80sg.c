@@ -222,7 +222,7 @@ static int elan80sg_maintenance(const struct device *dev, uint8_t *buf,
 	 */
 	data->errors &= ~FINGERPRINT_ERROR_DEAD_PIXELS_MASK;
 	data->errors |= FINGERPRINT_ERROR_DEAD_PIXELS(
-		MIN(sensor_info.num_defective_pixels,
+		min(sensor_info.num_defective_pixels,
 		    FINGERPRINT_ERROR_DEAD_PIXELS_MAX));
 	LOG_INF("num_defective_pixels: %d", sensor_info.num_defective_pixels);
 	LOG_INF("sensor_error_code: %d", sensor_info.sensor_error_code);

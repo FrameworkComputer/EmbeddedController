@@ -230,7 +230,7 @@ static void tps699x_emul_get_pdos(struct tps6699x_emul_pdc_data *data,
 	enum pdo_type_t pdo_type = req->source ? SOURCE_PDO : SINK_PDO;
 	enum pdo_offset_t pdo_offset = req->pdo_offset;
 	uint8_t pdo_count =
-		MIN(PDO_OFFSET_MAX - req->pdo_offset, req->num_pdos + 1);
+		min(PDO_OFFSET_MAX - req->pdo_offset, req->num_pdos + 1);
 
 	LOG_INF("GET_PDO type=%d, offset=%d, count=%d, partner_pdo=%d",
 		pdo_type, pdo_offset, pdo_count, req->partner_pdo);
@@ -1001,7 +1001,7 @@ static int emul_tps6699x_get_supported_drp_modes(const struct emul *target,
 	enum drp_mode_t supported[] = { DRP_NORMAL, DRP_TRY_SRC };
 
 	memcpy(dm, supported,
-	       sizeof(enum drp_mode_t) * MIN(size, ARRAY_SIZE(supported)));
+	       sizeof(enum drp_mode_t) * min(size, ARRAY_SIZE(supported)));
 
 	*num = ARRAY_SIZE(supported);
 
@@ -1055,7 +1055,7 @@ static int emul_tps6699x_set_info(const struct emul *target,
 	*((uint16_t *)reg_tx_identity->product_id) = info->pid;
 	memset(reg_customer_use->data, 0, sizeof(reg_customer_use->data));
 	memcpy(reg_customer_use->data, info->project_name,
-	       MIN(sizeof(reg_customer_use->data), strlen(info->project_name)));
+	       min(sizeof(reg_customer_use->data), strlen(info->project_name)));
 
 	return 0;
 }

@@ -82,7 +82,7 @@ int emul_pdc_pdo_get_direct(struct emul_pdc_pdo_t *data,
 		return -EINVAL;
 	}
 
-	pdo_offset = MIN(pdo_offset, PDO_OFFSET_MAX);
+	pdo_offset = min(pdo_offset, PDO_OFFSET_MAX);
 	memcpy(pdos, &target_pdos[pdo_offset], num_pdos * sizeof(uint32_t));
 	return 0;
 }

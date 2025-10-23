@@ -55,8 +55,8 @@ static int flash_check_writable_range(int offset, int size)
 
 	/* Check RO protected and within the RO range */
 	if (ro_protected &&
-	    MAX(CONFIG_WP_STORAGE_OFF, offset) <
-		    MIN(CONFIG_WP_STORAGE_OFF + CONFIG_WP_STORAGE_SIZE,
+	    max(CONFIG_WP_STORAGE_OFF, offset) <
+		    min(CONFIG_WP_STORAGE_OFF + CONFIG_WP_STORAGE_SIZE,
 			offset + size)) {
 		return EC_ERROR_ACCESS_DENIED;
 	}

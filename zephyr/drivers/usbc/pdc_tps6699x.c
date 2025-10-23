@@ -1461,7 +1461,7 @@ static void cmd_set_rdo(struct pdc_data_t *data)
 		an_min_power = PDO_BATT_MAX_POWER(pdo) / 1000 / 250;
 	} else {
 		an_max_v = an_min_v = PDO_FIXED_VOLTAGE(pdo) / 50;
-		an_max_a = MIN(CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA,
+		an_max_a = min(CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA,
 			       PDO_FIXED_CURRENT(pdo)) /
 			   10;
 		an_min_power = (an_max_v * an_max_a) / 500;

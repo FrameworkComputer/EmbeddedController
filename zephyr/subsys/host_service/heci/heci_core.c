@@ -126,7 +126,7 @@ static bool send_client_msg(struct heci_conn_t *conn, struct mrd_t *msg)
 		fragment_size = 0;
 		/* try to copy as much as we can into current fragment */
 		while ((fragment_size < max_frag_size) && (msg != NULL)) {
-			copy_size = MIN(msg->len - done_bytes,
+			copy_size = min(msg->len - done_bytes,
 					max_frag_size - fragment_size);
 
 			memcpy(bus_msg->payload + fragment_size,
@@ -692,11 +692,11 @@ static void heci_flow_control_recv(struct heci_bus_msg_t *msg)
 		if (flowctrl->number_of_packets == 0) {
 			conn->host_buffers++;
 			heci_wakeup_sender(conn,
-					   MIN(1, conn->wait_thread_count));
+					   min(1, conn->wait_thread_count));
 		} else {
 			conn->host_buffers += flowctrl->number_of_packets;
 			heci_wakeup_sender(conn,
-					   MIN(flowctrl->number_of_packets,
+					   min(flowctrl->number_of_packets,
 					       conn->wait_thread_count));
 		}
 

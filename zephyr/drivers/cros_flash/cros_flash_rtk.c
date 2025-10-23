@@ -220,7 +220,7 @@ static int flash_check_prot_reg(const struct device *dev, unsigned int offset,
 	}
 
 	/* Check if ranges overlap */
-	if (MAX(start, offset) < MIN(start + len, offset + bytes)) {
+	if (max(start, offset) < min(start + len, offset + bytes)) {
 		return EC_ERROR_ACCESS_DENIED;
 	}
 
@@ -263,8 +263,8 @@ static int flash_check_prot_range(const struct device *dev, unsigned int offset,
 		return EC_ERROR_INVAL;
 	}
 
-	if (MAX(data->addr_prot_start, offset) <
-	    MIN(data->addr_prot_start + data->addr_prot_length,
+	if (max(data->addr_prot_start, offset) <
+	    min(data->addr_prot_start + data->addr_prot_length,
 		offset + bytes)) {
 		return EC_ERROR_ACCESS_DENIED;
 	}

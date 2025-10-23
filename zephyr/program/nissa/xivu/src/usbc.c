@@ -302,7 +302,7 @@ int charger_profile_override(struct charge_state_data *curr)
 		prev_tmp = chg_temp_c;
 		current = chg_curr_table[current_level].curr_ma;
 
-		curr->requested_current = MIN(curr->requested_current, current);
+		curr->requested_current = min(curr->requested_current, current);
 	}
 	return 0;
 }

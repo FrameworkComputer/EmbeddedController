@@ -200,7 +200,7 @@ static void fifo_pl_to_str(char *str, const size_t str_len,
 	const int entry_str_len = 3;
 	int entries;
 	entries = (str_len - 1 - str_index) / entry_str_len;
-	entries = MIN(entries, pl_size);
+	entries = min(entries, pl_size);
 
 	uint32_t chunk1;
 	uint32_t chunk2;

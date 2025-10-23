@@ -179,8 +179,8 @@ static void hid_i2c_target_buf_write_received(struct i2c_target_config *config,
 	struct i2c_target_data *data =
 		CONTAINER_OF(config, struct i2c_target_data, config);
 
-	memcpy(data->write_buf, ptr, MIN(len, ONE_WIRE_UART_MAX_PAYLOAD_SIZE));
-	data->write_buf_len = MIN(len, ONE_WIRE_UART_MAX_PAYLOAD_SIZE);
+	memcpy(data->write_buf, ptr, min(len, ONE_WIRE_UART_MAX_PAYLOAD_SIZE));
+	data->write_buf_len = min(len, ONE_WIRE_UART_MAX_PAYLOAD_SIZE);
 }
 
 static int hid_i2c_target_buf_read_requested(struct i2c_target_config *config,

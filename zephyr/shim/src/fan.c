@@ -164,9 +164,9 @@ static void fan_adjust_duty(int ch, int rpm_diff, int duty)
 
 	/* Adjust fan duty step by step */
 	if (rpm_diff > 0) {
-		duty = MIN(duty + duty_step, 100);
+		duty = min(duty + duty_step, 100);
 	} else {
-		duty = MAX(duty - duty_step, 1);
+		duty = max(duty - duty_step, 1);
 	}
 
 	fan_set_duty(ch, duty);

@@ -250,7 +250,7 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	 * brownout at low power charger connected. Limit charge current to 2A.
 	 */
 	if (charge_mv <= 5000 && port == 1)
-		charge_ma = MIN(charge_ma, 2000);
+		charge_ma = min(charge_ma, 2000);
 	else
 		charge_ma = charge_ma * 96 / 100;
 

@@ -351,7 +351,7 @@ int crec_flash_response_fill_banks(struct ec_response_flash_info_2 *r,
 		banks_idx++;
 	} while (res == EC_RES_IN_PROGRESS);
 
-	r->num_banks_desc = MIN(banks_idx, num_banks);
+	r->num_banks_desc = min(banks_idx, num_banks);
 	r->num_banks_total = banks_idx;
 
 	return res;

@@ -355,7 +355,7 @@ static int flash_check_prot_reg(const struct device *dev, unsigned int offset,
 		return rv;
 
 	/* Check if ranges overlap */
-	if (MAX(start, offset) < MIN(start + len, offset + bytes))
+	if (max(start, offset) < min(start + len, offset + bytes))
 		return EC_ERROR_ACCESS_DENIED;
 
 	return EC_SUCCESS;
@@ -390,8 +390,8 @@ static int flash_check_prot_range(unsigned int offset, unsigned int bytes)
 		return EC_ERROR_INVAL;
 
 	/* Check if ranges overlap */
-	if (MAX(addr_prot_start, offset) <
-	    MIN(addr_prot_start + addr_prot_length, offset + bytes))
+	if (max(addr_prot_start, offset) <
+	    min(addr_prot_start + addr_prot_length, offset + bytes))
 		return EC_ERROR_ACCESS_DENIED;
 
 	return EC_SUCCESS;
@@ -559,7 +559,7 @@ static int cros_flash_npcx_erase(const struct device *dev, int offset, int size)
 
 		/* Start erase */
 		ret = flash_erase(data->flash_dev, offset,
-				  MIN(reload_size, size));
+				  min(reload_size, size));
 		if (ret)
 			break;
 

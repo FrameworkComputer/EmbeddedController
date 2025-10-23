@@ -173,7 +173,7 @@ int charger_profile_override(struct charge_state_data *curr)
 		return 0;
 
 	if (current >= 0)
-		curr->requested_current = MIN(curr->requested_current, current);
+		curr->requested_current = min(curr->requested_current, current);
 
 	return 0;
 }

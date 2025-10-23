@@ -59,9 +59,9 @@ static void fan_tick(void)
 
 	/* Clamp rpm_diff. This essentially emulates fan inertia. */
 	if (rpm_diff > 0)
-		rpm_diff = MIN(rpm_diff, 500);
+		rpm_diff = min(rpm_diff, 500);
 	if (rpm_diff < 0)
-		rpm_diff = MAX(rpm_diff, -500);
+		rpm_diff = max(rpm_diff, -500);
 
 	fan_data[0].rpm_actual += rpm_diff;
 }

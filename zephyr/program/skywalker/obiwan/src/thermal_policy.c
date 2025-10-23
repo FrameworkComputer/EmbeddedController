@@ -190,14 +190,14 @@ static void update_current_limit(void)
 		charger_release_cnt = typec_release_cnt = 0;
 	}
 
-	current_limit = MIN(charger_limit_table[charger_limit_level],
+	current_limit = min(charger_limit_table[charger_limit_level],
 			    typec_limit_table[typec_limit_level]);
 }
 DECLARE_HOOK(HOOK_SECOND, update_current_limit, HOOK_PRIO_TEMP_SENSOR_DONE);
 
 int charger_profile_override(struct charge_state_data *curr)
 {
-	curr->requested_current = MIN(curr->requested_current, current_limit);
+	curr->requested_current = min(curr->requested_current, current_limit);
 
 	return EC_SUCCESS;
 }

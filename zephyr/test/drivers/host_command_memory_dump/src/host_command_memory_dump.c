@@ -136,7 +136,7 @@ static void *memcpy_from_dump(struct mem_dump *dump, void *dest,
 			dump->segments[seg].size -
 			(src_addr + offset - dump->segments[seg].addr);
 		/* Clamp copy size to min of remaining size and segment_size */
-		size_t copy_size = MIN(size - offset, segment_size);
+		size_t copy_size = min(size - offset, segment_size);
 
 		zassert_not_null(memcpy(((uint8_t *)dest + offset),
 					dump->segments[seg].mem + offset,

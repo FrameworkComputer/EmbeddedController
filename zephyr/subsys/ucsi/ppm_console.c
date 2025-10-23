@@ -193,7 +193,7 @@ static int cmd_get_cam_supported(const struct shell *sh, int argc, char **argv)
 	shell_hexdump(sh, resp, rv);
 
 	shell_fprintf(sh, SHELL_INFO, "\nSupported indexes: ");
-	for (int i = 0; i < MIN(rv, ARRAY_SIZE(resp)); i++) {
+	for (int i = 0; i < min(rv, ARRAY_SIZE(resp)); i++) {
 		for (int j = 0; j < 8; j++) {
 			if (resp[i] & BIT(j)) {
 				shell_fprintf(sh, SHELL_INFO, "%02d ",

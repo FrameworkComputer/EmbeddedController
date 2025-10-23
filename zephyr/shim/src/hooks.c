@@ -152,7 +152,7 @@ void hook_notify(enum hook_type type)
 				"Hook priority %d (handler %p) is out of range",
 				p->priority, p->routine);
 			if (p->priority > last_prio)
-				prio = MIN(prio, p->priority);
+				prio = min(prio, p->priority);
 		}
 
 		if (prio == INT_MAX) {

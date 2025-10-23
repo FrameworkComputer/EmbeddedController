@@ -80,9 +80,9 @@ enum fan_status board_override_fan_control_duty(int ch)
 	}
 
 	if (rpm_diff > 0)
-		duty = MIN(duty + duty_step, 100);
+		duty = min(duty + duty_step, 100);
 	else
-		duty = MAX(duty - duty_step, 1);
+		duty = max(duty - duty_step, 1);
 
 	fan_set_duty(ch, duty);
 

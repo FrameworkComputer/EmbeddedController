@@ -315,7 +315,7 @@ int tps_stream_data(const struct i2c_dt_spec *i2c,
 	     chunk_offset += TPS_STREAM_CHUNK_SIZE) {
 		/* Set up I2C write */
 		msg[0].buf = (uint8_t *)buf + chunk_offset;
-		msg[0].len = MIN(TPS_STREAM_CHUNK_SIZE, buf_len - chunk_offset);
+		msg[0].len = min(TPS_STREAM_CHUNK_SIZE, buf_len - chunk_offset);
 		msg[0].flags = I2C_MSG_WRITE | I2C_MSG_STOP;
 
 		rv = i2c_transfer_dt(&stream_i2c, msg, 1);

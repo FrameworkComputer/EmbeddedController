@@ -556,7 +556,7 @@ int host_cmd_cec_write(const uint8_t *msg, uint8_t msg_len)
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND_PARAMS(EC_CMD_CEC_WRITE_MSG, 0, params);
 
-	memcpy(params.msg, msg, MIN(msg_len, sizeof(params.msg)));
+	memcpy(params.msg, msg, min(msg_len, sizeof(params.msg)));
 	args.params_size = msg_len;
 
 	return host_command_process(&args);
@@ -568,7 +568,7 @@ int host_cmd_cec_write_v1(int port, const uint8_t *msg, uint8_t msg_len)
 
 	params_v1.port = port;
 	params_v1.msg_len = msg_len;
-	memcpy(params_v1.msg, msg, MIN(msg_len, sizeof(params_v1.msg)));
+	memcpy(params_v1.msg, msg, min(msg_len, sizeof(params_v1.msg)));
 
 	return ec_cmd_cec_write_v1(NULL, &params_v1);
 }

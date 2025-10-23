@@ -252,7 +252,7 @@ static uint32_t shi_valid_obuf_offset(struct shi_reg *const inst)
 static void shi_write_half_outbuf(void)
 {
 	const uint32_t size =
-		MIN(SHI_OBUF_HALF_SIZE,
+		min(SHI_OBUF_HALF_SIZE,
 		    shi_params.sz_response - shi_params.sz_sending);
 	uint8_t *obuf_ptr = (uint8_t *)shi_params.tx_buf;
 	const uint8_t *obuf_end = obuf_ptr + size;
@@ -382,7 +382,7 @@ static void shi_write_first_pkg_outbuf(struct shi_reg *const inst,
 
 	/* Fill up to OBUF mid point, or OBUF end */
 	half_buf_remain = SHI_OBUF_HALF_SIZE - (offset % SHI_OBUF_HALF_SIZE);
-	size = MIN(half_buf_remain, szbytes - shi_params.sz_sending);
+	size = min(half_buf_remain, szbytes - shi_params.sz_sending);
 	obuf_end = obuf_ptr + size;
 	while (obuf_ptr != obuf_end)
 		*obuf_ptr++ = *msg_ptr++;
@@ -395,7 +395,7 @@ static void shi_write_first_pkg_outbuf(struct shi_reg *const inst,
 		obuf_ptr = inst->OBUF;
 
 	/* Fill next half output buffer */
-	size = MIN(SHI_OBUF_HALF_SIZE, szbytes - shi_params.sz_sending);
+	size = min(SHI_OBUF_HALF_SIZE, szbytes - shi_params.sz_sending);
 	obuf_end = obuf_ptr + size;
 	while (obuf_ptr != obuf_end)
 		*obuf_ptr++ = *msg_ptr++;

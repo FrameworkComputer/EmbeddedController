@@ -166,8 +166,8 @@ void sm5803_emul_set_vbus_voltage(const struct emul *emul, uint16_t mv)
 
 	data->vbus = (uint16_t)((float)mv / VBUS_GPADC_LSB_MV);
 
-	if (MIN(mv, old) <= CHG_DET_THRESHOLD_MV &&
-	    MAX(mv, old) > CHG_DET_THRESHOLD_MV) {
+	if (min(mv, old) <= CHG_DET_THRESHOLD_MV &&
+	    max(mv, old) > CHG_DET_THRESHOLD_MV) {
 		/* CHG_DET changes state; trigger an interrupt. */
 		sm5803_emul_set_irqs(emul, SM5803_INT1_CHG, 0, 0, 0);
 	}
@@ -357,7 +357,7 @@ void sm5803_emul_set_internal_temperature(const struct emul *emul,
 {
 	struct sm5803_emul_data *data = emul->data;
 
-	data->internal_temp_kelvin = MIN(kelvin, 440);
+	data->internal_temp_kelvin = min(kelvin, 440);
 }
 
 SIMPLE_GETTER(tint_high_th, tint_high_th);

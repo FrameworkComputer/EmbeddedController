@@ -83,7 +83,7 @@ int fan_table_to_rpm(int fan, int *temp)
 	}
 
 	/* Ensure current_level will not exceed existing level */
-	current_level = CLAMP(current_level, 0, NUM_FAN_LEVELS - 1);
+	current_level = clamp(current_level, 0, NUM_FAN_LEVELS - 1);
 
 	if (current_level != prev_level) {
 		LOG_INF("temp_imvp_soc: %d, prev_temp_imvp_soc: %d",

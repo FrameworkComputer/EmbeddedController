@@ -67,7 +67,7 @@ static int fp_simulator_maintenance(const struct device *dev, uint8_t *buf,
 	data->state.maintenance_ran = true;
 	data->errors &= ~FINGERPRINT_ERROR_DEAD_PIXELS_MASK;
 	data->errors |= FINGERPRINT_ERROR_DEAD_PIXELS(
-		MIN(data->state.bad_pixels, FINGERPRINT_ERROR_DEAD_PIXELS_MAX));
+		min(data->state.bad_pixels, FINGERPRINT_ERROR_DEAD_PIXELS_MAX));
 
 	return 0;
 }
@@ -104,7 +104,7 @@ static int fp_simulator_acquire_image(const struct device *dev,
 {
 	const struct fp_simulator_cfg *config = dev->config;
 	struct fp_simulator_data *data = dev->data;
-	size_t size = MIN(config->info.frame_size, image_buf_size);
+	size_t size = min(config->info.frame_size, image_buf_size);
 
 	data->state.last_acquire_image_mode = mode;
 
@@ -198,7 +198,7 @@ void z_impl_fingerprint_load_image(const struct device *dev, uint8_t *image,
 				   size_t image_size)
 {
 	const struct fp_simulator_cfg *config = dev->config;
-	size_t size = MIN(config->info.frame_size, image_size);
+	size_t size = min(config->info.frame_size, image_size);
 
 	memcpy(config->image_buffer, image, size);
 }
