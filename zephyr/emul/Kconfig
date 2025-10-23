@@ -221,6 +221,16 @@ config EMUL_FPC1145
 	  mode) that can be issued by the public driver (without FPC private
 	  library)
 
+config EMUL_FT98XX
+	bool "FT98XX fingerprint sensor emulator"
+	depends on ZTEST && DT_HAS_FOCALTECH_FT98XX_ENABLED && ARCH_POSIX
+	default y
+	help
+	  This option enables the FT98XX fingerprint sensor emulator.
+	  It supports only basic commands (get hardware id, enter low power
+	  mode) that can be issued by the public driver (without FT private
+	  library)
+
 config EMUL_SMBUS_ARA
 	bool "SMBUS Alert Response Address emulator"
 	default y
