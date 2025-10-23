@@ -3159,7 +3159,7 @@ static void tps_check_and_notify_irq(void)
 		cfg = data->dev->config;
 
 		if (!gpio_pin_get_dt(&cfg->irq_gpios)) {
-			break;
+			continue;
 		}
 
 		/* Read the pending interrupt events */
