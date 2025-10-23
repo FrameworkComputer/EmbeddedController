@@ -106,6 +106,13 @@ config PDC_RUNTIME_PORT_CONFIG
 	  is invoked to determine which USB-C ports to enable and with what
 	  driver instance.
 
+config PDC_POWER_MGMT_POWER_STATE_DEBOUNCE_PERIOD_MS
+	int "Delay to wait for stable power state before running hooks"
+	default 2000 # milliseconds
+	help
+	  Used to set the delayable work handles in the power state hooks for
+	  different platform.
+
 if PDC_POWER_MGMT_USB_MUX
 config USB_MUX_SYS_INIT_PRIORITY
 	int "USB mux module init priority"
