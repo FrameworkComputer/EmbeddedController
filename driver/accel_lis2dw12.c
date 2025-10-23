@@ -580,4 +580,7 @@ const struct accelgyro_drv lis2dw12_drv = {
 #ifdef CONFIG_BODY_DETECTION
 	.get_rms_noise = get_rms_noise,
 #endif
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+	.list_activities = st_list_activities,
+#endif
 };
