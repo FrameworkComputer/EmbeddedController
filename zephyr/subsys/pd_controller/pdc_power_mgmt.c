@@ -377,6 +377,10 @@ enum init_local_state_t {
 	 *  PDC based on product configuration data.
 	 */
 	INIT_SET_SINK_PDOS,
+	/** INIT_SET_SRC_PDOS - pdc sets src pdo in advance during
+	 *  initialization.
+	 */
+	INIT_SET_SRC_PDOS,
 	/** INIT_GET_CONNECTOR_STATUS - Get current status. This state does not
 	 *  return; the state machine will transition to the unattached or one
 	 *  of the attached run states after handling the response.
@@ -559,6 +563,8 @@ enum policy_snk_attached_t {
  * @brief Attached state
  */
 enum attached_state_t {
+	/* INIT_STATE */
+	INIT_STATE,
 	/** UNATTACHED_STATE */
 	UNATTACHED_STATE,
 	/** SRC_ATTACHED_STATE */
@@ -572,6 +578,7 @@ enum attached_state_t {
 };
 
 static const char *const attached_state_names[] = {
+	[INIT_STATE] = "Init",
 	[UNATTACHED_STATE] = "Unattached",
 	[SRC_ATTACHED_STATE] = "Attached.SRC",
 	[SNK_ATTACHED_STATE] = "Attached.SNK",
@@ -3515,7 +3522,7 @@ static enum smf_state_result pdc_init_run(void *obj)
 		__fallthrough;
 
 	case INIT_SET_SINK_PDOS:
-		port->init_local_state = INIT_GET_CONNECTOR_STATUS;
+		port->init_local_state = INIT_SET_SRC_PDOS;
 
 		/* Set sink PDO(s) that reflects this board's max voltage and
 		 * current */
@@ -3526,6 +3533,23 @@ static enum smf_state_result pdc_init_run(void *obj)
 
 		memcpy(port->set_pdos.pdos, pdc_snk_pdos, sizeof(pdc_snk_pdos));
 
+		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
+		break;
+
+	case INIT_SET_SRC_PDOS:
+		port->init_local_state = INIT_GET_CONNECTOR_STATUS;
+		port->attached_state = INIT_STATE;
+
+		pdc_power_mgmt_set_current_limit(
+			config->connector_num,
+			pdc_power_mgmt_get_default_current_limit(
+				config->connector_num));
+
+		port->set_pdos = (struct set_pdos_t){
+			.count = 1,
+			.type = SOURCE_PDO,
+			.pdos = { port->src_policy.lpm_src_pdo },
+		};
 		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
 		break;
 
@@ -5358,6 +5382,8 @@ int pdc_power_mgmt_set_current_limit(int port_num,
 
 	/* Further actions depend on the port attached state and power role */
 	switch (pdc->attached_state) {
+	case INIT_STATE:
+		break;
 	case SRC_ATTACHED_TYPEC_ONLY_STATE:
 		/*
 		 * Active TypeC only SRC connection. Because the connection is
