@@ -389,7 +389,7 @@ DECLARE_HOST_COMMAND(EC_CMD_SET_CROS_BOARD_INFO, hc_cbi_set, EC_VER_MASK(0));
 static enum ec_status hc_cbi_bin_read(struct host_cmd_handler_args *args)
 {
 	const struct __ec_align4 ec_params_get_cbi_bin *p = args->params;
-	uint8_t size = MIN(args->response_max, UINT8_MAX);
+	uint8_t size = min(args->response_max, UINT8_MAX);
 
 	if (size < p->size) {
 		/* Insufficient buffer size */

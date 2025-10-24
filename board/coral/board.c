@@ -356,7 +356,7 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
 
 	/* TCPC1 (ps8751) requires 1ms reset down assertion */
-	crec_msleep(MAX(1, ANX74XX_RST_L_PWR_L_DELAY_MS));
+	crec_msleep(max(1, ANX74XX_RST_L_PWR_L_DELAY_MS));
 
 	/* Deassert reset to TCPC1 */
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);

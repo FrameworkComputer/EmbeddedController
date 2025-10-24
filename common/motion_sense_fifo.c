@@ -624,8 +624,8 @@ int motion_sense_fifo_read(int capacity_bytes, int max_count, void *out,
 	int count;
 
 	mutex_lock(&g_sensor_mutex);
-	count = MIN(capacity_bytes / fifo.unit_bytes,
-		    MIN(queue_count(&fifo), max_count));
+	count = min(capacity_bytes / fifo.unit_bytes,
+		    min(queue_count(&fifo), max_count));
 	count = queue_remove_units(&fifo, out, count);
 	mutex_unlock(&g_sensor_mutex);
 	*out_size = count * fifo.unit_bytes;
@@ -673,7 +673,7 @@ static int motion_sense_read_fifo(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	/* Limit the amount of data to avoid saturating the UART buffer */
-	count = MIN(queue_count(&fifo), 16);
+	count = min(queue_count(&fifo), 16);
 	for (i = 0; i < count; i++) {
 		queue_peek_units(&fifo, &v, i, 1);
 		if (v.flags & (MOTIONSENSE_SENSOR_FLAG_TIMESTAMP |

@@ -354,7 +354,7 @@ static void button_change_deferred(void)
 			soonest_debounce_time =
 				(soonest_debounce_time == 0) ?
 					state[i].debounce_time :
-					MIN(soonest_debounce_time,
+					min(soonest_debounce_time,
 					    state[i].debounce_time);
 		}
 	}

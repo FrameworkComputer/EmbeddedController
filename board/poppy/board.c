@@ -287,7 +287,7 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
 
-	crec_msleep(MAX(1, ANX74XX_RST_L_PWR_L_DELAY_MS));
+	crec_msleep(max(1, ANX74XX_RST_L_PWR_L_DELAY_MS));
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
 	/* Disable TCPC0 (anx3429) power */
 	gpio_set_level(GPIO_USB_C0_TCPC_PWR, 0);

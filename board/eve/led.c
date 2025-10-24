@@ -351,7 +351,7 @@ static void led_adjust_color_step(int side)
 		 */
 		for (i = 0; i < PWM_CHAN_PER_LED; i++) {
 			if ((rgb_c[i] > rgb_t[i]) && (rgb_c[i] >= lvl)) {
-				rgb_c[i] = MAX(lvl, rgb_t[i]);
+				rgb_c[i] = max(lvl, rgb_t[i]);
 				change = 1;
 			}
 		}
@@ -371,7 +371,7 @@ static void led_adjust_color_step(int side)
 		 */
 		for (i = 0; i < PWM_CHAN_PER_LED; i++) {
 			if ((rgb_c[i] < rgb_t[i]) && (rgb_c[i] <= lvl)) {
-				rgb_c[i] = MIN(lvl, rgb_t[i]);
+				rgb_c[i] = min(lvl, rgb_t[i]);
 				change = 1;
 			}
 		}

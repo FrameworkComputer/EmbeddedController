@@ -704,7 +704,7 @@ void __idle(void)
 		 *
 		 * Here, we handle the delayed update by changing negative to 0.
 		 */
-		pm_process(t0, MAX(0, next_delay));
+		pm_process(t0, max(0, next_delay));
 	}
 }
 

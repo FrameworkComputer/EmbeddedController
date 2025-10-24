@@ -187,7 +187,7 @@ static int fetch_transfer_start(struct consumer const *consumer, size_t count,
 	i = count;
 	while (i > 0) {
 		QUEUE_REMOVE_UNITS(consumer->queue, pupfr,
-				   MIN(i, sizeof(*pupfr)));
+				   min(i, sizeof(*pupfr)));
 		i -= sizeof(*pupfr);
 	}
 
@@ -409,7 +409,7 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 
 			response = uart_console_read_buffer(
 				data[0], (char *)output,
-				MIN(sizeof(output),
+				min(sizeof(output),
 				    queue_space(&update_to_usb)),
 				&write_count);
 			if (response != EC_RES_SUCCESS || write_count == 0)

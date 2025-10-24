@@ -44,8 +44,8 @@ int board_cut_off_battery(void)
 static void board_set_charge_limit_throttle(int charge_ma, int charge_mv)
 {
 	charge_set_input_current_limit(
-		MIN(throttled_ma,
-		    MAX(charge_ma, CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT)),
+		min(throttled_ma,
+		    max(charge_ma, CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT)),
 		charge_mv);
 }
 
@@ -105,14 +105,14 @@ static void battery_thermal_control(struct charge_state_data *curr)
 	 * PID algorithm (https://en.wikipedia.org/wiki/PID_controller),
 	 * and operates on only P value.
 	 */
-	throttled_ma = MIN(
+	throttled_ma = min(
 		CONFIG_USB_PD_MAX_CURRENT_MA,
 		/*
 		 * Should not pass the previously set input current by
 		 * charger manager.  This value might be related the charger's
 		 * capability.
 		 */
-		MIN(prev_charge_limit,
+		min(prev_charge_limit,
 		    input_current + k_p * (thermal_bound.target - jc_temp)));
 
 	/* If the input current doesn't change, just skip. */
@@ -218,7 +218,7 @@ void mt6370_charger_profile_override(struct charge_state_data *curr)
 	 * Enable this hack on on-board gauge only (b/142097561)
 	 */
 	if (IS_ENABLED(CONFIG_BATTERY_MAX17055) && rt946x_is_charge_done()) {
-		curr->batt.state_of_charge = MAX(CONFIG_BATT_HOST_FULL_FACTOR,
+		curr->batt.state_of_charge = max(CONFIG_BATT_HOST_FULL_FACTOR,
 						 curr->batt.state_of_charge);
 	}
 }

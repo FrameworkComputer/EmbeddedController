@@ -858,7 +858,7 @@ static enum ec_error_list rt946x_set_current(int chgnum, int current)
 	 * values below 0b100 are preserved.
 	 */
 	if (IS_ENABLED(CONFIG_CHARGER_MT6370))
-		current = MAX(500, current);
+		current = max(500, current);
 
 #ifdef CONFIG_CHARGER_MT6370
 	rv = mt6370_ichg_workaround(chgnum, current);

@@ -127,7 +127,7 @@ void uart_inject_char(char *s, int sz)
 	int num_char;
 
 	for (i = 0; i < sz; i += INPUT_BUFFER_SIZE - 1) {
-		num_char = MIN(INPUT_BUFFER_SIZE - 1, sz - i);
+		num_char = min(INPUT_BUFFER_SIZE - 1, sz - i);
 		if (queue_space(&cached_char) < num_char)
 			return;
 		queue_add_units(&cached_char, s + i, num_char);

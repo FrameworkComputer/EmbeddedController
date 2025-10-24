@@ -469,7 +469,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 		if (precision < 0) {
 			/* If precision is unset, print everything */
 			vlen = strlen(vstr);
-			precision = MAX(vlen, pad_width);
+			precision = max(vlen, pad_width);
 		} else {
 			/*
 			 * If precision is set, ensure that we do not

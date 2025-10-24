@@ -994,7 +994,7 @@ static int st_tp_write_flash(int offset, int size, const uint8_t *data)
 		addr = 0x00100000;
 		flash_buffer_size = 0;
 		while (flash_buffer_size < ST_TP_FLASH_BUFFER_SIZE) {
-			chunk_size = MIN(ST_TP_DMA_CHUNK_SIZE, tail - head);
+			chunk_size = min(ST_TP_DMA_CHUNK_SIZE, tail - head);
 			ret = st_tp_write_one_chunk(head, addr, chunk_size);
 			if (ret)
 				return ret;
@@ -1047,7 +1047,7 @@ static int st_tp_check_command_echo(const uint8_t *cmd, const size_t len)
 
 		if (e->evt_id == ST_TP_EVENT_ID_STATUS_REPORT &&
 		    e->report.report_type == ST_TP_STATUS_CMD_ECHO &&
-		    memcmp(e->report.info, cmd, MIN(4, len)) == 0)
+		    memcmp(e->report.info, cmd, min(4, len)) == 0)
 			return EC_SUCCESS;
 	}
 	return EC_ERROR_BUSY;

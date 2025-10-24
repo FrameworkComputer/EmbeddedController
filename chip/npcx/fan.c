@@ -85,7 +85,7 @@ static int rpm_pre[FAN_CH_COUNT];
  *   TACH = Counts of tachometer
  */
 #define TACH_TO_RPM(ch, tach) \
-	((fan_status[ch].mft_freq * 60 / PULSES_ROUND) / MAX((tach), 1))
+	((fan_status[ch].mft_freq * 60 / PULSES_ROUND) / max((tach), 1))
 
 /* MFT TCNT default count */
 #define TACHO_MAX_CNT (BIT(16) - 1)
@@ -264,9 +264,9 @@ static void fan_adjust_duty(int ch, int rpm_diff, int duty)
 
 	/* Adjust fan duty step by step */
 	if (rpm_diff > 0)
-		duty = MIN(duty + duty_step, 100);
+		duty = min(duty + duty_step, 100);
 	else
-		duty = MAX(duty - duty_step, 1);
+		duty = max(duty - duty_step, 1);
 
 	fan_set_duty(ch, duty);
 

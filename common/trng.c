@@ -26,7 +26,7 @@ test_mockable void trng_rand_bytes(void *buffer, size_t len)
 		uintptr_t align = (uintptr_t)buffer & 3;
 
 		if (len < 4 || align) {
-			cnt = MIN(4 - align, len);
+			cnt = min(4 - align, len);
 			memcpy(buffer, &number, cnt);
 		} else {
 			*(uint32_t *)buffer = number;

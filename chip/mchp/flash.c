@@ -69,7 +69,7 @@ int crec_flash_physical_write(int offset, int size, const char *data)
 		return EC_ERROR_INVAL;
 
 	for (i = 0; i < size; i += write_size) {
-		write_size = MIN((size - i), SPI_FLASH_MAX_WRITE_SIZE);
+		write_size = min((size - i), SPI_FLASH_MAX_WRITE_SIZE);
 		ret = spi_flash_write(offset + i, write_size,
 				      (uint8_t *)data + i);
 		if (ret != EC_SUCCESS)

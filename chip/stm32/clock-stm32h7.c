@@ -453,7 +453,7 @@ static void set_lptim_event(int delay_us, uint16_t *lptim_cnt)
 {
 	uint16_t cnt = lptim_read();
 
-	STM32_LPTIM_CMP(1) = cnt + MIN(delay_us / LPTIM_PERIOD_US - 1, 0xffff);
+	STM32_LPTIM_CMP(1) = cnt + min(delay_us / LPTIM_PERIOD_US - 1, 0xffff);
 	/* clean-up previous event */
 	STM32_LPTIM_ICR(1) = STM32_LPTIM_INT_CMPM;
 	*lptim_cnt = cnt;

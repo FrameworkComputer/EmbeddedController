@@ -270,7 +270,7 @@ extern "C" {
  * x = a * 1000 / range * 1953
  */
 #define BMI160_MOTION_TH(_s, _mg) \
-	(MIN(((_mg) * 1000) / ((_s)->current_range * 1953), 0xff))
+	(min(((_mg) * 1000) / ((_s)->current_range * 1953), 0xff))
 #define BMI160_INT_MOTION_2 0x61
 #define BMI160_INT_MOTION_3 0x62
 #define BMI160_MOTION_NO_MOT_SEL BIT(0)
@@ -278,22 +278,22 @@ extern "C" {
 #define BMI160_MOTION_SKIP_OFF 2
 #define BMI160_MOTION_SKIP_MASK 0x3
 #define BMI160_MOTION_SKIP_TIME(_ms) \
-	(MIN(__fls((_ms) / 1500), BMI160_MOTION_SKIP_MASK))
+	(min(__fls((_ms) / 1500), BMI160_MOTION_SKIP_MASK))
 #define BMI160_MOTION_PROOF_OFF 4
 #define BMI160_MOTION_PROOF_MASK 0x3
 #define BMI160_MOTION_PROOF_TIME(_ms) \
-	(MIN(__fls((_ms) / 250), BMI160_MOTION_PROOF_MASK))
+	(min(__fls((_ms) / 250), BMI160_MOTION_PROOF_MASK))
 
 #define BMI160_INT_TAP_0 0x63
 #define BMI160_TAP_DUR(_s, _ms)                   \
-	((_ms) <= 250 ? MAX((_ms), 50) / 50 - 1 : \
+	((_ms) <= 250 ? max((_ms), 50) / 50 - 1 : \
 	 (_ms) <= 500 ? 4 + ((_ms) - 250) / 125 : \
 	 (_ms) < 700  ? 6 :                       \
 			7)
 
 #define BMI160_INT_TAP_1 0x64
 #define BMI160_TAP_TH(_s, _mg) \
-	(MIN(((_mg) * 1000) / ((_s)->current_range * 31250), 0x1f))
+	(min(((_mg) * 1000) / ((_s)->current_range * 31250), 0x1f))
 
 #define BMI160_INT_ORIENT_0 0x65
 

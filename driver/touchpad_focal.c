@@ -226,7 +226,7 @@ static int fts_tp_read_report(void)
 			break;
 		}
 		pressure = (touch_buf[6 + offset] & 0xFF);
-		pressure = CLAMP(pressure, 25, 281);
+		pressure = clamp(pressure, 25, 281);
 
 		if (EVENT_DOWN(event_flag)) {
 			report.finger[ri].id = point_id;

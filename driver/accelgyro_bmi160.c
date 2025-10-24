@@ -153,7 +153,7 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		 * Given odr is in mHz, multiply by 1000x
 		 */
 		moc->batch_size =
-			MAX(MAG_CAL_MIN_BATCH_SIZE,
+			max(MAG_CAL_MIN_BATCH_SIZE,
 			    (data->odr * 1000) / (MAG_CAL_MIN_BATCH_WINDOW_US));
 		CPRINTS("Batch size: %d", moc->batch_size);
 	}

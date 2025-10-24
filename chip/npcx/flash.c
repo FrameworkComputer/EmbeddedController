@@ -379,8 +379,8 @@ static int flash_check_prot_range(unsigned int offset, unsigned int bytes)
 	if (offset + bytes > CONFIG_FLASH_SIZE_BYTES)
 		return EC_ERROR_INVAL;
 	/* Check if ranges overlap */
-	if (MAX(addr_prot_start, offset) <
-	    MIN(addr_prot_start + addr_prot_length, offset + bytes))
+	if (max(addr_prot_start, offset) <
+	    min(addr_prot_start + addr_prot_length, offset + bytes))
 		return EC_ERROR_ACCESS_DENIED;
 
 	return EC_SUCCESS;
@@ -416,7 +416,7 @@ static int flash_check_prot_reg(unsigned int offset, unsigned int bytes)
 		return rv;
 
 	/* Check if ranges overlap */
-	if (MAX(start, offset) < MIN(start + len, offset + bytes))
+	if (max(start, offset) < min(start + len, offset + bytes))
 		return EC_ERROR_ACCESS_DENIED;
 
 	return EC_SUCCESS;
@@ -470,7 +470,7 @@ static int flash_program_bytes(uint32_t offset, uint32_t bytes,
 
 	while (bytes > 0) {
 		/* Write length can not go beyond the end of the flash page */
-		write_size = MIN(bytes,
+		write_size = min(bytes,
 				 CONFIG_FLASH_WRITE_IDEAL_SIZE -
 					 (offset &
 					  (CONFIG_FLASH_WRITE_IDEAL_SIZE - 1)));

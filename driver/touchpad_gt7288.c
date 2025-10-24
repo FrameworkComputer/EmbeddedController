@@ -168,7 +168,7 @@ static int command_gt7288_read_report_descriptor(int argc, const char **argv)
 	ccprintf("Report descriptor: ");
 	while (bytes_read < GT7288_REPORT_DESCRIPTOR_LENGTH) {
 		size_t bytes_to_read =
-			MIN(GT7288_REPORT_DESCRIPTOR_LENGTH - bytes_read,
+			min(GT7288_REPORT_DESCRIPTOR_LENGTH - bytes_read,
 			    sizeof(data));
 		RETURN_ERROR(gt7288_read(data, bytes_to_read));
 

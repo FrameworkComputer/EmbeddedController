@@ -822,7 +822,7 @@ static enum ec_error_list bd9995x_set_current(int chgnum, int current)
 	}
 
 	rv = ch_raw_write16(chgnum, BD9995X_CMD_IPRECH_SET,
-			    MIN(current, BD9995X_IPRECH_MAX),
+			    min(current, BD9995X_IPRECH_MAX),
 			    BD9995X_EXTENDED_COMMAND);
 	if (rv)
 		return rv;

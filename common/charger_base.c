@@ -112,7 +112,7 @@ static const struct dual_battery_policy db_policy = {
 /* Add at most "value" to power_var, subtracting from total_power budget. */
 #define CHG_ALLOCATE(power_var, total_power, value)       \
 	do {                                              \
-		int val_capped = MIN(value, total_power); \
+		int val_capped = min(value, total_power); \
 		(power_var) += val_capped;                \
 		(total_power) -= val_capped;              \
 	} while (0)
@@ -449,7 +449,7 @@ void base_charge_allocate_input_current_limit(
 		lid_battery_power_max =
 			batt->desired_current * batt->desired_voltage / 1000;
 
-	lid_battery_power = MIN(lid_battery_power, lid_battery_power_max);
+	lid_battery_power = min(lid_battery_power, lid_battery_power_max);
 
 	/* Estimate base battery power. */
 	if (!(base_bd->flags & EC_BATT_FLAG_INVALID_DATA)) {
@@ -462,7 +462,7 @@ void base_charge_allocate_input_current_limit(
 		base_battery_power = smooth_value(
 			prev_base_battery_power, base_battery_power,
 			db_policy.battery_power_smooth);
-	base_battery_power = MIN(base_battery_power, base_battery_power_max);
+	base_battery_power = min(base_battery_power, base_battery_power_max);
 
 	if (debugging) {
 		CPRINTF("%s:\n", __func__);

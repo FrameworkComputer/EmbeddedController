@@ -39,7 +39,7 @@ test_mockable int cbi_get_ufsc(struct cbi_ufsc *ufsc)
 static enum ec_status hc_cbi_get(struct host_cmd_handler_args *args)
 {
 	const struct __ec_align4 ec_params_get_cbi *p = args->params;
-	uint8_t size = MIN(args->response_max, UINT8_MAX);
+	uint8_t size = min(args->response_max, UINT8_MAX);
 
 	if (p->flag & CBI_GET_RELOAD) {
 		cbi_invalidate_cache();

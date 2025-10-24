@@ -65,7 +65,7 @@ int charger_profile_override(struct charge_state_data *curr)
 			current_level = NUM_TEMP_CHG_LEVELS - 1;
 
 		curr->requested_current =
-			MIN(curr->requested_current,
+			min(curr->requested_current,
 			    temp_chg_table[current_level].current);
 	}
 

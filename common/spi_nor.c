@@ -451,7 +451,7 @@ static int spi_nor_read_internal(const struct spi_nor_device_t *spi_nor_device,
 	 * is larger than the maximum read size.
 	 */
 	while (size > 0) {
-		size_t read_size = MIN(size, CONFIG_SPI_NOR_MAX_READ_SIZE);
+		size_t read_size = min(size, CONFIG_SPI_NOR_MAX_READ_SIZE);
 		size_t read_command_size;
 
 		/* Set up the read command in the TX buffer. */
@@ -698,7 +698,7 @@ int spi_nor_erase(const struct spi_nor_device_t *spi_nor_device,
 		read_left = erase_size;
 		while (read_left) {
 			read_size =
-				MIN(read_left, CONFIG_SPI_NOR_MAX_READ_SIZE);
+				min(read_left, CONFIG_SPI_NOR_MAX_READ_SIZE);
 			/* Since CONFIG_SPI_NOR_MAX_READ_SIZE & erase_size are
 			 * both guaranteed to be multiples of 4.
 			 */
@@ -804,7 +804,7 @@ int spi_nor_write(const struct spi_nor_device_t *spi_nor_device,
 	/* Ensure the device's page size fits in the driver's buffer, if not
 	 * emulate a smaller page size based on the buffer size. */
 	effective_page_size =
-		MIN(spi_nor_device->page_size, CONFIG_SPI_NOR_MAX_WRITE_SIZE);
+		min(spi_nor_device->page_size, CONFIG_SPI_NOR_MAX_WRITE_SIZE);
 
 	/* Split the write into multiple writes if the size is too large. */
 	while (size > 0) {
@@ -812,7 +812,7 @@ int spi_nor_write(const struct spi_nor_device_t *spi_nor_device,
 		/* Figure out the size of the next write within 1 page. */
 		uint32_t page_offset = offset & (effective_page_size - 1);
 		size_t write_size =
-			MIN(size, effective_page_size - page_offset);
+			min(size, effective_page_size - page_offset);
 
 		/* Wait for the previous operation to finish. */
 		rv = spi_nor_wait(spi_nor_device);

@@ -82,7 +82,7 @@ static void cam_ipi_handler(int id, void *data, uint32_t len)
 		return;
 
 	rsv_msg.id = id;
-	memcpy(rsv_msg.msg, data, MIN(len, sizeof(rsv_msg.msg)));
+	memcpy(rsv_msg.msg, data, min(len, sizeof(rsv_msg.msg)));
 
 	/*
 	 * If there is no other IPI handler touch this queue, we don't need to

@@ -162,7 +162,7 @@ int spi_flash_read(uint8_t *buf_usr, unsigned int offset, unsigned int bytes)
 		cmd[1] = (spi_addr >> 16) & 0xFF;
 		cmd[2] = (spi_addr >> 8) & 0xFF;
 		cmd[3] = spi_addr & 0xFF;
-		read_size = MIN((bytes - i), SPI_FLASH_MAX_READ_SIZE);
+		read_size = min((bytes - i), SPI_FLASH_MAX_READ_SIZE);
 		ret = spi_transaction(SPI_FLASH_DEVICE, cmd, 4, buf_usr + i,
 				      read_size);
 		if (ret != EC_SUCCESS)
@@ -286,7 +286,7 @@ int spi_flash_write(unsigned int offset, unsigned int bytes,
 		watchdog_reload();
 		/* Write length can not go beyond the end of the flash page */
 		write_size =
-			MIN(bytes,
+			min(bytes,
 			    SPI_FLASH_MAX_WRITE_SIZE -
 				    (offset & (SPI_FLASH_MAX_WRITE_SIZE - 1)));
 
@@ -445,7 +445,7 @@ int spi_flash_check_protect(unsigned int offset, unsigned int bytes)
 		return rv;
 
 	/* Check if ranges overlap */
-	if (MAX(start, offset) < MIN(start + len, offset + bytes))
+	if (max(start, offset) < min(start + len, offset + bytes))
 		return EC_ERROR_ACCESS_DENIED;
 
 	return EC_SUCCESS;

@@ -95,7 +95,7 @@ void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
 		max_request_allowed = 1;
 
 	if (IS_ENABLED(CONFIG_USB_PD_DPS) && dps_is_enabled())
-		max_request_mv = MIN(max_request_mv, dps_get_dynamic_voltage());
+		max_request_mv = min(max_request_mv, dps_get_dynamic_voltage());
 
 	/*
 	 * If currently charging on a different port, or we are not allowed to
@@ -210,7 +210,7 @@ void pd_process_source_cap(int port, int cnt, uint32_t *src_caps)
 		uint32_t max_mv = pd_get_max_voltage();
 
 		if (IS_ENABLED(CONFIG_USB_PD_DPS) && dps_is_enabled())
-			max_mv = MIN(max_mv, dps_get_dynamic_voltage());
+			max_mv = min(max_mv, dps_get_dynamic_voltage());
 
 		/* Get max power info that we could request */
 		pd_select_best_pdo(pd_get_src_cap_cnt(port),

@@ -95,7 +95,7 @@ static int hostcmd_fill(const uint8_t *data, size_t size)
 	 * over checksum and data_len.
 	 */
 	for (i = 0; i < ARRAY_SIZE(chunks) && ipos < size; i++) {
-		int cp_size = MIN(chunks[i].size, size - ipos);
+		int cp_size = min(chunks[i].size, size - ipos);
 
 		memcpy(req_buf + chunks[i].start, data + ipos, cp_size);
 

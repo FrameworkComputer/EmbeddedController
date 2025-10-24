@@ -157,7 +157,7 @@ static enum ec_error_list rt9490_get_current(int chgnum, int *current)
 
 	val = (val & RT9490_ICHG_MASK) >> RT9490_ICHG_SHIFT;
 	val *= info->current_step;
-	*current = CLAMP(val, info->current_min, info->current_max);
+	*current = clamp(val, info->current_min, info->current_max);
 
 	return EC_SUCCESS;
 }
@@ -189,7 +189,7 @@ static enum ec_error_list rt9490_get_voltage(int chgnum, int *voltage)
 
 	val = val & RT9490_CV_MASK;
 	val *= info->voltage_step;
-	*voltage = CLAMP(val, info->voltage_min, info->voltage_max);
+	*voltage = clamp(val, info->voltage_min, info->voltage_max);
 
 	return EC_SUCCESS;
 }
@@ -491,7 +491,7 @@ static enum ec_error_list rt9490_set_input_current_limit(int chgnum,
 {
 	uint16_t reg_val;
 
-	input_current = CLAMP(input_current, RT9490_AICR_MIN, RT9490_AICR_MAX);
+	input_current = clamp(input_current, RT9490_AICR_MIN, RT9490_AICR_MAX);
 	reg_val = input_current / RT9490_AICR_STEP;
 	return rt9490_write16(chgnum, RT9490_REG_AICR_CTRL, reg_val);
 }
@@ -504,7 +504,7 @@ static enum ec_error_list rt9490_get_input_current_limit(int chgnum,
 	RETURN_ERROR(rt9490_read16(chgnum, RT9490_REG_AICR_CTRL, &val));
 	val = (val & RT9490_AICR_MASK) >> RT9490_AICR_SHIFT;
 	val *= RT9490_AICR_STEP;
-	*input_current = CLAMP(val, RT9490_AICR_MIN, RT9490_AICR_MAX);
+	*input_current = clamp(val, RT9490_AICR_MIN, RT9490_AICR_MAX);
 	return EC_SUCCESS;
 }
 

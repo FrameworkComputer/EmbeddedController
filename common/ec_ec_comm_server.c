@@ -160,7 +160,7 @@ handle_cmd_charger_control(const struct ec_params_charger_control *params,
 	if (params->max_current >= 0) {
 		charge_set_output_current_limit(CHARGER_SOLO, 0, 0);
 		charge_set_input_current_limit(
-			MIN(MAX_CURRENT_MA, params->max_current), 0);
+			min(MAX_CURRENT_MA, params->max_current), 0);
 		charging_allowed = params->allow_charging;
 	} else {
 		if (-params->max_current > MAX_OTG_CURRENT_MA ||

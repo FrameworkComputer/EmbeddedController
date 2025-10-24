@@ -277,7 +277,7 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 		 * In case the AP want to run the sensors faster than it can,
 		 * be sure we don't see the ratio to 0.
 		 */
-		sensor->oversampling_ratio = MAX(1, odr / ap_odr_mhz);
+		sensor->oversampling_ratio = max(1, odr / ap_odr_mhz);
 	else
 		sensor->oversampling_ratio = 0;
 
@@ -1046,7 +1046,7 @@ void motion_sense_task(void *u)
 				ec_rate = sensor->config[cfg_index].ec_rate;
 			}
 
-			time_diff = MAX(time_until(ts_end_task.le.lo,
+			time_diff = max(time_until(ts_end_task.le.lo,
 						   sensor->next_collection),
 					ec_rate);
 
@@ -1126,7 +1126,7 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		}
 		out->dump.sensor_count = ALL_MOTION_SENSORS;
 		args->response_size = sizeof(out->dump);
-		reported = MIN(ALL_MOTION_SENSORS, in->dump.max_sensor_count);
+		reported = min(ALL_MOTION_SENSORS, in->dump.max_sensor_count);
 		mutex_lock(&g_sensor_mutex);
 		for (i = 0; i < reported; i++) {
 			out->dump.sensor[i].flags =
@@ -1215,7 +1215,7 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			args->response_size = sizeof(out->info);
 		if (args->version >= 3) {
 			out->info_3.min_frequency =
-				MAX(sensor->min_frequency,
+				max(sensor->min_frequency,
 				    BASE_ODR(sensor->config[SENSOR_CONFIG_EC_S0]
 						     .odr));
 			out->info_3.max_frequency = sensor->max_frequency;
@@ -1242,7 +1242,7 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 			if (new_ec_rate > 0)
 				new_ec_rate =
-					MAX(new_ec_rate, motion_min_interval);
+					max(new_ec_rate, motion_min_interval);
 			sensor->config[SENSOR_CONFIG_AP].ec_rate = new_ec_rate;
 
 			/* Force a collection to purge old events.  */

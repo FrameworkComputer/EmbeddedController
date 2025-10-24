@@ -448,7 +448,7 @@ int mt6360_regulator_set_voltage(enum mt6360_regulator_id id, int min_mv,
 		mv = DIV_ROUND_UP((min_mv + max_mv) / 2,
 				  MT6360_BUCK_VOSEL_STEP_MV) *
 		     MT6360_BUCK_VOSEL_STEP_MV;
-		mv = MIN(MAX(mv, MT6360_BUCK_VOSEL_MIN), MT6360_BUCK_VOSEL_MAX);
+		mv = min(max(mv, MT6360_BUCK_VOSEL_MIN), MT6360_BUCK_VOSEL_MAX);
 
 		step = (mv - MT6360_BUCK_VOSEL_MIN) / MT6360_BUCK_VOSEL_STEP_MV;
 
@@ -513,7 +513,7 @@ int mt6360_regulator_get_voltage(enum mt6360_regulator_id id, int *voltage_mv)
 		return EC_ERROR_INVAL;
 	}
 	*voltage_mv +=
-		MIN(MT6360_LDO_VOCAL_MAX_STEP, value & data->mask_vocal) *
+		min(MT6360_LDO_VOCAL_MAX_STEP, value & data->mask_vocal) *
 		MT6360_LDO_VOCAL_STEP_MV;
 	return EC_SUCCESS;
 }

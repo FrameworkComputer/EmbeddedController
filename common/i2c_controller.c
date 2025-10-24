@@ -152,7 +152,7 @@ static int i2c_xfer_no_retry(const int port, const uint16_t addr_flags,
 	int offset;
 
 	for (offset = 0; offset < out_size;) {
-		int chunk_size = MIN(out_size - offset,
+		int chunk_size = min(out_size - offset,
 				     CONFIG_I2C_CHIP_MAX_TRANSFER_SIZE);
 		int out_flags = 0;
 
@@ -167,7 +167,7 @@ static int i2c_xfer_no_retry(const int port, const uint16_t addr_flags,
 		offset += chunk_size;
 	}
 	for (offset = 0; offset < in_size;) {
-		int chunk_size = MIN(in_size - offset,
+		int chunk_size = min(in_size - offset,
 				     CONFIG_I2C_CHIP_MAX_TRANSFER_SIZE);
 		int in_flags = 0;
 

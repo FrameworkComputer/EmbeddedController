@@ -207,7 +207,7 @@ __override void tcs3400_translate_to_xyz(struct motion_sensor_t *s,
 
 	/* Use different coefficients based on n_interval = (G+B)/C */
 	fp64_t gb_sum = INT_TO_FP64(crgb_data[2]) + INT_TO_FP64(crgb_data[3]);
-	fp64_t n_interval = gb_sum / MAX(crgb_data[0], 1);
+	fp64_t n_interval = gb_sum / max(crgb_data[0], 1);
 
 	if (n_interval < FLOAT_TO_FP64(0.692)) {
 		const float scale = 799.797;
@@ -241,7 +241,7 @@ __override void tcs3400_translate_to_xyz(struct motion_sensor_t *s,
 	/* Adjust for exposure time and sensor gain.
 	 * Note: fp64_t / int = fp64_t.
 	 */
-	result /= MAX(integration_time_us * cur_gain / 1000, 1);
+	result /= max(integration_time_us * cur_gain / 1000, 1);
 
 	/* Some C/R/G/B coefficients are negative, so the result could also be
 	 * negative and must be clamped at zero.
@@ -249,7 +249,7 @@ __override void tcs3400_translate_to_xyz(struct motion_sensor_t *s,
 	 * The value of xyz_data[1] is stored in a 16 bit integer later on, so
 	 * it must be clamped at INT16_MAX.
 	 */
-	xyz_data[1] = MIN(MAX(FP64_TO_INT(result), 0), INT16_MAX);
+	xyz_data[1] = min(max(FP64_TO_INT(result), 0), INT16_MAX);
 }
 
 static void ppc_interrupt(enum gpio_signal signal)

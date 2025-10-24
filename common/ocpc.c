@@ -132,10 +132,10 @@ static void calc_resistance_stats(struct ocpc_data *ocpc)
 		 * Don't let our stddev collapse to 0 to continually consider
 		 * new values.
 		 */
-		stddev_resistance[i] = MAX(stddev_resistance[i], 1);
+		stddev_resistance[i] = max(stddev_resistance[i], 1);
 		CPRINTS_DBG("%d: mean: %d stddev: %d", i, mean_resistance[i],
 			    stddev_resistance[i]);
-		lb[i] = MAX(0, mean_resistance[i] - (3 * stddev_resistance[i]));
+		lb[i] = max(0, mean_resistance[i] - (3 * stddev_resistance[i]));
 		ub[i] = mean_resistance[i] + (3 * stddev_resistance[i]);
 	}
 }
@@ -226,12 +226,12 @@ enum ec_error_list ocpc_calc_resistances(struct ocpc_data *ocpc,
 	    (seeded && is_within_range(ocpc, combined, rbatt, rsys))) {
 		if (!(ocpc->chg_flags[act_chg] & OCPC_NO_ISYS_MEAS_CAP)) {
 			resistance_tbl[resistance_tbl_idx][RSYS_IDX] =
-				MAX(rsys, 0);
+				max(rsys, 0);
 			resistance_tbl[resistance_tbl_idx][RBATT_IDX] =
-				MAX(rbatt, CONFIG_OCPC_DEF_RBATT_MOHMS);
+				max(rbatt, CONFIG_OCPC_DEF_RBATT_MOHMS);
 		}
 		resistance_tbl[resistance_tbl_idx][COMBINED_IDX] =
-			MAX(combined, CONFIG_OCPC_DEF_RBATT_MOHMS);
+			max(combined, CONFIG_OCPC_DEF_RBATT_MOHMS);
 		calc_resistance_stats(ocpc);
 		resistance_tbl_idx =
 			(resistance_tbl_idx + 1) % NUM_RESISTANCE_SAMPLES;
@@ -239,12 +239,12 @@ enum ec_error_list ocpc_calc_resistances(struct ocpc_data *ocpc,
 
 	if (seeded) {
 		ocpc->combined_rsys_rbatt_mo =
-			MAX(mean_resistance[COMBINED_IDX],
+			max(mean_resistance[COMBINED_IDX],
 			    CONFIG_OCPC_DEF_RBATT_MOHMS);
 
 		if (!(ocpc->chg_flags[act_chg] & OCPC_NO_ISYS_MEAS_CAP)) {
 			ocpc->rsys_mo = mean_resistance[RSYS_IDX];
-			ocpc->rbatt_mo = MAX(mean_resistance[RBATT_IDX],
+			ocpc->rbatt_mo = max(mean_resistance[RBATT_IDX],
 					     CONFIG_OCPC_DEF_RBATT_MOHMS);
 			CPRINTS_DBG("Rsys: %dmOhm Rbatt: %dmOhm", ocpc->rsys_mo,
 				    ocpc->rbatt_mo);
@@ -453,7 +453,7 @@ int ocpc_config_secondary_charger(int *desired_charger_input_current,
 	}
 
 	/* Ensure our target is not negative. */
-	i_ma = MAX(i_ma, 0);
+	i_ma = max(i_ma, 0);
 
 	/* Convert desired mA to what the charger could actually regulate to. */
 	i_step = (int)charger_get_info()->current_step;
@@ -475,7 +475,7 @@ int ocpc_config_secondary_charger(int *desired_charger_input_current,
 			int charger_input_error =
 				(*desired_charger_input_current -
 				 ocpc->secondary_ibus_ma);
-			error = MIN(error, charger_input_error);
+			error = min(error, charger_input_error);
 		}
 
 		/* Add some hysteresis. */
@@ -503,7 +503,7 @@ int ocpc_config_secondary_charger(int *desired_charger_input_current,
 	CPRINTS_DBG("batt.current = %dmA", batt.current);
 	CPRINTS_DBG("i_ma = %dmA", i_ma);
 
-	min_vsys_target = MIN(batt.voltage, batt.desired_voltage);
+	min_vsys_target = min(batt.voltage, batt.desired_voltage);
 	CPRINTS_DBG("min_vsys_target = %d", min_vsys_target);
 
 	/* Obtain the drive from our PID controller. */
@@ -561,7 +561,7 @@ int ocpc_config_secondary_charger(int *desired_charger_input_current,
 	 * plus the voltage drop across the system.
 	 */
 	vsys_target =
-		CLAMP(vsys_target, min_vsys_target,
+		clamp(vsys_target, min_vsys_target,
 		      batt_info->voltage_max +
 			      (i_ma * ocpc->combined_rsys_rbatt_mo / 1000));
 
@@ -591,7 +591,7 @@ int ocpc_config_secondary_charger(int *desired_charger_input_current,
 
 set_vsys:
 	/* VSYS should never be below the battery's min voltage. */
-	vsys_target = MAX(vsys_target, batt_info->voltage_min);
+	vsys_target = max(vsys_target, batt_info->voltage_min);
 	/* To reduce spam, only print when we change VSYS significantly. */
 	if ((ABS(vsys_target - ocpc->last_vsys) > 10) || debug_output)
 		CPRINTS("OCPC: Target VSYS: %dmV", vsys_target);
@@ -604,7 +604,7 @@ set_vsys:
 	 */
 	if (i_ma != 0) {
 		loc = error * 20 / i_ma;
-		loc = CLAMP(loc, -10, 10);
+		loc = clamp(loc, -10, 10);
 		CPRINT_VIZ("[");
 		for (i = -10; i <= 10; i++) {
 			if (i == 0)

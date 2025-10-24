@@ -74,7 +74,7 @@ static const uint8_t *report_ptr;
 static int send_report(usb_uint *ep0_buf_tx, const uint8_t *report,
 		       int report_size)
 {
-	int packet_size = MIN(report_size, USB_MAX_PACKET_SIZE);
+	int packet_size = min(report_size, USB_MAX_PACKET_SIZE);
 
 	memcpy_to_usbram((void *)usb_sram_addr(ep0_buf_tx), report,
 			 packet_size);
@@ -104,7 +104,7 @@ int hid_iface_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx,
 		 */
 		if (report_left == 0)
 			return -1;
-		report_size = MIN(USB_MAX_PACKET_SIZE, report_left);
+		report_size = min(USB_MAX_PACKET_SIZE, report_left);
 		memcpy_to_usbram((void *)usb_sram_addr(ep0_buf_tx), report_ptr,
 				 report_size);
 		btable_ep[0].tx_count = report_size;
@@ -118,7 +118,7 @@ int hid_iface_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx,
 		if (ep0_buf_rx[1] == (USB_HID_DT_REPORT << 8)) {
 			/* Setup : HID specific : Get Report descriptor */
 			return send_report(ep0_buf_tx, report_desc,
-					   MIN(ep0_buf_rx[3], report_size));
+					   min(ep0_buf_rx[3], report_size));
 		} else if (ep0_buf_rx[1] == (USB_HID_DT_HID << 8)) {
 			/* Setup : HID specific : Get HID descriptor */
 			memcpy_to_usbram_ep0_patch(hid_desc, sizeof(*hid_desc));

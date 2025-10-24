@@ -144,7 +144,7 @@ static int clock_stretching(const struct i2c_port_t *i2c_port)
 	 * SMBus 3.0, Note 3
 	 * Devices participating in a transfer can abort the transfer in
 	 * progress and release the bus when any single clock low interval
-	 * exceeds the value of tTIMEOUT,MIN(=25ms).
+	 * exceeds the value of tTIMEOUT,Min(=25ms).
 	 * After the controller in a transaction detects this condition, it must
 	 * generate a stop condition within or after the current data byte in
 	 * the transfer process.

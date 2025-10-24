@@ -49,7 +49,7 @@ static void mdp_ipi_handler(int id, void *data, unsigned int len)
 	struct mdp_msg_service cmd;
 
 	cmd.id = id;
-	memcpy(cmd.msg, data, MIN(len, sizeof(cmd.msg)));
+	memcpy(cmd.msg, data, min(len, sizeof(cmd.msg)));
 
 	/*
 	 * If there is no other IPI handler touch this queue, we don't need to

@@ -106,7 +106,7 @@ int keyscan_seq_next_event_delay(void)
 
 	/* Calculate the delay until the event */
 	ksi = &keyscan_items[keyscan_seq_upto];
-	delay = MAX(ksi->abs_time.val - get_time().val, 0);
+	delay = max(ksi->abs_time.val - get_time().val, 0);
 
 	return delay;
 }
@@ -143,11 +143,11 @@ static int keyscan_seq_collect(struct ec_params_keyscan_seq_ctrl *req,
 	if (start >= keyscan_seq_count)
 		end = start;
 	else
-		end = MIN(end, keyscan_seq_count);
-	start = MIN(start, end);
+		end = min(end, keyscan_seq_count);
+	start = min(start, end);
 
 	/* Response plus one byte per item */
-	end = MIN(end - start, EC_HOST_PARAM_SIZE - sizeof(*resp));
+	end = min(end - start, EC_HOST_PARAM_SIZE - sizeof(*resp));
 	resp->collect.num_items = end - start;
 
 	for (i = start, ksi = keyscan_items; i < end; i++, ksi++)

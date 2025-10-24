@@ -231,7 +231,7 @@ __stdlib_compat unsigned long long int strtoull(const char *nptr, char **endptr,
 	base = find_base(base, &c, &nptr);
 
 	while (c) {
-		if (c >= '0' && c < '0' + MIN(base, 10))
+		if (c >= '0' && c < '0' + min(base, 10))
 			result = result * base + (c - '0');
 		else if (c >= 'A' && c < 'A' + base - 10)
 			result = result * base + (c - 'A' + 10);

@@ -78,7 +78,7 @@ void log_add_event(uint8_t type, uint8_t size, uint16_t data, void *payload,
 	r->size = size;
 	r->data = data;
 	/* copy the payload into the FIFO */
-	first = MIN(total_size - 1,
+	first = min(total_size - 1,
 		    (UNIT_COUNT - (current_tail & UNIT_COUNT_MASK)) - 1);
 	if (first)
 		memcpy(r->payload, payload, first * UNIT_SIZE);
@@ -109,7 +109,7 @@ retry:
 
 	entry = log_events + (current_head & UNIT_COUNT_MASK);
 	total_size = ENTRY_SIZE(EVENT_LOG_SIZE(entry->size));
-	first = MIN(total_size, UNIT_COUNT - (current_head & UNIT_COUNT_MASK));
+	first = min(total_size, UNIT_COUNT - (current_head & UNIT_COUNT_MASK));
 	memcpy(r, entry, first * UNIT_SIZE);
 	if (first < total_size)
 		memcpy(r + first, log_events, (total_size - first) * UNIT_SIZE);

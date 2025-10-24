@@ -104,7 +104,7 @@ static void set_keyscan_config(const struct ec_mkbp_config *src,
 		 * watchdog events. Use 200 to be safe.
 		 */
 		ksc->min_post_scan_delay_us =
-			MAX(src->min_post_scan_delay_us, 200);
+			max(src->min_post_scan_delay_us, 200);
 	}
 
 	if (valid_mask & EC_MKBP_VALID_OUTPUT_SETTLE)
@@ -160,7 +160,7 @@ static void keyscan_copy_config(const struct ec_mkbp_config *src,
 
 	if (valid_mask & EC_MKBP_VALID_FIFO_MAX_DEPTH) {
 		/* Validity check for fifo depth */
-		dst->fifo_max_depth = MIN(src->fifo_max_depth, FIFO_DEPTH);
+		dst->fifo_max_depth = min(src->fifo_max_depth, FIFO_DEPTH);
 	}
 
 	new_flags = dst->flags & ~valid_flags;

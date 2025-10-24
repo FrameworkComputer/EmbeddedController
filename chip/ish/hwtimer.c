@@ -145,7 +145,7 @@ void __hw_clock_event_set(uint32_t deadline)
 	 * we make remaining time not less than 'MINIMUM_EVENT_DELAY_US'
 	 */
 	remaining_us = deadline - current_us;
-	remaining_us = MAX(remaining_us, MINIMUM_EVENT_DELAY_US);
+	remaining_us = max(remaining_us, MINIMUM_EVENT_DELAY_US);
 
 	/*
 	 * Set new 64bit absolute timeout ticks to Timer 1 comparator

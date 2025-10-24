@@ -383,7 +383,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 				fifo_frame.available_fifo_len);
 
 		fifo_frame.available_fifo_len =
-			MIN(fifo_frame.available_fifo_len,
+			min(fifo_frame.available_fifo_len,
 			    ARRAY_SIZE(fifo_frame.data));
 		/* Read FIFO data */
 		rv = bmi3_read_n(

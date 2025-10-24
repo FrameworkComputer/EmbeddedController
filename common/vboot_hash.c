@@ -140,7 +140,7 @@ static void vboot_hash_all_chunks(void)
 	char str_buf[hex_str_buf_size(SHA256_PRINT_SIZE)];
 
 	do {
-		size_t size = MIN(CHUNK_SIZE, data_size - curr_pos);
+		size_t size = min(CHUNK_SIZE, data_size - curr_pos);
 		hash_next_chunk(size);
 		curr_pos += size;
 	} while (curr_pos < data_size);
@@ -171,7 +171,7 @@ static void vboot_hash_next_chunk(void)
 	}
 
 	/* Compute the next chunk of hash */
-	size = MIN(CHUNK_SIZE, data_size - curr_pos);
+	size = min(CHUNK_SIZE, data_size - curr_pos);
 	hash_next_chunk(size);
 
 	curr_pos += size;

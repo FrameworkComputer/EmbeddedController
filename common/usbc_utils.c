@@ -31,7 +31,7 @@ int pd_select_best_pdo(uint32_t src_cap_cnt, const uint32_t *const src_caps,
 	int __attribute__((unused)) cur_mv = 0;
 
 	/* max voltage is always limited by this boards max request */
-	max_mv = MIN(max_mv, CONFIG_USB_PD_MAX_VOLTAGE_MV);
+	max_mv = min(max_mv, CONFIG_USB_PD_MAX_VOLTAGE_MV);
 
 	/* Get max power that is under our max voltage input */
 	for (i = 0; i < src_cap_cnt; i++) {
@@ -73,7 +73,7 @@ int pd_select_best_pdo(uint32_t src_cap_cnt, const uint32_t *const src_caps,
 			continue;
 
 		uw = ma * mv;
-		uw = MIN(uw, CONFIG_USB_PD_MAX_POWER_MW * 1000);
+		uw = min(uw, CONFIG_USB_PD_MAX_POWER_MW * 1000);
 		prefer_cur = 0;
 
 		/* Apply special rules in favor of voltage  */
@@ -152,10 +152,10 @@ void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *max_mv,
 	if (*max_mv) {
 		/* Clamp current to board limits for non-zero-volt PDOs */
 		uint32_t board_limit_ma =
-			MIN(CONFIG_USB_PD_MAX_CURRENT_MA,
+			min(CONFIG_USB_PD_MAX_CURRENT_MA,
 			    CONFIG_USB_PD_MAX_POWER_MW * 1000 /
 				    PROCESS_ZERO_DIVISOR(*max_mv));
 
-		*ma = MIN(*ma, board_limit_ma);
+		*ma = min(*ma, board_limit_ma);
 	}
 }

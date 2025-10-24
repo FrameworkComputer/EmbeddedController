@@ -859,7 +859,7 @@ int system_get_image_used(enum ec_image copy)
 {
 	const struct image_data *data = system_get_image_data(copy);
 
-	return data ? MAX((int)data->size, 0) : 0;
+	return data ? max((int)data->size, 0) : 0;
 }
 
 /*

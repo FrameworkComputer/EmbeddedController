@@ -508,11 +508,11 @@ static int get_report(uint8_t report_id, uint8_t report_type,
 	switch (report_id) {
 	case REPORT_ID_DEVICE_CAPS:
 		*buffer_ptr = device_caps_response;
-		*buffer_size = MIN(sizeof(device_caps_response), *buffer_size);
+		*buffer_size = min(sizeof(device_caps_response), *buffer_size);
 		return 0;
 	case REPORT_ID_DEVICE_CERT:
 		*buffer_ptr = device_cert_response;
-		*buffer_size = MIN(sizeof(device_cert_response), *buffer_size);
+		*buffer_size = min(sizeof(device_cert_response), *buffer_size);
 		return 0;
 	}
 	return -1;

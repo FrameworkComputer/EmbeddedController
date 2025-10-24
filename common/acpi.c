@@ -69,7 +69,7 @@ static int current_dptf_profile = DPTF_PROFILE_DEFAULT;
 
 /* Calculate size of valid cache based upon end of memmap data. */
 #define ACPI_VALID_CACHE_SIZE(addr)                                       \
-	(MIN(EC_ACPI_MEM_MAPPED_SIZE + EC_ACPI_MEM_MAPPED_BEGIN - (addr), \
+	(min(EC_ACPI_MEM_MAPPED_SIZE + EC_ACPI_MEM_MAPPED_BEGIN - (addr), \
 	     ACPI_READ_CACHE_SIZE))
 
 /*
@@ -340,7 +340,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 #ifdef CONFIG_USB_PORT_POWER_DUMB
 		case EC_ACPI_MEM_USB_PORT_POWER: {
 			int i;
-			const int port_count = MIN(8, USB_PORT_COUNT);
+			const int port_count = min(8, USB_PORT_COUNT);
 
 			/*
 			 * Convert each USB port power GPIO signal to a bit
@@ -436,7 +436,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 		case EC_ACPI_MEM_USB_PORT_POWER: {
 			int i;
 			int mode_field = data;
-			const int port_count = MIN(8, USB_PORT_COUNT);
+			const int port_count = min(8, USB_PORT_COUNT);
 
 			/*
 			 * Read the port power bit field (with max size 8 bits)

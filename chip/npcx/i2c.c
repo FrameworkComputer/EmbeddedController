@@ -305,7 +305,7 @@ static void i2c_fifo_write_data(int controller)
 	if (IS_ENABLED(NPCX_I2C_FIFO_SUPPORT)) {
 		len = p_status->sz_txbuf - p_status->idx_buf;
 		fifo_avail = I2C_TX_FIFO_AVAILABLE(controller);
-		len = MIN(len, fifo_avail);
+		len = min(len, fifo_avail);
 	}
 	for (i = 0; i < len; i++) {
 		I2C_WRITE_BYTE(controller,

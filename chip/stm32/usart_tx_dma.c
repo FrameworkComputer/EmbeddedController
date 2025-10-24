@@ -50,7 +50,7 @@ static void usart_tx_dma_start(struct usart_config const *config,
 	 * that would hold up any additional writes to the TX queue
 	 * unnecessarily.
 	 */
-	state->chunk.count = MIN(state->chunk.count, dma_config->max_bytes);
+	state->chunk.count = min(state->chunk.count, dma_config->max_bytes);
 
 	dma_prepare_tx(&options, state->chunk.count, state->chunk.buffer);
 

@@ -212,7 +212,7 @@ struct fstatus {
 
 /* Gyro Reg value for Full Scale selection */
 #define LSM6DSM_GYRO_FS_REG(_fs) \
-	__fls(MAX(1, (_fs * 1000) / LSM6DSM_GYRO_FS_MIN_VAL_MDPS))
+	__fls(max(1, (_fs * 1000) / LSM6DSM_GYRO_FS_MIN_VAL_MDPS))
 
 /* Gyro normalized FS value from Full Scale register */
 #define LSM6DSM_GYRO_NORMALIZE_FS(_reg) \

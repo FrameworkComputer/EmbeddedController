@@ -378,9 +378,9 @@ static enum ec_status hc_smart_discharge(struct host_cmd_handler_args *args)
 
 		/* Commit */
 		hours_to_zero = p->hours_to_zero;
-		sdzone.stayup = MIN(hours_to_zero * drate.hibern / 1000, cap);
+		sdzone.stayup = min(hours_to_zero * drate.hibern / 1000, cap);
 		sdzone.cutoff =
-			MIN(hours_to_zero * drate.cutoff / 1000, sdzone.stayup);
+			min(hours_to_zero * drate.cutoff / 1000, sdzone.stayup);
 	}
 
 	/* Return the effective values. */
@@ -490,7 +490,7 @@ static enum power_state power_common_state(void)
 				break;
 			}
 
-			wait = MIN(target - now, TASK_MAX_WAIT_US);
+			wait = min(target - now, TASK_MAX_WAIT_US);
 			task_wait_event(wait);
 		}
 #else /* !CONFIG_HIBERNATE */

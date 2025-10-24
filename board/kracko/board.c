@@ -633,7 +633,7 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 {
 	/* Limit C1 on board version 0 to 2.0 A */
 	if ((board_version == 0) && (port == 1))
-		charge_ma = MIN(charge_ma, 2000);
+		charge_ma = min(charge_ma, 2000);
 	/*
 	 * TODO(b/151955431): Characterize the input current limit in case a
 	 * scaling needs to be applied here

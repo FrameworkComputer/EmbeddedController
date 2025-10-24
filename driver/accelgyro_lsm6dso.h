@@ -151,7 +151,7 @@ static inline uint8_t lsm6dso_accel_fs_reg(int fs)
 
 /* Gyro reg value for Full Scale selection in DPS */
 #define LSM6DSO_GYRO_FS_REG(_fs) \
-	__fls(MAX(1, (_fs * 1000) / LSM6DSO_GYRO_FS_MIN_VAL_MDPS))
+	__fls(max(1, (_fs * 1000) / LSM6DSO_GYRO_FS_MIN_VAL_MDPS))
 
 /* Gyro normalized FS value (in DPS) from Full Scale register */
 #define LSM6DSO_GYRO_NORMALIZE_FS(_reg) \

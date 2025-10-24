@@ -995,7 +995,7 @@ void i2c_init(void)
 		    (controller_kbps[controller] != kbps)) {
 			CPRINTF("I2C[%d] init speed conflict: %d != %d\n",
 				controller, kbps, controller_kbps[controller]);
-			kbps = MIN(kbps, controller_kbps[controller]);
+			kbps = min(kbps, controller_kbps[controller]);
 		}
 
 		/* controller speed hardware limits */

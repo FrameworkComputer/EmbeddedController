@@ -491,7 +491,7 @@ enum sm5803_phot3_vbus_sel {
  */
 #define IBAT_SEL_MAX 37800
 
-#define SM5803_IBAT_PROCHOT_MA_TO_REG(ma) MIN(ma / 600, SM5803_PHOT4_IBAT_SEL)
+#define SM5803_IBAT_PROCHOT_MA_TO_REG(ma) min(ma / 600, SM5803_PHOT4_IBAT_SEL)
 
 /* Expose cached Vbus presence */
 int sm5803_is_vbus_present(int chgnum);

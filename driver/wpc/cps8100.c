@@ -760,7 +760,7 @@ static int cps8x00_get_chip_info(struct pchg *ctx)
 	}
 
 	/* not probed yet, need to unlock blindly first. */
-	crec_msleep(MAX(CPS8100_POWER_ON_DELAY_MS, CPS8200_POWER_ON_DELAY_MS));
+	crec_msleep(max(CPS8100_POWER_ON_DELAY_MS, CPS8200_POWER_ON_DELAY_MS));
 	if (!cps8100_unlock(port))
 		rv = cps8100_read32(port, CPS8100_REG_IC_INFO, &u32);
 	else if (!cps8200_unlock(port))

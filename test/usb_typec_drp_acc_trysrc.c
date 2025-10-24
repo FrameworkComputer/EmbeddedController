@@ -765,7 +765,7 @@ __maybe_unused static int test_auto_toggle_delay_early_connect(void)
 	pd_set_dual_role(PORT0, PD_DRP_TOGGLE_ON);
 
 	/* Wait less than tDRP_SNK(40ms) and tDRP_SRC(30ms) */
-	task_wait_event(MIN(PD_T_DRP_SNK, PD_T_DRP_SRC) - (10 * MSEC));
+	task_wait_event(min(PD_T_DRP_SNK, PD_T_DRP_SRC) - (10 * MSEC));
 
 	/* Have partner connect as SRC */
 	mock_tcpc.cc1 = TYPEC_CC_VOLT_OPEN;

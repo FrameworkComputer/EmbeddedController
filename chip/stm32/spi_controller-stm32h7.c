@@ -250,7 +250,7 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 		buf = rxdata;
 		full_readback = 1;
 	} else {
-		rv = shared_mem_acquire(MAX(txlen, rxlen), &buf);
+		rv = shared_mem_acquire(max(txlen, rxlen), &buf);
 		if (rv != EC_SUCCESS)
 			return rv;
 	}

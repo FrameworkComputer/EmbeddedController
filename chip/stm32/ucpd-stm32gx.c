@@ -212,7 +212,7 @@ static void ucpd_log_add_msg(uint16_t header, int dir)
 	 */
 	if (msg_log_cnt++ < MSG_LOG_LEN) {
 		int msg_bytes =
-			MIN((PD_HEADER_CNT(header) << 2) + 2, MSG_BUF_LEN);
+			min((PD_HEADER_CNT(header) << 2) + 2, MSG_BUF_LEN);
 
 		msg_log[idx].header = header;
 		msg_log[idx].ts = ts;
@@ -1418,7 +1418,7 @@ static void ucpd_dump_msg_log(void)
 				 msg_log[i].comp, msg_log[i].crc,
 				 PD_HEADER_PROLE(header) ? "SRC" : "SNK",
 				 PD_HEADER_DROLE(header) ? "DFP" : "UFP");
-			len = MIN((len * 4) + 2, MSG_BUF_LEN);
+			len = min((len * 4) + 2, MSG_BUF_LEN);
 			for (j = 0; j < len; j++)
 				ccprintf(" %02x", msg_log[i].buf[j]);
 		} else {

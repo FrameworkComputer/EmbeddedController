@@ -277,7 +277,7 @@ int sspi_flash_verify(int offset, int size, const char *data)
 int sspi_flash_get_image_used(const char *fw_base)
 {
 	const uint8_t *image;
-	int size = MAX(CONFIG_RO_SIZE, CONFIG_RW_SIZE); /* max size is 128KB */
+	int size = max(CONFIG_RO_SIZE, CONFIG_RW_SIZE); /* max size is 128KB */
 
 	image = (const uint8_t *)fw_base;
 	/*

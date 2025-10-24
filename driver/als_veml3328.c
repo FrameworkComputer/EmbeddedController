@@ -36,7 +36,7 @@ static int veml3328_read(const struct motion_sensor_t *s, intv3_t v)
 		v[0] = raw;
 	} else {
 		RETURN_ERROR(i2c_read16(port, addr, VEML3328_REG_G, &raw));
-		raw = MAX(raw, 1);
+		raw = max(raw, 1);
 		lux = calib->LG * raw / VEML3328_DEFAULT_GAIN;
 		v[0] = (int)lux;
 	}
@@ -213,8 +213,8 @@ static int veml3328_rgb_read(const struct motion_sensor_t *s, intv3_t v)
 
 	/* XYZ conversion */
 
-	c = MAX(c, 1);
-	g = MAX(g, 1);
+	c = max(c, 1);
+	g = max(g, 1);
 	if ((r + g - b) <= 0)
 		CCTi = 0.1;
 	else
@@ -256,7 +256,7 @@ static int veml3328_rgb_read(const struct motion_sensor_t *s, intv3_t v)
 	Z = (Y / y) - X - Y;
 
 	/* Non-negative Z, as suggested in b/312586806#comment41 */
-	Z = MAX(Z, 0);
+	Z = max(Z, 0);
 
 	v[0] = (int)X;
 	v[1] = (int)Y;

@@ -371,7 +371,7 @@ test_mockable_static bool has_new_power_request(struct pdo_candidate *cand)
 	 * powerful PDO.
 	 */
 	if (is_near_limit(input_pwr_avg, req_pwr) ||
-	    is_near_limit(input_curr_avg, MIN(req_ma, input_curr_limit))) {
+	    is_near_limit(input_curr_avg, min(req_ma, input_curr_limit))) {
 		atomic_or(&flag, DPS_FLAG_NEED_MORE_PWR);
 		if (!fake_enabled)
 			input_pwr_avg = req_pwr + 1;
@@ -406,7 +406,7 @@ test_mockable_static bool has_new_power_request(struct pdo_candidate *cand)
 			if (mv > max_mv)
 				continue;
 
-			mw = MIN(ma, CONFIG_USB_PD_MAX_CURRENT_MA) * mv / 1000;
+			mw = min(ma, CONFIG_USB_PD_MAX_CURRENT_MA) * mv / 1000;
 			efficient = is_more_efficient(mv, cand->mv, batt_mv,
 						      batt_pwr, input_pwr_avg);
 

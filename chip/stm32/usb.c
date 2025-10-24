@@ -196,7 +196,7 @@ static void ep0_send_descriptor(const uint8_t *desc, int len,
 				uint16_t fixup_size)
 {
 	/* do not send more than what the host asked for */
-	len = MIN(ep0_buf_rx[3], len);
+	len = min(ep0_buf_rx[3], len);
 	/*
 	 * if we cannot transmit everything at once,
 	 * keep the remainder for the next IN packet
@@ -388,7 +388,7 @@ static void ep0_tx(void)
 	}
 	if (desc_ptr) {
 		/* we have an on-going descriptor transfer */
-		int len = MIN(desc_left, EP0_MAX_PACKET_SIZE);
+		int len = min(desc_left, EP0_MAX_PACKET_SIZE);
 		memcpy_to_usbram(EP0_BUF_TX_SRAM_ADDR, desc_ptr, len);
 		btable_ep[0].tx_count = len;
 		desc_left -= len;

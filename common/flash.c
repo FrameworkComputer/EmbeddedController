@@ -232,7 +232,7 @@ int crec_flash_response_fill_banks(struct ec_response_flash_info_2 *r,
 				   int num_banks)
 {
 	const struct ec_flash_bank *banks = flash_bank_array;
-	int banks_to_copy = MIN(ARRAY_SIZE(flash_bank_array), num_banks);
+	int banks_to_copy = min(ARRAY_SIZE(flash_bank_array), num_banks);
 
 	r->num_banks_desc = banks_to_copy;
 	r->num_banks_total = ARRAY_SIZE(flash_bank_array);
@@ -708,7 +708,7 @@ int crec_flash_is_erased(uint32_t offset, int size)
 	int bsize;
 
 	while (size) {
-		bsize = MIN(size, sizeof(buf));
+		bsize = min(size, sizeof(buf));
 
 		if (crec_flash_read(offset, bsize, (char *)buf))
 			return 0;
@@ -756,8 +756,8 @@ static void protect_cbi_overlapped_section(int offset, int size, char *data)
 	if (check_cbi_section_overlap(offset, size)) {
 		int cbi_end = CBI_FLASH_OFFSET + CBI_FLASH_SIZE;
 		int sec_end = offset + size;
-		int cbi_fill_start = MAX(CBI_FLASH_OFFSET, offset);
-		int cbi_fill_size = MIN(cbi_end, sec_end) - cbi_fill_start;
+		int cbi_fill_start = max(CBI_FLASH_OFFSET, offset);
+		int cbi_fill_size = min(cbi_end, sec_end) - cbi_fill_start;
 
 		memset(data + (cbi_fill_start - offset), 0xff, cbi_fill_size);
 	}
@@ -1439,7 +1439,7 @@ DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
  * correctly in flashrom, dump_fmap, etc. and remove EC_FLASH_REGION_START.
  */
 #define EC_FLASH_REGION_START \
-	MIN(CONFIG_EC_PROTECTED_STORAGE_OFF, CONFIG_EC_WRITABLE_STORAGE_OFF)
+	min(CONFIG_EC_PROTECTED_STORAGE_OFF, CONFIG_EC_WRITABLE_STORAGE_OFF)
 
 static enum ec_status flash_command_get_info(struct host_cmd_handler_args *args)
 {

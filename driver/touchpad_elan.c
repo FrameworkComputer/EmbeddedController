@@ -197,9 +197,9 @@ static int elan_tp_read_report(void)
 			pressure = DIV_ROUND_NEAREST(pressure * pressure_mult,
 						     pressure_div);
 
-			width = MIN(4095, width * elan_tp_params.width_x);
-			height = MIN(4095, height * elan_tp_params.width_y);
-			pressure = MIN(1023, pressure);
+			width = min(4095, width * elan_tp_params.width_x);
+			height = min(4095, height * elan_tp_params.width_y);
+			pressure = min(1023, pressure);
 
 			report.finger[ri].confidence = 1;
 			report.finger[ri].tip = 1;
@@ -790,7 +790,7 @@ int touchpad_debug(const uint8_t *param, unsigned int param_size,
 	}
 
 	*data = buffer + offset;
-	*data_size = MIN(64, buffer_size - offset);
+	*data_size = min(64, buffer_size - offset);
 
 	return EC_RES_SUCCESS;
 }

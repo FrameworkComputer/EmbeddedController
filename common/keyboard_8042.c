@@ -1414,7 +1414,7 @@ DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, keyboard_power_button,
 #ifdef TEST_BUILD
 void test_keyboard_8042_set_resend_command(const uint8_t *data, int length)
 {
-	length = MIN(length, sizeof(resend_command));
+	length = min(length, sizeof(resend_command));
 
 	memcpy(resend_command, data, length);
 	resend_command_len = length;

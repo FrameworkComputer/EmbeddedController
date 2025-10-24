@@ -119,8 +119,8 @@
 
 #define RT1718S_RT2_SYS_CTRL5 0xF210
 
-#define RT1718S_VBUS_VOL_TO_REG(_vol) (CLAMP(_vol, 5, 20) - 5)
-#define RT1718S_VBUS_PCT_TO_REG(_pct) (CLAMP(_pct, 5, 20) / 5 - 1)
+#define RT1718S_VBUS_VOL_TO_REG(_vol) (clamp(_vol, 5, 20) - 5)
+#define RT1718S_VBUS_PCT_TO_REG(_pct) (clamp(_pct, 5, 20) / 5 - 1)
 #define RT1718S_RT2_VBUS_VOL_CTRL 0xF213
 #define RT1718S_RT2_VBUS_VOL_CTRL_OVP_SEL (BIT(5) | BIT(4))
 #define RT1718S_RT2_VBUS_VOL_CTRL_VOL_SEL 0x0F

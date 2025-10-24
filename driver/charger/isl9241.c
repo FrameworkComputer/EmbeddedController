@@ -879,7 +879,7 @@ static enum ec_error_list isl9241_nvdc_to_bypass(int chgnum)
 		       MASK_SET);
 
 	/* 8*: Set MaxSysVoltage to VADP. */
-	vsys_target = MIN(charge_voltage - 256, CHARGE_V_MAX);
+	vsys_target = min(charge_voltage - 256, CHARGE_V_MAX);
 	isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE, vsys_target);
 
 	/* 9*: Wait until VSYS == MaxSysVoltage. */

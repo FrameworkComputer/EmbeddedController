@@ -138,8 +138,8 @@ static int fifo_enable(const struct motion_sensor_t *accel)
 		s = accel + agm_maps[i];
 		rate = s->drv->get_data_rate(s);
 		if (rate > 0) {
-			min_odr = MIN(min_odr, rate);
-			max_odr = MAX(max_odr, rate);
+			min_odr = min(min_odr, rate);
+			max_odr = max(max_odr, rate);
 		}
 		odrs[i] = rate;
 	}
@@ -201,7 +201,7 @@ static int fifo_enable(const struct motion_sensor_t *accel)
 	 * Leave the bad sample alone, it will be a single glitch in the
 	 * accelerometer data stream.
 	 */
-	if (max_odr > MAX(odrs[FIFO_DEV_ACCEL], odrs[FIFO_DEV_GYRO])) {
+	if (max_odr > max(odrs[FIFO_DEV_ACCEL], odrs[FIFO_DEV_GYRO])) {
 		st_write_data_with_mask(accel, LSM6DSM_ODR_REG(accel->type),
 					LSM6DSM_ODR_MASK,
 					LSM6DSM_ODR_TO_REG(max_odr));
@@ -515,7 +515,7 @@ int lsm6dsm_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		 */
 		if (normalized_rate > 0)
 			cal->batch_size =
-				MAX(MAG_CAL_MIN_BATCH_SIZE,
+				max(MAG_CAL_MIN_BATCH_SIZE,
 				    (normalized_rate * 1000) /
 					    MAG_CAL_MIN_BATCH_WINDOW_US);
 		else

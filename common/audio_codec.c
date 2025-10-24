@@ -150,7 +150,7 @@ int16_t audio_codec_s16_scale_and_clip(int16_t orig, uint8_t scalar)
 	int32_t val;
 
 	val = (int32_t)orig * (int32_t)scalar;
-	val = MIN(val, (int32_t)INT16_MAX);
-	val = MAX(val, (int32_t)INT16_MIN);
+	val = min(val, (int32_t)INT16_MAX);
+	val = max(val, (int32_t)INT16_MIN);
 	return val;
 }

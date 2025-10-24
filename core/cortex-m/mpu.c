@@ -130,7 +130,7 @@ static int mpu_config_region_greedy(uint8_t region, uint32_t addr,
 	 * This is the minimum of the base address and size alignment, since
 	 * regions must be naturally aligned to their size.
 	 */
-	uint8_t natural_alignment = MIN(addr == 0 ? 32 : alignment_log2(addr),
+	uint8_t natural_alignment = min(addr == 0 ? 32 : alignment_log2(addr),
 					alignment_log2(size));
 	uint8_t subregion_disable = 0;
 
@@ -324,7 +324,7 @@ struct mpu_rw_regions mpu_get_rw_regions(void)
 	 * address used for an MPU region must be aligned to the size.
 	 */
 	aligned_size_bit = __fls(regions.addr[0] & -regions.addr[0]);
-	regions.size[0] = MIN(BIT(aligned_size_bit), CONFIG_RW_SIZE);
+	regions.size[0] = min(BIT(aligned_size_bit), CONFIG_RW_SIZE);
 	regions.addr[1] = regions.addr[0] + regions.size[0];
 	regions.size[1] = CONFIG_RW_SIZE - regions.size[0];
 	regions.num_regions = (regions.size[1] == 0) ? 1 : 2;

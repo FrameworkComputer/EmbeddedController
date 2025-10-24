@@ -144,13 +144,13 @@ int base32_decode(uint8_t *dest, int destlen_bits, const char *src,
 			break;
 
 		/* See how many bits we get to use from this symbol */
-		sbits = MIN(5, destlen_bits - out_bits);
+		sbits = min(5, destlen_bits - out_bits);
 		if (sbits < 5)
 			sym >>= (5 - sbits);
 
 		/* Fill up the rest of the current byte */
 		dbits = 8 - (out_bits & 7);
-		b = MIN(dbits, sbits);
+		b = min(dbits, sbits);
 		if (dbits == 8)
 			dest[out_bits / 8] = 0; /* Starting a new byte */
 		dest[out_bits / 8] |= (sym << (dbits - b)) >> (sbits - b);

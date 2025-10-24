@@ -163,7 +163,7 @@ host_command_test_protocol(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_test_protocol *p = args->params;
 	struct ec_response_test_protocol *r = args->response;
-	int copy_len = MIN(p->ret_len, sizeof(r->buf)); /* p,r bufs same size */
+	int copy_len = min(p->ret_len, sizeof(r->buf)); /* p,r bufs same size */
 
 	memset(r->buf, 0, sizeof(r->buf));
 	memcpy(r->buf, p->buf, copy_len);

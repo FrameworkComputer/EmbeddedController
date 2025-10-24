@@ -440,7 +440,7 @@ int charge_request(bool use_curr, bool is_full)
 		if (is_full)
 			voltage = battery_get_info()->voltage_max;
 		/* And handle dead battery case */
-		voltage = MAX(voltage, battery_get_info()->voltage_normal);
+		voltage = max(voltage, battery_get_info()->voltage_normal);
 #else
 		voltage = current = 0;
 #endif
@@ -1014,7 +1014,7 @@ static int get_desired_input_current(const struct charger_info *const info)
 	int ilim = charge_manager_get_charger_current();
 	return ilim == CHARGE_CURRENT_UNINITIALIZED ?
 		       CHARGE_CURRENT_UNINITIALIZED :
-		       MAX(CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT, ilim);
+		       max(CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT, ilim);
 #else
 	return CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT;
 #endif
@@ -1936,7 +1936,7 @@ int charge_set_input_current_limit(int ma, int mv)
 		"Charger minimum input current limit is unreasonably low."
 		" Consider unsetting it, and refer to the Kconfig help for details.");
 	if (CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT > 0) {
-		ma = MAX(ma, CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT);
+		ma = max(ma, CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT);
 	}
 #endif
 
@@ -1992,7 +1992,7 @@ int charge_set_input_current_limit(int ma, int mv)
 
 #ifdef CONFIG_CHARGER_MAX_INPUT_CURRENT
 	/* Limit input current limit to max limit for this board */
-	ma = MIN(ma, CONFIG_CHARGER_MAX_INPUT_CURRENT);
+	ma = min(ma, CONFIG_CHARGER_MAX_INPUT_CURRENT);
 #endif
 
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {

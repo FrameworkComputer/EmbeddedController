@@ -383,7 +383,7 @@ int charger_profile_override(struct charge_state_data *curr)
 	}
 
 	curr->requested_voltage =
-		MIN(curr->requested_voltage, voltage_drop_table[i].drop_volt);
+		min(curr->requested_voltage, voltage_drop_table[i].drop_volt);
 #ifdef BATTERY_RUNTIME_TEST
 	cprints(CC_CHARGER,
 		"Charger: run time(day): %d, drop level: %d, CV: %d",

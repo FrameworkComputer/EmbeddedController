@@ -369,7 +369,7 @@ int send_in_packet(uint32_t ep_num)
 {
 	struct dwc_usb *usb = &usb_ctl;
 	struct dwc_usb_ep *ep = usb->ep[ep_num];
-	int len = MIN(USB_MAX_PACKET_SIZE, ep->in_pending);
+	int len = min(USB_MAX_PACKET_SIZE, ep->in_pending);
 
 	if (ep->in_packets == 0) {
 		report_error(ep_num);
@@ -605,7 +605,7 @@ static int handle_setup_with_in_stage(enum table_case tc,
 	}
 
 	/* Don't send back more than we were asked for. */
-	len = MIN(req->wLength, len);
+	len = min(req->wLength, len);
 
 	/* Prepare the TX FIFO. If we haven't preallocated enough room in the
 	 * TX FIFO for the largest reply, we'll have to stall. This is a bug in

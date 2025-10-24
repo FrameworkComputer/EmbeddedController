@@ -102,7 +102,7 @@ void __hw_clock_event_set(uint32_t deadline)
 	while (IS_BIT_SET(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_ITEN))
 		;
 
-	NPCX_ITCNT(ITIM_EVENT_NO) = MAX(evt_cnt, 1);
+	NPCX_ITCNT(ITIM_EVENT_NO) = max(evt_cnt, 1);
 
 	/* Event module enable */
 	SET_BIT(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_ITEN);

@@ -159,7 +159,7 @@ int charger_profile_override(struct charge_state_data *curr)
 		rcv_soh = 100;
 	else if (soh <= 50)
 		rcv_soh = 150;
-	rcv = MAX(rcv_cycle, rcv_soh);
+	rcv = max(rcv_cycle, rcv_soh);
 	curr->requested_voltage -= rcv;
 
 	/* Should not keep charging voltage > 4250mV for 48hrs. */
@@ -204,9 +204,9 @@ int charger_profile_override(struct charge_state_data *curr)
 	if (curr->state == ST_CHARGE || curr->state == ST_PRECHARGE) {
 		if (time_minute == (BATTERY_PROTECTION_TIMEOUT_HOURS * 60)) {
 			curr->requested_voltage =
-				MIN(4100, curr->requested_voltage);
+				min(4100, curr->requested_voltage);
 			curr->requested_current =
-				MIN(1, curr->requested_current);
+				min(1, curr->requested_current);
 		}
 	}
 #endif

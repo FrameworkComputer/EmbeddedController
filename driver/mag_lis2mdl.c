@@ -350,7 +350,7 @@ int lis2mdl_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		init_mag_cal(cal);
 
 	if (normalized_rate > 0)
-		cal->batch_size = MAX(MAG_CAL_MIN_BATCH_SIZE,
+		cal->batch_size = max(MAG_CAL_MIN_BATCH_SIZE,
 				      (normalized_rate * 1000) /
 					      MAG_CAL_MIN_BATCH_WINDOW_US);
 	else

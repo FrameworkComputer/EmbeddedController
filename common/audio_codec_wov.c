@@ -267,7 +267,7 @@ static enum ec_status wov_read_audio(struct host_cmd_handler_args *args)
 		r->len = audio_buf_wp - audio_buf_rp;
 	else
 		r->len = AUDIO_BUF_LEN - audio_buf_rp;
-	r->len = MIN(sizeof(r->buf), r->len);
+	r->len = min(sizeof(r->buf), r->len);
 
 	p = (uint8_t *)audio_codec_wov_audio_buf_addr + audio_buf_rp;
 
@@ -380,7 +380,7 @@ void audio_codec_wov_task(void *arg)
 		 * If wp < rp, wp can fill up to rp - 2.
 		 */
 		if (audio_buf_wp == audio_buf_rp)
-			req = AUDIO_BUF_LEN - MAX(audio_buf_wp, 2);
+			req = AUDIO_BUF_LEN - max(audio_buf_wp, 2);
 		else if (audio_buf_wp > audio_buf_rp)
 			req = AUDIO_BUF_LEN - audio_buf_wp;
 		else

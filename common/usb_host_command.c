@@ -60,8 +60,8 @@ static void usbhc_read(struct producer const *producer, size_t count)
 	static uint32_t out_index;
 	size_t len;
 
-	len = MIN(producer->queue->buffer_units, out_size - out_index);
-	len = MIN(count, len);
+	len = min(producer->queue->buffer_units, out_size - out_index);
+	len = min(count, len);
 
 	/* If we're not sending, what's going on? */
 	if (state != USBHC_STATE_SENDING)

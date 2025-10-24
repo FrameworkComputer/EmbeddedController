@@ -1483,7 +1483,7 @@ static enum ec_error_list raa489000_enable_linear_charge(int chgnum,
 		 *
 		 * 64mA is the minimum current level we must set.
 		 */
-		precharge_current = MAX(64, batt_info->precharge_current);
+		precharge_current = max(64, batt_info->precharge_current);
 		trickle_regval = precharge_current / 32;
 		trickle_regval--; /* convert to 0-based field */
 		rv |= raw_read16(CHARGER_PRIMARY, ISL923X_REG_CONTROL2,
@@ -1571,7 +1571,7 @@ static enum ec_error_list raa489000_set_vsys_compensation(int chgnum,
 	 * If Rp1 is less than 36mOhms, then the compensation is disabled.
 	 */
 
-	rp1 = MIN(o->rsys_mo, RAA489000_RP1_MAX);
+	rp1 = min(o->rsys_mo, RAA489000_RP1_MAX);
 	rp1 -= RAA489000_RP1_MIN;
 	if (rp1 < 0) {
 		if (o->last_vsys == OCPC_UNINIT)
@@ -1585,7 +1585,7 @@ static enum ec_error_list raa489000_set_vsys_compensation(int chgnum,
 
 	/* Rp2 is set between 0-124mOhms in 4mOhm increments. */
 	rp2 = o->rbatt_mo;
-	rp2 = CLAMP(rp2, RAA489000_RP2_MIN, RAA489000_RP2_MAX);
+	rp2 = clamp(rp2, RAA489000_RP2_MIN, RAA489000_RP2_MAX);
 	rp2 /= 4;
 
 	rv |= raw_read16(chgnum, RAA489000_REG_CONTROL10, &regval);

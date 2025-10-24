@@ -29,7 +29,7 @@ DECLARE_DEFERRED(reset_retry_delay);
 static void reset_csbu(void)
 {
 	/* double the retry time up to 1 minute */
-	ovp_retry_delay_us = MIN(ovp_retry_delay_us * 2, MINUTE);
+	ovp_retry_delay_us = min(ovp_retry_delay_us * 2, MINUTE);
 	/* and reset it if interrupt not triggered in a short period */
 	hook_call_deferred(&reset_retry_delay_data, 500 * MSEC);
 

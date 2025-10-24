@@ -859,7 +859,7 @@ static void sm5803_init(int chgnum)
 			ibat_eoc_ma = batt_info->precharge_current - 50;
 			ibat_eoc_ma /= 100;
 			ibat_eoc_ma =
-				CLAMP(ibat_eoc_ma, 0, SM5803_CONF5_IBAT_EOC_TH);
+				clamp(ibat_eoc_ma, 0, SM5803_CONF5_IBAT_EOC_TH);
 			rv |= chg_read8(chgnum, SM5803_REG_FAST_CONF5, &reg);
 			reg &= ~SM5803_CONF5_IBAT_EOC_TH;
 			reg |= ibat_eoc_ma;
@@ -871,7 +871,7 @@ static void sm5803_init(int chgnum)
 			pre_term = batt_info->voltage_min / cells;
 			/* Convert to decivolts. */
 			pre_term /= 100;
-			pre_term = CLAMP(pre_term, SM5803_VBAT_PRE_TERM_MIN_DV,
+			pre_term = clamp(pre_term, SM5803_VBAT_PRE_TERM_MIN_DV,
 					 SM5803_VBAT_PRE_TERM_MAX_DV);
 			/* Convert to regval */
 			pre_term -= SM5803_VBAT_PRE_TERM_MIN_DV;
@@ -891,7 +891,7 @@ static void sm5803_init(int chgnum)
 			 */
 			reg = SM5803_CURRENT_TO_REG(
 				batt_info->precharge_current);
-			reg = MIN(reg, SM5803_PRECHG_ICHG_PRE_SET);
+			reg = min(reg, SM5803_PRECHG_ICHG_PRE_SET);
 			rv |= chg_write8(chgnum, SM5803_REG_PRECHG, reg);
 		}
 
@@ -1895,11 +1895,11 @@ static enum ec_error_list sm5803_set_otg_current_voltage(int chgnum,
 		return rv;
 
 	reg &= ~SM5803_DISCH_CONF5_CLS_LIMIT;
-	reg |= MIN((output_current / SM5803_CLS_CURRENT_STEP),
+	reg |= min((output_current / SM5803_CLS_CURRENT_STEP),
 		   SM5803_DISCH_CONF5_CLS_LIMIT);
 	rv |= chg_write8(chgnum, SM5803_REG_DISCH_CONF5, reg);
 
-	reg = MAX(SM5803_VOLTAGE_TO_REG(output_voltage), 0);
+	reg = max(SM5803_VOLTAGE_TO_REG(output_voltage), 0);
 	rv = chg_write8(chgnum, SM5803_REG_VPWR_MSB, (reg >> 3));
 	rv |= chg_write8(chgnum, SM5803_REG_DISCH_CONF2,
 			 reg & SM5803_DISCH_CONF5_VPWR_LSB);
@@ -2026,7 +2026,7 @@ static enum ec_error_list sm5803_set_vsys_compensation(int chgnum,
 
 	/* Set IR drop compensation */
 	r = ocpc->combined_rsys_rbatt_mo * 100 / 167; /* 1.67mOhm steps */
-	r = MAX(0, r);
+	r = max(0, r);
 	rv = chg_write8(chgnum, SM5803_REG_IR_COMP2, r & 0xFF);
 	rv |= chg_read8(chgnum, SM5803_REG_IR_COMP1, &regval);
 	regval &= ~SM5803_IR_COMP_RES_SET_MSB;

@@ -31,8 +31,8 @@
  *   f = 32.768K
  *   poles = 2
  */
-#define RPM_TO_TACH(rpm) MIN((7864320 / MAX((rpm), 1)), MAX_TACH)
-#define TACH_TO_RPM(tach) (7864320 / MAX((tach), 1))
+#define RPM_TO_TACH(rpm) min((7864320 / max((rpm), 1)), MAX_TACH)
+#define TACH_TO_RPM(tach) (7864320 / max((tach), 1))
 
 static int rpm_setting;
 static int duty_setting;

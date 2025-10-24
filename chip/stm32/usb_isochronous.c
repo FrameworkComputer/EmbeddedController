@@ -88,7 +88,7 @@ int usb_isochronous_write_buffer(struct usb_isochronous_config const *config,
 	if (dst_offset > config->tx_size)
 		return -EC_ERROR_INVAL;
 
-	n = MIN(n, config->tx_size - dst_offset);
+	n = min(n, config->tx_size - dst_offset);
 	memcpy_to_usbram((void *)(ptr + dst_offset), src, n);
 
 	if (commit)

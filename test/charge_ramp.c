@@ -69,7 +69,7 @@ int charge_is_consuming_full_input_current(void)
 
 int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 {
-	return MIN(system_load_current_ma, charge_limit_ma) >
+	return min(system_load_current_ma, charge_limit_ma) >
 	       vbus_low_current_ma;
 }
 

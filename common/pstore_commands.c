@@ -41,7 +41,7 @@ static enum ec_status pstore_command_read(struct host_cmd_handler_args *args)
 
 	while (bytes_left) {
 		/* Read what we can from the current block */
-		int bytes_this = MIN(bytes_left, block_size - offset);
+		int bytes_this = min(bytes_left, block_size - offset);
 
 		if (block >=
 		    EEPROM_BLOCK_START_PSTORE + EEPROM_BLOCK_COUNT_PSTORE)
@@ -77,7 +77,7 @@ static enum ec_status pstore_command_write(struct host_cmd_handler_args *args)
 
 	while (bytes_left) {
 		/* Write what we can to the current block */
-		int bytes_this = MIN(bytes_left, block_size - offset);
+		int bytes_this = min(bytes_left, block_size - offset);
 
 		if (block >=
 		    EEPROM_BLOCK_START_PSTORE + EEPROM_BLOCK_COUNT_PSTORE)

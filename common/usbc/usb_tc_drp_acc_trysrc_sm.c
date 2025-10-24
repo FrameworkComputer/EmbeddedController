@@ -3213,7 +3213,7 @@ static void tc_attached_src_entry(const int port)
 
 			tc_enable_pd(port, 0);
 			pd_timer_enable(port, TC_TIMER_TIMEOUT,
-					MAX(PD_POWER_SUPPLY_TURN_ON_DELAY,
+					max(PD_POWER_SUPPLY_TURN_ON_DELAY,
 					    PD_T_VCONN_STABLE));
 		}
 	} else {

@@ -503,14 +503,14 @@ static int bmi_config_load(const struct motion_sensor_t *s)
 	 * I2C burst to the size of the RAM buffer.
 	 */
 	if (!bmi_config)
-		burst_write_len = MIN(BMI_RAM_BUFFER_SIZE, burst_write_len);
+		burst_write_len = min(BMI_RAM_BUFFER_SIZE, burst_write_len);
 
 	/* We have to write the config even bytes of data every time */
 	ASSERT(((burst_write_len & 1) == 0) && (burst_write_len != 0));
 
 	for (i = 0; i < bmi_config_tbin_len; i += burst_write_len) {
 		uint8_t addr[2];
-		const int len = MIN(burst_write_len, bmi_config_tbin_len - i);
+		const int len = min(burst_write_len, bmi_config_tbin_len - i);
 
 		addr[0] = (i / 2) & 0xF;
 		addr[1] = (i / 2) >> 4;

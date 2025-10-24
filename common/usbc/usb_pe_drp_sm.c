@@ -2669,7 +2669,7 @@ static void pe_src_send_capabilities_run(int port)
 			 * ports.
 			 */
 			prl_set_rev(port, TCPCI_MSG_SOP,
-				    MIN(PD_REVISION,
+				    min(PD_REVISION,
 					PD_HEADER_REV(rx_emsg[port].header)));
 
 			init_cable_rev(port);
@@ -3530,7 +3530,7 @@ static void pe_snk_evaluate_capability_entry(int port)
 
 	/* Set to highest revision supported by both ports. */
 	prl_set_rev(port, TCPCI_MSG_SOP,
-		    MIN(PD_REVISION, PD_HEADER_REV(rx_emsg[port].header)));
+		    min(PD_REVISION, PD_HEADER_REV(rx_emsg[port].header)));
 
 	init_cable_rev(port);
 
@@ -3635,7 +3635,7 @@ static void pe_snk_apply_transition_current(int port)
 	 * input voltage, because both voltages may appear during the
 	 * transition.
 	 */
-	high_mv = MAX(charge_manager_get_charger_voltage(), request_mv);
+	high_mv = max(charge_manager_get_charger_voltage(), request_mv);
 
 	if (request_ma == 0) {
 		/* Transition to 0A. */

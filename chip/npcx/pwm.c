@@ -81,7 +81,7 @@ static void pwm_set_freq(enum pwm_channel ch, uint32_t freq)
 	 * Calculate maximum resolution for the given freq. and prescaler. And
 	 * prevent it exceed the resolution of CTR/DCR registers.
 	 */
-	pwm_res[ch] = MIN((clock / pre) / freq, NPCX_PWM_MAX_RAW_DUTY);
+	pwm_res[ch] = min((clock / pre) / freq, NPCX_PWM_MAX_RAW_DUTY);
 
 	/* Set PWM prescaler. */
 	NPCX_PRSC(mdl) = pre - 1;

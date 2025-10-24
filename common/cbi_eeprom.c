@@ -45,7 +45,7 @@ static int eeprom_write(uint8_t *cbi)
 	int rest = ((struct cbi_header *)p)->total_size;
 
 	while (rest > 0) {
-		int size = MIN(EEPROM_PAGE_WRITE_SIZE, rest);
+		int size = min(EEPROM_PAGE_WRITE_SIZE, rest);
 		int rv;
 
 		rv = i2c_write_block(I2C_PORT_EEPROM, I2C_ADDR_EEPROM_FLAGS,

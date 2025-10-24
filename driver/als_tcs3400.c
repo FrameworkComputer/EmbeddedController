@@ -29,12 +29,12 @@ static void decrement_atime(struct tcs_saturation_t *sat_p,
 			    uint16_t __attribute__((unused)) cur_lux,
 			    int __attribute__((unused)) percent)
 {
-	sat_p->atime = MAX(sat_p->atime - TCS_ATIME_DEC_STEP, TCS_MIN_ATIME);
+	sat_p->atime = max(sat_p->atime - TCS_ATIME_DEC_STEP, TCS_MIN_ATIME);
 }
 
 static void increment_atime(struct tcs_saturation_t *sat_p)
 {
-	sat_p->atime = MIN(sat_p->atime + TCS_ATIME_INC_STEP, TCS_MAX_ATIME);
+	sat_p->atime = min(sat_p->atime + TCS_ATIME_INC_STEP, TCS_MAX_ATIME);
 }
 
 static inline int tcs3400_i2c_read8(const struct motion_sensor_t *s, int reg,
@@ -145,7 +145,7 @@ static int tcs3400_adjust_sensor_for_saturation(struct motion_sensor_t *s,
 		return EC_SUCCESS;
 
 	for (int i = 0; i < CRGB_COUNT; i++)
-		max_val = MAX(max_val, crgb_data[i]);
+		max_val = max(max_val, crgb_data[i]);
 
 	/* Don't process if status isn't valid yet */
 	if ((status & TCS_I2C_STATUS_ALS_SATURATED) ||
@@ -350,7 +350,7 @@ static int32_t get_lux_from_xyz(struct motion_sensor_t *s, int32_t *xyz_data)
 	/*
 	 * Do not include the offset when determining LUX from XYZ.
 	 */
-	lux = MAX(0, lux - offset);
+	lux = max(0, lux - offset);
 
 	return lux;
 }

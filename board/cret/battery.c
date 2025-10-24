@@ -710,7 +710,7 @@ int charger_profile_override(struct charge_state_data *curr)
 {
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
 		curr->requested_current =
-			MIN(curr->requested_current, CHARGING_CURRENT_1100MA);
+			min(curr->requested_current, CHARGING_CURRENT_1100MA);
 	}
 
 	return 0;

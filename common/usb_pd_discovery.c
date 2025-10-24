@@ -64,7 +64,7 @@ void dfp_consume_identity(int port, enum tcpci_msg_type type, int cnt,
 	ptype = PD_IDH_PTYPE(payload[VDO_I(IDH)]);
 	disc = pd_get_am_discovery_and_notify_access(port, type);
 	identity_size =
-		MIN(sizeof(union disc_ident_ack), (cnt - 1) * sizeof(uint32_t));
+		min(sizeof(union disc_ident_ack), (cnt - 1) * sizeof(uint32_t));
 
 	/* Note: only store VDOs, not the VDM header */
 	memcpy(disc->identity.raw_value, payload + 1, identity_size);
@@ -98,7 +98,7 @@ void pd_set_svdm_ver(int port, enum tcpci_msg_type type,
 	struct pd_discovery *disc =
 		pd_get_am_discovery_and_notify_access(port, type);
 
-	disc->svdm_vers = MIN(SVDM_VER_2_1, ver);
+	disc->svdm_vers = min(SVDM_VER_2_1, ver);
 }
 
 void dfp_consume_svids(int port, enum tcpci_msg_type type, int cnt,

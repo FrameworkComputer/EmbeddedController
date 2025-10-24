@@ -165,7 +165,7 @@ void copy_memmap_string(uint8_t *dest, int offset, int len)
 				strlen(memmap_str) :
 				EC_MEMMAP_TEXT_MAX;
 	dest[0] = memmap_strlen;
-	memcpy(dest + 1, memmap_str, MIN(memmap_strlen, len - 1));
+	memcpy(dest + 1, memmap_str, min(memmap_strlen, len - 1));
 }
 
 static void copy_battery_info_string(uint8_t *dst, const uint8_t *src, int len)
@@ -198,7 +198,7 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head, uint8_t *dest,
 	 * Don't allow host reads into arbitrary memory space, most params
 	 * are two bytes.
 	 */
-	int bounded_read_len = MIN(read_len, 2);
+	int bounded_read_len = min(read_len, 2);
 	const struct battery_static_info *bs;
 
 	if (IS_ENABLED(CONFIG_BATTERY_INFO))
@@ -392,7 +392,7 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head, uint8_t *dest,
 	case SB_MANUFACTURE_INFO:
 		if (sb_read_string(*batt_cmd_head, str, sizeof(str)))
 			return EC_ERROR_INVAL;
-		memcpy(dest, &str, MIN(read_len, sizeof(str)));
+		memcpy(dest, &str, min(read_len, sizeof(str)));
 		break;
 #endif
 	case SB_MANUFACTURER_ACCESS:
@@ -422,7 +422,7 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head, uint8_t *dest,
 	case SB_OPTIONAL_MFG_FUNC5:
 		if (sb_read_sized_block(*batt_cmd_head, str, sizeof(str)))
 			return EC_ERROR_INVAL;
-		memcpy(dest, &str, MIN(read_len, sizeof(str)));
+		memcpy(dest, &str, min(read_len, sizeof(str)));
 		break;
 #endif
 	default:

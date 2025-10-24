@@ -103,7 +103,7 @@ int power_button_wait_for_release(int timeout_us)
 		 * power button has not been debounced.
 		 */
 		task_wait_event(
-			MIN(power_button.debounce_us, deadline.val - now.val));
+			min(power_button.debounce_us, deadline.val - now.val));
 	}
 
 	CPRINTS("%s released in time", power_button.name);

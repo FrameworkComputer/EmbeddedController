@@ -284,20 +284,20 @@ static enum ec_status hc_typec_status(struct host_cmd_handler_args *args)
 			0;
 
 	if (args->version == 0) {
-		cs->source_cap_count = MIN(pd_get_src_cap_cnt(p->port),
+		cs->source_cap_count = min(pd_get_src_cap_cnt(p->port),
 					   ARRAY_SIZE(r0->source_cap_pdos));
 		memcpy(r0->source_cap_pdos, pd_get_src_caps(p->port),
 		       cs->source_cap_count * sizeof(uint32_t));
-		cs->sink_cap_count = MIN(pd_get_snk_cap_cnt(p->port),
+		cs->sink_cap_count = min(pd_get_snk_cap_cnt(p->port),
 					 ARRAY_SIZE(r0->sink_cap_pdos));
 		memcpy(r0->sink_cap_pdos, pd_get_snk_caps(p->port),
 		       cs->sink_cap_count * sizeof(uint32_t));
 	} else {
-		cs->source_cap_count = MIN(pd_get_src_cap_cnt(p->port),
+		cs->source_cap_count = min(pd_get_src_cap_cnt(p->port),
 					   ARRAY_SIZE(r1->source_cap_pdos));
 		memcpy(r1->source_cap_pdos, pd_get_src_caps(p->port),
 		       cs->source_cap_count * sizeof(uint32_t));
-		cs->sink_cap_count = MIN(pd_get_snk_cap_cnt(p->port),
+		cs->sink_cap_count = min(pd_get_snk_cap_cnt(p->port),
 					 ARRAY_SIZE(r1->sink_cap_pdos));
 		memcpy(r1->sink_cap_pdos, pd_get_snk_caps(p->port),
 		       cs->sink_cap_count * sizeof(uint32_t));

@@ -513,7 +513,7 @@ static enum ec_status mkbp_get_next_event(struct host_cmd_handler_args *args)
 			max_size = member_size(
 				union ec_response_get_next_data_v3, key_matrix);
 		}
-		data_size = MIN(data_size, max_size);
+		data_size = min(data_size, max_size);
 	}
 
 	/* If there are no more events and we support the "more" flag, set it */

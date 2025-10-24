@@ -65,7 +65,7 @@ static void vdec_h264_ipi_handler(int id, void *data, uint32_t len)
 	}
 
 	rsv_msg.type = VDEC_LAT;
-	memcpy(rsv_msg.msg, data, MIN(len, sizeof(rsv_msg.msg)));
+	memcpy(rsv_msg.msg, data, min(len, sizeof(rsv_msg.msg)));
 
 	/*
 	 * If there is no other IPI handler touch this queue, we don't need to
@@ -86,7 +86,7 @@ static void vdec_h264_ipi_core_handler(int id, void *data, uint32_t len)
 	}
 
 	rsv_msg.type = VDEC_CORE;
-	memcpy(rsv_msg.msg, data, MIN(len, sizeof(rsv_msg.msg)));
+	memcpy(rsv_msg.msg, data, min(len, sizeof(rsv_msg.msg)));
 
 	/*
 	 * If there is no other IPI handler touch this queue, we don't need to

@@ -273,7 +273,7 @@ void chg_ramp_task(void *u)
 			if (board_is_vbus_too_low(active_port,
 						  CHG_RAMP_VBUS_RAMPING)) {
 				CPRINTS("VBUS low");
-				active_icl_new = MAX(
+				active_icl_new = max(
 					min_icl, active_icl - RAMP_ICL_BACKOFF);
 				ramp_st_new = CHG_RAMP_STABILIZE;
 				task_wait_time = STABLIZE_DELAY;
@@ -320,7 +320,7 @@ void chg_ramp_task(void *u)
 			    board_is_vbus_too_low(active_port,
 						  CHG_RAMP_VBUS_STABLE)) {
 				CPRINTS("VBUS low; Re-ramp");
-				max_icl = MAX(min_icl,
+				max_icl = max(min_icl,
 					      max_icl - RAMP_ICL_BACKOFF);
 				active_icl_new = min_icl;
 				ramp_st_new = CHG_RAMP_RAMP;

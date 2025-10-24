@@ -352,7 +352,7 @@ bool motion_sensor_in_forced_mode(const struct motion_sensor_t *s);
  */
 static inline uint16_t ec_motion_sensor_clamp_u16(const int32_t value)
 {
-	return (uint16_t)MIN(MAX(value, 0), (int32_t)UINT16_MAX);
+	return (uint16_t)min(max(value, 0), (int32_t)UINT16_MAX);
 }
 static inline void ec_motion_sensor_clamp_u16s(uint16_t *arr, const int32_t *v)
 {
@@ -363,7 +363,7 @@ static inline void ec_motion_sensor_clamp_u16s(uint16_t *arr, const int32_t *v)
 
 static inline int16_t ec_motion_sensor_clamp_i16(const int32_t value)
 {
-	return MIN(MAX(value, (int32_t)INT16_MIN), (int32_t)INT16_MAX);
+	return min(max(value, (int32_t)INT16_MIN), (int32_t)INT16_MAX);
 }
 static inline void ec_motion_sensor_clamp_i16s(int16_t *arr, const int32_t *v)
 {

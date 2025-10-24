@@ -122,7 +122,7 @@ static enum ec_status read_memory_dump(struct host_cmd_handler_args *args)
 	}
 
 	/* Must leave room for ec_host_response header */
-	args->response_size = MIN(
+	args->response_size = min(
 		p->size, args->response_max - sizeof(struct ec_host_response));
 
 	memcpy(r, (void *)p->address, args->response_size);

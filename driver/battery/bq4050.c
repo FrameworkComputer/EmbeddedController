@@ -29,8 +29,8 @@ int battery_bq4050_imbalance_mv(void)
 		res = sb_read(cell_voltage_address[i], &cell_voltage);
 		if (res == EC_SUCCESS && cell_voltage != 0) {
 			n_cells++;
-			max_voltage = MAX(max_voltage, cell_voltage);
-			min_voltage = MIN(min_voltage, cell_voltage);
+			max_voltage = max(max_voltage, cell_voltage);
+			min_voltage = min(min_voltage, cell_voltage);
 		}
 	}
 	return (n_cells == 0) ? 0 : max_voltage - min_voltage;

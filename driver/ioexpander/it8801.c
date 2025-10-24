@@ -646,8 +646,8 @@ int it8801_pwm_get_enabled(enum pwm_channel ch)
 
 void it8801_pwm_set_raw_duty(enum pwm_channel ch, uint16_t duty)
 {
-	duty = MIN(duty, 255);
-	duty = MAX(duty, 0);
+	duty = min(duty, 255);
+	duty = max(duty, 0);
 	it8801_write(IT8801_REG_PWMDCR(it8801_pwm_channels[ch].index), duty);
 }
 

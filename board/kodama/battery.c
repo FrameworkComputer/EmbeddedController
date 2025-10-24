@@ -111,7 +111,7 @@ int charger_profile_override(struct charge_state_data *curr)
 	 * mt6370's VOREG set as 4400mV and minimum value of mt6370's ICHG
 	 * is limited as 500mA.
 	 */
-	curr->requested_current = MAX(500, curr->requested_current);
+	curr->requested_current = max(500, curr->requested_current);
 
 	return 0;
 }

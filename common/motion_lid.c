@@ -357,11 +357,11 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 	}
 
 	largest_hinge_accel =
-		MAX(ABS(scaled_base[HINGE_AXIS]), ABS(scaled_lid[HINGE_AXIS]));
+		max(ABS(scaled_base[HINGE_AXIS]), ABS(scaled_lid[HINGE_AXIS]));
 
-	smoothed_ratio = MAX(
+	smoothed_ratio = max(
 		INT_TO_FP(0),
-		MIN(INT_TO_FP(1),
+		min(INT_TO_FP(1),
 		    fp_div(INT_TO_FP(largest_hinge_accel -
 				     SCALED_HINGE_VERTICAL_SMOOTHING_START),
 			   INT_TO_FP(SCALED_HINGE_VERTICAL_MAXIMUM -
