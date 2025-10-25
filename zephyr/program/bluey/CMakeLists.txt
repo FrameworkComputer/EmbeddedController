@@ -12,6 +12,7 @@ endif()
 
 if(DEFINED CONFIG_BOARD_QUENBI)
 	project(quenbi)
+	add_subdirectory(quenbi)
 endif()
 
 if(DEFINED CONFIG_BOARD_QUARTZ)
