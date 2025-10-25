@@ -220,14 +220,6 @@ gpio_soc_ps_hold_ls: &gpio_soc_ps_hold_ls {};
 gpio_sys_rst_odl: &gpio_sys_rst_odl {};
 
 /*
- * Aliases power-rails to common names
- */
-gpio_ec_usb_en: &gpio_ec_en_usba {};
-gpio_ec_3v_s3_en: &gpio_ec_en_pp3300_s3 {};
-gpio_ec_en_ppvar_oled: &gpio_en_ppvar_oled {};
-gpio_ec_en_pp5000: &gpio_ec_en_pp5000_s5 {};
-
-/*
  * Aliases switchcap to common names
  */
 gpio_ec_en_vph_pwr_1a: &gpio_ec_en_vph_pwr_1a_s5_r {};
