@@ -243,8 +243,8 @@
 	};
 
 	batteries {
-		default_battery: cosmx-3 {
-			compatible = "cosmx,ap20cbl-3", "battery-smart";
+		default_battery: smp_l23m4pg4 {
+			compatible = "smp,l23m4pg4", "battery-smart";
 		};
 	};
 
