@@ -8,6 +8,7 @@ find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 
 if(DEFINED CONFIG_BOARD_BLUEY)
 	project(bluey)
+	add_subdirectory(bluey)
 endif()
 
 if(DEFINED CONFIG_BOARD_QUENBI)
