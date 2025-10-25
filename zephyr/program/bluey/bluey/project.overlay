@@ -18,6 +18,7 @@
 
 #include "gpios.dtsi"
 #include "fan.dtsi"
+#include "temp_sensors.dtsi"
 
 /* bluey overrides follow... */
 

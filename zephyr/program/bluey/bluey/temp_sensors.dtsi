@@ -1,0 +1,76 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+
+/ {
+	named-adc-channels {
+		adc_temp_temp0: temp0 {
+			enum-name = "ADC_TEMP_SENSOR_1";
+			io-channels = <&adc0 0>;
+		};
+		adc_temp_temp1: temp1 {
+			enum-name = "ADC_TEMP_SENSOR_2";
+			io-channels = <&adc0 1>;
+		};
+		adc_temp_temp2: temp2 {
+			enum-name = "ADC_TEMP_SENSOR_3";
+			io-channels = <&adc0 2>;
+		};
+		adc_temp_temp3: temp3 {
+			enum-name = "ADC_TEMP_SENSOR_4";
+			io-channels = <&adc0 3>;
+		};
+	};
+
+	temp_sensor_temp0: temp0 {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&adc_temp_temp0>;
+	};
+	temp_sensor_temp1: temp1 {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&adc_temp_temp1>;
+	};
+	temp_sensor_temp2: temp2 {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&adc_temp_temp2>;
+	};
+	temp_sensor_temp3: temp3 {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&adc_temp_temp3>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_temp0: temp0 {
+			sensor = <&temp_sensor_temp0>;
+		};
+		temp_temp1: temp1 {
+			sensor = <&temp_sensor_temp1>;
+		};
+		temp_temp2: temp2 {
+			sensor = <&temp_sensor_temp2>;
+		};
+		temp_temp3: temp3 {
+			sensor = <&temp_sensor_temp3>;
+		};
+	};
+};
+
+&thermistor_3V3_100K_100K_4250B {
+	status = "okay";
+};
+
+&adc0 {
+	pinctrl-0 = <&adc0_chan0_gp45
+		&adc0_chan1_gp44
+		&adc0_chan2_gp43
+		&adc0_chan3_gp42>;
+	pinctrl-names = "default";
+};
