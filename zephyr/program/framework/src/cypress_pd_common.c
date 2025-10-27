@@ -1732,7 +1732,8 @@ void cypd_port_int(int controller, int port)
 			/* check if the device is the first 3A pd device or not */
 			if (pd_port_states[another_pd_port].pd_state != PD_ROLE_SOURCE ||
 				(pd_port_states[another_pd_port].pd_state == PD_ROLE_SOURCE &&
-				 pd_port_states[another_pd_port].current != 3000))
+				 pd_port_states[another_pd_port].current != 3000 &&
+				 pd_port_states[another_pd_port].first_pd_device != true))
 				pd_port_states[pd_port].first_pd_device = true;
 		}
 #ifdef CONFIG_PD_CCG8_EPR
