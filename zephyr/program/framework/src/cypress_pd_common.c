@@ -1498,7 +1498,7 @@ static void cypd_handle_state(int controller)
 		if (cypd_read_reg8(controller, CCG_DEVICE_MODE, &data) == EC_SUCCESS) {
 			if ((data & 0x03) == 0x00) {
 				CPRINTS("CYPD %d is in bootloader 0x%04x", controller, data);
-				delay = 25*MSEC;
+				delay = CCG_MAX_TBOOTWAIT_VALUE;
 				if (cypd_read_reg16(controller, CCG_BOOT_MODE_REASON, &data)
 						== EC_SUCCESS) {
 					CPRINTS("CYPD bootloader reason 0x%02x", data);

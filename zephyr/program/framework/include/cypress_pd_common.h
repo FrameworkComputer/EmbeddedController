@@ -16,6 +16,11 @@
 #define VENDOR_ID	0x32ac
 
 #define BB_PWR_DOWN_TIMEOUT (4000*MSEC)
+/* The boot wait time is configurable in PD firmware to a value between
+ * 10 ms and 200 ms (see CCG HPI spec).
+ * To avoid communication issues, use the highest possible.
+ */
+#define CCG_MAX_TBOOTWAIT_VALUE (200 * MSEC)
 
 /*
  * commands
