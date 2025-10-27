@@ -13,7 +13,6 @@
 #include "../usba.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
-#include "motionsense.dtsi"
 #include "usbc.dtsi"
 
 / {
@@ -34,6 +33,12 @@
 	};
 
 	gpio-interrupts {
+                /delete-node/ lid-accel;
+                /delete-node/ ec-imu;
+                /delete-node/ tablet_mode;
+                /delete-node/ volume-up;
+                /delete-node/ volume-down;
+
 		int_pmic_ec_resetb: pmic-ec-resetb {
 			irq-pin = <&gpio_pmic_ec_resetb>;
 			flags = <GPIO_INT_EDGE_BOTH>;
@@ -44,18 +49,34 @@
 	named-gpios {
 		/delete-node/ ec_i2c_pdc1_sm_int_odl;
 		/delete-node/ ec_i2c_pdc1_s_int_odl;
+                /delete-node/ ec_voldn_btn_odl;
+                /delete-node/ ec_volup_btn_odl;
+                /delete-node/ lid_360_l;
+                /delete-node/ imu_int_ec_l;
+                /delete-node/ lid_accel_int_ec_l;
 
 		gpio_en_pwr_s3: en_pwr_s3 {
 			gpios = <&gpiob 6 (GPIO_OUTPUT_LOW)>;
 		};
 	};
 
+        named-i2c-ports {
+                /delete-node/ ec_i2c_sensor_scl_1v8;
+        };
+
 	unused-pins {
 		compatible = "unused-gpios";
 		unused-gpios =
 			<&gpioa 0 GPIO_INPUT_PULL_DOWN>,
 			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
-			<&gpioa 7 GPIO_INPUT_PULL_DOWN>;
+			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
+			<&gpiob 2 GPIO_INPUT_PULL_DOWN>,
+			<&gpiob 5 GPIO_INPUT_PULL_DOWN>,
+			<&gpioc 7 GPIO_INPUT_PULL_DOWN>,
+			<&gpiod 0 GPIO_INPUT_PULL_DOWN>,
+			<&gpiod 1 GPIO_INPUT_PULL_DOWN>,
+			<&gpioe 3 GPIO_INPUT_PULL_DOWN>,
+			<&gpioe 4 GPIO_INPUT_PULL_DOWN>;
 	};
 
 	cros-keyscan {
