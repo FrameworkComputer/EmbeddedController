@@ -49,14 +49,14 @@ static const charge_limit_t typec_limit_table[TYPEC_LIMIT_LEVELS] = {
 };
 
 static const temp_limit_t charge_temp_limits[CHARGER_LIMIT_LEVELS - 1] = {
-	{ 47, 43 },
-	{ 52, 47 },
-	{ 56, 52 }
+	{ 45, 43 },
+	{ 49, 45 },
+	{ 53, 49 }
 };
 
 static const temp_limit_t typec_5v_temp_limits[TYPEC_LIMIT_LEVELS - 1] = {
-	{ 68, 65 },
-	{ 73, 70 }
+	{ 63, 60 },
+	{ 68, 65 }
 };
 
 static const temp_limit_t typec_chg_temp_limits[TYPEC_LIMIT_LEVELS - 1] = {
