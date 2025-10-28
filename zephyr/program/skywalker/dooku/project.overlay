@@ -24,16 +24,39 @@
 	};
 
 	batteries {
-		default_battery: cosmx_ap25cbk {
-			compatible = "cosmx,ap25cbk", "battery-smart";
+		default_battery: cosmx {
+			compatible = "cosmx,gh02047xl", "battery-smart";
 		};
-		smp_ap25c7k_batt: smp_ap25c7k {
-			compatible = "smp,ap25c7k", "battery-smart";
+		dynapack_atl_gh02047xl {
+			compatible = "dynapack,atl_gh02047xl", "battery-smart";
+		};
+		dynapack_cosmx_gh02047xl {
+			compatible = "dynapack,cosmx_gh02047xl", "battery-smart";
+		};
+		smp_coslight_gh02047xl {
+			compatible = "smp,coslight_gh02047xl", "battery-smart";
+		};
+		smp_highpower_gh02047xl {
+			compatible = "smp,highpower_gh02047xl", "battery-smart";
+		};
+		default_battery_3s:cosmx_si03058xl {
+			compatible = "cosmx,si03058xl", "battery-smart";
+		};
+		smp_highpower_si03058xl {
+			compatible = "smp,highpower_si03058xl", "battery-smart";
+		};
+		smp_si03054xl {
+			compatible = "smp,si03054xl", "battery-smart";
 		};
 	};
 
 	named-adc-channels {
 		/delete-node/ usbc_sub_detect;
+
+		adc_temp_sensor2: temp_sensor2 {
+			enum-name = "ADC_TEMP_SENSOR_2";
+			io-channels = <&adc0 5>;
+		};
 	};
 
 	named-gpios {
@@ -81,24 +104,21 @@
 		compatible = "cros-ec,keyscan";
 
 		actual-key-mask = <
-			0x08  /* C0 */
-			0xff  /* C1 */
-			0xff  /* C2 */
-			0xff  /* C3 */
-			0xff  /* C4 */
-			0xff  /* C5 */
-			0xff  /* C6 */
-			0xa0  /* C7 */
-			0xff  /* C8 */
-			0xff  /* C9 */
-			0x01  /* C10 */
-			0xff  /* C11 */
-			0xff  /* C12 */
-			0x40  /* C13 */
-			0x0a  /* C14 */
-			0x40  /* C15 */
-			0x03  /* C16 */
-			0xc6  /* C17 */
+			0x1c /* C0 */
+			0xff /* C1 */
+			0xff /* C2 */
+			0xff /* C3 */
+			0xff /* C4 */
+			0xff /* C5 */
+			0xff /* C6 */
+			0xa4 /* C7 */
+			0xff /* C8 */
+			0xf6 /* C9 */
+			0x55 /* C10 */
+			0xfe /* C11 */
+			0xff /* C12 */
+			0xff /* C13 */
+			0xff /* C14 */
 		>;
 	};
 
@@ -106,6 +126,12 @@
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_100K_100K_4250B>;
 		adc = <&adc_temp_sensor1>;
+	};
+
+	temp_5v: 5v {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&adc_temp_sensor2>;
 	};
 
 	named-temp-sensors {
@@ -151,38 +177,30 @@
 		     &kso11_default
 		     &kso12_default
 		     &kso13_default
-		     &kso14_default
-		     &kso15_default
-		     &kso16_default
-		     &kso17_default>;
-	pinctrl-1 = <
-		&ksi0_sleep
-		&ksi1_sleep
-		&ksi2_sleep
-		&ksi3_sleep
-		&ksi4_sleep
-		&ksi5_sleep
-		&ksi6_sleep
-		&ksi7_sleep
-		&kso0_sleep
-		&kso1_sleep
-		&kso2_sleep
-		&kso3_sleep
-		&kso4_sleep
-		&kso5_sleep
-		&kso6_sleep
-		&kso7_sleep
-		&kso8_sleep
-		&kso9_sleep
-		&kso10_sleep
-		&kso11_sleep
-		&kso12_sleep
-		&kso13_sleep
-		&kso14_sleep
-		&kso15_sleep
-		&kso16_sleep
-		&kso17_sleep>;
-
+		     &kso14_default>;
+	pinctrl-1 = <&ksi0_sleep
+		     &ksi1_sleep
+		     &ksi2_sleep
+		     &ksi3_sleep
+		     &ksi4_sleep
+		     &ksi5_sleep
+		     &ksi6_sleep
+		     &ksi7_sleep
+		     &kso0_sleep
+		     &kso1_sleep
+		     &kso2_sleep
+		     &kso3_sleep
+		     &kso4_sleep
+		     &kso5_sleep
+		     &kso6_sleep
+		     &kso7_sleep
+		     &kso8_sleep
+		     &kso9_sleep
+		     &kso10_sleep
+		     &kso11_sleep
+		     &kso12_sleep
+		     &kso13_sleep
+		     &kso14_sleep>;
 	pinctrl-names = "default", "sleep";
 };
 
