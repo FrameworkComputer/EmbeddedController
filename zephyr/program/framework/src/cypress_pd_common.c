@@ -1718,8 +1718,13 @@ void cypd_port_int(int controller, int port)
 			i2c_read_offset16_block(i2c_port, addr_flags,
 				CCG_READ_DATA_MEMORY_REG(port, 0), data2, MIN(response_len, 32));
 
-			if (data2[0] & BIT(1)) {
-				CPRINTS("RDO Mismatch, may provide more power for this device");
+			if (data2[0] & BIT(1) || get_force_enable_psu()) {
+				if (get_force_enable_psu())
+					CPRINTS("Force PSU enable, "
+						"may provide more power for this device");
+				else
+					CPRINTS("RDO Mismatch, "
+						"may provide more power for this device");
 				pd_port_states[pd_port].rdo_mismatch = true;
 				task_set_event(TASK_ID_CYPD, CCG_EVT_RDO_MISMATCH);
 			}

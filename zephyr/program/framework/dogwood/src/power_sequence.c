@@ -487,7 +487,7 @@ bool power_5vsb_exit(void)
 
 	/**
 	 * Call cypd event CCG_EVT_RDO_MISMATCH to check if we can provide more
-	 * power for RDO mismatch device.
+	 * power for RDO mismatch device or when psu power force on.
 	 */
 	task_set_event(TASK_ID_CYPD, CCG_EVT_RDO_MISMATCH);
 
@@ -1024,7 +1024,8 @@ __override int chipset_in_low_power_mode(void)
 __override bool cypd_allow_increase_rdo_profile(void)
 {
 	/* Only allow the PD chips to increase the current when the PSU is on */
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pok_l)) == 1)
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pok_l)) == 1 ||
+		get_force_enable_psu())
 		return true;
 	else
 		return false;
