@@ -10,6 +10,9 @@
 
 enum fp_transport_type get_fp_transport_type(void)
 {
+#ifdef CONFIG_EC_HOST_CMD_BACKEND_USB
+	return FP_TRANSPORT_TYPE_USB;
+#else /* CONFIG_EC_HOST_CMD_BACKEND_USB */
 	static enum fp_transport_type ret = FP_TRANSPORT_TYPE_UNKNOWN;
 
 	if (ret == FP_TRANSPORT_TYPE_UNKNOWN) {
@@ -30,4 +33,5 @@ enum fp_transport_type get_fp_transport_type(void)
 	}
 
 	return ret;
+#endif /* CONFIG_EC_HOST_CMD_BACKEND_USB */
 }
