@@ -56,6 +56,12 @@ config BOARD_GROGU
 	  Build Google Grogu board. Grogu has MediaTek SoC
 	  with ITE IT82002 EC.
 
+config BOARD_DOOKU
+	bool "Google Dooku Board"
+	help
+	  Build Google Dooku board. Dooku has MediaTek SoC
+	  with ITE IT82002 EC.
+
 config BOARD_SKYWALKER_SINGLE_USB_TYPEC
 	bool "Boards have only one USB-C port"
 	default n
