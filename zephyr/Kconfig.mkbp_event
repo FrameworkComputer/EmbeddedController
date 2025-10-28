@@ -49,6 +49,14 @@ config PLATFORM_EC_MKBP_USE_CUSTOM
       mkbp_set_host_active_via_custom() which is called when there's a MKBP event
       to be sent. for more about the function, refer to mkbp_event.h.
 
+config PLATFORM_EC_MKBP_USE_USB
+    bool "Use USB for MKBP"
+    depends on EC_HOST_CMD_BACKEND_USB
+    help
+      Select to send MKBP events via USB Host Command backend.
+
+      The USB backend uses an interrupt endpoint for this that is handled by host.
+
 endchoice
 
 config PLATFORM_EC_MKBP_USE_GPIO_ACTIVE_HIGH

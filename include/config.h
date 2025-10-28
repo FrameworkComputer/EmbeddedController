@@ -6491,17 +6491,21 @@
 /******************************************************************************/
 /* MKBP events delivery methods. */
 #ifdef CONFIG_MKBP_EVENT
+/* clang-format off */
 #if !defined(CONFIG_MKBP_USE_CUSTOM) &&                  \
 	!defined(CONFIG_MKBP_USE_HOST_EVENT) &&          \
 	!defined(CONFIG_MKBP_USE_GPIO) &&                \
 	!defined(CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT) && \
-	!defined(CONFIG_MKBP_USE_HECI)
+	!defined(CONFIG_MKBP_USE_HECI) &&                \
+	!defined(CONFIG_MKBP_USE_USB)
 #error Please define one of CONFIG_MKBP_USE_* macro.
 #endif
+/* clang-format on */
 
 #if defined(CONFIG_MKBP_USE_CUSTOM) + defined(CONFIG_MKBP_USE_GPIO) + \
 		defined(CONFIG_MKBP_USE_HOST_EVENT) +                 \
-		defined(CONFIG_MKBP_USE_HOST_HECI) >                  \
+		defined(CONFIG_MKBP_USE_HOST_HECI) +                  \
+		defined(CONFIG_MKBP_USE_HOST_USB) >                   \
 	1
 #error Must select only one type of MKBP event delivery method.
 #endif
