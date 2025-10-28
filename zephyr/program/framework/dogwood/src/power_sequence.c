@@ -5,6 +5,7 @@
 
 #include "board_adc.h"
 #include "board_host_command.h"
+#include "board_function.h"
 #include "chipset.h"
 #include "config.h"
 #include "console.h"
@@ -63,7 +64,6 @@ static int timeout_5vsb = TIMEOUT_5VSB_MIN;
 static bool power_s5_up;		/* Chipset is sequencing up or down */
 static int force_shutdown_flags;
 static int d3cold_is_entry;	/* check the d3cold status */
-static int force_enable_psu = 0;
 
 static void system_check_ssd_status(void);
 
@@ -430,7 +430,7 @@ void power_5vsb_enter(void)
 		return;
 	}
 
-	if (force_enable_psu) {
+	if (get_force_enable_psu()) {
 		CPRINTS("...but we want to force power supply on");
 		return;
 	}
@@ -1030,37 +1030,3 @@ __override bool cypd_allow_increase_rdo_profile(void)
 		return false;
 }
 
-static int cmd_psu_s3_keep(int argc, const char **argv)
-{
-	char *e;
-
-	if (argc > 2)
-		return EC_ERROR_PARAM_COUNT;
-
-	if (argc == 2) {
-		force_enable_psu = strtoi(argv[1], &e, 10);
-		if (*e)
-			return EC_ERROR_PARAM1;
-	};
-
-	CPRINTS("PSU is forced on in S3: %d", force_enable_psu);
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(psu_s3_keep, cmd_psu_s3_keep,
-			"[1/0]",
-			"Keep the PSU on when the system is in S3.");
-
-static enum ec_status hc_psu_control(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_psu_control *p = args->params;
-	struct ec_response_psu_control *r = args->response;
-
-	force_enable_psu = p->force_enable_in_standby > 0 ? true : false;
-
-	r->force_enable_in_standby = force_enable_psu;
-	args->response_size = sizeof(*r);
-
-	return EC_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_PSU_CONTROL, hc_psu_control, EC_VER_MASK(0));

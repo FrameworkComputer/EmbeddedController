@@ -32,6 +32,8 @@
 #define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ##args)
 
+static int force_enable_psu;
+
 int bios_function_status(uint16_t type, uint16_t addr, uint8_t flag)
 {
 	uint8_t status;
@@ -145,3 +147,43 @@ __override int board_temp_smi_evet(void)
 
 	return false;
 }
+
+int get_force_enable_psu(void)
+{
+	return force_enable_psu;
+}
+
+static enum ec_status hc_psu_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_psu_control *p = args->params;
+	struct ec_response_psu_control *r = args->response;
+
+	force_enable_psu = p->force_enable_in_standby > 0 ? true : false;
+
+	r->force_enable_in_standby = force_enable_psu;
+	args->response_size = sizeof(*r);
+
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PSU_CONTROL, hc_psu_control, EC_VER_MASK(0));
+
+static int cmd_psu_s3_keep(int argc, const char **argv)
+{
+	char *e;
+
+	if (argc > 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (argc == 2) {
+		force_enable_psu = strtoi(argv[1], &e, 10);
+		if (*e)
+			return EC_ERROR_PARAM1;
+	};
+
+	CPRINTS("PSU is forced on in S3: %d", force_enable_psu);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(psu_s3_keep, cmd_psu_s3_keep,
+			"[1/0]",
+			"Keep the PSU on when the system is in S3.");

@@ -23,4 +23,6 @@ __override_proto void project_chassis_function(enum gpio_signal signal);
 
 uint32_t get_system_percentage(void);
 
+int get_force_enable_psu(void);
+
 #endif	/* __CROS_EC_BOARD_FUNCTION_H */
