@@ -895,6 +895,24 @@ static enum smf_state_result st_init_run(void *o)
 }
 
 /**
+ * @brief Check if any interrupt GPIO is currently asserted
+ */
+static bool any_irq_gpio_asserted(void)
+{
+	for (int i = 0; i < ARRAY_SIZE(rts54xx_irq_list); i++) {
+		if (rts54xx_irq_list[i].port == NULL &&
+		    rts54xx_irq_list[i].pin == 0) {
+			/* This GPIO entry is blank, ignore it */
+			continue;
+		}
+		if (gpio_pin_get_dt(&rts54xx_irq_list[i])) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
  * @brief Called from the main thread to handle interrupts
  */
 static void handle_irqs(struct pdc_data_t *data)
@@ -911,7 +929,7 @@ static void handle_irqs(struct pdc_data_t *data)
 	 * This assumes that this driver is valid for all PD controllers on the
 	 * system.
 	 */
-	for (int i = 0; i < pdc_power_mgmt_get_usb_pd_port_count(); i++) {
+	do {
 		/*
 		 * Read the Alert Response Address to determine
 		 * which port generated the interrupt.
@@ -955,7 +973,7 @@ static void handle_irqs(struct pdc_data_t *data)
 				break;
 			}
 		}
-	}
+	} while (any_irq_gpio_asserted());
 }
 
 static void st_idle_entry(void *o)

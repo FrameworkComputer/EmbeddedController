@@ -54,14 +54,17 @@ static int smbus_ara_emul_read_byte(const struct emul *emul, int reg,
 	struct smbus_ara_emul_data *data = emul->data;
 	uint8_t min_addr = 0;
 
+	if (!data->addr_used_map) {
+		/* No active ARA addresses. Return a NAK */
+		return -1;
+	}
+
 	/* Return lowest port stored address for ARA. */
-	if (data->addr_used_map) {
-		for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
-			if (data->addr_used_map & (1 << i)) {
-				min_addr = data->device_address[i];
-				data->addr_used_map &= ~(1 << i);
-				break;
-			}
+	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
+		if (data->addr_used_map & (1 << i)) {
+			min_addr = data->device_address[i];
+			data->addr_used_map &= ~(1 << i);
+			break;
 		}
 	}
 
