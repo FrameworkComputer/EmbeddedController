@@ -28,27 +28,6 @@
 #define REG16(addr) (*REG16_ADDR(addr))
 #define REG8(addr) (*REG8_ADDR(addr))
 
-/* Standard macros / definitions */
-#define GENERIC_MAX(x, y) ((x) > (y) ? (x) : (y))
-#define GENERIC_MIN(x, y) ((x) < (y) ? (x) : (y))
-#ifndef MAX
-#define MAX(a, b)                            \
-	({                                   \
-		__typeof__(a) temp_a = (a);  \
-		__typeof__(b) temp_b = (b);  \
-                                             \
-		GENERIC_MAX(temp_a, temp_b); \
-	})
-#endif
-#ifndef MIN
-#define MIN(a, b)                            \
-	({                                   \
-		__typeof__(a) temp_a = (a);  \
-		__typeof__(b) temp_b = (b);  \
-                                             \
-		GENERIC_MIN(temp_a, temp_b); \
-	})
-#endif
 #ifndef NULL
 #define NULL ((void *)0)
 #endif
