@@ -67,6 +67,8 @@ void bios_function_detect(void)
 
 #ifndef CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
 	flash_storage_update(FLASH_FLAGS_STANDALONE, get_standalone_mode() ? 1 : 0);
+#else
+	flash_storage_update(FLASH_FLAGS_FORCE_PSU, force_enable_psu);
 #endif
 #ifdef CONFIG_BOARD_LOTUS
 	flash_storage_update(FLASH_FLAGS_INPUT_MODULE_POWER, get_detect_mode());
@@ -126,6 +128,9 @@ static void bios_function_init(void)
 #ifndef CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
 	if (flash_storage_get(FLASH_FLAGS_STANDALONE))
 		set_standalone_mode(1);
+#else
+	/* before sequence start need to read back psu status */
+	force_enable_psu = flash_storage_get(FLASH_FLAGS_FORCE_PSU);
 #endif
 #ifdef CONFIG_BOARD_LOTUS
 	set_detect_mode(flash_storage_get(FLASH_FLAGS_INPUT_MODULE_POWER));
