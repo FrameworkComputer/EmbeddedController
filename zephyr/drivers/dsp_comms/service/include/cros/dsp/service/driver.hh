@@ -47,6 +47,8 @@ int dsp_service_read_processed(struct i2c_target_config* cfg, uint8_t* out);
 int dsp_service_write_requested(struct i2c_target_config* cfg);
 int dsp_service_write_received(struct i2c_target_config* cfg, uint8_t in);
 int dsp_service_stop(struct i2c_target_config* cfg);
+void dsp_service_error(struct i2c_target_config* cfg,
+                       enum i2c_error_reason error_code);
 void dsp_service_buf_write_received(struct i2c_target_config* cfg,
                                     uint8_t* ptr,
                                     uint32_t len);
@@ -83,6 +85,8 @@ class Driver {
   friend int ::dsp_service_write_received(struct i2c_target_config* cfg,
                                           uint8_t in);
   friend int ::dsp_service_stop(struct i2c_target_config* cfg);
+  friend void ::dsp_service_error(struct i2c_target_config* cfg,
+                                  enum i2c_error_reason error_code);
   friend void ::dsp_service_buf_write_received(struct i2c_target_config* cfg,
                                                uint8_t* ptr,
                                                uint32_t len);

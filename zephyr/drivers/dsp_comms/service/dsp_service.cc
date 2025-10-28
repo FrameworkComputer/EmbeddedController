@@ -44,6 +44,7 @@ static constexpr const struct i2c_target_callbacks dsp_service_callbacks = {
     .buf_read_requested = dsp_service_buf_read_requested,
 #endif
     .stop = dsp_service_stop,
+    .error = dsp_service_error,
 };
 
 namespace cros::dsp::service {

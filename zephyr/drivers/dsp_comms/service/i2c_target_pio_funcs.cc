@@ -135,3 +135,8 @@ extern "C" int dsp_service_stop(struct i2c_target_config*) {
   }
   return 0;
 }
+
+extern "C" void dsp_service_error(struct i2c_target_config*,
+                                  enum i2c_error_reason) {
+  /* TODO(b/455736070): Provide actual implementation. */
+}
