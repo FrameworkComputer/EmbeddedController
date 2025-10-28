@@ -21,7 +21,8 @@ enum fp_sensor_type {
 enum fp_transport_type {
 	FP_TRANSPORT_TYPE_UNKNOWN = -1,
 	FP_TRANSPORT_TYPE_SPI,
-	FP_TRANSPORT_TYPE_UART
+	FP_TRANSPORT_TYPE_UART,
+	FP_TRANSPORT_TYPE_USB
 };
 
 enum fp_sensor_spi_select {
