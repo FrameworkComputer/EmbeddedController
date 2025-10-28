@@ -121,10 +121,10 @@ template <int MAX_NUM_RESULTS = 5> class Benchmark {
 				watchdog_reload();
 
 			if (valid_min_max) {
-				result.max_time =
-					MAX(result.max_time, iteration_time);
-				result.min_time =
-					MIN(result.min_time, iteration_time);
+				result.max_time = std::max(result.max_time,
+							   iteration_time);
+				result.min_time = std::min(result.min_time,
+							   iteration_time);
 			} else {
 				result.max_time = iteration_time;
 				result.min_time = iteration_time;
