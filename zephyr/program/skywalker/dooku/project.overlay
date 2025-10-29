@@ -39,6 +39,8 @@
 	named-gpios {
 		/delete-node/ ec_kso_02_inv;
 		/delete-node/ en_pp5000_z1;
+		/delete-node/ dp_aux_path_sel;
+		/delete-node/ usb_c1_dp_hpd;
 
 		gpio_ec_kso_02: ec_kso_02 {
 			gpios = <&gpioksol 2 (GPIO_OUTPUT | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_LOW)>;
@@ -115,6 +117,10 @@
 			temp-host-release-halt = <85>;
 			sensor = <&temp_charger>;
 		};
+	};
+
+	usbc {
+		/delete-node/ port1@1;
 	};
 };
 
@@ -223,4 +229,13 @@
 			size = <0x1000>;
 		};
 	};
+};
+
+&i2c2 {
+	/delete-node/ rts54-pdc@67;
+};
+
+&i2c4 {
+	/delete-node/ ps8747-mux-1@10;
+	/delete-node/ tusb546-mux-0@44;
 };
