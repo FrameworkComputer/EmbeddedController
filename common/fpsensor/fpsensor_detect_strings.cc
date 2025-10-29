@@ -27,6 +27,12 @@ const char *fp_sensor_type_to_str(enum fp_sensor_type type)
 		return "FPC";
 	case FP_SENSOR_TYPE_ELAN:
 		return "ELAN";
+	case FP_SENSOR_TYPE_EGIS:
+		return "EGIS";
+	case FP_SENSOR_TYPE_FOCALTECH:
+		return "FOCALTECH";
+	case FP_SENSOR_TYPE_REALTEK:
+		return "REALTEK";
 	}
 }
 
