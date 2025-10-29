@@ -72,7 +72,7 @@
 			enum-name = "GPIO_KBD_KSO2";
 		};
 		gpio_edp_bl_en_3v3: edp_bl_en_3v3 {
-			gpios = <&gpiob 6 GPIO_INPUT>;
+			gpios = <&gpioc 7 GPIO_INPUT>;
 		};
 		gpio_ec_tchscr_report_en: ec_tchscr_report_en {
 			gpios = <&gpioh 3 GPIO_OUTPUT>;
@@ -83,6 +83,9 @@
 		gpio_c0_charger_led_amber_l: c0_charger_led_amber_l {
 			gpios = <&gpioa 1 GPIO_OUTPUT_HIGH>;
 		};
+		gpio_en_pwr_s3: en_pwr_s3 {
+			gpios = <&gpiob 6 (GPIO_OUTPUT_LOW)>;
+		};
 	};
 
 	gpio-interrupts {
@@ -91,6 +94,12 @@
 		/delete-node/ lid-accel;
 		/delete-node/ ec-imu;
 		/delete-node/ tablet_mode;
+
+		int_pmic_ec_resetb: pmic-ec-resetb {
+			irq-pin = <&gpio_pmic_ec_resetb>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "pmic_ec_resetb_interrupt";
+		};
 	};
 
 	unused-pins {
