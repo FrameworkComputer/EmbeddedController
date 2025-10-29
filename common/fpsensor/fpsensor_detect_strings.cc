@@ -14,6 +14,8 @@ const char *fp_transport_type_to_str(enum fp_transport_type type)
 		return "SPI";
 	case FP_TRANSPORT_TYPE_UART:
 		return "UART";
+	case FP_TRANSPORT_TYPE_USB:
+		return "USB";
 	}
 }
 
