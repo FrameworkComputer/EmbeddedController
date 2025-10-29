@@ -483,9 +483,18 @@ config PLATFORM_EC_HOOKS
 
 config PLATFORM_EC_HOOK_SECOND
 	bool "Enable the one second period hook"
+	default n if SOC_FAMILY_INTEL_ISH
 	default y
 	help
 	  Enable support for the one second hook. Disabling the hook save
+	  some memory and CPU time.
+
+config PLATFORM_EC_HOOK_TICK
+	bool "Enable the one tick period hook"
+	default n if SOC_FAMILY_INTEL_ISH
+	default y
+	help
+	  Enable support for the one tick hook. Disabling the hook save
 	  some memory and CPU time.
 
 menuconfig PLATFORM_EC_HOSTCMD
