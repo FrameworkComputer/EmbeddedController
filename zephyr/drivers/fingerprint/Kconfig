@@ -26,7 +26,7 @@ config FINGERPRINT_SENSOR_IMAGE_SIZE
 	# Increased to support largest test images:
 	# { width (80) x height (64) x bytes_per_pixel (2) }
 	default 10240 if FINGERPRINT_SENSOR_EGIS630
-	default 12800 if FINGERPRINT_SENSOR_ELAN80SG
+	default 12800 if FINGERPRINT_SENSOR_ELAN80SERIES
 	help
 	  This is a size of fingerprint image with an additional metadata.
 	  This size must be at least a size of raw image. For FPC1025,
@@ -42,7 +42,7 @@ config FINGERPRINT_SENSOR_IMAGE_OFFSET
 	default 400 if FINGERPRINT_SENSOR_FPC1025
 	default 2340 if FINGERPRINT_SENSOR_FPC1145
 	default 0 if FINGERPRINT_SENSOR_EGIS630
-	default 0 if FINGERPRINT_SENSOR_ELAN80SG
+	default 0 if FINGERPRINT_SENSOR_ELAN80SERIES
 	help
 	  This is an offset of the raw fingerprint image in the image data
 	  buffer.
