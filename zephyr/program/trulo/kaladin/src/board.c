@@ -95,6 +95,10 @@ test_export_static void kb_layout_init(void)
 #ifdef CONFIG_KEYBOARD_DEBUG
 		set_keycap_label(0, 10, get_keycap_label(5, 15));
 #endif
+		set_scancode_set2(0, 13, get_scancode_set2(5, 15));
+#ifdef CONFIG_KEYBOARD_DEBUG
+		set_keycap_label(0, 13, get_keycap_label(5, 15));
+#endif
 		set_scancode_set2(5, 15, get_scancode_set2(1, 12));
 #ifdef CONFIG_KEYBOARD_DEBUG
 		set_keycap_label(5, 15, get_keycap_label(1, 12));
