@@ -9,7 +9,7 @@
 	/* lid: (gpioh 0) */
 	wkup-pin@0 {
 		reg = <0x0>;
-		wkup-pin-pol = "falling";
+		wkup-pin-pol = "rising";
 		wkup-pin-mode = "vin";
 	};
 
