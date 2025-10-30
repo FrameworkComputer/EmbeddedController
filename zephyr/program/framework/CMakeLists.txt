@@ -127,6 +127,7 @@ if(DEFINED CONFIG_BOARD_MARIGOLD OR DEFINED CONFIG_BOARD_SAKURA)
 		zephyr_library_sources("marigold/src/usbc.c")
 		zephyr_library_sources("src/ucsi_port_13.c")
 		zephyr_library_sources("marigold/src/thermal.c")
+		zephyr_library_sources("marigold/src/cpu_power.c")
 	elseif(DEFINED CONFIG_BOARD_SAKURA)
 		project(sakura)
 		cros_ec_library_include_directories_ifdef(CONFIG_BOARD_SAKURA include)
@@ -135,12 +136,12 @@ if(DEFINED CONFIG_BOARD_MARIGOLD OR DEFINED CONFIG_BOARD_SAKURA)
 		zephyr_library_sources("sakura/src/usbc.c")
 		zephyr_library_sources("sakura/src/ucsi_port.c")
 		zephyr_library_sources("src/input_module_13.c")
+		zephyr_library_sources("sakura/src/cpu_power.c")
 	endif()
 	zephyr_include_directories("include/marigold")
 	zephyr_library_sources(
 			"src/battery_13.c"
 			"src/battery_present_adc.c"
-			"marigold/src/cpu_power.c"
 			"src/keyboard_customization_13.c"
 			"marigold/src/project_diagnostics.c"
 			"marigold/src/temperature.c"
