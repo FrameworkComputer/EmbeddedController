@@ -404,15 +404,6 @@ static enum ec_error_list matrix_callback(int8_t row, int8_t col,
 
 	make_code = get_scancode_set2(row, col);
 
-#ifdef CONFIG_KEYBOARD_SCANCODE_CALLBACK
-	{
-		enum ec_error_list r =
-			keyboard_scancode_callback(&make_code, pressed);
-		if (r != EC_SUCCESS)
-			return r;
-	}
-#endif
-
 	code_set = acting_code_set(code_set);
 	if (!is_supported_code_set(code_set)) {
 		CPRINTS("KB scancode set %d unsupported", code_set);

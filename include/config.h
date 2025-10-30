@@ -3276,11 +3276,6 @@
 #undef CONFIG_KEYBOARD_MULTIPLE
 
 /*
- * Allow board-specific 8042 keyboard callback when a key state is changed.
- */
-#undef CONFIG_KEYBOARD_SCANCODE_CALLBACK
-
-/*
  * Enable keyboard testing functionality. This enables a message which receives
  * a list of keyscan events from the AP and processes them.  This will cause
  * keypresses to appear on the AP through the same mechanism as a normal
