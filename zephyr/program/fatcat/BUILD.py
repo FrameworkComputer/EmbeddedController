@@ -163,6 +163,20 @@ register_ish_project(
 )
 
 register_ish_project(
+    project_name="ruby-ish",
+    zephyr_board="intel_ish_5_8_0",
+    dts_overlays=[
+        here / "ruby-ish" / "project.overlay",
+    ],
+    kconfig_files=[
+        here / "dsp_comms.conf",
+        here / "ruby-ish" / "project.conf",
+    ],
+    modules=["ec", "cmsis", "cmsis_6", "hal_intel_public", "pigweed", "nanopb"],
+    inherited_from=["fatcat"],
+)
+
+register_ish_project(
     project_name="moonstone-ish",
     zephyr_board="intel_ish_5_8_0",
     dts_overlays=[
