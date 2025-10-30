@@ -21,8 +21,8 @@
 	motionsense-rotation-ref {
 		compatible = "cros-ec,motionsense-rotation-ref";
 		lid_rot_ref: lid-rotation-ref-bmi {
-			mat33 = <1 0 0
-				 0 1 0
+			mat33 = <(-1) 0 0
+				 0 (-1) 0
 				 0 0 1>;
 		};
 	};
@@ -115,8 +115,8 @@
 			compatible = "cros-ec,bmi3xx-accel";
 			status = "okay";
 
-			active-mask = "SENSOR_ACTIVE_S0_S3";
-			location = "MOTIONSENSE_LOC_BASE";
+			active-mask = "SENSOR_ACTIVE_S0";
+			location = "MOTIONSENSE_LOC_LID";
 			mutex = <&lid_mutex>;
 			port = <&i2c_ec_i2c_sensor_scl_1v8>;
 			rot-standard-ref = <&lid_rot_ref>;
@@ -127,9 +127,6 @@
 				ec-s0 {
 					odr = <(10000 | ROUND_UP_FLAG)>;
 				};
-				ec-s3 {
-					odr = <(10000 | ROUND_UP_FLAG)>;
-				};
 			};
 		};
 
@@ -137,8 +134,8 @@
 			compatible = "cros-ec,bmi3xx-gyro";
 			status = "okay";
 
-			active-mask = "SENSOR_ACTIVE_S0_S3";
-			location = "MOTIONSENSE_LOC_BASE";
+			active-mask = "SENSOR_ACTIVE_S0";
+			location = "MOTIONSENSE_LOC_LID";
 			mutex = <&lid_mutex>;
 			port = <&i2c_ec_i2c_sensor_scl_1v8>;
 			rot-standard-ref = <&lid_rot_ref>;
