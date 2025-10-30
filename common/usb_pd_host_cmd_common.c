@@ -135,7 +135,11 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 			    polarity_rm_dts(pd_get_polarity(p->port)));
 
 	if (p->swap == USB_PD_CTRL_SWAP_DATA) {
-		pd_request_data_swap(p->port);
+		// TODO(b/458004422) fix pd_request_data_swap impl. for TCPMv2
+		if (IS_ENABLED(CONFIG_USB_PD_TCPMV2))
+			pd_dpm_request(p->port, DPM_REQUEST_DR_SWAP);
+		else
+			pd_request_data_swap(p->port);
 	} else if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) ||
 		   IS_ENABLED(CONFIG_USB_PD_CONTROLLER)) {
 		if (p->swap == USB_PD_CTRL_SWAP_POWER)
