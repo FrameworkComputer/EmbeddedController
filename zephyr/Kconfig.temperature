@@ -43,8 +43,8 @@ config PLATFORM_EC_DPTF_PRINTS
 config PLATFORM_EC_THERMISTOR
 	bool "Thermistor support"
 	default y
-	depends on DT_HAS_CROS_EC_THERMISTOR_ENABLED
-	depends on ADC
+	depends on (DT_HAS_CROS_EC_THERMISTOR_ENABLED && ADC) || \
+		DT_HAS_CROS_EC_TEMP_SENSOR_APL6012_ENABLED
 	help
 	  Enables support for thermistors (resistor whose resistance is
 	  strongly dependent on temperature) as temperature-sensor type.
