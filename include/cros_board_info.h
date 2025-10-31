@@ -233,6 +233,11 @@ int cbi_set_fw_config(uint32_t fw_config);
 int cbi_set_ssfc(uint32_t ssfc);
 
 /**
+ * Set and update MODEL ID tag field
+ */
+int cbi_set_model_id(uint32_t model_id);
+
+/**
  * Initialize CBI cache
  */
 int cbi_create(void);
