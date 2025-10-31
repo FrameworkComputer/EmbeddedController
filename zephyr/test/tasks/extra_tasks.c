@@ -169,7 +169,7 @@ ZTEST_USER(extra_tasks, test_extra_task_unmapped)
 	task_id_t task_id;
 
 	/* Not a real thread */
-	struct k_thread thread_data;
+	struct k_thread thread_data = { 0 };
 
 	task_id = thread_id_to_task_id(&thread_data);
 	zassert_equal(task_id, TASK_ID_INVALID);
