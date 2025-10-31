@@ -425,7 +425,7 @@ static void anx7447_tcpc_alert(int port)
 		anx7447_vendor_defined_alert(port);
 
 	/* process and clear alert status */
-	tcpci_tcpc_alert(port);
+	tcpci_tcpc_alert_with_value(port, alert);
 }
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER

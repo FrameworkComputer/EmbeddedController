@@ -430,7 +430,7 @@ static void rt1718s_alert(int port)
 		rt1718s_vendor_defined_alert(port);
 
 	if (alert & ~TCPC_REG_ALERT_VENDOR_DEF)
-		tcpci_tcpc_alert(port);
+		tcpci_tcpc_alert_with_value(port, alert);
 }
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER

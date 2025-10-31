@@ -236,3 +236,32 @@ ZTEST(rt1718s_tcpc, test_set_src_ctrl)
 		rt1718s_emul, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SRC_CTRL_LOW,
 		TCPC_REG_COMMAND_SRC_CTRL_HIGH | TCPC_REG_COMMAND_SRC_CTRL_LOW);
 }
+
+ZTEST(rt1718s_tcpc, test_tcpc_alert)
+{
+	/*
+	 * Set a standard TCPCI alert.
+	 * This ensures (alert & ~TCPC_REG_ALERT_VENDOR_DEF) evaluates to true.
+	 */
+	uint16_t alert_mask = TCPC_REG_ALERT_CC_STATUS;
+
+	/* Use the emulator to set the ALERT register directly */
+	tcpci_emul_set_reg(rt1718s_emul, TCPC_REG_ALERT, alert_mask);
+
+	/* Verify the emulator register is actually set before the test */
+	compare_reg_val_with_mask(rt1718s_emul, TCPC_REG_ALERT, alert_mask,
+				  alert_mask);
+
+	/*
+	 * Call the rt1718s TCPM driver's alert handler function.
+	 */
+	rt1718s_tcpm_drv.tcpc_alert(tcpm_rt1718s_port);
+
+	/*
+	 * If the code entered the `if (alert & ~TCPC_REG_ALERT_VENDOR_DEF)`
+	 * block, it called `tcpci_tcpc_alert_with_value`. The standard behavior
+	 * of that function is to process the event and write-to-clear the ALERT
+	 * register.
+	 */
+	compare_reg_val_with_mask(rt1718s_emul, TCPC_REG_ALERT, 0, alert_mask);
+}

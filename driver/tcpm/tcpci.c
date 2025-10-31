@@ -1229,17 +1229,28 @@ static void tcpci_check_vbus_changed(int port, int alert, uint32_t *pd_event)
 void tcpci_tcpc_alert(int port)
 {
 	int alert = 0;
-	int alert_ext = 0;
-	int failed_attempts;
-	uint32_t pd_event = 0;
-	int retval = 0;
-	bool bist_mode;
 
 	/* Read the Alert register from the TCPC */
 	if (tcpm_alert_status(port, &alert)) {
 		CPRINTS("C%d: Failed to read alert register", port);
 		return;
 	}
+
+	/*
+	 * Call the function with the alert value. This function
+	 * now handles all the TCPC alert processing.
+	 */
+	tcpci_tcpc_alert_with_value(port, alert);
+}
+
+void tcpci_tcpc_alert_with_value(int port, int alert_value)
+{
+	int alert = alert_value;
+	int alert_ext = 0;
+	int failed_attempts;
+	uint32_t pd_event = 0;
+	int retval = 0;
+	bool bist_mode;
 
 	/* Get Extended Alert register if needed */
 	if (alert & TCPC_REG_ALERT_ALERT_EXT)
