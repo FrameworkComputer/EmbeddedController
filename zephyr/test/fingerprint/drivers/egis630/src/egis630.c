@@ -53,6 +53,10 @@ static void egis630_before(void *data)
 /* Maps Egis image capture errors to fingerprint errors. */
 int convert_egis_get_image_error_code(egis_api_return_t code);
 
+/* Converts capture types from the ec domain to the egis domain. */
+egis_capture_mode_t convert_fp_capture_type_to_egis_capture_type(
+	enum fingerprint_capture_type capture_type);
+
 /* Converts Egis sensor initialization error to a generic sensor error code. */
 uint16_t convert_egis_sensor_init_error_code(egis_api_return_t code);
 
@@ -156,13 +160,38 @@ ZTEST_F(egis630, test_finger_status_not_supported)
 	zassert_equal(fingerprint_finger_status(fixture->dev), -ENOTSUP);
 }
 
-ZTEST_F(egis630, test_acquire_image_not_supported)
+ZTEST_F(egis630, test_convert_fp_capture_type_to_egis_capture_type)
 {
-	uint8_t buffer[CONFIG_FINGERPRINT_SENSOR_IMAGE_SIZE];
-
-	zassert_equal(fingerprint_acquire_image(fixture->dev, 0, buffer,
-						sizeof(buffer)),
-		      -ENOTSUP);
+	zassert_equal(convert_fp_capture_type_to_egis_capture_type(
+			      FINGERPRINT_CAPTURE_TYPE_VENDOR_FORMAT),
+		      EGIS_CAPTURE_NORMAL_FORMAT);
+	zassert_equal(convert_fp_capture_type_to_egis_capture_type(
+			      FINGERPRINT_CAPTURE_TYPE_SIMPLE_IMAGE),
+		      EGIS_CAPTURE_NORMAL_FORMAT);
+	zassert_equal(convert_fp_capture_type_to_egis_capture_type(
+			      FINGERPRINT_CAPTURE_TYPE_PATTERN0),
+		      EGIS_CAPTURE_BLACK_PXL_TEST);
+	zassert_equal(convert_fp_capture_type_to_egis_capture_type(
+			      FINGERPRINT_CAPTURE_TYPE_PATTERN1),
+		      EGIS_CAPTURE_WHITE_PXL_TEST);
+	zassert_equal(convert_fp_capture_type_to_egis_capture_type(
+			      FINGERPRINT_CAPTURE_TYPE_QUALITY_TEST),
+		      EGIS_CAPTURE_RV_INT_TEST);
+	zassert_equal(convert_fp_capture_type_to_egis_capture_type(
+			      FINGERPRINT_CAPTURE_TYPE_DEFECT_PXL_TEST),
+		      EGIS_CAPTURE_DEFECT_PXL_TEST);
+	zassert_equal(convert_fp_capture_type_to_egis_capture_type(
+			      FINGERPRINT_CAPTURE_TYPE_ABNORMAL_TEST),
+		      EGIS_CAPTURE_ABNORMAL_TEST);
+	zassert_equal(convert_fp_capture_type_to_egis_capture_type(
+			      FINGERPRINT_CAPTURE_TYPE_NOISE_TEST),
+		      EGIS_CAPTURE_NOISE_TEST);
+	zassert_equal(convert_fp_capture_type_to_egis_capture_type(
+			      FINGERPRINT_CAPTURE_TYPE_RESET_TEST),
+		      EGIS_CAPTURE_TYPE_INVALID);
+	zassert_equal(convert_fp_capture_type_to_egis_capture_type(
+			      FINGERPRINT_CAPTURE_TYPE_MAX),
+		      EGIS_CAPTURE_TYPE_INVALID);
 }
 
 ZTEST_F(egis630, test_acquire_image_small_buffer_size)
@@ -174,6 +203,28 @@ ZTEST_F(egis630, test_acquire_image_small_buffer_size)
 
 	zassert_equal(fingerprint_acquire_image(fixture->dev, capture_type,
 						buffer, image_buf_size),
+		      -EINVAL);
+}
+
+ZTEST_F(egis630, test_acquire_image_not_supported)
+{
+	uint8_t buffer[CONFIG_FINGERPRINT_SENSOR_IMAGE_SIZE];
+	enum fingerprint_capture_type capture_type =
+		FINGERPRINT_CAPTURE_TYPE_RESET_TEST;
+
+	zassert_equal(fingerprint_acquire_image(fixture->dev, capture_type,
+						buffer, sizeof(buffer)),
+		      -EINVAL);
+}
+
+ZTEST_F(egis630, test_acquire_image_wrong_capture_type)
+{
+	uint8_t buffer[CONFIG_FINGERPRINT_SENSOR_IMAGE_SIZE] = { 0 };
+	enum fingerprint_capture_type capture_type =
+		FINGERPRINT_CAPTURE_TYPE_MAX;
+
+	zassert_equal(fingerprint_acquire_image(fixture->dev, capture_type,
+						buffer, sizeof(buffer)),
 		      -EINVAL);
 }
 
