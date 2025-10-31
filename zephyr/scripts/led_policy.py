@@ -4,6 +4,7 @@
 
 """Configure-time checks for the led-policy node."""
 
+from collections import defaultdict
 import logging
 import sys
 from typing import List, Optional
@@ -142,6 +143,7 @@ def iterate_power_states(edt, project_name):
 
     Args:
         edt: EDT object representation of a devicetree
+        project_name: Name of the board that is being built
 
     Returns:
         num_errors: Number of missing or overcoverage policies detected.
@@ -284,6 +286,71 @@ def iterate_power_states(edt, project_name):
     return num_errors
 
 
+def validate_led_colors(edt, project_name):
+    """Iterate all led patterns that are in the led policy and verify that
+       the colors for each pattern are present in a corresponding led driver
+       dts node.
+
+    Args:
+        edt: EDT object representation of a devicetree
+        project_name: Name of the board that is being built
+
+    Returns:
+        num_errors: Number of missing colors detected.
+    """
+
+    led_compat_list = ["cros-ec,gpio-led-pins", "cros-ec,pwm-led-pins"]
+
+    led_map = defaultdict(set)
+
+    for compat in led_compat_list:
+        led_compat_nodes = edt.compat2okay[compat]
+
+        if len(led_compat_nodes) == 0:
+            continue
+
+        # only one instance of any particular led driver can be defined
+        compat_node = led_compat_nodes[0]
+
+        for led_node in compat_node.children.values():
+            if "led-id" in led_node.props:
+                led_id = led_node.props["led-id"].val
+                for color_node in led_node.children.values():
+                    if "led-color" in color_node.props:
+                        led_color = color_node.props["led-color"].val
+                        led_map[led_id].add(led_color)
+
+    led_policy_nodes = edt.compat2okay["cros-ec,led-policy"]
+
+    if len(led_policy_nodes) != 1:
+        return 0
+    policies = led_policy_nodes[0]
+
+    color_error_set = set()
+    for policy_node in policies.children.values():
+        for led_node in policy_node.children.values():
+            led_id = led_node.props["led-id"].val
+            if led_id not in led_map:
+                color_error_set.add(f"led-id: '{led_id}'")
+                continue
+
+            for color_node in led_node.children.values():
+                led_color = color_node.props["led-color"].val
+                if led_color not in led_map[led_id]:
+                    color_error_set.add(
+                        f"led-id: '{led_id}', color: '{led_color}'"
+                    )
+
+    for s in color_error_set:
+        logging.error(
+            "%s: %s used in led policy is not defined",
+            project_name,
+            s,
+        )
+
+    return len(color_error_set)
+
+
 def parse_args(argv: Optional[List[str]] = None):
     """Returns parsed command-line arguments"""
     parser = util.EdtArgumentParser(
@@ -319,6 +386,9 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
         return 0
 
     if iterate_power_states(edt, project_dir.name):
+        return 1
+
+    if validate_led_colors(edt, project_dir.name):
         return 1
 
     return 0
