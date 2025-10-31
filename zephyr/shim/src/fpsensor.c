@@ -16,11 +16,14 @@
 #else
 #define fp_sensor_dev DEVICE_DT_GET(DT_CHOSEN(cros_fp_fingerprint_sensor))
 #endif
+#define CROS_FP_HAS_COMPAT(compat) \
+	DT_NODE_HAS_COMPAT(DT_CHOSEN(cros_fp_fingerprint_sensor), compat)
 
 static const struct fingerprint_algorithm *fp_algorithm;
 
 enum fp_sensor_type fpsensor_detect_get_type(void)
 {
+#if DT_NODE_EXISTS(DT_NODELABEL(fp_sensor_sel))
 	enum fp_sensor_type ret = FP_SENSOR_TYPE_UNKNOWN;
 
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(div_highside), 1);
@@ -39,6 +42,17 @@ enum fp_sensor_type fpsensor_detect_get_type(void)
 	 * only needed for initial detection on those boards.
 	 */
 	return ret;
+#elif CROS_FP_HAS_COMPAT(fpc_fpc1025) || CROS_FP_HAS_COMPAT(fpc_fpc1145)
+	return FP_SENSOR_TYPE_FPC;
+#elif CROS_FP_HAS_COMPAT(elan_elan80sg) || CROS_FP_HAS_COMPAT(elan_elani80sa)
+	return FP_SENSOR_TYPE_ELAN;
+#elif CROS_FP_HAS_COMPAT(egis_egis630)
+	return FP_SENSOR_TYPE_EGIS;
+#elif CROS_FP_HAS_COMPAT(ft_ft9865)
+	return FP_SENSOR_TYPE_FOCALTECH;
+#else
+#error "Unsupported sensor type"
+#endif
 }
 
 static void fp_sensor_irq(const struct device *dev)
