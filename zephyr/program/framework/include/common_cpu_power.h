@@ -14,10 +14,31 @@
 #include "intel_cpu_power_interface.h"
 #endif
 
+enum clear_reasons {
+	PROCHOT_CLEAR_REASON_SUCCESS,
+	PROCHOT_CLEAR_REASON_NOT_POWER,
+	PROCHOT_CLEAR_REASON_FORCE,
+};
+
 void update_soc_power_limit(bool force_update, bool force_no_adapter);
 
 #ifdef CONFIG_PD_CCG8_EPR
 void update_cpu_power_limit_events(uint8_t pd_event, int enable);
+
+/**
+ * Clear the PROCHOT after the power limit update is complete.
+ *
+ * @param reason The reason to clear the PROCHOT
+ */
+void power_limit_clear_prochot(enum clear_reasons reason);
+
+/**
+ * Check the power limit pending events. If there is an event
+ * the EC should update the power limit value.
+ *
+ * @return power limit pending events
+ */
+uint8_t power_limit_get_events(void);
 #endif
 
 #endif	/* __CROS_EC_CPU_POWER_H */

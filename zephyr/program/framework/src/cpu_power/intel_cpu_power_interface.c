@@ -522,6 +522,11 @@ static void power_limit_force_clear_prochot(void)
 }
 DECLARE_DEFERRED(power_limit_force_clear_prochot);
 
+uint8_t power_limit_get_events(void)
+{
+	return power_limit_update_events;
+}
+
 void power_limit_clear_prochot(enum clear_reasons reason)
 {
 	if (power_limit_update_events &

@@ -31,14 +31,7 @@
 static int battery_current_limit_mA = -5490;
 static int thermal_stt_table;
 static int safety_stt;
-static uint8_t events;
 static bool force_typec_1_5a_flag;
-
-enum clear_reasons {
-	PROCHOT_CLEAR_REASON_SUCCESS,
-	PROCHOT_CLEAR_REASON_NOT_POWER,
-	PROCHOT_CLEAR_REASON_FORCE,
-};
 
 void update_power_limit_thermal_value(struct pmf_data *pmf)
 {
@@ -288,82 +281,6 @@ static int update_safety_power_limit(int active_mpower)
 	return safety_level;
 }
 
-void force_clear_pmf_prochot(void)
-{
-	CPRINTS("pmf update timeout");
-	update_cpu_power_limit_events(0, 255);
-}
-DECLARE_DEFERRED(force_clear_pmf_prochot);
-
-void update_cpu_power_limit_events(uint8_t pd_event, int enable)
-{
-	static uint8_t pre_events;
-	int power;
-
-	switch (power_get_state()) {
-	case POWER_S0:
-	case POWER_S3S0:
-	case POWER_S0ixS0: /* S0ix -> S0 */
-		power = 1;
-		break;
-	default:
-		power = 0;
-	}
-
-	/* We should not need to assert the prochot before apu ready to update pmf */
-	if (!power || !get_apu_ready() || (enable == 255)) {
-		pre_events = 0;
-		pd_event = 0;
-		events = 0;
-		throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_UPDATE_POWER_LIMIT);
-		return;
-	}
-
-	if (enable)
-		events |= pd_event;
-	else
-		events &= ~pd_event;
-
-	if (pre_events != events) {
-		CPRINTS("events = %d, pre_events = %d", events, pre_events);
-		if (events) {
-			throttle_ap(THROTTLE_ON, THROTTLE_HARD, THROTTLE_SRC_UPDATE_POWER_LIMIT);
-			if (pd_event == BIT(PD_PROGRESS_ENTER_EPR_MODE))
-				set_gpu_gpio(GPIO_FUNC_ACDC, 0);
-			hook_call_deferred(&force_clear_pmf_prochot_data, 3 * SECOND);
-		} else {
-			throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_UPDATE_POWER_LIMIT);
-			if (pd_event == BIT(PD_PROGRESS_ENTER_EPR_MODE))
-				set_gpu_gpio(GPIO_FUNC_ACDC, 1);
-			hook_call_deferred(&force_clear_pmf_prochot_data, -1);
-		}
-
-		pre_events = events;
-	}
-}
-
-void clear_prochot(enum clear_reasons reason)
-{
-	if (events & BIT(PD_PROGRESS_ENTER_EPR_MODE) && (cypd_get_ac_power() > 100000)) {
-		/* wait charger to entry the bypass mode */
-#ifdef CONFIG_BOARD_LOTUS
-		if (charger_in_bypass_mode())
-			update_cpu_power_limit_events(BIT(PD_PROGRESS_ENTER_EPR_MODE), 0);
-#else
-		update_cpu_power_limit_events(BIT(PD_PROGRESS_ENTER_EPR_MODE), 0);
-#endif
-
-	}
-
-	if (events & BIT(PD_PROGRESS_EXIT_EPR_MODE))
-		update_cpu_power_limit_events(BIT(PD_PROGRESS_EXIT_EPR_MODE), 0);
-
-	if (events & BIT(PD_PROGRESS_DISCONNECTED)) {
-		/* if the adapter is disconnected, we should clear all events */
-		update_cpu_power_limit_events(0xff, 0);
-	}
-}
-
 static uint8_t update_d_notify(int active_mpower, uint8_t gpu_vendor,
 					enum power_safety_level safety_level)
 {
@@ -463,7 +380,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		old_stt_table = 0;
 
 	if (!chipset_in_state(CHIPSET_STATE_ON) || !get_apu_ready()) {
-		clear_prochot(PROCHOT_CLEAR_REASON_NOT_POWER);
+		power_limit_clear_prochot(PROCHOT_CLEAR_REASON_NOT_POWER);
 		return;
 	}
 
@@ -566,7 +483,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		|| power_limit[target_func[TYPE_P3T]].mwatt[TYPE_P3T] != old_p3t_limit
 		|| (power_limit[target_func[TYPE_APU_ONLY_SPPT]].mwatt[TYPE_APU_ONLY_SPPT]
 			!= old_ao_sppt)
-		|| set_pl_limit || force_update || events) {
+		|| set_pl_limit || force_update || power_limit_get_events()) {
 		/* only set PL when it is changed */
 		old_sustain_power_limit = power_limit[target_func[TYPE_SPL]].mwatt[TYPE_SPL];
 		old_slow_ppt_limit = power_limit[target_func[TYPE_SPPT]].mwatt[TYPE_SPPT];
@@ -588,7 +505,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 			old_sustain_power_limit, old_slow_ppt_limit,
 			old_fast_ppt_limit, old_p3t_limit, old_ao_sppt);
 
-			clear_prochot(PROCHOT_CLEAR_REASON_SUCCESS);
+			power_limit_clear_prochot(PROCHOT_CLEAR_REASON_SUCCESS);
 		}
 	}
 }

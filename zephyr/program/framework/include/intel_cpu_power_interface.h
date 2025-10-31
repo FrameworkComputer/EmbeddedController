@@ -61,12 +61,6 @@
 #define PECI_PARAMS_POWER_LIMITS_PL4			0x0000
 #define PECI_PL4_POWER_LIMIT(x)				(x << 3)
 
-enum clear_reasons {
-	PROCHOT_CLEAR_REASON_SUCCESS,
-	PROCHOT_CLEAR_REASON_NOT_POWER,
-	PROCHOT_CLEAR_REASON_FORCE,
-};
-
 extern int pl1_watt;
 extern int pl2_watt;
 extern int pl3_watt;
@@ -74,12 +68,4 @@ extern int pl4_watt;
 extern int psyspl2_watt;
 
 int set_pl_limits(int pl1, int pl2, int pl4, int psyspl2);
-
-/**
- * Clear the PROCHOT after the power limit update is complete.
- *
- * @param reason The reason to clear the PROCHOT
- */
-void power_limit_clear_prochot(enum clear_reasons reason);
-
 #endif

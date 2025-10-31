@@ -3,21 +3,27 @@
  * found in the LICENSE file.
  */
 
+#include "board_charger.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "charge_manager.h"
 #include "chipset.h"
 #include "common_cpu_power.h"
+#include "cypress_pd_common.h"
 #include "customized_shared_memory.h"
 #include "console.h"
 #include "driver/sb_rmi.h"
 #include "extpower.h"
 #include "hooks.h"
+#include "power.h"
 #include "math_util.h"
 #include "util.h"
+#include "throttle_ap.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+
+#define FORCE_CLEAR_PROCHOT_MAGIC_NUMBER 255
 
 struct power_limit_details power_limit[FUNCTION_COUNT];
 static int apu_ready;
@@ -118,6 +124,86 @@ void update_soc_power_limit_hook(void)
 }
 DECLARE_HOOK(HOOK_SECOND, update_soc_power_limit_hook, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_AC_CHANGE, update_soc_power_limit_hook, HOOK_PRIO_DEFAULT);
+
+
+#ifdef CONFIG_PD_CCG8_EPR
+static uint8_t power_limit_update_events;
+
+static void power_limit_force_clear_prochot(void)
+{
+	CPRINTS("power limit update timeout");
+	update_cpu_power_limit_events(0, FORCE_CLEAR_PROCHOT_MAGIC_NUMBER);
+}
+DECLARE_DEFERRED(power_limit_force_clear_prochot);
+
+uint8_t power_limit_get_events(void)
+{
+	return power_limit_update_events;
+}
+
+void power_limit_clear_prochot(enum clear_reasons reason)
+{
+	if (power_limit_update_events &
+		BIT(PD_PROGRESS_ENTER_EPR_MODE) && (cypd_get_ac_power() > 100000)) {
+#ifdef CONFIG_BOARD_LOTUS
+		if (charger_in_bypass_mode())
+			update_cpu_power_limit_events(BIT(PD_PROGRESS_ENTER_EPR_MODE), 0);
+#else
+		update_cpu_power_limit_events(BIT(PD_PROGRESS_ENTER_EPR_MODE), 0);
+#endif
+	}
+
+	if (power_limit_update_events & BIT(PD_PROGRESS_EXIT_EPR_MODE))
+		update_cpu_power_limit_events(BIT(PD_PROGRESS_EXIT_EPR_MODE), 0);
+
+	if (power_limit_update_events & BIT(PD_PROGRESS_DISCONNECTED)) {
+		/* if the adapter is disconnected, we should clear all events */
+		update_cpu_power_limit_events(FORCE_CLEAR_PROCHOT_MAGIC_NUMBER, 0);
+	}
+}
+
+void update_cpu_power_limit_events(uint8_t event, int enable)
+{
+	static uint8_t pre_power_limit_update_events;
+	bool cpu_is_power;
+
+	switch (power_get_state()) {
+	case POWER_S0:
+	case POWER_S3S0:
+	case POWER_S0ixS0: /* S0ix -> S0 */
+		cpu_is_power = true;
+		break;
+	default:
+		cpu_is_power = false;
+	}
+
+	if (!cpu_is_power || (enable == FORCE_CLEAR_PROCHOT_MAGIC_NUMBER)) {
+		pre_power_limit_update_events = 0;
+		event = 0;
+		power_limit_update_events = 0;
+		throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_UPDATE_POWER_LIMIT);
+		return;
+	}
+
+	if (enable)
+		power_limit_update_events |= event;
+	else
+		power_limit_update_events &= ~event;
+
+	if (pre_power_limit_update_events != power_limit_update_events) {
+		if (power_limit_update_events) {
+			throttle_ap(THROTTLE_ON, THROTTLE_HARD, THROTTLE_SRC_UPDATE_POWER_LIMIT);
+			hook_call_deferred(&power_limit_force_clear_prochot_data, 3 * SECOND);
+		} else {
+			throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_UPDATE_POWER_LIMIT);
+			hook_call_deferred(&power_limit_force_clear_prochot_data, -1);
+		}
+
+		pre_power_limit_update_events = power_limit_update_events;
+	}
+}
+#endif /* CONFIG_PD_CCG8_EPR */
+
 
 static int cmd_cpupower(int argc, const char **argv)
 {
