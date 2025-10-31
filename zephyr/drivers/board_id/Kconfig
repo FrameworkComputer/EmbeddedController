@@ -10,7 +10,8 @@ config COMMON_BOARD_ID
 
 config BOARD_ID_INTEL_RVP
 	bool "Intel RVP board ID read"
-	depends on DT_HAS_INTEL_RVP_BOARD_ID_ENABLED && COMMON_BOARD_ID
+	depends on DT_HAS_INTEL_RVP_BOARD_ID_ENABLED \
+			&& COMMON_BOARD_ID && PLATFORM_EC_CBI
 	default y
 	help
 	  Enable support for reading board id for INTEL RVP.

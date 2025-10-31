@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "cros_board_info.h"
 #ifdef CONFIG_AP_PWRSEQ_DRIVER
 #include <ap_power/ap_pwrseq_sm.h>
 #endif
@@ -17,7 +18,12 @@
 #define FAB_GPIOS_COUNT 2
 #define BOARD_GPIOS_COUNT 6
 
-LOG_MODULE_REGISTER(rvp_board_id, LOG_LEVEL_INF);
+#define FAB_ID_SHIFT 8
+#define BOARD_ID_MASK (BIT(BOARD_GPIOS_COUNT) - 1)
+
+LOG_MODULE_DECLARE(rvp_model_id, LOG_LEVEL_DBG);
+
+static int rvp_model_id = -1;
 
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
 	     "Unsupported RVP Board ID instance");
@@ -116,6 +122,60 @@ int get_rvp_id_config(enum rvp_id_type id_type)
 	}
 
 	return -1;
+}
+
+void rvp_id_handler(void)
+{
+	int board_id;
+	int fab_id;
+
+	board_id = get_rvp_id_config(BOARD_ID);
+	if (board_id < 0) {
+		LOG_DBG("RVP_ID: get_rvp_id_config.BOARD_ID failed");
+		return;
+	}
+
+	fab_id = get_rvp_id_config(FAB_ID);
+	if (fab_id < 0) {
+		LOG_DBG("RVP_ID: get_rvp_id_config.FAB_ID failed");
+		return;
+	}
+
+	rvp_model_id = (fab_id << FAB_ID_SHIFT) | board_id;
+
+	LOG_DBG("RVP_ID: %d from driver", rvp_model_id);
+
+	uint32_t id_from_cbi;
+	if ((cbi_get_model_id(&id_from_cbi) == EC_SUCCESS) &&
+	    id_from_cbi == rvp_model_id) {
+		// CBI MODEL_ID is up-to-date
+		LOG_DBG("RVP_ID: %d matches CBI", rvp_model_id);
+		return;
+	}
+
+	LOG_INF("RVP_ID: %d store in CBI ", rvp_model_id);
+	cbi_set_model_id(rvp_model_id);
+}
+
+/*
+ * Returns board version on success, -1 on error.
+ */
+__override int board_get_version(void)
+{
+	if (rvp_model_id == -1) {
+		int id;
+
+		if (cbi_get_model_id(&id) != EC_SUCCESS) {
+			LOG_INF("RVP_ID: not available");
+			return -1;
+		}
+
+		LOG_DBG("RVP_ID: %d load from CBI", id);
+		rvp_model_id = id;
+	}
+
+	// return only board id from model id
+	return rvp_model_id & BOARD_ID_MASK;
 }
 
 #ifdef CONFIG_AP_PWRSEQ_DRIVER
