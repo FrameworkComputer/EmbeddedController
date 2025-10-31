@@ -142,17 +142,24 @@ static void mp2964_pre_init(struct ap_power_ev_callback *cb,
 
 	ret = cbi_get_board_version(&cbi_boardversion);
 
-	if (cbi_boardversion >= 4) {
+	/*
+	 * Uldrenite: board version !=4 and < 10.
+	 * Uldrino:   board version  =4 or  >=10.
+	 */
+	if (ret != EC_SUCCESS) {
+		LOG_ERR("Error retrieving CBI BOARD_VER.");
+		LOG_ERR(" Default use Uldrenite setting ");
+	} else if (cbi_boardversion <= -1) {
+		LOG_ERR("Error: not a acceptable version");
+		LOG_ERR(" Default use Uldrenite setting ");
+	} else if ((cbi_boardversion == 4) || (cbi_boardversion >= 10)) {
 		LOG_INF(" Uldrino board ");
 		rail_a = rail_a_uldrino;
 		rail_b = rail_b_uldrino;
 		rail_a_size = ARRAY_SIZE(rail_a_uldrino);
 		rail_b_size = ARRAY_SIZE(rail_b_uldrino);
-	} else if (cbi_boardversion <= 3) {
+	} else {
 		LOG_INF(" Uldrenite board ");
-	} else if (ret != EC_SUCCESS) {
-		LOG_ERR("Error retrieving CBI BOARD_VER.");
-		LOG_ERR(" Default use Uldrenite setting ");
 	}
 
 	/* Only run this once */
