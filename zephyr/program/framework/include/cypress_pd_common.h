@@ -1010,12 +1010,12 @@ int epr_progress_status(void);
 /**
  * Clear EPR statue by &= ~EPR_PROCESS_MASK
  */
-void clear_erp_progress_mask(void);
+void clear_epr_progress_mask(void);
 
 /**
  * fully clear EPR Status
  */
-void clear_erp_progress(void);
+void clear_epr_progress(void);
 
 /**
  * Update EPR Progress status when epr event trigger

@@ -444,12 +444,12 @@ int epr_progress_status(void)
 	return pd_epr_in_progress;
 }
 
-void clear_erp_progress_mask(void)
+void clear_epr_progress_mask(void)
 {
 	pd_epr_in_progress &= ~EPR_PROCESS_MASK;
 }
 
-void clear_erp_progress(void)
+void clear_epr_progress(void)
 {
     /* clear the EPR progress when the adapter is removed */
 	pd_epr_in_progress &= EPR_PROCESS_MASK;

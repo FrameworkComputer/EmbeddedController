@@ -1351,7 +1351,7 @@ void cypd_update_port_state(int controller, int port)
 			charger_set_input_current_limit(0, (int)calculate_ma);
 		}
 
-		clear_erp_progress_mask();
+		clear_epr_progress_mask();
 	}
 #endif
 
@@ -1981,7 +1981,7 @@ void cypd_port_int(int controller, int port)
 
 #ifdef CONFIG_PD_CCG8_EPR
 			/* clear the EPR progress when the adapter is removed */
-			clear_erp_progress();
+			clear_epr_progress();
 #endif /* CONFIG_PD_CCG8_EPR */
 			set_gpu_gpio(GPIO_FUNC_ACDC, 0);
 		}
