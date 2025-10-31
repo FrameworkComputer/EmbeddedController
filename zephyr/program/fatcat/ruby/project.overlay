@@ -8,6 +8,8 @@
 #include <cros/cbi_flash.dtsi>
 
 #include <cros/integrated_fwid.dtsi>
+#include <dt-bindings/macros.h>
+#include <zephyr/dt-bindings/led/led.h>
 
 #include "adc.dtsi"
 #include "battery.dtsi"
@@ -40,4 +42,40 @@
 	status = "okay";
 	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
 	pinctrl-names = "default";
+};
+
+/* DT Overlay (e.g. project.overlay) for current-speed = <3333333> */
+&pcc {
+	clock-frequency = <DT_FREQ_M(80)>; /* OFMCLK runs at 80 MHz */
+	core-prescaler = <1>; /* CORE_CLK runs at 80 MHz */
+	apb1-prescaler = <4>; /* APB1_CLK runs at 20 MHz */
+	apb2-prescaler = <4>; /* APB2_CLK runs at 20 MHz */
+	apb3-prescaler = <4>; /* APB3_CLK runs at 20 MHz */
+	/*
+	 * APB4_CLK runs at 80 MHz, required to support
+	 * UART4 Baudrate=3.333333 MHz
+	 */
+	apb4-prescaler = <1>;
+};
+
+&uart4 {
+    status = "okay";
+    current-speed = <3333333>;      // 3.333333 MHz baud rate
+    pinctrl-0 = <&uart4_sout_gp35>; // Configure the specific TX pin
+    pinctrl-names = "default";
+    data-bits = <8>;                // (2+8=10, a multiple of 5)
+    tx-invert;                      // Mandatory for idle-low signal
+
+    led_strip: ws2812-strip {
+        compatible = "worldsemi,ws2812-uart";
+        status = "okay";
+        chain-length = <8>;
+        color-mapping = <LED_COLOR_ID_GREEN
+                         LED_COLOR_ID_RED
+                         LED_COLOR_ID_BLUE>;
+        reset-delay = <200>;
+        bits-per-symbol = <5>;
+        one-symbol = <BINARY(1,1,1,0,0)>;
+        zero-symbol = <BINARY(1,0,0,0,0)>;
+    };
 };
