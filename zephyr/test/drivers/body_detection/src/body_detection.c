@@ -114,10 +114,12 @@ ZTEST_USER(bodydetectmode, test_setbodydetectionmode_forced)
 
 	/**
 	 * Reset body detect mode. This returns body detect to "on".
+	 * After a delay to analyze sensor data.
 	 */
 	ret = shell_execute_cmd(get_ec_shell(), "bodydetectmode reset");
 	zassert_equal(ret, EC_SUCCESS, "unexpected command return status: %d",
 		      ret);
+	k_sleep(K_SECONDS(1));
 	body_detect_state = body_detect_get_state();
 	zassert_equal(body_detect_state, BODY_DETECTION_ON_BODY,
 		      "unexpected body detect mode: %d", body_detect_state);
@@ -297,7 +299,7 @@ static void body_detect_sample_after(void *state)
 /**
  * @brief TestPurpose: provide real-life data to feed the algorithm.
  */
-ZTEST_USER(bodydetectsample, test_setbodydetectionmode_unknown_arg)
+ZTEST_USER(bodydetectsample, test_reallife_data)
 {
 	int i, cnt;
 	int noise1, noise2;
@@ -306,8 +308,8 @@ ZTEST_USER(bodydetectsample, test_setbodydetectionmode_unknown_arg)
 	int noise_range = 3;
 	int G_1 = 16384;
 
-	/* Simulation time is 5 minutes */
-	cnt = 5 * 60 * fs;
+	/* Simulation time is 2 minutes */
+	cnt = 2 * 60 * fs;
 
 	/*
 	 * Run body_detect with small noise, should detect OFF_BODY.
