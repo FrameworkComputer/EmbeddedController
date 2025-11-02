@@ -1,0 +1,119 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include <dt-bindings/battery.h>
+
+
+/* Only for BASE DETECT to work; will be removed when LB is ready. */
+/ {
+	pwmleds {
+		compatible = "pwm-leds";
+
+		/* NOTE: &pwm number needs same with channel number */
+		led_power_red: ec_led1_odl {
+			pwms = <&pwm0
+				PWM_CHANNEL_0
+				PWM_HZ(324)
+				PWM_POLARITY_NORMAL>;
+		};
+	};
+
+	led_pins: pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+
+		battery_led: battery-led {
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pwms = <&led_power_red>;
+
+			color-power-off {
+				led-color = "LED_OFF";
+				led-values = <0>;
+			};
+
+			color-power-red {
+				led-color = "LED_RED";
+				led-values = <100>;
+			};
+		};
+	};
+
+	led-colors {
+		compatible = "cros-ec,led-policy";
+
+		sysrq-alias = "EC_LED_ID_BATTERY_LED";
+		sysrq-led-control-color = "LED_RED";
+
+		recovery-hw-reinit-alias = "EC_LED_ID_BATTERY_LED";
+		recovery-hw-reinit-led-control-color = "LED_RED";
+
+		/* Add this for prevent print storm */
+		power-state-charge-lvl-1 {
+			charge-state = "LED_PWRS_CHARGE";
+			batt-lvl = <BATTERY_LEVEL_EMPTY 100>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		power-state-near-full {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		power-state-discharge {
+			charge-state = "LED_PWRS_DISCHARGE";
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		power-state-idle {
+			charge-state = "LED_PWRS_IDLE";
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		power-state-forced-idle {
+			charge-state = "LED_PWRS_FORCED_IDLE";
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		power-state-error {
+			charge-state = "LED_PWRS_ERROR";
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+	};
+};
+
+&pwm0 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm0_gpa0_default>;
+	pinctrl-names = "default";
+};
