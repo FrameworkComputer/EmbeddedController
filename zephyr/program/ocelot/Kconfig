@@ -35,6 +35,12 @@ config BOARD_MATSU
 	  Build Google Matsu reference board.
 	  This board uses an Intel WCL SoC and ITE EC.
 
+config BOARD_KODKOD
+	bool "Google Ocelot with Realtek (rtk5915) EC"
+	help
+	  Build Google Kodkod reference board.
+	  This board uses an Intel WCL SoC and RTK EC.
+
 module = Oceolot
 module-str = Ocelot board-specific code
 source "subsys/logging/Kconfig.template.log_config"

@@ -1,0 +1,87 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+
+/ {
+	fans {
+		compatible = "cros-ec,fans";
+		fan_0 {
+			pwms = <&pwm2 0 PWM_KHZ(2) PWM_POLARITY_NORMAL>;
+			tach = <&tach0>;
+			rpm-min = <2600>;
+			rpm-start = <2000>;
+			rpm-max = <5000>;
+			rpm-deviation = <2>;
+		};
+	};
+
+	temp_charger: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V0_22K6_47K_4050B>;
+		adc = <&adc_temp_charger>;
+	};
+	temp_ambient: ambient {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V0_22K6_47K_4050B>;
+		adc = <&adc_temp_vr_in1>;
+	};
+	temp_cpu: cpu {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V0_22K6_47K_4050B>;
+		adc = <&adc_temp_cpu>;
+	};
+	temp_memory: memory {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V0_22K6_47K_4050B>;
+		adc = <&adc_temp_memory>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		cpu {
+			temp-fan-off = <54>;
+			temp-fan-max = <100>;
+			temp-host-warn = <92>;
+			temp-host-high = <92>;
+			temp-host-halt = <105>;
+			temp-host-release-warn = <87>;
+			temp-host-release-high = <87>;
+			temp-host-release-halt = <95>;
+			power-good-pin = <&gpio_en_pp5000_s5>;
+			sensor = <&temp_cpu>;
+		};
+		charger {
+			power-good-pin = <&gpio_en_pp5000_s5>;
+			sensor = <&temp_charger>;
+		};
+		ambient {
+			power-good-pin = <&gpio_en_pp5000_s5>;
+			sensor = <&temp_ambient>;
+		};
+		memory {
+			power-good-pin = <&gpio_en_pp5000_s5>;
+			sensor = <&temp_memory>;
+		};
+	};
+};
+
+&thermistor_3V0_22K6_47K_4050B {
+	status = "okay";
+};
+
+/* fan tachometer sensor */
+&tach0 {
+	status = "okay";
+	pinctrl-0 = <&tacho0_gpio052>;
+	pinctrl-names = "default";
+	pulses-per-round = <2>;
+};
+
+&pwm2 {
+	status = "okay";
+	pinctrl-0 = <&pwm2_gpio025>;
+	pinctrl-names = "default";
+};

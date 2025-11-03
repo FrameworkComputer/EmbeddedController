@@ -34,6 +34,12 @@ if(DEFINED CONFIG_BOARD_OJAL)
 	zephyr_library_sources("ojal/src/board_power.c")
 endif()
 
+if(DEFINED CONFIG_BOARD_KODKOD)
+	project(kodkod)
+	zephyr_library_sources("kodkod/src/board_power.c")
+	zephyr_library_sources("kodkod/src/keyboard_customization.c")
+endif()
+
 if(DEFINED CONFIG_BOARD_MATSU)
 	project(matsu)
 	zephyr_library_sources("matsu/src/board_power.c")

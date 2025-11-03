@@ -1,0 +1,95 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_charger: ec_i2c_charger {
+			i2c-port = <&i2c_0>;
+			enum-names = "I2C_PORT_BATTERY",
+				"I2C_PORT_CHARGER",
+				"I2C_PORT_PORT80";
+		};
+		i2c_ec_i2c_sensor: ec_i2c_sensor {
+			i2c-port = <&i2c_1>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+		i2c_ec_i2c_pdc: ec_i2c_pdc {
+			i2c-port = <&i2c_3>;
+			enum-names = "I2C_PORT_PD";
+		};
+	};
+};
+
+&i2c_0 {
+	label = "I2C_PORT_CHARGER";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+
+	pinctrl-0 = <&i2c00_clk_gpio094
+		     &i2c00_data_gpio095>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	charger: isl9538@9 {
+		compatible = "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
+	};
+
+	max695x@38 {
+		compatible = "maxim,max695x";
+		reg = <0x38>;
+	};
+};
+
+&i2c_1 {
+	pinctrl-0 = <&i2c01_clk_gpio118
+		     &i2c01_data_gpio119>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	label = "I2C_PORT_SENSOR";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c_3 {
+	label = "I2C_PORT_PD";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c03_clk_gpio100
+		     &i2c03_data_gpio101>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	pdc_power_p0: rts54-pdc@66 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x66>;
+		irq-gpios = <&gpiob 11 GPIO_ACTIVE_LOW>;
+		ccd;
+	};
+
+	pdc_power_p1: rts54-pdc@67 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x67>;
+		irq-gpios = <&gpiob 11 GPIO_ACTIVE_LOW>;
+		no-fw-update;
+	};
+};
+
+&i2c_0_wrapper {
+	status = "okay";
+	scl-gpios = <&gpiof 14 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpiof 15 GPIO_ACTIVE_HIGH>;
+};
+&i2c_1_wrapper {
+	status = "okay";
+	scl-gpios = <&gpioh 6 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpioh 7 GPIO_ACTIVE_HIGH>;
+};
+&i2c_3_wrapper {
+	status = "okay";
+	scl-gpios = <&gpiog 14 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <&gpiog 15 GPIO_ACTIVE_HIGH>;
+};

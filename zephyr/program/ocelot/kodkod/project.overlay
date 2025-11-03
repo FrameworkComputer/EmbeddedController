@@ -1,0 +1,31 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* ocelot program common DTS includes */
+#include <cros/integrated_fwid.dtsi>
+
+
+/* kodkod project DTS includes */
+#include "gpio.dtsi"
+#include "power_signals.dtsi"
+#include "i2c.dtsi"
+#include "adc.dtsi"
+#include "battery.dtsi"
+#include "usba.dtsi"
+#include "usbc.dtsi"
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
+#include "keyboard.dtsi"
+#include "fan.dtsi"
+
+/* kodkod overrides follow... */
+
+&espi0 {
+	status = "okay";
+};
+
+&sha0 {
+	status = "okay";
+};
