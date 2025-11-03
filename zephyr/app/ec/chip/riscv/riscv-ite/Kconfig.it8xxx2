@@ -31,4 +31,7 @@ config CROS_EC_RW_MEM_OFF
 config FLASH_LOAD_OFFSET
 	default CROS_EC_RW_MEM_OFF if CROS_EC_RW
 
+config ARCH_IRQ_VECTOR_TABLE_ALIGN
+	default 4
+
 endif # SOC_FAMILY_ITE_EC
