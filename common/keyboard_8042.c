@@ -392,7 +392,8 @@ static void scancode_bytes(uint16_t make_code, int8_t pressed,
 static enum ec_error_list matrix_callback(int8_t row, int8_t col,
 					  int8_t pressed,
 					  enum scancode_set_list code_set,
-					  uint8_t *scan_code, int32_t *len)
+					  uint8_t *scan_code, int32_t *len,
+					  int override_code)
 {
 	uint16_t make_code;
 
@@ -402,7 +403,11 @@ static enum ec_error_list matrix_callback(int8_t row, int8_t col,
 	if (row >= KEYBOARD_ROWS || col >= keyboard_cols)
 		return EC_ERROR_INVAL;
 
-	make_code = get_scancode_set2(row, col);
+	if (override_code < 0) {
+		make_code = get_scancode_set2(row, col);
+	} else {
+		make_code = override_code;
+	}
 
 	code_set = acting_code_set(code_set);
 	if (!is_supported_code_set(code_set)) {
@@ -465,7 +470,8 @@ void clear_typematic_key(void)
 	typematic_len = 0;
 }
 
-test_mockable void keyboard_state_changed(int row, int col, int is_pressed)
+void keyboard_state_changed_process(int row, int col, int is_pressed,
+				    int override_code)
 {
 	uint8_t scan_code[MAX_SCAN_CODE_LEN];
 	int32_t len = 0;
@@ -483,7 +489,7 @@ test_mockable void keyboard_state_changed(int row, int col, int is_pressed)
 #endif
 
 	ret = matrix_callback(row, col, is_pressed, scancode_set, scan_code,
-			      &len);
+			      &len, override_code);
 	if (ret == EC_SUCCESS) {
 		ASSERT(len > 0);
 		if (keystroke_enabled)
@@ -497,6 +503,11 @@ test_mockable void keyboard_state_changed(int row, int col, int is_pressed)
 	} else {
 		clear_typematic_key();
 	}
+}
+
+test_mockable void keyboard_state_changed(int row, int col, int is_pressed)
+{
+	keyboard_state_changed_process(row, col, is_pressed, -1);
 }
 
 static void keystroke_enable(int enable)

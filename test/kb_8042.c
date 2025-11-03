@@ -577,6 +577,32 @@ test_static int test_single_key_press(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_single_key_press_override(void)
+{
+	ENABLE_KEYSTROKE(1);
+	keyboard_state_changed_process(1, 1, 1, -1);
+	VERIFY_LPC_CHAR("\x01");
+	keyboard_state_changed_process(1, 1, 0, -1);
+	VERIFY_LPC_CHAR("\x81");
+
+	keyboard_state_changed_process(1, 1, 1, 0x16);
+	VERIFY_LPC_CHAR("\x02");
+	keyboard_state_changed_process(1, 1, 0, 0x16);
+	VERIFY_LPC_CHAR("\x82");
+
+	keyboard_state_changed_process(6, 12, 1, -1);
+	VERIFY_LPC_CHAR("\xe0\x4d");
+	keyboard_state_changed_process(6, 12, 0, -1);
+	VERIFY_LPC_CHAR("\xe0\xcd");
+
+	keyboard_state_changed_process(6, 12, 1, 0xe016);
+	VERIFY_LPC_CHAR("\xe0\x02");
+	keyboard_state_changed_process(6, 12, 0, 0xe016);
+	VERIFY_LPC_CHAR("\xe0\x82");
+
+	return EC_SUCCESS;
+}
+
 test_static int test_disable_keystroke(void)
 {
 	ENABLE_KEYSTROKE(0);
@@ -1075,6 +1101,7 @@ void run_test(int argc, const char **argv)
 		RUN_TEST(test_atkbd_set_ex_leds);
 		RUN_TEST(test_atkbd_reset);
 		RUN_TEST(test_single_key_press);
+		RUN_TEST(test_single_key_press_override);
 		RUN_TEST(test_disable_keystroke);
 		RUN_TEST(test_typematic);
 		RUN_TEST(test_scancode_set2);

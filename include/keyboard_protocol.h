@@ -55,6 +55,19 @@ static inline void keyboard_state_changed(int row, int col, int is_pressed)
 void keyboard_state_changed(int row, int col, int is_pressed);
 #endif
 
+/*
+ * Process a single key for a press or release, can take either a row, col pair
+ * or a raw key code. This is normally called by keyboard_state_changed().
+ *
+ * @param row the key row
+ * @param col the key column
+ * @param is_pressed true if the key has been pressed, false if it's been
+ *                   released
+ * @param override_code the 8042 key code or -1 to use row, col instead
+ */
+void keyboard_state_changed_process(int row, int col, int is_pressed,
+				    int override_code);
+
 /**
  * Returns true if keyboard backlight is present/detected.
  */
