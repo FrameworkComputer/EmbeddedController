@@ -11,3 +11,12 @@
 #include "overlay.dtsi"
 #include "power_signals.dtsi"
 #include "pwm_leds.dtsi"
+
+&pcc {
+        clock-frequency = <DT_FREQ_M(80)>; /* OFMCLK runs at 80 MHz */
+        core-prescaler = <2>; /* CORE_CLK runs at 40 MHz */
+        apb1-prescaler = <4>; /* APB1_CLK runs at 20 MHz */
+        apb2-prescaler = <2>; /* APB2_CLK runs at 40 MHz */
+        apb3-prescaler = <2>; /* APB3_CLK runs at 40 MHz */
+        apb4-prescaler = <4>; /* APB4_CLK runs at 20 MHz */
+};
