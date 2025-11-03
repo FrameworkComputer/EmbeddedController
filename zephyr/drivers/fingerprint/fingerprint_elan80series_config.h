@@ -11,8 +11,10 @@
  * fingerprint sensor.
  */
 
-#ifdef CONFIG_FINGERPRINT_SENSOR_ELAN80SG
+#if defined(CONFIG_FINGERPRINT_SENSOR_ELAN80SG)
 #include "fingerprint_elan80sg_config.h"
+#elif defined(CONFIG_FINGERPRINT_SENSOR_ELANI80SA)
+#include "fingerprint_elani80sa_config.h"
 #else
 #error "No valid configuration for fingerprint sensor."
 #endif

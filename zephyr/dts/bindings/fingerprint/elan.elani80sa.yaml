@@ -1,0 +1,32 @@
+# Copyright 2026 The ChromiumOS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: ELANI80SA fingerprint sensor
+
+compatible: "elan,elani80sa"
+
+include: [spi-device.yaml]
+
+properties:
+  irq-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      This property specifies the connection for sensor interrupt.
+
+  reset-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      This property specifies the connection for sensor reset.
+
+  base-image-addr:
+    type: int
+    description: |
+      The address in internal flash for storing the fingerprint sensor's base image.
+
+  ft-info-addr:
+    type: int
+    description: |
+      Address of the Factory Test information in internal flash.
