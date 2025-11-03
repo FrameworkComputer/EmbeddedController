@@ -42,6 +42,8 @@ LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_INF);
 
 #define MINIMUM_CHARGING_MV 15000
 
+#define LOW_ADP_BLINK_END_STEP 60
+
 static int blink_cnt;
 
 const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED,
@@ -270,9 +272,10 @@ static void led_set_battery(void)
 		}
 		break;
 	case LED_PWRS_INSUFFICIENT_ADAPTER:
-		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
+		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED) &&
+		    (blink_cnt < LOW_ADP_BLINK_END_STEP)) {
 			/* 500ms on, 500ms off, blink three times, then
-			 * off 2 sec, loop */
+			 * off 2 sec */
 			switch (blink_cnt % 10) {
 			case 0:
 			case 2:
@@ -284,8 +287,6 @@ static void led_set_battery(void)
 				break;
 			}
 			blink_cnt++;
-			if (blink_cnt >= 10)
-				blink_cnt = 0;
 		}
 		break;
 	case LED_PWRS_ERROR:
@@ -321,8 +322,7 @@ static void led_set_battery(void)
 		break;
 	}
 
-	if (led_pwr_get_state() != LED_PWRS_INSUFFICIENT_ADAPTER &&
-	    blink_cnt != 0)
+	if (led_pwr_get_state() != LED_PWRS_INSUFFICIENT_ADAPTER)
 		low_adp_blink_init();
 
 	if (led_pwr_get_state() != LED_PWRS_DISCHARGE) {
