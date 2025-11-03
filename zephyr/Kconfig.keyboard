@@ -327,6 +327,13 @@ config PLATFORM_EC_KEYBOARD_RUNTIME_KEYS
 	  Enable this to support for extra runtime key combinations (e.g.
 	  alt+volup+h/r for hibernate and warm reboot, respectively).
 
+config KEYBOARD_FN_KEYS
+	bool "Support for Fn keys"
+	default y
+	depends on DT_HAS_CROS_EC_FN_KEYS_ENABLED
+	help
+	  Enable support for Fn key processing.
+
 menuconfig PLATFORM_EC_RGB_KEYBOARD
 	bool "RGB keyboard support"
 	select HAS_TASK_RGBKBD

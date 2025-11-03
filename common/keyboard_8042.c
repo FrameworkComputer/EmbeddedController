@@ -505,10 +505,12 @@ void keyboard_state_changed_process(int row, int col, int is_pressed,
 	}
 }
 
+#ifndef CONFIG_KEYBOARD_FN_KEYS
 test_mockable void keyboard_state_changed(int row, int col, int is_pressed)
 {
 	keyboard_state_changed_process(row, col, is_pressed, -1);
 }
+#endif
 
 static void keystroke_enable(int enable)
 {

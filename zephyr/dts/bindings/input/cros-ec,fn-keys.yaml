@@ -1,0 +1,42 @@
+# Copyright 2025 Google LLC
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+  Fn keys definition
+
+  This can be used to TODO TODO TODO
+
+  Example configuration:
+
+  kbd {
+      fn-keys {
+          compatible = "cros-ec,fn-keys";
+
+          fn-rc = <KBD_RC(2, 0)>;
+          keymap = <
+            MATRIX_KEY(1, 1, KBD_SCANCODE_F1)
+            MATRIX_KEY(0, 2, KBD_SCANCODE_F2)
+            ...
+            MATRIX_KEY(0, 4, KBD_SCANCODE_F11)
+            MATRIX_KEY(3, 9, KBD_SCANCODE_F12)
+          >;
+      };
+  };
+
+compatible: "cros-ec,fn-keys"
+
+include: base.yaml
+
+properties:
+  fn-rc:
+    type: int
+    required: true
+    description: Row-column position of the "Fn" key.
+
+  keymap:
+    type: array
+    required: true
+    description: |
+      List of row, key and codes, using the MATRIX_KEY() macro.
+
