@@ -21,6 +21,8 @@ PLATFORM=$(abspath ../..)
 THIRD_PARTY=$(abspath ../../../third_party)
 BUILD=$(PLATFORM_EC)/build
 
+# common/mock is not a generator or system path. However, listing it here
+# removes it from consideration in CQ coverage math, which is the intent.
 GENERATED_AND_SYSTEM_PATTERNS='$(PLATFORM_EC)/build/**' \
 	'$(PLATFORM_EC)/twister-out*/**' \
 	'/usr/include/**' \
@@ -28,7 +30,8 @@ GENERATED_AND_SYSTEM_PATTERNS='$(PLATFORM_EC)/build/**' \
 	'**/picolibc/picolibc/include/**' \
 	'**/third_party/boringssl/crypto/**' \
 	'**/lib/gcc/**' \
-	'**/.cache/**'
+	'**/.cache/**' \
+	'$(PLATFORM_EC)/common/mock/**'
 TEST_PATTERNS='$(PLATFORM_EC)/test/**' \
 	'$(PLATFORM_EC)/include/tests/**' \
 	'$(PLATFORM)/ec-private/test/**' \

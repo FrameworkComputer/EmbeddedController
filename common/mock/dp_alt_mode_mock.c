@@ -25,11 +25,7 @@
 #define CPRINTS(format, args...)
 #endif
 
-/* LCOV_EXCL_START - These mocks just avoid linker errors with stubs. */
-
 void mock_dp_alt_mode_reset(void)
 {
 	/* Nothing to do right now, but in the future ... */
 }
-
-/* LCOV_EXCL_STOP */

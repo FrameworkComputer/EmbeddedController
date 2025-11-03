@@ -98,7 +98,6 @@ void tc_hard_reset_request(int port)
 	mock_tc_port_reset();
 }
 
-/* LCOV_EXCL_START These functions only serve to allow tests to link. */
 void typec_select_src_current_limit_rp(int port, enum tcpc_rp_value rp)
 {
 }
@@ -235,4 +234,3 @@ bool pd_alt_mode_capable(int port)
 {
 	return false;
 }
-/* LCOV_EXCL_STOP */

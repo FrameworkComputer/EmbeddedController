@@ -21,8 +21,6 @@
 #error "Mocks should only be in the test build."
 #endif
 
-/* LCOV_EXCL_START - These mocks just avoid linker errors with stubs. */
-
 /* Public API for controlling/inspecting this mock */
 struct mock_tcpc_ctrl mock_tcpc;
 
@@ -231,5 +229,3 @@ const struct tcpm_drv mock_tcpc_driver = {
 	.set_frs_enable = &mock_set_frs_enable,
 #endif
 };
-
-/* LCOV_EXCL_STOP */

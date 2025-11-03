@@ -17,8 +17,6 @@
 #error "Mocks should only be in the test build."
 #endif
 
-/* LCOV_EXCL_START - These mocks just avoid linker errors with stubs. */
-
 struct mock_ctrl_mkbp_events mock_ctrl_mkbp_events =
 	MOCK_CTRL_DEFAULT_MKBP_EVENTS;
 
@@ -26,5 +24,3 @@ int mkbp_send_event(uint8_t event_type)
 {
 	return mock_ctrl_mkbp_events.mkbp_send_event_return;
 }
-
-/* LCOV_EXCL_STOP */

@@ -92,8 +92,6 @@ bool pe_in_local_ams(int port)
 	return false;
 }
 
-/* LCOV_EXCL_START - These mocks just avoid linker errors with stubs. */
-
 const uint32_t *const pd_get_src_caps(int port)
 {
 	return NULL;
@@ -124,5 +122,3 @@ int pd_get_rev(int port, enum tcpci_msg_type type)
 {
 	return IS_ENABLED(CONFIG_USB_PD_REV30) ? PD_REV30 : PD_REV20;
 }
-
-/* LCOV_EXCL_STOP */
