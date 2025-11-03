@@ -1,0 +1,100 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+
+
+&ite_uart1_wrapper {
+	status = "okay";
+	pinctrl-0 = <&uart1_rx_gpc7_default
+		     &uart1_tx_gpe6_default>;
+	pinctrl-names = "default";
+};
+
+&power_ctrl_elpm {
+	status = "okay";
+	pinctrl-0 = <&xlpin0_gpq0_default &xlpin1_gpq1_default
+		     &xlpin4_gpq4_default>;
+	pinctrl-names = "default";
+
+	xlpin@0 {
+		reg = <0>;
+		polarity = "low-falling";
+	};
+
+	xlpin@1 {
+		reg = <1>;
+		polarity = "high-rising";
+	};
+
+	xlpin@4 {
+		reg = <4>;
+		polarity = "high-rising";
+	};
+};
+
+
+/ {
+	/delete-node/ hibernate_z5;
+	/delete-node/ gpio_pwrbtn;
+
+	named-gpios {
+
+		/delete-node/ gpio_acok_od;
+		/delete-node/ gpio_bga_pinm2;
+		/delete-node/ gpio_bga_pinn1;
+		/delete-node/ gpio_lid_open;
+		/delete-node/ gsc_ec_pwr_btn_odl;
+
+
+		gpio_ec_mech_pwr_btn_l: ec_mech_pwr_btn_l {
+			gpios = <&gpioq 0 (GPIO_INPUT)>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_acok_od: acok_od {
+			gpios = <&gpioq 1 (GPIO_INPUT)>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		/* I2C_PROG_SCL */
+		gpio_bga_pinm2: bga_pinm2 {
+			gpios = <&gpiof 2 (GPIO_INPUT)>;
+		};
+		/* I2C_PROG_SDA */
+		gpio_bga_pinn1: bga_pinn1 {
+			gpios = <&gpiof 3 (GPIO_INPUT)>;
+		};
+		gpio_lid_open: lid_open {
+			gpios = <&gpioq 4 (GPIO_INPUT)>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+
+		unused-gpios =
+			<&gpioa 4 0>, /* SPARE GPA4 (LED_3_R_L) */
+			<&gpioa 5 0>, /* SPARE GPA5 (LED_4_R_L) */
+			<&gpioc 0 0>, /* SPARE GPC0 (acok) */
+			<&gpiod 0 0>, /* SPARE GPD0 (prog_sda) */
+			<&gpiod 3 0>, /* SPARE GPD3 (led_open) */
+			<&gpioe 4 0>, /* SPARE GPE4 (gsc_ec_pwr_bnt)*/
+			<&gpioj 6 0>, /* SPARE GPJ6 (PD2_INT) */
+			/* Strap pins */
+			<&gpiog 0 0>, /* SPARE GPG0 */
+			<&gpiog 3 0>, /* SPARE GPG3 */
+			<&gpiog 4 0>, /* SPARE GPG4 */
+			<&gpiog 5 0>, /* SPARE GPG5 */
+			<&gpiog 7 0>; /* SPARE GPG7 */
+	};
+
+	gpio-interrupts {
+		/delete-node/ int_power_button;
+		int_power_button: power_button {
+			irq-pin = <&gpio_ec_mech_pwr_btn_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+	};
+};

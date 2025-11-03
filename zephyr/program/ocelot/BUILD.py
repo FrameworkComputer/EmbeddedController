@@ -40,14 +40,15 @@ def register_it8xxx2_project(
     extra_kconfig_base_files=(),
     extra_kconfig_proj_files=(),
     inherited_from=None,
+    chip="it8xxx2/it82002aw",
 ):
     """Register an it8xxx2 based variant of ocelot."""
     if inherited_from is None:
         inherited_from = ["ocelot"]
 
-    register_binman_project(
+    return register_binman_project(
         project_name=project_name,
-        zephyr_board="it8xxx2/it82002aw",
+        zephyr_board=chip,
         dts_overlays=[
             here / project_name / "project.overlay",
         ],
@@ -163,9 +164,18 @@ register_rtk59_project(
     project_name="ojal",
 )
 
-register_it8xxx2_project(
+matsu = register_it8xxx2_project(
     project_name="matsu",
 )
+
+matsu.variant(
+    project_name="matsu_it82000",
+    zephyr_board="it8xxx2/it82000bw",
+    dts_overlays=[
+        here / "matsu" / "it82000.overlay",
+    ],
+)
+
 
 register_ish_project(
     project_name="matsu-ish",
@@ -182,6 +192,7 @@ register_ish_project(
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release.
 assert_rw_fwid_DO_NOT_EDIT(project_name="matsu", addr=0x60098)
+assert_rw_fwid_DO_NOT_EDIT(project_name="matsu_it82000", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="ocelotrvp-npcx", addr=0x80144)
 assert_rw_fwid_DO_NOT_EDIT(project_name="ocelotrvp-ite", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="ocelotrvp-mchp", addr=0x40318)
