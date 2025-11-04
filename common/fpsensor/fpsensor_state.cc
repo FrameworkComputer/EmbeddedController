@@ -55,6 +55,7 @@ struct fpsensor_context global_context = {
 	.templ_dirty = 0,
 	.fp_events = 0,
 	.sensor_mode = 0,
+	.current_capture_type = FP_CAPTURE_TYPE_INVALID,
 	.current_frame_size = 0,
 	.fp_frame_size_cache = {},
 	.tpm_seed = { 0 },

@@ -94,6 +94,10 @@ struct fpsensor_context {
 	uint32_t fp_encryption_status;
 	atomic_t fp_events;
 	uint32_t sensor_mode;
+	/** Type of the image captured from the fingerprint sensor in the
+	 * most recent successful capture.
+	 */
+	enum fp_capture_type current_capture_type;
 	/** Size of the image frame captured from the fingerprint sensor in the
 	 * most recent successful capture, in bytes.
 	 */
