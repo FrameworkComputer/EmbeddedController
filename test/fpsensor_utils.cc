@@ -63,23 +63,17 @@ test_static int test_is_finger_needed()
 
 test_static int test_skip_image_offset()
 {
-	TEST_ASSERT(!skip_image_offset(FP_CAPTURE_VENDOR_FORMAT
-				       << FP_MODE_CAPTURE_TYPE_SHIFT));
-	TEST_ASSERT(skip_image_offset(FP_CAPTURE_SIMPLE_IMAGE
-				      << FP_MODE_CAPTURE_TYPE_SHIFT));
-	TEST_ASSERT(skip_image_offset(FP_CAPTURE_PATTERN0
-				      << FP_MODE_CAPTURE_TYPE_SHIFT));
-	TEST_ASSERT(skip_image_offset(FP_CAPTURE_PATTERN1
-				      << FP_MODE_CAPTURE_TYPE_SHIFT));
-	TEST_ASSERT(!skip_image_offset(FP_CAPTURE_QUALITY_TEST
-				       << FP_MODE_CAPTURE_TYPE_SHIFT));
-	TEST_ASSERT(skip_image_offset(FP_CAPTURE_RESET_TEST
-				      << FP_MODE_CAPTURE_TYPE_SHIFT));
-
-	/* Check the case when FP_MODE_CAPTURE is set. */
-	TEST_ASSERT(!skip_image_offset(FP_MODE_CAPTURE |
-				       FP_CAPTURE_QUALITY_TEST
-					       << FP_MODE_CAPTURE_TYPE_SHIFT));
+	TEST_ASSERT(skip_image_offset(FP_CAPTURE_TYPE_INVALID));
+	TEST_ASSERT(!skip_image_offset(FP_CAPTURE_VENDOR_FORMAT));
+	TEST_ASSERT(skip_image_offset(FP_CAPTURE_DEFECT_PXL_TEST));
+	TEST_ASSERT(skip_image_offset(FP_CAPTURE_ABNORMAL_TEST));
+	TEST_ASSERT(skip_image_offset(FP_CAPTURE_NOISE_TEST));
+	TEST_ASSERT(skip_image_offset(FP_CAPTURE_SIMPLE_IMAGE));
+	TEST_ASSERT(skip_image_offset(FP_CAPTURE_PATTERN0));
+	TEST_ASSERT(skip_image_offset(FP_CAPTURE_PATTERN1));
+	TEST_ASSERT(!skip_image_offset(FP_CAPTURE_QUALITY_TEST));
+	TEST_ASSERT(skip_image_offset(FP_CAPTURE_RESET_TEST));
+	TEST_ASSERT(skip_image_offset(FP_CAPTURE_TYPE_MAX));
 
 	return EC_SUCCESS;
 }

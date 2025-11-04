@@ -9,6 +9,7 @@
 #define __CROS_EC_FPSENSOR_FPSENSOR_UTILS_H
 
 #include "common.h"
+#include "ec_commands.h"
 
 #include <cstdint>
 #include <string>
@@ -33,14 +34,14 @@ bool fp_match_success(int match_result);
 bool is_finger_needed(uint32_t mode);
 
 /**
- * @param mode sensor mode
- * @return true if the mode is the one where we only care about the
+ * @param capture_type current capture type
+ * @return true if the capture type is the one where we only care about the
  * embedded/offset image bytes to be returned over EC_CMD_FRAME.
- * Some capture modes (simple, pattern0, pattern1, and reset_test) are only
+ * Some capture types (simple, pattern0, pattern1, and reset_test) are only
  * interested in the height*width*bpp image bytes that are offset inside the
  * frame. Other modes require the full frame.
  */
-bool skip_image_offset(uint32_t mode);
+bool skip_image_offset(enum fp_capture_type capture_type);
 
 /**
  * Format an unsigned int FOURCC value as a printable string.
