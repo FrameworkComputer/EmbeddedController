@@ -190,6 +190,7 @@ static int syv682x_discharge_vbus(int port, int enable)
 static int syv682x_vbus_source_enable(int port, int enable)
 {
 	int regval;
+	int oldval;
 	int rv;
 	/*
 	 * For source mode need to make sure 5V power path is connected
@@ -199,6 +200,7 @@ static int syv682x_vbus_source_enable(int port, int enable)
 	if (rv)
 		return rv;
 
+	oldval = regval;
 	if (enable) {
 		/* Select 5V path and turn on channel */
 		regval &=
@@ -223,8 +225,9 @@ static int syv682x_vbus_source_enable(int port, int enable)
 		if (IS_ENABLED(CONFIG_USB_PD_FRS_PPC))
 			gpio_or_ioex_set_level(ppc_chips[port].frs_en, 0);
 	}
+	if (regval != oldval)
+		rv = write_reg(port, SYV682X_CONTROL_1_REG, regval);
 
-	rv = write_reg(port, SYV682X_CONTROL_1_REG, regval);
 	if (rv)
 		return rv;
 
@@ -575,11 +578,13 @@ static int syv682x_set_polarity(int port, int polarity)
 static int syv682x_set_vconn(int port, int enable)
 {
 	int regval;
+	int oldval;
 	int rv;
 
 	rv = read_reg(port, SYV682X_CONTROL_4_REG, &regval);
 	if (rv)
 		return rv;
+	oldval = regval;
 	/*
 	 * The control4 register interrupt bits are clear on read, check
 	 * register value to see if there are interrupts to avoid race
@@ -595,6 +600,8 @@ static int syv682x_set_vconn(int port, int enable)
 				  SYV682X_CONTROL_4_VCONN1 :
 				  SYV682X_CONTROL_4_VCONN2;
 	}
+	if (regval == oldval)
+		return EC_SUCCESS;
 
 	return write_reg(port, SYV682X_CONTROL_4_REG, regval);
 }

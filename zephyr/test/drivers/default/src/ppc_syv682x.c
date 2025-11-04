@@ -821,3 +821,70 @@ ZTEST_F(ppc_syv682x, test_syv682x_i2c_error_control_4)
 	i2c_common_emul_set_write_fail_reg(fixture->common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 }
+
+ZTEST_F(ppc_syv682x, test_vbus_source_register_check)
+{
+	uint8_t reg_before, reg_after;
+
+	/* Set initial CONTROL_1 register value */
+	zassert_ok(syv682x_emul_set_reg(fixture->ppc_emul,
+					SYV682X_CONTROL_1_REG, 0x55),
+		   "Failed to set initial CONTROL_1 value");
+
+	/* Enable source once  */
+	zassert_ok(ppc_vbus_source_enable(syv682x_port, true),
+		   "Initial VBUS enable failed");
+
+	/* Disable source, register updated first time */
+	zassert_ok(ppc_vbus_source_enable(syv682x_port, false),
+		   "Initial VBUS disable failed");
+
+	/* Get register value*/
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+					SYV682X_CONTROL_1_REG, &reg_before),
+		   "Failed to read CONTROL_1 before second disable");
+
+	/* Disable again */
+	zassert_ok(ppc_vbus_source_enable(syv682x_port, false),
+		   "VBUS disable failed");
+
+	/* Get register value*/
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+					SYV682X_CONTROL_1_REG, &reg_after),
+		   "Failed to read CONTROL_1 after second disable");
+
+	/* Register value should remain same */
+	zassert_equal(reg_before, reg_after,
+		      "CONTROL_1 register changed unexpectedly");
+}
+
+ZTEST_F(ppc_syv682x, test_vconn_register_check)
+{
+	uint8_t reg_before, reg_after;
+
+	/* Set initial CONTROL_4 register value */
+	zassert_ok(syv682x_emul_set_reg(fixture->ppc_emul,
+					SYV682X_CONTROL_4_REG, 0x55),
+		   "Failed to set initial CONTROL_4 value");
+
+	/* Disable VCONN - First call */
+	zassert_ok(ppc_set_vconn(syv682x_port, false),
+		   "Initial disable vconn failed");
+
+	/* Get register value*/
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+					SYV682X_CONTROL_4_REG, &reg_before),
+		   "Failed to read CONTROL_4 before second disable");
+
+	/* Disable Vconn again */
+	zassert_ok(ppc_set_vconn(syv682x_port, false), "Disable vconn failed");
+
+	/* Get register value*/
+	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
+					SYV682X_CONTROL_4_REG, &reg_after),
+		   "Failed to read CONTROL_4 after second disable");
+
+	/* Register value should remain same */
+	zassert_equal(reg_before, reg_after,
+		      "CONTROL_4 register changed unexpectedly");
+}
