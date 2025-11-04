@@ -283,7 +283,7 @@ int check_power_on_port(void)
  */
 int board_set_active_charge_port(int charge_port)
 {
-	int next_charge_port = get_active_charge_pd_port();
+	int pre_charge_port = get_active_charge_pd_port();
 	bool battery_can_discharge = (battery_is_present() == BP_YES) &
 		battery_get_disconnect_state();
 
@@ -300,10 +300,19 @@ int board_set_active_charge_port(int charge_port)
 	}
 
 	/* port need change, stop all power and ready to switch. */
-	if (next_charge_port != -1 && next_charge_port != charge_port) {
+	if (pre_charge_port != -1 && pre_charge_port != charge_port) {
 		CPRINTS("Disable all type-c port to change the charger port");
 		cypd_write_reg8(0, CCG_CUST_C_CTRL_CONTROL_REG, CCG_P0P1_TURN_OFF_C_CTRL);
 		cypd_write_reg8(1, CCG_CUST_C_CTRL_CONTROL_REG, CCG_P0P1_TURN_OFF_C_CTRL);
+
+		/**
+		 * Multi-port switch, we should force set the current limit to the active
+		 * port before enabling the sink path.
+		 */
+		if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER)) {
+			charge_manager_force_ceil(
+				pre_charge_port, pd_port_states[charge_port].current);
+		}
 		crec_msleep(250);
 	}
 
