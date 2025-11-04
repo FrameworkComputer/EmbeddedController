@@ -9,15 +9,6 @@
 		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
 	};
 
-	hibernate-wake-pins {
-		compatible = "cros-ec,hibernate-wake-pins";
-		wakeup-irqs = <
-			&int_power_button
-			&int_lid_open
-			&int_ac_present
-		>;
-	};
-
 	gpio-interrupts {
 		compatible = "cros-ec,gpio-interrupts";
 
@@ -236,6 +227,24 @@
 	psl-in-pol = "low-falling";
 };
 
+&psl_in2_gp00 {
+	/* ACOK_R_OD */
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
+};
+
+&psl_in1_gpd2 {
+	/* LID_OPEN_R */
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
+};
+
+/* Power domain device controlled by PSL (Power Switch Logic) IO pads */
+&power_ctrl_psl {
+	status = "okay";
+	pinctrl-names = "sleep";
+	pinctrl-0 = <&psl_in1_gpd2 &psl_in2_gp00 &psl_in4_gp02>;
+};
 
 /* These GPIOS are initialized by the PDC driver */
 &gpio_i2c_ec_pd0_int_odl {
