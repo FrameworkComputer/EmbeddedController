@@ -7,11 +7,9 @@
   * Modified led-colors to obtain better test coverage.
   */
 / {
-	pwm-led-pins {
-		status = "disabled";
-	};
+	/delete-node/ pwm-led-pins;
 
-	gpio-led-pins {
+	led_pins: gpio-led-pins {
 		compatible = "cros-ec,gpio-led-pins";
 
 		left_led: left-led {

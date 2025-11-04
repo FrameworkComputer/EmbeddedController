@@ -4,7 +4,7 @@
  */
 
 / {
-	gpio-led-pins {
+	led_pins: gpio-led-pins {
 		compatible = "cros-ec,gpio-led-pins";
 
 		power_led: power-led {

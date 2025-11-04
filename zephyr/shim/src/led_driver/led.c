@@ -30,15 +30,13 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 
 #define DECLARE_PINS_NODE(id) extern struct led_pins_node_t PINS_NODE(id);
 
-#if CONFIG_PLATFORM_EC_LED_DT_PWM
-DT_FOREACH_CHILD_STATUS_OKAY_VARGS(
-	DT_COMPAT_GET_ANY_STATUS_OKAY(cros_ec_pwm_led_pins), DT_FOREACH_CHILD,
-	DECLARE_PINS_NODE)
-#elif CONFIG_PLATFORM_EC_LED_DT_GPIO
-DT_FOREACH_CHILD_STATUS_OKAY_VARGS(
-	DT_COMPAT_GET_ANY_STATUS_OKAY(cros_ec_gpio_led_pins), DT_FOREACH_CHILD,
-	DECLARE_PINS_NODE)
-#endif
+/* Whichever LED pins node is used must be given the `led_pins` label. */
+#define PINS_PARENT_NODE DT_NODELABEL(led_pins)
+BUILD_ASSERT(DT_NODE_HAS_STATUS(PINS_PARENT_NODE, okay),
+	     "The devicetree must have a node with label 'led_pins'.");
+
+DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS_PARENT_NODE, DT_FOREACH_CHILD,
+				   DECLARE_PINS_NODE)
 
 #define PINS_NODE_FROM_POLICY(led_id, color_token) \
 	DT_CAT4(PIN_NODE_, led_id, _COLOR_, color_token)

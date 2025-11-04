@@ -4,11 +4,9 @@
  */
 
 / {
-	pwm-led-pins {
-		status = "disabled";
-	};
+	/delete-node/ pwm-led-pins;
 
-	gpio-led-pins {
+	led_pins: gpio-led-pins {
 		compatible = "cros-ec,gpio-led-pins";
 
 		sysrq_led: sysrq-led {

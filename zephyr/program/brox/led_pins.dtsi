@@ -23,7 +23,7 @@
 		};
 	};
 
-	pwm-led-pins {
+	led_pins: pwm-led-pins {
 		compatible = "cros-ec,pwm-led-pins";
 
 		battery_led: combo-battery-led {

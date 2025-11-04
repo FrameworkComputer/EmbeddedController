@@ -21,7 +21,7 @@
 		leds = <&pwm_pwr_blue_led>;
 	};
 
-	pwm-led-pins {
+	led_pins: pwm-led-pins {
 		compatible = "cros-ec,pwm-led-pins";
 
 		power_led: power-led {

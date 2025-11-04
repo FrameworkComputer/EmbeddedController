@@ -307,7 +307,7 @@
 		};
 	};
 
-	pwm-led-pins {
+	led_pins: pwm-led-pins {
 		power_led: power-led {
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pwms = <&led_power_white>;
