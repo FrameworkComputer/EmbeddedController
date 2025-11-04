@@ -6878,6 +6878,7 @@ const char *action_key_names[] = {
 	[TK_DICTATE] = "Dictation",
 	[TK_ACCESSIBILITY] = "Accessibility",
 	[TK_DONOTDISTURB] = "Do Not Disturb",
+	[TK_HOME] = "Home",
 };
 
 BUILD_ASSERT(ARRAY_SIZE(action_key_names) == TK_COUNT);

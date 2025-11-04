@@ -7154,6 +7154,7 @@ enum action_key {
 	TK_DICTATE = 21,
 	TK_ACCESSIBILITY = 22,
 	TK_DONOTDISTURB = 23,
+	TK_HOME = 24,
 
 	TK_COUNT
 };

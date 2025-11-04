@@ -101,6 +101,7 @@ ZTEST(vivaldi_kbd, test_matching_codes)
 	zassert_equal(TK_MENU, VIVALDI_TK_MENU);
 	zassert_equal(TK_DICTATE, VIVALDI_TK_DICTATE);
 	zassert_equal(TK_ACCESSIBILITY, VIVALDI_TK_ACCESSIBILITY);
+	zassert_equal(TK_HOME, VIVALDI_TK_HOME);
 
 	zassert_equal(KEYBD_CAP_FUNCTION_KEYS, VIVALDI_KEYBD_CAP_FUNCTION_KEYS);
 	zassert_equal(KEYBD_CAP_NUMERIC_KEYPAD,
