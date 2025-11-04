@@ -10,10 +10,10 @@
 
 #ifdef CONFIG_ZEPHYR
 #include <zephyr/drivers/pwm.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
-#endif
 #endif
 
 #ifdef CONFIG_ZEPHYR

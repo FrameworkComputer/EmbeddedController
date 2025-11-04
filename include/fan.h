@@ -19,9 +19,15 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/pwm.h>
 
+#endif
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifdef CONFIG_ZEPHYR
+#ifdef CONFIG_PLATFORM_EC_FAN
 
 #define NODE_ID_AND_COMMA(node_id) node_id,
 enum fan_channel {
