@@ -1628,6 +1628,17 @@ int board_set_active_charge_port(int charge_port)
 		prev_charge_port != charge_port) {
 		/* Turn off the previous charge port before turning on the next port */
 		cypd_cfet_vbus_control(prev_charge_port, false, true);
+
+		/**
+		 * Multi-port switch, we should force set the current limit to the active
+		 * port before enabling the sink path.
+		 */
+		if (charge_port != -1) {
+			if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER)) {
+				charger_set_input_current_limit(0,
+						pd_port_states[charge_port].current);
+			}
+		}
 	}
 
 	for (i = 0; i < PD_PORT_COUNT; i++) {
