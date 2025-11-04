@@ -125,6 +125,7 @@ if(DEFINED CONFIG_BOARD_MARIGOLD OR DEFINED CONFIG_BOARD_SAKURA)
 		zephyr_library_sources("marigold/src/charger.c")
 		zephyr_library_sources("marigold/src/power_sequence.c")
 		zephyr_library_sources("marigold/src/usbc.c")
+		zephyr_library_sources("src/ucsi_port_13.c")
 		zephyr_library_sources("marigold/src/thermal.c")
 	elseif(DEFINED CONFIG_BOARD_SAKURA)
 		project(sakura)
@@ -132,12 +133,12 @@ if(DEFINED CONFIG_BOARD_MARIGOLD OR DEFINED CONFIG_BOARD_SAKURA)
 		zephyr_library_sources("sakura/src/charger.c")
 		zephyr_library_sources("sakura/src/power_sequence.c")
 		zephyr_library_sources("sakura/src/usbc.c")
+		zephyr_library_sources("sakura/src/ucsi_port.c")
 		zephyr_library_sources("src/input_module_13.c")
 	endif()
 	zephyr_include_directories("include/marigold")
 	zephyr_library_sources(
 			"src/battery_13.c"
-			"src/ucsi_port_13.c"
 			"src/battery_present_adc.c"
 			"marigold/src/cpu_power.c"
 			"src/keyboard_customization_13.c"

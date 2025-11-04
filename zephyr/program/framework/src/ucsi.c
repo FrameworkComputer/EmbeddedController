@@ -677,3 +677,4 @@ void setup_ucsi_pd_mapping(void)
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, setup_ucsi_pd_mapping, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, setup_ucsi_pd_mapping, HOOK_PRIO_DEFAULT+1);
