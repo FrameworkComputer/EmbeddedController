@@ -129,7 +129,8 @@ static enum ec_error_list fp_console_action(uint32_t mode)
 }
 
 test_export_static int
-get_image_frame_params(struct fp_image_frame_params &image_frame_params)
+get_image_frame_params(struct fp_image_frame_params &image_frame_params,
+		       const enum fp_capture_type capture_type)
 {
 #if defined(HAVE_FP_PRIVATE_DRIVER) || defined(BOARD_HOST)
 	size_t fp_sensor_get_info_v2_size =
@@ -144,7 +145,7 @@ get_image_frame_params(struct fp_image_frame_params &image_frame_params)
 
 	for (uint8_t i = 0; i < info->sensor_info.num_capture_types; ++i) {
 		if (info->image_frame_params[i].fp_capture_type ==
-		    global_context.current_capture_type) {
+		    capture_type) {
 			image_frame_params = info->image_frame_params[i];
 			return EC_RES_SUCCESS;
 		}
@@ -177,7 +178,9 @@ static int command_fpcapture(int argc, const char **argv)
 	const enum ec_error_list rc = fp_console_action(mode);
 	if (rc == EC_SUCCESS) {
 		struct fp_image_frame_params image_frame_params{};
-		int ret = get_image_frame_params(image_frame_params);
+		int ret = get_image_frame_params(
+			image_frame_params,
+			global_context.current_capture_type);
 		if (ret != EC_RES_SUCCESS) {
 			CPRINTF("Failed to get image frame params, error: %d\n",
 				ret);
@@ -241,7 +244,8 @@ static int command_fpdownload(int argc, const char **argv)
 		return EC_ERROR_ACCESS_DENIED;
 
 	struct fp_image_frame_params image_frame_params{};
-	int ret = get_image_frame_params(image_frame_params);
+	int ret = get_image_frame_params(image_frame_params,
+					 global_context.current_capture_type);
 	if (ret != EC_RES_SUCCESS) {
 		CPRINTF("Failed to get image frame params, error: %d\n", ret);
 		return ret;
