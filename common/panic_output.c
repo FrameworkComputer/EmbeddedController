@@ -430,6 +430,10 @@ static int command_crash(int argc, const char **argv)
 	}
 
 	if (!strcasecmp(argv[1], "assert")) {
+		if (!IS_ENABLED(CONFIG_DEBUG_ASSERT_REBOOTS)) {
+			ccprintf("Asserts are disabled\n");
+			return EC_ERROR_PARAM1;
+		}
 		ASSERT(0);
 	} else if (!strcasecmp(argv[1], "divzero")) {
 		volatile int one = 1;
