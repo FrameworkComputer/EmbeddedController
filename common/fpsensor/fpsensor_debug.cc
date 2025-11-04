@@ -144,7 +144,7 @@ get_image_frame_params(struct fp_image_frame_params &image_frame_params)
 
 	for (uint8_t i = 0; i < info->sensor_info.num_capture_types; ++i) {
 		if (info->image_frame_params[i].fp_capture_type ==
-		    FP_CAPTURE_TYPE(global_context.sensor_mode)) {
+		    global_context.current_capture_type) {
 			image_frame_params = info->image_frame_params[i];
 			return EC_RES_SUCCESS;
 		}
