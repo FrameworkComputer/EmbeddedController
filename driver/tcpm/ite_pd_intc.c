@@ -8,10 +8,13 @@
 #include "ite_pd_intc.h"
 #include "task.h"
 #include "tcpm/tcpm.h"
+#include "timer.h"
 #include "usb_pd.h"
 
 void chip_pd_irq(enum usbpd_port port)
 {
+	timestamp_t irq_ts = get_time();
+
 	task_clear_pending_irq(usbpd_ctrl_regs[port].irq);
 
 	/* check status */
@@ -47,14 +50,16 @@ void chip_pd_irq(enum usbpd_port port)
 	}
 
 	if (USBPD_IS_TX_DONE(port)) {
-#ifdef CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2
-		it8xxx2_clear_tx_error_status(port);
-		/* check TX status, clear by TX_DONE status too */
-		if (USBPD_IS_TX_ERR(port))
-			it8xxx2_get_tx_error_status(port);
-		else
-			pd_transmit_complete(port, TCPC_TX_COMPLETE_SUCCESS);
-#endif
+		if (IS_ENABLED(CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2)) {
+			it8xxx2_clear_tx_error_status(port);
+			/* check TX status, clear by TX_DONE status too */
+			if (USBPD_IS_TX_ERR(port))
+				it8xxx2_get_tx_error_status(port);
+			else
+				pd_transmit_complete(port,
+						     TCPC_TX_COMPLETE_SUCCESS,
+						     &irq_ts);
+		}
 		/* clear TX done interrupt */
 		IT83XX_USBPD_ISR(port) = USBPD_REG_MASK_MSG_TX_DONE;
 		task_set_event(PD_PORT_TO_TASK_ID(port),

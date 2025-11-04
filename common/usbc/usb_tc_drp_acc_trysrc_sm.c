@@ -521,7 +521,7 @@ __maybe_unused static bool is_try_src_enabled(int port)
  * These pd_ functions are implemented in common/usb_prl_sm.c
  */
 
-void pd_transmit_complete(int port, int status)
+void pd_transmit_complete(int port, int status, const timestamp_t *ts)
 {
 	/* DO NOTHING */
 }

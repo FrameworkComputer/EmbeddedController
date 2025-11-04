@@ -122,6 +122,7 @@ int tcpm_transmit(int port, enum tcpci_msg_type type, uint16_t header,
 void tcpc_alert(int port)
 {
 	int status;
+	timestamp_t alert_ts = get_time();
 
 	/* Read the Alert register from the TCPC */
 	tcpm_alert_status(port, &status);
@@ -152,8 +153,10 @@ void tcpc_alert(int port)
 	}
 	if (status & TCPC_REG_ALERT_TX_COMPLETE) {
 		/* transmit complete */
-		pd_transmit_complete(port, status & TCPC_REG_ALERT_TX_SUCCESS ?
-						   TCPC_TX_COMPLETE_SUCCESS :
-						   TCPC_TX_COMPLETE_FAILED);
+		pd_transmit_complete(port,
+				     status & TCPC_REG_ALERT_TX_SUCCESS ?
+					     TCPC_TX_COMPLETE_SUCCESS :
+					     TCPC_TX_COMPLETE_FAILED,
+				     &alert_ts);
 	}
 }

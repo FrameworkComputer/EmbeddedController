@@ -679,6 +679,7 @@ static int it8xxx2_tcpm_transmit(int port, enum tcpci_msg_type type,
 {
 	int status = TCPC_TX_COMPLETE_FAILED;
 	bool pd_transmit_complete_called = false;
+	timestamp_t tx_ts = get_time();
 
 	switch (type) {
 	case TCPCI_MSG_SOP:
@@ -709,7 +710,7 @@ static int it8xxx2_tcpm_transmit(int port, enum tcpci_msg_type type,
 		break;
 	}
 	if (!pd_transmit_complete_called) {
-		pd_transmit_complete(port, status);
+		pd_transmit_complete(port, status, &tx_ts);
 	}
 
 	return EC_SUCCESS;

@@ -533,15 +533,15 @@ timestamp_t prl_get_tcpc_tx_success_ts(int port)
 }
 
 /* Sets the time stamp when TCPC reports TX success. */
-static void set_tcpc_tx_success_ts(int port)
+static void set_tcpc_tx_success_ts(int port, const timestamp_t *ts)
 {
-	tcpc_tx_success_ts[port] = get_time();
+	tcpc_tx_success_ts[port] = *ts;
 }
 
-void pd_transmit_complete(int port, int status)
+void pd_transmit_complete(int port, int status, const timestamp_t *ts)
 {
 	if (status == TCPC_TX_COMPLETE_SUCCESS)
-		set_tcpc_tx_success_ts(port);
+		set_tcpc_tx_success_ts(port, ts);
 	prl_tx[port].xmit_status = status;
 }
 

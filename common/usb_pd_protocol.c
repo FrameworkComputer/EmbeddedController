@@ -891,7 +891,7 @@ static void inc_id(int port)
 	pd[port].msg_id = (pd[port].msg_id + 1) & PD_MESSAGE_ID_COUNT;
 }
 
-void pd_transmit_complete(int port, int status)
+void pd_transmit_complete(int port, int status, const timestamp_t *ts)
 {
 	if (status == TCPC_TX_COMPLETE_SUCCESS)
 		inc_id(port);

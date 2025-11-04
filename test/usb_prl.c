@@ -87,12 +87,13 @@ static int test_receive_control_msg(void)
 static int test_send_control_msg(void)
 {
 	int port = PORT0;
+	timestamp_t ctl_msg_ts = get_time();
 
 	/* Set up the message to be sent. */
 	prl_send_ctrl_msg(port, TCPCI_MSG_SOP, PD_CTRL_ACCEPT);
 	task_wait_event(MSEC);
 	/* Simulate the TX complete that the PD_INT handler would signal */
-	pd_transmit_complete(port, TCPC_TX_COMPLETE_SUCCESS);
+	pd_transmit_complete(port, TCPC_TX_COMPLETE_SUCCESS, &ctl_msg_ts);
 
 	task_wait_event(10 * MSEC);
 

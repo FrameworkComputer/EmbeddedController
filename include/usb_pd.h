@@ -3107,9 +3107,9 @@ void pd_execute_hard_reset(int port);
  *
  * @param port USB-C port number
  * @param status status of the transmission
+ * @param ts time at which the transmit completed
  */
-void pd_transmit_complete(int port, int status);
-
+void pd_transmit_complete(int port, int status, const timestamp_t *ts);
 /**
  * Get port polarity.
  *

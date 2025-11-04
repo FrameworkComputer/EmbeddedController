@@ -880,7 +880,7 @@ static void ucpd_manage_tx(int port, int evt)
 	enum ucpd_state enter = ucpd_tx_state;
 	int req = ucpd_tx_request;
 #endif
-
+	timestamp_t tx_ts = get_time();
 	if (evt & UCPD_EVT_HR_REQ) {
 		/*
 		 * Hard reset control messages are treated as a priority. The
@@ -910,8 +910,9 @@ static void ucpd_manage_tx(int port, int evt)
 				 * not been sent yet, it needs to be discarded
 				 * based on the received message event.
 				 */
-				pd_transmit_complete(
-					port, TCPC_TX_COMPLETE_DISCARDED);
+				pd_transmit_complete(port,
+						     TCPC_TX_COMPLETE_DISCARDED,
+						     &tx_ts);
 				ucpd_tx_request &= ~MSG_TCPM_MASK;
 			} else if (!ucpd_rx_msg_active) {
 				ucpd_set_tx_state(STATE_ACTIVE_TCPM);
@@ -960,7 +961,8 @@ static void ucpd_manage_tx(int port, int evt)
 					ucpd_set_tx_state(STATE_IDLE);
 					pd_transmit_complete(
 						port,
-						TCPC_TX_COMPLETE_DISCARDED);
+						TCPC_TX_COMPLETE_DISCARDED,
+						&tx_ts);
 					ucpd_set_tx_state(STATE_IDLE);
 				} else {
 					/*
@@ -977,7 +979,7 @@ static void ucpd_manage_tx(int port, int evt)
 						 TCPC_TX_COMPLETE_FAILED :
 						 TCPC_TX_COMPLETE_DISCARDED;
 				ucpd_set_tx_state(STATE_IDLE);
-				pd_transmit_complete(port, status);
+				pd_transmit_complete(port, status, &tx_ts);
 			}
 		}
 		break;
@@ -996,7 +998,8 @@ static void ucpd_manage_tx(int port, int evt)
 	case STATE_WAIT_CRC_ACK:
 		if (evt & UCPD_EVT_RX_GOOD_CRC && ucpd_crc_id == msg_id_match) {
 			/* GoodCRC with matching ID was received */
-			pd_transmit_complete(port, TCPC_TX_COMPLETE_SUCCESS);
+			pd_transmit_complete(port, TCPC_TX_COMPLETE_SUCCESS,
+					     &tx_ts);
 			ucpd_set_tx_state(STATE_IDLE);
 #ifdef CONFIG_STM32G4_UCPD_DEBUG
 			ucpd_log_mark_crc();
@@ -1010,8 +1013,8 @@ static void ucpd_manage_tx(int port, int evt)
 				tx_retry_count++;
 			} else {
 				ucpd_set_tx_state(STATE_IDLE);
-				pd_transmit_complete(port,
-						     TCPC_TX_COMPLETE_FAILED);
+				pd_transmit_complete(
+					port, TCPC_TX_COMPLETE_FAILED, &tx_ts);
 			}
 		} else if (evt & UCPD_EVT_RX_MSG) {
 			/*
@@ -1021,7 +1024,8 @@ static void ucpd_manage_tx(int port, int evt)
 			 * in this state, then treat it as a discard from an
 			 * incoming message.
 			 */
-			pd_transmit_complete(port, TCPC_TX_COMPLETE_DISCARDED);
+			pd_transmit_complete(port, TCPC_TX_COMPLETE_DISCARDED,
+					     &tx_ts);
 			ucpd_set_tx_state(STATE_IDLE);
 		}
 		break;
