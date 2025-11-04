@@ -119,6 +119,13 @@ void reset_nct38xx_port(int port)
 	gpio_reset_port(ioex_port0);
 }
 
+static void notify_power_change(void)
+{
+	/* Notify host of power info change. */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+}
+DECLARE_DEFERRED(notify_power_change);
+
 void pd_power_supply_reset(int port)
 {
 	/* Disable VBUS. */
@@ -128,8 +135,7 @@ void pd_power_supply_reset(int port)
 	if (IS_ENABLED(CONFIG_USB_PD_DISCHARGE))
 		pd_set_vbus_discharge(port, 1);
 
-	/* Notify host of power info change. */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+	hook_call_deferred(&notify_power_change_data, 0);
 }
 
 int pd_set_power_supply_ready(int port)
@@ -151,8 +157,7 @@ int pd_set_power_supply_ready(int port)
 		return rv;
 	}
 
-	/* Notify host of power info change. */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+	hook_call_deferred(&notify_power_change_data, 0);
 
 	return EC_SUCCESS;
 }

@@ -38,6 +38,8 @@
 			      expected);                                   \
 	} while (0)
 
+#define HOST_EVENT_DEFER_WAIT_MS 100
+
 void reset_nct38xx_port(int port);
 void pen_detect_change(struct ap_power_ev_callback *cb,
 		       struct ap_power_ev_data data);
@@ -201,6 +203,8 @@ ZTEST(pujjoga, test_pd_power_supply_reset)
 		zassert_equal(pd_set_vbus_discharge_fake.arg1_val, 1);
 	}
 
+	/* Allow the deferred host event to run */
+	k_sleep(K_MSEC(HOST_EVENT_DEFER_WAIT_MS));
 	zassert_equal(pd_send_host_event_fake.call_count, 1);
 }
 
@@ -222,6 +226,8 @@ ZTEST(pujjoga, test_pd_set_power_supply_ready)
 	zassert_equal(ppc_vbus_source_enable_fake.arg0_val, 0);
 	zassert_equal(ppc_vbus_source_enable_fake.arg1_val, 1);
 
+	/* Allow the deferred host event to run */
+	k_sleep(K_MSEC(HOST_EVENT_DEFER_WAIT_MS));
 	zassert_equal(pd_send_host_event_fake.call_count, 1);
 }
 
