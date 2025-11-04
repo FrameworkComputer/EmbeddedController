@@ -115,8 +115,12 @@ static void _fp_clear_context(void)
 {
 	fp_reset_context();
 	OPENSSL_cleanse(fp_buffer, sizeof(fp_buffer));
-	/* Reset frame size, as they are correlated with fp_buffer. */
+	/*
+	 * Reset frame size and capture type, as they are correlated with
+	 * fp_buffer.
+	 */
 	global_context.current_frame_size = 0;
+	global_context.current_capture_type = FP_CAPTURE_TYPE_INVALID;
 	for (uint16_t idx = 0; idx < FP_MAX_FINGER_COUNT; idx++)
 		fp_clear_finger_context(idx);
 }
