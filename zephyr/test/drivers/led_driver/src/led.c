@@ -26,10 +26,12 @@
 	{                                                                  \
 		const struct led_pins_node_t *pin_node =                   \
 			led_get_node(color, led_id);                       \
+		const struct gpio_pin_t *gpio_pins =                       \
+			(const struct gpio_pin_t *)pin_node->pins;         \
 		for (int j = 0; j < pin_node->pins_count; j++) {           \
-			int val = gpio_pin_get_dt(gpio_get_dt_spec(        \
-				pin_node->gpio_pins[j].signal));           \
-			int expecting = pin_node->gpio_pins[j].val;        \
+			int val = gpio_pin_get_dt(                         \
+				gpio_get_dt_spec(gpio_pins[j].signal));    \
+			int expecting = gpio_pins[j].val;                  \
 			zassert_equal(expecting, val, "[%d]: %d != %d", j, \
 				      expecting, val);                     \
 		}                                                          \

@@ -36,7 +36,7 @@ DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD, GEN_PINS_ARRAY)
 #define SET_PIN_NODE(node_id)                             \
 	{ .led_color = GET_PROP(node_id, led_color),      \
 	  .led_id = GET_PROP(DT_PARENT(node_id), led_id), \
-	  .gpio_pins = PINS_ARRAY(node_id),               \
+	  .pins = PINS_ARRAY(node_id),                    \
 	  .pins_count = DT_PROP_LEN(node_id, led_values) }
 
 /*
@@ -62,10 +62,11 @@ const struct led_pins_node_t *pins_node[] = {
  */
 void led_set_color_with_node(const struct led_pins_node_t *pins_node)
 {
+	struct gpio_pin_t *gpio_pins = (struct gpio_pin_t *)pins_node->pins;
+
 	for (int j = 0; j < pins_node->pins_count; j++) {
-		gpio_pin_set_dt(
-			gpio_get_dt_spec(pins_node->gpio_pins[j].signal),
-			pins_node->gpio_pins[j].val);
+		gpio_pin_set_dt(gpio_get_dt_spec(gpio_pins[j].signal),
+				gpio_pins[j].val);
 	}
 }
 

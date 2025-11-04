@@ -55,7 +55,7 @@ DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD, GEN_PINS_ARRAY)
 #define SET_PIN_NODE(node_id)                             \
 	{ .led_color = GET_PROP(node_id, led_color),      \
 	  .led_id = GET_PROP(DT_PARENT(node_id), led_id), \
-	  .pwm_pins = PINS_ARRAY(node_id),                \
+	  .pins = PINS_ARRAY(node_id),                    \
 	  .pins_count = DT_PROP_LEN(node_id, led_values) }
 
 /*
@@ -100,9 +100,9 @@ void led_set_color(enum led_color color, enum ec_led_id led_id,
 	for (int i = 0; i < ARRAY_SIZE(pins_node); i++) {
 		if ((pins_node[i]->led_color == color) &&
 		    (pins_node[i]->led_id == led_id)) {
-			led_set_color_with_pins(pins_node[i]->pwm_pins,
-						pins_node[i]->pins_count,
-						brightness);
+			led_set_color_with_pins(
+				(struct pwm_pin_t *)pins_node[i]->pins,
+				pins_node[i]->pins_count, brightness);
 			break;
 		}
 	}
@@ -163,13 +163,14 @@ void led_set_color_with_pattern(const struct led_pattern_node_t *pattern)
 	int32_t duration_ms =
 		pattern->pattern_color[pattern->cur_color].duration_ms;
 	struct pwm_pin_t *next_color =
-		pattern->pattern_color[pattern->cur_color]
-			.led_color_node->pwm_pins;
+		(struct pwm_pin_t *)pattern->pattern_color[pattern->cur_color]
+			.led_color_node->pins;
 	uint8_t prev_color_idx =
 		(pattern->cur_color + pattern->pattern_len - 1) %
 		pattern->pattern_len;
 	struct pwm_pin_t *prev_color =
-		pattern->pattern_color[prev_color_idx].led_color_node->pwm_pins;
+		(struct pwm_pin_t *)pattern->pattern_color[prev_color_idx]
+			.led_color_node->pins;
 	struct pwm_pin_t cur_color[pins_count];
 
 	for (int i = 0; i < pins_count; i++) {

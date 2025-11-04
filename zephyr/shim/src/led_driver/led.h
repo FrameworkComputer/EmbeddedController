@@ -115,15 +115,12 @@ struct led_pins_node_t {
 	 */
 	enum ec_led_id led_id;
 
-#if CONFIG_PLATFORM_EC_LED_DT_GPIO
-	/* Array of GPIO pins to set to enable particular color */
-	struct gpio_pin_t *gpio_pins;
-#endif
-
-#if CONFIG_PLATFORM_EC_LED_DT_PWM
-	/* Array of PWM pins to set to enable particular color */
-	struct pwm_pin_t *pwm_pins;
-#endif
+	/*
+	 * Pointer to driver-specific pin configuration data used to
+	 * enable a particular color. The underlying driver is responsible
+	 * for casting this to the correct type.
+	 */
+	void *pins;
 
 	/* Number of pins per color */
 	uint8_t pins_count;
