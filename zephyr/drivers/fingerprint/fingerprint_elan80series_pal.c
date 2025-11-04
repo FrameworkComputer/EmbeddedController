@@ -223,20 +223,22 @@ int __unused elan_write_reg_vector(const uint8_t *reg_table, int length)
 	return ret;
 }
 
-int __unused elan_raw_capture(uint16_t *short_raw)
+/**
+ * @brief Reads the fingerprint image data from the sensor.
+ *
+ * This function polls the scan status register until the image is ready
+ * and then reads the image data into the provided buffer.
+ *
+ * @param short_raw Pointer to the buffer to store the image data.
+ * @return 0 on success, negative error code on failure.
+ */
+static int elan_image_read(uint16_t *short_raw)
 {
 	assert(short_raw != NULL);
 
 	int ret = 0, i = 0, cnt_timer = 0, rx_index = 0;
 	uint8_t regdata[4] = { 0 };
 
-	/* Write start scans command to fp sensor */
-	if (elan_write_cmd(START_SCAN) < 0) {
-		ret = ELAN_ERROR_SPI;
-		LOG_ERR("%s SPISendCommand( SSP2, START_SCAN ) fail ret = %d",
-			__func__, ret);
-		return ret;
-	}
 	/* Polling scan status */
 	cnt_timer = 0;
 	while (1) {
@@ -282,6 +284,27 @@ int __unused elan_raw_capture(uint16_t *short_raw)
 	k_sem_give(&trx_buffer_lock);
 
 	return 0;
+}
+
+int __unused elan_raw_capture(uint16_t *short_raw)
+{
+	assert(short_raw != NULL);
+
+	int ret = 0;
+
+	/* Write start scans command to fp sensor */
+	if (elan_write_cmd(START_SCAN) < 0) {
+		ret = ELAN_ERROR_SPI;
+		LOG_ERR("%s SPISendCommand( SSP2, START_SCAN ) fail ret = %d",
+			__func__, ret);
+		return ret;
+	}
+
+	ret = elan_image_read(short_raw);
+	if (ret < 0)
+		LOG_ERR("%s: elan_image_read failed (%d)", __func__, ret);
+
+	return ret;
 }
 
 int __unused elan_execute_calibration(void)
