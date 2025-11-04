@@ -26,6 +26,7 @@ static uint32_t fn_keys[] = DT_INST_PROP(0, keymap);
 #define CODE_MASK 0xffff
 
 static bool fn_key_pressed;
+static bool fn_key_triggered;
 static uint32_t fn_keys_status;
 
 static const uint32_t fn_key_rc = DT_INST_PROP(0, fn_rc);
@@ -43,6 +44,17 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 {
 	if (KBD_RC(row, col) == fn_key_rc) {
 		fn_key_pressed = is_pressed;
+
+		if (is_pressed) {
+			fn_key_triggered = false;
+		} else if (!fn_key_triggered) {
+			/* trigger a press and release of the Fn key if nothing
+			 * else has been pressed
+			 */
+			keyboard_state_changed_process(row, col, true, -1);
+			keyboard_state_changed_process(row, col, false, -1);
+		}
+
 		return;
 	}
 
@@ -79,6 +91,8 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 
 			break;
 		}
+
+		fn_key_triggered = true;
 	}
 
 	LOG_DBG("fn_key_pressed=%d fn_keys_status=%02x", fn_key_pressed,
