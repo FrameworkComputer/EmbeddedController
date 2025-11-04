@@ -7,6 +7,7 @@
 #  vendor-prefix<TAB>vendor name
 aec	Battery vendor
 aoz	Alpha & Omega Semiconductor
+atc	Battery vendor
 atl	Battery vendor
 bms-gf	Battery vendor
 byd	Battery vendor
