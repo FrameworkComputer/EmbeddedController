@@ -202,36 +202,36 @@ static void fp_process_finger(void)
 	CPRINTS("Capturing ...");
 	int res = fp_acquire_image(fp_buffer, capture_type);
 	capture_time_us = time_since32(t0);
-	if (!res) {
-		global_context.current_frame_size =
-			global_context.fp_frame_size_cache.get_frame_size(
-				capture_type);
-		uint32_t evt = EC_MKBP_FP_IMAGE_READY;
+	if (res) {
+		timestamps_invalid |= FPSTATS_CAPTURE_INV;
+		return;
+	}
+
+	global_context.current_frame_size =
+		global_context.fp_frame_size_cache.get_frame_size(capture_type);
+	uint32_t evt = EC_MKBP_FP_IMAGE_READY;
 
 #ifndef CONFIG_ZEPHYR
-		/* Clean up SPI before clocking up to avoid hang on the dsb
-		 * in dma_go. Ignore the return value to let the WDT reboot
-		 * the MCU (and avoid getting trapped in the loop).
-		 * b/112781659 */
-		res = spi_transaction_flush(&spi_devices[0]);
-		if (res)
-			CPRINTS("Failed to flush SPI: 0x%x", res);
+	/* Clean up SPI before clocking up to avoid hang on the dsb
+	 * in dma_go. Ignore the return value to let the WDT reboot
+	 * the MCU (and avoid getting trapped in the loop).
+	 * b/112781659 */
+	res = spi_transaction_flush(&spi_devices[0]);
+	if (res)
+		CPRINTS("Failed to flush SPI: 0x%x", res);
 #endif
 
-		/* we need CPU power to do the computations */
-		ScopedFastCpu fast_cpu;
+	/* we need CPU power to do the computations */
+	ScopedFastCpu fast_cpu;
 
-		if (global_context.sensor_mode & FP_MODE_ENROLL_IMAGE)
-			evt = fp_process_enroll();
-		else if (global_context.sensor_mode & FP_MODE_MATCH)
-			evt = fp_process_match();
+	if (global_context.sensor_mode & FP_MODE_ENROLL_IMAGE)
+		evt = fp_process_enroll();
+	else if (global_context.sensor_mode & FP_MODE_MATCH)
+		evt = fp_process_match();
 
-		global_context.sensor_mode &= ~FP_MODE_ANY_CAPTURE;
-		overall_time_us = time_since32(overall_t0);
-		send_mkbp_event(evt);
-	} else {
-		timestamps_invalid |= FPSTATS_CAPTURE_INV;
-	}
+	global_context.sensor_mode &= ~FP_MODE_ANY_CAPTURE;
+	overall_time_us = time_since32(overall_t0);
+	send_mkbp_event(evt);
 }
 #endif /* HAVE_FP_PRIVATE_DRIVER */
 
