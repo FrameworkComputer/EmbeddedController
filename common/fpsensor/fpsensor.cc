@@ -231,7 +231,8 @@ static void fp_process_finger(void)
 	else if (global_context.sensor_mode & FP_MODE_MATCH)
 		evt = fp_process_match();
 
-	global_context.sensor_mode &= ~FP_MODE_ANY_CAPTURE;
+	global_context.sensor_mode &=
+		~(FP_MODE_ANY_CAPTURE | FP_MODE_CAPTURE_TYPE_MASK);
 	overall_time_us = time_since32(overall_t0);
 	send_mkbp_event(evt);
 }
