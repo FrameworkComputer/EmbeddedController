@@ -124,6 +124,9 @@ static int cached_rp[CONFIG_USB_PD_PORT_MAX_COUNT];
 /* Cache our Device Capabilities at init for later reference */
 static int dev_cap_1[CONFIG_USB_PD_PORT_MAX_COUNT];
 
+/* Cache add state */
+static bool cached_auto_discharge_disconnect[CONFIG_USB_PD_PORT_MAX_COUNT];
+
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 int tcpc_addr_write(int port, int i2c_addr, int reg, int val)
 {
@@ -406,8 +409,12 @@ void tcpci_tcpc_discharge_vbus(int port, int enable)
  * are connected and disabled after we are disconnected and
  * VBus is at SafeV0
  */
-void tcpci_tcpc_enable_auto_discharge_disconnect(int port, int enable)
+void tcpci_tcpc_enable_auto_discharge_disconnect(int port, bool enable)
 {
+	/* Skip redundant register access */
+	if (cached_auto_discharge_disconnect[port] == enable)
+		return;
+
 	if (IS_ENABLED(DEBUG_AUTO_DISCHARGE_DISCONNECT))
 		CPRINTS("C%d: AutoDischargeDisconnect %sABLED", port,
 			enable ? "EN" : "DIS");
@@ -415,6 +422,8 @@ void tcpci_tcpc_enable_auto_discharge_disconnect(int port, int enable)
 	tcpc_update8(port, TCPC_REG_POWER_CTRL,
 		     TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT,
 		     (enable) ? MASK_SET : MASK_CLR);
+
+	cached_auto_discharge_disconnect[port] = enable;
 }
 
 int tcpci_tcpc_debug_accessory(int port, bool enable)
@@ -1546,6 +1555,7 @@ int tcpci_tcpm_init(int port)
 	int error;
 	int power_status;
 	int tries = TCPM_INIT_TRIES;
+	cached_auto_discharge_disconnect[port] = false;
 
 	if (port >= board_get_usb_pd_port_count())
 		return EC_ERROR_INVAL;

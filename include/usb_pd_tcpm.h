@@ -361,7 +361,7 @@ struct tcpm_drv {
 	 * @param port Type-C port number
 	 * @param enable Auto Discharge enable or disable
 	 */
-	void (*tcpc_enable_auto_discharge_disconnect)(int port, int enable);
+	void (*tcpc_enable_auto_discharge_disconnect)(int port, bool enable);
 
 	/**
 	 * Manual control of TCPC DebugAccessory enable
