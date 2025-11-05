@@ -26,9 +26,12 @@
 /* Allow objects to be linked into a flash resident section */
 #define CONFIG_CHIP_INIT_ROM_REGION
 
-/* System safe mode for improved panic debugging */
-#define CONFIG_SYSTEM_SAFE_MODE
-#define CONFIG_PANIC_ON_WATCHDOG_WARNING
+/* Panic Handling Features */
+#ifdef SECTION_IS_RW
+#define CONFIG_PRESERVED_RING_BUF
+#define CONFIG_PANIC_LOG
+#endif
+
 /* Increase watchdog timeout since system will panic on warning */
 #undef CONFIG_WATCHDOG_PERIOD_MS
 #define CONFIG_WATCHDOG_PERIOD_MS 2100
