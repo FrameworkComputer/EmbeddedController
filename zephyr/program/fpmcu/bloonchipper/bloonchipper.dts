@@ -9,17 +9,25 @@
 
 #include <cros/integrated_fwid.dtsi>
 
-#define FPC1025_COMMON_IMAGE_PROPS \
-	width = <160>; \
-	height = <160>; \
-	bits-per-pixel = <8>; \
-	/*
-	 * Sensor image size
-	 *
-	 * Value from fpc_bep_image_get_buffer_size(): (160*160)+660
-	 */ \
-	frame-size = <26260>; \
-	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+#define FPC1025_BASE_IMAGE_PROPS \
+    width = <160>; \
+    height = <160>; \
+    bits-per-pixel = <8>; \
+    v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+
+#define FPC1025_RAW_IMAGE_PROPS \
+    FPC1025_BASE_IMAGE_PROPS \
+    /*
+     * Sensor raw image size
+     *
+     * Value from fpc_bep_image_get_buffer_size(): (160*160)+660
+     */ \
+    frame-size = <26260>;
+
+#define FPC1025_REAL_IMAGE_PROPS \
+    FPC1025_BASE_IMAGE_PROPS \
+    /* Sensor real image size: (160*160) */ \
+    frame-size = <25600>;
 
 / {
 	chosen {
@@ -134,27 +142,27 @@
 		configs {
 			compatible = "fingerprint-image-frame-params";
 			config0 {
-				FPC1025_COMMON_IMAGE_PROPS
+				FPC1025_RAW_IMAGE_PROPS
 				capture-type = "FINGERPRINT_CAPTURE_TYPE_VENDOR_FORMAT";
 			};
 			config1 {
-				FPC1025_COMMON_IMAGE_PROPS
+				FPC1025_REAL_IMAGE_PROPS
 				capture-type = "FINGERPRINT_CAPTURE_TYPE_SIMPLE_IMAGE";
 			};
 			config2 {
-				FPC1025_COMMON_IMAGE_PROPS
+				FPC1025_REAL_IMAGE_PROPS
 				capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN0";
 			};
 			config3 {
-				FPC1025_COMMON_IMAGE_PROPS
+				FPC1025_REAL_IMAGE_PROPS
 				capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN1";
 			};
 			config4 {
-				FPC1025_COMMON_IMAGE_PROPS
+				FPC1025_RAW_IMAGE_PROPS
 				capture-type = "FINGERPRINT_CAPTURE_TYPE_QUALITY_TEST";
 			};
 			config5 {
-				FPC1025_COMMON_IMAGE_PROPS
+				FPC1025_REAL_IMAGE_PROPS
 				capture-type = "FINGERPRINT_CAPTURE_TYPE_RESET_TEST";
 			};
 		};
