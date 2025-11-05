@@ -73,7 +73,8 @@ error_exit:
 uint32_t
 FpFrameSizeCache::get_frame_size(enum fp_capture_type capture_type) const
 {
-	if (capture_type >= frame_sizes_.size() || capture_type < 0) {
+	if (static_cast<size_t>(capture_type) >= frame_sizes_.size() ||
+	    capture_type < 0) {
 		CPRINTF("Error: Invalid fp_capture_type %d requested (max: %zu), "
 			"returning size 0.",
 			capture_type, frame_sizes_.size());
