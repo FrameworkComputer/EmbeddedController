@@ -299,20 +299,12 @@ def validate_led_colors(edt, project_name):
         num_errors: Number of missing colors detected.
     """
 
-    led_compat_list = ["cros-ec,gpio-led-pins", "cros-ec,pwm-led-pins"]
-
     led_map = defaultdict(set)
 
-    for compat in led_compat_list:
-        led_compat_nodes = edt.compat2okay[compat]
+    pins_node = edt.label2node.get("led_pins")
 
-        if len(led_compat_nodes) == 0:
-            continue
-
-        # only one instance of any particular led driver can be defined
-        compat_node = led_compat_nodes[0]
-
-        for led_node in compat_node.children.values():
+    if pins_node:
+        for led_node in pins_node.children.values():
             if "led-id" in led_node.props:
                 led_id = led_node.props["led-id"].val
                 for color_node in led_node.children.values():
