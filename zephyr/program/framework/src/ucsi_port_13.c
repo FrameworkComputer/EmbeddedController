@@ -1,7 +1,10 @@
 /*
- * Copyright 2024 The Chromium OS Authors. All rights reserved.
+ * Copyright 2025 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
+ *
+ * Common UCSI port configuration for most Framework 13 mainboard.
+ * Some don't share the same connector mapping, they would need a custom file.
  */
 
 #include "ucsi.h"
