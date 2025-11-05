@@ -523,11 +523,12 @@ static int fpc1025_init_driver(const struct device *dev)
 			FINGERPRINT_SENSOR_FRAME_SIZE(idx, DT_DRV_INST(inst)), \
 		"FP image buffer size smaller than raw image size at index " #idx);
 
-#define FPC1025_ASSERT_FRAME_SIZE_CONSISTENT(idx, inst)                        \
-	BUILD_ASSERT((FINGERPRINT_SENSOR_FRAME_SIZE(idx, DT_DRV_INST(inst)) == \
-		      FINGERPRINT_SENSOR_FRAME_SIZE(0, DT_DRV_INST(inst))),    \
-		     "FPC1025: frame_size of config " #idx                     \
-		     " does not match config 0");
+#define FPC1025_ASSERT_IMAGE_REAL_SIZE_CONSISTENT(idx, inst)                   \
+	BUILD_ASSERT(                                                          \
+		(FINGERPRINT_SENSOR_REAL_IMAGE_SIZE(idx, DT_DRV_INST(inst)) == \
+		 FINGERPRINT_SENSOR_REAL_IMAGE_SIZE(0, DT_DRV_INST(inst))),    \
+		"FPC1025: real_image_size of config " #idx                     \
+		" does not match config 0");
 
 #define FPC1025_DEFINE(inst)                                                         \
 	static struct fpc1025_data fpc1025_data_##inst;                              \
@@ -546,7 +547,7 @@ static int fpc1025_init_driver(const struct device *dev)
 	LISTIFY(FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)),                   \
 		FPC1025_BUILD_ASSERT_IMAGE_SIZE, (;), inst)                          \
 	LISTIFY(FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)),                   \
-		FPC1025_ASSERT_FRAME_SIZE_CONSISTENT, (;), inst)                     \
+		FPC1025_ASSERT_IMAGE_REAL_SIZE_CONSISTENT, (;), inst)                \
 	BUILD_ASSERT(                                                                \
 		FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)) <=                 \
 			NUM_IMAGE_CAPTURE_TYPES,                                     \
