@@ -22,6 +22,7 @@
  *  - If POWER_GOOD is dropped by the AP, then we power the AP off
  */
 
+#include "battery.h"
 #include "builtin/assert.h"
 #include "chipset.h"
 #include "common.h"
@@ -150,6 +151,17 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
  * Based on o-scope measurements showing a ~500ms event.
  */
 #define AC_IRQ_DISABLE_DURATION (750 * MSEC)
+
+/*
+ * TODO(b/452646350): Update this threshold when ADSP lite is available.
+ *
+ * The current 75% value is a temporary workaround. The absence of
+ * ADSP lite firmware limits the system to slow charging, preventing
+ * the battery from reaching 100%.
+ */
+#define BATTERY_STATE_OF_CHARGE_LOWER_THRESHOLD 75
+
+#define BATTERY_BAD_STATE_OF_CHARGE -1
 
 /* TODO(crosbug.com/p/25047): move to HOOK_POWER_BUTTON_CHANGE */
 /* 1 if the power button was pressed last time we checked */
@@ -305,6 +317,46 @@ static void power_ac_changed(void)
 	task_wake(TASK_ID_CHIPSET);
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, power_ac_changed, HOOK_PRIO_DEFAULT);
+
+static int get_battery_state_of_charge(void)
+{
+	struct batt_params batt;
+	battery_get_params(&batt);
+
+	if (batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE) {
+		return BATTERY_BAD_STATE_OF_CHARGE;
+	}
+
+	return batt.state_of_charge;
+}
+
+/*
+ * Monitor battery SoC while on AC.
+ *
+ * If discharging while on AC, ensure the chipset boots up
+ * once we hit the lower threshold to manage charging or
+ * system state.
+ */
+void battery_soc_changed(void)
+{
+	int battery_soc;
+
+	/* Proceed only if AC is connected. */
+	if (!extpower_is_present())
+		return;
+
+	battery_soc = get_battery_state_of_charge();
+
+	if (BATTERY_BAD_STATE_OF_CHARGE == battery_soc) {
+		return;
+	}
+
+	if (battery_soc < BATTERY_STATE_OF_CHARGE_LOWER_THRESHOLD) {
+		ac_on = 1;
+		task_wake(TASK_ID_CHIPSET);
+	}
+}
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, battery_soc_changed, HOOK_PRIO_DEFAULT);
 
 /**
  * Wait the switchcap GPIO0 PVC_PG signal asserted.
