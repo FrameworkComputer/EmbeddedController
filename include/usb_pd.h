@@ -132,7 +132,7 @@ enum pdo_peak_overcurrent {
 #define PDO_FIXED_GET_DRP BIT(29)
 #define PDO_FIXED_GET_UNCONSTRAINED_PWR BIT(27)
 #define PDO_FIXED_GET_USB_COMM_CAPABLE BIT(26)
-
+#define PDO_FIXED_GET_PEAK_CURR(pdo) ((pdo >> 20) & 3)
 /* Mask of flag bits in a fixed PDO per USB-PD spec R3.2 V1.1, 6.4.1.2.1 */
 #define PDO_FIXED_FLAGS_MASK GENMASK(29, 23)
 

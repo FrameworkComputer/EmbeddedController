@@ -17,6 +17,9 @@ config TEST_SUITE_PDC_DEVICE_NOT_READY
 config TEST_SUITE_PDC_POLICY
 	bool "Enable PDC policy tests"
 
+config TEST_SUITE_PDC_POLICY_SRC_NO_3A
+	bool "Enable PDC src policy tests with no 3A port"
+
 config TEST_SUITE_PDC_POLICY_SINK
 	bool "Enable PDC policy sink tests"
 
