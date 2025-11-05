@@ -23,6 +23,14 @@ config FP_ELAN_ELAN80SG_ALGORITHM
         Enable ELAN ELAN80SG matching algorithm. To work properly, ELAN
         private library is required.
 
+config FP_ELAN_ELANI80SA_ALGORITHM
+      bool "ELAN ELANI80SA matching algorithm"
+      default y if FINGERPRINT_SENSOR_ELANI80SA
+      select FP_ELAN_ELAN80SERIES_ALGORITHM
+      help
+        Enable ELAN ELANI80SA matching algorithm. To work properly, ELAN
+        private library is required.
+
 config FP_FPC_LIBFP_ALGORITHM
 	bool "FPC LIBFP matching algorithm"
 	default y if FINGERPRINT_SENSOR_FPC1145
@@ -43,6 +51,7 @@ config FP_ALGORITHM_TEMPLATE_SIZE
 	default 47552 if FINGERPRINT_SENSOR_FPC1145 && FP_FPC_LIBFP_ALGORITHM
 	default 16384 if FINGERPRINT_SENSOR_EGIS630 && FP_EGIS_EGIS630_ALGORITHM
 	default 19320 if FINGERPRINT_SENSOR_ELAN80SG && FP_ELAN_ELAN80SG_ALGORITHM
+	default 19320 if FINGERPRINT_SENSOR_ELANI80SA && FP_ELAN_ELANI80SA_ALGORITHM
 	default 0
 	help
 	  Constant value corresponding to the maximum template size.
@@ -59,6 +68,7 @@ config FP_MAX_FINGER_COUNT
 	  default 5 if FINGERPRINT_SENSOR_FPC1145 && FP_FPC_LIBFP_ALGORITHM
 	  default 3 if FINGERPRINT_SENSOR_EGIS630 && FP_EGIS_EGIS630_ALGORITHM
 	  default 3 if FINGERPRINT_SENSOR_ELAN80SG && FP_ELAN_ELAN80SG_ALGORITHM
+	  default 3 if FINGERPRINT_SENSOR_ELANI80SA && FP_ELAN_ELANI80SA_ALGORITHM
 	  default 5
 	  help
 		Max number of templates stored / matched against. This limit comes
