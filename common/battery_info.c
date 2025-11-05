@@ -26,6 +26,12 @@
 struct battery_static_info battery_static[CONFIG_BATTERY_COUNT];
 struct ec_response_battery_dynamic_info battery_dynamic[CONFIG_BATTERY_COUNT];
 
+/*
+ * Store the previous state of charge values to detect changes and trigger
+ * the HOOK_BATTERY_SOC_CHANGE hook.
+ */
+static int prev_charge, prev_disp_charge;
+
 #ifdef HAS_TASK_HOSTCMD
 static void battery_update(enum battery_index i)
 {
@@ -250,6 +256,32 @@ bool battery_is_below_threshold(const struct batt_params *batt,
 	return batt->state_of_charge <= get_battery_threshold_percent(type);
 }
 
+/**
+ * Checks if the battery's state of charge (SoC) or display charge has changed
+ * since the last check. If it has, it updates the stored values and calls the
+ * HOOK_BATTERY_SOC_CHANGE hook to notify other modules.
+ *
+ * This is primarily used in builds without CONFIG_CHARGER, where the charger
+ * task isn't available to provide these notifications.
+ *
+ * @param batt battery parameters.
+ */
+void check_battery_soc_change(struct batt_params batt)
+{
+	/*
+	 * Check for a change if:
+	 * 1. The SoC value is valid AND it's different from the previous value.
+	 * 2. The display charge value is different from the previous value.
+	 */
+	if ((!(batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE) &&
+	     batt.state_of_charge != prev_charge) ||
+	    (batt.display_charge != prev_disp_charge)) {
+		prev_charge = batt.state_of_charge;
+		prev_disp_charge = batt.display_charge;
+		hook_notify(HOOK_BATTERY_SOC_CHANGE);
+	}
+}
+
 void battery_poll_dynamic_info(void)
 {
 	struct batt_params batt;
@@ -262,6 +294,12 @@ void battery_poll_dynamic_info(void)
 	is_charging = ac_present && (batt.current >= 0);
 #ifdef CONFIG_CHARGER
 	charger_idle = charge_get_status()->state == ST_IDLE;
+#else /* !CONFIG_CHARGER */
+	/*
+	 * If charger task is not available, manually check for changes
+	 * in battery SoC to call appropriate hooks.
+	 */
+	check_battery_soc_change(batt);
 #endif
 
 	battery_set_dynamic_info(&batt, ac_present, is_charging, charger_idle);
