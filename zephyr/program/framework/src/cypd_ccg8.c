@@ -643,7 +643,7 @@ void enter_epr_mode(void)
 			if (battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED
 				&& get_active_charge_pd_port() == port_idx) {
 				/* Enable learn mode to discharge on AC */
-				board_discharge_on_ac(1);
+				charger_discharge_on_ac(1);
 
 				/* Set input current to 0mA */
 				charger_set_input_current_limit(0, 0);
@@ -697,7 +697,7 @@ void exit_epr_mode(void)
 				(battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED)
 				&& get_active_charge_pd_port() == port_idx) {
 				/* Enable learn mode to discharge on AC */
-				board_discharge_on_ac(1);
+				charger_discharge_on_ac(1);
 
 				/* Set input current to 0mA */
 				charger_set_input_current_limit(0, 0);

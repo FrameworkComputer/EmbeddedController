@@ -1325,7 +1325,7 @@ void cypd_update_port_state(int controller, int port)
 	    !(epr_progress_status() & ~EPR_PROCESS_MASK)) {
 
 		if (get_active_charge_pd_port() == port_idx) {
-			board_discharge_on_ac(0);
+			charger_discharge_on_ac(0);
 
 #ifdef CONFIG_CHARGER_HAS_VOLTAGE_REGULATOR
 #ifdef CONFIG_BOARD_LOTUS
