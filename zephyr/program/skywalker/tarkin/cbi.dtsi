@@ -23,5 +23,26 @@
                 		default;
 			};
 		};
+
+		kb_vol_up {
+			enum-name = "FW_KB_VOL_UP";
+			start = <2>;
+			size = <2>;
+			kb_vol_up_0 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_VOL_UP_DEFAULT";
+				value = <0>;
+			};
+			kb_vol_up_1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_VOL_UP_T13";
+				value = <1>;
+			};
+			kb_vol_up_2 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_VOL_UP_T15";
+				value = <2>;
+			};
+		};
 	};
 };

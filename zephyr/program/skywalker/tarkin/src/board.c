@@ -4,13 +4,18 @@
  */
 
 #include "chipset.h"
+#include "cros_cbi.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
+#include "keyboard_scan.h"
 #include "timer.h"
 
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/logging/log.h>
 
 #include <ap_power/ap_power.h>
+
+LOG_MODULE_REGISTER(board_init, LOG_LEVEL_ERR);
 
 #define INT_RECHECK_US 5000
 
@@ -78,3 +83,42 @@ static void board_setup_init()
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_jd1));
 }
 DECLARE_HOOK(HOOK_INIT, board_setup_init, HOOK_PRIO_PRE_DEFAULT);
+
+/* Vol-up key matrix for T13 */
+#define VOL_UP_KEY_ROW_T13 3
+#define VOL_UP_KEY_COL_T13 5
+
+/* Vol-up key matrix for T15 */
+#define VOL_UP_KEY_ROW_T15 0
+#define VOL_UP_KEY_COL_T15 12
+
+static void kb_vol_up_init(void)
+{
+	int ret;
+	uint32_t val;
+
+	ret = cros_cbi_get_fw_config(FW_KB_VOL_UP, &val);
+	if (ret != 0) {
+		LOG_ERR("Error retrieving CBI FW_CONFIG field %d",
+			FW_KB_VOL_UP);
+		return;
+	}
+
+	switch (val) {
+	case FW_KB_VOL_UP_DEFAULT:
+		set_vol_up_key(KEYBOARD_DEFAULT_ROW_VOL_UP,
+			       KEYBOARD_DEFAULT_COL_VOL_UP);
+		break;
+	case FW_KB_VOL_UP_T13:
+		set_vol_up_key(VOL_UP_KEY_ROW_T13, VOL_UP_KEY_COL_T13);
+		break;
+	case FW_KB_VOL_UP_T15:
+		set_vol_up_key(VOL_UP_KEY_ROW_T15, VOL_UP_KEY_COL_T15);
+		break;
+	default:
+		set_vol_up_key(KEYBOARD_DEFAULT_ROW_VOL_UP,
+			       KEYBOARD_DEFAULT_COL_VOL_UP);
+		break;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, kb_vol_up_init, HOOK_PRIO_PRE_DEFAULT);
