@@ -1,0 +1,51 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Bluey battery-specific configuration */
+
+#include "battery.h"
+#include "charge_state.h"
+#include "chipset.h"
+#include "common.h"
+#include "hooks.h"
+
+LOG_MODULE_REGISTER(bluey_battery, LOG_LEVEL_INF);
+
+void poll_battery_info(void);
+DECLARE_DEFERRED(poll_battery_info);
+
+/*
+ * Deferred task that periodically polls the battery for dynamic information
+ * (like SOC, voltage, current) while the chipset is in the HARD_OFF state.
+ * It re-arms itself every CHARGE_POLL_PERIOD_CHARGE until the chipset leaves
+ * this state.
+ */
+void poll_battery_info(void)
+{
+	/* Exit polling loop if chipset is no longer off */
+	if (!chipset_in_state(CHIPSET_STATE_HARD_OFF))
+		return;
+
+	/* Keep polling as long as the chipset is off */
+	hook_call_deferred(&poll_battery_info_data, CHARGE_POLL_PERIOD_CHARGE);
+
+	/* Update dynamic battery information if battery is present */
+	if (battery_is_present() == BP_YES)
+		battery_poll_dynamic_info();
+}
+
+/*
+ * Hook registered to run when the chipset enters the HARD_OFF state.
+ * It ensures an immediate battery SOC check and kicks off the periodic
+ * polling task.
+ */
+void board_chipset_hard_off(void)
+{
+	/* Force a check for battery SOC change upon entering HARD_OFF */
+	hook_notify(HOOK_BATTERY_SOC_CHANGE);
+	/* Start the periodic polling loop */
+	hook_call_deferred(&poll_battery_info_data, CHARGE_POLL_PERIOD_CHARGE);
+}
+DECLARE_HOOK(HOOK_CHIPSET_HARD_OFF, board_chipset_hard_off, HOOK_PRIO_DEFAULT);
