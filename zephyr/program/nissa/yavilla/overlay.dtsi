@@ -21,6 +21,9 @@
 		default_battery: cosmx {
 			compatible = "cosmx,gg02047xl", "battery-smart";
 		};
+		cosmx_333-ac-0b-a {
+			compatible = "cosmx,333-ac-0b-a", "battery-smart";
+		};
 		dynapack_byd_gg02047xl {
 			compatible = "dynapack,byd_gg02047xl", "battery-smart";
 		};
