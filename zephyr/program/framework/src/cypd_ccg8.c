@@ -547,7 +547,7 @@ static void buck_ready_for_epr(void)
 	int mode = is_enter_epr ? LEVEL_BUCK_ENTER_EPR : LEVEL_BUCK_EXIT_EPR;
 
 	/* make sure enter EPR mode only process in S0 state */
-	if (is_enter_epr && (!chipset_in_state(CHIPSET_STATE_ON) ||
+	if (is_enter_epr && (!chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON) ||
 		!extpower_is_present())) {
 		CPRINTS("Enter EPR aborted: not in S0 or no power");
 		epr_buck_ctx.phase = BUCK_PHASE_IDLE;
