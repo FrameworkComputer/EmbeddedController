@@ -2361,6 +2361,10 @@ static enum smf_state_result st_task_wait_run(void *o)
 		offset = 1;
 		len = sizeof(union cable_property_t);
 		break;
+	case UCSI_GET_CURRENT_CAM:
+		offset = 1;
+		len = sizeof(uint32_t);
+		break;
 	case UCSI_GET_ALTERNATE_MODES:
 	case UCSI_GET_ERROR_STATUS:
 		offset = 2;

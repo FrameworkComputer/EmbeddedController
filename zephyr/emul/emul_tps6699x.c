@@ -315,6 +315,15 @@ tps699x_emul_get_pd_message(struct tps6699x_emul_pdc_data *data,
 	}
 }
 
+static void tps699x_emul_get_current_cam(struct tps6699x_emul_pdc_data *data)
+{
+	data->response.result = TASK_COMPLETED_SUCCESSFULLY;
+	data->response.data.current_cam = data->current_cam;
+
+	memcpy(data->reg_val[REG_DATA_FOR_CMD1], &data->response,
+	       sizeof(data->response));
+}
+
 static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
 				      uint8_t *data_reg)
 {
@@ -385,6 +394,9 @@ static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
 	case UCSI_GET_PD_MESSAGE:
 		tps699x_emul_get_pd_message(
 			data, (union get_pd_message_t *)&data_reg[2]);
+		break;
+	case UCSI_GET_CURRENT_CAM:
+		tps699x_emul_get_current_cam(data);
 		break;
 	default:
 		LOG_WRN("tps6699x_emul: Unimplemented UCSI command %#04x", cmd);
@@ -1499,6 +1511,15 @@ static int emul_tps6699x_set_revision(const struct emul *target, uint32_t rmdo)
 	return 0;
 }
 
+static int emul_tps6699x_set_current_cam(const struct emul *target,
+					 uint32_t current_cam)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+	data->current_cam = current_cam;
+	return 0;
+}
+
 static DEVICE_API(emul_pdc, emul_tps6699x_api) = {
 	.reset = emul_tps6699x_reset,
 	.set_response_delay = emul_tps6699x_set_response_delay,
@@ -1536,6 +1557,7 @@ static DEVICE_API(emul_pdc, emul_tps6699x_api) = {
 	.get_autoneg_sink = emul_tps6699x_get_autoneg_sink,
 	.set_identity = emul_tps6699x_set_identity,
 	.set_revision = emul_tps6699x_set_revision,
+	.set_current_cam = emul_tps6699x_set_current_cam,
 };
 
 /* clang-format off */

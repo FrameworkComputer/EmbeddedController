@@ -66,6 +66,7 @@ struct tps6699x_response {
 		struct capability_t capability;
 		union connector_capability_t connector_capability;
 		union cable_property_t cable_property;
+		uint32_t current_cam;
 	} data;
 } __packed;
 
@@ -95,6 +96,7 @@ struct tps6699x_emul_pdc_data {
 	bool frs_configured;
 	uint32_t rmdo;
 	uint32_t identity[PDC_DISC_IDENTITY_VDO_COUNT];
+	uint32_t current_cam;
 
 	struct tps6699x_response response;
 
