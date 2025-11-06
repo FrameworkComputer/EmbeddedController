@@ -28,7 +28,7 @@ jobs:
       matrix:
         platform: [
           # Starting with 2.05, tulip is released from fwk-tulip-29169
-          { name: tulip, folder: lotus, ver: "3.0.3", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
+          { name: tulip, folder: lotus, ver: "3.0.4", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           # Starting with 4.00, lotus is released from fwk-tulip-29169
           { name: lotus, folder: lotus, ver: "4.0.1", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           # Just for reference, not releasing from this branch
