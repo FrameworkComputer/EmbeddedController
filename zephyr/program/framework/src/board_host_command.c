@@ -460,6 +460,25 @@ static enum ec_status privacy_switches_check(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_PRIVACY_SWITCHES_CHECK_MODE, privacy_switches_check, EC_VER_MASK(0));
 
+static enum ec_status power_on_ac_attach_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_power_on_ac_attach *p = args->params;
+	int enable = p->enable;
+	int status;
+
+	status = flash_storage_get(FLASH_FLAGS_ACPOWERON);
+
+	/* Update the flash if status changes */
+	if (enable != status) {
+		/* Store the status in EC ROM and restore when EC power on */
+		flash_storage_update(FLASH_FLAGS_ACPOWERON, enable);
+		flash_storage_commit();
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_POWER_ON_AC_ATTACH, power_on_ac_attach_control, EC_VER_MASK(0));
+
 /*******************************************************************************/
 /*                       EC console command for Project                        */
 /*******************************************************************************/

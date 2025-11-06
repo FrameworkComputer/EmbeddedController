@@ -68,14 +68,11 @@ int bios_function_status(uint16_t type, uint16_t addr, uint8_t flag)
  */
 int ac_boot_status(void)
 {
-	return bios_function_status(TYPE_MEMMAP, EC_CUSTOMIZED_MEMMAP_BIOS_SETUP_FUNC,
-		EC_AC_ATTACH_BOOT);
+	return bios_function_status(TYPE_FLASH, FLASH_FLAGS_ACPOWERON, 0);
 }
 
 void bios_function_detect(void)
 {
-	flash_storage_update(FLASH_FLAGS_ACPOWERON, ac_boot_status());
-
 	flash_storage_update(FLASH_FLAGS_STANDALONE, get_standalone_mode() ? 1 : 0);
 #ifdef CONFIG_BOARD_LOTUS
 	flash_storage_update(FLASH_FLAGS_INPUT_MODULE_POWER, get_detect_mode());
@@ -234,10 +231,6 @@ void chassis_interrupt_handler(enum gpio_signal signal)
 
 static void bios_function_init(void)
 {
-	/* restore the bios setup menu setting */
-	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_BIOS_SETUP_FUNC) =
-		flash_storage_get(FLASH_FLAGS_ACPOWERON);
-
 	if (flash_storage_get(FLASH_FLAGS_STANDALONE))
 		set_standalone_mode(1);
 #ifdef CONFIG_BOARD_LOTUS
