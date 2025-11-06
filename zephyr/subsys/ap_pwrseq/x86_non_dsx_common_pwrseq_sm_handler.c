@@ -945,6 +945,13 @@ static int x86_non_dsx_s3_run(void *data)
 
 AP_POWER_ARCH_STATE_DEFINE(S3, NULL, x86_non_dsx_s3_run, NULL);
 
+static int x86_non_dsx_s0_entry(void *data)
+{
+	disable_sleep(SLEEP_MASK_AP_RUN);
+
+	return 0;
+}
+
 static int x86_non_dsx_s0_run(void *data)
 {
 	if (signals_valid_and_on(IN_PCH_SLP_S3)) {
@@ -962,7 +969,15 @@ static int x86_non_dsx_s0_run(void *data)
 	return 0;
 }
 
-AP_POWER_ARCH_STATE_DEFINE(S0, NULL, x86_non_dsx_s0_run, NULL);
+static int x86_non_dsx_s0_exit(void *data)
+{
+	enable_sleep(SLEEP_MASK_AP_RUN);
+
+	return 0;
+}
+
+AP_POWER_ARCH_STATE_DEFINE(S0, x86_non_dsx_s0_entry, x86_non_dsx_s0_run,
+			   x86_non_dsx_s0_exit);
 #endif /* CONFIG_AP_PWRSEQ_DRIVER */
 
 #ifdef CONFIG_AP_PWRSEQ_DEBUG_MODE_COMMAND
