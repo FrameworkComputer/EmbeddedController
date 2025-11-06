@@ -81,6 +81,20 @@
 			sensor = <&cpu_f75303>;
 		};
 	};
+
+	led-colors {
+		compatible = "cros-ec,fwk-led-policy";
+		power-state-s5 {
+			chipset-state = "POWER_S5";
+
+			power_led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+	};
 };
 
 &i2c3_0 {
