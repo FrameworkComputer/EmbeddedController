@@ -55,14 +55,11 @@ int bios_function_status(uint16_t type, uint16_t addr, uint8_t flag)
  */
 int ac_boot_status(void)
 {
-	return bios_function_status(TYPE_MEMMAP, EC_CUSTOMIZED_MEMMAP_BIOS_SETUP_FUNC,
-		EC_AC_ATTACH_BOOT);
+	return bios_function_status(TYPE_FLASH, FLASH_FLAGS_ACPOWERON, 0);
 }
 
 void bios_function_detect(void)
 {
-	flash_storage_update(FLASH_FLAGS_ACPOWERON, ac_boot_status());
-
 #ifndef CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
 	flash_storage_update(FLASH_FLAGS_STANDALONE, get_standalone_mode() ? 1 : 0);
 #endif
@@ -117,10 +114,6 @@ void board_power_button_interrupt(enum gpio_signal signal)
 
 static void bios_function_init(void)
 {
-	/* restore the bios setup menu setting */
-	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_BIOS_SETUP_FUNC) =
-		flash_storage_get(FLASH_FLAGS_ACPOWERON);
-
 #ifndef CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
 	if (flash_storage_get(FLASH_FLAGS_STANDALONE))
 		set_standalone_mode(1);

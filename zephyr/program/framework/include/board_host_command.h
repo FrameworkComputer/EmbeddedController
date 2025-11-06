@@ -619,4 +619,14 @@ struct ec_response_wake_on_lan_control {
 	uint8_t enable;
 } __ec_align1;
 
+/*****************************************************************************/
+/*
+ * This command uses to control the Power on AC attach enable/disable
+ */
+#define EC_CMD_POWER_ON_AC_ATTACH 0x3E2A
+
+struct ec_params_power_on_ac_attach {
+	uint8_t enable;
+} __ec_align1;
+
 #endif /* __BOARD_HOST_COMMAND_H */
