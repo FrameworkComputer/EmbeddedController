@@ -210,5 +210,9 @@
 		gpio_lcd_backoff: lcd_backoff {
 			gpios = <&gpioa 2 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
 		};
+		/* EC_SOC_REC_SWITCH_ODL */
+		gpio_ec_soc_rec_switch_odl: ec_soc_rec_switch_odl {
+			gpios = <&gpioh 8 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
 	};
 };
