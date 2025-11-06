@@ -9,12 +9,19 @@ config FP_FPC_BEP_ALGORITHM
 	  Enable FPC BEP matching algorithm. To work properly, FPC private
 	  library is required.
 
-config FP_ELAN_ELAN80SG_ALGORITHM
-	  bool "ELAN ELAN80SG matching algorithm"
-	  default y if FINGERPRINT_SENSOR_ELAN80SG
+config FP_ELAN_ELAN80SERIES_ALGORITHM
+	  bool
 	  help
-	    Enable ELAN ELAN80SG matching algorithm. To work properly, ELAN
+	    Enable ELAN ELAN80SERIES matching algorithm. To work properly, ELAN
 		private library is required.
+
+config FP_ELAN_ELAN80SG_ALGORITHM
+      bool "ELAN ELAN80SG matching algorithm"
+      default y if FINGERPRINT_SENSOR_ELAN80SG
+      select FP_ELAN_ELAN80SERIES_ALGORITHM
+      help
+        Enable ELAN ELAN80SG matching algorithm. To work properly, ELAN
+        private library is required.
 
 config FP_FPC_LIBFP_ALGORITHM
 	bool "FPC LIBFP matching algorithm"
@@ -75,10 +82,10 @@ config HAVE_EGIS630_PRIVATE_ALGORITHM
 	help
 	  If enabled, it indicates that EGIS630 private algorithm is present.
 
-config HAVE_ELAN80SG_PRIVATE_ALGORITHM
+config HAVE_ELAN80SERIES_PRIVATE_ALGORITHM
 	bool
 	help
-	  If enabled, it indicates that ELAN80SG private algorithm is present.
+	  If enabled, it indicates that ELAN80SERIES private algorithm is present.
 
 config LIBFP_PRIVATE_DRIVER_HEAP_SIZE
 	int "Size of heap for FPC1145 driver"
