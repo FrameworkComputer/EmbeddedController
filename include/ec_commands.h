@@ -1776,6 +1776,10 @@ enum ec_feature_code {
 	 * The EC supports PoE.
 	 */
 	EC_FEATURE_POE = 56,
+	/*
+	 * The EC supports a hybrid boost charger
+	 */
+	EC_FEATURE_CHARGER_HYBRID_POWER_BOOST = 57,
 };
 
 #define EC_FEATURE_MASK_0(event_code) BIT(event_code % 32)
