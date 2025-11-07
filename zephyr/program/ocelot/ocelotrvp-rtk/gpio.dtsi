@@ -1,0 +1,22 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ / {
+	aliases {
+		gpio-wp = &gpio_ec_wp_odl;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		/* The legacy system code requires GPIO_ENTERING_RW symbol */
+		gpio_ec_entering_rw: ec_entering_rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		gpio_ec_wp_odl: ec_wp_odl { /* SPI_WP_H1 */
+			gpios = <RTS5912_GPIO030 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+	};
+};

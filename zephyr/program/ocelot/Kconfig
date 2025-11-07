@@ -23,6 +23,13 @@ config BOARD_OCELOTRVP_MCHP
 	  This board is for use with the Intel RVP using the
 	  on board EC.
 
+config BOARD_OCELOTRVP_RTK
+	bool "Google Ocelot Realtek (rtk5915) add-in card for the RVP"
+	help
+	  Build Realtek rtk5915 based Ocelot add-in card.
+	  This board is for use with the Intel RVP using the
+	  MECC 2.1 connector.
+
 config BOARD_OJAL
 	bool "Google Ocelot with Realtek (rtk5915) EC"
 	help
