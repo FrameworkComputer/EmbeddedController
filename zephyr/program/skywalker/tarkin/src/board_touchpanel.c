@@ -41,7 +41,7 @@ static void board_tp_startup(void)
 	boot_flags = true;
 	hook_call_deferred(&set_tp_vtsp_en_pin_data, 0);
 	hook_call_deferred(&set_tp_rst_pin_data, 10 * USEC_PER_MSEC);
-	hook_call_deferred(&set_tp_en_pin_data, 80 * USEC_PER_MSEC);
+	hook_call_deferred(&set_tp_en_pin_data, 3080 * USEC_PER_MSEC);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_tp_startup, HOOK_PRIO_DEFAULT);
 
