@@ -486,10 +486,10 @@ ZTEST(power_seq, test_power_chipset_init)
 	power_chipset_init_subtest(POWER_S0, false, EC_RESET_FLAG_AP_OFF,
 				   POWER_G3, __LINE__);
 
-	/* Boot from hibernate => stay at G3 */
+	/* AC insert from hibernate => boot to S0 */
 	gpio_emul_input_set(ac_present->port, ac_present->pin, 1);
 	power_chipset_init_subtest(POWER_G3, false, EC_RESET_FLAG_HIBERNATE,
-				   POWER_G3, __LINE__);
+				   POWER_S0, __LINE__);
 
 	/* AP_IDLE => keep current state */
 	power_chipset_init_subtest(POWER_G3, false, EC_RESET_FLAG_AP_IDLE,
