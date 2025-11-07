@@ -25,7 +25,7 @@
 		/* I2C PD pins*/
 		/* I2C PCH pins*/
 
-		all-sys-pwrgd-3v3-i {
+		all_sys_pwrgd_i: all-sys-pwrgd-3v3-i {
 			gpios = <RTS5912_GPIO099 GPIO_INPUT>;
 		};
 		c-ec-pdb-ctrl-1v8-od {

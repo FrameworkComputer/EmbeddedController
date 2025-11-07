@@ -10,3 +10,18 @@
 /* ocelotrvp-rtk program common DTS includes */
 
 #include "gpio.dtsi"
+#include "power_signals.dtsi"
+#include "../rvp_interrupts.dtsi"
+
+&espi0 {
+	status = "okay";
+};
+
+&sha0 {
+	status = "okay";
+};
+
+/delete-node/ &int_volume_down;
+/delete-node/ &int_volume_up;
+/delete-node/ &int_lid_open;
+/delete-node/ &int_dc_jack_present;

@@ -1,0 +1,58 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "../power_signals.dtsi"
+
+&pwr_en_pp3300_a {
+        /* EC_DS3 net. This connects to the PRIM_VR_EN signal and
+         * both the EN1 and EN2 pins on the RT6585 LDO. */
+	gpios = <RTS5912_GPIO053 GPIO_ACTIVE_HIGH>;
+};
+&pwr_rsmrst_pwrgd {
+        /* RSMRST_PWRGD_N_R net  */
+	gpios = <RTS5912_GPIO104 GPIO_ACTIVE_HIGH>;
+};
+&pwr_ec_pch_rsmrst {
+        /* RM_RSMST_N_R net */
+	gpios = <RTS5912_GPIO111 GPIO_ACTIVE_LOW>;
+};
+&pwr_slp_s0 {
+        /* PCH_SLP_S0_N_R net */
+	gpios = <RTS5912_GPIO125 GPIO_ACTIVE_LOW>;
+};
+&pwr_pch_pwrok {
+        /* PCH_PWROK_EC_R net */
+	gpios = <RTS5912_GPIO127 GPIO_PUSH_PULL>;
+};
+&pwr_all_sys_pwrgd {
+        /* ALL_SYS_PWRGD_R net */
+	gpios = <RTS5912_GPIO099 GPIO_ACTIVE_HIGH>;
+};
+&pwr_sys_rst {
+	/* TODO: Check*/
+        gpios = <RTS5912_GPIO103 (GPIO_ACTIVE_LOW|GPIO_OPEN_DRAIN)>;
+};
+
+&gpio_en_pp3300 {
+	no-auto-init;
+};
+&gpio_ec_pch_wake_odl {
+	no-auto-init;
+};
+&gpio_rsmrst_pwrgd {
+	no-auto-init;
+};
+&gpio_ec_pch_rsmrst {
+	no-auto-init;
+};
+&gpio_slp_s0 {
+	no-auto-init;
+};
+&gpio_pch_pwrok_ec {
+	no-auto-init;
+};
+&all_sys_pwrgd_i {
+	no-auto-init;
+};
