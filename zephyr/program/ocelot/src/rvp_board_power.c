@@ -23,6 +23,10 @@ void board_ap_power_force_shutdown(void)
 {
 	int timeout_ms = X86_NON_DSX_FORCE_SHUTDOWN_TO_MS;
 
+	/* De-assert PCH_PWROK and EC_PCH_SYS_PWROK */
+	power_signal_set(PWR_PCH_PWROK, 0);
+	power_signal_set(PWR_EC_PCH_SYS_PWROK, 0);
+
 	/* Turn off PCH_RMSRST to meet tPCH12 */
 	power_signal_set(PWR_EC_PCH_RSMRST, 1);
 
