@@ -23,6 +23,7 @@ properties:
       - "atl,gb-s30-586075-020h"
       - "atl,gb-s30-636076-010h"
       - "atl,l25n3pg1"
+      - "atl,l25n4pk5"
       - "bms-gf,cr50"
       - "byd,byd"
       - "byd,byd-1"
