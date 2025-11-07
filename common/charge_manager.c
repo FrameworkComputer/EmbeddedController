@@ -160,6 +160,7 @@ static int override_port = OVERRIDE_OFF;
 
 static int delayed_override_port = OVERRIDE_OFF;
 static timestamp_t delayed_override_deadline;
+static bool charger_insufficient_adapter_found = false;
 
 /* Source-out Rp values for TCPMv1 */
 __maybe_unused static uint8_t source_port_rp[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -831,6 +832,7 @@ static void charge_manager_get_best_port(int *new_port, int *new_supplier)
 					 EC_SUCCESS;
 	}
 
+	charger_insufficient_adapter_found = false;
 	/*
 	 * Charge supplier selection logic:
 	 * 1. Prefer DPS charge port.
@@ -863,6 +865,7 @@ static void charge_manager_get_best_port(int *new_port, int *new_supplier)
 			    !is_voltage_sufficient(
 				    &available_charge[sup_idx][port_idx],
 				    min_required_mv)) {
+				charger_insufficient_adapter_found = true;
 				continue;
 			}
 
@@ -1583,6 +1586,12 @@ bool charge_manager_has_active_charge_port(void)
 {
 	return charge_manager_get_active_charge_port_no_lock() !=
 	       CHARGE_PORT_NONE;
+}
+
+bool charge_manager_has_insufficient_adapter(void)
+{
+	return !charge_manager_has_active_charge_port() &&
+	       charger_insufficient_adapter_found;
 }
 
 int charge_manager_get_selected_charge_port(void)

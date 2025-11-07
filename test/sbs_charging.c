@@ -41,6 +41,11 @@ int charge_manager_get_charger_voltage(void)
 	return 25000;
 }
 
+bool charge_manager_has_insufficient_adapter(void)
+{
+	return false;
+}
+
 /* The simulation doesn't really hibernate, so we must reset this ourselves */
 extern timestamp_t shutdown_target_time;
 bool battery_sustainer_enabled(void);
