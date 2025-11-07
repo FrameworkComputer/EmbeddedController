@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <zephyr/dt-bindings/gpio/realtek-gpio.h>
+
  / {
 	aliases {
 		gpio-wp = &gpio_ec_wp_odl;
@@ -10,13 +12,99 @@
 
 	named-gpios {
 		compatible = "named-gpios";
+		smc-wake-sci-n-3v3-od {
+			gpios = <RTS5912_GPIO000 (GPIO_OUTPUT | GPIO_ODR_HIGH)>;
+		};
+		std-adpt-cntrl-gpio-3v3-pp {
+			gpios = <RTS5912_GPIO001 GPIO_OUTPUT>;
+		};
 
+		/* I3C pins*/
+		/* I2C SMB pins*/
+		/* I2C ISH pins*/
+		/* I2C PD pins*/
+		/* I2C PCH pins*/
+
+		all-sys-pwrgd-3v3-i {
+			gpios = <RTS5912_GPIO099 GPIO_INPUT>;
+		};
+		c-ec-pdb-ctrl-1v8-od {
+			gpios = <RTS5912_GPIO096 GPIO_INPUT>;
+		};
+		gpio_ec_pch_rsmrst: pm-rsmrst-n-1v8-pp {
+			gpios = <RTS5912_GPIO111 GPIO_OUTPUT>;
+		};
+		sys-pwrok-ec-1v8-od {
+			gpios = <RTS5912_GPIO109 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
+		};
+		pm-pwrbtn-n-1v8-od {
+			gpios = <RTS5912_GPIO124 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		prochot-ec-n-3v3-od {
+			gpios = <RTS5912_GPIO122 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
+		};
+		cse_early_rec_sw: c-mecc-cse-early-sw-1v8-od {
+			gpios = <RTS5912_GPIO015 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
+		};
+		gpio_slp_s0: pch-slp-s0-n-1v8-i {
+			gpios = <RTS5912_GPIO125 GPIO_INPUT>;
+		};
+		bat-det-3v3-i {
+			gpios = <RTS5912_GPIO126 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		gpio_voldn: vol-dn-ec-3v3-i {
+			gpios = <RTS5912_GPIO029 GPIO_INPUT>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		};
+		cpu-c10-gate-1v8-i {
+			gpios = <RTS5912_GPIO031 GPIO_INPUT>;
+		};
+		gpio_en_pp3300: ec-ds3-3v3-pp {
+			gpios = <RTS5912_GPIO053 GPIO_OUTPUT>;
+		};
+		gpio_volup: volume-up-3v3-i {
+			gpios = <RTS5912_GPIO083 GPIO_INPUT>;
+			enum-name = "GPIO_VOLUME_UP_L";
+		};
+		gpio_lid: smc-lid-3v3-i {
+			gpios = <RTS5912_GPIO092 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		gpio_pwrbtn: pwrbtn-ec-in-n-3v3-i {
+			gpios = <RTS5912_GPIO115 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_acok: bc-acok-3v3-i {
+			gpios = <RTS5912_GPIO112 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_ec_pch_wake_odl: ec-pg3-wake-3v3-pp {
+			gpios = <RTS5912_GPIO131 GPIO_OUTPUT>;
+		};
+		gpio_rsmrst_pwrgd: rsmrst-pwrgd-n-1v8-i {
+			gpios = <RTS5912_GPIO104 GPIO_INPUT>;
+		};
+		gpio_tablet_mode_l: ec-slatemode-hallout-snsr-1v8-i {
+			gpios = <RTS5912_GPIO078 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
+		};
+		gpio_dc_jack_present: std_adp_prsnt: std-adp-prsnt-3v3-i {
+			gpios = <RTS5912_GPIO093 GPIO_INPUT>;
+		};
+		gpio_pch_pwrok_ec: pch-pwrok-ec-1v8-od {
+			gpios = <RTS5912_GPIO127 GPIO_INPUT>;
+		};
+		c-en-pp5000-typea-3v3-pp {
+			gpios = <RTS5912_GPIO123 GPIO_INPUT>;
+		};
+		gpio_ec_wp_odl: ec_wp_odl { /* SPI_WP_H1 */
+			gpios = <RTS5912_GPIO030 (GPIO_INPUT | GPIO_VOLTAGE_1P8 | GPIO_ACTIVE_LOW)>;
+		};
 		/* The legacy system code requires GPIO_ENTERING_RW symbol */
 		gpio_ec_entering_rw: ec_entering_rw {
 			enum-name = "GPIO_ENTERING_RW";
-		};
-		gpio_ec_wp_odl: ec_wp_odl { /* SPI_WP_H1 */
-			gpios = <RTS5912_GPIO030 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 	};
 };
