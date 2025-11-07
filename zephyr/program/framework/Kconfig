@@ -154,6 +154,21 @@ config PD_COMMON_VBUS_CONTROL
 		Enable Cypress CCG common vbus control, if not enable please modify
 		board_set_active_charge_port at board for customize vbus control.
 
+# CCG vendor-specific register
+config CCG_DPM_CMD_REG
+	hex "CCG DPM Command Register"
+	default 0x0040 if CHIPSET_AMD
+	default 0x004B if CHIPSET_INTEL
+
+config CCG_MUX_CFG_REG
+	hex "CCG MUX Config Register"
+	default 0x0041 if CHIPSET_AMD
+	default 0x004D if CHIPSET_INTEL
+
+config CCG_DEINIT_PORT_REG
+	hex "CCG De-init Port Register"
+	default 0x0042 if CHIPSET_AMD
+	default 0x004E if CHIPSET_INTEL
 
 config PLATFORM_SIMPLE_VERSION_SHIFT_IDX
 	int "Shift idx for return commit id to BIOS"
