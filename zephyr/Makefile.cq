@@ -185,3 +185,17 @@ $(BUILD)/zephyr/%_rpt: $(BUILD)/zephyr/%_final.info
 	/usr/bin/genhtml --branch-coverage -q -o $@ \
 	--ignore-errors inconsistent,inconsistent --ignore-errors unused \
 	-t '$* ec code only' -s $^
+
+# Try not to assume too much about optional tools and prefixes
+CCACHE:=$(shell which ccache 2>/dev/null)
+
+.PHONY: clobber
+clobber:
+	-rm -rf $(PLATFORM_EC)/build $(PLATFORM_EC)/TAGS $(PLATFORM_EC)/cscope.files $(PLATFORM_EC)/cscope.out
+	@# Check if CCACHE variable is non-empty
+	@if [ -n "$(CCACHE)" ]; then \
+		echo "Clearing ccache..."; \
+		$(CCACHE) -c; \
+	else \
+		echo "ccache not found, skipping ccache clear."; \
+	fi
