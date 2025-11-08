@@ -499,7 +499,9 @@ def main(argv):
             f"with strategy option '{opts.strategy_option if opts.strategy_option else ''}'"
         ),
     )
-    cros_main = opts.remote_prefix + "/" + "main"
+    cros_main = (
+        opts.remote_prefix + "/" + ("main" if opts.zephyr else "ec-legacy")
+    )
     strategy = [
         opts.merge_strategy,
     ]
