@@ -55,11 +55,15 @@ i2c_port_pd2: &i2c_5 {
 
 #include "../rvp_i2c.dtsi"
 #include "../rvp_imvp.dtsi"
+#include <ite/it8801-common-cfg.dtsi>
 
 &imvp_rt3645 {
 	enable-gpios = <RTS5912_GPIO053 GPIO_ACTIVE_HIGH>;
 };
 
+&it8801_mfd {
+	irq-gpios = <RTS5912_GPIO085 GPIO_ACTIVE_LOW>;
+};
+
 /delete-node/ &i2c_named_i2c_port_ish;
 /delete-node/ &i2c_port_ish;
-/delete-node/ &it8801_mfd;

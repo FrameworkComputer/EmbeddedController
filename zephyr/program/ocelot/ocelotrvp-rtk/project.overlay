@@ -13,6 +13,7 @@
 #include "i2c.dtsi"
 #include "power_signals.dtsi"
 #include "../rvp_interrupts.dtsi"
+#include "../rvp_ioex_gpio.dtsi"
 
 &espi0 {
 	status = "okay";
