@@ -33,6 +33,10 @@ zephyr_library_sources_ifdef(CONFIG_PD_CHIP_CCG8
 	"src/cypd_ccg8.c")
 zephyr_library_sources_ifdef(CONFIG_PD_CHIP_CCG6
 	"src/cypd_ccg6.c")
+zephyr_library_sources_ifdef(CONFIG_CHIPSET_AMD
+	"src/cypd_amd.c")
+zephyr_library_sources_ifdef(CONFIG_CHIPSET_INTEL
+	"src/cypd_intel.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TOUCHPAD_CUSTOMIZED
 	"src/ps2mouse.c")

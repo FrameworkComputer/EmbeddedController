@@ -235,8 +235,8 @@
 /************************************************/
 #ifdef CONFIG_PD_CHIP_CCG6
 #define CCG6_AC_AT_PORT				0xC4
-#define CCG_ICL_CTRL_REG	0x0040
 #endif
+#define CCG_ICL_CTRL_REG	0x0040
 
 #define BSDO_BATT_IS_PRESENT		BIT(1)
 #define BSDO_BATT_IS_DISCHARGING	BIT(2)
