@@ -7,7 +7,7 @@
 #include "common.h"
 #include "panic.h"
 #include "panic_utils.h"
-#include "system_safe_mode.h"
+#include "task.h"
 
 #include <zephyr/arch/cpu.h>
 #include <zephyr/fatal.h>
@@ -190,20 +190,6 @@ void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *esf)
 
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_CONSOLE_CMD_CRASH_NESTED))
 		command_crash_nested_handler();
-
-	/* Start system safe mode if possible */
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_SYSTEM_SAFE_MODE)) {
-		if (reason != K_ERR_KERNEL_PANIC &&
-		    start_system_safe_mode() == EC_SUCCESS) {
-			/* Returning from k_sys_fatal_error_handler will cause
-			 * the faulting thread to be aborted and resume the
-			 * kernel
-			 */
-			pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_STARTED;
-			return;
-		}
-		pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_FAIL_PRECONDITIONS;
-	}
 
 	/*
 	 * Reboot immediately, don't wait for watchdog, otherwise

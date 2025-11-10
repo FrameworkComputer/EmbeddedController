@@ -219,7 +219,6 @@ common-$(HAS_TASK_PDCMD)+=host_command_pd.o
 common-$(HAS_TASK_KEYSCAN)+=keyboard_scan.o
 common-$(HAS_TASK_LIGHTBAR)+=lb_common.o lightbar.o
 common-$(HAS_TASK_MOTIONSENSE)+=motion_sense.o
-common-$(CONFIG_SYSTEM_SAFE_MODE)+=system_safe_mode.o
 common-$(CONFIG_HOST_COMMAND_MEMORY_DUMP)+=host_command_memory_dump.o
 common-$(CONFIG_PRESERVED_RING_BUF)+=preserved_ring_buf.o
 common-$(CONFIG_PANIC_LOG)+=panic_log.o

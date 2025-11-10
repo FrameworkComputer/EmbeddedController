@@ -11,7 +11,6 @@
 #include "panic.h"
 #include "printf.h"
 #include "system.h"
-#include "system_safe_mode.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
@@ -287,21 +286,6 @@ void panic_data_print(const struct panic_data *pdata)
 #endif
 }
 
-/*
- * Handle returning from the exception handler to task context.
- * The task has already been disabled, but may continue to run
- * until the next interrupt. Calling `task_disable_task` again
- * from the task context will force a task switch.
- */
-static void exception_return_handler(void)
-{
-	/* Force a task switch */
-	task_disable_task(task_get_current());
-	/* Something went wrong, just reboot */
-	panic_reboot();
-	__builtin_unreachable();
-}
-
 void __keep report_panic(void)
 {
 	/*
@@ -371,32 +355,6 @@ void __keep report_panic(void)
 
 	if (IS_ENABLED(CONFIG_CMD_CRASH_NESTED))
 		command_crash_nested_handler();
-
-	/* Start safe mode if possible */
-	if (IS_ENABLED(CONFIG_SYSTEM_SAFE_MODE)) {
-		/* Only start safe mode if panic occurred in thread context */
-		if (!is_frame_in_handler_stack(
-			    pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]) &&
-		    !is_exception_from_handler_mode(
-			    pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]) &&
-		    start_system_safe_mode() == EC_SUCCESS) {
-			pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_STARTED;
-			/* If not in an interrupt context (e.g. software_panic),
-			 * the next highest priority task will immediately
-			 * execute when the current task is disabled on the
-			 * following line.
-			 */
-			task_disable_task(task_get_current());
-			/* Return from exception on process stack.
-			 * The scheduler will switch to a different task
-			 * on the next interrupt since the current task has
-			 * been disabled.
-			 */
-			cpu_return_from_exception_psp(exception_return_handler);
-			__builtin_unreachable();
-		}
-		pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_FAIL_PRECONDITIONS;
-	}
 
 	panic_reboot();
 }

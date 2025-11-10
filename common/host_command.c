@@ -16,7 +16,6 @@
 #include "printf.h"
 #include "shared_mem.h"
 #include "system.h"
-#include "system_safe_mode.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"

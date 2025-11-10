@@ -1839,18 +1839,6 @@
 #undef CONFIG_RO_PANIC_DATA_SIZE
 
 /*
- * When defined, it enables system safe mode. System safe mode allows the AP to
- * capture the EC state after a panic.
- */
-#undef CONFIG_SYSTEM_SAFE_MODE
-#define CONFIG_SYSTEM_SAFE_MODE_TIMEOUT_MSEC 4000
-/*
- * Prints the stack of the faulting task to the console buffer in system safe
- * mode.
- */
-#define CONFIG_SYSTEM_SAFE_MODE_PRINT_STACK
-
-/*
  * Enables fetching a memory dump using host commands. This is useful when
  * debugging panics. May not dump all memory, e.g. sensitive memory will
  * not be dumped.
