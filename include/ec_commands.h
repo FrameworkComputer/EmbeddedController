@@ -8403,6 +8403,7 @@ struct ec_params_fp_passthru {
  * @note This enum must remain ordered, if you add new values you must ensure
  * that FP_CAPTURE_TYPE_MAX is still the last one.
  */
+/* LINT.IfChange */
 enum fp_capture_type {
 	FP_CAPTURE_TYPE_INVALID = -1,
 	FP_CAPTURE_VENDOR_FORMAT = 0,
@@ -8416,6 +8417,9 @@ enum fp_capture_type {
 	FP_CAPTURE_RESET_TEST = 20,
 	FP_CAPTURE_TYPE_MAX,
 };
+/* LINT.ThenChange(/test/fpsensor_utils.cc,
+ * /zephyr/test/fingerprint/task/src/fpsensor_debug.cc)
+ */
 
 /* The maximum number of capture types in enum fp_capture_type */
 #define FP_MAX_CAPTURE_TYPES 9
