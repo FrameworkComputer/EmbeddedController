@@ -24,7 +24,7 @@
 };
 &pwr_pch_pwrok {
         /* PCH_PWROK_EC_R net */
-	gpios = <&gpio6 1 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
+	gpios = <&gpio6 1 GPIO_ACTIVE_HIGH>;
 };
 &pwr_all_sys_pwrgd {
         /* ALL_SYS_PWRGD_R net */
