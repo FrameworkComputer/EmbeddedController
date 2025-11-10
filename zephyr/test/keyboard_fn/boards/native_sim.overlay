@@ -1,0 +1,21 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_sim.dts>
+#include <dt-bindings/kbd.h>
+#include <zephyr/dt-bindings/input/keymap.h>
+
+/ {
+	fn_keys: fn-keys {
+		compatible = "cros-ec,fn-keys";
+
+		fn-rc = <KBD_RC(0, 1)>;
+		keymap = <
+			MATRIX_KEY(2, 3, KBD_SCANCODE_F1)
+			MATRIX_KEY(4, 5, KBD_SCANCODE_F2)
+			MATRIX_KEY(6, 7, KBD_SCANCODE_F3)
+		>;
+	};
+};
