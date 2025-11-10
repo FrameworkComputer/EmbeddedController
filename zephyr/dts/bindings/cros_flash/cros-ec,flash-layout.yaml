@@ -80,3 +80,8 @@ properties:
     description: >-
       Set the image size to use when preforming read and write to the region
       through drivers, in bytes.
+      Also used to specify the actual EC image size in cases where it
+      does not match the EC image flash region. For example, the nuvoton
+      NPCX9m7f uses a 320 KiB image due to code RAM limitations but uses
+      a corresponding 512 KiB flash region due to flash protection
+      limitations.

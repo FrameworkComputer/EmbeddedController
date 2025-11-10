@@ -115,6 +115,8 @@ config CROS_EC_RO_MEM_OFF
 config CROS_EC_RO_SIZE
 	hex "The size of the RO region."
 	default 0xb000 if ARCH_POSIX
+	default $(dt_node_int_prop_hex,/binman/wp-ro,image-size) \
+		if $(dt_node_has_prop,/binman/wp-ro,image-size)
 	default $(dt_node_int_prop_hex,/binman/wp-ro,size)
 	help
 		This will be used (along with SYSTEM_RO_MEM_OFF) to determine if the
