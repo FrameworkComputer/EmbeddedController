@@ -369,12 +369,6 @@ void dsp_service_hook_tablet_mode_change() {
   cros::dsp::service::driver.transport_.SetStatusBit(
       cros_dsp_comms_StatusFlag_STATUS_FLAG_TABLET_MODE, is_in_tablet_mode);
 }
-#ifdef CONFIG_PLATFORM_EC_DSP_REMOTE_TABLET_SWITCH
-extern "C" void dsp_service_gmr_tablet_switch_isr(enum gpio_signal signal) {
-  dsp_service_hook_tablet_mode_change();
-  gmr_tablet_switch_isr(signal);
-}
-#endif
 DECLARE_HOOK(HOOK_INIT, dsp_service_hook_tablet_mode_change, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_PLATFORM_EC_TABLET_MODE */
 

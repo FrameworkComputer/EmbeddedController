@@ -13,6 +13,10 @@
 #include "tablet_mode.h"
 #include "timer.h"
 
+#ifdef CONFIG_ZEPHYR
+#include "drivers/dsp_service.h"
+#endif
+
 #include <stdbool.h>
 #include <string.h>
 
@@ -200,6 +204,15 @@ void gmr_tablet_switch_isr_handler(void)
 		board_sensor_at_360();
 #else
 		!gpio_get_level(GPIO_TABLET_MODE_L);
+#endif
+
+#if defined(CONFIG_PLATFORM_EC_DSP_REMOTE_TABLET_SWITCH) && \
+	defined(CONFIG_PLATFORM_EC_DSP_SERVICE)
+	/*
+	 * If lid angle is calculated in ISH, then notify ISH about
+	 * the GMR sensor GPIO change.
+	 */
+	dsp_service_hook_tablet_mode_change();
 #endif
 
 	/*
