@@ -134,7 +134,7 @@
 
 	runtime-keys {
 		compatible = "cros-ec,runtime-keys";
-		left-alt-rc = <KBD_RC(6, 10)>;
+		left-alt-rc = <KBD_RC(6, 13)>;
 		right-alt-rc = <KBD_RC(0, 10)>;
 		h-rc = <KBD_RC(1, 6)>;
 		r-rc = <KBD_RC(7, 3)>;
