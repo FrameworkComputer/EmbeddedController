@@ -56,7 +56,6 @@ struct fpsensor_context global_context = {
 	.fp_events = 0,
 	.sensor_mode = 0,
 	.current_capture_type = FP_CAPTURE_TYPE_INVALID,
-	.current_frame_size = 0,
 	.fp_frame_size_cache = {},
 	.tpm_seed = { 0 },
 	.user_id = { 0 },
@@ -115,11 +114,7 @@ static void _fp_clear_context(void)
 {
 	fp_reset_context();
 	OPENSSL_cleanse(fp_buffer, sizeof(fp_buffer));
-	/*
-	 * Reset frame size and capture type, as they are correlated with
-	 * fp_buffer.
-	 */
-	global_context.current_frame_size = 0;
+	/* Reset capture type, as it is correlated with fp_buffer. */
 	global_context.current_capture_type = FP_CAPTURE_TYPE_INVALID;
 	for (uint16_t idx = 0; idx < FP_MAX_FINGER_COUNT; idx++)
 		fp_clear_finger_context(idx);

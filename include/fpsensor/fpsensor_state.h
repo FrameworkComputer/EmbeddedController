@@ -98,10 +98,6 @@ struct fpsensor_context {
 	 * most recent successful capture.
 	 */
 	enum fp_capture_type current_capture_type;
-	/** Size of the image frame captured from the fingerprint sensor in the
-	 * most recent successful capture, in bytes.
-	 */
-	uint32_t current_frame_size;
 	/** Map of the capture type to frame size. */
 	FpFrameSizeCache fp_frame_size_cache;
 	/** Part of the IKM used to derive encryption keys received from the

@@ -197,7 +197,6 @@ static void fp_process_finger(void)
 	timestamp_t t0 = get_time();
 	enum fp_capture_type capture_type =
 		FP_CAPTURE_TYPE(global_context.sensor_mode);
-	global_context.current_frame_size = 0;
 	global_context.current_capture_type = FP_CAPTURE_TYPE_INVALID;
 
 	CPRINTS("Capturing ...");
@@ -208,8 +207,6 @@ static void fp_process_finger(void)
 		return;
 	}
 
-	global_context.current_frame_size =
-		global_context.fp_frame_size_cache.get_frame_size(capture_type);
 	global_context.current_capture_type = capture_type;
 	uint32_t evt = EC_MKBP_FP_IMAGE_READY;
 
@@ -286,16 +283,10 @@ extern "C" void fp_task(void)
 			if (!is_finger_needed(mode)) {
 				enum fp_capture_type capture_type =
 					FP_CAPTURE_TYPE(mode);
-				global_context.current_frame_size = 0;
 				global_context.current_capture_type =
 					FP_CAPTURE_TYPE_INVALID;
 				if (!fp_acquire_image(fp_buffer,
 						      capture_type)) {
-					global_context.current_frame_size =
-						global_context
-							.fp_frame_size_cache
-							.get_frame_size(
-								capture_type);
 					global_context.current_capture_type =
 						capture_type;
 				}
@@ -479,12 +470,16 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 		if (skip_image_offset(global_context.current_capture_type))
 			offset += FP_SENSOR_IMAGE_OFFSET;
 
-		if (global_context.current_frame_size > sizeof(fp_buffer)) {
+		uint32_t current_frame_size =
+			global_context.fp_frame_size_cache.get_frame_size(
+				global_context.current_capture_type);
+
+		if (current_frame_size > sizeof(fp_buffer)) {
 			return EC_RES_INVALID_PARAM;
 		}
 
-		ret = validate_fp_buffer_offset(
-			global_context.current_frame_size, offset, size);
+		ret = validate_fp_buffer_offset(current_frame_size, offset,
+						size);
 		if (ret != EC_SUCCESS)
 			return EC_RES_INVALID_PARAM;
 
