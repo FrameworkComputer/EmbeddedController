@@ -344,6 +344,11 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "pen_pres_irq";
 		};
+		int_batt_pres_en: batt_pres_int{
+			irq-pin = <&gpio_ec_batt_pres_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "batt_pres_interrupt";
+		};
 	};
 
 	temp_vr_5v: vr_5v {
