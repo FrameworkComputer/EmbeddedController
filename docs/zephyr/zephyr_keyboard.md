@@ -237,6 +237,35 @@ int8_t board_vivaldi_keybd_idx(void)
 }
 ```
 
+### Fn keys
+
+The keyboard driver can generate an alternate key code for selected keys when a
+function (Fn) key is also pressed, this is configured using a `cros-ec,fn-keys`
+node.
+
+```
+#include <zephyr/dt-bindings/input/keymap.h>
+
+kbd {
+    fn-keys {
+        compatible = "cros-ec,fn-keys";
+
+        fn-rc = <KBD_RC(2, 0)>;
+        keymap = <
+          MATRIX_KEY(1, 1, KBD_SCANCODE_F1)
+          MATRIX_KEY(0, 2, KBD_SCANCODE_F2)
+          ...
+          MATRIX_KEY(0, 4, KBD_SCANCODE_F11)
+          MATRIX_KEY(3, 9, KBD_SCANCODE_F12)
+        >;
+    };
+};
+```
+
+The scancode is the set2 version, which is going to then get translated by the
+8042 driver according to the [8042 protocol], and then mapped to Linux input
+key events according to the map defined in [Coreboot ACPI tables].
+
 ## Testing and Debugging
 
 ### Shell Command
@@ -252,3 +281,5 @@ Command | Description | Usage
 [keyboard-rex]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/program/rex/keyboard.dtsi
 [keyboard-brox]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/program/brox/keyboard.dtsi
 [keyboard-jubilant]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/program/brox/jubilant/keyboard.dtsi
+[8042 protocol]: https://www.scs.stanford.edu/10wi-cs140/pintos/specs/kbd/scancodes-9.html
+[Coreboot ACPI tables]: https://github.com/coreboot/coreboot/blob/main/src/acpi/acpigen_ps2_keybd.c
