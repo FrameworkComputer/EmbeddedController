@@ -139,7 +139,7 @@
 
 	kblight {
 		compatible = "cros-ec,kblight-pwm";
-		pwms = <&pwm3 PWM_CHANNEL_3 PWM_HZ(100) PWM_POLARITY_NORMAL>;
+		pwms = <&pwm3 PWM_CHANNEL_3 PWM_KHZ(24) PWM_POLARITY_NORMAL>;
 	};
 };
 
