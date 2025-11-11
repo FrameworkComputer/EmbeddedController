@@ -24,6 +24,7 @@ int tablet_get_mode(void);
 /* Bit mask of tablet mode trigger */
 #define TABLET_TRIGGER_LID BIT(0)
 #define TABLET_TRIGGER_BASE BIT(1)
+#define TABLET_TRIGGER_OVERRIDE_GMR BIT(2)
 
 /**
  * Set tablet mode state

@@ -48,9 +48,10 @@ static void reset_tablet_mode(void)
 	 * clamshell mode until the lid angle is calculated, we should reset the
 	 * state too.
 	 */
-	tablet_set_mode(0, TABLET_TRIGGER_LID);
+	tablet_set_mode(0, TABLET_TRIGGER_LID | TABLET_TRIGGER_OVERRIDE_GMR);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, reset_tablet_mode, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESET, reset_tablet_mode, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_PLATFORM_EC_DSP_REMOTE_LID_ANGLE */
 
 static void enable_peripherals(void)

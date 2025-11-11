@@ -140,13 +140,40 @@ void tablet_set_mode(int mode, uint32_t trigger)
 		 * would be misleading since the mode wouldn't change anyway, so
 		 * skip it.
 		 */
-		if (!tablet_mode_forced)
-			CPRINTS("Ignoring %s mode entry while gmr sensors "
-				"reports lid %s",
-				tablet_mode_names[mode],
-				(gmr_sensor_at_360 ? "flipped" : "closed"));
-		return;
+		if (!tablet_mode_forced) {
+			if (trigger & TABLET_TRIGGER_OVERRIDE_GMR) {
+				CPRINTS("Allowing %s mode entry while gmr "
+					"sensor active to sync with ISH",
+					tablet_mode_names[mode]);
+			} else {
+				CPRINTS("Ignoring %s mode entry while gmr "
+					"sensors reports lid %s",
+					tablet_mode_names[mode],
+					(gmr_sensor_at_360 ? "flipped" :
+							     "closed"));
+			}
+		}
+
+		/*
+		 * When lid angle calculation is done on ISH, whenever the AP
+		 * resumes or reboots this function is called to set the EC to
+		 * clamshell mode to keep in sync with the ISH which assumes
+		 * tablet_mode is clamshell mode. This call is done with a
+		 * special trigger to override the GMR sensor reading. This
+		 * handles the case where the lid is at 360 and the AP is
+		 * rebooted, but then moved to clamshell during the reboot.
+		 */
+		if (!(trigger & TABLET_TRIGGER_OVERRIDE_GMR)) {
+			return;
+		}
 	}
+
+	/*
+	 * Always clear TABLET_TRIGGER_OVERRIDE_GMR as this is only used to
+	 * ensure the EC will always start with clamsell when tablet mode is
+	 * controlled by the ISH.
+	 */
+	trigger &= ~TABLET_TRIGGER_OVERRIDE_GMR;
 
 	if (mode)
 		new_mode |= trigger;
