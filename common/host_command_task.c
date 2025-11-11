@@ -103,8 +103,10 @@ test_mockable void host_send_response(struct host_cmd_handler_args *args)
 			 * the completion of that command, so stash the result
 			 * code.
 			 */
-			CPRINTS("HC pending done, size=%d, result=%d",
-				args->response_size, args->result);
+			if (hcdebug >= HCDEBUG_NORMAL) {
+				CPRINTS("HC pending done, size=%d, result=%d",
+					args->response_size, args->result);
+			}
 
 			/*
 			 * We don't support stashing response data, so mark the
@@ -125,7 +127,9 @@ test_mockable void host_send_response(struct host_cmd_handler_args *args)
 
 		} else if (args->result == EC_RES_IN_PROGRESS) {
 			command_pending = 1;
-			CPRINTS("HC pending");
+			if (hcdebug >= HCDEBUG_NORMAL) {
+				CPRINTS("HC pending");
+			}
 		}
 	}
 #endif
