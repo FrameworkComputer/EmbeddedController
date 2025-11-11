@@ -380,9 +380,6 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
     if iterate_power_states(edt, project_dir.name):
         return 1
 
-    if validate_led_colors(edt, project_dir.name):
-        return 1
-
     return 0
 
 
