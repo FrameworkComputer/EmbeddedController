@@ -546,6 +546,13 @@ struct rts5453p_emul_pdc_data {
 
 	uint16_t delay_ms;
 	struct k_work_delayable delay_work;
+	struct k_work_delayable delayed_sink_contract_negotiation_work;
+
+	/** An RDO sent by SET_RDO. The RDO gets "activated" by
+	 *  delayed_sink_contract_negotiation_handler() after a delay to
+	 *  simulate the time it takes the PDC to negotiate with the port
+	 *  partner. */
+	uint32_t pending_rdo;
 
 	struct emul_pdc_pdo_t pdo;
 

@@ -24,6 +24,8 @@ enum emul_pdc_feature_flag {
 	/** Enable support for SBU mux override commands, used on PDC-driven CCD
 	 *  DUTs */
 	EMUL_PDC_FEATURE_SBU_MUX_OVERRIDE,
+	/** Never update the effective RDO after processing SET_RDO */
+	EMUL_PDC_FEATURE_DONT_APPLY_RDO,
 	EMUL_PDC_FEATURE_COUNT,
 };
 

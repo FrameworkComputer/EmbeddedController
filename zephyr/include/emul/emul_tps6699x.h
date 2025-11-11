@@ -107,9 +107,11 @@ struct tps6699x_emul_pdc_data {
 	enum ucsi_command_t fail_next_ucsi_cmd;
 	enum std_task_response fail_next_ucsi_cmd_with_response;
 
+	uint32_t pending_rdo;
 	struct emul_pdc_pdo_t pdo;
 	bool cmd_error;
 	struct k_work_delayable aneg_delay_work;
+	struct k_work_delayable delayed_sink_contract_negotiation_work;
 	/** PDC feature flags */
 	ATOMIC_DEFINE(features, EMUL_PDC_FEATURE_COUNT);
 };

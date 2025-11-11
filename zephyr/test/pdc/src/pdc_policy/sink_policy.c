@@ -149,7 +149,7 @@ static int connect_sink(const struct pdc_fixture *pdc)
 	emul_pdc_set_rdo(pdc->emul_pdc, RDO_FIXED(1, 1500, 1500, 0));
 
 	zassert_ok(emul_pdc_connect_partner(pdc->emul_pdc, &cs));
-	zassert_ok(pdc_power_mgmt_wait_for_sync(pdc->port, 4300));
+	zassert_ok(pdc_power_mgmt_wait_for_sync(pdc->port, 5000));
 
 	return 0;
 }
@@ -198,6 +198,29 @@ ZTEST_USER_F(sink_policy, test_sink_policy)
 	zassert_ok(
 		emul_pdc_get_rdo(fixture->pdc[TEST_USBC_PORT0].emul_pdc, &rdo));
 	zassert_equal(RDO_POS(rdo), 3);
+}
+
+ZTEST_USER_F(sink_policy, test_sink_policy_set_rdo_fails)
+{
+	union connector_status_t connector_status;
+	uint32_t rdo;
+
+	/* Force emulator to not adopt the RDO we set. This is analogous to the
+	 * port partner not agreeing to our RDO request. pdc_power_mgmt should
+	 * time out and assume the RDO reported by the PDC */
+	emul_pdc_set_feature_flag(fixture->pdc[TEST_USBC_PORT0].emul_pdc,
+				  EMUL_PDC_FEATURE_DONT_APPLY_RDO);
+
+	/* This forces the emulator's reported RDO to have RDO_POS()==1 */
+	connect_sink(&fixture->pdc[TEST_USBC_PORT0]);
+
+	zassert_ok(pdc_power_mgmt_get_connector_status(TEST_USBC_PORT0,
+						       &connector_status));
+	zassert_ok(pdc_power_mgmt_get_rdo(TEST_USBC_PORT0, &rdo));
+
+	/* Verify original RDO is selected on PORT0 */
+	zassert_equal(RDO_POS(connector_status.rdo), 1);
+	zassert_equal(RDO_POS(rdo), 1);
 }
 
 ZTEST_USER_F(sink_policy, test_sink_policy_attach_better_charger)

@@ -473,6 +473,21 @@ static void aneg_delayable_work_handler(struct k_work *w)
 	gpio_emul_input_set(data->irq_gpios.port, data->irq_gpios.pin, 0);
 }
 
+static void delayed_sink_contract_negotiation_handler(struct k_work *work)
+{
+	struct k_work_delayable *dwork = k_work_delayable_from_work(work);
+	struct tps6699x_emul_pdc_data *data =
+		CONTAINER_OF(dwork, struct tps6699x_emul_pdc_data,
+			     delayed_sink_contract_negotiation_work);
+
+	LOG_INF("Adopting RDO (%08x, pos=%d) and setting negotiated_power_level",
+		data->pending_rdo, RDO_POS(data->pending_rdo));
+
+	data->pdo.rdo = data->pending_rdo;
+	data->connector_status.raw_conn_status_change_bits |=
+		UCSI_CHANGE_BITS_NEGOTIATED_POWER_LEVEL;
+}
+
 static void tps6699x_emul_handle_aneg(struct tps6699x_emul_pdc_data *data,
 				      uint8_t *data_reg)
 {
@@ -494,14 +509,22 @@ static void tps6699x_emul_handle_aneg(struct tps6699x_emul_pdc_data *data,
 
 		if ((min_mv / 50) == an_snk->auto_neg_min_voltage &&
 		    (max_mv / 50) == an_snk->auto_neg_max_voltage) {
-			LOG_INF("ANEg Found PDO pos=%d", i + 1);
 			active_rdo_contract->rdo = RDO_FIXED(i + 1, ma, ma, 0);
-			data->pdo.rdo = active_rdo_contract->rdo;
+			LOG_INF("ANEg Found PDO pos=%d. Set pending RDO to %08x",
+				i + 1, active_rdo_contract->rdo);
+			data->pending_rdo = active_rdo_contract->rdo;
 			break;
 		}
 	}
 	data_reg[0] = TASK_COMPLETED_SUCCESSFULLY;
 	k_work_schedule(&data->aneg_delay_work, K_MSEC(1));
+
+	if (!atomic_test_bit(data->features, EMUL_PDC_FEATURE_DONT_APPLY_RDO)) {
+		/* Simulate a delay in the port partner accepting the RDO
+		 * request */
+		k_work_reschedule(&data->delayed_sink_contract_negotiation_work,
+				  K_MSEC(400));
+	}
 }
 
 static void tps6699x_emul_handle_disc(struct tps6699x_emul_pdc_data *data,
@@ -1176,6 +1199,9 @@ static int emul_tps6699x_reset(const struct emul *target)
 	attention_vdm->vdm_header = 0;
 	attention_vdm->vdo = 0x1;
 
+	data->pending_rdo = 0;
+	k_work_cancel_delayable(&data->delayed_sink_contract_negotiation_work);
+
 	return 0;
 }
 
@@ -1257,6 +1283,9 @@ static int tps6699x_emul_init(const struct emul *emul,
 			      delayable_work_handler);
 	k_work_init_delayable(&data->pdc_data.aneg_delay_work,
 			      aneg_delayable_work_handler);
+	k_work_init_delayable(
+		&data->pdc_data.delayed_sink_contract_negotiation_work,
+		delayed_sink_contract_negotiation_handler);
 
 	/* Init register to APP0 */
 	*((uint32_t *)reg_mode->data) = REG_MODE_APP0;
@@ -1431,6 +1460,7 @@ static bool is_feature_flag_supported(enum emul_pdc_feature_flag feature)
 {
 	switch (feature) {
 	case EMUL_PDC_FEATURE_SBU_MUX_OVERRIDE:
+	case EMUL_PDC_FEATURE_DONT_APPLY_RDO:
 		return true;
 	default:
 		return false;

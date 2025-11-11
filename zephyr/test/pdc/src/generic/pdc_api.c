@@ -11,6 +11,7 @@
 #include "emul/emul_pdc.h"
 #include "i2c.h"
 #include "pdc_trace_msg.h"
+#include "test/util.h"
 #include "usbc/utils.h"
 #include "zephyr/sys/util.h"
 #include "zephyr/sys/util_macro.h"
@@ -345,24 +346,56 @@ ZTEST_USER(pdc_api, test_set_pdr)
 	}
 }
 
-/* TODO(b/345292002): TPS6699x driver set_rdo is not supported yet. */
-#ifndef CONFIG_TODO_B_345292002
+static bool check_rdo(const struct device *pdc_dev, uint32_t expected)
+{
+	uint32_t out = 0;
+	int rv = pdc_get_rdo(pdc_dev, &out);
+
+	if (rv) {
+		return false;
+	}
+
+	PDC_WAIT_FOR_COMPLETION();
+
+	return RDO_POS(out) == RDO_POS(expected);
+}
+
 ZTEST_USER(pdc_api, test_rdo)
 {
-	uint32_t in, out = 0;
+	/* Arbitrary set of test PDOs */
+	uint32_t pdos_in[] = {
+		PDO_FIXED(5000, 3000, 0),
+		PDO_FIXED(9000, 3000, 0),
+		PDO_FIXED(15000, 3000, 0),
+		PDO_FIXED(20000, 5000, 0),
+	};
+	uint32_t pdos_out[ARRAY_SIZE(pdos_in)];
+	int rv;
 
-	in = BIT(25) | (BIT_MASK(9) & 0x55);
-	zassert_ok(pdc_set_rdo(dev, in));
+	/* Set PDOs */
+	emul_pdc_set_pdos(emul, SOURCE_PDO, PDO_OFFSET_0, ARRAY_SIZE(pdos_in),
+			  PARTNER_PDO, pdos_in);
+
+	/* Note: TI PDC doesn't support directly setting an RDO. Instead
+	 * choose a particular PDO and ensure the correct RDO position is
+	 * returned. */
+
+	/* TI driver needs to cache the PDOs for the SET_RDO process */
+	zassert_ok(pdc_get_pdos(dev, SOURCE_PDO, PDO_OFFSET_0,
+				ARRAY_SIZE(pdos_out), PARTNER_PDO, pdos_out));
 
 	PDC_WAIT_FOR_COMPLETION();
 
-	zassert_ok(pdc_get_rdo(dev, &out));
+	/* Corresponds to 20V/5A PDO (position 4) */
+	uint32_t in = RDO_FIXED(4, 5000, 5000, 0);
+
+	rv = pdc_set_rdo(dev, in);
+	zassert_ok(rv, "Cannot set RDO: %d", rv);
 
 	PDC_WAIT_FOR_COMPLETION();
 
-	zassert_equal(in, out);
+	zassert_true(TEST_WAIT_FOR(check_rdo(dev, in), 2000));
 }
-#endif
 
 ZTEST_USER(pdc_api, test_set_power_level)
 {

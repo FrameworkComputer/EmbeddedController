@@ -525,11 +525,26 @@ static int set_pdr(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static void delayed_sink_contract_negotiation_handler(struct k_work *work)
+{
+	struct k_work_delayable *dwork = k_work_delayable_from_work(work);
+	struct rts5453p_emul_pdc_data *data =
+		CONTAINER_OF(dwork, struct rts5453p_emul_pdc_data,
+			     delayed_sink_contract_negotiation_work);
+
+	LOG_INF("Adopting RDO (%08x, pos=%d) and setting negotiated_power_level",
+		data->pending_rdo, RDO_POS(data->pending_rdo));
+
+	data->pdo.rdo = data->pending_rdo;
+	data->connector_status.raw_conn_status_change_bits |=
+		UCSI_CHANGE_BITS_NEGOTIATED_POWER_LEVEL;
+}
+
 static int set_rdo(struct rts5453p_emul_pdc_data *data,
 		   const union rts54_request *req)
 {
-	LOG_INF("SET_RDO port=%d, rdo=0x%X", req->set_rdo.port_num,
-		req->set_rdo.rdo);
+	LOG_INF("SET_RDO port=%d, rdo=0x%X (pos=%d)", req->set_rdo.port_num,
+		req->set_rdo.rdo, RDO_POS(req->set_rdo.rdo));
 
 	/* The SET_RDO command triggers a Request Object to be sent
 	 * to the port partner when the LPM is a sink.
@@ -540,10 +555,17 @@ static int set_rdo(struct rts5453p_emul_pdc_data *data,
 		return -EINVAL;
 	}
 
-	data->pdo.rdo = req->set_rdo.rdo;
+	data->pending_rdo = req->set_rdo.rdo;
 
 	memset(&data->response, 0, sizeof(union rts54_response));
 	send_response(data);
+
+	if (!atomic_test_bit(data->features, EMUL_PDC_FEATURE_DONT_APPLY_RDO)) {
+		/* Simulate a delay in the port partner accepting the RDO
+		 * request */
+		k_work_reschedule(&data->delayed_sink_contract_negotiation_work,
+				  K_MSEC(400));
+	}
 
 	return 0;
 }
@@ -1272,6 +1294,9 @@ static int emul_realtek_rts54xx_reset(const struct emul *target)
 	emul_realtek_rts54xx_init_data(target);
 
 	data->dead_battery = 0;
+	data->pending_rdo = 0;
+
+	k_work_cancel_delayable(&data->delayed_sink_contract_negotiation_work);
 
 	return 0;
 }
@@ -1321,6 +1346,10 @@ static int rts5453p_emul_init(const struct emul *emul,
 
 	k_work_init_delayable(&data->pdc_data.delay_work,
 			      delayable_work_handler);
+
+	k_work_init_delayable(
+		&data->pdc_data.delayed_sink_contract_negotiation_work,
+		delayed_sink_contract_negotiation_handler);
 
 	return 0;
 }
@@ -1711,6 +1740,7 @@ static bool is_feature_flag_supported(enum emul_pdc_feature_flag feature)
 {
 	switch (feature) {
 	case EMUL_PDC_FEATURE_SBU_MUX_OVERRIDE:
+	case EMUL_PDC_FEATURE_DONT_APPLY_RDO:
 		return true;
 	default:
 		return false;
