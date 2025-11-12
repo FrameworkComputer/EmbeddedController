@@ -29,3 +29,9 @@ properties:
      Define the IOEX device node which needs to be deferred
      until EC boots to S5 for RVP, as the power rail to the
      IOEX comes up in S5 state.
+
+  handler:
+    type: string
+    description: |
+     The C function name to call as a notification event when the board
+     ID is available.

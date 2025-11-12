@@ -20,6 +20,14 @@ enum rvp_id_type {
 };
 
 /**
+ * @brief RVP board identification callback prototype.
+ *
+ * This is the function type associated with the "handler" property in
+ * the "intel,rvp-board-id" device tree node.
+ */
+typedef void (*rvp_board_id_handler)(void);
+
+/**
  * @brief Get RVP board identification configuration
  *
  * Reads GPIO pins to determine board ID, BOM ID, or FAB ID based on the

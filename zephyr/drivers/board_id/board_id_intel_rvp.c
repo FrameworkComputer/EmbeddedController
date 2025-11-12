@@ -3,11 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include "hooks.h"
-
 #ifdef CONFIG_AP_PWRSEQ_DRIVER
 #include <ap_power/ap_pwrseq_sm.h>
 #endif
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/logging/log.h>
+
 #include <drivers/rvp_board_id.h>
 
 #define DT_DRV_COMPAT intel_rvp_board_id
@@ -44,6 +45,7 @@ struct rvp_board_id_config {
 	const struct gpio_dt_spec *bom_gpios_config;
 	const struct gpio_dt_spec *fab_gpios_config;
 	const struct gpio_dt_spec *board_gpios_config;
+	rvp_board_id_handler handler;
 };
 
 /*
@@ -146,6 +148,8 @@ static void pca95xx_deferred_init_cb(const struct device *dev,
 				device_init(gpio_port);
 			}
 		}
+		if (rvp_config->handler != NULL)
+			rvp_config->handler();
 	}
 }
 
@@ -173,6 +177,10 @@ static int rvp_board_id_init(const struct device *dev)
 }
 #endif /* CONFIG_AP_PWRSEQ_DRIVER */
 
+#if DT_NODE_HAS_PROP(DT_DRV_INST(0), handler)
+extern void DT_STRING_TOKEN(DT_DRV_INST(0), handler)(void);
+#endif
+
 static const struct rvp_board_id_config rvp_board_id_cfg = {
 	.defer_until_s5 = DT_NODE_HAS_PROP(DT_DRV_INST(0), defer_until_s5),
 #if DT_NODE_HAS_PROP(DT_DRV_INST(0), bom_gpios)
@@ -192,6 +200,7 @@ static const struct rvp_board_id_config rvp_board_id_cfg = {
 	.board_gpios_config =
 		(const struct gpio_dt_spec[]){
 			FOREACH_RVP_GPIOS_ELEM(0, board_gpios) },
+	.handler = DT_INST_STRING_TOKEN_OR(0, handler, NULL),
 };
 
 DEVICE_DT_INST_DEFINE(0, rvp_board_id_init, NULL, NULL, &rvp_board_id_cfg,
