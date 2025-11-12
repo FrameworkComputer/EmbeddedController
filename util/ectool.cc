@@ -20,6 +20,7 @@
 #include "panic.h"
 #include "tablet_mode.h"
 #include "usb_pd.h"
+#include "util.h"
 
 /* TODO(b/395723202): These macros from timer.h, included transitively in
  * usb_pd.h, conflict with constants declared in json_reader.h below. Ideally,
@@ -1953,8 +1954,9 @@ fp_download_frame(struct SensorImage &sensor_image,
 	 */
 	size_t size;
 	if (index == FP_FRAME_INDEX_SIMPLE_IMAGE) {
-		size = (size_t)sensor_image.width * sensor_image.bpp / 8 *
-		       sensor_image.height;
+		size = (size_t)sensor_image.width *
+		       DIV_ROUND_UP(sensor_image.bpp, 8) * sensor_image.height;
+
 		index = FP_FRAME_INDEX_RAW_IMAGE;
 	} else if (index == FP_FRAME_INDEX_RAW_IMAGE) {
 		size = sensor_image.frame_size;
