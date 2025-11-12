@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "battery.h"
 #include "board_host_command.h"
 #include "board_adc.h"
 #include "chipset.h"
@@ -391,6 +392,8 @@ enum power_state power_handle_state(enum power_state state)
 		resume_ms_flag = 0;
 		system_in_s0ix = 0;
 		lpc_s0ix_resume_restore_masks();
+		/* We should enter EPR mode when the system actually resume to S0 state */
+		enter_epr_mode();
 		cypd_set_power_active();
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
@@ -408,6 +411,12 @@ enum power_state power_handle_state(enum power_state state)
 		system_in_s0ix = 1;
 		CPRINTS("PH S0->S0ix");
 		lpc_s0ix_suspend_clear_masks();
+		/**
+		 * Only exit EPR when a battery is connected,
+		 * because in some cases AC power will drop during exit
+		 */
+		if (battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED)
+			exit_epr_mode();
 		cypd_set_power_active();
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
