@@ -76,6 +76,6 @@
  * after waking up automatically for better power consumption.
  */
 &power_leakage_io {
-	leak-gpios = <&gpio5 7 (GPIO_OUTPUT | GPIO_VOLTAGE_1P8)
+	leak-gpios = <&gpio5 7 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW | GPIO_VOLTAGE_1P8)
 		      &gpio6 6 GPIO_OPEN_DRAIN>;
 };
