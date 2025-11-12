@@ -68,11 +68,11 @@ jobs:
           git reset --hard ${{ matrix.platform.cmsis_ref }}
           popd
 
-      - name: Build ${{ matrix.platform.name }} ectool
-        if: ${{ matrix.platform.zephyr_ref == 'framework-main' || matrix.platform.zephyr_ref == 'fwk-main' }}
-        run: |
-          cros_sdk bash -c 'pushd ../platform/ec; BOARD=host make clean'
-          cros_sdk bash -c 'pushd ../platform/ec; BOARD=host make utils'
+      # - name: Build ${{ matrix.platform.name }} ectool
+      #   if: ${{ matrix.platform.zephyr_ref == 'framework-main' || matrix.platform.zephyr_ref == 'fwk-main' }}
+      #   run: |
+      #     cros_sdk bash -c 'pushd ../platform/ec; BOARD=host make clean'
+      #     cros_sdk bash -c 'pushd ../platform/ec; BOARD=host make utils'
 
       # Note:
       # By default cros_sdk changes into src/scripts folder.
@@ -98,20 +98,20 @@ jobs:
           name: ${{ matrix.platform.name }}.${{ env.VERSIONINFO }}
           path: /${{ matrix.platform.folder }}/ec_home/chromiumos/src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output
 
-      - name: Package dynamic libs with util (enough to run ectool)
-        if: ${{ matrix.platform.zephyr_ref == 'framework-main' || matrix.platform.zephyr_ref == 'fwk-main' }}
-        run: |
-          # Check which libraries it links to
-          cros_sdk bash -c 'ldd ../platform/ec/build/host/util/ectool'
-          # Copy libraries to util folder so we can run it with
-          # sudo LD_LIBRARY_PATH=. ./ectool
-          cp chroot/usr/lib64/libec.so src/platform/ec/build/host/util/ || true
-          cp chroot/usr/lib64/libbase-core.so src/platform/ec/build/host/util/ || true
-          cp chroot/usr/lib64/libc++.so.* src/platform/ec/build/host/util/ || true
-          cp chroot/usr/lib64/libc++abi.so.* src/platform/ec/build/host/util/ || true
-          cp chroot/usr/lib64/libabseil_dll.so.* src/platform/ec/build/host/util/ || true
-          cp chroot/usr/lib64/libfmap.so.* src/platform/ec/build/host/util/ || true
-          cp chroot/usr/lib64/libbrillo-core.so src/platform/ec/build/host/util/ || true
+      #- name: Package dynamic libs with util (enough to run ectool)
+      #  if: ${{ matrix.platform.zephyr_ref == 'framework-main' || matrix.platform.zephyr_ref == 'fwk-main' }}
+      #  run: |
+      #    # Check which libraries it links to
+      #    cros_sdk bash -c 'ldd ../platform/ec/build/host/util/ectool'
+      #    # Copy libraries to util folder so we can run it with
+      #    # sudo LD_LIBRARY_PATH=. ./ectool
+      #    cp chroot/usr/lib64/libec.so src/platform/ec/build/host/util/ || true
+      #    cp chroot/usr/lib64/libbase-core.so src/platform/ec/build/host/util/ || true
+      #    cp chroot/usr/lib64/libc++.so.* src/platform/ec/build/host/util/ || true
+      #    cp chroot/usr/lib64/libc++abi.so.* src/platform/ec/build/host/util/ || true
+      #    cp chroot/usr/lib64/libabseil_dll.so.* src/platform/ec/build/host/util/ || true
+      #    cp chroot/usr/lib64/libfmap.so.* src/platform/ec/build/host/util/ || true
+      #    cp chroot/usr/lib64/libbrillo-core.so src/platform/ec/build/host/util/ || true
 
       - uses: actions/upload-artifact@v4
         if: ${{ matrix.platform.zephyr_ref == 'framework-main' || matrix.platform.zephyr_ref == 'fwk-main' }}
