@@ -434,14 +434,29 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
 	int prochot_ma;
+	int active_ac_watt = (charge_mv * charge_ma) / 1000000;
+	int prep_ac_watt = pd_get_active_watt(get_previous_charge_pd_port());
 	int64_t calculate_ma;
 
 	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT) {
 		charge_ma = CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT;
 	}
 
-	/* Handle EPR converstion through the buck switcher */
-	if (charge_mv > 20000) {
+	/*
+	 * Handle EPR converstion through the buck switcher
+	 * Before we set a high mA need to check those conditions
+	 * to protect the PD port not cause abnormal behavior.
+	 *
+	 * 1. when connect EPR ADP(>100w) and prev port not connect can set high mA
+	 * 2. when connect EPR ADP(>100w) and prev port also is EPR ADP can set high mA
+	 * 3. when connect EPR ADP(>100w) and prev port is SPR ADP need to check bypass mode enable.
+	 *
+	 * for 2. we should set high mA cause next port also will process bypass mode
+	 * and it will need a high power to make vsys == MaxSysVoltage (nvdc->bypass step.9)
+	 */
+	if ((active_ac_watt > 100 && prep_ac_watt == 0) ||
+		(active_ac_watt > 100 && prep_ac_watt > 100) ||
+		(active_ac_watt > 100 && prep_ac_watt <= 100 && isl9241_is_in_bypass_mode(0))) {
 		/**
 		 * (charge_ma * charge_mv / 20000 ) * 0.9 * 0.94
 		 */
