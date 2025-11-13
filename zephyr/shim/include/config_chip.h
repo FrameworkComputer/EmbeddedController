@@ -2739,7 +2739,7 @@ BUILD_ASSERT((DT_NUM_INST_STATUS_OKAY(maxim_max695x)) == 1,
 #endif
 
 #undef CONFIG_OTP_KEY
-#ifdef CONFIG_NPCX_OTP_KEY
+#if defined(CONFIG_NPCX_OTP_KEY) || defined(CONFIG_EGIS_ET171_OTP_KEY)
 #define CONFIG_OTP_KEY
 #endif
 

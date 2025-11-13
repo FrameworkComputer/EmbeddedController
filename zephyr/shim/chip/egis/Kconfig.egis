@@ -12,4 +12,11 @@ config PLATFORM_EC_ET171_ENTER_BOOTLOADER
 	  Add implementation of chip_enter_bootloader for the ET171 chip
 	  needed for the EC_CMD_ENTER_BOOTLOADER host command.
 
+config EGIS_ET171_OTP_KEY
+	bool "Enable EGIS ET171 OTP Key functionality"
+	depends on HAS_EGIS_ET171_HAL && BORINGSSL_CRYPTO
+	help
+	  Enable support for reading and validating the One-Time Programmable
+	  (OTP) key on EGIS ET171 series chips.
+
 endif # PLATFORM_EC
