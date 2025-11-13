@@ -99,6 +99,42 @@ struct pwm_pin_t {
 };
 
 /*
+ * Pseudo api for interfacing with the led driver.
+ *
+ * TODO: rework the api so that the api stores the driver configs instead of
+ * driver configs storing the api
+ */
+struct led_pins_api_t {
+	/**
+	 * Set LED color using pattern node.
+	 */
+	void (*led_set_color_with_pattern)(void *);
+
+	/**
+	 * For pwms only.
+	 * The set function only sets the LED color into the pwm data.
+	 * the data is applied to the pin using this function. This allows the
+	 * pwm LEDs to be set and applied at different timings, allowing for a
+	 * smoother transition of pwm color without repeatedly checking the
+	 * policy.
+	 *
+	 * @param has_transitions		Whether the policy has a
+	 * transition pattern
+	 */
+	void (*led_asynchronous_apply_color)(bool has_transitions);
+
+	/**
+	 * Set LED color using color enum
+	 *
+	 * @param color			LED Color to enable
+	 * @param led_id		LED ID to set the color for
+	 * @param brightness	Brightness to set the color to
+	 */
+	void (*led_set_color)(enum led_color color, enum ec_led_id led_id,
+			      uint8_t brightness);
+};
+
+/*
  * Pin node contains LED color and array of gpio/pwm pins
  * to alter in order to enable the given color.
  */
@@ -114,6 +150,8 @@ struct led_pins_node_t {
 	 * ectool functionality.
 	 */
 	enum ec_led_id led_id;
+
+	struct led_pins_api_t api;
 
 	/*
 	 * Pointer to driver-specific pin configuration data used to
@@ -145,7 +183,10 @@ struct led_pattern_node_t {
 	pattern_element.pattern_color[color_index].duration_ms
 
 /**
- * Set LED color using color enum
+ * Wrapper function to call the api.
+ *
+ * TODO: remove when api is part of the LED driver instead of an element of the
+ * config.
  *
  * @param color			LED Color to enable
  * @param led_id		LED ID to set the color for
@@ -155,19 +196,10 @@ void led_set_color(enum led_color color, enum ec_led_id led_id,
 		   uint8_t brightness);
 
 /**
- * Set LED color using pattern node
+ * Wrapper function to call the api.
  *
- * @param *pins_node	Pins node to enable the color corresponding
- *			to the node.
- */
-void led_set_color_with_pattern(const struct led_pattern_node_t *led);
-
-/**
- * For pwms only.
- * The set function only sets the LED color into the pwm data.
- * the data is applied to the pin using this function. This allows the pwm LEDs
- * to be set and applied at different timings, allowing for a smoother
- * transition of pwm color without repeatedly checking the policy.
+ * TODO: remove when api is part of the LED driver instead of an element of the
+ * config.
  *
  * @param has_transitions		Whether the policy has a transition
  * pattern

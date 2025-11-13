@@ -155,7 +155,10 @@ static void set_color(int node_idx)
 			    patterns[i].pattern_color[0].led_color_node->led_id))
 			continue; /* Auto control is disabled */
 
-		led_set_color_with_pattern(&patterns[i]);
+		patterns[i]
+			.pattern_color[0]
+			.led_color_node->api.led_set_color_with_pattern(
+				&patterns[i]);
 
 		if (GET_DURATION(patterns[i], patterns[i].cur_color) != 0) {
 			patterns[i].elapsed_ms += HOOK_TICK_INTERVAL_MS;
@@ -313,6 +316,15 @@ static bool led_set_all_colors(void)
 	return has_transitions;
 }
 
+#define INVOKE_APPLY_COLOR_API(id) \
+	PINS_NODE(id).api.led_asynchronous_apply_color(has_transitions);
+
+void led_asynchronous_apply_color(bool has_transitions)
+{
+	DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS_PARENT_NODE, DT_FOREACH_CHILD,
+					   INVOKE_APPLY_COLOR_API)
+}
+
 /* Called by hook task every HOOK_TICK_INTERVAL_MS */
 static void led_tick(void)
 {
@@ -354,4 +366,35 @@ void led_control(enum ec_led_id led_id, enum ec_led_state state)
 	led_auto_control(led_id, 0);
 
 	led_set_color(color, led_id, 100);
+}
+
+#define IS_SUPPORTED(id) supported_leds |= (1 << PINS_NODE(id).led_id);
+
+__override int led_is_supported(enum ec_led_id led_id)
+{
+	static int supported_leds = -1;
+
+	if (supported_leds == -1) {
+		supported_leds = 0;
+
+		DT_FOREACH_CHILD_STATUS_OKAY_VARGS(
+			PINS_PARENT_NODE, DT_FOREACH_CHILD, IS_SUPPORTED)
+	}
+
+	return ((1 << (int)led_id) & supported_leds);
+}
+
+#define LED_SET_COLOR(id)                                                   \
+	if (PINS_NODE(id).led_id == led_id) {                               \
+		PINS_NODE(id).api.led_set_color(color, led_id, brightness); \
+	}
+
+/*
+ * Iterate through LED pins nodes to find the color matching node.
+ */
+void led_set_color(enum led_color color, enum ec_led_id led_id,
+		   uint8_t brightness)
+{
+	DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS_PARENT_NODE, DT_FOREACH_CHILD,
+					   LED_SET_COLOR)
 }
