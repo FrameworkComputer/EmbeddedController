@@ -290,3 +290,53 @@ void board_led_apply_color(void)
 {
 	DT_INST_FOREACH_CHILD_STATUS_OKAY(0, LED_APPLY_COLOR)
 }
+
+enum led_pwms_color_t {
+	LED_PWMS_COLOR_RED,
+	LED_PWMS_COLOR_GREEN,
+	LED_PWMS_COLOR_BLUE,
+	LED_PWMS_COUNT,
+};
+
+static int ledpwm_cmd(int argc, const char **argv)
+{
+	int red, green, blue;
+	uint8_t white_color[LED_PWMS_COUNT];
+	uint8_t amber_color[LED_PWMS_COUNT];
+	char *e;
+
+	if (argc == 5) {
+		red = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM1;
+
+		green = strtoi(argv[3], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+
+		blue = strtoi(argv[4], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM3;
+
+		if (!strncmp(argv[1], "amber", 5)) {
+			amber_color[LED_PWMS_COLOR_RED] = red;
+			amber_color[LED_PWMS_COLOR_GREEN] = green;
+			amber_color[LED_PWMS_COLOR_BLUE] = blue;
+			led_change_color(LED_AMBER, EC_LED_ID_BATTERY_LED,
+					sizeof(amber_color), amber_color);
+		} else if (!strncmp(argv[1], "white", 5)) {
+			white_color[LED_PWMS_COLOR_RED] = red;
+			white_color[LED_PWMS_COLOR_GREEN] = green;
+			white_color[LED_PWMS_COLOR_BLUE] = blue;
+			led_change_color(LED_WHITE, EC_LED_ID_BATTERY_LED,
+					sizeof(white_color), white_color);
+		}
+		ccprintf("Set LED PWM R:%d, G:%d, B:%d\n", red, green, blue);
+	} else {
+		return EC_ERROR_PARAM_COUNT;
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(ledpwm, ledpwm_cmd,
+			"[amber/white <r> <g> <b>]",
+			"amber/white <r> <g> <b>");
