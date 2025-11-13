@@ -47,6 +47,7 @@ struct alert_msg_t alert_rx[CONFIG_USB_PD_PORT_MAX_COUNT];
 struct extended_msg rx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int prev_charge_port = -1;
+static int prep_charge_port = -1;
 static bool verbose_msg_logging;
 static bool firmware_update;
 static bool alert_press;
@@ -1540,6 +1541,7 @@ static void cypd_handle_state(int controller)
 
 		/* After initial complete, update the type-c port state */
 		for (int port = 0; port < pd_chip_config[controller].support_max_port; port++) {
+			clear_port_state(controller, port);
 			cypd_update_port_state(controller, port);
 		}
 
@@ -1637,6 +1639,7 @@ int board_set_active_charge_port(int charge_port)
 
 	if (prev_charge_port != -1 &&
 		prev_charge_port != charge_port) {
+		prep_charge_port = prev_charge_port;
 		/* Turn off the previous charge port before turning on the next port */
 		cypd_cfet_vbus_control(prev_charge_port, false, true);
 
@@ -2452,6 +2455,12 @@ int pd_get_active_current(int port)
 	return pd_port_states[port].current;
 }
 
+int pd_get_active_watt(int port)
+{
+	int active_watt = (pd_port_states[port].voltage * pd_port_states[port].current) / 1000000;
+	return active_watt;
+}
+
 __override uint8_t board_get_usb_pd_port_count(void)
 {
 	return CONFIG_USB_PD_PORT_MAX_COUNT;
@@ -2500,6 +2509,11 @@ int get_active_charge_pd_port(void)
 	 */
 
 	return prev_charge_port;
+}
+
+int get_previous_charge_pd_port(void)
+{
+	return prep_charge_port;
 }
 
 void update_active_charge_pd_port(int update_charger_port)

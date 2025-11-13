@@ -864,6 +864,15 @@ uint8_t *get_pd_version(int controller);
  */
 int pd_get_active_current(int port);
 
+
+/**
+ * Get the active supply watt
+ *
+ * @param port		The activer charge port
+ * @return int
+ */
+int pd_get_active_watt(int port);
+
 /**
  * Set system power state
  *
@@ -883,6 +892,14 @@ int active_charge_pd_chip(void);
  * @return int
  */
 int get_active_charge_pd_port(void);
+
+/**
+ * Get the previous charge port
+ *
+ * @return int
+ */
+int get_previous_charge_pd_port(void);
+
 
 /**
  * Get the active charge port
