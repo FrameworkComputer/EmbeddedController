@@ -38,6 +38,60 @@ static union cci_event_t test_cc_cb_cci;
 
 FAKE_VALUE_FUNC(int, chipset_in_state, int);
 
+/** Events originating from the PDC */
+static K_EVENT_DEFINE(pdc_event);
+
+#define PDC_CC_EVENT_COMPLETE BIT(0)
+#define PDC_CC_EVENT_ERROR BIT(1)
+#define PDC_CC_EVENT_BUSY BIT(2)
+
+#define PDC_OPERATION_TIMEOUT K_MSEC(2000)
+
+#define PDC_WAIT_FOR_COMPLETION()                                            \
+	do {                                                                 \
+		zassert_true(k_event_wait(&pdc_event, PDC_CC_EVENT_COMPLETE, \
+					  false, PDC_OPERATION_TIMEOUT));    \
+		PDC_CLEAR_EVENTS();                                          \
+		emul_pdc_idle_wait(emul);                                    \
+	} while (0)
+
+#define PDC_CLEAR_EVENTS()                  \
+	do {                                \
+		k_event_set(&pdc_event, 0); \
+	} while (0)
+
+/** Callback called by PDC driver upon command completion */
+static void pdc_cc_handler_cb(const struct device *dev,
+			      const struct pdc_callback *callback,
+			      union cci_event_t cci_event)
+{
+	LOG_INF("Test CC callback received, CCI=%08x", cci_event.raw_value);
+
+	uint32_t events = 0;
+
+	if (cci_event.command_completed)
+		events |= PDC_CC_EVENT_COMPLETE;
+	if (cci_event.error)
+		events |= PDC_CC_EVENT_ERROR;
+	if (cci_event.busy)
+		events |= PDC_CC_EVENT_BUSY;
+
+	k_event_post(&pdc_event, events);
+}
+
+void *pdc_setup(void)
+{
+	static struct pdc_callback cb = (struct pdc_callback){
+		.handler = pdc_cc_handler_cb,
+	};
+
+	k_event_init(&pdc_event);
+
+	pdc_set_cc_callback(dev, &cb);
+
+	return NULL;
+}
+
 void pdc_before_test(void *data)
 {
 	emul_pdc_reset(emul);
@@ -50,9 +104,12 @@ void pdc_before_test(void *data)
 
 	test_cc_cb_called = false;
 	test_cc_cb_cci.raw_value = 0;
+
+	/* Clear all the command completion events */
+	PDC_CLEAR_EVENTS();
 }
 
-ZTEST_SUITE(pdc_api, NULL, NULL, pdc_before_test, NULL, NULL);
+ZTEST_SUITE(pdc_api, NULL, pdc_setup, pdc_before_test, NULL, NULL);
 
 ZTEST_USER(pdc_api, test_get_ucsi_version)
 {
@@ -84,7 +141,8 @@ ZTEST_USER(pdc_api, test_connector_reset)
 	emul_pdc_set_response_delay(emul, 50);
 	zassert_ok(pdc_connector_reset(dev, in), "Failed to reset connector");
 
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
+
 	emul_pdc_get_connector_reset(emul, &out);
 
 	zassert_equal(in.reset_type, out.reset_type);
@@ -102,7 +160,7 @@ ZTEST_USER(pdc_api, test_get_capability)
 
 	zassert_ok(pdc_get_capability(dev, &out), "Failed to get capability");
 
-	k_sleep(K_MSEC(500));
+	PDC_WAIT_FOR_COMPLETION();
 
 	/* Verify versioning from emulator */
 	zassert_equal(out.bcdBCVersion, in.bcdBCVersion);
@@ -122,7 +180,7 @@ ZTEST_USER(pdc_api, test_get_connector_capability)
 	zassert_ok(pdc_get_connector_capability(dev, &out),
 		   "Failed to get connector capability");
 
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
 
 	/* Verify data from emulator */
 	zassert_equal(out.op_mode_rp_only, in.op_mode_rp_only);
@@ -142,7 +200,8 @@ ZTEST_USER(pdc_api, test_get_error_status)
 	zassert_ok(pdc_get_error_status(dev, &out),
 		   "Failed to get connector capability");
 	zassert_equal(pdc_get_error_status(dev, &out), -EBUSY);
-	k_sleep(K_MSEC(SLEEP_MS));
+
+	PDC_WAIT_FOR_COMPLETION();
 
 	/* Verify data from emulator */
 	zassert_equal(out.unrecognized_command, in.unrecognized_command);
@@ -178,7 +237,8 @@ ZTEST_USER(pdc_api, test_get_connector_status)
 	zassert_ok(pdc_get_connector_status(dev, &out),
 		   "Failed to get connector capability");
 
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
+
 	out_conn_status_change_bits.raw_value = out.raw_conn_status_change_bits;
 
 	/* Verify data from emulator */
@@ -211,7 +271,8 @@ ZTEST_USER(pdc_api, test_set_uor)
 
 	zassert_ok(pdc_set_uor(dev, in), "Failed to set uor");
 
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
+
 	zassert_ok(emul_pdc_get_uor(emul, &out));
 
 	zassert_equal(out.swap_to_dfp, in.swap_to_dfp);
@@ -261,7 +322,8 @@ ZTEST_USER(pdc_api, test_set_pdr)
 		rv = pdc_set_pdr(dev, test_cases[i].policy_in);
 		zassert_ok(rv, "Failed to set PDR (i=%d, rv=%d)", i, rv);
 
-		k_sleep(K_MSEC(SLEEP_MS));
+		PDC_WAIT_FOR_COMPLETION();
+
 		rv = emul_pdc_get_pdr(emul, &out);
 		zassert_ok(rv, "Failed to read PDR (i=%d, rv=%d)", i, rv);
 
@@ -292,10 +354,12 @@ ZTEST_USER(pdc_api, test_rdo)
 	in = BIT(25) | (BIT_MASK(9) & 0x55);
 	zassert_ok(pdc_set_rdo(dev, in));
 
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
+
 	zassert_ok(pdc_get_rdo(dev, &out));
 
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
+
 	zassert_equal(in, out);
 }
 #endif
@@ -316,7 +380,8 @@ ZTEST_USER(pdc_api, test_set_power_level)
 	for (i = 0; i < ARRAY_SIZE(in); i++) {
 		zassert_ok(pdc_set_power_level(dev, in[i]));
 
-		k_sleep(K_MSEC(SLEEP_MS));
+		PDC_WAIT_FOR_COMPLETION();
+
 		emul_pdc_get_requested_power_level(emul, &out);
 		zassert_equal(in[i], out);
 	}
@@ -336,7 +401,8 @@ ZTEST_USER(pdc_api, test_get_bus_voltage)
 	emul_pdc_set_connector_status(emul, &in);
 
 	zassert_ok(pdc_get_vbus_voltage(dev, &out));
-	k_sleep(K_MSEC(SLEEP_MS));
+
+	PDC_WAIT_FOR_COMPLETION();
 
 	zassert_equal(out, expected_voltage_mv);
 
@@ -347,26 +413,24 @@ ZTEST_USER(pdc_api, test_set_ccom)
 {
 	enum ccom_t ccom_out;
 
-	k_sleep(K_MSEC(SLEEP_MS));
-
 	zassert_ok(pdc_set_ccom(dev, CCOM_RD));
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
 	zassert_ok(emul_pdc_get_ccom(emul, &ccom_out));
 	zassert_equal(CCOM_RD, ccom_out);
 
 	zassert_ok(pdc_set_ccom(dev, CCOM_RP));
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
 	zassert_ok(emul_pdc_get_ccom(emul, &ccom_out));
 	zassert_equal(CCOM_RP, ccom_out);
 
 	zassert_ok(pdc_set_ccom(dev, CCOM_DRP));
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
 	zassert_ok(emul_pdc_get_ccom(emul, &ccom_out));
 	zassert_equal(CCOM_DRP, ccom_out);
 
 	/* Illegal value. Should retain previous CCOM */
 	pdc_set_ccom(dev, 9999);
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
 	zassert_ok(emul_pdc_get_ccom(emul, &ccom_out));
 	zassert_equal(CCOM_DRP, ccom_out);
 }
@@ -382,36 +446,38 @@ ZTEST_USER(pdc_api, test_set_drp_mode)
 	(void)emul_pdc_get_supported_drp_modes(emul, dm_in, ARRAY_SIZE(dm_in),
 					       &num_modes);
 
-	k_sleep(K_MSEC(SLEEP_MS));
-
 	for (i = 0; i < num_modes; i++) {
 		zassert_ok(pdc_set_drp_mode(dev, dm_in[i]));
 
-		k_sleep(K_MSEC(SLEEP_MS));
+		PDC_WAIT_FOR_COMPLETION();
 		zassert_ok(emul_pdc_get_drp_mode(emul, &dm_out));
 		zassert_equal(dm_in[i], dm_out);
 
 		/* Check PDC driver API if supported */
 		dm_out = DRP_INVALID;
 		zassert_ok(pdc_get_drp_mode(dev, &dm_out));
-		k_sleep(K_MSEC(SLEEP_MS));
+		PDC_WAIT_FOR_COMPLETION();
 		zassert_equal(dm_in[i], dm_out);
 	}
 }
 
 ZTEST_USER(pdc_api, test_set_sink_path)
 {
-	int i;
-	bool in[] = { true, false }, out;
+	bool out;
 
-	for (i = 0; i < ARRAY_SIZE(in); i++) {
-		zassert_ok(pdc_set_sink_path(dev, in[i]));
+	/* Turn sink path on */
+	zassert_ok(pdc_set_sink_path(dev, true));
+	PDC_WAIT_FOR_COMPLETION();
 
-		k_sleep(K_MSEC(SLEEP_MS * 10));
-		zassert_ok(emul_pdc_get_sink_path(emul, &out));
+	zassert_ok(emul_pdc_get_sink_path(emul, &out));
+	zassert_true(out);
 
-		zassert_equal(in[i], out);
-	}
+	/* Turn sink path off */
+	zassert_ok(pdc_set_sink_path(dev, false));
+	PDC_WAIT_FOR_COMPLETION();
+
+	zassert_ok(emul_pdc_get_sink_path(emul, &out));
+	zassert_false(out);
 }
 
 ZTEST_USER(pdc_api, test_get_current_pdo)
@@ -428,12 +494,12 @@ ZTEST_USER(pdc_api, test_get_current_pdo)
 	rv = emul_pdc_set_cmd_error(emul, true);
 	if (rv != -ENOSYS) {
 		zassert_ok(pdc_get_current_pdo(dev, &out));
-		k_sleep(K_MSEC(SLEEP_MS));
+		PDC_WAIT_FOR_COMPLETION();
 		zassert_equal(0, out);
 		emul_pdc_set_cmd_error(emul, false);
 	}
 	zassert_ok(pdc_get_current_pdo(dev, &out));
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
 	zassert_equal(in, out, "Got 0x%x, expected 0x%x", out, in);
 }
 
@@ -448,7 +514,7 @@ ZTEST_USER(pdc_api, test_is_vconn_sourcing)
 		out = false;
 		zassert_ok(emul_pdc_set_vconn_sourcing(emul, true));
 		zassert_ok(pdc_is_vconn_sourcing(dev, &out));
-		k_sleep(K_MSEC(SLEEP_MS));
+		PDC_WAIT_FOR_COMPLETION();
 		zassert_equal(false, out, "Got 0x%x, expected 0x%x", out,
 			      false);
 		emul_pdc_set_cmd_error(emul, false);
@@ -457,7 +523,7 @@ ZTEST_USER(pdc_api, test_is_vconn_sourcing)
 	for (i = 0; i < ARRAY_SIZE(in); i++) {
 		zassert_ok(emul_pdc_set_vconn_sourcing(emul, in[i]));
 		zassert_ok(pdc_is_vconn_sourcing(dev, &out));
-		k_sleep(K_MSEC(SLEEP_MS));
+		PDC_WAIT_FOR_COMPLETION();
 		zassert_equal(in[i], out, "[%d] Got 0x%x, expected 0x%x", i,
 			      out, in[i]);
 	}
@@ -472,7 +538,7 @@ ZTEST_USER(pdc_api, test_set_frs)
 	for (int i = 0; i < ARRAY_SIZE(frs_state); i++) {
 		zassert_ok(pdc_set_frs(dev, frs_state[i]));
 
-		k_sleep(K_MSEC(SLEEP_MS));
+		PDC_WAIT_FOR_COMPLETION();
 		zassert_ok(emul_pdc_get_frs(emul, &out));
 
 		zassert_equal(frs_state[i], out, "Got %d, expected %d (i=%d)",
@@ -487,7 +553,7 @@ ZTEST_USER(pdc_api, test_reconnect)
 
 	zassert_ok(pdc_reconnect(dev));
 
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
 	zassert_ok(emul_pdc_get_reconnect_req(emul, &expected, &val));
 	zassert_equal(expected, val);
 }
@@ -502,7 +568,7 @@ void helper_clear_cached_chip_info(void)
 	init.fw_version = PDC_FWVER_INVALID;
 	emul_pdc_set_info(emul, &init);
 	zassert_ok(pdc_get_info(dev, &out, true));
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
 }
 
 #define ZEPHYR_USER_NODE DT_PATH(zephyr_user)
@@ -555,13 +621,12 @@ ZTEST_USER(pdc_api, test_get_info)
 
 	helper_clear_cached_chip_info();
 	zassert_equal(-EAGAIN, pdc_get_info(dev, &out, false));
-	k_sleep(K_MSEC(SLEEP_MS));
 
 	/* Part 1: Live read -- Set `info_in1`, `out` should match `info_in1` */
 
 	emul_pdc_set_info(emul, &info_in1);
 	zassert_ok(pdc_get_info(dev, &out, true));
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
 
 	zassert_equal(info_in1.fw_version, out.fw_version, "in=0x%X, out=0x%X",
 		      info_in1.fw_version, out.fw_version);
@@ -581,7 +646,6 @@ ZTEST_USER(pdc_api, test_get_info)
 
 	emul_pdc_set_info(emul, &info_in2);
 	zassert_ok(pdc_get_info(dev, &out, false));
-	k_sleep(K_MSEC(SLEEP_MS));
 
 	zassert_equal(info_in1.fw_version, out.fw_version, "in=0x%X, out=0x%X",
 		      info_in1.fw_version, out.fw_version);
@@ -599,7 +663,7 @@ ZTEST_USER(pdc_api, test_get_info)
 	 */
 
 	zassert_ok(pdc_get_info(dev, &out, true));
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
 
 	zassert_equal(info_in2.fw_version, out.fw_version, "in=0x%X, out=0x%X",
 		      info_in2.fw_version, out.fw_version);
@@ -635,7 +699,7 @@ ZTEST_USER(pdc_api, test_get_lpm_ppm_info)
 	/* Successful */
 	emul_pdc_set_lpm_ppm_info(emul, &in);
 	zassert_equal(EC_SUCCESS, pdc_get_lpm_ppm_info(dev, &out));
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
 
 	zassert_equal(in.vid, out.vid, "Got $%04x, expected $%04x", out.vid,
 		      in.vid);
@@ -665,14 +729,14 @@ ZTEST_USER(pdc_api, test_get_pdo)
 	/* Test source fixed pdo. */
 	zassert_ok(pdc_get_pdos(dev, SOURCE_PDO, PDO_OFFSET_0, 1, false,
 				&fixed_pdo));
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
 	zassert_equal(PDO_FIXED_VOLTAGE(fixed_pdo), 12000);
 
 	/* Test sink fixed pdo. */
 	fixed_pdo = 0;
 	zassert_ok(pdc_get_pdos(dev, SINK_PDO, PDO_OFFSET_0, 1, false,
 				&fixed_pdo));
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
 	zassert_equal(PDO_FIXED_VOLTAGE(fixed_pdo), 5000);
 }
 
@@ -697,12 +761,12 @@ ZTEST_USER(pdc_api, test_set_pdos)
 
 	/* Set PDOs */
 	zassert_ok(pdc_set_pdos(dev, SINK_PDO, pdos_in, ARRAY_SIZE(pdos_in)));
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
 
 	/* Read back PDOs */
 	zassert_ok(pdc_get_pdos(dev, SINK_PDO, PDO_OFFSET_0,
 				ARRAY_SIZE(pdos_out), false, pdos_out));
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
 
 /* TODO(b/345292002): Incorrect PDOs returned by TI driver or emulator. */
 #ifndef CONFIG_TODO_B_345292002
@@ -736,7 +800,8 @@ ZTEST_USER(pdc_api, test_get_cable_property)
 
 	memset(&read_property, 0, sizeof(union cable_property_t));
 	zassert_ok(pdc_get_cable_property(dev, &read_property));
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
+
 	zassert_ok(memcmp(&read_property, &property,
 			  sizeof(union cable_property_t)));
 }
@@ -797,7 +862,8 @@ ZTEST_USER(pdc_api, test_get_sbu_mux_mode_access_error)
 	rv = emul_pdc_set_cmd_error(emul, true);
 	if (rv != -ENOSYS) {
 		zassert_ok(pdc_get_sbu_mux_mode(dev, &mode));
-		k_sleep(K_MSEC(SLEEP_MS));
+		PDC_WAIT_FOR_COMPLETION();
+
 		zassert_equal(mode, PDC_SBU_MUX_MODE_INVALID,
 			      "Expect PDC_SBU_MUX_MODE_INVALID (%d), Get (%d)",
 			      PDC_SBU_MUX_MODE_INVALID, mode);
@@ -831,7 +897,7 @@ void *pdc_suspended_setup(void)
 	 */
 	emul_pdc_set_info(emul, &info_in1);
 	zassert_ok(pdc_get_info(dev, &out, true));
-	k_sleep(K_MSEC(SLEEP_MS));
+	PDC_WAIT_FOR_COMPLETION();
 
 	/* Suspend chip communications */
 	zassert_ok(pdc_set_comms_state(dev, false));
