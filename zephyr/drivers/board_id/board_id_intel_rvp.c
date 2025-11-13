@@ -123,8 +123,8 @@ static void pca95xx_deferred_init_cb(const struct device *dev,
 {
 	const struct device *gpio_port;
 
-	if (exit == AP_POWER_STATE_G3) {
-		LOG_DBG("S5 callback triggered, when exiting G3");
+	if (entry > AP_POWER_STATE_S5) {
+		LOG_DBG("S5 callback triggered, going to higher state");
 		for (int i = 0; i < BOM_GPIOS_COUNT; i++) {
 			gpio_port = rvp_config->bom_gpios_config[i].port;
 			if (!device_is_ready(gpio_port)) {
@@ -154,15 +154,14 @@ static int rvp_board_id_init(const struct device *dev)
 	rvp_config = dev->config;
 
 	if (rvp_config->defer_until_s5) {
-		static struct ap_pwrseq_state_callback ap_pwrseq_entry_cb;
+		static struct ap_pwrseq_state_callback ap_pwrseq_cb;
 		const struct device *ap_pwrseq_dev = ap_pwrseq_get_instance();
 
 		LOG_INF("setup_pca95xx_init_callback");
-		ap_pwrseq_entry_cb.cb = pca95xx_deferred_init_cb;
-		ap_pwrseq_entry_cb.states_bit_mask = BIT(AP_POWER_STATE_S5);
-
-		ap_pwrseq_register_state_entry_callback(ap_pwrseq_dev,
-							&ap_pwrseq_entry_cb);
+		ap_pwrseq_cb.cb = pca95xx_deferred_init_cb;
+		ap_pwrseq_cb.states_bit_mask = BIT(AP_POWER_STATE_S5);
+		ap_pwrseq_register_state_exit_callback(ap_pwrseq_dev,
+						       &ap_pwrseq_cb);
 	}
 	return 0;
 }
