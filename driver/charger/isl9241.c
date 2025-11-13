@@ -1139,6 +1139,8 @@ bool isl9241_is_in_bypass_mode(int chgnum)
 static enum ec_error_list isl9241_enable_bypass_mode(int chgnum, bool enable)
 {
 	enum ec_error_list rv = EC_ERROR_UNKNOWN;
+	int charge_current = charge_manager_get_charger_current();
+	int charge_voltage = charge_manager_get_charger_voltage();
 
 	if (enable) {
 #ifdef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
@@ -1193,6 +1195,10 @@ static enum ec_error_list isl9241_enable_bypass_mode(int chgnum, bool enable)
 #endif
 		if (rv == EC_SUCCESS) {
 			isl9241_in_bypass_mode = true;
+			/* Set a high adapter current limit when charger is ready at RTB */
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+			board_set_charge_limit(0, 0, charge_current, 0, charge_voltage);
+#endif
 		}
 		return rv;
 	}
