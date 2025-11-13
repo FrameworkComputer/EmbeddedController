@@ -36,6 +36,8 @@ static const uint8_t connector_number =
 static bool test_cc_cb_called;
 static union cci_event_t test_cc_cb_cci;
 
+FAKE_VALUE_FUNC(int, chipset_in_state, int);
+
 void pdc_before_test(void *data)
 {
 	emul_pdc_reset(emul);

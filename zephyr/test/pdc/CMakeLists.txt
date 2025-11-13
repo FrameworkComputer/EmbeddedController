@@ -18,8 +18,11 @@ target_sources_ifdef(CONFIG_TEST_PDC_MESSAGE_TRACING  app PRIVATE
 	src/util_pcap.c
 	src/pdc_trace_msg.c)
 
-if (DEFINED CONFIG_TEST_SUITE_PDC_GENERIC)
+if (DEFINED CONFIG_TEST_SUITE_PDC_API)
 	target_sources(app PRIVATE src/generic/pdc_api.c)
+endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PDC_GENERIC)
 	target_sources(app PRIVATE src/generic/pdc_attached_snk.c)
 	target_sources(app PRIVATE src/generic/pdc_power_mgmt_api.c)
 	target_sources(app PRIVATE src/generic/pdc_pmc_debug_api.c)

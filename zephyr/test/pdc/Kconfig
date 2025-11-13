@@ -2,8 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config TEST_SUITE_PDC_API
+	bool "Enable generic PDC driver API tests"
+
 config TEST_SUITE_PDC_GENERIC
-	bool "Enable generic PDC tests"
+	bool "Enable generic pdc_power_mgmt tests"
 
 config TEST_SUITE_PDC_UTILS
 	bool "Enable PDC utility tests"
