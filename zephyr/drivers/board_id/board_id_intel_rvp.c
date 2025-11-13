@@ -54,34 +54,26 @@ int get_rvp_id_config(enum rvp_id_type id_type)
 {
 	const struct device *gpio_port;
 
-	int board_id = -1;
-	int bom_id = -1;
-	int fab_id = -1;
-	int rv = -1;
-
 	gpio_port = rvp_config->board_gpios_config[0].port;
 	if (!device_is_ready(gpio_port)) {
 		LOG_ERR("gpio controller port is not initialized, cannot access it");
-		return rv;
+		return -ENODEV;
 	}
 
 	if (id_type == BOARD_ID) {
 		/*
 		 * BOARD ID[5:0] : IOEX[13:8]
 		 */
-		board_id = gpio_pin_get_dt(&rvp_config->board_gpios_config[0]);
-		board_id |= gpio_pin_get_dt(&rvp_config->board_gpios_config[1])
-			    << 1;
-		board_id |= gpio_pin_get_dt(&rvp_config->board_gpios_config[2])
-			    << 2;
-		board_id |= gpio_pin_get_dt(&rvp_config->board_gpios_config[3])
-			    << 3;
-		board_id |= gpio_pin_get_dt(&rvp_config->board_gpios_config[4])
-			    << 4;
-		board_id |= gpio_pin_get_dt(&rvp_config->board_gpios_config[5])
-			    << 5;
+		int board_id = 0;
+		for (int i = 0; i < BOARD_GPIOS_COUNT; ++i) {
+			int pin = gpio_pin_get_dt(
+				&rvp_config->board_gpios_config[i]);
+			if (pin < 0)
+				return pin;
+			board_id |= pin << i;
+		}
 
-		LOG_DBG("BOARD_ID:0x%x", board_id);
+		LOG_DBG("BOARD_ID: 0x%x", board_id);
 		return board_id;
 	}
 
@@ -90,12 +82,16 @@ int get_rvp_id_config(enum rvp_id_type id_type)
 		 * BOM ID [2]   : IOEX[0]
 		 * BOM ID [1:0] : IOEX[15:14]
 		 */
-		bom_id = gpio_pin_get_dt(&rvp_config->bom_gpios_config[0]);
-		bom_id |= gpio_pin_get_dt(&rvp_config->bom_gpios_config[1])
-			  << 1;
-		bom_id |= gpio_pin_get_dt(&rvp_config->bom_gpios_config[2])
-			  << 2;
-		LOG_DBG("BOM_ID:0x%x", bom_id);
+		int bom_id = 0;
+		for (int i = 0; i < BOM_GPIOS_COUNT; ++i) {
+			int pin = gpio_pin_get_dt(
+				&rvp_config->bom_gpios_config[i]);
+			if (pin < 0)
+				return pin;
+			bom_id |= pin << i;
+		}
+
+		LOG_DBG("BOM_ID: 0x%x", bom_id);
 		return bom_id;
 	}
 
@@ -103,16 +99,21 @@ int get_rvp_id_config(enum rvp_id_type id_type)
 		/*
 		 * FAB ID [1:0] : IOEX[2:1] + 1
 		 */
-		fab_id = gpio_pin_get_dt(&rvp_config->fab_gpios_config[0]);
-		fab_id |= gpio_pin_get_dt(&rvp_config->fab_gpios_config[1])
-			  << 1;
+		int fab_id = 0;
+		for (int i = 0; i < FAB_GPIOS_COUNT; ++i) {
+			int pin = gpio_pin_get_dt(
+				&rvp_config->fab_gpios_config[i]);
+			if (pin < 0)
+				return pin;
+			fab_id |= pin << i;
+		}
 		fab_id += 1;
 
-		LOG_DBG("FAB_ID:0x%x", fab_id);
+		LOG_DBG("FAB_ID: 0x%x", fab_id);
 		return fab_id;
 	}
 
-	return rv;
+	return -1;
 }
 
 #ifdef CONFIG_AP_PWRSEQ_DRIVER
