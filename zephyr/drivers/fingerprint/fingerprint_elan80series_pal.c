@@ -232,7 +232,7 @@ int __unused elan_write_reg_vector(const uint8_t *reg_table, int length)
  * @param short_raw Pointer to the buffer to store the image data.
  * @return 0 on success, negative error code on failure.
  */
-static int elan_image_read(uint16_t *short_raw)
+static __unused int elan_read_image_full(uint16_t *short_raw)
 {
 	assert(short_raw != NULL);
 
@@ -286,6 +286,15 @@ static int elan_image_read(uint16_t *short_raw)
 	return 0;
 }
 
+int elan_read_image(uint16_t *short_raw)
+{
+#ifdef CONFIG_FINGERPRINT_SENSOR_ELAN80SERIES_READ_MODE_FULL
+	return elan_read_image_full(short_raw);
+#else
+#error "No read mode selected."
+#endif
+}
+
 int __unused elan_raw_capture(uint16_t *short_raw)
 {
 	assert(short_raw != NULL);
@@ -300,9 +309,9 @@ int __unused elan_raw_capture(uint16_t *short_raw)
 		return ret;
 	}
 
-	ret = elan_image_read(short_raw);
+	ret = elan_read_image(short_raw);
 	if (ret < 0)
-		LOG_ERR("%s: elan_image_read failed (%d)", __func__, ret);
+		LOG_ERR("%s: elan_image_read_func failed (%d)", __func__, ret);
 
 	return ret;
 }

@@ -31,6 +31,17 @@ config FINGERPRINT_SENSOR_ELAN80SERIES_HEAP_SIZE
 	  during the enrollment process and to enable efficient runtime matching
 	  operations.
 
+choice FINGERPRINT_SENSOR_ELAN80SERIES_READ_MODE
+    prompt "ELAN 80 series read mode"
+	default FINGERPRINT_SENSOR_ELAN80SERIES_READ_MODE_FULL if FINGERPRINT_SENSOR_ELAN80SG
+    help
+      Select the data read mode for the ELAN 80 series sensors.
+
+config FINGERPRINT_SENSOR_ELAN80SERIES_READ_MODE_FULL
+    bool "Image read mode"
+    help
+      Reads the image in a standard block.
+endchoice
 endif # FINGERPRINT_SENSOR_ELAN80SERIES
 
 menuconfig FINGERPRINT_SENSOR_ELAN80SG
