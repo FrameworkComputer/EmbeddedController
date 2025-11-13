@@ -224,4 +224,13 @@ int elan_fp_maintenance(uint16_t *error_state);
  */
 int elan_fp_deinit(void);
 
+/**
+ * Use setting flash addresses to access ELAN fingerprint data.
+ *
+ * @param base_addr    Base address of the fingerprint base image in flash.
+ * @param ft_info_addr Address of the fingerprint info in flash.
+ *
+ */
+void use_flash_addresses(uint32_t base_addr, uint32_t ft_info_addr);
+
 #endif /* ZEPHYR_DRIVERS_FINGERPRINT_ELAN80SERIES_PRIVATE_H_ */

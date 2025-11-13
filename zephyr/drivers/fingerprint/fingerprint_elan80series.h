@@ -15,6 +15,8 @@ struct elan80series_cfg {
 	struct gpio_dt_spec interrupt;
 	struct gpio_dt_spec reset_pin;
 	struct fingerprint_sensor_info sensor_info;
+	uint32_t base_image_addr;
+	uint32_t ft_info_addr;
 	struct fingerprint_image_frame_params sensor_image_configs[];
 };
 
