@@ -569,7 +569,19 @@ extern "C" {
 #endif
 
 #if DT_HAS_CHOSEN(zephyr_flash)
+#if DT_NODE_HAS_COMPAT(DT_CHOSEN(zephyr_flash), jedec_spi_nor) && \
+	defined(CONFIG_RISCV)
+/* Based on RISC-V linker script, the jedec,spi-nor zephyr flash chosen node
+ * uses additional dts property/register to point flash memory-mapped address.
+ */
+#define SPI_CTRL DT_PARENT(DT_CHOSEN(zephyr_flash))
+#define FLASH_MMAP_NAME flash_mmap
+#define CONFIG_PROGRAM_MEMORY_BASE                        \
+	DT_REG_ADDR_BY_NAME_OR(SPI_CTRL, FLASH_MMAP_NAME, \
+			       DT_REG_ADDR_BY_IDX(SPI_CTRL, 1))
+#else
 #define CONFIG_PROGRAM_MEMORY_BASE DT_REG_ADDR(DT_CHOSEN(zephyr_flash))
+#endif
 #else
 #error "A zephyr,flash device must be chosen in the device tree"
 #endif
