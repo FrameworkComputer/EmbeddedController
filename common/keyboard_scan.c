@@ -1125,6 +1125,7 @@ void keyboard_scan_task(void *u)
 				keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
 				udelay(keyscan_config.output_settle_us +
 				       COL2_DELAY_US);
+				force_poll |= local_disable_scanning;
 			} else if (!local_disable_scanning) {
 				/*
 				 * Scanning isn't enabled but it was last time
@@ -1175,9 +1176,6 @@ void keyboard_scan_task(void *u)
 			}
 		}
 
-		/* We're about to poll, so any existing forces are fulfilled */
-		force_poll = 0;
-
 		/* Enter polling mode */
 		CPRINTS5("poll");
 		keyboard_raw_enable_interrupt(0);
@@ -1187,8 +1185,12 @@ void keyboard_scan_task(void *u)
 		while (keyboard_scan_is_enabled()) {
 			start = get_time();
 
-			/* Check for keys down */
-			if (check_keys_changed(debounced_state)) {
+			/*
+			 * Check for keys down or force poll to debounce key
+			 * press during keyboard scan disablement.
+			 */
+			if (check_keys_changed(debounced_state) || force_poll) {
+				force_poll = 0;
 				poll_deadline.val =
 					start.val +
 					keyscan_config.poll_timeout_us;
@@ -1215,6 +1217,12 @@ void keyboard_scan_task(void *u)
 
 			crec_usleep(wait_time);
 		}
+
+		/*
+		 * Set force_poll in case that keyboard_scan_is_enabled is false
+		 * in the first iteration.
+		 */
+		force_poll = 0;
 	}
 }
 
