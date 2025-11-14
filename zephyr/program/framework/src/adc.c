@@ -108,17 +108,19 @@ static enum ec_status hc_read_boardid(struct host_cmd_handler_args *args)
 	case HC_BOARD_ID_MAINBOARD:
 		r->board_id = get_hardware_id(ADC_MAIN_BOARD_ID);
 		break;
-#ifdef ADC_POWER_BUTTON_BOARD_ID
+#if defined(CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_12)
 	case HC_BOARD_ID_POWERBUTTON_BOARD:
 		r->board_id = get_hardware_id(ADC_POWER_BUTTON_BOARD_ID);
 		break;
 #endif
-#ifdef ADC_TOUCHPAD_ID
+#if defined(CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_12) || \
+	defined(CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_13)
 	case HC_BOARD_ID_TOUCHPAD:
 		r->board_id = get_hardware_id(ADC_TOUCHPAD_ID);
 		break;
 #endif
-#ifdef ADC_AUDIO_ID
+#if defined(CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_12) || \
+	defined(CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_13)
 	case HC_BOARD_ID_AUDIO_BOARD:
 		r->board_id = get_hardware_id(ADC_AUDIO_ID);
 		break;
