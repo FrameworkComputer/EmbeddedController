@@ -71,7 +71,7 @@ If you want to share the same terminal, add this line to
 `zephyr/program/minimal/prj.conf` and rebuild:
 
 ```
-  CONFIG_NATIVE_UART_0_ON_STDINOUT=y
+  CONFIG_UART_NATIVE_PTY_0_ON_STDINOUT=y
 ```
 
 Running that will show an EC prompt on your terminal. Use Ctrl-\ to quit.
