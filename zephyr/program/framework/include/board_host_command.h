@@ -495,9 +495,9 @@ enum ec_board_id_type {
 	HC_BOARD_ID_MAINBOARD = 0,
 	/* Power button board - Framework 12 */
 	HC_BOARD_ID_POWERBUTTON_BOARD = 1,
-	/* Power button board - Framework 12, 13, 16 */
+	/* Touchpad board - Framework 12, 13 */
 	HC_BOARD_ID_TOUCHPAD = 2,
-	/* Power button board - Framework 12, 13 */
+	/* Audio board - Framework 12, 13 */
 	HC_BOARD_ID_AUDIO_BOARD = 3,
 	/* dGPU board - Framework 16 */
 	HC_BOARD_ID_DGPU0 = 4,
