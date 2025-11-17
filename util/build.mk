@@ -7,7 +7,8 @@
 #
 
 # See Makefile for description.
-host-util-bin-cxx-y += ectool ec_parse_panicinfo lbplay stm32mon lbcc iteflash \
+host-util-bin-cxx-y += ectool ec_parse_panicinfo lbplay \
+	stm32mon stm32mon_static lbcc iteflash \
 	itecomdbgr cbi-util ec_coredump
 host-util-bin-y += rtkupdate
 build-util-art-y += util/export_taskinfo.so
@@ -23,6 +24,10 @@ $(out)/util/uartupdatetool: HOST_CFLAGS+=-Iutil/
 # stm32mon doesn't have any library dependencies (e.g., ftdi, usb) that are
 # linked into host utilities by default.
 $(out)/util/stm32mon: HOST_LDFLAGS=
+
+# b/381916046: statically linked version of stm32mon.
+stm32mon_static-objs = stm32mon.o
+$(out)/util/stm32mon_static: HOST_LDFLAGS=-static
 
 # If the util/ directory in the private repo is symlinked into util/private,
 # we want to build host-side tools from it, too.
