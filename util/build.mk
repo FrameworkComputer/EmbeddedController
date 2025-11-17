@@ -20,6 +20,10 @@ uartupdatetool-objs=uut/main.o uut/cmd.o uut/opr.o uut/l_com_port.o \
 	uut/lib_crc.o
 $(out)/util/uartupdatetool: HOST_CFLAGS+=-Iutil/
 
+# stm32mon doesn't have any library dependencies (e.g., ftdi, usb) that are
+# linked into host utilities by default.
+$(out)/util/stm32mon: HOST_LDFLAGS=
+
 # If the util/ directory in the private repo is symlinked into util/private,
 # we want to build host-side tools from it, too.
 ifneq ("$(wildcard util/private/build.mk)","")
