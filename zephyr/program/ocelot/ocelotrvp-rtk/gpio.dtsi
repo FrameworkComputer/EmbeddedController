@@ -68,10 +68,6 @@
 			gpios = <RTS5912_GPIO083 GPIO_INPUT>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
-		gpio_lid: smc-lid-3v3-i {
-			gpios = <RTS5912_GPIO092 GPIO_INPUT>;
-			enum-name = "GPIO_LID_OPEN";
-		};
 		gpio_pwrbtn: pwrbtn-ec-in-n-3v3-i {
 			gpios = <RTS5912_GPIO115 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_POWER_BUTTON_L";
@@ -79,6 +75,10 @@
 		gpio_acok: bc-acok-3v3-i {
 			gpios = <RTS5912_GPIO112 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_lid: smc-lid-3v3-i {
+			gpios = <RTS5912_GPIO117 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
 		};
 		gpio_ec_pch_wake_odl: ec-pg3-wake-3v3-pp {
 			gpios = <RTS5912_GPIO131 GPIO_OUTPUT>;

@@ -27,7 +27,6 @@
 
 /delete-node/ &int_volume_down;
 /delete-node/ &int_volume_up;
-/delete-node/ &int_lid_open;
 
 &pdc_rtk_c0 {
 	irq-gpios = <RTS5912_GPIO027 GPIO_ACTIVE_LOW>;
