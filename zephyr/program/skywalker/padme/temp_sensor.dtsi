@@ -5,6 +5,30 @@
 #include <cros/thermistor/thermistor.dtsi>
 
 / {
+	temp_charger2: charger2 {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&adc_charger>;
+	};
+
+	temp_typec: typec{
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&adc_type_c>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		charger {
+			sensor = <&charger_rt9490>;
+		};
+		charger2 {
+			sensor = <&temp_charger2>;
+		};
+		typec {
+			sensor = <&temp_typec>;
+		};
+	};
 };
 
 &thermistor_3V3_100K_100K_4250B {
