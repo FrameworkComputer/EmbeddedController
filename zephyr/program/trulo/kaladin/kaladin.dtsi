@@ -44,6 +44,11 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "gmr_tablet_switch_isr";
 		};
+		int_plt_rst: plt_rst {
+			irq-pin = <&gpio_plt_rst>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "plt_rst_interrupt";
+		};
 	};
 };
 
