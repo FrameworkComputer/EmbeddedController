@@ -7,9 +7,17 @@
 #
 
 # See Makefile for description.
-host-util-bin-cxx-y += ectool ec_parse_panicinfo lbplay \
-	stm32mon stm32mon_static lbcc iteflash \
-	itecomdbgr cbi-util ec_coredump
+host-util-bin-cxx-y += ectool
+host-util-bin-cxx-y += ec_parse_panicinfo
+host-util-bin-cxx-y += lbplay
+host-util-bin-cxx-y += stm32mon
+host-util-bin-cxx-y += stm32mon_static
+host-util-bin-cxx-y += lbcc
+host-util-bin-cxx-y += iteflash
+host-util-bin-cxx-y += itecomdbgr
+host-util-bin-cxx-y += cbi-util
+host-util-bin-cxx-y += ec_coredump
+
 host-util-bin-y += rtkupdate
 build-util-art-y += util/export_taskinfo.so
 
