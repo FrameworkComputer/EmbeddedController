@@ -12,8 +12,10 @@
 #include "gpio.dtsi"
 #include "i2c.dtsi"
 #include "power_signals.dtsi"
+#include "../rvp_battery.dtsi"
 #include "../rvp_interrupts.dtsi"
 #include "../rvp_ioex_gpio.dtsi"
+#include "../rvp_usbc.dtsi"
 
 &espi0 {
 	status = "okay";
@@ -26,4 +28,16 @@
 /delete-node/ &int_volume_down;
 /delete-node/ &int_volume_up;
 /delete-node/ &int_lid_open;
-/delete-node/ &int_dc_jack_present;
+
+&pdc_rtk_c0 {
+	irq-gpios = <RTS5912_GPIO027 GPIO_ACTIVE_LOW>;
+};
+&pdc_rtk_c1 {
+	irq-gpios = <RTS5912_GPIO027 GPIO_ACTIVE_LOW>;
+};
+&pdc_ti_c0 {
+	irq-gpios = <RTS5912_GPIO027 GPIO_ACTIVE_LOW>;
+};
+&pdc_ti_c1 {
+	irq-gpios = <RTS5912_GPIO027 GPIO_ACTIVE_LOW>;
+};
