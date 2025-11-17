@@ -29,7 +29,7 @@
 		enum-name = "PWR_RSMRST_PWRGD";
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
                 /* RSMRST_PWRGD_N_R net  */
-	        gpios = <&gpiof 0 0>;
+	        gpios = <&gpioe 6 (GPIO_VOLTAGE_1P8)>;
 	};
 	pwr_ec_pch_rsmrst: pm-rsmrst-ec-n {
 		compatible = "intel,ap-pwrseq-gpio";
@@ -60,7 +60,7 @@
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "SYS_PWROK output to PCH";
 		enum-name = "PWR_EC_PCH_SYS_PWROK";
-		gpios = <&gpiof 1 GPIO_ACTIVE_HIGH>;
+		gpios = <&gpioj 4 GPIO_ACTIVE_HIGH>;
 		output;
 	};
 	pwr-slp-s3 {
