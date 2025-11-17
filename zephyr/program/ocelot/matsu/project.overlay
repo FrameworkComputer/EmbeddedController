@@ -31,7 +31,6 @@ gpio_lid: &gpio_lid_open {};
 gpio_pwrbtn: &gpio_gsc_ec_pwr_btn_odl {};
 gpio_fan_control: &gpio_en_pp5000_fan {};
 gpio_all_sys_pwr_good: &gpio_all_sys_pwrgd_r {};
-gpio_temp_sensor_power_good: &gpio_en_s5_rails {};
 
 /* Map tachometers to common names */
 tach_fan0: &tach0 {};
@@ -46,11 +45,11 @@ tach_fan0: &tach0 {};
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
 #include "pwm.dtsi"
+#include "temp_sensors.dtsi"
 #include "usba.dtsi"
 #include "usb_typec.dtsi"
 
 #include "../ite_hibernate.dtsi"
-#include "../rvp_temp_sensors.dtsi"
 
 /* matsu overrides follow... */
 
