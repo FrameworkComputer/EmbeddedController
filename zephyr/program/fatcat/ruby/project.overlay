@@ -66,13 +66,9 @@
     data-bits = <8>;                // (2+8=10, a multiple of 5)
     tx-invert;                      // Mandatory for idle-low signal
 
-    led_strip: ws2812-strip {
-        compatible = "worldsemi,ws2812-uart";
+    uart4_dev0: uart4_dev0 {
         status = "okay";
         chain-length = <8>;
-        color-mapping = <LED_COLOR_ID_GREEN
-                         LED_COLOR_ID_RED
-                         LED_COLOR_ID_BLUE>;
         reset-delay = <200>;
         bits-per-symbol = <5>;
         one-symbol = <BINARY(1,1,1,0,0)>;
