@@ -9,6 +9,7 @@
 
 /* moonstone project DTS includes */
 #include "gpios.dtsi"
+#include "keyboard.dtsi"
 
 #include "../kinmen/adc.dtsi"
 #include "../kinmen/binman.dtsi"
@@ -17,7 +18,6 @@
 #include "../kinmen/hibernate.dtsi"
 #include "../kinmen/i2c.dtsi"
 #include "../kinmen/interrupts.dtsi"
-#include "../kinmen/keyboard.dtsi"
 #include "../kinmen/led_pins.dtsi"
 #include "../kinmen/led_policy.dtsi"
 #include "../kinmen/power_signals.dtsi"
@@ -43,4 +43,20 @@
 
 &sha0 {
 	status = "okay";
+};
+
+&spi0 {
+	status = "okay";
+	pinctrl-0 = <&spi_ssce0_default &spi_smosi_default>;
+	pinctrl-names = "default";
+
+	spi0_dev0: spi0_dev@0 {
+		reg = <0>;
+		chain-length = <12>;
+		reset-delay = <200>;
+		spi-max-frequency = <6000000>;
+		bits-per-symbol = <8>;
+		spi-one-frame = <0xF8>;
+		spi-zero-frame = <0xC0>;
+	};
 };
