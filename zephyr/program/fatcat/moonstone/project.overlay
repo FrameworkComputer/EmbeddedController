@@ -8,11 +8,12 @@
 #include <cros/integrated_fwid.dtsi>
 
 /* moonstone project DTS includes */
+#include "gpios.dtsi"
+
 #include "../kinmen/adc.dtsi"
 #include "../kinmen/binman.dtsi"
 #include "../kinmen/console.dtsi"
 #include "../kinmen/fan.dtsi"
-#include "../kinmen/gpios.dtsi"
 #include "../kinmen/hibernate.dtsi"
 #include "../kinmen/i2c.dtsi"
 #include "../kinmen/interrupts.dtsi"
