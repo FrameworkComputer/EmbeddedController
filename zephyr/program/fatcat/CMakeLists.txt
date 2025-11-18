@@ -71,6 +71,7 @@ if(DEFINED CONFIG_BOARD_MOONSTONE)
 	zephyr_include_directories("moonstone/include")
 	zephyr_library_sources("moonstone/src/board_power.c")
 	zephyr_library_sources("moonstone/src/suspend_resume.c")
+	zephyr_library_sources("moonstone/src/thermal.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 					"moonstone/src/keyboard_customization.c")
 	zephyr_library_sources_ifdef(CONFIG_PDC_RUNTIME_PORT_CONFIG

@@ -8,13 +8,13 @@
 #include <cros/integrated_fwid.dtsi>
 
 /* moonstone project DTS includes */
+#include "fan.dtsi"
 #include "gpios.dtsi"
 #include "keyboard.dtsi"
 
 #include "../kinmen/adc.dtsi"
 #include "../kinmen/binman.dtsi"
 #include "../kinmen/console.dtsi"
-#include "../kinmen/fan.dtsi"
 #include "../kinmen/hibernate.dtsi"
 #include "../kinmen/i2c.dtsi"
 #include "../kinmen/interrupts.dtsi"
@@ -22,6 +22,7 @@
 #include "../kinmen/led_policy.dtsi"
 #include "../kinmen/power_signals.dtsi"
 #include "../kinmen/pwm.dtsi"
+#include "../kinmen/temp_sensors.dtsi"
 #include "../kinmen/usb_typec.dtsi"
 #include "../kinmen/usba.dtsi"
 

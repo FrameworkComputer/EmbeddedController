@@ -211,12 +211,10 @@
 		compatible = "unused-gpios";
 
 		unused-gpios =
-			<&gpioa 4 0>,
 			<&gpioa 6 0>,
 			<&gpiob 2 0>,
 			<&gpiob 3 0>,
 			<&gpiob 4 0>,
-			<&gpiod 7 0>,
 			<&gpiof 2 0>,
 			<&gpiof 3 0>,
 			<&gpiog 0 0>,
