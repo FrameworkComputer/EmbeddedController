@@ -236,7 +236,7 @@ static __unused int elan_read_image_full(uint16_t *short_raw)
 {
 	assert(short_raw != NULL);
 
-	int ret = 0, i = 0, cnt_timer = 0, rx_index = 0;
+	int ret = 0, cnt_timer = 0, rx_index = 0;
 	uint8_t regdata[4] = { 0 };
 
 	/* Polling scan status */
@@ -261,7 +261,7 @@ static __unused int elan_read_image_full(uint16_t *short_raw)
 	k_sem_take(&trx_buffer_lock, K_FOREVER);
 	memset(tx_buf, 0, ELAN_SPI_TX_BUF_SIZE);
 	tx_buf[0] = START_READ_IMAGE;
-	for (i = 0; i < ELAN_DMA_LOOP; i++) {
+	for (int line_idx = 0; line_idx < ELAN_DMA_LOOP; line_idx++) {
 		ret = elan_spi_transaction_duplex(tx_buf, ELAN_SPI_TX_BUF_SIZE,
 						  rx_buf, ELAN_SPI_RX_BUF_SIZE);
 
@@ -275,7 +275,7 @@ static __unused int elan_read_image_full(uint16_t *short_raw)
 			for (int x = 0; x < IMAGE_WIDTH; x++) {
 				rx_index = (x * 2) + (RAW_DATA_SIZE * y);
 				short_raw[(x + y * IMAGE_WIDTH) +
-					  i * ELAN_DMA_SIZE] =
+					  line_idx * ELAN_DMA_SIZE] =
 					(rx_buf[rx_index] << 8) +
 					(rx_buf[rx_index + 1]);
 			}
@@ -300,10 +300,10 @@ static __unused int elan_image_read_linewise(uint16_t *short_raw)
 {
 	assert(short_raw != NULL);
 
-	int ret = 0, i = 0, cnt_timer = 0, rx_index = 0;
+	int ret = 0, cnt_timer = 0, rx_index = 0;
 	uint8_t regdata[4] = { 0 };
 
-	for (i = 0; i < ELAN_DMA_LOOP; i++) {
+	for (int line_idx = 0; line_idx < ELAN_DMA_LOOP; line_idx++) {
 		/* Polling scan status */
 		cnt_timer = 0;
 		do {
@@ -333,7 +333,7 @@ static __unused int elan_image_read_linewise(uint16_t *short_raw)
 			rx_index = x * 2;
 			/* Sensor outputs Big-Endian: rx_buf[0] is MSB,
 			 * rx_buf[1] is LSB */
-			short_raw[x + i * ELAN_DMA_SIZE] =
+			short_raw[x + line_idx * ELAN_DMA_SIZE] =
 				(rx_buf[rx_index] << 8) | rx_buf[rx_index + 1];
 		}
 		k_sem_give(&trx_buffer_lock);
