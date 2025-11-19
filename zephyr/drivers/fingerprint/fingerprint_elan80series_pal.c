@@ -237,7 +237,7 @@ static __unused int elan_read_image_full(uint16_t *short_raw)
 	assert(short_raw != NULL);
 
 	int ret = 0, cnt_timer = 0, rx_index = 0;
-	uint8_t regdata[4] = { 0 };
+	uint8_t regdata[2] = { 0 };
 
 	/* Polling scan status */
 	cnt_timer = 0;
@@ -301,7 +301,7 @@ static __unused int elan_image_read_linewise(uint16_t *short_raw)
 	assert(short_raw != NULL);
 
 	int ret = 0, cnt_timer = 0, rx_index = 0;
-	uint8_t regdata[4] = { 0 };
+	uint8_t regdata[2] = { 0 };
 
 	for (int line_idx = 0; line_idx < ELAN_DMA_LOOP; line_idx++) {
 		/* Polling scan status */
