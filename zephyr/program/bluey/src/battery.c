@@ -59,3 +59,13 @@ void board_chipset_pre_init(void)
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, board_chipset_pre_init, HOOK_PRIO_DEFAULT);
+
+enum battery_access_type battery_check_access_limit(void)
+{
+	if (!chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
+		LOG_INF("battery access not allowed when chipset on");
+		return BATTERY_ACCESS_NOT_ALLOWED;
+	}
+
+	return BATTERY_ACCESS_ALLOWED;
+}
