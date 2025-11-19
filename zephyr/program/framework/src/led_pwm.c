@@ -290,3 +290,25 @@ void board_led_apply_color(void)
 {
 	DT_INST_FOREACH_CHILD_STATUS_OKAY(0, LED_APPLY_COLOR)
 }
+
+DECLARE_CONSOLE_COMMAND(ledpwm, ledpwm_cmd,
+			"[Led_ID Led_color <r> <g> <b>]",
+			"Led_ID Led_color <r> <g> <b>");
+
+static enum ec_status led_pwm_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_led_pwm_control *p = args->params;
+	uint8_t pwm_colors[LED_PWMS_COUNT];
+
+	if (!led_is_supported(p->led_id) || (p->led_color >= LED_COLOR_COUNT))
+		return EC_RES_INVALID_PARAM;
+
+	pwm_colors[LED_PWMS_COLOR_RED] = p->pwm_r;
+	pwm_colors[LED_PWMS_COLOR_GREEN] = p->pwm_g;
+	pwm_colors[LED_PWMS_COLOR_BLUE] = p->pwm_b;
+	led_change_color(p->led_color, p->led_id, sizeof(pwm_colors), pwm_colors);
+	ccprintf("Set LED_ID:%d, LED_COLOR:%d, PWM R:%d, G:%d, B:%d\n", p->led_id,
+	p->led_color, p->pwm_r, p->pwm_g, p->pwm_b);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_LED_PWM_CONTROL, led_pwm_control, EC_VER_MASK(0));
