@@ -729,4 +729,16 @@ struct ec_params_power_on_ac_attach {
 	uint8_t enable;
 } __ec_align1;
 
+#define EC_CMD_LED_PWM_CONTROL 0x3E2B
+
+struct ec_params_led_pwm_control {
+	/* See enum ec_led_id */
+	uint8_t led_id;
+	/* See enum led_color */
+	uint8_t led_color;
+	uint8_t pwm_r;
+	uint8_t pwm_g;
+	uint8_t pwm_b;
+} __ec_align1;
+
 #endif /* __BOARD_HOST_COMMAND_H */

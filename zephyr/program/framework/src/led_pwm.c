@@ -12,6 +12,7 @@
 #include "led.h"
 #include "util.h"
 #include "board_led.h"
+#include "board_host_command.h"
 
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/pwm.h>
@@ -291,6 +292,57 @@ void board_led_apply_color(void)
 	DT_INST_FOREACH_CHILD_STATUS_OKAY(0, LED_APPLY_COLOR)
 }
 
+enum led_pwms_color_t {
+	LED_PWMS_COLOR_RED,
+	LED_PWMS_COLOR_GREEN,
+	LED_PWMS_COLOR_BLUE,
+	LED_PWMS_COUNT,
+};
+
+static int ledpwm_cmd(int argc, const char **argv)
+{
+	int led_id, led_color, red, green, blue;
+	uint8_t pwm_colors[LED_PWMS_COUNT];
+	char *e;
+
+	if (argc == 6) {
+		led_id = strtoi(argv[1], &e, 0);
+		if (!led_is_supported(led_id))
+			return EC_ERROR_PARAM1;
+
+		/* Only support side charging LEDs */
+		/* we will either remove this host command after dvt1 or fix it. */
+		if (led_id != EC_LED_ID_BATTERY_LED)
+			return EC_ERROR_PARAM1;
+
+		led_color = strtoi(argv[2], &e, 0);
+		if (led_color >= LED_COLOR_COUNT)
+			return EC_ERROR_PARAM2;
+
+		red = strtoi(argv[3], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM3;
+
+		green = strtoi(argv[4], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM4;
+
+		blue = strtoi(argv[5], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM5;
+
+		pwm_colors[LED_PWMS_COLOR_RED] = red;
+		pwm_colors[LED_PWMS_COLOR_GREEN] = green;
+		pwm_colors[LED_PWMS_COLOR_BLUE] = blue;
+		led_change_color(led_color, led_id, sizeof(pwm_colors), pwm_colors);
+
+		ccprintf("Set LED_ID:%d, LED_COLOR:%d, PWM R:%d, G:%d, B:%d\n", led_id,
+		led_color, red, green, blue);
+	} else {
+		return EC_ERROR_PARAM_COUNT;
+	}
+	return EC_SUCCESS;
+}
 DECLARE_CONSOLE_COMMAND(ledpwm, ledpwm_cmd,
 			"[Led_ID Led_color <r> <g> <b>]",
 			"Led_ID Led_color <r> <g> <b>");
