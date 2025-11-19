@@ -101,8 +101,10 @@ static uint32_t pwm_get_bb_sleep_mask(int id)
 {
 	uint32_t bitpos = 32;
 
-	if (id >= MCHP_PWM_ID_MAX && id < MCHP_PWM_ID_MAX)
+	if (id >= MCHP_PWM_ID_MAX && 
+		id < (MCHP_PWM_ID_MAX + MCHP_BBLEN_INSTANCES))
 		bitpos = (uint32_t)pwm_slp_bitpos[id];
+
 	return (1ul << bitpos);
 }
 
