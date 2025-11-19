@@ -1,0 +1,122 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* ocelot program common DTS includes */
+
+#include <cros/integrated_fwid.dtsi>
+
+/* ocicat project DTS includes */
+
+#include "binman.dtsi"
+#include "generated.dtsi"
+#include "power_signals.dtsi"
+
+/*
+ * Map I2C buses to common names
+ */
+
+i2c_port_pd1: &i2c1 {};
+i2c_port_pd2: &i2c3 {};
+i2c_port_charger: &i2c4 {};
+i2c_port_ish: &i2c5 {};
+
+/*
+ * Map GPIOs used for interrupts to common names
+ */
+
+gpio_acok: &gpio_acok_od {};
+gpio_dc_jack_present: &gpio_std_adp_prsnt_r {};
+gpio_lid: &gpio_lid_open {};
+gpio_pwrbtn: &gpio_gsc_ec_pwr_btn_odl {};
+gpio_voldn: &gpio_ec_voldn_btn_odl {};
+gpio_volup: &gpio_ec_volup_btn_odl {};
+gpio_fan_control: &gpio_ec_fan_pwr_disable_n_r {};
+gpio_all_sys_pwr_good: &gpio_all_sys_pwrgd_r {};
+gpio_temp_sensor_power_good: &gpio_en_s5_rails {};
+
+/* Power sequencing */
+gpio_ec_pch_wake_odl: &gpio_smc_wake_sci_n_r {};
+cse_early_rec_sw: &gpio_c_mecc_cse_early_sw_r{};
+
+/* Map tachometers to common names */
+tach_fan0: &tach0 {};
+
+#include "../ite_hibernate.dtsi"
+#include "../rvp_usba.dtsi"
+#include "../rvp_battery.dtsi"
+#include "../rvp_i2c.dtsi"
+#include "../rvp_interrupts.dtsi"
+#include "../rvp_usbc.dtsi"
+#include "../rvp_keyboard.dtsi"
+#include "../rvp_fans.dtsi"
+#include "../rvp_temp_sensors.dtsi"
+#include "../rvp_ioex_gpio.dtsi"
+#include <ite/it8801-common-cfg.dtsi>
+
+&it8801_mfd {
+        irq-gpios = <&gpioi 6 GPIO_ACTIVE_LOW>;
+};
+
+/* ocicat overrides follow... */
+/ {
+	aliases {
+		gpio-wp = &gpio_c_ec_wp_odl_r;
+	};
+
+	named-gpios {
+		/* unimplemented GPIOs */
+		entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+
+	chosen {
+		cros-ec,keyboard = &kbd;
+	};
+};
+
+&espi0 {
+	status = "okay";
+};
+
+&sha0 {
+	status = "okay";
+};
+
+&pwm1 {
+	status = "okay";
+};
+&pwm2 {
+	status = "disabled";
+};
+&pwm3 {
+	status = "disabled";
+};
+
+/* Update board-specific references  */
+
+&pdc_rtk_c0 {
+	irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
+};
+
+&pdc_rtk_c1 {
+	irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
+};
+
+&pdc_ti_c0 {
+	irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
+};
+
+&pdc_ti_c1 {
+	irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
+};
+
+&fan0 {
+	pwms = <&pwm5 PWM_CHANNEL_5 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+};
+
+&kblight {
+	pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(324) PWM_POLARITY_NORMAL>;
+};

@@ -1,0 +1,36 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "../power_signals.dtsi"
+
+&pwr_en_pp3300_a {
+        /* EC_DS3 net. This connects to the PRIM_VR_EN signal and
+         * both the EN1 and EN2 pins on the RT6585 LDO. */
+	gpios = <&gpioi 7 GPIO_ACTIVE_HIGH>;
+};
+&pwr_rsmrst_pwrgd {
+        /* RSMRST_PWRGD_N_R net  */
+	gpios = <&gpiof 0 GPIO_ACTIVE_HIGH>;
+};
+&pwr_ec_pch_rsmrst {
+        /* RM_RSMST_N_R net */
+	gpios = <&gpioj 0 GPIO_ACTIVE_LOW>;
+};
+&pwr_slp_s0 {
+        /* PCH_SLP_S0_N_R net */
+	gpios = <&gpioj 5 GPIO_ACTIVE_LOW>;
+};
+&pwr_pch_pwrok {
+        /* PCH_PWROK_EC_R net */
+	gpios = <&gpioj 1 GPIO_OPEN_DRAIN>;
+};
+&pwr_all_sys_pwrgd {
+        /* ALL_SYS_PWRGD_R net */
+	gpios = <&gpiod 5 GPIO_ACTIVE_HIGH>;
+};
+&pwr_sys_rst {
+        gpios = <&gpioj 7 (GPIO_ACTIVE_LOW|GPIO_OPEN_DRAIN)>;
+};
+
