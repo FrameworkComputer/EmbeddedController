@@ -110,7 +110,7 @@
     <vif:Sends_Pings value="false" />
     <vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="0">FR_Swap not supported</vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
     <vif:Master_Port value="false" />
-    <vif:Has_Invariant_PDOs value="true" />
+    <vif:Has_Invariant_PDOs value="false" />
     <vif:Port_Managed_Guaranteed_Type value="0">Managed Capability</vif:Port_Managed_Guaranteed_Type>
     <vif:DPS_Supported value="false" />
     <vif:Num_Src_PDOs value="1">1 Src PDO</vif:Num_Src_PDOs>
@@ -121,9 +121,9 @@
       <vif:SrcPDO>
         <!--Source PDO 1-->
         <vif:Src_PDO_Supply_Type value="0">Fixed</vif:Src_PDO_Supply_Type>
-        <vif:Src_PDO_Peak_Current value="1">130% IOC</vif:Src_PDO_Peak_Current>
+        <vif:Src_PDO_Peak_Current value="0">100% IOC</vif:Src_PDO_Peak_Current>
         <vif:Src_PDO_Voltage value="100">5000 mV (Factor = 50)</vif:Src_PDO_Voltage>
-        <vif:Src_PDO_Max_Current value="300">3000 mA (Factor = 10)</vif:Src_PDO_Max_Current>
+        <vif:Src_PDO_Max_Current value="150">1500 mA (Factor = 10)</vif:Src_PDO_Max_Current>
         <vif:Src_PD_OCP_OC_Debounce value="0">0 msec</vif:Src_PD_OCP_OC_Debounce>
         <vif:Src_PD_OCP_OC_Threshold value="300">3000 mA (Factor = 10)</vif:Src_PD_OCP_OC_Threshold>
       </vif:SrcPDO>
@@ -278,7 +278,7 @@
     <vif:Sends_Pings value="false" />
     <vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="0">FR_Swap not supported</vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
     <vif:Master_Port value="false" />
-    <vif:Has_Invariant_PDOs value="true" />
+    <vif:Has_Invariant_PDOs value="false" />
     <vif:Port_Managed_Guaranteed_Type value="0">Managed Capability</vif:Port_Managed_Guaranteed_Type>
     <vif:DPS_Supported value="false" />
     <vif:Num_Src_PDOs value="1">1 Src PDO</vif:Num_Src_PDOs>
@@ -289,9 +289,9 @@
       <vif:SrcPDO>
         <!--Source PDO 1-->
         <vif:Src_PDO_Supply_Type value="0">Fixed</vif:Src_PDO_Supply_Type>
-        <vif:Src_PDO_Peak_Current value="1">130% IOC</vif:Src_PDO_Peak_Current>
+        <vif:Src_PDO_Peak_Current value="0">100% IOC</vif:Src_PDO_Peak_Current>
         <vif:Src_PDO_Voltage value="100">5000 mV (Factor = 50)</vif:Src_PDO_Voltage>
-        <vif:Src_PDO_Max_Current value="300">3000 mA (Factor = 10)</vif:Src_PDO_Max_Current>
+        <vif:Src_PDO_Max_Current value="150">1500 mA (Factor = 10)</vif:Src_PDO_Max_Current>
         <vif:Src_PD_OCP_OC_Debounce value="0">0 msec</vif:Src_PD_OCP_OC_Debounce>
         <vif:Src_PD_OCP_OC_Threshold value="300">3000 mA (Factor = 10)</vif:Src_PD_OCP_OC_Threshold>
       </vif:SrcPDO>
