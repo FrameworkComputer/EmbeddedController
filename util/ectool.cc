@@ -707,6 +707,7 @@ static const char *const ec_feature_names[] = {
 	[EC_FEATURE_UCSI_PPM] = "UCSI PPM",
 	[EC_FEATURE_STRAUSS] = "Strauss",
 	[EC_FEATURE_POE] = "POE",
+	[EC_FEATURE_CHARGER_HYBRID_POWER_BOOST] = "Hybrid Power Boost charger",
 };
 
 int cmd_inventory(int argc, char *argv[])
