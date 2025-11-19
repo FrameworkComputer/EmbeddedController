@@ -506,6 +506,14 @@ get_chip() {
   esac
 }
 
+get_firmware_dir() {
+  if [[ "$(os)" == "android" ]]; then
+    echo "/apex/com.android.hardware.fingerprint.crosfp/etc/firmware"
+  else
+    echo "/opt/google/biod/fw"
+  fi
+}
+
 get_default_fw() {
   local board
   board="$(get_fp_mcu_board)"
@@ -516,7 +524,7 @@ get_default_fw() {
   local tmp_file
   tmp_file="$(mktemp)"
 
-  find /opt/google/biod/fw -maxdepth 1 -name "${board}*.bin" 2>/dev/null > "${tmp_file}"
+  find "$(get_firmware_dir)" -maxdepth 1 -name "${board}*.bin" 2>/dev/null > "${tmp_file}"
 
   local num_fw_files
   num_fw_files="$(wc -l < "${tmp_file}")"
