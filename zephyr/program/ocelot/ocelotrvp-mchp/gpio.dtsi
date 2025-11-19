@@ -89,6 +89,10 @@
 		entering-rw {
 			enum-name = "GPIO_ENTERING_RW";
 		};
+		gpio_tablet_mode_l: ec-slatemode-hallout-snsr-r {
+			gpios = <MCHP_GPIO_DECODE_222 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
+		};
 	};
 
 	/* Below pins provided in the spreadsheet are not connected
@@ -225,8 +229,6 @@
 			<MCHP_GPIO_DECODE_014 GPIO_INPUT>,
 			/* sys-pwrok-ec-r */
 			<MCHP_GPIO_DECODE_015 GPIO_INPUT>,
-			/* ec-slatemode-hallout-snsr-r */
-			<MCHP_GPIO_DECODE_222 GPIO_INPUT>,
 			/* tp-bgp1 */
 			<MCHP_GPIO_DECODE_101 GPIO_INPUT>,
 			/* tp-bgp2 */

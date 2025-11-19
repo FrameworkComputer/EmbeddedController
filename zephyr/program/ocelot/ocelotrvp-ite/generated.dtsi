@@ -86,8 +86,9 @@
 		gpio_ec_ish_int_odl_c_ec_ish_alert_r: ec_ish_int_odl_c_ec_ish_alert_r {
 			gpios = <&gpioh 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
-		gpio_ec_slatemode_hallout_snsr_r: ec_slatemode_hallout_snsr_r {
+		gpio_tablet_mode_l: tablet-mode {
 			gpios = <&gpiod 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			enum-name = "GPIO_TABLET_MODE_L";
 		};
 		gpio_ec_soc_int_odl: ec_soc_int_odl {
 			gpios = <&gpioj 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;

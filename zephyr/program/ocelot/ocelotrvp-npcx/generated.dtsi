@@ -150,8 +150,9 @@
 		gpio_slp_s4_ls_l: slp_s4_ls_l {
 			gpios = <&gpioa 6 (GPIO_INPUT)>;
 		};
-		gpio_tablet_mode_l: tablet_mode_l {
+		gpio_tablet_mode_l: tablet-mode {
 			gpios = <&gpio7 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			enum-name = "GPIO_TABLET_MODE_L";
 		};
 		gpio_usb_pd_int_ls_odl: usb_pd_int_ls_odl {
 			gpios = <&gpiof 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
