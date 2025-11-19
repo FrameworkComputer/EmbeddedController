@@ -15,6 +15,8 @@
 
 LOG_MODULE_DECLARE(charger_init, LOG_LEVEL_INF);
 
+#define AC_PROCHOT_RATE 1.2
+
 static enum ec_error_list isl95522_write(int chgnum, int offset, int value)
 {
 	int rv = i2c_write16(chg_chips[chgnum].i2c_port,
@@ -43,6 +45,7 @@ static void set_ac_prochot(void)
 
 	if (extpower_is_present()) {
 		if (!charger_get_input_current_limit(0, &input_current)) {
+			input_current = (input_current * AC_PROCHOT_RATE);
 			LOG_INF("set_ac_prochot: %d", input_current);
 			isl95522_set_ac_prochot(0, input_current);
 		}
