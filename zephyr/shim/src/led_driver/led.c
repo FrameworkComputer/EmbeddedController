@@ -25,8 +25,11 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(led, LOG_LEVEL_ERR);
 
-BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
-	     "Exactly one instance of cros-ec,led-policy should be defined.");
+#define NUM_POLICIES DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT)
+
+BUILD_ASSERT(
+	NUM_POLICIES <= 2,
+	"No more than 2 instances of cros-ec,led-policy should be defined.");
 
 #define DECLARE_PINS_NODE(id) extern struct led_pins_node_t PINS_NODE(id);
 
@@ -37,6 +40,15 @@ BUILD_ASSERT(DT_NODE_HAS_STATUS(PINS_PARENT_NODE, okay),
 
 DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS_PARENT_NODE, DT_FOREACH_CHILD,
 				   DECLARE_PINS_NODE)
+
+/* Whichever LED pins node is used must be given the `led_pins2` label. */
+#define PINS2_PARENT_NODE DT_NODELABEL(led_pins2)
+#define PINS2_DEFINED DT_NODE_HAS_STATUS(PINS2_PARENT_NODE, okay)
+
+#if PINS2_DEFINED
+DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS2_PARENT_NODE, DT_FOREACH_CHILD,
+				   DECLARE_PINS_NODE)
+#endif
 
 #define PINS_NODE_FROM_POLICY(led_id, color_token) \
 	DT_CAT4(PIN_NODE_, led_id, _COLOR_, color_token)
@@ -56,6 +68,11 @@ DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS_PARENT_NODE, DT_FOREACH_CHILD,
 DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD_VARGS,
 					GEN_PATTERN_COLOR_ARRAY,
 					DT_FOREACH_CHILD)
+#if NUM_POLICIES == 2
+DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(1, DT_FOREACH_CHILD_VARGS,
+					GEN_PATTERN_COLOR_ARRAY,
+					DT_FOREACH_CHILD)
+#endif
 
 #define PLUS_ONE(id) +1
 
@@ -88,6 +105,12 @@ struct node_prop_t {
 DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, GEN_PATTERN_NODE_ARRAY,
 					DT_FOREACH_CHILD_VARGS,
 					DT_FOREACH_CHILD)
+
+#if NUM_POLICIES == 2
+DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(1, GEN_PATTERN_NODE_ARRAY,
+					DT_FOREACH_CHILD_VARGS,
+					DT_FOREACH_CHILD)
+#endif
 
 /*
  * Initialize node_array struct with prop listed in dts.
@@ -123,6 +146,10 @@ DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, GEN_PATTERN_NODE_ARRAY,
 static struct node_prop_t node_array[] = {
 	DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, SET_LED_VALUES,
 						DT_FOREACH_CHILD)
+#if NUM_POLICIES == 2
+		DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(1, SET_LED_VALUES,
+							DT_FOREACH_CHILD)
+#endif
 };
 
 test_export_static enum power_state get_chipset_state(void)
@@ -323,6 +350,10 @@ void led_asynchronous_apply_color(bool has_transitions)
 {
 	DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS_PARENT_NODE, DT_FOREACH_CHILD,
 					   INVOKE_APPLY_COLOR_API)
+#if PINS2_DEFINED
+	DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS2_PARENT_NODE, DT_FOREACH_CHILD,
+					   INVOKE_APPLY_COLOR_API)
+#endif
 }
 
 /* Called by hook task every HOOK_TICK_INTERVAL_MS */
@@ -379,6 +410,10 @@ __override int led_is_supported(enum ec_led_id led_id)
 
 		DT_FOREACH_CHILD_STATUS_OKAY_VARGS(
 			PINS_PARENT_NODE, DT_FOREACH_CHILD, IS_SUPPORTED)
+#if PINS2_DEFINED
+		DT_FOREACH_CHILD_STATUS_OKAY_VARGS(
+			PINS2_PARENT_NODE, DT_FOREACH_CHILD, IS_SUPPORTED)
+#endif
 	}
 
 	return ((1 << (int)led_id) & supported_leds);
@@ -397,4 +432,8 @@ void led_set_color(enum led_color color, enum ec_led_id led_id,
 {
 	DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS_PARENT_NODE, DT_FOREACH_CHILD,
 					   LED_SET_COLOR)
+#if PINS2_DEFINED
+	DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS2_PARENT_NODE, DT_FOREACH_CHILD,
+					   LED_SET_COLOR)
+#endif
 }
