@@ -33,15 +33,10 @@
 	pinctrl-names = "default";
 	status = "okay";
 
-	charger: isl9538@9 {
-		compatible = "intersil,isl923x";
+	charger: bq25710@9 {
+		compatible = "ti,bq25710";
 		status = "okay";
 		reg = <0x9>;
-	};
-
-	max695x@38 {
-		compatible = "maxim,max695x";
-		reg = <0x38>;
 	};
 };
 
