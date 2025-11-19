@@ -139,6 +139,25 @@ def get_version():
     return None
 
 
+def get_projects():
+    """Get the filtered list of all projects."""
+    projects = []
+    platform_ec = ZEPHYR_DIR.parent
+    platform_ec_private = platform_ec.parent / "ec-private"
+    modules = zmake.modules.locate_from_checkout(find_checkout())
+    projects_path = zmake.modules.default_projects_dirs(modules)
+    for project in zmake.project.find_projects(projects_path).values():
+        # Skip some projects if ec-private dir is missing until the builders
+        # are fixed correctly.
+        if (
+            project.config.project_name in ["ruby"]
+            and not platform_ec_private.exists()
+        ):
+            continue
+        projects.append(project)
+    return projects
+
+
 def build(opts):
     """Builds all Zephyr firmware targets"""
     metric_list = firmware_pb2.FwBuildMetricList()  # pylint: disable=no-member
@@ -151,8 +170,6 @@ def build(opts):
     )
 
     platform_ec = ZEPHYR_DIR.parent
-    modules = zmake.modules.locate_from_checkout(find_checkout())
-    projects_path = zmake.modules.default_projects_dirs(modules)
 
     # Start with a clean build environment
     cmd = ["make", "clobber"]
@@ -165,7 +182,7 @@ def build(opts):
         env=env,
     )
 
-    cmd = ["zmake", "-D", "build", "-a", "--static"]
+    cmd = ["zmake", "-D", "build", "--static"]
     if opts.code_coverage:
         cmd.append("--coverage")
     if opts.bcs_version:
@@ -174,6 +191,10 @@ def build(opts):
         version = get_version()
         if version:
             cmd.extend(["-v", version])
+
+    projects = get_projects()
+    for project in projects:
+        cmd.append(project.config.project_name)
 
     log_cmd(cmd)
     subprocess.run(
@@ -184,7 +205,7 @@ def build(opts):
         env=env,
     )
     if not opts.code_coverage:
-        for project in zmake.project.find_projects(projects_path).values():
+        for project in projects:
             build_dir = (
                 platform_ec / "build" / "zephyr" / project.config.project_name
             )
@@ -340,11 +361,9 @@ def bundle_firmware(opts):
 
     bundle_dir = get_bundle_dir(opts)
     platform_ec = ZEPHYR_DIR.parent
-    modules = zmake.modules.locate_from_checkout(find_checkout())
-    projects_path = zmake.modules.default_projects_dirs(modules)
     subprocesses = []
     per_board_targets = collections.defaultdict(list)
-    for project in zmake.project.find_projects(projects_path).values():
+    for project in get_projects():
         build_dir = (
             platform_ec / "build" / "zephyr" / project.config.project_name
         )
@@ -485,8 +504,6 @@ def test(opts):
     platform_ec = ZEPHYR_DIR.parent
     twister_out_dir = platform_ec / "twister-out-llvm"
     twister_out_dir_gcc = platform_ec / "twister-out-host"
-    modules = zmake.modules.locate_from_checkout(find_checkout())
-    projects_path = zmake.modules.default_projects_dirs(modules)
 
     if opts.code_coverage:
         build_dir = platform_ec / "build" / "zephyr"
@@ -513,7 +530,7 @@ def test(opts):
             "ALL_FILTERED", metrics, build_dir / "lcov_no_tests.info"
         )
 
-        for project in zmake.project.find_projects(projects_path).values():
+        for project in get_projects():
             if project.config.project_name in SPECIAL_BOARDS:
                 _extract_lcov_summary(
                     f"BOARD_{project.config.full_name}".upper(),
@@ -532,11 +549,9 @@ def check_inherits(_opts):
     the boards and zephyr_ec targets with the zephyr inherited_from values.
     """
 
-    modules = zmake.modules.locate_from_checkout(find_checkout())
-    projects_path = zmake.modules.default_projects_dirs(modules)
     # Ec target name -> board name -> boolean if seen in Boxster
     ec_to_board = collections.defaultdict(dict)
-    for project in zmake.project.find_projects(projects_path).values():
+    for project in get_projects():
         board_dict = {}
         for board in project.config.inherited_from:
             board_dict[board] = False
