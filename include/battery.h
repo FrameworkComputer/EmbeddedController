@@ -99,6 +99,13 @@ enum batt_threshold_type {
 	BATT_THRESHOLD_TYPE_SHUTDOWN
 };
 
+#ifdef CONFIG_BATTERY_ACCESS_LIMIT
+enum battery_access_type {
+	BATTERY_ACCESS_ALLOWED = 0,
+	BATTERY_ACCESS_NOT_ALLOWED
+};
+#endif
+
 struct battery_static_info {
 	uint16_t design_capacity;
 	uint16_t design_voltage;
@@ -567,6 +574,10 @@ int update_static_battery_info(void);
  */
 void battery_set_dynamic_info(const struct batt_params *params, bool ac_present,
 			      bool is_charging, bool sustainer_idle);
+
+#ifdef CONFIG_BATTERY_ACCESS_LIMIT
+enum battery_access_type battery_check_access_limit(void);
+#endif
 
 #ifdef __cplusplus
 }

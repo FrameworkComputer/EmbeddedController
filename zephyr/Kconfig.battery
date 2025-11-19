@@ -360,4 +360,10 @@ config PLATFORM_EC_BATTERY_CHARGING_OFFLOAD_TO_AP
 	  Enabling this setting offloads battery charging to the Application Processor,
 	  which disables the charging configuration for the EC.
 
+config PLATFORM_EC_BATTERY_ACCESS_LIMIT
+	bool "Limit access to the `battery` host command"
+	default n
+	help
+	  Enabling this limits the access to the battery host commands from the EC console.
+
 endif # PLATFORM_EC_BATTERY

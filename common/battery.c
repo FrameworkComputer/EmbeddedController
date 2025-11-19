@@ -292,6 +292,11 @@ static int command_battery(int argc, const char **argv)
 	int sleep_ms = 0;
 	char *e;
 
+#ifdef CONFIG_BATTERY_ACCESS_LIMIT
+	if (BATTERY_ACCESS_NOT_ALLOWED == battery_check_access_limit())
+		return EC_ERROR_ACCESS_DENIED;
+#endif
+
 	if (argc > 1) {
 		repeat = strtoi(argv[1], &e, 0);
 		if (*e) {
