@@ -570,7 +570,7 @@ static void gpio_discharge_vbus(int port, int enable)
 #endif /* CONFIG_USB_PD_DISCHARGE_GPIO */
 }
 
-void pd_set_vbus_discharge(int port, int enable)
+test_mockable void pd_set_vbus_discharge(int port, int enable)
 {
 	static mutex_t discharge_lock[CONFIG_USB_PD_PORT_MAX_COUNT];
 #ifdef CONFIG_ZEPHYR

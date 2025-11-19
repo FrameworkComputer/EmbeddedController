@@ -1,0 +1,10 @@
+common:
+  platform_allow:
+  - native_sim
+tests:
+  rauru.usbc:
+    extra_configs:
+      - CONFIG_TEST_RAURU_USBC=y
+      - CONFIG_SHIMMED_TASKS=y
+    extra_dtc_overlay_files:
+    - common.dtsi

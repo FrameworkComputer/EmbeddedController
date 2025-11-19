@@ -251,7 +251,7 @@ int ppc_enter_low_power_mode(int port)
 	return rv;
 }
 
-int ppc_vbus_source_enable(int port, int enable)
+test_mockable int ppc_vbus_source_enable(int port, int enable)
 {
 	int rv = EC_ERROR_UNIMPLEMENTED;
 	const struct ppc_config_t *ppc;
