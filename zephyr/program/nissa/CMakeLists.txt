@@ -293,6 +293,19 @@ if(DEFINED CONFIG_BOARD_DOMIKA)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "domika/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "domika/src/charger.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "domika/src/fan.c")
+
+	if(CONFIG_KERNEL_NO_LTO)
+		# Non-critical kernel source files that may use LTO to reduce RAM usage
+		set(KERNEL_LTO_FILES
+		  ${ZEPHYR_BASE}/kernel/init.c
+		  ${ZEPHYR_BASE}/kernel/errno.c
+		  ${ZEPHYR_BASE}/kernel/fatal.c
+		  ${ZEPHYR_BASE}/kernel/timer.c
+		)
+		set_source_files_properties(${KERNEL_LTO_FILES} TARGET_DIRECTORY kernel PROPERTIES
+		  COMPILE_FLAGS $<TARGET_PROPERTY:compiler,optimization_lto>
+		)
+	endif()
 endif()
 if(DEFINED CONFIG_BOARD_TELIKS)
 	project(teliks)
