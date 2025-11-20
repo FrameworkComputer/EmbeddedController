@@ -132,6 +132,14 @@ config PLATFORM_EC_LID_ANGLE_UPDATE
       peripheral devices should be enabled or disabled, like key scanning,
       trackpad interrupt.
 
+config PLATFORM_EC_LID_ANGLE_UPDATE_KEYBOARD_POLICY
+    bool "Update keyboard policy based on lid angle changes"
+    depends on PLATFORM_EC_LID_ANGLE_UPDATE && !PLATFORM_EC_DSP_CLIENT
+    default y
+    help
+      Enable updating keyboard policy based on lid angle changes.
+      This is automatically enabled when lid angle updates are available.
+
 config PLATFORM_EC_CONSOLE_CMD_ACCELS
     bool "Console commands: accels, accelrate, accelinit, accelinfo, etc."
     help

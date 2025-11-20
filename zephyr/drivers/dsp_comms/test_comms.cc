@@ -436,4 +436,19 @@ TEST_F(DspComms, LidPosition) {
       IsFlagSet(status, cros_dsp_comms_StatusFlag_STATUS_FLAG_TABLET_MODE));
 }
 
+#ifdef CONFIG_PLATFORM_EC_DSP_REMOTE_LID_ANGLE
+TEST_F(DspComms, LidAnglePeripheralEnableIsNoOp) {
+  // Verify lid_angle_peripheral_enable can be called with enable=1
+  // This is a no-op function when DSP handles lid angle
+  lid_angle_peripheral_enable(1);
+
+  // Verify lid_angle_peripheral_enable can be called with enable=0
+  // This is a no-op function when DSP handles lid angle
+  lid_angle_peripheral_enable(0);
+
+  // No assertions needed - the function is a no-op
+  // The test verifies that the function exists and can be called without errors
+}
+#endif /* CONFIG_PLATFORM_EC_DSP_REMOTE_LID_ANGLE */
+
 }  // namespace

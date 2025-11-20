@@ -84,6 +84,18 @@ void remote_lid_switch_set(bool is_open);
  */
 void remote_tablet_switch_set(bool is_360);
 
+#ifdef CONFIG_PLATFORM_EC_DSP_REMOTE_LID_ANGLE
+/**
+ * Enable or disable lid angle peripheral functionality
+ *
+ * This is a no-op function when DSP handles lid angle calculations.
+ * Provided for compatibility with existing lid angle peripheral interface.
+ *
+ * @param enable 1 to enable, 0 to disable (ignored in DSP implementation)
+ */
+void lid_angle_peripheral_enable(int enable);
+#endif /* CONFIG_PLATFORM_EC_DSP_REMOTE_LID_ANGLE */
+
 /** Reference to the default DSP client device. */
 extern const struct device* default_client_device;
 

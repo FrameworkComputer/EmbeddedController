@@ -404,6 +404,11 @@ static int dsp_client_init(const struct device* dev) {
   return rc;
 }
 
+void lid_angle_peripheral_enable(int enable) {
+  // No-op: DSP senrvice handles periphearls based on mode change
+  ARG_UNUSED(enable);
+}
+
 #define DSP_CLIENT_DEFINE(inst)                                \
   static struct dsp_client_config dsp_client_config_##inst = { \
       .i2c = I2C_DT_SPEC_INST_GET(inst),                       \
