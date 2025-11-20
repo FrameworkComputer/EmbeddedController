@@ -298,6 +298,23 @@ config PLATFORM_EC_PMIC_PASSTHRU_POWER_SIGNALS
 	when the switch-cap power is active. This mechanism ensures that the PMIC's
 	power signal flow remain undisturbed.
 
+config PLATFORM_EC_HOSTCMD_ENABLE_OFFMODE_HEARTBEAT
+	bool "Enable Support for AP to enter G3 and enable heartbeat wake"
+	depends on PLATFORM_EC_POWERSEQ_QC_EXP && PLATFORM_EC_HOSTCMD
+	help
+	  Enable Off-Mode Charging Heartbeat Wake mode for the QC_EXP driver.
+
+	  This feature is used by the AP to put the system into a low-power
+	  G3 state (System Off) while AC is present. The EC then monitors the
+	  battery State of Charge (SoC) and waits for the battery to discharge
+	  by the defined threshold before automatically powering
+	  on the AP to resume the charging process. This prevents excessive
+	  passive discharge during long-term storage or off-mode charging.
+
+	  Warning: This command uses a host command EC_CMD_ENABLE_OFFMODE_HEARTBEAT
+	  to initiate the shutdown sequence, which skips the normal reset/graceful
+	  shutdown mechanisms on the AP and may leave unsaved data.
+
 config PLATFORM_EC_POWERSEQ_SC7180
 	bool "SC7180 power sequencing"
 	depends on AP_ARM_QUALCOMM_SC7180

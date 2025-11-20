@@ -8990,6 +8990,14 @@ struct ec_response_get_boot_time {
 /* Issue AP shutdown */
 #define EC_CMD_AP_SHUTDOWN 0x0605
 
+/**
+ * Issue AP shutdown using heartbeat wake.
+ * The AP calls this to enter the low-power G3 state for off-mode charging.
+ * The EC then monitors battery SoC and wakes the AP when discharged by a
+ * configured threshold.
+ */
+#define EC_CMD_ENABLE_OFFMODE_HEARTBEAT 0x0606
+
 /*****************************************************************************/
 /*
  * Reserve a range of host commands for board-specific, experimental, or
