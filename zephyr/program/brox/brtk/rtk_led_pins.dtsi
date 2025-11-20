@@ -31,17 +31,17 @@
 			led-pwms = <&led_battery_charge_amber
 				    &led_battery_full_blue>;
 
-			color-battery-off {
+			battery_led_off: color-battery-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
 
-			color-battery-amber {
+			battery_led_amber: color-battery-amber {
 				led-color = "LED_AMBER";
 				led-values = <100 0>;
 			};
 
-			color-battery-blue {
+			battery_led_blue: color-battery-blue {
 				led-color = "LED_BLUE";
 				led-values = <0 100>;
 			};
@@ -51,17 +51,17 @@
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pwms = <&led_suspend_amber &led_power_blue>;
 
-			color-battery-off {
+			power_led_off: color-battery-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
 
-			color-battery-amber {
+			power_led_amber: color-battery-amber {
 				led-color = "LED_AMBER";
 				led-values = <100 0>;
 			};
 
-			color-battery-blue {
+			power_led_blue: color-battery-blue {
 				led-color = "LED_BLUE";
 				led-values = <0 100>;
 			};

@@ -10,17 +10,17 @@
 		batt_led: batt-led {
 			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pins = <&gpio_led_1_l &gpio_led_2_l>;
-			color_off: color-off {
+			battery_led_off: color-off {
 				led-color = "LED_OFF";
 				led-values = <1 1>;
 			};
 
-			color_amber: color-amber {
+			battery_led_amber: color-amber {
 				led-color = "LED_AMBER";
 				led-values = <0 1>;
 			};
 
-			color_blue: color-blue {
+			battery_led_blue: color-blue {
 				led-color = "LED_BLUE";
 				led-values = <1 0>;
 			};

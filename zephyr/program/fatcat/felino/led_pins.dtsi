@@ -11,17 +11,17 @@
 			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pins = <&gpio_chg_led_n &gpio_led_state_white>;
 
-			color-off {
+			battery_led_off: color-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
 
-			color-red {
+			battery_led_red: color-red {
 				led-color = "LED_RED";
 				led-values = <1 0>;
 			};
 
-			color-white {
+			battery_led_white: color-white {
 				led-color = "LED_WHITE";
 				led-values = <0 1>;
 			};

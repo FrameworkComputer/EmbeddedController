@@ -30,22 +30,22 @@
 			led-pwms = <&led_battery_red
 				    &led_battery_green>;
 
-			color-battery-off {
+			battery_led_off: color-battery-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
 
-			color-battery-red {
+			battery_led_red: color-battery-red {
 				led-color = "LED_RED";
 				led-values = <100 0>;
 			};
 
-			color-battery-green {
+			battery_led_green: color-battery-green {
 				led-color = "LED_GREEN";
 				led-values = <0 100>;
 			};
 
-			color-battery-amber {
+			battery_led_amber: color-battery-amber {
 				led-color = "LED_AMBER";
 				led-values = <70 50>;
 			};
@@ -55,12 +55,12 @@
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pwms = <&led_suspend_white>;
 
-			color-power-off {
+			power_led_off: color-power-off {
 				led-color = "LED_OFF";
 				led-values = <0>;
 			};
 
-			color-power-white {
+			power_led_white: color-power-white {
 				led-color = "LED_WHITE";
 				led-values = <100>;
 			};
@@ -81,7 +81,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_RED";
+					led-color = <&battery_led_red>;
 				};
 			};
 		};
@@ -96,7 +96,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_AMBER";
+					led-color = <&battery_led_amber>;
 				};
 			};
 		};
@@ -111,7 +111,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 				};
 			};
 		};
@@ -123,7 +123,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 				};
 			};
 		};
@@ -135,7 +135,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_OFF";
+					led-color = <&battery_led_off>;
 				};
 			};
 		};
@@ -148,11 +148,11 @@
 
 				/* Red 1 sec on, 1 sec off */
 				color-0 {
-					led-color = "LED_RED";
+					led-color = <&battery_led_red>;
 					period-ms = <1000>;
 				};
 				color-1 {
-					led-color = "LED_OFF";
+					led-color = <&battery_led_off>;
 					period-ms = <1000>;
 				};
 			};
@@ -166,11 +166,11 @@
 
 				/* Red 2 sec on, Green 2 sec on */
 				color-0 {
-					led-color = "LED_RED";
+					led-color = <&battery_led_red>;
 					period-ms = <2000>;
 				};
 				color-1 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 					period-ms = <2000>;
 				};
 			};
@@ -184,11 +184,11 @@
 
 				/* Red 2 sec on, Green 2 sec on */
 				color-0 {
-					led-color = "LED_RED";
+					led-color = <&battery_led_red>;
 					period-ms = <2000>;
 				};
 				color-1 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 					period-ms = <2000>;
 				};
 			};
@@ -201,7 +201,7 @@
 				led-id = "EC_LED_ID_POWER_LED";
 
 				color-0 {
-					led-color = "LED_WHITE";
+					led-color = <&power_led_white>;
 				};
 			};
 		};
@@ -214,11 +214,11 @@
 
 				/* White 1 sec on, 3 sec off */
 				color-0 {
-					led-color = "LED_WHITE";
+					led-color = <&power_led_white>;
 					period-ms = <1000>;
 				};
 				color-1 {
-					led-color = "LED_OFF";
+					led-color = <&power_led_off>;
 					period-ms = <3000>;
 				};
 			};
@@ -231,7 +231,7 @@
 				led-id = "EC_LED_ID_POWER_LED";
 
 				color-0 {
-					led-color = "LED_OFF";
+					led-color = <&power_led_off>;
 				};
 			};
 		};

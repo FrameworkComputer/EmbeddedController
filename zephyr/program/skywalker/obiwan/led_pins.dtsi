@@ -23,22 +23,22 @@
 		battery_led: battery-led {
 			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pwms = <&led_red &led_green>;
-			color_off: color-off {
+			battery_led_off: color-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
 
-			color_red: color-red {
+			battery_led_red: color-red {
 				led-color = "LED_RED";
 				led-values = <100 0>;
 			};
 
-			color_green: color-green {
+			battery_led_green: color-green {
 				led-color = "LED_GREEN";
 				led-values = <0 100>;
 			};
 
-			color_amber: color-amber {
+			battery_led_amber: color-amber {
 				led-color = "LED_AMBER";
 				led-values = <70 50>;
 			};
@@ -48,12 +48,12 @@
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pwms = <&led_white>;
 
-			color_power_off: color-power-off {
+			power_led_off: color-power-off {
 				led-color = "LED_OFF";
 				led-values = <0>;
 			};
 
-			color_power_white: color-power-white {
+			power_led_white: color-power-white {
 				led-color = "LED_WHITE";
 				led-values = <100>;
 			};

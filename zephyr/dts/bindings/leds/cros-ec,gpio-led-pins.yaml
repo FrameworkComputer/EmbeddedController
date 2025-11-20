@@ -52,10 +52,10 @@ child-binding:
     properties:
       led-color:
         type: string
-        required: true
         description: |
           This property is used to identify pin nodes based on color enum.
-          It is required by the EC_CMD_LED_CONTROL host command.
+          It is optional, but required to support the EC_CMD_LED_CONTROL host
+          command.
         enum:
           - LED_OFF
           - LED_RED

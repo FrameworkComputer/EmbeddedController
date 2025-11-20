@@ -15,11 +15,11 @@
 				transition = "LED_TRANSITION_LINEAR";
 
 				color-0 {
-					led-color = "LED_BLUE";
+					led-color = <&left_led_blue>;
 					period-ms = <4000>;
 				};
 				color-1 {
-					led-color = "LED_OFF";
+					led-color = <&left_led_off>;
 					period-ms = <4000>;
 				};
 			};
@@ -27,7 +27,7 @@
 				led-id = "EC_LED_ID_RIGHT_LED";
 
 				color {
-					led-color = "LED_OFF";
+					led-color = <&right_led_off>;
 				};
 			};
 		};
@@ -39,7 +39,7 @@
 				led-id = "EC_LED_ID_LEFT_LED";
 
 				color {
-					led-color = "LED_OFF";
+					led-color = <&left_led_off>;
 				};
 			};
 			led-1 {
@@ -47,15 +47,15 @@
 				transition = "LED_TRANSITION_EXPONENTIAL";
 
 				color-0 {
-					led-color = "LED_WHITE";
+					led-color = <&right_led_white>;
 					period-ms = <6000>;
 				};
 				color-1 {
-					led-color = "LED_WHITE";
+					led-color = <&right_led_white>;
 					period-ms = <2000>;
 				};
 				color-2 {
-					led-color = "LED_OFF";
+					led-color = <&right_led_off>;
 					period-ms = <6000>;
 				};
 			};
@@ -68,7 +68,7 @@
 				led-id = "EC_LED_ID_LEFT_LED";
 
 				color {
-					led-color = "LED_OFF";
+					led-color = <&left_led_off>;
 				};
 			};
 			led-1 {
@@ -76,20 +76,20 @@
 				transition = "LED_TRANSITION_LINEAR";
 
 				color-0 {
-					led-color = "LED_WHITE";
+					led-color = <&right_led_white>;
 					period-ms = <4000>;
 				};
 				color-1 {
-					led-color = "LED_YELLOW";
+					led-color = <&right_led_yellow>;
 					period-ms = <4000>;
 				};
 				color-2 {
-					led-color = "LED_OFF";
+					led-color = <&right_led_off>;
 					period-ms = <4000>;
 				};
 				// color will stay off instead of cycling
 				color-3 {
-					led-color = "LED_OFF";
+					led-color = <&right_led_off>;
 				};
 			};
 		};

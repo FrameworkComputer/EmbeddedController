@@ -20,12 +20,12 @@
 			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pins = <&gpio_led_1>;
 
-			color-off {
+			battery_led_off: color-off {
 				led-color = "LED_OFF";
 				led-values = <0>;
 			};
 
-			color-1 {
+			battery_led_green: color-1 {
 				led-color = "LED_GREEN";
 				led-values = <1>;
 			};
@@ -35,12 +35,12 @@
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pins = <&gpio_led_2>;
 
-			color-off {
+			power_led_off: color-off {
 				led-color = "LED_OFF";
 				led-values = <0>;
 			};
 
-			color-1 {
+			power_led_green: color-1 {
 				led-color = "LED_GREEN";
 				led-values = <1>;
 			};
@@ -61,7 +61,7 @@
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 				};
 			};
 		};
@@ -73,11 +73,11 @@
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 					period-ms = <1500>;
 				};
 				color-1 {
-					led-color = "LED_OFF";
+					led-color = <&battery_led_off>;
 					period-ms = <500>;
 				};
 			};
@@ -90,7 +90,7 @@
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 				color-0 {
-					led-color = "LED_OFF";
+					led-color = <&battery_led_off>;
 				};
 			};
 		};
@@ -102,11 +102,11 @@
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 					period-ms = <1000>;
 				};
 				color-1 {
-					led-color = "LED_OFF";
+					led-color = <&battery_led_off>;
 					period-ms = <1000>;
 				};
 			};
@@ -117,11 +117,11 @@
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 					period-ms = <500>;
 				};
 				color-1 {
-					led-color = "LED_OFF";
+					led-color = <&battery_led_off>;
 					period-ms = <500>;
 				};
 			};
@@ -133,7 +133,7 @@
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 				};
 			};
 		};
@@ -143,11 +143,11 @@
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 					period-ms = <100>;
 				};
 				color-1 {
-					led-color = "LED_OFF";
+					led-color = <&battery_led_off>;
 					period-ms = <900>;
 				};
 			};
@@ -158,11 +158,11 @@
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 					period-ms = <900>;
 				};
 				color-1 {
-					led-color = "LED_OFF";
+					led-color = <&battery_led_off>;
 					period-ms = <100>;
 				};
 			};
@@ -179,7 +179,7 @@
 				led-id = "EC_LED_ID_POWER_LED";
 
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&power_led_green>;
 				};
 			};
 		};
@@ -191,11 +191,11 @@
 				led-id = "EC_LED_ID_POWER_LED";
 
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&power_led_green>;
 					period-ms = <1000>;
 				};
 				color-1 {
-					led-color = "LED_OFF";
+					led-color = <&power_led_off>;
 					period-ms = <1000>;
 				};
 			};
@@ -208,7 +208,7 @@
 				led-id = "EC_LED_ID_POWER_LED";
 
 				color-0 {
-					led-color = "LED_OFF";
+					led-color = <&power_led_off>;
 				};
 			};
 		};

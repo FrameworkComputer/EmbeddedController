@@ -11,12 +11,12 @@
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pins = <&gpio_ec_pwr_led>;
 
-			color-off {
+			power_led_off: color-off {
 				led-color = "LED_OFF";
 				led-values = <0>;
 			};
 
-			color-white {
+			power_led_white: color-white {
 				led-color = "LED_WHITE";
 				led-values = <1>;
 			};
@@ -26,12 +26,12 @@
 			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pins = <&gpio_ec_batt_led>;
 
-			color-off {
+			battery_led_off: color-off {
 				led-color = "LED_OFF";
 				led-values = <0>;
 			};
 
-			color-amnber {
+			battery_led_amber: color-amnber {
 				led-color = "LED_AMBER";
 				led-values = <1>;
 			};

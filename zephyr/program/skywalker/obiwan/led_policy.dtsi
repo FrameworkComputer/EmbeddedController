@@ -19,7 +19,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_RED";
+					led-color = <&battery_led_red>;
 				};
 			};
 		};
@@ -34,7 +34,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_AMBER";
+					led-color = <&battery_led_amber>;
 				};
 			};
 		};
@@ -49,7 +49,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 				};
 			};
 		};
@@ -61,7 +61,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 				};
 			};
 		};
@@ -73,7 +73,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_OFF";
+					led-color = <&battery_led_off>;
 				};
 			};
 		};
@@ -86,11 +86,11 @@
 
 				/* Red 1 sec on, 1 sec off */
 				color-0 {
-					led-color = "LED_OFF";
+					led-color = <&battery_led_off>;
 					period-ms = <1000>;
 				};
 				color-1 {
-					led-color = "LED_RED";
+					led-color = <&battery_led_red>;
 					period-ms = <1000>;
 				};
 			};
@@ -105,11 +105,11 @@
 
 				/* Red 2 sec on, Green 2 sec on */
 				color-0 {
-					led-color = "LED_RED";
+					led-color = <&battery_led_red>;
 					period-ms = <2000>;
 				};
 				color-1 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 					period-ms = <2000>;
 				};
 			};
@@ -123,11 +123,11 @@
 
 				/* Red 2 sec on, Green 2 sec on */
 				color-0 {
-					led-color = "LED_RED";
+					led-color = <&battery_led_red>;
 					period-ms = <2000>;
 				};
 				color-1 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 					period-ms = <2000>;
 				};
 			};
@@ -140,7 +140,7 @@
 				led-id = "EC_LED_ID_POWER_LED";
 
 				color-0 {
-					led-color = "LED_WHITE";
+					led-color = <&power_led_white>;
 				};
 			};
 		};
@@ -153,11 +153,11 @@
 
 				/* White 1 sec on, 3 sec off */
 				color-0 {
-					led-color = "LED_WHITE";
+					led-color = <&power_led_white>;
 					period-ms = <1000>;
 				};
 				color-1 {
-					led-color = "LED_OFF";
+					led-color = <&power_led_off>;
 					period-ms = <3000>;
 				};
 			};
@@ -170,7 +170,7 @@
 				led-id = "EC_LED_ID_POWER_LED";
 
 				color-0 {
-					led-color = "LED_OFF";
+					led-color = <&power_led_off>;
 				};
 			};
 		};

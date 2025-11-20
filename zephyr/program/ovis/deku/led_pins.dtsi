@@ -10,17 +10,17 @@
 		power_led: power-led {
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pins = <&gpio_led_1_l &gpio_led_2_l>;
-			color-off-power {
+			power_led_off: color-off-power {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
 
-			color-green-power {
+			power_led_amber: color-green-power {
 				led-color = "LED_AMBER";
 				led-values = <0 1>;
 			};
 
-			color-red-power {
+			power_led_white: color-red-power {
 				led-color = "LED_WHITE";
 				led-values = <1 0>;
 			};

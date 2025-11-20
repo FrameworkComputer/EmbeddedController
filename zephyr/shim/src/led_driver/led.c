@@ -50,15 +50,10 @@ DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS2_PARENT_NODE, DT_FOREACH_CHILD,
 				   DECLARE_PINS_NODE)
 #endif
 
-#define PINS_NODE_FROM_POLICY(led_id, color_token) \
-	DT_CAT4(PIN_NODE_, led_id, _COLOR_, color_token)
-
-#define SET_PATTERN_COLOR_ARRAY(id)                          \
-	{                                                    \
-		.led_color_node = &PINS_NODE_FROM_POLICY(    \
-			GET_PROP(DT_PARENT(id), led_id),     \
-			GET_PROP(id, led_color)),            \
-		.duration_ms = DT_PROP_OR(id, period_ms, 0), \
+#define SET_PATTERN_COLOR_ARRAY(id)                                      \
+	{                                                                \
+		.led_color_node = &PINS_NODE(DT_PHANDLE(id, led_color)), \
+		.duration_ms = DT_PROP_OR(id, period_ms, 0),             \
 	},
 
 #define PATTERN_COLOR_ARRAY(id) DT_CAT(PATTERN_COLOR_, id)

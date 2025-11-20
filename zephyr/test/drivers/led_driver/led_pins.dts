@@ -17,16 +17,16 @@
 			led-pins = <&gpio_ec_chg_led_y_c1
 				    &gpio_ec_chg_led_w_c1>;
 
-			color-off {
+			sysrq_debug_led_off: color-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
 
-			color_blue_left: color-blue-left {
+			sysrq_debug_led_blue: color-blue-left {
 				led-color = "LED_BLUE";
 				led-values = <1 0>;
 			};
-			color_white_left: color-white-left {
+			sysrq_debug_led_white: color-white-left {
 				led-color = "LED_WHITE";
 				led-values = <0 1>;
 			};
@@ -37,15 +37,15 @@
 			led-pins = <&gpio_ec_chg_led_y_c0
 				    &gpio_ec_chg_led_w_c0>;
 
-			color-off {
+			battery_led_off: color-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
-			color_blue_right: color-blue-right {
+			battery_led_blue: color-blue-right {
 				led-color = "LED_BLUE";
 				led-values = <1 0>;
 			};
-			color_white_right: color-white-right {
+			battery_led_white: color-white-right {
 				led-color = "LED_WHITE";
 				led-values = <0 1>;
 			};

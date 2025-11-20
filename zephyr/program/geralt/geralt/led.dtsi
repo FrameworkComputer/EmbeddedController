@@ -15,7 +15,7 @@
 				led-id = "EC_LED_ID_POWER_LED";
 
 				color-0 {
-					led-color = "LED_OFF";
+					led-color = <&power_led_off>;
 				};
 			};
 		};
@@ -27,7 +27,7 @@
 				led-id = "EC_LED_ID_POWER_LED";
 
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&power_led_green>;
 				};
 			};
 		};
@@ -39,12 +39,12 @@
 				led-id = "EC_LED_ID_POWER_LED";
 
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&power_led_green>;
 					period-ms = <1000>;
 				};
 
 				color-1 {
-					led-color = "LED_OFF";
+					led-color = <&power_led_off>;
 					period-ms = <3000>;
 				};
 			};
@@ -85,17 +85,17 @@
 			led-pwms = <&led_power_red &led_power_green
 				    &led_power_blue>;
 
-			color-power-off {
+			power_led_off: color-power-off {
 				led-color = "LED_OFF";
 				led-values = <0 0 0>;
 			};
 
-			color-power-green {
+			power_led_green: color-power-green {
 				led-color = "LED_GREEN";
 				led-values = <0 100 0>;
 			};
 
-			color-power-blue {
+			power_led_blue: color-power-blue {
 				led-color = "LED_BLUE";
 				led-values = <0 0 100>;
 			};

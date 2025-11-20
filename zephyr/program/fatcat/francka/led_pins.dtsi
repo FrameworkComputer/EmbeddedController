@@ -23,12 +23,12 @@
 			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pwms = <&pwm_battery>;
 
-			color_battery_off: color-off {
+			battery_led_off: color-off {
 				led-color = "LED_OFF";
 				led-values = <0>;
 			};
 
-			color_battery_white: color-white {
+			battery_led_white: color-white {
 				led-color = "LED_WHITE";
 				led-values = <100>;
 			};
@@ -38,12 +38,12 @@
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pwms = <&pwm_power>;
 
-			color_power_off: color-off {
+			power_led_off: color-off {
 				led-color = "LED_OFF";
 				led-values = <0>;
 			};
 
-			color_power_white: color-white {
+			power_led_white: color-white {
 				led-color = "LED_WHITE";
 				led-values = <100>;
 			};

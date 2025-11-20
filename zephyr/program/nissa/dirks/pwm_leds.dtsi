@@ -28,17 +28,17 @@
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pwms = <&pwm_pwr_red_led &pwm_pwr_blue_led>;
 
-			color-power-off {
+			power_led_off: color-power-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
 
-			color-power-red {
+			power_led_red: color-power-red {
 				led-color = "LED_RED";
 				led-values = <100 0>;
 			};
 
-			color-power-blue {
+			power_led_blue: color-power-blue {
 				led-color = "LED_BLUE";
 				led-values = <0 100>;
 			};

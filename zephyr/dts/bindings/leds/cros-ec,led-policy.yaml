@@ -164,11 +164,9 @@ child-binding:
       properties:
         led-color:
           description: |
-            The color to be set for this LED. Must be one of the colors defined
-            for this LED in led_pins.dts or pwm_pins.dts.
-          type: string
+            Phandle to the LED pin configuration node.
+          type: phandle
           required: true
-          enum: *led-color-enum
         period-ms:
           description: |
             In case of blinking LEDs, amount of time in msecs the LED

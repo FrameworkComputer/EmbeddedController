@@ -16,7 +16,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_AMBER";
+					led-color = <&battery_led_amber>;
 				};
 			};
 		};
@@ -28,7 +28,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_BLUE";
+					led-color = <&battery_led_blue>;
 				};
 			};
 		};
@@ -43,7 +43,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_BLUE";
+					led-color = <&battery_led_blue>;
 				};
 			};
 		};
@@ -56,11 +56,11 @@
 			combo-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 				color-0 {
-					led-color = "LED_AMBER";
+					led-color = <&battery_led_amber>;
 					period-ms = <1000>;
 				};
 				color-1 {
-					led-color = "LED_OFF";
+					led-color = <&battery_led_off>;
 					period-ms = <3000>;
 				};
 			};
@@ -74,7 +74,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_OFF";
+					led-color = <&battery_led_off>;
 				};
 			};
 		};
@@ -87,11 +87,11 @@
 
 				/* Amber 1 sec on, 1 sec off */
 				color-0 {
-					led-color = "LED_AMBER";
+					led-color = <&battery_led_amber>;
 					period-ms = <1000>;
 				};
 				color-1 {
-					led-color = "LED_OFF";
+					led-color = <&battery_led_off>;
 					period-ms = <1000>;
 				};
 			};
@@ -105,11 +105,11 @@
 
 				/* Amber 2 sec on, Blue 2 sec on */
 				color-0 {
-					led-color = "LED_AMBER";
+					led-color = <&battery_led_amber>;
 					period-ms = <2000>;
 				};
 				color-1 {
-					led-color = "LED_BLUE";
+					led-color = <&battery_led_blue>;
 					period-ms = <2000>;
 				};
 			};
@@ -122,7 +122,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_BLUE";
+					led-color = <&battery_led_blue>;
 				};
 			};
 		};

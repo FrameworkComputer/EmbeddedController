@@ -24,7 +24,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_RED";
+					led-color = <&battery_led_red>;
 				};
 			};
 		};
@@ -39,7 +39,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_AMBER";
+					led-color = <&battery_led_amber>;
 				};
 			};
 		};
@@ -54,7 +54,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 				};
 			};
 		};
@@ -66,7 +66,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 				};
 			};
 		};
@@ -78,7 +78,7 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_OFF";
+					led-color = <&battery_led_off>;
 				};
 			};
 		};
@@ -90,11 +90,11 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_RED";
+					led-color = <&battery_led_red>;
 					period-ms = <2000>;
 				};
 				color-1 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 					period-ms = <2000>;
 				};
 			};
@@ -107,11 +107,11 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_RED";
+					led-color = <&battery_led_red>;
 					period-ms = <2000>;
 				};
 				color-1 {
-					led-color = "LED_GREEN";
+					led-color = <&battery_led_green>;
 					period-ms = <2000>;
 				};
 			};
@@ -124,11 +124,11 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_RED";
+					led-color = <&battery_led_red>;
 					period-ms = <1000>;
 				};
 				color-1 {
-					led-color = "LED_OFF";
+					led-color = <&battery_led_off>;
 					period-ms = <1000>;
 				};
 			};
@@ -161,22 +161,22 @@
 			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pwms = <&led_power_red &led_power_green>;
 
-			color-power-off {
+			battery_led_off: color-power-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
 
-			color-power-red {
+			battery_led_red: color-power-red {
 				led-color = "LED_RED";
 				led-values = <100 0>;
 			};
 
-			color-power-green {
+			battery_led_green: color-power-green {
 				led-color = "LED_GREEN";
 				led-values = <0 100>;
 			};
 
-			color-power-orange {
+			battery_led_amber: color-power-orange {
 				led-color = "LED_AMBER";
 				led-values = <70 30>;
 			};

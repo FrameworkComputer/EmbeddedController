@@ -24,27 +24,27 @@
 		combo_led: combo-led {
 			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pwms = <&led_red &led_green &led_blue>;
-			color_off: color-off {
+			battery_led_off: color-off {
 				led-color = "LED_OFF";
 				led-values = <0 0 0>;
 			};
 
-			color_red: color-red {
+			battery_led_red: color-red {
 				led-color = "LED_RED";
 				led-values = <100 0 0>;
 			};
 
-			color_green: color-green {
+			battery_led_green: color-green {
 				led-color = "LED_GREEN";
 				led-values = <0 100 0>;
 			};
 
-			color_blue: color-blue {
+			battery_led_blue: color-blue {
 				led-color = "LED_BLUE";
 				led-values = <0 0 100>;
 			};
 
-			color_white: color-white {
+			battery_led_white: color-white {
 				led-color = "LED_WHITE";
 				led-values = <100 100 100>;
 			};

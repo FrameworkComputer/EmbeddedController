@@ -1101,15 +1101,15 @@
 			led-id = "EC_LED_ID_LEFT_LED";
 			led-pwms = <&pwmled_blue_left &pwmled_white_left>;
 
-			color-off {
+			left_led_off: color-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
-			color-blue {
+			left_led_blue: color-blue {
 				led-color = "LED_BLUE";
 				led-values = <100 0>;
 			};
-			color-white {
+			left_led_white: color-white {
 				led-color = "LED_WHITE";
 				led-values = <0 100>;
 			};
@@ -1119,19 +1119,19 @@
 			led-id = "EC_LED_ID_RIGHT_LED";
 			led-pwms = <&pwmled_amber_right &pwmled_white_right>;
 
-			color-off {
+			right_led_off: color-off {
 				led-color = "LED_OFF";
 				led-values = <0 0>;
 			};
-			color-amber {
+			right_led_amber: color-amber {
 				led-color = "LED_AMBER";
 				led-values = <100 0>;
 			};
-			color-white {
+			right_led_white: color-white {
 				led-color = "LED_WHITE";
 				led-values = <0 100>;
 			};
-			color-yellow {
+			right_led_yellow: color-yellow {
 				led-color = "LED_YELLOW";
 				led-values = <100 20>;
 			};

@@ -19,11 +19,7 @@
 	COND_CODE_1(DT_NODE_HAS_PROP(id, prop), \
 		    (DT_STRING_UPPER_TOKEN(id, prop)), (0))
 
-#define PINS_NODE_HELPER(parent_id, color_token) \
-	DT_CAT4(PIN_NODE_, parent_id, _COLOR_, color_token)
-#define PINS_NODE(id)                                     \
-	PINS_NODE_HELPER(GET_PROP(DT_PARENT(id), led_id), \
-			 GET_PROP(id, led_color))
+#define PINS_NODE(id) DT_CAT(LEDPIN_, id)
 #define PINS_ARRAY(id) DT_CAT(PINS_ARRAY_, id)
 #define DATA_NODE(node_id) DT_CAT(DATA_NODE_, node_id)
 
