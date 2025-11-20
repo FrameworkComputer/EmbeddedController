@@ -49,3 +49,13 @@ void board_chipset_hard_off(void)
 	hook_call_deferred(&poll_battery_info_data, CHARGE_POLL_PERIOD_CHARGE);
 }
 DECLARE_HOOK(HOOK_CHIPSET_HARD_OFF, board_chipset_hard_off, HOOK_PRIO_DEFAULT);
+
+void board_chipset_pre_init(void)
+{
+	/* Cache the battery dynamic information before AP power on */
+	if (battery_is_present() == BP_YES) {
+		battery_poll_dynamic_info();
+		LOG_INF("battery dynamic information cached");
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, board_chipset_pre_init, HOOK_PRIO_DEFAULT);

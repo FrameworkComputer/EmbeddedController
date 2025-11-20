@@ -14,16 +14,6 @@
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
-void board_chipset_pre_init(void)
-{
-	/* Cache the battery dynamic information before AP power on */
-	if (battery_is_present() == BP_YES) {
-		battery_poll_dynamic_info();
-		CPRINTS("battery dynamic information cached");
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, board_chipset_pre_init, HOOK_PRIO_DEFAULT);
-
 void board_chipset_startup(void)
 {
 	/* Update the AC event during boot */
