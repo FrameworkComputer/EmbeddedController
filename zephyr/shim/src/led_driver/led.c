@@ -50,6 +50,14 @@ DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS2_PARENT_NODE, DT_FOREACH_CHILD,
 				   DECLARE_PINS_NODE)
 #endif
 
+#define ASSERT_LEDS_ID_MATCH(id)                                              \
+	BUILD_ASSERT(                                                         \
+		DT_STRING_TOKEN(DT_PARENT(id), led_id) ==                     \
+			DT_STRING_TOKEN(DT_PARENT(DT_PHANDLE(id, led_color)), \
+					led_id),                              \
+		"The led-color node (" #id                                    \
+		") must belong to the same led-id defined in the policy.");
+
 #define SET_PATTERN_COLOR_ARRAY(id)                                      \
 	{                                                                \
 		.led_color_node = &PINS_NODE(DT_PHANDLE(id, led_color)), \
@@ -57,9 +65,10 @@ DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS2_PARENT_NODE, DT_FOREACH_CHILD,
 	},
 
 #define PATTERN_COLOR_ARRAY(id) DT_CAT(PATTERN_COLOR_, id)
-#define GEN_PATTERN_COLOR_ARRAY(id, fn)                  \
-	struct pattern_color_node_t PATTERN_COLOR_ARRAY( \
-		id)[] = { fn(id, SET_PATTERN_COLOR_ARRAY) };
+#define GEN_PATTERN_COLOR_ARRAY(id, fn)                      \
+	struct pattern_color_node_t PATTERN_COLOR_ARRAY(     \
+		id)[] = { fn(id, SET_PATTERN_COLOR_ARRAY) }; \
+	fn(id, ASSERT_LEDS_ID_MATCH)
 DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD_VARGS,
 					GEN_PATTERN_COLOR_ARRAY,
 					DT_FOREACH_CHILD)
