@@ -179,6 +179,17 @@ static inline int ReadCbiValue(cros_dsp_comms_GetCbiFlagsResponse& response,
   return rc;
 }
 
+static void mode_handling_delayed(struct k_work* work) {
+  ARG_UNUSED(work);
+  int mode_val = cros::dsp::service::driver.get_mode_val();
+  if (IS_ENABLED(CONFIG_PLATFORM_EC_TABLET_MODE)) {
+    tablet_set_mode(mode_val, TABLET_TRIGGER_LID);
+  }
+  if (IS_ENABLED(CONFIG_PLATFORM_EC_DSP_REMOTE_LID_ANGLE)) {
+    lid_angle_peripheral_enable(!mode_val);
+  }
+}
+
 void dsp_service_handle_get_cbi_flags_request(struct k_work*) {
   const cros_dsp_comms_GetCbiFlagsRequest* request =
       &(cros::dsp::service::driver.pending_service_request_.request
@@ -228,22 +239,18 @@ void cros::dsp::service::Driver::SetNotebookMode(
   switch (mode) {
     case cros_dsp_comms_NotebookMode_NOTEBOOK_MODE_NOTEBOOK:
       LOG_DBG("    NOTEBOOK mode, tablet_get_mode()=%d", tablet_get_mode());
-      tablet_set_mode(0, TABLET_TRIGGER_LID);
-      if (IS_ENABLED(CONFIG_PLATFORM_EC_DSP_REMOTE_LID_ANGLE)) {
-        lid_angle_peripheral_enable(1);
-      }
+      cros::dsp::service::driver.mode_val = 0;
       break;
     case cros_dsp_comms_NotebookMode_NOTEBOOK_MODE_TABLET:
       LOG_DBG("    TABLET mode, tablet_get_mode()=%d", tablet_get_mode());
-      tablet_set_mode(1, TABLET_TRIGGER_LID);
-      if (IS_ENABLED(CONFIG_PLATFORM_EC_DSP_REMOTE_LID_ANGLE)) {
-        lid_angle_peripheral_enable(0);
-      }
+      cros::dsp::service::driver.mode_val = 1;
       break;
     default:
       LOG_WRN("Unsupported notebook mode");
-      break;
+      return;
   }
+  k_work_reschedule(&mode_handling_work_,
+                    K_MSEC(DSP_SERVICE_MODE_HANDLE_DELAY_MS));
 }
 
 bool cros::dsp::service::Driver::HandleDecodedRequest() {
@@ -323,6 +330,7 @@ pw::Status cros::dsp::service::Driver::Init() {
   }
 #endif
   k_work_init(&get_cbi_flags_work_, dsp_service_handle_get_cbi_flags_request);
+  k_work_init_delayable(&mode_handling_work_, mode_handling_delayed);
 
   LOG_INF("Setting up target %s::0x%02x", bus_->name, target_cfg_.address);
 
