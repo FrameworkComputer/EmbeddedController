@@ -29,7 +29,7 @@
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
 		};
 		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
-			gpios = <&gpioe 3 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+			gpios = <&gpioe 3 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
 		gpio_ec_pmc_pd_int_odl: ec_pmc_pd_int_odl {
