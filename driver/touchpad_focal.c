@@ -50,7 +50,10 @@
 #define FTS_BOOT_ID_H 0x54
 #define FTS_BOOT_ID_L 0x5E
 #define FTS_VENDOR_ID 0x2808
+#define FTS_PRODUCT_ID 0x0364
 
+#define FTS_REG_PID_H 0xE4
+#define FTS_REG_PID_L 0xE5
 #define FTS_REG_UPGRADE 0xFC
 #define FTS_UPGRADE_AA 0xAA
 #define FTS_UPGRADE_55 0x55
@@ -226,8 +229,11 @@ static int fts_tp_read_report(void)
 			break;
 		}
 		pressure = (touch_buf[6 + offset] & 0xFF);
-		pressure = clamp(pressure, 25, 281);
-
+		if (pressure < 25) {
+			pressure = 25;
+		} else if (pressure >= 255) {
+			pressure = 281;
+		}
 		if (EVENT_DOWN(event_flag)) {
 			report.finger[ri].id = point_id;
 			report.finger[ri].confidence = 1;
@@ -352,6 +358,8 @@ DECLARE_DEFERRED(fts_tp_init);
 int touchpad_get_info(struct touchpad_info *tp)
 {
 	uint8_t ver = 0;
+	uint8_t pid_h = 0;
+	uint8_t pid_l = 0;
 
 	if (!fts_fw_is_valid()) {
 		tp->status = EC_RES_SUCCESS;
@@ -360,7 +368,7 @@ int touchpad_get_info(struct touchpad_info *tp)
 		 * failed to get system info, FW corrupted, return some default
 		 * values.
 		 */
-		tp->fts.id = FTS_CHIP_ID_H;
+		tp->fts.id = FTS_PRODUCT_ID;
 		tp->fts.fw_version = 0;
 		tp->fts.fw_checksum = 0;
 		return sizeof(*tp);
@@ -368,7 +376,9 @@ int touchpad_get_info(struct touchpad_info *tp)
 
 	tp->status = EC_RES_SUCCESS;
 	tp->vendor = FTS_VENDOR_ID;
-	tp->fts.id = FTS_CHIP_ID_H;
+	fts_read_reg(FTS_REG_PID_H, &pid_h);
+	fts_read_reg(FTS_REG_PID_L, &pid_l);
+	tp->fts.id = (pid_h << 8) + pid_l;
 	fts_read_reg(FTS_REG_FW_VER, &ver);
 	tp->fts.fw_version = ver;
 	tp->fts.fw_checksum = 0;
