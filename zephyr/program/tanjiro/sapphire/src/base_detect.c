@@ -28,10 +28,8 @@ K_MUTEX_DEFINE(modify_base_detection_mutex);
 #define BASE_DETECT_EN_DEBOUNCE_US (300 * USEC_PER_MSEC)
 #define BASE_DETECT_DIS_DEBOUNCE_US (0 * USEC_PER_MSEC)
 
-#define ATTACH_MAX_THRESHOLD_MV 1600
-#define ATTACH_MIN_THRESHOLD_MV 300
-
-#define BASE_SOC_THRESHOLD 20
+#define ATTACH_MAX_THRESHOLD_MV 2500
+#define BASE_SOC_THRESHOLD 10
 
 static bool attached;
 static bool debouncing;
@@ -39,11 +37,16 @@ static bool debouncing;
 static void base_update(void);
 DECLARE_DEFERRED(base_update);
 
+static void base_batt_soc_setting(void);
+DECLARE_DEFERRED(base_batt_soc_setting);
+
 static void base_update(void)
 {
 	base_set_state(attached);
 	tablet_set_mode(!attached, TABLET_TRIGGER_BASE);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_ppvar_base_x), attached);
+
+	hook_call_deferred(&base_batt_soc_setting_data, 0);
 }
 
 static void base_detect_tick(void);
@@ -54,24 +57,24 @@ static void base_detect_tick(void)
 	int next_us = BASE_DETECT_INTERVAL;
 
 	int mv = adc_read_channel(ADC_BASE_DET);
-	if ((mv > ATTACH_MAX_THRESHOLD_MV || mv < ATTACH_MIN_THRESHOLD_MV) &&
-	    base_get_state()) {
+	if ((mv > ATTACH_MAX_THRESHOLD_MV) && base_get_state()) {
 		if (!debouncing) {
 			debouncing = true;
 			next_us = BASE_DETECT_DIS_DEBOUNCE_US;
 		} else {
 			debouncing = false;
 			attached = false;
+			CPRINTS("Base detached (adc=%d mV)", mv);
 			base_update();
 		}
-	} else if (mv >= ATTACH_MIN_THRESHOLD_MV &&
-		   mv <= ATTACH_MAX_THRESHOLD_MV && !base_get_state()) {
+	} else if (mv <= ATTACH_MAX_THRESHOLD_MV && !base_get_state()) {
 		if (!debouncing) {
 			debouncing = true;
 			next_us = BASE_DETECT_EN_DEBOUNCE_US;
 		} else {
 			debouncing = false;
 			attached = true;
+			CPRINTS("Base attached (adc=%d mV)", mv);
 			base_update();
 		}
 	} else {
@@ -126,8 +129,7 @@ SYS_INIT(base_init, APPLICATION, 1);
 
 void base_init_setting(void)
 {
-	if (adc_read_channel(ADC_BASE_DET) > ATTACH_MAX_THRESHOLD_MV ||
-	    adc_read_channel(ADC_BASE_DET) < ATTACH_MIN_THRESHOLD_MV) {
+	if (adc_read_channel(ADC_BASE_DET) > ATTACH_MAX_THRESHOLD_MV) {
 		attached = false;
 		hook_call_deferred(&base_update_data, 0);
 	} else {
@@ -138,24 +140,27 @@ void base_init_setting(void)
 }
 DECLARE_HOOK(HOOK_INIT, base_init_setting, HOOK_PRIO_DEFAULT);
 
-void base_batt_soc_setting(void)
+static void base_batt_soc_setting(void)
 {
 	int curr_batt_lvl = DIV_ROUND_NEAREST(charge_get_display_charge(), 10);
-	bool base_power =
-		gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_en_ppvar_base_x));
 	bool ext_power = extpower_is_present();
-	bool low_batt_no_ext =
-		(curr_batt_lvl < BASE_SOC_THRESHOLD && !ext_power);
-	bool target_state;
+	int current_gpio_level = gpio_pin_get_dt(
+		GPIO_DT_FROM_NODELABEL(gpio_ec_pogo_low_pwr_sw));
 
-	if (!attached || debouncing)
+	if (!attached || debouncing) {
+		if (current_gpio_level)
+			gpio_pin_set_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_ec_pogo_low_pwr_sw),
+				false);
 		return;
+	}
 
-	target_state = !low_batt_no_ext;
+	int target_level =
+		(curr_batt_lvl < BASE_SOC_THRESHOLD && !ext_power) ? 1 : 0;
 
-	if (base_power != target_state) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_ppvar_base_x),
-				target_state);
+	if (current_gpio_level != target_level) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pogo_low_pwr_sw),
+				target_level);
 	}
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, base_batt_soc_setting, HOOK_PRIO_DEFAULT);
