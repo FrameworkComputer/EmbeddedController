@@ -3276,6 +3276,15 @@
 /* Add support for skipping lid close when the system into tablet mode. */
 #undef CONFIG_TABLET_MODE_SKIP_LID_CLOSE
 
+/* Add hall control to power on/off the WPC.*/
+#undef CONFIG_WPC_HALL_ENABLE
+
+/*
+ * The debounce time for the WPC HALL
+ * Default is 30ms.
+ */
+#define CONFIG_WPC_HALL_DEBOUNCE_US (30 * MSEC)
+
 /*
  * Minimum CPU clocks between scans.  This ensures that keyboard scanning
  * doesn't starve the other EC tasks of CPU when running at a decreased system

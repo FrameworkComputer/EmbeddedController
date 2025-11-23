@@ -391,6 +391,13 @@ void pchg_irq(enum gpio_signal signal);
 void pchg_task(void *u);
 
 /**
+ * The interrupt handler for controlling the power on/off of the WPC HALL.
+ *
+ * @param signal
+ */
+void wpc_hall_interrupt(enum gpio_signal signal);
+
+/**
  * Turn on/off power for a PCHG charger.
  *
  * @param port  Port number of the PCHG charger.
