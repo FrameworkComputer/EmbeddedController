@@ -18,7 +18,8 @@ static bool value_en;
 
 static void set_tp_en_pin(void)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_tp_en_od), value_en);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_tchscr_report_en_od),
+			value_en);
 }
 DECLARE_DEFERRED(set_tp_en_pin);
 
@@ -37,8 +38,9 @@ void ap_bl_en_interrupt(enum gpio_signal signal)
 		hook_call_deferred(&set_tp_en_pin_data, 3 * USEC_PER_MSEC);
 	} else {
 		value_en = false;
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_tp_en_od),
-				value_en);
+		gpio_pin_set_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_ec_tchscr_report_en_od),
+			value_en);
 		hook_call_deferred(&set_bl_en_pin_data, 3 * USEC_PER_MSEC);
 	}
 }

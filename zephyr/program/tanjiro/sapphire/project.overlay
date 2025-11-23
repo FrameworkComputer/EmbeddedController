@@ -284,8 +284,6 @@
 	};
 
 	named-gpios {
-		/delete-node/ gsc_ec_voldn_btn_odl;
-		/delete-node/ gsc_ec_volup_btn_odl;
 		/delete-node/ ec_gpa7;
 		/delete-node/ fp_btn_ign;
 		/delete-node/ pen_int_odl;
@@ -298,20 +296,19 @@
 		/delete-node/ ec_gpd1;
 		/delete-node/ ec_gph1;
 		/delete-node/ ec_hid_int_odl;
+		/delete-node/ rsvd_kso17;
 
-		gpio_gsc_ec_voldn_btn_odl: gsc_ec_voldn_btn_odl {
+		gsc_ec_voldn_btn_odl {
 			gpios = <&gpioe 3 (GPIO_INPUT | GPIO_PULL_UP)>;
-			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
-		gpio_gsc_ec_volup_btn_odl: gsc_ec_volup_btn_odl {
+		gsc_ec_volup_btn_odl {
 			gpios = <&gpioe 4 (GPIO_INPUT | GPIO_PULL_UP)>;
-			enum-name = "GPIO_VOLUME_UP_L";
 		};
 		gpio_ap_bl_en_odl: gpio_ap_bl_en_odl{
 			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
-		gpio_tp_en_od:gpio_tp_en_od {
-			gpios = <&gpioa 7 (GPIO_ODR_LOW)>;
+		gpio_ec_tchscr_report_en_od: ec_tchscr_report_en_od {
+			gpios = <&gpioa 7 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_OUTPUT_INIT_LOW)>;
 		};
 		gpio_pen_int_odl: pen_int_odl {
 			gpios = <&gpiog 0 GPIO_INPUT>;
@@ -332,6 +329,12 @@
 		};
 		imu_int_ec_l {
 			gpios = <&gpiod 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_ec_pac_en_odl: ec_pac_en_odl {
+			gpios = <&gpioc 5 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_ec_pogo_low_pwr_sw: ec_pogo_low_pwr_sw{
+			gpios = <&gpioe 2 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
 		};
 	};
 

@@ -5,6 +5,7 @@
 #include "accelgyro.h"
 #include "charger.h"
 #include "common.h"
+#include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "driver/accelgyro_bmi3xx.h"
 #include "driver/accelgyro_lsm6dsm.h"
@@ -72,3 +73,23 @@ static void batt_pres_en_init(void)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_batt_pres_en));
 }
 DECLARE_HOOK(HOOK_INIT, batt_pres_en_init, HOOK_PRIO_DEFAULT);
+
+static void board_config_init(void)
+{
+	uint32_t board_version;
+
+	if (cbi_get_board_version(&board_version) != EC_SUCCESS) {
+		LOG_ERR("Failed to get board version.");
+		board_version = 0;
+	}
+
+	if (board_version > 0) {
+		gpio_pin_configure_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_gsc_ec_voldn_btn_odl),
+			GPIO_INPUT);
+		gpio_pin_configure_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_gsc_ec_volup_btn_odl),
+			GPIO_INPUT);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_config_init, HOOK_PRIO_DEFAULT);
