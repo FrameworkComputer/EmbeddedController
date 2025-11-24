@@ -563,7 +563,11 @@ uint16_t host_command_process(struct host_cmd_handler_args *args)
 			rv = cmd->handler(args);
 	}
 
-	if (rv != EC_RES_SUCCESS)
+	/* Do not print next event unavailable errors. This is not really an
+	 * error and spams the console during FW screens. */
+	if (rv != EC_RES_SUCCESS &&
+	    !(args->command == EC_CMD_GET_NEXT_EVENT &&
+	      rv == EC_RES_UNAVAILABLE && hcdebug <= HCDEBUG_NORMAL))
 		CPRINTS("HC 0x%04x err %d", args->command, rv);
 
 	if (hcdebug >= HCDEBUG_PARAMS && args->response_size) {
