@@ -12,8 +12,6 @@
 		pwm_led_w_c0: pwm_led_w_c0 {
 			pwms = <&pwm0 0 PWM_HZ(324) PWM_POLARITY_INVERTED>;
 		};
-		/* reserve to use */
-		pwms = <&pwm1 1 PWM_HZ(324) PWM_POLARITY_INVERTED>;
 	};
 
 	led_pins: pwm-led-pins {
