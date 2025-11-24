@@ -61,8 +61,9 @@ static void motionsense_init(void)
 	}
 
 	if (sensor_fwconfig == FORM_FACTOR_CLAMSHELL) {
-		if (!IS_ENABLED(CONFIG_SOC_FAMILY_INTEL_ISH)) {
-			/* Only valid in EC */
+		if (IS_ENABLED(CONFIG_GMR_TABLET_MODE)) {
+			/* Disable GMR interrupt on EC that have GMR code
+			 * support compiled-in. */
 			gmr_tablet_switch_disable();
 		}
 		motion_sensor_count = 0;
