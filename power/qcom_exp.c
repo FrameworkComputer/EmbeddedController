@@ -149,7 +149,7 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
  * spurious toggle from the switchcap turning on/off.
  * Based on o-scope measurements showing a ~500ms event.
  */
-#define AC_IRQ_DISABLE_DURATION (750 * MSEC)
+#define AC_IRQ_DISABLE_DURATION (2000 * MSEC)
 
 /* TODO(crosbug.com/p/25047): move to HOOK_POWER_BUTTON_CHANGE */
 /* 1 if the power button was pressed last time we checked */
@@ -519,7 +519,6 @@ static int set_system_power(int enable)
 	int ret;
 
 	CPRINTS("%s(%d)", __func__, enable);
-	start_ac_filter_window();
 	set_system_power_no_check(enable);
 
 	ret = wait_switchcap_power_good(enable);
@@ -548,6 +547,8 @@ static int set_pmic_pwron(int enable, uint8_t event)
 	int ret;
 
 	CPRINTS("%s(%d)", __func__, enable);
+
+	start_ac_filter_window();
 
 	/* Check the PMIC/AP power state */
 	if (enable == is_pmic_pwron())
