@@ -23,13 +23,11 @@ LOG_MODULE_REGISTER(fn_keys, LOG_LEVEL_INF);
 
 static uint32_t fn_keys[] = DT_INST_PROP(0, keymap);
 
-#define CODE_MASK 0xffff
-
 static bool fn_key_pressed;
 static bool fn_key_triggered;
 static uint32_t fn_keys_status;
 
-static const uint32_t fn_key_rc = DT_INST_PROP(0, fn_rc);
+static const uint16_t fn_key_rc = DT_INST_PROP(0, fn_rc);
 
 static bool is_key(int row, int col, uint32_t rc)
 {
@@ -70,7 +68,7 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 				continue;
 			}
 
-			override_code = fn_keys[i] & CODE_MASK;
+			override_code = MATRIX_CODE(fn_keys[i]);
 			fn_keys_status &= ~BIT(i);
 
 			break;
@@ -82,12 +80,8 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 				continue;
 			}
 
-			override_code = fn_keys[i] & CODE_MASK;
-			if (is_pressed) {
-				fn_keys_status |= BIT(i);
-			} else {
-				fn_keys_status &= ~BIT(i);
-			}
+			override_code = MATRIX_CODE(fn_keys[i]);
+			fn_keys_status |= BIT(i);
 
 			break;
 		}
