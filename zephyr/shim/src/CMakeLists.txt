@@ -6,6 +6,7 @@ zephyr_library_sources(console.c)
 zephyr_library_sources(crc.c)
 zephyr_library_sources(gpio.c)
 zephyr_library_sources(gpio_int.c)
+zephyr_library_sources(panic_utils.c)
 zephyr_library_sources_ifdef(CONFIG_PM pm_state.c)
 
 add_subdirectory("buttons")

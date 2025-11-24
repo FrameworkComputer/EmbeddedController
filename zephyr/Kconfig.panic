@@ -12,6 +12,13 @@ config PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE
 
 if PLATFORM_EC_PANIC
 
+config PLATFORM_EC_PANIC_PRINT_STACK_ON_ASSERT
+	bool "Dump thread call stack on an assertion"
+	depends on ARCH_STACKWALK
+	default y
+	help
+	  Print out the current thread's stack following an assert.
+
 config PLATFORM_EC_CONSOLE_CMD_CRASH
 	bool "Console command: crash"
 	default y

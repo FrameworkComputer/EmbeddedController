@@ -6,6 +6,7 @@
 #include "builtin/assert.h"
 #include "common.h"
 #include "panic.h"
+#include "panic_utils.h"
 #include "system_safe_mode.h"
 
 #include <zephyr/arch/cpu.h>
@@ -228,6 +229,8 @@ __override void assert_post_action(void)
 #else
 __override void assert_post_action(const char *path, unsigned int line)
 {
+	const k_tid_t thread = k_current_get();
+
 	/* Extract filename from path */
 	const char *last_slash = strrchr(path, '/');
 	const char *filename = last_slash ? last_slash + 1 : path;
@@ -241,6 +244,10 @@ __override void assert_post_action(const char *path, unsigned int line)
 
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_CONSOLE_CMD_CRASH_NESTED))
 		command_crash_nested_handler();
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_PANIC_PRINT_STACK_ON_ASSERT)) {
+		print_stack_trace(thread);
+	}
 
 	panic_reboot();
 	__ASSERT_UNREACHABLE;

@@ -7,6 +7,7 @@
 #include "ec_tasks.h"
 #include "hooks.h"
 #include "panic.h"
+#include "panic_utils.h"
 #include "task.h"
 #include "watchdog.h"
 
@@ -162,36 +163,6 @@ void watchdog_reload(void)
 }
 DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
 
-static void get_thread_name(const struct k_thread *thread, char *name,
-			    size_t size)
-{
-#ifdef CONFIG_THREAD_NAME
-	snprintf(name, size, "%s", thread->name);
-#else
-	snprintf(name, size, "TASK_%d", thread_id_to_task_id((k_tid_t)thread));
-#endif
-}
-
-static uint32_t get_stack_ptr(const struct k_thread *thread)
-{
-#if defined(CONFIG_ARM64)
-	/* We are assuming that the SP of interest is SP_EL1 */
-	return thread->callee_saved.sp_elx;
-#elif defined(CONFIG_ARM)
-	return thread->callee_saved.psp;
-#elif defined(CONFIG_X86)
-#if defined(CONFIG_X86_64)
-	return thread->callee_saved.rsp;
-#else
-	return thread->callee_saved.esp;
-#endif
-#elif defined(CONFIG_RISCV)
-	return thread->callee_saved.sp;
-#elif defined(CONFIG_ARCH_POSIX)
-	return (uint32_t)thread->callee_saved.thread_status;
-#endif
-}
-
 static void print_sp_pc(const struct k_thread *thread)
 {
 	uint32_t sp = get_stack_ptr(thread);
@@ -218,47 +189,6 @@ static void print_sp_pc(const struct k_thread *thread)
 	/* Nothing useful within esf to be printed here */
 	ARG_UNUSED(esf);
 #endif
-}
-
-static bool print_trace_address(void *arg, unsigned long pc)
-{
-	int *frame_idx = (int *)arg;
-#ifdef CONFIG_SYMTAB
-	uint32_t offset = 0;
-	const char *name = symtab_find_symbol_name(pc, &offset);
-
-	printk(" #%d: %p [%s+0x%x]\n", *frame_idx, (void *)pc, name, offset);
-#else
-	printk(" #%d: %p\n", *frame_idx, (void *)pc);
-#endif
-
-	(*frame_idx)++;
-	return true;
-}
-
-static void print_stack_trace(const struct k_thread *thread)
-{
-	int frame_idx = 0;
-	char state[32];
-	uint32_t sp = 0;
-	struct arch_esf *esf = NULL;
-	bool is_current_thread = thread == k_current_get();
-	char thread_name[16];
-
-	get_thread_name(thread, thread_name, sizeof(thread_name));
-
-	printk("Thread: %s%s, state=%s\n", is_current_thread ? "*" : "",
-	       thread_name,
-	       k_thread_state_str((k_tid_t)thread, state, sizeof(state)));
-
-	/* Pass esf if this is the currently interrupted thread */
-	if (is_current_thread) {
-		sp = get_stack_ptr(thread);
-		esf = (struct arch_esf *)sp;
-	} else {
-		esf = NULL;
-	}
-	arch_stack_walk(print_trace_address, &frame_idx, thread, esf);
 }
 
 static void log_thread_info(const struct k_thread *thread, void *user_data)
