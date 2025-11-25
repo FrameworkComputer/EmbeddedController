@@ -49,6 +49,7 @@ tach_fan0: &tach1 {};
 #include "../rvp_interrupts.dtsi"
 #include "../rvp_usbc.dtsi"
 #include "../rvp_keyboard.dtsi"
+#include "../rvp_leds.dtsi"
 #include "../rvp_fans.dtsi"
 #include "../rvp_temp_sensors.dtsi"
 #include "../rvp_ioex_gpio.dtsi"

@@ -149,6 +149,12 @@
 		gpio_io_exp_int_mecc_r: io_exp_int_mecc_r {
 			gpios = <&gpioh 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
+		gpio_led_1: led_1 {
+			gpios = <&gpioa 2 (GPIO_OUTPUT)>;
+		};
+		gpio_led_2: led_2 {
+			gpios = <&gpioa 3 (GPIO_OUTPUT)>;
+		};
 		gpio_lid_open: lid_open {
 			gpios = <&gpiod 3 (GPIO_INPUT)>;
 			enum-name = "GPIO_LID_OPEN";

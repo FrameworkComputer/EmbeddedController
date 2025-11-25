@@ -129,6 +129,12 @@
 			gpios = <&gpio7 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_KB_DISCRETE_INT";
 		};
+		gpio_led_1: led_1 {
+			gpios = <&gpioc 4 (GPIO_OUTPUT)>;
+		};
+		gpio_led_2: led_2 {
+			gpios = <&gpioc 0 (GPIO_OUTPUT)>;
+		};
 		gpio_lid_open: lid_open {
 			gpios = <&gpio0 1 (GPIO_INPUT)>;
 			enum-name = "GPIO_LID_OPEN";

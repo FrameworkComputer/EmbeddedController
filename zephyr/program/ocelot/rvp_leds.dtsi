@@ -1,0 +1,151 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/battery.h>
+
+/ {
+	led_pins: gpio-led-pins {
+		compatible = "cros-ec,gpio-led-pins";
+
+		/* This is re-using the caps lock LED to convey system and
+		 * battery status because the EC AICs cannot control the RVP's
+		 * usual charging status status LED over the MECC connector.
+		 *
+		 * EC_LED_ID_BATTERY_LED: caps lock, DS1J3, MECC #17
+		 */
+		led1 {
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pins = <&gpio_led_1>;
+
+			color-off {
+				led-color = "LED_OFF";
+				led-values = <0>;
+			};
+
+			color-1 {
+				led-color = "LED_GREEN";
+				led-values = <1>;
+			};
+		};
+	};
+
+	led-colors {
+		compatible = "cros-ec,led-policy";
+
+		power-state-charge {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery percent range (15% <= FULL) */
+			batt-lvl = <15 BATTERY_LEVEL_FULL>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_GREEN";
+				};
+			};
+		};
+
+		power-state-charge-batt-low {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery percent range (EMPTY <= 14%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 14>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_GREEN";
+					period-ms = <1500>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <500>;
+				};
+			};
+		};
+
+		power-state-discharge {
+			charge-state = "LED_PWRS_DISCHARGE";
+			/* Battery percent range (15% <= FULL) */
+			batt-lvl = <15 BATTERY_LEVEL_FULL>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		power-state-discharge-batt-low {
+			charge-state = "LED_PWRS_DISCHARGE";
+			/* Battery percent range (EMPTY <= 14%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 14>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_GREEN";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		power-state-error {
+			charge-state = "LED_PWRS_ERROR";
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_GREEN";
+					period-ms = <500>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <500>;
+				};
+			};
+		};
+
+		power-state-near-full {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_GREEN";
+				};
+			};
+		};
+
+		power-state-forced-idle {
+			charge-state = "LED_PWRS_FORCED_IDLE";
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_GREEN";
+					period-ms = <100>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <900>;
+				};
+			};
+		};
+
+		power-state-idle {
+			charge-state = "LED_PWRS_IDLE";
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_GREEN";
+					period-ms = <900>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <100>;
+				};
+			};
+		};
+	};
+};
