@@ -163,8 +163,8 @@
 			gpios = <&gpioe 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
-		gpio_prochot_ec_n_r: prochot_ec_n_r {
-			gpios = <&gpioi 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		gpio_prochot_odl: prochot_odl {
+			gpios = <&gpioi 0 (GPIO_ODR_HIGH)>;
 		};
 		gpio_rst_push_n_d_r: rst_push_n_d_r {
 			gpios = <&gpioj 7 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
