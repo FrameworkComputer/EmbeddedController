@@ -83,9 +83,6 @@
 		gpio_ec_kb_bl_pwm: ec_kb_bl_pwm {
 			gpios = <&gpioc 2 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
-		gpio_ec_pch_sys_pwrok: ec_pch_sys_pwrok {
-			gpios = <&gpio9 7 (GPIO_INPUT)>;
-		};
 		gpio_ec_prochot_ls_odl: ec_prochot_ls_odl {
 			gpios = <&gpio3 5 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
 		};
