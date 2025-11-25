@@ -343,6 +343,7 @@ __override int board_rt1718s_init(int port)
 const struct cc_para_t *board_get_cc_tuning_parameter(enum usbpd_port port)
 {
 	const static struct cc_para_t cc_parameter = {
+		.rc_filter = IT83XX_TX_RC_FILTER_TRIM,
 		.rising_time = IT83XX_TX_PRE_DRIVING_TIME_1_UNIT,
 		.falling_time = IT83XX_TX_PRE_DRIVING_TIME_2_UNIT,
 	};

@@ -840,8 +840,17 @@ static void it8xxx2_init(enum usbpd_port port, int role)
 		const struct cc_para_t *ptr =
 			board_get_cc_tuning_parameter(port);
 
-		IT83XX_USBPD_CCPSR3_RISE(port) = ptr->rising_time;
-		IT83XX_USBPD_CCPSR4_FALL(port) = ptr->falling_time;
+		if (ptr->rc_filter != IT83XX_TX_RC_FILTER_TRIM) {
+			IT83XX_USBPD_CCPSR0(port) = ptr->rc_filter;
+		}
+
+		if (ptr->rising_time != IT83XX_TX_PRE_DRIVING_TIME_TRIM) {
+			IT83XX_USBPD_CCPSR3_RISE(port) = ptr->rising_time;
+		}
+
+		if (ptr->falling_time != IT83XX_TX_PRE_DRIVING_TIME_TRIM) {
+			IT83XX_USBPD_CCPSR4_FALL(port) = ptr->falling_time;
+		}
 	}
 	/* Reset and disable HW auto generate message header */
 	IT83XX_USBPD_PDMSR(port) &= ~USBPD_REG_MASK_DISABLE_AUTO_GEN_TX_HEADER;

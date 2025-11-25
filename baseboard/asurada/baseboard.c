@@ -103,12 +103,14 @@ const struct cc_para_t *board_get_cc_tuning_parameter(enum usbpd_port port)
 	const static struct cc_para_t
 		cc_parameter[CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT] = {
 			{
+				.rc_filter = IT83XX_TX_RC_FILTER_TRIM,
 				.rising_time =
 					IT83XX_TX_PRE_DRIVING_TIME_1_UNIT,
 				.falling_time =
 					IT83XX_TX_PRE_DRIVING_TIME_2_UNIT,
 			},
 			{
+				.rc_filter = IT83XX_TX_RC_FILTER_TRIM,
 				.rising_time =
 					IT83XX_TX_PRE_DRIVING_TIME_1_UNIT,
 				.falling_time =
