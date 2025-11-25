@@ -157,7 +157,32 @@ if (cros_cbi_ufsc_check_match(
 ## Testing and Debugging
 
 The `cbi` console command and the `ectool cbi` host command can be used to read
-and write UFSC data.
+UFSC data.
+
+When setting the UFSC value using `ectool`, the argument provided must be a
+byte-ordered hex string using **little-endian** format (least significant byte
+first).
+
+For example, if the desired UFSC data consists of the following 32-bit words:
+*   **DWORD[0]:** `0x11223344`
+*   **DWORD[1]:** `0x55667788`
+*   **DWORD[2]:** `0x99aabbcc`
+*   **DWORD[3]:** `0xddeeff00`
+
+The command to write this to the UFSC tag (`29`) is:
+```bash
+ectool cbi set 29 4433221188776655ccbbaa9900ffeedd
+```
+
+To generate a CBI image file containing UFSC data, use the `cbi-util` tool.
+The `--ufsc` argument requires four comma-separated 32-bit hexadecimal values
+(DWORD 0 to DWORD 3).
+
+Using the same example data as above:
+```bash
+cbi-util create --file cbi.bin --board_version 1 --sku_id 1 --size 256 \
+    --ufsc 0x11223344,0x55667788,0x99aabbcc,0xddeeff00
+```
 
 [`CBI`]: ./zephyr_cbi.md
 [`FW_CONFIG`]: ./zephyr_fw_config.md
