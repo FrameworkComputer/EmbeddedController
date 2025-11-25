@@ -150,7 +150,8 @@ def get_projects():
         # Skip some projects if ec-private dir is missing until the builders
         # are fixed correctly.
         if (
-            project.config.project_name in ["ruby"]
+            project.config.project_name
+            in ["lapis", "moonstone", "ruby", "sapphire"]
             and not platform_ec_private.exists()
         ):
             continue
