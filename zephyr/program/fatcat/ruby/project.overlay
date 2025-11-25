@@ -24,6 +24,7 @@
 #include "thermal.dtsi"
 #include "usba.dtsi"
 #include "usbc.dtsi"
+#include <ruby/overlay.dtsi>
 
 /* ruby overrides follow... */
 
