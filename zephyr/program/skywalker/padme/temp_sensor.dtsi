@@ -23,6 +23,12 @@
 			sensor = <&charger_rt9490>;
 		};
 		charger2 {
+			temp-host-warn = <79>;
+			temp-host-high = <84>;
+			temp-host-halt = <99>;
+			temp-host-release-warn = <76>;
+			temp-host-release-high = <81>;
+			temp-host-release-halt = <94>;
 			sensor = <&temp_charger2>;
 		};
 		typec {
