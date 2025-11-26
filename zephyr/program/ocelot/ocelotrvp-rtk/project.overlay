@@ -37,3 +37,19 @@
 &pdc_ti_c1 {
 	irq-gpios = <RTS5912_GPIO027 GPIO_ACTIVE_LOW>;
 };
+
+&ulpm {
+	status = "okay";
+	bc_acok: wkup-pin@0 {
+		wkup-pin-mode = "vin";
+		wkup-pin-pol = "rising";
+	};
+	power_btn: wkup-pin@3 {
+		wkup-pin-mode = "vin";
+		wkup-pin-pol = "falling";
+	};
+	smc_lid: wkup-pin@5 {
+		wkup-pin-mode = "vin";
+		wkup-pin-pol = "rising";
+	};
+};
