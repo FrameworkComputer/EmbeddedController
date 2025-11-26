@@ -27,12 +27,17 @@ ZTEST_SUITE(fpsernsor_hw, NULL, NULL, NULL, NULL, NULL);
 ZTEST(fpsernsor_hw, test_fp_check_hwid)
 {
 	if (IS_ENABLED(CONFIG_CROS_EC_RW)) {
-		struct fingerprint_info info;
+		struct fingerprint_sensor_info sensor_info{};
+		struct fingerprint_image_frame_params
+			image_frame_params_array[NUM_IMAGE_CAPTURE_TYPES] = {};
+		uint8_t num_params = NUM_IMAGE_CAPTURE_TYPES;
 
-		zassert_ok(fingerprint_get_info(fp_sensor_dev, &info));
+		zassert_ok(fingerprint_get_info(fp_sensor_dev, &sensor_info,
+						image_frame_params_array,
+						&num_params));
 		/* The lower 4-bits of the sensor hardware id are a
 		 * manufacturing ID that is ok to vary.
 		 */
-		zassert_equal(fp_sensor_hwid, info.model_id >> 4);
+		zassert_equal(fp_sensor_hwid, sensor_info.model_id >> 4);
 	};
 }
