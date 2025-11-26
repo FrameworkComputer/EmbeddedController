@@ -3476,6 +3476,8 @@ static void enforce_pd_chipset_suspend_policy_1(int port)
 {
 	LOG_DBG("C%d: Chipset Suspend Policy 1", port);
 
+	atomic_clear_bit(pdc_data[port]->port.snk_policy.flags,
+			 SNK_POLICY_EVAL_SWAP_TO_SRC);
 	pdc_power_mgmt_set_dual_role(port, PD_DRP_TOGGLE_OFF);
 }
 
