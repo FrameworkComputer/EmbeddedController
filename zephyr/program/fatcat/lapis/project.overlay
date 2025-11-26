@@ -6,6 +6,13 @@
 /* lapis program common DTS includes */
 #include <cros/integrated_fwid.dtsi>
 
+/* Include the standard and OEM schema templates */
+#include <cros/cbi_ufsc_std_schema.dtsi>
+#include <cros/cbi_ufsc_oem_schema.dtsi>
+
+/* Include the generated file that defines the values for this project */
+#include "lapis_ec_ufsc.dtsi"
+
 /* lapis project DTS includes */
 #include "battery.dtsi"
 #include "console.dtsi"
