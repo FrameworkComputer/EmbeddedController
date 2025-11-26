@@ -576,7 +576,7 @@ void check_ucsi_event_from_host(void)
 		 * both controllers
 		 */
 		if (ucsi_check_all_pd_status(OPERATOR_AND)) {
-			for (i = 0; i <= PD_CHIP_COUNT; i++) {
+			for (i = 0; i < PD_CHIP_COUNT; i++) {
 				if (!cypd_contoller_is_powered(i))
 					continue;
 
