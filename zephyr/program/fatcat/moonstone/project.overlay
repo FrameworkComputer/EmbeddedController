@@ -11,6 +11,7 @@
 #include "fan.dtsi"
 #include "gpios.dtsi"
 #include "keyboard.dtsi"
+#include "temp_sensors.dtsi"
 #include "usb_typec.dtsi"
 
 #include "../kinmen/adc.dtsi"
@@ -23,7 +24,6 @@
 #include "../kinmen/led_policy.dtsi"
 #include "../kinmen/power_signals.dtsi"
 #include "../kinmen/pwm.dtsi"
-#include "../kinmen/temp_sensors.dtsi"
 #include "../kinmen/usba.dtsi"
 
 #include <cros/cbi_ufsc_std_schema.dtsi>
