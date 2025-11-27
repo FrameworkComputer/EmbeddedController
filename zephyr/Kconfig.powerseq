@@ -38,6 +38,15 @@ config PLATFORM_EC_POWERSEQ_HOST_SLEEP
 	  required for S0ix support on Intel platforms, and optional
 	  for boards without S0ix support.
 
+config PLATFORM_EC_SLEEP_TIMEOUT_MS
+	int "AP sleep timeout in ms"
+	default 10000
+	help
+	  Timeout for the AP to go to sleep. When the EC is told to suspend,
+	  it uses this config to determine how long to wait for the
+	  suspend to actually happen. If the EC hits this timeout, the AP is
+	  assumed to be stuck and the EC will trigger a reset.
+
 config PLATFORM_EC_POWER_SLEEP_FAILURE_DETECTION
 	bool "Detect failure to enter a sleep state (S0ix/S3)"
 	depends on PLATFORM_EC_POWERSEQ_HOST_SLEEP
