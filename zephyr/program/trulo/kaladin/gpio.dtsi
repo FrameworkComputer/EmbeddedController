@@ -19,7 +19,7 @@
 			gpios = <&gpiof 3 (GPIO_INPUT)>;
 		};
 		gpio_amp_mute_l: amp_mute_l {
-			gpios = <&gpiog 6 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_HIGH)>;
+			gpios = <&gpiog 6 (GPIO_OUTPUT | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
 		};
 		gpio_cpu_c10_gate_l: cpu_c10_gate_l {
 			gpios = <&gpiog 1 (GPIO_INPUT)>;
@@ -128,9 +128,6 @@
 			gpios = <&gpiod 1 (GPIO_INPUT)>;
 			enum-name = "GPIO_TABLET_MODE_L";
 		};
-		gpio_plt_rst: plt_rst {
-			gpios = <&gpiod 0 (GPIO_INPUT)>;
-		};
 		gpio_sen_mode2_ec_pch_int_odl: sen_mode2_ec_pch_int_odl {
 			gpios = <&gpiod 4 GPIO_ODR_LOW>;
 		};
@@ -144,6 +141,9 @@
 		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
 			gpios = <&gpiog 5 GPIO_INPUT>;
 			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		gpio_bat_disconnect_ec_odl: bat_disconnect_ec_odl {
+			gpios = <&gpiod 0 GPIO_ODR_LOW>;
 		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
 			gpios = <&gpioksol 2 GPIO_OUTPUT_HIGH>;
