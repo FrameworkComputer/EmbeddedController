@@ -798,6 +798,10 @@ enum policy_src_attached_t {
 	 * balancing policy.
 	 */
 	SRC_POLICY_GET_RDO,
+	/** Get source caps from DRP sink partner */
+	SRC_POLICY_GET_SRC_CAPS,
+	/** Evaluate source PDOs from DRP sink partner */
+	SRC_POLICY_EVAL_SRC_PDOS,
 	/** Triggers an update of the allow_pr_swap bit in CMD_SET_DRP */
 	SRC_POLICY_UPDATE_ALLOW_PR_SWAP,
 	/** Update battery status */
@@ -1389,7 +1393,7 @@ static void invalidate_charger_settings(struct pdc_port_t *port,
 
 	/* Invalidate PDOS */
 	port->snk_policy.pdo = 0;
-	memset(port->snk_policy.src.pdos, 0, sizeof(port->snk_policy.snk.pdos));
+	memset(port->snk_policy.src.pdos, 0, sizeof(port->snk_policy.src.pdos));
 	port->snk_policy.src.pdo_count = 0;
 	memset(port->src_policy.snk.pdos, 0, sizeof(port->src_policy.snk.pdos));
 	port->src_policy.snk.pdo_count = 0;
@@ -2069,6 +2073,13 @@ static void run_src_policies(struct pdc_port_t *port)
 		/* Adjust source current limits if necessary */
 		pdc_dpm_eval_sink_fixed_pdo(port_num,
 					    port->src_policy.snk.pdos[0]);
+
+		/* If the partner is DRP capable, request source caps */
+		if (port->src_policy.snk.pdos[0] & PDO_FIXED_GET_DRP) {
+			atomic_set_bit(port->src_policy.flags,
+				       SRC_POLICY_GET_SRC_CAPS);
+		}
+
 		return;
 	} else if (atomic_test_and_clear_bit(port->src_policy.flags,
 					     SRC_POLICY_GET_SINK_CAPS)) {
@@ -2118,6 +2129,33 @@ static void run_src_policies(struct pdc_port_t *port)
 					     SRC_POLICY_GET_RDO)) {
 		/* Get the RDO from the port partner */
 		queue_internal_cmd(port, CMD_PDC_GET_RDO);
+		return;
+	} else if (atomic_test_and_clear_bit(port->src_policy.flags,
+					     SRC_POLICY_GET_SRC_CAPS)) {
+		/*
+		 * For evaluating swap to sink, we only request the partner's
+		 * first SRC PDO.
+		 */
+		port->get_pdo.num_pdos = 1;
+		port->get_pdo.pdo_offset = PDO_OFFSET_0;
+		port->get_pdo.pdo_type = SOURCE_PDO;
+		port->get_pdo.pdo_source = PARTNER_PDO;
+		port->get_pdo.updating = false;
+
+		atomic_set_bit(port->src_policy.flags,
+			       SRC_POLICY_EVAL_SRC_PDOS);
+		queue_internal_cmd(port, CMD_PDC_GET_PDOS);
+		return;
+	} else if (atomic_test_and_clear_bit(port->src_policy.flags,
+					     SRC_POLICY_EVAL_SRC_PDOS)) {
+		/* Request a swap to sink if the partner has unconstained power
+		 */
+		if (port->snk_policy.src.pdos[0] &
+		    PDO_FIXED_GET_UNCONSTRAINED_PWR) {
+			atomic_set_bit(port->src_policy.flags,
+				       SRC_POLICY_SWAP_TO_SNK);
+		}
+
 		return;
 	} else if (atomic_test_and_clear_bit(port->src_policy.flags,
 					     SRC_POLICY_UPDATE_ALLOW_PR_SWAP)) {

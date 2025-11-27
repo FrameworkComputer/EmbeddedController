@@ -688,6 +688,19 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_data_swap_capable)
 					   SOURCE_PDO :
 					   SINK_PDO),
 				  PDO_OFFSET_0, 1, PARTNER_PDO, &test[i].pdo);
+
+		/* If the partner is a DRP, set PDO for the opposite role with
+		 * same flags
+		 */
+		if (test[i].pdo & PDO_FIXED_DUAL_ROLE) {
+			emul_pdc_set_pdos(emul,
+					  (test[i].power_role == PD_ROLE_SINK ?
+						   SINK_PDO :
+						   SOURCE_PDO),
+					  PDO_OFFSET_0, 1, PARTNER_PDO,
+					  &test[i].pdo);
+		}
+
 		emul_pdc_connect_partner(emul, &connector_status);
 
 		zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
@@ -2741,6 +2754,67 @@ ZTEST_USER(pdc_power_mgmt_api, test_pd_power_button)
 	zassert_equal(
 		2, pdc_power_mgmt_simulate_power_button_press_fake.call_count,
 		"Power button press not simulated.");
+}
+
+ZTEST_USER(pdc_power_mgmt_api, test_swap_to_sink)
+{
+	int i;
+	union pdr_t pdr;
+	union connector_status_t connector_status = {};
+	struct {
+		enum pd_power_role power_role;
+		uint32_t pdo;
+		bool expected;
+	} test[] = {
+		{ .power_role = PD_ROLE_SOURCE,
+		  .pdo = PDO_FIXED(5000, 3000, PDO_FIXED_DATA_SWAP),
+		  .expected = false },
+		{ .power_role = PD_ROLE_SOURCE,
+		  .pdo = PDO_FIXED(5000, 3000, PDO_FIXED_DUAL_ROLE),
+		  .expected = false },
+		{ .power_role = PD_ROLE_SOURCE,
+		  .pdo = PDO_FIXED(5000, 3000,
+				   PDO_FIXED_DUAL_ROLE |
+					   PDO_FIXED_UNCONSTRAINED),
+		  .expected = true },
+	};
+
+	for (i = 0; i < ARRAY_SIZE(test); i++) {
+		emul_pdc_configure_src(emul, &connector_status);
+		clear_partner_pdos(emul, SINK_PDO);
+
+		/* Set Partner PDOs for initial power role */
+		emul_pdc_set_pdos(emul, SINK_PDO, PDO_OFFSET_0, 1, PARTNER_PDO,
+				  &test[i].pdo);
+
+		/* If the partner is a DRP, set PDO for the opposite role with
+		 * same flags
+		 */
+		if (test[i].pdo & PDO_FIXED_DUAL_ROLE) {
+			emul_pdc_set_pdos(emul, SOURCE_PDO, PDO_OFFSET_0, 1,
+					  PARTNER_PDO, &test[i].pdo);
+		}
+
+		emul_pdc_connect_partner(emul, &connector_status);
+
+		zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
+		LOG_INF("[%d] connection settled", i);
+
+		/* Verify swap_to_snk bit is set in SET_PDR when expected */
+		if (test[i].expected) {
+			zassert_ok(emul_pdc_get_pdr(emul, &pdr));
+			zassert_equal(pdr.swap_to_snk, 1);
+		} else {
+			zassert_ok(emul_pdc_get_pdr(emul, &pdr));
+			zassert_equal(pdr.swap_to_snk, 0);
+		}
+
+		emul_pdc_disconnect(emul);
+		zassert_true(TEST_WAIT_FOR(!pd_is_connected(TEST_PORT),
+					   PDC_TEST_TIMEOUT));
+		zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
+		LOG_INF("[%d] disconnection settled", i);
+	}
 }
 
 /*
