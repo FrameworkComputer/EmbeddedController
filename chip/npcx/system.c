@@ -86,8 +86,6 @@ void system_watchdog_reset(void)
 	/* Wait for timer is loaded and restart */
 	while (IS_BIT_SET(NPCX_T0CSR, NPCX_T0CSR_RST))
 		;
-	/* Enable interrupt */
-	interrupt_enable();
 }
 
 /* Return true if index is stored as a single byte in bbram */
