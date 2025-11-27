@@ -6,6 +6,9 @@
 /* ocelot program common DTS includes */
 
 #include <cros/integrated_fwid.dtsi>
+#include <cros/cbi_ufsc_std_schema.dtsi>
+#include <cros/cbi_ufsc_oem_schema.dtsi>
+#include "matsu_ec_ufsc.dtsi"
 
 /* matsu project DTS includes */
 
