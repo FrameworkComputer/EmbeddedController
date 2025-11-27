@@ -4,6 +4,8 @@
  */
 
 #include "gpio_signal.h"
+#include "hooks.h"
+#include "host_command.h"
 
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/init.h>
@@ -47,3 +49,22 @@ static int install_backlight_handler(void)
 }
 
 SYS_INIT(install_backlight_handler, APPLICATION, 1);
+
+/**
+ * Host command to toggle backlight.
+ *
+ * The requested state will persist until the next lid-switch or request-gpio
+ * transition.
+ */
+static enum ec_status
+switch_command_enable_backlight(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_switch_enable_backlight *p = args->params;
+	int value = p->enabled;
+
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_bl_en_od), value);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_BKLIGHT,
+		     switch_command_enable_backlight, EC_VER_MASK(0));
