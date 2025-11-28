@@ -2015,6 +2015,10 @@ static void run_typec_snk_policies(struct pdc_port_t *port)
 		port->sink_path_to_send =
 			charge_manager_get_active_charge_port() ==
 			config->connector_num;
+		if (port->sink_path_to_send) {
+			/* Set ACOKREF to 5000 */
+			charge_manager_set_acokref(5000);
+		}
 		queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
 	} else if (atomic_test_and_clear_bit(port->snk_policy.flags,
 					     SNK_POLICY_UPDATE_SRC_CAPS)) {
@@ -2786,6 +2790,14 @@ static bool pdc_snk_attached_set_sink_path(struct pdc_port_t *port)
 		if (sink_path_mask == 0) {
 			/* No other ports have sink path enabled,
 			 * proceed to enable */
+			int pdo_mv;
+			int pdo_ma;
+			int pdo_mw;
+			pd_extract_pdo_power_unclamped(port->snk_policy.pdo,
+						       &pdo_ma, &pdo_mv,
+						       &pdo_mw);
+			charge_manager_set_acokref(pdo_mv);
+
 			port->sink_path_to_send = true;
 			queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
 			return true;
