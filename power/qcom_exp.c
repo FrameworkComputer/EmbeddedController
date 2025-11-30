@@ -780,6 +780,10 @@ enum power_state power_chipset_init(void)
  */
 static void power_off_seq(uint8_t shutdown_event)
 {
+	if (shutdown_event == POWER_OFF_BY_POWER_GOOD_LOST)
+		/* Filter AC toggles when power good is lost. */
+		start_ac_filter_window();
+
 	/* Check PMIC POWER_GOOD */
 	if (is_pmic_pwron()) {
 		if (shutdown_event == POWER_OFF_BY_POWER_GOOD_LOST) {
