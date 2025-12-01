@@ -19,12 +19,12 @@ static const uint32_t fp_sensor_hwid = UINT32_MAX;
 
 int fpc_get_hwid(uint16_t *id);
 
-ZTEST_SUITE(fpsernsor_hw, NULL, NULL, NULL, NULL, NULL);
+ZTEST_SUITE(fpsensor_hw, NULL, NULL, NULL, NULL, NULL);
 
 /* Hardware-dependent smoke test that makes a SPI transaction with the
  * fingerprint sensor.
  */
-ZTEST(fpsernsor_hw, test_fp_check_hwid)
+ZTEST(fpsensor_hw, test_fp_check_hwid)
 {
 	if (IS_ENABLED(CONFIG_CROS_EC_RW)) {
 		struct fingerprint_sensor_info sensor_info{};
