@@ -66,7 +66,7 @@ int fan_table_to_rpm(int fan, int *temp)
 	 *  2. increasing path. (check the trigger point)
 	 *  3. invariant path. (return the current RPM)
 	 */
-	if (temp[TEMP_DDR_SOC] < prev_temp[TEMP_DDR_SOC] &&
+	if (temp[TEMP_DDR_SOC] < prev_temp[TEMP_DDR_SOC] ||
 	    temp[TEMP_SOC] < prev_temp[TEMP_SOC]) {
 		for (i = current_level; i > 0; i--) {
 			temp_ddr_soc_off = fan_step_table[i].off[TEMP_DDR_SOC];
