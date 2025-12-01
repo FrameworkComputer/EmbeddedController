@@ -25,6 +25,7 @@
 	pinctrl-0 = <&i2c5_clk_gpe1_default
 		     &i2c5_data_gpe2_default>;
 	pinctrl-names = "default";
+	target-enable;
 
 	scl-gpios = <&gpioe 1 0>;
 	sda-gpios = <&gpioe 2 0>;
