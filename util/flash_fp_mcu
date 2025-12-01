@@ -1262,8 +1262,8 @@ config_brox() {
     (caboc)
       # FPMCU RST_ODL is on GPP_D9 = 160 + 9 = 169
       readonly GPIO_NRST=169
-      # FPMCU BOOT0 is on GPP_D8 = 160 + 8 = 168
-      readonly GPIO_BOOT0=168
+      # FPMCU BOOT0 is on GPP_D5 = 160 + 5 = 165
+      readonly GPIO_BOOT0=165
       # FP_PWR_EN is on GPP_D11 = 160 + 11 = 171
       readonly GPIO_PWREN=171
       ;;
