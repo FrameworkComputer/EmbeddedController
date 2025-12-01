@@ -34,7 +34,7 @@
 	dsp_service: dsp-service@20 {
 		compatible = "cros,dsp-service";
 		reg = <0x20>;
-		int-gpios = <&gpioh 6 (GPIO_ACTIVE_LOW)>;
+		int-gpios = <&gpioh 6 (GPIO_ACTIVE_LOW | GPIO_VOLTAGE_1P8)>;
 	};
 };
 
