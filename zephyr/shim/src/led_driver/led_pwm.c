@@ -7,9 +7,9 @@
 
 #define DT_DRV_COMPAT cros_ec_pwm_led_pins
 
+#include "drivers/led.h"
 #include "ec_commands.h"
 #include "hooks.h"
-#include "led.h"
 #include "util.h"
 
 #include <zephyr/devicetree.h>

@@ -2,8 +2,8 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include "drivers/led.h"
 #include "host_command.h"
-#include "led.h"
 #include "led_common.h"
 #include "pwm_mock.h"
 #include "test/drivers/test_state.h"

@@ -4,13 +4,13 @@
  */
 
 #include "battery_smart.h"
+#include "drivers/led.h"
 #include "ec_commands.h"
 #include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "gpio.h"
 #include "include/power.h"
-#include "led.h"
 #include "led_common.h"
 #include "pwm_mock.h"
 #include "test/drivers/test_state.h"

@@ -6,6 +6,8 @@
 #ifndef __CROS_EC_LED_H__
 #define __CROS_EC_LED_H__
 
+#include "ec_commands.h"
+
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/pwm.h>
