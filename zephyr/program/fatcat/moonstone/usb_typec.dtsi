@@ -44,6 +44,7 @@
 		reg = <0x24>;
 		irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
 		port-index-on-chip = <0x2>;
+		no-fw-update;
 		zephyr,deferred-init;
 		ccd;
 	};
@@ -52,7 +53,6 @@
 		reg = <0x20>;
 		irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
 		port-index-on-chip = <0x1>;
-		no-fw-update;
 		zephyr,deferred-init;
 	};
 	pdc_power_p2: tps6699-pdc@21 {
