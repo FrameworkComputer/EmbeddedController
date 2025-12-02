@@ -5,6 +5,7 @@
 zephyr_library_sources_ifdef(CONFIG_EMUL_TCPCI		emul_tcpci.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_TCPCI		emul_tcpci_generic.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_ANX7447	emul_anx7447.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_IT8XXX2	emul_it8xxx2.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_NCT38XX	emul_nct38xx.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_PS8XXX		emul_ps8xxx.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_RAA489000	emul_raa489000.c)

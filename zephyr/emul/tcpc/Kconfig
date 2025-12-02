@@ -77,6 +77,15 @@ config EMUL_RT1718S
 	  TCPCI emulator. rt1718s specific API is available in
 	  zephyr/include/emul/tcpc/emul_rt1718s.h
 
+config EMUL_IT8XXX2
+	bool "ITE it8xxx2 emulator"
+	default y
+	depends on DT_HAS_CROS_IT8XXX2_TCPC_EMUL_ENABLED
+	help
+	  Enable emulator for it8xxx2 of TCPM. This emulator is extension for
+	  TCPCI emulator. it8xxx2 specific API is available in
+	  zephyr/include/emul/tcpc/emul_it8xxx2.h
+
 config EMUL_TCPCI_PARTNER_COMMON
 	bool
 	help
