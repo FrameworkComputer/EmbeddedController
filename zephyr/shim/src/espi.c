@@ -420,6 +420,15 @@ static void lpc_host_command_init(void)
 		EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED |
 		EC_HOST_CMD_FLAG_VERSION_3;
 
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_TEMP_SENSOR)) {
+		/* Shared memory range is zero initialized.
+		 * If temperature sensors aren't supported, mark the first
+		 * sensor entry as not present.
+		 */
+		*(lpc_get_memmap_range() + EC_MEMMAP_TEMP_SENSOR) =
+			EC_TEMP_SENSOR_NOT_PRESENT;
+	}
+
 	/* Sufficiently initialized */
 	init_done = 1;
 

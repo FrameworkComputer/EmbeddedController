@@ -145,7 +145,7 @@
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
 			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_OUTPUT_LOW)>;
 		};
-		pg_ec_dsw_pwrok {
+		gpio_pg_ec_dsw_pwrok: pg_ec_dsw_pwrok {
 			gpios = <&gpio0 4 GPIO_INPUT>;
 			enum-name = "GPIO_TEMP_SENSOR_POWER";
 		};

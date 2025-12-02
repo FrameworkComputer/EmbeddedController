@@ -1,0 +1,11 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* Remove the temperature sensors, which forces
+	 * CONFIG_PLATFORM_EC_TEMP_SENSOR=n
+	 */
+	/delete-node/ named-temp-sensors;
+};
