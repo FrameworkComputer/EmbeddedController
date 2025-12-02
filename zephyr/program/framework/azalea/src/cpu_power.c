@@ -19,6 +19,11 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+#define BATTERY_55mW 55000
+#define BATTERY_61mW 61000
+/*75W's PL setting same as 61W*/
+#define BATTERY_75mW BATTERY_61mW
+
 static int battery_mwatt_type;
 static int battery_current_limit_mA;
 static int powerlimit_restore;
@@ -312,12 +317,16 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 
 static void initial_soc_power_limit(void)
 {
-	const char *str = "FRANGWAT01";
+	const char *curr_model = battery_static[BATT_IDX_MAIN].model_ext;
 	static int pre_battery_type;
 
-	battery_mwatt_type =
-		(!strncmp(battery_static[BATT_IDX_MAIN].model_ext, str, 10) ?
-		BATTERY_61mW : BATTERY_55mW);
+	if (!strncmp(curr_model, "FRANEDA", 7)) {
+		battery_mwatt_type = BATTERY_75mW;
+	} else if (!strncmp(curr_model, "FRANGWAT01", 10)) {
+		battery_mwatt_type = BATTERY_61mW;
+	} else {
+		battery_mwatt_type = BATTERY_55mW;
+	}
 
 	if (pre_battery_type != battery_mwatt_type)
 		pre_battery_type = battery_mwatt_type;
