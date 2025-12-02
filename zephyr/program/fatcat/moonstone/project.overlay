@@ -10,6 +10,7 @@
 /* moonstone project DTS includes */
 #include "fan.dtsi"
 #include "gpios.dtsi"
+#include "i2c.dtsi"
 #include "keyboard.dtsi"
 #include "temp_sensors.dtsi"
 #include "usb_typec.dtsi"
@@ -18,7 +19,6 @@
 #include "../kinmen/binman.dtsi"
 #include "../kinmen/console.dtsi"
 #include "../kinmen/hibernate.dtsi"
-#include "../kinmen/i2c.dtsi"
 #include "../kinmen/interrupts.dtsi"
 #include "../kinmen/led_pins.dtsi"
 #include "../kinmen/led_policy.dtsi"
