@@ -217,6 +217,11 @@ static void pchg_print_status(const struct pchg *ctx)
 		 _text_event(event));
 }
 
+int pchg_get_battery_percent(int port)
+{
+	return pchgs[port].battery_percent;
+}
+
 static void _clear_port(struct pchg *ctx)
 {
 	mutex_lock(&ctx->mtx);

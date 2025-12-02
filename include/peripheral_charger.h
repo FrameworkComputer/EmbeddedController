@@ -406,6 +406,15 @@ void wpc_hall_interrupt(enum gpio_signal signal);
 __override_proto void board_pchg_power_on(int port, bool on);
 
 /**
+ * pchg_get_battery_percent - Get the current battery percentage of a PCHG port.
+ *
+ * @port: The PCHG port index.
+ *
+ * Returns the battery remaining percentage (0–100) for the specified port.
+ */
+int pchg_get_battery_percent(int port);
+
+/**
  * Return counts for PCHG charger.
  */
 int board_get_pchg_count(void);
