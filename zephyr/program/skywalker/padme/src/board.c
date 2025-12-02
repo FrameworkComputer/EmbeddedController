@@ -11,6 +11,7 @@
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "peripheral_charger.h"
+#include "power.h"
 #include "timer.h"
 
 #include <zephyr/drivers/gpio.h>
@@ -19,6 +20,9 @@
 #include <ap_power/ap_power.h>
 
 #define INT_RECHECK_US 5000
+/* Periodic check interval for stylus battery status in S3 */
+#define PCHG_POLICY_DELAY (1000 * USEC_PER_MSEC)
+static bool pchg_low_power_mode = false;
 
 static void board_backlight_handler(struct ap_power_ev_callback *cb,
 				    struct ap_power_ev_data data)
@@ -121,7 +125,40 @@ static void board_setup_init()
 }
 DECLARE_HOOK(HOOK_INIT, board_setup_init, HOOK_PRIO_PRE_DEFAULT);
 
+static void pchg_policy(void);
+DECLARE_DEFERRED(pchg_policy);
+
+static void pchg_policy(void)
+{
+	enum power_state chipset_state = power_get_state();
+	if (chipset_state == POWER_S0) {
+		if (pchg_low_power_mode == true) {
+			pchg_low_power_mode = false;
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pen_dis),
+					1);
+			ccprints("pchg: resume from low power (S0)");
+		}
+	} else if (chipset_state == POWER_S3) {
+		if (pchg_get_battery_percent(0) >= 100) {
+			if (pchg_low_power_mode == false) {
+				pchg_low_power_mode = true;
+				gpio_pin_set_dt(
+					GPIO_DT_FROM_NODELABEL(gpio_ec_pen_dis),
+					0);
+				ccprints("pchg: enter low power (S3, full)");
+			}
+		}
+	}
+	hook_call_deferred(&pchg_policy_data, PCHG_POLICY_DELAY);
+}
+
 void board_pchg_power_on(int port, bool on)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pen_dis), on);
+	if (on) {
+		pchg_low_power_mode = false;
+		hook_call_deferred(&pchg_policy_data, 0);
+	} else {
+		hook_call_deferred(&pchg_policy_data, -1);
+	}
 }
