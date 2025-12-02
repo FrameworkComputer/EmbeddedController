@@ -196,6 +196,13 @@ config LINK_TEST_SUITE_RT1715
 	  Link rt1715 test suite for the TCPM driver related function
 	  tests.
 
+config LINK_TEST_SUITE_IT8XXX2
+	bool "Link and test the it8xxx2 tests"
+	help
+	  Link it8xxx2 test suite for the TCPM driver related function
+	  tests.
+
+
 config LINK_TEST_SUITE_RT1718S
 	bool "Link and test the rt1718s tests"
 	help
