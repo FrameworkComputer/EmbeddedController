@@ -2202,12 +2202,12 @@ int cmd_fp_enc_status(int argc, char *argv[])
 			"FP Encryption Status returned with errors: %d\n", rv);
 		return rv;
 	}
-	printf("FPMCU encryption status: 0x%08x%s",
+	printf("FPMCU encryption status: 0x%08x%s\n",
 	       fp_encryptionstatus_command.GetStatus(),
 	       (ec::FpEncryptionStatusCommand::ParseFlags(
 			fp_encryptionstatus_command.GetStatus()))
 		       .c_str());
-	printf("Valid flags:             0x%08x%s",
+	printf("Valid flags:             0x%08x%s\n",
 	       fp_encryptionstatus_command.GetValidFlags(),
 	       (ec::FpEncryptionStatusCommand::ParseFlags(
 			fp_encryptionstatus_command.GetValidFlags()))
