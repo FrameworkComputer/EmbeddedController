@@ -10,6 +10,7 @@
 #include "extpower.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
+#include "peripheral_charger.h"
 #include "timer.h"
 
 #include <zephyr/drivers/gpio.h>
@@ -119,3 +120,8 @@ static void board_setup_init()
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_jd1));
 }
 DECLARE_HOOK(HOOK_INIT, board_setup_init, HOOK_PRIO_PRE_DEFAULT);
+
+void board_pchg_power_on(int port, bool on)
+{
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pen_dis), on);
+}

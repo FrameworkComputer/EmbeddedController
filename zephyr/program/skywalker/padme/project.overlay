@@ -77,6 +77,11 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "pchg_irq";
 		};
+		wpc_lid_irq: wpc_lid_irq{
+			irq-pin = <&gpio_pen_eject_od_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "wpc_hall_interrupt";
+		};
 	};
 
 	named-gpios {
@@ -134,6 +139,7 @@
 		//PEN_EJECT_OD_L GPD1
 		gpio_pen_eject_od_l: gpio_pen_eject_od_l {
 			gpios = <&gpiod 1 (GPIO_INPUT)>;
+			enum-name = "GPIO_HALL_CTL_PCHG";
 		};
 
 		//CCD_MODE_L GPE5
