@@ -198,9 +198,6 @@ register_ish_project(
 ocicat = register_it8xxx2_project(
     project_name="ocicat",
     chip="it8xxx2/it82002bw",
-    extra_kconfig_base_files=[
-        here / "rvp_program.conf",
-    ],
 )
 
 # Note for reviews, do not let anyone edit these assertions, the addresses

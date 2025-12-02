@@ -1,0 +1,44 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* kb back light */
+&pwm1 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;      /* ITE PWM Group 1 */
+	pinctrl-0 = <&pwm1_gpa1_default>;
+	pinctrl-names = "default";
+};
+/* fan duty */
+&pwm6 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C6>;      /* ITE PWM Group 2 */
+	pinctrl-0 = <&pwm6_gpa6_default>;
+	pinctrl-names = "default";
+};
+
+/* Board LEDs - share one prescaler reference, all clocks must be configured
+ * for 324 Hz or lower so LEDs work in low power mode.
+ */
+    /* CHG_LED#_EC */
+&pwm2 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm2_gpa2_default>;
+	pinctrl-names = "default";
+};
+    /* AC_LED#_EC */
+&pwm3 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm3_gpa3_default>;
+	pinctrl-names = "default";
+};
+    /* PWR_LED_L */
+&pwm5 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm5_gpa5_default>;
+	pinctrl-names = "default";
+};
