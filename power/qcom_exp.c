@@ -327,8 +327,7 @@ host_command_offmode_charing_active(struct host_cmd_handler_args *args)
 	 * Set the flag to indicate we are entering the off-mode charging state.
 	 */
 	heartbeat_mode = 1;
-	/* Force the chipset to shutdown */
-	chipset_force_shutdown(CHIPSET_SHUTDOWN_HOST_CMD);
+
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_ENABLE_OFFMODE_HEARTBEAT,
