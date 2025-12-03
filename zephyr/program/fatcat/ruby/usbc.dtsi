@@ -14,6 +14,7 @@
 			reg = <0>;
 			chg = <&charger>;
 			pdc = <&pdc_power_p0>;
+			pd-retimer;
 			policy = <&cros_policy>;
 		};
 		usbc_port1: port1@1 {
