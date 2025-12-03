@@ -434,6 +434,24 @@ DECLARE_HOOK(HOOK_INIT, sensor_enable_irqs, HOOK_PRIO_DEFAULT);
 			     DT_NODE_HAS_PROP(id, alternate_ssfc_indicator)), \
 		    (CHECK_SSFC_AND_ENABLE_ALT_SENSOR(id);), ())
 
+#define CHECK_UFSC_AND_ENABLE_ALT_SENSOR(id)                                 \
+	do {                                                                 \
+		if (cros_cbi_ufsc_check_match(CBI_UFSC_VALUE_ID(             \
+			    DT_PHANDLE(id, alternate_ufsc_indicator)))) {    \
+			LOG_INF("Replacing \"%s\" for \"%s\" based on UFSC", \
+				motion_sensors[SENSOR_ID(DT_PHANDLE(         \
+						       id, alternate_for))]  \
+					.name,                               \
+				motion_sensors_alt[SENSOR_ID(id)].name);     \
+			ENABLE_ALT_MOTION_SENSOR(id);                        \
+		}                                                            \
+	} while (0)
+
+#define ALT_SENSOR_CHECK_UFSC_ID(id)                                          \
+	COND_CODE_1(UTIL_AND(DT_NODE_HAS_PROP(id, alternate_for),             \
+			     DT_NODE_HAS_PROP(id, alternate_ufsc_indicator)), \
+		    (CHECK_UFSC_AND_ENABLE_ALT_SENSOR(id);), ())
+
 #if DT_NODE_EXISTS(SENSOR_ALT_NODE)
 
 int motion_sense_probe(enum sensor_alt_id alt_idx)
@@ -455,8 +473,13 @@ int motion_sense_probe(enum sensor_alt_id alt_idx)
 	return res;
 }
 
-void motion_sensors_check_ssfc(void){
+void motion_sensors_check_ssfc(void)
+{
 	DT_FOREACH_CHILD(SENSOR_ALT_NODE, ALT_SENSOR_CHECK_SSFC_ID)
+}
+
+void motion_sensors_check_ufsc(void){
+	DT_FOREACH_CHILD(SENSOR_ALT_NODE, ALT_SENSOR_CHECK_UFSC_ID)
 }
 #endif /* DT_NODE_EXISTS(SENSOR_ALT_NODE) */
 

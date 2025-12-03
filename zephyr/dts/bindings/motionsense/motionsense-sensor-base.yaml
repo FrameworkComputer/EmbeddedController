@@ -53,6 +53,10 @@ properties:
     type: phandle
     description: phandle to CBI SSFC value indicating that the sensor
       should be used
+  alternate-ufsc-indicator:
+    type: phandle
+    description: phandle to CBI UFSC value indicating that the sensor
+      should be used
   int-signal:
     type: phandle
     description: pin which triggers interrupt for sensor
