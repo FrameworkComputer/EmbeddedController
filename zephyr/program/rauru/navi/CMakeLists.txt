@@ -4,6 +4,7 @@
 
 zephyr_library_sources("src/led.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/dp_alt_mode.c")
+zephyr_library_sources("src/usbc.c")
 zephyr_library_sources("src/usb_mux.c")
 zephyr_library_sources("src/touch.c")
 zephyr_library_sources("src/suspend_resume.c")
