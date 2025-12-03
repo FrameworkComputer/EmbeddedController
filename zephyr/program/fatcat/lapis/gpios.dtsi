@@ -178,6 +178,11 @@
 		gpio_fp_rst_ec: fp_rst_ec {
 			gpios = <&gpiof 9 GPIO_INPUT>;
 		};
+
+		gpio_fp_rxd1: fp_rxd1 {
+			gpios = <&gpiob 6 (GPIO_OUTPUT | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+
 		/* EDP_BIST_EN */
 		gpio_edp_bist_en: edp_bist_en {
 			gpios = <&gpiob 15 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;

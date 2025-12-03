@@ -7,4 +7,5 @@ zephyr_library_sources(
 		"src/board_power.c"
 		"src/charger.c"
 		"src/fan.c"
+		"src/fp_led.c"
 )
