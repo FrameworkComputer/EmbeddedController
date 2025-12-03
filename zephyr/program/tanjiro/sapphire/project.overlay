@@ -1,3 +1,12 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Include the standard and OEM schema templates */
+#include <cros/cbi_ufsc_std_schema.dtsi>
+#include <cros/cbi_ufsc_oem_schema.dtsi>
+
 #include <cros/cbi_flash.dtsi>
 #include <cros/thermistor/thermistor.dtsi>
 #include <dt-bindings/motionsense/utils.h>
@@ -12,6 +21,7 @@
 #include "../power_signal.dtsi"
 #include "cbi.dtsi"
 #include "led.dtsi"
+#include "sapphire_ec_ufsc.dtsi"
 #include <sapphire/overlay.dtsi>
 
 / {
