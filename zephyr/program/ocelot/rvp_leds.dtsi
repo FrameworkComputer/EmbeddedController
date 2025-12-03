@@ -13,7 +13,8 @@
 		 * battery status because the EC AICs cannot control the RVP's
 		 * usual charging status status LED over the MECC connector.
 		 *
-		 * EC_LED_ID_BATTERY_LED: caps lock, DS1J3, MECC #17
+		 * EC_LED_ID_BATTERY_LED: caps lock, DS1J3, MECC #17 (led1)
+		 * EC_LED_ID_POWER_LED: num lock, DS1J2, MECC #18 (led2)
 		 */
 		led1 {
 			led-id = "EC_LED_ID_BATTERY_LED";
@@ -29,10 +30,29 @@
 				led-values = <1>;
 			};
 		};
+
+		led2 {
+			led-id = "EC_LED_ID_POWER_LED";
+			led-pins = <&gpio_led_2>;
+
+			color-off {
+				led-color = "LED_OFF";
+				led-values = <0>;
+			};
+
+			color-1 {
+				led-color = "LED_GREEN";
+				led-values = <1>;
+			};
+		};
 	};
 
 	led-colors {
 		compatible = "cros-ec,led-policy";
+
+		/*
+		 * Charge states
+		 */
 
 		power-state-charge {
 			charge-state = "LED_PWRS_CHARGE";
@@ -144,6 +164,51 @@
 				color-1 {
 					led-color = "LED_OFF";
 					period-ms = <100>;
+				};
+			};
+		};
+
+		/*
+		 * Chipset states
+		 */
+
+		chipset-state-s0 {
+			chipset-state = "POWER_S0";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				color-0 {
+					led-color = "LED_GREEN";
+				};
+			};
+		};
+
+		chipset-state-s3 {
+			chipset-state = "POWER_S3";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				color-0 {
+					led-color = "LED_GREEN";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		chipset-state-s5 {
+			chipset-state = "POWER_S5";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
 				};
 			};
 		};
