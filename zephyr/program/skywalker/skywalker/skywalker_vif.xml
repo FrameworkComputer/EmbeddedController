@@ -104,7 +104,7 @@
     <!--;PD Source-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <vif:PD_Power_As_Source value="15000">15000 mW</vif:PD_Power_As_Source>
-    <vif:PD_Power_As_Source_Guaranteed value="500">500 mW</vif:PD_Power_As_Source_Guaranteed>
+    <vif:PD_Power_As_Source_Guaranteed value="7500">7500 mW</vif:PD_Power_As_Source_Guaranteed>
     <vif:EPR_Supported_As_Src value="false" />
     <vif:USB_Suspend_May_Be_Cleared value="true" />
     <vif:Sends_Pings value="false" />
@@ -182,7 +182,7 @@
     <vif:USB_VID_SOP value="6353">18D1</vif:USB_VID_SOP>
     <vif:PID_SOP value="20594">5072</vif:PID_SOP>
     <!--BCD value below is for production FW. The main branch uses different PDC FW.-->
-    <vif:bcdDevice_SOP value="41">29</vif:bcdDevice_SOP>
+    <vif:bcdDevice_SOP value="4098">1002</vif:bcdDevice_SOP>
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;DP section-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
@@ -302,7 +302,7 @@
     <!--;PD Source-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <vif:PD_Power_As_Source value="15000">15000 mW</vif:PD_Power_As_Source>
-    <vif:PD_Power_As_Source_Guaranteed value="500">500 mW</vif:PD_Power_As_Source_Guaranteed>
+    <vif:PD_Power_As_Source_Guaranteed value="7500">7500 mW</vif:PD_Power_As_Source_Guaranteed>
     <vif:EPR_Supported_As_Src value="false" />
     <vif:USB_Suspend_May_Be_Cleared value="true" />
     <vif:Sends_Pings value="false" />
@@ -380,7 +380,7 @@
     <vif:USB_VID_SOP value="6353">18D1</vif:USB_VID_SOP>
     <vif:PID_SOP value="20594">5072</vif:PID_SOP>
     <!--BCD value below is for production FW. The main branch uses different PDC FW.-->
-    <vif:bcdDevice_SOP value="41">29</vif:bcdDevice_SOP>
+    <vif:bcdDevice_SOP value="4098">1002</vif:bcdDevice_SOP>
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;DP section-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
