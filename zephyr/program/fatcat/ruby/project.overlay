@@ -3,6 +3,10 @@
  * found in the LICENSE file.
  */
 
+/* Include the standard and OEM schema templates */
+#include <cros/cbi_ufsc_std_schema.dtsi>
+#include <cros/cbi_ufsc_oem_schema.dtsi>
+
 /* ruby program common DTS includes */
 
 #include <cros/cbi_flash.dtsi>
@@ -21,6 +25,7 @@
 #include "led_policy.dtsi"
 #include "overlay.dtsi"
 #include "power_signals.dtsi"
+#include "ruby_ec_ufsc.dtsi"
 #include "thermal.dtsi"
 #include "usba.dtsi"
 #include "usbc.dtsi"
