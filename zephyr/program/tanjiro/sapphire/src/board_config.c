@@ -32,9 +32,9 @@ void motion_interrupt(enum gpio_signal signal)
 
 static void alt_sensor_init(void)
 {
-	lid_use_alt_sensor = cros_cbi_ssfc_check_match(
-		CBI_SSFC_VALUE_ID(DT_NODELABEL(lid_sensor_0)));
-	motion_sensors_check_ssfc();
+	lid_use_alt_sensor = cros_cbi_ufsc_check_match(
+		CBI_UFSC_VALUE_ID(DT_NODELABEL(ufsc_lid_sensor_bmi323)));
+	motion_sensors_check_ufsc();
 }
 DECLARE_HOOK(HOOK_INIT, alt_sensor_init, HOOK_PRIO_POST_I2C);
 

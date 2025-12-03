@@ -13,3 +13,16 @@
 	};
 };
 
+&ufsc_lid_sensor {
+	ufsc_lid_sensor_bmi323: lid-sensor-bmi323 {
+		compatible = "cros-ec,cbi-ufsc-value";
+		status = "okay";
+		value = <1>;
+	};
+	ufsc_lid_sensor_lsm6dsm: lid-sensor-lsm6dsm {
+		compatible = "cros-ec,cbi-ufsc-value";
+		status = "okay";
+		value = <2>;
+		default;
+	};
+};
