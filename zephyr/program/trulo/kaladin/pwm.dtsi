@@ -29,6 +29,7 @@
 	prescaler-cx = <PWM_PRESCALER_C4>;
 	pinctrl-0 = <&pwm1_gpa1_default>;
 	pinctrl-names = "default";
+	pwm-init-high;
 };
 
 &pwm2 {
@@ -36,6 +37,7 @@
 	prescaler-cx = <PWM_PRESCALER_C4>;
 	pinctrl-0 = <&pwm2_gpa2_default>;
 	pinctrl-names = "default";
+	pwm-init-high;
 };
 
 &pwm4 {
