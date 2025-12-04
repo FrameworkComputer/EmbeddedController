@@ -9,6 +9,7 @@
 
 /* ocicat project DTS includes */
 
+#include "battery.dtsi"
 #include "interrupts.dtsi"
 #include "pwm.dtsi"
 #include "binman.dtsi"
@@ -40,7 +41,6 @@ tach_fan0: &tach0 {};
 
 #include "../ite_hibernate.dtsi"
 #include "../rvp_usba.dtsi"
-#include "../rvp_battery.dtsi"
 #include "../rvp_i2c.dtsi"
 #include "../rvp_usbc.dtsi"
 #include "../rvp_keyboard.dtsi"

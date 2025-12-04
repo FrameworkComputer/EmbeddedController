@@ -1,0 +1,27 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	batteries {
+        default_battery: dynapack_313-2d-32-a {
+            compatible = "dynapack,313-2d-32-a", "battery-smart";
+        };
+		dynapack_333-2c-32-a {
+			compatible = "dynapack,333-2c-32-a", "battery-smart";
+		};
+		sunwoda_333-cf-32-a {
+			compatible = "sunwoda,333-cf-32-a", "battery-smart";
+		};
+		cosmx_313-ac-32-a {
+			compatible = "cosmx,313-ac-32-a", "battery-smart";
+		};
+		smp_333-17-32-a {
+			compatible = "smp,333-17-32-a", "battery-smart";
+		};
+		atl_313_b7_32_a {
+			compatible = "atl,313-b7-32-a", "battery-smart";
+		};
+	};
+};
