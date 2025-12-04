@@ -3,34 +3,105 @@
  * found in the LICENSE file.
  */
 
-#include "../power_signals.dtsi"
+/ {
+	chosen {
+		intel-ap-pwrseq,espi = &espi0;
+	};
 
-&pwr_en_pp3300_a {
-        /* EC_DS3 net. This connects to the PRIM_VR_EN signal and
-         * both the EN1 and EN2 pins on the RT6585 LDO. */
-	gpios = <&gpioi 7 GPIO_ACTIVE_HIGH>;
-};
-&pwr_rsmrst_pwrgd {
-        /* RSMRST_PWRGD_N_R net  */
-	gpios = <&gpiof 0 GPIO_ACTIVE_HIGH>;
-};
-&pwr_ec_pch_rsmrst {
-        /* RM_RSMST_N_R net */
-	gpios = <&gpioj 0 GPIO_ACTIVE_LOW>;
-};
-&pwr_slp_s0 {
-        /* PCH_SLP_S0_N_R net */
-	gpios = <&gpioj 5 GPIO_ACTIVE_LOW>;
-};
-&pwr_pch_pwrok {
-        /* PCH_PWROK_EC_R net */
-	gpios = <&gpioj 1 GPIO_OPEN_DRAIN>;
-};
-&pwr_all_sys_pwrgd {
-        /* ALL_SYS_PWRGD_R net */
-	gpios = <&gpiod 5 GPIO_ACTIVE_HIGH>;
-};
-&pwr_sys_rst {
-        gpios = <&gpioj 7 (GPIO_ACTIVE_LOW|GPIO_OPEN_DRAIN)>;
-};
+	common-pwrseq {
+		compatible = "intel,ap-pwrseq";
 
+		sys-pwrok-delay = <3>;
+		all-sys-pwrgd-timeout = <20>;
+		sys-reset-delay = <60>;
+	};
+
+	pwr-en-s5-rails {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "EN_S5_RAILS enable output for PP5000/PP3300";
+		enum-name = "PWR_EN_PP5000_A";
+		gpios = <&gpioi 7 0>;
+		output;
+	};
+	pwr_rsmrst_pwrgd: rsmrst-pwrgd-ec-n {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "RSMRST power good from regulator";
+		enum-name = "PWR_RSMRST_PWRGD";
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+                /* RSMRST_PWRGD_N_R net  */
+	        gpios = <&gpiof 0 0>;
+	};
+	pwr_ec_pch_rsmrst: pm-rsmrst-ec-n {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "RSMRST output to PCH";
+		enum-name = "PWR_EC_PCH_RSMRST";
+                /* RM_RSMST_N_R net */
+	        gpios = <&gpioj 0 GPIO_ACTIVE_LOW>;
+		reset-val = <1>;
+		output;
+	};
+	pwr_slp_s0: pm-slp-s0-r-n {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SLP_S0_L input from PCH";
+		enum-name = "PWR_SLP_S0";
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+                /* PCH_SLP_S0_N_R net */
+	        gpios = <&gpioj 5 (GPIO_ACTIVE_LOW)>;
+	};
+	pwr_pch_pwrok: ec-pm-pch-pwrok {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "PCH_PWROK output to PCH";
+		enum-name = "PWR_PCH_PWROK";
+                /* PCH_PWROK_EC_R net */
+	        gpios = <&gpioj 1 GPIO_ACTIVE_HIGH>;
+		output;
+	};
+	pwr_ec_pch_sys_pwrok: pwr-ec-pch-sys-pwrok {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SYS_PWROK output to PCH";
+		enum-name = "PWR_EC_PCH_SYS_PWROK";
+		gpios = <&gpiof 1 GPIO_ACTIVE_HIGH>;
+		output;
+	};
+	pwr-slp-s3 {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SLP_S3_L input from PCH";
+		enum-name = "PWR_SLP_S3";
+		gpios = <&gpioh 3 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+	pwr-slp-s4 {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SLP_S4_L input from PCH";
+		enum-name = "PWR_SLP_S4";
+		gpios = <&gpioh 4 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+	pwr-slp-s5 {
+		compatible = "intel,ap-pwrseq-vw";
+		dbg-label = "SLP_S5 virtual wire input from PCH";
+		enum-name = "PWR_SLP_S5";
+		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S5";
+		reset-val = <1>;
+		vw-invert;
+	};
+	pwr_all_sys_pwrgd: all_sys_pwrgd {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "all power good";
+		enum-name = "PWR_ALL_SYS_PWRGD";
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+                /* ALL_SYS_PWRGD_R net */
+	        gpios = <&gpiod 5 (GPIO_ACTIVE_HIGH | GPIO_VOLTAGE_1P8)>;
+	};
+	pwr_sys_rst: pwr-sys-rst-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SYS_RESET# output to PCH";
+		enum-name = "PWR_SYS_RST";
+                gpios = <&gpioj 7 (GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN)>;
+		output;
+	};
+	ap-power {
+		compatible = "ap-pwrseq-sub-states";
+		chipset = "S0ix";
+	};
+};
