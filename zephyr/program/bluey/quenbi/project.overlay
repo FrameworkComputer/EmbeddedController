@@ -19,6 +19,7 @@
 
 #include "gpios.dtsi"
 #include "fan.dtsi"
+#include "keyboard.dtsi"
 #include "temp_sensors.dtsi"
 
 /* quenbi overrides follow... */
