@@ -28,34 +28,49 @@
 static void board_set_charge_limit_current(void)
 {
 	uint32_t rdo = 0;
+	uint8_t port_count = pdc_power_mgmt_get_usb_pd_port_count();
 
 	if (extpower_is_present()) {
 		int port = charge_manager_get_active_charge_port();
+		if (port < 0 || port >= port_count)
+			return;
 
 		const uint32_t *const src_caps =
 			pdc_power_mgmt_get_src_caps(port);
+		if (src_caps == NULL)
+			return;
 
-		pdc_power_mgmt_get_rdo(port, &rdo);
+		if (pdc_power_mgmt_get_rdo(port, &rdo) != 0) {
+			CPRINTS("No active RDO on port %d", port);
+			return;
+		}
 
-		uint32_t src_cap = src_caps[(RDO_POS(rdo) - 1)];
-		uint32_t max_ma = 0, max_mv = 0, min_mv = 0;
+		uint32_t cap_count = pdc_power_mgmt_get_src_cap_cnt(port);
+		int pos = RDO_POS(rdo);
+		if (pos < 1 || pos > cap_count)
+			return;
+		else {
+			uint32_t src_cap = src_caps[(pos - 1)];
+			uint32_t max_ma = 0, max_mv = 0, min_mv = 0;
 
-		pd_extract_pdo_power_unclamped(src_cap, &max_ma, &max_mv,
-					       &min_mv);
+			pd_extract_pdo_power_unclamped(src_cap, &max_ma,
+						       &max_mv, &min_mv);
 
-		if (max_mv >= MAX_VOLTAGE && max_ma >= MAX_CURRENT) {
-			charge_set_input_current_limit(MAX_CURRENT, max_mv);
-			CPRINTS("The charging current is limited to 2.25A");
+			if (max_mv >= MAX_VOLTAGE && max_ma >= MAX_CURRENT) {
+				charge_set_input_current_limit(MAX_CURRENT,
+							       max_mv);
+				CPRINTS("The charging current is limited to 2.25A");
+			}
 		}
 	}
 }
 DECLARE_DEFERRED(board_set_charge_limit_current);
 
-static void chagrge_limit_current_init(void)
+static void charge_limit_current_init(void)
 {
 	hook_call_deferred(&board_set_charge_limit_current_data,
 			   INT_RECHECK_US);
 }
-DECLARE_HOOK(HOOK_INIT, chagrge_limit_current_init, HOOK_PRIO_LAST);
-DECLARE_HOOK(HOOK_POWER_SUPPLY_CHANGE, chagrge_limit_current_init,
+DECLARE_HOOK(HOOK_INIT, charge_limit_current_init, HOOK_PRIO_LAST);
+DECLARE_HOOK(HOOK_POWER_SUPPLY_CHANGE, charge_limit_current_init,
 	     HOOK_PRIO_LAST);
