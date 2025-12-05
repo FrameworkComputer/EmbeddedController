@@ -164,6 +164,26 @@ static int dsp_client_enable_interrupt(struct dsp_client_data* data,
   }
 }
 
+static void dsp_client_process_status(pw_transport_Status* status) {
+  bool is_lid_open =
+      is_status_bit_set(cros_dsp_comms_StatusFlag_STATUS_FLAG_LID_OPEN, status);
+  bool is_360 = is_status_bit_set(
+      cros_dsp_comms_StatusFlag_STATUS_FLAG_TABLET_MODE, status);
+
+  LOG_DBG("is_lid_open=%d, is_360=%d", is_lid_open, is_360);
+  if (IS_ENABLED(CONFIG_PLATFORM_EC_DSP_REMOTE_LID_SWITCH)) {
+    remote_lid_switch_set(is_lid_open);
+  }
+  if (IS_ENABLED(CONFIG_PLATFORM_EC_DSP_REMOTE_TABLET_SWITCH)) {
+    remote_tablet_switch_set(is_360);
+  }
+  if (IS_ENABLED(CONFIG_PLATFORM_EC_TABLET_MODE) &&
+      (IS_ENABLED(CONFIG_PLATFORM_EC_DSP_REMOTE_LID_SWITCH) ||
+       IS_ENABLED(CONFIG_PLATFORM_EC_DSP_REMOTE_TABLET_SWITCH))) {
+    gmr_tablet_switch_isr_handler();
+  }
+}
+
 int dsp_client_get_cbi_flags(const struct device* dev,
                              cros_dsp_comms_CbiFlag flag,
                              cros_dsp_comms_GetCbiFlagsResponse* mem) {
@@ -242,6 +262,8 @@ int dsp_client_get_cbi_flags(const struct device* dev,
   }
 
   k_mutex_unlock(&data->mutex);
+  /* Handle any updates to lid switch or GMR sensor values */
+  dsp_client_process_status(&data->status);
   return rc;
 }
 
@@ -268,7 +290,6 @@ static void dsp_client_read_status(struct k_work* item) {
 
   /* Read the status */
   uint8_t status_buffer[pw_transport_Status_size + 4] = {0};
-  pw_transport_Status status;
   LOG_DBG("Reading Status bytes");
   rc = i2c_read_dt(&cfg->i2c, status_buffer, ARRAY_SIZE(status_buffer));
   dsp_client_enable_interrupt(data, true);
@@ -280,43 +301,35 @@ static void dsp_client_read_status(struct k_work* item) {
   pb_istream_t istream =
       pb_istream_from_buffer(status_buffer, ARRAY_SIZE(status_buffer));
   bool decode_status =
-      pb_decode_delimited(&istream, pw_transport_Status_fields, &status);
+      pb_decode_delimited(&istream, pw_transport_Status_fields, &data->status);
 
   if (!decode_status) {
     LOG_ERR("Failed to decode Status");
     return;
   }
   bool is_response_ready = is_status_bit_set(
-      cros_dsp_comms_StatusFlag_STATUS_FLAG_RESPONSE_READY, &status);
+      cros_dsp_comms_StatusFlag_STATUS_FLAG_RESPONSE_READY, &data->status);
   bool is_processing_error = is_status_bit_set(
-      cros_dsp_comms_StatusFlag_STATUS_FLAG_PROCESSING_ERROR, &status);
-  bool is_lid_open = is_status_bit_set(
-      cros_dsp_comms_StatusFlag_STATUS_FLAG_LID_OPEN, &status);
-  bool is_360 = is_status_bit_set(
-      cros_dsp_comms_StatusFlag_STATUS_FLAG_TABLET_MODE, &status);
-  LOG_DBG("response_ready? %d, response_length=%u",
-          is_response_ready,
-          status.response_length);
-  LOG_DBG("processing error? %d", is_processing_error);
+      cros_dsp_comms_StatusFlag_STATUS_FLAG_PROCESSING_ERROR, &data->status);
+
   if (is_response_ready) {
-    data->pending_response_length = status.response_length;
+    LOG_DBG("response_ready? %d, response_length=%u",
+            is_response_ready,
+            data->status.response_length);
+    data->pending_response_length = data->status.response_length;
     k_event_post(&data->response_ready_event, 1);
   } else if (is_processing_error) {
+    LOG_DBG("processing error? %d", is_processing_error);
     data->pending_response_length = PENDING_RESPONSE_LENGTH_ERROR;
     k_event_post(&data->response_ready_event, 2);
-  }
-
-  LOG_DBG("is_lid_open=%d, is_360=%d", is_lid_open, is_360);
-  if (IS_ENABLED(CONFIG_PLATFORM_EC_DSP_REMOTE_LID_SWITCH)) {
-    remote_lid_switch_set(is_lid_open);
-  }
-  if (IS_ENABLED(CONFIG_PLATFORM_EC_DSP_REMOTE_TABLET_SWITCH)) {
-    remote_tablet_switch_set(is_360);
-  }
-  if (IS_ENABLED(CONFIG_PLATFORM_EC_TABLET_MODE) &&
-      (IS_ENABLED(CONFIG_PLATFORM_EC_DSP_REMOTE_LID_SWITCH) ||
-       IS_ENABLED(CONFIG_PLATFORM_EC_DSP_REMOTE_TABLET_SWITCH))) {
-    gmr_tablet_switch_isr_handler();
+  } else {
+    /*
+     * Only handle lid switch or GMR sensor status changes if ISH is not waiting
+     * on a response from the EC to avoid mutex contention for I2C bus. If a
+     * response is pending, then lid switch and/or GMR sensor status is handled
+     * after the response handling is fully complete.
+     */
+    dsp_client_process_status(&data->status);
   }
 }
 

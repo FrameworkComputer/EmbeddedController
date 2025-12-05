@@ -13,6 +13,7 @@
 
 #include "ec_commands.h"
 #include "proto/ec_dsp.pb.h"
+#include "pw_transport/proto/transport.pb.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -112,6 +113,7 @@ struct dsp_client_data {
   struct gpio_callback gpio_cb;
   int interrupt_config;
   uint32_t pending_response_length;
+  pw_transport_Status status;
   cros_dsp_comms_EcService service;
   uint8_t request_buffer[cros_dsp_comms_EcService_size];
   uint8_t response_buffer[CONFIG_PLATFORM_EC_DSP_RESPONSE_BUFFER_SIZE];
