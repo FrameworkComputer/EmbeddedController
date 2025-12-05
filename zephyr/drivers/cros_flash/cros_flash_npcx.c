@@ -8,6 +8,7 @@
 #include "../drivers/flash/spi_nor.h"
 #include "flash.h"
 #include "spi_flash_reg.h"
+#include "system.h"
 #include "watchdog.h"
 #include "write_protect.h"
 
@@ -39,6 +40,15 @@ struct cros_flash_npcx_data {
 #define DRV_DATA(dev) ((struct cros_flash_npcx_data *)(dev)->data)
 
 #define SPI_NOR_CMD_RDSR2 0x35
+
+#define FLASH_SYSJUMP_TAG 0x5750 /* "WP" - Write Protect */
+#define FLASH_HOOK_VERSION 1
+/* The previous write protect state before sys jump */
+struct flash_wp_state {
+	int all_protected;
+	uint8_t saved_sr1;
+	uint8_t saved_sr2;
+};
 
 /* cros ec flash local functions */
 static int cros_flash_npcx_get_status_reg(const struct device *dev,
@@ -414,6 +424,54 @@ static void flash_set_quad_enable(const struct device *dev, bool enable)
 	flash_set_status(dev, sr1, sr2);
 }
 
+/**
+ * @brief Restores flash WP status during initialization after a system jump.
+ *
+ * This function checks for a system jump (sysjump) and attempts to restore
+ * the flash write protection (WP) status, including Status Registers (SR1,
+ * SR2), and the 'all_protected' flag, if the system was previously running
+ * the EC RO.
+ *
+ * This restoration is crucial when transitioning from a legacy EC RO
+ * image. Such images used UMA_LOCK, preventing direct reads of the status
+ * registers after protection was enabled. The RO image would have saved SR1,
+ * SR2, and all_protected and the new Zephyr RW image must restore these to
+ * understand the true protection status. Zephyr itself doesn't use UMA_LOCK,
+ * but needs to honor the state set by the legacy EC RO.
+ *
+ * @retval true if WP status was restored.
+ * @retval false if WP status was not restored.
+ */
+static bool flash_physical_restore_state(void)
+{
+	uint32_t reset_flags = system_get_reset_flags();
+	int version, size;
+	const struct flash_wp_state *prev;
+
+	/*
+	 * If we have already jumped between images, an earlier image
+	 * could have applied write protection. Nothing additional needs
+	 * to be done.
+	 */
+	if (reset_flags & EC_RESET_FLAG_SYSJUMP) {
+		/*
+		 * FLASH_SYSJUMP_TAG is only set in EC RO:
+		 * https://crrev.com/c/4885833
+		 */
+		prev = (const struct flash_wp_state *)system_get_jump_tag(
+			FLASH_SYSJUMP_TAG, &version, &size);
+		if (prev && version == FLASH_HOOK_VERSION &&
+		    size == sizeof(*prev)) {
+			all_protected = prev->all_protected;
+			saved_sr1 = prev->saved_sr1;
+			saved_sr2 = prev->saved_sr2;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 /* cros ec flash api functions */
 static int cros_flash_npcx_init(const struct device *dev)
 {
@@ -472,6 +530,8 @@ static int cros_flash_npcx_init(const struct device *dev)
 	 * during ec initialization.
 	 */
 	flash_protect_int_flash(dev, write_protect_is_asserted());
+
+	flash_physical_restore_state();
 
 	return 0;
 }
