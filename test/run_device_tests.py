@@ -823,6 +823,20 @@ class AllTests:
                 )
             )
 
+        # Run system_is_locked test with wp_on for all boards and RO versions.
+        for variant_name, variant_info in board_config.variants.items():
+            tests.append(
+                TestConfig(
+                    config_name="system_is_locked_wp_on_" + variant_name,
+                    test_name="system_is_locked",
+                    test_args=["wp_on"],
+                    toggle_power=True,
+                    enable_hw_write_protect=True,
+                    ro_image=variant_info.get("ro_image_path"),
+                    build_board=variant_info.get("build_board"),
+                )
+            )
+
         return tests
 
     @staticmethod
