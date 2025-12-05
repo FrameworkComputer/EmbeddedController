@@ -22,28 +22,12 @@
 #include <mkbp_event.h>
 #include <rollback.h>
 
-#define FP_SIMULATOR_IMAGE_FRAME_PARAM_INITIALIZER(idx, node_id)            \
-	{                                                                   \
-		.frame_size = FINGERPRINT_SENSOR_FRAME_SIZE(idx, node_id),  \
-		.pixel_format =                                             \
-			FINGERPRINT_SENSOR_V4L2_PIXEL_FORMAT(idx, node_id), \
-		.width = FINGERPRINT_SENSOR_RES_X(idx, node_id),            \
-		.height = FINGERPRINT_SENSOR_RES_Y(idx, node_id),           \
-		.bpp = FINGERPRINT_SENSOR_RES_BPP(idx, node_id),            \
-		.fp_capture_type =                                          \
-			FINGERPRINT_SENSOR_CAPTURE_TYPE(idx, node_id),      \
-		.reserved = 0,                                              \
-	}
+static const struct device *const fp_sensor_dev =
+	DEVICE_DT_GET(DT_CHOSEN(cros_fp_fingerprint_sensor));
 
 static_assert(sizeof(struct fp_image_frame_params) ==
 		      sizeof(struct fingerprint_image_frame_params),
 	      "Frame param structures must be the same size");
-
-static const struct fingerprint_image_frame_params image_frame_params_arr[] = {
-	LISTIFY(NUM_IMAGE_CAPTURE_TYPES,
-		FP_SIMULATOR_IMAGE_FRAME_PARAM_INITIALIZER, (, ),
-		DT_NODELABEL(fpsensor_sim))
-};
 
 int get_image_frame_params(struct fp_image_frame_params &image_frame_params,
 			   enum fp_capture_type capture_type);
@@ -222,6 +206,17 @@ ZTEST(fpsensor_debug, test_upload_pgm_image_wrong_bpp)
 
 ZTEST(fpsensor_debug, test_get_image_frame_params)
 {
+	struct fingerprint_sensor_info sensor_info{};
+	struct fingerprint_image_frame_params
+		image_frame_params_arr[NUM_IMAGE_CAPTURE_TYPES] = {};
+	uint8_t num_params = NUM_IMAGE_CAPTURE_TYPES;
+
+	zassert_ok(fingerprint_get_info(fp_sensor_dev, &sensor_info,
+					image_frame_params_arr, &num_params));
+	zassert_true(
+		num_params == NUM_IMAGE_CAPTURE_TYPES,
+		"fingerprint_get_info returned different params than expected");
+
 	constexpr auto kCaptureTypesArray = std::to_array(
 		{ FP_CAPTURE_VENDOR_FORMAT, FP_CAPTURE_DEFECT_PXL_TEST,
 		  FP_CAPTURE_ABNORMAL_TEST, FP_CAPTURE_NOISE_TEST,
@@ -233,8 +228,7 @@ ZTEST(fpsensor_debug, test_get_image_frame_params)
 	for (enum fp_capture_type current_capture_type : kCaptureTypesArray) {
 		const struct fingerprint_image_frame_params *expected_params =
 			nullptr;
-		for (size_t j = 0; j < ARRAY_SIZE(image_frame_params_arr);
-		     ++j) {
+		for (size_t j = 0; j < num_params; ++j) {
 			if (image_frame_params_arr[j].fp_capture_type ==
 			    current_capture_type) {
 				expected_params = &image_frame_params_arr[j];
