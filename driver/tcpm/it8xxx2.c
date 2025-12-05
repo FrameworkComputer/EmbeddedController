@@ -913,6 +913,7 @@ static void it8xxx2_init(enum usbpd_port port, int role)
 	*usbpd_ctrl_regs[port].cc2 = cc_config;
 	task_clear_pending_irq(usbpd_ctrl_regs[port].irq);
 #ifdef CONFIG_ZEPHYR
+	task_disable_irq(usbpd_ctrl_regs[port].irq);
 	irq_connect_dynamic(usbpd_ctrl_regs[port].irq, 0,
 			    (void (*)(const void *))chip_pd_irq, (void *)port,
 			    0);
