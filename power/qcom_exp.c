@@ -670,8 +670,6 @@ static int set_pmic_pwron(int enable, uint8_t event)
 	if (enable == is_pmic_pwron())
 		return EC_SUCCESS;
 
-	/* TODO: b/420351157 confirm if PMIC is powered can be checked or not */
-
 	/*
 	 * Power-on sequence:
 	 *
