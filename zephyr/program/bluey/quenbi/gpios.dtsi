@@ -71,7 +71,6 @@
 		};
 		gpio_kybd_int: kybd_int {
 			gpios = <&gpioa 2 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
-			/* TODO: b/415641772 Confirm if this pin will be used for EC INT */
 			enum-name = "GPIO_EC_INT_L";
 		};
 		/* Reserve only: Control backlight of the eDP panel */
