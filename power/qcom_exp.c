@@ -881,7 +881,7 @@ static uint8_t check_for_power_on_event(void)
 		/* check for power button press */
 		ret = POWER_ON_BY_POWER_BUTTON_PRESSED;
 	} else {
-		ret = POWER_OFF_CANCEL;
+		ret = POWER_ON_CANCEL;
 	}
 
 	/* The flags are handled above. Clear them all. */
