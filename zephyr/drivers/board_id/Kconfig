@@ -2,9 +2,15 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config COMMON_BOARD_ID
+	bool "Specific RVP Support"
+	help
+	  Enable support only for specific RVPs that require common
+	  board id driver support.
+
 config BOARD_ID_INTEL_RVP
 	bool "Intel RVP board ID read"
-	depends on DT_HAS_INTEL_RVP_BOARD_ID_ENABLED
+	depends on DT_HAS_INTEL_RVP_BOARD_ID_ENABLED && COMMON_BOARD_ID
 	default y
 	help
 	  Enable support for reading board id for INTEL RVP.
