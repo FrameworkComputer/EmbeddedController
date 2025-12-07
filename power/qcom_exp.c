@@ -203,6 +203,19 @@ enum power_request_t {
 
 static enum power_request_t power_request;
 
+/* Store the power-on reason */
+static enum power_on_event_t power_on_reason;
+
+/**
+ * Get the reason why the chipset was powered on.
+ *
+ * @return the power-on reason, uses the POWER_ON_BY_* enum
+ */
+enum power_on_event_t chipset_get_power_on_reason(void)
+{
+	return power_on_reason;
+}
+
 /**
  * Return values for check_for_power_off_event().
  */
@@ -216,22 +229,6 @@ enum power_off_event_t {
 	POWER_OFF_BY_POWER_REQ_RESET,
 
 	POWER_OFF_EVENT_COUNT,
-};
-
-/**
- * Return values for check_for_power_on_event().
- */
-enum power_on_event_t {
-	POWER_ON_CANCEL,
-	POWER_ON_BY_AUTO_POWER_ON,
-	POWER_ON_BY_AC_ON,
-	POWER_ON_BY_LID_OPEN,
-	POWER_ON_BY_LONG_WARM_RESET,
-	POWER_ON_BY_POWER_BUTTON_PRESSED,
-	POWER_ON_BY_POWER_REQ_ON,
-	POWER_ON_BY_POWER_REQ_RESET,
-
-	POWER_ON_EVENT_COUNT,
 };
 
 #ifdef CONFIG_CHIPSET_RESET_HOOK
@@ -902,6 +899,7 @@ static uint8_t check_for_power_on_event(void)
 	lid_opened = 0;
 	ac_on = 0;
 
+	power_on_reason = (enum power_on_event_t)ret;
 	return ret;
 }
 
