@@ -797,7 +797,7 @@ class AllTests:
         for variant_name, variant_info in board_config.variants.items():
             tests.append(
                 TestConfig(
-                    config_name="unaligned_access_" + variant_name,
+                    config_name=f"unaligned_access_{variant_name}",
                     test_name="unaligned_access",
                     fail_regexes=[
                         SINGLE_CHECK_FAILED_REGEX,
@@ -812,7 +812,7 @@ class AllTests:
         for variant_name, variant_info in board_config.variants.items():
             tests.append(
                 TestConfig(
-                    config_name="panic_data_" + variant_name,
+                    config_name=f"panic_data_{variant_name}",
                     test_name="panic_data",
                     fail_regexes=[
                         SINGLE_CHECK_FAILED_REGEX,
@@ -827,7 +827,7 @@ class AllTests:
         for variant_name, variant_info in board_config.variants.items():
             tests.append(
                 TestConfig(
-                    config_name="system_is_locked_wp_on_" + variant_name,
+                    config_name=f"system_is_locked_wp_on_{variant_name}",
                     test_name="system_is_locked",
                     test_args=["wp_on"],
                     toggle_power=True,
