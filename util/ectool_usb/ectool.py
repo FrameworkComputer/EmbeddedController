@@ -314,6 +314,17 @@ def cmd_flash_region_info(args, comm) -> int:
     return ret
 
 
+def cmd_rwsig_action(args, comm) -> int:
+    """Perform RWSIG action."""
+    rwsig_action = commands.RwSigActionCmd0(action=args.action)
+    ret = rwsig_action.run(comm)
+
+    if ret != commands.EcCommandResult.SUCCESS:
+        print(f"Failed to perform RWSIG action: {ret.name}")
+
+    return ret
+
+
 def cmd_reboot_ec(args, comm) -> int:
     """Reboots the EC."""
     reboot_ec = commands.RebootECCmd0(cmd=args.cmd)
@@ -554,6 +565,17 @@ subcommands = {
         },
     },
     "reflash_rw": {"help": "Try reflashing rw", "func": cmd_reflash_rw},
+    "rwsig_action": {
+        "help": "RWSIG action",
+        "func": cmd_rwsig_action,
+        "args": {
+            "action": {
+                "type": commands.RwSigAction.from_string,
+                "choices": list(commands.RwSigAction),
+                "help": "RWSIG action",
+            }
+        },
+    },
 }
 
 

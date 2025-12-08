@@ -49,6 +49,7 @@ class ECCommandsIds(IntEnum):
     FLASH_REGION_INFO = 0x0016
     REBOOT_EC = 0x00D2
     ENTER_BOOTLOADER = 0x00E2
+    RWSIG_ACTION = 0x011D
     FP_MODE = 0x0402
     FP_INFO = 0x0403
     FP_VENDOR = 0x040B
@@ -108,6 +109,22 @@ class FlashRegion(IntEnum):
     def from_string(s) -> "FlashRegion":
         """Returns the region from a string."""
         return FlashRegion[s]
+
+
+class RwSigAction(IntEnum):
+    """RwSig actions."""
+
+    ABORT = 0
+    CONTINUE = 1
+
+    def __str__(self) -> str:
+        """Returns the name of the RwSig action."""
+        return self.name
+
+    @staticmethod
+    def from_string(s) -> "RwSigAction":
+        """Returns the RwSigAction from a string."""
+        return RwSigAction[s]
 
 
 class ECCommand(HostCommand):
@@ -421,6 +438,16 @@ class RebootECCmd0(ECCommand):
         super().__init__(ECCommandsIds.REBOOT_EC, 0, request_msg=request_msg)
 
 
+class RwSigActionCmd0(ECCommand):
+    """RWSIG action."""
+
+    def __init__(self, action: int):
+        # 4 bytes of action
+        request_msg = [(action, "I")]
+
+        super().__init__(ECCommandsIds.RWSIG_ACTION, 0, request_msg=request_msg)
+
+
 VERSIONED_COMMANDS = {
     ECCommandsIds.GET_VERSION: {1: GetVersionCmd1},
     ECCommandsIds.GET_VERSIONS: {1: GetVersionsCmd1},
@@ -435,6 +462,7 @@ VERSIONED_COMMANDS = {
     ECCommandsIds.FP_MODE: {0: FpModeCmd0},
     ECCommandsIds.FP_INFO: {1: FpInfoCmd1, 2: FpInfoCmd2},
     ECCommandsIds.FP_VENDOR: {0: FpVendorCmd0},
+    ECCommandsIds.RWSIG_ACTION: {0: RwSigActionCmd0},
 }
 
 
