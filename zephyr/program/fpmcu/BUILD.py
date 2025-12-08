@@ -129,3 +129,30 @@ gwendolin = register_fpmcu_variant(
 # The address of RW_FWID is hardcoded in RO. You need to have REALLY
 # good reason to change it.
 assert_rw_fwid_DO_NOT_EDIT(project_name="gwendolin", addr=0x40144)
+
+
+def register_et171_project(
+    project_name,
+):
+    """Register an fpmcu variant"""
+    dts_path = project_name + ".dts"
+    conf_path = project_name + ".conf"
+    return register_fpmcu_variant(
+        project_name=project_name,
+        zephyr_board="egis_et171",
+        register_func=register_binman_project,
+        variant_modules=["hal_egis", "egis_module"],
+        variant_optional_modules=["egis"],
+        variant_dts_overlays=[here / "et171" / dts_path],
+        variant_kconfig_files=[
+            here / "et171" / "prj.conf",
+            here / "et171" / conf_path,
+        ],
+        signer=signers.RwsigSigner(  # pylint: disable=undefined-variable
+            here / "et171" / "dev_key.pem",
+        ),
+    )
+
+
+sanok = register_et171_project("sanok")
+assert_rw_fwid_DO_NOT_EDIT(project_name="sanok", addr=0x42104)

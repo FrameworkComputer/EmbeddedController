@@ -1,0 +1,48 @@
+/* Copyright 2025 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/egis/et171.dtsi>
+
+/delete-node/ &sram;
+
+/ {
+	sdcp: memory@0 {
+		device_type = "memory";
+		compatible = "mmio-sram";
+		reg = <0x00000000 256>;
+	};
+	sram: memory@400 {
+		device_type = "memory";
+		compatible = "mmio-sram";
+		/* Round down to kB, because the SRAM_SIZE config uses kB as SRAM
+		 * size
+		 */
+		reg = <0x00000400 DT_SIZE_K(383)>;
+	};
+};
+
+&spi0 {
+	status = "okay";
+};
+
+&spi1 {
+	status = "okay";
+	clock-frequency = <100000000>;
+};
+
+&syscon {
+	status = "okay";
+};
+
+&uart0 {
+	status = "okay";
+	current-speed = <115200>;
+	/delete-property/ clock-frequency;
+};
+
+&clock {
+	ahb-divide = <2>;
+	apb-divide = <1>;
+};
