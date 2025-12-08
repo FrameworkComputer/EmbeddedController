@@ -11,6 +11,7 @@
 #include "../ite_overlay.dtsi"
 #include "../power_signal.dtsi"
 #include "../usba.dtsi"
+#include "cbi.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
 #include "usbc.dtsi"
@@ -143,6 +144,22 @@
 
 &sha0 {
 	status = "okay";
+};
+
+&usbc_port0 {
+        zephyr,deferred-init;
+};
+
+&usbc_port1 {
+        zephyr,deferred-init;
+};
+
+&pdc_power_p0 {
+        zephyr,deferred-init;
+};
+
+&pdc_power_p1 {
+        zephyr,deferred-init;
 };
 
 /*

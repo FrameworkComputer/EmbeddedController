@@ -1,0 +1,30 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+        grogu-fw-config {
+                compatible = "cros-ec,cbi-fw-config";
+
+                /*
+                 * FW_CONFIG field to indicate the usbc number.
+                 */
+                usbc-ports {
+                        enum-name = "USBC_PORTS";
+                        start = <0>;
+                        size = <2>;
+
+                        two-ports {
+                                compatible = "cros-ec,cbi-fw-config-value";
+                                enum-name = "TWO_PORTS";
+                                value = <0>;
+                        };
+                        one-port {
+                                compatible = "cros-ec,cbi-fw-config-value";
+                                enum-name = "ONE_PORT";
+                                value = <1>;
+                        };
+                };
+        };
+};
