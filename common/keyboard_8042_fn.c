@@ -19,6 +19,7 @@
 
 LOG_MODULE_REGISTER(fn_keys, LOG_LEVEL_INF);
 
+#include "keyboard_config.h"
 #include "keyboard_protocol.h"
 
 static uint32_t fn_keys[] = DT_INST_PROP(0, keymap);
@@ -26,6 +27,7 @@ static uint32_t fn_keys[] = DT_INST_PROP(0, keymap);
 static bool fn_key_pressed;
 static bool fn_key_triggered;
 static uint32_t fn_keys_status;
+static uint8_t normal_keys_status[KEYBOARD_COLS_MAX];
 
 static const uint16_t fn_key_rc = DT_INST_PROP(0, fn_rc);
 
@@ -56,10 +58,11 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 		return;
 	}
 
-	int override_code = -1;
 	if (!is_pressed) {
 		/* Handle release regardless of Fn status */
 		for (uint8_t i = 0; i < ARRAY_SIZE(fn_keys); i++) {
+			int override_code;
+
 			if (!is_key(row, col, fn_keys[i])) {
 				continue;
 			}
@@ -71,11 +74,23 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 			override_code = MATRIX_CODE(fn_keys[i]);
 			fn_keys_status &= ~BIT(i);
 
-			break;
+			keyboard_state_changed_process(row, col, is_pressed,
+						       override_code);
+
+			return;
+		}
+
+		if ((normal_keys_status[col] & BIT(row)) == 0) {
+			/* Discard, key press code was not sent */
+			return;
 		}
 	} else if (fn_key_pressed) {
 		/* Handle press while holding Fn */
+		fn_key_triggered = true;
+
 		for (uint8_t i = 0; i < ARRAY_SIZE(fn_keys); i++) {
+			int override_code;
+
 			if (!is_key(row, col, fn_keys[i])) {
 				continue;
 			}
@@ -83,14 +98,21 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 			override_code = MATRIX_CODE(fn_keys[i]);
 			fn_keys_status |= BIT(i);
 
-			break;
+			keyboard_state_changed_process(row, col, is_pressed,
+						       override_code);
+
+			return;
 		}
 
-		fn_key_triggered = true;
+		/* Do not emit a code if the key is not mapped */
+		return;
 	}
 
-	LOG_DBG("fn_key_pressed=%d fn_keys_status=%02x", fn_key_pressed,
-		fn_keys_status);
+	if (is_pressed) {
+		normal_keys_status[col] |= BIT(row);
+	} else {
+		normal_keys_status[col] &= ~BIT(row);
+	}
 
-	keyboard_state_changed_process(row, col, is_pressed, override_code);
+	keyboard_state_changed_process(row, col, is_pressed, -1);
 }

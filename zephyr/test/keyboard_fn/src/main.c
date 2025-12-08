@@ -40,11 +40,27 @@ void assert_last_state(int row, int col, int is_pressed, int override)
 
 ZTEST(keyboard_fn, test_unrelated_key)
 {
-	keyboard_state_changed(10, 11, 1);
-	assert_last_state(10, 11, 1, -1);
+	keyboard_state_changed(0, 11, 1);
+	assert_last_state(0, 11, 1, -1);
 
-	keyboard_state_changed(10, 11, 0);
-	assert_last_state(10, 11, 0, -1);
+	keyboard_state_changed(0, 11, 0);
+	assert_last_state(0, 11, 0, -1);
+}
+
+ZTEST(keyboard_fn, test_fn_unrelated_key)
+{
+	/* No codes emitted when pressing Fn and a non mapped key */
+	keyboard_state_changed(FN_ROW, FN_COL, 1);
+	zassert_equal(keyboard_state_changed_process_fake.call_count, 0);
+
+	keyboard_state_changed(0, 11, 1);
+	zassert_equal(keyboard_state_changed_process_fake.call_count, 0);
+
+	keyboard_state_changed(0, 11, 0);
+	zassert_equal(keyboard_state_changed_process_fake.call_count, 0);
+
+	keyboard_state_changed(FN_ROW, FN_COL, 0);
+	zassert_equal(keyboard_state_changed_process_fake.call_count, 0);
 }
 
 ZTEST(keyboard_fn, test_fn_alone)
