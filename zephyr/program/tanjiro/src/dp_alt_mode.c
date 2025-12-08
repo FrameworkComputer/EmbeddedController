@@ -25,7 +25,7 @@ int svdm_get_hpd_gpio(int port)
 		return 0;
 	}
 
-	return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_dp_hpd_l));
+	return !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_dp_hpd_l));
 }
 
 static void set_dp_path_sel(int port)
