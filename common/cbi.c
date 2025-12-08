@@ -541,10 +541,27 @@ static void print_uint64_tag(const char *const tag, int rv,
 		ccprintf(": (Error %d)\n", rv);
 }
 
+static void print_ufsc(const char *const tag, int rv,
+		       const struct cbi_ufsc *ufsc)
+{
+	int i;
+
+	ccprintf("%s", tag);
+	if (rv == EC_SUCCESS && ufsc) {
+		ccprintf(": ");
+		for (i = 0; i < sizeof(*ufsc); i++)
+			ccprintf("%02x", ((uint8_t *)ufsc)[i]);
+		ccprintf("\n");
+	} else {
+		ccprintf(": (Error %d)\n", rv);
+	}
+}
+
 static void dump_cbi(void)
 {
 	uint32_t val;
 	uint64_t lval;
+	struct cbi_ufsc ufsc;
 
 	/* Ensure we read the latest data from flash. */
 	cbi_invalidate_cache();
@@ -567,6 +584,7 @@ static void dump_cbi(void)
 	print_tag("PCB_SUPPLIER", cbi_get_pcb_supplier(&val), &val);
 	print_tag("SSFC", cbi_get_ssfc(&val), &val);
 	print_uint64_tag("REWORK_ID", cbi_get_rework_id(&lval), &lval);
+	print_ufsc("UFSC", cbi_get_ufsc(&ufsc), &ufsc);
 }
 
 /*
@@ -604,6 +622,9 @@ static int cc_cbi(int argc, const char **argv)
 		    setter->tag == CBI_TAG_OEM_NAME) {
 			setter->size = strlen(argv[3]) + 1;
 			memcpy(setter->data, argv[3], setter->size);
+		} else if (setter->tag == CBI_TAG_UFSC) {
+			/* TODO(b/463750635): Implement UFSC set command */
+			return EC_ERROR_UNIMPLEMENTED;
 		} else {
 			uint64_t val = strtoull(argv[3], &e, 0);
 
