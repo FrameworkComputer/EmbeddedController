@@ -67,7 +67,7 @@
 			gpios = <&gpiof 13 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
 		gpio_ec_amp_mute_l: ec_amp_mute_l {
-			gpios = <&gpiog 0 GPIO_ODR_LOW>;
+			gpios = <&gpiog 0 (GPIO_ODR_LOW | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_sys_rst_odl: sys_rst_odl {
 			gpios = <&gpiog 6 (GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;

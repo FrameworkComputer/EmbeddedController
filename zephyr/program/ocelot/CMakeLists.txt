@@ -35,6 +35,7 @@ if(DEFINED CONFIG_BOARD_KODKOD)
 	project(kodkod)
 	zephyr_library_sources("kodkod/src/board_power.c")
 	zephyr_library_sources("kodkod/src/keyboard_customization.c")
+	zephyr_library_sources("kodkod/src/suspend_resume.c")
 endif()
 
 if(DEFINED CONFIG_BOARD_MATSU)
