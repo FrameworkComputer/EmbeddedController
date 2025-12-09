@@ -766,6 +766,21 @@ void scan_console_cmd(const char *cmd, const int expected_rv,
 		      const int expected_count, const char *file,
 		      const int line, const char *format, ...);
 
+/**
+ * @brief Checks console command output for a specific line, then scans values
+ * from that line.
+ *
+ */
+#define SCAN_CONSOLE_LINE(cmd, expected_rv, line_prefix, expected_count,  \
+			  format, ...)                                    \
+	scan_console_line((cmd), (expected_rv), (line_prefix),            \
+			  (expected_count), __FILE__, __LINE__, (format), \
+			  __VA_ARGS__)
+void scan_console_line(const char *cmd, const int expected_rv,
+		       const char *line_prefix, const int expected_count,
+		       const char *file, const int line, const char *format,
+		       ...);
+
 /* The upstream struct ec_host_cmd_handler_args omits the result field, so skip
  * checks of the result when using the upstream host commands.
  */
