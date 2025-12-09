@@ -38,7 +38,7 @@
 	kbd_config_0: kbd-config-0{
 		vivaldi-codes = <
 			VIVALDI_TK_BACK               /* T1 */
-			VIVALDI_TK_REFRESH            /* T2 */
+			VIVALDI_TK_HOME               /* T2 */
 			VIVALDI_TK_OVERVIEW           /* T3 */
 			VIVALDI_TK_FULLSCREEN         /* T4 */
 			VIVALDI_TK_SNAPSHOT           /* T5 */
