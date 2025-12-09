@@ -11,6 +11,7 @@
 
 LOG_MODULE_REGISTER(board_init, LOG_LEVEL_INF);
 
+#define LAN_PWR_EN_DT_SPEC GPIO_DT_FROM_NODELABEL(gpio_ec_lan_pwr_en)
 #define AMP_MUTE_L_DT_SPEC GPIO_DT_FROM_NODELABEL(gpio_ec_amp_mute_l)
 
 static void kodkod_power_event_handler(struct ap_power_ev_callback *callback,
@@ -21,10 +22,16 @@ static void kodkod_power_event_handler(struct ap_power_ev_callback *callback,
 		/* fall-through */
 	case AP_POWER_STARTUP:
 
+		/* Deassert LAN_PWR_EN when AP is on. */
+		gpio_pin_set_dt(LAN_PWR_EN_DT_SPEC, 1);
+
 		/* Deassert AMP_MUTE_L when AP is on. */
 		gpio_pin_set_dt(AMP_MUTE_L_DT_SPEC, 0);
 		break;
 	case AP_POWER_HARD_OFF:
+
+		/* Assert LAN_PWR_EN when powered off. */
+		gpio_pin_set_dt(LAN_PWR_EN_DT_SPEC, 0);
 
 		/* Assert AMP_MUTE_L when powered off. */
 		gpio_pin_set_dt(AMP_MUTE_L_DT_SPEC, 1);
@@ -38,8 +45,15 @@ static void kodkod_power_event_handler(struct ap_power_ev_callback *callback,
 static int init_suspend_resume(void)
 {
 	static struct ap_power_ev_callback cb;
+	const struct gpio_dt_spec *lan_pwr_en =
+		GPIO_DT_FROM_NODELABEL(gpio_ec_lan_pwr_en);
 	const struct gpio_dt_spec *amp_mute_l =
 		GPIO_DT_FROM_NODELABEL(gpio_ec_amp_mute_l);
+
+	if (!gpio_is_ready_dt(lan_pwr_en)) {
+		LOG_ERR("device %s not ready", lan_pwr_en->port->name);
+		return -EINVAL;
+	}
 
 	if (!gpio_is_ready_dt(amp_mute_l)) {
 		LOG_ERR("device %s not ready", amp_mute_l->port->name);
