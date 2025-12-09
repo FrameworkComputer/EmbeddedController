@@ -14,13 +14,6 @@
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
-void board_chipset_startup(void)
-{
-	/* Update the AC event during boot */
-	extpower_update_host_events(gpio_get_level(GPIO_AC_PRESENT));
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
-
 void passthru_lid_open_to_pmic(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pmic_lid_open_od),
