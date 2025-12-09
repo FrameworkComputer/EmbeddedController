@@ -97,22 +97,22 @@ static void kb_vol_up_init(void)
 	int ret;
 	uint32_t val;
 
-	ret = cros_cbi_get_fw_config(FW_KB_VOL_UP, &val);
+	ret = cros_cbi_get_fw_config(FW_KB_LAYOUT, &val);
 	if (ret != 0) {
 		LOG_ERR("Error retrieving CBI FW_CONFIG field %d",
-			FW_KB_VOL_UP);
+			FW_KB_LAYOUT);
 		return;
 	}
 
 	switch (val) {
-	case FW_KB_VOL_UP_DEFAULT:
+	case FW_KB_LAYOUT_CM1406:
 		set_vol_up_key(KEYBOARD_DEFAULT_ROW_VOL_UP,
 			       KEYBOARD_DEFAULT_COL_VOL_UP);
 		break;
-	case FW_KB_VOL_UP_T13:
+	case FW_KB_LAYOUT_CM1405:
 		set_vol_up_key(VOL_UP_KEY_ROW_T13, VOL_UP_KEY_COL_T13);
 		break;
-	case FW_KB_VOL_UP_T15:
+	case FW_KB_LAYOUT_CM1505:
 		set_vol_up_key(VOL_UP_KEY_ROW_T15, VOL_UP_KEY_COL_T15);
 		break;
 	default:

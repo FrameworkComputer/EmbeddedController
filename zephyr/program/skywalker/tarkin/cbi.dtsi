@@ -24,23 +24,23 @@
 			};
 		};
 
-		kb_vol_up {
-			enum-name = "FW_KB_VOL_UP";
+		kb_layout {
+			enum-name = "FW_KB_LAYOUT";
 			start = <2>;
 			size = <2>;
-			kb_vol_up_0 {
+			kb_layout_cm1406 {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_KB_VOL_UP_DEFAULT";
+				enum-name = "FW_KB_LAYOUT_CM1406";
 				value = <0>;
 			};
-			kb_vol_up_1 {
+			kb_layout_cm1405 {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_KB_VOL_UP_T13";
+				enum-name = "FW_KB_LAYOUT_CM1405";
 				value = <1>;
 			};
-			kb_vol_up_2 {
+			kb_layout_cm1505 {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_KB_VOL_UP_T15";
+				enum-name = "FW_KB_LAYOUT_CM1505";
 				value = <2>;
 			};
 		};
