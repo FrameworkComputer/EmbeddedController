@@ -204,6 +204,20 @@ ocicat = register_it8xxx2_project(
     chip="it8xxx2/it82002bw",
 )
 
+register_ish_project(
+    project_name="ocicat-ish",
+    zephyr_board="intel_ish_5_8_0",
+    dts_overlays=[
+        here / "ocicat-ish" / "project.overlay",
+    ],
+    kconfig_files=[
+        here / "ocicat-ish" / "prj.conf",
+        here / "ocicat-ish" / "motionsense.conf",
+        here / "dsp_comms.conf",
+    ],
+    modules=["ec", "cmsis", "cmsis_6", "hal_intel_public", "pigweed", "nanopb"],
+)
+
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release.
 assert_rw_fwid_DO_NOT_EDIT(project_name="kodkod", addr=0x80404)
