@@ -46,3 +46,9 @@ properties:
     type: int
     required: true
     description: Row-column position of the "r" key.
+
+  vol-up-rc:
+    type: int
+    description: |
+      Row-column position of the "volume up" key, only required when using the
+      MKBP keyboard protocol.

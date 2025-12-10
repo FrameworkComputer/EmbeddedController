@@ -60,6 +60,23 @@ static const uint32_t runtime_keys[] = {
  **/
 #define RUNTIME_KEY_COUNT 3
 
+#ifdef CONFIG_CROS_EC_VIVALDI_KBD
+BUILD_ASSERT(!DT_INST_NODE_HAS_PROP(0, vol_up_rc),
+	     "do not specify vol-up-rc not CROS_EC_VIVALDI_KBD");
+#else
+BUILD_ASSERT(DT_INST_NODE_HAS_PROP(0, vol_up_rc),
+	     "vol-up-rc must be specified when not using CROS_EC_VIVALDI_KBD");
+#endif
+
+static bool key_is_vol_up(uint8_t row, uint8_t col)
+{
+#if defined(CONFIG_CROS_EC_VIVALDI_KBD) || (CONFIG_TEST_RUNTIME_KEYS_VIVALDI)
+	return vivaldi_kbd_is_vol_up(row, col);
+#else
+	return KBD_RC(row, col) == DT_INST_PROP(0, vol_up_rc);
+#endif
+}
+
 static void process_key(uint8_t row, uint8_t col, bool pressed)
 {
 	if (pressed) {
@@ -72,7 +89,7 @@ static void process_key(uint8_t row, uint8_t col, bool pressed)
 		bool key_match;
 
 		if (i == RUNTIME_KEY_VOL_UP) {
-			key_match = vivaldi_kbd_is_vol_up(row, col);
+			key_match = key_is_vol_up(row, col);
 		} else {
 			key_match = runtime_keys[i] == KBD_RC(row, col);
 		}

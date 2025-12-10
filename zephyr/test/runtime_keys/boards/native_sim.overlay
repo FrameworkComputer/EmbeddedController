@@ -23,6 +23,7 @@
 			right-alt-rc = <KBD_RC(4, 5)>;
 			h-rc = <KBD_RC(6, 7)>;
 			r-rc = <KBD_RC(8, 9)>;
+			vol-up-rc = <KBD_RC(0, 1)>;
 		};
 	};
 };

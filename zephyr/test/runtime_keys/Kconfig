@@ -8,4 +8,7 @@ config INPUT_KBD_MATRIX
 config CROS_EC_RUNTIME_KEYS
 	default y
 
+config TEST_RUNTIME_KEYS_VIVALDI
+	bool "Test the vivaldi runtime key code path"
+
 source "Kconfig.zephyr"
