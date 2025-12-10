@@ -17,6 +17,7 @@
 #include "power_signals.dtsi"
 #include "usb_typec.dtsi"
 #include "i2c.dtsi"
+#include "console.dtsi"
 
 /*
  * Map GPIOs used for interrupts to common names
