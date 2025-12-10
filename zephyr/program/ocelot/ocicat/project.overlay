@@ -18,6 +18,7 @@
 #include "usb_typec.dtsi"
 #include "i2c.dtsi"
 #include "console.dtsi"
+#include "cbi.dtsi"
 
 /*
  * Map GPIOs used for interrupts to common names

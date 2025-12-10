@@ -1,0 +1,199 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+/* Kaladin-specific fw_config fields. */
+	trulo-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+		/*
+		 * FW_CONFIG field to indicate tablet mode present
+		 * or absent.
+		 */
+		tablet_mode {
+			enum-name = "FW_TABLET";
+			start = <0>;
+			size = <1>;
+
+			absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TABLET_ABSENT";
+				value = <0>;
+			};
+			present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TABLET_PRESENT";
+				value = <1>;
+			};
+		};
+		/*
+		 * FW_CONFIG field to defined for THERMAL SOLUTION.
+		 */
+		thermal-solution {
+			enum-name = "FW_THERMAL_SOLUTION";
+			start = <1>;
+			size = <1>;
+
+			thermal-solution-6w {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_SOLUTION_6W";
+				value = <0>;
+			};
+			thermal-solution-15w {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_SOLUTION_15W";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to difined the number of mainboard type-c port.
+		 */
+		usbc-ports {
+			enum-name = "USBC_PORTS";
+			start = <2>;
+			size = <1>;
+
+			one-port {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "ONE_PORT";
+				value = <0>;
+				default;
+			};
+			two-ports {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "TWO_PORTS";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined the ISH to sensor.
+		 */
+		ish {
+			enum-name = "ISH";
+			start = <3>;
+			size = <1>;
+
+			ish-disabled {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "ISH_DISABLED";
+				value = <0>;
+				default;
+			};
+			ish-enabled {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "ISH_ENABLED";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined panel type.
+		 */
+		panel {
+			enum-name = "FW_PANEL";
+			start = <4>;
+			size = <2>;
+
+			panel-top-elan {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "PANEL_TOP_ELAN";
+				value = <0>;
+				default;
+			};
+			panel-dbts-elan {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "PANEL_DBTS";
+				value = <1>;
+			};
+			panel-top-gth563 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "PANEL_TOP_GTH1563";
+				value = <2>;
+				default;
+			};
+			panel-top-gth7503 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "PANEL_TOP_GTH7503";
+				value = <3>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to enable KB backlight or not.
+		 */
+		kb-bl {
+			enum-name = "FW_KB_BL";
+			start = <10>;
+			size = <1>;
+
+			no-kb-bl {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_NOT_PRESENT";
+				value = <0>;
+				default;
+			};
+			kb-bl-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_PRESENT";
+				value = <1>;
+			};
+		};
+		/*
+		 * FW_CONFIG field to change scancode setting for special
+		 * keyboard type.
+		 */
+		kb-type {
+			enum-name = "FW_KB_LAYOUT";
+			start = <11>;
+			size = <2>;
+
+			kb-type-default {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_LAYOUT_DEFAULT";
+				value = <0>;
+			};
+			kb-type-us2 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_LAYOUT_US2";
+				value = <1>;
+			};
+			kb-type-jp {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_LAYOUT_JP";
+				value = <2>;
+			};
+		};
+		/*
+		 * FW_CONFIG field to defined for STORAGE TYPE.
+		 */
+		storage {
+			enum-name = "FW_STORAGE";
+			start = <30>;
+			size = <2>;
+
+			storage-emmc {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_EMMC";
+				value = <0>;
+			};
+			storage-nvme {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_NVME";
+				value = <1>;
+			};
+			storage-ufs {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_UFS";
+				value = <2>;
+			};
+			storage-unknown {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_UNKNOWN";
+				value = <3>;
+			};
+		};
+	};
+};
