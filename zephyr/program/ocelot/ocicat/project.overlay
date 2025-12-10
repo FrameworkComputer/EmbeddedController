@@ -19,6 +19,7 @@
 #include "i2c.dtsi"
 #include "console.dtsi"
 #include "cbi.dtsi"
+#include "fan.dtsi"
 
 /*
  * Map GPIOs used for interrupts to common names
