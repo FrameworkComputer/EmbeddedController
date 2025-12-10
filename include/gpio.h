@@ -92,7 +92,7 @@
 #elif DT_HAS_COMPAT_STATUS_OKAY(zephyr_gpio_emul)
 #define GPIO_VOLTAGE_1P8 NATIVE_POSIX_GPIO_VOLTAGE_1P8
 #define GPIO_SEL_1P8V GPIO_VOLTAGE_1P8
-#elif DT_HAS_COMPAT_STATUS_OKAY(microchip_xec_gpio_v2)
+#elif DT_HAS_COMPAT_STATUS_OKAY(microchip_xec_gpio)
 /*
  * Add GPIO_VOLTAGE_1P8 and GPIO_SEL_1P8V used in common code.
  * In MEC1727, GPIO_VOLTAGE_1P8 feature is not supported in GPIO control
