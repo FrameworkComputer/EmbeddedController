@@ -36,6 +36,11 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "extpower_interrupt";
 		};
+		int_en_fpad_seq: en_fpad_seq {
+			irq-pin = <&gpio_en_fpad_seq>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "forcepad_interrupt";
+		};
 	};
 
 	named-gpios {
@@ -190,10 +195,13 @@
 			gpios = <&gpio6 0 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_HIGH)>;
 		};
 		gpio_fpad_5v_en: fpad_5v_en {
-			gpios = <&gpio6 7 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_HIGH)>;
+			gpios = <&gpio6 7 (GPIO_OUTPUT)>;
 		};
 		gpio_fpad_1p8v_en: fpad_1p8v_en {
-			gpios = <&gpio7 0 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_HIGH)>;
+			gpios = <&gpio7 0 (GPIO_OUTPUT)>;
+		};
+		gpio_en_fpad_seq: en_fpad_seq {
+			gpios = <&gpio9 1 (GPIO_INPUT)>;
 		};
 		gpio_charger_vap_otg_en: charger_vap_otg_en {
 			gpios = <&gpio6 3 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
@@ -211,8 +219,7 @@
 	unused-pins {
 		compatible = "unused-gpios";
 		unused-gpios =
-			<&gpio5 6 0>,
-			<&gpio9 1 0>;
+			<&gpio5 6 0>;
 	};
 };
 

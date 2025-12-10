@@ -85,6 +85,7 @@ if(DEFINED CONFIG_BOARD_RUBY)
 	zephyr_include_directories("ruby/include")
 	zephyr_library_sources("ruby/src/touch_panel.c")
 	zephyr_library_sources("ruby/src/board_power.c")
+	zephyr_library_sources("ruby/src/forcepad.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 					"ruby/src/keyboard_customization.c")
 endif()
