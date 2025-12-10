@@ -58,27 +58,34 @@ DEVICE_DT_DEFINE(VND_KEYBOARD_NODE, input_kbd_matrix_common_init,
 
 FAKE_VALUE_FUNC(int, system_is_locked);
 FAKE_VOID_FUNC(keyboard_state_changed, int, int, int);
+FAKE_VALUE_FUNC(int, mkbp_keyboard_add, const uint8_t *);
 
 ZTEST(keyboard_input, test_keyboard_input_events)
 {
 	zassert_equal(keyboard_state_changed_fake.call_count, 0);
+	zassert_equal(mkbp_keyboard_add_fake.call_count, 0);
 
-	input_report_abs(fake_dev, INPUT_ABS_X, 10, false, K_FOREVER);
-	input_report_abs(fake_dev, INPUT_ABS_Y, 11, false, K_FOREVER);
+	input_report_abs(fake_dev, INPUT_ABS_X, 1, false, K_FOREVER);
+	input_report_abs(fake_dev, INPUT_ABS_Y, 2, false, K_FOREVER);
 	input_report_key(fake_dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
 
-	input_report_abs(fake_dev, INPUT_ABS_X, 10, false, K_FOREVER);
-	input_report_abs(fake_dev, INPUT_ABS_Y, 11, false, K_FOREVER);
+	zassert_equal(mkbp_keyboard_add_fake.call_count, 1);
+	zassert_equal(mkbp_keyboard_add_fake.arg0_history[0][1], 0x04);
+
+	input_report_abs(fake_dev, INPUT_ABS_X, 1, false, K_FOREVER);
+	input_report_abs(fake_dev, INPUT_ABS_Y, 2, false, K_FOREVER);
 	input_report_key(fake_dev, INPUT_BTN_TOUCH, 0, true, K_FOREVER);
 
 	zassert_equal(keyboard_state_changed_fake.call_count, 2);
+	zassert_equal(mkbp_keyboard_add_fake.call_count, 2);
+	zassert_equal(mkbp_keyboard_add_fake.arg0_history[0][1], 0x00);
 
-	zassert_equal(keyboard_state_changed_fake.arg0_history[0], 11);
-	zassert_equal(keyboard_state_changed_fake.arg1_history[0], 10);
+	zassert_equal(keyboard_state_changed_fake.arg0_history[0], 2);
+	zassert_equal(keyboard_state_changed_fake.arg1_history[0], 1);
 	zassert_equal(keyboard_state_changed_fake.arg2_history[0], 1);
 
-	zassert_equal(keyboard_state_changed_fake.arg0_history[1], 11);
-	zassert_equal(keyboard_state_changed_fake.arg1_history[1], 10);
+	zassert_equal(keyboard_state_changed_fake.arg0_history[1], 2);
+	zassert_equal(keyboard_state_changed_fake.arg1_history[1], 1);
 	zassert_equal(keyboard_state_changed_fake.arg2_history[1], 0);
 }
 
@@ -340,6 +347,7 @@ static void reset(void *fixture)
 	ARG_UNUSED(fixture);
 
 	RESET_FAKE(keyboard_state_changed);
+	RESET_FAKE(mkbp_keyboard_add);
 	RESET_FAKE(system_is_locked);
 
 	memset(&last_evt, 0, sizeof(last_evt));

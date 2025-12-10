@@ -30,6 +30,7 @@ FAKE_VALUE_FUNC(int, system_is_locked);
 FAKE_VOID_FUNC(test_drive_column, const struct device *, int);
 FAKE_VALUE_FUNC(kbd_row_t, test_read_row, const struct device *);
 FAKE_VOID_FUNC(test_set_detect_mode, const struct device *, bool);
+FAKE_VALUE_FUNC(int, mkbp_keyboard_add, const uint8_t *);
 
 static const struct input_kbd_matrix_api test_api = {
 	.drive_column = test_drive_column,
@@ -168,6 +169,7 @@ static void reset(void *fixture)
 	RESET_FAKE(system_is_locked);
 	RESET_FAKE(vnd_keyboard_pm_action);
 	RESET_FAKE(pinctrl_configure_pins);
+	RESET_FAKE(mkbp_keyboard_add);
 
 	simulate_short_p3_p11 = false;
 }
