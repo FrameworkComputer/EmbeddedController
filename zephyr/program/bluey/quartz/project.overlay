@@ -13,6 +13,7 @@
 #include "../i2c.dtsi"
 #include "../common.dtsi"
 #include "../psl.dtsi"
+#include <quartz/overlay.dtsi>
 
 /* quartz project DTS includes */
 
@@ -44,7 +45,7 @@
 
 	uart4_dev0: uart4_dev0 {
 		status = "okay";
-		chain-length = <6>;
+		chain-length = <4>;
 		reset-delay = <205>;
 		bits-per-symbol = <5>;
 		one-symbol = <BINARY(1,1,1,1,0)>;
