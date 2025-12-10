@@ -77,7 +77,7 @@
 			rot-standard-ref = <&lid_rot_ref>;
 			default-range = <2>;
 			drv-data = <&lis2de12_lid_data>;
-			i2c-spi-addr-flags = "LIS2DH_ADDR1_FLAGS";
+			i2c-spi-addr-flags = "LIS2DH_ADDR0_FLAGS";
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";
