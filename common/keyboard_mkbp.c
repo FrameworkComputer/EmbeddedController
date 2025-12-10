@@ -30,9 +30,9 @@
 #define BATTERY_KEY_ROW 7
 #define BATTERY_KEY_ROW_MASK BIT(BATTERY_KEY_ROW)
 
-#ifndef HAS_TASK_KEYSCAN
+#if !(defined(HAS_TASK_KEYSCAN) || defined(CONFIG_CROS_EC_KEYBOARD_INPUT))
 #error "Task KEYSCAN has to be enabled for MKBP keyboard"
-#endif /* !defined(HAS_TASK_KEYSCAN) */
+#endif
 
 /* Config for mkbp protocol; does not include fields from scan config */
 struct ec_mkbp_protocol_config {
@@ -45,11 +45,15 @@ struct ec_mkbp_protocol_config {
 } __packed;
 
 static struct ec_mkbp_protocol_config config = {
+#ifndef CONFIG_CROS_EC_KEYBOARD_INPUT
 	.valid_mask = EC_MKBP_VALID_SCAN_PERIOD | EC_MKBP_VALID_POLL_TIMEOUT |
 		      EC_MKBP_VALID_MIN_POST_SCAN_DELAY |
 		      EC_MKBP_VALID_OUTPUT_SETTLE |
 		      EC_MKBP_VALID_DEBOUNCE_DOWN | EC_MKBP_VALID_DEBOUNCE_UP |
 		      EC_MKBP_VALID_FIFO_MAX_DEPTH,
+#else
+	.valid_mask = EC_MKBP_VALID_FIFO_MAX_DEPTH,
+#endif
 	.valid_flags = EC_MKBP_FLAGS_ENABLE,
 	.flags = EC_MKBP_FLAGS_ENABLE,
 	.fifo_max_depth = FIFO_DEPTH,
@@ -89,6 +93,7 @@ static void set_keyscan_config(const struct ec_mkbp_config *src,
 			       struct ec_mkbp_protocol_config *dst,
 			       uint32_t valid_mask, uint8_t new_flags)
 {
+#ifndef CONFIG_CROS_EC_KEYBOARD_INPUT
 	struct keyboard_scan_config *ksc = keyboard_scan_get_config();
 
 	if (valid_mask & EC_MKBP_VALID_SCAN_PERIOD)
@@ -123,10 +128,12 @@ static void set_keyscan_config(const struct ec_mkbp_config *src,
 	if ((new_flags & EC_MKBP_FLAGS_ENABLE) &&
 	    !(dst->flags & EC_MKBP_FLAGS_ENABLE))
 		task_wake(TASK_ID_KEYSCAN);
+#endif
 }
 
 test_export_static void get_keyscan_config(struct ec_mkbp_config *dst)
 {
+#ifndef CONFIG_CROS_EC_KEYBOARD_INPUT
 	const struct keyboard_scan_config *ksc = keyboard_scan_get_config();
 
 	/* Copy fields from keyscan config to mkbp config */
@@ -136,6 +143,7 @@ test_export_static void get_keyscan_config(struct ec_mkbp_config *dst)
 	dst->scan_period_us = ksc->scan_period_us;
 	dst->min_post_scan_delay_us = ksc->min_post_scan_delay_us;
 	dst->poll_timeout_us = ksc->poll_timeout_us;
+#endif
 }
 
 /**
