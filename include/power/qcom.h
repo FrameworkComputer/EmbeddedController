@@ -41,4 +41,8 @@ void passthru_ac_on_to_pmic(void);
 void reset_all_passthru_pmic_signal(void);
 #endif
 
+#if defined(CONFIG_PLATFORM_EC_HIBERNATE_EXIT_AC_WAKE)
+int board_check_hibernate_wake_source_ac(void);
+#endif
+
 #endif /* __CROS_EC_POWER_QCOM_H_ */

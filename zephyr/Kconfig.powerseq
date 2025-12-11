@@ -298,6 +298,15 @@ config PLATFORM_EC_PMIC_PASSTHRU_POWER_SIGNALS
 	when the switch-cap power is active. This mechanism ensures that the PMIC's
 	power signal flow remain undisturbed.
 
+config PLATFORM_EC_HIBERNATE_EXIT_AC_WAKE
+	bool "Enable AC wake from hibernate with correct power-on reason"
+	depends on PLATFORM_EC_POWERSEQ_QC_EXP
+	help
+	  This option ensures that when the system wakes from hibernate due
+	  to an AC connection, the Application Processor (AP) firmware
+	  receives the correct power-on reason (e.g., CBLPWR). It allows
+	  the board to define a function to check the specific wake source.
+
 config PLATFORM_EC_HOSTCMD_ENABLE_OFFMODE_HEARTBEAT
 	bool "Enable Support for AP to enter G3 and enable heartbeat wake"
 	depends on PLATFORM_EC_POWERSEQ_QC_EXP && PLATFORM_EC_HOSTCMD
