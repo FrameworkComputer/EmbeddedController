@@ -1,0 +1,62 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_apps: ec_i2c_apps {
+			i2c-port = <&i2c1_0>;
+			enum-names = "I2C_PORT_APPS";
+		};
+		i2c_ec_i2c_ssc_sen: ec_i2c_ssc_sen {
+			i2c-port = <&i2c4_1>;
+			enum-names = "I2C_PORT_SSC_SEN";
+		};
+		i2c_ec_i2c_adsp: ec_i2c_adsp {
+			i2c-port = <&i2c5_0>;
+			enum-names = "I2C_PORT_ADSP", "I2C_PORT_BATTERY";
+		};
+	};
+};
+
+&i2c1_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
+	pinctrl-names = "default";
+
+	label = "I2C_PORT_APPS";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c4_1 {
+	status = "okay";
+	pinctrl-0 = <&i2c4_1_sda_scl_gpf2_f3>;
+	pinctrl-names = "default";
+
+	label = "I2C_PORT_SSC_SEN";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c5_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
+	pinctrl-names = "default";
+
+	label = "I2C_PORT_ADSP";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c_ctrl1 {
+	status = "okay";
+};
+
+&i2c_ctrl4 {
+	status = "okay";
+};
+
+&i2c_ctrl5 {
+	status = "okay";
+};

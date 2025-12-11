@@ -71,6 +71,12 @@
 		gpio_ec_led_c1_full_chg: ec_led_c1_full_chg {
 			gpios = <&gpio8 6 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
 		};
+		ec_i2c_apps_sda {
+			gpios = <&gpio8 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec_i2c_apps_scl {
+			gpios = <&gpio9 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
 		gpio_sys_rst_odl: sys_rst_odl {
 			gpios = <&gpio9 3 (GPIO_INPUT)>;
 			enum-name = "GPIO_WARM_RESET_L";
@@ -170,6 +176,12 @@
 		};
 		gpio_smb2360_a_chg_led_pg_odl: smb2360_a_chg_led_pg_odl {
 			gpios = <&gpiof 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		ec_i2c_sensor_sda {
+			gpios = <&gpiof 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec_i2c_sensor_scl {
+			gpios = <&gpiof 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		gpio_led_ec_do_argb_di: led_ec_do_argb_di {
 			gpios = <&gpio3 5 (GPIO_OUTPUT)>;

@@ -10,7 +10,6 @@
 
 #include "../interrupts.dtsi"
 #include "../adc.dtsi"
-#include "../i2c.dtsi"
 #include "../common.dtsi"
 #include "../psl.dtsi"
 #include <quartz/overlay.dtsi>
@@ -22,6 +21,7 @@
 #include "fan.dtsi"
 #include "keyboard.dtsi"
 #include "temp_sensors.dtsi"
+#include "i2c.dtsi"
 
 /* quartz overrides follow... */
 
