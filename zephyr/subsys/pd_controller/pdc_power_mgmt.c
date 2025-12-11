@@ -1119,6 +1119,19 @@ static ALWAYS_INLINE void pdc_thread(void *pdc_dev, void *unused1,
 
 DT_INST_FOREACH_STATUS_OKAY(PDC_SUBSYS_INIT)
 
+#ifndef CONFIG_ZTEST
+#define PDC_DEVICE_INIT_ONE(node_id) device_init(DEVICE_DT_GET(node_id));
+
+/* Explicitly initialized all ports defined with zephyr,deferred-init */
+static int pdc_device_init(void)
+{
+	DT_FOREACH_STATUS_OKAY(DT_DRV_COMPAT, PDC_DEVICE_INIT_ONE);
+	return 0;
+}
+
+SYS_INIT(pdc_device_init, POST_KERNEL, CONFIG_PDC_POWER_MGMT_INIT_PRIORITY);
+#endif
+
 /* Enforce initialization order constraints. This driver depends on the PDC
  * driver(s) and also charge manager (the latter is enforced by
  * `common/charge_manager.c`)

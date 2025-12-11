@@ -57,9 +57,11 @@ i2c3ALT: &i2c3 {
 /* Set up runtime driver selection of TI and RTK PDCs */
 &usbc_port0 {
 	pdc = <&pdc_power_p0 &pdc_power_p0_ti>;
+	zephyr,deferred-init;
 };
 &usbc_port1 {
 	pdc = <&pdc_power_p1 &pdc_power_p1_ti>;
+	zephyr,deferred-init;
 };
 
 /* Modify Realtek RTS5453P PDCs from parent DT */

@@ -164,6 +164,14 @@
 	status = "okay";
 };
 
+&usbc_port0 {
+	zephyr,deferred-init;
+};
+
+&usbc_port1 {
+	zephyr,deferred-init;
+};
+
 &pdc_power_p0 {
 	zephyr,deferred-init;
 };

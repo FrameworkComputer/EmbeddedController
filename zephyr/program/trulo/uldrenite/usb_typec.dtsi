@@ -29,6 +29,14 @@
 	};
 };
 
+&usbc_port0 {
+	zephyr,deferred-init;
+};
+
+&usbc_port1 {
+	zephyr,deferred-init;
+};
+
 &i2c3_0 {
 	label = "I2C_PORT_PD";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;

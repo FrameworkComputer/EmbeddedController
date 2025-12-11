@@ -19,6 +19,7 @@
 			/* Set up runtime driver selection of TI and RTK PDCs */
 			pdc = <&pdc_power_p0 &pdc_power_p0_ti>;
 			policy = <&cros_policy>;
+			zephyr,deferred-init;
 		};
 		usbc_port1: port1@1 {
 			compatible = "named-usbc-port";
@@ -26,6 +27,7 @@
 			/* Set up runtime driver selection of TI and RTK PDCs */
 			pdc = <&pdc_power_p1 &pdc_power_p1_ti>;
 			policy = <&cros_policy>;
+			zephyr,deferred-init;
 		};
 	};
  };

@@ -6,6 +6,8 @@ description: Intel RVP Board id
 
 compatible: "intel,rvp-board-id"
 
+include: base.yaml
+
 properties:
   bom-gpios:
     type: phandle-array
