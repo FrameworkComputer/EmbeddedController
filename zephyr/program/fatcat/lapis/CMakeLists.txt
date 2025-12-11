@@ -2,4 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-zephyr_library_sources("src/battery.c" "src/board_power.c" "src/fan.c")
+zephyr_library_sources(
+		"src/battery.c"
+		"src/board_power.c"
+		"src/charger.c"
+		"src/fan.c"
+)
