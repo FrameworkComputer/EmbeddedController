@@ -111,7 +111,7 @@
 		gpio_hdmi_gate_ec: hdmi_gate_ec{
 			gpios = <&gpiof 3 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
-		gpio_en_pp5000_usba: en_pp5000_usba {
+		gpio_en_usb_a0_vbus: en_usb_a0_vbus {
 			gpios = <&gpiof 4 (GPIO_OUTPUT_LOW)>;
 		};
 		gpio_usb_pd1_int_odl: usb_pd_int_odl {

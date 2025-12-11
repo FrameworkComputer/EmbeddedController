@@ -20,6 +20,7 @@
 #include "console.dtsi"
 #include "cbi.dtsi"
 #include "fan.dtsi"
+#include "usba.dtsi"
 
 /*
  * Map GPIOs used for interrupts to common names
@@ -36,7 +37,6 @@ gpio_temp_sensor_power_good: &gpio_en_s5_rails {};
 tach_fan0: &tach0 {};
 
 #include "../ite_hibernate.dtsi"
-#include "../rvp_usba.dtsi"
 #include "../rvp_keyboard.dtsi"
 
 /* ocicat overrides follow... */
