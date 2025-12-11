@@ -18,7 +18,7 @@
 	gpios = <MCHP_GPIO_DECODE_052 GPIO_ACTIVE_LOW>;
 };
 &pwr_pch_pwrok {
-	gpios = <MCHP_GPIO_DECODE_100 GPIO_OPEN_DRAIN>;
+	gpios = <MCHP_GPIO_DECODE_100 GPIO_ACTIVE_HIGH>;
 };
 &pwr_all_sys_pwrgd {
 	gpios = <MCHP_GPIO_DECODE_057 GPIO_ACTIVE_HIGH>;
