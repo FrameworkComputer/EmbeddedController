@@ -146,11 +146,14 @@ to HELIPILOT_DATA_RAM_SIZE_BYTES being increased from 156KiB to 252KiB.
 # \r is added twice by Zephyr code.
 PRINTF_CALLED_REGEX = re.compile(r"printf called(\r){1,2}\n")
 
+NEVER_MATCH_REGEX = re.compile(r"(?!)")
+
 BLOONCHIPPER = "bloonchipper"
 BUCCANEER = "buccaneer"
 DARTMONKEY = "dartmonkey"
 GWENDOLIN = "gwendolin"
 HELIPILOT = "helipilot"
+SANOK = "sanok"
 
 JTRACE = "jtrace"
 SERVO_MICRO = "servo_micro"
@@ -190,6 +193,10 @@ HELIPILOT_V27609_IMAGE_PATH = os.path.join(
 
 RangedValue = namedtuple("RangedValue", "nominal range")
 PowerUtilization = namedtuple("PowerUtilization", "idle sleep")
+
+INVALID_POWER_UTILIZATION = PowerUtilization(
+    idle=RangedValue(0, 0), sleep=RangedValue(0, 0)
+)
 
 
 class ImageType(Enum):
@@ -1040,12 +1047,36 @@ GWENDOLIN_CONFIG.name = GWENDOLIN
 GWENDOLIN_CONFIG.sensor_type = FPSensorType.EGIS
 GWENDOLIN_CONFIG.mpu_regex = DATA_ACCESS_VIOLATION_20098000_REGEX
 
+SANOK_CONFIG = BoardConfig(
+    name=SANOK,
+    sensor_type=FPSensorType.EGIS,
+    servo_uart_name="raw_fpmcu_console_uart_pty",
+    servo_power_enable="fpmcu_pp3300",
+    reboot_timeout=1.0,
+    # TODO(b/468406461): configure rollback regex.
+    rollback_region0_regex=NEVER_MATCH_REGEX,
+    rollback_region1_regex=NEVER_MATCH_REGEX,
+    # TODO(b/363277530): create Zephyr MPU tests.
+    mpu_regex=NEVER_MATCH_REGEX,
+    fp_power_supply="pp3300_fp_mw",
+    mcu_power_supply="pp3300_mcu_mw",
+    # TODO(b/468406665): configure power utilization.
+    expected_fp_power=INVALID_POWER_UTILIZATION,
+    expected_mcu_power=INVALID_POWER_UTILIZATION,
+    expected_fp_power_zephyr=INVALID_POWER_UTILIZATION,
+    expected_mcu_power_zephyr=INVALID_POWER_UTILIZATION,
+    # TODO(b/468407068): configure variants.
+    variants={},
+    zephyr_board_name="egis_et171",
+)
+
 BOARD_CONFIGS = {
     "bloonchipper": BLOONCHIPPER_CONFIG,
     "buccaneer": BUCCANEER_CONFIG,
     "dartmonkey": DARTMONKEY_CONFIG,
     "gwendolin": GWENDOLIN_CONFIG,
     "helipilot": HELIPILOT_CONFIG,
+    "sanok": SANOK_CONFIG,
 }
 
 
