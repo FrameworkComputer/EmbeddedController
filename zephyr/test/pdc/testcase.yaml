@@ -204,6 +204,7 @@ tests:
     - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
     - CONFIG_PLATFORM_EC_USB_PD_FRS=y
     - CONFIG_TEST_SNIFF_POWER_MGMT_PDC_APIS=y
+    - CONFIG_TEST_NO_PDC_INIT=y
     extra_dtc_overlay_files:
     - "./boards/rts5453p.overlay"
     - "./boards/pdc_deferred.overlay"
@@ -219,6 +220,7 @@ tests:
     - CONFIG_PLATFORM_EC_USB_PD_FRS=y
     - CONFIG_TEST_SNIFF_POWER_MGMT_PDC_APIS=y
     - CONFIG_PLATFORM_EC_CONSOLE_DEBUG=y
+    - CONFIG_TEST_NO_PDC_INIT=y
     extra_dtc_overlay_files:
     - "./boards/rts5453p.overlay"
     - "./boards/pdc_deferred.overlay"
@@ -234,6 +236,7 @@ tests:
     - CONFIG_PLATFORM_EC_USB_PD_FRS=y
     - CONFIG_TEST_SNIFF_POWER_MGMT_PDC_APIS=y
     - CONFIG_PLATFORM_EC_CONSOLE_DEBUG=y
+    - CONFIG_TEST_NO_PDC_INIT=y
     extra_dtc_overlay_files:
     - "./boards/rts5453p.overlay"
     - "./boards/pdc_deferred.overlay"

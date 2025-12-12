@@ -7,3 +7,7 @@
 &gpio0 {
 	zephyr,deferred-init;
 };
+
+&hibernate_z5 {
+	zephyr,deferred-init;
+};

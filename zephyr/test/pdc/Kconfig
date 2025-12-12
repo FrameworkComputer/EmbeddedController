@@ -2,6 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config TEST_NO_PDC_INIT
+	bool "Do not autoinit pdc devices"
+
 config TEST_SUITE_PDC_API
 	bool "Enable generic PDC driver API tests"
 

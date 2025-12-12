@@ -8,6 +8,8 @@ description: |
 
 compatible: "cros-ec,hibernate-z5"
 
+include: base.yaml
+
 properties:
   en-slp-z-gpios:
     type: phandle-array

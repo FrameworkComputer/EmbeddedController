@@ -26,6 +26,7 @@
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_0>;
 			};
+			zephyr,deferred-init;
 		};
 
 		port0-muxes {
@@ -44,6 +45,7 @@
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_1>;
 			};
+			zephyr,deferred-init;
 		};
 
 		port1-muxes {

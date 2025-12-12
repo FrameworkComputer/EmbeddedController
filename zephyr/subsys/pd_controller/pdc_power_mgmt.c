@@ -1119,7 +1119,7 @@ static ALWAYS_INLINE void pdc_thread(void *pdc_dev, void *unused1,
 
 DT_INST_FOREACH_STATUS_OKAY(PDC_SUBSYS_INIT)
 
-#ifndef CONFIG_ZTEST
+#ifndef CONFIG_TEST_NO_PDC_INIT
 #define PDC_DEVICE_INIT_ONE(node_id) device_init(DEVICE_DT_GET(node_id));
 
 /* Explicitly initialized all ports defined with zephyr,deferred-init */
