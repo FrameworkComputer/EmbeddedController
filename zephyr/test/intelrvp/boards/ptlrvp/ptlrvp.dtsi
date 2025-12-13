@@ -56,3 +56,15 @@
 &pca95xx_0 {
 	zephyr,deferred-init;
 };
+
+/* Register an eSPI host emulator. Note that CONFIG_EMUL_ESPI_HOST must
+ * still be explicitly enabled and a stub driver registered using the
+ * EMUL_STUB_DEVICE helper macro.
+ */
+&espi0 {
+	espi-host@0 {
+		status = "okay";
+		compatible = "zephyr,espi-emul-espi-host";
+		reg = <0x0>;
+	};
+};

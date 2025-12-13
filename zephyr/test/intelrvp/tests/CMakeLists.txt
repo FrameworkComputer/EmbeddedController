@@ -17,6 +17,8 @@ zephyr_include_directories(${PLATFORM_EC}/driver/ioexpander)
 target_sources(app PRIVATE "${PLATFORM_EC_PROGRAM_DIR}/intelrvp/src/dc_jack.c")
 target_sources(app PRIVATE "${PLATFORM_EC_PROGRAM_DIR}/intelrvp/src/intel_rvp_board_id.c")
 
+target_sources(app PRIVATE intelrvp/src/espi_host.c)
+
 if((CONFIG_TEST_PROJECT_MTLRVPP_NPCX) OR (CONFIG_TEST_PROJECT_MTLRVPP_MCHP) OR (CONFIG_TEST_PROJECT_MTLRVPP_COMMON))
 
 #Add sources for MTLRVP boards.
