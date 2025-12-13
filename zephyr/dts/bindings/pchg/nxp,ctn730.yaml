@@ -23,3 +23,8 @@ properties:
     type: int
     default: 128
     description: block size is 128
+
+  rf-charge-msec:
+    type: int
+    default: 0
+    description: stylus recovery time

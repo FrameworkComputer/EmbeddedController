@@ -407,6 +407,9 @@ static void pchg_state_enabled(struct pchg *ctx)
 
 	switch (ctx->event) {
 	case PCHG_EVENT_RESET:
+		if (ctx->bist_cmd != PCHG_BIST_CMD_NONE) {
+			ctx->mode = PCHG_MODE_BIST;
+		}
 		ctx->state = pchg_reset(ctx);
 		break;
 	case PCHG_EVENT_DISABLE:

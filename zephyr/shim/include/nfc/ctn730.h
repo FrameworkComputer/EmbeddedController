@@ -21,6 +21,7 @@ extern struct pchg_drv ctn730_drv;
 			.full_percent = DT_PROP(id, full_percent),  \
 			.block_size = DT_PROP(id, block_size),      \
 			.flags = PCHG_CFG_FW_UPDATE_SYNC,           \
+			.rf_charge_msec = DT_PROP(id, rf_charge_msec),      \
 		},\
 		.policy = {\
 			[PCHG_CHIPSET_STATE_ON] = &pchg_policy_on,\
