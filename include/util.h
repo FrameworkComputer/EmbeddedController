@@ -64,7 +64,7 @@ extern "C" {
 #define DOWNCAST(pointer, type, member)					\
 	((type *)(((uint8_t *) pointer) - offsetof(type, member)))
 
-/* True of x is a power of two */
+/* True if x is a power of two */
 #define POWER_OF_TWO(x) ((x) && !((x) & ((x) - 1)))
 
 /* Macro to check if the value is in range */
