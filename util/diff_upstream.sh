@@ -4,17 +4,19 @@
 # found in the LICENSE file.
 
 SRC_DIR="$(realpath "$( dirname "${BASH_SOURCE[0]}" )/../../..")"
-ZEPHYR_DIR="${SRC_DIR}/third_party/zephyr"
-echo "Zephyr root directory: ${ZEPHYR_DIR}"
+THIRD_PARTY_DIR="${SRC_DIR}/third_party"
+echo "3p root directory: ${THIRD_PARTY_DIR}"
 
 # Should match infra/config/misc_builders/copybot.star
-declare -A zephyr_repos=(
-  ['main']='https://github.com/zephyrproject-rtos/zephyr.git main'
-  ['cmsis']='https://github.com/zephyrproject-rtos/cmsis.git master'
-  ['hal_intel_public']='https://github.com/zephyrproject-rtos/hal_intel.git main'
-  ['hal_stm32']='https://github.com/zephyrproject-rtos/hal_stm32.git main'
-  ['nanopb']='https://github.com/zephyrproject-rtos/nanopb.git zephyr'
-  ['picolibc']='https://github.com/zephyrproject-rtos/picolibc.git main'
+declare -A repos=(
+  ['zephyr/main']='https://github.com/zephyrproject-rtos/zephyr.git main'
+  ['zephyr/cmsis']='https://github.com/zephyrproject-rtos/cmsis.git master'
+  ['zephyr/cmsis_6']='https://github.com/zephyrproject-rtos/CMSIS_6.git main'
+  ['zephyr/hal_intel_public']='https://github.com/zephyrproject-rtos/hal_intel.git main'
+  ['zephyr/hal_stm32']='https://github.com/zephyrproject-rtos/hal_stm32.git main'
+  ['zephyr/nanopb']='https://github.com/zephyrproject-rtos/nanopb.git zephyr'
+  ['zephyr/picolibc']='https://github.com/zephyrproject-rtos/picolibc.git main'
+  ['pigweed']='https://pigweed.googlesource.com/pigweed/pigweed main'
 )
 
 function die() {
@@ -22,12 +24,12 @@ function die() {
   exit 1
 }
 
-for repo in "${!zephyr_repos[@]}"; do
-  read -ra upstream <<<"${zephyr_repos[${repo}]}"
+for repo in "${!repos[@]}"; do
+  read -ra upstream <<<"${repos[${repo}]}"
   upstream_repo="${upstream[0]}"
   upstream_branch="${upstream[1]}"
 
-  cd "${ZEPHYR_DIR}/${repo}" || die "${ZEPHYR_DIR}/${repo} not found"
+  cd "${THIRD_PARTY_DIR}/${repo}" || die "${THIRD_PARTY_DIR}/${repo} not found"
   repo start nodiffs . 2>/dev/null || die "repo start failed"
   git pull || die "git pull failed"
   upstream_commit="$(git log | sed -e '/^\s*GitOrigin-RevId:/!d' \
@@ -50,7 +52,8 @@ for repo in "${!zephyr_repos[@]}"; do
       ;;
   esac
   echo "==============================="
-  echo "Diffing ${ZEPHYR_DIR}/${repo} vs ${upstream_repo}@${upstream_branch}"
+  echo -n "Diffing ${THIRD_PARTY_DIR}/${repo} vs "
+  echo "${upstream_repo}@${upstream_branch}"
   git remote rm upstream >/dev/null
   git remote add -f upstream -t "${upstream_branch}" "${upstream_repo}" \
     >/dev/null 2>/dev/null || die "Failed to add upstream remote"
@@ -64,6 +67,7 @@ for repo in "${!zephyr_repos[@]}"; do
 
   git --no-pager diff "${upstream_commit}" ':(exclude).vpython3' \
     ':(exclude)DIR_METADATA' ':(exclude)OWNERS' ':(exclude)PRESUBMIT.cfg' \
+    ':(exclude)cloudbuild_pigweed.yaml' ':(exclude)metadata/md5-cache/OWNERS' \
     || die "git diff failed"
 done
 
