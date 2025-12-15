@@ -21,6 +21,8 @@
 #include "cbi.dtsi"
 #include "fan.dtsi"
 #include "usba.dtsi"
+#include "adc.dtsi"
+#include "temp_sensors.dtsi"
 
 /*
  * Map GPIOs used for interrupts to common names

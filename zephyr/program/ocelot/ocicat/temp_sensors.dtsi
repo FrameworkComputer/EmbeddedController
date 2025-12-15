@@ -1,0 +1,50 @@
+
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+ #include <cros/thermistor/thermistor.dtsi>
+ / {
+	 temp_io_port_thermistor: temp_io_port {
+		 compatible = "cros-ec,temp-sensor-thermistor";
+		 thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+		 adc = <&adc_temp_sensor_1>;
+	 };
+	 temp_cpu_thermistor: temp_cpu {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+		adc = <&adc_temp_sensor_2>;
+	};
+	 temp_board_thermistor: temp_board {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+		adc = <&adc_temp_sensor_3>;
+	};
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_io_port: io_port {
+			temp-host-high = <85>;
+			temp-host-halt = <85>;
+			temp-host-release-high = <85>;
+			power-good-pin = <&gpio_pg_pp1250_soc_s5_od>;
+			sensor = <&temp_io_port_thermistor>;
+		};
+		temp_cpu: cpu {
+			temp-host-high = <85>;
+			temp-host-halt = <85>;
+			temp-host-release-high = <85>;
+			power-good-pin = <&gpio_pg_pp1250_soc_s5_od>;
+			sensor = <&temp_cpu_thermistor>;
+		};
+		temp_board: board {
+			temp-host-high = <85>;
+			temp-host-halt = <85>;
+			temp-host-release-high = <85>;
+			power-good-pin = <&gpio_pg_pp1250_soc_s5_od>;
+			sensor = <&temp_board_thermistor>;
+		};
+	};
+};
+&thermistor_3V3_30K9_47K_4050B {
+	status = "okay";
+};
