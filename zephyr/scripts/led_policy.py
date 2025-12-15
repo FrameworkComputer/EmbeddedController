@@ -4,7 +4,6 @@
 
 """Configure-time checks for the led-policy node."""
 
-from collections import defaultdict
 import logging
 import sys
 from typing import List, Optional
@@ -284,63 +283,6 @@ def iterate_power_states(edt, project_name):
                             prev_coverage,
                         )
     return num_errors
-
-
-def validate_led_colors(edt, project_name):
-    """Iterate all led patterns that are in the led policy and verify that
-       the colors for each pattern are present in a corresponding led driver
-       dts node.
-
-    Args:
-        edt: EDT object representation of a devicetree
-        project_name: Name of the board that is being built
-
-    Returns:
-        num_errors: Number of missing colors detected.
-    """
-
-    led_map = defaultdict(set)
-
-    pins_node = edt.label2node.get("led_pins")
-
-    if pins_node:
-        for led_node in pins_node.children.values():
-            if "led-id" in led_node.props:
-                led_id = led_node.props["led-id"].val
-                for color_node in led_node.children.values():
-                    if "led-color" in color_node.props:
-                        led_color = color_node.props["led-color"].val
-                        led_map[led_id].add(led_color)
-
-    led_policy_nodes = edt.compat2okay["cros-ec,led-policy"]
-
-    if len(led_policy_nodes) != 1:
-        return 0
-    policies = led_policy_nodes[0]
-
-    color_error_set = set()
-    for policy_node in policies.children.values():
-        for led_node in policy_node.children.values():
-            led_id = led_node.props["led-id"].val
-            if led_id not in led_map:
-                color_error_set.add(f"led-id: '{led_id}'")
-                continue
-
-            for color_node in led_node.children.values():
-                led_color = color_node.props["led-color"].val
-                if led_color not in led_map[led_id]:
-                    color_error_set.add(
-                        f"led-id: '{led_id}', color: '{led_color}'"
-                    )
-
-    for s in color_error_set:
-        logging.error(
-            "%s: %s used in led policy is not defined",
-            project_name,
-            s,
-        )
-
-    return len(color_error_set)
 
 
 def parse_args(argv: Optional[List[str]] = None):
