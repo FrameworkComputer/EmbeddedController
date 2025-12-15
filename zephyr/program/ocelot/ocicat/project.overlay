@@ -18,12 +18,15 @@
 #include "usb_typec.dtsi"
 #include "i2c.dtsi"
 #include "console.dtsi"
-#include "cbi.dtsi"
 #include "fan.dtsi"
 #include "usba.dtsi"
 #include "adc.dtsi"
 #include "temp_sensors.dtsi"
 #include "keyboard.dtsi"
+#include "cbi.dtsi"
+#include <cros/cbi_ufsc_std_schema.dtsi>
+#include <cros/cbi_ufsc_oem_schema.dtsi>
+#include "ocicat_ec_ufsc.dtsi"
 
 /*
  * Map GPIOs used for interrupts to common names

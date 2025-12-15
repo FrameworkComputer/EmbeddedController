@@ -14,25 +14,21 @@ LOG_MODULE_DECLARE(fan_init, LOG_LEVEL_INF);
 
 test_export_static void fan_init(void)
 {
-	int ret;
-	uint32_t val;
 	/*
 	 * Retrieve the fan config.
 	 */
-	ret = cros_cbi_get_fw_config(FW_THERMAL_SOLUTION, &val);
-	if (ret != 0) {
-		LOG_ERR("Error retrieving CBI FW_CONFIG field %d",
-			FW_THERMAL_SOLUTION);
-		return;
-	}
-	if (val == FW_THERMAL_SOLUTION_15W) {
-		LOG_INF("FW_THERMAL_SOLUTION_15W, offset: %d",
-			FW_THERMAL_SOLUTION);
-	} else {
+	if (cros_cbi_ufsc_check_match(CBI_UFSC_VALUE_ID(
+		    DT_NODELABEL(ufsc_fw_thermal_solution_15w)))) {
+		/* Fan is present */
+		LOG_INF("FW_THERMAL_SOLUTION_15W");
+	} else if (cros_cbi_ufsc_check_match(CBI_UFSC_VALUE_ID(
+			   DT_NODELABEL(ufsc_fw_thermal_solution_6w)))) {
 		/* Disable the fan */
 		fan_set_count(0);
-		LOG_INF("FW_THERMAL_SOLUTION_6W, offset: %d",
-			FW_THERMAL_SOLUTION);
+		LOG_INF("FW_THERMAL_SOLUTION_6W");
+	} else {
+		LOG_INF("Error retrieving CBI USFC field");
+		return;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, fan_init, HOOK_PRIO_POST_FIRST);
