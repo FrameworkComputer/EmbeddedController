@@ -373,11 +373,6 @@
 			flags = <GPIO_INT_EDGE_RISING>;
 			handler = "pchg_irq";
 		};
-		int_pen_pres: pen_pres{
-			irq-pin = <&gpio_pen_pres>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "pen_pres_irq";
-		};
 		int_batt_pres_en: batt_pres_int{
 			irq-pin = <&gpio_ec_batt_pres_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
