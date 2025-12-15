@@ -27,6 +27,8 @@
 #include <cros/cbi_ufsc_std_schema.dtsi>
 #include <cros/cbi_ufsc_oem_schema.dtsi>
 #include "ocicat_ec_ufsc.dtsi"
+#include "leds_pins.dtsi"
+#include "led_policy.dtsi"
 
 /*
  * Map GPIOs used for interrupts to common names

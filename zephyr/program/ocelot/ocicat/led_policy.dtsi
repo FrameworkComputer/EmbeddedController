@@ -1,0 +1,194 @@
+#include <dt-bindings/battery.h>
+
+/ {
+	led-colors {
+		compatible = "cros-ec,led-policy";
+		led-pins = <&led_pins>;
+
+		/* --------------------------------------------------
+		 * DC MODE (DISCHARGE)
+		 * -------------------------------------------------- */
+
+		/* On battery only (discharge): default off */
+		power-state-discharge {
+			charge-state = "LED_PWRS_DISCHARGE";
+			batt-lvl = <5 BATTERY_LEVEL_FULL>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = <&battery_led_off>;
+				};
+			};
+		};
+
+		power-state-discharge-batt-low {
+			charge-state = "LED_PWRS_DISCHARGE";
+			batt-lvl = <BATTERY_LEVEL_EMPTY 4>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				transition = "LED_TRANSITION_LINEAR";
+
+				/* Amber slow flashing */
+				color-0 {
+					led-color = <&battery_led_amber>;
+					period-ms = <0>;
+				};
+				color-1 {
+					led-color = <&battery_led_amber>;
+					period-ms = <125>;
+				};
+				color-2 {
+					led-color = <&battery_led_off>;
+					period-ms = <875>;
+				};
+			};
+		};
+
+
+		/* --------------------------------------------------
+		 * AC MODE
+		 * -------------------------------------------------- */
+
+		/* LED_PWRS_CHARGE: Battery Amber solid (even in suspend) */
+		power-state-charge {
+			charge-state = "LED_PWRS_CHARGE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_amber>;
+				};
+			};
+		};
+
+		/* LED_PWRS_CHARGE_NEAR_FULL: Battery White solid */
+		power-state-charge-near-full {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_white>;
+				};
+			};
+		};
+
+		/* LED_PWRS_IDLE: External power in IDLE -> Battery White solid */
+		power-state-idle {
+			charge-state = "LED_PWRS_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_white>;
+				};
+			};
+		};
+
+		/* LED_PWRS_FORCED_IDLE */
+		power-state-forced-idle {
+			charge-state = "LED_PWRS_FORCED_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				/* Amber 1s on */
+				color-0 {
+					led-color = <&battery_led_amber>;
+					period-ms = <1000>;
+				};
+				/* Off 1s */
+				color-1 {
+					led-color = <&battery_led_off>;
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		/* LED_PWRS_ERROR */
+		power-state-error {
+			charge-state = "LED_PWRS_ERROR";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				transition = "LED_TRANSITION_LINEAR";
+
+				/* Amber fast flashing */
+				color-0 {
+					led-color = <&battery_led_amber>;
+					period-ms = <0>;
+				};
+				color-1 {
+					led-color = <&battery_led_amber>;
+					period-ms = <125>;
+				};
+				color-2 {
+					led-color = <&battery_led_off>;
+					period-ms = <375>;
+				};
+			};
+		};
+
+
+		/* --------------------------------------------------
+		 * POWER LED
+		 * -------------------------------------------------- */
+
+		/* MODE_NORMAL: Power white solid */
+		power-led-normal {
+			chipset-state = "POWER_S0";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = <&power_led_white>;
+				};
+			};
+		};
+
+		/* MODE_OFF: Power off */
+		power-led-off {
+			chipset-state = "POWER_S5";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = <&power_led_off>;
+				};
+			};
+		};
+
+		/*
+		 * MODE_SUSPEND: breathing
+		 * - off -> white (1500ms) -> off (1500ms) -> repeat
+		 */
+		power-led-suspend {
+			chipset-state = "POWER_S3";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+				transition = "LED_TRANSITION_LINEAR";
+
+				/* fade up */
+				color-0 {
+					led-color = <&power_led_white>;
+					period-ms = <1500>;
+				};
+				/* fade down */
+				color-1 {
+					led-color = <&power_led_off>;
+					period-ms = <1500>;
+				};
+				/* off hold */
+				color-2 {
+					led-color = <&power_led_off>;
+					period-ms = <1500>;
+				};
+			};
+		};
+	};
+};
