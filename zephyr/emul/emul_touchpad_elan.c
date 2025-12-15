@@ -5,10 +5,10 @@
 
 #include "driver/touchpad_elan.h"
 #include "emul/emul_common_i2c.h"
-#include "emul/emul_stub_device.h"
 #include "emul/emul_touchpad_elan.h"
 
 #include <zephyr/device.h>
+#include <zephyr/drivers/emul_stub_device.h>
 
 #define DT_DRV_COMPAT elan_ekth3000
 

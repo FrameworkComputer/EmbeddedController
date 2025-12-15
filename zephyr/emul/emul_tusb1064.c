@@ -5,10 +5,10 @@
 
 #include "driver/usb_mux/tusb1064.h"
 #include "emul/emul_common_i2c.h"
-#include "emul/emul_stub_device.h"
 #include "util.h"
 
 #include <zephyr/device.h>
+#include <zephyr/drivers/emul_stub_device.h>
 
 #define DT_DRV_COMPAT zephyr_tusb1064_emul
 

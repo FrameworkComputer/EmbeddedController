@@ -6,11 +6,11 @@
 #include "common.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_rt1739.h"
-#include "emul/emul_stub_device.h"
 
 #include <stdlib.h>
 
 #include <zephyr/device.h>
+#include <zephyr/drivers/emul_stub_device.h>
 #include <zephyr/sys/slist.h>
 #include <zephyr/ztest.h>
 

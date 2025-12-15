@@ -11,7 +11,6 @@
 #include "chipset.h"
 #include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
-#include "emul/emul_stub_device.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "hooks.h"
 #include "lpc.h"
@@ -21,6 +20,7 @@
 #include "test/drivers/stubs.h"
 #include "test/drivers/utils.h"
 
+#include <zephyr/drivers/emul_stub_device.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/kernel.h>
 #include <zephyr/mgmt/ec_host_cmd/simulator.h>

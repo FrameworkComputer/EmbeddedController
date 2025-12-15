@@ -7,11 +7,11 @@
 #include "driver/ppc/ktu1125.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_ktu1125.h"
-#include "emul/emul_stub_device.h"
 
 #include <stdlib.h>
 
 #include <zephyr/device.h>
+#include <zephyr/drivers/emul_stub_device.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/sys/slist.h>
 #include <zephyr/ztest.h>

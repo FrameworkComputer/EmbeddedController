@@ -4,10 +4,10 @@
  */
 
 #include "ec_commands.h"
-#include "emul/emul_stub_device.h"
 #include "host_command.h"
 #include "test_state.h"
 
+#include <zephyr/drivers/emul_stub_device.h>
 #include <zephyr/ztest.h>
 
 ZTEST(host_cmd, test_hibernate_get)

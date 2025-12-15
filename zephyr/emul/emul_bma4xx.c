@@ -7,7 +7,6 @@
 #include "driver/accel_bma4xx.h"
 #include "emul/emul_bma4xx.h"
 #include "emul/emul_common_i2c.h"
-#include "emul/emul_stub_device.h"
 #include "i2c.h"
 #include "motion_sense.h"
 
@@ -15,6 +14,7 @@
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/emul_stub_device.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/logging/log.h>

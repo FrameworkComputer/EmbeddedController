@@ -5,11 +5,11 @@
 
 #include "driver/accelgyro_icm42607.h"
 #include "emul/emul_icm42607.h"
-#include "emul/emul_stub_device.h"
 #include "queue.h"
 #include "util.h"
 
 #include <zephyr/device.h>
+#include <zephyr/drivers/emul_stub_device.h>
 
 #define DT_DRV_COMPAT zephyr_icm42607_emul
 

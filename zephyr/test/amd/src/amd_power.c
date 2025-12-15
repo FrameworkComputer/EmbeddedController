@@ -6,7 +6,6 @@
 #include "console.h"
 #include "driver/amd_stb.h"
 #include "ec_app_main.h"
-#include "emul/emul_stub_device.h"
 #include "gpio.h"
 #include "gpio/gpio_int.h"
 #include "gpio_signal.h"
@@ -22,6 +21,7 @@
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
+#include <zephyr/drivers/emul_stub_device.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/fff.h>

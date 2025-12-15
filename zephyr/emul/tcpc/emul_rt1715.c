@@ -4,12 +4,12 @@
  */
 
 #include "emul/emul_common_i2c.h"
-#include "emul/emul_stub_device.h"
 #include "emul/tcpc/emul_rt1715.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "tcpm/tcpci.h"
 
 #include <zephyr/device.h>
+#include <zephyr/drivers/emul_stub_device.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/ztest.h>
 

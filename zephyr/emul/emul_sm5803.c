@@ -5,8 +5,8 @@
 #include "driver/charger/sm5803.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_sm5803.h"
-#include "emul/emul_stub_device.h"
 
+#include <zephyr/drivers/emul_stub_device.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>

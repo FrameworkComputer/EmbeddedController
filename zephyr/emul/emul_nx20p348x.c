@@ -7,7 +7,6 @@
 #include "driver/tcpm/tcpci.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_nx20p348x.h"
-#include "emul/emul_stub_device.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "emul/utils.h"
 #include "usbc/ppc_nx20p348x.h"
@@ -17,6 +16,7 @@
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/emul_stub_device.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>

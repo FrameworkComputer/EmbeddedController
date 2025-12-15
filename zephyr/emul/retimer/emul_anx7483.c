@@ -4,9 +4,9 @@
  */
 #include "driver/retimer/anx7483.h"
 #include "emul/emul_common_i2c.h"
-#include "emul/emul_stub_device.h"
 #include "emul/retimer/emul_anx7483.h"
 
+#include <zephyr/drivers/emul_stub_device.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
 

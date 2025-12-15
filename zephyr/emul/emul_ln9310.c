@@ -6,7 +6,6 @@
 #include "driver/ln9310.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_ln9310.h"
-#include "emul/emul_stub_device.h"
 #include "hooks.h"
 #include "i2c.h"
 
@@ -15,6 +14,7 @@
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/emul_stub_device.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/drivers/i2c.h>
