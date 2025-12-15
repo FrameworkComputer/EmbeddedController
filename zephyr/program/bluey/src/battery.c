@@ -60,6 +60,7 @@ void board_chipset_pre_init(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, board_chipset_pre_init, HOOK_PRIO_DEFAULT);
 
+#if defined(CONFIG_PLATFORM_EC_BATTERY_ACCESS_LIMIT)
 enum battery_access_type battery_check_access_limit(void)
 {
 	if (!chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
@@ -69,3 +70,4 @@ enum battery_access_type battery_check_access_limit(void)
 
 	return BATTERY_ACCESS_ALLOWED;
 }
+#endif
