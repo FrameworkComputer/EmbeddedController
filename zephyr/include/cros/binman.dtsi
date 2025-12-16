@@ -29,6 +29,7 @@
 				size = <0x0>;
 			};
 			ec-ro {
+				compatible = "cros-ec,flash-layout";
 				type = "section";
 				pad-byte = <0xff>;
 				ro-fw {

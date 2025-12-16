@@ -40,7 +40,6 @@ properties:
       supported patterns.
   size:
     type: int
-    required: true
     description: >-
       The size of the flash region, in bytes.
   read-only:
