@@ -125,6 +125,17 @@ ZTEST_USER_F(usbc_frs, test_frs_enable)
 				      &power_control));
 	zassert_equal(power_control & TCPC_REG_POWER_CTRL_FRS_ENABLE,
 		      TCPC_REG_POWER_CTRL_FRS_ENABLE);
+
+	/* AP reboot to cover lines that only reachable when FRS enabled. */
+	zassert_equal(POWER_S0, power_get_state());
+	test_set_chipset_to_power_level(POWER_G3);
+	test_set_chipset_to_power_level(POWER_S0);
+
+	/* FRS keeps enabled after ap reboot. */
+	zassert_ok(tcpci_emul_get_reg(common->tcpci_emul, TCPC_REG_POWER_CTRL,
+				      &power_control));
+	zassert_equal(power_control & TCPC_REG_POWER_CTRL_FRS_ENABLE,
+		      TCPC_REG_POWER_CTRL_FRS_ENABLE);
 }
 
 ZTEST_USER_F(usbc_frs, test_frs_got_signal_fail)

@@ -777,9 +777,24 @@ static void init_cable_rev(int port)
 #define prl_send_ext_data_msg DO_NOT_USE
 #define prl_send_ctrl_msg DO_NOT_USE
 
+static void pe_set_frs_enable(int port, int enable);
+
+static void pe_reset_flags(int port)
+{
+	if (PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_ENABLED)) {
+		/* Calling set_frs_enable(port, 1) twice in a roll may break the
+		 * state of registers.
+		 */
+		pe_set_frs_enable(port, 0);
+	}
+
+	/* Reset flags */
+	memset(&pe[port].flags_a, 0, sizeof(pe[port].flags_a));
+}
+
 static void pe_init(int port)
 {
-	memset(&pe[port].flags_a, 0, sizeof(pe[port].flags_a));
+	pe_reset_flags(port);
 	pe[port].dpm_request = 0;
 	pe[port].dpm_curr_request = 0;
 	pd_timer_disable_range(port, PE_TIMER_RANGE);
@@ -3299,8 +3314,7 @@ static void pe_src_transition_to_default_entry(int port)
 {
 	print_current_state(port);
 
-	/* Reset flags */
-	memset(&pe[port].flags_a, 0, sizeof(pe[port].flags_a));
+	pe_reset_flags(port);
 
 	/* Reset DPM Request */
 	pe[port].dpm_request = 0;
@@ -4323,8 +4337,7 @@ static void pe_snk_transition_to_default_entry(int port)
 {
 	print_current_state(port);
 
-	/* Reset flags */
-	memset(&pe[port].flags_a, 0, sizeof(pe[port].flags_a));
+	pe_reset_flags(port);
 
 	/* Reset DPM Request */
 	pe[port].dpm_request = 0;
