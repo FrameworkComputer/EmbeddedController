@@ -88,6 +88,9 @@
 		gpio_ec_soc_wake_odl: ec_soc_wake_odl {
 			gpios = <&gpiob 0 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_OUTPUT_INIT_LOW)>;
 		};
+		gpio_sen_mode2_ec_ish_int_odl: sen_mode2_ec_ish_int_odl {
+			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
+		};
 		/* The legacy system code requires GPIO_ENTERING_RW symbol */
 		gpio_ec_entering_rw: ec_entering_rw {
 			enum-name = "GPIO_ENTERING_RW";

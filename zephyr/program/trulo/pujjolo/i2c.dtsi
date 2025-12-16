@@ -18,6 +18,6 @@
         dsp_service: dsp-service@21 {
                 compatible = "cros,dsp-service";
                 reg = <0x21>;
-                int-gpios = <&gpiod 7 (GPIO_ACTIVE_LOW)>;
+                int-gpios = <&gpiod 7 (GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
         };
 };
