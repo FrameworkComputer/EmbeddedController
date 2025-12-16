@@ -2432,11 +2432,9 @@ pdc_snk_attached_send_set_rdo(struct pdc_port_t *port,
 static void pdc_snk_seed_charge_manager(struct pdc_port_t *port, uint32_t pdo)
 {
 	const struct pdc_config_t *const config = port->dev->config;
-	uint32_t max_ma, max_mv, max_mw;
+	uint32_t max_ma, max_mv, max_mw, unused;
 
-	max_ma = min(PDO_FIXED_CURRENT(pdo),
-		     CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA);
-	max_mv = PDO_FIXED_VOLTAGE(pdo);
+	pd_extract_pdo_power(pdo, &max_ma, &max_mv, &unused);
 	max_mw = max_ma * max_mv / 1000;
 
 	/* Only the fixed 5V PDO at index 0 has the UP and DRP bits set */
@@ -2445,9 +2443,10 @@ static void pdc_snk_seed_charge_manager(struct pdc_port_t *port, uint32_t pdo)
 	LOG_INF("C%d: Available charging (%sconstrained)",
 		config->connector_num,
 		(vsafe_5v_pdo & PDO_FIXED_GET_UNCONSTRAINED_PWR) ? "un" : "");
-	LOG_INF("  PDO: %08x", pdo);
+	LOG_INF("  PDO: %08x (RDO pos %d)", pdo,
+		RDO_POS(port->connector_status.rdo));
 	LOG_INF("  V: %d", max_mv);
-	LOG_INF("  C: %d", max_ma);
+	LOG_INF("  I: %d", max_ma);
 	LOG_INF("  P: %d", max_mw);
 
 	if (port->sink_path_status) {

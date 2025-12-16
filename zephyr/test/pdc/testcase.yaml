@@ -185,6 +185,23 @@ tests:
     extra_dtc_overlay_files:
     - "./boards/rts5453p.overlay"
 
+  pdc.policy.sink.wattage_limit:
+    timeout: 300
+    extra_configs:
+    - CONFIG_TEST_SUITE_PDC_POLICY_SINK=y
+    - CONFIG_USBC_PDC_TRACE_MSG=y
+    - CONFIG_USB_PDC_LOG_LEVEL_DBG=y
+    - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
+    - CONFIG_PLATFORM_EC_USB_PD_FRS=y
+    - CONFIG_TEST_SNIFF_POWER_MGMT_PDC_APIS=y
+    # Max wattage is lower than max voltage x max current
+    - CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV=20000
+    - CONFIG_PLATFORM_EC_USB_PD_MAX_POWER_MW=45000
+    - CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA=3000
+    - CONFIG_PLATFORM_EC_USB_PD_PREFER_HIGH_VOLTAGE=y
+    extra_dtc_overlay_files:
+    - "./boards/rts5453p.overlay"
+
   pdc.battery_status:
     timeout: 300
     extra_configs:

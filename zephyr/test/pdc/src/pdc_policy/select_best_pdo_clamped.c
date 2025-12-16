@@ -61,10 +61,15 @@ ZTEST(pd_select_best_pdo_clamped, test_max_voltage)
 	zassert_equal(pd_select_best_pdo(ARRAY_SIZE(partner_src_pdo),
 					 partner_src_pdo,
 					 CONFIG_USB_PD_MAX_VOLTAGE_MV, &pdo),
-		      2, "Failed to select 15V/4A fixed PDO");
+		      2, "Failed to select 20V/4A fixed PDO");
 
-	pd_extract_pdo_power_unclamped(pdo, &ma, &max_mv, &min_mv);
+	pd_extract_pdo_power(pdo, &ma, &max_mv, &min_mv);
 	zassert_true(max_mv <= CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV);
+	zassert_true(ma <= CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA);
+	zassert_true(max_mv * ma <=
+			     CONFIG_PLATFORM_EC_USB_PD_MAX_POWER_MW * 1000,
+		     "%umV x %umA exceeds board wattage limit of %umW", max_mv,
+		     ma, CONFIG_PLATFORM_EC_USB_PD_MAX_POWER_MW);
 }
 
 ZTEST(pd_select_best_pdo_clamped, test_valid_voltage)
