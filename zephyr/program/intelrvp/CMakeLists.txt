@@ -22,9 +22,9 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_STRAUSS "src/kbd_straus
 
 if((DEFINED CONFIG_BOARD_ADLRVP_MCHP) OR (DEFINED CONFIG_BOARD_ADLRVP_NPCX))
   add_subdirectory(adlrvp)
-  zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "${PLATFORM_EC}/baseboard/intelrvp/usb_pd_policy_mecc_1_0.c")
-  zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "${PLATFORM_EC}/baseboard/intelrvp/chg_usb_pd_mecc_1_0.c")
-  zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "${PLATFORM_EC}/baseboard/intelrvp/chg_usb_pd.c")
+  zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/usb_pd_policy_mecc_1_0.c")
+  zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/chg_usb_pd_mecc_1_0.c")
+  zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/chg_usb_pd.c")
   zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_PWM "src/intel_rvp_led.c")
 endif()
 
