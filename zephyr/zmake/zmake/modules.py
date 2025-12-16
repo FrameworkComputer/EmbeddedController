@@ -57,13 +57,38 @@ known_modules = {
     "boringssl": lambda name, checkout: (
         checkout / "src" / "third_party" / name
     ),
-    "hal_stm32": third_party_module,
+    "hal_stm32": lambda name, checkout: (
+        checkout
+        / "src"
+        / "third_party"
+        / "zephyrproject"
+        / "modules"
+        / "hal"
+        / "stm32"
+    ),
     "chre": chre_module,
-    "cmsis": third_party_module,
+    "cmsis": lambda name, checkout: (
+        checkout
+        / "src"
+        / "third_party"
+        / "zephyrproject"
+        / "modules"
+        / "hal"
+        / "cmsis"
+    ),
     "cmsis_6": third_party_module,
     "ec": lambda name, checkout: (checkout / "src" / "platform" / "ec"),
     "egis": lambda name, checkout: (
         checkout / "src" / "platform" / "fingerprint" / "egis"
+    ),
+    "egis_module": lambda name, checkout: (
+        checkout
+        / "src"
+        / "third_party"
+        / "zephyrproject"
+        / "modules"
+        / "hal"
+        / "egis_module"
     ),
     "elan": lambda name, checkout: (
         checkout / "src" / "platform" / "fingerprint" / "elan"
@@ -71,9 +96,26 @@ known_modules = {
     "fpc": lambda name, checkout: (
         checkout / "src" / "platform" / "fingerprint" / "fpc"
     ),
+    "hal_egis": lambda name, checkout: (
+        checkout
+        / "src"
+        / "third_party"
+        / "zephyrproject"
+        / "modules"
+        / "hal"
+        / "egis"
+    ),
     "nanopb": third_party_module,
     "pigweed": lambda name, checkout: (checkout / "src" / "third_party" / name),
-    "hal_intel_public": third_party_module,
+    "hal_intel_public": lambda name, checkout: (
+        checkout
+        / "src"
+        / "third_party"
+        / "zephyrproject"
+        / "modules"
+        / "hal"
+        / "intel"
+    ),
     "picolibc": third_party_module,
     "google-private": third_party_module,
     "intel_module_private": third_party_module,
