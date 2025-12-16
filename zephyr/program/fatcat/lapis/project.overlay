@@ -30,6 +30,7 @@
 #include "usb_typec.dtsi"
 #include "usba.dtsi"
 #include "rtk_ulpm.dtsi"
+#include <lapis/overlay.dtsi>
 
 /*
  * Aliases to common names
