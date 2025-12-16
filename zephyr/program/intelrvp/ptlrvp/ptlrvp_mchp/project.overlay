@@ -20,10 +20,10 @@
 #include "../i2c.dtsi"
 #include "../ioex_gpio.dtsi"
 #include "../interrupts.dtsi"
-#include "../pd.dtsi"
+#include "../runtime_pd.dtsi"
 #include "../power_signals.dtsi"
 #include "../temp_sensor.dts"
-#include "../usbc.dtsi"
+#include "../runtime_usbc.dtsi"
 #include "../led_pins.dtsi"
 #include "../led_policy.dtsi"
 
