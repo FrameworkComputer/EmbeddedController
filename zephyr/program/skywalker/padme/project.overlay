@@ -62,11 +62,6 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "motion_interrupt";
 		};
-		int_jd1: jd1 {
-			irq-pin = <&gpio_jd1>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "audio_jack_interrupt";
-		};
 		pogo_prsnt_int: pogo-prsnt-int {
 			irq-pin = <&pogo_prsnt_int_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
@@ -119,10 +114,6 @@
 			gpios = <&gpioh 3 GPIO_INPUT>;
 		};
 
-		gpio_jd1: jd1 {
-			gpios = <&gpiod 7 GPIO_INPUT>;
-		};
-
 		gpio_5p0va_pwr_mode: 5p0va_pwr_mode {
 			gpios = <&gpiod 5 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
 		};
@@ -166,6 +157,7 @@
 		unused-gpios =
 			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
 			<&gpiob 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpiod 7 GPIO_INPUT_PULL_DOWN>,
 			<&gpiof 2 GPIO_INPUT_PULL_DOWN>,
 			<&gpiog 0 GPIO_INPUT_PULL_DOWN>,
 			<&gpiog 1 GPIO_INPUT_PULL_DOWN>,
