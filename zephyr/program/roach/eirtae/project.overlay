@@ -174,10 +174,10 @@
 		status = "okay";
 		reg = <0x38>;
 		irq = <&int_tchpad>;
-		logical-max-x = <3280>;
-		logical-max-y = <1980>;
-		physical-max-x = <1040>;
-		physical-max-y = <605>;
+		logical-max-x = <3216>;
+		logical-max-y = <1844>;
+		physical-max-x = <1020>;
+		physical-max-y = <585>;
 	};
 };
 
