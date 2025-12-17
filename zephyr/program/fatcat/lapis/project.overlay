@@ -26,6 +26,7 @@
 #include "temp_sensors.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
+#include "spi.dtsi"
 #include "thermistor.dtsi"
 #include "usb_typec.dtsi"
 #include "usba.dtsi"

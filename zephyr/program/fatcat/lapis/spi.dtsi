@@ -1,0 +1,22 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/macros.h>
+
+&spi0 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&spi_mosi_gpio096>;
+
+	spi0_dev0: spi0_dev0@0 {
+		reg = <0>;
+		spi-max-frequency = <3333333>;
+		chain-length = <4>;
+		spi-one-frame = <BINARY(1,1,1,0)>;
+		spi-zero-frame = <BINARY(1,0,0,0)>;
+		bits-per-symbol = <4>;
+		reset-delay = <50>;
+	};
+};
