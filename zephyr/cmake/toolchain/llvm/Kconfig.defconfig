@@ -1,0 +1,7 @@
+# Our LLVM toolchain has all the limits defined in limits.h,
+# so we don't want to use zephyr/posix/posix_limits.h.
+
+config NEWLIB_LIBC_USE_POSIX_LIMITS_H
+        bool
+        default n
+
