@@ -16,6 +16,7 @@ void ztest_post_fatal_error_hook(unsigned int reason,
 				 const struct arch_esf *pEsf)
 {
 	zassert_equal(reason, K_ERR_CPU_EXCEPTION);
+	ztest_set_fault_valid(false);
 }
 
 void null_pointer_dereference(void)
