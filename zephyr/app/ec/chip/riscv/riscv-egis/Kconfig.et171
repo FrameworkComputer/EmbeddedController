@@ -31,6 +31,10 @@ config CROS_EC_RO_MEM_OFF
 config CROS_EC_RO_SIZE
 	default $(dt_node_int_prop_hex,/binman/wp-ro/ec-ro,size)
 
+config SOC_EGIS_ET171_VENDOR_FIRMWARE_SIZE
+	# Use the RO size minus the signature size for secure boot
+	default $(sub_hex,$(dt_node_int_prop_hex,/binman/wp-ro/ec-ro,size),0x40)
+
 config CROS_EC_RW_MEM_OFF
 	default $(dt_node_int_prop_hex,/binman/ec-rw,offset)
 
