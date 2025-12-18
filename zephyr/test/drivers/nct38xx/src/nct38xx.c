@@ -8,6 +8,7 @@
 #include "driver/tcpm/tcpm.h"
 #include "emul/tcpc/emul_nct38xx.h"
 #include "test/drivers/utils.h"
+#include "zephyr/shim/include/usbc/tcpc_nct38xx.h"
 
 #include <zephyr/drivers/emul.h>
 #include <zephyr/ztest.h>
@@ -129,6 +130,7 @@ static void validate_init(void)
 {
 	int rv;
 	uint16_t val;
+	const struct device *dev;
 
 	/* Validate REG_CTRL_OUT_EN flags.*/
 	rv = nct38xx_emul_test_get_reg(NCT38XX_REG_CTRL_OUT_EN, &val);
@@ -164,6 +166,10 @@ static void validate_init(void)
 	zassert_true(val & (NCT38XX_REG_VBC_FAULT_CTL_VC_OCP_EN |
 			    NCT38XX_REG_VBC_FAULT_CTL_VC_SCP_EN |
 			    NCT38XX_REG_VBC_FAULT_CTL_FAULT_VC_OFF));
+
+	dev = nct38xx_get_gpio_device_from_port(NCT38XX_PORT);
+	zassert_not_null(dev);
+	zassert_true(device_is_ready(dev));
 }
 
 /* Tests nct38xx_tcpm_init from a non-dead battery. */
@@ -548,4 +554,42 @@ ZTEST(nct38xx, test_mfd_lock)
 	zassert_equal(EC_SUCCESS,
 		      tcpc_xfer(NCT38XX_PORT, &reg, 1, (uint8_t *)&val, 2),
 		      NULL);
+}
+
+/* Test vendor defined alert when device is not ready. */
+ZTEST(nct38xx, test_vendor_defined_alert_device_not_ready)
+{
+	const struct device *dev;
+	struct device_state *state;
+	int original_res;
+	uint16_t val;
+	int rv;
+
+	dev = nct38xx_get_gpio_device_from_port(NCT38XX_PORT);
+	zassert_not_null(dev, "Device should not be NULL");
+	zassert_true(device_is_ready(dev), "Device should be ready initially");
+
+	state = (struct device_state *)dev->state;
+	original_res = state->init_res;
+
+	/* Simulate device not ready */
+	state->init_res = -1;
+	zassert_false(device_is_ready(dev), "Device should not be ready now");
+
+	/* Trigger vendor defined alert */
+	rv = nct38xx_emul_test_set_reg(TCPC_REG_ALERT,
+				       TCPC_REG_ALERT_VENDOR_DEF);
+	zassert_ok(rv, "Failed to set alert register");
+
+	/* Call the alert handler */
+	nct38xx_tcpm_drv.tcpc_alert(NCT38XX_PORT);
+
+	/* Restore device state */
+	state->init_res = original_res;
+	zassert_true(device_is_ready(dev), "Device should be ready again");
+
+	/* Verify alert register state (optional, just ensuring no crash
+	 * occurred) */
+	rv = nct38xx_emul_test_get_reg(TCPC_REG_ALERT, &val);
+	zassert_ok(rv, "Failed to get alert register");
 }
