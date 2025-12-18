@@ -14,9 +14,7 @@
  * keyboard_cols, which holds a runtime column size.
  */
 #undef KEYBOARD_COLS_MAX
-#undef KEYBOARD_ROWS
 
 #define KEYBOARD_COLS_MAX 17
-#define KEYBOARD_ROWS 8
 
 #endif /* __KBD_STRAUSS_H */

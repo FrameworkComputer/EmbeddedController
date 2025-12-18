@@ -12,6 +12,9 @@
 
 #define KEYBOARD_ROW_TO_MASK(r) (1 << (r))
 
+/* Rows is always 8 */
+#define KEYBOARD_ROWS 8
+
 #ifdef CONFIG_KEYBOARD_CUSTOMIZATION
 /* include the board layer keyboard header file */
 #include "keyboard_customization.h"
@@ -38,7 +41,6 @@
 #ifndef KEYBOARD_COLS_MAX
 #define KEYBOARD_COLS_MAX KEYBOARD_COLS
 #endif
-#define KEYBOARD_ROWS 8
 
 #ifdef __cplusplus
 extern "C" {

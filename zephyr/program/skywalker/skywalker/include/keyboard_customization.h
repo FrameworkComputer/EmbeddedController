@@ -9,7 +9,6 @@
 #define __KEYBOARD_CUSTOMIZATION_H
 
 #define KEYBOARD_COLS_MAX 15
-#define KEYBOARD_ROWS 8
 
 /* Columns and Rows for keys we particularly care about */
 #define KEYBOARD_COL_DOWN 11

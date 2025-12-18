@@ -22,7 +22,6 @@
 #else
 #define KEYBOARD_COLS_MAX KEYBOARD_COLS_NO_KEYPAD
 #endif
-#define KEYBOARD_ROWS 8
 
 /* Columns for keys we particularly care about */
 #define KEYBOARD_COL_DOWN 11

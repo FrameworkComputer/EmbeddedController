@@ -16,5 +16,4 @@
  * keyboard_cols, which holds a runtime column size.
  */
 #define KEYBOARD_COLS_MAX DT_PROP(DT_NODELABEL(kbd), col_size)
-#define KEYBOARD_ROWS DT_PROP(DT_NODELABEL(kbd), row_size)
 #endif /* __KEYBOARD_CUSTOMIZATION_H */

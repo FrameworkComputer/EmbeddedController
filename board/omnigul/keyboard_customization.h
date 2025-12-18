@@ -14,7 +14,6 @@
  * keyboard_cols, which holds a runtime column size.
  */
 #define KEYBOARD_COLS_MAX 15
-#define KEYBOARD_ROWS 8
 
 #define KEYBOARD_COLS_NO_KEYPAD 13
 

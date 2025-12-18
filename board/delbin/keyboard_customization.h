@@ -14,7 +14,6 @@
  * keyboard_cols, which holds a runtime column size.
  */
 #define KEYBOARD_COLS_MAX 16
-#define KEYBOARD_ROWS 8
 
 #define DELBIN_KEYBOARD_COL_DOWN 11
 #define DELBIN_KEYBOARD_ROW_DOWN 6
