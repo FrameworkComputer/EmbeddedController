@@ -298,10 +298,10 @@
 
 		reg = <0x56>;
 		max-pressure = <255>;
-		logical-max-x = <2925>;
-		logical-max-y = <1426>;
-		physical-max-x = <929>;
-		physical-max-y = <457>;
+		logical-max-x = <3216>;
+		logical-max-y = <1844>;
+		physical-max-x = <1020>;
+		physical-max-y = <585>;
 
 		/* TODO(b/301380459): allocate pid */
 		vid = <0x18d1>;
