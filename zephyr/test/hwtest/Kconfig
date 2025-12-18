@@ -143,6 +143,13 @@ config HW_TEST_PANIC_DATA
 	help
 	  It verifies panic data across different reboots.
 
+config HW_TEST_PMP_ENTRIES
+	bool "pmp entries test"
+	select ZTEST
+	depends on RISCV_PMP
+	help
+	  The test verifies the pmp entries in both RO and RW.
+
 config HW_TEST_PRINTF
 	bool "printf test"
 	select ZTEST

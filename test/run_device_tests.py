@@ -706,6 +706,29 @@ class AllTests:
             # task_wait_event is implemented based on k_poll_event and it is verified by
             # the kernel.poll test.
             TestConfig(test_name="pingpong", skip_for_zephyr=True),
+            TestConfig(
+                config_name="pmp_entries_ro",
+                test_name="pmp_entries",
+                exclude_boards=[
+                    BLOONCHIPPER,
+                    DARTMONKEY,
+                    HELIPILOT,
+                    BUCCANEER,
+                    GWENDOLIN,
+                ],
+                imagetype_to_use=ImageType.RO,
+            ),
+            TestConfig(
+                config_name="pmp_entries_rw",
+                test_name="pmp_entries",
+                exclude_boards=[
+                    BLOONCHIPPER,
+                    DARTMONKEY,
+                    HELIPILOT,
+                    BUCCANEER,
+                    GWENDOLIN,
+                ],
+            ),
             TestConfig(test_name="printf"),
             TestConfig(test_name="queue"),
             TestConfig(
