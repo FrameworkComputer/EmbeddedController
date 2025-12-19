@@ -959,10 +959,12 @@ static int x86_non_dsx_s0_run(void *data)
 	}
 #if CONFIG_AP_PWRSEQ_S0IX
 	if (ap_power_sleep_get_notify() == AP_POWER_SLEEP_SUSPEND &&
-	    power_signals_on(IN_PCH_SLP_S0)) {
+	    power_signal_get(PWR_SLP_S0) != 0) {
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S0ix);
 	} else if (ap_power_sleep_get_notify() == AP_POWER_SLEEP_RESUME) {
 		ap_power_sleep_notify_transition(AP_POWER_SLEEP_RESUME);
+	} else if (power_signal_get(PWR_SLP_S0) == 0) {
+		disable_sleep(SLEEP_MASK_AP_RUN);
 	}
 #endif
 
