@@ -34,6 +34,12 @@ struct rollback_info rollback_info = {
 	.region_1_offset = 0x30000,
 	.region_size_bytes = 64 * 1024,
 };
+#elif defined(CONFIG_SOC_EGIS_ET171)
+struct rollback_info rollback_info = {
+	.region_0_offset = 0x40000,
+	.region_1_offset = 0x41000,
+	.region_size_bytes = 4 * 1024,
+};
 #else
 #error "Rollback info not defined for this chip. Please add it."
 #endif
