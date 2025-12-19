@@ -136,6 +136,14 @@ config CROS_EC_RW_SIZE
 		This will be used (along with SYSTEM_RW_MEM_OFF) to determine if the
 		current PC is in the RW section.
 
+config CROS_EC_FIRMWARE_LOAD_OFF
+	hex "The offset in flash to load firmware"
+	default 0x0
+	help
+	  The offset in flash at which a firmware binary is loaded.
+	  The config is used to determine storage offsets properly in case the
+	  offset is not 0.
+
 # By default, a unit test doesn't need shimmed tasks.
 config SHIMMED_TASKS
 	bool "Add support for shimming in platform/ec tasks as Zephyr threads"
