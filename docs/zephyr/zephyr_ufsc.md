@@ -175,10 +175,15 @@ ectool cbi set 29 4433221188776655ccbbaa9900ffeedd
 ```
 
 To generate a CBI image file containing UFSC data, use the `cbi-util` tool.
-The `--ufsc` argument requires four comma-separated 32-bit hexadecimal values
-(DWORD 0 to DWORD 3).
-
-Using the same example data as above:
+There are two ways to provide UFSC data:
+* Hex string format: Use the `--ufsc_hex` argument to provide a raw hex string.
+This aligns with the ectool format.
+```bash
+cbi-util create --file cbi.bin --board_version 1 --sku_id 1 --size 256 \
+    --ufsc_hex 4433221188776655ccbbaa9900ffeedd
+```
+* Integer list format: Use the `--ufsc` argument with four comma-separated
+32-bit hexadecimal values (DWORD 0 to DWORD 3).
 ```bash
 cbi-util create --file cbi.bin --board_version 1 --sku_id 1 --size 256 \
     --ufsc 0x11223344,0x55667788,0x99aabbcc,0xddeeff00

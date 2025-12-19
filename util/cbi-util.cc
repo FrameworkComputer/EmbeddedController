@@ -44,6 +44,7 @@ enum {
 	OPT_REWORK_ID,
 	OPT_FACTORY_CALIBRATION_DATA,
 	OPT_UFSC,
+	OPT_UFSC_HEX,
 	OPT_SIZE,
 	OPT_ERASE_BYTE,
 	OPT_SHOW_ALL,
@@ -64,6 +65,7 @@ static const struct option opts_create[] = {
 	{ "rework_id", 1, 0, OPT_REWORK_ID },
 	{ "factory_calibration_data", 1, 0, OPT_FACTORY_CALIBRATION_DATA },
 	{ "ufsc", 1, 0, OPT_UFSC },
+	{ "ufsc_hex", 1, 0, OPT_UFSC_HEX },
 	{ "size", 1, 0, OPT_SIZE },
 	{ "erase_byte", 1, 0, OPT_ERASE_BYTE },
 	{ NULL, 0, 0, 0 }
@@ -121,6 +123,9 @@ const char help_create[] =
 	"                               separated 32-bit hex values for\n"
 	"                               DWORDs 0-3 respectively.\n"
 	"                               (eg, 0x1,0x202,0x30303,0x4040404)\n"
+	"  --ufsc_hex <hex_string>    UFSC data as a hex string (little-endian)\n"
+	"                               Must be exactly 32 hexadecimal characters.\n"
+	"                               (eg, 01000000020200000303030004040404)\n"
 	"\n"
 	"<value> must be a positive integer <= 0XFFFFFFFF, <lvalue> must be a\n"
 	"  positive integer <= 0xFFFFFFFFFFFFFFFF and field size can be\n"
@@ -357,6 +362,33 @@ out:
 	return rv;
 }
 
+static int parse_ufsc_hex_field(const char *arg, struct cbi_ufsc *ufsc)
+{
+	size_t len = strlen(arg);
+	uint8_t *raw_buf = (uint8_t *)ufsc;
+	char hex[3] = { 0 };
+	char *end;
+
+	if (len != sizeof(struct cbi_ufsc) * 2) {
+		fprintf(stderr,
+			"Invalid UFSC hex length. Expected %zu chars, got %zu\n",
+			sizeof(struct cbi_ufsc) * 2, len);
+		return -1;
+	}
+
+	for (size_t i = 0; i < sizeof(struct cbi_ufsc); i++) {
+		hex[0] = arg[i * 2];
+		hex[1] = arg[i * 2 + 1];
+		raw_buf[i] = (uint8_t)strtoul(hex, &end, 16);
+		if (*end != '\0') {
+			fprintf(stderr,
+				"Invalid hex character in UFSC string\n");
+			return -1;
+		}
+	}
+	return 0;
+}
+
 static int cmd_create(int argc, char **argv)
 {
 	uint8_t *cbi;
@@ -462,7 +494,20 @@ static int cmd_create(int argc, char **argv)
 				return -1;
 			break;
 		case OPT_UFSC:
+			if (ufsc_present) {
+				fprintf(stderr, "UFSC already specified\n");
+				return -1;
+			}
 			if (parse_ufsc_field(optarg, &bi.ufsc))
+				return -1;
+			ufsc_present = 1;
+			break;
+		case OPT_UFSC_HEX:
+			if (ufsc_present) {
+				fprintf(stderr, "UFSC already specified\n");
+				return -1;
+			}
+			if (parse_ufsc_hex_field(optarg, &bi.ufsc))
 				return -1;
 			ufsc_present = 1;
 			break;
@@ -590,6 +635,11 @@ static void print_ufsc(const uint8_t *buf, enum cbi_data_tag tag)
 
 	ufsc = (struct cbi_ufsc *)d->value;
 	printf("    %s: (%u, %u)\n", name, d->tag, d->size);
+	printf("      Hex: ");
+	for (i = 0; i < sizeof(struct cbi_ufsc); i++) {
+		printf("%02x", ((uint8_t *)ufsc)[i]);
+	}
+	printf("\n");
 	for (i = 0; i < CBI_UFSC_DATA_COUNT; i++)
 		printf("      DWORD[%d]: 0x%08x\n", i, ufsc->data[i]);
 }
