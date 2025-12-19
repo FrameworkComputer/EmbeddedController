@@ -1,0 +1,236 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/cbi_flash.dtsi>
+#include "../npcx_generated.dtsi"
+#include "../interrupts.dtsi"
+#include "../npcx_common.dtsi"
+#include "../npcx_default_gpio_pinctrl.dtsi"
+#include "../npcx_keyboard.dtsi"
+#include "../npcx_overlay.dtsi"
+#include "../power_signal.dtsi"
+#include "../npcx_usbc.dtsi"
+#include "../usba.dtsi"
+#include "cbi.dtsi"
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
+#include "motionsense.dtsi"
+
+/ {
+
+	/* Battery parameter */
+	batteries {
+		default_battery: smp_smp_atl_4_106 {
+			compatible = "smp,smp-atl-4-106", "battery-smart";
+		};
+		smp_hpt_4_122 {
+			compatible = "smp,smp-hpt-4-122", "battery-smart";
+		};
+		smp_smp_atl_4_106_1 {
+			compatible = "smp,smp-atl-4-106-1", "battery-smart";
+		};
+		smp_cos_4_122 {
+			compatible = "smp,smp-cos-4-122", "battery-smart";
+		};
+		swd_atl4_106 {
+			compatible = "swd,swd-atl4-106", "battery-smart";
+		};
+		swd_cos4_122 {
+			compatible = "swd,swd-cos4-122", "battery-smart";
+		};
+		com_cos4_122 {
+			compatible = "cosmx,com-cos4-122", "battery-smart";
+		};
+		atl_atl4_106 {
+			compatible = "nvt,atl-atl4-106", "battery-smart";
+		};
+		byd_byd_1 {
+			compatible = "byd,byd-1", "battery-smart";
+		};
+		byd_byd {
+			compatible = "byd,byd", "battery-smart";
+		};
+	};
+
+	aliases {
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
+		gpio-wp = &gpio_ec_flash_wp_odl;
+	};
+
+	/* Keyboard */
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+
+		debounce-down = <15000>;
+		debounce-up = <15000>;
+
+		actual-key-mask = <
+			0x08  	/* C0 */
+			0xff  	/* C1 */
+			0xff  	/* C2 */
+			0xff  	/* C3 */
+			0xff  	/* C4 */
+			0xf7  	/* C5 */
+			0xff  	/* C6 */
+			0xa5  	/* C7 */
+			0xff  	/* C8 */
+			0xff  	/* C9 */
+			0x01  	/* C10 */
+			0xfe  	/* C11 */
+			0xfe  	/* C12 */
+			0x40  	/* C13 */
+			0x0a  	/* C14 */
+			0x40  	/* C15 */
+			0x01  	/* C16 */
+			0xd4  	/* C17 */
+		>;
+	};
+
+	/* GPIO */
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		/* Charger Temps */
+		adc_temp_sensor2: temp_sensor2 {
+			enum-name = "ADC_TEMP_SENSOR_2";
+			io-channels = <&adc0 4>;
+		};
+
+		adc_temp_sensor3: temp_sensor3 {
+			enum-name = "ADC_TEMP_SENSOR_3";
+			io-channels = <&adc0 5>;
+		};
+	};
+
+	gpio-interrupts {
+		/delete-node/ volume-up;
+		/delete-node/ volume-down;
+		/delete-node/ lid-accel;
+
+		int_lid_accel: lid-accel {
+			irq-pin = <&gpio_lid_accel_int_ec_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bma4xx_interrupt";
+		};
+	};
+
+	named-gpios {
+
+		/delete-node/ ec_pen_chg_dis_odl;
+		/delete-node/ en_pp5000_z1;
+		/delete-node/ ec_pmic_en_odl_r;
+		/delete-node/ ec_volup_btn_odl;
+		/delete-node/ ec_voldn_btn_odl;
+
+		gpio_tchpad_lid_close: tchpad_lid_close {
+			gpios = <&gpiof 0 GPIO_OUTPUT>;
+		};
+		gpio_ec_pmic_en_odl_r: ec_pmic_en_odl_r {
+			gpios = <&gpio7 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+			enum-name = "GPIO_EC_PMIC_EN_ODL";
+		};
+		gpio_en_pwr_s3: en_pwr_s3 {
+			gpios = <&gpioc 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		//CCD_MODE_L
+		gpio_ccd_mode_l: ccd_mode_l {
+			gpios = <&gpioe 5 (GPIO_INPUT)>;
+		};
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpio3 4 0>,
+			<&gpio4 3 0>,
+			<&gpio8 0 0>,
+			<&gpio9 4 0>,
+			<&gpio9 7 0>,
+			<&gpioc 3 0>,
+			<&gpiod 5 0>,
+			<&gpiod 6 0>,
+			<&gpiod 7 0>,
+			<&gpioe 2 0>,
+			<&gpioe 4 0>;
+	};
+};
+
+&cros_kb_raw {
+	pinctrl-0 = <
+		&ksi0_gp31
+		&ksi1_gp30
+		&ksi2_gp27
+		&ksi3_gp26
+		&ksi4_gp25
+		&ksi5_gp24
+		&ksi6_gp23
+		&ksi7_gp22
+		&kso00_gp21
+		&kso01_gp20
+		&kso03_gp16
+		&kso04_gp15
+		&kso05_gp14
+		&kso06_gp13
+		&kso07_gp12
+		&kso08_gp11
+		&kso09_gp10
+		&kso10_gp07
+		&kso11_gp06
+		&kso12_gp05
+		&kso13_gp04
+		&kso14_gp82
+		&kso15_gp83
+		&kso16_gp03
+		&kso17_gpb1
+	>;
+};
+
+&pwm0_gpc3 {
+	status = "disabled";
+
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_chan0_gp45
+		&adc0_chan1_gp44
+		&adc0_chan3_gp42
+		&adc0_chan4_gp41
+		&adc0_chan5_gp37>;
+	pinctrl-names = "default";
+};
+
+&i2c5_0 {
+	label = "I2C_SMB_BATT";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	/* Upstream zephyr uses an irregular name here */
+	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
+};
+
+
+&usbc_port0 {
+	zephyr,deferred-init;
+};
+
+&usbc_port1 {
+	zephyr,deferred-init;
+};
+
+&i2c1_0 {
+	pdc_power_p0: rts54-pdc@66 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x66>;
+		irq-gpios = <&gpioe 1 GPIO_ACTIVE_LOW>;
+		zephyr,deferred-init;
+		ccd;
+	};
+	pdc_power_p1: rts54-pdc@67 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x67>;
+		irq-gpios = <&gpio6 2 GPIO_ACTIVE_LOW>;
+		zephyr,deferred-init;
+	};
+	/* TODO(b:380121396): enable PDC I2C_S port if we need it */
+};

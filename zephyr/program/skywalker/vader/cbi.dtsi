@@ -1,0 +1,134 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+/* Vader-specific fw_config fields. */
+	vader-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		series {
+			enum-name = "SERIES";
+			start = <1>;
+			size = <1>;
+
+			series-vader {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "SERIES_VADER";
+				value = <0>;
+				default;
+			};
+			series-sidious {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "SERIES_SIDIOUS";
+				value = <1>;
+			};
+		};
+		usbc-ports {
+			enum-name = "USBC_PORTS";
+			start = <2>;
+			size = <1>;
+
+			one-port {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "ONE_PORT";
+				value = <0>;
+			};
+			two-ports {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "TWO_PORTS";
+				value = <1>;
+			};
+		};
+		codec {
+			enum-name = "CODEC";
+			start = <22>;
+			size = <3>;
+
+			codec-nau88l25b {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CODEC_NAU88L25B";
+				value = <0>;
+			};
+			codec-alc5682ivs {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CODEC_ALC5682IVS";
+				value = <1>;
+			};
+			codec-alc5682i {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CODEC_ALC5682I";
+				value = <2>;
+			};
+			codec-alc5650 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CODEC_ALC5650";
+				value = <3>;
+			};
+		};
+		AMP {
+			enum-name = "AMP";
+			start = <25>;
+			size = <3>;
+
+			amp-rt9123 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "AMP_RT9123";
+				value = <0>;
+			};
+			amp-alc0109 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "AMP_ALC0109";
+				value = <1>;
+			};
+			amp-aw88081 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "AMP_AW88081";
+				value = <2>;
+			};
+			amp-alc5650 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "AMP_ALC5650";
+				value = <3>;
+			};
+		};
+		form-factor {
+			enum-name = "FORM_FACTOR";
+			start = <28>;
+			size = <2>;
+
+			convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CONVERTIBLE";
+				value = <0>;
+			};
+			clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CLAMSHELL";
+				value = <1>;
+			};
+		};
+		storage {
+			enum-name = "STORAGE";
+			start = <30>;
+			size = <2>;
+
+			storage-ufs3x {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "STORAGE_UFS3X";
+				value = <0>;
+			};
+			storage-ufs2x {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "STORAGE_UFS2X";
+				value = <1>;
+			};
+			storage-emmc {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "STORAGE_EMMC";
+				value = <2>;
+			};
+		};
+	};
+};

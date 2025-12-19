@@ -62,6 +62,12 @@ config BOARD_DOOKU
 	  Build Google Dooku board. Dooku has MediaTek SoC
 	  with ITE IT82002 EC.
 
+config BOARD_VADER
+	bool "Google Vader Board"
+	help
+	  Build Google Vader board. Vader has MediaTek SoC
+	  with Nuvoton NPCX997FB EC.
+
 config BOARD_SKYWALKER_SINGLE_USB_TYPEC
 	bool "Boards have only one USB-C port"
 	default n
