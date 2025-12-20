@@ -184,4 +184,25 @@ config CROS_SYSTEM_EM32_INIT_PRIORITY
 
 endif # CROS_SYSTEM_ELAN_EM32
 
+config CROS_SYSTEM_FT90
+	bool "FT cros system driver"
+	depends on SOC_SERIES_FT90
+	default y
+	help
+	  This option enables the cros system driver for the Focaltech ft90 family of
+	  processors.
+
+if CROS_SYSTEM_FT90
+
+config CROS_SYSTEM_FT90_INIT_PRIORITY
+	int "cros_system FT initialization priority"
+	default 10
+	help
+	  This sets the Focaltech ft90 cros_system driver initialization priority.
+	  The cros_system driver provides access to the Focaltech ft90 reset cause
+	  and must be higher priority than
+	  CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY.
+
+endif # CROS_SYSTEM_FT90
+
 endif # PLATFORM_EC
