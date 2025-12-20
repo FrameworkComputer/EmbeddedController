@@ -63,7 +63,7 @@ static struct fp_sensor_info fpc1145_sensor_info = {
 #define FPC1145_DEFAULT_IMAGE_PARAMS                                          \
 	.bpp = FP_SENSOR_RES_BPP_FPC, .frame_size = FP_SENSOR_IMAGE_SIZE_FPC, \
 	.pixel_format = V4L2_PIX_FMT_GREY, .width = FP_SENSOR_RES_X_FPC,      \
-	.height = FP_SENSOR_RES_X_FPC
+	.height = FP_SENSOR_RES_Y_FPC
 
 static const struct fp_image_frame_params fpc1145_image_frame_params[] = {
 	[FPC_CAPTURE_VENDOR_FORMAT] =
