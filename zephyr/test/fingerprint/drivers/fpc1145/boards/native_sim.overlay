@@ -7,8 +7,15 @@
 	width = <56>; \
 	height = <192>; \
 	bits-per-pixel = <8>; \
-	frame-size = <10752>; \
 	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+
+#define FPC1145_RAW_IMAGE_PROPS \
+	FPC1145_COMMON_IMAGE_PROPS \
+	frame-size = <35460>;
+
+#define FPC1145_REAL_IMAGE_PROPS \
+	FPC1145_COMMON_IMAGE_PROPS \
+	frame-size = <10752>;
 
 / {
 	chosen {
@@ -25,27 +32,27 @@
 		configs {
 			compatible = "fingerprint-image-frame-params";
 			config0 {
-				FPC1145_COMMON_IMAGE_PROPS
+				FPC1145_RAW_IMAGE_PROPS
 				capture-type = "FINGERPRINT_CAPTURE_TYPE_VENDOR_FORMAT";
 			};
 			config1 {
-				FPC1145_COMMON_IMAGE_PROPS
+				FPC1145_REAL_IMAGE_PROPS
 				capture-type = "FINGERPRINT_CAPTURE_TYPE_SIMPLE_IMAGE";
 			};
 			config2 {
-				FPC1145_COMMON_IMAGE_PROPS
+				FPC1145_REAL_IMAGE_PROPS
 				capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN0";
 			};
 			config3 {
-				FPC1145_COMMON_IMAGE_PROPS
+				FPC1145_REAL_IMAGE_PROPS
 				capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN1";
 			};
 			config4 {
-				FPC1145_COMMON_IMAGE_PROPS
+				FPC1145_RAW_IMAGE_PROPS
 				capture-type = "FINGERPRINT_CAPTURE_TYPE_QUALITY_TEST";
 			};
 			config5 {
-				FPC1145_COMMON_IMAGE_PROPS
+				FPC1145_REAL_IMAGE_PROPS
 				capture-type = "FINGERPRINT_CAPTURE_TYPE_RESET_TEST";
 			};
 		};
