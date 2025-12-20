@@ -60,40 +60,46 @@ static struct fp_sensor_info fpc1145_sensor_info = {
 	.version = 1,
 };
 
-#define FPC1145_DEFAULT_IMAGE_PARAMS                                          \
+#define FPC1145_DEFAULT_RAW_IMAGE_PARAMS                                      \
 	.bpp = FP_SENSOR_RES_BPP_FPC, .frame_size = FP_SENSOR_IMAGE_SIZE_FPC, \
 	.pixel_format = V4L2_PIX_FMT_GREY, .width = FP_SENSOR_RES_X_FPC,      \
+	.height = FP_SENSOR_RES_Y_FPC
+
+#define FPC1145_DEFAULT_REAL_IMAGE_PARAMS                                \
+	.bpp = FP_SENSOR_RES_BPP_FPC,                                    \
+	.frame_size = FP_SENSOR_REAL_IMAGE_SIZE_FPC,                     \
+	.pixel_format = V4L2_PIX_FMT_GREY, .width = FP_SENSOR_RES_X_FPC, \
 	.height = FP_SENSOR_RES_Y_FPC
 
 static const struct fp_image_frame_params fpc1145_image_frame_params[] = {
 	[FPC_CAPTURE_VENDOR_FORMAT] =
 	{
-		FPC1145_DEFAULT_IMAGE_PARAMS,
+		FPC1145_DEFAULT_RAW_IMAGE_PARAMS,
 		.fp_capture_type = FP_CAPTURE_VENDOR_FORMAT,
 	},
 	[FPC_CAPTURE_SIMPLE_IMAGE] =
 	{
-		FPC1145_DEFAULT_IMAGE_PARAMS,
+		FPC1145_DEFAULT_REAL_IMAGE_PARAMS,
 		.fp_capture_type = FP_CAPTURE_SIMPLE_IMAGE,
 	},
 	[FPC_CAPTURE_PATTERN0] =
 	{
-		FPC1145_DEFAULT_IMAGE_PARAMS,
+		FPC1145_DEFAULT_REAL_IMAGE_PARAMS,
 		.fp_capture_type = FP_CAPTURE_PATTERN0,
 	},
 	[FPC_CAPTURE_PATTERN1] =
 	{
-		FPC1145_DEFAULT_IMAGE_PARAMS,
+		FPC1145_DEFAULT_REAL_IMAGE_PARAMS,
 		.fp_capture_type = FP_CAPTURE_PATTERN1,
 	},
 	[FPC_CAPTURE_QUALITY_TEST] =
 	{
-		FPC1145_DEFAULT_IMAGE_PARAMS,
+		FPC1145_DEFAULT_RAW_IMAGE_PARAMS,
 		.fp_capture_type = FP_CAPTURE_QUALITY_TEST,
 	},
 	[FPC_CAPTURE_RESET_TEST] =
 	{
-		FPC1145_DEFAULT_IMAGE_PARAMS,
+		FPC1145_DEFAULT_REAL_IMAGE_PARAMS,
 		.fp_capture_type = FP_CAPTURE_RESET_TEST,
 	},
 };
