@@ -155,7 +155,7 @@
 			gpios = <&gpioh 5 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_ec_ish_int_odl: ec_ish_int_odl {
-			gpios = <&gpioh 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpioh 6 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
 		};
 
             /*********** Port I *****************/
