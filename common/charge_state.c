@@ -806,31 +806,6 @@ struct charge_state_data *charge_get_status(void)
 	return &curr;
 }
 
-/* Determine if the battery is outside of allowable temperature range */
-int battery_outside_charging_temperature(void)
-{
-	const struct battery_info *batt_info = battery_get_info();
-	int batt_temp_c = DECI_KELVIN_TO_CELSIUS(curr.batt.temperature);
-	int max_c, min_c;
-
-	if (curr.batt.flags & BATT_FLAG_BAD_TEMPERATURE)
-		return 0;
-
-	if ((curr.batt.desired_voltage == 0) &&
-	    (curr.batt.desired_current == 0)) {
-		max_c = batt_info->start_charging_max_c;
-		min_c = batt_info->start_charging_min_c;
-	} else {
-		max_c = batt_info->charging_max_c;
-		min_c = batt_info->charging_min_c;
-	}
-
-	if ((batt_temp_c >= max_c) || (batt_temp_c <= min_c)) {
-		return 1;
-	}
-	return 0;
-}
-
 static enum ec_charge_control_mode
 sustain_switch_mode(enum ec_charge_control_mode mode)
 {
@@ -1463,7 +1438,7 @@ static int process_charge_state(int *need_staticp, int sleep_usec)
 	}
 
 	if (IS_ENABLED(CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS) &&
-	    battery_outside_charging_temperature()) {
+	    battery_outside_charging_temperature(&curr.batt)) {
 		curr.requested_current = 0;
 		curr.requested_voltage = 0;
 		curr.batt.flags &= ~BATT_FLAG_WANT_CHARGE;

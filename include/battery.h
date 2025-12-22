@@ -594,6 +594,14 @@ void battery_set_dynamic_info(const struct batt_params *params, bool ac_present,
  */
 int battery_is_full(struct batt_params *batt);
 
+/**
+ * Determine if the battery is outside of allowable temperature range.
+ *
+ * @param batt Battery parameters.
+ * @return true if battery is outside charging temperature range.
+ */
+int battery_outside_charging_temperature(struct batt_params *batt);
+
 #ifdef CONFIG_BATTERY_ACCESS_LIMIT
 enum battery_access_type battery_check_access_limit(void);
 #endif

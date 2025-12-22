@@ -873,3 +873,27 @@ test_mockable int battery_is_full(struct batt_params *batt)
 	ret = (batt->state_of_charge >= 90 && batt->desired_current == 0);
 	return ret;
 }
+
+/* Determine if the battery is outside of allowable temperature range */
+int battery_outside_charging_temperature(struct batt_params *batt)
+{
+	const struct battery_info *batt_info = battery_get_info();
+	int batt_temp_c = DECI_KELVIN_TO_CELSIUS(batt->temperature);
+	int max_c, min_c;
+
+	if (batt->flags & BATT_FLAG_BAD_TEMPERATURE)
+		return 0;
+
+	if ((batt->desired_voltage == 0) && (batt->desired_current == 0)) {
+		max_c = batt_info->start_charging_max_c;
+		min_c = batt_info->start_charging_min_c;
+	} else {
+		max_c = batt_info->charging_max_c;
+		min_c = batt_info->charging_min_c;
+	}
+
+	if ((batt_temp_c >= max_c) || (batt_temp_c <= min_c)) {
+		return 1;
+	}
+	return 0;
+}

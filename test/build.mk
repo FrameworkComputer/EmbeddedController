@@ -195,8 +195,8 @@ boringssl_crypto-y=boringssl_crypto.o
 button-y=button.o
 cbi-y=cbi.o
 cbi_wp-y=cbi_wp.o
-charge_manager-y=charge_manager.o fake_usbc.o
-charge_manager_drp_charging-y=charge_manager.o fake_usbc.o
+charge_manager-y=charge_manager.o fake_usbc.o test_battery_mock.o
+charge_manager_drp_charging-y=charge_manager.o fake_usbc.o test_battery_mock.o
 charge_ramp-y+=charge_ramp.o
 chipset-y+=chipset.o
 compile_time_macros-y=compile_time_macros.o
@@ -342,7 +342,8 @@ usb_tcpmv2_compliance-y=usb_tcpmv2_compliance.o usb_tcpmv2_compliance_common.o \
 	usb_tcpmv2_td_pd_src3_e32.o \
 	usb_tcpmv2_td_pd_snk3_e12.o \
 	usb_tcpmv2_td_pd_vndi3_e3.o \
-	usb_tcpmv2_td_pd_other.o
+	usb_tcpmv2_td_pd_other.o \
+	test_battery_mock.o
 utils-y=utils.o
 utils_str-y=utils_str.o
 vboot-y=vboot.o

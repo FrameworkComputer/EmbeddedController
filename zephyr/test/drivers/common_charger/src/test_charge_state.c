@@ -10,7 +10,7 @@
 
 #include <zephyr/ztest.h>
 
-int battery_outside_charging_temperature(void);
+int battery_outside_charging_temperature(struct batt_params *batt);
 
 struct charge_state_fixture {
 	struct charge_state_data charge_state_data;
@@ -45,7 +45,7 @@ ZTEST(charge_state, test_battery_flag_bad_temperature)
 	struct charge_state_data *curr = charge_get_status();
 
 	curr->batt.flags |= BATT_FLAG_BAD_TEMPERATURE;
-	zassert_ok(battery_outside_charging_temperature());
+	zassert_ok(battery_outside_charging_temperature(&curr->batt));
 }
 
 ZTEST(charge_state, test_battery_temperature_range)
@@ -62,19 +62,19 @@ ZTEST(charge_state, test_battery_temperature_range)
 	/* Temperature is too high */
 	curr->batt.temperature =
 		CELSIUS_TO_DECI_KELVIN(batt_info->start_charging_max_c + 1);
-	zassert_equal(1, battery_outside_charging_temperature());
+	zassert_equal(1, battery_outside_charging_temperature(&curr->batt));
 
 	/* Temperature is too low */
 	curr->batt.temperature =
 		CELSIUS_TO_DECI_KELVIN(batt_info->start_charging_min_c - 1);
-	zassert_equal(1, battery_outside_charging_temperature());
+	zassert_equal(1, battery_outside_charging_temperature(&curr->batt));
 
 	/* Temperature is just right */
 	curr->batt.temperature =
 		CELSIUS_TO_DECI_KELVIN((batt_info->start_charging_max_c +
 					batt_info->start_charging_min_c) /
 				       2);
-	zassert_ok(battery_outside_charging_temperature());
+	zassert_ok(battery_outside_charging_temperature(&curr->batt));
 
 	/* Set an arbitrary desired current */
 	curr->batt.desired_current = 3;
@@ -82,7 +82,7 @@ ZTEST(charge_state, test_battery_temperature_range)
 	/* Temperature is too high */
 	curr->batt.temperature =
 		CELSIUS_TO_DECI_KELVIN(batt_info->charging_max_c + 1);
-	zassert_equal(1, battery_outside_charging_temperature());
+	zassert_equal(1, battery_outside_charging_temperature(&curr->batt));
 
 	/* Set an arbitrary desired voltage */
 	curr->batt.desired_voltage = 5;
@@ -90,12 +90,12 @@ ZTEST(charge_state, test_battery_temperature_range)
 	/* Temperature is too low */
 	curr->batt.temperature =
 		CELSIUS_TO_DECI_KELVIN(batt_info->charging_min_c - 1);
-	zassert_equal(1, battery_outside_charging_temperature());
+	zassert_equal(1, battery_outside_charging_temperature(&curr->batt));
 
 	/* Temperature is just right */
 	curr->batt.temperature = CELSIUS_TO_DECI_KELVIN(
 		(batt_info->charging_max_c + batt_info->charging_min_c) / 2);
-	zassert_ok(battery_outside_charging_temperature());
+	zassert_ok(battery_outside_charging_temperature(&curr->batt));
 }
 
 ZTEST(charge_state, test_current_limit_derating)
