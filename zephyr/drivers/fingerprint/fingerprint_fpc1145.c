@@ -616,8 +616,8 @@ static int fpc1145_init_driver(const struct device *dev)
 		.ctx = ctx_##inst,                                                   \
 	};                                                                           \
 	static const struct fpc1145_cfg fpc1145_cfg_##inst = {                       \
-		.spi = SPI_DT_SPEC_INST_GET(                                         \
-			inst, SPI_OP_MODE_MASTER | SPI_WORD_SET(8), 0),              \
+		.spi = SPI_DT_SPEC_INST_GET(inst, SPI_OP_MODE_MASTER |               \
+							  SPI_WORD_SET(8)),          \
 		.interrupt = GPIO_DT_SPEC_INST_GET(inst, irq_gpios),                 \
 		.reset_pin = GPIO_DT_SPEC_INST_GET(inst, reset_gpios),               \
 		.sensor_info = FPC1145_SENSOR_INFO(inst),                            \

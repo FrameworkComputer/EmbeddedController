@@ -464,8 +464,8 @@ static int elan80series_init_driver(const struct device *dev)
 #define ELAN80SERIES_DEFINE(inst)                                             \
 	static struct elan80series_data elan80series_data_##inst;             \
 	static const struct elan80series_cfg elan80series_cfg_##inst = {      \
-		.spi = SPI_DT_SPEC_INST_GET(                                  \
-			inst, SPI_OP_MODE_MASTER | SPI_WORD_SET(8), 0),       \
+		.spi = SPI_DT_SPEC_INST_GET(inst, SPI_OP_MODE_MASTER |        \
+							  SPI_WORD_SET(8)),   \
 		.base_image_addr = DT_INST_PROP_OR(inst, base_image_addr, 0), \
 		.ft_info_addr = DT_INST_PROP_OR(inst, ft_info_addr, 0),       \
 		.interrupt = GPIO_DT_SPEC_INST_GET(inst, irq_gpios),          \

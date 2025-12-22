@@ -533,10 +533,9 @@ static int fpc1025_init_driver(const struct device *dev)
 #define FPC1025_DEFINE(inst)                                                         \
 	static struct fpc1025_data fpc1025_data_##inst;                              \
 	static const struct fpc1025_cfg fpc1025_cfg_##inst = {                       \
-		.spi = SPI_DT_SPEC_INST_GET(                                         \
-			inst,                                                        \
-			SPI_OP_MODE_MASTER | SPI_WORD_SET(8) | SPI_HOLD_ON_CS,       \
-			0),                                                          \
+		.spi = SPI_DT_SPEC_INST_GET(inst, SPI_OP_MODE_MASTER |               \
+							  SPI_WORD_SET(8) |          \
+							  SPI_HOLD_ON_CS),           \
 		.interrupt = GPIO_DT_SPEC_INST_GET(inst, irq_gpios),                 \
 		.reset_pin = GPIO_DT_SPEC_INST_GET(inst, reset_gpios),               \
 		.sensor_info = FPC1025_SENSOR_INFO(inst),                            \

@@ -437,8 +437,8 @@ static int egis630_init_driver(const struct device *dev)
 #define EGIS630_DEFINE(inst)                                                         \
 	static struct egis630_data egis630_data_##inst;                              \
 	static const struct egis630_cfg egis630_cfg_##inst = {                       \
-		.spi = SPI_DT_SPEC_INST_GET(                                         \
-			inst, SPI_OP_MODE_MASTER | SPI_WORD_SET(8), 0),              \
+		.spi = SPI_DT_SPEC_INST_GET(inst, SPI_OP_MODE_MASTER |               \
+							  SPI_WORD_SET(8)),          \
 		.interrupt = GPIO_DT_SPEC_INST_GET(inst, irq_gpios),                 \
 		.reset_pin = GPIO_DT_SPEC_INST_GET(inst, reset_gpios),               \
 		.calibration_data_addr =                                             \
