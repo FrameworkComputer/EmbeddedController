@@ -1,0 +1,24 @@
+/* Copyright 2026 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/elan/em32f967.dtsi>
+
+/*
+ * Use 271kB of RAM. Some of it is reserved for hw accelarator which is not used.
+ * Make also 512b space for SDCP.
+ */
+&sram0 {
+	/* Round down to kB, because the SRAM_SIZE config uses kB as SRAM
+	 * size
+	 */
+	reg = <0x20000000 DT_SIZE_K(271)>;
+};
+
+/ {
+	sdcp: memory@20043e00 {
+		compatible = "mmio-sram";
+		reg = <0x20043e00 512>;
+	};
+};

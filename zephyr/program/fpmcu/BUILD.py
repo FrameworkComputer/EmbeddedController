@@ -156,3 +156,24 @@ def register_et171_project(
 
 sanok = register_et171_project("sanok")
 assert_rw_fwid_DO_NOT_EDIT(project_name="sanok", addr=0x42104)
+
+niedzica = register_fpmcu_variant(
+    project_name="niedzica",
+    zephyr_board="32f967_dv",
+    register_func=register_binman_project,
+    variant_modules=["cmsis_6", "elan_module"],
+    variant_optional_modules=["elan"],
+    variant_dts_overlays=[
+        here / "em32f967" / "niedzica.dts",
+    ],
+    variant_kconfig_files=[
+        here / "em32f967" / "prj.conf",
+    ],
+    signer=signers.RwsigSigner(  # pylint: disable=undefined-variable
+        here / "em32f967" / "dev_key.pem",
+    ),
+)
+
+# The address of RW_FWID is hardcoded in RO. You need to have REALLY
+# good reason to change it.
+assert_rw_fwid_DO_NOT_EDIT(project_name="niedzica", addr=0x24144)

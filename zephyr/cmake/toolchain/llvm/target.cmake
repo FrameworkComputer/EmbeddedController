@@ -31,7 +31,12 @@ if("${ARCH}" STREQUAL "arm")
     # run on Cortex-M4 MCU with enabled FPU. Calling builtin functions that use
     # floating-point instructions (e.g. __aeabi_ul2d) with FPU disabled leads to
     # Usage Fault. Let's check if FPU is enabled.
-    if(NOT DEFINED CONFIG_FPU)
+    #
+    # TODO(b/416568977, b/479751619): allow linking the libraries for EM32F967
+    # board project, because hardware floating point operations are not use.
+    # Using multilib is the only reasonable solution, but it is not supported
+    # for now.
+    if(NOT DEFINED CONFIG_FPU AND NOT DEFINED CONFIG_BOARD_EM32F967)
       message(FATAL_ERROR "The armv7m-cros-eabi toolchain requires enabled FPU")
     endif()
     set(CROSS_COMPILE_TARGET armv7m-cros-eabi)

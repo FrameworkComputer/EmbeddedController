@@ -1,0 +1,178 @@
+/* Copyright 2026 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <elan/32f967_dv_priv.dtsi>
+
+#include "soc.dtsi"
+#include "gpio.dtsi"
+#include "rwsig.dtsi"
+#include <mem.h>
+
+#include <cros/integrated_fwid.dtsi>
+
+#define ELANI80SA_COMMON_IMAGE_PROPS \
+	width = <80>; \
+	height = <80>; \
+	bits-per-pixel = <14>; \
+	frame-size = <12800>; \
+	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+
+/ {
+	chosen {
+		cros-fp,fingerprint-sensor = &fp_sensor;
+	};
+
+	named-bbram-regions {
+		compatible = "named-bbram-regions";
+
+		scratchpad {
+			offset = <0x00>;
+			size = <0x02>;
+		};
+		saved-reset-flags {
+			offset = <0x02>;
+			size = <0x04>;
+		};
+		saved-panic-reason {
+			offset = <0x06>;
+			size = <0x02>;
+		};
+		saved-panic-info {
+			offset = <0x08>;
+			size = <0x02>;
+		};
+		saved-panic-exception {
+			offset = <0x0a>;
+			size = <0x02>;
+		};
+		saved-panic-flags {
+			offset = <0x0c>;
+			size = <0x02>;
+		};
+	};
+
+	/* Erase unit 8k, flash size for firmware 536k. The rest is used for
+	 * base image and ROM code
+	 */
+	binman {
+		/* 128kB of RO */
+		wp-ro {
+			size = <0x20000>;
+			ec-ro {
+				size = <0x20000>;
+				pad-byte = <0xff>;
+				/* SHA256 checksum */
+				ro-checksum {
+					compatible = "cros-ec,flash-layout";
+					type = "section";
+					offset = <(0x20000-32)>;
+					size = <32>;
+					pad-byte = <0xff>;
+				};
+			};
+		};
+
+		/* 8k per rollback */
+		rollback0 {
+			offset = <0x20000>;
+			size = <0x2000>;
+			type = "blob";
+			filename = "../build-rw/rollback_initial_data.bin";
+		};
+
+		rollback1 {
+			offset = <0x22000>;
+			size = <0x2000>;
+			type = "blob";
+			filename = "../build-rw/rollback_initial_data.bin";
+		};
+
+		ec-rw {
+			offset = <0x24000>;
+			size = <0x62000>;
+			rw-fw {
+				/*
+				 * Clang doesn't emit STT_SECTION symbols (also
+				 * called 'section symbols'), so 'rom_start'
+				 * symbol is not available. Fortunately, Zephyr
+				 * linker scripts provide '__rom_start_address'
+				 * symbol which points to the beginning of
+				 * 'rom_start' section.
+				 */
+				zephyr-rw {
+					elf-base-sym = "__rom_start_address";
+				};
+			};
+		};
+		pad-byte = <0xff>;
+	};
+};
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		rollback0: partition@20000 {
+			label = "rollback0";
+			reg = <0x20000 DT_SIZE_K(8)>;
+		};
+
+		rollback1: partition@22000 {
+			label = "rollback1";
+			reg = <0x22000 DT_SIZE_K(8)>;
+		};
+		base_image: partition@86000 {
+			label = "base_image";
+			reg = <0x86000 DT_SIZE_K(20)>;
+		};
+		ft_info: partition@8b000 {
+			label = "factory_test_info";
+			reg = <0x8b000 DT_SIZE_K(4)>;
+		};
+	};
+};
+
+&spi2 {
+	fp_sensor: elani80sa@0 {
+		compatible = "elan,elani80sa";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+
+		configs {
+			compatible = "fingerprint-image-frame-params";
+			config0 {
+				ELANI80SA_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_VENDOR_FORMAT";
+			};
+			config1 {
+				ELANI80SA_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_SIMPLE_IMAGE";
+			};
+			config2 {
+				ELANI80SA_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN0";
+			};
+			config3 {
+				ELANI80SA_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN1";
+			};
+			config4 {
+				ELANI80SA_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_QUALITY_TEST";
+			};
+			config5 {
+				ELANI80SA_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_RESET_TEST";
+			};
+		};
+
+		irq-gpios = <&gpioa 15 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpioa 14 GPIO_ACTIVE_LOW>;
+		base-image = <&base_image>;
+		ft-info = <&ft_info>;
+	};
+};

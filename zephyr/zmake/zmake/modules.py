@@ -126,6 +126,15 @@ known_modules = {
     "elan": lambda name, checkout: (
         checkout / "src" / "platform" / "fingerprint" / "elan"
     ),
+    "elan_module": lambda name, checkout: (
+        checkout
+        / "src"
+        / "third_party"
+        / "zephyrproject"
+        / "modules"
+        / "hal"
+        / "elan_module"
+    ),
     "focaltech_fp": lambda name, checkout: (
         checkout / "src" / "platform" / "fingerprint" / "focaltech"
     ),

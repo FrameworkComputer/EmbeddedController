@@ -99,5 +99,20 @@ config BOARD_ET171
 	help
 	  Build the FPMCU board based on ET171 chip
 
+config BOARD_EM32F967
+	bool "EM32F967 based FPMCU Board"
+	select HAS_COVERAGE_SUPPORT
+	select BOARD_FINGERPRINT
+	select FINGERPRINT_SUBSYSTEM if CROS_EC_RW
+	select FINGERPRINT_SENSOR if CROS_EC_RW
+	select FINGERPRINT_SHELL if CROS_EC_RW
+	select PLATFORM_EC_FINGERPRINT if CROS_EC_RW
+
+	# Make sure RSA parameters for RWSIG are correct.
+	depends on PLATFORM_EC_RSA_KEY_SIZE = 3072
+	depends on PLATFORM_EC_RSA_EXPONENT_3
+	help
+	  Build the FPMCU board based on EM32F967 chip.
+
 rsource "et171/Kconfig"
 source "Kconfig.zephyr"
