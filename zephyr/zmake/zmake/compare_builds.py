@@ -10,6 +10,7 @@ import logging
 import os
 import pathlib
 import shlex
+import shutil
 import subprocess
 from typing import List
 
@@ -225,9 +226,18 @@ class CompareBuilds:
             zephyr_base: The location of the zephyr sources.
             module_paths: The location of the module sources.
         """
-
         for checkout in self.checkouts:
+            git_source_path = ""
             for module_name, git_source in module_paths.items():
+                is_flattened_module = (
+                    "zephyrproject" in pathlib.Path(git_source).parts
+                )
+                if is_flattened_module:
+                    git_source_path = (
+                        str(git_source).split("zephyrproject", 1)[0]
+                        + "zephyrproject"
+                    )
+                    continue
                 dst_dir = checkout.modules_dir / module_name
                 git_ref = checkout.full_ref if module_name == "ec" else "HEAD"
                 self._do_git_work(
@@ -237,6 +247,16 @@ class CompareBuilds:
                         work_dir=checkout.work_dir,
                         git_source=git_source,
                         dst_dir=dst_dir,
+                    )
+                )
+            if git_source_path:
+                self._do_git_work(
+                    func=functools.partial(
+                        _git_clone_repo,
+                        module_name="zephyrproject",
+                        work_dir=checkout.work_dir,
+                        git_source=git_source_path,
+                        dst_dir=checkout.modules_dir.parent / "zephyrproject",
                     )
                 )
 
@@ -253,7 +273,14 @@ class CompareBuilds:
         self._do_git_wait("Failed to clone one or more repositories")
 
         for checkout in self.checkouts:
+            flattened_module_list = []
             for module_name, git_source in module_paths.items():
+                is_flattened_module = (
+                    "zephyrproject" in pathlib.Path(git_source).parts
+                )
+                if is_flattened_module:
+                    flattened_module_list.append(module_name)
+                    continue
                 dst_dir = checkout.modules_dir / module_name
                 git_ref = checkout.full_ref if module_name == "ec" else "HEAD"
                 self._do_git_work(
@@ -264,6 +291,37 @@ class CompareBuilds:
                         git_ref=git_ref,
                     )
                 )
+            if flattened_module_list:
+                self._do_git_work(
+                    func=functools.partial(
+                        _git_do_checkout,
+                        work_dir=checkout.work_dir,
+                        dst_dir=checkout.modules_dir.parent / "zephyrproject",
+                        git_ref="HEAD",
+                    )
+                )
+                zephyrproject_checkout = (
+                    checkout.modules_dir.parent / "zephyrproject"
+                )
+                for module_type in os.listdir(zephyrproject_checkout):
+                    module_type_dir = os.path.join(
+                        zephyrproject_checkout, module_type
+                    )
+                    if not os.path.isdir(module_type_dir):
+                        continue
+                    for module in os.listdir(module_type_dir):
+                        module_dir = os.path.join(module_type_dir, module)
+                        if module in flattened_module_list:
+                            print(
+                                "Copying module %s to %s",
+                                module,
+                                checkout.modules_dir / module,
+                            )
+                            shutil.copytree(
+                                module_dir,
+                                checkout.modules_dir / module,
+                                dirs_exist_ok=True,
+                            )
 
             self._do_git_work(
                 func=functools.partial(
