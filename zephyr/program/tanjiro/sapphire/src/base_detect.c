@@ -101,9 +101,12 @@ static void base_startup_hook(struct ap_power_ev_callback *cb,
 	switch (data.event) {
 	case AP_POWER_STARTUP:
 		base_detect_enable(true);
+		if (attached)
+			hook_call_deferred(&base_update_data, 0);
 		break;
 	case AP_POWER_SHUTDOWN:
-		base_detect_enable(false);
+		if (!extpower_is_present())
+			base_detect_enable(false);
 		break;
 	default:
 		return;
@@ -118,7 +121,7 @@ static int base_init(void)
 				  AP_POWER_STARTUP | AP_POWER_SHUTDOWN);
 	ap_power_ev_add_callback(&cb);
 
-	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) || extpower_is_present()) {
 		base_detect_enable(true);
 	}
 
@@ -165,6 +168,16 @@ static void base_batt_soc_setting(void)
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, base_batt_soc_setting, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, base_batt_soc_setting, HOOK_PRIO_DEFAULT);
+
+static void base_setting_on_shutdown(void)
+{
+	if (extpower_is_present() && chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		base_detect_enable(true);
+	} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		base_detect_enable(false);
+	}
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, base_setting_on_shutdown, HOOK_PRIO_PRE_DEFAULT);
 
 void base_force_state(enum ec_set_base_state_cmd state)
 {
