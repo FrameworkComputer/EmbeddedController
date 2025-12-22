@@ -1498,8 +1498,11 @@ static int process_charge_state(int *need_staticp, int sleep_usec)
 		charge_manager_leave_safe_mode();
 
 	/* Keep the AP informed */
-	if (*need_staticp)
+	if (*need_staticp) {
 		*need_staticp = update_static_battery_info();
+		if (*need_staticp)
+			charge_problem(PR_STATIC_UPDATE, *need_staticp);
+	}
 
 	/* Wait on the dynamic info until the static info is good. */
 	if (!*need_staticp)

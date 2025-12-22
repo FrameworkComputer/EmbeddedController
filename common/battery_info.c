@@ -383,9 +383,6 @@ int update_static_battery_info(void)
 	       sizeof(battery_dynamic[BATT_IDX_MAIN]));
 	battery_dynamic[BATT_IDX_MAIN].flags = EC_BATT_FLAG_INVALID_DATA;
 
-	if (rv)
-		charge_problem(PR_STATIC_UPDATE, rv);
-
 #ifdef HAS_TASK_HOSTCMD
 	battery_memmap_refresh(BATT_IDX_MAIN);
 #endif
