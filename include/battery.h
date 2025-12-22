@@ -575,6 +575,14 @@ int update_static_battery_info(void);
 void battery_set_dynamic_info(const struct batt_params *params, bool ac_present,
 			      bool is_charging, bool sustainer_idle);
 
+/**
+ * Calculate if battery is full based on whether it is accepting charge.
+ *
+ * @param batt Battery parameters.
+ * @return true if battery is full, false otherwise.
+ */
+int battery_is_full(struct batt_params *batt);
+
 #ifdef CONFIG_BATTERY_ACCESS_LIMIT
 enum battery_access_type battery_check_access_limit(void);
 #endif

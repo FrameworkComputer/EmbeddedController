@@ -390,26 +390,6 @@ static void show_charging_progress(bool is_full)
 	}
 }
 
-/* Calculate if battery is full based on whether it is accepting charge */
-test_mockable int calc_is_full(void)
-{
-	static int ret;
-
-	/* If bad state of charge reading, return last value */
-	if (curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE ||
-	    curr.batt.state_of_charge > 100)
-		return ret;
-	/*
-	 * Battery is full when SoC is above 90% and battery desired current
-	 * is 0. This is necessary because some batteries stop charging when
-	 * the SoC still reports <100%, so we need to check desired current
-	 * to know if it is actually full.
-	 */
-	ret = (curr.batt.state_of_charge >= 90 &&
-	       curr.batt.desired_current == 0);
-	return ret;
-}
-
 __overridable int board_should_charger_bypass(void)
 {
 	return false;
@@ -1571,7 +1551,7 @@ void charger_task(void *u)
 		sleep_usec = process_charge_state(&need_static, sleep_usec);
 
 		/* And the EC console */
-		is_full = calc_is_full();
+		is_full = battery_is_full(&curr.batt);
 
 		/* Run battery sustainer (no-op if not applicable). */
 		sustain_battery_soc();
