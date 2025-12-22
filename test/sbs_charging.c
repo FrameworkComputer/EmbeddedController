@@ -160,9 +160,13 @@ test_static int charge_control(enum ec_charge_control_mode mode)
 				      NULL, 0);
 }
 
-__override int charge_get_display_charge(void)
+__override const struct batt_params *charger_current_battery_params(void)
 {
-	return display_soc;
+	static struct batt_params batt;
+
+	battery_get_params(&batt);
+	batt.display_charge = display_soc;
+	return &batt;
 }
 
 __override int calc_is_full(void)

@@ -1830,11 +1830,6 @@ test_mockable int charge_get_percent(void)
 	return local_state.is_full ? 100 : curr.batt.state_of_charge;
 }
 
-test_mockable int charge_get_display_charge(void)
-{
-	return curr.batt.display_charge;
-}
-
 int charge_get_battery_temp(int idx, int *temp_ptr)
 {
 	if (curr.batt.flags & BATT_FLAG_BAD_TEMPERATURE)

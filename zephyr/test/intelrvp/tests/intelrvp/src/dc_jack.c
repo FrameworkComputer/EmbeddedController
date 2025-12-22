@@ -40,7 +40,6 @@ __overridable const int supplier_priority[] = {
 FAKE_VOID_FUNC(charge_manager_update_charge, int, int,
 	       const struct charge_port_info *);
 FAKE_VALUE_FUNC(const struct batt_params *, charger_current_battery_params);
-FAKE_VALUE_FUNC(int, charge_get_display_charge);
 
 struct charge_port_info port_info = {
 	.current = 0,

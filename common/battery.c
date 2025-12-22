@@ -143,18 +143,26 @@ static void print_battery_strings(void)
 		ccprintf("%s\n", text);
 }
 
+__attribute__((weak)) const struct batt_params *
+charger_current_battery_params(void)
+{
+	static struct batt_params batt;
+
+	battery_get_params(&batt);
+	return &batt;
+}
+
+int charge_get_display_charge(void)
+{
+	const struct batt_params *batt = charger_current_battery_params();
+
+	return batt->display_charge;
+}
+
 static void print_battery_params(void)
 {
-#if defined(HAS_TASK_CHARGER)
 	/* Ask charger so that we don't need to ask battery again. */
 	const struct batt_params *batt = charger_current_battery_params();
-#else
-	/* This is for test code, where doesn't have charger task. */
-	struct batt_params _batt;
-	const struct batt_params *batt = &_batt;
-
-	battery_get_params(&_batt);
-#endif
 
 	print_item_name("Param flags:");
 	ccprintf("%08x\n", batt->flags);
