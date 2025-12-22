@@ -137,7 +137,7 @@
 
             /*********** Port H *****************/
 		gpio_amp_mute_odl: amp_mute_odl {
-			gpios = <&gpioh 0 (GPIO_OUTPUT_LOW | GPIO_OPEN_DRAIN)>;
+			gpios = <&gpioh 0 (GPIO_OUTPUT_HIGH | GPIO_OPEN_DRAIN)>;
 		};
         /* GPH1: WOL_PWEN               */
 		gpio_touchpad_disable_odl: touchpad_disable_odl{
