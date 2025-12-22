@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "fan.h"
+#include "power/qcom.h"
 
 /*
  * Set Fan Duty cycle to 50%. Anything less than 50% may
@@ -29,6 +30,13 @@
  */
 enum fan_status board_override_fan_control_duty(int ch)
 {
+	/* If the last power-on is due to AC, which enters the charging loop in
+	 * the AP firmware stop the fan */
+	if (POWER_ON_BY_AC_ON == chipset_get_power_on_reason()) {
+		fan_set_duty(ch, 0);
+		return FAN_STATUS_STOPPED;
+	}
+
 	/* Wait for tachometer to report a valid RPM. */
 	if (!fan_get_rpm_actual(ch)) {
 		/*
