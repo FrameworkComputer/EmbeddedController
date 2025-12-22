@@ -1,0 +1,21 @@
+/* Copyright 2025 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/binman.dtsi>
+
+/ {
+	chosen {
+		cros-ec,flash = &flash0;
+		cros-ec,flash-controller = &flash_controller;
+		cros-ec,sha = &crypto0;
+		cros-ec,watchdog = &wdt0;
+	};
+
+	soc {
+		flash_controller: cros-ec-flash {
+			compatible = "elan,em32f967-cros-flash";
+		};
+	};
+};
