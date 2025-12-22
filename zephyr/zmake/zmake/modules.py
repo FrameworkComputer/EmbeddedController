@@ -50,21 +50,18 @@ def chre_module(name, checkout):
     )
 
 
+module_name_overrides = {
+    "hal_stm32": "stm32",
+    "hal_intel_public": "intel",
+    "hal_egis": "egis",
+}
+
 known_modules = {
     # TODO(b/384581513): boringssl is not officially recognized by Zephyr,
     # since it doesn't have a zephyr/module.yaml. That doesn't prevent us from
     # using it with zmake.
     "boringssl": lambda name, checkout: (
         checkout / "src" / "third_party" / name
-    ),
-    "hal_stm32": lambda name, checkout: (
-        checkout
-        / "src"
-        / "third_party"
-        / "zephyrproject"
-        / "modules"
-        / "hal"
-        / "stm32"
     ),
     "chre": chre_module,
     "cmsis": lambda name, checkout: (
@@ -93,9 +90,13 @@ known_modules = {
     "elan": lambda name, checkout: (
         checkout / "src" / "platform" / "fingerprint" / "elan"
     ),
+    "focaltech_fp": lambda name, checkout: (
+        checkout / "src" / "platform" / "fingerprint" / "focaltech"
+    ),
     "fpc": lambda name, checkout: (
         checkout / "src" / "platform" / "fingerprint" / "fpc"
     ),
+    "google-private": third_party_module,
     "hal_egis": lambda name, checkout: (
         checkout
         / "src"
@@ -105,8 +106,6 @@ known_modules = {
         / "hal"
         / "egis"
     ),
-    "nanopb": third_party_module,
-    "pigweed": lambda name, checkout: (checkout / "src" / "third_party" / name),
     "hal_intel_public": lambda name, checkout: (
         checkout
         / "src"
@@ -116,12 +115,19 @@ known_modules = {
         / "hal"
         / "intel"
     ),
-    "picolibc": third_party_module,
-    "google-private": third_party_module,
-    "intel_module_private": third_party_module,
-    "focaltech_fp": lambda name, checkout: (
-        checkout / "src" / "platform" / "fingerprint" / "focaltech"
+    "hal_stm32": lambda name, checkout: (
+        checkout
+        / "src"
+        / "third_party"
+        / "zephyrproject"
+        / "modules"
+        / "hal"
+        / "stm32"
     ),
+    "intel_module_private": third_party_module,
+    "nanopb": third_party_module,
+    "pigweed": lambda name, checkout: (checkout / "src" / "third_party" / name),
+    "picolibc": third_party_module,
 }
 
 
@@ -166,10 +172,11 @@ def locate_from_directory(directory):
         if (modpath / "zephyr" / "module.yml").is_file():
             result[name] = modpath
             continue
-        modpath = (directory / "hal" / name).resolve()
+        module_name = module_name_overrides.get(name, name)
+        modpath = (directory / "hal" / module_name).resolve()
         if (modpath / "zephyr" / "module.yml").is_file():
             result[name] = modpath
-        modpath = (directory / "lib" / name).resolve()
+        modpath = (directory / "lib" / module_name).resolve()
         if (modpath / "zephyr" / "module.yml").is_file():
             result[name] = modpath
 
