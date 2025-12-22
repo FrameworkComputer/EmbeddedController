@@ -4,7 +4,6 @@
  */
 
 #include <egis/common_priv.dtsi>
-#include <zephyr/dt-bindings/memory-attr/memory-attr-riscv.h>
 
 #include "soc.dtsi"
 #include "gpio.dtsi"
@@ -136,14 +135,4 @@
 			reg = <0x41000 DT_SIZE_K(4)>;
 		};
 	};
-};
-
-/ {
-       rollback: rollback@80040000 {
-               compatible = "zephyr,memory-region";
-               reg = <0x80040000 DT_SIZE_K(8)>;
-               zephyr,memory-region = "ROLLBACK_REGION";
-			   /* no access permissions (no read, no write, and no execute) */
-               zephyr,memory-attr = <(DT_MEM_RISCV_TYPE_EMPTY)>;
-       };
 };
