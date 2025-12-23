@@ -5970,6 +5970,55 @@ static int cmd_motionsense(int argc, char **argv)
 	return ms_help(argv[0]);
 }
 
+static int cmd_watchdog_info(int argc, char *argv[])
+{
+	struct ec_params_hostcmd_watchdog_info p;
+	struct ec_response_hostcmd_watchdog_info r;
+	int rv;
+
+	if (argc == 1) {
+		p.reset_stats = false;
+	} else if (argc == 2) {
+		if (strcasecmp(argv[1], "reset_stats") == 0)
+			p.reset_stats = true;
+		else
+			goto usage;
+	} else {
+		goto usage;
+	}
+
+	rv = ec_command(EC_CMD_HOSTCMD_WATCHDOG_INFO, 0, &p, sizeof(p), &r,
+			sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	printf("Watchdog Period: %d ms\n", r.watchdog_period_ms);
+	printf("Watchdog Warning Period: %d ms\n",
+	       r.watchdog_warning_period_ms);
+	printf("Watchdog Reload Period Nominal: %d ms\n",
+	       r.watchdog_reload_period_nominal_ms);
+	printf("Watchdog Stats Elapsed Time: %" PRId64 ".%03" PRId64 " s\n",
+	       r.watchdog_stats_elapsed_ms / 1000,
+	       r.watchdog_stats_elapsed_ms % 1000);
+	printf("Watchdog Reload Count: %u\n", r.watchdog_reload_count);
+	printf("Watchdog Reload Period Max: %d ms @ %" PRId64 ".%03" PRId64
+	       " s\n",
+	       r.watchdog_reload_period_max_ms,
+	       r.watchdog_reload_period_max_ts_ms / 1000,
+	       r.watchdog_reload_period_max_ts_ms % 1000);
+	printf("Watchdog Reload Period Average: %" PRId64 " ms\n",
+	       r.watchdog_reload_count > 0 ?
+		       r.watchdog_stats_elapsed_ms / r.watchdog_reload_count :
+		       0);
+	if (p.reset_stats)
+		printf("Watchdog stats reset.\n");
+	return 0;
+
+usage:
+	fprintf(stderr, "Usage: %s [reset_stats]\n", argv[0]);
+	return -1;
+}
+
 int cmd_next_event(int argc, char *argv[])
 {
 	uint8_t *rdata = (uint8_t *)ec_inbuf;
@@ -13164,6 +13213,9 @@ const struct command commands[] = {
 	  "\tWait for the MKBP event of type and display it.\n"
 	  "\tOptionaly, run the command and wait for the mkbp event.\n"
 	  "\tRun with no arguments for more information." },
+	{ "watchdoginfo", cmd_watchdog_info,
+	  "[reset_stats]\n"
+	  "\tGet watchdog info." },
 	{ "wireless", cmd_wireless,
 	  "<flags> [<mask> [<suspend_flags> <suspend_mask>]]\n"
 	  "\tEnable/disable WLAN/Bluetooth radio." },

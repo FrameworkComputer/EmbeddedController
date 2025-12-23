@@ -44,4 +44,17 @@ config PLATFORM_EC_WATCHDOG_DUMP_THREADS_CALL_STACK
 	help
 	  Dump each thread's current call stack when watchdog is detected.
 
+config PLATFORM_EC_CONSOLE_CMD_WATCHDOG_INFO
+	bool "Enable console command for watchdog info"
+	default n
+	help
+	  Enable watchdoginfo console command. Useful for debugging watchdog
+	  issues.
+
+config PLATFORM_EC_HOSTCMD_WATCHDOG_INFO
+	bool "Enable host command for watchdog info"
+	default y
+	help
+	  Enable host command to query watchdog info.
+
 endif # WATCHDOG
