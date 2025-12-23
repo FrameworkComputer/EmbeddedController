@@ -161,7 +161,7 @@ void watchdog_reload(void)
 		wdt_feed(wdt_info[i].wdt_dev, wdt_chan[i]);
 	}
 }
-DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_LAST);
 
 static void print_sp_pc(const struct k_thread *thread)
 {
