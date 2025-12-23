@@ -159,6 +159,106 @@ def get_projects():
     return projects
 
 
+def build_host_utils(opts, platform_ec, env, extra_env):
+    """Build the utilities that ec-utils, ec-devutils, and ec-utils-test need"""
+
+    env = env.copy()
+    env.update(
+        {
+            "BOARD": "host",
+            "CROSS_COMPILE_CC_NAME": "clang",
+            "V": "1",
+        }
+    )
+    env.update(extra_env)
+    # Start with a clean build environment
+    cmd = ["make", "clobber"]
+    log_cmd(cmd, env=env, cwd=platform_ec)
+    subprocess.run(
+        cmd,
+        cwd=platform_ec,
+        check=True,
+        stdin=subprocess.DEVNULL,
+        env=env,
+    )
+
+    cmd = ["make", "utils-host", f"-j{opts.cpus}"]
+    log_cmd(cmd, env=env, cwd=platform_ec)
+    subprocess.run(
+        cmd,
+        cwd=platform_ec,
+        check=True,
+        stdin=subprocess.DEVNULL,
+        env=env,
+    )
+
+    cmd = ["make", "-C", "extra/rma_reset", "clean"]
+    log_cmd(cmd, env=env, cwd=platform_ec)
+    subprocess.run(
+        cmd,
+        cwd=platform_ec,
+        check=True,
+        stdin=subprocess.DEVNULL,
+        env=env,
+    )
+
+    cmd = ["make", "-C", "extra/rma_reset", f"-j{opts.cpus}"]
+    log_cmd(cmd, env=env, cwd=platform_ec)
+    subprocess.run(
+        cmd,
+        cwd=platform_ec,
+        check=True,
+        stdin=subprocess.DEVNULL,
+        env=env,
+    )
+
+    cmd = ["make", "-C", "extra/usb_updater", "clean"]
+    log_cmd(cmd, env=env, cwd=platform_ec)
+    subprocess.run(
+        cmd,
+        cwd=platform_ec,
+        check=True,
+        stdin=subprocess.DEVNULL,
+        env=env,
+    )
+
+    cmd = ["make", "-C", "extra/usb_updater", "usb_updater2", f"-j{opts.cpus}"]
+    log_cmd(cmd, env=env, cwd=platform_ec)
+    subprocess.run(
+        cmd,
+        cwd=platform_ec,
+        check=True,
+        stdin=subprocess.DEVNULL,
+        env=env,
+    )
+
+    cmd = ["make", "-C", "extra/touchpad_updater", "clean"]
+    log_cmd(cmd, env=env, cwd=platform_ec)
+    subprocess.run(
+        cmd,
+        cwd=platform_ec,
+        check=True,
+        stdin=subprocess.DEVNULL,
+        env=env,
+    )
+
+    cmd = [
+        "make",
+        "-C",
+        "extra/touchpad_updater",
+        "touchpad_updater",
+        f"-j{opts.cpus}",
+    ]
+    log_cmd(cmd, env=env, cwd=platform_ec)
+    subprocess.run(
+        cmd,
+        cwd=platform_ec,
+        check=True,
+        stdin=subprocess.DEVNULL,
+        env=env,
+    )
+
+
 def build(opts):
     """Builds all Zephyr firmware targets"""
     metric_list = firmware_pb2.FwBuildMetricList()  # pylint: disable=no-member
@@ -171,6 +271,12 @@ def build(opts):
     )
 
     platform_ec = ZEPHYR_DIR.parent
+
+    if not opts.code_coverage:
+        # Build the host utils first
+        build_host_utils(opts, platform_ec, env, {})
+        build_host_utils(opts, platform_ec, env, {"TEST_ASAN": "y"})
+        build_host_utils(opts, platform_ec, env, {"TEST_MSAN": "y"})
 
     # Start with a clean build environment
     cmd = ["make", "clobber"]
