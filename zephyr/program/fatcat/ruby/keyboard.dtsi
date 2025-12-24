@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <zephyr/dt-bindings/input/keymap.h>
+
 / {
 	chosen {
 		cros-ec,keyboard = &kbd;
@@ -161,6 +163,30 @@
 		right-alt-rc = <KBD_RC(0, 10)>;
 		h-rc = <KBD_RC(1, 6)>;
 		r-rc = <KBD_RC(7, 3)>;
+	};
+
+	fn-keys {
+		compatible = "cros-ec,fn-keys";
+
+		fn-rc = <KBD_RC(0, 16)>;
+		keymap = <
+			MATRIX_KEY(0, 2, KBD_SCANCODE_F1)
+			MATRIX_KEY(3, 2, KBD_SCANCODE_F2)
+			MATRIX_KEY(2, 2, KBD_SCANCODE_F3)
+			MATRIX_KEY(1, 2, KBD_SCANCODE_F4)
+			MATRIX_KEY(4, 4, KBD_SCANCODE_F5)
+			MATRIX_KEY(2, 4, KBD_SCANCODE_F6)
+			MATRIX_KEY(1, 4, KBD_SCANCODE_F7)
+			MATRIX_KEY(2, 11, KBD_SCANCODE_F8)
+			MATRIX_KEY(1, 9, KBD_SCANCODE_F9)
+			MATRIX_KEY(0, 4, KBD_SCANCODE_F10)
+			MATRIX_KEY(0, 1, KBD_SCANCODE_F11)
+			MATRIX_KEY(1, 5, KBD_SCANCODE_F12)
+			MATRIX_KEY(3, 5, KBD_SCANCODE_F13)
+			MATRIX_KEY(0, 11, KBD_SCANCODE_F14)
+
+			MATRIX_KEY(6, 15, KBD_SCANCODE_CAPSLOCK)
+		>;
 	};
 };
 
