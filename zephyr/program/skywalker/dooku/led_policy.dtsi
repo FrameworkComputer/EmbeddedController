@@ -1,0 +1,128 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ #include <dt-bindings/battery.h>
+
+/ {
+	led-colors {
+		compatible = "cros-ec,led-policy";
+		led-pins = <&led_pins>;
+
+		power-state-charge {
+			charge-state = "LED_PWRS_CHARGE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = <&battery_led_amber>;
+				};
+			};
+		};
+
+		power-state-near-full {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = <&battery_led_white>;
+				};
+			};
+		};
+
+		power-state-discharge {
+			charge-state = "LED_PWRS_DISCHARGE";
+			batt-lvl = <5 BATTERY_LEVEL_FULL>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = <&battery_led_off>;
+				};
+			};
+		};
+
+		power-state-discharge-batt-low {
+			charge-state = "LED_PWRS_DISCHARGE";
+			batt-lvl = <BATTERY_LEVEL_EMPTY 4>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				transition = "LED_TRANSITION_LINEAR";
+
+				/* Amber slow flashing */
+				color-0 {
+					led-color = <&battery_led_amber>;
+					period-ms = <0>;
+				};
+				color-1 {
+					led-color = <&battery_led_amber>;
+					period-ms = <125>;
+				};
+				color-2 {
+					led-color = <&battery_led_off>;
+					period-ms = <875>;
+				};
+			};
+		};
+
+		power-state-forced-idle {
+			charge-state = "LED_PWRS_FORCED_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				/* Amber 1 sec, off 1 sec */
+				color-0 {
+					led-color = <&battery_led_amber>;
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = <&battery_led_off>;
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		power-state-error {
+			charge-state = "LED_PWRS_ERROR";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				transition = "LED_TRANSITION_LINEAR";
+
+				/* Amber fast flashing */
+				color-0 {
+					led-color = <&battery_led_amber>;
+					period-ms = <0>;
+				};
+				color-1 {
+					led-color = <&battery_led_amber>;
+					period-ms = <125>;
+				};
+				color-2 {
+					led-color = <&battery_led_off>;
+					period-ms = <375>;
+				};
+			};
+		};
+
+		power-state-idle {
+			charge-state = "LED_PWRS_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_white>;
+				};
+			};
+		};
+
+	};
+};

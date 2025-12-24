@@ -14,6 +14,8 @@
 #include "../power_signal.dtsi"
 #include "../usba.dtsi"
 #include "cbi.dtsi"
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
 
 / {
 	aliases {
@@ -76,12 +78,6 @@
 		};
 		gpio_ec_tchscr_report_en: ec_tchscr_report_en {
 			gpios = <&gpioh 3 GPIO_OUTPUT>;
-		};
-		gpio_c0_charger_led_white_l: c0_charger_led_white_l {
-			gpios = <&gpioa 0 GPIO_OUTPUT_HIGH>;
-		};
-		gpio_c0_charger_led_amber_l: c0_charger_led_amber_l {
-			gpios = <&gpioa 1 GPIO_OUTPUT_HIGH>;
 		};
 		gpio_en_pwr_s3: en_pwr_s3 {
 			gpios = <&gpiob 6 (GPIO_OUTPUT_LOW)>;
