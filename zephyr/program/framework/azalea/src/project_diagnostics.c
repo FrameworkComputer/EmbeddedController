@@ -26,10 +26,13 @@
 
 void start_fan_deferred(void)
 {
+	if (is_device_complete())
+		return;
 	/* force turn on the fan for diagnostic */
 	dptf_set_fan_duty_target(20);
 }
 DECLARE_DEFERRED(start_fan_deferred);
+DECLARE_HOOK(HOOK_CHIPSET_RESET, start_fan_deferred, HOOK_PRIO_DEFAULT);
 
 void check_device_deferred(void)
 {
