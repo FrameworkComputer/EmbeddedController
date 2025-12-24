@@ -496,6 +496,63 @@ static int cros_system_npcx_get_reset_cause(const struct device *dev)
 	return data->reset;
 }
 
+#if DT_NODE_HAS_STATUS(PSL_NODE, okay)
+/**
+ * Match PSL node with a known wake source label.
+ */
+#define MATCH_PSL_WAKE_SOURCE(node_id, prop, idx, label, source, wake_source) \
+	COND_CODE_1(DT_NODE_EXISTS(DT_NODELABEL(label)),                      \
+		    (if (DT_SAME_NODE(DT_PHANDLE_BY_IDX(node_id, prop, idx),  \
+				      DT_NODELABEL(label))) {                 \
+			    wake_source = source;                             \
+		    }),                                                       \
+		    ())
+
+/**
+ * Check if the PSL wake source matches one of the known signals (lid, power
+ * button, AC).
+ */
+#define CHECK_PSL_WAKE(node_id, prop, idx, wake_source)                        \
+	if (psl_cts &                                                          \
+	    BIT(DT_PROP(DT_PHANDLE_BY_IDX(node_id, prop, idx), psl_offset))) { \
+		MATCH_PSL_WAKE_SOURCE(node_id, prop, idx,                      \
+				      wake_source_lid_open,                    \
+				      WAKE_SOURCE_LID_OPEN, wake_source);      \
+		MATCH_PSL_WAKE_SOURCE(node_id, prop, idx, wake_source_pwr_btn, \
+				      WAKE_SOURCE_PWR_BTN, wake_source);       \
+		MATCH_PSL_WAKE_SOURCE(node_id, prop, idx, wake_source_acok,    \
+				      WAKE_SOURCE_ACOK, wake_source);          \
+	}
+
+/**
+ * NPCX implementation to get hibernate wake source.
+ *
+ * It reads the PSL_CTS register to find which PSL_IN pin triggered the wake
+ * and then maps it to a wake source using devicetree node labels.
+ */
+static int
+cros_system_npcx_get_hibernate_wake_source(const struct device *dev,
+					   enum hibernate_wake_source *source)
+{
+	enum hibernate_wake_source wake_source = WAKE_SOURCE_UNKNOWN;
+	struct glue_reg *inst_glue = (struct glue_reg *)(NPCX_GLUE_REG_ADDR);
+	/* PSL_CTS bits 0-3 indicate which PSL_IN triggered wake from hibernate.
+	 */
+	uint8_t psl_cts = inst_glue->PSL_CTS & 0xf;
+
+	LOG_INF("PSL_CTS: %d", psl_cts);
+
+	DT_FOREACH_PROP_ELEM_VARGS(PSL_NODE, pinctrl_0, CHECK_PSL_WAKE,
+				   wake_source)
+
+	LOG_INF("wake source: %x", wake_source);
+
+	*source = wake_source;
+
+	return 0;
+}
+#endif
+
 static int cros_system_npcx_init(const struct device *dev)
 {
 	struct scfg_reg *const inst_scfg = HAL_SCFG_INST(dev);
@@ -619,6 +676,9 @@ static DEVICE_API(cros_system, cros_system_driver_npcx_api) = {
 	.chip_vendor = cros_system_npcx_get_chip_vendor,
 	.chip_name = cros_system_npcx_get_chip_name,
 	.chip_revision = cros_system_npcx_get_chip_revision,
+#if DT_NODE_HAS_STATUS(PSL_NODE, okay)
+	.get_hibernate_wake_source = cros_system_npcx_get_hibernate_wake_source,
+#endif
 #ifdef CONFIG_PM
 	.deep_sleep_ticks = cros_system_npcx_deep_sleep_ticks,
 #endif
