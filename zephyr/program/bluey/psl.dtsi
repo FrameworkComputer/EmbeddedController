@@ -11,19 +11,19 @@
  */
 
 /* Power switch logic input pads */
-&psl_in1_gpd2 {
+wake_source_lid_open: &psl_in1_gpd2 {
 	/* EC_LID_OPEN */
 	psl-in-mode = "edge";
 	psl-in-pol = "high-rising";
 };
 
-&psl_in2_gp00 {
+wake_source_pwr_btn: &psl_in2_gp00 {
 	/* EC_PWR_BTN_ODL */
 	psl-in-mode = "edge";
 	psl-in-pol = "low-falling";
 };
 
-&psl_in3_gp01 {
+wake_source_acok: &psl_in3_gp01 {
 	/* EC_ACOK_OD */
 	psl-in-mode = "edge";
 	psl-in-pol = "high-rising";
