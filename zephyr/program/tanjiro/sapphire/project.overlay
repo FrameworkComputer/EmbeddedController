@@ -335,7 +335,7 @@
 			gpios = <&gpiod 3 (GPIO_OUTPUT)>;
 		};
 		gpio_pp1800_wlc_en: pp1800_wlc_en {
-			gpios = <&gpioa 1 (GPIO_OUTPUT)>;
+			gpios = <&gpioa 1 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
 		};
 		imu_int_ec_l {
 			gpios = <&gpiod 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
