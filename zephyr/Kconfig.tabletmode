@@ -62,15 +62,4 @@ config PLATFORM_EC_EXTERNAL_NOTEBOOK_MODE
       clamshell/tablet mode changes. The motionsense task notifies the EC
       using the GPIO mapped to the devicetree alias "gpio_nb_mode".
 
-config PLATFORM_EC_WPC_HALL_ENABLE
-    bool "Enable WPC HALL control function"
-    help
-      Enable support for the WPC HALL controller power on/off function.
-
-config PLATFORM_EC_WPC_HALL_DEBOUNCE_US
-    int "WPC Hall debounce delay (microseconds)"
-    default 30000
-    help
-      Set the Hall delay used to control WPC power.
-
 endif # PLATFORM_EC_TABLET_MODE

@@ -19,5 +19,20 @@ config PLATFORM_EC_CTN730
 	help
 	  Use CTN730 driver. CTN730 is a nfc wireless power transmitter.
 
+config PLATFORM_EC_WPC_HALL_ENABLE
+	bool "Enable WPC HALL control function"
+	help
+	  Enable support for the WPC HALL controller power on/off function.
+
+config PLATFORM_EC_WPC_HALL_DEBOUNCE_US
+	int "WPC Hall debounce delay (microseconds)"
+	default 30000
+	help
+	  Set the Hall delay used to control WPC power.
+
+config PLATFORM_EC_WPC_AC_S5_CHARGE
+	bool "Enable WPC AC S5 charge feature"
+	help
+	  Enable AC S5 charge feature for the WPC.
 
 endif # PLATFORM_EC_PERIPHERAL_CHARGER
