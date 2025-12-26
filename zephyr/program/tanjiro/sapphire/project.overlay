@@ -452,6 +452,7 @@
 		compatible = "nxp,ctn730";
 		reg = <0x28>;
 		irq-gpios=<&gpiog 0 GPIO_INPUT>;
+		rf-charge-msec = <1000>;
 	};
 };
 
