@@ -99,6 +99,19 @@ static bool cypd_allow_reg_in_bootloader(int reg)
 	return false;
 }
 
+static bool cypd_controllers_are_ready(void)
+{
+	for (int controller = 0; controller < PD_CHIP_COUNT; controller++) {
+		if (pd_chip_config[controller].state == CCG_STATE_NO_POWER)
+			continue;
+
+		if (pd_chip_config[controller].state != CCG_STATE_READY)
+			return false;
+	}
+
+	return true;
+}
+
 bool cypd_contoller_is_powered(int controller)
 {
 	if (pd_chip_config[controller].state == CCG_STATE_NO_POWER)
@@ -1620,25 +1633,22 @@ static void cypd_handle_state(int controller)
 
 		cypd_customize_app_setup(controller);
 
-		/* After initial complete, update the type-c port state */
-		for (int port = 0; port < pd_chip_config[controller].support_max_port; port++) {
-			cypd_update_port_state(controller, port);
-		}
-
 		ucsi_startup(controller);
+
+		CPRINTS("CYPD %d Ready!", controller);
+		pd_chip_config[controller].state = CCG_STATE_READY;
 
 		gpio_enable_interrupt(pd_chip_config[controller].gpio);
 
-		/* Update PDO format after init complete */
-		if (controller) {
+		/* After all PD chips initialize completely, and then update the state */
+		if (cypd_controllers_are_ready()) {
+
+			task_set_event(TASK_ID_CYPD, CCG_EVT_UPDATE_PORTSTATE);
 #if defined(CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE) || defined(CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE)
 			hook_call_deferred(&pd_batt_init_deferred_data, 100 * MSEC);
 #endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE || CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE */
 			hook_call_deferred(&pdo_init_deferred_data, 25 * MSEC);
 		}
-
-		CPRINTS("CYPD %d Ready!", controller);
-		pd_chip_config[controller].state = CCG_STATE_READY;
 		break;
 	case CCG_STATE_NO_POWER:
 		CPRINTS("CYPD %d no power!", controller);
@@ -2316,6 +2326,16 @@ void cypd_interrupt_handler_task(void *p)
 			for (i = 0; i < PD_CHIP_COUNT; i++) {
 				if (cypd_contoller_is_powered(i))
 					cypd_update_power_status(i);
+			}
+		}
+
+		if (evt & CCG_EVT_UPDATE_PORTSTATE) {
+			for (i = 0; i < PD_PORT_COUNT; i++) {
+				int controller = PORT_TO_CONTROLLER(i);
+				int port = PORT_TO_CONTROLLER_PORT(i);
+
+				if (cypd_contoller_is_powered(controller))
+					cypd_update_port_state(controller, port);
 			}
 		}
 
