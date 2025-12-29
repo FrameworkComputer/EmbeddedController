@@ -134,12 +134,14 @@ struct i2c_timing {
 
 /* I2C timing setting array of 400K & 1M Hz */
 static const struct i2c_timing i2c_400k_timings[] = {
+	{ 40, 13, 64, 42 },
 	{ 20, 7, 32, 22 },
 	{ 15, 7, 24, 18 },
 };
 const unsigned int i2c_400k_timing_used = ARRAY_SIZE(i2c_400k_timings);
 
 static const struct i2c_timing i2c_1m_timings[] = {
+	{ 40, 7, 26, 20 },
 	{ 20, 7, 16, 10 },
 	{ 15, 7, 14, 10 },
 };
