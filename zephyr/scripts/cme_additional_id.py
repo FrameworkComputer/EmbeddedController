@@ -26,7 +26,7 @@ AdditionalInfo = collections.namedtuple(
 ADDITIONAL_DICTIONARY = {
     "realtek,rts54": [
         AdditionalInfo(
-            "realtek,jhl8040",
+            "intel,jhl8040",
             "mux",
             None,
             {
@@ -44,7 +44,7 @@ ADDITIONAL_DICTIONARY = {
             },
         ),
         AdditionalInfo(
-            "realtek,jhl9040",
+            "intel,jhl9040",
             "mux",
             None,
             {
@@ -62,7 +62,7 @@ ADDITIONAL_DICTIONARY = {
             },
         ),
         AdditionalInfo(
-            "realtek,jhl9040",
+            "intel,jhl9040",
             "mux",
             None,
             {
@@ -116,7 +116,7 @@ ADDITIONAL_DICTIONARY = {
             },
         ),
         AdditionalInfo(
-            "realtek,jhl9040",
+            "intel,jhl9040",
             "mux",
             None,
             {
@@ -134,7 +134,7 @@ ADDITIONAL_DICTIONARY = {
             },
         ),
         AdditionalInfo(
-            "realtek,tusb1044",
+            "ti,tusb1044",
             "mux",
             None,
             {
@@ -152,7 +152,7 @@ ADDITIONAL_DICTIONARY = {
             },
         ),
         AdditionalInfo(
-            "realtek,tusb1044",
+            "ti,tusb1044",
             "mux",
             None,
             {
