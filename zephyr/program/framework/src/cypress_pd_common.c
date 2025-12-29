@@ -62,6 +62,18 @@ static int pre_safety_level = TYPEC_SAFETY_LEVEL_0;
 static void cypd_pdo_reset_deferred(void);
 static void cypd_set_prepare_pdo(int controller, int port);
 
+static bool cypd_controller_is_error(int controller)
+{
+	if (pd_chip_config[controller].state == CCG_STATE_ERROR)
+		return true;
+
+	return false;
+}
+
+/**
+ * If the PD chip is in the bootloader mode, EC shouldn't send the cmd
+ * to PD chip.
+ */
 static bool cypd_controller_in_bootloader(int controller)
 {
 	if (pd_chip_config[controller].state == CCG_STATE_BOOTLOADER)
@@ -126,6 +138,9 @@ int cypd_write_reg_block(int controller, int reg, void *data, int len)
 	if (controller >= PD_CHIP_COUNT)
 		return EC_ERROR_PARAM1;
 
+	if (cypd_controller_is_error(controller))
+		return EC_ERROR_UNKNOWN;
+
 	/* EC shouldn't communicate with PD chip during it is updating */
 	if (cypd_fw_update_in_progress())
 		return EC_ERROR_ACCESS_DENIED;
@@ -149,6 +164,9 @@ int cypd_write_reg16(int controller, int reg, int data)
 
 	if (controller >= PD_CHIP_COUNT)
 		return EC_ERROR_PARAM1;
+
+	if (cypd_controller_is_error(controller))
+		return EC_ERROR_UNKNOWN;
 
 	/* EC shouldn't communicate with PD chip during it is updating */
 	if (cypd_fw_update_in_progress())
@@ -174,6 +192,9 @@ int cypd_write_reg8(int controller, int reg, int data)
 	if (controller >= PD_CHIP_COUNT)
 		return EC_ERROR_PARAM1;
 
+	if (cypd_controller_is_error(controller))
+		return EC_ERROR_UNKNOWN;
+
 	/* EC shouldn't communicate with PD chip during it is updating */
 	if (cypd_fw_update_in_progress())
 		return EC_ERROR_ACCESS_DENIED;
@@ -197,6 +218,9 @@ int cypd_read_reg_block(int controller, int reg, void *data, int len)
 
 	if (controller >= PD_CHIP_COUNT)
 		return EC_ERROR_PARAM1;
+
+	if (cypd_controller_is_error(controller))
+		return EC_ERROR_UNKNOWN;
 
 	/* EC shouldn't communicate with PD chip during it is updating */
 	if (cypd_fw_update_in_progress())
@@ -222,6 +246,9 @@ int cypd_read_reg16(int controller, int reg, int *data)
 	if (controller >= PD_CHIP_COUNT)
 		return EC_ERROR_PARAM1;
 
+	if (cypd_controller_is_error(controller))
+		return EC_ERROR_UNKNOWN;
+
 	/* EC shouldn't communicate with PD chip during it is updating */
 	if (cypd_fw_update_in_progress())
 		return EC_ERROR_ACCESS_DENIED;
@@ -245,6 +272,9 @@ int cypd_read_reg8(int controller, int reg, int *data)
 
 	if (controller >= PD_CHIP_COUNT)
 		return EC_ERROR_PARAM1;
+
+	if (cypd_controller_is_error(controller))
+		return EC_ERROR_UNKNOWN;
 
 	/* EC shouldn't communicate with PD chip during it is updating */
 	if (cypd_fw_update_in_progress())
@@ -1564,6 +1594,9 @@ static void cypd_handle_state(int controller)
 
 			} else
 				pd_chip_config[controller].state = CCG_STATE_APP_SETUP;
+		} else {
+			CPRINTS("CYPD %d read device mode failed.", controller);
+			pd_chip_config[controller].state = CCG_STATE_ERROR;
 		}
 		/*try again in a while*/
 		if (delay) {
