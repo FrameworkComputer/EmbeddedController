@@ -62,6 +62,31 @@ static int pre_safety_level = TYPEC_SAFETY_LEVEL_0;
 static void cypd_pdo_reset_deferred(void);
 static void cypd_set_prepare_pdo(int controller, int port);
 
+static bool cypd_controller_in_bootloader(int controller)
+{
+	if (pd_chip_config[controller].state == CCG_STATE_BOOTLOADER)
+		return true;
+
+	return false;
+}
+
+/**
+ * The EC should not send unsupported commands while the PD is in bootloader mode.
+ */
+static bool cypd_allow_reg_in_bootloader(int reg)
+{
+	int bootloader_reg[4] = {
+		CCG_DEVICE_MODE, CCG_BOOT_MODE_REASON, CCG_RESPONSE_REG, CCG_INTR_REG
+	};
+
+	for (int idx = 0; idx < ARRAY_SIZE(bootloader_reg); idx++) {
+		if (bootloader_reg[idx] == reg)
+			return true;
+	}
+
+	return false;
+}
+
 bool cypd_contoller_is_powered(int controller)
 {
 	if (pd_chip_config[controller].state == CCG_STATE_NO_POWER)
@@ -105,6 +130,11 @@ int cypd_write_reg_block(int controller, int reg, void *data, int len)
 	if (cypd_fw_update_in_progress())
 		return EC_ERROR_ACCESS_DENIED;
 
+	if (cypd_controller_in_bootloader(controller) && !cypd_allow_reg_in_bootloader(reg)) {
+		CPRINTS("PD%d is in boot mode, pending write block:0x%04x", controller, reg);
+		return EC_ERROR_ACCESS_DENIED;
+	}
+
 	rv = i2c_write_offset16_block(i2c_port, addr_flags, reg, data, len);
 	if (rv != EC_SUCCESS)
 		CPRINTS("%s failed: ctrl=0x%x, reg=0x%02x", __func__, controller, reg);
@@ -123,6 +153,11 @@ int cypd_write_reg16(int controller, int reg, int data)
 	/* EC shouldn't communicate with PD chip during it is updating */
 	if (cypd_fw_update_in_progress())
 		return EC_ERROR_ACCESS_DENIED;
+
+	if (cypd_controller_in_bootloader(controller) && !cypd_allow_reg_in_bootloader(reg)) {
+		CPRINTS("PD%d is in boot mode, pending write reg16:0x%04x", controller, reg);
+		return EC_ERROR_ACCESS_DENIED;
+	}
 
 	rv = i2c_write_offset16(i2c_port, addr_flags, reg, data, 2);
 	if (rv != EC_SUCCESS)
@@ -143,6 +178,11 @@ int cypd_write_reg8(int controller, int reg, int data)
 	if (cypd_fw_update_in_progress())
 		return EC_ERROR_ACCESS_DENIED;
 
+	if (cypd_controller_in_bootloader(controller) && !cypd_allow_reg_in_bootloader(reg)) {
+		CPRINTS("PD%d is in boot mode, pending write reg8:0x%04x", controller, reg);
+		return EC_ERROR_ACCESS_DENIED;
+	}
+
 	rv = i2c_write_offset16(i2c_port, addr_flags, reg, data, 1);
 	if (rv != EC_SUCCESS)
 		CPRINTS("%s failed: ctrl=0x%x, reg=0x%02x", __func__, controller, reg);
@@ -161,6 +201,11 @@ int cypd_read_reg_block(int controller, int reg, void *data, int len)
 	/* EC shouldn't communicate with PD chip during it is updating */
 	if (cypd_fw_update_in_progress())
 		return EC_ERROR_ACCESS_DENIED;
+
+	if (cypd_controller_in_bootloader(controller) && !cypd_allow_reg_in_bootloader(reg)) {
+		CPRINTS("PD%d is in boot mode, pending read block:0x%04x", controller, reg);
+		return EC_ERROR_ACCESS_DENIED;
+	}
 
 	rv = i2c_read_offset16_block(i2c_port, addr_flags, reg, data, len);
 	if (rv != EC_SUCCESS)
@@ -181,6 +226,11 @@ int cypd_read_reg16(int controller, int reg, int *data)
 	if (cypd_fw_update_in_progress())
 		return EC_ERROR_ACCESS_DENIED;
 
+	if (cypd_controller_in_bootloader(controller) && !cypd_allow_reg_in_bootloader(reg)) {
+		CPRINTS("PD%d is in boot mode, pending read reg16:0x%04x", controller, reg);
+		return EC_ERROR_ACCESS_DENIED;
+	}
+
 	rv = i2c_read_offset16(i2c_port, addr_flags, reg, data, 2);
 	if (rv != EC_SUCCESS)
 		CPRINTS("%s failed: ctrl=0x%x, reg=0x%02x", __func__, controller, reg);
@@ -199,6 +249,11 @@ int cypd_read_reg8(int controller, int reg, int *data)
 	/* EC shouldn't communicate with PD chip during it is updating */
 	if (cypd_fw_update_in_progress())
 		return EC_ERROR_ACCESS_DENIED;
+
+	if (cypd_controller_in_bootloader(controller) && !cypd_allow_reg_in_bootloader(reg)) {
+		CPRINTS("PD%d is in boot mode, pending read reg8:0x%04x", controller, reg);
+		return EC_ERROR_ACCESS_DENIED;
+	}
 
 	rv = i2c_read_offset16(i2c_port, addr_flags, reg, data, 1);
 	if (rv != EC_SUCCESS)
@@ -1494,12 +1549,14 @@ static void cypd_handle_state(int controller)
 				CONFIG_PD_WAIT_STABLE_TIMER * MSEC);
 		}
 		break;
+	case CCG_STATE_BOOTLOADER:
 	case CCG_STATE_POWER_ON:
 		/* poll to see if the controller has booted yet */
 		if (cypd_read_reg8(controller, CCG_DEVICE_MODE, &data) == EC_SUCCESS) {
 			if ((data & 0x03) == 0x00) {
 				CPRINTS("CYPD %d is in bootloader 0x%04x", controller, data);
 				delay = CCG_MAX_TBOOTWAIT_VALUE;
+				pd_chip_config[controller].state = CCG_STATE_BOOTLOADER;
 				if (cypd_read_reg16(controller, CCG_BOOT_MODE_REASON, &data)
 						== EC_SUCCESS) {
 					CPRINTS("CYPD bootloader reason 0x%02x", data);

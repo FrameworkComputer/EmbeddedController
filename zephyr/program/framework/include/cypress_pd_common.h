@@ -308,6 +308,7 @@ enum pd_task_evt {
 	CCG_EVT_PERFORM_ERROR_RECOVERY = BIT(27),
 	CCG_EVT_PDO_RESET = BIT(28),
 	CCG_EVT_BATT_UPDATE = BIT(29),
+	CCG_EVT_UPDATE_PORTSTATE = BIT(30),
 };
 
 /************************************************
