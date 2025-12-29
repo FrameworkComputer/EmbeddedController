@@ -160,6 +160,13 @@ child-binding:
           - LED_TRANSITION_STEP
           - LED_TRANSITION_LINEAR
           - LED_TRANSITION_EXPONENTIAL
+      cycle-count:
+        type: int
+        description: |
+          Number of times the sequence repeats before stopping.
+          0 (default) implies infinite loop.
+          If N > 0, the sequence runs N times and then holds the state
+          of the last defined color in the pattern.
     child-binding:
       properties:
         led-color:

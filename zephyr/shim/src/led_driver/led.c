@@ -80,14 +80,20 @@ DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(1, DT_FOREACH_CHILD_VARGS,
 
 #define PLUS_ONE(id) +1
 
-#define LED_PATTERN_INIT(node_id, fn)                          \
-	{                                                      \
-		.cur_color = 0,                                \
-		.elapsed_ms = 0,                               \
-		.transition = GET_PROP(node_id, transition),   \
-		.pattern_len = 0 fn(node_id, PLUS_ONE),        \
-		.pattern_color = PATTERN_COLOR_ARRAY(node_id), \
+#define LED_PATTERN_INIT(node_id, fn)                               \
+	{                                                           \
+		.cur_color = 0,                                     \
+		.elapsed_ms = 0,                                    \
+		.transition = GET_PROP(node_id, transition),        \
+		.pattern_len = 0 fn(node_id, PLUS_ONE),             \
+		.pattern_color = PATTERN_COLOR_ARRAY(node_id),      \
+		.cycle_limit = DT_PROP_OR(node_id, cycle_count, 0), \
+		.cycle_curr = 0,                                    \
 	},
+
+#define VALIDATE_CYCLE_COUNT(node_id, ...)                       \
+	BUILD_ASSERT(DT_PROP_OR(node_id, cycle_count, 0) <= 255, \
+		     "cycle-count exceeds uint8_t limit (255)");
 
 struct node_prop_t {
 	enum led_pwr_state pwr_state;
@@ -103,9 +109,10 @@ struct node_prop_t {
 };
 
 #define PATTERN_NODE_ARRAY(id) DT_CAT(PATTERN_ARRAY_, id)
-#define GEN_PATTERN_NODE_ARRAY(id, fn1, fn2)          \
-	struct led_pattern_node_t PATTERN_NODE_ARRAY( \
-		id)[] = { fn1(id, LED_PATTERN_INIT, fn2) };
+#define GEN_PATTERN_NODE_ARRAY(id, fn1, fn2)                \
+	struct led_pattern_node_t PATTERN_NODE_ARRAY(       \
+		id)[] = { fn1(id, LED_PATTERN_INIT, fn2) }; \
+	fn1(id, VALIDATE_CYCLE_COUNT)
 DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, GEN_PATTERN_NODE_ARRAY,
 					DT_FOREACH_CHILD_VARGS,
 					DT_FOREACH_CHILD)
@@ -182,6 +189,12 @@ static void advance_led_pattern(struct led_pattern_node_t *pattern,
 {
 	uint32_t duration;
 
+	/* If we have finished the requested number of cycles, hold state. */
+	if (pattern->cycle_limit > 0 &&
+	    pattern->cycle_curr >= pattern->cycle_limit) {
+		return;
+	}
+
 	duration = get_step_duration(pattern, pattern->cur_color);
 
 	/* If the current step has no duration, we can't advance time */
@@ -197,6 +210,20 @@ static void advance_led_pattern(struct led_pattern_node_t *pattern,
 
 		/* Wrap around if we reached the end of the pattern */
 		if (pattern->cur_color >= pattern->pattern_len) {
+			/* Handle cycle counting if a limit is configured */
+			if (pattern->cycle_limit > 0) {
+				pattern->cycle_curr++;
+				if (pattern->cycle_curr >=
+				    pattern->cycle_limit) {
+					/* Limit reached. Hold final state. */
+					pattern->cur_color =
+						pattern->pattern_len - 1;
+					pattern->elapsed_ms = get_step_duration(
+						pattern, pattern->cur_color);
+					return;
+				}
+			}
+
 			pattern->cur_color = 0;
 		}
 
@@ -324,8 +351,12 @@ static int match_node(int node_idx)
 	if (node_array[node_idx].state_active == false) {
 		node_array[node_idx].state_active = true;
 		for (int i = 0; i < node_array[node_idx].num_patterns; i++) {
-			node_array[node_idx].led_patterns[i].cur_color = 0;
-			node_array[node_idx].led_patterns[i].elapsed_ms = 0;
+			struct led_pattern_node_t *pattern =
+				&node_array[node_idx].led_patterns[i];
+
+			pattern->cur_color = 0;
+			pattern->elapsed_ms = 0;
+			pattern->cycle_curr = 0;
 		}
 	}
 

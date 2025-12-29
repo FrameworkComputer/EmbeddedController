@@ -140,6 +140,9 @@ config LINK_TEST_SUITE_LED_DRIVER
 config LINK_TEST_SUITE_LED_DRIVER_ALIAS_LED
 	bool "Link and test the led_driver tests with alias LEDs defined"
 
+config LINK_TEST_SUITE_LED_DRIVER_SEQUENCE
+	bool "Link and test the LED pattern sequence logic"
+
 config LINK_TEST_SUITE_LOCATE_CHIP_ALTS
 	bool "Link tests for alternate operations of the locate chip host cmd"
 	help
