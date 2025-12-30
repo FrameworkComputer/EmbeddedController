@@ -46,6 +46,8 @@
 	label = "I2C_PORT_PD";
 	clock-frequency = <I2C_BITRATE_FAST>;
 	status = "okay";
+	lcnt-offset = <38>;
+	hcnt-offset = <32>;
 };
 
 &i2c_2_wrapper {
