@@ -210,6 +210,10 @@
 		gpio_ec_entering_rw: ec_entering_rw {
 			enum-name = "GPIO_ENTERING_RW";
 		};
+		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
+			gpios = <&gpio6 2 (GPIO_INPUT)>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
 	};
 
 	/*
