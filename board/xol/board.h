@@ -13,6 +13,9 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+/* Configure the APB2 and APB3 CLK to 40MHz */
+#define NPCX_CORE_ABP2_ABP3_CLOCK_40M
+
 /*
  * This will happen automatically on NPCX9 ES2 and later. Do not remove
  * until we can confirm all earlier chips are out of service.
