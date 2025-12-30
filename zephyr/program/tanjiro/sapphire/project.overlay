@@ -330,6 +330,7 @@
 		};
 		gpio_pen_pres: pen_pres_odl {
 			gpios = <&gpiog 1 (GPIO_INPUT)>;
+			enum-name = "GPIO_HALL_CTL_PCHG";
 		};
 		gpio_pp5000_wlc_en: pp5000_wlc_en {
 			gpios = <&gpiod 3 (GPIO_OUTPUT)>;
@@ -377,6 +378,11 @@
 			irq-pin = <&gpio_ec_batt_pres_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "batt_pres_interrupt";
+		};
+		wpc_lid_irq: wpc_lid_irq{
+			irq-pin = <&gpio_pen_pres>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "wpc_hall_interrupt";
 		};
 	};
 
