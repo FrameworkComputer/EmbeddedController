@@ -171,3 +171,25 @@ config FLASH_ANDES_QSPI_INIT_PRIORITY
 	default 50
 
 endif
+
+config CROS_FLASH_FOCALTECH
+	bool "FT driver for the Zephyr shim"
+	depends on SOC_SERIES_FT90
+	default y
+	select PLATFORM_EC_FLASH_CROS
+	select PLATFORM_EC_SPI_FLASH_REGS
+	help
+	  This option enables the flash driver for the Focaltech FT90 chip. We can
+	  access the flash by read, write and erase.
+
+if CROS_FLASH_FOCALTECH
+
+config CROS_FLASH_FOCALTECH_INIT_PRIORITY
+	int "Generic flash driver priority for the Zephyr shim"
+	default 85
+	help
+	  This sets the priority of the cros-flash driver for Zephyr shim.
+	  This driver depends on the flash-controller driver in Zephyr.
+	  Its priority must be lower than CONFIG_FLASH_INIT_PRIORITY.
+
+endif
