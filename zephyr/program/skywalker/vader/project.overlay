@@ -4,6 +4,7 @@
  */
 
 #include <cros/cbi_flash.dtsi>
+#include <cros/thermistor/thermistor.dtsi>
 #include "../npcx_generated.dtsi"
 #include "../interrupts.dtsi"
 #include "../npcx_common.dtsi"
@@ -88,9 +89,15 @@
 		>;
 	};
 
-	/* GPIO */
+	/* ADC */
 	named-adc-channels {
 		compatible = "named-adc-channels";
+
+		/* PMIC Temps */
+		adc_temp_sensor1: temp_sensor1 {
+			enum-name = "ADC_TEMP_SENSOR_1";
+			io-channels = <&adc0 1>;
+		};
 
 		/* Charger Temps */
 		adc_temp_sensor2: temp_sensor2 {
@@ -98,12 +105,63 @@
 			io-channels = <&adc0 4>;
 		};
 
+		/* Ambient Temps */
 		adc_temp_sensor3: temp_sensor3 {
 			enum-name = "ADC_TEMP_SENSOR_3";
 			io-channels = <&adc0 5>;
 		};
 	};
 
+	temp_pmic: pmic {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_47K_NCP15WB473>;
+		adc = <&adc_temp_sensor1>;
+	};
+
+	temp_charger: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor2>;
+	};
+
+	temp_ambient: ambient {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_47K_NCP15WB473>;
+		adc = <&adc_temp_sensor3>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		charger {
+			temp-host-warn = <90>;
+			temp-host-high = <95>;
+			temp-host-halt = <105>;
+			temp-host-release-warn = <89>;
+			temp-host-release-high = <90>;
+			temp-host-release-halt = <100>;
+			sensor = <&temp_charger>;
+		};
+		pmic {
+			temp-host-warn = <80>;
+			temp-host-high = <95>;
+			temp-host-halt = <105>;
+			temp-host-release-warn = <79>;
+			temp-host-release-high = <90>;
+			temp-host-release-halt = <100>;
+			sensor = <&temp_pmic>;
+		};
+		ambient {
+			temp-host-warn = <70>;
+			temp-host-high = <95>;
+			temp-host-halt = <105>;
+			temp-host-release-warn = <69>;
+			temp-host-release-high = <90>;
+			temp-host-release-halt = <100>;
+			sensor = <&temp_ambient>;
+		};
+	};
+
+	/* GPIO */
 	gpio-interrupts {
 		/delete-node/ volume-up;
 		/delete-node/ volume-down;
@@ -209,7 +267,6 @@
 	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
 };
 
-
 &usbc_port0 {
 	zephyr,deferred-init;
 };
@@ -233,4 +290,12 @@
 		zephyr,deferred-init;
 	};
 	/* TODO(b:380121396): enable PDC I2C_S port if we need it */
+};
+
+&thermistor_3V3_51K1_47K_4050B {
+	status = "okay";
+};
+
+&thermistor_3V3_100K_47K_NCP15WB473 {
+	status = "okay";
 };
