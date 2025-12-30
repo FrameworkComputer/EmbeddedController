@@ -73,6 +73,7 @@
 			};
 			led-1 {
 				led-id = "EC_LED_ID_RIGHT_LED";
+				cycle-count = <1>;
 				transition = "LED_TRANSITION_LINEAR";
 
 				color-0 {
@@ -86,10 +87,6 @@
 				color-2 {
 					led-color = <&right_led_off>;
 					period-ms = <4000>;
-				};
-				// color will stay off instead of cycling
-				color-3 {
-					led-color = <&right_led_off>;
 				};
 			};
 		};
