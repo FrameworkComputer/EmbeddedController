@@ -10,6 +10,7 @@
 
 		s0 {
 			chipset-state = "POWER_S0";
+			board-led-alt-policy-label = <1>;
 
 			led-0 {
 				led-id = "EC_LED_ID_LEFT_LED";
@@ -20,6 +21,37 @@
 					period-ms = <4000>;
 				};
 				color-1 {
+					led-color = <&left_led_off>;
+					period-ms = <4000>;
+				};
+			};
+			led-1 {
+				led-id = "EC_LED_ID_RIGHT_LED";
+
+				color {
+					led-color = <&right_led_off>;
+				};
+			};
+		};
+
+		/* Duplicate S0 logic with instant transitions inserted */
+		s0_instant {
+			chipset-state = "POWER_S0";
+			board-led-alt-policy-label = <2>;
+
+			led-0 {
+				led-id = "EC_LED_ID_LEFT_LED";
+				transition = "LED_TRANSITION_LINEAR";
+
+				color-0 {
+					led-color = <&left_led_off>;
+					period-ms = <0>; /* Instant transition */
+				};
+				color-1 {
+					led-color = <&left_led_blue>;
+					period-ms = <4000>;
+				};
+				color-2 {
 					led-color = <&left_led_off>;
 					period-ms = <4000>;
 				};
@@ -64,6 +96,7 @@
 
 		s5 {
 			chipset-state = "POWER_S5";
+			board-led-alt-policy-label = <1>;
 
 			led-0 {
 				led-id = "EC_LED_ID_LEFT_LED";
@@ -86,6 +119,46 @@
 					period-ms = <4000>;
 				};
 				color-2 {
+					led-color = <&right_led_off>;
+					period-ms = <4000>;
+				};
+			};
+		};
+
+		/* Duplicate S5 logic with instant transitions inserted */
+		s5_instant {
+			chipset-state = "POWER_S5";
+			board-led-alt-policy-label = <2>;
+
+			led-0 {
+				led-id = "EC_LED_ID_LEFT_LED";
+
+				color-0 {
+					led-color = <&left_led_off>;
+				};
+			};
+			led-1 {
+				led-id = "EC_LED_ID_RIGHT_LED";
+				cycle-count = <1>;
+				transition = "LED_TRANSITION_LINEAR";
+
+				color-0 {
+					led-color = <&right_led_white>;
+					period-ms = <4000>;
+				};
+				color-1 {
+					led-color = <&right_led_yellow>;
+					period-ms = <0>; /* Instant transition */
+				};
+				color-2 {
+					led-color = <&right_led_white>;
+					period-ms = <0>; /* Instant transition */
+				};
+				color-3 {
+					led-color = <&right_led_yellow>;
+					period-ms = <4000>;
+				};
+				color-4 {
 					led-color = <&right_led_off>;
 					period-ms = <4000>;
 				};

@@ -10,4 +10,5 @@ target_include_directories(app PRIVATE
 target_sources(app PRIVATE
   src/led_pwm_fade.c
   src/led_host_cmd.c
+  src/stubs.c
 )

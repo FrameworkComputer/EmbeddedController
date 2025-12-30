@@ -22,9 +22,11 @@
 #include <zephyr/ztest.h>
 #include <zephyr/ztest_assert.h>
 
+void set_board_led_alt_policy(int label);
+
 ZTEST_SUITE(led_pwm_fade, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
 
-ZTEST(led_pwm_fade, test_led_fade)
+static void run_full_fade_test_sequence(void)
 {
 	const struct device *pwm_blue_left =
 		DEVICE_DT_GET(DT_NODELABEL(pwm_blue_left));
@@ -174,4 +176,18 @@ ZTEST(led_pwm_fade, test_led_fade)
 	zassert_equal(pwm_mock_get_duty(pwm_white_left, 0), 0, NULL);
 	zassert_equal(pwm_mock_get_duty(pwm_amber_right, 0), 0, NULL);
 	zassert_equal(pwm_mock_get_duty(pwm_white_right, 0), 0, NULL);
+}
+
+ZTEST(led_pwm_fade, test_led_fade)
+{
+	/* Select the default policy */
+	set_board_led_alt_policy(1);
+	run_full_fade_test_sequence();
+}
+
+ZTEST(led_pwm_fade, test_led_fade_instant)
+{
+	/* Select the policy with extra 0-ms steps */
+	set_board_led_alt_policy(2);
+	run_full_fade_test_sequence();
 }

@@ -64,3 +64,40 @@ ZTEST(led_driver_sequence, test_run_once)
 		zassert_true(is_blue_on(), "Tick %d: Expected to hold Blue", i);
 	}
 }
+
+ZTEST(led_driver_sequence, test_instant_init)
+{
+	/* Select the instant transition at start policy node */
+	set_board_led_alt_policy(4);
+	led_control(EC_LED_ID_BATTERY_LED, LED_STATE_RESET);
+
+	hook_notify(HOOK_TICK);
+	zassert_true(is_white_on(),
+		     "Failed to skip initial 0ms steps to White");
+}
+
+ZTEST(led_driver_sequence, test_all_zero_safety_guard)
+{
+	/* Select the all-zero policy node */
+	set_board_led_alt_policy(5);
+	led_control(EC_LED_ID_BATTERY_LED, LED_STATE_RESET);
+
+	/* Safety guard should prevent infinite loop and CPU hang */
+	hook_notify(HOOK_TICK);
+	zassert_true(is_white_on() || is_blue_on());
+}
+
+ZTEST(led_driver_sequence, test_mid_pattern_instant)
+{
+	/* Select the instant transition in middle policy node */
+	set_board_led_alt_policy(6);
+	led_control(EC_LED_ID_BATTERY_LED, LED_STATE_RESET);
+
+	/* Land on Blue */
+	hook_notify(HOOK_TICK);
+	zassert_true(is_blue_on());
+
+	/* Next tick: Blue expires, skips Off(0ms), lands on White */
+	hook_notify(HOOK_TICK);
+	zassert_true(is_white_on(), "Failed to skip mid-pattern 0ms step");
+}

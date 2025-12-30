@@ -43,5 +43,61 @@
 				};
 			};
 		};
+
+		/* Label 4 triggers Instant Transition at start */
+		seq-instant-init {
+			board-led-alt-policy-label = <4>;
+			battery-led-logic {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_off>;
+					period-ms = <0>;
+				};
+				color-1 {
+					led-color = <&battery_led_blue>;
+					period-ms = <0>;
+				};
+				color-2 {
+					led-color = <&battery_led_white>;
+					period-ms = <250>;
+				};
+			};
+		};
+
+		/* Label 5 triggers All-Zero Pattern (Safety Guard) */
+		seq-all-zero {
+			board-led-alt-policy-label = <5>;
+			battery-led-logic {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_blue>;
+					period-ms = <0>;
+				};
+				color-1 {
+					led-color = <&battery_led_white>;
+					period-ms = <0>;
+				};
+			};
+		};
+
+		/* Label 6 triggers Instant Transition in middle */
+		seq-mid-instant {
+			board-led-alt-policy-label = <6>;
+			battery-led-logic {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_blue>;
+					period-ms = <250>;
+				};
+				color-1 {
+					led-color = <&battery_led_off>;
+					period-ms = <0>;
+				};
+				color-2 {
+					led-color = <&battery_led_white>;
+					period-ms = <250>;
+				};
+			};
+		};
 	};
 };
