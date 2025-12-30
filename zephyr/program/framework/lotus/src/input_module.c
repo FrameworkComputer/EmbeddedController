@@ -349,7 +349,7 @@ static int inputdeck_cmd(int argc, const char **argv)
 
 			id = get_hardware_id(ADC_HUB_BOARD_ID);
 			mv = adc_read_channel(ADC_HUB_BOARD_ID);
-			ccprintf("    C-Deck status %d = %d %d mV", i, id, mv);
+			ccprintf("    C-Deck status %d = %2d %4d mV", i, id, mv);
 			switch (i) {
 			case TOP_ROW_0:
 				ccprintf(" [X - -    - -]");
@@ -373,7 +373,7 @@ static int inputdeck_cmd(int argc, const char **argv)
 				ccprintf(" [Toprow disc.]");
 				break;
 			case HUBBOARD:
-				ccprintf("  [Hubboard    ]");
+				ccprintf(" [Hubboard    ]");
 				break;
 			default:
 				break;
