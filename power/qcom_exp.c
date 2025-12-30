@@ -754,19 +754,7 @@ enum power_state power_chipset_init(void)
 		   (reset_flags & EC_RESET_FLAG_SYSJUMP)) {
 		auto_power_on = 0;
 	}
-#ifdef CONFIG_PLATFORM_EC_HIBERNATE_EXIT_AC_WAKE
-	if ((reset_flags & EC_RESET_FLAG_HIBERNATE) &&
-	    board_check_hibernate_wake_source_ac()) {
-		/*
-		 * If the system is exiting from hibernate and the wake source
-		 * is AC, set `ac_on` to true. This ensures that the power-on
-		 * sequence is triggered with `POWER_ON_BY_AC_ON`, providing the
-		 * correct power-on reason to the AP firmware (CBLPWR).
-		 */
-		auto_power_on = 0;
-		ac_on = 1;
-	}
-#endif
+
 	if (auto_power_on) {
 		CPRINTS("auto_power_on set due to reset flags");
 	} else {
