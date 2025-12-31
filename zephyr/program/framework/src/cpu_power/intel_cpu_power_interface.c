@@ -26,7 +26,6 @@
 #define CPRINTF(format, args...) cprintf(CC_THERMAL, format, ## args)
 
 #define PECI_HOST_ADDR		0x30	/* PECI Host address */
-#define CONFIG_PECI_TJMAX	110	/* PECI TJMAX value */
 
 #define ESPI_OOB_SMB_SLAVE_SRC_ADDR_EC 0x0F
 #define ESPI_OOB_SMB_SLAVE_DEST_ADDR_PMC_FW 0x20
@@ -261,11 +260,10 @@ static int peci_get_cpu_temp(int *cpu_temp)
 	*cpu_temp = ((*cpu_temp ^ 0xFFFF) + 1) >> 6;
 
 	/* TODO: calculate the fractional value (PECI spec figure 5.1)*/
-
-	if (*cpu_temp >= CONFIG_PECI_TJMAX)
+	if (*cpu_temp >= CONFIG_PLATFORM_EC_PECI_TJMAX)
 		return EC_ERROR_UNKNOWN;
 
-	*cpu_temp = CONFIG_PECI_TJMAX - *cpu_temp + 273;
+	*cpu_temp = CONFIG_PLATFORM_EC_PECI_TJMAX - *cpu_temp + 273;
 
 	return EC_SUCCESS;
 }

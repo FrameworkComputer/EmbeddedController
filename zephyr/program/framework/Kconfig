@@ -278,6 +278,12 @@ config PLATFORM_EC_CHARGER_RAA489300
 		Framework project which uses the renesas raa489300 chip.
 		Enable raa489300 feature.
 
+config PLATFORM_EC_PECI_TJMAX
+	int "Static INTEL CPU TjMax Value (degrees C)"
+	default 110
+	help
+		Specify to set INTEL CPU the Tjunction Max temperature in degrees Celsius.
+
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code
 source "subsys/logging/Kconfig.template.log_config"
