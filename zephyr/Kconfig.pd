@@ -467,6 +467,19 @@ config PLATFORM_EC_USB_PD_EVENT_DRIVEN_CC_STATE
 	  Enable interrupt event driven CC state change detection instead of
 	  polling CC state from TCPC
 
+config PLATFORM_EC_USBC_PD3_T_SENDER_RESPONSE_OVERRIDE
+	bool "override for PD3_T_SENDER_RESPONSE"
+	default n
+	help
+	  enable PD3_T_SENDER_RESPONSE value override.
+
+config PLATFORM_EC_USBC_PD3_SENDER_RESPONSE_MS
+	int "Value for PD3_T_SENDER_RESPONSE"
+	depends on PLATFORM_EC_USBC_PD3_T_SENDER_RESPONSE_OVERRIDE
+	default 29000
+	help
+	  configure PD3_T_SENDER_RESPONSE value.
+
 rsource "Kconfig.svdm_rsp"
 
 endif  # PLATFORM_EC_USB_POWER_DELIVERY

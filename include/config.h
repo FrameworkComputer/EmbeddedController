@@ -5514,6 +5514,9 @@
 /* Support VCONN swap */
 #undef CONFIG_USBC_VCONN_SWAP
 
+#undef CONFIG_USBC_PD3_SENDER_RESPONSE_OVERRIDE
+#undef CONFIG_USBC_PD3_T_SENDER_RESPONSE_MS
+
 /*
  * The amount of time in microseconds that the board takes to turn VCONN on or
  * off after being directed to do so. Typically a property of the PPC. Default
