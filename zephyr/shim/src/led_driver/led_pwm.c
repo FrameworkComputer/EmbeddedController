@@ -51,22 +51,25 @@ DT_INST_FOREACH_CHILD_STATUS_OKAY(0, GEN_PINS_DATA)
 
 DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD, GEN_PINS_ARRAY)
 
-void pwm_set_color_with_pattern(void *p);
-void pwm_asynchronous_apply_color(bool has_transitions);
-void pwm_set_color(enum led_color color, enum ec_led_id led_id,
-		   uint8_t brightness);
+static void pwm_set_color_with_pattern(void *p);
+static void pwm_asynchronous_apply_color(bool has_transitions);
+static void pwm_set_color(enum led_color color, enum ec_led_id led_id,
+			  uint8_t brightness);
+
+static const struct led_driver_api pwm_led_driver_api = {
+	.asynchronous_apply_color = pwm_asynchronous_apply_color,
+	.set_color_with_pattern = pwm_set_color_with_pattern,
+	.set_color = pwm_set_color,
+};
 
 /* EC_LED_COLOR maps to LED_COLOR - 1 */
-#define SET_PIN_NODE(node_id) \
-	{ .led_color = GET_PROP(node_id, led_color),      \
-	  .led_id = GET_PROP(DT_PARENT(node_id), led_id), \
-	  .pins = PINS_ARRAY(node_id),                    \
-	  .pins_count = DT_PROP_LEN(node_id, led_values), \
-	  .api = {                                        \
-		.led_asynchronous_apply_color = pwm_asynchronous_apply_color, \
-		.led_set_color_with_pattern = pwm_set_color_with_pattern, \
-		.led_set_color = pwm_set_color, \
-	  }, \
+#define SET_PIN_NODE(node_id)                                   \
+	{                                                       \
+		.led_color = GET_PROP(node_id, led_color),      \
+		.led_id = GET_PROP(DT_PARENT(node_id), led_id), \
+		.pins = PINS_ARRAY(node_id),                    \
+		.pins_count = DT_PROP_LEN(node_id, led_values), \
+		.api = &pwm_led_driver_api,                     \
 	}
 
 /*
@@ -105,8 +108,8 @@ void led_set_color_with_pins(const struct pwm_pin_t *pwm_pins,
 /*
  * Iterate through LED pins nodes to find the color matching node.
  */
-void pwm_set_color(enum led_color color, enum ec_led_id led_id,
-		   uint8_t brightness)
+static void pwm_set_color(enum led_color color, enum ec_led_id led_id,
+			  uint8_t brightness)
 {
 	for (int i = 0; i < ARRAY_SIZE(pins_node); i++) {
 		if ((pins_node[i]->led_color == color) &&
@@ -167,7 +170,7 @@ static void led_tick_control(struct k_work *work)
  * approximately equal to 2^17. Because HOOK_TICK_INTERVAL_MS is on a 250ms
  * tick rate, this allows for 4s of transition without loss of accuracy.
  */
-void pwm_set_color_with_pattern(void *p)
+static void pwm_set_color_with_pattern(void *p)
 {
 	struct led_pattern_node_t *pattern = (struct led_pattern_node_t *)p;
 	uint8_t pins_count = pattern->pattern_color[pattern->cur_color]
@@ -288,7 +291,7 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 }
 
 /* Called by hook task every HOOK_TICK_INTERVAL_MS */
-void pwm_asynchronous_apply_color(bool has_transitions)
+static void pwm_asynchronous_apply_color(bool has_transitions)
 {
 	if (has_transitions) {
 		k_work_schedule(&led_tick_control_data, K_NO_WAIT);

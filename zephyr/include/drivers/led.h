@@ -96,30 +96,25 @@ struct pwm_pin_t {
 	int32_t pulse_step_ns;
 };
 
-/*
- * Pseudo api for interfacing with the led driver.
- *
- * TODO: rework the api so that the api stores the driver configs instead of
- * driver configs storing the api
- */
-struct led_pins_api_t {
+/* Shared function table for LED driver implementations. */
+struct led_driver_api {
 	/**
 	 * Set LED color using pattern node.
 	 */
-	void (*led_set_color_with_pattern)(void *);
+	void (*set_color_with_pattern)(void *pattern);
 
 	/**
-	 * For pwms only.
-	 * The set function only sets the LED color into the pwm data.
-	 * the data is applied to the pin using this function. This allows the
-	 * pwm LEDs to be set and applied at different timings, allowing for a
-	 * smoother transition of pwm color without repeatedly checking the
-	 * policy.
+	 * Commit the calculated LED color/duty cycles to the hardware.
 	 *
-	 * @param has_transitions		Whether the policy has a
-	 * transition pattern
+	 * This decouples the pattern logic from the physical application,
+	 * allowing drivers to perform asynchronous updates or smooth
+	 * transitions without re-evaluating the policy.
+	 *
+	 * @param has_transitions True if the active policy uses a transition
+	 * pattern.
 	 */
-	void (*led_asynchronous_apply_color)(bool has_transitions);
+
+	void (*asynchronous_apply_color)(bool has_transitions);
 
 	/**
 	 * Set LED color using color enum
@@ -128,8 +123,8 @@ struct led_pins_api_t {
 	 * @param led_id		LED ID to set the color for
 	 * @param brightness	Brightness to set the color to
 	 */
-	void (*led_set_color)(enum led_color color, enum ec_led_id led_id,
-			      uint8_t brightness);
+	void (*set_color)(enum led_color color, enum ec_led_id led_id,
+			  uint8_t brightness);
 };
 
 /*
@@ -149,7 +144,8 @@ struct led_pins_node_t {
 	 */
 	enum ec_led_id led_id;
 
-	struct led_pins_api_t api;
+	/* Shared driver API implementation */
+	const struct led_driver_api *api;
 
 	/*
 	 * Pointer to driver-specific pin configuration data used to
@@ -184,10 +180,7 @@ static inline int32_t get_step_duration(const struct led_pattern_node_t *cfg,
 }
 
 /**
- * Wrapper function to call the api.
- *
- * TODO: remove when api is part of the LED driver instead of an element of the
- * config.
+ * Wrapper function to set LED color.
  *
  * @param color			LED Color to enable
  * @param led_id		LED ID to set the color for
@@ -197,13 +190,9 @@ void led_set_color(enum led_color color, enum ec_led_id led_id,
 		   uint8_t brightness);
 
 /**
- * Wrapper function to call the api.
+ * Wrapper function to apply the calculated color to hardware
  *
- * TODO: remove when api is part of the LED driver instead of an element of the
- * config.
- *
- * @param has_transitions		Whether the policy has a transition
- * pattern
+ * @param has_transitions	Whether the policy has a transition pattern
  */
 void led_asynchronous_apply_color(bool has_transitions);
 

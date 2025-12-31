@@ -245,7 +245,7 @@ static void update_led_pattern(struct led_pattern_node_t *pattern)
 	}
 
 	/* Apply color calculated in the previous tick */
-	pattern->pattern_color[0].led_color_node->api.led_set_color_with_pattern(
+	pattern->pattern_color[0].led_color_node->api->set_color_with_pattern(
 		pattern);
 
 	/* Advance state machine for the next tick */
@@ -399,7 +399,7 @@ static bool led_set_all_colors(void)
 }
 
 #define INVOKE_APPLY_COLOR_API(id) \
-	PINS_NODE(id).api.led_asynchronous_apply_color(has_transitions);
+	PINS_NODE(id).api->asynchronous_apply_color(has_transitions);
 
 void led_asynchronous_apply_color(bool has_transitions)
 {
@@ -474,9 +474,9 @@ __override int led_is_supported(enum ec_led_id led_id)
 	return ((1 << (int)led_id) & supported_leds);
 }
 
-#define LED_SET_COLOR(id)                                                   \
-	if (PINS_NODE(id).led_id == led_id) {                               \
-		PINS_NODE(id).api.led_set_color(color, led_id, brightness); \
+#define LED_SET_COLOR(id)                                                \
+	if (PINS_NODE(id).led_id == led_id) {                            \
+		PINS_NODE(id).api->set_color(color, led_id, brightness); \
 	}
 
 /*
