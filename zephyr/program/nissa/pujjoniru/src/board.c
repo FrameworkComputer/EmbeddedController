@@ -17,7 +17,6 @@
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "keyboard_backlight.h"
-#include "keyboard_customization.h"
 #include "motion_sense.h"
 #include "motionsense_sensors.h"
 #include "temp_sensor/temp_sensor.h"

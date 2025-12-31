@@ -9,24 +9,13 @@
 #include "../baseboard/baseboard.overlay"
 #include "../program/brox/jubilant/cbi.dtsi"
 
-/ {
-	chosen {
-		cros-ec,keyboard = &fake_keyboard;
-	};
-
-	fake_keyboard: fake-device {
-		compatible = "gpio-kbd-matrix";
-		row-gpios = <&gpio0 0 0>;
-		col-gpios = <&gpio0 0 0>;
-		debounce-down-ms = <100>;
-
-		test_boot_keys: boot-keys {
-			compatible = "cros-ec,boot-keys";
-			down-arrow-rc = <KBD_RC(0, 1)>;
-			esc-rc = <KBD_RC(2, 3)>;
-			left-shift-rc = <KBD_RC(4, 5)>;
-			refresh-rc = <KBD_RC(3, 2)>;
-		};
+&fake_keyboard {
+	test_boot_keys: boot-keys {
+		compatible = "cros-ec,boot-keys";
+		down-arrow-rc = <KBD_RC(0, 1)>;
+		esc-rc = <KBD_RC(2, 3)>;
+		left-shift-rc = <KBD_RC(4, 5)>;
+		refresh-rc = <KBD_RC(3, 2)>;
 	};
 };
 

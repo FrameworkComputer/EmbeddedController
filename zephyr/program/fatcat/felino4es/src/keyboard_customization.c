@@ -5,7 +5,6 @@
 
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_config.h"
-#include "keyboard_customization.h"
 
 static uint16_t scancode_set2[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 	{ 0x0037, 0x0079, 0x0000, 0x0000, 0xe05a, 0x0000, 0x0000, 0x0070 },

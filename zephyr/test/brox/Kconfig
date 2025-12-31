@@ -2,6 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config INPUT_KBD_MATRIX
+	default y
+
 choice TEST_BOARD_VARIANT
 	prompt "Select board variant for tests"
 	help

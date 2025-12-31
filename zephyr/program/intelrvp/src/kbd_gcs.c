@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include "kbd_gcs.h"
 #include "keyboard_8042_sharedlib.h"
 
 #include <zephyr/logging/log.h>

@@ -1,3 +1,0 @@
-compatible: "vnd,keyboard-input-device"
-
-include: kbd-matrix-common.yaml
