@@ -300,6 +300,34 @@ void battery_policy(void)
 	}
 }
 
+void ac_charge_policy(void)
+{
+	int value, vsys;
+	if (i2c_read16(chg_chips[0].i2c_port, chg_chips[0].i2c_addr_flags,
+		       BQ25710_REG_MIN_SYSTEM_VOLTAGE, &value)) {
+		check_charger_state = true;
+		retry_charger_cyc = 0;
+		return;
+	}
+
+	vsys = min_system_reg_to_voltage_mv(value);
+
+	if (pre_battery_cells == BATT_2_CELL && vsys >= BATT_2_CELL_VSYS &&
+	    vsys <= BATT_3_CELL_VSYS)
+		return;
+	else if (pre_battery_cells == BATT_3_CELL && vsys >= BATT_3_CELL_VSYS)
+		return;
+	else {
+		ccprints("charger vsys set %d but read %d",
+			 pre_battery_cells == BATT_2_CELL ? BATT_2_CELL_VSYS :
+							    BATT_3_CELL_VSYS,
+			 vsys);
+		check_charger_state = true;
+		retry_charger_cyc = 0;
+	}
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, ac_charge_policy, HOOK_PRIO_DEFAULT);
+
 int charger_profile_override(struct charge_state_data *curr)
 {
 	curr->requested_current = min(curr->requested_current, current_limit);
