@@ -56,7 +56,6 @@
 	};
 
 	aliases {
-		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
 		gpio-wp = &gpio_ec_flash_wp_odl;
 	};
 
@@ -181,6 +180,7 @@
 		/delete-node/ ec_pmic_en_odl_r;
 		/delete-node/ ec_volup_btn_odl;
 		/delete-node/ ec_voldn_btn_odl;
+		/delete-node/ ec_kso_02_inv;
 
 		gpio_tchpad_lid_close: tchpad_lid_close {
 			gpios = <&gpiof 0 GPIO_OUTPUT>;
