@@ -8414,6 +8414,8 @@ struct ec_params_fp_passthru {
 #define FP_MODE_RESET_SENSOR BIT(7)
 /* Sensor maintenance for dead pixels. */
 #define FP_MODE_SENSOR_MAINTENANCE BIT(8)
+/* Encrypt template. */
+#define FP_MODE_ENCRYPT_TEMPLATE BIT(9)
 /* special value: don't change anything just read back current mode */
 #define FP_MODE_DONT_CHANGE BIT(31)
 
@@ -8421,7 +8423,7 @@ struct ec_params_fp_passthru {
 	(FP_MODE_DEEPSLEEP | FP_MODE_FINGER_DOWN | FP_MODE_FINGER_UP |       \
 	 FP_MODE_CAPTURE | FP_MODE_ENROLL_SESSION | FP_MODE_ENROLL_IMAGE |   \
 	 FP_MODE_MATCH | FP_MODE_RESET_SENSOR | FP_MODE_SENSOR_MAINTENANCE | \
-	 FP_MODE_DONT_CHANGE)
+	 FP_MODE_ENCRYPT_TEMPLATE | FP_MODE_DONT_CHANGE)
 
 #define FP_MODES_WITH_AUTHENTICATION (FP_MODE_ENROLL_SESSION | FP_MODE_MATCH)
 
@@ -8642,6 +8644,33 @@ struct ec_params_fp_frame {
 	uint32_t size;
 } __ec_align4;
 
+/*
+ * FP_FRAME commands:
+ *
+ * - FP_FRAME_GET_RAW_IMAGE command can be used to get raw image from sensor.
+ *   This command works only when the system is not locked. The template index
+ *   is ignored.
+ * - FP_FRAME_ENCRYPT_TEMPLATE command is used to request encryption of the
+ *   template with provided template index. Offset and size are ignored.
+ *   The encryption process is considered as started only after EC_SUCCESS
+ *   was returned.
+ * - FP_FRAME_GET_ENCRYPTED_TEMPLATE command is used to obtain the encrypted
+ *   template.
+ */
+enum fp_frame_cmd {
+	FP_FRAME_GET_RAW_IMAGE = 0,
+	FP_FRAME_ENCRYPT_TEMPLATE = 1,
+	FP_FRAME_GET_ENCRYPTED_TEMPLATE = 2,
+};
+
+struct ec_params_fp_frame_v1 {
+	uint8_t cmd;
+	uint8_t reserved;
+	uint16_t index;
+	uint32_t offset;
+	uint32_t size;
+} __ec_align4;
+
 /* Load a template into the MCU */
 #define EC_CMD_FP_TEMPLATE 0x0405
 
@@ -8714,6 +8743,8 @@ struct ec_params_fp_seed {
 #define FP_CONTEXT_USER_ID_SET BIT(3)
 /* The operation authentication challenge was generated */
 #define FP_AUTH_CHALLENGE_SET BIT(4)
+/* Encrypted template is available */
+#define FP_ENCRYPTED_TEMPLATE_READY BIT(5)
 
 struct ec_response_fp_encryption_status {
 	/* Used bits in encryption engine status */

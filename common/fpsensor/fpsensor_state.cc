@@ -66,6 +66,7 @@ struct fpsensor_context global_context = {
 			.val = 0,
 		}},
 	.fp_positive_match_salt = {{0}},
+        .template_encrypted_id = FP_NO_SUCH_TEMPLATE,
 };
 
 int fp_tpm_seed_is_set(void)
@@ -99,6 +100,7 @@ void fp_reset_context()
 		FP_ENC_STATUS_SEED_SET | FP_CONTEXT_SESSION_NONCE_SET |
 		FP_CONTEXT_STATUS_SESSION_ESTABLISHED;
 	OPENSSL_cleanse(&fp_enc_buffer, sizeof(fp_enc_buffer));
+	global_context.template_encrypted_id = FP_NO_SUCH_TEMPLATE;
 	OPENSSL_cleanse(global_context.user_id.data(),
 			sizeof(global_context.user_id));
 	fp_disable_positive_match_secret(

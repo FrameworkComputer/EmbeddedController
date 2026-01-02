@@ -115,6 +115,14 @@ static inline int ec_cmd_fp_frame(CROS_EC_COMMAND_INFO *h,
 			       p->size);
 }
 
+static inline int ec_cmd_fp_frame_v1(CROS_EC_COMMAND_INFO *h,
+				     const struct ec_params_fp_frame_v1 *p,
+				     uint8_t *r)
+{
+	return CROS_EC_COMMAND(h, EC_CMD_FP_FRAME, 1, p, sizeof(*p), r,
+			       p->size);
+}
+
 static inline int ec_cmd_fp_template(CROS_EC_COMMAND_INFO *h,
 				     const struct ec_params_fp_template *p,
 				     int size)

@@ -187,6 +187,25 @@ ZTEST_USER(fpsensor_template, test_fp_frame_raw_image_system_is_locked)
 		      EC_RES_ACCESS_DENIED);
 }
 
+ZTEST_USER(fpsensor_template, test_fp_frame_v1_raw_image_system_is_locked)
+{
+	struct ec_params_fp_frame_v1 frame_request = {
+		.cmd = FP_FRAME_GET_RAW_IMAGE,
+		.offset = 0,
+		.size = IMAGE_SIZE,
+	};
+
+	/* Lock the system. */
+	system_is_locked_fake.return_val = true;
+
+	/*
+	 * Confirm that it's not possible to get raw image when system is
+	 * locked.
+	 */
+	zassert_equal(ec_cmd_fp_frame_v1(NULL, &frame_request, frame_buffer),
+		      EC_RES_ACCESS_DENIED);
+}
+
 ZTEST_USER(fpsensor_template, test_fp_frame_raw_image_size_too_big)
 {
 	uint8_t buffer[IMAGE_SIZE + 1];
@@ -320,6 +339,421 @@ ZTEST_USER(fpsensor_template, test_fp_frame_get_encrypted_template_success)
 	zassert_mem_equal(secret_response.positive_match_secret,
 			  example_positive_match_secret,
 			  FP_POSITIVE_MATCH_SECRET_BYTES);
+
+	/* b/114160734: Not more than 1 encrypted message per second. */
+	k_sleep(K_SECONDS(1));
+}
+
+ZTEST_USER(fpsensor_template, test_fp_frame_v1_no_template)
+{
+	struct ec_params_fp_frame_v1 template_request = {
+		.cmd = FP_FRAME_ENCRYPT_TEMPLATE,
+		.index = 0,
+	};
+
+	/* Encrypt template (should fail with EC_RES_UNAVAILABLE). */
+	zassert_equal(EC_RES_UNAVAILABLE,
+		      ec_cmd_fp_frame_v1(NULL, &template_request, NULL));
+}
+
+ZTEST_USER(fpsensor_template, test_fp_frame_v1_template_id_out_of_range)
+{
+	struct ec_params_fp_frame_v1 template_request = {
+		.cmd = FP_FRAME_ENCRYPT_TEMPLATE,
+		.index = FP_MAX_FINGER_COUNT,
+	};
+
+	/* Encrypt template (should fail with EC_RES_INVALID_PARAM). */
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      ec_cmd_fp_frame_v1(NULL, &template_request, NULL));
+}
+
+ZTEST_USER(fpsensor_template, test_fp_frame_v1_get_encrypted_template_success)
+{
+	struct ec_params_fp_mode params = {
+		.mode = FP_MODE_ENROLL_SESSION | FP_MODE_ENROLL_IMAGE,
+	};
+	struct ec_response_fp_mode response;
+	struct fingerprint_sensor_state state;
+	struct ec_params_fp_frame_v1 encrypt_request = {
+		.cmd = FP_FRAME_ENCRYPT_TEMPLATE,
+		.index = 0,
+	};
+	struct ec_params_fp_frame_v1 get_request = {
+		.cmd = FP_FRAME_GET_ENCRYPTED_TEMPLATE,
+		.offset = 0,
+		.size = sizeof(encrypted_template),
+	};
+	struct ec_fp_template_encryption_metadata *enc_info;
+
+	/* Switch mode to enroll. */
+	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
+	zassert_true(response.mode &
+		     (FP_MODE_ENROLL_SESSION | FP_MODE_ENROLL_IMAGE));
+
+	/* Give opportunity for fpsensor task to change mode. */
+	k_msleep(1);
+
+	/* Put finger on the sensor. */
+	fingerprint_get_state(fp_sim, &state);
+	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
+	fingerprint_set_state(fp_sim, &state);
+
+	/*
+	 * Use custom enroll step function to tell the fpsensor task that
+	 * enroll is finished.
+	 */
+	enroll_percent = 100;
+	mock_alg_enroll_step_fake.custom_fake = custom_enroll_step;
+
+	/* Use custom enroll finish function to return the template */
+	mock_alg_enroll_finish_fake.custom_fake = custom_enroll_finish;
+
+	/* Ping fpsensor task. */
+	fingerprint_run_callback(fp_sim);
+
+	/* Give opportunity for fpsensor task process event. */
+	k_msleep(1);
+
+	/* Request encryption. */
+	zassert_ok(ec_cmd_fp_frame_v1(NULL, &encrypt_request, NULL));
+
+	/* b/114160734: Not more than 1 encrypted message per second. */
+	k_sleep(K_SECONDS(1));
+
+	/* Get encrypted template. */
+	zassert_ok(ec_cmd_fp_frame_v1(NULL, &get_request, encrypted_template));
+
+	enc_info =
+		(struct ec_fp_template_encryption_metadata *)encrypted_template;
+	zassert_equal(enc_info->struct_version,
+		      expected_enc_info.struct_version);
+	zassert_mem_equal(enc_info->nonce, expected_enc_info.nonce,
+			  FP_CONTEXT_NONCE_BYTES);
+	zassert_mem_equal(enc_info->encryption_salt,
+			  expected_enc_info.encryption_salt,
+			  FP_CONTEXT_ENCRYPTION_SALT_BYTES);
+	zassert_mem_equal(enc_info->tag, expected_enc_info.tag,
+			  FP_CONTEXT_TAG_BYTES);
+
+	zassert_mem_equal(
+		encrypted_template +
+			sizeof(struct ec_fp_template_encryption_metadata),
+		example_template_encrypted,
+		CONFIG_FP_ALGORITHM_TEMPLATE_SIZE +
+			FP_POSITIVE_MATCH_SALT_BYTES);
+}
+
+ZTEST_USER(fpsensor_template, test_fp_frame_v1_get_encrypted_template_busy)
+{
+	struct ec_params_fp_mode params = {
+		.mode = FP_MODE_ENROLL_SESSION | FP_MODE_ENROLL_IMAGE,
+	};
+	struct ec_response_fp_mode response;
+	struct fingerprint_sensor_state state;
+	struct ec_params_fp_frame_v1 encrypt_request = {
+		.cmd = FP_FRAME_ENCRYPT_TEMPLATE,
+		.index = 0,
+	};
+	struct ec_params_fp_frame_v1 get_request = {
+		.cmd = FP_FRAME_GET_ENCRYPTED_TEMPLATE,
+		.offset = 0,
+		.size = sizeof(encrypted_template),
+	};
+
+	/* Switch mode to enroll. */
+	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
+	zassert_true(response.mode &
+		     (FP_MODE_ENROLL_SESSION | FP_MODE_ENROLL_IMAGE));
+
+	/* Give opportunity for fpsensor task to change mode. */
+	k_msleep(1);
+
+	/* Put finger on the sensor. */
+	fingerprint_get_state(fp_sim, &state);
+	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
+	fingerprint_set_state(fp_sim, &state);
+
+	/*
+	 * Use custom enroll step function to tell the fpsensor task that
+	 * enroll is finished.
+	 */
+	enroll_percent = 100;
+	mock_alg_enroll_step_fake.custom_fake = custom_enroll_step;
+
+	/* Use custom enroll finish function to return the template */
+	mock_alg_enroll_finish_fake.custom_fake = custom_enroll_finish;
+
+	/* Ping fpsensor task. */
+	fingerprint_run_callback(fp_sim);
+
+	/* Give opportunity for fpsensor task process event. */
+	k_msleep(1);
+
+	/* Request encryption. */
+	zassert_ok(ec_cmd_fp_frame_v1(NULL, &encrypt_request, NULL));
+
+	/*
+	 * Get encrypted template immediately (deferred task didn't run yet).
+	 * Should return EC_RES_BUSY.
+	 */
+	zassert_equal(EC_RES_BUSY, ec_cmd_fp_frame_v1(NULL, &get_request,
+						      encrypted_template));
+
+	/* b/114160734: Not more than 1 encrypted message per second. */
+	k_sleep(K_SECONDS(1));
+}
+
+ZTEST_USER(fpsensor_template, test_fp_frame_v1_get_encrypted_template_not_ready)
+{
+	struct ec_params_fp_frame_v1 get_request = {
+		.cmd = FP_FRAME_GET_ENCRYPTED_TEMPLATE,
+		.offset = 0,
+		.size = sizeof(encrypted_template),
+	};
+
+	zassert_equal(EC_RES_UNAVAILABLE,
+		      ec_cmd_fp_frame_v1(NULL, &get_request,
+					 encrypted_template));
+}
+
+ZTEST_USER(fpsensor_template,
+	   test_fp_frame_v1_get_encrypted_template_bad_offset)
+{
+	struct ec_params_fp_mode params = {
+		.mode = FP_MODE_ENROLL_SESSION | FP_MODE_ENROLL_IMAGE,
+	};
+	struct ec_response_fp_mode response;
+	struct fingerprint_sensor_state state;
+	struct ec_params_fp_frame_v1 encrypt_request = {
+		.cmd = FP_FRAME_ENCRYPT_TEMPLATE,
+		.index = 0,
+	};
+	struct ec_params_fp_frame_v1 get_request = {
+		.cmd = FP_FRAME_GET_ENCRYPTED_TEMPLATE,
+		.offset = 0,
+		.size = sizeof(encrypted_template) + 1,
+	};
+
+	/* Switch mode to enroll. */
+	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
+	zassert_true(response.mode &
+		     (FP_MODE_ENROLL_SESSION | FP_MODE_ENROLL_IMAGE));
+
+	/* Give opportunity for fpsensor task to change mode. */
+	k_msleep(1);
+
+	/* Put finger on the sensor. */
+	fingerprint_get_state(fp_sim, &state);
+	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
+	fingerprint_set_state(fp_sim, &state);
+
+	/*
+	 * Use custom enroll step function to tell the fpsensor task that
+	 * enroll is finished.
+	 */
+	enroll_percent = 100;
+	mock_alg_enroll_step_fake.custom_fake = custom_enroll_step;
+
+	/* Use custom enroll finish function to return the template */
+	mock_alg_enroll_finish_fake.custom_fake = custom_enroll_finish;
+
+	/* Ping fpsensor task. */
+	fingerprint_run_callback(fp_sim);
+
+	/* Give opportunity for fpsensor task process event. */
+	k_msleep(1);
+
+	/* Request encryption. */
+	zassert_ok(ec_cmd_fp_frame_v1(NULL, &encrypt_request, NULL));
+
+	/* Give opportunity for deferred task to run. */
+	k_msleep(1);
+
+	/* Get encrypted template with bad size. */
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      ec_cmd_fp_frame_v1(NULL, &get_request,
+					 encrypted_template));
+
+	/* b/114160734: Not more than 1 encrypted message per second. */
+	k_sleep(K_SECONDS(1));
+}
+
+ZTEST_USER(fpsensor_template, test_fp_frame_v1_encrypt_template_busy)
+{
+	struct ec_params_fp_mode params = {
+		.mode = FP_MODE_ENROLL_SESSION | FP_MODE_ENROLL_IMAGE,
+	};
+	struct ec_response_fp_mode response;
+	struct fingerprint_sensor_state state;
+	struct ec_params_fp_frame_v1 encrypt_request = {
+		.cmd = FP_FRAME_ENCRYPT_TEMPLATE,
+		.index = 0,
+	};
+
+	/* Switch mode to enroll. */
+	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
+	zassert_true(response.mode &
+		     (FP_MODE_ENROLL_SESSION | FP_MODE_ENROLL_IMAGE));
+
+	/* Give opportunity for fpsensor task to change mode. */
+	k_msleep(1);
+
+	/* Put finger on the sensor. */
+	fingerprint_get_state(fp_sim, &state);
+	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
+	fingerprint_set_state(fp_sim, &state);
+
+	/*
+	 * Use custom enroll step function to tell the fpsensor task that
+	 * enroll is finished.
+	 */
+	enroll_percent = 100;
+	mock_alg_enroll_step_fake.custom_fake = custom_enroll_step;
+
+	/* Use custom enroll finish function to return the template */
+	mock_alg_enroll_finish_fake.custom_fake = custom_enroll_finish;
+
+	/* Ping fpsensor task. */
+	fingerprint_run_callback(fp_sim);
+
+	/* Give opportunity for fpsensor task process event. */
+	k_msleep(1);
+
+	/* Request encryption. */
+	zassert_ok(ec_cmd_fp_frame_v1(NULL, &encrypt_request, NULL));
+
+	/* Request encryption again. Should return EC_RES_BUSY. */
+	zassert_equal(EC_RES_BUSY,
+		      ec_cmd_fp_frame_v1(NULL, &encrypt_request, NULL));
+
+	/* b/114160734: Not more than 1 encrypted message per second. */
+	k_sleep(K_SECONDS(1));
+}
+
+ZTEST_USER(fpsensor_template, test_fp_frame_v1_encrypt_template_deadline)
+{
+	struct ec_params_fp_mode params = {
+		.mode = FP_MODE_ENROLL_SESSION | FP_MODE_ENROLL_IMAGE,
+	};
+	struct ec_response_fp_mode response;
+	struct fingerprint_sensor_state state;
+	struct ec_params_fp_frame_v1 encrypt_request = {
+		.cmd = FP_FRAME_ENCRYPT_TEMPLATE,
+		.index = 0,
+	};
+
+	/* Switch mode to enroll. */
+	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
+	zassert_true(response.mode &
+		     (FP_MODE_ENROLL_SESSION | FP_MODE_ENROLL_IMAGE));
+
+	/* Give opportunity for fpsensor task to change mode. */
+	k_msleep(1);
+
+	/* Put finger on the sensor. */
+	fingerprint_get_state(fp_sim, &state);
+	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
+	fingerprint_set_state(fp_sim, &state);
+
+	/*
+	 * Use custom enroll step function to tell the fpsensor task that
+	 * enroll is finished.
+	 */
+	enroll_percent = 100;
+	mock_alg_enroll_step_fake.custom_fake = custom_enroll_step;
+
+	/* Use custom enroll finish function to return the template */
+	mock_alg_enroll_finish_fake.custom_fake = custom_enroll_finish;
+
+	/* Ping fpsensor task. */
+	fingerprint_run_callback(fp_sim);
+
+	/* Give opportunity for fpsensor task process event. */
+	k_msleep(1);
+
+	/* Request encryption. */
+	zassert_ok(ec_cmd_fp_frame_v1(NULL, &encrypt_request, NULL));
+
+	/* Give opportunity for deferred task to run (clear IN_PROGRESS). */
+	k_msleep(100);
+
+	/* Request encryption again (hit deadline). */
+	zassert_equal(EC_RES_BUSY,
+		      ec_cmd_fp_frame_v1(NULL, &encrypt_request, NULL));
+
+	/* b/114160734: Not more than 1 encrypted message per second. */
+	k_sleep(K_SECONDS(1));
+}
+
+ZTEST_USER(fpsensor_template,
+	   test_fp_frame_v1_encryption_status_ready_set_and_cleared)
+{
+	struct ec_params_fp_mode params = {
+		.mode = FP_MODE_ENROLL_SESSION | FP_MODE_ENROLL_IMAGE,
+	};
+	struct ec_response_fp_mode response;
+	struct fingerprint_sensor_state state;
+	struct ec_params_fp_frame_v1 encrypt_request = {
+		.cmd = FP_FRAME_ENCRYPT_TEMPLATE,
+		.index = 0,
+	};
+	struct ec_response_fp_encryption_status status_response;
+
+	/* Switch mode to enroll. */
+	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
+
+	/* Give opportunity for fpsensor task to change mode. */
+	k_msleep(1);
+
+	/* Put finger on the sensor. */
+	fingerprint_get_state(fp_sim, &state);
+	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
+	fingerprint_set_state(fp_sim, &state);
+
+	/*
+	 * Use custom enroll step function to tell the fpsensor task that
+	 * enroll is finished.
+	 */
+	enroll_percent = 100;
+	mock_alg_enroll_step_fake.custom_fake = custom_enroll_step;
+
+	/* Use custom enroll finish function to return the template */
+	mock_alg_enroll_finish_fake.custom_fake = custom_enroll_finish;
+
+	/* Ping fpsensor task. */
+	fingerprint_run_callback(fp_sim);
+
+	/* Give opportunity for fpsensor task process event. */
+	k_msleep(1);
+
+	/* Verify initially FP_ENCRYPTED_TEMPLATE_READY is NOT set. */
+	zassert_ok(ec_cmd_fp_encryption_status(NULL, &status_response));
+	zassert_false(status_response.status & FP_ENCRYPTED_TEMPLATE_READY);
+
+	/* Request encryption. */
+	zassert_ok(ec_cmd_fp_frame_v1(NULL, &encrypt_request, NULL));
+
+	/* b/114160734: Not more than 1 encrypted message per second. */
+	k_sleep(K_SECONDS(1));
+
+	/* Verify FP_ENCRYPTED_TEMPLATE_READY IS set. */
+	zassert_ok(ec_cmd_fp_encryption_status(NULL, &status_response));
+	zassert_true(status_response.status & FP_ENCRYPTED_TEMPLATE_READY);
+
+	/* Request encryption AGAIN. */
+	zassert_ok(ec_cmd_fp_frame_v1(NULL, &encrypt_request, NULL));
+
+	/* Verify FP_ENCRYPTED_TEMPLATE_READY IS CLEARED immediately. */
+	zassert_ok(ec_cmd_fp_encryption_status(NULL, &status_response));
+	zassert_false(status_response.status & FP_ENCRYPTED_TEMPLATE_READY);
+
+	/* b/114160734: Not more than 1 encrypted message per second. */
+	k_sleep(K_SECONDS(1));
+
+	/* Verify FP_ENCRYPTED_TEMPLATE_READY IS set again. */
+	zassert_ok(ec_cmd_fp_encryption_status(NULL, &status_response));
+	zassert_true(status_response.status & FP_ENCRYPTED_TEMPLATE_READY);
 }
 
 ZTEST_USER(fpsensor_template, test_fp_template_load_template_success)

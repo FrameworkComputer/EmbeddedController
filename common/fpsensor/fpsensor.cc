@@ -235,6 +235,8 @@ static void fp_process_finger(void)
 }
 #endif /* HAVE_FP_PRIVATE_DRIVER */
 
+static enum ec_error_list encrypt_template(uint16_t fgr);
+
 extern "C" void fp_task(void)
 {
 	int timeout_us = -1;
@@ -328,6 +330,24 @@ extern "C" void fp_task(void)
 				fp_maintenance();
 				global_context.sensor_mode &=
 					~FP_MODE_SENSOR_MAINTENANCE;
+			} else if (mode & FP_MODE_ENCRYPT_TEMPLATE) {
+				global_context.fp_encryption_status &=
+					~FP_ENCRYPTED_TEMPLATE_READY;
+				if (global_context.template_encrypted_id !=
+				    FP_NO_SUCH_TEMPLATE) {
+					ScopedFastCpu fast_cpu;
+
+					if (encrypt_template(
+						    global_context
+							    .template_encrypted_id) ==
+					    EC_SUCCESS) {
+						global_context
+							.fp_encryption_status |=
+							FP_ENCRYPTED_TEMPLATE_READY;
+					}
+				}
+				global_context.sensor_mode &=
+					~FP_MODE_ENCRYPT_TEMPLATE;
 			} else {
 				fp_sensor_low_power();
 			}
@@ -557,7 +577,8 @@ static enum ec_status get_frame(uint32_t offset, uint32_t size, uint8_t *output)
 	return EC_RES_SUCCESS;
 }
 
-static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
+/* TODO(b/471160577): Remove FP_FRAME v0 after migration is completed. */
+static enum ec_status fp_command_frame_v0(struct host_cmd_handler_args *args)
 {
 	const auto *params =
 		static_cast<const struct ec_params_fp_frame *>(args->params);
@@ -614,7 +635,126 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_FP_FRAME, fp_command_frame, EC_VER_MASK(0));
+
+/*
+ * We are modifying variables in the global_context from this function running
+ * in the HOSTCMD task and encrypt_template() running in the FPSENSOR task,
+ * without protecting these data.
+ *
+ * This works because:
+ * - We use single-core MCUs
+ * - HOSTCMD task has higher priority than FPSENSOR task.
+ * - There could be only one host command running at the time.
+ * - Host commands cannot be interrupted by other tasks.
+ * - We are checking only one bit in global_context.sensor_mode,
+ *   so we are not prone to partial (non-atomic) writes/reads.
+ *
+ * TODO(b/479824917): Unfortunately, lack of any synchronization is a general
+ * problem with FPSENSOR architecture. All fingerprint related work should be
+ * done by FPSENSOR task, HOSTCMD role should be limited to validating input
+ * (if possible), posting work to FPSENSOR task and waiting for result, if
+ * needed.
+ */
+static enum ec_status fp_command_frame_v1(struct host_cmd_handler_args *args)
+{
+	const auto *params =
+		static_cast<const struct ec_params_fp_frame_v1 *>(args->params);
+	void *out = args->response;
+	uint32_t offset = params->offset;
+	uint32_t size = params->size;
+	enum ec_error_list ret;
+	enum ec_status status;
+
+	if (size > args->response_max)
+		return EC_RES_INVALID_PARAM;
+
+	switch (params->cmd) {
+	case FP_FRAME_GET_RAW_IMAGE:
+		/* The host requested a frame. */
+		status = get_frame(offset, size, (uint8_t *)out);
+		if (status != EC_RES_SUCCESS) {
+			return status;
+		}
+
+		args->response_size = size;
+		return EC_RES_SUCCESS;
+	case FP_FRAME_ENCRYPT_TEMPLATE: {
+		timestamp_t now;
+		uint32_t mode_output;
+
+		/*
+		 * Do not change the content of fp_enc_buffer if the encryption
+		 * is in progress.
+		 */
+		if (global_context.sensor_mode & FP_MODE_ENCRYPT_TEMPLATE) {
+			return EC_RES_BUSY;
+		}
+
+		if (params->index >= FP_MAX_FINGER_COUNT)
+			return EC_RES_INVALID_PARAM;
+		if (params->index >= global_context.templ_valid)
+			return EC_RES_UNAVAILABLE;
+
+		now = get_time();
+
+		/* b/114160734: Not more than 1 encrypted message per second. */
+		if (!timestamp_expired(encryption_deadline, &now))
+			return EC_RES_BUSY;
+		encryption_deadline.val = now.val + (1 * SECOND);
+
+		global_context.fp_encryption_status &=
+			~FP_ENCRYPTED_TEMPLATE_READY;
+		global_context.template_encrypted_id = params->index;
+		status = fp_set_sensor_mode(FP_MODE_ENCRYPT_TEMPLATE,
+					    &mode_output, std::nullopt);
+		if (status != EC_RES_SUCCESS) {
+			return EC_RES_ERROR;
+		}
+		break;
+	}
+	case FP_FRAME_GET_ENCRYPTED_TEMPLATE:
+		/* Encryption is still running */
+		if (global_context.sensor_mode & FP_MODE_ENCRYPT_TEMPLATE) {
+			return EC_RES_BUSY;
+		}
+
+		/*
+		 * Encrypted template not available (or encryption finished
+		 * with error)
+		 */
+		if (!(global_context.fp_encryption_status &
+		      FP_ENCRYPTED_TEMPLATE_READY)) {
+			return EC_RES_UNAVAILABLE;
+		}
+
+		/* Validate data request */
+		ret = validate_fp_buffer_offset(sizeof(fp_enc_buffer), offset,
+						size);
+		if (ret != EC_SUCCESS)
+			return EC_RES_INVALID_PARAM;
+
+		/* Encryption succeeded */
+		memcpy(out,
+		       reinterpret_cast<uint8_t *>(&fp_enc_buffer) + offset,
+		       size);
+		args->response_size = size;
+
+		break;
+	}
+
+	return EC_RES_SUCCESS;
+}
+
+static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
+{
+	if (args->version == 1) {
+		return fp_command_frame_v1(args);
+	}
+
+	return fp_command_frame_v0(args);
+}
+DECLARE_HOST_COMMAND(EC_CMD_FP_FRAME, fp_command_frame,
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 static enum ec_status fp_command_stats(struct host_cmd_handler_args *args)
 {
