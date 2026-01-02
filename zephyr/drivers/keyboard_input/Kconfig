@@ -10,3 +10,10 @@ config CROS_EC_COL_GPIO_DRIVE
 	select INPUT_KBD_DRIVE_COLUMN_HOOK
 	help
 	  Implemnt the hook to handle a keyboard matrix column using a GPIO.
+
+config CROS_EC_SCANCODE_SET2
+	bool "DT based scancode set2 table"
+	depends on DT_HAS_CROS_EC_SCANCODE_SET2_ENABLED
+	default y
+	help
+	  Define a scancode_set2 array based on the devicetree definition.

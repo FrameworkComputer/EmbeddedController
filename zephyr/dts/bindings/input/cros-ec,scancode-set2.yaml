@@ -1,0 +1,95 @@
+# Copyright 2025 Google LLC
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+  Set2 scancode definition
+
+  This defines a scancode_set2 array and the corresponding set and get
+  functions.
+
+  Example configuration:
+
+  kbd {
+    scancode-set2 {
+      compatible = "cros-ec,scancode-set2";
+
+      col0-codes = <0x0000 0x0000 0x0000 0xe01f 0x0000 0x0000 0x0000 0x0000>;
+      col1-codes = <0x0078 0x0076 0x000d 0x000e 0x001c 0x0016 0x001a 0x003c>;
+      ...
+    };
+  };
+
+compatible: "cros-ec,scancode-set2"
+
+include: base.yaml
+
+child-binding:
+  properties:
+    col0-codes:
+      type: array
+      required: true
+      description: The codes for col0, 8 values.
+
+    col1-codes:
+      type: array
+      required: true
+
+    col2-codes:
+      type: array
+      required: true
+
+    col3-codes:
+      type: array
+      required: true
+
+    col4-codes:
+      type: array
+      required: true
+
+    col5-codes:
+      type: array
+      required: true
+
+    col6-codes:
+      type: array
+      required: true
+
+    col7-codes:
+      type: array
+      required: true
+
+    col8-codes:
+      type: array
+      required: true
+
+    col9-codes:
+      type: array
+      required: true
+
+    col10-codes:
+      type: array
+      required: true
+
+    col11-codes:
+      type: array
+      required: true
+
+    col12-codes:
+      type: array
+      required: true
+
+    col13-codes:
+      type: array
+
+    col14-codes:
+      type: array
+
+    col15-codes:
+      type: array
+
+    col16-codes:
+      type: array
+
+    col17-codes:
+      type: array
