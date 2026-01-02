@@ -197,13 +197,16 @@ struct pattern_color_node_t {
 };
 
 struct led_pattern_node_t {
-	uint8_t cur_color;
+	/* 4-byte members first */
 	int32_t elapsed_ms;
-	enum led_transition transition;
 	struct pattern_color_node_t *pattern_color;
+
+	/* 1-byte members following */
+	uint8_t cur_color;
 	uint8_t pattern_len;
 	uint8_t cycle_limit;
 	uint8_t cycle_curr;
+	enum led_transition transition;
 };
 
 static inline int32_t get_step_duration(const struct led_pattern_node_t *cfg,
