@@ -174,7 +174,7 @@ void print_flag(int port, int set_or_clear, int flag);
  * partner behavior (e.g. compliance tests), where strict tDRP
  * enforcement is required.
  */
-#define PD_DRP_SW_TOGGLE_LIMIT 10
+#define PD_DRP_SW_TOGGLE_LIMIT 14
 
 /*
  * The TypeC state machine uses this bit to disable/enable PD
