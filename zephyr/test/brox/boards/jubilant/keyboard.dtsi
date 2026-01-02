@@ -84,4 +84,6 @@
 				VIVALDI_KEYBD_CAP_SCRNLOCK_KEY |
 				VIVALDI_KEYBD_CAP_ASSISTANT_KEY)>;
 	};
+
+	#include "../../../../program/brox/jubilant/keyboard_set2.dtsi"
 };

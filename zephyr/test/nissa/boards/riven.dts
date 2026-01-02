@@ -18,6 +18,8 @@
 
 	cros_kb_raw: kb-raw-emul {
 		compatible = "cros-ec,kb-raw-emul";
+
+		#include "../../../program/nissa/riven/keyboard_set2.dtsi"
 	};
 
 	named-gpios {

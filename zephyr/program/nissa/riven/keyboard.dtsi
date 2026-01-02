@@ -113,4 +113,6 @@
 		&kso17_gpio_gpb1
 	>;
 	pinctrl-names = "default", "sleep";
+
+	#include "keyboard_set2.dtsi"
 };

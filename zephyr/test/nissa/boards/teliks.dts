@@ -107,6 +107,8 @@
 			};
 		};
 	};
+
+	#include "../../../program/nissa/teliks/keyboard_set2.dtsi"
 };
 
 &i2c4 {

@@ -1,0 +1,8 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&fake_keyboard {
+	#include "../../../../program/brox/lotso/keyboard_set2.dtsi"
+};

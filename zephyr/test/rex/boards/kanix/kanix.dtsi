@@ -79,5 +79,7 @@
 		row-gpios = <&gpio0 0 0>;
 		col-gpios = <&gpio0 0 0>;
 		debounce-down-ms = <100>;
+
+		#include "../../../../program/rex/kanix/keyboard_set2.dtsi"
 	};
 };

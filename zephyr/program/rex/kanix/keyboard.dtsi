@@ -69,3 +69,7 @@
 &boot_keys {
 	refresh-rc = <KBD_RC(3, 2)>;
 };
+
+&kbd {
+	#include "keyboard_set2.dtsi"
+};

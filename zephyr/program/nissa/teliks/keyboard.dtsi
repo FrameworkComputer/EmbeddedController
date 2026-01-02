@@ -76,4 +76,6 @@
 		&kso14_default
 	>;
 	pinctrl-names = "default";
+
+	#include "keyboard_set2.dtsi"
 };

@@ -105,4 +105,6 @@
 		h-rc = <KBD_RC(1, 8)>;
 		r-rc = <KBD_RC(7, 4)>;
 	};
+
+	#include "keyboard_set2.dtsi"
 };

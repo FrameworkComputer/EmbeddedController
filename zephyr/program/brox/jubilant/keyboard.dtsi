@@ -201,4 +201,6 @@
 		pin27-gpios = <&gpioc 5 GPIO_ACTIVE_HIGH>;
 		pin28-gpios = <&gpioc 3 GPIO_ACTIVE_HIGH>;
 	};
+
+	#include "keyboard_set2.dtsi"
 };

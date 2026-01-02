@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include "baseboard/baseboard.overlay"
 #include "../program/brox/motionsense.dtsi"
 #include "../program/brox/lotso/cbi.dtsi"
 
