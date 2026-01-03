@@ -23,6 +23,11 @@
 #define PINS_ARRAY(id) DT_CAT(PINS_ARRAY_, id)
 #define DATA_NODE(node_id) DT_CAT(DATA_NODE_, node_id)
 
+/* Build-time bitmask of supported IDs for this driver */
+#define LED_ID_BIT(node_id) | (1 << DT_STRING_UPPER_TOKEN(node_id, led_id))
+#define GET_DRIVER_ID_MASK(inst) \
+	(0 DT_FOREACH_CHILD(DT_DRV_INST(inst), LED_ID_BIT))
+
 enum led_color {
 	LED_OFF,
 	LED_RED,
@@ -125,6 +130,13 @@ struct led_driver_api {
 	 */
 	void (*set_color)(enum led_color color, enum ec_led_id led_id,
 			  uint8_t brightness);
+};
+
+/* Driver handle containing the API table */
+struct led_driver_t {
+	/* Bitmask of ec_led_id values supported by this driver */
+	uint32_t led_id_mask;
+	const struct led_driver_api *api;
 };
 
 /*

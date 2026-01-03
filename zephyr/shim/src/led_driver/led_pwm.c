@@ -62,6 +62,12 @@ static const struct led_driver_api pwm_led_driver_api = {
 	.set_color = pwm_set_color,
 };
 
+/* Generate one handle for the driver instance */
+const struct led_driver_t PINS_NODE(DT_DRV_INST(0)) = {
+	.led_id_mask = GET_DRIVER_ID_MASK(0),
+	.api = &pwm_led_driver_api,
+};
+
 /* EC_LED_COLOR maps to LED_COLOR - 1 */
 #define SET_PIN_NODE(node_id)                                   \
 	{                                                       \

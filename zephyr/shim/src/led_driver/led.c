@@ -31,6 +31,18 @@ BUILD_ASSERT(
 	NUM_POLICIES <= 2,
 	"No more than 2 instances of cros-ec,led-policy should be defined.");
 
+/* Extern the driver handles linked by 'led-pins' in the policies */
+#define DECLARE_DRIVER(inst)                        \
+	extern const struct led_driver_t PINS_NODE( \
+		DT_INST_PHANDLE(inst, led_pins));
+DT_INST_FOREACH_STATUS_OKAY(DECLARE_DRIVER)
+
+/* Registry of hardware pin drivers, one per policy instance */
+#define DRV_PTR(inst) &PINS_NODE(DT_INST_PHANDLE(inst, led_pins)),
+static const struct led_driver_t *const pins_drivers[] = {
+	DT_INST_FOREACH_STATUS_OKAY(DRV_PTR)
+};
+
 #define DECLARE_PINS_NODE(id) extern struct led_pins_node_t PINS_NODE(id);
 
 /* Whichever LED pins node is used must be given the `led_pins` label. */
@@ -398,17 +410,11 @@ static bool led_set_all_colors(void)
 	return has_transitions;
 }
 
-#define INVOKE_APPLY_COLOR_API(id) \
-	PINS_NODE(id).api->asynchronous_apply_color(has_transitions);
-
 void led_asynchronous_apply_color(bool has_transitions)
 {
-	DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS_PARENT_NODE, DT_FOREACH_CHILD,
-					   INVOKE_APPLY_COLOR_API)
-#if PINS2_DEFINED
-	DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS2_PARENT_NODE, DT_FOREACH_CHILD,
-					   INVOKE_APPLY_COLOR_API)
-#endif
+	for (int i = 0; i < ARRAY_SIZE(pins_drivers); i++) {
+		pins_drivers[i]->api->asynchronous_apply_color(has_transitions);
+	}
 }
 
 /* Called by hook task every HOOK_TICK_INTERVAL_MS */
@@ -454,30 +460,18 @@ void led_control(enum ec_led_id led_id, enum ec_led_state state)
 	led_set_color(color, led_id, 100);
 }
 
-#define IS_SUPPORTED(id) supported_leds |= (1 << PINS_NODE(id).led_id);
-
 __override int led_is_supported(enum ec_led_id led_id)
 {
 	static int supported_leds = -1;
 
 	if (supported_leds == -1) {
 		supported_leds = 0;
-
-		DT_FOREACH_CHILD_STATUS_OKAY_VARGS(
-			PINS_PARENT_NODE, DT_FOREACH_CHILD, IS_SUPPORTED)
-#if PINS2_DEFINED
-		DT_FOREACH_CHILD_STATUS_OKAY_VARGS(
-			PINS2_PARENT_NODE, DT_FOREACH_CHILD, IS_SUPPORTED)
-#endif
+		for (int i = 0; i < ARRAY_SIZE(pins_drivers); i++) {
+			supported_leds |= pins_drivers[i]->led_id_mask;
+		}
 	}
-
 	return ((1 << (int)led_id) & supported_leds);
 }
-
-#define LED_SET_COLOR(id)                                                \
-	if (PINS_NODE(id).led_id == led_id) {                            \
-		PINS_NODE(id).api->set_color(color, led_id, brightness); \
-	}
 
 /*
  * Iterate through LED pins nodes to find the color matching node.
@@ -485,10 +479,12 @@ __override int led_is_supported(enum ec_led_id led_id)
 void led_set_color(enum led_color color, enum ec_led_id led_id,
 		   uint8_t brightness)
 {
-	DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS_PARENT_NODE, DT_FOREACH_CHILD,
-					   LED_SET_COLOR)
-#if PINS2_DEFINED
-	DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS2_PARENT_NODE, DT_FOREACH_CHILD,
-					   LED_SET_COLOR)
-#endif
+	uint32_t mask = (1 << led_id);
+
+	for (int i = 0; i < ARRAY_SIZE(pins_drivers); i++) {
+		if (pins_drivers[i]->led_id_mask & mask) {
+			pins_drivers[i]->api->set_color(color, led_id,
+							brightness);
+		}
+	}
 }

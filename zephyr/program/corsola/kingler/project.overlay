@@ -32,6 +32,7 @@
 
 	led_colors: led-colors {
 		compatible = "cros-ec,led-policy";
+		led-pins = <&led_pins>;
 
 		/* kingler LED bat charge */
 		bat-state1-charge {

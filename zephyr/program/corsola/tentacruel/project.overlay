@@ -265,6 +265,7 @@
 
 	led-colors {
 		compatible = "cros-ec,led-policy";
+		led-pins = <&led_pins>;
 
 		/* Tentacruel LED bat charge */
 		bat-power-state-charge {

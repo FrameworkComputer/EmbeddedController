@@ -7,6 +7,7 @@
 / {
 	led-colors {
 		compatible = "cros-ec,led-policy";
+		led-pins = <&led_pins>;
 
 		power-state-charge-1 {
 			charge-state = "LED_PWRS_CHARGE";

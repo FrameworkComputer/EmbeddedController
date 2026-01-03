@@ -206,6 +206,7 @@
 
 	led-colors {
 		compatible = "cros-ec,led-policy";
+		led-pins = <&led_pins>;
 
 		/* Squirtle LED bat charge */
 		bat-power-state-charge {

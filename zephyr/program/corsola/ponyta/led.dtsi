@@ -59,6 +59,7 @@
 
 	led-colors {
 		compatible = "cros-ec,led-policy";
+		led-pins = <&led_pins>;
 
 		bat-state-charge {
 			charge-state = "LED_PWRS_CHARGE";

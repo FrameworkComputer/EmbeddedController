@@ -3,6 +3,7 @@
 / {
 	led-colors {
 		compatible = "cros-ec,led-policy";
+		led-pins = <&led_pins>;
 
 		power-state-near-full-left {
 			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";

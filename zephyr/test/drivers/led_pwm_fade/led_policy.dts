@@ -6,6 +6,7 @@
 / {
 	led-colors {
 		compatible = "cros-ec,led-policy";
+		led-pins = <&led_pins>;
 
 		s0 {
 			chipset-state = "POWER_S0";

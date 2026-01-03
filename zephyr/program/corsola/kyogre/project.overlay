@@ -210,6 +210,7 @@
 
 	led_colors: led-colors {
 		compatible = "cros-ec,led-policy";
+		led-pins = <&led_pins>;
 
 		pwr-power-state-on {
 			chipset-state = "POWER_S0";

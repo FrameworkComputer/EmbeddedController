@@ -7,6 +7,12 @@ description: LED policy parent node
 compatible: "cros-ec,led-policy"
 
 properties:
+  led-pins:
+    description: |
+      Phandle to the physical LED hardware node (e.g. cros-ec,pwm-led-pins,
+      cros-ec,gpio-led-pins) that this policy block controls.
+    type: phandle
+    required: true
   sysrq-alias:
     description: |
       This property is for making another existing led behaves as the
