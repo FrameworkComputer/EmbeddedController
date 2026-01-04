@@ -105,7 +105,7 @@ static void pdc_dpm_balance_source_ports(struct k_work *work)
 		int new_max_port = LOWEST_PORT(new_ports);
 
 		if (count_port_bits(max_current_claimed) <
-		    CONFIG_PLATFORM_EC_USB_PD_3A_PORTS) {
+		    pd_get_usb_pd_3a_ports()) {
 			max_current_claimed |= BIT(new_max_port);
 			pdc_power_mgmt_set_current_limit(new_max_port,
 							 TC_CURRENT_3_0A);
@@ -148,7 +148,7 @@ static void pdc_dpm_balance_source_ports(struct k_work *work)
 		int new_frs_port = LOWEST_PORT(new_ports);
 
 		if (count_port_bits(max_current_claimed) <
-		    CONFIG_PLATFORM_EC_USB_PD_3A_PORTS) {
+		    pd_get_usb_pd_3a_ports()) {
 			max_current_claimed |= BIT(new_frs_port);
 			/* Enable FRS for this port */
 			pdc_power_mgmt_frs_enable(new_frs_port, true);
@@ -179,7 +179,7 @@ static void pdc_dpm_balance_source_ports(struct k_work *work)
 		int new_max_port = LOWEST_PORT(new_ports);
 
 		if (count_port_bits(max_current_claimed) <
-		    CONFIG_PLATFORM_EC_USB_PD_3A_PORTS) {
+		    pd_get_usb_pd_3a_ports()) {
 			max_current_claimed |= BIT(new_max_port);
 			pdc_power_mgmt_set_current_limit(new_max_port,
 							 TC_CURRENT_3_0A);
@@ -204,7 +204,7 @@ void pdc_dpm_eval_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo)
 		return;
 
 	if (pdc_power_mgmt_get_power_role(port) == PD_ROLE_SOURCE) {
-		if (CONFIG_PLATFORM_EC_USB_PD_3A_PORTS == 0)
+		if (pd_get_usb_pd_3a_ports() == 0)
 			return;
 
 		/* Valid PDO to process, so evaluate whether >1.5A is needed */
@@ -241,7 +241,7 @@ void pdc_dpm_eval_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo)
 				goto balance;
 			}
 
-			if (CONFIG_PLATFORM_EC_USB_PD_3A_PORTS == 0)
+			if (pd_get_usb_pd_3a_ports() == 0)
 				return;
 
 			atomic_set_bit(&source_frs_max_requested, port);
@@ -262,7 +262,7 @@ void pdc_dpm_add_pd_source(int port)
 	 * can confirm 3A is not required. It can take longer to enable FRS on
 	 * platforms which don't source 3A.
 	 */
-	if (CONFIG_PLATFORM_EC_USB_PD_3A_PORTS == 0)
+	if (pd_get_usb_pd_3a_ports() == 0)
 		return;
 
 	atomic_set_bit(&source_frs_max_requested, port);
@@ -271,7 +271,7 @@ void pdc_dpm_add_pd_source(int port)
 
 void pdc_dpm_add_non_pd_sink(int port)
 {
-	if (CONFIG_PLATFORM_EC_USB_PD_3A_PORTS == 0)
+	if (pd_get_usb_pd_3a_ports() == 0)
 		return;
 
 	atomic_set_bit(&non_pd_sink_max_requested, port);
@@ -282,7 +282,7 @@ void pdc_dpm_remove_sink(int port)
 {
 	enum usb_typec_current_t rp;
 
-	if (CONFIG_PLATFORM_EC_USB_PD_3A_PORTS == 0)
+	if (pd_get_usb_pd_3a_ports() == 0)
 		return;
 
 	if (!atomic_test_bit(&sink_max_pdo_requested, port) &&
@@ -302,7 +302,7 @@ void pdc_dpm_remove_source(int port)
 {
 	enum usb_typec_current_t rp;
 
-	if (CONFIG_PLATFORM_EC_USB_PD_3A_PORTS == 0)
+	if (pd_get_usb_pd_3a_ports() == 0)
 		return;
 
 	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS))

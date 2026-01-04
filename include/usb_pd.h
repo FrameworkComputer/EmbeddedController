@@ -3880,6 +3880,13 @@ int typec_update_cc(int port);
 __override_proto enum pd_sdb_power_indicator
 board_get_pd_sdb_power_indicator(enum pd_sdb_power_state power_state);
 
+/*
+ * Return the number of USB Type-C ports that are allowed to source 3.0A
+ * simultaneously. Boards may override this to provide a custom or
+ * dynamic policy.
+ */
+__override_proto int pd_get_usb_pd_3a_ports(void);
+
 /****************************************************************************/
 
 #ifdef __cplusplus

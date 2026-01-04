@@ -59,6 +59,15 @@ int usb_get_battery_soc(void)
 #endif
 }
 
+#ifdef CONFIG_USB_PD_3A_PORTS
+#ifndef CONFIG_PLATFORM_EC_USB_PD_3A_PORTS_CUSTOM
+__overridable int pd_get_usb_pd_3a_ports(void)
+{
+	return CONFIG_USB_PD_3A_PORTS;
+}
+#endif
+#endif
+
 /*
  * CC values for regular sources and Debug sources (aka DTS)
  *

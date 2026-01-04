@@ -59,4 +59,18 @@ config PLATFORM_EC_USB_PD_3A_PORTS
 
 	  To turn off 3.0A current allocation, set this field to 0.
 
+config PLATFORM_EC_USB_PD_3A_PORTS_CUSTOM
+	bool "Use board-specific USB PD 3A port configuration"
+	default n
+	help
+	  Enable a board-specific implementation to determine which USB Type-C
+	  ports can supply 3.0A.
+
+	  When enabled, the platform must provide a custom implementation of
+	  pd_get_usb_pd_3a_ports() to return the set of ports that are allowed to
+	  source 3.0A current.
+
+	  When disabled, the static Kconfig value
+	  PLATFORM_EC_USB_PD_3A_PORTS is used instead.
+
 endif # PLATFORM_EC_USB_POWER_DELIVERY || PLATFORM_EC_USB_PD_CONTROLLER
