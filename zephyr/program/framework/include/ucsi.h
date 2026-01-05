@@ -73,12 +73,22 @@ struct ucsi_to_pd_port_map {
 	int pd_controller_port;
 };
 
+enum ucsi_port {
+	UCSI_PORT_1,
+	UCSI_PORT_2,
+	UCSI_PORT_3,
+	UCSI_PORT_4,
+	UCSI_PORT_5,
+};
+
 extern struct ucsi_to_pd_port_map ucsi_pd_port_map[];
 
 int ucsi_write_tunnel(void);
 int ucsi_read_tunnel(int controller);
 int ucsi_startup(int controller);
 int ucsi_message_out_offset(void);
+int ucsi_to_pd_port(int ucsi_port);
+int pd_to_ucsi_port(int pd_port);
 void ucsi_set_debug(bool enable);
 void check_ucsi_event_from_host(void);
 void record_ucsi_connector_change_event(int controller, int port);

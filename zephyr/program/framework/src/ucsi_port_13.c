@@ -10,13 +10,6 @@
 #include "ucsi.h"
 #include "cypress_pd_common.h"
 
-enum ucsi_port {
-	UCSI_PORT_1,
-	UCSI_PORT_2,
-	UCSI_PORT_3,
-	UCSI_PORT_4,
-};
-
 struct ucsi_to_pd_port_map ucsi_pd_port_map[] = {
 	[UCSI_PORT_1] = {.pd_controller = PD_CHIP_0,
 					 .pd_controller_port = PD_CHIP_UCSI_CONNECTOR_1},

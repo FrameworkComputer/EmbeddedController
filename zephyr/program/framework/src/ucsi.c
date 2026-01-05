@@ -703,6 +703,26 @@ void ucsi_pd_port_mapping(void)
 }
 
 /**
+ * get the PD port id from UCSI PD port mapping
+ * return the enum pd_port
+ */
+int ucsi_to_pd_port(int ucsi_port)
+{
+	return ((ucsi_pd_port_map[ucsi_port].pd_controller * 2) +
+			ucsi_pd_port_map[ucsi_port].pd_controller_port-1);
+}
+
+/**
+ * get the UCSI port from array pd_ucsi_port_map
+ * return the enum ucsi_port
+ */
+int pd_to_ucsi_port(int pd_port)
+{
+	return (pd_ucsi_port_map[pd_port]-1);
+}
+
+
+/**
  * CHIPSET_RESET for warmboot/coldboot
  * CHIPSET_INIT for first power on
  */

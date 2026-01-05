@@ -631,7 +631,8 @@ void cypd_evaluate_port_profile(int controller, int port, int ccg_event)
 			k_msleep(100);
 
 			/* Reduce the typec Rp value and PDO current to 1.5A */
-			if ((shared_pd_port == PD_PORT_0 || shared_pd_port == PD_PORT_3)) {
+			if ((pd_to_ucsi_port(shared_pd_port) == UCSI_PORT_1 ||
+				pd_to_ucsi_port(shared_pd_port) == UCSI_PORT_4)) {
 				cypd_select_rp(shared_pd_port,	CCG_PD_CMD_SET_TYPEC_1_5A);
 			}
 
@@ -654,8 +655,10 @@ void cypd_evaluate_port_profile(int controller, int port, int ccg_event)
 
 			if (profile_is_changed) {
 				/* Restore the typec Rp value and PDO current to 3A */
-				if (port_idx == PD_PORT_0 || port_idx == PD_PORT_3)
+				if (pd_to_ucsi_port(port_idx) == UCSI_PORT_1 ||
+					pd_to_ucsi_port(port_idx) == UCSI_PORT_4) {
 					cypd_select_rp(port_idx, CCG_PD_CMD_SET_TYPEC_3A);
+				}
 
 				cypd_select_pdo(controller, idx, CCG_PD_CMD_SET_TYPEC_3A);
 			}
@@ -667,7 +670,8 @@ void cypd_evaluate_port_profile(int controller, int port, int ccg_event)
 		     pd_port_states[shared_pd_port].safety_table[pre_safety_level]) &&
 		    (pd_port_states[pd_port].safety_table[pre_safety_level] ==
 		     CCG_PD_CMD_SET_TYPEC_3A)) {
-			int target_port = controller ? PD_PORT_2 : PD_PORT_1;
+			int target_port = controller ?
+				ucsi_to_pd_port(UCSI_PORT_3) : ucsi_to_pd_port(UCSI_PORT_2);
 
 			/* Force reduce port 2 or port5 to 1.5A after resetting the pd ports */
 			for (int level = 0; level < TYPEC_SAFETY_LEVEL_2; level++) {
