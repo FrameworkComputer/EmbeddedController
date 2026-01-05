@@ -31,7 +31,7 @@
 #define FP_SENSOR_REAL_IMAGE_SIZE_FPC \
 	(FP_SENSOR_RES_X_FPC * FP_SENSOR_RES_Y_FPC)
 /*
- * Size of the captured image in MQT mode. If you this is modified the
+ * Size of the captured image in MQT mode. If this is modified the
  * corresponding value in the MQT tool fputils.py must be changed too.
  * See b/111443750 for context.
  */
