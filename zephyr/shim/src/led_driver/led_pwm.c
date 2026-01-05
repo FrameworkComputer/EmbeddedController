@@ -55,11 +55,16 @@ static void pwm_set_color_with_pattern(void *p);
 static void pwm_asynchronous_apply_color(bool has_transitions);
 static void pwm_set_color(enum led_color color, enum ec_led_id led_id,
 			  uint8_t brightness);
+static void pwm_get_brightness_range(enum ec_led_id led_id,
+				     uint8_t *brightness_range);
+static int pwm_set_brightness(enum ec_led_id led_id, const uint8_t *brightness);
 
 static const struct led_driver_api pwm_led_driver_api = {
 	.asynchronous_apply_color = pwm_asynchronous_apply_color,
 	.set_color_with_pattern = pwm_set_color_with_pattern,
 	.set_color = pwm_set_color,
+	.get_brightness_range = pwm_get_brightness_range,
+	.set_brightness = pwm_set_brightness,
 };
 
 /* Generate one handle for the driver instance */
@@ -252,7 +257,8 @@ static void pwm_set_color_with_pattern(void *p)
 	led_set_color_with_pins(cur_color, pins_count, 100);
 }
 
-void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
+static void pwm_get_brightness_range(enum ec_led_id led_id,
+				     uint8_t *brightness_range)
 {
 	memset(brightness_range, 0, EC_LED_COLOR_COUNT);
 
@@ -269,7 +275,7 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 	}
 }
 
-int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
+static int pwm_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
 	bool color_set = false;
 

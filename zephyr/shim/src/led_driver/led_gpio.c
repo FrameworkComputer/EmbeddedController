@@ -36,11 +36,17 @@ static void gpio_set_color_with_pattern(void *p);
 static void gpio_asynchronous_apply_color(bool tmp);
 static void gpio_set_color(enum led_color color, enum ec_led_id led_id,
 			   uint8_t brightness);
+static void gpio_get_brightness_range(enum ec_led_id led_id,
+				      uint8_t *brightness_range);
+static int gpio_set_brightness(enum ec_led_id led_id,
+			       const uint8_t *brightness);
 
 static const struct led_driver_api gpio_led_driver_api = {
 	.asynchronous_apply_color = gpio_asynchronous_apply_color,
 	.set_color_with_pattern = gpio_set_color_with_pattern,
 	.set_color = gpio_set_color,
+	.get_brightness_range = gpio_get_brightness_range,
+	.set_brightness = gpio_set_brightness,
 };
 
 /* Generate one handle for the driver instance */
@@ -115,7 +121,8 @@ static void gpio_set_color_with_pattern(void *p)
 	led_set_color_with_node(pins_node);
 }
 
-void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
+static void gpio_get_brightness_range(enum ec_led_id led_id,
+				      uint8_t *brightness_range)
 {
 	for (int i = 0; i < ARRAY_SIZE(pins_node); i++) {
 		int br_color = pins_node[i]->led_color - 1;
@@ -125,7 +132,7 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 	}
 }
 
-int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
+static int gpio_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
 	bool color_set = false;
 

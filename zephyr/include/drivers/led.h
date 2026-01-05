@@ -124,12 +124,33 @@ struct led_driver_api {
 	/**
 	 * Set LED color using color enum
 	 *
-	 * @param color			LED Color to enable
-	 * @param led_id		LED ID to set the color for
+	 * @param color		LED Color to enable
+	 * @param led_id	LED ID to set the color for
 	 * @param brightness	Brightness to set the color to
 	 */
 	void (*set_color)(enum led_color color, enum ec_led_id led_id,
 			  uint8_t brightness);
+
+	/**
+	 * Get the brightness range for each supported color channel.
+	 *
+	 * Used to query LED capabilities, such as which color channels
+	 * are present and whether they support dimming.
+	 *
+	 * @param led_id            LED ID to query.
+	 * @param brightness_range  Output array for brightness ranges.
+	 */
+	void (*get_brightness_range)(enum ec_led_id led_id,
+				     uint8_t *brightness_range);
+
+	/**
+	 * Manually set the brightness for each color channel.
+	 *
+	 * @param led_id      LED ID to set brightness for.
+	 * @param brightness  Array of brightness levels for each color.
+	 * @return EC_SUCCESS on success, or an error status.
+	 */
+	int (*set_brightness)(enum ec_led_id led_id, const uint8_t *brightness);
 };
 
 /* Driver handle containing the API table */

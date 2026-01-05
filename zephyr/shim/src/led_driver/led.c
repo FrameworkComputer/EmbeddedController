@@ -488,3 +488,33 @@ void led_set_color(enum led_color color, enum ec_led_id led_id,
 		}
 	}
 }
+
+void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
+{
+	uint32_t mask = (1 << led_id);
+
+	memset(brightness_range, 0, EC_LED_COLOR_COUNT);
+
+	for (int i = 0; i < ARRAY_SIZE(pins_drivers); i++) {
+		if (pins_drivers[i]->led_id_mask & mask) {
+			pins_drivers[i]->api->get_brightness_range(
+				led_id, brightness_range);
+			return;
+		}
+	}
+}
+
+int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
+{
+	uint32_t mask = (1 << led_id);
+
+	for (int i = 0; i < ARRAY_SIZE(pins_drivers); i++) {
+		if (pins_drivers[i]->led_id_mask & mask) {
+			int rv = pins_drivers[i]->api->set_brightness(
+				led_id, brightness);
+			return rv;
+		}
+	}
+
+	return EC_ERROR_INVAL;
+}
