@@ -150,9 +150,9 @@ void cros_cbi_ufsc_init(void)
 		cached_ufsc = default_ufsc;
 	}
 	cached_ufsc_ready = true;
-	LOG_INF("Read CBI UFSC: 0x%08x 0x%08x 0x%08x 0x%08X 0x%08x",
+	LOG_INF("Read CBI UFSC: 0x%08x 0x%08x 0x%08x 0x%08X",
 		cached_ufsc.data[0], cached_ufsc.data[1], cached_ufsc.data[2],
-		cached_ufsc.data[3], cached_ufsc.data[4]);
+		cached_ufsc.data[3]);
 }
 
 test_mockable bool cros_cbi_ufsc_check_match(enum cbi_ufsc_value_id value_id)
