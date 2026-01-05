@@ -82,7 +82,7 @@ static void average_tempature(void)
 
 	charger_temp_c = K_TO_C(charger_temp);
 	/* Abnormal value processing, limited to 500mA */
-	if ((charger_temp_c > 120) || (charger_temp_c < 20)) {
+	if ((charger_temp_c > 120) || (charger_temp_c < 0)) {
 		current = 500;
 		return;
 	}
