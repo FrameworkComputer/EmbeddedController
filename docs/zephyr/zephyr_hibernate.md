@@ -98,6 +98,41 @@ Example from the [Rex project]:
 
 ```
 
+#### Hibernate Wake Source Detection
+
+The application can determine the source of the wake-up from hibernate using the
+`cros_system_get_hibernate_wake_source` API. Currently, this feature is only
+implemented for NPCX based platforms. Other platforms will return `-ENOSYS`.
+
+For NPCX based platforms using PSL, the driver maps the PSL input that caused
+the wake to a specific wake source (e.g., AC, Lid, Power Button). To enable
+this mapping, you must label the corresponding PSL input nodes in the
+devicetree with `wake_source_acok`, `wake_source_lid_open`, and
+`wake_source_pwr_btn`.
+
+Example from the [Bluey project]:
+
+```
+/* Power switch logic input pads */
+wake_source_lid_open: &psl_in1_gpd2 {
+	/* EC_LID_OPEN */
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
+};
+
+wake_source_pwr_btn: &psl_in2_gp00 {
+	/* EC_PWR_BTN_ODL */
+	psl-in-mode = "edge";
+	psl-in-pol = "low-falling";
+};
+
+wake_source_acok: &psl_in3_gp01 {
+	/* EC_ACOK_OD */
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
+};
+```
+
 ### `CONFIG_PLATFORM_EC_HIBERNATE_VCI`
 
 Supported by the Microchip EC family only.  An example configuration of
@@ -252,3 +287,4 @@ Use the `hibdelay` command to override the project's hibernation timeout.
 [`cros-ec,hibernate-wake-pins`]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/gpio/cros-ec,hibernate-wake-pins.yaml
 [`cros-ec,hibernate-z5`]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/hibernate/cros-ec,hibernate-z5.yaml
 [brox project]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/program/brox/hibernate.dtsi
+[Bluey project]:https://source.corp.google.com/h/chrome-internal/chromeos/superproject/+/main:src/platform/ec/zephyr/program/bluey/psl.dtsi
