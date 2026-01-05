@@ -1,0 +1,20 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+DT_ALIAS_BTN_IGN_IN := gpio-btn-ign-in
+
+config PLATFORM_EC_BTN_IGN_IN
+	bool "Enable power button ignore input"
+	default y
+	depends on $(dt_alias_enabled,$(DT_ALIAS_BTN_IGN_IN))
+	help
+	  Enables handling power button ignore state read from GPIO.
+	  Enabled if the gpio-btn-ign-in alias is defined in the DT.
+
+config PLATFORM_EC_BTN_IGN_IN_DELAY_MS
+	int "Power button ignore delay"
+	default 4000
+	depends on PLATFORM_EC_BTN_IGN_IN
+	help
+	  Time in milliseconds to ignore power button press if BTN_IGN is high.

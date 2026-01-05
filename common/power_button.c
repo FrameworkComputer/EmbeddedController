@@ -170,12 +170,54 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pb_chipset_shutdown,
 	     HOOK_PRIO_PRE_DEFAULT);
 #endif
 
+#ifdef CONFIG_PLATFORM_EC_BTN_IGN_IN
+/**
+ * Handle button ignore logic for power button.
+ *
+ * @param pressed   Current power button state (1 for pressed, 0 for released).
+ * @return Remaining microseconds to ignore the press.
+ */
+static int btn_ign_in_get_remaining_time(int pressed)
+{
+	static timestamp_t ign_start_time;
+
+	int ignore_us = 0;
+
+	if (pressed &&
+	    gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_btn_ign_in)) == 1) {
+		if (ign_start_time.val == 0) {
+			ign_start_time = get_time();
+		}
+
+		ignore_us = CONFIG_PLATFORM_EC_BTN_IGN_IN_DELAY_MS * MSEC -
+			    time_since32(ign_start_time);
+	} else {
+		ign_start_time.val = 0;
+	}
+
+	return ignore_us;
+}
+#endif
+
 /**
  * Handle debounced power button changing state.
  */
+static void power_button_change_deferred(void);
+DECLARE_DEFERRED(power_button_change_deferred);
 static void power_button_change_deferred(void)
 {
 	const int new_pressed = raw_power_button_pressed();
+
+#ifdef CONFIG_PLATFORM_EC_BTN_IGN_IN
+	int ignore_us = btn_ign_in_get_remaining_time(new_pressed);
+	if (ignore_us > 0) {
+		debounced_power_pressed = 0;
+		hook_call_deferred(&power_button_change_deferred_data,
+				   ignore_us);
+		CPRINTS("%s ignored", power_button.name);
+		return;
+	}
+#endif
 
 	/* Re-enable keyboard scanning if power button is no longer pressed */
 	if (!new_pressed)
@@ -200,7 +242,6 @@ static void power_button_change_deferred(void)
 	if (new_pressed)
 		host_set_single_event(EC_HOST_EVENT_POWER_BUTTON);
 }
-DECLARE_DEFERRED(power_button_change_deferred);
 
 static void power_button_simulate_deferred(void)
 {
