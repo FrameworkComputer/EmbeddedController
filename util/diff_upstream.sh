@@ -11,30 +11,32 @@ echo "3p root directory: ${THIRD_PARTY_DIR}"
 # And also any repos that copybot copies from indirectly, i.e.
 # zephyrproject-rtos/cmsis -> zephyr/cmsis -> zephyrproject/modules/hal/cmsis
 declare -A repos=(
-  # chre-main-public-copybot-downstream.ini
+  # config/chre/main-public.ini
   ['android/platform/system/chre']='https://android.googlesource.com/platform/system/chre main'
-  # chre-main-copybot-downstream.ini
+  # config/chre/main.ini
   ['android/platform/system/chre_internal']='https://chrome-internal.googlesource.com/chromeos/third_party/chre upstream/main'
-  # pigweed-main-copybot-downstream.ini
+  # config/pigweed/main.ini
   ['pigweed']='https://pigweed.googlesource.com/pigweed/pigweed main'
-  # zephyr-cmsis_6-copybot-downstream.ini
-  ['zephyr/cmsis_6']='https://github.com/zephyrproject-rtos/CMSIS_6.git main'
-  # zephyr-main-copybot-downstream.ini
+  # config/zephyr/main.ini
   ['zephyr/main']='https://github.com/zephyrproject-rtos/zephyr.git main'
-  # zephyr-nanopb-copybot-downstream.ini
-  ['zephyr/nanopb']='https://github.com/zephyrproject-rtos/nanopb.git zephyr'
-  # zephyr-picolibc-copybot-downstream.ini
-  ['zephyr/picolibc']='https://github.com/zephyrproject-rtos/picolibc.git main'
-  # zephyr-project-cmsis-copybot-downstream.ini
+  # config/zephyr/project-cmsis.ini
   ['zephyrproject/modules/hal/cmsis']='https://github.com/zephyrproject-rtos/cmsis.git master'
-  # zephyr-project-egis_module-copybot-downstream.ini
+  # config/zephyr/project-cmsis_6.ini
+  ['zephyrproject/modules/hal/cmsis_6']='https://github.com/zephyrproject-rtos/CMSIS_6.git main'
+  # config/zephyr/project-egis_module.ini
   ['zephyrproject/modules/hal/egis_module']='https://github.com/EgisMCU/egis_module.git main'
-  # zephyr-project-hal_egis-copybot-downstream.ini
+  # config/zephyr/project-hal_egis.ini
   ['zephyrproject/modules/hal/egis']='https://github.com/EgisMCU/hal_egis.git main'
-  # zephyr-project-intel-copybot-downstream.ini
+  # config/zephyr/project-intel.ini
   ['zephyrproject/modules/hal/intel']='https://github.com/zephyrproject-rtos/hal_intel.git main'
-  # zephyr-project-stm32-copybot-downstream.ini
+  # config/zephyr/project-stm32.ini
   ['zephyrproject/modules/hal/stm32']='https://github.com/zephyrproject-rtos/hal_stm32.git main'
+  # config/zephyr/project-chre.ini
+  ['zephyrproject/modules/lib/chre']='https://github.com/zephyrproject-rtos/chre.git zephyr'
+  # config/zephyr/project-nanopb.ini
+  ['zephyrproject/modules/lib/nanopb']='https://github.com/zephyrproject-rtos/nanopb.git zephyr'
+  # config/zephyr/project-picolibc.ini
+  ['zephyrproject/modules/lib/picolibc']='https://github.com/zephyrproject-rtos/picolibc.git main'
 )
 
 # All expected diffs (FROMPULLs)
@@ -78,10 +80,6 @@ for repo in "${all_repos[@]}"; do
     c3bd2094f92d574377f7af2aec147ae181aa5f8e)
       upstream_commit=4b96cbb174678dcd3ca86e11e1f24bc5f8726da0
       ;;
-    # nanopb has some commits out of order
-    0aa6f11bc7563989da85774a0decaecd3b304d6a)
-      upstream_commit=65cbefb4695bc7af1cb733ced99618afb3586b20
-      ;;
     # picolibc has a commit out of order
     b25f4a47784d2c24695977c903fe114565ae2bc6)
       upstream_commit=1c73900b79dbc02b80d09f5d637382249158e1ec
@@ -98,14 +96,29 @@ for repo in "${all_repos[@]}"; do
     2a535edbfb51d2524578a1b8f8342e9644ac0864)
       upstream_commit=9d05ebdff47b5071fa092de243a1244e7c27f518
       ;;
+    # chre
     9e5f90b27e929ff9803abf3841eb3a452dc4830f)
       upstream_commit=0e9e07d8eb89107aa57ad25a12ba1ed4112c53ab
       ;;
+    # pigweed
     495cbd601502e07c8d39873df8d791100b4a7e38)
       upstream_commit=58a89e7894dd90be8fab467f9504afa4533b0aa0
       ;;
+    # zephyr/main
     dfe251554b26412dd683ee26474925d7132218ac)
       upstream_commit=458e6f8ae3d
+      ;;
+    # nanopb upstream switch
+    54a8f364e39bf21e2c5fd3ee7e36557f8b2f6da5)
+      upstream_commit=65cbefb4695bc7af1cb733ced99618afb3586b20
+      ;;
+    # picolibc upstream switch
+    e16b6e6e69dcceaa778f8eeb68c8e1f70e271aa9)
+      upstream_commit=01254932e8e81085817ed61fd858648584ffe37c
+      ;;
+    # cmsis_6 upstream switch
+    a04b38d91cda4ff3064d67349006f23b2ba8273b)
+      upstream_commit=30a859f44ef8ab4dc8f84b03ed586fd16ccf9d74
       ;;
   esac
   echo "==============================="
@@ -148,7 +161,7 @@ for repo in "${all_repos[@]}"; do
             ;;
         esac
         ;;
-      zephyr/picolibc)
+      zephyr/picolibc|zephyrproject/modules/lib/picolibc)
         case "${file}" in
           # These should be upstreamed after we have multilib
           scripts/*-coreboot-*)
