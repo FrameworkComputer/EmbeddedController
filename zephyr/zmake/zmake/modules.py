@@ -73,7 +73,15 @@ known_modules = {
         / "hal"
         / "cmsis"
     ),
-    "cmsis_6": third_party_module,
+    "cmsis_6": lambda name, checkout: (
+        checkout
+        / "src"
+        / "third_party"
+        / "zephyrproject"
+        / "modules"
+        / "hal"
+        / "cmsis_6"
+    ),
     "ec": lambda name, checkout: (checkout / "src" / "platform" / "ec"),
     "egis": lambda name, checkout: (
         checkout / "src" / "platform" / "fingerprint" / "egis"
@@ -125,9 +133,25 @@ known_modules = {
         / "stm32"
     ),
     "intel_module_private": third_party_module,
-    "nanopb": third_party_module,
+    "nanopb": lambda name, checkout: (
+        checkout
+        / "src"
+        / "third_party"
+        / "zephyrproject"
+        / "modules"
+        / "lib"
+        / "nanopb"
+    ),
     "pigweed": lambda name, checkout: (checkout / "src" / "third_party" / name),
-    "picolibc": third_party_module,
+    "picolibc": lambda name, checkout: (
+        checkout
+        / "src"
+        / "third_party"
+        / "zephyrproject"
+        / "modules"
+        / "lib"
+        / "picolibc"
+    ),
 }
 
 
