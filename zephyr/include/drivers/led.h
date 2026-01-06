@@ -192,14 +192,14 @@ struct led_pins_node_t {
 };
 
 struct pattern_color_node_t {
-	struct led_pins_node_t *led_color_node;
+	const struct led_pins_node_t *led_color_node;
 	int32_t duration_ms;
 };
 
 struct led_pattern_node_t {
 	/* 4-byte members first */
 	int32_t elapsed_ms;
-	struct pattern_color_node_t *pattern_color;
+	const struct pattern_color_node_t *pattern_color;
 
 	/* 1-byte members following */
 	uint8_t cur_color;

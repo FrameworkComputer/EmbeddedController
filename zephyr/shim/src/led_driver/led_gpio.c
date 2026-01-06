@@ -116,7 +116,7 @@ static void gpio_set_color(enum led_color color, enum ec_led_id led_id,
 static void gpio_set_color_with_pattern(void *p)
 {
 	const struct led_pattern_node_t *led = (struct led_pattern_node_t *)p;
-	struct led_pins_node_t *pins_node =
+	const struct led_pins_node_t *pins_node =
 		led->pattern_color[led->cur_color].led_color_node;
 	led_set_color_with_node(pins_node);
 }
