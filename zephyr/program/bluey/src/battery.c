@@ -50,6 +50,16 @@ void board_chipset_hard_off(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_HARD_OFF, board_chipset_hard_off, HOOK_PRIO_DEFAULT);
 
+static void board_battery_init(void)
+{
+	/* Cache the battery static information */
+	if (battery_is_present() == BP_YES) {
+		update_static_battery_info();
+		LOG_INF("battery static information cached");
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_battery_init, HOOK_PRIO_POST_BATTERY_INIT);
+
 void board_chipset_pre_init(void)
 {
 	/* Cache the battery dynamic information before AP power on */
