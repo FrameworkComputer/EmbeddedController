@@ -277,22 +277,24 @@ __overridable int board_led_alt_policy(void)
  */
 static int match_node(int node_idx)
 {
+	struct node_prop_t *node = &node_array[node_idx];
+
 #if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER))
 	/* Check if this node depends on power state */
-	if (node_array[node_idx].pwr_state != LED_PWRS_UNCHANGE) {
+	if (node->pwr_state != LED_PWRS_UNCHANGE) {
 		enum led_pwr_state pwr_state = led_pwr_get_state();
 
-		if (node_array[node_idx].pwr_state != pwr_state) {
-			node_array[node_idx].state_active = false;
+		if (node->pwr_state != pwr_state) {
+			node->state_active = false;
 			return -1;
 		}
 
 		/* Check if this node depends on charge port */
-		if (node_array[node_idx].charge_port != -1) {
+		if (node->charge_port != -1) {
 			int port = charge_manager_get_active_charge_port();
 
-			if (node_array[node_idx].charge_port != port) {
-				node_array[node_idx].state_active = false;
+			if (node->charge_port != port) {
+				node->state_active = false;
 				return -1;
 			}
 		}
@@ -300,34 +302,33 @@ static int match_node(int node_idx)
 #endif /* CONFIG_PLATFORM_EC_CHARGE_MANAGER */
 
 	/* Check if this node depends on chipset state */
-	if (node_array[node_idx].chipset_state != 0) {
+	if (node->chipset_state != 0) {
 		enum power_state chipset_state = get_chipset_state();
 
-		if (node_array[node_idx].chipset_state != chipset_state) {
-			node_array[node_idx].state_active = false;
+		if (node->chipset_state != chipset_state) {
+			node->state_active = false;
 			return -1;
 		}
 	}
 
 	/* Check if this node depends on board alt policy */
-	if (node_array[node_idx].board_led_alt_policy_label != -1) {
-		if (node_array[node_idx].board_led_alt_policy_label !=
+	if (node->board_led_alt_policy_label != -1) {
+		if (node->board_led_alt_policy_label !=
 		    board_led_alt_policy()) {
-			node_array[node_idx].state_active = false;
+			node->state_active = false;
 			return -1;
 		}
 	}
 
 #if (IS_ENABLED(CONFIG_PLATFORM_EC_BATTERY))
 	/* check if this node depends on battery status */
-	if (node_array[node_idx].batt_state_mask != -1) {
+	if (node->batt_state_mask != -1) {
 		int batt_state;
 
 		battery_status(&batt_state);
-		if ((node_array[node_idx].batt_state_mask & batt_state) !=
-		    (node_array[node_idx].batt_state_mask &
-		     node_array[node_idx].batt_state)) {
-			node_array[node_idx].state_active = false;
+		if ((node->batt_state_mask & batt_state) !=
+		    (node->batt_state_mask & node->batt_state)) {
+			node->state_active = false;
 			return -1;
 		}
 	}
@@ -335,21 +336,21 @@ static int match_node(int node_idx)
 
 #if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER))
 	/* Check if this node depends on battery level */
-	if (node_array[node_idx].batt_lvl[0] != -1) {
+	if (node->batt_lvl[0] != -1) {
 		int curr_batt_lvl =
 			DIV_ROUND_NEAREST(charge_get_display_charge(), 10);
 
-		if ((curr_batt_lvl < node_array[node_idx].batt_lvl[0]) ||
-		    (curr_batt_lvl > node_array[node_idx].batt_lvl[1])) {
-			node_array[node_idx].state_active = false;
+		if ((curr_batt_lvl < node->batt_lvl[0]) ||
+		    (curr_batt_lvl > node->batt_lvl[1])) {
+			node->state_active = false;
 			return -1;
 		}
 	}
 #endif /* CONFIG_PLATFORM_EC_CHARGE_MANAGER */
 
 	/* reset the color counter if pattern just activated */
-	if (node_array[node_idx].state_active == false) {
-		node_array[node_idx].state_active = true;
+	if (!node->state_active) {
+		node->state_active = true;
 		for (int i = 0; i < node_array[node_idx].num_patterns; i++) {
 			struct led_pattern_node_t *pattern =
 				&node_array[node_idx].led_patterns[i];
