@@ -35,37 +35,6 @@ static void side_led_set_color(int port, enum led_color color)
 			(color == LED_WHITE) ? SIDE_LED_ON : SIDE_LED_OFF);
 }
 
-void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
-{
-	brightness_range[EC_LED_COLOR_AMBER] = 1;
-	brightness_range[EC_LED_COLOR_WHITE] = 1;
-}
-
-int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
-{
-	int port;
-
-	switch (led_id) {
-	case EC_LED_ID_RIGHT_LED:
-		port = 0;
-		break;
-	case EC_LED_ID_LEFT_LED:
-		port = 1;
-		break;
-	default:
-		return EC_ERROR_PARAM1;
-	}
-
-	if (brightness[EC_LED_COLOR_WHITE] != 0)
-		side_led_set_color(port, LED_WHITE);
-	else if (brightness[EC_LED_COLOR_AMBER] != 0)
-		side_led_set_color(port, LED_AMBER);
-	else
-		side_led_set_color(port, LED_OFF);
-
-	return EC_SUCCESS;
-}
-
 static void set_active_port_color(int port, enum led_color color)
 {
 	if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED) && port == 0)
