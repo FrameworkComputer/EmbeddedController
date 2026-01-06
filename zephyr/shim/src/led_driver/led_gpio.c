@@ -62,7 +62,6 @@ const struct led_driver_t PINS_NODE(DT_DRV_INST(0)) = {
 		.led_id = GET_PROP(DT_PARENT(node_id), led_id), \
 		.pins = PINS_ARRAY(node_id),                    \
 		.pins_count = DT_PROP_LEN(node_id, led_values), \
-		.api = &gpio_led_driver_api,                    \
 	}
 
 /*

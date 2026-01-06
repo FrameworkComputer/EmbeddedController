@@ -177,9 +177,6 @@ struct led_pins_node_t {
 	 */
 	enum ec_led_id led_id;
 
-	/* Shared driver API implementation */
-	const struct led_driver_api *api;
-
 	/*
 	 * Pointer to driver-specific pin configuration data used to
 	 * enable a particular color. The underlying driver is responsible
