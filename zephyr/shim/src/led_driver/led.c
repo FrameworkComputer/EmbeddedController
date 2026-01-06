@@ -31,12 +31,6 @@ LOG_MODULE_REGISTER(led, LOG_LEVEL_ERR);
 		DT_INST_PHANDLE(inst, led_pins));
 DT_INST_FOREACH_STATUS_OKAY(DECLARE_DRIVER)
 
-/* Registry of hardware pin drivers, one per policy instance */
-#define DRV_PTR(inst) &PINS_NODE(DT_INST_PHANDLE(inst, led_pins)),
-static const struct led_driver_t *const pins_drivers[] = {
-	DT_INST_FOREACH_STATUS_OKAY(DRV_PTR)
-};
-
 /* Extern the led_pins_node instances for each individual color step */
 #define DECLARE_PINS_NODE(id) extern struct led_pins_node_t PINS_NODE(id);
 
@@ -150,12 +144,31 @@ struct node_prop_t {
 		.state_active = false,                                        \
 	},
 
-#define GEN_POLICY_NODE_ARRAY(inst)                                   \
-	DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(inst, SET_LED_VALUES, \
-						DT_FOREACH_CHILD)
+struct policy_group {
+	const struct led_driver_t *driver;
+	struct node_prop_t *nodes;
+	size_t num_nodes;
+};
 
-static struct node_prop_t node_array[] = { DT_INST_FOREACH_STATUS_OKAY(
-	GEN_POLICY_NODE_ARRAY) };
+#define LOCAL_NODE_ARRAY(inst) DT_CAT(node_array_, inst)
+
+#define GEN_LOCAL_ARRAYS(inst)                                                \
+	static struct node_prop_t LOCAL_NODE_ARRAY(inst)[] = {                \
+		DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(inst, SET_LED_VALUES, \
+							DT_FOREACH_CHILD)     \
+	};
+DT_INST_FOREACH_STATUS_OKAY(GEN_LOCAL_ARRAYS)
+
+#define INIT_POLICY_GROUP(inst)                                        \
+	{                                                              \
+		.driver = &PINS_NODE(DT_INST_PHANDLE(inst, led_pins)), \
+		.nodes = LOCAL_NODE_ARRAY(inst),                       \
+		.num_nodes = ARRAY_SIZE(LOCAL_NODE_ARRAY(inst)),       \
+	},
+
+static const struct policy_group policy_groups[] = {
+	DT_INST_FOREACH_STATUS_OKAY(INIT_POLICY_GROUP)
+};
 
 test_export_static enum power_state get_chipset_state(void)
 {
@@ -271,9 +284,9 @@ __overridable int board_led_alt_policy(void)
  * Update the python script whenever major changes are made to the matching
  * function here.
  */
-static int match_node(int node_idx)
+static int match_node(const struct policy_group *grp, int node_idx)
 {
-	struct node_prop_t *node = &node_array[node_idx];
+	struct node_prop_t *node = &grp->nodes[node_idx];
 
 #if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER))
 	/* Check if this node depends on power state */
@@ -365,7 +378,6 @@ static int match_node(int node_idx)
 
 static bool led_set_all_colors(void)
 {
-	bool found_node = false;
 	bool has_transitions = false;
 
 	/*
@@ -376,30 +388,36 @@ static bool led_set_all_colors(void)
 	 * We must find at least one node that indicates the LED Behavior for
 	 * current system state.
 	 */
-	for (int i = 0; i < ARRAY_SIZE(node_array); i++) {
-		if (match_node(i) != -1) {
-			found_node = true;
+	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
+		const struct policy_group *grp = &policy_groups[i];
+		bool found_node = false;
 
-			// TODO: has_transitions should support all non-step
-			// patterns
-			if (node_array[i].led_patterns->transition ==
-			    LED_TRANSITION_LINEAR)
-				has_transitions = true;
+		for (int j = 0; j < grp->num_nodes; j++) {
+			if (match_node(grp, j) != -1) {
+				found_node = true;
 
-			update_node_patterns(&node_array[i]);
+				// TODO: has_transitions should support all
+				// non-step patterns
+				if (grp->nodes[j].led_patterns->transition ==
+				    LED_TRANSITION_LINEAR)
+					has_transitions = true;
+
+				update_node_patterns(&grp->nodes[j]);
+			}
+		}
+		if (!found_node) {
+			LOG_ERR("Node with matching prop not found");
 		}
 	}
-
-	if (!found_node)
-		LOG_ERR("Node with matching prop not found");
 
 	return has_transitions;
 }
 
 void led_asynchronous_apply_color(bool has_transitions)
 {
-	for (int i = 0; i < ARRAY_SIZE(pins_drivers); i++) {
-		pins_drivers[i]->api->asynchronous_apply_color(has_transitions);
+	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
+		policy_groups[i].driver->api->asynchronous_apply_color(
+			has_transitions);
 	}
 }
 
@@ -452,8 +470,8 @@ __override int led_is_supported(enum ec_led_id led_id)
 
 	if (supported_leds == -1) {
 		supported_leds = 0;
-		for (int i = 0; i < ARRAY_SIZE(pins_drivers); i++) {
-			supported_leds |= pins_drivers[i]->led_id_mask;
+		for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
+			supported_leds |= policy_groups[i].driver->led_id_mask;
 		}
 	}
 	return ((1 << (int)led_id) & supported_leds);
@@ -467,10 +485,10 @@ void led_set_color(enum led_color color, enum ec_led_id led_id,
 {
 	uint32_t mask = (1 << led_id);
 
-	for (int i = 0; i < ARRAY_SIZE(pins_drivers); i++) {
-		if (pins_drivers[i]->led_id_mask & mask) {
-			pins_drivers[i]->api->set_color(color, led_id,
-							brightness);
+	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
+		if (policy_groups[i].driver->led_id_mask & mask) {
+			policy_groups[i].driver->api->set_color(color, led_id,
+								brightness);
 		}
 	}
 }
@@ -481,9 +499,9 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 
 	memset(brightness_range, 0, EC_LED_COLOR_COUNT);
 
-	for (int i = 0; i < ARRAY_SIZE(pins_drivers); i++) {
-		if (pins_drivers[i]->led_id_mask & mask) {
-			pins_drivers[i]->api->get_brightness_range(
+	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
+		if (policy_groups[i].driver->led_id_mask & mask) {
+			policy_groups[i].driver->api->get_brightness_range(
 				led_id, brightness_range);
 			return;
 		}
@@ -494,9 +512,9 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
 	uint32_t mask = (1 << led_id);
 
-	for (int i = 0; i < ARRAY_SIZE(pins_drivers); i++) {
-		if (pins_drivers[i]->led_id_mask & mask) {
-			int rv = pins_drivers[i]->api->set_brightness(
+	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
+		if (policy_groups[i].driver->led_id_mask & mask) {
+			int rv = policy_groups[i].driver->api->set_brightness(
 				led_id, brightness);
 			return rv;
 		}
