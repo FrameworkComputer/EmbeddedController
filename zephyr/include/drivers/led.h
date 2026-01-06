@@ -175,10 +175,11 @@ struct led_pattern_node_t {
 	uint8_t pattern_len;
 };
 
-#define GET_COLOR(pattern_element, color_index) \
-	pattern_element.pattern_color[color_index].led_color
-#define GET_DURATION(pattern_element, color_index) \
-	pattern_element.pattern_color[color_index].duration_ms
+static inline int32_t get_step_duration(const struct led_pattern_node_t *cfg,
+					uint8_t step_idx)
+{
+	return cfg->pattern_color[step_idx].duration_ms;
+}
 
 /**
  * Wrapper function to call the api.

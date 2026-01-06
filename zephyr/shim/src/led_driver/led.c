@@ -177,41 +177,53 @@ test_export_static enum power_state get_chipset_state(void)
 	return chipset_state;
 }
 
-static void set_color(int node_idx)
+static void update_led_pattern(struct led_pattern_node_t *pattern)
 {
-	struct led_pattern_node_t *patterns = node_array[node_idx].led_patterns;
+	uint32_t duration;
 
-	for (int i = 0; i < node_array[node_idx].num_patterns; i++) {
-		if (!led_auto_control_is_enabled(
-			    patterns[i].pattern_color[0].led_color_node->led_id))
-			continue; /* Auto control is disabled */
+	/* Check if auto control is enabled */
+	if (!led_auto_control_is_enabled(
+		    pattern->pattern_color[0].led_color_node->led_id)) {
+		return;
+	}
 
-		patterns[i]
-			.pattern_color[0]
-			.led_color_node->api.led_set_color_with_pattern(
-				&patterns[i]);
+	/* Apply color calculated in the previous tick */
+	pattern->pattern_color[0].led_color_node->api.led_set_color_with_pattern(
+		pattern);
 
-		if (GET_DURATION(patterns[i], patterns[i].cur_color) != 0) {
-			patterns[i].elapsed_ms += HOOK_TICK_INTERVAL_MS;
+	duration = get_step_duration(pattern, pattern->cur_color);
 
-			while (patterns[i].elapsed_ms >=
-			       GET_DURATION(patterns[i],
-					    patterns[i].cur_color)) {
-				patterns[i].elapsed_ms -= GET_DURATION(
-					patterns[i], patterns[i].cur_color);
-				patterns[i].cur_color++;
+	/* If the current step has no duration, we can't advance time */
+	if (duration == 0) {
+		return;
+	}
 
-				if (patterns[i].cur_color >=
-				    patterns[i].pattern_len) {
-					patterns[i].cur_color = 0;
-				}
+	pattern->elapsed_ms += HOOK_TICK_INTERVAL_MS;
 
-				if (GET_DURATION(patterns[i],
-						 patterns[i].cur_color) == 0) {
-					break;
-				}
-			}
+	while (pattern->elapsed_ms >= duration) {
+		pattern->elapsed_ms -= duration;
+		pattern->cur_color++;
+
+		/* Wrap around if we reached the end of the pattern */
+		if (pattern->cur_color >= pattern->pattern_len) {
+			pattern->cur_color = 0;
 		}
+
+		duration = get_step_duration(pattern, pattern->cur_color);
+
+		/* Stop if the next state has 0 duration (hold state) */
+		if (duration == 0) {
+			break;
+		}
+	}
+}
+
+static void update_node_patterns(struct node_prop_t *node)
+{
+	struct led_pattern_node_t *patterns = node->led_patterns;
+
+	for (int i = 0; i < node->num_patterns; i++) {
+		update_led_pattern(&patterns[i]);
 	}
 }
 
@@ -337,7 +349,7 @@ static bool led_set_all_colors(void)
 			    LED_TRANSITION_LINEAR)
 				has_transitions = true;
 
-			set_color(i);
+			update_node_patterns(&node_array[i]);
 		}
 	}
 
