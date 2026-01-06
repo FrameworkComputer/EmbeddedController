@@ -52,6 +52,7 @@ enum power_on_event_t chipset_get_power_on_reason(void);
 void board_set_switchcap_power(int enable);
 int board_is_switchcap_enabled(void);
 int board_is_switchcap_power_good(void);
+int board_is_switchcap_power_reset(void);
 
 #if defined(CONFIG_PLATFORM_EC_PMIC_PASSTHRU_POWER_SIGNALS)
 void passthru_lid_open_to_pmic(void);

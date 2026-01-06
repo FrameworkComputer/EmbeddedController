@@ -114,6 +114,12 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 /* Wait for polling if the switchcap outputs good voltage */
 #define SWITCHCAP_PG_CHECK_WAIT (6 * MSEC)
 
+/* The timeout of the check if the switchcap outputs reset voltage */
+#define SWITCHCAP_RESET_TIMEOUT (2000 * MSEC)
+
+/* Wait for polling if the switchcap outputs reset voltage */
+#define SWITCHCAP_RESET_CHECK_WAIT (6 * MSEC)
+
 /*
  * Delay between power-on the system and power-on the PMIC.
  * Some latest PMIC firmware needs this delay longer, for doing a cold
@@ -459,6 +465,27 @@ static int wait_switchcap_power_good(int enable)
 }
 
 /**
+ * Wait for the switchcap to reset to init state.
+ */
+static void wait_switchcap_power_reset(void)
+{
+	timestamp_t poll_deadline;
+
+	poll_deadline = get_time();
+	poll_deadline.val += SWITCHCAP_RESET_TIMEOUT;
+	while (!board_is_switchcap_power_reset() &&
+	       get_time().val < poll_deadline.val) {
+		crec_usleep(SWITCHCAP_RESET_CHECK_WAIT);
+	}
+
+	if (board_is_switchcap_power_reset()) {
+		CPRINTS("SWITCHCAP IS RESET!");
+	} else {
+		CPRINTS("SWITCHCAP NOT RESET!");
+	}
+}
+
+/**
  * Get the state of the system power signals.
  *
  * @return 1 if the system is powered, 0 if not
@@ -615,6 +642,18 @@ void start_ac_filter_window(void)
 static void set_system_power_no_check(int enable)
 {
 	board_set_switchcap_power(enable);
+}
+
+/**
+ * Initialize the System SwitchCap power.
+ *
+ * The system power signals are the enable pins of SwitchCap.
+ * The switchcap needs to be in the reset state during initialization.
+ */
+void system_reset_switchcap_power(void)
+{
+	set_system_power_no_check(0);
+	wait_switchcap_power_reset();
 }
 
 /**
