@@ -25,12 +25,6 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(led, LOG_LEVEL_ERR);
 
-#define NUM_POLICIES DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT)
-
-BUILD_ASSERT(
-	NUM_POLICIES <= 2,
-	"No more than 2 instances of cros-ec,led-policy should be defined.");
-
 /* Extern the driver handles linked by 'led-pins' in the policies */
 #define DECLARE_DRIVER(inst)                        \
 	extern const struct led_driver_t PINS_NODE( \
@@ -43,24 +37,15 @@ static const struct led_driver_t *const pins_drivers[] = {
 	DT_INST_FOREACH_STATUS_OKAY(DRV_PTR)
 };
 
+/* Extern the led_pins_node instances for each individual color step */
 #define DECLARE_PINS_NODE(id) extern struct led_pins_node_t PINS_NODE(id);
 
-/* Whichever LED pins node is used must be given the `led_pins` label. */
-#define PINS_PARENT_NODE DT_NODELABEL(led_pins)
-BUILD_ASSERT(DT_NODE_HAS_STATUS(PINS_PARENT_NODE, okay),
-	     "The devicetree must have a node with label 'led_pins'.");
+#define DECLARE_PINS_NODE_FOR_POLICY(inst)                                  \
+	DT_FOREACH_CHILD_STATUS_OKAY_VARGS(DT_INST_PHANDLE(inst, led_pins), \
+					   DT_FOREACH_CHILD,                \
+					   DECLARE_PINS_NODE)
 
-DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS_PARENT_NODE, DT_FOREACH_CHILD,
-				   DECLARE_PINS_NODE)
-
-/* Whichever LED pins node is used must be given the `led_pins2` label. */
-#define PINS2_PARENT_NODE DT_NODELABEL(led_pins2)
-#define PINS2_DEFINED DT_NODE_HAS_STATUS(PINS2_PARENT_NODE, okay)
-
-#if PINS2_DEFINED
-DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS2_PARENT_NODE, DT_FOREACH_CHILD,
-				   DECLARE_PINS_NODE)
-#endif
+DT_INST_FOREACH_STATUS_OKAY(DECLARE_PINS_NODE_FOR_POLICY)
 
 #define ASSERT_LEDS_ID_MATCH(id)                                              \
 	BUILD_ASSERT(                                                         \
@@ -70,6 +55,7 @@ DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS2_PARENT_NODE, DT_FOREACH_CHILD,
 		"The led-color node (" #id                                    \
 		") must belong to the same led-id defined in the policy.");
 
+/* Generates the step-level pattern array for each rule */
 #define SET_PATTERN_COLOR_ARRAY(id)                                      \
 	{                                                                \
 		.led_color_node = &PINS_NODE(DT_PHANDLE(id, led_color)), \
@@ -81,14 +67,13 @@ DT_FOREACH_CHILD_STATUS_OKAY_VARGS(PINS2_PARENT_NODE, DT_FOREACH_CHILD,
 	struct pattern_color_node_t PATTERN_COLOR_ARRAY(     \
 		id)[] = { fn(id, SET_PATTERN_COLOR_ARRAY) }; \
 	fn(id, ASSERT_LEDS_ID_MATCH)
-DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD_VARGS,
-					GEN_PATTERN_COLOR_ARRAY,
-					DT_FOREACH_CHILD)
-#if NUM_POLICIES == 2
-DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(1, DT_FOREACH_CHILD_VARGS,
-					GEN_PATTERN_COLOR_ARRAY,
-					DT_FOREACH_CHILD)
-#endif
+
+#define GEN_PATTERN_COLOR_ARRAY_FOR_POLICY(inst)                              \
+	DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(inst, DT_FOREACH_CHILD_VARGS, \
+						GEN_PATTERN_COLOR_ARRAY,      \
+						DT_FOREACH_CHILD)
+
+DT_INST_FOREACH_STATUS_OKAY(GEN_PATTERN_COLOR_ARRAY_FOR_POLICY)
 
 #define PLUS_ONE(id) +1
 
@@ -107,6 +92,20 @@ DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(1, DT_FOREACH_CHILD_VARGS,
 	BUILD_ASSERT(DT_PROP_OR(node_id, cycle_count, 0) <= 255, \
 		     "cycle-count exceeds uint8_t limit (255)");
 
+/* Generate the logic-level pattern array for each rule */
+#define PATTERN_NODE_ARRAY(id) DT_CAT(PATTERN_ARRAY_, id)
+#define GEN_PATTERN_NODE_ARRAY(id, fn1, fn2)                \
+	struct led_pattern_node_t PATTERN_NODE_ARRAY(       \
+		id)[] = { fn1(id, LED_PATTERN_INIT, fn2) }; \
+	fn1(id, VALIDATE_CYCLE_COUNT)
+
+#define GEN_PATTERN_NODE_ARRAY_FOR_POLICY(inst)                               \
+	DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(inst, GEN_PATTERN_NODE_ARRAY, \
+						DT_FOREACH_CHILD_VARGS,       \
+						DT_FOREACH_CHILD)
+
+DT_INST_FOREACH_STATUS_OKAY(GEN_PATTERN_NODE_ARRAY_FOR_POLICY)
+
 struct node_prop_t {
 	enum led_pwr_state pwr_state;
 	enum power_state chipset_state;
@@ -119,21 +118,6 @@ struct node_prop_t {
 	uint8_t num_patterns;
 	bool state_active;
 };
-
-#define PATTERN_NODE_ARRAY(id) DT_CAT(PATTERN_ARRAY_, id)
-#define GEN_PATTERN_NODE_ARRAY(id, fn1, fn2)                \
-	struct led_pattern_node_t PATTERN_NODE_ARRAY(       \
-		id)[] = { fn1(id, LED_PATTERN_INIT, fn2) }; \
-	fn1(id, VALIDATE_CYCLE_COUNT)
-DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, GEN_PATTERN_NODE_ARRAY,
-					DT_FOREACH_CHILD_VARGS,
-					DT_FOREACH_CHILD)
-
-#if NUM_POLICIES == 2
-DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(1, GEN_PATTERN_NODE_ARRAY,
-					DT_FOREACH_CHILD_VARGS,
-					DT_FOREACH_CHILD)
-#endif
 
 /*
  * Initialize node_array struct with prop listed in dts.
@@ -166,14 +150,12 @@ DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(1, GEN_PATTERN_NODE_ARRAY,
 		.state_active = false,                                        \
 	},
 
-static struct node_prop_t node_array[] = {
-	DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, SET_LED_VALUES,
+#define GEN_POLICY_NODE_ARRAY(inst)                                   \
+	DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(inst, SET_LED_VALUES, \
 						DT_FOREACH_CHILD)
-#if NUM_POLICIES == 2
-		DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(1, SET_LED_VALUES,
-							DT_FOREACH_CHILD)
-#endif
-};
+
+static struct node_prop_t node_array[] = { DT_INST_FOREACH_STATUS_OKAY(
+	GEN_POLICY_NODE_ARRAY) };
 
 test_export_static enum power_state get_chipset_state(void)
 {
