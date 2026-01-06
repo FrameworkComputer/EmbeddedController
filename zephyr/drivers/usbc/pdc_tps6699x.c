@@ -376,9 +376,12 @@ static void task_dbfg(struct pdc_data_t *data);
 static void task_aneg(struct pdc_data_t *data);
 static void task_disc(struct pdc_data_t *data);
 static void task_sbud(struct pdc_data_t *data);
+static void task_swdf(struct pdc_data_t *data);
+static void task_swuf(struct pdc_data_t *data);
 static void task_ucsi(struct pdc_data_t *data,
 		      enum ucsi_command_t ucsi_command);
 static void task_raw_ucsi(struct pdc_data_t *data);
+
 static int pdc_autonegotiate_sink_reset(struct pdc_data_t *data);
 static void tps_check_and_notify_irq(void);
 
@@ -1186,13 +1189,12 @@ static void cmd_set_drs(struct pdc_data_t *data)
 		goto error_recovery;
 	}
 
-	/* Command has completed */
-	data->cci_event.command_completed = 1;
-	/* Inform the system of the event */
-	call_cci_event_cb(data);
+	/* Start DR Swap task. */
+	if (data->uor.swap_to_dfp)
+		task_swdf(data);
+	else
+		task_swuf(data);
 
-	/* Transition to idle state */
-	set_state(data, ST_IDLE);
 	return;
 
 error_recovery:
@@ -2100,6 +2102,36 @@ static void task_disc(struct pdc_data_t *data)
 	/* Disconnect for 3 seconds then reconnect, adjustable. */
 	cmd_data.data[0] = 3;
 	rv = write_task_cmd(cfg, COMMAND_TASK_DISC, &cmd_data);
+	if (rv) {
+		set_state(data, ST_ERROR_RECOVERY);
+		return;
+	}
+
+	set_state(data, ST_TASK_WAIT);
+	return;
+}
+
+static void task_swdf(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	int rv;
+
+	rv = write_task_cmd(cfg, COMMAND_TASK_SWDF, NULL);
+	if (rv) {
+		set_state(data, ST_ERROR_RECOVERY);
+		return;
+	}
+
+	set_state(data, ST_TASK_WAIT);
+	return;
+}
+
+static void task_swuf(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	int rv;
+
+	rv = write_task_cmd(cfg, COMMAND_TASK_SWUF, NULL);
 	if (rv) {
 		set_state(data, ST_ERROR_RECOVERY);
 		return;
