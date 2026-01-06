@@ -137,22 +137,17 @@ def log_state(
     return True
 
 
-def iterate_power_states(edt, project_name):
+def iterate_power_states(edt, project_name, policies):
     """Iterate all combinations of states and test the led policy coverage.
 
     Args:
         edt: EDT object representation of a devicetree
         project_name: Name of the board that is being built
+        policies: The specific led-policy node instance to check
 
     Returns:
         num_errors: Number of missing or overcoverage policies detected.
     """
-    led_policy_nodes = edt.compat2okay["cros-ec,led-policy"]
-
-    if len(led_policy_nodes) != 1:
-        return 0
-    policies = led_policy_nodes[0]
-
     charge_state_list = [None]
 
     charge_port_list = [None]
@@ -319,7 +314,11 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
     if util.is_test(args.edt_pickle):
         return 0
 
-    if iterate_power_states(edt, project_dir.name):
+    num_errors = 0
+    for policy in edt.compat2okay["cros-ec,led-policy"]:
+        num_errors += iterate_power_states(edt, project_dir.name, policy)
+
+    if num_errors:
         return 1
 
     return 0
