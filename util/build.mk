@@ -31,13 +31,9 @@ uartupdatetool-objs=uut/main.o uut/cmd.o uut/opr.o uut/l_com_port.o \
 	uut/lib_crc.o
 $(out)/util/uartupdatetool: HOST_CFLAGS+=-Iutil/
 
-# stm32mon doesn't have any library dependencies (e.g., ftdi, usb) that are
-# linked into host utilities by default.
-$(out)/util/stm32mon: HOST_LDFLAGS=
-
 # b/381916046: statically linked version of stm32mon.
 stm32mon_static-objs = stm32mon.o
-$(out)/util/stm32mon_static: HOST_LDFLAGS=-static
+$(out)/util/stm32mon_static: HOST_LDFLAGS+=-static
 
 # If the util/ directory in the private repo is symlinked into util/private,
 # we want to build host-side tools from it, too.
@@ -50,6 +46,7 @@ comm-objs=$(util-lock-objs:%=lock/%) comm-host.o comm-dev.o
 comm-objs+=comm-lpc.o comm-i2c.o misc_util.o comm-usb.o
 
 iteflash-objs = iteflash.o usb_if.o
+$(out)/util/iteflash: HOST_LDFLAGS+=$(LIBFTDIUSB_BUILD_LDLIBS)
 itecomdbgr-objs = itecomdbgr.o
 rtkupdate-objs = rtkupdate.o
 ectool-objs=ectool.o ectool_keyscan.o ec_flash.o $(comm-objs)
@@ -59,11 +56,16 @@ ectool-objs+=ectool_pdc_pcap.o
 ectool-objs+=../common/crc.o
 ectool_servo-objs=$(ectool-objs) comm-servo-spi.o
 lbplay-objs=lbplay.o $(comm-objs)
+$(out)/util/lbplay: HOST_LDFLAGS+=$(LIBFTDIUSB_BUILD_LDLIBS)
 
 util/ectool.cc: $(out)/ec_version.h
+$(out)/util/ectool: HOST_LDFLAGS+=$(LIBEC_HOST_LDLIBS)
 
 ec_parse_panicinfo-objs=ec_parse_panicinfo.o
+$(out)/util/ec_parse_panicinfo: HOST_LDFLAGS+=$(LIBEC_HOST_LDLIBS)
+
 ec_coredump-objs=ec_coredump.o $(comm-objs)
+$(out)/util/ec_coredump: HOST_LDFLAGS+=$(LIBEC_HOST_LDLIBS)
 
 # USB type-C Vendor Information File generation
 ifeq ($(CONFIG_USB_POWER_DELIVERY),y)

@@ -278,11 +278,9 @@ ifeq ($(CROSS_COMPILE_CC_NAME),gcc)
 MEMSIZE_FLAGS+=-Wl,--print-memory-usage
 endif
 BUILD_LDFLAGS=$(LIBFTDIUSB_BUILD_LDLIBS)
-HOST_LDFLAGS+=$(LIBFTDIUSB_HOST_LDLIBS)
 ifneq (${HOST_SYSROOT},)
   HOST_LDFLAGS+=--sysroot=${HOST_SYSROOT}
 endif
-HOST_LDFLAGS+=$(LIBEC_HOST_LDLIBS)
 HOST_TEST_LDFLAGS=-Wl,-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
 		  -no-pie -flto\
 		  $(if $(TEST_COVERAGE), --coverage,) \
