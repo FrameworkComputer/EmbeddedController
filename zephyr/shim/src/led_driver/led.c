@@ -41,6 +41,14 @@ DT_INST_FOREACH_STATUS_OKAY(DECLARE_DRIVER)
 
 DT_INST_FOREACH_STATUS_OKAY(DECLARE_PINS_NODE_FOR_POLICY)
 
+#define ASSERT_LEDS_HW_MATCH(id)                                               \
+	BUILD_ASSERT(                                                          \
+		DT_SAME_NODE(DT_PHANDLE(DT_PARENT(DT_PARENT(DT_PARENT(id))),   \
+					led_pins),                             \
+			     DT_PARENT(DT_PARENT(DT_PHANDLE(id, led_color)))), \
+		"The led-color node " #id                                      \
+		" does not match the driver linked in 'led-pins'.");
+
 #define ASSERT_LEDS_ID_MATCH(id)                                              \
 	BUILD_ASSERT(                                                         \
 		DT_STRING_TOKEN(DT_PARENT(id), led_id) ==                     \
@@ -57,10 +65,11 @@ DT_INST_FOREACH_STATUS_OKAY(DECLARE_PINS_NODE_FOR_POLICY)
 	},
 
 #define PATTERN_COLOR_ARRAY(id) DT_CAT(PATTERN_COLOR_, id)
+
 #define GEN_PATTERN_COLOR_ARRAY(id, fn)                        \
 	const struct pattern_color_node_t PATTERN_COLOR_ARRAY( \
 		id)[] = { fn(id, SET_PATTERN_COLOR_ARRAY) };   \
-	fn(id, ASSERT_LEDS_ID_MATCH)
+	fn(id, ASSERT_LEDS_HW_MATCH) fn(id, ASSERT_LEDS_ID_MATCH)
 
 #define GEN_PATTERN_COLOR_ARRAY_FOR_POLICY(inst)                              \
 	DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(inst, DT_FOREACH_CHILD_VARGS, \
