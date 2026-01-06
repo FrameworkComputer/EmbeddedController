@@ -10,3 +10,15 @@
 #include "ish.dtsi"
 #include "motionsense.dtsi"
 
+&i2c_ec_i2c_sensor_r {
+	i2c-port = <&i2c2>;
+};
+
+&i2c2 {
+	status = "okay";
+	dsp_client: dsp-client@29 {
+		compatible = "cros,dsp-client";
+		reg = <0x29>;
+		int-gpios = <&gpio0 1 GPIO_ACTIVE_LOW>;
+	};
+};

@@ -66,6 +66,14 @@
 	pinctrl-0 = <&i2c5_clk_gpe1_default
 		     &i2c5_data_gpe2_default>;
 	pinctrl-names = "default";
+
 	label = "I2C_PORT_SENSOR";
-	clock-frequency = <I2C_BITRATE_STANDARD>;
+	clock-frequency = <I2C_BITRATE_FAST>;
+	dsp_service: dsp-service@29 {
+		compatible = "cros,dsp-service";
+		reg = <0x29>;
+		int-gpios = <&gpioh 6 (GPIO_ACTIVE_LOW |
+				GPIO_VOLTAGE_1P8 |
+				GPIO_OPEN_DRAIN)>;
+	};
 };

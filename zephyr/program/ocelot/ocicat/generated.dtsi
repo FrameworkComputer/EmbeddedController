@@ -154,9 +154,6 @@
 		gpio_ec_soc_rtcrst: ec_soc_rtcrst {
 			gpios = <&gpioh 5 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
 		};
-		gpio_ec_ish_int_odl: ec_ish_int_odl {
-			gpios = <&gpioh 6 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
-		};
 
             /*********** Port I *****************/
 		gpio_ec_forcepr_odl: ec_forcepr_odl {

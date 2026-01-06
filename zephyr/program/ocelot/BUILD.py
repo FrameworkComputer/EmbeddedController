@@ -202,6 +202,9 @@ register_ish_project(
 ocicat = register_it8xxx2_project(
     project_name="ocicat",
     chip="it8xxx2/it82002bw",
+    extra_kconfig_base_files=[
+        here / "dsp_comms.conf",
+    ],
 )
 
 register_ish_project(
