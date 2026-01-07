@@ -1,0 +1,26 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config CSE_EARLY_RECOVERY_GPIO_DRIVER
+	bool "Use a GPIO to signal when booting into Recovery Mode"
+	default y
+	depends on DT_HAS_CROS_EC_CSE_EARLY_REC_ENABLED && AP_PWRSEQ_DRIVER
+	help
+	  Set a GPIO to indicate whether the system is booting into Recovery
+	  Mode. This signal is connected to Intel SoCs, where it is read by the
+	  CSE firmware during early bootup.
+
+	  Requires use of the newer Intel AP power sequencing driver
+	  (CONFIG_AP_PWRSEQ_DRIVER) to configure the power state hooks.
+
+if CSE_EARLY_RECOVERY_GPIO_DRIVER
+
+config CSE_EARLY_RECOVERY_GPIO_DRIVER_INIT_PRIORITY
+	int "CSE early recovery driver init priority"
+	default 50
+	help
+	  CSE early recovery driver init priority. This should initialize after
+	  (higher value than) CONFIG_GPIO_INIT_PRIORITY.
+
+endif # CSE_EARLY_RECOVERY_GPIO_DRIVER

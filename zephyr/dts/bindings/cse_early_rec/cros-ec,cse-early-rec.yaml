@@ -1,0 +1,19 @@
+# Copyright 2025 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+  Driver code to set the CSE early recovery GPIO. This signal is read by AP FW
+  on Intel systems during early boot phases to anticipate recovery mode entry.
+
+compatible: "cros-ec,cse-early-rec"
+
+include: base.yaml
+
+properties:
+  cse-early-rec-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      GPIO pin connected to the EC_SOC_REC_SWITCH_ODL (aka CSE_EARLY_REC_SW)
+      signal on the platform.
