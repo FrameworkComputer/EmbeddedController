@@ -33,9 +33,6 @@
 			gpios = <MCHP_GPIO_DECODE_057 GPIO_INPUT>;
 			no-auto-init;
 		};
-		cse_early_rec_sw: ec-cse-early-sw {
-			gpios = <MCHP_GPIO_DECODE_064 GPIO_ODR_LOW>;
-		};
 		/* PP3300_A rail is used by temperature sensors as power good indicator */
 		gpio_temp_sensor_power_good: en_pp3300_a: ec-pg3-r {
 			gpios = <MCHP_GPIO_DECODE_226 GPIO_OUTPUT_LOW>;

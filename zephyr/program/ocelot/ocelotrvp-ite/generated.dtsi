@@ -76,10 +76,6 @@
 		gpio_c_ioex_kbd_intr_r: c_ioex_kbd_intr_r {
 			gpios = <&gpioi 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
-		gpio_c_mecc_cse_early_sw_r: c_mecc_cse_early_sw_r {
-			// signal name was manually overriden from "x00085"
-			gpios = <&gpioj 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
-		};
 		gpio_ec_fan_pwr_disable_n_r: ec_fan_pwr_disable_n_r {
 			gpios = <&gpioc 4 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};

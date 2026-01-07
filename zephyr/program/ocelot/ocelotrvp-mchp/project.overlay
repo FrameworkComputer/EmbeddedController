@@ -25,6 +25,13 @@
 
 #include <ite/it8801-common-cfg.dtsi>
 
+/ {
+	cse_early_recovery: cse-early-recovery {
+		compatible = "cros-ec,cse-early-rec";
+		cse-early-rec-gpios = <MCHP_GPIO_DECODE_064 (GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH)>;
+	};
+};
+
 /* ocelot_mchp overrides follow... */
 
 &pdc_rtk_c0 {

@@ -38,7 +38,6 @@ gpio_temp_sensor_power_good: &gpio_en_s5_rails {};
 
 /* Power sequencing */
 gpio_ec_pch_wake_odl: &gpio_ec_soc_wake_ls_odl {};
-cse_early_rec_sw: &gpio_ec_soc_rec_switch_odl{};
 
 /* Map tachometers to common names */
 tach_fan0: &tach1 {};
@@ -75,6 +74,11 @@ tach_fan0: &tach1 {};
 
 	chosen {
 		cros-ec,keyboard = &kbd;
+	};
+
+	cse_early_recovery: cse-early-recovery {
+		compatible = "cros-ec,cse-early-rec";
+		cse-early-rec-gpios = <&gpiof 5 (GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_VOLTAGE_1P8)>;
 	};
 };
 

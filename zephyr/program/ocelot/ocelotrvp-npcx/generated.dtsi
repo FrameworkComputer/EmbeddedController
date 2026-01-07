@@ -91,9 +91,6 @@
 			gpios = <&gpioa 0 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
-		gpio_ec_soc_rec_switch_odl: ec_soc_rec_switch_odl {
-			gpios = <&gpiof 5 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW | GPIO_VOLTAGE_1P8)>;
-		};
 		gpio_ec_soc_wake_ls_odl: ec_soc_wake_ls_odl {
 			gpios = <&gpio3 2 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 		};
