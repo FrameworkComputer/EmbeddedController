@@ -1,5 +1,6 @@
 board:
   name: mec172x
+  full_name: MEC172x EC
   vendor: google
   socs:
   - name: mec172x_nsz

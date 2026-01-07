@@ -1,5 +1,6 @@
 board:
   name: npcx7
+  full_name: NPCX7 EC
   vendor: google
   socs:
   - name: npcx7m7fc

@@ -1,5 +1,6 @@
 board:
   name: realtek
+  full_name: Realtek EC
   vendor: google
   socs:
     - name: rts5912
