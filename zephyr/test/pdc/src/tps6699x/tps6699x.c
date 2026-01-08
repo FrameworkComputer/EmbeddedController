@@ -548,3 +548,49 @@ ZTEST_USER(tps6699x, test_get_current_cam)
 	memcpy(&current_cam, &ucsi_data.message_in, sizeof(uint32_t));
 	zassert_equal(current_cam, 0x1);
 }
+
+/* Cover the tps6699x driver mapping SET_UOR from the PPM to CMD_SET_DRS */
+ZTEST_USER(tps6699x, test_ppm_set_uor)
+{
+	union uor_t in, out;
+	in.raw_value = 0;
+	out.raw_value = 0;
+	in.connector_number = 1;
+	in.accept_dr_swap = 1;
+
+	struct ucsi_memory_region ucsi_data;
+	struct ucsi_control_t *control = &ucsi_data.control;
+
+	access = ACCESS_OK;
+	RESET_FAKE(tps_rw_port_control);
+	tps_rw_port_control_fake.custom_fake = custom_fake_tps_rw_port_control;
+
+	/* Send SET_UOR to UFP through pdc_execute_ucsi_cmd() */
+	in.swap_to_ufp = 1;
+	in.swap_to_dfp = 0;
+	memcpy(&control->command_specific, &in.raw_value, sizeof(in.raw_value));
+	zassert_ok(pdc_execute_ucsi_cmd(dev, UCSI_SET_UOR, sizeof(uint32_t),
+					control->command_specific,
+					ucsi_data.message_in, NULL));
+	k_sleep(K_MSEC(SLEEP_MS));
+
+	/* Verify UOR has swap_to_ufp set. */
+	zassert_ok(emul_pdc_get_uor(emul, &out));
+	zassert_equal(out.swap_to_ufp, 1);
+	zassert_equal(out.swap_to_dfp, 0);
+	zassert_equal(out.accept_dr_swap, 1);
+
+	in.swap_to_ufp = 0;
+	in.swap_to_dfp = 1;
+	memcpy(&control->command_specific, &in.raw_value, sizeof(in.raw_value));
+	zassert_ok(pdc_execute_ucsi_cmd(dev, UCSI_SET_UOR, sizeof(uint32_t),
+					control->command_specific,
+					ucsi_data.message_in, NULL));
+	k_sleep(K_MSEC(SLEEP_MS));
+
+	/* Verify UOR has swap_to_dfp set. */
+	zassert_ok(emul_pdc_get_uor(emul, &out));
+	zassert_equal(out.swap_to_ufp, 0);
+	zassert_equal(out.swap_to_dfp, 1);
+	zassert_equal(out.accept_dr_swap, 1);
+}
