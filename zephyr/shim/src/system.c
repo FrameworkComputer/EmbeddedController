@@ -204,6 +204,13 @@ const char *system_get_chip_revision(void)
 	return cros_system_chip_revision(sys_dev);
 }
 
+int system_get_hibernate_wake_source(enum hibernate_wake_source *source)
+{
+	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
+
+	return cros_system_get_hibernate_wake_source(sys_dev, source);
+}
+
 test_mockable void system_reset(int flags)
 {
 	int err;

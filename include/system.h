@@ -20,6 +20,9 @@ extern "C" {
 #endif
 
 #ifdef CONFIG_ZEPHYR
+
+#include <drivers/cros_system.h>
+
 #ifdef CONFIG_CPU_CORTEX_M
 /*
  * For cortex-m we cannot use irq_lock() for disabling all the interrupts
@@ -515,6 +518,18 @@ enum system_bbram_idx {
  */
 int system_get_bbram(enum system_bbram_idx idx, uint8_t *value);
 int system_set_bbram(enum system_bbram_idx idx, uint8_t value);
+
+#ifdef CONFIG_ZEPHYR
+/**
+ * Get hibernate wake source.
+ *
+ * @param source Pointer to the variable where the hibernate wake source will be
+ * stored.
+ * @return 0 if successful.
+ * @return Negative errno code if failure.
+ */
+int system_get_hibernate_wake_source(enum hibernate_wake_source *source);
+#endif
 
 /**
  * Put the EC in hibernate (lowest EC power state).
