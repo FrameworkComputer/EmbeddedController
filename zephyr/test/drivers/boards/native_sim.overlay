@@ -406,6 +406,7 @@
 	batteries {
 		default_battery: lgc_ac17a8m {
 			compatible = "lgc,ac17a8m", "battery-smart";
+			has_manuf_info;
 		};
 		ap16l5j {
 			compatible = "panasonic,ap16l5j", "battery-smart";

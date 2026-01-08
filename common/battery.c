@@ -134,6 +134,13 @@ static void print_battery_strings(void)
 	if (check_print_error(battery_manufacturer_name(text, sizeof(text))))
 		ccprintf("%s\n", text);
 
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_BATTERY_MANUF_INFO)) {
+		print_item_name("ManufInfo:");
+		if (check_print_error(
+			    battery_manufacture_info(text, sizeof(text))))
+			ccprintf("%s\n", text);
+	}
+
 	print_item_name("Device:");
 	if (check_print_error(battery_device_name(text, sizeof(text))))
 		ccprintf("%s\n", text);
@@ -744,6 +751,13 @@ test_mockable int battery_manufacturer_name(char *dest, int size)
 {
 	return get_battery_manufacturer_name(dest, size);
 }
+
+#ifdef CONFIG_PLATFORM_EC_BATTERY_MANUF_INFO
+test_mockable int battery_manufacture_info(char *dest, int size)
+{
+	return get_battery_manufacture_info(dest, size);
+}
+#endif /* CONFIG_PLATFORM_EC_BATTERY_MANUF_INFO */
 
 __overridable enum battery_disconnect_state battery_get_disconnect_state(void)
 {
