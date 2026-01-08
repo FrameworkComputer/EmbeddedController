@@ -22,9 +22,9 @@ static bool key_pad = FW_KB_NUMERIC_PAD_ABSENT;
 int8_t board_vivaldi_keybd_idx(void)
 {
 	if (key_pad == FW_KB_NUMERIC_PAD_ABSENT) {
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_0));
+		return VIVALDI_CFG_IDX(kbd_config_0);
 	} else {
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_1));
+		return VIVALDI_CFG_IDX(kbd_config_1);
 	}
 }
 

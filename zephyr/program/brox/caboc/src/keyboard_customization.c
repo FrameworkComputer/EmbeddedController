@@ -68,10 +68,10 @@ int8_t board_vivaldi_keybd_idx(void)
 	switch (val) {
 	case FW_KB_BL_PRESENT:
 		LOG_INF("KB_BL present!!!");
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_1));
+		return VIVALDI_CFG_IDX(kbd_config_1);
 	case FW_KB_BL_ABSENT:
 	default:
 		LOG_INF("KB_BL absent!!!");
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_0));
+		return VIVALDI_CFG_IDX(kbd_config_0);
 	}
 }

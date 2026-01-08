@@ -22,6 +22,7 @@
 
 #include <ap_power/ap_power.h>
 #include <ap_power/ap_power_interface.h>
+#include <drivers/vivaldi_kbd.h>
 
 LOG_MODULE_REGISTER(board_init, LOG_LEVEL_ERR);
 
@@ -258,15 +259,15 @@ int8_t board_vivaldi_keybd_idx(void)
 
 	switch (kb_status) {
 	case 0:
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_0));
+		return VIVALDI_CFG_IDX(kbd_config_0);
 	case 1:
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_1));
+		return VIVALDI_CFG_IDX(kbd_config_1);
 	case 2:
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_2));
+		return VIVALDI_CFG_IDX(kbd_config_2);
 	case 3:
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_3));
+		return VIVALDI_CFG_IDX(kbd_config_3);
 	default:
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_0));
+		return VIVALDI_CFG_IDX(kbd_config_0);
 	}
 }
 

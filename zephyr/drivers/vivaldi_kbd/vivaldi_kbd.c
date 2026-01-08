@@ -108,8 +108,7 @@ KEYBOARD_ROW_REFRESH/KEYBOARD_COL_REFRESH");
 	DT_FOREACH_PROP_ELEM(node_id, vivaldi_codes, REFRESH_ROW_VALIDATE)
 DT_INST_FOREACH_CHILD(0, KEYBD_CONFIG_VALIDATE)
 
-#define NODE_SUM_ONE(fn) 1 +
-#define VIVALDI_CONFIG_COUNT (DT_INST_FOREACH_CHILD(0, NODE_SUM_ONE) 0)
+#define VIVALDI_CONFIG_COUNT DT_INST_CHILD_NUM(0)
 
 #define KEYBD_CONFIG_INIT(node_id)                                       \
 	[DT_NODE_CHILD_IDX(node_id)] = {                                 \

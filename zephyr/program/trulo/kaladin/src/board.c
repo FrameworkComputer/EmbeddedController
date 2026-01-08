@@ -16,15 +16,17 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
 
+#include <drivers/vivaldi_kbd.h>
+
 LOG_MODULE_DECLARE(board_init, LOG_LEVEL_INF);
 
 static bool has_backlight = FW_KB_BL_NOT_PRESENT;
 int8_t board_vivaldi_keybd_idx(void)
 {
 	if (has_backlight == FW_KB_BL_NOT_PRESENT) {
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_0));
+		return VIVALDI_CFG_IDX(kbd_config_0);
 	} else {
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_1));
+		return VIVALDI_CFG_IDX(kbd_config_1);
 	}
 }
 

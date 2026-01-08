@@ -15,6 +15,7 @@
 #include <zephyr/logging/log.h>
 
 #include <drivers/scancode_set2.h>
+#include <drivers/vivaldi_kbd.h>
 
 LOG_MODULE_REGISTER(trulo_keyboard, LOG_LEVEL_INF);
 
@@ -60,11 +61,11 @@ int8_t board_vivaldi_keybd_idx(void)
 
 	switch (kb_status) {
 	case FW_KB_NUMERIC_PAD_ABSENT:
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_0));
+		return VIVALDI_CFG_IDX(kbd_config_0);
 	case FW_KB_NUMERIC_PAD_PRESENT:
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_1));
+		return VIVALDI_CFG_IDX(kbd_config_1);
 	default:
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_0));
+		return VIVALDI_CFG_IDX(kbd_config_0);
 	}
 }
 

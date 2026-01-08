@@ -16,15 +16,17 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
 
+#include <drivers/vivaldi_kbd.h>
+
 LOG_MODULE_DECLARE(board_init, LOG_LEVEL_INF);
 
 int8_t board_vivaldi_keybd_idx(void)
 {
 	if (cros_cbi_ufsc_check_match(CBI_UFSC_VALUE_ID(
 		    DT_NODELABEL(ufsc_kb_backlight_absent)))) {
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_0));
+		return VIVALDI_CFG_IDX(kbd_config_0);
 	} else {
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_1));
+		return VIVALDI_CFG_IDX(kbd_config_1);
 	}
 }
 

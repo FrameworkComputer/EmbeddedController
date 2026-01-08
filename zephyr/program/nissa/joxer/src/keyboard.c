@@ -31,9 +31,9 @@ int8_t board_vivaldi_keybd_idx(void)
 
 	if (val == FW_KB_FEATURE_BL_ABSENT_DEFAULT ||
 	    val == FW_KB_FEATURE_BL_ABSENT_US2) {
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_1));
+		return VIVALDI_CFG_IDX(kbd_config_1);
 	} else {
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_0));
+		return VIVALDI_CFG_IDX(kbd_config_0);
 	}
 }
 
