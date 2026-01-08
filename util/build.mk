@@ -46,7 +46,7 @@ comm-objs=$(util-lock-objs:%=lock/%) comm-host.o comm-dev.o
 comm-objs+=comm-lpc.o comm-i2c.o misc_util.o comm-usb.o
 
 iteflash-objs = iteflash.o usb_if.o
-$(out)/util/iteflash: HOST_LDFLAGS+=$(LIBFTDIUSB_BUILD_LDLIBS)
+$(out)/util/iteflash: HOST_LDFLAGS+=$(LIBFTDIUSB_HOST_LDLIBS)
 itecomdbgr-objs = itecomdbgr.o
 rtkupdate-objs = rtkupdate.o
 ectool-objs=ectool.o ectool_keyscan.o ec_flash.o $(comm-objs)
@@ -56,7 +56,7 @@ ectool-objs+=ectool_pdc_pcap.o
 ectool-objs+=../common/crc.o
 ectool_servo-objs=$(ectool-objs) comm-servo-spi.o
 lbplay-objs=lbplay.o $(comm-objs)
-$(out)/util/lbplay: HOST_LDFLAGS+=$(LIBFTDIUSB_BUILD_LDLIBS)
+$(out)/util/lbplay: HOST_LDFLAGS+=$(LIBFTDIUSB_HOST_LDLIBS)
 
 util/ectool.cc: $(out)/ec_version.h
 $(out)/util/ectool: HOST_LDFLAGS+=$(LIBEC_HOST_LDLIBS)
