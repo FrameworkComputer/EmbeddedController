@@ -188,6 +188,10 @@
 
 #define CONFIG_KEYBOARD_REFRESH_ROW3
 
+/* WATCHDOG_PERIOD_MS*/
+#undef CONFIG_WATCHDOG_PERIOD_MS
+#define CONFIG_WATCHDOG_PERIOD_MS 2600
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h" /* needed by registers.h */
