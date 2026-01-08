@@ -65,9 +65,8 @@
 #define CONFIG_USBC_NX20P348X_RCP_5VSRC_MASK_ENABLE
 #define CONFIG_USBC_NX20P348X_VBUS_DISCHARGE_BY_SRC_EN
 
-/* TODO: b/177608416 - measure and check these values on brya */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY 30000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 60000 /* us */
 #define PD_VCONN_SWAP_DELAY 5000 /* us */
 
 /* PD */
