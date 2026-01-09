@@ -64,7 +64,7 @@ int get_rvp_id_config(enum rvp_id_type id_type)
 
 	gpio_port = rvp_config->board_gpios_config[0].port;
 	if (!device_is_ready(gpio_port)) {
-		LOG_ERR("gpio controller port is not initialized, cannot access it");
+		LOG_ERR("RVP_ID: gpio controller port is not initialized, cannot access it");
 		return -ENODEV;
 	}
 
@@ -81,7 +81,7 @@ int get_rvp_id_config(enum rvp_id_type id_type)
 			board_id |= pin << i;
 		}
 
-		LOG_DBG("BOARD_ID: 0x%x", board_id);
+		LOG_DBG("RVP_ID: BOARD_ID: 0x%x", board_id);
 		return board_id;
 	}
 
@@ -99,7 +99,7 @@ int get_rvp_id_config(enum rvp_id_type id_type)
 			bom_id |= pin << i;
 		}
 
-		LOG_DBG("BOM_ID: 0x%x", bom_id);
+		LOG_DBG("RVP_ID: BOM_ID: 0x%x", bom_id);
 		return bom_id;
 	}
 
@@ -117,7 +117,7 @@ int get_rvp_id_config(enum rvp_id_type id_type)
 		}
 		fab_id += 1;
 
-		LOG_DBG("FAB_ID: 0x%x", fab_id);
+		LOG_DBG("RVP_ID: FAB_ID: 0x%x", fab_id);
 		return fab_id;
 	}
 
@@ -128,33 +128,38 @@ void rvp_id_handler(void)
 {
 	int board_id;
 	int fab_id;
+	int ret;
 
 	board_id = get_rvp_id_config(BOARD_ID);
 	if (board_id < 0) {
-		LOG_DBG("RVP_ID: get_rvp_id_config.BOARD_ID failed");
+		LOG_ERR("RVP_ID: get_rvp_id_config.BOARD_ID failed");
 		return;
 	}
 
 	fab_id = get_rvp_id_config(FAB_ID);
 	if (fab_id < 0) {
-		LOG_DBG("RVP_ID: get_rvp_id_config.FAB_ID failed");
+		LOG_ERR("RVP_ID: get_rvp_id_config.FAB_ID failed");
 		return;
 	}
 
 	rvp_model_id = (fab_id << FAB_ID_SHIFT) | board_id;
 
-	LOG_DBG("RVP_ID: %d from driver", rvp_model_id);
+	LOG_DBG("RVP_ID: from GPIOs: %d", rvp_model_id);
 
 	uint32_t id_from_cbi;
 	if ((cbi_get_model_id(&id_from_cbi) == EC_SUCCESS) &&
 	    id_from_cbi == rvp_model_id) {
-		// CBI MODEL_ID is up-to-date
+		/* CBI MODEL_ID is up-to-date */
 		LOG_DBG("RVP_ID: %d matches CBI", rvp_model_id);
 		return;
 	}
 
-	LOG_INF("RVP_ID: %d store in CBI ", rvp_model_id);
-	cbi_set_model_id(rvp_model_id);
+	LOG_INF("RVP_ID: store in CBI: %d", rvp_model_id);
+
+	ret = cbi_set_model_id(rvp_model_id);
+	if (ret) {
+		LOG_ERR("RVP_ID: cbi_set_model_id() failed: %d", ret);
+	}
 }
 
 /*
@@ -174,38 +179,64 @@ __override int board_get_version(void)
 		rvp_model_id = id;
 	}
 
-	// return only board id from model id
+	/* return only board id from model id */
 	return rvp_model_id & BOARD_ID_MASK;
 }
 
+#define SAFE_DEV_NAME(dev) ((dev) && ((dev)->name) ? (dev)->name : "unknown")
+
 #ifdef CONFIG_AP_PWRSEQ_DRIVER
-static void pca95xx_deferred_init_cb(const struct device *dev,
-				     const enum ap_pwrseq_state entry,
-				     const enum ap_pwrseq_state exit)
+static void ap_power_state_callback(const struct device *dev,
+				    const enum ap_pwrseq_state entry,
+				    const enum ap_pwrseq_state exit)
 {
 	const struct device *gpio_port;
+	int ret;
 
 	if (entry > AP_POWER_STATE_S5) {
-		LOG_DBG("S5 callback triggered, going to higher state");
+		LOG_DBG("RVP_ID: S5 callback triggered. Init GPIO drivers.");
+
+		/* Sleep a short amount of time to allow the external I/O
+		 * expander to power up and be ready to accept commands. */
+		k_sleep(K_MSEC(25));
+
 		for (int i = 0; i < BOM_GPIOS_COUNT; i++) {
 			gpio_port = rvp_config->bom_gpios_config[i].port;
 			if (!device_is_ready(gpio_port)) {
-				LOG_DBG("Initializing bom_gpios controller port");
-				device_init(gpio_port);
+				LOG_DBG("RVP_ID: Initializing %s",
+					SAFE_DEV_NAME(gpio_port));
+				ret = device_init(gpio_port);
+				if (ret) {
+					LOG_ERR("RVP_ID: Cannot init driver '%s': %d (BOM GPIO %d)",
+						SAFE_DEV_NAME(gpio_port), ret,
+						i);
+				}
 			}
 		}
 		for (int i = 0; i < FAB_GPIOS_COUNT; i++) {
 			gpio_port = rvp_config->fab_gpios_config[i].port;
 			if (!device_is_ready(gpio_port)) {
-				LOG_DBG("Initializing fab_gpios controller port");
-				device_init(gpio_port);
+				LOG_DBG("RVP_ID: Initializing %s",
+					SAFE_DEV_NAME(gpio_port));
+				ret = device_init(gpio_port);
+				if (ret) {
+					LOG_ERR("RVP_ID: Cannot init driver '%s': %d (FAB GPIO %d)",
+						SAFE_DEV_NAME(gpio_port), ret,
+						i);
+				}
 			}
 		}
 		for (int i = 0; i < BOARD_GPIOS_COUNT; i++) {
 			gpio_port = rvp_config->board_gpios_config[i].port;
 			if (!device_is_ready(gpio_port)) {
-				LOG_DBG("Initializing board_gpios controller port");
-				device_init(gpio_port);
+				LOG_DBG("RVP_ID: Initializing %s",
+					SAFE_DEV_NAME(gpio_port));
+				ret = device_init(gpio_port);
+				if (ret) {
+					LOG_ERR("RVP_ID: Cannot init driver '%s': %d (BOARD GPIO %d)",
+						SAFE_DEV_NAME(gpio_port), ret,
+						i);
+				}
 			}
 		}
 		if (rvp_config->handler != NULL)
@@ -221,8 +252,8 @@ static int rvp_board_id_init(const struct device *dev)
 		static struct ap_pwrseq_state_callback ap_pwrseq_cb;
 		const struct device *ap_pwrseq_dev = ap_pwrseq_get_instance();
 
-		LOG_INF("setup_pca95xx_init_callback");
-		ap_pwrseq_cb.cb = pca95xx_deferred_init_cb;
+		LOG_INF("RVP_ID: register ap_power_state_callback");
+		ap_pwrseq_cb.cb = ap_power_state_callback;
 		ap_pwrseq_cb.states_bit_mask = BIT(AP_POWER_STATE_S5);
 		ap_pwrseq_register_state_exit_callback(ap_pwrseq_dev,
 						       &ap_pwrseq_cb);
@@ -262,6 +293,26 @@ static const struct rvp_board_id_config rvp_board_id_cfg = {
 			FOREACH_RVP_GPIOS_ELEM(0, board_gpios) },
 	.handler = DT_INST_STRING_TOKEN_OR(0, handler, NULL),
 };
+
+static int initialize_device(void)
+{
+	const struct device *dev = DEVICE_DT_GET(DT_DRV_INST(0));
+	int ret;
+
+	if (!(dev->flags & DEVICE_FLAG_INIT_DEFERRED)) {
+		/* Not deferred. Let the kernel initialize the device. */
+		return 0;
+	}
+
+	ret = device_init(dev);
+
+	if (ret) {
+		LOG_ERR("RVP_ID: Cannot start driver: %d", ret);
+	}
+	return ret;
+}
+
+SYS_INIT(initialize_device, POST_KERNEL, CONFIG_APPLICATION_INIT_PRIORITY);
 
 DEVICE_DT_INST_DEFINE(0, rvp_board_id_init, NULL, NULL, &rvp_board_id_cfg,
 		      POST_KERNEL, CONFIG_APPLICATION_INIT_PRIORITY, NULL);
