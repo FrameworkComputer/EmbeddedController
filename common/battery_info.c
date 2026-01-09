@@ -349,6 +349,11 @@ int update_static_battery_info(void)
 	rv |= battery_manufacturer_name(bs->manufacturer_ext,
 					sizeof(bs->manufacturer_ext));
 
+#ifdef CONFIG_PLATFORM_EC_BATTERY_MANUF_INFO
+	/* Battery Manufacture info string */
+	rv |= battery_manufacture_info(bs->manuf_info, sizeof(bs->manuf_info));
+#endif /* CONFIG_PLATFORM_EC_BATTERY_MANUF_INFO */
+
 	/* Battery Model string */
 	rv |= battery_device_name(bs->model_ext, sizeof(bs->model_ext));
 
