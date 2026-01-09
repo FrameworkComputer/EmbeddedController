@@ -90,6 +90,9 @@ static const struct protect_range spi_flash_protect_ranges[] = {
 	{ 0, 0, 1, { 0, 1, 1 }, 0, 0x40000 }, /* Lower 1/8 */
 	{ 0, 0, 1, { 1, 0, 0 }, 0, 0x80000 }, /* Lower 1/4 */
 	{ 0, 0, 1, { 1, 0, 1 }, 0, 0x100000 }, /* Lower 1/2 */
+	{ 0, IGN, IGN, { 1, 1, IGN }, 0, 0x200000 }, /* ALL */
+	/* CMP = 1 */
+	{ 1, 0, 0, { 1, 0, 0 }, 0, 0x180000 }, /* Lower 3/4 */
 };
 #endif
 
