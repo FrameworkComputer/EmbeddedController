@@ -101,3 +101,24 @@ ZTEST(led_driver_sequence, test_mid_pattern_instant)
 	hook_notify(HOOK_TICK);
 	zassert_true(is_white_on(), "Failed to skip mid-pattern 0ms step");
 }
+
+ZTEST(led_driver_sequence, test_no_matching_policy_found)
+{
+	/* Setup a known valid state (Blue). */
+	set_board_led_alt_policy(2);
+	led_control(EC_LED_ID_BATTERY_LED, LED_STATE_RESET);
+
+	/* Trigger tick to apply the Blue color */
+	hook_notify(HOOK_TICK);
+	zassert_true(is_blue_on(), "Setup failed: LED should be Blue");
+
+	/* Set Alt Policy Label to a non-existent value (99). */
+	set_board_led_alt_policy(99);
+
+	/* Trigger tick logic. */
+	hook_notify(HOOK_TICK);
+
+	/* Verify the LED state should be unchanged. */
+	zassert_true(is_blue_on(),
+		     "Driver should not update HW if no policy matches.");
+}

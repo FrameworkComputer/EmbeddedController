@@ -390,13 +390,11 @@ static int match_node(const struct policy_group *grp, int node_idx)
 	return node_idx;
 }
 
-static bool led_set_all_colors(void)
+static void led_update_policy_state(void)
 {
-	bool has_transitions = false;
-
 	/*
 	 * Find all the nodes that match the current state of the system and
-	 * set color for these nodes. Depending on the policy defined in
+	 * mark them as active. Depending on the policy defined in
 	 * led.dts, a node could depend on power-state, chipset-state, extra
 	 * flags like battery percentage etc.
 	 * We must find at least one node that indicates the LED Behavior for
@@ -409,22 +407,12 @@ static bool led_set_all_colors(void)
 		for (int j = 0; j < grp->num_nodes; j++) {
 			if (match_node(grp, j) != -1) {
 				found_node = true;
-
-				// TODO: has_transitions should support all
-				// non-step patterns
-				if (grp->nodes[j].led_patterns->transition ==
-				    LED_TRANSITION_LINEAR)
-					has_transitions = true;
-
-				update_node_patterns(grp, &grp->nodes[j]);
 			}
 		}
 		if (!found_node) {
 			LOG_ERR("Node with matching prop not found");
 		}
 	}
-
-	return has_transitions;
 }
 
 void led_asynchronous_apply_color(bool has_transitions)
@@ -435,10 +423,40 @@ void led_asynchronous_apply_color(bool has_transitions)
 	}
 }
 
+static bool led_execute_patterns(void)
+{
+	bool has_transitions = false;
+
+	/* Iterate through all policy groups to process active patterns */
+	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
+		const struct policy_group *grp = &policy_groups[i];
+
+		for (int j = 0; j < grp->num_nodes; j++) {
+			if (!grp->active[j]) {
+				continue;
+			}
+
+			// TODO: has_transitions should support all
+			// non-step patterns
+			if (grp->nodes[j].led_patterns->transition ==
+			    LED_TRANSITION_LINEAR) {
+				has_transitions = true;
+			}
+
+			update_node_patterns(grp, &grp->nodes[j]);
+		}
+	}
+
+	return has_transitions;
+}
+
 /* Called by hook task every HOOK_TICK_INTERVAL_MS */
 static void led_tick(void)
 {
-	bool has_transitions = led_set_all_colors();
+	bool has_transitions;
+
+	led_update_policy_state();
+	has_transitions = led_execute_patterns();
 	led_asynchronous_apply_color(has_transitions);
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
