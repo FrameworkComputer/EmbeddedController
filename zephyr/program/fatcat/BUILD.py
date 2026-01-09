@@ -115,7 +115,7 @@ register_npcx9_project(
 register_npcx9_project(
     project_name="ruby",
     zephyr_board="npcx9/npcx9m7fb",
-    extra_modules=["google-private"],
+    extra_modules=["google-private", "nanopb", "pigweed"],
 )
 
 register_it8xxx2_project(
@@ -143,7 +143,7 @@ register_it8xxx2_project(
 register_realtek_project(
     project_name="lapis",
     extra_kconfig_files=[],
-    extra_modules=["google-private"],
+    extra_modules=["google-private", "pigweed", "nanopb"],
 )
 
 register_it8xxx2_project(
