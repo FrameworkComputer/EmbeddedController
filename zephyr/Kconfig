@@ -157,6 +157,7 @@ config PLATFORM_EC_BACKLIGHT_LID
 	bool "Control the display backlight based on the lid switch"
 	depends on PLATFORM_EC_HOSTCMD
 	depends on PLATFORM_EC_LID_SWITCH
+	depends on !SOC_FAMILY_INTEL_ISH
 	default y
 	help
 	  Support controlling the display backlight based on the state of the
@@ -484,7 +485,7 @@ config PLATFORM_EC_HOOKS
 
 config PLATFORM_EC_HOOK_SECOND
 	bool "Enable the one second period hook"
-	default n if SOC_FAMILY_INTEL_ISH
+	depends on !SOC_FAMILY_INTEL_ISH
 	default y
 	help
 	  Enable support for the one second hook. Disabling the hook save
@@ -492,7 +493,7 @@ config PLATFORM_EC_HOOK_SECOND
 
 config PLATFORM_EC_HOOK_TICK
 	bool "Enable the one tick period hook"
-	default n if SOC_FAMILY_INTEL_ISH
+	depends on !SOC_FAMILY_INTEL_ISH
 	default y
 	help
 	  Enable support for the one tick hook. Disabling the hook save
@@ -698,6 +699,8 @@ config PLATFORM_EC_NOINIT_END_OF_RAM_SECTION_OFFSET
 
 config PLATFORM_EC_PANIC
 	bool "Panic output"
+	# TODO - b/439591195. Enable by default once ISH panic is working
+	default n if SOC_FAMILY_INTEL_ISH
 	default y
 	help
 	  Enable support for collecting and reporting panic information,
@@ -888,6 +891,7 @@ config PLATFORM_EC_SHA256_UNROLLED
 config PLATFORM_EC_SWITCH
 	bool "Memory mapped switches"
 	depends on PLATFORM_EC_HOSTCMD
+	depends on !SOC_FAMILY_INTEL_ISH
 	default y
 	help
 	  Enable the reporting of the platform switches state to the AP using
@@ -984,6 +988,7 @@ menuconfig PLATFORM_EC_TIMER
 
 config PLATFORM_EC_VBOOT_EFS2
 	bool "EFS2 verified EC boot"
+	depends on !SOC_FAMILY_INTEL_ISH
 	default y if !SOC_POSIX
 	help
 	  Enables Early Firmware Selection v2 (EFS2) verified boot. When booting
@@ -996,6 +1001,7 @@ config PLATFORM_EC_VBOOT_EFS2
 config PLATFORM_EC_VBOOT_HASH
 	bool "Host command: EC_CMD_VBOOT_HASH"
 	depends on PLATFORM_EC_HOSTCMD
+	depends on !SOC_FAMILY_INTEL_ISH
 	default y
 	help
 	  Allows the AP to request hashing functions from the EC.
