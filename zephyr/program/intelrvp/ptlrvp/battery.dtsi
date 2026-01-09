@@ -12,6 +12,7 @@
 		default_battery: getac-smp-hhp-408-3s {
 			compatible = "getac,bq40z50-R3-S3", "battery-smart";
 			voltage_normal = <13000>;
+			has_manuf_info;
 		};
 	};
 };
