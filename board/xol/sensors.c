@@ -50,6 +50,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv_data = &g_veml3328_data,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = VEML3328_I2C_ADDR,
+		.default_range = 0x10000, /* scale = 1x, uscale = 0 */
 		.min_frequency = VEML3328_MIN_FREQ,
 		.max_frequency = VEML3328_MAX_FREQ,
 	},
@@ -63,6 +64,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv_data = &g_veml3328_rgb_data,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = VEML3328_I2C_ADDR,
+		.default_range = 0x10000, /* scale = 1x, uscale = 0 */
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
