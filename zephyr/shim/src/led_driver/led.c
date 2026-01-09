@@ -439,9 +439,7 @@ void led_asynchronous_apply_color(bool has_transitions)
 static void led_tick(void)
 {
 	bool has_transitions = led_set_all_colors();
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_LED_DT_PWM)) {
-		led_asynchronous_apply_color(has_transitions);
-	}
+	led_asynchronous_apply_color(has_transitions);
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
 
