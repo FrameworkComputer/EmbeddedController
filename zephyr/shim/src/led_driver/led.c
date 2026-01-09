@@ -203,11 +203,37 @@ test_export_static enum power_state get_chipset_state(void)
 	return chipset_state;
 }
 
+static bool is_pattern_done(struct led_pattern_node_t *pattern)
+{
+	uint8_t last;
+
+	/* 0 means infinite cycles */
+	if (pattern->cycle_limit == 0) {
+		return false;
+	}
+
+	pattern->cycle_curr++;
+	if (pattern->cycle_curr < pattern->cycle_limit) {
+		return false;
+	}
+
+	/* Limit reached. Hold final state. */
+	last = pattern->pattern_len - 1;
+	if (pattern->cur_color != last) {
+		pattern->cur_color = last;
+		pattern->elapsed_ms = get_step_duration(pattern, last);
+		pattern->needs_update = true;
+	}
+
+	return true;
+}
+
 static void advance_led_pattern(struct led_pattern_node_t *pattern,
 				uint32_t increment)
 {
 	uint32_t duration;
 	int steps = 0;
+	uint8_t prev_color = pattern->cur_color;
 
 	/* If we have finished the requested number of cycles, hold state. */
 	if (pattern->cycle_limit > 0 &&
@@ -231,20 +257,10 @@ static void advance_led_pattern(struct led_pattern_node_t *pattern,
 
 		/* Wrap around if we reached the end of the pattern */
 		if (pattern->cur_color >= pattern->pattern_len) {
-			/* Handle cycle counting if a limit is configured */
-			if (pattern->cycle_limit > 0) {
-				pattern->cycle_curr++;
-				if (pattern->cycle_curr >=
-				    pattern->cycle_limit) {
-					/* Limit reached. Hold final state. */
-					pattern->cur_color =
-						pattern->pattern_len - 1;
-					pattern->elapsed_ms = get_step_duration(
-						pattern, pattern->cur_color);
-					return;
-				}
+			if (is_pattern_done(pattern)) {
+				return;
 			}
-
+			/* Cycle continues, wrap to start */
 			pattern->cur_color = 0;
 		}
 
@@ -254,6 +270,12 @@ static void advance_led_pattern(struct led_pattern_node_t *pattern,
 	/* Reset time if limit hit to prevent accumulation/overflow */
 	if (steps >= pattern->pattern_len) {
 		pattern->elapsed_ms = 0;
+	}
+
+	/* Mark for update if color changed or we are in a smooth transition */
+	if (pattern->cur_color != prev_color ||
+	    pattern->transition != LED_TRANSITION_STEP) {
+		pattern->needs_update = true;
 	}
 }
 
@@ -267,7 +289,10 @@ static void update_led_pattern(const struct policy_group *grp,
 	}
 
 	/* Apply color calculated in the previous tick */
-	grp->driver->api->set_color_with_pattern(pattern);
+	if (pattern->needs_update) {
+		grp->driver->api->set_color_with_pattern(pattern);
+		pattern->needs_update = false;
+	}
 
 	/* Advance state machine for the next tick */
 	advance_led_pattern(pattern, HOOK_TICK_INTERVAL_MS);
@@ -381,6 +406,7 @@ static int match_node(const struct policy_group *grp, int node_idx)
 			pattern->cur_color = 0;
 			pattern->elapsed_ms = 0;
 			pattern->cycle_curr = 0;
+			pattern->needs_update = true;
 			/* Skip initial 0-duration colors before first render */
 			advance_led_pattern(pattern, 0);
 		}
