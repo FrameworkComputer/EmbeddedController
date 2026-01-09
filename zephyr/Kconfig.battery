@@ -55,6 +55,15 @@ config PLATFORM_EC_BATTERY_SMART
 
 endchoice # PLATFORM_EC_BATTERY_SELECT
 
+config PLATFORM_EC_BATTERY_MANUF_INFO
+	bool "Support battery manufacture info"
+	default $(dt_nodelabel_bool_prop,default_battery,has_manuf_info)
+	help
+	  Enable accessing the battery manufacture info string. For
+	  smart batteries, register SB_MANUFACTURE_INFO (0x70) must be
+	  supported. Automatically enabled if nodelabel default_battery
+	  has property has_manuf_info.
+
 choice PLATFORM_EC_BATTERY_PRESENT_MODE
 	prompt "Method to use to detect the battery"
 	default PLATFORM_EC_BATTERY_PRESENT_GPIO if $(dt_path_enabled,/named-gpios/ec_batt_pres_odl)

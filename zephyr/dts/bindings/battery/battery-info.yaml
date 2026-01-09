@@ -67,3 +67,8 @@ properties:
        Maximum working temperature of battery.
        If temperature is above this value, the system will shutdown.
     type: int
+  has_manuf_info:
+    description: |
+       The battery can report a manufacture info string. This is
+       the SB_MANUFACTURE_INFO (0x70) register on smart batteries.
+    type: boolean
