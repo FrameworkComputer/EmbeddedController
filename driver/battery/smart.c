@@ -406,6 +406,11 @@ int get_battery_manufacturer_name(char *dest, int size)
 	return sb_read_string(SB_MANUFACTURER_NAME, dest, size);
 }
 
+int get_battery_manufacture_info(char *dest, int size)
+{
+	return sb_read_string(SB_MANUFACTURE_INFO, dest, size);
+}
+
 /* Read device name */
 test_mockable int battery_device_name(char *dest, int size)
 {

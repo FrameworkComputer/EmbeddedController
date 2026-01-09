@@ -52,6 +52,10 @@ ZTEST_USER(smart_battery, test_battery_getters)
 		      NULL);
 	zassert_mem_equal(block, bat->mf_name, bat->mf_name_len, "%s != %s",
 			  block, bat->mf_name);
+	zassert_equal(EC_SUCCESS, get_battery_manufacture_info(block, 32),
+		      NULL);
+	zassert_mem_equal(block, bat->mf_info, bat->mf_info_len, "%s != %s",
+			  block, bat->mf_info);
 	zassert_equal(EC_SUCCESS, battery_device_name(block, 32));
 	zassert_mem_equal(block, bat->dev_name, bat->dev_name_len, "%s != %s",
 			  block, bat->dev_name);
@@ -600,6 +604,8 @@ ZTEST_USER(smart_battery, test_battery_access_cutoff)
 	zassert_equal(params.flags, BATT_FLAG_BAD_ANY, "actual flags were %#x",
 		      params.flags);
 	zassert_equal(get_battery_manufacturer_name(str, sizeof(str)),
+		      EC_ERROR_ACCESS_DENIED);
+	zassert_equal(get_battery_manufacture_info(str, sizeof(str)),
 		      EC_ERROR_ACCESS_DENIED);
 	zassert_equal(sb_read_sized_block(0, NULL, 0), EC_ERROR_ACCESS_DENIED);
 	/*

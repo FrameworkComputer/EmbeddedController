@@ -135,5 +135,5 @@ properties:
 
   mf-info:
     type: string
-    default: "LION"
-    description: Manufacturer info. Length has to be smaller than 32 bytes.
+    default: "sb-mf-info-str"
+    description: Manufacture info. Length has to be smaller than 32 bytes.
