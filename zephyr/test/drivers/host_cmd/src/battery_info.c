@@ -127,6 +127,40 @@ ZTEST(host_cmd_battery_info, test_get_static__v2)
 			  sizeof(response.chemistry));
 }
 
+ZTEST(host_cmd_battery_info, test_get_static__v3)
+{
+	/* Same as v2, adds new manuf_info field. */
+	struct ec_params_battery_static_info params = {
+		.index = 0,
+	};
+	struct ec_response_battery_static_info_v3 response;
+	int rv;
+
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_BATTERY_GET_STATIC, 3, response, params);
+
+	rv = host_command_process(&args);
+	zassert_ok(rv, "Got %d", rv);
+	zassert_equal(args.response_size, sizeof(response));
+
+	/* Validate all of the fields */
+	struct battery_static_info *batt = &battery_static[0];
+
+	zassert_equal(batt->design_capacity, response.design_capacity);
+	zassert_equal(batt->design_voltage, response.design_voltage);
+	zassert_equal(batt->cycle_count, response.cycle_count);
+	zassert_mem_equal(batt->manufacturer_ext, response.manufacturer,
+			  sizeof(response.manufacturer));
+	zassert_mem_equal(batt->model_ext, response.device_name,
+			  sizeof(response.device_name));
+	zassert_mem_equal(batt->serial_ext, response.serial,
+			  sizeof(response.serial));
+	zassert_mem_equal(batt->type_ext, response.chemistry,
+			  sizeof(response.chemistry));
+	zassert_mem_equal(batt->manuf_info, response.manuf_info,
+			  sizeof(response.manuf_info));
+}
+
 ZTEST(host_cmd_battery_info, test_get_dynamic__invalid_index)
 {
 	struct ec_response_battery_dynamic_info response;

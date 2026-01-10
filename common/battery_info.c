@@ -107,6 +107,20 @@ static void battery_update(enum battery_index i)
 }
 
 #ifdef CONFIG_HOSTCMD_BATTERY_INFO
+
+static void populate_bsi_v2(struct ec_response_battery_static_info_v2 *r,
+			    const struct battery_static_info *bs)
+{
+	r->design_capacity = bs->design_capacity;
+	r->design_voltage = bs->design_voltage;
+	r->cycle_count = bs->cycle_count;
+
+	strzcpy(r->manufacturer, bs->manufacturer_ext, sizeof(r->manufacturer));
+	strzcpy(r->device_name, bs->model_ext, sizeof(r->device_name));
+	strzcpy(r->serial, bs->serial_ext, sizeof(r->serial));
+	strzcpy(r->chemistry, bs->type_ext, sizeof(r->chemistry));
+}
+
 static enum ec_status
 host_command_battery_get_static(struct host_cmd_handler_args *args)
 {
@@ -149,15 +163,18 @@ host_command_battery_get_static(struct host_cmd_handler_args *args)
 	} else if (args->version == 2) {
 		struct ec_response_battery_static_info_v2 *r = args->response;
 
-		r->design_capacity = bs->design_capacity;
-		r->design_voltage = bs->design_voltage;
-		r->cycle_count = bs->cycle_count;
+		populate_bsi_v2(r, bs);
 
-		strzcpy(r->manufacturer, bs->manufacturer_ext,
-			sizeof(r->manufacturer));
-		strzcpy(r->device_name, bs->model_ext, sizeof(r->device_name));
-		strzcpy(r->serial, bs->serial_ext, sizeof(r->serial));
-		strzcpy(r->chemistry, bs->type_ext, sizeof(r->chemistry));
+		args->response_size = sizeof(*r);
+	} else if (args->version == 3) {
+		struct ec_response_battery_static_info_v3 *r = args->response;
+
+		/* The v3 layout is simply v2 + an extra field */
+		populate_bsi_v2((struct ec_response_battery_static_info_v2 *)r,
+				bs);
+#ifdef CONFIG_PLATFORM_EC_BATTERY_MANUF_INFO
+		strzcpy(r->manuf_info, bs->manuf_info, sizeof(r->manuf_info));
+#endif /* CONFIG_PLATFORM_EC_BATTERY_MANUF_INFO */
 
 		args->response_size = sizeof(*r);
 	} else {
@@ -167,7 +184,8 @@ host_command_battery_get_static(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_BATTERY_GET_STATIC, host_command_battery_get_static,
-		     EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2));
+		     EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2) |
+			     EC_VER_MASK(3));
 
 static enum ec_status
 host_command_battery_get_dynamic(struct host_cmd_handler_args *args)
