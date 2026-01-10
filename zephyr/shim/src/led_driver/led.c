@@ -283,7 +283,8 @@ static void advance_led_pattern(struct led_pattern_node_t *pattern,
 }
 
 static void update_led_pattern(const struct policy_group *grp,
-			       struct led_pattern_node_t *pattern)
+			       struct led_pattern_node_t *pattern,
+			       uint32_t increment)
 {
 	/* Check if auto control is enabled */
 	if (!led_auto_control_is_enabled(
@@ -298,16 +299,17 @@ static void update_led_pattern(const struct policy_group *grp,
 	}
 
 	/* Advance state machine for the next tick */
-	advance_led_pattern(pattern, HOOK_TICK_INTERVAL_MS);
+	advance_led_pattern(pattern, increment);
 }
 
 static void update_node_patterns(const struct policy_group *grp,
-				 const struct node_prop_t *node)
+				 const struct node_prop_t *node,
+				 uint32_t increment)
 {
 	struct led_pattern_node_t *patterns = node->led_patterns;
 
 	for (int i = 0; i < node->num_patterns; i++) {
-		update_led_pattern(grp, &patterns[i]);
+		update_led_pattern(grp, &patterns[i], increment);
 	}
 }
 
@@ -466,7 +468,8 @@ static void led_execute_patterns(void)
 				grp->is_animating = true;
 			}
 
-			update_node_patterns(grp, &grp->nodes[j]);
+			update_node_patterns(grp, &grp->nodes[j],
+					     HOOK_TICK_INTERVAL_MS);
 		}
 
 		if (grp->is_animating) {
