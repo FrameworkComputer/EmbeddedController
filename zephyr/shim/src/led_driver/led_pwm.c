@@ -130,6 +130,7 @@ static void pwm_set_color(enum led_color color, enum ec_led_id led_id,
 			break;
 		}
 	}
+	pwm_asynchronous_apply_color(false);
 }
 
 /*
@@ -297,7 +298,7 @@ static int pwm_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	if (!color_set)
 		led_set_color(LED_OFF, led_id, 0);
 
-	led_asynchronous_apply_color(false);
+	pwm_asynchronous_apply_color(false);
 	return EC_SUCCESS;
 }
 
