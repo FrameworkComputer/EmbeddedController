@@ -109,7 +109,7 @@ Chromium OS's meta-build tool for Zephyr
 |---|---|
 | `-h`, `--help` | show this help message and exit |
 | `--ref1 REF1` | 1st git reference (commit, branch, etc), default=HEAD |
-| `--ref2 REF2` | 2nd git reference (commit, branch, etc), default=HEAD~ |
+| `--ref2 REF2` | 2nd git reference (commit, branch, etc), default=HEAD~. If ref2==ref1 then only one checkout is performed and the firmware binary comparison is skipped. |
 | `-k`, `--keep-temps` | Keep temporary build directories on exit |
 | `-n`, `--compare-configs` | Compare configs of build outputs |
 | `-b`, `--compare-binaries-disable` | Don't compare binaries of build outputs |

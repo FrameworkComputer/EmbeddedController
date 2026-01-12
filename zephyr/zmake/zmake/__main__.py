@@ -202,7 +202,11 @@ def get_argparser():
     compare_builds.add_argument(
         "--ref2",
         default="HEAD~",
-        help="2nd git reference (commit, branch, etc), default=HEAD~",
+        help=(
+            "2nd git reference (commit, branch, etc), default=HEAD~. "
+            "If ref2==ref1 then only one checkout is performed and the "
+            "firmware binary comparison is skipped."
+        ),
     )
     compare_builds.add_argument(
         "-k",

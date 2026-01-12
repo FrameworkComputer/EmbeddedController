@@ -179,6 +179,10 @@ class CompareBuilds:
         ref1: 1st git reference for the EC repository.  May be a partial hash,
             local branch name, or remote branch name.
         ref2: 2nd git reference for the EC repository.
+            Special case: if ref1 == ref2 then the 2nd checkout is skipped
+            and the final build comparison is skipped. This is used by
+            firmware_builder.py in the CQ to verify that compare-builds can
+            successfully build images.
         executor: a zmake.multiproc.Executor object for submitting
             tasks to.
         sequential: True to perform git checkouts sequentially. False to
@@ -194,7 +198,14 @@ class CompareBuilds:
 
         self.checkouts = []
         self.checkouts.append(CheckoutConfig(temp_dir, ref1))
-        self.checkouts.append(CheckoutConfig(temp_dir, ref2))
+        self.single_checkout = False
+        if get_git_hash(ref1) != get_git_hash(ref2):
+            self.checkouts.append(CheckoutConfig(temp_dir, ref2))
+        else:
+            self.logger.info(
+                "Single checkout detected. Firmware comparison disabled."
+            )
+            self.single_checkout = True
         self._executor = executor
         self._sequential = sequential
 
@@ -433,6 +444,9 @@ class CompareBuilds:
             A list of projects that failed to compare.  An empty list indicates that
             all projects compared successfully.
         """
+        if self.single_checkout:
+            self.logger.info("Single checkout detected, skip check_binaries")
+            return []
 
         failed_projects = _compare_non_test_projects(
             projects, self._compare_binaries
@@ -491,6 +505,9 @@ class CompareBuilds:
             A list of projects that failed to compare.  An empty list indicates that
             all projects compared successfully.
         """
+        if self.single_checkout:
+            self.logger.info("Single checkout detected, skip check_binaries")
+            return []
 
         failed_projects = _compare_non_test_projects(
             projects,
@@ -509,6 +526,9 @@ class CompareBuilds:
             A list of projects that failed to compare.  An empty list indicates that
             all projects compared successfully.
         """
+        if self.single_checkout:
+            self.logger.info("Single checkout detected, skip check_binaries")
+            return []
 
         failed_projects = _compare_non_test_projects(
             projects,
