@@ -156,6 +156,7 @@ struct policy_group {
 	const struct node_prop_t *nodes;
 	bool *active;
 	size_t num_nodes;
+	bool is_animating;
 };
 
 #define LOCAL_NODE_ARRAY(inst) DT_CAT(node_array_, inst)
@@ -178,9 +179,11 @@ DT_INST_FOREACH_STATUS_OKAY(GEN_LOCAL_ARRAYS)
 		.num_nodes = ARRAY_SIZE(LOCAL_NODE_ARRAY(inst)),       \
 	},
 
-static const struct policy_group policy_groups[] = {
-	DT_INST_FOREACH_STATUS_OKAY(INIT_POLICY_GROUP)
-};
+static struct policy_group policy_groups[] = { DT_INST_FOREACH_STATUS_OKAY(
+	INIT_POLICY_GROUP) };
+
+static void led_animation_worker(struct k_work *work);
+static K_WORK_DELAYABLE_DEFINE(led_worker_data, led_animation_worker);
 
 test_export_static enum power_state get_chipset_state(void)
 {
@@ -443,10 +446,13 @@ static void led_update_policy_state(void)
 
 static void led_execute_patterns(void)
 {
+	bool continue_animating = false;
+
 	/* Iterate through all policy groups to process active patterns */
 	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
-		const struct policy_group *grp = &policy_groups[i];
-		bool has_transitions = false;
+		struct policy_group *grp = &policy_groups[i];
+
+		grp->is_animating = false;
 
 		for (int j = 0; j < grp->num_nodes; j++) {
 			if (!grp->active[j]) {
@@ -457,12 +463,46 @@ static void led_execute_patterns(void)
 			// non-step patterns
 			if (grp->nodes[j].led_patterns->transition ==
 			    LED_TRANSITION_LINEAR) {
-				has_transitions = true;
+				grp->is_animating = true;
 			}
 
 			update_node_patterns(grp, &grp->nodes[j]);
 		}
-		grp->driver->api->asynchronous_apply_color(has_transitions);
+
+		if (grp->is_animating) {
+			continue_animating = true;
+		} else {
+			grp->driver->api->asynchronous_apply_color(false);
+		}
+	}
+
+	if (continue_animating) {
+		k_work_schedule(&led_worker_data, K_NO_WAIT);
+	} else {
+		k_work_cancel_delayable(&led_worker_data);
+	}
+}
+
+static void led_animation_worker(struct k_work *work)
+{
+	bool continue_animating = false;
+	int64_t start_time = k_uptime_get();
+	int64_t elapsed_ms;
+	int64_t delay_ms;
+
+	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
+		const struct policy_group *grp = &policy_groups[i];
+
+		if (grp->is_animating) {
+			grp->driver->api->asynchronous_apply_color(true);
+			continue_animating = true;
+		}
+	}
+
+	if (continue_animating) {
+		elapsed_ms = k_uptime_delta(&start_time);
+		delay_ms = max(0, (int64_t)LED_ANIMATION_TICK_MS - elapsed_ms);
+		k_work_schedule(&led_worker_data, K_MSEC(delay_ms));
 	}
 }
 

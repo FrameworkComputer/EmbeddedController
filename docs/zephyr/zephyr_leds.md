@@ -30,6 +30,9 @@ Example:
 CONFIG_PLATFORM_EC_LED_COMMON=n
 ```
 
+The animation tick interval can be configured via `CONFIG_PLATFORM_EC_LED_ANIMATION_TICK_MS` (default `30ms`).
+Lower values result in smoother animations but increase CPU usage.
+
 Enable other [config options](../configuration/leds.md) supported in the legacy code.
 
 ## Devicetree Nodes

@@ -190,3 +190,11 @@ config PLATFORM_EC_CONSOLE_CMD_SEVEN_SEGMENT_DISPLAY
 	help
 	  Enable the "seg" console command. This command allow the user to write
 	  on seven segment display.
+
+config PLATFORM_EC_LED_ANIMATION_TICK_MS
+	int "LED animation tick interval (ms)"
+	default 30
+	depends on PLATFORM_EC_LED_DT
+	help
+	  The interval at which the LED animation worker runs. Lower values
+	  result in smoother animations but increase CPU usage.
