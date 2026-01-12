@@ -44,6 +44,8 @@ static void fpad_init(void)
 		LOG_INF("Disable ForcePad Interrupt");
 		gpio_disable_dt_interrupt(
 			GPIO_INT_FROM_NODELABEL(int_en_fpad_seq));
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_fpad_5v_en), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_fpad_1p8v_en), 1);
 	} else {
 		LOG_INF("Enable ForcePad Interrupt");
 		gpio_enable_dt_interrupt(
