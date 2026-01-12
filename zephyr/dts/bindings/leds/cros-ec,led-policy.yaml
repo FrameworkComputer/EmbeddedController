@@ -182,9 +182,17 @@ child-binding:
           required: true
         period-ms:
           description: |
-            In case of blinking LEDs, amount of time in msecs the LED
-            color is active. This value must be a multiple of
-            HOOK_TICK_INTERVAL_MS for gpio LEDs.
+            Duration in msecs for this pattern step. This applies to both
+            blinking (LED_TRANSITION_STEP) and fading transitions (e.g.
+            LED_TRANSITION_LINEAR).
+
+            The resolution is determined by
+            CONFIG_PLATFORM_EC_LED_ANIMATION_TICK_MS (default 30ms). If the
+            value is not a multiple of the tick interval, the actual duration
+            of individual steps will be quantized to the nearest tick. This
+            may result in slight timing jitter between cycles, though the
+            average duration will remain correct.
+
             e.g.
             power-state-error {
                charge-state = "LED_PWRS_ERROR";

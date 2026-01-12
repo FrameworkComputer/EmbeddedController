@@ -11,10 +11,20 @@
 
 #include <zephyr/ztest.h>
 
+extern uint32_t led_test_apply_count;
+
 void set_board_led_alt_policy(int label);
 
-ZTEST_SUITE(led_driver_sequence, drivers_predicate_post_main, NULL, NULL, NULL,
-	    NULL);
+static void *led_sequence_setup(void)
+{
+	/* Sleep to allow init functions to complete and timing to settle */
+	k_sleep(K_MSEC(1000));
+
+	return NULL;
+}
+
+ZTEST_SUITE(led_driver_sequence, drivers_predicate_post_main,
+	    led_sequence_setup, NULL, NULL, NULL);
 
 static bool is_blue_on(void)
 {
@@ -26,18 +36,61 @@ static bool is_white_on(void)
 	return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_chg_led_w_c0));
 }
 
+static void wait_and_assert_led_state(bool (*check_fn)(void), int min_ms,
+				      int max_ms, const char *state_name)
+{
+	int64_t start = k_uptime_get();
+	int64_t now;
+	int64_t elapsed;
+
+	while (true) {
+		if (check_fn()) {
+			break;
+		}
+		now = k_uptime_get();
+		elapsed = now - start;
+		zassert_true(
+			elapsed <= max_ms,
+			"Timeout waiting for %s. Elapsed: %lld ms, Limit: %d ms",
+			state_name, elapsed, max_ms);
+		k_sleep(K_MSEC(10));
+	}
+
+	now = k_uptime_get();
+	elapsed = now - start;
+	zassert_true(
+		elapsed >= min_ms,
+		"Transition to %s too fast. Elapsed: %lld ms, Expected >= %d ms",
+		state_name, elapsed, min_ms);
+}
+
 ZTEST(led_driver_sequence, test_infinite_loop)
 {
 	/* Select the infinite loop policy node */
 	set_board_led_alt_policy(2);
 	led_control(EC_LED_ID_BATTERY_LED, LED_STATE_RESET);
+	led_test_apply_count = 0;
 
-	/* Pattern: Blue(250ms) -> White(250ms). Test 5 full cycles. */
+	hook_notify(HOOK_TICK);
+	k_sleep(K_MSEC(30));
+	zassert_true(is_blue_on(), "Sync to Blue should occur within 1 tick");
+	zassert_equal(led_test_apply_count, 1,
+		      "Expected 1 apply (sync), got %d", led_test_apply_count);
+
+	/* Pattern: Blue(500ms) -> White(500ms). Test 5 full cycles. */
 	for (int i = 0; i < 5; i++) {
-		hook_notify(HOOK_TICK);
-		zassert_true(is_blue_on(), "Cycle %d: Blue should be on", i);
-		hook_notify(HOOK_TICK);
-		zassert_true(is_white_on(), "Cycle %d: White should be on", i);
+		/*
+		 * Lower bound: 1 animation tick (30ms) early + polling margin.
+		 * Upper bound: 1 animation tick (30ms) late + polling margin.
+		 */
+		wait_and_assert_led_state(is_white_on, 450, 550, "White");
+		zassert_equal(led_test_apply_count, 2 * i + 2,
+			      "Expected %d applies, got %d", 2 * i + 2,
+			      led_test_apply_count);
+		wait_and_assert_led_state(is_blue_on, 450, 550, "Blue");
+		zassert_equal(led_test_apply_count, 2 * i + 3,
+			      "Expected %d applies, got %d", 2 * i + 3,
+			      led_test_apply_count);
 	}
 }
 
@@ -46,22 +99,35 @@ ZTEST(led_driver_sequence, test_run_once)
 	/* Select the run-once policy node */
 	set_board_led_alt_policy(3);
 	led_control(EC_LED_ID_BATTERY_LED, LED_STATE_RESET);
+	led_test_apply_count = 0;
 
-	/* Step 0: White */
+	/* At 0ms: White */
 	hook_notify(HOOK_TICK);
-	zassert_true(is_white_on());
+	k_sleep(K_MSEC(30));
+	zassert_true(is_white_on(), "Sync to White should occur within 1 tick");
+	zassert_equal(led_test_apply_count, 1,
+		      "Expected 1 apply (sync), got %d", led_test_apply_count);
 
-	/* Step 1: Blue */
-	hook_notify(HOOK_TICK);
-	zassert_true(is_blue_on());
+	/* At 250ms: Blue */
+	wait_and_assert_led_state(is_blue_on, 200, 300, "Blue");
+	zassert_equal(led_test_apply_count, 2, "Expected 2 applies, got %d",
+		      led_test_apply_count);
+
+	/* At 500ms: Hold the last color Blue */
+	k_sleep(K_MSEC(250));
+	zassert_equal(led_test_apply_count, 3, "Expected 3 applies, got %d",
+		      led_test_apply_count);
 
 	/*
 	 * Pattern cycle limit (1) has been reached. Test several more ticks to
 	 * verify the state remains held on Blue.
 	 */
 	for (int i = 0; i < 10; i++) {
-		hook_notify(HOOK_TICK);
+		k_sleep(K_MSEC(250));
 		zassert_true(is_blue_on(), "Tick %d: Expected to hold Blue", i);
+		zassert_equal(led_test_apply_count, 3,
+			      "Apply count increased during hold state: %d.",
+			      led_test_apply_count);
 	}
 }
 
@@ -72,6 +138,7 @@ ZTEST(led_driver_sequence, test_instant_init)
 	led_control(EC_LED_ID_BATTERY_LED, LED_STATE_RESET);
 
 	hook_notify(HOOK_TICK);
+	k_sleep(K_MSEC(30));
 	zassert_true(is_white_on(),
 		     "Failed to skip initial 0ms steps to White");
 }
@@ -84,6 +151,7 @@ ZTEST(led_driver_sequence, test_all_zero_safety_guard)
 
 	/* Safety guard should prevent infinite loop and CPU hang */
 	hook_notify(HOOK_TICK);
+	k_sleep(K_MSEC(30));
 	zassert_true(is_white_on() || is_blue_on());
 }
 
@@ -93,13 +161,13 @@ ZTEST(led_driver_sequence, test_mid_pattern_instant)
 	set_board_led_alt_policy(6);
 	led_control(EC_LED_ID_BATTERY_LED, LED_STATE_RESET);
 
-	/* Land on Blue */
+	/* At 0ms: Land on Blue */
 	hook_notify(HOOK_TICK);
+	k_sleep(K_MSEC(30));
 	zassert_true(is_blue_on());
 
-	/* Next tick: Blue expires, skips Off(0ms), lands on White */
-	hook_notify(HOOK_TICK);
-	zassert_true(is_white_on(), "Failed to skip mid-pattern 0ms step");
+	/* At 250ms: Blue expires, skips Off(0ms), lands on White */
+	wait_and_assert_led_state(is_white_on, 200, 300, "White");
 }
 
 ZTEST(led_driver_sequence, test_no_matching_policy_found)
@@ -110,6 +178,7 @@ ZTEST(led_driver_sequence, test_no_matching_policy_found)
 
 	/* Trigger tick to apply the Blue color */
 	hook_notify(HOOK_TICK);
+	k_sleep(K_MSEC(30));
 	zassert_true(is_blue_on(), "Setup failed: LED should be Blue");
 
 	/* Set Alt Policy Label to a non-existent value (99). */
@@ -117,6 +186,7 @@ ZTEST(led_driver_sequence, test_no_matching_policy_found)
 
 	/* Trigger tick logic. */
 	hook_notify(HOOK_TICK);
+	k_sleep(K_MSEC(30));
 
 	/* Verify the LED state should be unchanged. */
 	zassert_true(is_blue_on(),

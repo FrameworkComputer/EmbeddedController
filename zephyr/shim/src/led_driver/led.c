@@ -156,7 +156,6 @@ struct policy_group {
 	const struct node_prop_t *nodes;
 	bool *active;
 	size_t num_nodes;
-	bool is_animating;
 };
 
 #define LOCAL_NODE_ARRAY(inst) DT_CAT(node_array_, inst)
@@ -179,8 +178,11 @@ DT_INST_FOREACH_STATUS_OKAY(GEN_LOCAL_ARRAYS)
 		.num_nodes = ARRAY_SIZE(LOCAL_NODE_ARRAY(inst)),       \
 	},
 
-static struct policy_group policy_groups[] = { DT_INST_FOREACH_STATUS_OKAY(
-	INIT_POLICY_GROUP) };
+static const struct policy_group policy_groups[] = {
+	DT_INST_FOREACH_STATUS_OKAY(INIT_POLICY_GROUP)
+};
+
+static void led_execute_patterns(void);
 
 static void led_animation_worker(struct k_work *work);
 static K_WORK_DELAYABLE_DEFINE(led_worker_data, led_animation_worker);
@@ -275,9 +277,15 @@ static void advance_led_pattern(struct led_pattern_node_t *pattern,
 		pattern->elapsed_ms = 0;
 	}
 
-	/* Mark for update if color changed or we are in a smooth transition */
+	/*
+	 * Mark for update if color changed. Exponential transitions also
+	 * require updates because they use absolute value recalculation.
+	 *
+	 * TODO: Support relative calculation for exponential transitions
+	 * so the update flag is not required.
+	 */
 	if (pattern->cur_color != prev_color ||
-	    pattern->transition != LED_TRANSITION_STEP) {
+	    pattern->transition == LED_TRANSITION_EXPONENTIAL) {
 		pattern->needs_update = true;
 	}
 }
@@ -302,15 +310,47 @@ static void update_led_pattern(const struct policy_group *grp,
 	advance_led_pattern(pattern, increment);
 }
 
-static void update_node_patterns(const struct policy_group *grp,
-				 const struct node_prop_t *node,
-				 uint32_t increment)
+struct node_status {
+	bool needs_apply;
+	bool is_animating;
+	bool has_transitions;
+};
+
+static struct node_status update_and_check_node(const struct policy_group *grp,
+						const struct node_prop_t *node,
+						uint32_t increment)
 {
 	struct led_pattern_node_t *patterns = node->led_patterns;
+	struct node_status status = { 0 };
 
 	for (int i = 0; i < node->num_patterns; i++) {
-		update_led_pattern(grp, &patterns[i], increment);
+		struct led_pattern_node_t *pattern = &patterns[i];
+		bool pattern_is_done;
+
+		/* Cache dirty flag before it's cleared in update_led_pattern */
+		if (pattern->needs_update) {
+			status.needs_apply = true;
+		}
+		/* Similar reason, cache the pattern_is_done status. */
+		pattern_is_done = (pattern->cycle_limit > 0 &&
+				   pattern->cycle_curr >= pattern->cycle_limit);
+
+		update_led_pattern(grp, pattern, increment);
+
+		if (pattern_is_done) {
+			continue;
+		}
+
+		if (pattern->transition != LED_TRANSITION_STEP ||
+		    pattern->pattern_len > 1) {
+			status.is_animating = true;
+		}
+
+		if (pattern->transition != LED_TRANSITION_STEP) {
+			status.has_transitions = true;
+		}
 	}
+	return status;
 }
 
 /* LCOV_EXCL_START */
@@ -415,6 +455,8 @@ static int match_node(const struct policy_group *grp, int node_idx)
 			/* Skip initial 0-duration colors before first render */
 			advance_led_pattern(pattern, 0);
 		}
+		/* Schedule animation worker to execute patterns */
+		k_work_schedule(&led_worker_data, K_NO_WAIT);
 	}
 
 	/* We found the node that matches the current system state */
@@ -446,59 +488,46 @@ static void led_update_policy_state(void)
 	}
 }
 
+#ifdef CONFIG_ZTEST
+uint32_t led_test_apply_count;
+#endif
+
 static void led_execute_patterns(void)
-{
-	bool continue_animating = false;
-
-	/* Iterate through all policy groups to process active patterns */
-	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
-		struct policy_group *grp = &policy_groups[i];
-
-		grp->is_animating = false;
-
-		for (int j = 0; j < grp->num_nodes; j++) {
-			if (!grp->active[j]) {
-				continue;
-			}
-
-			// TODO: has_transitions should support all
-			// non-step patterns
-			if (grp->nodes[j].led_patterns->transition ==
-			    LED_TRANSITION_LINEAR) {
-				grp->is_animating = true;
-			}
-
-			update_node_patterns(grp, &grp->nodes[j],
-					     HOOK_TICK_INTERVAL_MS);
-		}
-
-		if (grp->is_animating) {
-			continue_animating = true;
-		} else {
-			grp->driver->api->asynchronous_apply_color(false);
-		}
-	}
-
-	if (continue_animating) {
-		k_work_schedule(&led_worker_data, K_NO_WAIT);
-	} else {
-		k_work_cancel_delayable(&led_worker_data);
-	}
-}
-
-static void led_animation_worker(struct k_work *work)
 {
 	bool continue_animating = false;
 	int64_t start_time = k_uptime_get();
 	int64_t elapsed_ms;
 	int64_t delay_ms;
 
+	/* Iterate through all policy groups to process active patterns */
 	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
 		const struct policy_group *grp = &policy_groups[i];
+		struct node_status group_status = { 0 };
 
-		if (grp->is_animating) {
-			grp->driver->api->asynchronous_apply_color(true);
+		for (int j = 0; j < grp->num_nodes; j++) {
+			struct node_status status;
+
+			if (!grp->active[j]) {
+				continue;
+			}
+
+			status = update_and_check_node(grp, &grp->nodes[j],
+						       LED_ANIMATION_TICK_MS);
+			group_status.needs_apply |= status.needs_apply;
+			group_status.is_animating |= status.is_animating;
+			group_status.has_transitions |= status.has_transitions;
+		}
+
+		if (group_status.is_animating) {
 			continue_animating = true;
+		}
+
+		if (group_status.needs_apply || group_status.has_transitions) {
+#ifdef CONFIG_ZTEST
+			led_test_apply_count++;
+#endif
+			grp->driver->api->asynchronous_apply_color(
+				group_status.has_transitions);
 		}
 	}
 
@@ -506,14 +535,20 @@ static void led_animation_worker(struct k_work *work)
 		elapsed_ms = k_uptime_delta(&start_time);
 		delay_ms = max(0, (int64_t)LED_ANIMATION_TICK_MS - elapsed_ms);
 		k_work_schedule(&led_worker_data, K_MSEC(delay_ms));
+	} else {
+		k_work_cancel_delayable(&led_worker_data);
 	}
+}
+
+static void led_animation_worker(struct k_work *work)
+{
+	led_execute_patterns();
 }
 
 /* Called by hook task every HOOK_TICK_INTERVAL_MS */
 static void led_tick(void)
 {
 	led_update_policy_state();
-	led_execute_patterns();
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
 

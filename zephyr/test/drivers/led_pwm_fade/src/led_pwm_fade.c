@@ -22,6 +22,8 @@
 #include <zephyr/ztest.h>
 #include <zephyr/ztest_assert.h>
 
+extern uint32_t led_test_apply_count;
+
 void set_board_led_alt_policy(int label);
 
 ZTEST_SUITE(led_pwm_fade, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
@@ -36,6 +38,7 @@ static void run_full_fade_test_sequence(void)
 		DEVICE_DT_GET(DT_NODELABEL(pwm_amber_right));
 	const struct device *pwm_white_right =
 		DEVICE_DT_GET(DT_NODELABEL(pwm_white_right));
+	uint32_t hold_count;
 
 	/* make sure we're starting at the start of a pattern */
 	test_set_chipset_to_g3();
@@ -176,6 +179,18 @@ static void run_full_fade_test_sequence(void)
 	zassert_equal(pwm_mock_get_duty(pwm_white_left, 0), 0, NULL);
 	zassert_equal(pwm_mock_get_duty(pwm_amber_right, 0), 0, NULL);
 	zassert_equal(pwm_mock_get_duty(pwm_white_right, 0), 0, NULL);
+
+	/* Sleep to allow timing to settle */
+	k_sleep(K_MSEC(100));
+	hold_count = led_test_apply_count;
+
+	/* Run a few ticks to ensure no apply during hold state */
+	for (int i = 0; i < 10; i++) {
+		k_sleep(K_MSEC(250));
+		zassert_equal(led_test_apply_count, hold_count,
+			      "Apply count increased during hold state: %d.",
+			      led_test_apply_count);
+	}
 }
 
 ZTEST(led_pwm_fade, test_led_fade)

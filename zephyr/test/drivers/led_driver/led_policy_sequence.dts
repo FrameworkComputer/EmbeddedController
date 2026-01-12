@@ -17,11 +17,11 @@
 				cycle-count = <0>;
 				color-0 {
 					led-color = <&battery_led_blue>;
-					period-ms = <250>;
+					period-ms = <500>;
 				};
 				color-1 {
 					led-color = <&battery_led_white>;
-					period-ms = <250>;
+					period-ms = <500>;
 				};
 			};
 		};
