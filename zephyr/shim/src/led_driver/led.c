@@ -449,13 +449,12 @@ void led_asynchronous_apply_color(bool has_transitions)
 	}
 }
 
-static bool led_execute_patterns(void)
+static void led_execute_patterns(void)
 {
-	bool has_transitions = false;
-
 	/* Iterate through all policy groups to process active patterns */
 	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
 		const struct policy_group *grp = &policy_groups[i];
+		bool has_transitions = false;
 
 		for (int j = 0; j < grp->num_nodes; j++) {
 			if (!grp->active[j]) {
@@ -471,19 +470,15 @@ static bool led_execute_patterns(void)
 
 			update_node_patterns(grp, &grp->nodes[j]);
 		}
+		grp->driver->api->asynchronous_apply_color(has_transitions);
 	}
-
-	return has_transitions;
 }
 
 /* Called by hook task every HOOK_TICK_INTERVAL_MS */
 static void led_tick(void)
 {
-	bool has_transitions;
-
 	led_update_policy_state();
-	has_transitions = led_execute_patterns();
-	led_asynchronous_apply_color(has_transitions);
+	led_execute_patterns();
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
 
