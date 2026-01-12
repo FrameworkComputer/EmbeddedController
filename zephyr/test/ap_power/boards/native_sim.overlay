@@ -60,6 +60,11 @@
 		compatible = "ap-pwrseq-sub-states";
 		chipset = "S0ix";
 	};
+
+	cse_early_recovery: cse-early-recovery {
+		compatible = "cros-ec,cse-early-rec";
+		cse-early-rec-gpios = <&gpio0 5 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &espi0 {

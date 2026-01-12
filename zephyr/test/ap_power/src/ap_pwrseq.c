@@ -12,6 +12,7 @@
 #include "host_command.h"
 #include "lpc.h"
 #include "power_signals.h"
+#include "system.h"
 #include "test_mocks.h"
 #include "test_state.h"
 #include "zephyr/sys/util.h"
@@ -174,7 +175,7 @@ static void verify_ap_inputs(bool in_s0)
 	}
 }
 
-ZTEST(ap_pwrseq, test_ap_pwrseq_0)
+static void power_up_test_g3_to_s0_helper(void)
 {
 	/* Verify all inputs to the AP start a physical level 0. */
 	verify_ap_inputs(false);
@@ -195,6 +196,35 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_0)
 	 * AP are set to high level.
 	 */
 	verify_ap_inputs(true);
+}
+
+static bool get_cse_early_recovery_gpio_level(void)
+{
+	const static struct gpio_dt_spec cse_early_rec_gpio = GPIO_DT_SPEC_GET(
+		DT_NODELABEL(cse_early_recovery), cse_early_rec_gpios);
+
+	return gpio_emul_output_get_dt(&cse_early_rec_gpio);
+}
+
+ZTEST(ap_pwrseq, test_ap_pwrseq_0)
+{
+#ifdef CONFIG_TEST_AP_POWER_RECOVERY_MODE
+	/* When recovery boot is requested, the CSE early recovery GPIO driver
+	 * should assert a given GPIO pin when exiting G3.
+	 */
+	system_enter_manual_recovery();
+#endif /* CONFIG_TEST_AP_POWER_RECOVERY_MODE */
+
+	zassert_equal(0, get_cse_early_recovery_gpio_level());
+	power_up_test_g3_to_s0_helper();
+
+#ifdef CONFIG_TEST_AP_POWER_RECOVERY_MODE
+	/* This is a recovery boot. GPIO should be asserted. */
+	zassert_equal(1, get_cse_early_recovery_gpio_level());
+#else
+	/* Not doing a recovery boot. GPIO should be deasserted. */
+	zassert_equal(0, get_cse_early_recovery_gpio_level());
+#endif
 }
 
 /* Sleep hang test - this assumes the test is run after the test_ap_pwrseq_0
@@ -576,6 +606,7 @@ ZTEST(ap_pwrseq, test_get_ap_pwrseq_thread)
 
 void ap_pwrseq_after_test(void *data)
 {
+	system_exit_manual_recovery();
 	power_signal_emul_unload();
 	ap_pwrseq_reset_ev_counters();
 }

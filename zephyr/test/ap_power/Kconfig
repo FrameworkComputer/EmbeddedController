@@ -22,4 +22,10 @@ config TEST_AP_POWER_BROX
 	  Run the AP power sequence tests using the Brox devicetree
 	  configuration and the Brox project specific source files.
 
+config TEST_AP_POWER_RECOVERY_MODE
+	bool "AP power sequencing tests for recovery boot"
+	help
+	  Run AP power sequencing tests, but boot into recovery mode and verify
+	  functionality of the CSE early recovery GPIO driver.
+
 source "Kconfig.zephyr"

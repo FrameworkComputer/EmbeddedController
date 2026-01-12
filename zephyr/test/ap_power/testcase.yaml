@@ -54,12 +54,40 @@ tests:
     - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S4=y
     - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S5=y
     - CONFIG_AP_PWRSEQ_DRIVER=y
+  ap_power_drv.alderlake.rec:
+    extra_dtc_overlay_files:
+    - boards/native_sim.overlay
+    - boards/alderlake.dts
+    extra_configs:
+    - CONFIG_TEST_AP_POWER_ADL=y
+    - CONFIG_TEST_AP_POWER_RECOVERY_MODE=y
+    - CONFIG_EMUL_POWER_SIGNALS=y
+    - CONFIG_X86_NON_DSX_PWRSEQ_ADL=y
+    - CONFIG_AP_PWRSEQ_S0IX=y
+    - CONFIG_AP_X86_INTEL_ADL=y
+    - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S4=y
+    - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S5=y
+    - CONFIG_AP_PWRSEQ_DRIVER=y
   ap_power_drv.meteorlake:
     extra_dtc_overlay_files:
     - boards/native_sim.overlay
     - boards/meteorlake.dts
     extra_configs:
     - CONFIG_TEST_AP_POWER_MTL=y
+    - CONFIG_EMUL_POWER_SIGNALS=y
+    - CONFIG_X86_NON_DSX_PWRSEQ_MTL=y
+    - CONFIG_AP_PWRSEQ_S0IX=y
+    - CONFIG_AP_X86_INTEL_MTL=y
+    - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S4=y
+    - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S5=y
+    - CONFIG_AP_PWRSEQ_DRIVER=y
+  ap_power_drv.meteorlake.rec:
+    extra_dtc_overlay_files:
+    - boards/native_sim.overlay
+    - boards/meteorlake.dts
+    extra_configs:
+    - CONFIG_TEST_AP_POWER_MTL=y
+    - CONFIG_TEST_AP_POWER_RECOVERY_MODE=y
     - CONFIG_EMUL_POWER_SIGNALS=y
     - CONFIG_X86_NON_DSX_PWRSEQ_MTL=y
     - CONFIG_AP_PWRSEQ_S0IX=y
