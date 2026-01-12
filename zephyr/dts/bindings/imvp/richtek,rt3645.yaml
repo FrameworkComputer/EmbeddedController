@@ -2,8 +2,24 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-description: Richtek IMVP chip
+description: Richtek RT3645 IMVP chip
 
 include: i2c-device.yaml
 
 compatible: "richtek,rt3645"
+
+properties:
+  enable-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      Power supply control for RT3645 (zephyr standard GPIO format)
+  update-data:
+    type: array
+    required: true
+    description: |
+      Array of RT3645_UPDATE_ENTRY() entries corresponding to [page, reg, val]
+  update-crc:
+    type: int
+    required: true
+    description: CRC value for validation of updated data. This value is data dependent.

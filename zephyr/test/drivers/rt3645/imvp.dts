@@ -8,5 +8,8 @@
 		compatible = "richtek,rt3645";
 		status = "okay";
 		reg = <0x20>;
+		enable-gpios = <&gpio0 27 GPIO_ACTIVE_HIGH>;
+		update-data = <0x24 0x54 0x02>;
+		update-crc = <0x12>;
 	};
 };

@@ -12,6 +12,8 @@
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/shell/shell.h>
 
+LOG_MODULE_REGISTER(imvp_rt3645, LOG_LEVEL_INF);
+
 #define DT_DRV_COMPAT richtek_rt3645
 
 #define RT3645_PAGE_INVALID 0xFF
@@ -22,13 +24,237 @@
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 	     "only one 'richtek,rt3645' compatible node may be present");
 
+/* Get raw data from devicetree */
+static const uint32_t raw_data[] = DT_PROP(DT_DRV_INST(0), update_data);
+static const uint8_t expected_crc = DT_PROP(DT_DRV_INST(0), update_crc);
+
 struct rt3645_data_t {
 	uint8_t cur_page;
 };
 
 struct rt3645_config_t {
 	struct i2c_dt_spec i2c;
+	struct gpio_dt_spec enable_gpio;
 };
+
+const struct rt3645_config_t *config;
+
+static struct rt3645_data_t data0 = {
+	.cur_page = RT3645_PAGE_INVALID,
+};
+
+static const struct rt3645_config_t config0 = {
+	.i2c = I2C_DT_SPEC_INST_GET(0),
+	.enable_gpio = GPIO_DT_SPEC_GET(DT_DRV_INST(0), enable_gpios),
+};
+
+static int rt3645_update(const struct device *dev);
+
+static int rt3645_init(const struct device *dev)
+{
+	config = dev->config;
+
+	return 0;
+}
+
+DEVICE_DT_INST_DEFINE(0, rt3645_init, NULL, &data0, &config0, POST_KERNEL,
+		      CONFIG_APPLICATION_INIT_PRIORITY, NULL);
+
+static const struct device *rt3645_dev = DEVICE_DT_GET(DT_DRV_INST(0));
+
+static int rt3645_apply_update_data(const struct device *dev)
+{
+	int rv = 0;
+	int prev_page = -1;
+	struct rt3645_info update_entries;
+
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		return -EINVAL;
+	}
+
+	/* Apply each register update from the raw_data array */
+	for (size_t i = 0; i < ARRAY_SIZE(raw_data); i++) {
+		/* Unpack each entry */
+		update_entries.page = (raw_data[i] >> 16) & 0xFF;
+		update_entries.reg = (raw_data[i] >> 8) & 0xFF;
+		update_entries.val = raw_data[i] & 0xFF;
+
+		if (prev_page != update_entries.page) {
+			/* Any new page write will need a delay of 1msec */
+			k_msleep(1);
+
+			/* Set the correct page */
+			rv = rt3645_set_page(dev, update_entries.page);
+			/* Return upon set page failure */
+			if (rv)
+				return rv;
+			prev_page = update_entries.page;
+		}
+
+		/* Write the register value */
+		rv = rt3645_write_reg(dev, update_entries.reg,
+				      update_entries.val);
+		/* Return upon write register failure */
+		if (rv)
+			return rv;
+
+		LOG_DBG("page:0x%x Reg:0x%x Data:0x%x ", update_entries.page,
+			update_entries.reg, update_entries.val);
+	}
+
+	return rv;
+}
+
+static int rt3645_crc_check(const struct device *dev)
+{
+	uint8_t crc_val;
+
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		return -EINVAL;
+	}
+
+	rt3645_set_page(dev, RT3645_PAGE_D);
+	rt3645_read_reg(dev, CRC_REG, &crc_val);
+
+	if (crc_val == expected_crc) {
+		LOG_DBG("Good CRC value - 0x%0x", crc_val);
+		return EC_SUCCESS;
+	}
+
+	LOG_ERR("CRC value - 0x%0x  not matching!", crc_val);
+	return -EINVAL;
+}
+
+static int rt3645_lock_nvm(const struct device *dev)
+{
+	int rv = 0;
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		return -EINVAL;
+	}
+
+	rt3645_set_page(dev, RT3645_PAGE_GLOBAL);
+
+	rv = rt3645_write_reg(dev, CONFIG_MODE_REG, LOCK_CODE1);
+
+	rv = rt3645_write_reg(dev, CONFIG_MODE_REG, LOCK_CODE2);
+
+	LOG_DBG("NVM Locked!");
+	return rv;
+}
+
+static int rt3645_nvm_program_status(const struct device *dev, int stat_bit)
+{
+	int retry_cnt, retry = 0;
+	int rv = 1;
+	uint8_t status_reg;
+
+	if ((stat_bit == NVM_RELOAD_STAT_BIT) || (stat_bit == NVM_STAT_BITS))
+		retry_cnt = 4;
+	if (stat_bit == NVM_PRGRM_FINISH_STAT_BIT)
+		retry_cnt = 20;
+	while (retry < retry_cnt) {
+		rt3645_set_page(dev, RT3645_PAGE_GLOBAL);
+		rv = rt3645_read_reg(dev, NVM_STAT_REG, &status_reg);
+
+		if (!rv) {
+			if (stat_bit == NVM_STAT_BITS) {
+				if (status_reg == 0xE0) {
+					LOG_DBG("Match to NVM_STAT");
+					return EC_SUCCESS;
+				}
+			} else {
+				if (status_reg & BIT(stat_bit)) {
+					LOG_DBG("NVM_Reload/Programming Done");
+					return EC_SUCCESS;
+				}
+			}
+			/* Status bit value is not as expected */
+			rv = -EINVAL;
+		}
+		retry++;
+
+		/* Delay before next read retrial */
+		k_msleep(1);
+	}
+
+	return rv;
+}
+
+static int rt3645_update(const struct device *dev)
+{
+	int rv = 0;
+	uint8_t reg_val = 0;
+
+	/* unlock configuration */
+	const uint8_t config_seq[] = { 0x24, 0x54, 0x02 };
+
+	/* Check NVM status and decide to progress */
+	if (rt3645_nvm_program_status(dev, NVM_RELOAD_STAT_BIT) != EC_SUCCESS)
+		return -EINVAL;
+
+	if (rt3645_set_cfg_mode(dev, config_seq, 3) != EC_SUCCESS) {
+		LOG_ERR("Unlock IMVP Failure");
+		return -EINVAL;
+	}
+
+	/* Delay of 1ms after setting config */
+	k_msleep(1);
+
+	/* Read ID */
+	rv = rt3645_read_reg(dev, PRODUCT_ID_REG, &reg_val);
+	if (rv) {
+		LOG_ERR("Read product id Failure");
+		goto lock_imvp;
+	}
+	if (reg_val != PRODUCT_ID) {
+		LOG_ERR("Wrong Product Id");
+		goto lock_imvp;
+	}
+	/* Delay of 1ms after reading product id */
+	k_msleep(1);
+
+	rv = rt3645_crc_check(dev);
+	if (!rv) {
+		LOG_INF(" No IMVP update needed");
+		goto lock_imvp;
+	}
+
+	rv = rt3645_apply_update_data(dev);
+	if (rv) {
+		LOG_ERR("Data update Failed");
+		goto lock_imvp;
+	}
+
+	/* Program  NVM */
+	rt3645_store_config(dev);
+	/* Wait for 800ms */
+	k_msleep(800);
+	rv = rt3645_nvm_program_status(dev, NVM_PRGRM_FINISH_STAT_BIT);
+	if (rv) {
+		LOG_ERR("NVM Programming Failed");
+		goto lock_imvp;
+	}
+
+	/* Restore NVM */
+	rt3645_load_config(dev);
+	/* Wait for 100ms */
+	k_msleep(100);
+	rv = rt3645_nvm_program_status(dev, NVM_STAT_BITS);
+	if (rv) {
+		LOG_ERR("NVM Relaoding Failed");
+		goto lock_imvp;
+	}
+
+	rv = rt3645_crc_check(dev);
+	if (rv)
+		LOG_ERR("CRC Match Failed");
+
+lock_imvp:
+	if (rt3645_lock_nvm(dev))
+		LOG_ERR("Lock_Faied");
+
+	return rv;
+}
 
 int rt3645_read_reg(const struct device *dev, uint8_t reg, uint8_t *val)
 {
@@ -87,22 +313,12 @@ int rt3645_store_config(const struct device *dev)
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		return -EINVAL;
 	}
+
+	rt3645_set_page(dev, RT3645_PAGE_GLOBAL);
 	return rt3645_write_reg(dev, NVM_PRGRM_CTRL_REG, NVM_PRGRM_DAT);
 }
 
-static struct rt3645_data_t data0 = {
-	.cur_page = RT3645_PAGE_INVALID,
-};
-
-const static struct rt3645_config_t config0 = {
-	.i2c = I2C_DT_SPEC_GET(DT_DRV_INST(0)),
-};
-
-DEVICE_DT_INST_DEFINE(0, NULL, NULL, &data0, &config0, POST_KERNEL,
-		      CONFIG_APPLICATION_INIT_PRIORITY, NULL);
-
 #ifdef CONFIG_IMVP_RT3645_CONSOLE
-static const struct device *rt3645_dev = DEVICE_DT_GET(DT_DRV_INST(0));
 
 static int cmd_rt3645_enter_cfg_mode(const struct shell *sh, size_t argc,
 				     char **argv)
@@ -246,6 +462,35 @@ static int cmd_rt3645_set_regs(const struct shell *sh, size_t argc, char **argv)
 	return rv;
 }
 
+static int cmd_rt3645_update(const struct shell *sh, size_t argc, char **argv)
+{
+	chipset_force_shutdown(CHIPSET_SHUTDOWN_G3);
+	LOG_INF("System shutting_down for IMVP update");
+
+	/* Reasonable delay for system to shutdown */
+	k_msleep(100);
+
+	gpio_pin_configure_dt(&config->enable_gpio, GPIO_OUTPUT);
+
+	gpio_pin_set_dt(&config->enable_gpio, 1);
+
+	/* Reasonable delay for voltage to stabilize */
+	k_msleep(100);
+
+	if (gpio_pin_get_dt(&config->enable_gpio) == 1) {
+		/* Start Updation */
+		if (!rt3645_update(rt3645_dev))
+			LOG_INF("IMVP Update Success!");
+		else
+			LOG_ERR("IMVP update Failed!");
+	}
+
+	gpio_pin_set_dt(&config->enable_gpio, 0);
+	LOG_INF("Press powerbtn/Command to boot system");
+
+	return EC_SUCCESS;
+}
+
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_imvp_cmds,
 	SHELL_CMD_ARG(cfg_mode, NULL,
@@ -269,6 +514,7 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 	SHELL_CMD(dump_regs, NULL,
 		  "Dump registers, content depends on current page\n",
 		  cmd_rt3645_dump_regs),
+	SHELL_CMD(update, NULL, "Update IMVP controller\n", cmd_rt3645_update),
 	SHELL_SUBCMD_SET_END /* Array terminated. */
 );
 
