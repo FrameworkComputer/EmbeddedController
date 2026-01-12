@@ -190,6 +190,8 @@ class CompareBuilds:
     """
 
     def __init__(self, temp_dir, ref1, ref2, executor, sequential):
+        self.logger = logging.getLogger(self.__class__.__name__)
+
         self.checkouts = []
         self.checkouts.append(CheckoutConfig(temp_dir, ref1))
         self.checkouts.append(CheckoutConfig(temp_dir, ref2))
@@ -219,6 +221,19 @@ class CompareBuilds:
         if not self._sequential and self._executor.wait():
             raise OSError(message)
 
+    def _find_zephyrproject_modules(self, modules_topdir):
+        module_tuples = []
+        for module_type in os.listdir(modules_topdir):
+            module_type_dir = os.path.join(modules_topdir, module_type)
+            if not os.path.isdir(module_type_dir):
+                continue
+            for module in os.listdir(module_type_dir):
+                module_dir = os.path.join(module_type_dir, module)
+                if os.path.isdir(module_dir):
+                    module_tuple = (module, module_dir)
+                    module_tuples.append(module_tuple)
+        return module_tuples
+
     def do_checkouts(self, zephyr_base, module_paths):
         """Checkout all EC sources at a specific commit.
 
@@ -226,6 +241,7 @@ class CompareBuilds:
             zephyr_base: The location of the zephyr sources.
             module_paths: The location of the module sources.
         """
+        self.logger.info("Clone all repos")
         for checkout in self.checkouts:
             git_source_path = ""
             for module_name, git_source in module_paths.items():
@@ -272,14 +288,15 @@ class CompareBuilds:
 
         self._do_git_wait("Failed to clone one or more repositories")
 
+        self.logger.info("Checkout all repos")
         for checkout in self.checkouts:
-            flattened_module_list = []
+            has_zephyrproject = False
             for module_name, git_source in module_paths.items():
                 is_flattened_module = (
                     "zephyrproject" in pathlib.Path(git_source).parts
                 )
                 if is_flattened_module:
-                    flattened_module_list.append(module_name)
+                    has_zephyrproject = True
                     continue
                 dst_dir = checkout.modules_dir / module_name
                 git_ref = checkout.full_ref if module_name == "ec" else "HEAD"
@@ -291,7 +308,7 @@ class CompareBuilds:
                         git_ref=git_ref,
                     )
                 )
-            if flattened_module_list:
+            if has_zephyrproject:
                 self._do_git_work(
                     func=functools.partial(
                         _git_do_checkout,
@@ -300,28 +317,6 @@ class CompareBuilds:
                         git_ref="HEAD",
                     )
                 )
-                zephyrproject_checkout = (
-                    checkout.modules_dir.parent / "zephyrproject"
-                )
-                for module_type in os.listdir(zephyrproject_checkout):
-                    module_type_dir = os.path.join(
-                        zephyrproject_checkout, module_type
-                    )
-                    if not os.path.isdir(module_type_dir):
-                        continue
-                    for module in os.listdir(module_type_dir):
-                        module_dir = os.path.join(module_type_dir, module)
-                        if module in flattened_module_list:
-                            print(
-                                "Copying module %s to %s",
-                                module,
-                                checkout.modules_dir / module,
-                            )
-                            shutil.copytree(
-                                module_dir,
-                                checkout.modules_dir / module,
-                                dirs_exist_ok=True,
-                            )
 
             self._do_git_work(
                 func=functools.partial(
@@ -333,6 +328,47 @@ class CompareBuilds:
             )
 
         self._do_git_wait("Failed to checkout one or more repositories")
+
+        flattened_module_list = []
+        for module_name, git_source in module_paths.items():
+            is_flattened_module = (
+                "zephyrproject" in pathlib.Path(git_source).parts
+            )
+            if is_flattened_module:
+                flattened_module_list.append(module_name)
+
+        # Upstream zephyr modules are all included in the "zephyrproject"
+        # repository.  These need to be copied from "./zephyrproject/modules"
+        # to "./modules" in the working directory.
+        if flattened_module_list:
+            self.logger.info("Copy zephyrproject modules to build area")
+            for checkout in self.checkouts:
+                zephyrproject_modules_topdir = (
+                    checkout.modules_dir.parent / "zephyrproject" / "modules"
+                )
+
+                zephyrmodule_tuples = self._find_zephyrproject_modules(
+                    zephyrproject_modules_topdir
+                )
+
+                for zephyr_module_name, module_dir in zephyrmodule_tuples:
+                    legacy_repo_name = (
+                        zmake.modules.legacy_repo_from_zephyrproject(
+                            zephyr_module_name
+                        )
+                    )
+
+                    if legacy_repo_name in flattened_module_list:
+                        self.logger.info(
+                            "Copying module %s to %s",
+                            zephyr_module_name,
+                            checkout.modules_dir / legacy_repo_name,
+                        )
+                        shutil.copytree(
+                            module_dir,
+                            checkout.modules_dir / legacy_repo_name,
+                            dirs_exist_ok=True,
+                        )
 
     def _compare_binaries(self, project):
         output_path = (
@@ -369,7 +405,7 @@ class CompareBuilds:
         bin1_path = pathlib.Path(bin_output1)
         bin2_path = pathlib.Path(bin_output2)
         if not os.path.isfile(bin1_path) or not os.path.isfile(bin2_path):
-            logging.error(
+            self.logger.error(
                 "Zephyr binary '%s' not found for project %s",
                 bin_name,
                 project.config.project_name,
@@ -431,7 +467,7 @@ class CompareBuilds:
             data2 = data2.replace(self.checkouts[1].full_ref, "")
             return data1 == data2
         except FileNotFoundError as err:
-            logging.error(
+            self.logger.error(
                 "Zephyr build-%s %s file not found for project %s: %s",
                 build_mode,
                 file,

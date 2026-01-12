@@ -56,6 +56,34 @@ module_name_overrides = {
     "hal_egis": "egis",
 }
 
+
+def legacy_repo_from_zephyrproject(zephyrproject_module):
+    """Given a flattened zephyr module name, return the legacy repository
+    name.
+
+    Flattened zephyr module names are specified as a directory found under
+       third_party/zephyrproject/modules/hal
+       third_party/zephyrproject/modules/lib
+
+    Example: flattened zephyr module zephyrproject/modules/hal/stm32, pass
+    in "stm32" as the module name, this routine returns "hal_stm32".
+
+    Args:
+        zephyrproject_module: The module name found under
+            third_party/zephyrproject/modules/hal or
+            third_party/zephyrproject/modules/lib
+    Return:
+        Returns the legacy repository under third_party/zephyr/ that maps
+        to the specified zephyrproject_module.
+        If there is no valid mapping, returns zephyrproject_module unchanged.
+    """
+    for key, value in module_name_overrides.items():
+        if value == zephyrproject_module:
+            return key
+
+    return zephyrproject_module
+
+
 known_modules = {
     # TODO(b/384581513): boringssl is not officially recognized by Zephyr,
     # since it doesn't have a zephyr/module.yaml. That doesn't prevent us from
