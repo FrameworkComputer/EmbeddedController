@@ -71,6 +71,16 @@ SPECIAL_BOARDS = [
     "ocelotrvp-ite",
 ]
 
+# List of boards that we run compare-builds.
+COMPARE_BUILDS_BOARDS = [
+    # Zephyr EC build
+    "ocelotrvp-ite",
+    # ISH build
+    "ocelotrvp-ish",
+    # Fingerprint build
+    "bloonchipper",
+]
+
 BINARY_SIZE_REGIONS = [
     "RO_FLASH",
     "RO_RAM",
@@ -259,6 +269,33 @@ def build_host_utils(opts, platform_ec, env, extra_env):
     )
 
 
+def build_compare_builds():
+    """Runs compare-builds a select set of targets"""
+    env = os.environ.copy()
+    env.update(init_toolchain())
+    env.update(
+        {
+            "PYTHONPATH": str(ZEPHYR_DIR / "zmake"),
+        }
+    )
+
+    # Run compare-builds at the same git reference.  This forces the
+    # compare-builds step to compile only, skipping the firmware binary
+    # comparison.
+    cmd = ["zmake", "-D", "compare-builds", "--ref1", "HEAD", "--ref2", "HEAD"]
+    for board in COMPARE_BUILDS_BOARDS:
+        cmd.append(board)
+
+    log_cmd(cmd)
+    subprocess.run(
+        cmd,
+        cwd=ZEPHYR_DIR,
+        check=True,
+        stdin=subprocess.DEVNULL,
+        env=env,
+    )
+
+
 def build(opts):
     """Builds all Zephyr firmware targets"""
     metric_list = firmware_pb2.FwBuildMetricList()  # pylint: disable=no-member
@@ -277,6 +314,8 @@ def build(opts):
         build_host_utils(opts, platform_ec, env, {})
         build_host_utils(opts, platform_ec, env, {"TEST_ASAN": "y"})
         build_host_utils(opts, platform_ec, env, {"TEST_MSAN": "y"})
+        # Verify compare-builds isn't fundamentally broken
+        build_compare_builds()
 
     # Start with a clean build environment
     cmd = ["make", "clobber"]
