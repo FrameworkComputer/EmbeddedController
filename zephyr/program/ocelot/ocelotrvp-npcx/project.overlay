@@ -53,6 +53,7 @@ tach_fan0: &tach1 {};
 #include "../rvp_fans.dtsi"
 #include "../rvp_temp_sensors.dtsi"
 #include "../rvp_ioex_gpio.dtsi"
+#include "../rvp_imvp.dtsi"
 #include <ite/it8801-common-cfg.dtsi>
 
 &it8801_mfd {
@@ -123,4 +124,8 @@ tach_fan0: &tach1 {};
 
 &dsp_service {
 	int-gpios = <&gpiod 0 (GPIO_ACTIVE_LOW | GPIO_VOLTAGE_1P8)>;
+};
+
+&imvp_rt3645 {
+	enable-gpios = <&gpio4 1 GPIO_ACTIVE_HIGH>;
 };

@@ -34,6 +34,11 @@ i2c_port_pd1: &i2c_smb_1 {
 };
 
 #include "../rvp_i2c.dtsi"
+#include "../rvp_imvp.dtsi"
+
+&imvp_rt3645 {
+	enable-gpios = <MCHP_GPIO_DECODE_226 GPIO_ACTIVE_HIGH>;
+};
 
 /delete-node/ &i2c_named_i2c_port_pd2;
 /delete-node/ &i2c_named_i2c_port_ish;

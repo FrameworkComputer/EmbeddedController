@@ -43,6 +43,11 @@
 	label = "I2C_PORT_CHARGER";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 
+	imvp_rt3645: richtek-imvp@20 {
+		compatible = "richtek,rt3645";
+		status = "okay";
+		reg = <0x20>;
+	};
 	charger: raa489@9 {
 		compatible = "intersil,isl9241";
 		status = "okay";
