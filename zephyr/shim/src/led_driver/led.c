@@ -469,7 +469,6 @@ void led_control(enum ec_led_id led_id, enum ec_led_state state)
 
 	if (state == LED_STATE_RESET) {
 		led_auto_control(led_id, 1);
-		led_set_all_colors();
 		return;
 	}
 
