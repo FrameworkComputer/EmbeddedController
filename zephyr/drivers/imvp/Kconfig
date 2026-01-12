@@ -15,4 +15,9 @@ config IMVP_RT3645_CONSOLE
 	help
 	  Support accessing RT3645 IMVP registers through console commands.
 
+config IMVP_FACTORY_UPDATE
+	bool "Support imvp update in factory"
+	depends on AP_PWRSEQ_DRIVER
+	help
+	  Support update of RT3645 IMVP registers during system boot.
 endif

@@ -6,6 +6,10 @@
 #include "chipset.h"
 #include "rt3645.h"
 
+#ifdef CONFIG_AP_PWRSEQ_DRIVER
+#include <ap_power/ap_pwrseq_sm.h>
+#endif
+
 #include <ctype.h>
 #include <stdlib.h>
 
@@ -48,11 +52,27 @@ static const struct rt3645_config_t config0 = {
 	.enable_gpio = GPIO_DT_SPEC_GET(DT_DRV_INST(0), enable_gpios),
 };
 
+#ifdef CONFIG_IMVP_FACTORY_UPDATE
+static void imvp_init_cb(const struct device *dev,
+			 const enum ap_pwrseq_state entry,
+			 const enum ap_pwrseq_state exit);
+#endif
+
 static int rt3645_update(const struct device *dev);
 
 static int rt3645_init(const struct device *dev)
 {
 	config = dev->config;
+
+#if defined(CONFIG_IMVP_FACTORY_UPDATE)
+	static struct ap_pwrseq_state_callback ap_pwrseq_imvp_cb;
+	const struct device *ap_pwrseq_dev = ap_pwrseq_get_instance();
+
+	ap_pwrseq_imvp_cb.cb = imvp_init_cb;
+	ap_pwrseq_imvp_cb.states_bit_mask = BIT(AP_POWER_STATE_G3);
+	ap_pwrseq_register_state_exit_callback(ap_pwrseq_dev,
+					       &ap_pwrseq_imvp_cb);
+#endif
 
 	return 0;
 }
@@ -255,6 +275,34 @@ lock_imvp:
 
 	return rv;
 }
+
+static void rt3645_initiate_update(const struct device *dev)
+{
+	gpio_pin_configure_dt(&config->enable_gpio, GPIO_OUTPUT);
+	gpio_pin_set_dt(&config->enable_gpio, 1);
+
+	/* Reasonable delay for voltage to stabilize */
+	k_msleep(30);
+
+	if (gpio_pin_get_dt(&config->enable_gpio) == 1) {
+		/* Start Updation */
+		if (!rt3645_update(rt3645_dev))
+			LOG_INF("IMVP Update Success! ");
+		else
+			LOG_ERR("IMVP update Failed! ");
+	}
+}
+
+#if defined(CONFIG_IMVP_FACTORY_UPDATE)
+static void imvp_init_cb(const struct device *dev,
+			 const enum ap_pwrseq_state entry,
+			 const enum ap_pwrseq_state exit)
+{
+	if (entry == AP_POWER_STATE_S5) {
+		rt3645_initiate_update(rt3645_dev);
+	}
+}
+#endif
 
 int rt3645_read_reg(const struct device *dev, uint8_t reg, uint8_t *val)
 {
@@ -470,23 +518,11 @@ static int cmd_rt3645_update(const struct shell *sh, size_t argc, char **argv)
 	/* Reasonable delay for system to shutdown */
 	k_msleep(100);
 
-	gpio_pin_configure_dt(&config->enable_gpio, GPIO_OUTPUT);
-
-	gpio_pin_set_dt(&config->enable_gpio, 1);
-
-	/* Reasonable delay for voltage to stabilize */
-	k_msleep(100);
-
-	if (gpio_pin_get_dt(&config->enable_gpio) == 1) {
-		/* Start Updation */
-		if (!rt3645_update(rt3645_dev))
-			LOG_INF("IMVP Update Success!");
-		else
-			LOG_ERR("IMVP update Failed!");
-	}
+	rt3645_initiate_update(rt3645_dev);
 
 	gpio_pin_set_dt(&config->enable_gpio, 0);
-	LOG_INF("Press powerbtn/Command to boot system");
+
+	LOG_INF("Press powerbutton/enter 'powerbtn' to boot system");
 
 	return EC_SUCCESS;
 }
