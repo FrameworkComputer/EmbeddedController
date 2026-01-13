@@ -36,7 +36,7 @@
 
 		power-state-discharge {
 			charge-state = "LED_PWRS_DISCHARGE";
-			batt-lvl = <BATTERY_LEVEL_LOW BATTERY_LEVEL_FULL>;
+			batt-lvl = <5 BATTERY_LEVEL_FULL>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
@@ -49,10 +49,11 @@
 
 		power-state-discharge-batt-low {
 			charge-state = "LED_PWRS_DISCHARGE";
-			batt-lvl = <BATTERY_LEVEL_EMPTY 8>;
+			batt-lvl = <BATTERY_LEVEL_EMPTY 4>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
+
 				transition = "LED_TRANSITION_LINEAR";
 
 				/* Amber slow flashing */
