@@ -13,6 +13,7 @@
 #include "ec_commands.h"
 #include "fpsensor/fpsensor.h"
 #include "fpsensor/fpsensor_auth_commands.h"
+#include "fpsensor/fpsensor_btn_ign_out.h"
 #include "fpsensor/fpsensor_console.h"
 #include "fpsensor/fpsensor_crypto.h"
 #include "fpsensor/fpsensor_detect.h"
@@ -437,6 +438,7 @@ extern "C" void fp_task(void)
 				fp_sensor_low_power();
 			}
 		}
+		fp_btn_ign_out::update(global_context.sensor_mode);
 	}
 #else /* !HAVE_FP_PRIVATE_DRIVER */
 	while (1) {

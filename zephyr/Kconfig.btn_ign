@@ -18,3 +18,20 @@ config PLATFORM_EC_BTN_IGN_IN_DELAY_MS
 	depends on PLATFORM_EC_BTN_IGN_IN
 	help
 	  Time in milliseconds to ignore power button press if BTN_IGN is high.
+
+DT_ALIAS_BTN_IGN_OUT := gpio-btn-ign-out
+
+config PLATFORM_EC_FINGERPRINT_BTN_IGN_OUT
+	bool "Enable power button ignore output"
+	default y
+	depends on $(dt_alias_enabled,$(DT_ALIAS_BTN_IGN_OUT))
+	help
+	  Enables setting power button ignore state by GPIO.
+	  Enabled if the gpio-btn-ign-out alias is defined in the DT.
+
+config PLATFORM_EC_FINGERPRINT_BTN_IGN_OUT_DELAY_MS
+	int "Power button ignore deactivation delay (ms)"
+	default 2000
+	depends on PLATFORM_EC_FINGERPRINT_BTN_IGN_OUT
+	help
+	  Delay in milliseconds before deactivating the power button ignore signal.

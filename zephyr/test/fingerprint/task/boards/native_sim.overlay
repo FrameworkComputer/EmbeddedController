@@ -50,6 +50,10 @@
 		div_highside: div_highside {
 			gpios = <&gpio0 2 GPIO_OUTPUT_HIGH>;
 		};
+
+		gpio_btn_ign_out: gpio_btn_ign_out {
+			gpios = <&gpio0 3 GPIO_OUTPUT_INACTIVE>;
+		};
 	};
 
 	cros_flash: cros-flash {
@@ -89,7 +93,7 @@
 };
 
 &gpio0 {
-	ngpios = <3>;
+	ngpios = <4>;
 };
 
 &flash0 {

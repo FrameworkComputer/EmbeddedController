@@ -80,4 +80,10 @@ config LINK_TEST_SUITE_FINGERPRINT_FP_INFO
 	  Link and execute fingerprint subsystem tests that focus
 	  on FP_INFO host command.
 
+config LINK_TEST_SUITE_FINGERPRINT_BTN_IGN_OUT
+	bool "Link fingerprint btn ign out tests"
+	help
+	  Link and execute fingerprint subsystem tests that focus
+	  on btn ign out.
+
 source "Kconfig.zephyr"
