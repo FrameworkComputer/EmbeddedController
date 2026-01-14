@@ -221,7 +221,6 @@
 #define CONFIG_USB_PID 0x504F
 /* Device version of product. */
 #define CONFIG_USB_BCD_DEV 0x0000
-#define CONFIG_USB_PD_XID 0
 
 /*
  * These stack sizes were determined using "make analyzestack" for brya
