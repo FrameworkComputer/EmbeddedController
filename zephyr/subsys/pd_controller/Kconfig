@@ -113,6 +113,14 @@ config PDC_POWER_MGMT_POWER_STATE_DEBOUNCE_PERIOD_MS
 	  Used to set the delayable work handles in the power state hooks for
 	  different platform.
 
+config PDC_POWER_MGMT_LOG_SUBSTATES
+	bool "Print substate names in log"
+	depends on USB_PDC_POWER_MGMT
+	default y
+	help
+	  Print the names of active substates in print_current_pdc_state()
+	  Disable this to save some flash space.
+
 if PDC_POWER_MGMT_USB_MUX
 config USB_MUX_SYS_INIT_PRIORITY
 	int "USB mux module init priority"
