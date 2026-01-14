@@ -461,9 +461,13 @@ static bool check_comms_suspended(void)
 static void print_current_state(struct pdc_data_t *data)
 {
 	struct pdc_config_t const *cfg = data->dev->config;
+	enum state_t s = get_state(data);
 
-	LOG_INF("TI%d: %s", cfg->connector_number,
-		state_names[get_state(data)]);
+	if (s == ST_IDLE || s == ST_TASK_WAIT) {
+		LOG_DBG("TI%d: %s", cfg->connector_number, state_names[s]);
+	} else {
+		LOG_INF("TI%d: %s", cfg->connector_number, state_names[s]);
+	}
 }
 
 static void call_cci_event_cb(struct pdc_data_t *data)
