@@ -6,6 +6,7 @@
 / {
 	aliases {
 		gpio-wp = &gpio_ec_flash_wp_odl;
+		gpio-btn-ign-in = &gpio_fp_apm;
 	};
 
 	/*
