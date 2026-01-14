@@ -28,6 +28,7 @@
 		bmi3xx-int = &lid_accel;
 		lsm6dsm-int = &lid_accel;
 		tcs3400-int = &als_clear;
+		gpio-btn-ign-in = &gpio_usb_fp_btn_ign;
 	};
 
 	/* Rotation matrix used by drivers. */
@@ -343,6 +344,9 @@
 		};
 		gpio_ec_pac_en_odl: ec_pac_en_odl {
 			gpios = <&gpioc 5 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_usb_fp_btn_ign: usb_fp_btn_ign {
+			gpios = <&gpioe 1 (GPIO_INPUT)>;
 		};
 		gpio_ec_pogo_low_pwr_sw: ec_pogo_low_pwr_sw{
 			gpios = <&gpioe 2 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
