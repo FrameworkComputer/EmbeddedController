@@ -3043,9 +3043,6 @@ static enum smf_state_result pdc_snk_attached_run(void *obj)
 static void pdc_send_cmd_start_entry(void *obj)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
-	const struct pdc_config_t *const config = port->dev->config;
-
-	PRINT_STATE(config->connector_num, get_pdc_state(port));
 
 	port->send_cmd_return_state = port->last_state;
 	port->send_cmd.wait_counter = 0;
@@ -3315,9 +3312,6 @@ static enum smf_state_result pdc_send_cmd_start_run(void *obj)
 static void pdc_send_cmd_wait_entry(void *obj)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
-	const struct pdc_config_t *const config = port->dev->config;
-
-	PRINT_STATE(config->connector_num, get_pdc_state(port));
 
 	port->send_cmd.wait_counter = 0;
 	port->send_cmd.resend_counter = 0;
