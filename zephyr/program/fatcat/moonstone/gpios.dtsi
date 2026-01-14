@@ -6,6 +6,7 @@
 / {
 	aliases {
 		gpio-wp = &gpio_ec_wp_od;
+		gpio-btn-ign-in = &gpio_fp_btn_ign;
 	};
 
 	named-adc-channels {
@@ -77,6 +78,9 @@
 		};
 		gpio_amp_mute_odl: amp_mute_odl {
 			gpios = <&gpioh 0 (GPIO_OUTPUT_LOW | GPIO_OPEN_DRAIN)>;
+		};
+		gpio_fp_btn_ign: fp_btn_ign {
+			gpios = <&gpioh 2 (GPIO_INPUT)>;
 		};
 		gpio_ec_wp_od: ec_wp_od {
 			gpios = <&gpiob 5 (GPIO_INPUT | GPIO_ACTIVE_HIGH)>;
