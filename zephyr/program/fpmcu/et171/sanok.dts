@@ -4,6 +4,7 @@
  */
 
 #include "common.dtsi"
+#include "btn_ign.dtsi"
 
 #define EGIS630_DEFAULT_IMAGE_PROPS \
 	width = <80>; \
