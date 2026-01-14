@@ -136,8 +136,6 @@ static void keyboard_input_cb(struct input_event *evt, void *user_data)
 		mkbp_data[col] &= ~BIT(row);
 	}
 
-	LOG_HEXDUMP_INF(mkbp_data, sizeof(mkbp_data), "mkbp_data");
-
 	mkbp_keyboard_add(mkbp_data);
 #endif
 }
