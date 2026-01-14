@@ -260,3 +260,22 @@ ZTEST(isl9241_driver, test_prochot_dump)
 	 */
 	print_charger_prochot(CHARGER_SOLO);
 }
+
+#ifdef CONFIG_PLATFORM_EC_CHARGER_SET_ACOKREF
+ZTEST_F(isl9241_driver, test_acokref)
+{
+	const int pdo_mv[] = { 5000, 15000 };
+	const uint16_t acokref_reg_val[] = { ISL9241_MV_TO_ACOK_REFERENCE(0),
+					     ISL9241_MV_TO_ACOK_REFERENCE(
+						     11700) };
+	uint16_t reg_val = 0;
+
+	for (int i = 0; i < ARRAY_SIZE(acokref_reg_val); i++) {
+		zassert_ok(charger_set_acokref(CHARGER_SOLO, pdo_mv[i]));
+		reg_val = isl9241_emul_peek(fixture->isl9241_emul,
+					    ISL9241_REG_ACOK_REFERENCE);
+
+		zassert_equal(acokref_reg_val[i], reg_val);
+	}
+}
+#endif /* CONFIG_PLATFORM_EC_CHARGER_SET_ACOKREF */

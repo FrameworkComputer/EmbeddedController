@@ -166,6 +166,9 @@ struct charger_drv {
 
 	/* Dumps prochot status information */
 	void (*dump_prochot)(int chgnum);
+
+	/* Set ACOK Ref */
+	enum ec_error_list (*set_acokref)(int chgnum, int mv);
 };
 
 /* Value when charger doesn't require a minimum voltage. */
@@ -314,6 +317,15 @@ enum ec_error_list charger_get_vsys_voltage(int port, int *voltage);
  * @return EC_SUCCESS upon success, with mv populated.
  */
 enum ec_error_list charger_get_minimum_charging_mv(int chgnum, uint32_t *mv);
+
+/**
+ * @brief Set ACOK REF of charger IC
+ *
+ * @param mv Requested voltage in mV
+ *
+ * @return EC_SUCCESS upon success
+ */
+enum ec_error_list charger_set_acokref(int chgnum, int mv);
 
 /* Custom board function to discharge battery when on AC power */
 int board_discharge_on_ac(int enable);

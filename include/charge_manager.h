@@ -346,6 +346,14 @@ void charge_manager_source_port(int port, int enable);
  */
 int charge_manager_get_source_pdo(const uint32_t **src_pdo, const int port);
 
+/**
+ * @brief  Set ACOK REF of charger IC
+ *
+ * @param pdo_mv Requested voltage in mV
+ * @return EC_SUCCESS upon success
+ */
+int charge_manager_set_acokref(int pdo_mv);
+
 /* Board-level callback functions */
 
 /**

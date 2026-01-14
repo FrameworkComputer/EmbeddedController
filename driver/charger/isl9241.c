@@ -1077,6 +1077,31 @@ static enum ec_error_list isl9241_enable_bypass_mode(int chgnum, bool enable)
 }
 #endif /* CONFIG_CHARGER_BYPASS_MODE */
 
+static int pdo_mv_to_acokref_mv(int pdo_mv)
+{
+	if (pdo_mv == 5000) {
+		/* For 5V, the threshold is a fixed 3.6V, which is the default
+		 * used by the ISL9241 if ACOKREF is set to 0.
+		 */
+		return 0;
+	}
+	/* Calculation taken from  b/462138011 */
+	int vNew = (pdo_mv * 95) / 100;
+	int vValid = -500;
+	int vSinkPD_min1 = vNew - 750 + vValid;
+	int vSinkDisconnectPD_min = (vSinkPD_min1 * 9) / 10;
+	return vSinkDisconnectPD_min;
+}
+
+enum ec_error_list isl9241_set_acokref(int chgnum, int mv)
+{
+	int acokref_mv = pdo_mv_to_acokref_mv(mv);
+
+	CPRINTS("Setting ACOKREF to %d mv (PDO %d mV)", acokref_mv, mv);
+	return isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
+			     ISL9241_MV_TO_ACOK_REFERENCE(acokref_mv));
+}
+
 /*****************************************************************************/
 /* ISL-9241 initialization */
 static void isl9241_init(int chgnum)
@@ -1298,5 +1323,8 @@ const struct charger_drv isl9241_drv = {
 #endif
 #ifdef CONFIG_CHARGER_DUMP_PROCHOT
 	.dump_prochot = &isl9241_dump_prochot_status,
+#endif
+#ifdef CONFIG_PLATFORM_EC_CHARGER_SET_ACOKREF
+	.set_acokref = &isl9241_set_acokref,
 #endif
 };

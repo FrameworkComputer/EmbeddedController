@@ -505,6 +505,23 @@ test_mockable enum ec_error_list charger_get_minimum_charging_mv(int chgnum,
 }
 #endif /* CONFIG_PLATFORM_EC_CHARGER_HYBRID_POWER_BOOST */
 
+enum ec_error_list charger_set_acokref(int chgnum, int mv)
+{
+	if (chgnum < 0) {
+		return EC_ERROR_INVAL;
+	}
+
+	if (chgnum >= board_get_charger_chip_count()) {
+		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
+		return EC_ERROR_INVAL;
+	}
+
+	if (!chg_chips[chgnum].drv->set_acokref)
+		return EC_ERROR_UNIMPLEMENTED;
+
+	return chg_chips[chgnum].drv->set_acokref(chgnum, mv);
+}
+
 enum ec_error_list charger_set_voltage(int chgnum, int voltage)
 {
 	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {

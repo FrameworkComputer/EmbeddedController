@@ -1164,6 +1164,14 @@ config PLATFORM_EC_PRECHARGE_DELAY_MS
 	  at precharge.
 endif
 
+config PLATFORM_EC_CHARGER_SET_ACOKREF
+	bool "Set the charger ACOK reference voltage"
+	default n
+	help
+	  Instructs the charge manager to set the ACOK reference voltage
+	  in the charging IC prior to enaling the sink path from any
+	  source.
+
 rsource "drivers/sm5803/Kconfig.sm5803"
 
 endif # PLATFORM_EC_CHARGER
