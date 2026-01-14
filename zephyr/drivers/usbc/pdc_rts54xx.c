@@ -569,8 +569,12 @@ static void print_current_state(struct pdc_data_t *data)
 		LOG_INF("RTK%d: %s %s %d", cfg->connector_number,
 			state_names[st], cmd_names[data->cmd],
 			data->error_recovery_counter);
-	} else {
+	} else if (st == ST_DISABLE || st == ST_SUSPENDED || st == ST_INIT) {
 		LOG_INF("RTK%d: %s", cfg->connector_number,
+			state_names[get_state(data)]);
+	} else {
+		/* IDLE, PING_STATUS, READ */
+		LOG_DBG("RTK%d: %s", cfg->connector_number,
 			state_names[get_state(data)]);
 	}
 }
