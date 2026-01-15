@@ -33,6 +33,14 @@ int mpu_lock_ro_flash(void);
 int mpu_lock_rw_flash(void);
 
 #ifdef CONFIG_PLATFORM_EC_ROLLBACK_MPU_PROTECT
+/**
+ * @brief Protects or unprotects the rollback region readback.
+ *
+ * @param lock Non-zero to lock (protect), 0 to unlock (unprotect).
+ *
+ * @retval 0 Success.
+ * @retval <0 Error occurred.
+ */
 int mpu_lock_rollback(int lock);
 #endif
 
