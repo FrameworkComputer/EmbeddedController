@@ -1,0 +1,399 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<vif:VIF xmlns:opt="http://usb.org/VendorInfoFileOptionalContent.xsd" xmlns:vif="http://usb.org/VendorInfoFile.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+ <vif:VIF_Specification>3.36</vif:VIF_Specification>
+ <vif:VIF_App>
+  <vif:Vendor>Teledyne LeCroy</vif:Vendor>
+  <vif:Name>USB Compliance Suite</vif:Name>
+  <vif:Version>8.31.1240</vif:Version>
+ </vif:VIF_App>
+ <vif:Vendor_Name>Google</vif:Vendor_Name>
+ <vif:Model_Part_Number>Sapphire</vif:Model_Part_Number>
+ <vif:Product_Revision>0</vif:Product_Revision>
+ <vif:TID>0</vif:TID>
+ <vif:VIF_Product_Type value="0">Port product</vif:VIF_Product_Type>
+ <vif:Certification_Type value="0">End Product</vif:Certification_Type>
+ <vif:Component>
+  <vif:Port_Label>0</vif:Port_Label>
+  <vif:Connector_Type value="2">USB Type-C</vif:Connector_Type>
+  <vif:USB4_Supported value="false">No</vif:USB4_Supported>
+  <vif:USB_PD_Support value="true">Yes</vif:USB_PD_Support>
+  <vif:PD_Port_Type value="4">DRP</vif:PD_Port_Type>
+  <vif:Type_C_State_Machine value="2">DRP</vif:Type_C_State_Machine>
+  <vif:Port_Battery_Powered value="true">Yes</vif:Port_Battery_Powered>
+  <vif:BC_1_2_Support value="0">None</vif:BC_1_2_Support>
+  <vif:Captive_Cable value="false">No</vif:Captive_Cable>
+  <vif:PD_Spec_Revision_Major value="3">3</vif:PD_Spec_Revision_Major>
+  <vif:PD_Spec_Revision_Minor value="1">1</vif:PD_Spec_Revision_Minor>
+  <vif:PD_Spec_Version_Major value="1">1</vif:PD_Spec_Version_Major>
+  <vif:PD_Spec_Version_Minor value="6">6</vif:PD_Spec_Version_Minor>
+  <vif:PD_Specification_Revision value="2">Revision 3</vif:PD_Specification_Revision>
+  <vif:SOP_Capable value="true">Yes</vif:SOP_Capable>
+  <vif:SOP_P_Capable value="true">Yes</vif:SOP_P_Capable>
+  <vif:SOP_PP_Capable value="true">Yes</vif:SOP_PP_Capable>
+  <vif:SOP_P_Debug_Capable value="false">No</vif:SOP_P_Debug_Capable>
+  <vif:SOP_PP_Debug_Capable value="false">No</vif:SOP_PP_Debug_Capable>
+  <vif:Manufacturer_Info_Supported_Port value="true">Yes</vif:Manufacturer_Info_Supported_Port>
+  <vif:Manufacturer_Info_VID_Port value="6353">18D1</vif:Manufacturer_Info_VID_Port>
+  <vif:Manufacturer_Info_PID_Port value="20607">507F</vif:Manufacturer_Info_PID_Port>
+  <vif:USB_Comms_Capable value="true">Yes</vif:USB_Comms_Capable>
+  <vif:DR_Swap_To_DFP_Supported value="true">Yes</vif:DR_Swap_To_DFP_Supported>
+  <vif:DR_Swap_To_UFP_Supported value="false">No</vif:DR_Swap_To_UFP_Supported>
+  <vif:Unconstrained_Power value="false">No</vif:Unconstrained_Power>
+  <vif:VCONN_Swap_To_On_Supported value="true">Yes</vif:VCONN_Swap_To_On_Supported>
+  <vif:VCONN_Swap_To_Off_Supported value="true">Yes</vif:VCONN_Swap_To_Off_Supported>
+  <vif:Responds_To_Discov_SOP_UFP value="true">Yes</vif:Responds_To_Discov_SOP_UFP>
+  <vif:Responds_To_Discov_SOP_DFP value="true">Yes</vif:Responds_To_Discov_SOP_DFP>
+  <vif:Attempts_Discov_SOP value="true">Yes</vif:Attempts_Discov_SOP>
+  <vif:Power_Interruption_Available value="0">No Interruption Possible</vif:Power_Interruption_Available>
+  <vif:Chunking_Implemented_SOP value="true">Yes</vif:Chunking_Implemented_SOP>
+  <vif:Data_Reset_Supported value="true">Yes</vif:Data_Reset_Supported>
+  <vif:Enter_USB_Supported value="false">No</vif:Enter_USB_Supported>
+  <vif:Unchunked_Extended_Messages_Supported value="true">Yes</vif:Unchunked_Extended_Messages_Supported>
+  <vif:Security_Msgs_Supported_SOP value="false">No</vif:Security_Msgs_Supported_SOP>
+  <vif:Num_Fixed_Batteries value="1">1</vif:Num_Fixed_Batteries>
+  <vif:Num_Swappable_Battery_Slots value="0">0</vif:Num_Swappable_Battery_Slots>
+  <vif:ID_Header_Connector_Type_SOP value="2">USB Type-C Receptacle</vif:ID_Header_Connector_Type_SOP>
+  <vif:Type_C_Can_Act_As_Host value="true">Yes</vif:Type_C_Can_Act_As_Host>
+  <vif:Type_C_Can_Act_As_Device value="false">No</vif:Type_C_Can_Act_As_Device>
+  <vif:Type_C_Implements_Try_SRC value="true">Yes</vif:Type_C_Implements_Try_SRC>
+  <vif:Type_C_Implements_Try_SNK value="false">No</vif:Type_C_Implements_Try_SNK>
+  <vif:Type_C_Supports_Audio_Accessory value="false">No</vif:Type_C_Supports_Audio_Accessory>
+  <vif:Type_C_Is_VCONN_Powered_Accessory value="false">No</vif:Type_C_Is_VCONN_Powered_Accessory>
+  <vif:Type_C_Is_Debug_Target_SRC value="true">Yes</vif:Type_C_Is_Debug_Target_SRC>
+  <vif:Type_C_Is_Debug_Target_SNK value="true">Yes</vif:Type_C_Is_Debug_Target_SNK>
+  <vif:RP_Value value="2">3 A</vif:RP_Value>
+  <vif:Type_C_Port_On_Hub value="false">No</vif:Type_C_Port_On_Hub>
+  <vif:Type_C_Power_Source value="2">Both</vif:Type_C_Power_Source>
+  <vif:Type_C_Sources_VCONN value="true">Yes</vif:Type_C_Sources_VCONN>
+  <vif:Type_C_Is_Alt_Mode_Controller value="true">Yes</vif:Type_C_Is_Alt_Mode_Controller>
+  <vif:Type_C_Is_Alt_Mode_Adapter value="true">Yes</vif:Type_C_Is_Alt_Mode_Adapter>
+  <vif:Host_Supports_USB_Data value="true">Yes</vif:Host_Supports_USB_Data>
+  <vif:Host_Speed value="1">USB 3.2 Gen 1x1</vif:Host_Speed>
+  <vif:Host_Contains_Captive_Retimer value="false">No</vif:Host_Contains_Captive_Retimer>
+  <vif:Host_Truncates_DP_For_tDHPResponse value="false">No</vif:Host_Truncates_DP_For_tDHPResponse>
+  <vif:Host_Is_Embedded value="false">No</vif:Host_Is_Embedded>
+  <vif:Host_Suspend_Supported value="true">Yes</vif:Host_Suspend_Supported>
+  <vif:Is_DFP_On_Hub value="false">No</vif:Is_DFP_On_Hub>
+  <vif:PD_Power_As_Source value="15000">15000 mW</vif:PD_Power_As_Source>
+  <vif:PD_Power_As_Source_Guaranteed value="15000"/>
+  <vif:EPR_Supported_As_Src value="false">No</vif:EPR_Supported_As_Src>
+  <vif:USB_Suspend_May_Be_Cleared value="true">Yes</vif:USB_Suspend_May_Be_Cleared>
+  <vif:Sends_Pings value="false">No</vif:Sends_Pings>
+  <vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="0">FR_Swap not supported</vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
+  <vif:Master_Port value="false">No</vif:Master_Port>
+  <vif:Has_Invariant_PDOs value="false">No</vif:Has_Invariant_PDOs>
+  <vif:Port_Managed_Guaranteed_Type value="0">Managed Capability</vif:Port_Managed_Guaranteed_Type>
+  <vif:PD_OC_Protection value="true">Yes</vif:PD_OC_Protection>
+  <vif:PD_OCP_Method value="0">Over-Current Response</vif:PD_OCP_Method>
+  <vif:DPS_Supported value="false">No</vif:DPS_Supported>
+  <vif:Num_Src_PDOs value="1">1 Src PDO</vif:Num_Src_PDOs>
+  <vif:SrcPdoList>
+   <vif:SrcPDO>
+    <vif:Src_PDO_Supply_Type value="0">Fixed</vif:Src_PDO_Supply_Type>
+    <vif:Src_PDO_Peak_Current value="0">100% IOC</vif:Src_PDO_Peak_Current>
+    <vif:Src_PDO_Voltage value="100">5000</vif:Src_PDO_Voltage>
+    <vif:Src_PDO_Max_Current value="150">1500</vif:Src_PDO_Max_Current>
+    <vif:Src_PD_OCP_OC_Debounce value="0">0</vif:Src_PD_OCP_OC_Debounce>
+    <vif:Src_PD_OCP_OC_Threshold value="150">1500</vif:Src_PD_OCP_OC_Threshold>
+   </vif:SrcPDO>
+  </vif:SrcPdoList>
+  <vif:PD_Power_As_Sink value="65000">65000 mW</vif:PD_Power_As_Sink>
+  <vif:EPR_Supported_As_Snk value="false">No</vif:EPR_Supported_As_Snk>
+  <vif:No_USB_Suspend_May_Be_Set value="true">Yes</vif:No_USB_Suspend_May_Be_Set>
+  <vif:GiveBack_May_Be_Set value="false">No</vif:GiveBack_May_Be_Set>
+  <vif:Higher_Capability_Set value="false">No</vif:Higher_Capability_Set>
+  <vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source value="0">FR_Swap not supported</vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source>
+  <vif:Num_Snk_PDOs value="3">3 Snk PDOs</vif:Num_Snk_PDOs>
+  <vif:SnkPdoList>
+   <vif:SnkPDO>
+    <vif:Snk_PDO_Supply_Type value="0">Fixed</vif:Snk_PDO_Supply_Type>
+    <vif:Snk_PDO_Voltage value="100">5000</vif:Snk_PDO_Voltage>
+    <vif:Snk_PDO_Op_Current value="300">3000</vif:Snk_PDO_Op_Current>
+   </vif:SnkPDO>
+   <vif:SnkPDO>
+    <vif:Snk_PDO_Supply_Type value="1">Battery</vif:Snk_PDO_Supply_Type>
+    <vif:Snk_PDO_Op_Power value="60">15000</vif:Snk_PDO_Op_Power>
+    <vif:Snk_PDO_Min_Voltage value="95">4750</vif:Snk_PDO_Min_Voltage>
+    <vif:Snk_PDO_Max_Voltage value="400">20000</vif:Snk_PDO_Max_Voltage>
+   </vif:SnkPDO>
+   <vif:SnkPDO>
+    <vif:Snk_PDO_Supply_Type value="2">Variable</vif:Snk_PDO_Supply_Type>
+    <vif:Snk_PDO_Min_Voltage value="95">4750</vif:Snk_PDO_Min_Voltage>
+    <vif:Snk_PDO_Max_Voltage value="400">20000</vif:Snk_PDO_Max_Voltage>
+    <vif:Snk_PDO_Op_Current value="325">3250</vif:Snk_PDO_Op_Current>
+   </vif:SnkPDO>
+  </vif:SnkPdoList>
+  <vif:Accepts_PR_Swap_As_Src value="true">Yes</vif:Accepts_PR_Swap_As_Src>
+  <vif:Accepts_PR_Swap_As_Snk value="true">Yes</vif:Accepts_PR_Swap_As_Snk>
+  <vif:Requests_PR_Swap_As_Src value="true">Yes</vif:Requests_PR_Swap_As_Src>
+  <vif:Requests_PR_Swap_As_Snk value="true">Yes</vif:Requests_PR_Swap_As_Snk>
+  <vif:FR_Swap_Supported_As_Initial_Sink value="false">No</vif:FR_Swap_Supported_As_Initial_Sink>
+  <vif:XID_SOP value="0">0</vif:XID_SOP>
+  <vif:Data_Capable_As_USB_Host_SOP value="true">Yes</vif:Data_Capable_As_USB_Host_SOP>
+  <vif:Data_Capable_As_USB_Device_SOP value="false">No</vif:Data_Capable_As_USB_Device_SOP>
+  <vif:Product_Type_UFP_SOP value="2">PDUSB Peripheral</vif:Product_Type_UFP_SOP>
+  <vif:Product_Type_DFP_SOP value="2">PDUSB Host</vif:Product_Type_DFP_SOP>
+  <vif:DFP_VDO_Port_Number value="0">0</vif:DFP_VDO_Port_Number>
+  <vif:Modal_Operation_Supported_SOP value="true">Yes</vif:Modal_Operation_Supported_SOP>
+  <vif:USB_VID_SOP value="6353">18D1</vif:USB_VID_SOP>
+  <vif:PID_SOP value="20607">507F</vif:PID_SOP>
+  <vif:bcdDevice_SOP value="4096">013D</vif:bcdDevice_SOP>
+  <vif:SVID_Fixed_SOP value="false">No</vif:SVID_Fixed_SOP>
+  <vif:Num_SVIDs_Min_SOP value="1"/>
+  <vif:Num_SVIDs_Max_SOP value="1"/>
+  <vif:SOPSVIDList>
+   <vif:SOPSVID>
+    <vif:SVID_SOP value="1"/>
+    <vif:SVID_Modes_Fixed_SOP value="false">No</vif:SVID_Modes_Fixed_SOP>
+    <vif:SVID_Num_Modes_Min_SOP value="1"/>
+    <vif:SVID_Num_Modes_Max_SOP value="1"/>
+    <vif:SOPSVIDModeList>
+     <vif:SOPSVIDMode>
+      <vif:SVID_Mode_Enter_SOP value="true">Yes</vif:SVID_Mode_Enter_SOP>
+      <vif:SVID_Mode_Recog_Mask_SOP value="1"/>
+      <vif:SVID_Mode_Recog_Value_SOP value="0"/>
+      <vif:SOPSVIDModeVDOList/>
+     </vif:SOPSVIDMode>
+    </vif:SOPSVIDModeList>
+   </vif:SOPSVID>
+  </vif:SOPSVIDList>
+  <vif:AMA_HW_Vers value="0"/>
+  <vif:AMA_FW_Vers value="0"/>
+  <vif:AMA_VCONN_Reqd value="false">No</vif:AMA_VCONN_Reqd>
+  <vif:AMA_VBUS_Reqd value="false">No</vif:AMA_VBUS_Reqd>
+  <vif:AMA_Superspeed_Support value="0">USB 2.0 only, no Superspeed support</vif:AMA_Superspeed_Support>
+  <vif:Product_Total_Source_Power_mW value="22500">22500</vif:Product_Total_Source_Power_mW>
+  <vif:Port_Source_Power_Type value="1">Shared</vif:Port_Source_Power_Type>
+  <vif:Port_Source_Power_Gang>1</vif:Port_Source_Power_Gang>
+  <vif:Port_Source_Power_Gang_Max_Power value="22500">22500</vif:Port_Source_Power_Gang_Max_Power>
+  <opt:OptionalContent xml:space="preserve" identifier="DPAM">
+   <vif:VIF_Specification>0.6</vif:VIF_Specification>
+   <vif:VIF_App>
+    <vif:Vendor>Teledyne LeCroy</vif:Vendor>
+    <vif:Name>USB Compliance Suite</vif:Name>
+    <vif:Version>8.31.1240</vif:Version>
+   </vif:VIF_App>
+   <opt:DisplayPort_Product_Summary>
+    <opt:DP_Alt_Mode_Device_Type value="2">DisplayPort Source (Notebook)</opt:DP_Alt_Mode_Device_Type>
+    <opt:DPAM_Version value="0">DPAM Version 2.0 or earlier</opt:DPAM_Version>
+    <opt:Max_DP_Signaling_Rate_Support value="1">RBR Supported</opt:Max_DP_Signaling_Rate_Support>
+   </opt:DisplayPort_Product_Summary>
+   <opt:SOP_DP_Capabilities>
+    <opt:SOP_DP_Capability value="2">DP Source Capable</opt:SOP_DP_Capability>
+    <opt:SOP_Signaling_For_Transport_Of_DisplayPort_Protocol value="1"/>
+    <opt:SOP_DP_Receptacle_Indication value="1">DP on USB-C Receptacle</opt:SOP_DP_Receptacle_Indication>
+    <opt:SOP_USB2_Not_Used value="0">USB2.0 may be needed</opt:SOP_USB2_Not_Used>
+    <opt:SOP_DP_Source_Pin_Assignments value="28">Pin Assignment C &amp; D &amp; E</opt:SOP_DP_Source_Pin_Assignments>
+    <opt:SOP_DP_Sink_Pin_Assignments value="0">No Pin Assignment</opt:SOP_DP_Sink_Pin_Assignments>
+    <opt:SOP_DP_Alt_Mode_Version value="0">DPAM Version 2.0 or earlier</opt:SOP_DP_Alt_Mode_Version>
+   </opt:SOP_DP_Capabilities>
+   <opt:SOPP_DisplayPort_Capabilities>
+    <opt:SOPP_DP_Signaling_Rate value="1">HBR3</opt:SOPP_DP_Signaling_Rate>
+    <opt:SOPP_DP_Src_Pin_Assignments value="12">Pin Assignment C &amp; D</opt:SOPP_DP_Src_Pin_Assignments>
+    <opt:SOPP_DP_Sink_Pin_Assignments value="12">Pin Assignment C &amp; D</opt:SOPP_DP_Sink_Pin_Assignments>
+    <opt:SOPP_DP_UHBR13p5_Support value="0">UHBR13.5 Not Supported</opt:SOPP_DP_UHBR13p5_Support>
+    <opt:SOPP_DP_Active_Component value="0">Passive Cable</opt:SOPP_DP_Active_Component>
+    <opt:SOPP_DPAM_Version value="0">DPAM Version 2.0 or earlier</opt:SOPP_DPAM_Version>
+   </opt:SOPP_DisplayPort_Capabilities>
+   <opt:DisplayPort_Status>
+    <opt:SOP_DP_Src_Sink_Device_Connected value="1">DP Source Connected</opt:SOP_DP_Src_Sink_Device_Connected>
+    <opt:SOP_DP_Multifunction_Preferred value="0">No preference for multifunction</opt:SOP_DP_Multifunction_Preferred>
+    <opt:SOP_DP_Suspend_Support value="0">No Preference for Low Power Entry</opt:SOP_DP_Suspend_Support>
+   </opt:DisplayPort_Status>
+  </opt:OptionalContent>
+ </vif:Component>
+ <vif:Component>
+  <vif:Port_Label>1</vif:Port_Label>
+  <vif:Connector_Type value="2">USB Type-C</vif:Connector_Type>
+  <vif:USB4_Supported value="false">No</vif:USB4_Supported>
+  <vif:USB_PD_Support value="true">Yes</vif:USB_PD_Support>
+  <vif:PD_Port_Type value="4">DRP</vif:PD_Port_Type>
+  <vif:Type_C_State_Machine value="2">DRP</vif:Type_C_State_Machine>
+  <vif:Port_Battery_Powered value="true">Yes</vif:Port_Battery_Powered>
+  <vif:BC_1_2_Support value="0">None</vif:BC_1_2_Support>
+  <vif:Captive_Cable value="false">No</vif:Captive_Cable>
+  <vif:PD_Spec_Revision_Major value="3">3</vif:PD_Spec_Revision_Major>
+  <vif:PD_Spec_Revision_Minor value="1">1</vif:PD_Spec_Revision_Minor>
+  <vif:PD_Spec_Version_Major value="1">1</vif:PD_Spec_Version_Major>
+  <vif:PD_Spec_Version_Minor value="6">6</vif:PD_Spec_Version_Minor>
+  <vif:PD_Specification_Revision value="2">Revision 3</vif:PD_Specification_Revision>
+  <vif:SOP_Capable value="true">Yes</vif:SOP_Capable>
+  <vif:SOP_P_Capable value="true">Yes</vif:SOP_P_Capable>
+  <vif:SOP_PP_Capable value="true">Yes</vif:SOP_PP_Capable>
+  <vif:SOP_P_Debug_Capable value="false">No</vif:SOP_P_Debug_Capable>
+  <vif:SOP_PP_Debug_Capable value="false">No</vif:SOP_PP_Debug_Capable>
+  <vif:Manufacturer_Info_Supported_Port value="true">Yes</vif:Manufacturer_Info_Supported_Port>
+  <vif:Manufacturer_Info_VID_Port value="6353">18D1</vif:Manufacturer_Info_VID_Port>
+  <vif:Manufacturer_Info_PID_Port value="20607">507F</vif:Manufacturer_Info_PID_Port>
+  <vif:USB_Comms_Capable value="true">Yes</vif:USB_Comms_Capable>
+  <vif:DR_Swap_To_DFP_Supported value="true">Yes</vif:DR_Swap_To_DFP_Supported>
+  <vif:DR_Swap_To_UFP_Supported value="false">No</vif:DR_Swap_To_UFP_Supported>
+  <vif:Unconstrained_Power value="false">No</vif:Unconstrained_Power>
+  <vif:VCONN_Swap_To_On_Supported value="true">Yes</vif:VCONN_Swap_To_On_Supported>
+  <vif:VCONN_Swap_To_Off_Supported value="true">Yes</vif:VCONN_Swap_To_Off_Supported>
+  <vif:Responds_To_Discov_SOP_UFP value="true">Yes</vif:Responds_To_Discov_SOP_UFP>
+  <vif:Responds_To_Discov_SOP_DFP value="true">Yes</vif:Responds_To_Discov_SOP_DFP>
+  <vif:Attempts_Discov_SOP value="true">Yes</vif:Attempts_Discov_SOP>
+  <vif:Power_Interruption_Available value="0">No Interruption Possible</vif:Power_Interruption_Available>
+  <vif:Chunking_Implemented_SOP value="true">Yes</vif:Chunking_Implemented_SOP>
+  <vif:Data_Reset_Supported value="true">Yes</vif:Data_Reset_Supported>
+  <vif:Enter_USB_Supported value="false">No</vif:Enter_USB_Supported>
+  <vif:Unchunked_Extended_Messages_Supported value="true">Yes</vif:Unchunked_Extended_Messages_Supported>
+  <vif:Security_Msgs_Supported_SOP value="false">No</vif:Security_Msgs_Supported_SOP>
+  <vif:Num_Fixed_Batteries value="1">1</vif:Num_Fixed_Batteries>
+  <vif:Num_Swappable_Battery_Slots value="0">0</vif:Num_Swappable_Battery_Slots>
+  <vif:ID_Header_Connector_Type_SOP value="2">USB Type-C Receptacle</vif:ID_Header_Connector_Type_SOP>
+  <vif:Type_C_Can_Act_As_Host value="true">Yes</vif:Type_C_Can_Act_As_Host>
+  <vif:Type_C_Can_Act_As_Device value="false">No</vif:Type_C_Can_Act_As_Device>
+  <vif:Type_C_Implements_Try_SRC value="true">Yes</vif:Type_C_Implements_Try_SRC>
+  <vif:Type_C_Implements_Try_SNK value="false">No</vif:Type_C_Implements_Try_SNK>
+  <vif:Type_C_Supports_Audio_Accessory value="false">No</vif:Type_C_Supports_Audio_Accessory>
+  <vif:Type_C_Is_VCONN_Powered_Accessory value="false">No</vif:Type_C_Is_VCONN_Powered_Accessory>
+  <vif:Type_C_Is_Debug_Target_SRC value="true">Yes</vif:Type_C_Is_Debug_Target_SRC>
+  <vif:Type_C_Is_Debug_Target_SNK value="true">Yes</vif:Type_C_Is_Debug_Target_SNK>
+  <vif:RP_Value value="2">3 A</vif:RP_Value>
+  <vif:Type_C_Port_On_Hub value="false">No</vif:Type_C_Port_On_Hub>
+  <vif:Type_C_Power_Source value="2">Both</vif:Type_C_Power_Source>
+  <vif:Type_C_Sources_VCONN value="true">Yes</vif:Type_C_Sources_VCONN>
+  <vif:Type_C_Is_Alt_Mode_Controller value="true">Yes</vif:Type_C_Is_Alt_Mode_Controller>
+  <vif:Type_C_Is_Alt_Mode_Adapter value="true">Yes</vif:Type_C_Is_Alt_Mode_Adapter>
+  <vif:Host_Supports_USB_Data value="true">Yes</vif:Host_Supports_USB_Data>
+  <vif:Host_Speed value="1">USB 3.2 Gen 1x1</vif:Host_Speed>
+  <vif:Host_Contains_Captive_Retimer value="false">No</vif:Host_Contains_Captive_Retimer>
+  <vif:Host_Truncates_DP_For_tDHPResponse value="false">No</vif:Host_Truncates_DP_For_tDHPResponse>
+  <vif:Host_Is_Embedded value="false">No</vif:Host_Is_Embedded>
+  <vif:Host_Suspend_Supported value="true">Yes</vif:Host_Suspend_Supported>
+  <vif:Is_DFP_On_Hub value="false">No</vif:Is_DFP_On_Hub>
+  <vif:PD_Power_As_Source value="15000">15000 mW</vif:PD_Power_As_Source>
+  <vif:PD_Power_As_Source_Guaranteed value="15000"/>
+  <vif:EPR_Supported_As_Src value="false">No</vif:EPR_Supported_As_Src>
+  <vif:USB_Suspend_May_Be_Cleared value="true">Yes</vif:USB_Suspend_May_Be_Cleared>
+  <vif:Sends_Pings value="false">No</vif:Sends_Pings>
+  <vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="0">FR_Swap not supported</vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
+  <vif:Master_Port value="false">No</vif:Master_Port>
+  <vif:Has_Invariant_PDOs value="false">No</vif:Has_Invariant_PDOs>
+  <vif:Port_Managed_Guaranteed_Type value="0">Managed Capability</vif:Port_Managed_Guaranteed_Type>
+  <vif:PD_OC_Protection value="true">Yes</vif:PD_OC_Protection>
+  <vif:PD_OCP_Method value="0">Over-Current Response</vif:PD_OCP_Method>
+  <vif:DPS_Supported value="false">No</vif:DPS_Supported>
+  <vif:Num_Src_PDOs value="1">1 Src PDO</vif:Num_Src_PDOs>
+  <vif:SrcPdoList>
+   <vif:SrcPDO>
+    <vif:Src_PDO_Supply_Type value="0">Fixed</vif:Src_PDO_Supply_Type>
+    <vif:Src_PDO_Peak_Current value="0">100% IOC</vif:Src_PDO_Peak_Current>
+    <vif:Src_PDO_Voltage value="100">5000</vif:Src_PDO_Voltage>
+    <vif:Src_PDO_Max_Current value="150">1500</vif:Src_PDO_Max_Current>
+    <vif:Src_PD_OCP_OC_Debounce value="0">0</vif:Src_PD_OCP_OC_Debounce>
+    <vif:Src_PD_OCP_OC_Threshold value="150">1500</vif:Src_PD_OCP_OC_Threshold>
+   </vif:SrcPDO>
+  </vif:SrcPdoList>
+  <vif:PD_Power_As_Sink value="65000">65000 mW</vif:PD_Power_As_Sink>
+  <vif:EPR_Supported_As_Snk value="false">No</vif:EPR_Supported_As_Snk>
+  <vif:No_USB_Suspend_May_Be_Set value="true">Yes</vif:No_USB_Suspend_May_Be_Set>
+  <vif:GiveBack_May_Be_Set value="false">No</vif:GiveBack_May_Be_Set>
+  <vif:Higher_Capability_Set value="false">No</vif:Higher_Capability_Set>
+  <vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source value="0">FR_Swap not supported</vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source>
+  <vif:Num_Snk_PDOs value="3">3 Snk PDOs</vif:Num_Snk_PDOs>
+  <vif:SnkPdoList>
+   <vif:SnkPDO>
+    <vif:Snk_PDO_Supply_Type value="0">Fixed</vif:Snk_PDO_Supply_Type>
+    <vif:Snk_PDO_Voltage value="100">5000</vif:Snk_PDO_Voltage>
+    <vif:Snk_PDO_Op_Current value="300">3000</vif:Snk_PDO_Op_Current>
+   </vif:SnkPDO>
+   <vif:SnkPDO>
+    <vif:Snk_PDO_Supply_Type value="1">Battery</vif:Snk_PDO_Supply_Type>
+    <vif:Snk_PDO_Op_Power value="60">15000</vif:Snk_PDO_Op_Power>
+    <vif:Snk_PDO_Min_Voltage value="95">4750</vif:Snk_PDO_Min_Voltage>
+    <vif:Snk_PDO_Max_Voltage value="400">20000</vif:Snk_PDO_Max_Voltage>
+   </vif:SnkPDO>
+   <vif:SnkPDO>
+    <vif:Snk_PDO_Supply_Type value="2">Variable</vif:Snk_PDO_Supply_Type>
+    <vif:Snk_PDO_Min_Voltage value="95">4750</vif:Snk_PDO_Min_Voltage>
+    <vif:Snk_PDO_Max_Voltage value="400">20000</vif:Snk_PDO_Max_Voltage>
+    <vif:Snk_PDO_Op_Current value="325">3250</vif:Snk_PDO_Op_Current>
+   </vif:SnkPDO>
+  </vif:SnkPdoList>
+  <vif:Accepts_PR_Swap_As_Src value="true">Yes</vif:Accepts_PR_Swap_As_Src>
+  <vif:Accepts_PR_Swap_As_Snk value="true">Yes</vif:Accepts_PR_Swap_As_Snk>
+  <vif:Requests_PR_Swap_As_Src value="true">Yes</vif:Requests_PR_Swap_As_Src>
+  <vif:Requests_PR_Swap_As_Snk value="true">Yes</vif:Requests_PR_Swap_As_Snk>
+  <vif:FR_Swap_Supported_As_Initial_Sink value="false">No</vif:FR_Swap_Supported_As_Initial_Sink>
+  <vif:XID_SOP value="0">0</vif:XID_SOP>
+  <vif:Data_Capable_As_USB_Host_SOP value="true">Yes</vif:Data_Capable_As_USB_Host_SOP>
+  <vif:Data_Capable_As_USB_Device_SOP value="false">No</vif:Data_Capable_As_USB_Device_SOP>
+  <vif:Product_Type_UFP_SOP value="2">PDUSB Peripheral</vif:Product_Type_UFP_SOP>
+  <vif:Product_Type_DFP_SOP value="2">PDUSB Host</vif:Product_Type_DFP_SOP>
+  <vif:DFP_VDO_Port_Number value="1">1</vif:DFP_VDO_Port_Number>
+  <vif:Modal_Operation_Supported_SOP value="true">Yes</vif:Modal_Operation_Supported_SOP>
+  <vif:USB_VID_SOP value="6353">18D1</vif:USB_VID_SOP>
+  <vif:PID_SOP value="20607">507F</vif:PID_SOP>
+  <vif:bcdDevice_SOP value="45">002D</vif:bcdDevice_SOP>
+  <vif:SVID_Fixed_SOP value="false">No</vif:SVID_Fixed_SOP>
+  <vif:Num_SVIDs_Min_SOP value="1"/>
+  <vif:Num_SVIDs_Max_SOP value="1"/>
+  <vif:SOPSVIDList>
+   <vif:SOPSVID>
+    <vif:SVID_SOP value="1"/>
+    <vif:SVID_Modes_Fixed_SOP value="false">No</vif:SVID_Modes_Fixed_SOP>
+    <vif:SVID_Num_Modes_Min_SOP value="1"/>
+    <vif:SVID_Num_Modes_Max_SOP value="1"/>
+    <vif:SOPSVIDModeList>
+     <vif:SOPSVIDMode>
+      <vif:SVID_Mode_Enter_SOP value="true">Yes</vif:SVID_Mode_Enter_SOP>
+      <vif:SVID_Mode_Recog_Mask_SOP value="1"/>
+      <vif:SVID_Mode_Recog_Value_SOP value="0"/>
+      <vif:SOPSVIDModeVDOList/>
+     </vif:SOPSVIDMode>
+    </vif:SOPSVIDModeList>
+   </vif:SOPSVID>
+  </vif:SOPSVIDList>
+  <vif:AMA_HW_Vers value="0"/>
+  <vif:AMA_FW_Vers value="0"/>
+  <vif:AMA_VCONN_Reqd value="false">No</vif:AMA_VCONN_Reqd>
+  <vif:AMA_VBUS_Reqd value="false">No</vif:AMA_VBUS_Reqd>
+  <vif:AMA_Superspeed_Support value="0">USB 2.0 only, no Superspeed support</vif:AMA_Superspeed_Support>
+  <vif:Product_Total_Source_Power_mW value="22500">22500</vif:Product_Total_Source_Power_mW>
+  <vif:Port_Source_Power_Type value="1">Shared</vif:Port_Source_Power_Type>
+  <vif:Port_Source_Power_Gang>1</vif:Port_Source_Power_Gang>
+  <vif:Port_Source_Power_Gang_Max_Power value="22500">22500</vif:Port_Source_Power_Gang_Max_Power>
+  <vif:VPD_HW_Vers value="0"/>
+  <vif:VPD_FW_Vers value="0"/>
+  <vif:VPD_Max_VBUS_Voltage value="0">20V</vif:VPD_Max_VBUS_Voltage>
+  <vif:VPD_Charge_Through_Support value="false">No</vif:VPD_Charge_Through_Support>
+  <opt:OptionalContent xml:space="preserve" identifier="DPAM">
+   <vif:VIF_Specification/>
+   <vif:VIF_App>
+    <vif:Vendor/>
+    <vif:Name/>
+    <vif:Version/>
+   </vif:VIF_App>
+   <opt:DisplayPort_Product_Summary>
+    <opt:DP_Alt_Mode_Device_Type value="2">DisplayPort Source (Notebook)</opt:DP_Alt_Mode_Device_Type>
+    <opt:DPAM_Version value="0">DPAM Version 2.0 or earlier</opt:DPAM_Version>
+    <opt:Max_DP_Signaling_Rate_Support value="1">RBR Supported</opt:Max_DP_Signaling_Rate_Support>
+   </opt:DisplayPort_Product_Summary>
+   <opt:SOP_DP_Capabilities>
+    <opt:SOP_DP_Capability value="2">DP Source Capable</opt:SOP_DP_Capability>
+    <opt:SOP_Signaling_For_Transport_Of_DisplayPort_Protocol value="1"/>
+    <opt:SOP_DP_Receptacle_Indication value="1">DP on USB-C Receptacle</opt:SOP_DP_Receptacle_Indication>
+    <opt:SOP_USB2_Not_Used value="0">USB2.0 may be needed</opt:SOP_USB2_Not_Used>
+    <opt:SOP_DP_Source_Pin_Assignments value="28">Pin Assignment C &amp; D &amp; E</opt:SOP_DP_Source_Pin_Assignments>
+    <opt:SOP_DP_Sink_Pin_Assignments value="0">No Pin Assignment</opt:SOP_DP_Sink_Pin_Assignments>
+    <opt:SOP_DP_Alt_Mode_Version value="0">DPAM Version 2.0 or earlier</opt:SOP_DP_Alt_Mode_Version>
+   </opt:SOP_DP_Capabilities>
+   <opt:SOPP_DisplayPort_Capabilities>
+    <opt:SOPP_DP_Signaling_Rate value="1">HBR3</opt:SOPP_DP_Signaling_Rate>
+    <opt:SOPP_DP_Src_Pin_Assignments value="12">Pin Assignment C &amp; D</opt:SOPP_DP_Src_Pin_Assignments>
+    <opt:SOPP_DP_Sink_Pin_Assignments value="12">Pin Assignment C &amp; D</opt:SOPP_DP_Sink_Pin_Assignments>
+    <opt:SOPP_DP_UHBR13p5_Support value="0">UHBR13.5 Not Supported</opt:SOPP_DP_UHBR13p5_Support>
+    <opt:SOPP_DP_Active_Component value="0">Passive Cable</opt:SOPP_DP_Active_Component>
+    <opt:SOPP_DPAM_Version value="0">DPAM Version 2.0 or earlier</opt:SOPP_DPAM_Version>
+   </opt:SOPP_DisplayPort_Capabilities>
+   <opt:DisplayPort_Status>
+    <opt:SOP_DP_Src_Sink_Device_Connected value="1">DP Source Connected</opt:SOP_DP_Src_Sink_Device_Connected>
+    <opt:SOP_DP_Multifunction_Preferred value="0">No preference for multifunction</opt:SOP_DP_Multifunction_Preferred>
+    <opt:SOP_DP_Suspend_Support value="0">No Preference for Low Power Entry</opt:SOP_DP_Suspend_Support>
+   </opt:DisplayPort_Status>
+  </opt:OptionalContent>
+ </vif:Component>
+</vif:VIF>
