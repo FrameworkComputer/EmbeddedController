@@ -23,6 +23,8 @@
 #include "trng.h"
 #include "util.h"
 
+#include <stdbool.h>
+
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
 #ifdef CONFIG_BORINGSSL_CRYPTO
 #include "openssl/mem.h"
@@ -71,7 +73,7 @@ static int get_rollback_offset(int region)
 static void lock_rollback(uint32_t key)
 {
 #ifdef CONFIG_ROLLBACK_MPU_PROTECT
-	mpu_lock_rollback(1);
+	mpu_lock_rollback(true);
 	irq_unlock(key);
 #endif
 }
@@ -82,7 +84,7 @@ static uint32_t unlock_rollback(void)
 	uint32_t key;
 
 	key = irq_lock();
-	mpu_lock_rollback(0);
+	mpu_lock_rollback(false);
 	return key;
 #else
 	return 0;

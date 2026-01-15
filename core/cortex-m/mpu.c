@@ -16,6 +16,8 @@
 #include "task.h"
 #include "util.h"
 
+#include <stdbool.h>
+
 /**
  * @return Number of regions supported by the MPU. 0 means the processor does
  * not implement an MPU.
@@ -352,7 +354,7 @@ int mpu_lock_rw_flash(void)
 #endif /* !CONFIG_EXTERNAL_STORAGE */
 
 #ifdef CONFIG_ROLLBACK_MPU_PROTECT
-int mpu_lock_rollback(int lock)
+int mpu_lock_rollback(bool lock)
 {
 	int rv;
 	int num_mpu_regions = mpu_num_regions();
@@ -454,7 +456,7 @@ int mpu_pre_init(void)
 	}
 
 	if (IS_ENABLED(CONFIG_ROLLBACK_MPU_PROTECT)) {
-		rv = mpu_lock_rollback(1);
+		rv = mpu_lock_rollback(true);
 		if (rv != EC_SUCCESS)
 			return rv;
 	}

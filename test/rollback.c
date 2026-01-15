@@ -71,7 +71,7 @@ test_static int _test_lock_rollback(const struct rollback_info *info,
 	 * initialization process (mpu_pre_init).
 	 */
 
-	rv = mpu_lock_rollback(0);
+	rv = mpu_lock_rollback(false);
 	TEST_EQ(rv, EC_SUCCESS, "%d");
 
 	/* unlocked we should be able to read both regions */
@@ -81,7 +81,7 @@ test_static int _test_lock_rollback(const struct rollback_info *info,
 	rv = read_rollback_region(info, 1);
 	TEST_EQ(rv, rollback_info.region_size_bytes, "%d");
 
-	rv = mpu_lock_rollback(1);
+	rv = mpu_lock_rollback(true);
 	TEST_EQ(rv, EC_SUCCESS, "%d");
 
 	/* TODO(b/156112448): Validate that it actually reboots with the correct

@@ -8,6 +8,7 @@
 #include "flash.h"
 #include "mpu.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 
 #include <zephyr/ztest.h>
@@ -77,7 +78,7 @@ static void test_lock_rollback(const struct rollback_info *info, int region)
 	 * We expect the MPU to have already been enabled during the
 	 * initialization process (mpu_pre_init).
 	 */
-	rv = mpu_lock_rollback(0);
+	rv = mpu_lock_rollback(false);
 	zassert_equal(rv, EC_SUCCESS);
 
 	/* unlocked we should be able to read both regions */
@@ -87,7 +88,7 @@ static void test_lock_rollback(const struct rollback_info *info, int region)
 	rv = read_rollback_region(info, 1);
 	zassert_equal(rv, rollback_info.region_size_bytes);
 
-	rv = mpu_lock_rollback(1);
+	rv = mpu_lock_rollback(true);
 	zassert_equal(rv, EC_SUCCESS);
 
 	read_rollback_region(info, region);
