@@ -156,7 +156,7 @@ def iterate_power_states(edt, project_name, policies):
 
     board_led_alt_policy_label_list = []
 
-    board_led_alt_policy_label_sum = 0
+    board_led_alt_policy_label_sum = 1
 
     led_id_list = []
 
