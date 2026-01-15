@@ -1,0 +1,29 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+using sysbus
+$name?="sanok"
+mach create $name
+
+$repl?=@platforms/cpus/egis_et171.repl
+machine LoadPlatformDescription $repl
+
+$bin?=$ORIGIN/sanok/ec.bin
+$elf_ro?=$ORIGIN/sanok/ec.RO.elf
+$elf_rw?=$ORIGIN/sanok/ec.RW.elf
+
+showAnalyzer uart0
+
+# Mock of bootrom, reads entry point from flash header and jumps there
+cpu0 AssembleBlock 0x70000000 "li t0, 0x80000000; lw t1, 24(t0); jalr zero, t1, 0"
+
+macro reset
+"""
+    sysbus LoadBinary $bin 0x80000000
+    sysbus LoadSymbolsFrom $elf_ro
+    sysbus LoadSymbolsFrom $elf_rw
+    cpu0 PC `syscon ResetVector`
+"""
+
+runMacro $reset

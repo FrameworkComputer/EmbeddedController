@@ -30,6 +30,7 @@ CONSOLE_MAP: dict[str, str] = {
     "nami_fp": DARTMONKEY_CONSOLE,
     "nocturne_fp": DARTMONKEY_CONSOLE,
     "rosalia": "sysbus.cr_uart1",
+    "sanok": "sysbus.uart0",
 }
 
 DARTMONKEY_GPIO_WP = "sysbus.gpioPortB.GPIO_WP"
