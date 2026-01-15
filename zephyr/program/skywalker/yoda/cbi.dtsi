@@ -1,4 +1,4 @@
-/* Copyright 2025 The ChromiumOS Authors
+/* Copyright 2026 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -39,6 +39,30 @@
 			lid_sensor_1: bma422 {
 				compatible = "cros-ec,cbi-ssfc-value";
 				status = "okay";
+				value = <1>;
+			};
+		};
+	};
+	yoda-fw-config{
+		compatible = "cros-ec,cbi-fw-config";
+		/*
+		 * FW_CONFIG field to indicate which keyboard numeric
+		 * pad should be used.
+		 */
+		kb-numeric-pad {
+			enum-name = "FW_KB_NUMERIC_PAD";
+			start = <4>;
+			size = <1>;
+
+			no-kb-numpad {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_NUMERIC_PAD_ABSENT";
+				value = <0>;
+				default;
+			};
+			kb-numpad-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_NUMERIC_PAD_PRESENT";
 				value = <1>;
 			};
 		};
