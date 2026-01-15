@@ -4,6 +4,6 @@
 
 if (DEFINED CONFIG_CPU_CORTEX_M)
     add_subdirectory(cortex-m)
-elseif(DEFINED CONFIG_RISCV)
+elseif (DEFINED CONFIG_RISCV)
     add_subdirectory(riscv)
 endif()
