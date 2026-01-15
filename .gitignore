@@ -46,3 +46,9 @@ flash.bin
 # Random binaries that don't build in the build dir
 util/cq-excludes/cq-excludes
 extra/touchpad_updater/touchpad_updater
+
+# Renode temporary files
+renode/.cipd
+renode/bin
+renode/lib
+renode/license.html.zst

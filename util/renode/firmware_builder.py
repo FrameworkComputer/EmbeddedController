@@ -9,6 +9,7 @@ This is the entry point for the custom firmware builder workflow recipe.  It
 gets invoked by chromite/api/controller/firmware.py.
 """
 
+import getpass
 import os
 from pathlib import Path
 import subprocess
@@ -112,6 +113,20 @@ def test(_opts):
         cwd=working_dir,
         check=True,
     )
+
+    # Fix the ~/.config dir if necessary b/431869968 b/310667234
+    config_dir = Path.home() / ".config"
+    if config_dir.exists() and config_dir.owner() == "root":
+        print("Fixing ownership of ~/.config")
+        subprocess.run(
+            [
+                "sudo",
+                "chown",
+                getpass.getuser(),
+                str(config_dir),
+            ],
+            check=True,
+        )
 
     os.environ["PATH"] += ":" + str(renode_install_dir.joinpath("bin"))
 
