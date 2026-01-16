@@ -13279,7 +13279,7 @@ int main(int argc, char *argv[])
 	int i2c_bus = -1;
 	char device_name[41] = CROS_EC_DEV_NAME;
 	uint16_t vid = USB_VID_GOOGLE, pid = USB_PID_HAMMER;
-	int rv = 1;
+	int rv = -1;
 	int parse_error = 0;
 	char *e;
 	int i;
@@ -13422,5 +13422,8 @@ out:
 	if (interfaces == COMM_USB)
 		comm_usb_exit();
 
-	return !!rv;
+	/* Negative values from the command handler should be treated as errors
+	 * return an exit code of 1. Some command handlers return 0 or the
+	 * number of bytes received upon success. */
+	return (rv < 0) ? 1 : 0;
 }
