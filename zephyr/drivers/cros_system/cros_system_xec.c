@@ -25,8 +25,7 @@ LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 #define STRUCT_ADC_REG_BASE_ADDR \
 	((struct adc_regs *)(DT_REG_ADDR(DT_NODELABEL(adc0))))
 
-#define STRUCT_UART_REG_BASE_ADDR \
-	((struct uart_regs *)(DT_REG_ADDR(DT_NODELABEL(uart0))))
+#define STRUCT_UART_REG_BASE_ADDR ((mm_reg_t)(DT_REG_ADDR(DT_NODELABEL(uart0))))
 
 #define STRUCT_ECS_REG_BASE_ADDR \
 	((struct ecs_regs *)(DT_REG_ADDR(DT_NODELABEL(ecs))))
@@ -465,7 +464,7 @@ static void system_xec_hibernate_by_dsleep(const struct device *dev,
 	struct adc_regs *adc0 = STRUCT_ADC_REG_BASE_ADDR;
 #endif
 #ifdef CONFIG_UART_XEC
-	struct uart_regs *uart0 = STRUCT_UART_REG_BASE_ADDR;
+	mm_reg_t uart0 = STRUCT_UART_REG_BASE_ADDR;
 #endif
 	struct ecs_regs *ecs = STRUCT_ECS_REG_BASE_ADDR;
 	struct btmr_regs *btmr4 = STRUCT_TIMER4_REG_BASE_ADDR;
@@ -557,7 +556,7 @@ static void system_xec_hibernate_by_dsleep(const struct device *dev,
 	/* Disable UART0 */
 	/* Flush console before hibernating */
 	cflush();
-	uart0->ACTV &= ~(MCHP_UART_LD_ACTIVATE);
+	soc_clear_bit8(uart0 + XEC_UART_LD_ACT_OFS, XEC_UART_LD_ACTIVATE_POS);
 #endif
 
 	/* Disable JATG and RTM */
