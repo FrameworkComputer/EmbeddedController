@@ -13367,5 +13367,8 @@ out:
 	if (interfaces == COMM_USB)
 		comm_usb_exit();
 
-	return !!rv;
+	/* Negative values from the command handler should be treated as errors
+	 * return an exit code of 1. Some command handlers return 0 or the
+	 * number of bytes received upon success. */
+	return (rv < 0) ? 1 : 0;
 }
