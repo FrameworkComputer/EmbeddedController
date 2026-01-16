@@ -101,6 +101,13 @@ uint8_t pdc_power_mgmt_get_usb_pd_port_count(void);
 int pdc_power_mgmt_set_active_charge_port(int charge_port);
 
 /**
+ * @brief Check if a power role swap is required.
+ *
+ * @param port Port number to check
+ */
+void pdc_power_mgmt_check_pr_swap_needed(int port);
+
+/**
  * @brief Get CC polarity of the port. Note: the result may not be valid if the
  *        port is not connected.
  *
