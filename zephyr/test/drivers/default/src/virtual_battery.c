@@ -289,8 +289,34 @@ ZTEST(virtual_battery, test_read_data_from_host_memmap)
 	zassert_mem_equal("TEST", buffer + 1, 4);
 }
 
-ZTEST_SUITE(virtual_battery, drivers_predicate_post_main, NULL, NULL, NULL,
-	    NULL);
+ZTEST(virtual_battery, test_read_status_critical_charge)
+{
+	struct ec_response_battery_dynamic_info *const bd =
+		&battery_dynamic[BATT_IDX_MAIN];
+
+	/* When battery is critical, flag FULLY_DISCHARGED. */
+	bd->flags |= EC_BATT_FLAG_LEVEL_CRITICAL;
+	zassert_equal(
+		virtual_battery_read16(SB_BATTERY_STATUS) &
+			STATUS_FULLY_DISCHARGED,
+		STATUS_FULLY_DISCHARGED,
+		"Battery status should include FULLY_DISCHARGED but did not");
+
+	/* Otherwise pass status through unmodified. */
+	bd->flags &= ~EC_BATT_FLAG_LEVEL_CRITICAL;
+	zassert_equal(virtual_battery_read16(SB_BATTERY_STATUS) &
+			      STATUS_FULLY_DISCHARGED,
+		      0, "FULLY_DISCHARGED should be clear but was set");
+}
+
+static void virtual_battery_after_test(void *fixture)
+{
+	/* Reset critical flags if the test set them. */
+	battery_dynamic[BATT_IDX_MAIN].flags &= EC_BATT_FLAG_LEVEL_CRITICAL;
+}
+
+ZTEST_SUITE(virtual_battery, drivers_predicate_post_main, NULL, NULL,
+	    virtual_battery_after_test, NULL);
 
 ZTEST(virtual_battery_direct, test_bad_reg_write)
 {

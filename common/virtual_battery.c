@@ -200,13 +200,16 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head, uint8_t *dest,
 	 */
 	int bounded_read_len = min(read_len, 2);
 	const struct battery_static_info *bs;
+	const struct ec_response_battery_dynamic_info *bd;
 
-	if (IS_ENABLED(CONFIG_BATTERY_INFO))
+	if (IS_ENABLED(CONFIG_BATTERY_INFO)) {
 		/*
 		 * TODO: To support multiple batteries, we need to translate
 		 * i2c address to a battery index.
 		 */
 		bs = &battery_static[BATT_IDX_MAIN];
+		bd = &battery_dynamic[BATT_IDX_MAIN];
+	}
 
 	curr_batt = charger_current_battery_params();
 	switch (*batt_cmd_head) {
@@ -283,6 +286,13 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head, uint8_t *dest,
 		if (curr_batt->flags & BATT_FLAG_BAD_STATUS)
 			return EC_ERROR_BUSY;
 		memcpy(dest, &(curr_batt->status), bounded_read_len);
+		// Linux uses the FULLY_DISCHARGED status bit as an indication
+		// of critical charge, so set it if we've noticed critical
+		// battery. Take care not to write beyond the bounds of *dest.
+		if (IS_ENABLED(CONFIG_BATTERY_INFO) && bounded_read_len > 0 &&
+		    (bd->flags & EC_BATT_FLAG_LEVEL_CRITICAL)) {
+			*dest |= STATUS_FULLY_DISCHARGED;
+		}
 		break;
 	case SB_CYCLE_COUNT:
 		memcpy(dest, (int *)host_get_memmap(EC_MEMMAP_BATT_CCNT),
