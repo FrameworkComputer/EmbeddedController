@@ -35,7 +35,7 @@ DECLARE_HOOK(HOOK_SYSJUMP, prepare_for_sysjump_to_ec, HOOK_PRIO_LAST);
 BUILD_ASSERT(DT_NODE_EXISTS(ROLLBACK_NODE),
 	     "The 'rollback' node label is not defined in the Devicetree.");
 
-int mpu_lock_rollback(bool lock)
+test_mockable int mpu_lock_rollback(bool lock)
 {
 	const char *rollback_node_name = DT_NODE_FULL_NAME(ROLLBACK_NODE);
 	int rollback_region_idx =

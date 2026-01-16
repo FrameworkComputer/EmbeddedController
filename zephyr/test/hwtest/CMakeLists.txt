@@ -38,6 +38,7 @@ zephyr_library_sources_ifdef(CONFIG_HW_TEST_RESTRICTED_CONSOLE ${PLATFORM_EC}/ze
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_RNG_BENCHMARK src/rng_benchmark.cc)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_ROLLBACK src/rollback.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_ROLLBACK_ENTROPY src/rollback_entropy.c)
+zephyr_library_sources_ifdef(CONFIG_HW_TEST_ROLLBACK_LOCK_PANIC src/rollback_lock_panic.cc)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_RTC_NPCX9 src/rtc_npcx9.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_SBRK ${PLATFORM_EC}/zephyr/test/lib/src/sbrk.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_SHA256 ${PLATFORM_EC}/zephyr/test/crypto/src/sha256.c)

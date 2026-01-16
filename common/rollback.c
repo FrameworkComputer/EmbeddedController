@@ -94,7 +94,7 @@ static void check_mpu_rv(int rv, const char *func_name)
  * When MPU is available, read rollback with interrupts disabled, to minimize
  * time protection is left open.
  */
-static void lock_rollback(uint32_t key)
+test_export_static void lock_rollback(uint32_t key)
 {
 #ifdef CONFIG_ROLLBACK_MPU_PROTECT
 	int rv = mpu_lock_rollback(true);
@@ -103,7 +103,7 @@ static void lock_rollback(uint32_t key)
 #endif
 }
 
-static uint32_t unlock_rollback(void)
+test_export_static uint32_t unlock_rollback(void)
 {
 #ifdef CONFIG_ROLLBACK_MPU_PROTECT
 	uint32_t key;

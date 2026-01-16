@@ -191,6 +191,13 @@ config HW_TEST_ROLLBACK
 	help
 	  The test verifies rollback regions functionality.
 
+config HW_TEST_ROLLBACK_LOCK_PANIC
+	bool "Rollback lock panic test"
+	select ZTEST
+	depends on BOARD_FINGERPRINT
+	help
+	  The test verifies that panic occurs if function mpu_lock_rollback fails.
+
 config HW_TEST_ROLLBACK_ENTROPY
 	bool "Rollback entropy test"
 	select ZTEST

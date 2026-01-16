@@ -752,6 +752,7 @@ class AllTests:
             TestConfig(
                 test_name="rollback_entropy", imagetype_to_use=ImageType.RO
             ),
+            TestConfig(test_name="rollback_lock_panic"),
             # RTC is handled by Zephyr drivers, covered by Zephyr tests. Time
             # translation is covered by the utilities.time test.
             TestConfig(test_name="rtc", skip_for_zephyr=True),
