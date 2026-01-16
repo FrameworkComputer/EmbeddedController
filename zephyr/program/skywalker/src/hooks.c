@@ -57,6 +57,7 @@ void xhci_interrupt(enum gpio_signal signal)
 	for (int i = 0; i < pdc_power_mgmt_get_usb_pd_port_count(); i++) {
 		if (xhci_stat) {
 			pdc_power_mgmt_set_dual_role(i, PD_DRP_TOGGLE_ON);
+			pdc_power_mgmt_check_pr_swap_needed(i);
 		}
 	}
 }
