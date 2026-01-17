@@ -1,0 +1,219 @@
+{
+  "nodes": {
+    "cmsis": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1766538587,
+        "narHash": "sha256-ENo0K0rs4R15xqRZQHdLSrzuz/dORWuXHYGB7yJYsAg=",
+        "ref": "chromeos-main",
+        "rev": "ada89e4063a02bf12797415ebab9d21f0cfaeef1",
+        "revCount": 54,
+        "type": "git",
+        "url": "https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis"
+      },
+      "original": {
+        "ref": "chromeos-main",
+        "type": "git",
+        "url": "https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis"
+      }
+    },
+    "flake-utils": {
+      "inputs": {
+        "systems": "systems"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "id": "flake-utils",
+        "type": "indirect"
+      }
+    },
+    "nix-github-actions": {
+      "inputs": {
+        "nixpkgs": [
+          "zephyr-nix",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1737420293,
+        "narHash": "sha256-F1G5ifvqTpJq7fdkT34e/Jy9VCyzd5XfJ9TO8fHhJWE=",
+        "owner": "nix-community",
+        "repo": "nix-github-actions",
+        "rev": "f4158fa080ef4503c8f4c820967d946c2af31ec9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nix-github-actions",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1779560665,
+        "narHash": "sha256-tpyBcxPpcQb8ukyNF7DoCwfSY3VPsxHoYwj00Cayv5o=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "64c08a7ca051951c8eae34e3e3cb1e202fe36786",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "pyproject-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "zephyr-nix",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1776715674,
+        "narHash": "sha256-Gs1VnEkCkkRZxJQAC/Dhz0Jbfi22mFXChbtNg9w/Ybg=",
+        "owner": "pyproject-nix",
+        "repo": "pyproject.nix",
+        "rev": "69f57f27e52a87c54e28138a75ec741cd46663c9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "pyproject-nix",
+        "repo": "pyproject.nix",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "cmsis": "cmsis",
+        "flake-utils": "flake-utils",
+        "nixpkgs": "nixpkgs",
+        "u-boot": "u-boot",
+        "zephyr": "zephyr",
+        "zephyr-nix": "zephyr-nix"
+      }
+    },
+    "systems": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "u-boot": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1708620973,
+        "narHash": "sha256-QeMCW9bef2KK32eNWMFSNvWb2GS9apv/hH2ska6IVqI=",
+        "ref": "refs/heads/chromeos-v2023.04",
+        "rev": "923f25080339770806369e41767f8d0464f2b451",
+        "revCount": 88472,
+        "type": "git",
+        "url": "https://chromium.googlesource.com/chromiumos/third_party/u-boot"
+      },
+      "original": {
+        "rev": "923f25080339770806369e41767f8d0464f2b451",
+        "type": "git",
+        "url": "https://chromium.googlesource.com/chromiumos/third_party/u-boot"
+      }
+    },
+    "uv-python": {
+      "inputs": {
+        "nixpkgs": [
+          "zephyr-nix",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1776489725,
+        "narHash": "sha256-9MhAOHQeMxxMHq1Rej4Hqtb8KPT1z+1Y7WlV/N4EcwY=",
+        "owner": "pyproject-nix",
+        "repo": "uv-python.nix",
+        "rev": "bf8f911a7bd2b93bbcd92ef9082f226ca16ca8fe",
+        "type": "github"
+      },
+      "original": {
+        "owner": "pyproject-nix",
+        "repo": "uv-python.nix",
+        "type": "github"
+      }
+    },
+    "zephyr": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1775618330,
+        "narHash": "sha256-y4MtXkvCehXKIH1mNIRSYLKU8cG3bCQkhRwY7h/CfZY=",
+        "ref": "fwk-main",
+        "rev": "8bdbcbbbe6bfecf4067379e9eae146c6d01c7f64",
+        "revCount": 110860,
+        "type": "git",
+        "url": "ssh://git@github.com/FrameworkComputer/zephyr-ec"
+      },
+      "original": {
+        "ref": "fwk-main",
+        "type": "git",
+        "url": "ssh://git@github.com/FrameworkComputer/zephyr-ec"
+      }
+    },
+    "zephyr-nix": {
+      "inputs": {
+        "nix-github-actions": "nix-github-actions",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "pyproject-nix": "pyproject-nix",
+        "uv-python": "uv-python",
+        "zephyr": "zephyr_2"
+      },
+      "locked": {
+        "lastModified": 1776749325,
+        "narHash": "sha256-47rOEFMPsmLpeU1HJDZu9ufbE+RuJVIT48pPpjEzfkA=",
+        "owner": "adisbladis",
+        "repo": "zephyr-nix",
+        "rev": "6966fb1cbf2fdb494bea3062c5e8e7d44dd8ac9c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "adisbladis",
+        "repo": "zephyr-nix",
+        "type": "github"
+      }
+    },
+    "zephyr_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1763048108,
+        "narHash": "sha256-NSv0utc4dqeJClldgFxezt0/qNJ1Xb0sh7zN5qa3uVk=",
+        "owner": "zephyrproject-rtos",
+        "repo": "zephyr",
+        "rev": "3568e1b6d5cdd51a6b964a2a1d6d29200fea2056",
+        "type": "github"
+      },
+      "original": {
+        "owner": "zephyrproject-rtos",
+        "ref": "v4.3.0",
+        "repo": "zephyr",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
