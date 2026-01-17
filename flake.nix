@@ -34,6 +34,16 @@
       python = pkgs.python312;
       pythonPkgs = pkgs.python312Packages;
 
+      # Bundled Python with all required packages for the build
+      buildPython = python.withPackages (ps: [
+        ps.pyyaml
+        ps.pykwalify
+        ps.packaging
+        ps.pyelftools
+        ps.colorama
+        ps.setuptools
+      ]);
+
       setProjectDynamicToLicense = ''
         ${pkgs.toml-cli}/bin/toml set pyproject.toml project.dynamic license | ${pkgs.moreutils}/bin/sponge pyproject.toml
         sed -e 's/dynamic = "license"/dynamic = ["license"]/' -i pyproject.toml
@@ -84,18 +94,17 @@
             pkgs.cmake
             pkgs.git
             pkgs.ninja
-            pythonPkgs.pyyaml
-            pythonPkgs.pykwalify
-            pythonPkgs.packaging
-            pythonPkgs.pyelftools
-            pythonPkgs.colorama
+            buildPython
             packages.binman
           ];
 
           dontUseCmakeConfigure = true;
 
+          # Ensure the zephyr SDK is found by zmake toolchain probing
+          ZEPHYR_SDK_INSTALL_DIR = "${zephyr-sdk}";
+
           buildPhase = ''
-            ${packages.zmake}/bin/zmake -j8 build ${build}
+            ${packages.zmake}/bin/zmake -j8 build --static -t zephyr ${build}
           '';
 
           installPhase = ''
@@ -121,12 +130,25 @@
         pyproject = true;
         build-system = [pythonPkgs.setuptools];
 
+        # These dependencies are needed by zmake's Python (sys.executable)
+        # which gets passed to CMake as Python3_EXECUTABLE
+        dependencies = [
+          pythonPkgs.pyyaml
+          pythonPkgs.pykwalify
+          pythonPkgs.packaging
+          pythonPkgs.pyelftools
+          pythonPkgs.colorama
+        ];
+
         postPatch = ''
           sed -e 's#"/bin:/usr/bin"#"/bin:/usr/bin:${pkgs.gcc}/bin:${pkgs.dtc}/bin:${pkgs.ninja}/bin"${
             if pkgs.stdenv.hostPlatform.isDarwin
             then '',"DYLD_LIBRARY_PATH":"${pkgs.dtc}/lib"''
             else ""
           }#' -i zmake/jobserver.py
+
+          # Replace sys.executable with the bundled Python that has all required packages
+          sed -e 's#"Python3_EXECUTABLE": sys.executable#"Python3_EXECUTABLE": "${buildPython}/bin/python3"#' -i zmake/zmake.py
         '';
       };
 
@@ -206,12 +228,7 @@
           pkgs.cmake
           pkgs.git
           pkgs.ninja
-          pythonPkgs.pyyaml
-          pythonPkgs.pykwalify
-          pythonPkgs.packaging
-          pythonPkgs.pyelftools
-          pythonPkgs.colorama
-          pythonPkgs.setuptools
+          buildPython
           packages.zmake
           packages.binman
         ];
