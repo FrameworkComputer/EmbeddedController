@@ -123,15 +123,33 @@ bool input_deck_is_fully_populated(void)
 {
 	int i;
 
+	/* All modules connect through the hubboard */
 	if (hub_board_id[HUBBOARD] == INPUT_MODULE_SHORT ||
 		hub_board_id[HUBBOARD] == INPUT_MODULE_DISCONNECTED) {
 		return false;
 	}
+
+	/* Touchpad is either present or not */
+	if (hub_board_id[TOUCHPAD] != INPUT_MODULE_TOUCHPAD) {
+		return false;
+	}
+
+	/* The full-width module covers the whole input deck top row,
+	 * but unlike our other modules the connector does not have to be at
+	 * the left edge of the module - it can be anywhere.
+	 */
+	for (i = 0; i <= TOP_ROW_4; i++) {
+		if (hub_board_id[i] == INPUT_MODULE_FULL_WIDTH)
+			return true;
+	}
+
+	/* Go through the input deck top row from left to right,
+	 * when detecting a module, jump over all empty slots that the module covers.
+	 * If the end is reached, the deck is fully covered.
+	 * If any slot after a module is empty, something is missing.
+	 */
 	for (i = 0; i <= TOP_ROW_4;) {
 		switch (hub_board_id[i]) {
-		case INPUT_MODULE_FULL_WIDTH:
-			i += 5;
-			break;
 		case INPUT_MODULE_GENERIC_A:
 		case INPUT_MODULE_KEYBOARD_A:
 			i += 3;
@@ -146,10 +164,6 @@ bool input_deck_is_fully_populated(void)
 		default:
 			return false;
 		}
-	}
-
-	if (hub_board_id[TOUCHPAD] != INPUT_MODULE_TOUCHPAD) {
-		return false;
 	}
 
 	return true;
