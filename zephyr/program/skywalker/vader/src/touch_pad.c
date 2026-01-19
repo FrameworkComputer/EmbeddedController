@@ -15,8 +15,9 @@
 
 static void touchpad_enable_switch(void)
 {
-	if (lid_is_open() && (chipset_in_state(CHIPSET_STATE_ON) ||
-			      chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)))
+	if (lid_is_open() &&
+	    (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON) ||
+	     chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_SUSPEND)))
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_tchpad_lid_close),
 				1);
 	else
