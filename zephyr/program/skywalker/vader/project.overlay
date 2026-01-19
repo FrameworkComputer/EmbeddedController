@@ -171,6 +171,11 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "bma4xx_interrupt";
 		};
+		int_pmic_ec_resetb: pmic-ec-resetb {
+			irq-pin = <&gpio_pmic_ec_resetb>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "pmic_ec_resetb_interrupt";
+		};
 	};
 
 	named-gpios {
