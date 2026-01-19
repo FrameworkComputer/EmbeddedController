@@ -25,6 +25,16 @@
 
 /* quartz overrides follow... */
 
+/ {
+	gpio-interrupts {
+		int_s3_power_monitor: s3_power_monitor {
+			irq-pin = <&gpio_pp1800_l1i_s3_ec>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "s3_power_interrupt";
+		};
+	};
+};
+
 &cbi_flash {
 	/*
 	 * CBI section size is 0x1000 bytes, the CBI portion lies at the end of

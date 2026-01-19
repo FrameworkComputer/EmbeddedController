@@ -35,7 +35,7 @@
 			gpios = <&gpio4 0 (GPIO_OUTPUT)>;
 		};
 		gpio_pp1800_l1i_s3_ec: pp1800_l1i_s3_ec {
-			gpios = <&gpio5 0 (GPIO_INPUT)>;
+			gpios = <&gpio5 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		gpio_dock_vdm_pwr_on: dock_vdm_pwr_on {
 			gpios = <&gpio5 4 (GPIO_INPUT)>;
