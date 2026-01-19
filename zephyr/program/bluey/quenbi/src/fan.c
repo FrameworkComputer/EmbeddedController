@@ -47,6 +47,9 @@ enum fan_status board_override_fan_control_duty(int ch)
 		fan_set_duty(ch, FAN_STALLED_DUTY_CYCLE);
 		return FAN_STATUS_LOCKED;
 	}
-	/* Valid RPM detected, return to default smart fan control logic */
-	return fan_smart_control(ch);
+	/* Valid RPM detected, return to default to RPM mode logic */
+	fan_set_rpm_mode(ch, true);
+	fan_set_rpm_target(ch, 6000);
+
+	return FAN_STATUS_LOCKED;
 }
