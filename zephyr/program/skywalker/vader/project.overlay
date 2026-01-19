@@ -208,7 +208,6 @@
 			<&gpio9 7 0>,
 			<&gpioc 3 0>,
 			<&gpiod 5 0>,
-			<&gpiod 6 0>,
 			<&gpiod 7 0>,
 			<&gpioe 2 0>,
 			<&gpioe 4 0>;
