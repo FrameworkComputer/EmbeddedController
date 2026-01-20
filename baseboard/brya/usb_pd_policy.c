@@ -80,7 +80,6 @@ int board_vbus_source_enabled(int port)
 	return ppc_is_sourcing_vbus(port);
 }
 
-#ifdef CONFIG_USB_PD_TBT_COMPAT_MODE
 /* ----------------- Vendor Defined Messages ------------------ */
 /* Responses specifically for the enablement of TBT mode in the role of UFP */
 
@@ -202,6 +201,8 @@ static int svdm_tbt_compat_response_modes(int port, uint32_t *payload)
 __override enum ec_status
 board_set_tbt_ufp_reply(int port, enum typec_tbt_ufp_reply reply)
 {
+	if (!IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE))
+		return EC_RES_ERROR;
 	/* Note: Host command has already bounds-checked port */
 	if (reply == TYPEC_TBT_UFP_REPLY_ACK)
 		tbt_ufp_ack_allowed[port] = true;
@@ -265,4 +266,3 @@ const struct svdm_response svdm_rsp = {
 	.amode = NULL,
 	.exit_mode = NULL,
 };
-#endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
