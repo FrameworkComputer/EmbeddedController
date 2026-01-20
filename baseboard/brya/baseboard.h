@@ -148,6 +148,11 @@
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
 
+/* Configure the APB2 and APB3 CLK to 40MHz.
+ * Improves I/O performance.
+ */
+#define NPCX_CORE_ABP2_ABP3_CLOCK_40M
+
 /* EDP back-light control defines */
 #define CONFIG_BACKLIGHT_LID
 
