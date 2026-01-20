@@ -59,9 +59,6 @@
 
 		irq-gpios = <&gpio0 9 GPIO_ACTIVE_HIGH>;
 		reset-gpios = <&gpio0 10 GPIO_ACTIVE_LOW>;
-		/* TODO(b/436165928): Rework to use phandle instead of an
-		 * absolute address.
-		 */
-		calibration-data-addr = <0x800001b9>;
+		calibration-data = <&mt_data>;
 	};
 };

@@ -160,7 +160,8 @@ static int egis630_init(const struct device *dev)
 
 	if (!ret && (cfg->calibration_data_addr != 0)) {
 		calibration_data = (struct egis630_calibration_data
-					    *)(cfg->calibration_data_addr);
+					    *)(cfg->calibration_data_addr +
+					       CONFIG_FLASH_BASE_ADDRESS);
 		ret = egis_apply_calibration_data(calibration_data->data,
 						  calibration_data->size);
 		if (ret != EGIS_API_OK) {
@@ -441,8 +442,11 @@ static int egis630_init_driver(const struct device *dev)
 							  SPI_WORD_SET(8)),          \
 		.interrupt = GPIO_DT_SPEC_INST_GET(inst, irq_gpios),                 \
 		.reset_pin = GPIO_DT_SPEC_INST_GET(inst, reset_gpios),               \
-		.calibration_data_addr =                                             \
-			DT_INST_PROP_OR(inst, calibration_data_addr, 0),             \
+		.calibration_data_addr = COND_CODE_1(                                \
+			DT_NODE_EXISTS(                                              \
+				DT_INST_PHANDLE(inst, calibration_data)),            \
+			(DT_REG_ADDR(DT_INST_PHANDLE(inst, calibration_data))),      \
+			(0)),                                                        \
 		.sensor_info = EGIS630_SENSOR_INFO(inst),                            \
 		.sensor_image_configs = { LISTIFY(                                   \
 			FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)),           \

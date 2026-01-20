@@ -21,8 +21,8 @@ properties:
     description: |
       This property specifies the connection for sensor reset.
 
-  calibration-data-addr:
-    type: int
+  calibration-data:
+    type: phandle
     description: |
-      An absolute address where calibration data are stored. The first 4 bytes
+      Phandle to a partition with calibration data. The first 4 bytes
       are size of the calibration data, then actual data.
