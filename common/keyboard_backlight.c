@@ -149,6 +149,10 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, kblight_resume, HOOK_PRIO_DEFAULT);
 #ifdef CONFIG_LID_SWITCH
 static void kblight_lid_change(void)
 {
+	/* We should not enable the kblight when the lid is open at S5 */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return;
+
 	kblight_enable(lid_is_open() && current_percent);
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, kblight_lid_change, HOOK_PRIO_DEFAULT);
