@@ -36,26 +36,22 @@ bool input_c_deck_detect(void)
 	if (get_standalone_mode())
 		return true;
 
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on)) == 0) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_tp_board_id_pug), 1);
 
 		touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
 
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_tp_board_id_pug), 0);
-		/*
-		 * Q1 NMOS turn on,C deck connect is 990mV,disconnect is 1815 mv
-		 */
+
 		if (touchpad > BOARD_VERSION_10)
 			return false;
 	} else {
 		touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
-		/*
-		 * System power on, don't need to turn on the Q1 NMOS.
-		 * The voltage is 0 V when the c deck is disconnected.
-		 */
+
 		if (touchpad < BOARD_VERSION_1)
 			return false;
 	}
+
 	return true;
 }
 
