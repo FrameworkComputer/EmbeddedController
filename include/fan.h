@@ -93,6 +93,9 @@ struct fan_conf {
 	int pgood_gpio;
 	/* Active-high power_enable output GPIO, or -1 if none */
 	int enable_gpio;
+	/* set fan_force_off true for fans which keep spinning
+	 * with minimum rpm at dutycycle 0 due to specs limitation */
+	bool fan_force_off;
 };
 
 struct fan_rpm {

@@ -32,6 +32,7 @@ extern "C" {
 #define GPIO_SIGNAL_START 0 /* The first valid GPIO signal is 0 */
 
 enum gpio_signal {
+	GPIO_UNIMPLEMENTED = -1,
 #include "gpio.wrap"
 	GPIO_COUNT,
 	/* Ensure that sizeof gpio_signal is large enough for ioex_signal */

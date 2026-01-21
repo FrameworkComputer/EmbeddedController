@@ -131,6 +131,14 @@ int temp_ratio_to_rpm_hysteresis(const struct fan_step_1_1 *fan_table,
 	return rpm;
 }
 
+static void set_enabled(int fan, int enable)
+{
+	fan_set_enabled(FAN_CH(fan), enable);
+
+	if (fans[fan].conf->enable_gpio != GPIO_UNIMPLEMENTED)
+		gpio_set_level(fans[fan].conf->enable_gpio, enable);
+}
+
 /* The thermal task will only call this function with pct in [0,100]. */
 test_mockable void fan_set_percent_needed(int fan, int pct)
 {
@@ -156,15 +164,11 @@ test_mockable void fan_set_percent_needed(int fan, int pct)
 	    new_rpm < fans[fan].rpm->rpm_start)
 		new_rpm = fans[fan].rpm->rpm_start;
 
+	if (fans[fan].conf->fan_force_off) {
+		/* enable the fan if rpm is non-zero */
+		set_enabled(fan, (new_rpm > 0) ? 1 : 0);
+	}
 	fan_set_rpm_target(FAN_CH(fan), new_rpm);
-}
-
-static void set_enabled(int fan, int enable)
-{
-	fan_set_enabled(FAN_CH(fan), enable);
-
-	if (fans[fan].conf->enable_gpio >= 0)
-		gpio_set_level(fans[fan].conf->enable_gpio, enable);
 }
 
 test_export_static void set_thermal_control_enabled(int fan, int enable)

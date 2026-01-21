@@ -55,3 +55,8 @@ child-binding:
       type: phandle
       description:
         Active high output GPIO to enable the power
+    fan-force-off:
+      type: boolean
+      description:
+        fan-force-off is need to set for fans which keep spinning with
+        minimum rpm at dutycycle 0 due to specs limitation

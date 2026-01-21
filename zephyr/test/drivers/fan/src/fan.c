@@ -438,3 +438,38 @@ ZTEST(fan_common, test_memmap_not_present)
 			mapped[i]);
 	}
 }
+
+ZTEST(fan_common, test_fan_set_percent_needed)
+{
+	int initial_target;
+	const struct gpio_dt_spec *gp = GPIO_DT_FROM_NODELABEL(gpio_test);
+
+	/* Ensure thermal control is enabled for fan 0 */
+	set_thermal_control_enabled(0, 1);
+
+	/* Test: Setting 0% should set RPM target to 0 */
+	fan_set_percent_needed(0, 0);
+	zassert_equal(fan_get_rpm_target(0), 0,
+		      "Fan target should be 0 RPM at 0%%");
+	/* Verify GPIO is turned off when RPM target is 0 */
+	zassert_equal(gpio_emul_output_get(gp->port, gp->pin), 0,
+		      "GPIO should be off when RPM is 0");
+
+	/* Test: Setting 100% should set RPM to max */
+	fan_set_percent_needed(0, 100);
+	zassert_equal(fan_get_rpm_target(0), fans[0].rpm->rpm_max,
+		      "Fan target should be max RPM at 100%%");
+	/* Verify GPIO is turned on when RPM target is non-zero */
+	zassert_equal(gpio_emul_output_get(gp->port, gp->pin), 1,
+		      "GPIO should be on when RPM is non-zero");
+
+	/* Test: Setting a mid-range percentage (e.g., 50%) */
+	fan_set_percent_needed(0, 50);
+	initial_target = fan_get_rpm_target(0);
+	zassert_true(initial_target > 0 &&
+			     initial_target <= fans[0].rpm->rpm_max,
+		     "Fan target at 50%% should be between 0 and max RPM");
+	/* Verify GPIO remains on for mid-range RPM */
+	zassert_equal(gpio_emul_output_get(gp->port, gp->pin), 1,
+		      "GPIO should be on when RPM is non-zero");
+}

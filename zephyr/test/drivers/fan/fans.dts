@@ -13,7 +13,9 @@
 			rpm-start = <3100>;
 			rpm-max = <8000>;
 			tach = <&tach_fan>;
+			enable-gpio = <&gpio_test>;
 			pgood-gpio = <&gpio_test>;
+			fan-force-off;
 		};
 	};
 	pwms {
