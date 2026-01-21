@@ -356,6 +356,7 @@ tests:
   pdc.console:
     extra_configs:
     - CONFIG_TEST_SUITE_PDC_CONSOLE=y
+    - CONFIG_SHELL_BACKEND_DUMMY_BUF_SIZE=8192
     extra_dtc_overlay_files:
     - "./boards/rts5453p.overlay"
 

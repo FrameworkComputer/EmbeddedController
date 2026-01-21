@@ -1300,3 +1300,43 @@ ZTEST_USER(console_cmd_pdc, test_set_ap_power_state)
 	zassert_equal(POWER_S5,
 		      pdc_power_mgmt_set_ap_power_state_fake.arg0_history[0]);
 }
+
+ZTEST_USER(console_cmd_pdc, test_pdc_dump)
+{
+	const char *outbuffer;
+	size_t buffer_size;
+	int rv;
+
+	/* Set up expected values for all subcommands called */
+	pdc_power_mgmt_get_power_role_fake.return_val = PD_ROLE_SINK;
+	pdc_power_mgmt_pd_get_data_role_fake.return_val = PD_ROLE_DFP;
+	pdc_power_mgmt_pd_get_polarity_fake.return_val = POLARITY_CC2;
+	pdc_power_mgmt_is_connected_fake.return_val = true;
+	pdc_power_mgmt_get_task_state_name_fake.return_val = "StateName";
+	pdc_power_mgmt_get_sbu_mux_mode_fake.custom_fake =
+		custom_fake_get_sbu_mux_mode;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc dump");
+	zassert_ok(rv, "Expected success, but got %d", rv);
+
+	/* Check for substrings to ensure each command is called */
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+
+	zassert_true(buffer_size > 0, NULL);
+	zassert_not_null(strstr(outbuffer, "===== Port C0 ====="));
+	zassert_not_null(strstr(
+		outbuffer,
+		"Port C0 CC2, Enable - Role: SNK-DFP PDC State: StateName"));
+	zassert_not_null(strstr(outbuffer, "VID/PID: 0000:0000"));
+	zassert_not_null(strstr(outbuffer, "Port 0 GET_CONNECTOR_STATUS:"));
+	zassert_not_null(strstr(outbuffer, "No source caps for port 0"));
+	zassert_not_null(strstr(outbuffer, "===== Port C1 ====="));
+	zassert_not_null(strstr(
+		outbuffer,
+		"Port C1 CC2, Enable - Role: SNK-DFP PDC State: StateName"));
+	zassert_not_null(strstr(outbuffer, "Port 1 GET_CONNECTOR_STATUS:"));
+	zassert_not_null(strstr(outbuffer, "No source caps for port 1"));
+	zassert_not_null(strstr(outbuffer, "===== General ====="));
+	zassert_not_null(strstr(outbuffer, "CCD Port: C2, Mode: NORMAL (0)"));
+}

@@ -8,6 +8,7 @@
 #include "usb_common.h"
 
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <zephyr/logging/log.h>
@@ -30,18 +31,18 @@ static int cmd_get_pd_port(const struct shell *sh, char *arg_val, uint8_t *port)
 	return 0;
 }
 
-static int cmd_pdc_get_status(const struct shell *sh, size_t argc, char **argv)
+/**
+ * @brief Helper to print PDC connection status
+ *
+ * @param sh Pointer to shell instance.
+ * @param port Port number. Must be pre-validated.
+ * @return 0 on success, or error code.
+ */
+static int print_get_status(const struct shell *sh, int port)
 {
-	int rv;
-	uint8_t port;
 	enum pd_power_role pr;
 	enum pd_data_role dr;
 	enum tcpc_cc_polarity polarity;
-
-	/* Get PD port number */
-	rv = cmd_get_pd_port(sh, argv[1], &port);
-	if (rv)
-		return rv;
 
 	/* Get PDC Status */
 	pr = pdc_power_mgmt_get_power_role(port);
@@ -59,17 +60,30 @@ static int cmd_pdc_get_status(const struct shell *sh, size_t argc, char **argv)
 	return EC_SUCCESS;
 }
 
-static int cmd_pdc_get_connector_status(const struct shell *sh, size_t argc,
-					char **argv)
+static int cmd_pdc_get_status(const struct shell *sh, size_t argc, char **argv)
 {
 	int rv;
 	uint8_t port;
-	union connector_status_t connector_status;
 
 	/* Get PD port number */
 	rv = cmd_get_pd_port(sh, argv[1], &port);
 	if (rv)
 		return rv;
+
+	return print_get_status(sh, port);
+}
+
+/**
+ * @brief Helper to print connector status field
+ *
+ * @param sh Pointer to shell instance.
+ * @param port Port number. Must be pre-validated.
+ * @return 0 on success, or error code.
+ */
+static int print_get_connector_status(const struct shell *sh, int port)
+{
+	union connector_status_t connector_status;
+	int rv;
 
 	rv = pdc_power_mgmt_get_connector_status(port, &connector_status);
 	if (rv)
@@ -138,6 +152,20 @@ static int cmd_pdc_get_connector_status(const struct shell *sh, size_t argc,
 	return EC_SUCCESS;
 }
 
+static int cmd_pdc_get_connector_status(const struct shell *sh, size_t argc,
+					char **argv)
+{
+	int rv;
+	uint8_t port;
+
+	/* Get PD port number */
+	rv = cmd_get_pd_port(sh, argv[1], &port);
+	if (rv)
+		return rv;
+
+	return print_get_connector_status(sh, port);
+}
+
 static int cmd_pdc_get_cable_prop(const struct shell *sh, size_t argc,
 				  char **argv)
 {
@@ -186,29 +214,18 @@ static int cmd_pdc_get_cable_prop(const struct shell *sh, size_t argc,
 	return EC_SUCCESS;
 }
 
-static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
+/**
+ * @brief Helper to print PDC info response
+ *
+ * @param sh Pointer to shell instance.
+ * @param port Port number. Must be pre-validated.
+ * @param live True for live read, false for cached value.
+ * @return 0 on success, or error code.
+ */
+static int print_pdc_info(const struct shell *sh, int port, bool live)
 {
-	int rv;
-	uint8_t port;
-	bool live = true;
 	struct pdc_info_t pdc_info = { 0 };
-
-	/* Get PD port number */
-	rv = cmd_get_pd_port(sh, argv[1], &port);
-	if (rv)
-		return rv;
-
-	if (argc > 2) {
-		/* Parse optional live parameter */
-		char *e;
-		int live_param = strtoul(argv[2], &e, 0);
-		if (*e) {
-			shell_error(sh, "Pass 0/1 for live");
-			return -EINVAL;
-		}
-
-		live = !!live_param;
-	}
+	int rv;
 
 	/* Get PDC Status */
 	rv = pdc_power_mgmt_get_info(port, &pdc_info, live);
@@ -242,6 +259,32 @@ static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 		      pdc_info.driver_name, pdc_info.no_fw_update ? 'N' : 'Y');
 
 	return EC_SUCCESS;
+}
+
+static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
+{
+	int rv;
+	uint8_t port;
+	bool live = true;
+
+	/* Get PD port number */
+	rv = cmd_get_pd_port(sh, argv[1], &port);
+	if (rv)
+		return rv;
+
+	if (argc > 2) {
+		/* Parse optional live parameter */
+		char *e;
+		int live_param = strtoul(argv[2], &e, 0);
+		if (*e) {
+			shell_error(sh, "Pass 0/1 for live");
+			return -EINVAL;
+		}
+
+		live = !!live_param;
+	}
+
+	return print_pdc_info(sh, port, live);
 }
 
 static int cmd_lpm_ppm_info(const struct shell *sh, size_t argc, char **argv)
@@ -614,19 +657,18 @@ static int cmd_pdc_src_voltage(const struct shell *sh, size_t argc, char **argv)
 	return 0;
 }
 
-static int cmd_pdc_srccaps(const struct shell *sh, size_t argc, char **argv)
+/**
+ * @brief Helper to print partner source caps
+ *
+ * @param sh Pointer to shell instance.
+ * @param port Port number. Must be pre-validated.
+ * @return 0 on success, or error code.
+ */
+static int print_srccaps(const struct shell *sh, int port)
 {
-	int rv;
-	uint8_t port;
-	uint32_t rdo = 0;
-
-	/* Get PD port number */
-	rv = cmd_get_pd_port(sh, argv[1], &port);
-	if (rv)
-		return rv;
-
 	const uint32_t *const src_caps = pdc_power_mgmt_get_src_caps(port);
 	uint8_t src_caps_count = pdc_power_mgmt_get_src_cap_cnt(port);
+	uint32_t rdo = 0;
 
 	if (src_caps == NULL || src_caps_count == 0) {
 		shell_fprintf(sh, SHELL_ERROR, "No source caps for port %u\n",
@@ -692,6 +734,19 @@ static int cmd_pdc_srccaps(const struct shell *sh, size_t argc, char **argv)
 	return 0;
 }
 
+static int cmd_pdc_srccaps(const struct shell *sh, size_t argc, char **argv)
+{
+	int rv;
+	uint8_t port;
+
+	/* Get PD port number */
+	rv = cmd_get_pd_port(sh, argv[1], &port);
+	if (rv)
+		return rv;
+
+	return print_srccaps(sh, port);
+}
+
 static int cmd_pdc_set_bbr_cts(const struct shell *sh, size_t argc, char **argv)
 {
 	int rv;
@@ -738,6 +793,35 @@ static const char *sbu_mux_mode_to_str(enum pdc_sbu_mux_mode mode)
 }
 
 /**
+ * @brief Helper to print PDC sbumux mode
+ *
+ * @param sh Pointer to shell instance.
+ * @param port Port number. Must be pre-validated.
+ * @return 0 on success, or error code.
+ */
+static int print_sbumux_mode(const struct shell *sh)
+{
+	enum pdc_sbu_mux_mode mode;
+	int ccd_port;
+	int rv;
+
+	rv = pdc_power_mgmt_get_sbu_mux_mode(&mode, &ccd_port);
+
+	if (rv == -ENOTSUP) {
+		shell_error(sh, "No CCD port specified in devicetree");
+		return rv;
+	} else if (rv < 0) {
+		shell_error(sh, "Error getting SBU mux mode: %d", rv);
+		return rv;
+	}
+
+	shell_info(sh, "CCD Port: C%d, Mode: %s (%d)", ccd_port,
+		   sbu_mux_mode_to_str(mode), mode);
+
+	return 0;
+}
+
+/**
  * @brief Get or set the PDC's SBU mux operating mode (normal or forced to debug
  *        for CCD keepalive)
  */
@@ -745,25 +829,11 @@ static int cmd_pdc_sbu_mux_mode(const struct shell *sh, size_t argc,
 				char **argv)
 {
 	enum pdc_sbu_mux_mode mode;
-	int ccd_port;
 	int rv;
 
 	if (argc < 2) {
 		/* Get current mode and exit */
-		rv = pdc_power_mgmt_get_sbu_mux_mode(&mode, &ccd_port);
-
-		if (rv == -ENOTSUP) {
-			shell_error(sh, "No CCD port specified in devicetree");
-			return rv;
-		} else if (rv < 0) {
-			shell_error(sh, "Error getting SBU mux mode: %d", rv);
-			return rv;
-		}
-
-		shell_info(sh, "CCD Port: C%d, Mode: %s (%d)", ccd_port,
-			   sbu_mux_mode_to_str(mode), mode);
-
-		return 0;
+		return print_sbumux_mode(sh);
 	}
 
 	if (!strncmp(argv[1], "normal", strlen("normal"))) {
@@ -807,6 +877,55 @@ static int cmd_set_ap_power_state(const struct shell *sh, size_t argc,
 	}
 
 	return pdc_power_mgmt_set_ap_power_state(state);
+}
+
+static int cmd_pdc_dump(const struct shell *sh, size_t argc, char **argv)
+{
+	int rv;
+
+	/* Iterate through all USB-C ports */
+	for (int port = 0; port < pdc_power_mgmt_get_usb_pd_port_count();
+	     port++) {
+		shell_info(sh, "===== Port C%d =====", port);
+
+		/* pdc status <port> */
+		rv = print_get_status(sh, port);
+		if (rv) {
+			shell_error(sh, "`pdc status %d` failed: %d", port, rv);
+		}
+
+		/* pdc info <port> */
+		rv = print_pdc_info(sh, port, 1);
+		if (rv) {
+			shell_error(sh, "`pdc info %d` failed: %d", port, rv);
+		}
+
+		/* pdc connector_status <port> */
+		rv = print_get_connector_status(sh, port);
+		if (rv) {
+			shell_error(sh, "`pdc connector_status %d` failed: %d",
+				    port, rv);
+		}
+
+		/* pdc srccaps <port> */
+		rv = print_srccaps(sh, port);
+		if (rv) {
+			shell_error(sh, "`pdc srccaps %d` failed: %d", port,
+				    rv);
+		}
+	}
+
+	shell_info(sh, "===== General =====");
+
+#ifdef CONFIG_USBC_PDC_DRIVEN_CCD
+	/* pdc sbumux */
+	rv = print_sbumux_mode(sh);
+	if (rv) {
+		shell_error(sh, "`pdc sbumux` failed: %d", rv);
+	}
+#endif /* CONFIG_USBC_PDC_DRIVEN_CCD */
+
+	return 0;
 }
 
 SHELL_STATIC_SUBCMD_SET_CREATE(
@@ -893,6 +1012,10 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      SHELL_HELP("Notify the PDC of AP power state change",
 				 "[s0|s5]"),
 		      cmd_set_ap_power_state, 2, 0),
+	SHELL_CMD_ARG(dump, NULL,
+		      "Print diagnostic data for all ports\n"
+		      "Usage: pdc dump",
+		      cmd_pdc_dump, 1, 0),
 	SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(pdc, &sub_pdc_cmds, "PDC console commands", NULL);
