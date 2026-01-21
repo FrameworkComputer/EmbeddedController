@@ -223,13 +223,6 @@ static inline int32_t get_step_duration(const struct led_pattern_node_t *cfg,
 void led_set_color(enum led_color color, enum ec_led_id led_id,
 		   uint8_t brightness);
 
-/**
- * Wrapper function to apply the calculated color to hardware
- *
- * @param has_transitions	Whether the policy has a transition pattern
- */
-void led_asynchronous_apply_color(bool has_transitions);
-
 #ifdef TEST_BUILD
 const struct led_pins_node_t *led_get_node(enum led_color color,
 					   enum ec_led_id led_id);

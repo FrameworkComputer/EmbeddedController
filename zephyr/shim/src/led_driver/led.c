@@ -441,14 +441,6 @@ static void led_update_policy_state(void)
 	}
 }
 
-void led_asynchronous_apply_color(bool has_transitions)
-{
-	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
-		policy_groups[i].driver->api->asynchronous_apply_color(
-			has_transitions);
-	}
-}
-
 static void led_execute_patterns(void)
 {
 	/* Iterate through all policy groups to process active patterns */
