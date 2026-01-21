@@ -565,7 +565,8 @@ void cypd_evaluate_port_profile(int controller, int port, int ccg_event)
 {
 	int pd_port = PDPORT(controller, port);
 	int shared_pd_port = PDPORT(controller, (port ? 0 : 1));
-	bool first_port = false;
+	bool first_3a_port = false;
+	bool first_1p5a_port = false;
 	bool restore_profile = false;
 	bool profile_is_changed = false;
 	static uint8_t ignore_evaluate_reason;
@@ -602,18 +603,26 @@ void cypd_evaluate_port_profile(int controller, int port, int ccg_event)
 
 		if (pd_port_states[pd_port].c_state == CCG_STATUS_SINK) {
 
-			if (pd_port_states[shared_pd_port].c_state != CCG_STATUS_SINK ||
+			if (pd_port_states[pd_port].max_operating_current <= 1500 &&
+			    pd_port_states[pd_port].max_operating_current > 0 &&
+			    pd_port_states[pd_port].safety_table[TYPEC_SAFETY_LEVEL_0]
+				!= CCG_PD_CMD_SET_TYPEC_1_5A) {
+				/* Current PD device maximum operating current <= 1.5A */
+				first_1p5a_port = true;
+			} else if (pd_port_states[shared_pd_port].c_state != CCG_STATUS_SINK ||
 			    (!pd_port_states[shared_pd_port].pd_state &&
 			    pd_port_states[shared_pd_port].current < 3000))
-				first_port = true;
+				first_3a_port = true;
 		}
 	}
 
 	/* Shared 3A type-c port with the one PD chip */
-	if (first_port) {
+	if (first_3a_port) {
 
 		/* Non-PD device and the Rp value is 1.5A or 0.9A */
-		if (!pd_port_states[pd_port].pd_state && pd_port_states[pd_port].current != 3000)
+		if ((!pd_port_states[pd_port].pd_state && pd_port_states[pd_port].current != 3000)
+		    || pd_port_states[pd_port].safety_table[TYPEC_SAFETY_LEVEL_0] ==
+		    CCG_PD_CMD_SET_TYPEC_1_5A)
 			return;
 
 		/* Override the safety table if the current should reduce to 1.5A */
@@ -638,6 +647,27 @@ void cypd_evaluate_port_profile(int controller, int port, int ccg_event)
 
 			cypd_select_pdo(controller, (port ? 0 : 1), CCG_PD_CMD_SET_TYPEC_1_5A);
 		}
+	} else if (first_1p5a_port) {
+
+		/* If shared port already selects the 1.5A, ignore to change PDO */
+		if (pd_port_states[shared_pd_port].c_state == CCG_STATUS_SINK &&
+		    pd_port_states[shared_pd_port].safety_table[TYPEC_SAFETY_LEVEL_0] ==
+		    CCG_PD_CMD_SET_TYPEC_1_5A)
+			return;
+
+		for (int level = 0; level < TYPEC_SAFETY_LEVEL_2; level++) {
+			pd_port_states[pd_port].safety_table[level] = CCG_PD_CMD_SET_TYPEC_1_5A;
+			/* Ensure shared PD ports perform 3A profiles */
+			pd_port_states[shared_pd_port].safety_table[level] =
+				CCG_PD_CMD_SET_TYPEC_3A;
+		}
+
+		k_msleep(100);
+		cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_1_5A);
+		/* Wait for the first port */
+		k_msleep(100);
+		cypd_select_pdo(controller, PORT_TO_CONTROLLER_PORT(shared_pd_port),
+			CCG_PD_CMD_SET_TYPEC_3A);
 	} else if (restore_profile) {
 
 		for (int idx = 0; idx < pd_chip_config[controller].support_max_port; idx++) {
@@ -1249,6 +1279,7 @@ static void clear_port_state(int controller, int port)
 	pd_port_states[port_idx].c_state = 0;
 	pd_port_states[port_idx].current = 0;
 	pd_port_states[port_idx].voltage = 0;
+	pd_port_states[port_idx].max_operating_current = 0;
 }
 
 #ifdef CONFIG_CHARGER_HAS_VOLTAGE_REGULATOR
