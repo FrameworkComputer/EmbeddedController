@@ -249,20 +249,22 @@ static int cmd_rt3645_set_regs(const struct shell *sh, size_t argc, char **argv)
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_imvp_cmds,
 	SHELL_CMD_ARG(cfg_mode, NULL,
-		      "Enter password to set IMVP chip in config mode\n"
-		      "Usage: imvp cfg_mode <Password sequence>\n",
+		      SHELL_HELP("Enter password to set IMVP chip in config mode"
+				 "<Password sequence>",
+				 NULL),
 		      cmd_rt3645_enter_cfg_mode, 1, 4),
-	SHELL_CMD(load_cfg, NULL, "Load IMVP config from NVM\n",
+	SHELL_CMD(load_cfg, NULL, SHELL_HELP("Load IMVP config from NVM", NULL),
 		  cmd_rt3645_load),
-	SHELL_CMD(store_cfg, NULL, "Store IMVP config into NVM\n",
+	SHELL_CMD(store_cfg, NULL,
+		  SHELL_HELP("Store IMVP config into NVM", NULL),
 		  cmd_rt3645_store),
 	SHELL_CMD_ARG(set_page, NULL,
-		      "Sets active page for R/W\n"
-		      "Usage: imvp set_page <page number in hex>\n",
+		      SHELL_HELP("Sets active page for R/W",
+				 "<page number in hex>"),
 		      cmd_rt3645_set_page, 2, 0),
 	SHELL_CMD_ARG(set_regs, NULL,
-		      "Sets chip paged registers\n"
-		      "Usage: imvp set_regs <start_reg> [value | - ] \n",
+		      SHELL_HELP("Sets chip paged registers",
+				 "<start_reg> [value | - ]"),
 		      cmd_rt3645_set_regs, 2, 13),
 	SHELL_CMD(dump_regs, NULL,
 		  "Dump registers, content depends on current page\n",

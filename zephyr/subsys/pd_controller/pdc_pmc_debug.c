@@ -55,12 +55,11 @@ static int cmd_altmode_read(const struct shell *sh, size_t argc, char **argv)
 	return 0;
 }
 
-SHELL_STATIC_SUBCMD_SET_CREATE(sub_altmode_cmds,
-			       SHELL_CMD_ARG(read, NULL,
-					     "Read status register\n"
-					     "Usage: altmode read <port>",
-					     cmd_altmode_read, 2, 1),
-			       SHELL_SUBCMD_SET_END);
+SHELL_STATIC_SUBCMD_SET_CREATE(
+	sub_altmode_cmds,
+	SHELL_CMD_ARG(read, NULL, SHELL_HELP("Read status register", "<port>"),
+		      cmd_altmode_read, 2, 1),
+	SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(altmode, &sub_altmode_cmds, "PD Altmode commands", NULL);
 

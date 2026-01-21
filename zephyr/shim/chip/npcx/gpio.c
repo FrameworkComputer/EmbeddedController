@@ -195,11 +195,17 @@ static int cmd_gpio_turn_off(const struct shell *sh, size_t argc, char **argv)
 
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_gpiodbg,
-	SHELL_CMD_ARG(list, NULL, "List all GPIOs used on platform by index",
+	SHELL_CMD_ARG(list, NULL,
+		      SHELL_HELP("List all GPIOs used on platform by index",
+				 NULL),
 		      cmd_gpio_list_all, 1, 0),
-	SHELL_CMD_ARG(on, NULL, "<index_in_list> Turn on GPIO's input buffer",
+	SHELL_CMD_ARG(on, NULL,
+		      SHELL_HELP("Turn on GPIO's input buffer",
+				 "<index_in_list>"),
 		      cmd_gpio_turn_on, 2, 0),
-	SHELL_CMD_ARG(off, NULL, "<index_in_list> Turn off GPIO's input buffer",
+	SHELL_CMD_ARG(off, NULL,
+		      SHELL_HELP("Turn off GPIO's input buffer",
+				 "<index_in_list>"),
 		      cmd_gpio_turn_off, 2, 0),
 	SHELL_SUBCMD_SET_END /* Array terminated. */
 );

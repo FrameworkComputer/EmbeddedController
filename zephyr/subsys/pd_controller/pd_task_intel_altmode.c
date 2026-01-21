@@ -475,13 +475,11 @@ static int cmd_altmode_write(const struct shell *sh, size_t argc, char **argv)
 
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_altmode_cmds,
-	SHELL_CMD_ARG(read, NULL,
-		      "Read status register\n"
-		      "Usage: altmode read <port>",
+	SHELL_CMD_ARG(read, NULL, SHELL_HELP("Read status register", "<port>"),
 		      cmd_altmode_read, 2, 1),
 	SHELL_CMD_ARG(write, NULL,
-		      "Write control register\n"
-		      "Usage: altmode write <port> [<byte0>, ...]",
+		      SHELL_HELP("Write control register",
+				 "<port> [<byte0>, ...]"),
 		      cmd_altmode_write, 3,
 		      INTEL_ALTMODE_DATA_CONTROL_REG_LEN - 1),
 	SHELL_SUBCMD_SET_END);

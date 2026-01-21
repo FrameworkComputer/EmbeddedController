@@ -381,30 +381,30 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_ppm_cmds,
 	SHELL_CMD_ARG(
 		get_alt_modes, NULL,
-		"Run GET_ALTERNATE_MODES UCSI command. Gets up to 8 responses. "
-		"Default recipient is SOP.\n"
-		"Usage: ppm get_alt_modes <port> "
-		"[conn|sop|sopprime|sopprimeprime]",
+		SHELL_HELP(
+			"Run GET_ALTERNATE_MODES UCSI command. Gets up to 8 responses. "
+			"Default recipient is SOP",
+			"<port>\n"
+			"[conn|sop|sopprime|sopprimeprime]"),
 		cmd_get_alt_modes, 2, 1),
 	SHELL_CMD_ARG(get_cam_supported, NULL,
-		      "Run GET_CAM_SUPPORTED UCSI command.\n"
-		      "Usage: ppm get_cam_supported <port>",
+		      SHELL_HELP("Run GET_CAM_SUPPORTED UCSI command",
+				 "<port>"),
 		      cmd_get_cam_supported, 2, 0),
 	SHELL_CMD_ARG(get_current_cam, NULL,
-		      "Run GET_CURRENT_CAM UCSI command.\n"
-		      "Usage: ppm get_current_cam <port>",
+		      SHELL_HELP("Run GET_CURRENT_CAM UCSI command", "<port>"),
 		      cmd_get_current_cam, 2, 0),
-	SHELL_CMD_ARG(set_new_cam, NULL,
-		      "Run SET_NEW_CAM UCSI command. Altmodes are described as "
-		      "indexes into the GET_ALTERNATE_MODES response.\n"
-		      "Usage: ppm set_new_cam <port> <new_cam> <am_specific> "
-		      "<enter|exit>",
-		      cmd_set_new_cam, 5, 0),
 	SHELL_CMD_ARG(
-		set_usb, NULL,
-		"Run SET_USB command.\n"
-		"Usage: ppm set_usb <port> <usb3_enable> <usb4_enable> <eudo>",
-		cmd_set_usb, 5, 0),
+		set_new_cam, NULL,
+		SHELL_HELP(
+			"Run SET_NEW_CAM UCSI command. Altmodes are described as "
+			"indexes into the GET_ALTERNATE_MODES response",
+			"<port> <new_cam> <am_specific> <enter|exit>"),
+		cmd_set_new_cam, 5, 0),
+	SHELL_CMD_ARG(set_usb, NULL,
+		      SHELL_HELP("Run SET_USB command",
+				 "<port> <usb3_enable> <usb4_enable> <eudo>"),
+		      cmd_set_usb, 5, 0),
 	SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(ppm, &sub_ppm_cmds, "PPM console commands", NULL);

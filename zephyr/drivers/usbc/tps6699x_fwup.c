@@ -664,29 +664,35 @@ static int cmd_pdc_tps_fwup_abort(const struct shell *sh, size_t argc,
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_pdc_tps_fwup_cmds,
 	SHELL_CMD_ARG(start, NULL,
-		      "Prepare the PDC for firmware download\n"
-		      "Usage: pdc_tps_fwup start <port>",
+		      SHELL_HELP("Prepare the PDC for firmware download",
+				 "<port>"),
 		      cmd_pdc_tps_fwup_start, 2, 0),
-	SHELL_CMD_ARG(send_initiate, NULL,
-		      "Send TFUi command with data to initiate update\n"
-		      "Usage: pdc_tps_fwup send_initiate <base64>",
-		      cmd_pdc_tps_fwup_send_initiate, 2, 0),
-	SHELL_CMD_ARG(send_block, NULL,
-		      "Send TFUd command with data to transfer block data\n"
-		      "Usage: pdc_tps_fwup send_block <base64>",
-		      cmd_pdc_tps_fwup_send_block, 2, 0),
-	SHELL_CMD_ARG(stream, NULL,
-		      "Stream data for TFUi or TFUd after sending the command\n"
-		      "Usage: pdc_tps_fwup stream <base64>",
-		      cmd_pdc_tps_fwup_stream, 2, 0),
-	SHELL_CMD_ARG(complete, NULL,
-		      "Finalize the FW update and restart PD subsystem\n"
-		      "Usage: pdc_tps_fwup complete",
-		      cmd_pdc_tps_fwup_complete, 1, 0),
-	SHELL_CMD_ARG(abort, NULL,
-		      "Recover from a failed or interrupted update session\n"
-		      "Usage: pdc_tps_fwup abort",
-		      cmd_pdc_tps_fwup_abort, 1, 0),
+	SHELL_CMD_ARG(
+		send_initiate, NULL,
+		SHELL_HELP("Send TFUi command with data to initiate update",
+			   "<base64>"),
+		cmd_pdc_tps_fwup_send_initiate, 2, 0),
+	SHELL_CMD_ARG(
+		send_block, NULL,
+		SHELL_HELP("Send TFUd command with data to transfer block data",
+			   "<base64>"),
+		cmd_pdc_tps_fwup_send_block, 2, 0),
+	SHELL_CMD_ARG(
+		stream, NULL,
+		SHELL_HELP(
+			"Stream data for TFUi or TFUd after sending the command",
+			"<base64>"),
+		cmd_pdc_tps_fwup_stream, 2, 0),
+	SHELL_CMD_ARG(
+		complete, NULL,
+		SHELL_HELP("Finalize the FW update and restart PD subsystem",
+			   NULL),
+		cmd_pdc_tps_fwup_complete, 1, 0),
+	SHELL_CMD_ARG(
+		abort, NULL,
+		SHELL_HELP("Recover from a failed or interrupted update session",
+			   NULL),
+		cmd_pdc_tps_fwup_abort, 1, 0),
 	SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(pdc_tps_fwup, &sub_pdc_tps_fwup_cmds,

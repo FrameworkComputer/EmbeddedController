@@ -691,23 +691,26 @@ static int cmd_pdc_rtk_fwup_abort(const struct shell *sh, size_t argc,
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_pdc_rtk_fwup_cmds,
 	SHELL_CMD_ARG(start, NULL,
-		      "Prepare the PDC for a firmware download\n"
-		      "Usage: pdc_rtk_fwup start <port>\n"
-		      "       pdc_rtk_fwup start <device> <addr>\n"
-		      "         (`device` is an I2C bus, likely I2C_PORT_PD)",
+		      SHELL_HELP("Prepare the PDC for a firmware download",
+				 "<port>\n"
+				 "<device> <addr>\n"
+				 "(`device` is an I2C bus, likely I2C_PORT_PD)"),
 		      cmd_pdc_rtk_fwup_start, 2, 1),
-	SHELL_CMD_ARG(write, NULL,
-		      "Write packets of 29 FW payload bytes to the PDC\n"
-		      "Usage: pdc_rtk_fwup write <base64>",
-		      cmd_pdc_rtk_fwup_write, 2, 0),
-	SHELL_CMD_ARG(finish, NULL,
-		      "Finalize the FW update and restart PD subsystem\n"
-		      "Usage: pdc_rtk_fwup finish",
-		      cmd_pdc_rtk_fwup_finish, 1, 0),
-	SHELL_CMD_ARG(abort, NULL,
-		      "Recover from a failed or interrupted update session\n"
-		      "Usage: pdc_rtk_fwup abort",
-		      cmd_pdc_rtk_fwup_abort, 1, 0),
+	SHELL_CMD_ARG(
+		write, NULL,
+		SHELL_HELP("Write packets of 29 FW payload bytes to the PDC",
+			   "<base64>"),
+		cmd_pdc_rtk_fwup_write, 2, 0),
+	SHELL_CMD_ARG(
+		finish, NULL,
+		SHELL_HELP("Finalize the FW update and restart PD subsystem",
+			   NULL),
+		cmd_pdc_rtk_fwup_finish, 1, 0),
+	SHELL_CMD_ARG(
+		abort, NULL,
+		SHELL_HELP("Recover from a failed or interrupted update session",
+			   NULL),
+		cmd_pdc_rtk_fwup_abort, 1, 0),
 	SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(pdc_rtk_fwup, &sub_pdc_rtk_fwup_cmds,

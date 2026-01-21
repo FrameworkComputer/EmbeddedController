@@ -68,8 +68,7 @@ static int console_command_slp_s0_debug_alarm(const struct shell *sh, int argc,
 	return EC_SUCCESS;
 }
 SHELL_CMD_ARG_REGISTER(slp_s0_debug_alarm, NULL,
-		       "Set SLP_S0 alarm time. "
-		       "Usage: slp_s0_debug_alarm <seconds>",
+		       SHELL_HELP("Set SLP_S0 alarm time.", "<seconds>"),
 		       console_command_slp_s0_debug_alarm, 2, 0);
 
 #endif

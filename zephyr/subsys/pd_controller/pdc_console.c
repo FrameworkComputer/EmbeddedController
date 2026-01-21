@@ -811,93 +811,87 @@ static int cmd_set_ap_power_state(const struct shell *sh, size_t argc,
 
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_pdc_cmds,
-	SHELL_CMD_ARG(status, NULL,
-		      "Get PD status\n"
-		      "Usage: pdc status <port>",
+	SHELL_CMD_ARG(status, NULL, SHELL_HELP("Get PD status", "<port>"),
 		      cmd_pdc_get_status, 2, 0),
-	SHELL_CMD_ARG(info, NULL,
-		      "Get PDC chip info. Live defaults to 1 to force a new "
-		      "read from chip. Pass 0 to use cached info.\n"
-		      "Usage: pdc info <port> [live]",
-		      cmd_pdc_get_info, 2, 1),
+	SHELL_CMD_ARG(
+		info, NULL,
+		SHELL_HELP(
+			"Get PDC chip info. Live defaults to 1 to force a new "
+			"read from chip. Pass 0 to use cached info",
+			"<port> [live]"),
+		cmd_pdc_get_info, 2, 1),
 	SHELL_CMD_ARG(prs, NULL,
-		      "Trigger power role swap\n"
-		      "Usage: pdc prs <port>",
+		      SHELL_HELP("Trigger power role swap", "<port>"),
 		      cmd_pdc_prs, 2, 0),
-	SHELL_CMD_ARG(drs, NULL,
-		      "Trigger data role swap\n"
-		      "Usage: pdc drs <port>",
+	SHELL_CMD_ARG(drs, NULL, SHELL_HELP("Trigger data role swap", "<port>"),
 		      cmd_pdc_drs, 2, 0),
-	SHELL_CMD_ARG(reset, NULL,
-		      "Trigger a PDC reset\n"
-		      "Usage: pdc reset <port>",
+	SHELL_CMD_ARG(reset, NULL, SHELL_HELP("Trigger a PDC reset", "<port>"),
 		      cmd_pdc_reset, 2, 0),
 	SHELL_CMD_ARG(dualrole, NULL,
-		      "Set or get dualrole mode\n"
-		      "Usage: pdc dualrole  <port> [on|off|freeze|sink|source]",
+		      SHELL_HELP("Set or get dualrole mode",
+				 "<port> [on|off|freeze|sink|source]"),
 		      cmd_pdc_dualrole, 2, 1),
 	SHELL_CMD_ARG(trysrc, NULL,
-		      "Set trysrc mode\n"
-		      "Usage: pdc trysrc <port> [0|1]",
+		      SHELL_HELP("Set trysrc mode", "<port> [0|1]"),
 		      cmd_pdc_trysrc, 3, 0),
-	SHELL_CMD_ARG(drp, NULL,
-		      "Get DRP mode\n"
-		      "Usage: pdc drp <port>",
+	SHELL_CMD_ARG(drp, NULL, SHELL_HELP("Get DRP mode", "<port>"),
 		      cmd_pdc_get_drp_mode, 2, 0),
 	SHELL_CMD_ARG(conn_reset, NULL,
-		      "Trigger hard or data reset\n"
-		      "Usage: pdc conn_reset  <port> [hard|data]",
+		      SHELL_HELP("Trigger hard or data reset",
+				 "<port> [hard|data]"),
 		      cmd_pdc_connector_reset, 3, 0),
 	SHELL_CMD_ARG(comms, &dsub_suspend_or_resume,
-		      "Suspend/resume PDC command communication\n"
-		      "Usage: pdc comms [suspend|resume]",
+		      SHELL_HELP("Suspend/resume PDC command communication",
+				 "[suspend|resume]"),
 		      cmd_pdc_comms_state, 2, 0),
 	SHELL_CMD_ARG(connector_status, NULL,
-		      "Print the UCSI GET_CONNECTOR_STATUS\n"
-		      "Usage pdc connector_status <port>",
+		      SHELL_HELP("Print the UCSI GET_CONNECTOR_STATUS",
+				 "<port>"),
 		      cmd_pdc_get_connector_status, 2, 0),
 	SHELL_CMD_ARG(cable_prop, NULL,
-		      "Print the UCSI GET_CABLE_PROPERTY\n"
-		      "Usage pdc cable_prop <port>",
+		      SHELL_HELP("Print the UCSI GET_CABLE_PROPERTY", "<port>"),
 		      cmd_pdc_get_cable_prop, 2, 0),
-	SHELL_CMD_ARG(src_voltage, NULL,
-		      "Request to source a given voltage from PSU. "
-		      "Omit last arg to use maximum supported voltage.\n"
-		      "Usage: pdc src_voltage <port> [volts]",
-		      cmd_pdc_src_voltage, 2, 1),
-	SHELL_CMD_ARG(srccaps, NULL,
-		      "Print current source capability PDOs received by the "
-		      "given port.\n"
-		      "Usage pdc srccaps <port>",
-		      cmd_pdc_srccaps, 2, 0),
-	SHELL_CMD_ARG(lpm_ppm_info, NULL,
-		      "Get PDC chip info via GET_LPM_PPM_INFO UCSI cmd\n"
-		      "Usage: pdc lpm_ppm_info <port>",
-		      cmd_lpm_ppm_info, 2, 0),
+	SHELL_CMD_ARG(
+		src_voltage, NULL,
+		SHELL_HELP("Request to source a given voltage from PSU. "
+			   "Omit last arg to use maximum supported voltage",
+			   "<port> [volts]"),
+		cmd_pdc_src_voltage, 2, 1),
+	SHELL_CMD_ARG(
+		srccaps, NULL,
+		SHELL_HELP(
+			"Print current source capability PDOs received by the "
+			"given port",
+			"<port>"),
+		cmd_pdc_srccaps, 2, 0),
+	SHELL_CMD_ARG(
+		lpm_ppm_info, NULL,
+		SHELL_HELP("Get PDC chip info via GET_LPM_PPM_INFO UCSI cmd",
+			   "<port>"),
+		cmd_lpm_ppm_info, 2, 0),
 	SHELL_CMD_ARG(vconn, NULL,
-		      "Get Vconn state for a port\n"
-		      "Usage: pdc vconn <port>",
+		      SHELL_HELP("Get Vconn state for a port", "<port>"),
 		      cmd_vconn_state, 2, 0),
 	SHELL_CMD_ARG(set_bbr_cts, NULL,
-		      "Enable/disable BBR compliance test mode\n"
-		      "Usage: pdc set_bbr_cts <port> [on|off]",
+		      SHELL_HELP("Enable/disable BBR compliance test mode",
+				 "<port> [on|off]"),
 		      cmd_pdc_set_bbr_cts, 3, 0),
 #ifdef CONFIG_USBC_PDC_DRIVEN_CCD
 	SHELL_CMD_ARG(sbumux, &dsub_sbu_mux_modes,
-		      "Get or set the SBU mux mode "
-		      "(for PDC-driven CCD boards only)\n"
-		      "Usage: pdc sbumux [normal|debug]",
+		      SHELL_HELP("Get or set the SBU mux mode "
+				 "(for PDC-driven CCD boards only)",
+				 "[normal|debug]"),
 		      cmd_pdc_sbu_mux_mode, 1, 1),
 #endif /* defined(CONFIG_USBC_PDC_DRIVEN_CCD) */
 	SHELL_COND_CMD_ARG(IS_ENABLED(CONFIG_USBC_PDC_TRACE_MSG_CONSOLE_CMD),
 			   trace, NULL,
-			   "Dump accumulated PDC trace messages "
-			   "and optionally set trace port\n"
-			   "<Type-C port number>|all|on|none|off",
+			   SHELL_HELP("Dump accumulated PDC trace messages "
+				      "and optionally set trace port",
+				      "<Type-C port number>|all|on|none|off"),
 			   cmd_pdc_trace, 1, 1),
 	SHELL_CMD_ARG(ap_state, NULL,
-		      "Notify the PDC of AP power state change\n"
-		      "Usage: pdc ap_state [s0|s5]",
+		      SHELL_HELP("Notify the PDC of AP power state change",
+				 "[s0|s5]"),
 		      cmd_set_ap_power_state, 2, 0),
 	SHELL_SUBCMD_SET_END);
 
@@ -911,8 +905,7 @@ static int cmd_pd_version(const struct shell *sh, size_t argc, char **argv)
 
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_pd_cmds,
 			       SHELL_CMD(version, NULL,
-					 "Get PD version\n"
-					 "Usage: pd version",
+					 SHELL_HELP("Get PD version", NULL),
 					 cmd_pd_version),
 			       SHELL_SUBCMD_SET_END);
 
