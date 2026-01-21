@@ -44,8 +44,8 @@ convert_fp_capture_type_to_elan_capture_type(enum fingerprint_capture_type mode)
 
 static void elan80series_use_flash_addresses(const struct device *dev)
 {
-#if DT_ANY_INST_HAS_PROP_STATUS_OKAY(base_image_addr) && \
-	DT_ANY_INST_HAS_PROP_STATUS_OKAY(ft_info_addr)
+#if DT_ANY_INST_HAS_PROP_STATUS_OKAY(base_image) && \
+	DT_ANY_INST_HAS_PROP_STATUS_OKAY(ft_info)
 	const struct elan80series_cfg *cfg = dev->config;
 
 	if (cfg->base_image_addr != 0 && cfg->ft_info_addr != 0) {
@@ -461,30 +461,36 @@ static int elan80series_init_driver(const struct device *dev)
 			FINGERPRINT_SENSOR_FRAME_SIZE(idx, DT_DRV_INST(inst)), \
 		"FP image buffer size smaller than raw image size at index " #idx);
 
-#define ELAN80SERIES_DEFINE(inst)                                             \
-	static struct elan80series_data elan80series_data_##inst;             \
-	static const struct elan80series_cfg elan80series_cfg_##inst = {      \
-		.spi = SPI_DT_SPEC_INST_GET(inst, SPI_OP_MODE_MASTER |        \
-							  SPI_WORD_SET(8)),   \
-		.base_image_addr = DT_INST_PROP_OR(inst, base_image_addr, 0), \
-		.ft_info_addr = DT_INST_PROP_OR(inst, ft_info_addr, 0),       \
-		.interrupt = GPIO_DT_SPEC_INST_GET(inst, irq_gpios),          \
-		.reset_pin = GPIO_DT_SPEC_INST_GET(inst, reset_gpios),        \
-		.sensor_info = ELAN80SERIES_SENSOR_INFO(inst),                \
-		.sensor_image_configs = { LISTIFY(                            \
-			FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)),    \
-			ELAN80SERIES_IMAGE_PARAM_INITIALIZER, (, ), inst) },  \
-	};                                                                    \
-	LISTIFY(FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)),            \
-		ELAN80SERIES_BUILD_ASSERT_IMAGE_SIZE, (;), inst)              \
-	BUILD_ASSERT(FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)) <=     \
-			     NUM_IMAGE_CAPTURE_TYPES,                         \
-		     "ELAN80SERIES: Number of image configs exceeds "         \
-		     "NUM_IMAGE_CAPTURE_TYPES");                              \
-	DEVICE_DT_INST_DEFINE(inst, elan80series_init_driver, NULL,           \
-			      &elan80series_data_##inst,                      \
-			      &elan80series_cfg_##inst, POST_KERNEL,          \
-			      CONFIG_FINGERPRINT_SENSOR_INIT_PRIORITY,        \
+#define GET_PARTITION_ADDRESS(inst, prop_name)                        \
+	COND_CODE_1(DT_NODE_EXISTS(DT_INST_PHANDLE(inst, prop_name)), \
+		    (DT_REG_ADDR(DT_INST_PHANDLE(inst, prop_name)) +  \
+		     CONFIG_FLASH_BASE_ADDRESS),                      \
+		    (0))
+
+#define ELAN80SERIES_DEFINE(inst)                                            \
+	static struct elan80series_data elan80series_data_##inst;            \
+	static const struct elan80series_cfg elan80series_cfg_##inst = {     \
+		.spi = SPI_DT_SPEC_INST_GET(inst, SPI_OP_MODE_MASTER |       \
+							  SPI_WORD_SET(8)),  \
+		.base_image_addr = GET_PARTITION_ADDRESS(inst, base_image),  \
+		.ft_info_addr = GET_PARTITION_ADDRESS(inst, ft_info),        \
+		.interrupt = GPIO_DT_SPEC_INST_GET(inst, irq_gpios),         \
+		.reset_pin = GPIO_DT_SPEC_INST_GET(inst, reset_gpios),       \
+		.sensor_info = ELAN80SERIES_SENSOR_INFO(inst),               \
+		.sensor_image_configs = { LISTIFY(                           \
+			FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)),   \
+			ELAN80SERIES_IMAGE_PARAM_INITIALIZER, (, ), inst) }, \
+	};                                                                   \
+	LISTIFY(FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)),           \
+		ELAN80SERIES_BUILD_ASSERT_IMAGE_SIZE, (;), inst)             \
+	BUILD_ASSERT(FINGERPRINT_SENSOR_NUM_CONFIGS(DT_DRV_INST(inst)) <=    \
+			     NUM_IMAGE_CAPTURE_TYPES,                        \
+		     "ELAN80SERIES: Number of image configs exceeds "        \
+		     "NUM_IMAGE_CAPTURE_TYPES");                             \
+	DEVICE_DT_INST_DEFINE(inst, elan80series_init_driver, NULL,          \
+			      &elan80series_data_##inst,                     \
+			      &elan80series_cfg_##inst, POST_KERNEL,         \
+			      CONFIG_FINGERPRINT_SENSOR_INIT_PRIORITY,       \
 			      &cros_fp_elan80series_driver_api)
 
 DT_INST_FOREACH_STATUS_OKAY(ELAN80SERIES_DEFINE);

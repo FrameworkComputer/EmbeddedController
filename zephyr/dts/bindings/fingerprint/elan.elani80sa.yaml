@@ -21,12 +21,12 @@ properties:
     description: |
       This property specifies the connection for sensor reset.
 
-  base-image-addr:
-    type: int
+  base-image:
+    type: phandle
     description: |
-      The address in internal flash for storing the fingerprint sensor's base image.
+      Phandle to a partition storing the fingerprint sensor's base image.
 
-  ft-info-addr:
-    type: int
+  ft-info:
+    type: phandle
     description: |
-      Address of the Factory Test information in internal flash.
+      Phandle to a partition with the Factory Test information.
