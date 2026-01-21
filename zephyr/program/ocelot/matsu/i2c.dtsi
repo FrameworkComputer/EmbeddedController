@@ -26,6 +26,7 @@
 &i2c_port_pd1 {
 	label = "I2C_PORT_PD";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
+	data-hold-time = <10>;
 };
 
 &i2c_port_charger {
