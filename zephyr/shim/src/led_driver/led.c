@@ -559,48 +559,43 @@ __override int led_is_supported(enum ec_led_id led_id)
 	return ((1 << (int)led_id) & supported_leds);
 }
 
-/*
- * Iterate through LED pins nodes to find the color matching node.
- */
-void led_set_color(enum led_color color, enum ec_led_id led_id,
-		   uint8_t brightness)
+static const struct led_driver_t *led_find_driver(enum ec_led_id led_id)
 {
 	uint32_t mask = (1 << led_id);
 
 	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
 		if (policy_groups[i].driver->led_id_mask & mask) {
-			policy_groups[i].driver->api->set_color(color, led_id,
-								brightness);
+			return policy_groups[i].driver;
 		}
+	}
+	return NULL;
+}
+
+void led_set_color(enum led_color color, enum ec_led_id led_id,
+		   uint8_t brightness)
+{
+	const struct led_driver_t *drv = led_find_driver(led_id);
+
+	if (drv) {
+		drv->api->set_color(color, led_id, brightness);
 	}
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
-	uint32_t mask = (1 << led_id);
+	const struct led_driver_t *drv = led_find_driver(led_id);
 
-	memset(brightness_range, 0, EC_LED_COLOR_COUNT);
-
-	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
-		if (policy_groups[i].driver->led_id_mask & mask) {
-			policy_groups[i].driver->api->get_brightness_range(
-				led_id, brightness_range);
-			return;
-		}
+	if (drv) {
+		drv->api->get_brightness_range(led_id, brightness_range);
 	}
 }
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	uint32_t mask = (1 << led_id);
+	const struct led_driver_t *drv = led_find_driver(led_id);
 
-	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
-		if (policy_groups[i].driver->led_id_mask & mask) {
-			int rv = policy_groups[i].driver->api->set_brightness(
-				led_id, brightness);
-			return rv;
-		}
+	if (drv) {
+		return drv->api->set_brightness(led_id, brightness);
 	}
-
 	return EC_ERROR_INVAL;
 }
