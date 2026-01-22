@@ -139,7 +139,7 @@ int mpu_lock_rw_flash(void);
  * @retval 0 Success.
  * @retval <0 Error occurred.
  */
-int mpu_lock_rollback(bool lock);
+test_mockable int mpu_lock_rollback(bool lock);
 
 /**
  * Initialize MPU.

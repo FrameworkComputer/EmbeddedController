@@ -273,6 +273,7 @@ restricted_console-y=restricted_console.o
 rng_benchmark-y=rng_benchmark.o
 rollback-y=rollback.o
 rollback_entropy-y=rollback_entropy.o
+rollback_lock_panic-y=rollback_lock_panic.o
 rollback_secret-y=rollback_secret.o
 rsa-y=rsa.o
 rsa3-y=rsa.o
