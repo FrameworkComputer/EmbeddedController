@@ -47,11 +47,13 @@ class ECCommandsIds(IntEnum):
     FLASH_WRITE = 0x0012
     FLASH_ERASE = 0x0013
     FLASH_REGION_INFO = 0x0016
+    GET_NEXT_EVENT = 0x0067
     REBOOT_EC = 0x00D2
     ENTER_BOOTLOADER = 0x00E2
     RWSIG_ACTION = 0x011D
     FP_MODE = 0x0402
     FP_INFO = 0x0403
+    FP_FRAME = 0x0404
     FP_VENDOR = 0x040B
     FP_ASCP_CLAIM = 0x0420
     FP_ASCP_ESTABLISH = 0x0421
@@ -349,6 +351,50 @@ class FpInfoCmd2(ECCommand):
         )
 
 
+class FpFrameCmd0(ECCommand):
+    """Gets FP frame (version 0)."""
+
+    def __init__(self, idx: int, offset: int, size: int):
+        # Variable number of bytes in response
+        response_msg = [("data", "")]
+        # 4 bytes of offset with index
+        # 4 bytes of size
+        idx_off = ((idx << 28) | (offset & 0x0FFFFFFF)) & 0xFFFFFFFF
+        request_msg = [
+            (idx_off, "I"),
+            (size, "I"),
+        ]
+        super().__init__(
+            ECCommandsIds.FP_FRAME,
+            0,
+            response_msg=response_msg,
+            request_msg=request_msg,
+        )
+
+
+class FpFrameCmd1(ECCommand):
+    """Gets FP frame (version 1)."""
+
+    def __init__(self, cmd: int, idx: int, offset: int, size: int):
+        # Variable number of bytes in response
+        response_msg = [("data", "")]
+        # 4 bytes of offset with index
+        # 4 bytes of size
+        request_msg = [
+            (cmd, "B"),
+            (0, "B"),
+            (idx, "H"),
+            (offset, "I"),
+            (size, "I"),
+        ]
+        super().__init__(
+            ECCommandsIds.FP_FRAME,
+            1,
+            response_msg=response_msg,
+            request_msg=request_msg,
+        )
+
+
 class FpVendorCmd0(ECCommand):
     """FP vendor command."""
 
@@ -429,6 +475,30 @@ class FlashRegionInfoCmd1(ECCommand):
         )
 
 
+class GetNextEventCmd2(ECCommand):
+    """Gets next MKBP event."""
+
+    def __init__(self):
+        # 1 byte of event_type
+        # 16 bytes of event_data
+        response_msg = [("event_type", "B"), ("event_data", "16s")]
+        super().__init__(
+            ECCommandsIds.GET_NEXT_EVENT, 2, response_msg=response_msg
+        )
+
+
+class GetNextEventCmd3(ECCommand):
+    """Gets next MKBP event."""
+
+    def __init__(self):
+        # 1 byte of event_type
+        # Up to 18 bytes of event_data
+        response_msg = [("event_type", "B"), ("event_data", "")]
+        super().__init__(
+            ECCommandsIds.GET_NEXT_EVENT, 3, response_msg=response_msg
+        )
+
+
 class RebootECCmd0(ECCommand):
     """Reboots the EC."""
 
@@ -487,10 +557,12 @@ VERSIONED_COMMANDS = {
     ECCommandsIds.FLASH_WRITE: {0: FlashWriteCmd0},
     ECCommandsIds.FLASH_ERASE: {0: FlashEraseCmd0},
     ECCommandsIds.FLASH_REGION_INFO: {1: FlashRegionInfoCmd1},
+    ECCommandsIds.GET_NEXT_EVENT: {2: GetNextEventCmd2, 3: GetNextEventCmd3},
     ECCommandsIds.REBOOT_EC: {0: RebootECCmd0},
     ECCommandsIds.ENTER_BOOTLOADER: {0: EnterBootloaderCmd0},
     ECCommandsIds.FP_MODE: {0: FpModeCmd0},
     ECCommandsIds.FP_INFO: {1: FpInfoCmd1, 2: FpInfoCmd2},
+    ECCommandsIds.FP_FRAME: {0: FpFrameCmd0, 1: FpFrameCmd1},
     ECCommandsIds.FP_VENDOR: {0: FpVendorCmd0},
     ECCommandsIds.RWSIG_ACTION: {0: RwSigActionCmd0},
     ECCommandsIds.FP_ASCP_CLAIM: {0: FpAscpClaimCmd0},

@@ -118,15 +118,28 @@ class UsbCommunication:
         """Sends data to the EC."""
         return self.ep_out.write(cmd_bytes, timeout=self.SEND_TIMEOUT_MS)
 
+    def _wait_for_interrupt(self, timeout: int) -> HostCommandIRQType:
+        """Waits for an interrupt."""
+        try:
+            ret = self.ep_in_int.read(
+                self.ep_in_int.wMaxPacketSize, timeout=timeout
+            )
+        except usb.core.USBTimeoutError:
+            return None
+        return ret[0]
+
     def wait(self):
         """Waits for a response from the EC."""
         # Wait for response ready signal from interrupt EP
-        while True:
-            ret = self.ep_in_int.read(
-                self.ep_in_int.wMaxPacketSize, timeout=self.WAIT_TIMEOUT_MS
-            )
-            if ret[0] == HostCommandIRQType.RESPONSE_READY:
-                break
+        while (
+            self._wait_for_interrupt(self.WAIT_TIMEOUT_MS)
+            != HostCommandIRQType.RESPONSE_READY
+        ):
+            pass
+
+    def wait_for_event(self, timeout: int) -> bool:
+        """Waits for an event from EC."""
+        return self._wait_for_interrupt(timeout) == HostCommandIRQType.EVENT
 
     def receive(self, size=-1) -> bytes:
         """Receives data from the EC."""

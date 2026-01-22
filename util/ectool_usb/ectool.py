@@ -5,6 +5,7 @@
 """A USB version of ectool."""
 
 import argparse
+from functools import partial
 import sys
 import time
 
@@ -132,7 +133,7 @@ def cmd_fp_mode(args, comm) -> int:
     if args.raw_mode:
         mode = args.raw_mode
     else:
-        capture_type = 0
+        capture_type = fp_capture_types["simple_image"]
         for arg in args.mode:
             mode |= fp_modes.get(arg, 0)
             capture_type = fp_capture_types.get(arg, capture_type)
@@ -223,18 +224,24 @@ def cmd_enter_bootloader(_args, comm) -> int:
     return enter_bootloader.run(comm)
 
 
+def get_max_res_size(comm) -> int:
+    """Gets max response size"""
+    pr_info = commands.ProtocolInfoCmd0()
+    ret = pr_info.run(comm)
+    if ret != commands.EcCommandResult.SUCCESS:
+        return -1
+    return (
+        pr_info.response.max_response_packet_size - command.RESPONSE_HEADER_LEN
+    )
+
+
 def flash_read_to_file(file: str, offset: int, size: int, comm) -> int:
     """Reads flash to a file."""
     read_bytes = 0
     ret = 0
-    # Get max response size
-    pr_info = commands.ProtocolInfoCmd0()
-    ret = pr_info.run(comm)
-    if ret != commands.EcCommandResult.SUCCESS:
-        return ret
-    max_res_size = (
-        pr_info.response.max_response_packet_size - command.RESPONSE_HEADER_LEN
-    )
+    max_res_size = get_max_res_size(comm)
+    if max_res_size < 0:
+        return -1
     with open(file, "wb") as out_file:
         while read_bytes < size:
             remaining_bytes = size - read_bytes
@@ -558,6 +565,123 @@ def cmd_fp_ascp_establish(args, comm) -> int:
         return -1
 
 
+events = {
+    "key_matrix": 0,
+    "host_event": 1,
+    "sensor_fifo": 2,
+    "button": 3,
+    "switch": 4,
+    "fingerprint": 5,
+    "sysrq": 6,
+    "host_event64": 7,
+    "cec_event": 8,
+    "cec_message": 9,
+    "dp_alt_mode_entered": 10,
+    "online_calibration": 11,
+    "pchg": 12,
+}
+
+
+def receive_event(event_type: int, comm) -> bool:
+    """Receives MKBP events until event type received or no more events."""
+    get_next_event_cmd = commands.get_cmd(
+        commands.ECCommandsIds.GET_NEXT_EVENT, comm
+    )
+    if not get_next_event_cmd:
+        print("No supported get next event")
+        return False
+    while True:
+        get_next_event = get_next_event_cmd()
+        ret = get_next_event.run(comm)
+        if ret != commands.EcCommandResult.SUCCESS:
+            if ret == commands.EcCommandResult.UNAVAILABLE:
+                print("No events available")
+            else:
+                print(f"Failed to get next event: {ret.name}")
+            return False
+        if get_next_event.response.event_type & 0x7F == event_type:
+            print("Event type: " + hex(get_next_event.response.event_type))
+            print("Event data: " + str(get_next_event.response.event_data))
+            return True
+
+
+def cmd_wait_for_event(args, comm) -> int:
+    """Waits for MKBP event."""
+
+    if not receive_event(events[args.type], comm):
+        start_time = time.perf_counter()
+        remaining_time = args.timeout
+        while remaining_time > 0:
+            print(f"Wait for event {remaining_time}s")
+            if comm.wait_for_event(int(1000 * remaining_time)):
+                if receive_event(events[args.type], comm):
+                    return 0
+            remaining_time = args.timeout - (time.perf_counter() - start_time)
+        print(f"No event in {args.timeout}s")
+        return -1
+    return 0
+
+
+def get_frame_size(capture_type, comm) -> tuple[int, int]:
+    """Gets FP frame size."""
+
+    fp_info = commands.FpInfoCmd2()
+    ret = fp_info.run(comm)
+    if ret != commands.EcCommandResult.SUCCESS:
+        print(f"Failed to get FP info: {ret.name}")
+        return None
+
+    for image_frame_params in fp_info.response.image_frame_params:
+        if image_frame_params.fp_capture_type == capture_type:
+            return image_frame_params.width, image_frame_params.height
+
+    print(f"No matching capture type: {capture_type}")
+    return None
+
+
+def cmd_fp_frame(args, comm) -> int:
+    """Captures FP frame."""
+
+    capture_type = fp_capture_types[args.type or "simple_image"]
+    width, height = get_frame_size(capture_type, comm)
+    frame_size = width * height
+    max_res_size = get_max_res_size(comm)
+    if max_res_size < 0:
+        print("Failed to get max command size")
+        return -1
+    raw_data = bytes()
+
+    fp_frame_cmd = commands.get_cmd(commands.ECCommandsIds.FP_FRAME, comm)
+    if not fp_frame_cmd:
+        print("No supported FP frame")
+        return -1
+
+    if fp_frame_cmd == commands.FpFrameCmd1:
+        fp_frame_cmd = partial(fp_frame_cmd, 0, 0)
+    else:
+        fp_frame_cmd = partial(fp_frame_cmd, 0)
+
+    offset = 0
+    while offset < frame_size:
+        chunk_size = min(frame_size - offset, max_res_size)
+        fp_frame = fp_frame_cmd(offset, chunk_size)
+        ret = fp_frame.run(comm)
+        if ret != commands.EcCommandResult.SUCCESS:
+            print(f"Failed to get FP frame: {ret.name}")
+            return ret
+        offset += chunk_size
+        raw_data += fp_frame.response.data
+
+    header = f"P5\n{width} {height}\n255\n"
+
+    with open(args.file, "wb") as f:
+        f.write(header.encode("ascii"))
+        f.write(raw_data)
+
+    print(f"{len(raw_data)} bytes written to {args.file}")
+    return 0
+
+
 def auto_int(x) -> int:
     """Converts a string to an int, automatically detecting the base."""
     return int(x, 0)
@@ -670,6 +794,26 @@ subcommands = {
         "func": cmd_fp_ascp_establish,
         "args": {
             "pk_g_file": {"type": str},
+        },
+    },
+    "wait_for_event": {
+        "help": "Wait for the next MKBP event",
+        "func": cmd_wait_for_event,
+        "args": {
+            "type": {"type": str, "choices": list(events.keys())},
+            "timeout": {"type": auto_int, "help": "timeout in seconds"},
+        },
+    },
+    "fpframe": {
+        "help": "Capture FP frame",
+        "func": cmd_fp_frame,
+        "args": {
+            "file": {"type": str},
+            "type": {
+                "type": str,
+                "choices": list(fp_capture_types.keys()),
+                "nargs": "?",
+            },
         },
     },
 }

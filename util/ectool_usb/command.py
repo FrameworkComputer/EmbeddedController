@@ -181,6 +181,12 @@ class HostCommand:
     def _validate_response(self, response_bytes, response_header) -> int:
         """Validates the response."""
 
+        if not HostCommand.checksum_valid(response_bytes):
+            raise HostCommandError("Response checksum invalid")
+
+        if response_header.result != HostCommandResult.SUCCESS:
+            return response_header.result
+
         expected_response_len = (
             struct.calcsize(self._response_fmt) + RESPONSE_HEADER_LEN
         )
@@ -197,12 +203,6 @@ class HostCommand:
                 f"Invalid response length. Received: {len(response_bytes)}, "
                 f"expected: {expected_response_len}"
             )
-
-        if not HostCommand.checksum_valid(response_bytes):
-            raise HostCommandError("Response checksum invalid")
-
-        if response_header.result != HostCommandResult.SUCCESS:
-            return response_header.result
 
         return HostCommandResult.SUCCESS
 
