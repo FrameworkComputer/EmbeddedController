@@ -4,6 +4,9 @@
  */
 
  /* moonstone-ish project DTSI includes */
+#include <cros/cbi_ufsc_std_schema.dtsi>
+#include <cros/cbi_ufsc_oem_schema.dtsi>
+#include "../moonstone/moonstone_ec_ufsc.dtsi"
 #include "../kinmen-ish/gpio.dtsi"
 #include "../kinmen-ish/i2c.dtsi"
 #include "../kinmen-ish/ish.dtsi"
