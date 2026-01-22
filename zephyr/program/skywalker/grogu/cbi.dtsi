@@ -26,5 +26,25 @@
                                 value = <1>;
                         };
                 };
+
+                /*
+                 * FW_CONFIG field to indicate the DB config.
+                 */
+                db-type {
+                        enum-name = "DB_TYPE";
+                        start = <2>;
+                        size = <2>;
+
+                        none {
+                                compatible = "cros-ec,cbi-fw-config-value";
+                                enum-name = "DB_NONE";
+                                value = <0>;
+                        };
+                        db_1a {
+                                compatible = "cros-ec,cbi-fw-config-value";
+                                enum-name = "DB_1A";
+                                value = <1>;
+                        };
+                 };
         };
 };
