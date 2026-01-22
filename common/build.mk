@@ -10,9 +10,7 @@
 _common_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
 
 common-y=util.o
-common-y+=debug.o
 common-y+=version.o printf.o queue.o queue_policies.o irq_locking.o
-common-y+=gettimeofday.o
 
 common-$(CONFIG_ACCELGYRO_BMI160)+=math_util.o
 common-$(CONFIG_ACCELGYRO_BMI220)+=math_util.o
@@ -76,7 +74,7 @@ common-$(CONFIG_CMD_I2CWEDGE)+=i2c_wedge.o
 common-$(CONFIG_COMMON_GPIO)+=gpio.o gpio_commands.o
 common-$(CONFIG_IO_EXPANDER)+=ioexpander.o ioexpander_commands.o
 common-$(CONFIG_COMMON_PANIC_OUTPUT)+=panic_output.o
-common-$(CONFIG_COMMON_RUNTIME)+=hooks.o main.o system.o peripheral.o \
+common-$(CONFIG_COMMON_RUNTIME)+=hooks.o system.o peripheral.o \
 	system_boot_time.o
 ifeq ($(BOARD),host)
 common-$(CONFIG_COMMON_RECURSIVE_MUTEX)+=recursive_mutex.o
@@ -109,12 +107,10 @@ common-$(CONFIG_HOSTCMD_REGULATOR)+=regulator.o
 common-$(CONFIG_HOSTCMD_RTC)+=rtc.o
 common-$(CONFIG_I2C_DEBUG)+=i2c_trace.o
 common-$(CONFIG_I2C_CONTROLLER)+=i2c_controller.o
-common-$(CONFIG_I2C_CONTROLLER)+=i2c_controller_cros_ec.o
 common-$(CONFIG_I2C_CONTROLLER)+=i2c_passthru.o
 common-$(CONFIG_I2C_PERIPHERAL)+=i2c_peripheral.o
 common-$(CONFIG_I2C_BITBANG_CROS_EC)+=i2c_bitbang.o
 common-$(CONFIG_I2C_VIRTUAL_BATTERY)+=virtual_battery.o
-common-$(CONFIG_INDUCTIVE_CHARGING)+=inductive_charging.o
 common-$(CONFIG_KEYBOARD_PROTOCOL_8042)+=keyboard_8042.o \
 	keyboard_8042_sharedlib.o
 common-$(CONFIG_KEYBOARD_PROTOCOL_MKBP)+=keyboard_mkbp.o mkbp_fifo.o \
@@ -146,7 +142,6 @@ common-$(CONFIG_PWM)+=pwm.o
 common-$(CONFIG_PWM_KBLIGHT)+=pwm_kblight.o
 common-$(CONFIG_KEYBOARD_BACKLIGHT)+=keyboard_backlight.o
 common-$(CONFIG_RGB_KEYBOARD)+=rgb_keyboard.o
-common-$(CONFIG_RNG)+=trng.o
 common-$(CONFIG_ROLLBACK)+=rollback.o
 common-$(CONFIG_RSA)+=rsa.o
 common-$(CONFIG_RWSIG)+=rwsig.o vboot/common.o

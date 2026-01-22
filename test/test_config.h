@@ -21,6 +21,7 @@
 
 /* Don't compile features unless specifically testing for them */
 #undef CONFIG_VBOOT_HASH
+#undef CONFIG_INDUCTIVE_CHARGING
 
 /* Only disable this if we didn't explicitly enable it in Kconfig */
 #ifndef CONFIG_PLATFORM_EC_USB_PD_LOGGING
