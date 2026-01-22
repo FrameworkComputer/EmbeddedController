@@ -64,6 +64,8 @@ constexpr const uint64_t kDefaultReworkId = 0x89abcdef01234567;
 constexpr const uint32_t kDefaultFactoryCalibrationData = 0x9abcdef0;
 constexpr const char* kDefaultDramPartNum = "DRAM-123";
 constexpr const char* kDefaultOemName = "Google";
+constexpr const uint32_t kDefaultUfsc[] = {
+    0x11223344, 0x55667788, 0x99aabbcc, 0xddeeff00};
 
 #define SUSPEND() k_usleep(1)
 
@@ -169,6 +171,11 @@ class DspComms : public ::testing::Test {
         cbi_set_board_info(CBI_TAG_OEM_NAME,
                            reinterpret_cast<const uint8_t*>(kDefaultOemName),
                            static_cast<uint8_t>(std::strlen(kDefaultOemName))));
+
+    ASSERT_EQ(0,
+              cbi_set_board_info(CBI_TAG_UFSC,
+                                 reinterpret_cast<const uint8_t*>(kDefaultUfsc),
+                                 static_cast<uint8_t>(sizeof(kDefaultUfsc))));
 
     gpio_callbacks_.handler = [](const struct device* port,
                                  struct gpio_callback*,
@@ -293,7 +300,7 @@ TEST_F(DspComms, ProcessingError) {
   // Create an invalid service request.
   ASSERT_EQ(-EINVAL,
             dsp_client_get_cbi_flags(
-                kClient, static_cast<cros_dsp_comms_CbiFlag>(11), nullptr));
+                kClient, static_cast<cros_dsp_comms_CbiFlag>(99), nullptr));
 }
 
 TEST_F(DspComms, ReadCbiVersion) {
@@ -417,6 +424,17 @@ TEST_F(DspComms, ReadCbiOemName) {
                 CBI_TAG_OEM_NAME, reinterpret_cast<uint8_t*>(out), &size));
   ASSERT_STREQ(kDefaultOemName, out);
   ASSERT_LE(size, sizeof(out));
+}
+
+TEST_F(DspComms, ReadCbiUfsc) {
+  uint32_t out[4];
+  uint8_t size = sizeof(out);
+
+  ASSERT_EQ(0,
+            cbi_remote_get_board_info(
+                CBI_TAG_UFSC, reinterpret_cast<uint8_t*>(out), &size));
+  ASSERT_EQ(0, memcmp(out, kDefaultUfsc, sizeof(out)));
+  ASSERT_EQ(size, static_cast<uint8_t>(sizeof(out)));
 }
 
 TEST_F(DspComms, LidPosition) {

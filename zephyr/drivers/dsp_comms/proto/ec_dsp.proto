@@ -55,11 +55,17 @@ enum CbiFlag {
 	FACTORY_CALIBRATION_DATA = 8;
 	DRAM_PART_NUM = 9;
 	OEM_NAME = 10;
+	UFSC = 11;
 }
 
 message GetCbiFlagsRequest
 {
 	CbiFlag which = 1;
+}
+
+message Ufsc
+{
+	repeated uint32 data = 1;
 }
 
 // Response message for GetCbiFlags
@@ -70,6 +76,7 @@ message GetCbiFlagsResponse
 		uint64 flags_64 = 1;
 		uint32 flags_32 = 2;
 		string flags_string = 3;
+		Ufsc ufsc = 4;
 	}
 }
 

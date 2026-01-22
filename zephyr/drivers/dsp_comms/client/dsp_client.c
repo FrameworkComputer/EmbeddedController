@@ -82,6 +82,10 @@ int cbi_remote_get_board_info(enum cbi_data_tag tag,
       LOG_DBG("Getting OEM_NAME");
       flag = cros_dsp_comms_CbiFlag_OEM_NAME;
       break;
+    case CBI_TAG_UFSC:
+      LOG_DBG("Getting UFSC");
+      flag = cros_dsp_comms_CbiFlag_UFSC;
+      break;
     default:
       LOG_ERR("TAG not supported");
       return -EINVAL;
@@ -121,6 +125,15 @@ int cbi_remote_get_board_info(enum cbi_data_tag tag,
              &response.flags.flags_string,
              strlen(response.flags.flags_string));
       *buffer_size = strlen(response.flags.flags_string);
+      break;
+    case cros_dsp_comms_GetCbiFlagsResponse_ufsc_tag:
+      if (*buffer_size < sizeof(response.flags.ufsc.data)) {
+        LOG_ERR("Not enough memory");
+        return -ENOMEM;
+      }
+      memcpy(
+          buffer, response.flags.ufsc.data, sizeof(response.flags.ufsc.data));
+      *buffer_size = sizeof(response.flags.ufsc.data);
       break;
     default:
       return -EINVAL;

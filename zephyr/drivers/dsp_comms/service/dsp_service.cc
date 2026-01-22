@@ -136,6 +136,11 @@ static inline int ParseGetCbiFlagsRequest(
       tag = CBI_TAG_OEM_NAME;
       LOG_DBG("Fetching OEM_NAME");
       break;
+    case cros_dsp_comms_CbiFlag_UFSC:
+      response.which_flags = cros_dsp_comms_GetCbiFlagsResponse_ufsc_tag;
+      tag = CBI_TAG_UFSC;
+      LOG_DBG("Fetching UFSC");
+      break;
     default:
       LOG_WRN("Unsupported CBI read request");
       return -EINVAL;
@@ -169,6 +174,13 @@ static inline int ReadCbiValue(cros_dsp_comms_GetCbiFlagsResponse& response,
       max_size = size;
       rc = cbi_get_board_info(
           tag, reinterpret_cast<uint8_t*>(response.flags.flags_string), &size);
+      break;
+    case cros_dsp_comms_GetCbiFlagsResponse_ufsc_tag:
+      size = static_cast<uint8_t>(
+          sizeof(cros_dsp_comms_GetCbiFlagsResponse::flags.ufsc.data));
+      max_size = size;
+      rc = cbi_get_board_info(
+          tag, reinterpret_cast<uint8_t*>(response.flags.ufsc.data), &size);
       break;
     default:
       break;

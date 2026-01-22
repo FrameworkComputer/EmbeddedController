@@ -1,2 +1,5 @@
 cros.dsp.comms.GetCbiFlagsResponse.flags_string max_size:80
 cros.dsp.comms.GetCbiFlagsResponse.flags_string fixed_length:True
+
+cros.dsp.comms.Ufsc.data max_count:4
+cros.dsp.comms.Ufsc.data fixed_count:true
