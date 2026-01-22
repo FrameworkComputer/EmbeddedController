@@ -105,6 +105,7 @@
 		};
 		gpio_tablet_mode_l: tablet_mode_l {
 			gpios = <&gpiod 1 (GPIO_INPUT)>;
+			enum-name = "GPIO_TABLET_MODE_L";
 		};
 		gpio_en_slp_z: en_slp_z {
 			gpios = <&gpiod 4 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
