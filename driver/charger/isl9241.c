@@ -1095,11 +1095,30 @@ static int pdo_mv_to_acokref_mv(int pdo_mv)
 
 enum ec_error_list isl9241_set_acokref(int chgnum, int mv)
 {
+	enum ec_error_list rv;
 	int acokref_mv = pdo_mv_to_acokref_mv(mv);
 
+	mutex_lock(&control3_mutex_isl9241);
+
+	/* 1: Enable ADC for all modes.
+	 *    This prevents ACOK from a 1ms glitch.
+	 *    See http://b/462138011#comment12 for more details.
+	 */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL3,
+		       ISL9241_CONTROL3_ENABLE_ADC, MASK_SET);
+
+	/* 2: Update ACOKREF. */
 	CPRINTS("Setting ACOKREF to %d mv (PDO %d mV)", acokref_mv, mv);
-	return isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
-			     ISL9241_MV_TO_ACOK_REFERENCE(acokref_mv));
+	rv = isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
+			   ISL9241_MV_TO_ACOK_REFERENCE(acokref_mv));
+
+	/* 3: Disable ADC. */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL3,
+		       ISL9241_CONTROL3_ENABLE_ADC, MASK_CLR);
+
+	mutex_unlock(&control3_mutex_isl9241);
+
+	return rv;
 }
 
 /*****************************************************************************/
