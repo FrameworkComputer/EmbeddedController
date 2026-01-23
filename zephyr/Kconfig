@@ -57,6 +57,7 @@ menuconfig PLATFORM_EC
 if PLATFORM_EC
 
 rsource "shim/chip/egis/Kconfig.egis"
+rsource "shim/chip/ft90/Kconfig.ft90"
 rsource "shim/chip/npcx/Kconfig.npcx"
 rsource "shim/chip/mchp/Kconfig.xec"
 rsource "Kconfig.adc"

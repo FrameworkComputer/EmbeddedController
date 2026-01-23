@@ -1,0 +1,15 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC
+
+config PLATFORM_EC_FT90_ENTER_BOOTLOADER
+	bool "Add procedure to enter bootloader for FT90 series"
+	default y if PLATFORM_EC_HOST_COMMAND_ENTER_BOOTLOADER
+	depends on SOC_SERIES_FT90
+	help
+	  Add implementation of chip_enter_bootloader for the Focaltech FT90
+	  chip series needed for the EC_CMD_ENTER_BOOTLOADER host command.
+
+endif # PLATFORM_EC

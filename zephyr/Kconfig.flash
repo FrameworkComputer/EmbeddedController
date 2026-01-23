@@ -72,6 +72,7 @@ choice PLATFORM_EC_STORAGE_TYPE
 	# Flash chip is external physically, but chip works in XIP mode
 	default PLATFORM_EC_INTERNAL_STORAGE if SOC_EGIS_ET171
 	default PLATFORM_EC_INTERNAL_STORAGE if SOC_EM32F967
+	default PLATFORM_EC_INTERNAL_STORAGE if SOC_SERIES_FT90
 	help
 	  Sets the EC code storage type.
 
@@ -124,6 +125,7 @@ config PLATFORM_EC_MAPPED_STORAGE
 	default y if SOC_FAMILY_REALTEK_EC
 	default y if SOC_EGIS_ET171
 	default y if SOC_EM32F967
+	default y if SOC_SERIES_FT90
 	help
 	  This indicates that the EC's flash is directly mapped into
 	  its address space. This makes it easier to read and write the flash.
