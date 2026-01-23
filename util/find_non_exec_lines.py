@@ -38,18 +38,24 @@ def main() -> int:
                     # but it seems consistent.
                     # Also ignore test dirs that don't affect coverage numbers
                     if (  # pylint: disable=too-many-boolean-expressions
-                        not "src/third_party/zephyr/cmsis/CMSIS/Core/Include/core_cm4.h"
-                        in active_name
-                        and not "src/third_party/zephyr/main/arch/arm/core/aarch32/mpu/arm_mpu.c"
+                        not (
+                            "src/third_party/zephyrproject/modules/hal/"
+                            "cmsis/CMSIS/Core/Include/core_cm4.h"
+                        )
                         in active_name
                         and not (
-                            "src/third_party/zephyr/main/drivers/"
+                            "src/third_party/zephyrproject/zephyr/"
+                            "arch/arm/core/aarch32/mpu/arm_mpu.c"
+                        )
+                        in active_name
+                        and not (
+                            "src/third_party/zephyrproject/zephyr/drivers/"
                             "clock_control/clock_control_mchp_xec.c"
                             in active_name
                         )
-                        and not "src/third_party/zephyr/main/lib/libc/minimal/include/"
+                        and not "src/third_party/zephyrproject/zephyr/lib/libc/minimal/include/"
                         in active_name
-                        and not "src/third_party/zephyr/main/subsys/testsuite/ztest/"
+                        and not "src/third_party/zephyrproject/zephyr/subsys/testsuite/ztest/"
                         in active_name
                         and not "platform/ec/zephyr/test/" in active_name
                         and not "platform/ec/build/" in active_name

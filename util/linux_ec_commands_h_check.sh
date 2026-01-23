@@ -20,7 +20,7 @@ while [[ ${chromiumos_src_dir} != "/" ]]; do
   chromiumos_src_dir=$(dirname "${chromiumos_src_dir}")
 done
 
-: "${ZEPHYR_BASE:=${chromiumos_src_dir}/src/third_party/zephyr/main}"
+: "${ZEPHYR_BASE:=${chromiumos_src_dir}/src/third_party/zephyrproject/zephyr}"
 TMP="$(mktemp -d)"
 ec_commands_file_out="${TMP}/cros_ec_commands.h"
 

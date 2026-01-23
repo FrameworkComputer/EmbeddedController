@@ -92,14 +92,14 @@ $ zmake build herobrine
     ...
 Building herobrine:ro: /usr/bin/ninja -C /mnt/host/source/src/platform/ec/build/zephyr/herobrine/build-ro
 -- git describe warned: warning: tag 'upstream/v2.7.99' is externally known as 'v2.7.99'
--- Zephyr version: 3.0.99 (/mnt/host/source/src/third_party/zephyr/main), build: v2.7.99-5035-ga17c05c7228e
+-- Zephyr version: 3.0.99 (/mnt/host/source/src/third_party/zephyrproject/zephyr), build: v2.7.99-5035-ga17c05c7228e
 Memory region         Used Size  Region Size  %age Used
            FLASH:      219920 B       256 KB     83.89%
             SRAM:       49688 B        64 KB     75.82%
         IDT_LIST:          0 GB         2 KB      0.00%
 Building herobrine:rw: /usr/bin/ninja -C /mnt/host/source/src/platform/ec/build/zephyr/herobrine/build-rw
 -- git describe warned: warning: tag 'upstream/v2.7.99' is externally known as 'v2.7.99'
--- Zephyr version: 3.0.99 (/mnt/host/source/src/third_party/zephyr/main), build: v2.7.99-5035-ga17c05c7228e
+-- Zephyr version: 3.0.99 (/mnt/host/source/src/third_party/zephyrproject/zephyr), build: v2.7.99-5035-ga17c05c7228e
 Memory region         Used Size  Region Size  %age Used
            FLASH:      219920 B       256 KB     83.89%
             SRAM:       49688 B        64 KB     75.82%

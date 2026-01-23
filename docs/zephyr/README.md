@@ -33,9 +33,9 @@ errors and troubleshooting techniques used when working with Zephyr.
 
 Zephyr EC images rely on multiple Chromium repositories to build Zephyr EC images.
 
-* [`third_party/zephyr/main`] - Google's local mirror of the main Zephyr RTOS
+* [`third_party/zephyrproject/zephyr`] - Google's local mirror of the main Zephyr RTOS
   source located on [Github](https://github.com/zephyrproject-rtos/zephyr).
-* [`third_party/zephyr/cmsis`] - Google's local mirror of the CMSIS module source
+* [`third_party/zephyrproject/modules/hal/cmsis`] - Google's local mirror of the CMSIS module source
   from [Github](https://github.com/zephyrproject-rtos/cmsis)
 * [`platform/ec`] - local repository containing code shared by the legacy EC and
   the Zephyr EC
@@ -119,7 +119,7 @@ The following provides an overview of the sub-directories found under
 * `zephyr/tests/` - Host based emulation tests.
 * `zephyr/zmake/` - Source code for the `zmake/` meta tool.
 
-[`third_party/zephyr/main`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/zephyr/main
-[`third_party/zephyr/cmsis`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/zephyr/cmsis
+[`third_party/zephyrproject/zephyr`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/zephyrproject/zephyr
+[`third_party/zephyrproject/modules/hal/cmsis`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/zephyrproject/modules/hal/cmsis
 [`platform/ec`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec
 [`ec_app_main()`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/app/ec/ec_app_main.c

@@ -11,7 +11,7 @@
 
 /*
  * The following functions are defined in upstream Zephyr:
- * Path: src/third_party/zephyr/main/arch/riscv/core/pmp.c
+ * Path: src/third_party/zephyrproject/zephyr/arch/riscv/core/pmp.c
  */
 void pmp_decode_region(uint8_t cfg_byte, unsigned long *pmp_addr,
 		       unsigned int index, unsigned long *start,

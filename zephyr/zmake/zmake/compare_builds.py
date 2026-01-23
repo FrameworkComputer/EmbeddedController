@@ -276,6 +276,9 @@ class CompareBuilds:
                         dst_dir=dst_dir,
                     )
                 )
+            is_flattened_module = (
+                "zephyrproject" in pathlib.Path(zephyr_base).parts
+            )
             if git_source_path:
                 self._do_git_work(
                     func=functools.partial(
@@ -286,16 +289,20 @@ class CompareBuilds:
                         dst_dir=checkout.modules_dir.parent / "zephyrproject",
                     )
                 )
-
-            self._do_git_work(
-                func=functools.partial(
-                    _git_clone_repo,
-                    module_name="zephyr",
-                    work_dir=checkout.work_dir,
-                    git_source=zephyr_base,
-                    dst_dir="zephyr-base",
+            if not is_flattened_module:
+                self._do_git_work(
+                    func=functools.partial(
+                        _git_clone_repo,
+                        module_name="zephyr",
+                        work_dir=checkout.work_dir,
+                        git_source=zephyr_base,
+                        dst_dir="zephyr-base",
+                    )
                 )
-            )
+            else:
+                checkout.zephyr_dir = (
+                    checkout.modules_dir.parent / "zephyrproject" / "zephyr"
+                )
 
         self._do_git_wait("Failed to clone one or more repositories")
 
@@ -320,6 +327,9 @@ class CompareBuilds:
                     )
                 )
             if has_zephyrproject:
+                checkout.zephyr_dir = (
+                    checkout.modules_dir.parent / "zephyrproject" / "zephyr"
+                )
                 self._do_git_work(
                     func=functools.partial(
                         _git_do_checkout,
@@ -328,15 +338,15 @@ class CompareBuilds:
                         git_ref="HEAD",
                     )
                 )
-
-            self._do_git_work(
-                func=functools.partial(
-                    _git_do_checkout,
-                    work_dir=checkout.work_dir,
-                    dst_dir="zephyr-base",
-                    git_ref="HEAD",
+            else:
+                self._do_git_work(
+                    func=functools.partial(
+                        _git_do_checkout,
+                        work_dir=checkout.work_dir,
+                        dst_dir="zephyr-base",
+                        git_ref="HEAD",
+                    )
                 )
-            )
 
         self._do_git_wait("Failed to checkout one or more repositories")
 

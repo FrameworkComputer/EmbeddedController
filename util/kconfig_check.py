@@ -38,7 +38,10 @@ if "ZEPHYR_BASE" in os.environ:
     ZEPHYR_BASE = pathlib.Path(os.environ.get("ZEPHYR_BASE"))
 else:
     ZEPHYR_BASE = pathlib.Path(
-        EC_BASE.resolve().parent.parent / "third_party" / "zephyr" / "main"
+        EC_BASE.resolve().parent.parent
+        / "third_party"
+        / "zephyrproject"
+        / "zephyr"
     )
 
 if not os.path.exists(ZEPHYR_BASE):

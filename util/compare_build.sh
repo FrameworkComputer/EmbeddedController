@@ -252,7 +252,7 @@ PARENT_DIR ?= $(realpath ../)
 BORINGSSL_DIR ?= $(realpath ../../third_party/boringssl)
 CRYPTOC_DIR ?= $(realpath ../../third_party/cryptoc)
 EIGEN3_DIR ?= $(realpath ../../third_party/eigen3)
-ZEPHYR_BASE ?= $(realpath ../../../src/third_party/zephyr/main)
+ZEPHYR_BASE ?= $(realpath ../../../src/third_party/zephyrproject/zephyr)
 BOARDS ?= ${BOARDS[*]}
 LINKS ?= ${LINKS[*]}
 HEREDOC

@@ -276,11 +276,11 @@ Use the `hibdelay` command to override the project's hibernation timeout.
 [`CONFIG_PLATFORM_EC_HIBERNATE_ELPM`]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.system?q=%22config%20PLATFORM_EC_HIBERNATE_ELPM%22
 [`CONFIG_PLATFORM_EC_HIBERNATE_WAKE_PINS`]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.system?q=%22config%20PLATFORM_EC_HIBERNATE_WAKE_PINS%22
 [`CONFIG_PLATFORM_EC_HIBERNATE_Z5`]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.system?q=%22config%20PLATFORM_EC_HIBERNATE_Z5%22
-[`nuvoton,npcx-power-psl`]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/zephyr/main/dts/arm/nuvoton/npcx/npcx.dtsi?q=%22nuvoton,npcx-power-psl%22
+[`nuvoton,npcx-power-psl`]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/zephyrproject/zephyr/dts/arm/nuvoton/npcx/npcx.dtsi?q=%22nuvoton,npcx-power-psl%22
 [NPCX7 PSL_OUT]:https://source.corp.google.com/h/chrome-internal/chromeos/superproject/+/main:src/platform/ec/zephyr/boards/google/npcx7/npcx7.dts?q=enable-gpios
 [NPCX9 PSL_OUT]:https://source.corp.google.com/h/chrome-internal/chromeos/superproject/+/main:src/platform/ec/zephyr/boards/google/npcx9/npcx9.dts?q=enable-gpios
-[NPCX7 PSL inputs]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/zephyr/main/dts/arm/nuvoton/npcx/npcx7/npcx7-pinctrl.dtsi?q=%22PSL%20peripheral%20interfaces%22
-[NPCX9 PSL inputs]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/zephyr/main/dts/arm/nuvoton/npcx/npcx9/npcx9-pinctrl.dtsi?q=%22PSL%20peripheral%20interfaces%22
+[NPCX7 PSL inputs]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/zephyrproject/zephyr/dts/arm/nuvoton/npcx/npcx7/npcx7-pinctrl.dtsi?q=%22PSL%20peripheral%20interfaces%22
+[NPCX9 PSL inputs]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/zephyrproject/zephyr/dts/arm/nuvoton/npcx/npcx9/npcx9-pinctrl.dtsi?q=%22PSL%20peripheral%20interfaces%22
 [Rex project]:https://source.corp.google.com/h/chrome-internal/chromeos/superproject/+/main:src/platform/ec/zephyr/program/rex/rex.dtsi?q=%22Power%20switch%20logic%22
 [`cros-ec,hibernate-vci-pin`]:https://source.corp.google.com/h/chrome-internal/chromeos/superproject/+/main:src/platform/ec/zephyr/dts/bindings/gpio/cros-ec,hibernate-vci-pin.yaml
 [ptlrvp_mchp]:https://source.corp.google.com/h/chrome-internal/chromeos/superproject/+/main:src/platform/ec/zephyr/program/intelrvp/ptlrvp/ptlrvp_mchp/vci.dtsi;l=7?q=vci-pins

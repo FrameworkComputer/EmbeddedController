@@ -154,16 +154,18 @@ ZEPHYR_TEST_PATHS = [
     Path("tests/subsys/shell"),
 ]
 
-# List of modules to use from the src/third_party/zephyr directory
+# List of modules to use from the src/third_party/zephyrproject/modules directory
 THIRD_PARTY_MODULES = [
+    "hal/cmsis",
+    "hal/cmsis_6",
+    "lib/picolibc",
+    "hal/stm32",
+    "hal/intel",
+    "lib/nanopb",
+]
+
+THIRD_PARTY_PRIVATE_MODULES = [
     "intel_module_private",
-    "cmsis",
-    "cmsis_6",
-    "picolibc",
-    "ish",
-    "hal_stm32",
-    "hal_intel_public",
-    "nanopb",
 ]
 
 
@@ -198,9 +200,18 @@ def find_paths():
             zephyr_base = Path(os.environ["ZEPHYR_BASE"]).resolve()
         except KeyError:
             zephyr_base = (
-                cros_checkout / "src" / "third_party" / "zephyr" / "main"
+                cros_checkout
+                / "src"
+                / "third_party"
+                / "zephyrproject"
+                / "zephyr"
             )
-        zephyr_modules_dir = cros_checkout / "src" / "third_party" / "zephyr"
+        zephyr_modules_dir = (
+            cros_checkout / "src" / "third_party" / "zephyrproject" / "modules"
+        )
+        zephyr_modules_private_dir = (
+            cros_checkout / "src" / "third_party" / "zephyr"
+        )
         pigweed_dir = cros_checkout / "src" / "third_party" / "pigweed"
     else:
         try:
@@ -231,7 +242,13 @@ def find_paths():
                 "PIGWEED_DIR unspecified. Please pass as env var to use chroot."
             ) from err
 
-    return ec_base, zephyr_base, zephyr_modules_dir, pigweed_dir
+    return (
+        ec_base,
+        zephyr_base,
+        zephyr_modules_dir,
+        pigweed_dir,
+        zephyr_modules_private_dir,
+    )
 
 
 def is_tool(name):
@@ -334,7 +351,13 @@ def main():
     """Run Twister using defaults for the EC project."""
 
     # Get paths for the build.
-    ec_base, zephyr_base, zephyr_modules_dir, pigweed_dir = find_paths()
+    (
+        ec_base,
+        zephyr_base,
+        zephyr_modules_dir,
+        pigweed_dir,
+        zephyr_modules_private_dir,
+    ) = find_paths()
     zephyr_base = zephyr_base.resolve()
 
     zephyr_modules = []
@@ -342,6 +365,9 @@ def main():
     # Add all third_pary modules
     for module_name in THIRD_PARTY_MODULES:
         module_path = zephyr_modules_dir / module_name
+        zephyr_modules.append(module_path.resolve())
+    for module_name in THIRD_PARTY_PRIVATE_MODULES:
+        module_path = zephyr_modules_private_dir / module_name
         zephyr_modules.append(module_path.resolve())
 
     # Add the EC dir as a module if not already included (resolve all paths to

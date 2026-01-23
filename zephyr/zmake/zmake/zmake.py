@@ -179,7 +179,7 @@ class Zmake:
             self.zephyr_base = zephyr_base
         else:
             self.zephyr_base = (
-                checkout / "src" / "third_party" / "zephyr" / "main"
+                checkout / "src" / "third_party" / "zephyrproject" / "zephyr"
             )
         self.zephyr_base = self.zephyr_base.resolve()
 

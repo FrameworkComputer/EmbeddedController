@@ -233,7 +233,7 @@ to the LED color for readability. e.g. `color-amber`
 [cros-ec,led_policy.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/leds/cros-ec,led-colors.yaml
 [cros-ec,gpio_led_pins.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/leds/cros-ec,gpio-led-pins.yaml
 [cros-ec,pwm_led_pins.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/leds/cros-ec,pwm-led-pins.yaml
-[pwm-leds.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/zephyr/main/dts/bindings/led/pwm-leds.yaml
+[pwm-leds.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/zephyrproject/zephyr/dts/bindings/led/pwm-leds.yaml
 [led_policy_skyrim.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/program/skyrim/led_policy_skyrim.dts
 [led_pins_skyrim.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/program/skyrim/led_pins_skyrim.dts
 [led_policy_herobrine.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/program/herobrine/led_policy_herobrine.dts
