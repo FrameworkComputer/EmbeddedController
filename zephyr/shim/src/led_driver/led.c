@@ -606,7 +606,12 @@ static const struct led_driver_t *led_find_driver(enum ec_led_id led_id)
 			return policy_groups[i].driver;
 		}
 	}
+
+	/* LCOV_EXCL_START - Unreachable as led_is_supported() is called first
+	 * to filter out this case.
+	 */
 	return NULL;
+	/* LCOV_EXCL_STOP */
 }
 
 void led_set_color(enum led_color color, enum ec_led_id led_id,
@@ -635,5 +640,10 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	if (drv) {
 		return drv->api->set_brightness(led_id, brightness);
 	}
+
+	/* LCOV_EXCL_START - Unreachable as led_is_supported() is called first
+	 * to filter out this case.
+	 */
 	return EC_ERROR_INVAL;
+	/* LCOV_EXCL_STOP */
 }
