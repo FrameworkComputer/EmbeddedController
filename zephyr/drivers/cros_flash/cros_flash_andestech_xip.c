@@ -39,6 +39,7 @@
 #include "../drivers/flash/spi_nor.h"
 #include "flash.h"
 #include "spi_flash_reg.h"
+#include "system.h"
 #include "write_protect.h"
 
 #include <zephyr/drivers/flash.h>
@@ -221,35 +222,6 @@ static int set_flash_prot(const struct device *dev, uint32_t offset,
 	}
 
 	return set_status_for_prot(dev, sr1, sr2);
-}
-
-static int cros_flash_andes_xip_init(const struct device *dev)
-{
-	struct cros_flash_andestech_xip_data *data = DRV_DATA(dev);
-	struct andes_xip_ex_ops_set_in op_in = { .regs = { 0 } };
-	int ret;
-
-	/* Make sure to clear SRP bits - only software protection. */
-	op_in.masks[0] = SPI_FLASH_SR1_SRP0;
-	op_in.masks[1] = SPI_FLASH_SR2_SRP1;
-	/* Make sure to clear WPS bit - per block protection. */
-	op_in.masks[2] = SPI_FLASH_CR_WPS;
-
-	k_mutex_lock(&data->flash_lock, K_FOREVER);
-	ret = flash_andes_xip_set_status_regs(dev, &op_in);
-	if (ret) {
-		goto unlock_flash;
-	}
-
-	if (write_protect_is_asserted()) {
-		/* Emulate behaviour of #WP pin and the lock status registers.
-		 */
-		ret = flash_andes_xip_lock_status(dev, true);
-	}
-
-unlock_flash:
-	k_mutex_unlock(&data->flash_lock);
-	return ret;
 }
 
 static uint32_t cros_flash_andes_xip_get_protect_flags(const struct device *dev)
@@ -564,6 +536,65 @@ static int cros_flash_andes_xip_erase(const struct device *dev, int offset,
 	}
 
 	ret = check_operation_status(dev);
+
+unlock_flash:
+	k_mutex_unlock(&data->flash_lock);
+	return ret;
+}
+
+static int cros_flash_andes_xip_init(const struct device *dev)
+{
+	struct cros_flash_andestech_xip_data *data = DRV_DATA(dev);
+	struct andes_xip_ex_ops_set_in op_in = { .regs = { 0 } };
+	int ret;
+
+	/* Make sure to clear SRP bits - only software protection. */
+	op_in.masks[0] = SPI_FLASH_SR1_SRP0;
+	op_in.masks[1] = SPI_FLASH_SR2_SRP1;
+	/* Make sure to clear WPS bit - per block protection. */
+	op_in.masks[2] = SPI_FLASH_CR_WPS;
+
+	k_mutex_lock(&data->flash_lock, K_FOREVER);
+	ret = flash_andes_xip_set_status_regs(dev, &op_in);
+	if (ret) {
+		goto unlock_flash;
+	}
+
+	if (!system_is_in_rw()) {
+		uint32_t flags = cros_flash_andes_xip_get_protect_flags(dev);
+		/*
+		 * The RW protection has to be disabled in RO to have
+		 * possibility of RW update. Changing the status registers won't
+		 * be possible after locking it, so disable the RW protection at
+		 * the beginning of the RO boot to allow RW update. RWSIG can
+		 * re-enable that before the jump.
+		 *
+		 * Changing the status registers takes ~8ms, so it increases
+		 * boot time a bit, if the change is really needed.
+		 *
+		 * There is an additional concern about flash wear-out in case
+		 * of RWSIG. The status registers have the same number of
+		 * erase/write cycles as other flash pages, which is e.g. 100k
+		 * for Puya P25Q16, so it shouldn't be an issue.
+		 * There is a possibility of volatile status register write, but
+		 * it is not supported by all flash NOR chips.
+		 * Additionally, the cros_flash driver wouldn't know when the
+		 * volatile status register write can be used or not.
+		 */
+		if (flags & EC_FLASH_PROTECT_ALL_AT_BOOT) {
+			ret = cros_flash_andes_xip_protect_at_boot(
+				dev, EC_FLASH_PROTECT_RO_AT_BOOT);
+			if (ret) {
+				goto unlock_flash;
+			}
+		}
+	}
+
+	if (write_protect_is_asserted()) {
+		/* Emulate behaviour of #WP pin and the lock status registers.
+		 */
+		ret = flash_andes_xip_lock_status(dev, true);
+	}
 
 unlock_flash:
 	k_mutex_unlock(&data->flash_lock);
