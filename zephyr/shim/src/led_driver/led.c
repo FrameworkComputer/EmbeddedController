@@ -294,12 +294,6 @@ static void update_led_pattern(const struct policy_group *grp,
 			       struct led_pattern_node_t *pattern,
 			       uint32_t increment)
 {
-	/* Check if auto control is enabled */
-	if (!led_auto_control_is_enabled(
-		    pattern->pattern_color[0].led_color_node->led_id)) {
-		return;
-	}
-
 	/* Apply color calculated in the previous tick */
 	if (pattern->needs_update) {
 		grp->driver->api->set_color_with_pattern(pattern);
@@ -326,6 +320,12 @@ static struct node_status update_and_check_node(const struct policy_group *grp,
 	for (int i = 0; i < node->num_patterns; i++) {
 		struct led_pattern_node_t *pattern = &patterns[i];
 		bool pattern_is_done;
+
+		/* Check if auto control is enabled */
+		if (!led_auto_control_is_enabled(
+			    pattern->pattern_color[0].led_color_node->led_id)) {
+			continue;
+		}
 
 		/* Cache dirty flag before it's cleared in update_led_pattern */
 		if (pattern->needs_update) {
