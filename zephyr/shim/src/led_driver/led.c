@@ -290,18 +290,14 @@ static void advance_led_pattern(struct led_pattern_node_t *pattern,
 	}
 }
 
-static void update_led_pattern(const struct policy_group *grp,
-			       struct led_pattern_node_t *pattern,
-			       uint32_t increment)
+static void led_init_pattern_state(struct led_pattern_node_t *pattern)
 {
-	/* Apply color calculated in the previous tick */
-	if (pattern->needs_update) {
-		grp->driver->api->set_color_with_pattern(pattern);
-		pattern->needs_update = false;
-	}
-
-	/* Advance state machine for the next tick */
-	advance_led_pattern(pattern, increment);
+	pattern->cur_color = 0;
+	pattern->elapsed_ms = 0;
+	pattern->cycle_curr = 0;
+	pattern->needs_update = true;
+	/* Skip initial 0-duration colors before first render */
+	advance_led_pattern(pattern, 0);
 }
 
 struct node_status {
@@ -310,16 +306,47 @@ struct node_status {
 	bool has_transitions;
 };
 
-static struct node_status update_and_check_node(const struct policy_group *grp,
-						const struct node_prop_t *node,
-						uint32_t increment)
+static void process_pattern_update(const struct policy_group *grp,
+				   struct led_pattern_node_t *pattern,
+				   uint32_t increment,
+				   struct node_status *status)
+{
+	bool pattern_is_done = (pattern->cycle_limit > 0 &&
+				pattern->cycle_curr >= pattern->cycle_limit);
+
+	/* Apply color calculated in the previous tick */
+	if (pattern->needs_update) {
+		status->needs_apply = true;
+		grp->driver->api->set_color_with_pattern(pattern);
+		pattern->needs_update = false;
+	}
+
+	/* Advance state machine for the next tick */
+	advance_led_pattern(pattern, increment);
+
+	if (pattern_is_done) {
+		return;
+	}
+
+	if (pattern->transition != LED_TRANSITION_STEP ||
+	    pattern->pattern_len > 1) {
+		status->is_animating = true;
+	}
+
+	if (pattern->transition != LED_TRANSITION_STEP) {
+		status->has_transitions = true;
+	}
+}
+
+static struct node_status update_policy_node(const struct policy_group *grp,
+					     const struct node_prop_t *node,
+					     uint32_t increment)
 {
 	struct led_pattern_node_t *patterns = node->led_patterns;
 	struct node_status status = { 0 };
 
 	for (int i = 0; i < node->num_patterns; i++) {
 		struct led_pattern_node_t *pattern = &patterns[i];
-		bool pattern_is_done;
 
 		/* Check if auto control is enabled */
 		if (!led_auto_control_is_enabled(
@@ -327,28 +354,7 @@ static struct node_status update_and_check_node(const struct policy_group *grp,
 			continue;
 		}
 
-		/* Cache dirty flag before it's cleared in update_led_pattern */
-		if (pattern->needs_update) {
-			status.needs_apply = true;
-		}
-		/* Similar reason, cache the pattern_is_done status. */
-		pattern_is_done = (pattern->cycle_limit > 0 &&
-				   pattern->cycle_curr >= pattern->cycle_limit);
-
-		update_led_pattern(grp, pattern, increment);
-
-		if (pattern_is_done) {
-			continue;
-		}
-
-		if (pattern->transition != LED_TRANSITION_STEP ||
-		    pattern->pattern_len > 1) {
-			status.is_animating = true;
-		}
-
-		if (pattern->transition != LED_TRANSITION_STEP) {
-			status.has_transitions = true;
-		}
+		process_pattern_update(grp, pattern, increment, &status);
 	}
 	return status;
 }
@@ -448,12 +454,7 @@ static int match_node(const struct policy_group *grp, int node_idx)
 			struct led_pattern_node_t *pattern =
 				&node->led_patterns[i];
 
-			pattern->cur_color = 0;
-			pattern->elapsed_ms = 0;
-			pattern->cycle_curr = 0;
-			pattern->needs_update = true;
-			/* Skip initial 0-duration colors before first render */
-			advance_led_pattern(pattern, 0);
+			led_init_pattern_state(pattern);
 		}
 		/* Schedule animation worker to execute patterns */
 		k_work_schedule(&led_worker_data, K_NO_WAIT);
@@ -511,8 +512,8 @@ static void led_execute_patterns(void)
 				continue;
 			}
 
-			status = update_and_check_node(grp, &grp->nodes[j],
-						       LED_ANIMATION_TICK_MS);
+			status = update_policy_node(grp, &grp->nodes[j],
+						    LED_ANIMATION_TICK_MS);
 			group_status.needs_apply |= status.needs_apply;
 			group_status.is_animating |= status.is_animating;
 			group_status.has_transitions |= status.has_transitions;
