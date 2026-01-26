@@ -227,6 +227,23 @@ static inline int32_t get_step_duration(const struct led_pattern_node_t *cfg,
 void led_set_color(enum led_color color, enum ec_led_id led_id,
 		   uint8_t brightness);
 
+struct custom_led_patterns_t {
+	struct led_pattern_node_t *led_patterns;
+	uint8_t num_patterns;
+	enum ec_led_id led_id;
+};
+
+/**
+ * Sets or clears custom LED patterns to be executed by the LED task.
+ *
+ * Overrides default devicetree patterns for the specified led_id until
+ * they complete their cycles.
+ *
+ * @param p Pointer to custom patterns. If NULL, custom patterns are cleared.
+ *          The data pointed to must remain valid until execution completes.
+ */
+void led_set_custom_patterns(struct custom_led_patterns_t *p);
+
 #ifdef TEST_BUILD
 const struct led_pins_node_t *led_get_node(enum led_color color,
 					   enum ec_led_id led_id);

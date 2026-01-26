@@ -140,6 +140,9 @@ config LINK_TEST_SUITE_LED_DRIVER
 config LINK_TEST_SUITE_LED_DRIVER_ALIAS_LED
 	bool "Link and test the led_driver tests with alias LEDs defined"
 
+config LINK_TEST_SUITE_LED_DRIVER_CUSTOM
+	bool "Link and test the LED custom pattern logic"
+
 config LINK_TEST_SUITE_LED_DRIVER_SEQUENCE
 	bool "Link and test the LED pattern sequence logic"
 

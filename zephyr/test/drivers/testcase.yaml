@@ -836,6 +836,16 @@ tests:
     - ./boards/native_sim.overlay
     - ./led_driver/led_pins.dts
     - ./led_driver/led_policy_alias.dts
+  drivers.led_driver_custom:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_LED_DRIVER_CUSTOM=y
+    extra_conf_files:
+    - prj.conf
+    - led_driver/prj.conf
+    extra_dtc_overlay_files:
+    - ./boards/native_sim.overlay
+    - ./led_driver/led_pins.dts
+    - ./led_driver/led_policy_sequence.dts
   drivers.led_driver_sequence:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_LED_DRIVER_SEQUENCE=y

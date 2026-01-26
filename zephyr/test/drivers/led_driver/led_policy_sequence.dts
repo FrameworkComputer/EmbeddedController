@@ -8,6 +8,17 @@
 		compatible = "cros-ec,led-policy";
 		led-pins = <&led_pins>;
 
+		/* Label 1 is the standard default state: solid White */
+		seq-white {
+			board-led-alt-policy-label = <1>;
+			battery-led-logic {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_white>;
+				};
+			};
+		};
+
 		/* Label 2 triggers Infinite Loop (cycle-count = 0) */
 		seq-infinite {
 			board-led-alt-policy-label = <2>;

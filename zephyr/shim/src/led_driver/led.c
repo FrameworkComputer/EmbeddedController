@@ -23,6 +23,7 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/util.h>
 LOG_MODULE_REGISTER(led, LOG_LEVEL_ERR);
 
 /* Extern the driver handles linked by 'led-pins' in the policies */
@@ -302,6 +303,7 @@ static void led_init_pattern_state(struct led_pattern_node_t *pattern)
 
 struct node_status {
 	bool needs_apply;
+	bool is_active;
 	bool is_animating;
 	bool has_transitions;
 };
@@ -327,6 +329,7 @@ static void process_pattern_update(const struct policy_group *grp,
 	if (pattern_is_done) {
 		return;
 	}
+	status->is_active = true;
 
 	if (pattern->transition != LED_TRANSITION_STEP ||
 	    pattern->pattern_len > 1) {
@@ -338,6 +341,87 @@ static void process_pattern_update(const struct policy_group *grp,
 	}
 }
 
+/* Reset any built-in patterns that match the given led_id */
+static void reset_policy_patterns(enum ec_led_id led_id)
+{
+	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
+		const struct policy_group *grp = &policy_groups[i];
+
+		for (int j = 0; j < grp->num_nodes; j++) {
+			const struct node_prop_t *node = &grp->nodes[j];
+
+			if (!grp->active[j]) {
+				continue;
+			}
+
+			for (int k = 0; k < node->num_patterns; k++) {
+				struct led_pattern_node_t *pat =
+					&node->led_patterns[k];
+				enum ec_led_id id =
+					pat->pattern_color[0]
+						.led_color_node->led_id;
+
+				if (id == led_id) {
+					led_init_pattern_state(pat);
+				}
+			}
+		}
+	}
+}
+
+/* Pointer to runtime-assigned patterns from host commands */
+static struct custom_led_patterns_t *g_custom_patterns;
+
+void led_set_custom_patterns(struct custom_led_patterns_t *p)
+{
+	struct custom_led_patterns_t *old_pattern;
+
+	if (p) {
+		/* Initialize state for new custom patterns */
+		for (int i = 0; i < p->num_patterns; i++) {
+			led_init_pattern_state(&p->led_patterns[i]);
+		}
+	}
+
+	old_pattern = g_custom_patterns;
+	if (old_pattern) {
+		reset_policy_patterns(old_pattern->led_id);
+	}
+
+	g_custom_patterns = p;
+
+	/* Schedule animation worker to execute patterns */
+	k_work_schedule(&led_worker_data, K_NO_WAIT);
+}
+
+static struct node_status update_custom_node(const struct policy_group *grp,
+					     uint32_t increment)
+{
+	struct node_status status = { 0 };
+
+	if (!g_custom_patterns) {
+		return status;
+	}
+
+	/* Only process if the LED is managed by this driver */
+	if (!(grp->driver->led_id_mask & (BIT(g_custom_patterns->led_id)))) {
+		return status;
+	}
+
+	/* Check if auto control is enabled */
+	if (!led_auto_control_is_enabled(g_custom_patterns->led_id)) {
+		return status;
+	}
+
+	for (int i = 0; i < g_custom_patterns->num_patterns; i++) {
+		struct led_pattern_node_t *pattern =
+			&g_custom_patterns->led_patterns[i];
+
+		process_pattern_update(grp, pattern, increment, &status);
+	}
+	return status;
+}
+
 static struct node_status update_policy_node(const struct policy_group *grp,
 					     const struct node_prop_t *node,
 					     uint32_t increment)
@@ -347,10 +431,16 @@ static struct node_status update_policy_node(const struct policy_group *grp,
 
 	for (int i = 0; i < node->num_patterns; i++) {
 		struct led_pattern_node_t *pattern = &patterns[i];
+		enum ec_led_id led_id =
+			pattern->pattern_color[0].led_color_node->led_id;
+
+		/* If a custom pattern is active, skip default policy. */
+		if (g_custom_patterns && g_custom_patterns->led_id == led_id) {
+			continue;
+		}
 
 		/* Check if auto control is enabled */
-		if (!led_auto_control_is_enabled(
-			    pattern->pattern_color[0].led_color_node->led_id)) {
+		if (!led_auto_control_is_enabled(led_id)) {
 			continue;
 		}
 
@@ -496,6 +586,7 @@ uint32_t led_test_apply_count;
 static void led_execute_patterns(void)
 {
 	bool continue_animating = false;
+	bool custom_patterns_active = false;
 	int64_t start_time = k_uptime_get();
 	int64_t elapsed_ms;
 	int64_t delay_ms;
@@ -504,10 +595,20 @@ static void led_execute_patterns(void)
 	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
 		const struct policy_group *grp = &policy_groups[i];
 		struct node_status group_status = { 0 };
+		struct node_status status;
 
+		/* 1. Process custom patterns (high priority) */
+		status = update_custom_node(grp, LED_ANIMATION_TICK_MS);
+		group_status.needs_apply |= status.needs_apply;
+		group_status.is_animating |= status.is_animating;
+		group_status.has_transitions |= status.has_transitions;
+
+		if (status.is_active) {
+			custom_patterns_active = true;
+		}
+
+		/* 2. Process DT-defined policy patterns */
 		for (int j = 0; j < grp->num_nodes; j++) {
-			struct node_status status;
-
 			if (!grp->active[j]) {
 				continue;
 			}
@@ -530,6 +631,17 @@ static void led_execute_patterns(void)
 			grp->driver->api->asynchronous_apply_color(
 				group_status.has_transitions);
 		}
+	}
+
+	/*
+	 * If we have a custom pattern but it is no longer active (completed
+	 * its cycles), clear it so the next tick resumes normal policy.
+	 */
+	if (g_custom_patterns && !custom_patterns_active) {
+		/* Reset built-in patterns suppressed by this custom pattern */
+		reset_policy_patterns(g_custom_patterns->led_id);
+		continue_animating = true;
+		g_custom_patterns = NULL;
 	}
 
 	if (continue_animating) {
@@ -595,12 +707,12 @@ __override int led_is_supported(enum ec_led_id led_id)
 			supported_leds |= policy_groups[i].driver->led_id_mask;
 		}
 	}
-	return ((1 << (int)led_id) & supported_leds);
+	return (BIT(led_id) & supported_leds);
 }
 
 static const struct led_driver_t *led_find_driver(enum ec_led_id led_id)
 {
-	uint32_t mask = (1 << led_id);
+	uint32_t mask = BIT(led_id);
 
 	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
 		if (policy_groups[i].driver->led_id_mask & mask) {

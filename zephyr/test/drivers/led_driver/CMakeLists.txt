@@ -15,6 +15,10 @@ zephyr_library_sources_ifdef(CONFIG_LINK_TEST_SUITE_LED_DRIVER
 zephyr_library_sources_ifdef(CONFIG_LINK_TEST_SUITE_LED_DRIVER_ALIAS_LED
     src/led_alias.c
 )
+zephyr_library_sources_ifdef(CONFIG_LINK_TEST_SUITE_LED_DRIVER_CUSTOM
+    src/led_custom.c
+    src/stubs.c
+)
 zephyr_library_sources_ifdef(CONFIG_LINK_TEST_SUITE_LED_DRIVER_SEQUENCE
     src/led_sequence.c
     src/stubs.c
