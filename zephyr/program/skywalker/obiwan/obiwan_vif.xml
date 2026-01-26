@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--USB VIF file for Obiwan-->
 <vif:VIF xmlns:opt="http://usb.org/VendorInfoFileOptionalContent.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:vif="http://usb.org/VendorInfoFile.xsd">
-  <vif:VIF_Specification>3.32</vif:VIF_Specification>
+  <vif:VIF_Specification>3.35</vif:VIF_Specification>
   <vif:VIF_App>
     <vif:Vendor>USB-IF</vif:Vendor>
     <vif:Name>VIF Editor</vif:Name>
-    <vif:Version>3.10.0.0</vif:Version>
+    <vif:Version>3.13.0.0</vif:Version>
   </vif:VIF_App>
   <vif:Vendor_Name>Google</vif:Vendor_Name>
   <vif:Model_Part_Number>Obiwan</vif:Model_Part_Number>
@@ -34,9 +33,9 @@
     <!--;General PD-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <vif:PD_Spec_Revision_Major value="3">3</vif:PD_Spec_Revision_Major>
-    <vif:PD_Spec_Revision_Minor value="1">1</vif:PD_Spec_Revision_Minor>
+    <vif:PD_Spec_Revision_Minor value="2">2</vif:PD_Spec_Revision_Minor>
     <vif:PD_Spec_Version_Major value="1">1</vif:PD_Spec_Version_Major>
-    <vif:PD_Spec_Version_Minor value="6">6</vif:PD_Spec_Version_Minor>
+    <vif:PD_Spec_Version_Minor value="1">1</vif:PD_Spec_Version_Minor>
     <vif:PD_Specification_Revision value="2">Revision 3</vif:PD_Specification_Revision>
     <vif:SOP_Capable value="true" />
     <vif:SOP_P_Capable value="true" />
@@ -45,7 +44,7 @@
     <vif:SOP_PP_Debug_Capable value="false" />
     <vif:Manufacturer_Info_Supported_Port value="true" />
     <vif:Manufacturer_Info_VID_Port value="6353">18D1</vif:Manufacturer_Info_VID_Port>
-    <vif:Manufacturer_Info_PID_Port value="20581">5065</vif:Manufacturer_Info_PID_Port>
+    <vif:Manufacturer_Info_PID_Port value="20594">5072</vif:Manufacturer_Info_PID_Port>
     <vif:Chunking_Implemented_SOP value="true" />
     <vif:Unchunked_Extended_Messages_Supported value="true" />
     <vif:Security_Msgs_Supported_SOP value="false" />
@@ -105,6 +104,7 @@
     <!--;PD Source-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <vif:PD_Power_As_Source value="15000">15000 mW</vif:PD_Power_As_Source>
+    <vif:PD_Power_As_Source_Guaranteed value="7500">7500 mW</vif:PD_Power_As_Source_Guaranteed>
     <vif:EPR_Supported_As_Src value="false" />
     <vif:USB_Suspend_May_Be_Cleared value="true" />
     <vif:Sends_Pings value="false" />
@@ -112,6 +112,7 @@
     <vif:Master_Port value="false" />
     <vif:Has_Invariant_PDOs value="false" />
     <vif:Port_Managed_Guaranteed_Type value="0">Managed Capability</vif:Port_Managed_Guaranteed_Type>
+    <vif:DPS_Supported value="false" />
     <vif:Num_Src_PDOs value="1">1 Src PDO</vif:Num_Src_PDOs>
     <vif:PD_OC_Protection value="true" />
     <vif:PD_OCP_Method value="0">Over-Current Response</vif:PD_OCP_Method>
@@ -120,7 +121,7 @@
       <vif:SrcPDO>
         <!--Source PDO 1-->
         <vif:Src_PDO_Supply_Type value="0">Fixed</vif:Src_PDO_Supply_Type>
-        <vif:Src_PDO_Peak_Current value="0">100% IOC</vif:Src_PDO_Peak_Current>
+        <vif:Src_PDO_Peak_Current value="1">130% IOC</vif:Src_PDO_Peak_Current>
         <vif:Src_PDO_Voltage value="100">5000 mV (Factor = 50)</vif:Src_PDO_Voltage>
         <vif:Src_PDO_Max_Current value="150">1500 mA (Factor = 10)</vif:Src_PDO_Max_Current>
         <vif:Src_PD_OCP_OC_Debounce value="0">0 msec</vif:Src_PD_OCP_OC_Debounce>
@@ -179,38 +180,8 @@
     <vif:DFP_VDO_Port_Number value="0">0</vif:DFP_VDO_Port_Number>
     <vif:Modal_Operation_Supported_SOP value="false" />
     <vif:USB_VID_SOP value="6353">18D1</vif:USB_VID_SOP>
-    <vif:PID_SOP value="20581">5065</vif:PID_SOP>
-    <!--BCD value below is for production FW. The main branch uses different PDC FW.-->
-    <vif:bcdDevice_SOP value="4096">013D</vif:bcdDevice_SOP>
-    <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
-    <!--;DP section-->
-    <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
-    <OptionalContent identifier="DPAM">
-      <DisplayPort_Product_Summary>
-        <DP_Alt_Mode_Device_Type value="2">DisplayPort Source</DP_Alt_Mode_Device_Type>
-        <DPAM_Version value="0">DPAM 2.0 or earlier</DPAM_Version>
-        <Max_DP_Signaling_Rate_Supported value="4">HBR3</Max_DP_Signaling_Rate_Supported>
-      </DisplayPort_Product_Summary>
-      <SOP_DP_Capabilities>
-        <SOP_DP_Capability value="2">DP Source Capable</SOP_DP_Capability>
-        <SOP_DP_Receptacle_Indication value="1">DP on USB-C Receptacle</SOP_DP_Receptacle_Indication>
-        <SOP_USB2_Not_Used value="0">USB2.0 may be needed</SOP_USB2_Not_Used>
-        <SOP_DP_Source_Pin_Assignments value="28">Pin Assignment C/D/E Supported</SOP_DP_Source_Pin_Assignments>
-        <SOP_DP_Sink_Pin_Assignments value="0">Not Supported</SOP_DP_Sink_Pin_Assignments>
-      </SOP_DP_Capabilities>
-      <SOPP_DisplayPort_Capabilities>
-        <SOPP_DP_Signaling_Rate value="1">HBR3</SOPP_DP_Signaling_Rate>
-        <SOPP_DP_Src_Pin_Assignments value="12">Pin Assignment C/D</SOPP_DP_Src_Pin_Assignments>
-        <SOPP_DP_Sink_Pin_Assignments value="12">Pin Assignment C/D</SOPP_DP_Sink_Pin_Assignments>
-        <SOPP_DP_UHBR13p5_Support value="0">UHBR13.5 Not Supported</SOPP_DP_UHBR13p5_Support>
-        <SOPP_DP_Active_Component value="0">Passive</SOPP_DP_Active_Component>
-      </SOPP_DisplayPort_Capabilities>
-      <DisplayPort_Status>
-        <SOP_DP_Src_Sink_Device_Connected value="1">DP Source Connected</SOP_DP_Src_Sink_Device_Connected>
-        <SOP_DP_Multifunction_Preferred value="0">No preference for multifunction</SOP_DP_Multifunction_Preferred>
-        <SOP_DP_Suspend_Support value="0">No Preference for Low Power Entry</SOP_DP_Suspend_Support>
-      </DisplayPort_Status>
-    </OptionalContent>
+    <vif:PID_SOP value="20594">5072</vif:PID_SOP>
+    <vif:bcdDevice_SOP value="44">002C</vif:bcdDevice_SOP>
   </vif:Component>
   <vif:Component>
     <!--Component 1: Port 1-->
@@ -230,9 +201,9 @@
     <!--;General PD-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <vif:PD_Spec_Revision_Major value="3">3</vif:PD_Spec_Revision_Major>
-    <vif:PD_Spec_Revision_Minor value="1">1</vif:PD_Spec_Revision_Minor>
+    <vif:PD_Spec_Revision_Minor value="2">2</vif:PD_Spec_Revision_Minor>
     <vif:PD_Spec_Version_Major value="1">1</vif:PD_Spec_Version_Major>
-    <vif:PD_Spec_Version_Minor value="6">6</vif:PD_Spec_Version_Minor>
+    <vif:PD_Spec_Version_Minor value="1">1</vif:PD_Spec_Version_Minor>
     <vif:PD_Specification_Revision value="2">Revision 3</vif:PD_Specification_Revision>
     <vif:SOP_Capable value="true" />
     <vif:SOP_P_Capable value="true" />
@@ -241,7 +212,7 @@
     <vif:SOP_PP_Debug_Capable value="false" />
     <vif:Manufacturer_Info_Supported_Port value="true" />
     <vif:Manufacturer_Info_VID_Port value="6353">18D1</vif:Manufacturer_Info_VID_Port>
-    <vif:Manufacturer_Info_PID_Port value="20581">5065</vif:Manufacturer_Info_PID_Port>
+    <vif:Manufacturer_Info_PID_Port value="20594">5072</vif:Manufacturer_Info_PID_Port>
     <vif:Chunking_Implemented_SOP value="true" />
     <vif:Unchunked_Extended_Messages_Supported value="true" />
     <vif:Security_Msgs_Supported_SOP value="false" />
@@ -301,6 +272,7 @@
     <!--;PD Source-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <vif:PD_Power_As_Source value="15000">15000 mW</vif:PD_Power_As_Source>
+    <vif:PD_Power_As_Source_Guaranteed value="7500">7500 mW</vif:PD_Power_As_Source_Guaranteed>
     <vif:EPR_Supported_As_Src value="false" />
     <vif:USB_Suspend_May_Be_Cleared value="true" />
     <vif:Sends_Pings value="false" />
@@ -308,6 +280,7 @@
     <vif:Master_Port value="false" />
     <vif:Has_Invariant_PDOs value="false" />
     <vif:Port_Managed_Guaranteed_Type value="0">Managed Capability</vif:Port_Managed_Guaranteed_Type>
+    <vif:DPS_Supported value="false" />
     <vif:Num_Src_PDOs value="1">1 Src PDO</vif:Num_Src_PDOs>
     <vif:PD_OC_Protection value="true" />
     <vif:PD_OCP_Method value="0">Over-Current Response</vif:PD_OCP_Method>
@@ -316,7 +289,7 @@
       <vif:SrcPDO>
         <!--Source PDO 1-->
         <vif:Src_PDO_Supply_Type value="0">Fixed</vif:Src_PDO_Supply_Type>
-        <vif:Src_PDO_Peak_Current value="0">100% IOC</vif:Src_PDO_Peak_Current>
+        <vif:Src_PDO_Peak_Current value="1">130% IOC</vif:Src_PDO_Peak_Current>
         <vif:Src_PDO_Voltage value="100">5000 mV (Factor = 50)</vif:Src_PDO_Voltage>
         <vif:Src_PDO_Max_Current value="150">1500 mA (Factor = 10)</vif:Src_PDO_Max_Current>
         <vif:Src_PD_OCP_OC_Debounce value="0">0 msec</vif:Src_PD_OCP_OC_Debounce>
@@ -375,37 +348,7 @@
     <vif:DFP_VDO_Port_Number value="1">1</vif:DFP_VDO_Port_Number>
     <vif:Modal_Operation_Supported_SOP value="false" />
     <vif:USB_VID_SOP value="6353">18D1</vif:USB_VID_SOP>
-    <vif:PID_SOP value="20581">5065</vif:PID_SOP>
-    <!--BCD value below is for production FW. The main branch uses different PDC FW.-->
-    <vif:bcdDevice_SOP value="4096">1000</vif:bcdDevice_SOP>
-    <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
-    <!--;DP section-->
-    <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
-    <OptionalContent identifier="DPAM">
-      <DisplayPort_Product_Summary>
-        <DP_Alt_Mode_Device_Type value="2">DisplayPort Source</DP_Alt_Mode_Device_Type>
-        <DPAM_Version value="0">DPAM 2.0 or earlier</DPAM_Version>
-        <Max_DP_Signaling_Rate_Supported value="4">HBR3</Max_DP_Signaling_Rate_Supported>
-      </DisplayPort_Product_Summary>
-      <SOP_DP_Capabilities>
-        <SOP_DP_Capability value="2">DP Source Capable</SOP_DP_Capability>
-        <SOP_DP_Receptacle_Indication value="1">DP on USB-C Receptacle</SOP_DP_Receptacle_Indication>
-        <SOP_USB2_Not_Used value="0">USB2.0 may be needed</SOP_USB2_Not_Used>
-        <SOP_DP_Source_Pin_Assignments value="28">Pin Assignment C/D/E Supported</SOP_DP_Source_Pin_Assignments>
-        <SOP_DP_Sink_Pin_Assignments value="0">Not Supported</SOP_DP_Sink_Pin_Assignments>
-      </SOP_DP_Capabilities>
-      <SOPP_DisplayPort_Capabilities>
-        <SOPP_DP_Signaling_Rate value="1">HBR3</SOPP_DP_Signaling_Rate>
-        <SOPP_DP_Src_Pin_Assignments value="12">Pin Assignment C/D</SOPP_DP_Src_Pin_Assignments>
-        <SOPP_DP_Sink_Pin_Assignments value="12">Pin Assignment C/D</SOPP_DP_Sink_Pin_Assignments>
-        <SOPP_DP_UHBR13p5_Support value="0">UHBR13.5 Not Supported</SOPP_DP_UHBR13p5_Support>
-        <SOPP_DP_Active_Component value="0">Passive</SOPP_DP_Active_Component>
-      </SOPP_DisplayPort_Capabilities>
-      <DisplayPort_Status>
-        <SOP_DP_Src_Sink_Device_Connected value="1">DP Source Connected</SOP_DP_Src_Sink_Device_Connected>
-        <SOP_DP_Multifunction_Preferred value="0">No preference for multifunction</SOP_DP_Multifunction_Preferred>
-        <SOP_DP_Suspend_Support value="0">No Preference for Low Power Entry</SOP_DP_Suspend_Support>
-      </DisplayPort_Status>
-    </OptionalContent>
+    <vif:PID_SOP value="20594">5072</vif:PID_SOP>
+    <vif:bcdDevice_SOP value="44">002C</vif:bcdDevice_SOP>
   </vif:Component>
 </vif:VIF>
