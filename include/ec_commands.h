@@ -8970,6 +8970,9 @@ struct ec_response_battery_static_info_v2 {
  * @serial: battery serial number string
  * @chemistry: battery type string
  * @manuf_info: battery manufacture info string (vendor specific)
+ * @manuf_year: battery manufacture year
+ * @manuf_month: battery manufacture month
+ * @manuf_day: battery manufacture day
  */
 struct ec_response_battery_static_info_v3 {
 	uint16_t design_capacity;
@@ -8980,6 +8983,9 @@ struct ec_response_battery_static_info_v3 {
 	char serial[SBS_MAX_STR_OBJ_SIZE];
 	char chemistry[SBS_MAX_STR_OBJ_SIZE];
 	char manuf_info[SBS_MAX_STR_OBJ_SIZE];
+	uint16_t manuf_year;
+	uint8_t manuf_month;
+	uint8_t manuf_day;
 } __ec_align4;
 
 /*

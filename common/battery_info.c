@@ -169,12 +169,15 @@ host_command_battery_get_static(struct host_cmd_handler_args *args)
 	} else if (args->version == 3) {
 		struct ec_response_battery_static_info_v3 *r = args->response;
 
-		/* The v3 layout is simply v2 + an extra field */
+		/* The v3 layout is simply v2 + extra fields */
 		populate_bsi_v2((struct ec_response_battery_static_info_v2 *)r,
 				bs);
 #ifdef CONFIG_PLATFORM_EC_BATTERY_MANUF_INFO
 		strzcpy(r->manuf_info, bs->manuf_info, sizeof(r->manuf_info));
 #endif /* CONFIG_PLATFORM_EC_BATTERY_MANUF_INFO */
+		r->manuf_year = bs->manuf_year;
+		r->manuf_month = bs->manuf_month;
+		r->manuf_day = bs->manuf_day;
 
 		args->response_size = sizeof(*r);
 	} else {
