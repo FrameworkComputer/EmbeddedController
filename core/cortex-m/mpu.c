@@ -224,7 +224,7 @@ int mpu_config_region(uint8_t region, uint32_t addr, uint32_t size,
 	}
 
 	if (size > 0)
-		return EC_ERROR_OVERFLOW;
+		return -EC_ERROR_OVERFLOW;
 	return EC_SUCCESS;
 }
 
