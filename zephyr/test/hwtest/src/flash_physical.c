@@ -15,14 +15,21 @@ struct flash_info {
 	int write_protect_bank_count;
 };
 
+/*
+ * flash_config coverage only; see Zephyr "flash_stm32" for upstream STM32 flash
+ * tests.
+ */
 #if defined(CONFIG_SOC_FAMILY_STM32)
-/* Covered by Zephyr tests. "flash_stm32" suite for STM32 chips */
-ZTEST(flash_physical, test_flash_physical)
-{
-	zassert_equal(1, 1);
-}
+struct flash_info flash_info = {
+	/*
+	 * 12 sectors listed in STM32F412CG (Bloonchipper) layout:
+	 * https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/fingerprint/fingerprint-ram-and-flash.md#stm32f412cg-bloonchipper
+	 */
+	.num_flash_banks = 12,
+	.write_protect_bank_offset = 0,
+	.write_protect_bank_count = 5,
+};
 #elif defined(CONFIG_SOC_FAMILY_NPCX)
-
 struct flash_info flash_info = {
 	.num_flash_banks = 16,
 	.write_protect_bank_offset = 0,
@@ -31,6 +38,9 @@ struct flash_info flash_info = {
 	 */
 	.write_protect_bank_count = 2,
 };
+#else
+#error "Flash config tests not defined for this chip. Please add it."
+#endif
 
 ZTEST(flash_physical, test_flash_config)
 {
@@ -43,6 +53,3 @@ ZTEST(flash_physical, test_flash_config)
 	zassert_equal(WP_BANK_COUNT, flash_info.write_protect_bank_count,
 		      "WP bank count mismatch");
 }
-#else
-#error "Flash tests not defined for this chip. Please add it."
-#endif
