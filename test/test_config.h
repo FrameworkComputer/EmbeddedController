@@ -116,17 +116,15 @@ enum battery_type {
 
 #if defined(TEST_BODY_DETECTION) || defined(TEST_BODY_DETECTION) ||        \
 	defined(TEST_MOTION_ANGLE) || defined(TEST_MOTION_ANGLE_TABLET) || \
-	defined(TEST_MOTION_LID) || defined(TEST_MOTION_SENSE_FIFO) ||     \
-	defined(TEST_TABLET_BROKEN_SENSOR)
+	defined(TEST_MOTION_LID) || defined(TEST_MOTION_SENSE_FIFO)
 enum sensor_id {
 	BASE,
 	LID,
 	SENSOR_COUNT,
 };
 
-#if defined(TEST_MOTION_ANGLE) || defined(TEST_MOTION_ANGLE_TABLET) ||    \
-	defined(TEST_MOTION_LID) || defined(TEST_TABLET_BROKEN_SENSOR) || \
-	defined(TEST_BODY_DETECTION)
+#if defined(TEST_MOTION_ANGLE) || defined(TEST_MOTION_ANGLE_TABLET) || \
+	defined(TEST_MOTION_LID) || defined(TEST_BODY_DETECTION)
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE
 #define CONFIG_LID_ANGLE_SENSOR_LID LID
@@ -150,14 +148,9 @@ enum sensor_id {
 	 (1 << CONFIG_LID_ANGLE_SENSOR_LID))
 #endif
 
-#if defined(TEST_TABLET_BROKEN_SENSOR) || defined(TEST_TABLET_NO_SENSOR) || \
-	defined(TEST_MOTION_LID)
+#if defined(TEST_MOTION_LID)
 #define CONFIG_TABLET_MODE
 #define CONFIG_GMR_TABLET_MODE
-#endif
-
-#ifdef TEST_TABLET_BROKEN_SENSOR
-#define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 #endif
 
 #if defined(TEST_BODY_DETECTION)
@@ -226,29 +219,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_FANS 1
 #endif
 
-#ifdef TEST_USB_COMMON
-#define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_USB_PD_TCPMV1
-#define CONFIG_USB_PD_PORT_MAX_COUNT 1
-#define CONFIG_USB_PD_TCPC
-#define CONFIG_USB_PD_TCPM_STUB
-#define CONFIG_SHA256_SW
-#define CONFIG_SW_CRC
-#endif
-
-#ifdef TEST_USB_PD_PDO_FIXED
-#define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_USB_PD_TCPMV1
-#define CONFIG_USB_PD_PORT_MAX_COUNT 1
-#define CONFIG_USB_PD_TCPC
-#define CONFIG_USB_PD_TCPM_STUB
-#define CONFIG_SHA256_SW
-#define CONFIG_SW_CRC
-#define CONFIG_USB_PD_ONLY_FIXED_PDOS
-#endif
-
-#if defined(TEST_USB_SM_FRAMEWORK_H3) || defined(TEST_USB_SM_FRAMEWORK_H2) || \
-	defined(TEST_USB_SM_FRAMEWORK_H1) || defined(TEST_USB_SM_FRAMEWORK_H0)
+#if defined(TEST_USB_SM_FRAMEWORK_H3)
 #define CONFIG_TEST_SM
 #endif
 
@@ -432,37 +403,6 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_DECODE_SOP
 #define CONFIG_USB_PD_3A_PORTS 0 /* Host does not define a 3.0 A PDO */
 #endif
-
-#ifdef TEST_USB_PD_INT
-#define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_USB_PD_TCPMV1
-#define CONFIG_USB_PD_DUAL_ROLE
-#define CONFIG_USB_PD_PORT_MAX_COUNT 1
-#define CONFIG_USB_PD_TCPC
-#define CONFIG_USB_PD_TCPM_STUB
-#define CONFIG_SHA256_SW
-#define CONFIG_SW_CRC
-#endif
-
-#if defined(TEST_USB_PD) || defined(TEST_USB_PD_GIVEBACK) || \
-	defined(TEST_USB_PD_REV30)
-#define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_USB_PD_TCPMV1
-#define CONFIG_USB_PD_DUAL_ROLE
-#define CONFIG_USB_PD_PORT_MAX_COUNT 2
-#define CONFIG_USB_PD_TCPC
-#define CONFIG_USB_PD_TCPM_STUB
-#define CONFIG_SHA256_SW
-#define CONFIG_SW_CRC
-#ifdef TEST_USB_PD_REV30
-#define CONFIG_USB_PD_REV30
-#define CONFIG_USB_PD_EXTENDED_MESSAGES
-#define CONFIG_USB_PID 0x5000
-#endif
-#ifdef TEST_USB_PD_GIVEBACK
-#define CONFIG_USB_PD_GIVE_BACK
-#endif
-#endif /* TEST_USB_PD || TEST_USB_PD_GIVEBACK || TEST_USB_PD_REV30 */
 
 #ifdef TEST_USB_PD_CONSOLE
 #define CONFIG_USB_PD_EPR
