@@ -311,8 +311,8 @@ ZTEST(virtual_battery, test_read_status_critical_charge)
 
 static void virtual_battery_after_test(void *fixture)
 {
-	/* Reset critical flags if the test set them. */
-	battery_dynamic[BATT_IDX_MAIN].flags &= EC_BATT_FLAG_LEVEL_CRITICAL;
+	/* Reset critical flag if the test set it. */
+	battery_dynamic[BATT_IDX_MAIN].flags &= ~EC_BATT_FLAG_LEVEL_CRITICAL;
 }
 
 ZTEST_SUITE(virtual_battery, drivers_predicate_post_main, NULL, NULL,
