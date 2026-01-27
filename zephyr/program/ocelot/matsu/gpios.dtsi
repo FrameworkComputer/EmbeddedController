@@ -67,7 +67,7 @@
 			gpios = <&gpiob 5 (GPIO_INPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_en_edp_bl: ec_en_edp_bl {
-			gpios = <&gpioc 6 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+			gpios = <&gpioc 6 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
 		};
 		gpio_en_pp5000_usba: en_pp5000_usba {
