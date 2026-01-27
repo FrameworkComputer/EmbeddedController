@@ -152,7 +152,7 @@ static int flash_set_status(const struct device *dev, uint8_t sr1, uint8_t sr2)
 	return rv;
 }
 
-static void flash_protect_int_flash(const struct device *dev, int enable)
+static void flash_protect_int_flash(const struct device *dev, bool enable)
 {
 	/*
 	 * Please notice the type of WP_IF bit is R/W1S. Once it's set,

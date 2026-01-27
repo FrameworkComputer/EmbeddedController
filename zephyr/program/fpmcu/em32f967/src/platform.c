@@ -7,9 +7,9 @@
 #include "write_protect.h"
 
 /* TODO(b/446109143): Change based on the final solution of WP state. */
-int write_protect_is_asserted_custom(void)
+bool write_protect_is_asserted_custom(void)
 {
-	return 0;
+	return false;
 }
 
 /* Actual implementation is placed in the private repository. */

@@ -25,7 +25,7 @@ int fp_vendor_command(uint32_t param, uint8_t *buf, size_t buf_size)
 }
 
 /* TODO(b/432682921): Change based on the final solution of WP state. */
-int write_protect_is_asserted_custom(void)
+bool write_protect_is_asserted_custom(void)
 {
-	return 0;
+	return false;
 }

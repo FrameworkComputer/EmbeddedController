@@ -270,7 +270,7 @@ static int is_int_flash_protected(const struct device *dev)
 	return cros_flash_xec_write_protection_is_set(dev);
 }
 
-static void flash_protect_int_flash(const struct device *dev, int enable)
+static void flash_protect_int_flash(const struct device *dev, bool enable)
 {
 	/*
 	 * Please notice the type of WP_IF bit is R/W1S. Once it's set,
