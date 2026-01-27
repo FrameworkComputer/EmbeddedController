@@ -4,6 +4,7 @@
  */
 
 #include "charger.h"
+#include "cros_board_info.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "lid_switch.h"
@@ -23,3 +24,16 @@ static void tp_enable(void)
 	}
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, tp_enable, HOOK_PRIO_DEFAULT);
+
+static void disable_sleep_bid(void)
+{
+	uint32_t board_id = 0;
+	/* Errors will count as board_id 0 */
+	cbi_get_board_version(&board_id);
+
+	if (board_id > 1)
+		enable_sleep(SLEEP_MASK_FORCE_NO_DSLEEP);
+	else
+		disable_sleep(SLEEP_MASK_FORCE_NO_DSLEEP);
+}
+DECLARE_HOOK(HOOK_INIT, disable_sleep_bid, HOOK_PRIO_POST_I2C);
