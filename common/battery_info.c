@@ -372,6 +372,16 @@ int update_static_battery_info(void)
 	rv |= battery_manufacture_info(bs->manuf_info, sizeof(bs->manuf_info));
 #endif /* CONFIG_PLATFORM_EC_BATTERY_MANUF_INFO */
 
+	/* Manufacture Date */
+	int mf_year, mf_month, mf_day;
+	ret = battery_manufacture_date(&mf_year, &mf_month, &mf_day);
+	if (!ret) {
+		bs->manuf_year = mf_year;
+		bs->manuf_month = mf_month;
+		bs->manuf_day = mf_day;
+	}
+	rv |= ret;
+
 	/* Battery Model string */
 	rv |= battery_device_name(bs->model_ext, sizeof(bs->model_ext));
 

@@ -110,6 +110,9 @@ struct battery_static_info {
 	uint16_t design_capacity;
 	uint16_t design_voltage;
 	uint32_t cycle_count;
+	uint16_t manuf_year;
+	uint8_t manuf_month;
+	uint8_t manuf_day;
 	/*
 	 * TODO: The fields below should be renamed & re-typed:
 	 * uint16_t serial[32];

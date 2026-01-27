@@ -52,6 +52,17 @@ void set_battery_cycle_count(int new_value)
 	battery_cycle_count_value = new_value;
 }
 
+static int battery_mf_date_year_value;
+static int battery_mf_date_month_value;
+static int battery_mf_date_day_value;
+int battery_manufacture_date(int *year, int *month, int *day)
+{
+	*year = battery_mf_date_year_value;
+	*month = battery_mf_date_month_value;
+	*day = battery_mf_date_day_value;
+	return EC_SUCCESS;
+}
+
 static int battery_design_voltage_value = 5000;
 int battery_design_voltage(int *voltage)
 {
