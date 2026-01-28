@@ -53,6 +53,7 @@ if(DEFINED CONFIG_PLATFORM_EC AND EXISTS "${EDT_PICKLE}")
       --zephyr-base ${ZEPHYR_BASE}
       --edt-pickle ${EDT_PICKLE}
       --manifest-file "${CMAKE_BINARY_DIR}/zephyr/component_manifest.json"
+      --version ${CONFIG_PLATFORM_EC_CME_VERSION}
       ${EXTRA_EC_VERSION_FLAGS_LIST}
     )
     execute_process(COMMAND ${CMD_CME} RESULT_VARIABLE ret)

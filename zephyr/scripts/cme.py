@@ -117,7 +117,41 @@ def parse_args(argv: Optional[List[str]] = None):
     return parser.parse_args(argv)
 
 
-def insert_expect(prop, comp, expect):
+def compress_expect_2(expect):
+    """convert a version 1 expect into version 2 expect.
+
+    No output because the conversion is done in place.
+
+    Args:
+        expect: Expect object.
+    """
+
+    if "reg" in expect and "write_data" in expect:
+        expect["write_data"] = (
+            "0x"
+            + expect["reg"].lstrip("0x")
+            + expect["write_data"].lstrip("0x")
+        )
+        del expect["reg"]
+
+    if "multi_byte_mask" in expect:
+        expect["mask"] = expect["multi_byte_mask"]
+        del expect["multi_byte_mask"]
+
+    if "multi_byte_value" in expect:
+        expect["value"] = expect["multi_byte_value"]
+        del expect["multi_byte_value"]
+
+    if "override_mask" in expect:
+        expect["mask"] = expect["override_mask"]
+        del expect["override_mask"]
+
+    if "override_value" in expect:
+        expect["value"] = expect["override_value"]
+        del expect["override_value"]
+
+
+def insert_expect(prop, version, comp, expect):
     """insert an expect into the property of a component
 
     Args:
@@ -131,19 +165,37 @@ def insert_expect(prop, comp, expect):
     if "expect" not in comp[prop]:
         comp[prop].update({"expect": []})
 
+    if version == "2":
+        compress_expect_2(expect)
+
     for preexisting_expect in comp[prop]["expect"]:
-        if preexisting_expect["reg"] == expect["reg"]:
+        if (
+            "reg" in preexisting_expect
+            and "reg" in expect
+            and preexisting_expect["reg"] == expect["reg"]
+        ):
             logging.error(
                 "%s has multiple values expected from the same register: %s",
                 comp["component_name"],
                 expect["reg"],
             )
             sys.exit(1)
+        if (
+            "write_data" in preexisting_expect
+            and "write_data" in expect
+            and preexisting_expect["write_data"] == expect["write_data"]
+        ):
+            logging.error(
+                "%s has multiple values expected from the same command code: %s",
+                comp["component_name"],
+                expect["write_data"],
+            )
+            sys.exit(1)
 
     comp[prop]["expect"].append(expect)
 
 
-def disambiguify(component):
+def disambiguify(component, manifest_version):
     """updates information in the a component that may be ambiguous
 
     Args:
@@ -166,10 +218,18 @@ def disambiguify(component):
             new_comp = deepcopy(component)
             new_comp["component_name"] = comp_info.name
 
-            insert_expect("i2c", new_comp, comp_info.pid_low_expect)
-            insert_expect("i2c", new_comp, comp_info.pid_high_expect)
-            insert_expect("i2c", new_comp, comp_info.did_low_expect)
-            insert_expect("i2c", new_comp, comp_info.did_high_expect)
+            insert_expect(
+                "i2c", manifest_version, new_comp, comp_info.pid_low_expect
+            )
+            insert_expect(
+                "i2c", manifest_version, new_comp, comp_info.pid_high_expect
+            )
+            insert_expect(
+                "i2c", manifest_version, new_comp, comp_info.did_low_expect
+            )
+            insert_expect(
+                "i2c", manifest_version, new_comp, comp_info.did_high_expect
+            )
 
             ret.append(new_comp)
     else:
@@ -189,8 +249,12 @@ def disambiguify(component):
             new_comp["component_type"] = additional_info.ctype
             new_comp["probe"] = "indirect"
 
-            insert_expect("i2c", new_comp, additional_info.command_1)
-            insert_expect("i2c", new_comp, additional_info.command_2)
+            insert_expect(
+                "i2c", manifest_version, new_comp, additional_info.command_1
+            )
+            insert_expect(
+                "i2c", manifest_version, new_comp, additional_info.command_2
+            )
 
             ret.append(new_comp)
 
@@ -200,9 +264,9 @@ def disambiguify(component):
 class Manifest:
     """Manifest class to operate the component manifest."""
 
-    def __init__(self, ec_version):
+    def __init__(self, manifest_version, ec_version):
         self.manifest = {
-            "manifest_version": 1,
+            "manifest_version": manifest_version,
             "ec_version": ec_version,
             "component_list": [],
         }
@@ -243,7 +307,7 @@ class Manifest:
             if comp == component:
                 return
 
-        comp_list = disambiguify(component)
+        comp_list = disambiguify(component, self.manifest["manifest_version"])
 
         for comp in comp_list:
             if comp not in self.manifest["component_list"]:
@@ -700,7 +764,7 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
             version=args.version,
             static=args.static_version,
         )
-    manifest = Manifest(ec_version_string)
+    manifest = Manifest(args.version, ec_version_string)
 
     ret = iterate_usbc_components(edtlib, edt, i2c_portmap, manifest)
     if ret != 0:
@@ -713,7 +777,6 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
         return ret
 
     manifest.json_dump(args.manifest_file)
-
     return 0
 
 

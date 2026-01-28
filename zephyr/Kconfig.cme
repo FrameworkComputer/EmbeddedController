@@ -1,0 +1,11 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_CME_VERSION
+	int "Component manifest support"
+	default 2
+	help
+	  Component manifest is used for hardware probing during the factory
+	  process. This config tells the engine which version of the manifest
+	  to build.
