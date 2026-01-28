@@ -25,7 +25,7 @@ config FINGERPRINT_SENSOR_ELAN80SERIES_PAL
 config FINGERPRINT_SENSOR_ELAN80SERIES_HEAP_SIZE
 	int
 	default 36864 if FINGERPRINT_SENSOR_ELAN80SG
-	default 52224 if FINGERPRINT_SENSOR_ELANI80SA
+	default 67568 if FINGERPRINT_SENSOR_ELANI80SA
 	help
 	  Size of heap to be used by ELAN private library. The heap must have
 	  enough space to facilitate the generation of the finger templates
