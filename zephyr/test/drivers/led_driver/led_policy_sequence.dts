@@ -110,5 +110,16 @@
 				};
 			};
 		};
+
+		/* Label 7: Solid Off (used for preemption test) */
+		seq-off {
+			board-led-alt-policy-label = <7>;
+			battery-led-logic {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_off>;
+				};
+			};
+		};
 	};
 };

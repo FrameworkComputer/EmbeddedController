@@ -23,6 +23,7 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/spinlock.h>
 #include <zephyr/sys/util.h>
 LOG_MODULE_REGISTER(led, LOG_LEVEL_ERR);
 
@@ -371,10 +372,12 @@ static void reset_policy_patterns(enum ec_led_id led_id)
 
 /* Pointer to runtime-assigned patterns from host commands */
 static struct custom_led_patterns_t *g_custom_patterns;
+static struct k_spinlock led_custom_lock;
 
 void led_set_custom_patterns(struct custom_led_patterns_t *p)
 {
 	struct custom_led_patterns_t *old_pattern;
+	k_spinlock_key_t key;
 
 	if (p) {
 		/* Initialize state for new custom patterns */
@@ -383,48 +386,85 @@ void led_set_custom_patterns(struct custom_led_patterns_t *p)
 		}
 	}
 
+	/* Atomic swap to ensure we get the old pattern */
+	key = k_spin_lock(&led_custom_lock);
 	old_pattern = g_custom_patterns;
+	g_custom_patterns = p;
+	k_spin_unlock(&led_custom_lock, key);
+
 	if (old_pattern) {
 		reset_policy_patterns(old_pattern->led_id);
 	}
-
-	g_custom_patterns = p;
 
 	/* Schedule animation worker to execute patterns */
 	k_work_schedule(&led_worker_data, K_NO_WAIT);
 }
 
-static struct node_status update_custom_node(const struct policy_group *grp,
-					     uint32_t increment)
+static bool is_custom_pattern_active(const struct custom_led_patterns_t *p,
+				     enum ec_led_id led_id)
+{
+	return p && p->led_id == led_id;
+}
+
+static struct node_status
+update_custom_node(const struct policy_group *grp,
+		   struct custom_led_patterns_t *custom, uint32_t increment)
 {
 	struct node_status status = { 0 };
 
-	if (!g_custom_patterns) {
+	if (!custom) {
 		return status;
 	}
 
 	/* Only process if the LED is managed by this driver */
-	if (!(grp->driver->led_id_mask & (BIT(g_custom_patterns->led_id)))) {
+	if (!(grp->driver->led_id_mask & (BIT(custom->led_id)))) {
 		return status;
 	}
 
 	/* Check if auto control is enabled */
-	if (!led_auto_control_is_enabled(g_custom_patterns->led_id)) {
+	if (!led_auto_control_is_enabled(custom->led_id)) {
 		return status;
 	}
 
-	for (int i = 0; i < g_custom_patterns->num_patterns; i++) {
-		struct led_pattern_node_t *pattern =
-			&g_custom_patterns->led_patterns[i];
+	for (int i = 0; i < custom->num_patterns; i++) {
+		struct led_pattern_node_t *pattern = &custom->led_patterns[i];
 
 		process_pattern_update(grp, pattern, increment, &status);
 	}
 	return status;
 }
 
-static struct node_status update_policy_node(const struct policy_group *grp,
-					     const struct node_prop_t *node,
-					     uint32_t increment)
+/* Clears the custom pattern if the given policy node conflicts with it. */
+static void cancel_custom_if_conflict(const struct node_prop_t *node)
+{
+	k_spinlock_key_t key;
+	bool conflict = false;
+	int i;
+
+	key = k_spin_lock(&led_custom_lock);
+	if (g_custom_patterns) {
+		for (i = 0; i < node->num_patterns; i++) {
+			enum ec_led_id id = node->led_patterns[i]
+						    .pattern_color[0]
+						    .led_color_node->led_id;
+
+			if (g_custom_patterns->led_id == id) {
+				conflict = true;
+				break;
+			}
+		}
+	}
+	k_spin_unlock(&led_custom_lock, key);
+
+	if (conflict) {
+		led_set_custom_patterns(NULL);
+	}
+}
+
+static struct node_status
+update_policy_node(const struct policy_group *grp,
+		   const struct node_prop_t *node,
+		   struct custom_led_patterns_t *custom, uint32_t increment)
 {
 	struct led_pattern_node_t *patterns = node->led_patterns;
 	struct node_status status = { 0 };
@@ -435,7 +475,7 @@ static struct node_status update_policy_node(const struct policy_group *grp,
 			pattern->pattern_color[0].led_color_node->led_id;
 
 		/* If a custom pattern is active, skip default policy. */
-		if (g_custom_patterns && g_custom_patterns->led_id == led_id) {
+		if (is_custom_pattern_active(custom, led_id)) {
 			continue;
 		}
 
@@ -540,6 +580,14 @@ static int match_node(const struct policy_group *grp, int node_idx)
 	/* reset the color counter if pattern just activated */
 	if (!(*active)) {
 		*active = true;
+
+		/*
+		 * If a system state transition activates a policy for an LED
+		 * currently running a custom pattern, cancel the custom
+		 * pattern.
+		 */
+		cancel_custom_if_conflict(node);
+
 		for (int i = 0; i < node->num_patterns; i++) {
 			struct led_pattern_node_t *pattern =
 				&node->led_patterns[i];
@@ -587,9 +635,15 @@ static void led_execute_patterns(void)
 {
 	bool continue_animating = false;
 	bool custom_patterns_active = false;
+	struct custom_led_patterns_t *active_custom;
+	k_spinlock_key_t key;
 	int64_t start_time = k_uptime_get();
 	int64_t elapsed_ms;
 	int64_t delay_ms;
+
+	key = k_spin_lock(&led_custom_lock);
+	active_custom = g_custom_patterns;
+	k_spin_unlock(&led_custom_lock, key);
 
 	/* Iterate through all policy groups to process active patterns */
 	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
@@ -598,7 +652,8 @@ static void led_execute_patterns(void)
 		struct node_status status;
 
 		/* 1. Process custom patterns (high priority) */
-		status = update_custom_node(grp, LED_ANIMATION_TICK_MS);
+		status = update_custom_node(grp, active_custom,
+					    LED_ANIMATION_TICK_MS);
 		group_status.needs_apply |= status.needs_apply;
 		group_status.is_animating |= status.is_animating;
 		group_status.has_transitions |= status.has_transitions;
@@ -614,6 +669,7 @@ static void led_execute_patterns(void)
 			}
 
 			status = update_policy_node(grp, &grp->nodes[j],
+						    active_custom,
 						    LED_ANIMATION_TICK_MS);
 			group_status.needs_apply |= status.needs_apply;
 			group_status.is_animating |= status.is_animating;
@@ -637,11 +693,22 @@ static void led_execute_patterns(void)
 	 * If we have a custom pattern but it is no longer active (completed
 	 * its cycles), clear it so the next tick resumes normal policy.
 	 */
-	if (g_custom_patterns && !custom_patterns_active) {
-		/* Reset built-in patterns suppressed by this custom pattern */
-		reset_policy_patterns(g_custom_patterns->led_id);
-		continue_animating = true;
-		g_custom_patterns = NULL;
+	if (active_custom && !custom_patterns_active) {
+		bool cleared = false;
+
+		key = k_spin_lock(&led_custom_lock);
+		/* Check global hasn't changed before clearing */
+		if (g_custom_patterns == active_custom) {
+			g_custom_patterns = NULL;
+			cleared = true;
+		}
+		k_spin_unlock(&led_custom_lock, key);
+
+		/* Only reset if the above cleared the custom pattern */
+		if (cleared) {
+			reset_policy_patterns(active_custom->led_id);
+			continue_animating = true;
+		}
 	}
 
 	if (continue_animating) {

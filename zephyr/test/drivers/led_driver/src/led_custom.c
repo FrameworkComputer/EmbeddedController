@@ -246,3 +246,210 @@ ZTEST(led_driver_custom, test_manual_control)
 	/* Re-enable auto control */
 	led_auto_control(EC_LED_ID_BATTERY_LED, 1);
 }
+
+/*
+ * Test system state preemption.
+ */
+ZTEST(led_driver_custom, test_system_state_preemption)
+{
+	const struct led_pins_node_t *blue_node =
+		led_get_node(LED_BLUE, EC_LED_ID_BATTERY_LED);
+
+	struct pattern_color_node_t color_step = {
+		.led_color_node = blue_node,
+		.duration_ms = 5000,
+	};
+
+	struct led_pattern_node_t pattern = {
+		.pattern_color = &color_step,
+		.pattern_len = 1,
+		.cycle_limit = 0, /* Infinite */
+		.transition = LED_TRANSITION_STEP,
+	};
+
+	struct custom_led_patterns_t custom = {
+		.led_patterns = &pattern,
+		.num_patterns = 1,
+		.led_id = EC_LED_ID_BATTERY_LED,
+	};
+
+	/* Apply custom pattern (Blue) */
+	led_set_custom_patterns(&custom);
+	k_sleep(K_MSEC(30));
+	zassert_true(is_blue_on(), "Custom pattern not active");
+
+	/* Change system state to trigger a new policy (Off) */
+	set_board_led_alt_policy(7);
+
+	/*
+	 * Trigger the tick. match_node should detect the state change,
+	 * see the new policy (Off) becoming active, and cancel the custom
+	 * pattern.
+	 */
+	hook_notify(HOOK_TICK);
+	k_sleep(K_MSEC(30));
+
+	/* Verify Custom Pattern was cancelled and new policy is active */
+	zassert_true(is_off(), "Custom pattern should be preempted");
+}
+
+/*
+ * Test that standard policy resets cleanly when custom pattern is cleared.
+ */
+ZTEST(led_driver_custom, test_resume_resets_policy)
+{
+	/* Set Standard Policy to Infinite Blink (Blue 500ms, White 500ms) */
+	set_board_led_alt_policy(2);
+	led_control(EC_LED_ID_BATTERY_LED, LED_STATE_RESET);
+	led_set_custom_patterns(NULL);
+
+	/* Tick to start */
+	hook_notify(HOOK_TICK);
+	k_sleep(K_MSEC(30));
+	zassert_true(is_blue_on(), "Standard policy should start Blue");
+
+	/* Advance time into the second half of the cycle (White) */
+	/* 500ms Blue -> 500ms White. Wait 600ms total. */
+	k_sleep(K_MSEC(600));
+	zassert_true(is_white_on(), "Standard policy should be White");
+
+	/* Set Custom Pattern (Solid Off) */
+	const struct led_pins_node_t *off_node =
+		led_get_node(LED_OFF, EC_LED_ID_BATTERY_LED);
+	struct pattern_color_node_t color_step = {
+		.led_color_node = off_node,
+		.duration_ms = 1000,
+	};
+	struct led_pattern_node_t pattern = {
+		.pattern_color = &color_step,
+		.pattern_len = 1,
+		.cycle_limit = 0,
+		.transition = LED_TRANSITION_STEP,
+	};
+	struct custom_led_patterns_t custom = {
+		.led_patterns = &pattern,
+		.num_patterns = 1,
+		.led_id = EC_LED_ID_BATTERY_LED,
+	};
+
+	led_set_custom_patterns(&custom);
+	k_sleep(K_MSEC(30));
+	zassert_true(is_off(), "Custom pattern (Off) active");
+
+	/* Clear Custom Pattern */
+	led_set_custom_patterns(NULL);
+	k_sleep(K_MSEC(30));
+
+	/* Verify Standard Policy restarted from beginning (Blue) */
+	zassert_true(is_blue_on(), "Standard policy should reset to Blue");
+}
+
+/*
+ * Test that system steady-state does not preempt custom pattern.
+ */
+ZTEST(led_driver_custom, test_steady_state_persistence)
+{
+	const struct led_pins_node_t *blue_node =
+		led_get_node(LED_BLUE, EC_LED_ID_BATTERY_LED);
+
+	struct pattern_color_node_t color_step = {
+		.led_color_node = blue_node,
+		.duration_ms = 5000,
+	};
+
+	struct led_pattern_node_t pattern = {
+		.pattern_color = &color_step,
+		.pattern_len = 1,
+		.cycle_limit = 0,
+		.transition = LED_TRANSITION_STEP,
+	};
+
+	struct custom_led_patterns_t custom = {
+		.led_patterns = &pattern,
+		.num_patterns = 1,
+		.led_id = EC_LED_ID_BATTERY_LED,
+	};
+
+	/* Trigger a policy and settle its state */
+	set_board_led_alt_policy(7);
+	hook_notify(HOOK_TICK);
+	k_sleep(K_MSEC(30));
+
+	/* Apply custom pattern (Blue) */
+	led_set_custom_patterns(&custom);
+	k_sleep(K_MSEC(30));
+	zassert_true(is_blue_on());
+
+	/* Trigger tick without changing system state */
+	hook_notify(HOOK_TICK);
+	k_sleep(K_MSEC(30));
+
+	/* Verify Custom Pattern is still active */
+	zassert_true(is_blue_on(), "Custom pattern should persist");
+	zassert_false(is_white_on(), "Standard policy should not override");
+}
+
+/*
+ * Test replacing one active custom pattern with another.
+ */
+ZTEST(led_driver_custom, test_custom_replace_custom)
+{
+	set_board_led_alt_policy(7);
+	hook_notify(HOOK_TICK);
+	k_sleep(K_MSEC(30));
+	zassert_true(is_off(), "Base policy should be Off");
+
+	const struct led_pins_node_t *blue_node =
+		led_get_node(LED_BLUE, EC_LED_ID_BATTERY_LED);
+	const struct led_pins_node_t *white_node =
+		led_get_node(LED_WHITE, EC_LED_ID_BATTERY_LED);
+
+	/* Define Pattern 1: Solid Blue */
+	struct pattern_color_node_t color_step_1 = {
+		.led_color_node = blue_node,
+		.duration_ms = 1000,
+	};
+	struct led_pattern_node_t pattern_1 = {
+		.pattern_color = &color_step_1,
+		.pattern_len = 1,
+		.cycle_limit = 0,
+		.transition = LED_TRANSITION_STEP,
+	};
+	struct custom_led_patterns_t custom_1 = {
+		.led_patterns = &pattern_1,
+		.num_patterns = 1,
+		.led_id = EC_LED_ID_BATTERY_LED,
+	};
+
+	/* Define Pattern 2: Solid White */
+	struct pattern_color_node_t color_step_2 = {
+		.led_color_node = white_node,
+		.duration_ms = 1000,
+	};
+	struct led_pattern_node_t pattern_2 = {
+		.pattern_color = &color_step_2,
+		.pattern_len = 1,
+		.cycle_limit = 0,
+		.transition = LED_TRANSITION_STEP,
+	};
+	struct custom_led_patterns_t custom_2 = {
+		.led_patterns = &pattern_2,
+		.num_patterns = 1,
+		.led_id = EC_LED_ID_BATTERY_LED,
+	};
+
+	/* Apply Custom 1 (Blue) */
+	led_set_custom_patterns(&custom_1);
+	k_sleep(K_MSEC(30));
+	zassert_true(is_blue_on(), "Custom 1 failed");
+
+	/* Apply Custom 2 (White) immediately */
+	led_set_custom_patterns(&custom_2);
+	k_sleep(K_MSEC(30));
+	zassert_true(is_white_on(), "Custom 2 failed to replace Custom 1");
+
+	/* Clear */
+	led_set_custom_patterns(NULL);
+	k_sleep(K_MSEC(30));
+	zassert_true(is_off(), "Failed to clear custom pattern");
+}
