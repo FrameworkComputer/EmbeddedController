@@ -67,24 +67,3 @@ int board_get_pdc_for_port(int port, const struct device **dev)
 	*dev = NULL;
 	return -ENOENT;
 }
-
-int pd_get_usb_pd_3a_ports(void)
-{
-	int rv;
-	uint32_t usbc_ports, db_type;
-
-	rv = cros_cbi_get_fw_config(USBC_PORTS, &usbc_ports);
-	rv |= cros_cbi_get_fw_config(DB_TYPE, &db_type);
-
-	if (rv) {
-		LOG_ERR("%s: Cannot read CBI FW CONFIG: %d. PDC config unknown!",
-			__func__, rv);
-
-		return CONFIG_USB_PD_3A_PORTS;
-	}
-
-	if ((usbc_ports == TWO_PORTS) && (db_type == DB_1A))
-		return 0;
-
-	return CONFIG_USB_PD_3A_PORTS;
-}
