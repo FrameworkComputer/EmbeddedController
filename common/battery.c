@@ -38,6 +38,9 @@ const static int batt_host_shutdown_pct = CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE;
 #define CONFIG_BATTERY_CUTOFF_DELAY_US (2105 * MSEC)
 #endif
 
+/* retry counter initialized when entering SCHEDULED state */
+static int battery_cutoff_retry_left = 0;
+
 static enum battery_cutoff_states battery_cutoff_state =
 	BATTERY_CUTOFF_STATE_NORMAL;
 
@@ -400,10 +403,24 @@ static int battery_cutoff_start(void)
 		/* Start monitor loop. */
 		hook_call_deferred(&pending_cutoff_deferred_data, 0);
 	} else {
+		if (battery_cutoff_retry_left > 0) {
+			CUTOFFPRINTS(
+				"cutoff failed, retrying (%d retries left)",
+				battery_cutoff_retry_left);
+			battery_cutoff_retry_left--;
+			/* Retry immediately */
+			battery_cutoff_state = BATTERY_CUTOFF_STATE_SCHEDULED;
+			hook_call_deferred(
+				&pending_cutoff_deferred_data,
+				CONFIG_BATTERY_CUTOFF_RETRY_DELAY_US);
+			return rv;
+		}
+
 		battery_cutoff_state = BATTERY_CUTOFF_STATE_NORMAL;
 		CUTOFFPRINTS("failed");
 	}
 
+	battery_cutoff_retry_left = 0;
 	return rv;
 }
 
@@ -515,6 +532,7 @@ static void ac_change(void)
 
 	CPRINTS("Refresh+Unplug! Scheduling cutoff.");
 	battery_cutoff_state = BATTERY_CUTOFF_STATE_SCHEDULED;
+	battery_cutoff_retry_left = CONFIG_BATTERY_CUTOFF_RETRY_COUNT;
 	hook_call_deferred(&pending_cutoff_deferred_data,
 			   CONFIG_BATTERY_CUTOFF_DELAY_US);
 }
@@ -542,6 +560,7 @@ DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CUT_OFF, battery_command_cutoff,
 static void check_pending_cutoff(void)
 {
 	if (battery_cutoff_state == BATTERY_CUTOFF_STATE_SCHEDULED) {
+		battery_cutoff_retry_left = CONFIG_BATTERY_CUTOFF_RETRY_COUNT;
 		CUTOFFPRINTS("deferred for %d secs",
 			     CONFIG_BATTERY_CUTOFF_DELAY_US / SECOND);
 		hook_call_deferred(&pending_cutoff_deferred_data,

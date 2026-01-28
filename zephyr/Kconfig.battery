@@ -175,6 +175,23 @@ config PLATFORM_EC_BATTERY_CUTOFF_TIMEOUT_MSEC
 	  After the EC executes battery cutoff, it'll wait for this amount of
 	  time in msec before deciding the cutoff failed.
 
+config PLATFORM_EC_BATTERY_CUTOFF_RETRY_COUNT
+	int "Battery cutoff retry count"
+	default 0
+	help
+	  Number of extra retry attempts after the first failure.
+	  Set to 0 to disable retry and perform only a single attempt.
+
+config PLATFORM_EC_BATTERY_CUTOFF_RETRY_DELAY_US
+	int "Battery cutoff retry delay (microseconds)"
+	default 500000
+	range 1000 60000000
+	help
+	  Delay time in microseconds between consecutive battery cutoff
+	  retry attempts.
+	  This value is only used when PLATFORM_EC_BATTERY_CUTOFF_RETRY_COUNT
+	  is greater than 0.
+
 config PLATFORM_EC_BATTERY_CUTOFF_VOL_UP_DISABLED
 	bool "Disable Volume Up button sequence for battery cutoff"
 	default n

@@ -590,6 +590,17 @@
  */
 #undef CONFIG_BATTERY_CUTOFF_DELAY_US
 
+/* Delay between consecutive battery cutoff retry attempts (in microseconds).
+ * Can be overridden by CONFIG_PLATFORM_EC_BATTERY_CUTOFF_RETRY_DELAY_US.
+ */
+#define CONFIG_BATTERY_CUTOFF_RETRY_DELAY_US (500 * MSEC)
+
+/* Number of extra retry attempts after the first battery cutoff failure.
+ * Set to 0 to disable retry.
+ * Can be overridden by CONFIG_PLATFORM_EC_BATTERY_CUTOFF_RETRY_COUNT.
+ */
+#define CONFIG_BATTERY_CUTOFF_RETRY_COUNT 0
+
 /*
  * After the EC executes battery cutoff, it'll wait for this amount of time in
  * msec before deciding the cutoff failed.
