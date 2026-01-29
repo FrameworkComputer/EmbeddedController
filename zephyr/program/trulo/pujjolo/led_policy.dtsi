@@ -129,8 +129,9 @@
 			};
 		};
 
-		power-state-idle {
+		power-state-idle-alt-policy-0 {
 			charge-state = "LED_PWRS_IDLE";
+			board-led-alt-policy-label = <0>;
 
 			/* Red 2 sec, Green 2 sec */
 			batter-led {
@@ -142,6 +143,24 @@
 				color-1 {
 					led-color = <&battery_led_green>;
 					period-ms = <2000>;
+				};
+			};
+		};
+
+		power-state-idle-alt-policy-1 {
+			charge-state = "LED_PWRS_IDLE";
+			board-led-alt-policy-label = <1>;
+
+			/* Red 1 sec, Off 1 sec for battery error*/
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_red>;
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = <&battery_led_off>;
+					period-ms = <1000>;
 				};
 			};
 		};
