@@ -53,9 +53,9 @@ struct pmf_info AMD_GPU_AC_ONLY_PMF[] = {
 
 struct pmf_info AMD_GPU_DC_ONLY_PMF[] = {
 	{0, EC_DC_BEST_PERFORMANCE, 28, {76, 60, 60, 60, 30}},
-	{0, EC_DC_BALANCED, 29, {76, 50, 50, 50, 20}},
-	{0, EC_DC_BEST_EFFICIENCY, 29, {76, 50, 50, 50, 20}},
-	{0, EC_DC_BATTERY_SAVER, 30, {65, 20, 20, 20, 20}},
+	{0, EC_DC_BALANCED, 29, {76, 50, 50, 50, 30}},
+	{0, EC_DC_BEST_EFFICIENCY, 29, {76, 50, 50, 50, 30}},
+	{0, EC_DC_BATTERY_SAVER, 30, {65, 45, 40, 30, 30}},
 };
 
 struct pmf_table AMD_GPU_PMF_TABLE[] = {
@@ -111,9 +111,9 @@ struct pmf_info NV_GPU_AC_ONLY_PMF[] = {
 
 struct pmf_info NV_GPU_DC_ONLY_PMF[] = {
 	{0, EC_DC_BEST_PERFORMANCE, 98, {85, 45, 30, 30, 0}},
-	{0, EC_DC_BALANCED, 99, {71, 38, 25, 20, 0}},
-	{0, EC_DC_BEST_EFFICIENCY, 100, {66, 35, 23, 20, 0}},
-	{0, EC_DC_BATTERY_SAVER, 101, {57, 30, 20, 20, 0}},
+	{0, EC_DC_BALANCED, 99, {85, 45, 30, 30, 0}},
+	{0, EC_DC_BEST_EFFICIENCY, 100, {85, 45, 30, 30, 0}},
+	{0, EC_DC_BATTERY_SAVER, 101, {85, 45, 30, 30, 0}},
 };
 
 struct pmf_table NV_GPU_PMF_TABLE[] = {
@@ -168,10 +168,10 @@ struct pmf_info UMA_AC_ONLY_PMF[] = {
 };
 
 struct pmf_info UMA_DC_ONLY_PMF[] = {
-	{0, EC_DC_BEST_PERFORMANCE, 62, {76, 60, 40, 30, 0}},
-	{0, EC_DC_BALANCED, 63, {76, 53, 35, 20, 0}},
-	{0, EC_DC_BEST_EFFICIENCY, 64, {76, 45, 30, 20, 0}},
-	{0, EC_DC_BATTERY_SAVER, 65, {65, 30, 20, 20, 0}},
+	{0, EC_DC_BEST_PERFORMANCE, 62, {85, 60, 40, 30, 0}},
+	{0, EC_DC_BALANCED, 63, {85, 53, 35, 30, 0}},
+	{0, EC_DC_BEST_EFFICIENCY, 64, {85, 45, 30, 30, 0}},
+	{0, EC_DC_BATTERY_SAVER, 65, {85, 45, 30, 30, 0}},
 };
 
 struct pmf_table UMA_PMF_TABLE[] = {
