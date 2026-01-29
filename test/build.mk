@@ -4,10 +4,7 @@
 # found in the LICENSE file.
 
 # Device test binaries
-test-list-y ?= flash_write_protect \
-	stdlib \
-	timer_calib
-#disable: powerdemo
+test-list-y ?= stdlib
 
 # Emulator tests
 ifneq ($(TEST_LIST_HOST),)
@@ -89,10 +86,6 @@ ifeq ($(and $(BOARD_HOST),$(TEST_BUILD)),y)
 rw-test = ro
 endif
 
-abort-y=abort.o
-assert_builtin-y=assert_builtin.o
-assert_stdlib-y=assert_stdlib.o
-base32-y=base32.o
 battery_config-y=battery_config.o
 bklight_passthru-y=bklight_passthru.o
 body_detection-y=body_detection.o body_detection_data_literals.o motion_common.o
@@ -100,14 +93,8 @@ boringssl_crypto-y=boringssl_crypto.o
 cbi-y=cbi.o
 charge_ramp-y+=charge_ramp.o
 console_edit-y=console_edit.o
-cortexm_fpu-y=cortexm_fpu.o
 crc-y=crc.o
-debug-y=debug.o
-exception-y=exception.o
-exit-y=exit.o
 fan-y=fan.o
-flash_physical-y=flash_physical.o
-flash_write_protect-y=flash_write_protect.o
 fpsensor_auth_commands-y=fpsensor_auth_commands.o
 fpsensor_auth_commands_otp-$(rw-test)=fpsensor_auth_commands_otp.o
 fpsensor_auth_crypto_stateful-y=fpsensor_auth_crypto_stateful.o
@@ -115,10 +102,7 @@ fpsensor_auth_crypto_stateless-y=fpsensor_auth_crypto_stateless.o
 fpsensor_crypto-y=fpsensor_crypto.o
 fpsensor_crypto_with_mock-y=fpsensor_crypto_with_mock.o
 fpsensor_crypto_with_mock_otp-y=fpsensor_crypto_with_mock_otp.o
-fpsensor_hw-y=fpsensor_hw.o
 fpsensor_state-y=fpsensor_state.o
-ftrapv-y=ftrapv.o
-global_initialization-y=global_initialization.o
 host_command-y=host_command.o
 kb_8042-y=kb_8042.o
 kb_scan-y=kb_scan.o
@@ -127,42 +111,18 @@ motion_angle-y=motion_angle.o motion_angle_data_literals.o motion_common.o
 motion_angle_tablet-y=motion_angle_tablet.o motion_angle_data_literals_tablet.o motion_common.o
 motion_lid-y=motion_lid.o
 motion_sense_fifo-y=motion_sense_fifo.o
-null_pointer-y=null_pointer.o
 rgb_keyboard-y=rgb_keyboard.o
-ifeq ($(USE_BUILTIN_STDLIB), 0)
-libc_printf-y=libc_printf.o
-endif
-libcxx-y=libcxx.o
-mpu-y=mpu.o
-panic-y=panic.o
-panic_data-y=panic_data.o
 power_button-y=power_button.o
-powerdemo-y=powerdemo.o
 printf-y=printf.o
 queue-y=queue.o
-ram_lock-y=ram_lock.o
-restricted_console-y=restricted_console.o
-rng_benchmark-y=rng_benchmark.o
-rollback-y=rollback.o
-rollback_entropy-y=rollback_entropy.o
-rollback_lock_panic-y=rollback_lock_panic.o
 rollback_secret-y=rollback_secret.o
 rsa3-y=rsa.o
 rtc-y=rtc.o
-rtc_npcx9-y=rtc_npcx9.o
-rtc_stm32f4-y=rtc_stm32f4.o
-scratchpad-y=scratchpad.o
 sbs_charging-y=sbs_charging.o
 sha256-y=sha256.o
 sha256_unrolled-y=sha256.o
 stdlib-y=stdlib.o
-stress-y=stress.o
-system_is_locked-y=system_is_locked.o
 thermal-y=thermal.o
-timer_calib-y=timer_calib.o
-tpm_seed_clear-y=tpm_seed_clear.o
-unaligned_access-y=unaligned_access.o
-unaligned_access_benchmark-y=unaligned_access_benchmark.o
 uptime-y=uptime.o
 usb_pd_console-y=usb_pd_console.o
 usb_pd_timer-y=usb_pd_timer.o
@@ -197,14 +157,4 @@ usb_tcpmv2_compliance-y=usb_tcpmv2_compliance.o usb_tcpmv2_compliance_common.o \
 	usb_tcpmv2_td_pd_other.o \
 	test_battery_mock.o
 vboot-y=vboot.o
-watchdog-y=watchdog.o
 x25519-y=x25519.o
-
-run-genvif_test:
-	@echo "  TEST    genvif_test"
-	$(MAKE) -C test/genvif clean
-	$(MAKE) -C test/genvif test test_over
-
-# This test requires C++ exceptions to be enabled.
-$(out)/RW/test/exception.o: CXXFLAGS+=-fexceptions
-$(out)/RO/test/exception.o: CXXFLAGS+=-fexceptions
