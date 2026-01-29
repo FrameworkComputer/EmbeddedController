@@ -66,5 +66,22 @@
 				value = <1>;
 			};
 		};
+		form-factor {
+			enum-name = "FORM_FACTOR";
+			start = <28>;
+			size = <2>;
+
+			form-factor-clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FORM_FACTOR_CONVERTIBLE";
+				value = <0>;
+				default;
+			};
+			form-factor-convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FORM_FACTOR_CLAMSHELL";
+				value = <1>;
+			};
+		};
 	};
 };
