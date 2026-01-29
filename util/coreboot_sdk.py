@@ -49,12 +49,14 @@ def get_toolchains_shell(
     local_filepath: Union[str, "os.PathLike[str]"] = os.path.expanduser(
         "~/.cache/coreboot-sdk"
     ),
+    toolchain: str = None,
 ) -> Dict[str, str]:
     """Download and extract the toolchains using the shell.
 
     Args:
         portage_toolchains: Dict of architectures to download
         local_filepath: Path to download the toolchains to
+        toolchain: Individual toolchain to obtain if desired
 
     Returns:
         Dict of coreboot-sdk env variables and their respective paths
@@ -66,6 +68,8 @@ def get_toolchains_shell(
         version,
         toolchain_hash,
     ) in portage_toolchains.items():
+        if toolchain and target != toolchain:
+            continue
         output_path = local_filepath + "/" + target
         output_toolchain = output_path + "/" + toolchain_hash
         tempfile.tempdir = output_path
@@ -157,7 +161,7 @@ def get_toolchains_shell(
     return result
 
 
-def init_toolchain() -> Dict[str, str]:
+def init_toolchain(toolchain: str = None) -> Dict[str, str]:
     """Initialize coreboot-sdk.
 
     Returns:
@@ -169,7 +173,7 @@ def init_toolchain() -> Dict[str, str]:
 
     portage_toolchains = get_portage_deps()
 
-    return get_toolchains_shell(portage_toolchains)
+    return get_toolchains_shell(portage_toolchains, toolchain=toolchain)
 
 
 def _parse_args(argv):
@@ -180,6 +184,12 @@ def _parse_args(argv):
         action="store_true",
         help="Output results in JSON format",
     )
+    parser.add_argument(
+        "-t",
+        "--toolchain",
+        dest="toolchain",
+        help="Select a single toolchain to get info for",
+    )
     args = parser.parse_args(argv)
     return args
 
@@ -187,10 +197,13 @@ def _parse_args(argv):
 def main(argv):
     """Main calling function for the script"""
     args = _parse_args(argv)
-    env_vars = init_toolchain()
+    env_vars = init_toolchain(args.toolchain)
     if env_vars:
         if args.json:
             print(json.dumps(env_vars))
+        elif args.toolchain:
+            # return just the requested toolchain
+            print(env_vars[toolchain_name_map[args.toolchain]])
         else:
             # Return a formatted string which can be declared as an associative array in bash
             print(

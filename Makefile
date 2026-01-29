@@ -165,11 +165,13 @@ ifneq (,$(COREBOOT_SDK_ROOT_$(COREBOOT_TOOLCHAIN)))
 CROSS_COMPILE:=$(COREBOOT_SDK_ROOT_$(COREBOOT_TOOLCHAIN))/bin/$(CROSS_COREBOOT)-
 else
 ifneq (,$(USE_COREBOOT_SDK))
-ifeq ($(shell bazel --project fwsdk >/dev/null 2>&1; echo $$?),0)
-BAZEL_SUPPORTED=1
-CROSS_COMPILE:=$(shell bazel --project fwsdk run \
-	@ec-coreboot-sdk-$(CROSS_COMPILE_TOOLCHAIN)//:get_path)/bin/$(CROSS_COREBOOT)-
-else
+SDK_SCRIPT := util/coreboot_sdk.py
+SDK_FLAGS := --toolchain $(CROSS_COMPILE_TOOLCHAIN)
+SDK_COMMAND := $(SDK_SCRIPT) $(SDK_FLAGS)
+PYTHON_RESULT:=$(shell $(SDK_COMMAND); echo $$?)
+CROSS_COMPILE:=$(word 1,$(PYTHON_RESULT))/bin/$(CROSS_COREBOOT)-
+EXIT_CODE := $(word 2,$(PYTHON_RESULT))
+ifneq ($(EXIT_CODE),0)
 CROSS_COMPILE:=/opt/coreboot-sdk/bin/$(CROSS_COREBOOT)-
 endif
 endif
