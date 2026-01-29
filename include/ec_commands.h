@@ -9025,6 +9025,29 @@ struct ec_response_battery_dynamic_info {
 	int16_t desired_current;
 } __ec_align2;
 
+/**
+ * struct ec_response_battery_dynamic_info_v1 - Battery dynamic info response
+ * (v1)
+ * @actual_voltage: Battery voltage (mV)
+ * @actual_current: Battery current (mA); negative=discharging
+ * @remaining_capacity: Remaining capacity (mAh)
+ * @full_capacity: Capacity (mAh, might change occasionally)
+ * @flags: Flags, see EC_BATT_FLAG_*
+ * @desired_voltage: Charging voltage desired by battery (mV)
+ * @desired_current: Charging current desired by battery (mA)
+ * @temperature: Battery temperature (dK)
+ */
+struct ec_response_battery_dynamic_info_v1 {
+	int16_t actual_voltage;
+	int16_t actual_current;
+	int16_t remaining_capacity;
+	int16_t full_capacity;
+	int16_t flags;
+	int16_t desired_voltage;
+	int16_t desired_current;
+	uint16_t temperature;
+} __ec_align2;
+
 /*
  * Control charger chip. Used to control charger chip on the peripheral.
  */
