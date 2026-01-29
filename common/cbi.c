@@ -609,8 +609,8 @@ static int cc_cbi(int argc, const char **argv)
 	}
 
 	if (strcasecmp(argv[1], "set") == 0) {
-		if (argc < 5) {
-			ccprintf("Set requires: <tag> <value> <size>\n");
+		if (argc < 3) {
+			ccprintf("Set requires: <tag> \n");
 			return EC_ERROR_PARAM_COUNT;
 		}
 
@@ -618,16 +618,58 @@ static int cc_cbi(int argc, const char **argv)
 		if (*e)
 			return EC_ERROR_PARAM2;
 
+		if (setter->tag == CBI_TAG_UFSC) {
+			if (argc < 4) {
+				ccprintf("Set requires: <tag> <hex_string>\n");
+				return EC_ERROR_PARAM_COUNT;
+			}
+		} else {
+			if (argc < 5) {
+				ccprintf(
+					"Set requires: <tag> <value> <size>\n");
+				return EC_ERROR_PARAM_COUNT;
+			}
+		}
+
 		if (setter->tag == CBI_TAG_DRAM_PART_NUM ||
 		    setter->tag == CBI_TAG_OEM_NAME) {
 			setter->size = strlen(argv[3]) + 1;
 			memcpy(setter->data, argv[3], setter->size);
+
+			last_arg = 5;
+
 		} else if (setter->tag == CBI_TAG_UFSC) {
-			/* TODO(b/463750635): Implement UFSC set command */
-			return EC_ERROR_UNIMPLEMENTED;
+			const char *val_str = argv[3];
+			int len = strlen(val_str);
+
+			if (len % 2 != 0) {
+				ccprintf("Hex length must be even\n");
+				return EC_ERROR_PARAM3;
+			}
+
+			setter->size = len / 2;
+
+			if (setter->size != sizeof(struct cbi_ufsc)) {
+				ccprintf("Data is not equal to ufsc\n");
+				return EC_ERROR_PARAM3;
+			}
+
+			for (int i = 0; i < setter->size; i++) {
+				char tmp[3] = { val_str[i * 2],
+						val_str[i * 2 + 1], '\0' };
+				char *err;
+				setter->data[i] =
+					(uint8_t)strtoi(tmp, &err, 16);
+				if (*err) {
+					ccprintf("Invalid hex: %s\n", tmp);
+					return EC_ERROR_PARAM3;
+				}
+			}
+
+			last_arg = 4;
+
 		} else {
 			uint64_t val = strtoull(argv[3], &e, 0);
-
 			if (*e)
 				return EC_ERROR_PARAM3;
 
@@ -646,19 +688,17 @@ static int cc_cbi(int argc, const char **argv)
 			}
 
 			memcpy(setter->data, &val, setter->size);
+			last_arg = 5;
 		}
 
-		last_arg = 5;
 	} else if (strcasecmp(argv[1], "remove") == 0) {
 		if (argc < 3) {
 			ccprintf("Remove requires: <tag>\n");
 			return EC_ERROR_PARAM_COUNT;
 		}
-
 		setter->tag = strtoi(argv[2], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM2;
-
 		setter->size = 0;
 		last_arg = 3;
 	} else {
@@ -666,17 +706,15 @@ static int cc_cbi(int argc, const char **argv)
 	}
 
 	setter->flag = 0;
-
 	if (argc > last_arg) {
 		int i;
-
 		for (i = last_arg; i < argc; i++) {
 			if (strcasecmp(argv[i], "init") == 0) {
 				setter->flag |= CBI_SET_INIT;
 			} else if (strcasecmp(argv[i], "skip_write") == 0) {
 				setter->flag |= CBI_SET_NO_SYNC;
 			} else {
-				ccprintf("Invalid additional option\n");
+				ccprintf("Invalid option: %s\n", argv[i]);
 				return EC_ERROR_PARAM1 + i - 1;
 			}
 		}
@@ -693,6 +731,7 @@ static int cc_cbi(int argc, const char **argv)
 		return EC_ERROR_UNKNOWN;
 	}
 }
+
 DECLARE_CONSOLE_COMMAND(cbi, cc_cbi,
 			"[set <tag> <value> <size> | "
 			"remove <tag>] [init | skip_write]",
