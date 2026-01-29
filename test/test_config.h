@@ -463,8 +463,4 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_CURVE25519
 #endif /* TEST_X25519 */
 
-#ifdef HAVE_PRIVATE
-#include "private_test_config.h"
-#endif /* HAVE_PRIVATE */
-
 #endif /* __TEST_TEST_CONFIG_H */

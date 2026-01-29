@@ -69,7 +69,6 @@ test-list-host += usb_pe_drp
 test-list-host += usb_pe_drp_noextended
 test-list-host += vboot
 test-list-host += x25519
--include ../ec-private/test/build.mk
 endif
 
 # Build up the list of coverage test targets based on test-list-host, but
