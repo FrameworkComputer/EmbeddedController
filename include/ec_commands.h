@@ -763,10 +763,12 @@ enum ec_status {
 } __packed;
 BUILD_ASSERT(sizeof(enum ec_status) == sizeof(uint16_t));
 #ifdef CONFIG_EC_HOST_CMD
+#ifdef CONFIG_ZEPHYR
 /*
  * Make sure Zephyre uses the same status codes.
  */
 #include <zephyr/mgmt/ec_host_cmd/ec_host_cmd.h>
+#endif
 
 BUILD_ASSERT((uint16_t)EC_RES_SUCCESS == (uint16_t)EC_HOST_CMD_SUCCESS);
 BUILD_ASSERT((uint16_t)EC_RES_INVALID_COMMAND ==
