@@ -108,9 +108,6 @@
 			no-auto-init;
 		};
         /* GPF2: PHASE_ID               */
-		gpio_hdmi_gate_ec: hdmi_gate_ec{
-			gpios = <&gpiof 3 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
-		};
 		gpio_en_usb_a0_vbus: en_usb_a0_vbus {
 			gpios = <&gpiof 4 (GPIO_OUTPUT_LOW)>;
 		};
@@ -141,7 +138,7 @@
 		};
         /* GPH1: WOL_PWEN               */
 		gpio_touchpad_disable_odl: touchpad_disable_odl{
-			gpios = <&gpioh 2 (GPIO_OUTPUT | GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN)>;
+			gpios = <&gpioh 2 (GPIO_INPUT)>;
 		};
 		gpio_ec_slp_s3_l: ec_slp_s3_l {
 			gpios = <&gpioh 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
@@ -217,6 +214,7 @@
 			<&gpioc 4 0>, /* TCHSCR_REPORT_EN */
 			<&gpioc 5 0>, /* EC_PROJECT_ID */
 			<&gpiof 2 0>, /* PHASE_ID */
+			<&gpiof 3 0>, /* HDMI_GATE_EC */
 			<&gpiof 6 0>, /* EC_ACCEL_DB_INT_L */
 			<&gpiof 7 0>, /* EC_ACCEL_MB_INT_L */
 			<&gpiog 0 0>, /* SPARE GPG0 */
