@@ -119,6 +119,8 @@ struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = {
 		DT_INST_PROP_OR(0, color_map_white, EC_LED_COLOR_BLANK),
 	[EC_LED_COLOR_AMBER] =
 		DT_INST_PROP_OR(0, color_map_amber, EC_LED_COLOR_BLANK),
+	[EC_LED_COLOR_MAGENTA] =
+		DT_INST_PROP_OR(0, color_map_magenta, EC_LED_COLOR_BLANK),
 };
 
 BUILD_ASSERT(DT_INST_PROP_LEN(0, brightness_range) == EC_LED_COLOR_COUNT,

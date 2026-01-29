@@ -106,7 +106,8 @@ static const char *const image_names[] = { "unknown", "RO", "RW" };
 
 /* Note: depends on enum ec_led_colors */
 static const char *const led_color_names[] = { "red",	 "green", "blue",
-					       "yellow", "white", "amber" };
+					       "yellow", "white", "amber",
+					       "magenta" };
 BUILD_ASSERT(ARRAY_SIZE(led_color_names) == EC_LED_COLOR_COUNT);
 
 /* Note: depends on enum ec_led_id */

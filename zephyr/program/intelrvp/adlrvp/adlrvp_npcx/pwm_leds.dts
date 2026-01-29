@@ -21,8 +21,8 @@
 
 		color-map-green  = <100>;
 
-		/* brightness-range = <red green blue yellow white amber> */
-		brightness-range = <0 100 0 0 0 0>;
+		/* brightness-range = <red green blue yellow white amber magenta> */
+		brightness-range = <0 100 0 0 0 0 0>;
 
 
 		#address-cells = <1>;
