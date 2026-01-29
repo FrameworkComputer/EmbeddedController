@@ -55,10 +55,10 @@ struct pmf_info STR_CPU_AMD_GPU_AC_ONLY_PMF[] = {
 };
 
 struct pmf_info STR_CPU_AMD_GPU_DC_ONLY_PMF[] = {
-	{0, EC_DC_BEST_PERFORMANCE, 27, {76, 60, 60, 60, 30}},
-	{0, EC_DC_BALANCED, 28, {76, 50, 50, 50, 20}},
-	{0, EC_DC_BEST_EFFICIENCY, 28, {76, 50, 50, 50, 20}},
-	{0, EC_DC_BATTERY_SAVER, 29, {65, 20, 20, 20, 20}},
+	{0, EC_DC_BEST_PERFORMANCE, 27, {85, 60, 60, 60, 30}},
+	{0, EC_DC_BALANCED, 28, {85, 50, 50, 50, 30}},
+	{0, EC_DC_BEST_EFFICIENCY, 28, {85, 50, 50, 50, 30}},
+	{0, EC_DC_BATTERY_SAVER, 29, {85, 50, 50, 50, 30}},
 };
 
 struct pmf_table STR_AMD_GPU_PMF_TABLE[] = {
@@ -117,9 +117,9 @@ struct pmf_info STR_CPU_UMA_AC_ONLY_PMF[] = {
 
 struct pmf_info STR_CPU_UMA_DC_ONLY_PMF[] = {
 	{0, EC_DC_BEST_PERFORMANCE, 62, {85, 60, 40, 30, 0}},
-	{0, EC_DC_BALANCED, 63, {85, 53, 35, 20, 0}},
-	{0, EC_DC_BEST_EFFICIENCY, 64, {85, 45, 30, 20, 0}},
-	{0, EC_DC_BATTERY_SAVER, 65, {60, 30, 20, 20, 0}},
+	{0, EC_DC_BALANCED, 63, {85, 53, 35, 30, 0}},
+	{0, EC_DC_BEST_EFFICIENCY, 64, {85, 45, 30, 30, 0}},
+	{0, EC_DC_BATTERY_SAVER, 65, {85, 45, 30, 30, 0}},
 };
 
 struct pmf_table STR_UMA_PMF_TABLE[] = {
@@ -178,9 +178,9 @@ struct pmf_info STR_CPU_NV_GPU_AC_ONLY_PMF[] = {
 
 struct pmf_info STR_CPU_NV_GPU_DC_ONLY_PMF[] = {
 	{0, EC_DC_BEST_PERFORMANCE, 98, {85, 45, 30, 30, 0}},
-	{0, EC_DC_BALANCED, 99, {75, 38, 25, 20, 0}},
-	{0, EC_DC_BEST_EFFICIENCY, 100, {69, 35, 23, 20, 0}},
-	{0, EC_DC_BATTERY_SAVER, 101, {60, 30, 20, 20, 0}},
+	{0, EC_DC_BALANCED, 99, {85, 45, 30, 30, 0}},
+	{0, EC_DC_BEST_EFFICIENCY, 100, {85, 45, 30, 30, 0}},
+	{0, EC_DC_BATTERY_SAVER, 101, {85, 45, 30, 30, 0}},
 };
 
 struct pmf_table STR_NV_GPU_PMF_TABLE[] = {
@@ -238,10 +238,10 @@ struct pmf_info KRK_CPU_AMD_GPU_AC_ONLY_PMF[] = {
 };
 
 struct pmf_info KRK_CPU_AMD_GPU_DC_ONLY_PMF[] = {
-	{0, EC_DC_BEST_PERFORMANCE, 129, {76, 60, 60, 60, 30}},
-	{0, EC_DC_BALANCED, 130, {76, 50, 50, 50, 20}},
-	{0, EC_DC_BEST_EFFICIENCY, 130, {76, 50, 50, 50, 20}},
-	{0, EC_DC_BATTERY_SAVER, 131, {65, 20, 20, 20, 20}},
+	{0, EC_DC_BEST_PERFORMANCE, 129, {85, 60, 60, 60, 30}},
+	{0, EC_DC_BALANCED, 130, {85, 50, 50, 50, 30}},
+	{0, EC_DC_BEST_EFFICIENCY, 130, {85, 50, 50, 50, 30}},
+	{0, EC_DC_BATTERY_SAVER, 131, {85, 50, 50, 50, 30}},
 };
 
 /**********************************************************
@@ -292,9 +292,9 @@ struct pmf_info KRK_CPU_UMA_AC_ONLY_PMF[] = {
 
 struct pmf_info KRK_CPU_UMA_DC_ONLY_PMF[] = {
 	{0, EC_DC_BEST_PERFORMANCE, 164, {85, 60, 40, 30, 0}},
-	{0, EC_DC_BALANCED, 165, {85, 53, 35, 20, 0}},
-	{0, EC_DC_BEST_EFFICIENCY, 166, {85, 45, 30, 20, 0}},
-	{0, EC_DC_BATTERY_SAVER, 167, {60, 30, 20, 20, 0}},
+	{0, EC_DC_BALANCED, 165, {85, 53, 35, 30, 0}},
+	{0, EC_DC_BEST_EFFICIENCY, 166, {85, 45, 30, 30, 0}},
+	{0, EC_DC_BATTERY_SAVER, 167, {85, 45, 30, 30, 0}},
 };
 
 /**********************************************************
@@ -344,9 +344,9 @@ struct pmf_info KRK_CPU_NV_GPU_AC_ONLY_PMF[] = {
 
 struct pmf_info KRK_CPU_NV_GPU_DC_ONLY_PMF[] = {
 	{0, EC_DC_BEST_PERFORMANCE, 199, {85, 45, 30, 30, 0}},
-	{0, EC_DC_BALANCED, 200, {75, 38, 25, 20, 0}},
-	{0, EC_DC_BEST_EFFICIENCY, 201, {69, 35, 23, 20, 0}},
-	{0, EC_DC_BATTERY_SAVER, 202, {60, 30, 20, 20, 0}},
+	{0, EC_DC_BALANCED, 200, {85, 45, 30, 30, 0}},
+	{0, EC_DC_BEST_EFFICIENCY, 201, {85, 45, 30, 30, 0}},
+	{0, EC_DC_BATTERY_SAVER, 202, {85, 45, 30, 30, 0}},
 };
 
 /**********************************************************
