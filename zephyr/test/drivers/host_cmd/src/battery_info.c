@@ -186,9 +186,13 @@ ZTEST(host_cmd_battery_info, test_get_dynamic)
 	zassert_ok(rv, "Got %d", rv);
 
 	/* Validate the data */
-	struct ec_response_battery_dynamic_info *batt = &battery_dynamic[0];
+	struct ec_response_battery_dynamic_info_v1 *batt = &battery_dynamic[0];
 
-	zassert_mem_equal(batt, &response, sizeof(*batt));
+	/*
+	 * BATTERY_GET_DYNAMIC v0 only returns part of the battery info
+	 * as new fields have been appended in later versions.
+	 */
+	zassert_mem_equal(batt, &response, sizeof(response));
 }
 
 ZTEST_SUITE(host_cmd_battery_info, drivers_predicate_post_main, NULL, NULL,

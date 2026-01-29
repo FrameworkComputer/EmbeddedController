@@ -133,7 +133,7 @@ struct battery_static_info {
 };
 
 extern struct battery_static_info battery_static[];
-extern struct ec_response_battery_dynamic_info battery_dynamic[];
+extern struct ec_response_battery_dynamic_info_v1 battery_dynamic[];
 
 /* Battery parameters */
 struct batt_params {

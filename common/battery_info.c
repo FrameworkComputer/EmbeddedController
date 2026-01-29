@@ -24,7 +24,7 @@
  * at index 0, and secondary (base) battery at index 1.
  */
 struct battery_static_info battery_static[CONFIG_BATTERY_COUNT];
-struct ec_response_battery_dynamic_info battery_dynamic[CONFIG_BATTERY_COUNT];
+struct ec_response_battery_dynamic_info_v1 battery_dynamic[CONFIG_BATTERY_COUNT];
 
 /*
  * Store the previous state of charge values to detect changes and trigger
@@ -433,7 +433,7 @@ void battery_set_dynamic_info(const struct batt_params *params, bool ac_present,
 	uint8_t tmp;
 	__maybe_unused int send_batt_status_event = 0;
 	__maybe_unused int send_batt_info_event = 0;
-	struct ec_response_battery_dynamic_info *const bd =
+	struct ec_response_battery_dynamic_info_v1 *const bd =
 		&battery_dynamic[BATT_IDX_MAIN];
 
 	tmp = 0;
@@ -460,6 +460,9 @@ void battery_set_dynamic_info(const struct batt_params *params, bool ac_present,
 
 	if (params->flags & BATT_FLAG_BAD_ANY)
 		tmp |= EC_BATT_FLAG_INVALID_DATA;
+
+	if (!(params->flags & BATT_FLAG_BAD_TEMPERATURE))
+		bd->temperature = params->temperature;
 
 	if (!(params->flags & BATT_FLAG_BAD_VOLTAGE))
 		bd->actual_voltage = params->voltage;

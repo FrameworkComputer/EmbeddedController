@@ -291,7 +291,7 @@ ZTEST(virtual_battery, test_read_data_from_host_memmap)
 
 ZTEST(virtual_battery, test_read_status_critical_charge)
 {
-	struct ec_response_battery_dynamic_info *const bd =
+	struct ec_response_battery_dynamic_info_v1 *const bd =
 		&battery_dynamic[BATT_IDX_MAIN];
 
 	/* When battery is critical, flag FULLY_DISCHARGED. */

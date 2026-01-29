@@ -200,7 +200,7 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head, uint8_t *dest,
 	 */
 	int bounded_read_len = min(read_len, 2);
 	const struct battery_static_info *bs;
-	const struct ec_response_battery_dynamic_info *bd;
+	const struct ec_response_battery_dynamic_info_v1 *bd;
 
 	if (IS_ENABLED(CONFIG_BATTERY_INFO)) {
 		/*
