@@ -176,23 +176,28 @@ ZTEST(host_cmd_battery_info, test_get_dynamic__invalid_index)
 
 ZTEST(host_cmd_battery_info, test_get_dynamic)
 {
-	struct ec_response_battery_dynamic_info response;
+	struct ec_response_battery_dynamic_info response0;
+	struct ec_response_battery_dynamic_info_v1 response1;
 	struct ec_params_battery_dynamic_info params = {
 		.index = 0,
 	};
 	int rv;
+	const struct ec_response_battery_dynamic_info_v1 *batt =
+		&battery_dynamic[0];
 
-	rv = ec_cmd_battery_get_dynamic(NULL, &params, &response);
+	memset(&response0, 0, sizeof(response0));
+	rv = ec_cmd_battery_get_dynamic(NULL, &params, &response0);
 	zassert_ok(rv, "Got %d", rv);
-
-	/* Validate the data */
-	struct ec_response_battery_dynamic_info_v1 *batt = &battery_dynamic[0];
-
 	/*
 	 * BATTERY_GET_DYNAMIC v0 only returns part of the battery info
-	 * as new fields have been appended in later versions.
+	 * struct as new fields have been appended in later versions.
 	 */
-	zassert_mem_equal(batt, &response, sizeof(response));
+	zassert_mem_equal(batt, &response0, sizeof(response0));
+
+	memset(&response1, 0, sizeof(response1));
+	rv = ec_cmd_battery_get_dynamic_v1(NULL, &params, &response1);
+	zassert_ok(rv, "Got %d", rv);
+	zassert_mem_equal(batt, &response1, sizeof(response1));
 }
 
 ZTEST_SUITE(host_cmd_battery_info, drivers_predicate_post_main, NULL, NULL,

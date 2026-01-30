@@ -194,18 +194,32 @@ static enum ec_status
 host_command_battery_get_dynamic(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_battery_dynamic_info *p = args->params;
-	struct ec_response_battery_dynamic_info *r = args->response;
 
 	if (p->index >= CONFIG_BATTERY_COUNT)
 		return EC_RES_INVALID_PARAM;
 
-	args->response_size = sizeof(*r);
-	memcpy(r, &battery_dynamic[p->index], sizeof(*r));
+	const struct ec_response_battery_dynamic_info_v1 *bd =
+		&battery_dynamic[p->index];
+
+	if (args->version == 0) {
+		struct ec_response_battery_dynamic_info *r0 = args->response;
+
+		args->response_size = sizeof(*r0);
+		memcpy(r0, bd, sizeof(*r0));
+	} else if (args->version == 1) {
+		struct ec_response_battery_dynamic_info_v1 *r1 = args->response;
+
+		args->response_size = sizeof(*r1);
+		memcpy(r1, bd, sizeof(*r1));
+	} else {
+		return EC_RES_INVALID_VERSION;
+	}
 
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_BATTERY_GET_DYNAMIC,
-		     host_command_battery_get_dynamic, EC_VER_MASK(0));
+		     host_command_battery_get_dynamic,
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
 #endif /* CONFIG_HOSTCMD_BATTERY_INFO */
 
 void battery_memmap_refresh(enum battery_index index)
