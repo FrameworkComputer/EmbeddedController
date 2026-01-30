@@ -17,7 +17,7 @@ This tool is written in go, because the code that checks the patterns is
 
 ## Executing
 
-This should work inside or outside the chroot.
+`regenerate_configs.py` must be run outside the chroot, but `cq-excludes.sh` should work inside or outside the chroot.
 
 ```shell
 ( cd ~/chromiumos/infra/config && ./regenerate_configs.py -b )

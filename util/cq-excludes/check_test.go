@@ -20,6 +20,7 @@ func TestCheckPatterns(t *testing.T) {
 		{"src/platform/ec/zephyr/.pylint", "src/platform/ec/zephyr/[^z]*/**", false},
 		{"src/platform/ec/zephyr/zmake/zmake.py", "src/platform/ec/zephyr/[^z]*/**", false},
 		{"src/platform/ec/chip/host/config_chip.h", "src/platform/ec/{board,chip}/host/**", true},
+		{"src/platform/ec/Makefile.toolchain", "src/platform/Makefile*", true},
 	} {
 		ok, err := doublestar.Match(tc.Pattern, tc.Filename)
 		if err != nil {
