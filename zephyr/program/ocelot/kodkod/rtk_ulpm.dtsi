@@ -1,0 +1,41 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&ulpm {
+	status = "okay";
+
+	/* ac (gpioh 0) */
+	wkup-pin@0 {
+		reg = <0x0>;
+		wkup-pin-pol = "rising";
+		wkup-pin-mode = "vin";
+	};
+
+	wkup-pin@1 {
+		reg = <0x1>;
+		wkup-pin-pol = "falling";
+		wkup-pin-mode = "gpio";
+	};
+
+	wkup-pin@2 {
+		reg = <0x2>;
+		wkup-pin-pol = "falling";
+		wkup-pin-mode = "gpio";
+	};
+
+	/* power button (gpioh 3) */
+	wkup-pin@3 {
+		reg = <0x3>;
+		wkup-pin-pol = "falling";
+		wkup-pin-mode = "vin";
+	};
+
+	/* lid (gpioh 5) */
+	wkup-pin@5 {
+		reg = <0x5>;
+		wkup-pin-pol = "rising";
+		wkup-pin-mode = "vin";
+	};
+};

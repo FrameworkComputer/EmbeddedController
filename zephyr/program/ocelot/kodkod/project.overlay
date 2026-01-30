@@ -19,6 +19,7 @@
 #include "led_policy.dtsi"
 #include "keyboard.dtsi"
 #include "fan.dtsi"
+#include "rtk_ulpm.dtsi"
 
 /* kodkod overrides follow... */
 
