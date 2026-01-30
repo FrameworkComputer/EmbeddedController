@@ -29,6 +29,9 @@ static int typec_policy_cyc;
 static bool typec_policy = false;
 static bool pre_typec_policy = false;
 
+#define TYPEC_POLICY_LONG_DELAY (1000 * USEC_PER_MSEC)
+#define TYPEC_POLICY_SHORT_DELAY (100 * USEC_PER_MSEC)
+
 enum {
 	TEMP_ZONE_0, /* not limit */
 	TEMP_ZONE_1, /* 2000mA */
@@ -60,8 +63,9 @@ static void clear_remaining_array(int arr[][COL_NUM], int row, int exceptrow,
 		}
 	}
 }
-
-static void typec_temperature_policy(void)
+static void typec_temperature_policy_deferred(void);
+DECLARE_DEFERRED(typec_temperature_policy_deferred);
+static void typec_temperature_policy_deferred(void)
 {
 	int typec_temp, typec_temp_c;
 
@@ -98,8 +102,17 @@ static void typec_temperature_policy(void)
 		pre_typec_policy = typec_policy;
 		pd_set_suspend(0, typec_policy);
 	}
+	hook_call_deferred(&typec_temperature_policy_deferred_data,
+			   (typec_temp_c >= 100) ? TYPEC_POLICY_SHORT_DELAY :
+						   TYPEC_POLICY_LONG_DELAY);
 }
-DECLARE_HOOK(HOOK_SECOND, typec_temperature_policy, HOOK_PRIO_DEFAULT);
+
+static void typec_policy_init(void)
+{
+	hook_call_deferred(&typec_temperature_policy_deferred_data,
+			   TYPEC_POLICY_LONG_DELAY);
+}
+DECLARE_HOOK(HOOK_INIT, typec_policy_init, HOOK_PRIO_DEFAULT);
 
 /* Called by hook task every hook second (1 sec) */
 static void average_tempature(void)
