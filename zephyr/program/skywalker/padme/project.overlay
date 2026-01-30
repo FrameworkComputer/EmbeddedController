@@ -186,6 +186,9 @@
 	};
 
 	named-i2c-ports {
+		i2c_ec_i2c_pdc_s_scl_3v3: ec_i2c_pdc_s_scl_3v3 {
+			remote-port = < 0x5 >;
+		};
 		i2c_detachable_base: detachable-base {
 			i2c-port = <&i2c5>;
 			enum-names = "I2C_PORT_DETACHABLE_BASE";
