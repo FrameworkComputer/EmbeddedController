@@ -33,8 +33,12 @@ parameters that may be used, please consult the Twister documentation.
 #   version: "version:0.18.2"
 # >
 # wheel: <
-#   name: "infra/python/wheels/jsonschema-py2_py3"
-#   version: "version:3.2.0"
+#   name: "infra/python/wheels/jsonschema-py3"
+#   version: "version:4.26.0"
+# >
+# wheel: <
+#   name: "infra/python/wheels/jsonschema-specifications-py3"
+#   version: "version:2025.9.1"
 # >
 # wheel: <
 #   name: "infra/python/wheels/junitparser-py2_py3"
@@ -85,6 +89,14 @@ parameters that may be used, please consult the Twister documentation.
 #   version: "version:5.3.1"
 # >
 # wheel: <
+#   name: "infra/python/wheels/rpds-py/${vpython_platform}"
+#   version: "version:0.30.0"
+# >
+# wheel: <
+#   name: "infra/python/wheels/referencing-py3"
+#   version: "version:0.37.0"
+# >
+# wheel: <
 #   name: "infra/python/wheels/ruamel_yaml_clib/${vpython_platform}"
 #   version: "version:0.2.8"
 # >
@@ -115,6 +127,10 @@ parameters that may be used, please consult the Twister documentation.
 # wheel: <
 #   name: "infra/python/wheels/tabulate-py3"
 #   version: "version:0.9.0"
+# >
+# wheel: <
+#   name: "infra/python/wheels/typing-extensions-py3"
+#   version: "version:4.15.0"
 # >
 # [VPYTHON:END]
 
