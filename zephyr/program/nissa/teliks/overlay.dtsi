@@ -29,6 +29,9 @@
 		celxpert_b340442 {
 			compatible = "celxpert,b340442","battery-smart";
 		};
+		smp_c31n2313 {
+			compatible = "smp,c31n2313","battery-smart";
+		};
 	};
 
 	hibernate-wake-pins {
