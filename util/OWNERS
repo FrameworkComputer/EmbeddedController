@@ -1,3 +1,4 @@
 # Only CrOS FP team is owner of this file.
 per-file flash_fp_mcu = set noparent
 per-file flash_fp_mcu = file:chromiumos/owners:v1:/firmware/OWNERS.cros_fp
+per-file flash_fp_mcu = file:chromiumos/owners:v1:/bots/OWNERS.copybot
