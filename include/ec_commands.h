@@ -8902,6 +8902,50 @@ struct ec_response_fp_sign_match {
 	uint8_t signature[FP_MAC_LENGTH];
 } __ec_align4;
 
+/*
+ * Fingerprint ASCP claim command.
+ *
+ */
+#define EC_CMD_FP_ASCP_CLAIM 0x0420
+
+/*
+ * ECC public key with no point compression as defined in
+ * ANSI X9.62 section 4.3.6 (0x04||x||y), P256v1 curve.
+ */
+#define FP_ASCP_KEY_SIZE 65
+/* ECC signature, P256v1 curve, P1363 encoding (r||s) */
+#define FP_ASCP_SIGNATURE_SIZE 64
+/* SHA256 */
+#define FP_ASCP_HASH_SIZE 32
+
+struct ec_response_fp_ascp_claim {
+	/* Model public key. */
+	uint8_t pk_m[FP_ASCP_KEY_SIZE];
+	/* Model public key signature. */
+	uint8_t s_goog[FP_ASCP_SIGNATURE_SIZE];
+	/* Device public key. */
+	uint8_t pk_d[FP_ASCP_KEY_SIZE];
+	/* Device public key signature (signed using model key). */
+	uint8_t s_m[FP_ASCP_SIGNATURE_SIZE];
+	/* Ephemeral public key used in ECDH procedure. */
+	uint8_t pk_f[FP_ASCP_KEY_SIZE];
+	/* SHA256 hash of the firmware. */
+	uint8_t h_f[FP_ASCP_HASH_SIZE];
+	/* Signature of the SHA256( 0xC001 || h_f || pk_f) using device key. */
+	uint8_t s_d[FP_ASCP_SIGNATURE_SIZE];
+} __ec_align4;
+
+/*
+ * Fingerprint ASCP establish command.
+ *
+ */
+#define EC_CMD_FP_ASCP_ESTABLISH 0x0421
+
+struct ec_params_fp_ascp_establish {
+	/* TA's ephemeral public key. */
+	uint8_t pk_g[FP_ASCP_KEY_SIZE];
+} __ec_align4;
+
 /*****************************************************************************/
 /* Touchpad MCU commands: range 0x0500-0x05FF */
 
