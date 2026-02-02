@@ -28,4 +28,23 @@ config PLATFORM_EC_FINGERPRINT_VENDOR_COMMAND
 
 	  If enabled, the fp_vendor_command function has to be defined.
 
+choice PLATFORM_EC_FINGERPRINT_AUTH_METHOD
+	prompt "Fingerprint authentication method"
+	default PLATFORM_EC_FINGERPRINT_AUTH_METHOD_ASCP if ASCP
+	default PLATFORM_EC_FINGERPRINT_AUTH_METHOD_HANDSHAKE
+	help
+	  This option selects the authentication method for the fingerprint.
+
+config PLATFORM_EC_FINGERPRINT_AUTH_METHOD_HANDSHAKE
+	bool "Handshake"
+	help
+	  The fingerprint is authenticated using handshake.
+
+config PLATFORM_EC_FINGERPRINT_AUTH_METHOD_ASCP
+	bool "ASCP"
+	help
+	  The fingerprint is authenticated using ASCP.
+
+endchoice
+
 endif # PLATFORM_EC_FINGERPRINT

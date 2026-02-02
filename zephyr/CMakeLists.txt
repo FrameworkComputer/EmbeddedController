@@ -384,7 +384,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FINGERPRINT
 						"${PLATFORM_EC}/common/fpsensor/fpsensor_crypto.cc"
 						"${PLATFORM_EC}/common/fpsensor/fpsensor_debug.cc"
 						"${PLATFORM_EC}/common/fpsensor/fpsensor_auth_commands.cc"
-						"${PLATFORM_EC}/common/fpsensor/fpsensor_auth_handshake.cc"
 						"${PLATFORM_EC}/common/fpsensor/fpsensor_auth_crypto_stateful.cc"
 						"${PLATFORM_EC}/common/fpsensor/fpsensor_auth_crypto_stateless.cc"
 						"${PLATFORM_EC}/common/fpsensor/fpsensor_detect_strings.cc"
@@ -392,6 +391,10 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FINGERPRINT
 						"${PLATFORM_EC}/common/fpsensor/fpsensor_vendor_command.cc"
             "${PLATFORM_EC}/common/fpsensor/fpsensor_frame_size.cc"
 						"${PLATFORM_EC}/crypto/elliptic_curve_key.cc")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FINGERPRINT_AUTH_METHOD_HANDSHAKE
+						"${PLATFORM_EC}/common/fpsensor/fpsensor_auth_handshake.cc")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FINGERPRINT_AUTH_METHOD_ASCP
+						"${PLATFORM_EC}/common/fpsensor/fpsensor_auth_ascp.cc")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD
                                                 "${PLATFORM_EC}/common/host_command.c")
 if (NOT DEFINED CONFIG_EC_HOST_CMD)
