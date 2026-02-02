@@ -6,6 +6,6 @@ cmake_minimum_required(VERSION 3.13.1)
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 project(base32)
 
-target_sources(app PRIVATE "${PLATFORM_EC}/test/base32.c")
+target_sources(app PRIVATE "src/base32.c")
 
 add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
