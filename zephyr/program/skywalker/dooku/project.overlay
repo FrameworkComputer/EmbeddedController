@@ -158,6 +158,9 @@
 			temp-host-release-halt = <85>;
 			sensor = <&temp_charger>;
 		};
+		5v {
+			sensor = <&temp_5v>;
+		};
 	};
 
 	usbc {
