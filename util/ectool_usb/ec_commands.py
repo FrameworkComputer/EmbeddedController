@@ -53,6 +53,8 @@ class ECCommandsIds(IntEnum):
     FP_MODE = 0x0402
     FP_INFO = 0x0403
     FP_VENDOR = 0x040B
+    FP_ASCP_CLAIM = 0x0420
+    FP_ASCP_ESTABLISH = 0x0421
 
 
 class ImageType(IntEnum):
@@ -448,6 +450,34 @@ class RwSigActionCmd0(ECCommand):
         super().__init__(ECCommandsIds.RWSIG_ACTION, 0, request_msg=request_msg)
 
 
+class FpAscpClaimCmd0(ECCommand):
+    """Gets ASCP claim."""
+
+    def __init__(self):
+        response_msg = [
+            ("pk_m", "65s"),
+            ("s_goog", "64s"),
+            ("pk_d", "65s"),
+            ("s_m", "64s"),
+            ("pk_f", "65s"),
+            ("h_f", "32s"),
+            ("s_d", "64s"),
+        ]
+        super().__init__(
+            ECCommandsIds.FP_ASCP_CLAIM, 0, response_msg=response_msg
+        )
+
+
+class FpAscpEstablishCmd0(ECCommand):
+    """Establishes ASCP session."""
+
+    def __init__(self, pk_g: bytearray):
+        request_msg = [(pk_g, "65s")]
+        super().__init__(
+            ECCommandsIds.FP_ASCP_ESTABLISH, 0, request_msg=request_msg
+        )
+
+
 VERSIONED_COMMANDS = {
     ECCommandsIds.GET_VERSION: {1: GetVersionCmd1},
     ECCommandsIds.GET_VERSIONS: {1: GetVersionsCmd1},
@@ -463,6 +493,8 @@ VERSIONED_COMMANDS = {
     ECCommandsIds.FP_INFO: {1: FpInfoCmd1, 2: FpInfoCmd2},
     ECCommandsIds.FP_VENDOR: {0: FpVendorCmd0},
     ECCommandsIds.RWSIG_ACTION: {0: RwSigActionCmd0},
+    ECCommandsIds.FP_ASCP_CLAIM: {0: FpAscpClaimCmd0},
+    ECCommandsIds.FP_ASCP_ESTABLISH: {0: FpAscpEstablishCmd0},
 }
 
 

@@ -10,6 +10,15 @@ import time
 
 import command
 import communication
+
+# pylint: disable=import-error
+# cryptography is not available in CROS SDK
+import cryptography.exceptions
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import utils
+
+# pylint: enable=import-error
 import ec_commands as commands
 
 
@@ -476,6 +485,79 @@ def cmd_reflash_rw(_args, comm) -> int:
     return _reboot_and_verify_rw(comm)
 
 
+def verify_raw(raw_public_key, raw_sig, data):
+    """Helper to verify raw signatures (converts back to DER for the library)."""
+
+    public_key = ec.EllipticCurvePublicKey.from_encoded_point(
+        ec.SECP256R1(), raw_public_key
+    )
+
+    r = int.from_bytes(raw_sig[:32], byteorder="big")
+    s = int.from_bytes(raw_sig[32:], byteorder="big")
+    der_sig = utils.encode_dss_signature(r, s)
+
+    public_key.verify(der_sig, data, ec.ECDSA(hashes.SHA256()))
+
+
+def cmd_fp_ascp_claim(args, comm) -> int:
+    """Gets ASCP claim and verifies it."""
+
+    claim = commands.FpAscpClaimCmd0()
+    ret = claim.run(comm)
+    if ret != commands.EcCommandResult.SUCCESS:
+        print(f"Failed to claim: {ret.name}")
+        return ret
+    print(f"pk_m: [{claim.response.pk_m.hex()}]")
+    print(f"s_goog: [{claim.response.s_goog.hex()}]")
+    print(f"pk_d: [{claim.response.pk_d.hex()}]")
+    print(f"s_m: [{claim.response.s_m.hex()}]")
+    print(f"pk_f: [{claim.response.pk_f.hex()}]")
+    print(f"h_f: [{claim.response.h_f.hex()}]")
+    print(f"s_d: [{claim.response.s_d.hex()}]")
+
+    try:
+        with open(args.pk_goog_file, "rb") as f:
+            pk_goog = f.read()
+            print("Checking s_goog...")
+            verify_raw(pk_goog, claim.response.s_goog, claim.response.pk_m)
+            print("s_goog is valid")
+            print("Checking s_m...")
+            verify_raw(
+                claim.response.pk_m, claim.response.s_m, claim.response.pk_d
+            )
+            print("s_m is valid")
+            print("Checking s_d...")
+            verify_raw(
+                claim.response.pk_d,
+                claim.response.s_d,
+                bytes([0xC0, 0x01]) + claim.response.h_f + claim.response.pk_f,
+            )
+            print("s_d is valid.\n")
+    except FileNotFoundError as e:
+        print(f"File not found: {e}")
+    except ValueError as e:
+        print(f"Wrong param: {e}")
+    except cryptography.exceptions.InvalidSignature:
+        print("Invalid signature.")
+
+    return ret
+
+
+def cmd_fp_ascp_establish(args, comm) -> int:
+    """Establishes ASCP."""
+    try:
+        with open(args.pk_g_file, "rb") as f:
+            pk_g = f.read()
+            establish = commands.FpAscpEstablishCmd0(pk_g)
+            ret = establish.run(comm)
+            if ret != commands.EcCommandResult.SUCCESS:
+                print(f"Failed to establish: {ret.name}")
+            return ret
+    except FileNotFoundError as e:
+        print(f"File not found: {e}")
+        return -1
+
+
 def auto_int(x) -> int:
     """Converts a string to an int, automatically detecting the base."""
     return int(x, 0)
@@ -574,6 +656,20 @@ subcommands = {
                 "choices": list(commands.RwSigAction),
                 "help": "RWSIG action",
             }
+        },
+    },
+    "fpascp": {
+        "help": "Get ASCP claim and verify it",
+        "func": cmd_fp_ascp_claim,
+        "args": {
+            "pk_goog_file": {"type": str},
+        },
+    },
+    "fpascp_establish": {
+        "help": "Establish ASCP",
+        "func": cmd_fp_ascp_establish,
+        "args": {
+            "pk_g_file": {"type": str},
         },
     },
 }
