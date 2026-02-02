@@ -229,7 +229,6 @@
 		en_pp3300_a: ec-pg3-r {
 			gpios = <MCHP_GPIO_DECODE_226 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_PP3300_A";
-			alias = "GPIO_TEMP_SENSOR_POWER";
 		};
 		pm-pwrbtn-led {
 			gpios = <MCHP_GPIO_DECODE_241 GPIO_INPUT>;
@@ -329,6 +328,7 @@
 		rsmrst_pwrgd: rsmrst-pwrgd-ec-n {
 			gpios = <MCHP_GPIO_DECODE_012 GPIO_INPUT>;
 			enum-name = "GPIO_PG_EC_RSMRST_ODL";
+			alias = "GPIO_TEMP_SENSOR_POWER";
 		};
 		cpu-c10-gate-n-r {
 			gpios = <MCHP_GPIO_DECODE_013 GPIO_INPUT>;
