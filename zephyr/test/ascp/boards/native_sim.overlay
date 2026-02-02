@@ -1,0 +1,30 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_sim.dts>
+#include <dt-bindings/gpio_defines.h>
+#include <cros/binman.dtsi>
+
+/ {
+	chosen {
+		cros-ec,flash-controller = &cros_flash;
+	};
+
+	aliases {
+		gpio-wp = &ec_wp_l;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		ec_wp_l: write-protect {
+			gpios = <&gpio0 0 GPIO_INPUT>;
+		};
+	};
+
+	cros_flash: cros-flash {
+		compatible = "cros-ec,flash-emul";
+	};
+};
