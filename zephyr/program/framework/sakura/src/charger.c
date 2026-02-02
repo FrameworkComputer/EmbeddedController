@@ -72,6 +72,11 @@ static void charger_chips_init(void)
 		return;
 	}
 
+	/* Set CCM/CDM mode transition threshold for better power efficiency in S5 */
+	reg_val = RAA489000_C0_BUCK_PHASE_THRESHOLD_MINUS4MV;
+	if (charger_i2c_write16(ISL923X_REG_CONTROL0, reg_val))
+		goto init_fail;
+
 	/* Control2 Configuration */
 	reg_val = ISL923X_C2_TRICKLE_256 | ISL923X_C2_ADAPTER_DEBOUNCE_150 |
 		  ISL923X_C2_PROCHOT_DEBOUNCE_1000;
