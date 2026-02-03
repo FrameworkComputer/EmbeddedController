@@ -1,0 +1,119 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	soc {
+		/* delete this because zmake complains that cros_kb_raw and kbd
+		 * has same address */
+		/delete-node/ cros-kb-raw@400a3000;
+	};
+
+	chosen {
+		/delete-property/ cros-ec,raw-kb;
+		cros-ec,keyboard = &kbd;
+	};
+};
+
+&kbd {
+	status = "okay";
+	pinctrl-0 = <
+		&ksi0_gp31
+		&ksi1_gp30
+		&ksi2_gp27
+		&ksi3_gp26
+		&ksi4_gp25
+		&ksi5_gp24
+		&ksi6_gp23
+		&ksi7_gp22
+		&kso00_gp21
+		&kso01_gp20
+		&kso02_gp17
+		&kso03_gp16
+		&kso04_gp15
+		&kso05_gp14
+		&kso06_gp13
+		&kso07_gp12
+		&kso08_gp11
+		&kso09_gp10
+		&kso10_gp07
+		&kso11_gp06
+		&kso12_gp05
+		&kso13_gp04
+		&kso14_gp82
+		&kso15_gp83
+		&kso16_gp03
+		&kso17_gpb1
+	>;
+	pinctrl-1 = <
+		&ksi0_gpio_gp31
+		&ksi1_gpio_gp30
+		&ksi2_gpio_gp27
+		&ksi3_gpio_gp26
+		&ksi4_gpio_gp25
+		&ksi5_gpio_gp24
+		&ksi6_gpio_gp23
+		&ksi7_gpio_gp22
+		&kso00_gpio_gp21
+		&kso01_gpio_gp20
+		&kso02_gpio_gp17
+		&kso03_gpio_gp16
+		&kso04_gpio_gp15
+		&kso05_gpio_gp14
+		&kso06_gpio_gp13
+		&kso07_gpio_gp12
+		&kso08_gpio_gp11
+		&kso09_gpio_gp10
+		&kso10_gpio_gp07
+		&kso11_gpio_gp06
+		&kso12_gpio_gp05
+		&kso13_gpio_gp04
+		&kso14_gpio_gp82
+		&kso15_gpio_gp83
+		&kso16_gpio_gp03
+		&kso17_gpio_gpb1
+	>;
+	pinctrl-names = "default", "sleep";
+	row-size = <8>;
+	col-size = <18>;
+	debounce-down-ms = <20>;
+	debounce-up-ms = <20>;
+	actual-key-mask = <
+		0x08	/* C0 */
+		0xff	/* C1 */
+		0xff	/* C2 */
+		0xff	/* C3 */
+		0xff	/* C4 */
+		0xff	/* C5 */
+		0xff	/* C6 */
+		0xa4	/* C7 */
+		0xff	/* C8 */
+		0xf7	/* C9 */
+		0x55	/* C10 */
+		0xff	/* C11 */
+		0xff	/* C12 */
+		0x40	/* C13 */
+		0x0a	/* C14 */
+		0x40	/* C15 */
+		0xff	/* C16 */
+		0xff	/* C17 */
+	>;
+
+	boot-keys {
+		compatible = "cros-ec,boot-keys";
+		down-arrow-rc = <KBD_RC(6, 11)>;
+		esc-rc = <KBD_RC(1, 1)>;
+		left-shift-rc = <KBD_RC(5, 7)>;
+		refresh-rc = <KBD_RC(3, 2)>;
+	};
+
+	runtime-keys {
+		compatible = "cros-ec,runtime-keys";
+		left-alt-rc = <KBD_RC(6, 13)>;
+		right-alt-rc = <KBD_RC(0, 10)>;
+		h-rc = <KBD_RC(1, 6)>;
+		r-rc = <KBD_RC(7, 9)>;
+		vol-up-rc = <KBD_RC(3, 5)>;
+	};
+};

@@ -20,6 +20,12 @@ config BOARD_QUARTZ
 	  Build Google Quartz board. The board uses Nuvoton
 	  NPCX9 chip as the EC.
 
+config BOARD_MICA
+	bool "Google MICA baseboard"
+	help
+	  Build Google MICA board. The board uses Nuvoton
+	  NPCX9 chip as the EC.
+
 module = Bluey
 module-str = Bluey board-specific code
 source "subsys/logging/Kconfig.template.log_config"

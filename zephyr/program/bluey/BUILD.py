@@ -1,4 +1,4 @@
-# Copyright 2025 The ChromiumOS Authors
+# Copyright 2026 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -49,8 +49,13 @@ register_npcx9_project(
     extra_modules=["google-private", "nanopb", "pigweed"],
 )
 
+register_npcx9_project(
+    project_name="mica",
+)
+
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release.
 assert_rw_fwid_DO_NOT_EDIT(project_name="bluey", addr=0x80144)
 assert_rw_fwid_DO_NOT_EDIT(project_name="quenbi", addr=0x80144)
 assert_rw_fwid_DO_NOT_EDIT(project_name="quartz", addr=0x40144)
+assert_rw_fwid_DO_NOT_EDIT(project_name="mica", addr=0x80144)

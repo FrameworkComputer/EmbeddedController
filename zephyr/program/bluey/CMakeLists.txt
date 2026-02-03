@@ -21,6 +21,11 @@ if(DEFINED CONFIG_BOARD_QUARTZ)
 	add_subdirectory(quartz)
 endif()
 
+if(DEFINED CONFIG_BOARD_MICA)
+	project(mica)
+	add_subdirectory(mica)
+endif()
+
 zephyr_library_sources("src/battery.c")
 zephyr_library_sources("src/switchcap.c")
 zephyr_library_sources("src/chipset.c")

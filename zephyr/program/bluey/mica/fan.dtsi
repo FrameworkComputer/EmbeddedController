@@ -1,0 +1,56 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	fans {
+		compatible = "cros-ec,fans";
+
+		fan1: fan_1 {
+			pwms = <&pwm5 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+			rpm-min = <3150>;
+			rpm-start = <3150>;
+			rpm-max = <7700>;
+			tach = <&tach2>;
+		};
+		fan2: fan_2 {
+			pwms = <&pwm4 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+			rpm-min = <3150>;
+			rpm-start = <3150>;
+			rpm-max = <7700>;
+			tach = <&tach1>;
+		};
+
+	};
+};
+
+&pwm4 {
+	status = "okay";
+	pinctrl-0 = <&pwm4_gpb6>;
+	pinctrl-names = "default";
+};
+
+&pwm5 {
+	status = "okay";
+	pinctrl-0 = <&pwm5_gpb7>;
+	pinctrl-names = "default";
+};
+
+&tach2 {
+	status = "okay";
+	pinctrl-0 = <&ta2_1_in_gp73>;
+	pinctrl-names = "default";
+	port = <NPCX_TACH_PORT_A>;
+	sample-clk = <NPCX_TACH_FREQ_LFCLK>;
+	pulses-per-round = <2>;
+};
+
+&tach1 {
+	status = "okay";
+	pinctrl-0 = <&tb1_2_in_gpd3>;
+	pinctrl-names = "default";
+	port = <NPCX_TACH_PORT_B>;
+	sample-clk = <NPCX_TACH_FREQ_LFCLK>;
+	pulses-per-round = <2>;
+};
