@@ -4675,7 +4675,7 @@ static void pe_give_battery_cap_entry(int port)
 			 * 10th of a Wh = Wh * 10
 			 */
 			msg[BCDB_FULL_CAP] = DIV_ROUND_NEAREST(
-				(design_cap * full_cap), 100000);
+				(full_cap * design_volt), 100000);
 		} else {
 			uint32_t v;
 			uint32_t c;
