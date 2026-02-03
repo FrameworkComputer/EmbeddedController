@@ -68,6 +68,12 @@ config BOARD_VADER
 	  Build Google Vader board. Vader has MediaTek SoC
 	  with Nuvoton NPCX997FB EC.
 
+config BOARD_JAINA
+	bool "Google Jaina Board"
+	help
+	  Build Google Jaina board. Jaina has MediaTek SoC
+	  with ITE IT82002 EC.
+
 config BOARD_SKYWALKER_SINGLE_USB_TYPEC
 	bool "Boards have only one USB-C port"
 	default n

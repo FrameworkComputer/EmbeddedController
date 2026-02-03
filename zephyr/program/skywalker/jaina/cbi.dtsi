@@ -1,0 +1,164 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	jaina-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		touchpad {
+			enum-name = "TOUCHPAD";
+			start = <0>;
+			size = <1>;
+
+			touchpad-11 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "TOUCHPAD_11";
+				value = <0>;
+			};
+			touchpad-14 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "TOUCHPAD_14";
+				value = <1>;
+			};
+		};
+		touchscreen {
+			enum-name = "TOUCHSCREEN";
+			start = <1>;
+			size = <1>;
+
+			non-touchscreen {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "NON_TOUCHSCREEN";
+				value = <0>;
+			};
+			touch {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "TOUCH";
+				value = <1>;
+			};
+		};
+		db-cellular {
+			enum-name = "DB_CELLULAR";
+			start = <2>;
+			size = <2>;
+
+			cellular-absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CELLULAR_ABSENT";
+				value = <0>;
+			};
+			cellular-rw135-gl {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CELLULAR_RW135_GL";
+				value = <1>;
+			};
+		};
+		stylus {
+			enum-name = "FW_STYLUS";
+			start = <4>;
+			size = <1>;
+
+			stylus-absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STYLUS_ABSENT";
+				value = <0>;
+			};
+			stylus-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STYLUS_PRESENT";
+				value = <1>;
+			};
+		};
+		codec {
+			enum-name = "CODEC";
+			start = <22>;
+			size = <3>;
+
+			codec-nau88l25b {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CODEC_NAU88L25B";
+				value = <0>;
+			};
+			codec-alc5682ivs {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CODEC_ALC5682IVS";
+				value = <1>;
+			};
+			codec-alc5682i {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CODEC_ALC5682I";
+				value = <2>;
+			};
+			codec-alc5650 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CODEC_ALC5650";
+				value = <3>;
+			};
+		};
+		amp {
+			enum-name = "AMP";
+			start = <25>;
+			size = <3>;
+
+			amp-rt9123 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "AMP_RT9123";
+				value = <0>;
+			};
+			amp-alc0109 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "AMP_ALC0109";
+				value = <1>;
+			};
+			amp-aw88081 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "AMP_AW88081";
+				value = <2>;
+			};
+			amp-alc5650 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "AMP_ALC5650";
+				value = <3>;
+			};
+		};
+		form-factor {
+			enum-name = "FORM_FACTOR";
+			start = <28>;
+			size = <2>;
+
+			convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CONVERTIBLE";
+				value = <0>;
+			};
+			clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CLAMSHELL";
+				value = <1>;
+			};
+		};
+		storage {
+			enum-name = "STORAGE";
+			start = <30>;
+			size = <2>;
+
+			storage-ufs3x {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "STORAGE_UFS3X";
+				value = <0>;
+			};
+			storage-ufs2x {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "STORAGE_UFS2X";
+				value = <1>;
+			};
+			storage-emmc {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "STORAGE_EMMC";
+				value = <2>;
+			};
+		};
+	};
+};
