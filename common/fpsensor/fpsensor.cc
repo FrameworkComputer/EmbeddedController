@@ -788,11 +788,14 @@ validate_template_format(struct ec_fp_template_encryption_metadata *enc_info)
 	return EC_RES_SUCCESS;
 }
 
-enum ec_status fp_commit_template(std::span<const uint8_t> context)
+static enum ec_status fp_commit_template(std::span<const uint8_t> context)
 {
 	ScopedFastCpu fast_cpu;
 
 	uint16_t idx = global_context.templ_valid;
+
+	if (idx >= FP_MAX_FINGER_COUNT)
+		return EC_RES_OVERFLOW;
 
 	/*
 	 * The complete encrypted template has been received, start
@@ -834,22 +837,26 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 				  encrypted_template_and_positive_match_salt,
 				  enc_info->nonce, enc_info->tag);
 	if (ret != EC_SUCCESS) {
+		/* Don't leave partially decrypted data in the buffer! */
+		OPENSSL_cleanse(&fp_enc_buffer, sizeof(fp_enc_buffer));
 		CPRINTS("fgr%d: Failed to decipher template", idx);
-		/* Don't leave bad data in the template buffer
-		 */
-		fp_clear_finger_context(idx);
 		return EC_RES_UNAVAILABLE;
 	}
 
-	std::ranges::copy(templ, fp_template[idx]);
 	if (bytes_are_trivial(positive_match_salt.data(),
 			      positive_match_salt.size_bytes())) {
+		/* Don't leave decrypted data in the buffer! */
+		OPENSSL_cleanse(&fp_enc_buffer, sizeof(fp_enc_buffer));
 		CPRINTS("fgr%d: Trivial positive match salt.", idx);
-		OPENSSL_cleanse(fp_template[idx], sizeof(fp_template[0]));
 		return EC_RES_INVALID_PARAM;
 	}
+
+	std::ranges::copy(templ, fp_template[idx]);
 	std::ranges::copy(positive_match_salt,
 			  global_context.fp_positive_match_salt[idx]);
+
+	/* Don't leave decrypted data in the buffer! */
+	OPENSSL_cleanse(&fp_enc_buffer, sizeof(fp_enc_buffer));
 
 	global_context.templ_valid++;
 	return EC_RES_SUCCESS;
