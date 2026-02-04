@@ -328,6 +328,11 @@ void ac_charge_policy(void)
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, ac_charge_policy, HOOK_PRIO_DEFAULT);
 
+int pd_get_usb_pd_3a_ports(void)
+{
+	return pre_battery_cells == BATT_2_CELL ? 0 : 1;
+}
+
 int charger_profile_override(struct charge_state_data *curr)
 {
 	curr->requested_current = min(curr->requested_current, current_limit);
