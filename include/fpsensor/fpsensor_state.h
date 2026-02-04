@@ -115,6 +115,8 @@ struct fpsensor_context {
 	 *  FP_ENCRYPTED_TEMPLATE_READY bit set.
 	 */
 	uint16_t template_encrypted_id;
+	/** Template decryption result. */
+	atomic_t template_decryption_result;
 };
 
 extern struct fpsensor_context global_context;

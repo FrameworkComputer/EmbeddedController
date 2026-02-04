@@ -8416,6 +8416,8 @@ struct ec_params_fp_passthru {
 #define FP_MODE_SENSOR_MAINTENANCE BIT(8)
 /* Encrypt template. */
 #define FP_MODE_ENCRYPT_TEMPLATE BIT(9)
+/* Decrypt template. */
+#define FP_MODE_DECRYPT_TEMPLATE BIT(10)
 /* special value: don't change anything just read back current mode */
 #define FP_MODE_DONT_CHANGE BIT(31)
 
@@ -8423,9 +8425,12 @@ struct ec_params_fp_passthru {
 	(FP_MODE_DEEPSLEEP | FP_MODE_FINGER_DOWN | FP_MODE_FINGER_UP |       \
 	 FP_MODE_CAPTURE | FP_MODE_ENROLL_SESSION | FP_MODE_ENROLL_IMAGE |   \
 	 FP_MODE_MATCH | FP_MODE_RESET_SENSOR | FP_MODE_SENSOR_MAINTENANCE | \
-	 FP_MODE_ENCRYPT_TEMPLATE | FP_MODE_DONT_CHANGE)
+	 FP_MODE_ENCRYPT_TEMPLATE | FP_MODE_DECRYPT_TEMPLATE |               \
+	 FP_MODE_DONT_CHANGE)
 
 #define FP_MODES_WITH_AUTHENTICATION (FP_MODE_ENROLL_SESSION | FP_MODE_MATCH)
+#define FP_MODES_CRYPTO_IN_PROGRESS \
+	(FP_MODE_ENCRYPT_TEMPLATE | FP_MODE_DECRYPT_TEMPLATE)
 
 /* Capture types defined in bits [30..26] */
 #define FP_MODE_CAPTURE_TYPE_SHIFT 26
@@ -8680,6 +8685,27 @@ struct ec_params_fp_frame_v1 {
 struct ec_params_fp_template {
 	uint32_t offset;
 	uint32_t size;
+	uint8_t data[FLEXIBLE_ARRAY_MEMBER_SIZE];
+} __ec_align4;
+
+/*
+ * FP_TEMPLATE commands:
+ *
+ * - FP_TEMPLATE_LOAD command is used to copy part of the template to FPMCU
+ *   buffer.
+ * - FP_TEMPLATE_DECRYPT command starts template decryption.
+ * - FP_TEMPLATE_GET_RESULT command is used to check decryption result.
+ */
+enum fp_template_cmd {
+	FP_TEMPLATE_LOAD = 0,
+	FP_TEMPLATE_DECRYPT = 1,
+	FP_TEMPLATE_GET_RESULT = 2,
+};
+
+struct ec_params_fp_template_v1 {
+	uint32_t offset;
+	uint32_t size;
+	uint8_t cmd;
 	uint8_t data[FLEXIBLE_ARRAY_MEMBER_SIZE];
 } __ec_align4;
 

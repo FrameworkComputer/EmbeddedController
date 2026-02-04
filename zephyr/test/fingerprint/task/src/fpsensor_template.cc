@@ -169,6 +169,219 @@ static struct ec_response_fp_info_v2 *test_info_buffer =
 BUILD_ASSERT(FP_TEMPLATE_PARAMS_BUFFER_SIZE >
 	     sizeof(struct ec_params_fp_template));
 
+#define FP_TEMPLATE_V1_PARAMS_BUFFER_SIZE 32
+BUILD_ASSERT(FP_TEMPLATE_V1_PARAMS_BUFFER_SIZE >
+	     sizeof(struct ec_params_fp_template_v1));
+
+ZTEST_USER(fpsensor_template, test_fp_template_v1_load_template_success)
+{
+	uint8_t params_buffer[FP_TEMPLATE_V1_PARAMS_BUFFER_SIZE];
+	struct ec_params_fp_template_v1 *params =
+		(struct ec_params_fp_template_v1 *)params_buffer;
+
+	const size_t data_size =
+		FP_TEMPLATE_V1_PARAMS_BUFFER_SIZE -
+		offsetof(struct ec_params_fp_template_v1, data);
+	uint8_t *data =
+		params_buffer + offsetof(struct ec_params_fp_template_v1, data);
+	size_t offset = 0;
+
+	memcpy(encrypted_template, &expected_enc_info,
+	       sizeof(struct ec_fp_template_encryption_metadata));
+	memcpy(encrypted_template +
+		       sizeof(struct ec_fp_template_encryption_metadata),
+	       example_template_encrypted,
+	       CONFIG_FP_ALGORITHM_TEMPLATE_SIZE +
+		       FP_POSITIVE_MATCH_SALT_BYTES);
+
+	params->cmd = FP_TEMPLATE_LOAD;
+	while (offset < FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE) {
+		params->offset = offset;
+		params->size =
+			MIN(data_size,
+			    FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE - offset);
+		memcpy(data, encrypted_template + offset, params->size);
+
+		zassert_ok(ec_cmd_fp_template_v1(
+			NULL, params,
+			params->size + offsetof(struct ec_params_fp_template_v1,
+						data)));
+
+		offset += params->size;
+	}
+
+	/* Start decryption. */
+	params->cmd = FP_TEMPLATE_DECRYPT;
+	params->offset = 0;
+	params->size = 0;
+	zassert_ok(ec_cmd_fp_template_v1(
+		NULL, params, offsetof(struct ec_params_fp_template_v1, data)));
+
+	/* Wait for decryption to finish. */
+	params->cmd = FP_TEMPLATE_GET_RESULT;
+	while (ec_cmd_fp_template_v1(NULL, params,
+				     offsetof(struct ec_params_fp_template_v1,
+					      data)) == EC_RES_BUSY) {
+		k_msleep(1);
+	}
+
+	/* Confirm that there is 1 valid template. */
+	zassert_ok(ec_cmd_fp_info_v2(NULL, test_info_buffer,
+				     test_info_buffer_size));
+	zassert_equal(test_info_buffer->template_info.template_valid, 1);
+}
+
+ZTEST_USER(fpsensor_template, test_fp_template_v1_load_template_invalid_tag)
+{
+	uint8_t params_buffer[FP_TEMPLATE_V1_PARAMS_BUFFER_SIZE];
+	struct ec_params_fp_template_v1 *params =
+		(struct ec_params_fp_template_v1 *)params_buffer;
+
+	const size_t data_size =
+		FP_TEMPLATE_V1_PARAMS_BUFFER_SIZE -
+		offsetof(struct ec_params_fp_template_v1, data);
+	uint8_t *data =
+		params_buffer + offsetof(struct ec_params_fp_template_v1, data);
+	size_t offset = 0;
+
+	struct ec_fp_template_encryption_metadata enc_info_with_invalid_tag =
+		expected_enc_info;
+
+	/* Corrupt the tag. We expect that the template will be rejected. */
+	enc_info_with_invalid_tag.tag[0] = expected_enc_info.tag[0] ^ 0xFF;
+
+	memcpy(encrypted_template, &enc_info_with_invalid_tag,
+	       sizeof(struct ec_fp_template_encryption_metadata));
+	memcpy(encrypted_template +
+		       sizeof(struct ec_fp_template_encryption_metadata),
+	       example_template_encrypted,
+	       CONFIG_FP_ALGORITHM_TEMPLATE_SIZE +
+		       FP_POSITIVE_MATCH_SALT_BYTES);
+
+	params->cmd = FP_TEMPLATE_LOAD;
+	while (offset < FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE) {
+		params->offset = offset;
+		params->size =
+			MIN(data_size,
+			    FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE - offset);
+		memcpy(data, encrypted_template + offset, params->size);
+
+		zassert_ok(ec_cmd_fp_template_v1(
+			NULL, params,
+			params->size + offsetof(struct ec_params_fp_template_v1,
+						data)));
+
+		offset += params->size;
+	}
+
+	/* Start decryption. */
+	params->cmd = FP_TEMPLATE_DECRYPT;
+	params->offset = 0;
+	params->size = 0;
+	zassert_ok(ec_cmd_fp_template_v1(
+		NULL, params, offsetof(struct ec_params_fp_template_v1, data)));
+
+	/* Wait for decryption to finish. */
+	params->cmd = FP_TEMPLATE_GET_RESULT;
+	int status;
+	while ((status = ec_cmd_fp_template_v1(
+			NULL, params,
+			offsetof(struct ec_params_fp_template_v1, data))) ==
+	       EC_RES_BUSY) {
+		k_msleep(1);
+	}
+
+	/* Expect decryption failure (EC_RES_UNAVAILABLE). */
+	zassert_equal(EC_RES_UNAVAILABLE, status);
+
+	/* Confirm that there is no valid template. */
+	zassert_ok(ec_cmd_fp_info_v2(NULL, test_info_buffer,
+				     test_info_buffer_size));
+	zassert_equal(test_info_buffer->template_info.template_valid, 0);
+}
+
+ZTEST_USER(fpsensor_template, test_fp_template_v1_busy)
+{
+	struct ec_params_fp_template_v1 params = {
+		.cmd = FP_TEMPLATE_LOAD,
+	};
+
+	/* Simulate crypto operation in progress. */
+	global_context.sensor_mode |= FP_MODE_ENCRYPT_TEMPLATE;
+
+	zassert_equal(EC_RES_BUSY,
+		      ec_cmd_fp_template_v1(NULL, &params, sizeof(params)));
+
+	params.cmd = FP_TEMPLATE_DECRYPT;
+	zassert_equal(EC_RES_BUSY,
+		      ec_cmd_fp_template_v1(NULL, &params, sizeof(params)));
+
+	global_context.sensor_mode &= ~FP_MODE_ENCRYPT_TEMPLATE;
+}
+
+ZTEST_USER(fpsensor_template, test_fp_template_v1_overflow)
+{
+	struct ec_params_fp_template_v1 params = {
+		.cmd = FP_TEMPLATE_LOAD,
+	};
+
+	/* Simulate maximum number of templates reached. */
+	global_context.templ_valid = FP_MAX_FINGER_COUNT;
+
+	zassert_equal(EC_RES_OVERFLOW,
+		      ec_cmd_fp_template_v1(NULL, &params, sizeof(params)));
+
+	global_context.templ_valid = 0;
+}
+
+ZTEST_USER(fpsensor_template, test_fp_template_v1_invalid_params)
+{
+	uint8_t params_buffer[FP_TEMPLATE_V1_PARAMS_BUFFER_SIZE];
+	struct ec_params_fp_template_v1 *params =
+		(struct ec_params_fp_template_v1 *)params_buffer;
+
+	params->cmd = FP_TEMPLATE_LOAD;
+	params->offset = 0;
+	params->size = 8;
+
+	/* 1. Incorrect args->params_size. */
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      ec_cmd_fp_template_v1(
+			      NULL, params,
+			      offsetof(struct ec_params_fp_template_v1, data) +
+				      params->size + 1));
+
+	/* 2. Offset/size out of bounds. */
+	params->offset = FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE;
+	params->size = 1;
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      ec_cmd_fp_template_v1(
+			      NULL, params,
+			      offsetof(struct ec_params_fp_template_v1, data) +
+				      params->size));
+}
+
+ZTEST_USER(fpsensor_template, test_fp_template_v1_sequential_integrity)
+{
+	struct ec_params_fp_template_v1 params = {
+		.offset = 0,
+		.size = 0,
+		.cmd = FP_TEMPLATE_LOAD,
+	};
+
+	/* Set FP_ENCRYPTED_TEMPLATE_READY and valid encrypted id. */
+	global_context.fp_encryption_status |= FP_ENCRYPTED_TEMPLATE_READY;
+	global_context.template_encrypted_id = 0;
+
+	/* Loading any template chunk should clear them. */
+	zassert_ok(ec_cmd_fp_template_v1(NULL, &params, sizeof(params)));
+
+	zassert_false(global_context.fp_encryption_status &
+		      FP_ENCRYPTED_TEMPLATE_READY);
+	zassert_equal(global_context.template_encrypted_id,
+		      FP_NO_SUCH_TEMPLATE);
+}
+
 ZTEST_USER(fpsensor_template, test_fp_frame_raw_image_system_is_locked)
 {
 	struct ec_params_fp_frame frame_request = {
@@ -851,6 +1064,138 @@ ZTEST_USER(fpsensor_template, test_fp_template_load_template_invalid_tag)
 }
 
 static const struct enc_buffer zero_enc_buffer = {};
+
+ZTEST_USER(fpsensor_template, test_fp_template_v1_cleans_buffer)
+{
+	uint8_t params_buffer[FP_TEMPLATE_V1_PARAMS_BUFFER_SIZE];
+	struct ec_params_fp_template_v1 *params =
+		(struct ec_params_fp_template_v1 *)params_buffer;
+
+	const size_t data_size =
+		FP_TEMPLATE_V1_PARAMS_BUFFER_SIZE -
+		offsetof(struct ec_params_fp_template_v1, data);
+	uint8_t *data =
+		params_buffer + offsetof(struct ec_params_fp_template_v1, data);
+	size_t offset = 0;
+
+	memcpy(encrypted_template, &expected_enc_info,
+	       sizeof(struct ec_fp_template_encryption_metadata));
+	memcpy(encrypted_template +
+		       sizeof(struct ec_fp_template_encryption_metadata),
+	       example_template_encrypted,
+	       CONFIG_FP_ALGORITHM_TEMPLATE_SIZE +
+		       FP_POSITIVE_MATCH_SALT_BYTES);
+
+	params->cmd = FP_TEMPLATE_LOAD;
+	while (offset < FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE) {
+		params->offset = offset;
+		params->size =
+			MIN(data_size,
+			    FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE - offset);
+		memcpy(data, encrypted_template + offset, params->size);
+
+		zassert_ok(ec_cmd_fp_template_v1(
+			NULL, params,
+			params->size + offsetof(struct ec_params_fp_template_v1,
+						data)));
+
+		offset += params->size;
+	}
+
+	/* Confirm that the buffer is NOT clean before decryption. */
+	zassert_true(memcmp(&fp_enc_buffer, &zero_enc_buffer,
+			    sizeof(fp_enc_buffer)) != 0,
+		     "fp_enc_buffer should not be clean before decryption.");
+
+	/* Start decryption. */
+	params->cmd = FP_TEMPLATE_DECRYPT;
+	params->offset = 0;
+	params->size = 0;
+	zassert_ok(ec_cmd_fp_template_v1(
+		NULL, params, offsetof(struct ec_params_fp_template_v1, data)));
+
+	/* Wait for decryption to finish. */
+	params->cmd = FP_TEMPLATE_GET_RESULT;
+	while (ec_cmd_fp_template_v1(NULL, params,
+				     offsetof(struct ec_params_fp_template_v1,
+					      data)) == EC_RES_BUSY) {
+		k_msleep(1);
+	}
+
+	/* Confirm that the buffer IS clean after decryption. */
+	zassert_mem_equal(&fp_enc_buffer, &zero_enc_buffer,
+			  sizeof(fp_enc_buffer),
+			  "fp_enc_buffer should be clean after decryption.");
+}
+
+ZTEST_USER(fpsensor_template, test_fp_template_v1_cleans_buffer_on_failure)
+{
+	uint8_t params_buffer[FP_TEMPLATE_V1_PARAMS_BUFFER_SIZE];
+	struct ec_params_fp_template_v1 *params =
+		(struct ec_params_fp_template_v1 *)params_buffer;
+
+	const size_t data_size =
+		FP_TEMPLATE_V1_PARAMS_BUFFER_SIZE -
+		offsetof(struct ec_params_fp_template_v1, data);
+	uint8_t *data =
+		params_buffer + offsetof(struct ec_params_fp_template_v1, data);
+	size_t offset = 0;
+
+	struct ec_fp_template_encryption_metadata enc_info_with_invalid_tag =
+		expected_enc_info;
+
+	/* Corrupt the tag. We expect that the template will be rejected. */
+	enc_info_with_invalid_tag.tag[0] = expected_enc_info.tag[0] ^ 0xFF;
+
+	memcpy(encrypted_template, &enc_info_with_invalid_tag,
+	       sizeof(struct ec_fp_template_encryption_metadata));
+	memcpy(encrypted_template +
+		       sizeof(struct ec_fp_template_encryption_metadata),
+	       example_template_encrypted,
+	       CONFIG_FP_ALGORITHM_TEMPLATE_SIZE +
+		       FP_POSITIVE_MATCH_SALT_BYTES);
+
+	params->cmd = FP_TEMPLATE_LOAD;
+	while (offset < FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE) {
+		params->offset = offset;
+		params->size =
+			MIN(data_size,
+			    FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE - offset);
+		memcpy(data, encrypted_template + offset, params->size);
+
+		zassert_ok(ec_cmd_fp_template_v1(
+			NULL, params,
+			params->size + offsetof(struct ec_params_fp_template_v1,
+						data)));
+
+		offset += params->size;
+	}
+
+	/* Confirm that the buffer is NOT clean before decryption. */
+	zassert_true(memcmp(&fp_enc_buffer, &zero_enc_buffer,
+			    sizeof(fp_enc_buffer)) != 0,
+		     "fp_enc_buffer should not be clean before decryption.");
+
+	/* Start decryption. */
+	params->cmd = FP_TEMPLATE_DECRYPT;
+	params->offset = 0;
+	params->size = 0;
+	zassert_ok(ec_cmd_fp_template_v1(
+		NULL, params, offsetof(struct ec_params_fp_template_v1, data)));
+
+	/* Wait for decryption to finish. */
+	params->cmd = FP_TEMPLATE_GET_RESULT;
+	while (ec_cmd_fp_template_v1(NULL, params,
+				     offsetof(struct ec_params_fp_template_v1,
+					      data)) == EC_RES_BUSY) {
+		k_msleep(1);
+	}
+
+	/* Confirm that the buffer IS clean even after failed decryption. */
+	zassert_mem_equal(
+		&fp_enc_buffer, &zero_enc_buffer, sizeof(fp_enc_buffer),
+		"fp_enc_buffer should be clean even after failed decryption.");
+}
 
 ZTEST_USER(fpsensor_template, test_fp_template_cleans_buffer)
 {

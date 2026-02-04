@@ -4,7 +4,7 @@
  */
 
 #include "assert.h"
-#include "atomic.h"
+#include "atomic_bit.h"
 #include "clock.h"
 #include "common.h"
 #include "compile_time_macros.h"
@@ -236,6 +236,7 @@ static void fp_process_finger(void)
 #endif /* HAVE_FP_PRIVATE_DRIVER */
 
 static enum ec_error_list encrypt_template(uint16_t fgr);
+static enum ec_status fp_commit_template(std::span<const uint8_t> context);
 
 extern "C" void fp_task(void)
 {
@@ -348,6 +349,16 @@ extern "C" void fp_task(void)
 				}
 				global_context.sensor_mode &=
 					~FP_MODE_ENCRYPT_TEMPLATE;
+			} else if (mode & FP_MODE_DECRYPT_TEMPLATE) {
+				ScopedFastCpu fast_cpu;
+
+				enum ec_status res = fp_commit_template(
+					global_context.user_id);
+				atomic_set(&global_context
+						    .template_decryption_result,
+					   res);
+				global_context.sensor_mode &=
+					~FP_MODE_DECRYPT_TEMPLATE;
 			} else {
 				fp_sensor_low_power();
 			}
@@ -684,9 +695,9 @@ static enum ec_status fp_command_frame_v1(struct host_cmd_handler_args *args)
 
 		/*
 		 * Do not change the content of fp_enc_buffer if the encryption
-		 * is in progress.
+		 * or decryption is in progress.
 		 */
-		if (global_context.sensor_mode & FP_MODE_ENCRYPT_TEMPLATE) {
+		if (global_context.sensor_mode & FP_MODES_CRYPTO_IN_PROGRESS) {
 			return EC_RES_BUSY;
 		}
 
@@ -713,8 +724,8 @@ static enum ec_status fp_command_frame_v1(struct host_cmd_handler_args *args)
 		break;
 	}
 	case FP_FRAME_GET_ENCRYPTED_TEMPLATE:
-		/* Encryption is still running */
-		if (global_context.sensor_mode & FP_MODE_ENCRYPT_TEMPLATE) {
+		/* Encryption or decryption is still running */
+		if (global_context.sensor_mode & FP_MODES_CRYPTO_IN_PROGRESS) {
 			return EC_RES_BUSY;
 		}
 
@@ -862,7 +873,7 @@ static enum ec_status fp_commit_template(std::span<const uint8_t> context)
 	return EC_RES_SUCCESS;
 }
 
-static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
+static enum ec_status fp_command_template_v0(struct host_cmd_handler_args *args)
 {
 	const auto *params =
 		static_cast<const struct ec_params_fp_template *>(args->params);
@@ -892,7 +903,100 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_FP_TEMPLATE, fp_command_template, EC_VER_MASK(0));
+
+static enum ec_status fp_command_template_v1(struct host_cmd_handler_args *args)
+{
+	const auto *params =
+		static_cast<const struct ec_params_fp_template_v1 *>(
+			args->params);
+	enum ec_status status;
+
+	switch (params->cmd) {
+	case FP_TEMPLATE_LOAD: {
+		uint32_t size = params->size;
+		uint32_t offset = params->offset;
+
+		/* Encryption or decryption is in progress. */
+		if (global_context.sensor_mode & FP_MODES_CRYPTO_IN_PROGRESS) {
+			return EC_RES_BUSY;
+		}
+
+		/* Can we store one more template ? */
+		if (global_context.templ_valid >= FP_MAX_FINGER_COUNT) {
+			return EC_RES_OVERFLOW;
+		}
+
+		if (args->params_size !=
+		    size + offsetof(struct ec_params_fp_template_v1, data)) {
+			return EC_RES_INVALID_PARAM;
+		}
+		enum ec_error_list ret = validate_fp_buffer_offset(
+			sizeof(fp_enc_buffer), offset, size);
+		if (ret != EC_SUCCESS) {
+			return EC_RES_INVALID_PARAM;
+		}
+
+		/*
+		 * We are going to modify 'fp_enc_buffer', so clear
+		 * FP_ENCRYPTED_TEMPLATE_READY bit and 'template_encrypted_id'.
+		 */
+		global_context.fp_encryption_status &=
+			~FP_ENCRYPTED_TEMPLATE_READY;
+		global_context.template_encrypted_id = FP_NO_SUCH_TEMPLATE;
+
+		/* Copy part of the template to buffer. */
+		memcpy(reinterpret_cast<uint8_t *>(&fp_enc_buffer) + offset,
+		       params->data, size);
+
+		return EC_RES_SUCCESS;
+	}
+	case FP_TEMPLATE_DECRYPT: {
+		uint32_t mode_output;
+
+		/* Encryption or decryption is in progress. */
+		if (global_context.sensor_mode & FP_MODES_CRYPTO_IN_PROGRESS) {
+			return EC_RES_BUSY;
+		}
+
+		/* Start template decryption. */
+		status = fp_set_sensor_mode(FP_MODE_DECRYPT_TEMPLATE,
+					    &mode_output, std::nullopt);
+		if (status != EC_RES_SUCCESS) {
+			atomic_set(&global_context.template_decryption_result,
+				   EC_RES_ERROR);
+			return EC_RES_ERROR;
+		}
+
+		atomic_set(&global_context.template_decryption_result,
+			   EC_RES_BUSY);
+
+		return EC_RES_SUCCESS;
+	}
+	case FP_TEMPLATE_GET_RESULT:
+		/* Decryption is still running */
+		if (global_context.sensor_mode & FP_MODE_DECRYPT_TEMPLATE) {
+			return EC_RES_BUSY;
+		}
+
+		status = (enum ec_status)atomic_get(
+			&global_context.template_decryption_result);
+
+		return status;
+	}
+
+	return EC_RES_INVALID_PARAM;
+}
+
+static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
+{
+	if (args->version == 1) {
+		return fp_command_template_v1(args);
+	}
+
+	return fp_command_template_v0(args);
+}
+DECLARE_HOST_COMMAND(EC_CMD_FP_TEMPLATE, fp_command_template,
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 static enum ec_status
 fp_command_confirm_template(struct host_cmd_handler_args *args)
