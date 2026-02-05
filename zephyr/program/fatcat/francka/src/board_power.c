@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "extpower.h"
 #include "gpio/gpio.h"
 #include "gpio_signal.h"
 #include "system_boot_time.h"
@@ -153,6 +154,8 @@ AP_POWER_APP_STATE_DEFINE(G3, board_ap_power_g3_entry, board_ap_power_g3_run,
 
 static int board_ap_power_s0_run(void *data)
 {
+	/* Update the AC event during boot */
+	extpower_update_host_events(gpio_get_level(GPIO_AC_PRESENT));
 	return 0;
 }
 

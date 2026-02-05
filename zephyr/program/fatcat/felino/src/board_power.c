@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "extpower.h"
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "system_boot_time.h"
@@ -126,6 +127,14 @@ static int board_ap_power_action_s3_run(void *data)
 }
 
 AP_POWER_APP_STATE_DEFINE(S3, NULL, board_ap_power_action_s3_run, NULL);
+
+static int board_ap_power_s0_run(void *data)
+{
+	/* Update the AC event during boot */
+	extpower_update_host_events(gpio_get_level(GPIO_AC_PRESENT));
+	return 0;
+}
+AP_POWER_APP_STATE_DEFINE(S0, NULL, board_ap_power_s0_run, NULL);
 #endif /* CONFIG_AP_PWRSEQ_DRIVER */
 
 int power_signal_external_init(void)
