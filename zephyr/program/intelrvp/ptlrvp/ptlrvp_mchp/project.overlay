@@ -73,11 +73,3 @@
           row-size = <8>;
           col-size = <13>;
 };
-
-&charger_i2c {
-	cros_imvp: richtek-imvp@20 {
-		compatible = "richtek,rt3645";
-		status = "okay";
-		reg = <0x20>;
-	};
-};
