@@ -287,7 +287,7 @@ class Platform(ABC):
 
     @abstractmethod
     def skip_test(
-        self, test_name: str, board_config: BoardConfig, zephyr: bool
+        self, test_config: TestConfig, board_config: BoardConfig, zephyr: bool
     ) -> bool:
         """Returns true if the given test should be skipped."""
 
@@ -376,7 +376,7 @@ class Hardware(Platform):
         pass
 
     def skip_test(
-        self, test_name: str, board_config: BoardConfig, zephyr: bool
+        self, test_config: TestConfig, board_config: BoardConfig, zephyr: bool
     ) -> bool:
         return False
 
@@ -436,8 +436,10 @@ class Renode(Platform):
         self.process.kill()
 
     def skip_test(
-        self, test_name: str, board_config: BoardConfig, zephyr: bool
+        self, test_config: TestConfig, board_config: BoardConfig, zephyr: bool
     ) -> bool:
+        test_name = test_config.test_name
+
         # Tests failures that are independent of the board.
         if test_name in [
             "fpsensor_hw",  # TODO(b/384743080)
@@ -1844,7 +1846,7 @@ def main():
     with ThreadPoolExecutor(max_workers=1) as executor:
         for test in test_list:
             if (test.skip_for_zephyr and args.zephyr) or platform.skip_test(
-                test.test_name, board_config, args.zephyr
+                test, board_config, args.zephyr
             ):
                 continue
             test.passed = flash_and_run_test(
@@ -1857,7 +1859,7 @@ def main():
             # print results
             print('Test "' + test.config_name + '": ', end="")
             if (test.skip_for_zephyr and args.zephyr) or platform.skip_test(
-                test.test_name, board_config, args.zephyr
+                test, board_config, args.zephyr
             ):
                 print(colorama.Fore.YELLOW + "SKIPPED")
             else:
