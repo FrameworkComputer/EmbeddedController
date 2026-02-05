@@ -3,6 +3,18 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
+ * Purpose: Windows does not have the Intel I2C driver in the installation ISO.
+ * To make the touchpad work in before the driver is installed, we emulate PS2.
+ * That's the only purpose of the emulation layer - an OS without I2C PTP HID driver.
+ * Making the touchpad work when a working driver is unloaded is not part of the scope.
+ *
+ * Requirements:
+ *
+ * - I2C PTP HID is the priority, that SHOULD work whenever possible, if the OS has a driver
+ *   - So we start with PTP and fall back to PS2 if the OS does not acknowledge the interrupts
+ * - If the OS driver was detected as working, emulation MUST never enable
+ *   - Unless the host reboots because that may boot into a different OS
+ *
  * i2c to PS2 compat mouse emulation using hid-i2c to ps2 conversion
  * This is designed to function with a pixart hid-i2c touchpad
  * and there are a few settings that configure this touchpad
