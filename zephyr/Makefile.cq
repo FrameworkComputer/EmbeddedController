@@ -32,39 +32,39 @@ GENERATED_AND_SYSTEM_PATTERNS='$(PLATFORM_EC)/build/**' \
 	'**/lib/gcc/**' \
 	'**/.cache/**' \
 	'$(PLATFORM_EC)/common/mock/**'
-TEST_PATTERNS='$(PLATFORM_EC)/test/**' \
-	'$(PLATFORM_EC)/include/tests/**' \
-	'$(PLATFORM)/ec-private/test/**' \
-	'$(PLATFORM)/ec-private/fingerprint/*/mcutest/**' \
-	'$(PLATFORM_EC)/zephyr/test/**' \
-	'$(THIRD_PARTY)/zephyrproject/zephyr/subsys/testsuite/**' \
-	'$(PLATFORM_EC)/include/mock/**' \
-	'$(PLATFORM_EC)/common/mock/**' \
-	'$(PLATFORM_EC)/board/host/**' \
-	'$(PLATFORM_EC)/chip/host/**' \
-	'$(PLATFORM_EC)/core/host/**' \
-	'$(PLATFORM_EC)/zephyr/emul/**' \
-	'$(PLATFORM_EC)/zephyr/mock/**' \
-	'$(PLATFORM_EC)/zephyr/drivers/fingerprint/*_sim.c' \
-	'$(PLATFORM_EC)/zephyr/drivers/pw_fsm/test_*.cc' \
-	'$(PLATFORM_EC)/zephyr/program/dev/**' \
-	'$(THIRD_PARTY)/zephyrproject/zephyr/subsys/emul/**' \
-	'$(THIRD_PARTY)/zephyrproject/zephyr/arch/posix/**' \
-	'$(THIRD_PARTY)/zephyrproject/zephyr/scripts/native_simulator/**' \
-	'$(THIRD_PARTY)/zephyrproject/zephyr/boards/native/native_posix/**' \
-	'$(THIRD_PARTY)/zephyrproject/zephyr/boards/native/native_sim/**' \
-        '$(THIRD_PARTY)/pigweed/pw_unit_test/**' \
-	'**/*_benchmark.cc' \
-	'**/*_test.c' \
-	'**/*_test.cc' \
-	'**/*_test.h' \
+TEST_PATTERNS='**/*_benchmark.cc' \
 	'**/*_emul.c' \
 	'**/*_emul.cc' \
 	'**/*_emul.h' \
-	'$(PLATFORM_EC)/include/test_util.h' \
+	'**/*_test.c' \
+	'**/*_test.cc' \
+	'**/*_test.h' \
+	'$(PLATFORM_EC)/board/host/**' \
+	'$(PLATFORM_EC)/chip/host/**' \
+	'$(PLATFORM_EC)/common/mock/**' \
 	'$(PLATFORM_EC)/common/test_util.c' \
+	'$(PLATFORM_EC)/core/host/**' \
+	'$(PLATFORM_EC)/include/mock/**' \
+	'$(PLATFORM_EC)/include/test_util.h' \
+	'$(PLATFORM_EC)/include/tests/**' \
+	'$(PLATFORM_EC)/test/**' \
+	'$(PLATFORM_EC)/zephyr/drivers/**/test_*' \
+	'$(PLATFORM_EC)/zephyr/drivers/fingerprint/*_sim.c' \
+	'$(PLATFORM_EC)/zephyr/emul/**' \
+	'$(PLATFORM_EC)/zephyr/mock/**' \
+	'$(PLATFORM_EC)/zephyr/program/dev/**' \
 	'$(PLATFORM_EC)/zephyr/shim/src/test_util.c' \
-	'$(PLATFORM_EC)/zephyr/shim/src/ztest_system.c'
+	'$(PLATFORM_EC)/zephyr/shim/src/ztest_system.c' \
+	'$(PLATFORM_EC)/zephyr/test/**' \
+	'$(PLATFORM)/ec-private/fingerprint/*/mcutest/**' \
+	'$(PLATFORM)/ec-private/test/**' \
+	'$(THIRD_PARTY)/pigweed/pw_unit_test/**' \
+	'$(THIRD_PARTY)/zephyrproject/zephyr/arch/posix/**' \
+	'$(THIRD_PARTY)/zephyrproject/zephyr/boards/native/native_posix/**' \
+	'$(THIRD_PARTY)/zephyrproject/zephyr/boards/native/native_sim/**' \
+	'$(THIRD_PARTY)/zephyrproject/zephyr/scripts/native_simulator/**' \
+	'$(THIRD_PARTY)/zephyrproject/zephyr/subsys/emul/**' \
+	'$(THIRD_PARTY)/zephyrproject/zephyr/subsys/testsuite/**'
 
 .PHONY: test twister_host twister_llvm
 
