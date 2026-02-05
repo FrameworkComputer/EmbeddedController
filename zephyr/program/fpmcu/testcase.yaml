@@ -256,6 +256,7 @@ tests:
     extra_conf_files:
     - prj_hw_tests.conf
   utils:
+    timeout: 300
     extra_configs:
     - CONFIG_HW_TEST_UTILS=y
     extra_conf_files:
