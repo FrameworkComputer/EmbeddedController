@@ -473,6 +473,17 @@ class Renode(Platform):
                 ]:
                     return True
 
+                # bloonchipper Zephyr test "variants" to skip on Renode.
+                if zephyr and test_config.config_name in [
+                    # TODO(b/481786786): The four tests below are all disabled
+                    # due to this issue.
+                    "unaligned_access_bloonchipper_v2.0.4277",
+                    "unaligned_access_bloonchipper_v2.0.5938",
+                    "system_is_locked_wp_on_bloonchipper_v2.0.4277",
+                    "system_is_locked_wp_on_bloonchipper_v2.0.5938",
+                ]:
+                    return True
+
                 # bloonchipper EC tests to skip on Renode.
                 if test_name in [
                     "rtc_stm32f4",  # TODO(b/384991107)
