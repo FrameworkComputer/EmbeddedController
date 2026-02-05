@@ -242,6 +242,15 @@ SENDACK:
 	send_data_byte(PS2MOUSE_ACKNOWLEDGE);
 }
 
+void touchpad_check_interrupt(void)
+{
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_soc_tp_int_l)) == 0) {
+		/* WA: Interrupt pending. Read input data immediately. */
+		task_set_event(TASK_ID_TOUCHPAD, PS2MOUSE_EVT_INTERRUPT);
+	}
+}
+DECLARE_DEFERRED(touchpad_check_interrupt);
+
 /* this interrupt is used to monitor if the main SOC is directly communicating with the
  * touchpad outside of the EC. If we detect this condition - then we disable the ec 8042
  * mouse emulation mode
@@ -294,6 +303,8 @@ void touchpad_interrupt(enum gpio_signal signal)
 	if (ec_mode_disabled) {
 		return;
 	}
+
+	hook_call_deferred(&touchpad_check_interrupt_data, -1);
 	if (!detected_host_packet) {
 		task_set_event(TASK_ID_TOUCHPAD, PS2MOUSE_EVT_INTERRUPT);
 		unprocessed_tp_int_count = 0;
@@ -506,7 +517,13 @@ read_failed:
 	}
 
 	i2c_lock(I2C_PORT_TOUCHPAD, 0);
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_tp));
+
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_soc_tp_int_l)) == 0)
+		task_set_event(TASK_ID_TOUCHPAD, PS2MOUSE_EVT_INTERRUPT);
+	else {
+		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_tp));
+		hook_call_deferred(&touchpad_check_interrupt_data, 10 * MSEC);
+	}
 
 	if (mouse_state == PS2MSTATE_RESET) {
 		return;
