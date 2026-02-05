@@ -1,0 +1,15 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_ATRIARVP_RTK
+	bool "Google Atria Realtek (rtk5915) add-in card for the RVP"
+	help
+	  Build Realtek RTK5915-based add-in card for Google Atria.
+	  This board is for use with the Intel RVP using the MECC 2.1 connector.
+
+module = Atria
+module-str = Atria board-specific code
+source "subsys/logging/Kconfig.template.log_config"
+
+source "Kconfig.zephyr"
