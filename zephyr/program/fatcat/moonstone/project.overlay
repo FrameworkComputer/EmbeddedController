@@ -58,7 +58,7 @@
 
 	spi0_dev0: spi0_dev@0 {
 		reg = <0>;
-		chain-length = <12>;
+		chain-length = <4>;
 		reset-delay = <200>;
 		spi-max-frequency = <6000000>;
 		bits-per-symbol = <8>;
