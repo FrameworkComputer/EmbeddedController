@@ -12,6 +12,7 @@
 #include "fan.dtsi"
 #include "gpio.dtsi"
 #include "i2c.dts"
+#include "imvp.dtsi"
 #include "keyboard.dtsi"
 #include "vci.dtsi"
 #include "../battery.dtsi"
@@ -72,4 +73,8 @@
           mfdctrl = <&kso18_gp01_default &kso20_gp23_default>;
           row-size = <8>;
           col-size = <13>;
+};
+
+&cros_imvp{
+		enable-gpios = <MCHP_GPIO_DECODE_226 GPIO_ACTIVE_HIGH>;
 };

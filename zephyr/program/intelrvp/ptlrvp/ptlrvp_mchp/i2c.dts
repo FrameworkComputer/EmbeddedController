@@ -8,6 +8,12 @@ charger_i2c: &i2c_smb_0 {
 	pinctrl-0 = <&i2c00_scl_gpio004 &i2c00_sda_gpio003>;
 	pinctrl-names = "default";
 	port-sel = <0>;
+
+	cros_imvp: richtek-imvp@20 {
+		compatible = "richtek,rt3645";
+		status = "okay";
+		reg = <0x20>;
+	};
 };
 
 /* typec-aic1-power */
