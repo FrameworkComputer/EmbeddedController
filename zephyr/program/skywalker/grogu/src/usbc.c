@@ -7,6 +7,7 @@
 
 #include "cros_board_info.h"
 #include "cros_cbi.h"
+#include "usbc/pdc_power_mgmt.h"
 #include "usbc/pdc_runtime_port_config.h"
 
 #include <stdint.h>
@@ -66,4 +67,9 @@ int board_get_pdc_for_port(int port, const struct device **dev)
 
 	*dev = NULL;
 	return -ENOENT;
+}
+
+enum usb_typec_current_t pdc_power_mgmt_get_default_current_limit(int port)
+{
+	return TC_CURRENT_3_0A;
 }
