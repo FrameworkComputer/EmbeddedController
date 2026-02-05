@@ -164,7 +164,6 @@ register_ish_project(
         here / "dsp_comms.conf",
         here / "kinmen-ish" / "project.conf",
     ],
-    modules=["ec", "cmsis", "cmsis_6", "hal_intel_public", "pigweed", "nanopb"],
     inherited_from=["fatcat"],
 )
 
@@ -178,7 +177,6 @@ register_ish_project(
         here / "dsp_comms.conf",
         here / "ruby-ish" / "project.conf",
     ],
-    modules=["ec", "cmsis", "cmsis_6", "hal_intel_public", "pigweed", "nanopb"],
     inherited_from=["fatcat"],
 )
 
@@ -192,7 +190,6 @@ register_ish_project(
         here / "dsp_comms.conf",
         here / "moonstone-ish" / "project.conf",
     ],
-    modules=["ec", "cmsis", "cmsis_6", "hal_intel_public", "pigweed", "nanopb"],
     inherited_from=["fatcat"],
 )
 
