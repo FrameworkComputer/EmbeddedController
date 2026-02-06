@@ -519,12 +519,40 @@ class Renode(Platform):
 
         return False
 
-    def _skip_test_helipilot(self, test_config: TestConfig) -> bool:
+    def _skip_test_helipilot(
+        self, test_config: TestConfig, zephyr: bool
+    ) -> bool:
         if test_config.test_name in [
             "exception",  # TODO(b/384730599)
             "otp_key",  # TODO(b/385216796)
             "ram_lock",  # TODO(b/385216805)
             "rtc_npcx9",  # TODO(b/385217282)
+        ]:
+            return True
+
+        if zephyr and test_config.test_name in [
+            "abort",  # TODO(b/485668212)
+            "flash_physical",  # TODO(b/448407366)
+            "flash_write_protect",  # TODO(b/485668014)
+            "fp_transport",  # TODO(b/485668240)
+            "ftrapv",  # TODO(b/485669808)
+            "malloc",  # TODO(b/485669070)
+            "null_pointer",  # TODO(b/485624833)
+            "panic",  # TODO(b/485668836)
+            "panic_data",  # TODO(b/485667679)
+            "rollback_entropy",  # TODO(b/485670085)
+            "sbrk",  # TODO(b/485669288)
+            "tpm_seed_clear",  # TODO(b/485669018)
+            "utils",  # TODO(b/485624824)
+            "zephyr_kernel_poll",  # TODO(b/485639561)
+        ]:
+            return True
+
+        if zephyr and test_config.config_name in [
+            "system_is_locked_wp_on",  # TODO(b/485669841)
+            "system_is_locked_wp_on_helipilot_v2.0.24337",  # TODO(b/485669841)
+            "system_is_locked_wp_on_helipilot_v2.0.27609",  # TODO(b/485669841)
+            "system_is_locked_wp_on_buccaneer_v2.0.26328",  # TODO(b/485669841)
         ]:
             return True
 
@@ -587,7 +615,7 @@ class Renode(Platform):
             return self._skip_test_chudow(test_config)
 
         if board_config.name in [HELIPILOT, BUCCANEER, GWENDOLIN]:
-            return self._skip_test_helipilot(test_config)
+            return self._skip_test_helipilot(test_config, zephyr)
 
         if board_config.name == SANOK and zephyr:
             return self._skip_test_sanok(test_config)
@@ -696,7 +724,11 @@ class AllTests:
                 apptype_to_use=ApplicationType.PRODUCTION,
             ),
             TestConfig(test_name="abort"),
-            TestConfig(test_name="aes"),
+            TestConfig(
+                test_name="aes",
+                # TODO(b/485954886): Runs slowly on helipilot Renode.
+                timeout_secs=150,
+            ),
             # Cryptoc is not supported with Zephyr.
             # TODO(b/333039464) A new test for OPENSSL_cleanse has to be implemented.
             TestConfig(test_name="always_memset", skip_for_zephyr=True),
@@ -718,7 +750,11 @@ class AllTests:
                 # TODO(b/365628799): Need to port to Zephyr.
                 skip_for_zephyr=True,
             ),
-            TestConfig(test_name="benchmark", timeout_secs=120),
+            TestConfig(
+                test_name="benchmark",
+                # TODO(b/485954886): Runs slowly on helipilot Renode.
+                timeout_secs=150,
+            ),
             TestConfig(test_name="boringssl_crypto"),
             # TODO(b/468409589): Add RISC-V FPU test.
             TestConfig(
@@ -779,7 +815,11 @@ class AllTests:
             ),
             # Handled by Zephyr - cpp.main.* tests
             TestConfig(test_name="global_initialization", skip_for_zephyr=True),
-            TestConfig(test_name="libcxx"),
+            TestConfig(
+                test_name="libcxx",
+                # TODO(b/485954886): Runs slowly on helipilot Renode.
+                timeout_secs=120,
+            ),
             TestConfig(test_name="malloc", imagetype_to_use=ImageType.RO),
             # TODO(b/363277530): Add Zephyr MPU tests.
             TestConfig(
