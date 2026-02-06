@@ -1411,7 +1411,7 @@ def erase_rw(image_path: str):
 
 
 def readline(
-    executor: ThreadPoolExecutor, file: BinaryIO, timeout_secs: int
+    executor: ThreadPoolExecutor, file: BinaryIO, timeout_secs: float
 ) -> Optional[bytes]:
     """Read a line with timeout."""
     future = executor.submit(file.readline)
@@ -1422,15 +1422,21 @@ def readline(
 
 
 def readlines_until_timeout(
-    executor, file: BinaryIO, timeout_secs: int
+    executor, file: BinaryIO, timeout_secs: float
 ) -> list[bytes]:
     """Continuously read lines for timeout_secs."""
     lines: list[bytes] = []
+    end_time = time.time() + timeout_secs
+    remaining = timeout_secs
     while True:
-        line = readline(executor, file, timeout_secs)
+        if remaining <= 0:
+            return lines
+
+        line = readline(executor, file, remaining)
         if not line:
             return lines
         lines.append(line)
+        remaining = end_time - time.time()
 
 
 def process_console_output_line(line: bytes, test: TestConfig):
