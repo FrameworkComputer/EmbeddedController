@@ -431,7 +431,7 @@ cmd_lcov=lcov --rc branch_coverage=1 --gcov-tool \
 	--exclude '*/ec/test/*' --exclude '*/ec/include/tests/*' \
 	--exclude '*/ec/common/mock/*' \
 	--ignore-errors unused,unused,inconsistent,inconsistent \
-	--ignore-errors negative,negative,range,range,source,source
+	--ignore-errors negative,negative
 cmd_lcov-initial=lcov --rc branch_coverage=1 --gcov-tool \
 	$(GCOV) -q -o $@ -c -d build/coverage/initial-$* \
 	-i -t $* --exclude '*/ec/test/*' --exclude '*/ec/include/tests/*' \
