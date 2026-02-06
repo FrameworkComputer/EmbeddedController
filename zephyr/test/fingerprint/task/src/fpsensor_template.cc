@@ -850,6 +850,118 @@ ZTEST_USER(fpsensor_template, test_fp_template_load_template_invalid_tag)
 	zassert_equal(test_info_buffer->template_info.template_valid, 0);
 }
 
+static const struct enc_buffer zero_enc_buffer = {};
+
+ZTEST_USER(fpsensor_template, test_fp_template_cleans_buffer)
+{
+	uint8_t params_buffer[FP_TEMPLATE_PARAMS_BUFFER_SIZE];
+	struct ec_params_fp_template *params =
+		(struct ec_params_fp_template *)params_buffer;
+
+	const size_t data_size =
+		FP_TEMPLATE_PARAMS_BUFFER_SIZE - sizeof(*params);
+	uint8_t *data = params_buffer + sizeof(*params);
+	size_t offset = 0;
+
+	memcpy(encrypted_template, &expected_enc_info,
+	       sizeof(struct ec_fp_template_encryption_metadata));
+	memcpy(encrypted_template +
+		       sizeof(struct ec_fp_template_encryption_metadata),
+	       example_template_encrypted,
+	       CONFIG_FP_ALGORITHM_TEMPLATE_SIZE +
+		       FP_POSITIVE_MATCH_SALT_BYTES);
+
+	while (offset < FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE) {
+		params->offset = offset;
+		params->size =
+			MIN(data_size,
+			    FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE - offset);
+		memcpy(data, encrypted_template + offset, params->size);
+		offset += params->size;
+
+		if (offset == FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE) {
+			params->size |= FP_TEMPLATE_COMMIT;
+		}
+
+		zassert_ok(ec_cmd_fp_template(NULL, params,
+					      FP_TEMPLATE_PARAMS_BUFFER_SIZE));
+
+		if (!(params->size & FP_TEMPLATE_COMMIT)) {
+			/* Confirm that the buffer is NOT clean before commit.
+			 */
+			zassert_true(
+				memcmp(&fp_enc_buffer, &zero_enc_buffer,
+				       sizeof(fp_enc_buffer)) != 0,
+				"fp_enc_buffer should not be clean before commit.");
+		}
+	}
+
+	/* Confirm that the buffer IS clean after commit. */
+	zassert_mem_equal(&fp_enc_buffer, &zero_enc_buffer,
+			  sizeof(fp_enc_buffer),
+			  "fp_enc_buffer should be clean after commit.");
+}
+
+ZTEST_USER(fpsensor_template, test_fp_template_cleans_buffer_on_failure)
+{
+	uint8_t params_buffer[FP_TEMPLATE_PARAMS_BUFFER_SIZE];
+	struct ec_params_fp_template *params =
+		(struct ec_params_fp_template *)params_buffer;
+
+	const size_t data_size =
+		FP_TEMPLATE_PARAMS_BUFFER_SIZE - sizeof(*params);
+	uint8_t *data = params_buffer + sizeof(*params);
+	size_t offset = 0;
+
+	struct ec_fp_template_encryption_metadata enc_info_with_invalid_tag =
+		expected_enc_info;
+
+	/* Corrupt the tag. We expect that the template will be rejected. */
+	enc_info_with_invalid_tag.tag[0] = expected_enc_info.tag[0] ^ 0xFF;
+
+	memcpy(encrypted_template, &enc_info_with_invalid_tag,
+	       sizeof(struct ec_fp_template_encryption_metadata));
+	memcpy(encrypted_template +
+		       sizeof(struct ec_fp_template_encryption_metadata),
+	       example_template_encrypted,
+	       CONFIG_FP_ALGORITHM_TEMPLATE_SIZE +
+		       FP_POSITIVE_MATCH_SALT_BYTES);
+
+	while (offset < FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE) {
+		params->offset = offset;
+		params->size =
+			MIN(data_size,
+			    FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE - offset);
+		memcpy(data, encrypted_template + offset, params->size);
+		offset += params->size;
+
+		if (offset != FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE) {
+			/* Encrypted template is copied correctly. */
+			zassert_ok(ec_cmd_fp_template(
+				NULL, params, FP_TEMPLATE_PARAMS_BUFFER_SIZE));
+
+			/* Confirm that the buffer is NOT clean before commit.
+			 */
+			zassert_true(
+				memcmp(&fp_enc_buffer, &zero_enc_buffer,
+				       sizeof(fp_enc_buffer)) != 0,
+				"fp_enc_buffer should not be clean before commit.");
+		} else {
+			params->size |= FP_TEMPLATE_COMMIT;
+			/* Expect decryption failure (EC_RES_UNAVAILABLE). */
+			zassert_equal(EC_RES_UNAVAILABLE,
+				      ec_cmd_fp_template(
+					      NULL, params,
+					      FP_TEMPLATE_PARAMS_BUFFER_SIZE));
+		}
+	}
+
+	/* Confirm that the buffer IS clean even after failed commit. */
+	zassert_mem_equal(
+		&fp_enc_buffer, &zero_enc_buffer, sizeof(fp_enc_buffer),
+		"fp_enc_buffer should be clean even after failed commit.");
+}
+
 static void *fpsensor_setup(void)
 {
 	struct ec_params_fp_seed fp_seed_params = {
