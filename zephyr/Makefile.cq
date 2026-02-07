@@ -195,7 +195,7 @@ clobber:
 	@# Check if CCACHE variable is non-empty
 	@if [ -n "$(CCACHE)" ]; then \
 		echo "Clearing ccache..."; \
-		$(CCACHE) -c; \
+		$(CCACHE) -C; \
 	else \
 		echo "ccache not found, skipping ccache clear."; \
 	fi

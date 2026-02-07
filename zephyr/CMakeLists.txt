@@ -164,7 +164,6 @@ cros_ec_library_include_directories(include)
 if (DEFINED CONFIG_PLATFORM_EC)
   cros_ec_library_include_directories(
     "${PLATFORM_EC}/zephyr/shim/include"
-    "${PLATFORM_EC}/fuzz"
     "${PLATFORM_EC}/test"
     "${PLATFORM_EC}"
     "${PLATFORM_EC}/include"

@@ -439,11 +439,7 @@ enum ec_error_list {
  * Mark functions that collide with stdlib so they can be hidden when linking
  * against libraries that require stdlib.
  */
-#ifdef TEST_FUZZ
-#define __stdlib_compat __attribute__((visibility("hidden")))
-#else /* TEST_FUZZ */
 #define __stdlib_compat
-#endif /* TEST_FUZZ */
 
 /* find the most significant bit. Not defined in n == 0. */
 #define __fls(n) (31 - __builtin_clz(n))

@@ -73,13 +73,13 @@ void panic_data_ccprint(const struct panic_data *pdata);
  */
 #if !(defined(CONFIG_ZEPHYR))
 #ifdef CONFIG_DEBUG_ASSERT_BRIEF
-#if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
+#if !(defined(CONFIG_ZTEST))
 __noreturn
 #endif
 	void
 	panic_assert_fail(const char *fname, int linenum);
 #else
-#if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
+#if !(defined(CONFIG_ZTEST))
 __noreturn
 #endif
 	void
@@ -92,7 +92,7 @@ __noreturn
  *
  * @param msg	Panic message
  */
-#if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
+#if !(defined(CONFIG_ZTEST))
 __noreturn
 #endif
 	void
@@ -103,7 +103,7 @@ __noreturn
 /**
  * Display a default message and reset
  */
-#if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
+#if !(defined(CONFIG_ZTEST))
 __noreturn
 #endif
 	void
@@ -114,7 +114,7 @@ __noreturn
  * Store a panic log and halt the system for a software-related reason, such as
  * stack overflow or assertion failure.
  */
-#if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
+#if !(defined(CONFIG_ZTEST))
 __noreturn
 #endif
 	void

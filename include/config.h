@@ -391,9 +391,6 @@
 /* Define which ALS sensor is used for dimming the lightbar when dark */
 #undef CONFIG_ALS_LIGHTBAR_DIMMING
 
-/* Link against third_party/cryptoc. */
-#undef CONFIG_LIBCRYPTOC
-
 /* Support AP hang detection host command and state machine */
 #undef CONFIG_AP_HANG_DETECT
 
@@ -4465,7 +4462,6 @@
  *
  * This is defined in the following two files:
  * test/{testname}.mocklist
- * fuzz/{fuzzname}.mocklist
  */
 #undef CONFIG_TEST_MOCK_LIST
 
@@ -7127,11 +7123,10 @@
 /*****************************************************************************/
 
 /*
- * Apply fuzzer and test config overrides last, since fuzzers and tests need to
+ * Apply test config overrides last, since tests need to
  * override some of the config flags in non-standard ways to mock only parts of
  * the system.
  */
-#include "fuzz_config.h"
 #ifdef TEST_BUILD
 #include "test_config.h"
 #endif

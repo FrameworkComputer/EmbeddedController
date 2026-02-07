@@ -1,10 +1,10 @@
 # Common Mocks
 
-This directory holds mock implementations for use in fuzzers and tests.
+This directory holds mock implementations for use in tests.
 
 Each mock is given some friendly build name, like ROLLBACK or FP_SENSOR. This
 name is defined in [common/mock/build.mk](build.mk) and referenced from unit
-tests and fuzzers' `.mocklist` file.
+tests' `.mocklist` file.
 
 ## Creating a new mock
 
@@ -16,7 +16,7 @@ tests and fuzzers' `.mocklist` file.
 *   Add a new entry in [common/mock/build.mk](build.mk) that is conditioned on
     your mock's name.
 
-If a unit test or fuzzer requests this mock, the build system will set the
+If a unit test requests this mock, the build system will set the
 variable `HAS_MOCK_<BUILD_NAME>` to `y` at build time. This variable is used to
 conditionally include the mock source in [common/mock/build.mk](build.mk).
 
@@ -29,9 +29,9 @@ mock-$(HAS_MOCK_ROLLBACK) += mock/rollback_mock.o
 
 ## Using a mock
 
-Unit tests and fuzzers can request a particular mock by adding an entry to their
+Unit tests can request a particular mock by adding an entry to their
 `.mocklist` file. The mocklist file is similar to a `.tasklist` file, where it
-is named according to the test/fuzz's name followed by `.mocklist`, like
+is named according to the test's name followed by `.mocklist`, like
 `fpsensor.mocklist`. The mocklist file is optional, so you may need to create
 one.
 
@@ -79,9 +79,7 @@ which resides in [include/mock](/include/mock).
 
 *   When creating mock controls, consider placing all your mock parameters in
     one externally facing struct, like in
-    [fpsensor_mock.h](/include/mock/fpsensor_mock.h). The primary reason for
-    this is to allow the mock to be easily used by a fuzzer (write random bytes
-    into the struct with memcpy).
+    [fpsensor_mock.h](/include/mock/fpsensor_mock.h).
 *   When following the above pattern, please provide a macro for resetting
     default values for this struct, like in
     [fpsensor_mock.h](/include/mock/fpsensor_mock.h). This allows unit tests

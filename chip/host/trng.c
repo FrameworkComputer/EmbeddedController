@@ -6,7 +6,7 @@
  *
  * Although a TRNG is designed to be anything but predictable,
  * this implementation strives to be as predictable and defined
- * as possible to allow reproducing unit tests and fuzzer crashes.
+ * as possible to allow reproducing unit tests.
  */
 
 #ifndef TEST_BUILD

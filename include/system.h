@@ -394,7 +394,7 @@ const char *system_get_build_info(void);
  *
  * @param flags		Reset flags; see SYSTEM_RESET_* above.
  */
-#if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
+#if !(defined(CONFIG_ZTEST))
 __noreturn
 #endif
 	void

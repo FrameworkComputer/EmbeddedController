@@ -5,7 +5,7 @@
 
 /*
  * Filter mocklists for makefile relevant items.
- * A mocklist is the .mocklist file in test/ and fuzz/ directories.
+ * A mocklist is the .mocklist file in test/ directory
  * See common/mock/README.md for more information.
  */
 

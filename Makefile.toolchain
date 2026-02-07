@@ -19,7 +19,7 @@ $(error ERROR: GNU make version $(min_make_version) or higher required.)
 endif
 
 # Default to clang if TEST_ASAN is enabled
-ifneq ($(TEST_FUZZ)$(TEST_ASAN)$(TEST_MSAN)$(TEST_UBSAN),)
+ifneq ($(TEST_ASAN)$(TEST_MSAN)$(TEST_UBSAN),)
 CROSS_COMPILE_CC_NAME=clang
 endif
 
@@ -33,32 +33,7 @@ USE_BUILTIN_STDLIB:=1
 # When set to 0, link with the C compiler.
 USE_CXX_COMPILER:=0
 
-# Boards that compile with clang by default.
-# We can't use a config for this since the config generation uses the compiler.
-CLANG_BOARDS:= \
-	bloonchipper \
-	bloonchipper-druid \
-	buccaneer \
-	dartmonkey \
-	gwendolin \
-	hatch_fp \
-	helipilot \
-	nami_fp \
-	nocturne_fp \
-	nucleo-dartmonkey \
-	nucleo-h743zi \
-	nucleo-f412zg \
-	rosalia \
-
-ifeq ($(filter $(BOARD), $(CLANG_BOARDS)), $(BOARD))
-CROSS_COMPILE_CC_NAME=clang
-USE_BUILTIN_STDLIB:=0
-USE_CXX_COMPILER:=1
-# b/144957935: Generate exception on signed integer overflow.
-COMMON_WARN-clang+=-ftrapv
-else
 CROSS_COMPILE_CC_NAME?=gcc
-endif
 
 ifeq ($(BOARD), host)
 USE_BUILTIN_STDLIB:=0
@@ -161,9 +136,7 @@ CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD=$(EMPTY) \
             -DTEST_$(PROJECT)=$(EMPTY) -DTEST_$(UC_PROJECT)=$(EMPTY) \
             $(if $(TEST_ASAN),-fsanitize=address) \
             $(if $(TEST_MSAN),-fsanitize=memory) \
-            $(if $(TEST_UBSAN),$(UBSAN_FLAGS)) \
-            $(if $(TEST_FUZZ),-fsanitize=fuzzer-no-link -fno-PIE \
-		-DTEST_FUZZ=$(EMPTY))
+            $(if $(TEST_UBSAN),$(UBSAN_FLAGS))
 CFLAGS_COVERAGE=$(if $(TEST_COVERAGE),--coverage \
 				      -DTEST_COVERAGE=$(EMPTY),)
 CFLAGS_HOSTTEST=$(if $(TEST_HOSTTEST),-DTEST_HOSTTEST=$(EMPTY),) -Iinclude/driver
@@ -176,8 +149,7 @@ CFLAGS_DEFINE=-DOUTDIR=$(out)/$(BLD) -DCHIP=$(CHIP) -DBOARD_TASKFILE=$(_tsk_lst_
               -DCHIP_VARIANT_$(UC_CHIP_VARIANT)=$(EMPTY) \
 	      -DCHIP_FAMILY_$(UC_CHIP_FAMILY)=$(EMPTY) \
 	      -DFINAL_OUTDIR=$(out) \
-	      -DPROTOBUF_MIN_PROTOC_VERSION=0 \
-              $(CFLAGS_BASEBOARD)
+	      -DPROTOBUF_MIN_PROTOC_VERSION=0
 CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE) $(CFLAGS_TEST) \
 	 $(EXTRA_CFLAGS) $(CFLAGS_COVERAGE) $(CFLAGS_HOSTTEST) $(LATE_CFLAGS_DEFINE) \
 	-DSECTION_IS_$(BLD)=$(EMPTY) -DSECTION=$(BLD) $(CPPFLAGS_$(BLD))
@@ -241,16 +213,6 @@ LIBFTDIUSB_BUILD_LDLIBS:=$(shell $(BUILD_PKG_CONFIG) --libs   lib${LIBFTDI_NAME}
 LIBEC_HOST_CFLAGS:=$(shell $(HOST_PKG_CONFIG) --cflags libec)
 LIBEC_HOST_LDLIBS:=$(shell $(HOST_PKG_CONFIG) --libs libec)
 
-ifeq ($(TEST_FUZZ),y)
-LIBPROTOBUF_CFLAGS:=$(shell $(PKG_CONFIG) --cflags protobuf)
-LIBPROTOBUF_LDLIBS:=$(shell $(PKG_CONFIG) --libs   protobuf)
-
-LIBPROTOBUF_MUTATOR_CFLAGS:=${LIBPROTOBUF_CFLAGS} \
-	$(shell $(PKG_CONFIG) --cflags libprotobuf-mutator)
-LIBPROTOBUF_MUTATOR_LDLIBS:=$(shell $(PKG_CONFIG) --libs libprotobuf-mutator) \
-	${LIBPROTOBUF_LDLIBS}
-endif
-
 BUILD_CFLAGS=$(LIBFTDIUSB_BUILD_CFLAGS) $(BUILD_CPPFLAGS) -O3 $(CFLAGS_DEBUG)
 BUILD_CFLAGS+=$(BUILDCC_WARN)
 BUILD_CFLAGS+=-DCHROMIUM_EC=$(EMPTY)
@@ -286,8 +248,7 @@ HOST_TEST_LDFLAGS=-Wl,-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
 		  $(if $(TEST_COVERAGE), --coverage,) \
 		  $(if $(TEST_ASAN), -fsanitize=address) \
 		  $(if $(TEST_MSAN), -fsanitize=memory) \
-		  $(if $(TEST_UBSAN), ${UBSAN_FLAGS}) \
-		  $(if $(TEST_FUZZ), -fsanitize=fuzzer)
+		  $(if $(TEST_UBSAN), ${UBSAN_FLAGS})
 
 # utility function to provide overridable defaults
 # $1: name of variable to set

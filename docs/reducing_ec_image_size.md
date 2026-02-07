@@ -51,38 +51,6 @@ minimuffin:    284
 zinger    :    284
 ```
 
-### Comparing cros-ec image sizes
-
-The cros-ec makefile provides two make targets for helping track the impact of
-code changes.
-
-`make savesizes` saves the EC footprint information for all boards, providing
-the baseline for comparison. `make newsizes` compares the sizes of the current
-build against the EC footprint information saved by most recent invocation of
-`make savesizes`.
-
-General workflow:
-
-1.  Checkout branch you need to compare against. For example `repo start
-    check-ec-size -r cros/main` or `repo start check-ec-size -r <hash>`.
-1.  Run `make buildall -j`.
-1.  Run `make savesizes`.
-1.  Apply your code change (e.g. change the local branch, cherry-pick your
-    changes, or directly edit source files).
-1.  Run `make buildall -j` again.
-1.  Run `make newsizes` to generate report of size changes.
-
-Example report from `make newsizes` shown below:
-
-```
-$ make newsizes
-build/burnet/RO/space_free_flash grew by 576 bytes: (488 to 1064)
-build/burnet/RW/space_free_flash grew by 552 bytes: (1324 to 1876)
-build/cerise/RO/space_free_flash grew by 512 bytes: (276 to 788)
-build/cerise/RW/space_free_flash grew by 548 bytes: (7076 to 7624)
-    ...
-```
-
 ### Checking a single zephyr-ec build
 
 By default, `zmake` will display the flash and SRAM usage of the board.

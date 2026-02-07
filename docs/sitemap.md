@@ -79,7 +79,6 @@
 *   [Application Processor to EC communication](./ap-ec-comm.md)
 *   [Reducing EC Image Size](./reducing_ec_image_size.md)
 *   [Code Reviews](./code_reviews.md)
-*   [IDE Support](./ide-support.md)
 *   [Parallel Uprevs for ebuilds](./pupr.md)
 *   [ECTool Rust Porting Guide](./ectool_rust_porting.md)
 

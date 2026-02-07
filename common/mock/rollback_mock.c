@@ -30,7 +30,7 @@ static const uint8_t fake_rollback_secret[] = {
 
 BUILD_ASSERT(sizeof(fake_rollback_secret) == CONFIG_ROLLBACK_SECRET_SIZE);
 
-/* Mock the rollback for unit or fuzz tests. */
+/* Mock the rollback for unit tests. */
 enum ec_error_list rollback_get_secret(uint8_t *secret)
 {
 	if (mock_ctrl_rollback.get_secret_fail)

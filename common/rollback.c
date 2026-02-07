@@ -30,9 +30,6 @@
 #ifdef CONFIG_BORINGSSL_CRYPTO
 #include "openssl/mem.h"
 #define secure_clear(buffer, size) OPENSSL_cleanse(buffer, size)
-#elif defined(CONFIG_LIBCRYPTOC)
-#include "cryptoc/util.h"
-#define secure_clear(buffer, size) always_memset(buffer, 0, size)
 #else
 /* Copied from OpenSSL crypto/mem_clr.c
  * Function call through volatile pointer should survive through optimization.

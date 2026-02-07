@@ -131,7 +131,6 @@ if(CONFIG_PIGWEED_LOG_TOKENIZED_LIB)
       pw_log_zephyr_tokenized.cc
     PUBLIC_INCLUDES
       ${PLATFORM_EC}/include
-      ${PLATFORM_EC}/fuzz/
       ${PLATFORM_EC}/zephyr/shim/chip/${CHIP}/include
       ${PLATFORM_EC}/zephyr/shim/include
     PUBLIC_DEPS

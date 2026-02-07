@@ -183,9 +183,6 @@ void after_test(void);
 /* Test entry point */
 void run_test(int argc, const char **argv);
 
-/* Test entry point for fuzzing tests. */
-int test_fuzz_one_input(const uint8_t *data, unsigned int size);
-
 /* Resets test error count */
 void test_reset(void);
 

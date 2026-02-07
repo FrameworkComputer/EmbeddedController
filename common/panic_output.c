@@ -143,7 +143,7 @@ void panic_reboot(void)
 #if !(defined(CONFIG_ZEPHYR))
 /* Complete the processing of a panic, after the initial message is shown */
 test_mockable_static
-#if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
+#if !(defined(CONFIG_ZTEST))
 	__noreturn
 #endif
 	void

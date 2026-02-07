@@ -44,7 +44,7 @@ const struct rollback_data fake_latest_rollback_real = {
 	.rollback_min_version = 1,
 };
 
-/* Mock the rollback for unit or fuzz tests. */
+/* Mock the rollback for unit tests. */
 int get_latest_rollback(struct rollback_data *data)
 {
 	switch (mock_ctrl_latest_rollback.output_type) {

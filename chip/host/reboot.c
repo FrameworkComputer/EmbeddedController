@@ -14,13 +14,6 @@
 
 #include <unistd.h>
 
-#ifdef TEST_FUZZ
-/* reboot breaks fuzzing, let's just not do it. */
-void emulator_reboot(void)
-{
-	ccprints("Emulator would reboot here. Fuzzing: doing nothing.");
-}
-#else /* !TEST_FUZZ */
 __noreturn void emulator_reboot(void)
 {
 	char *argv[] = { strdup(__get_prog_name()), NULL };
@@ -29,4 +22,3 @@ __noreturn void emulator_reboot(void)
 	while (1)
 		;
 }
-#endif /* !TEST_FUZZ */

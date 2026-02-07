@@ -15,5 +15,4 @@ target_sources(testbinary PRIVATE
 target_include_directories(testbinary PRIVATE
   include
   ../../../include
-  ../../../fuzz
 )
