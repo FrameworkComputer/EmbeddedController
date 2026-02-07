@@ -974,11 +974,10 @@ class AllTests:
                 zephyr_name="cpp.main.newlib",
                 test_name="zephyr_cpp_newlib",
             ),
-            # TODO(b/380491850): Test hangs.
-            # TestConfig(
-            #    zephyr_name="cpp.main.cpp20",
-            #    test_name="zephyr_cpp_std20",
-            # ),
+            TestConfig(
+                zephyr_name="cpp.main.cpp20",
+                test_name="zephyr_cpp_std20",
+            ),
             TestConfig(
                 zephyr_name="drivers.entropy",
                 test_name="zephyr_drivers_entropy",
