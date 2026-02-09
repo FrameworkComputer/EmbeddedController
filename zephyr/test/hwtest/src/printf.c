@@ -537,8 +537,8 @@ ZTEST(printf, test_snprintf_hex_buffer)
 	char str_buf[5];
 	int rv;
 
-	__ASSERT(ARRAY_SIZE(buf_ff) == ARRAY_SIZE(str_bufs),
-		 "Invalid test arrays sizes");
+	BUILD_ASSERT(ARRAY_SIZE(buf_ff) == ARRAY_SIZE(str_buf),
+		     "Invalid test arrays sizes");
 
 	/* Success cases. */
 
