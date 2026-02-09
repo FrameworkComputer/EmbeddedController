@@ -246,9 +246,9 @@ enum power_state power_handle_state(enum power_state state)
 		}
 
 		k_msleep(10);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 1);
-		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_me_en_l),
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_me_en_l),
 			(me_change & ME_UNLOCK) ? 0 : 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 1);
 
 		if (extpower_is_present())
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ac_present_cpu), 1);
@@ -335,7 +335,7 @@ enum power_state power_handle_state(enum power_state state)
 
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwrok_ls), 1);
 		k_msleep(10);
-		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_me_en_l), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_me_en_l), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrok_ls), 1);
 
 		/* Call hooks now that rails are up */
@@ -436,7 +436,7 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_ssd_pwr_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_amp_pwr_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_ts_pwr_en), 0);
-		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_me_en_l), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_me_en_l), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwrok_ls), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrok_ls), 0);
 
