@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vif:VIF xmlns:opt="http://usb.org/VendorInfoFileOptionalContent.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:vif="http://usb.org/VendorInfoFile.xsd">
-  <vif:VIF_Specification>3.34</vif:VIF_Specification>
+  <vif:VIF_Specification>3.36</vif:VIF_Specification>
   <vif:VIF_App>
     <vif:Vendor>USB-IF</vif:Vendor>
     <vif:Name>VIF Editor</vif:Name>
-    <vif:Version>3.12.1.0</vif:Version>
+    <vif:Version>3.14.0.0</vif:Version>
   </vif:VIF_App>
-  <vif:Vendor_Name>Google</vif:Vendor_Name>
-  <vif:Model_Part_Number>Moonstone</vif:Model_Part_Number>
+  <vif:Vendor_Name>TI</vif:Vendor_Name>
+  <vif:Model_Part_Number>TPS6699x</vif:Model_Part_Number>
   <vif:Product_Revision>1</vif:Product_Revision>
   <vif:TID>0</vif:TID>
   <vif:VIF_Product_Type value="0">Port Product</vif:VIF_Product_Type>
-  <vif:Certification_Type value="2">Silicon</vif:Certification_Type>
+  <vif:Certification_Type value="0">End Product</vif:Certification_Type>
   <vif:Product>
     <!--Product Level Content:-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
@@ -68,7 +68,7 @@
     <vif:PD_Spec_Revision_Major value="3">3</vif:PD_Spec_Revision_Major>
     <vif:PD_Spec_Revision_Minor value="2">2</vif:PD_Spec_Revision_Minor>
     <vif:PD_Spec_Version_Major value="1">1</vif:PD_Spec_Version_Major>
-    <vif:PD_Spec_Version_Minor value="0">0</vif:PD_Spec_Version_Minor>
+    <vif:PD_Spec_Version_Minor value="1">1</vif:PD_Spec_Version_Minor>
     <vif:PD_Specification_Revision value="2">Revision 3</vif:PD_Specification_Revision>
     <vif:SOP_Capable value="true" />
     <vif:SOP_P_Capable value="true" />
@@ -77,7 +77,7 @@
     <vif:SOP_PP_Debug_Capable value="false" />
     <vif:Manufacturer_Info_Supported_Port value="true" />
     <vif:Manufacturer_Info_VID_Port value="6353">18D1</vif:Manufacturer_Info_VID_Port>
-    <vif:Manufacturer_Info_PID_Port value="20581">506C</vif:Manufacturer_Info_PID_Port>
+    <vif:Manufacturer_Info_PID_Port value="20593">5071</vif:Manufacturer_Info_PID_Port>
     <vif:Chunking_Implemented_SOP value="true" />
     <vif:Unchunked_Extended_Messages_Supported value="true" />
     <vif:Security_Msgs_Supported_SOP value="false" />
@@ -104,13 +104,13 @@
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <vif:Type_C_Can_Act_As_Host value="true" />
     <vif:Type_C_Can_Act_As_Device value="false" />
-    <vif:Type_C_Implements_Try_SRC value="true" />
+    <vif:Type_C_Implements_Try_SRC value="false" />
     <vif:Type_C_Implements_Try_SNK value="false" />
-    <vif:Type_C_Supports_Audio_Accessory value="true" />
+    <vif:Type_C_Supports_Audio_Accessory value="false" />
     <vif:Type_C_Is_VCONN_Powered_Accessory value="false" />
-    <vif:Type_C_Is_Debug_Target_SRC value="true" />
-    <vif:Type_C_Is_Debug_Target_SNK value="true" />
-    <vif:RP_Value value="2">3A</vif:RP_Value>
+    <vif:Type_C_Is_Debug_Target_SRC value="false" />
+    <vif:Type_C_Is_Debug_Target_SNK value="false" />
+    <vif:RP_Value value="1">1.5A</vif:RP_Value>
     <vif:Type_C_Port_On_Hub value="false" />
     <vif:Type_C_Power_Source value="2">Both</vif:Type_C_Power_Source>
     <vif:Type_C_Sources_VCONN value="true" />
@@ -137,16 +137,14 @@
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;Product Power-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
-    <vif:Product_Total_Source_Power_mW value="22500">22500 mW</vif:Product_Total_Source_Power_mW>
-    <vif:Port_Source_Power_Type value="1">Shared</vif:Port_Source_Power_Type>
-    <vif:Port_Source_Power_Gang>1</vif:Port_Source_Power_Gang>
-    <vif:Port_Source_Power_Gang_Max_Power value="22500">22500 mW</vif:Port_Source_Power_Gang_Max_Power>
+    <vif:Product_Total_Source_Power_mW value="15000">15000 mW</vif:Product_Total_Source_Power_mW>
+    <vif:Port_Source_Power_Type value="0">Assured</vif:Port_Source_Power_Type>
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;USB Host-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <vif:Host_Supports_USB_Data value="true" />
     <vif:Host_Speed value="4">USB 3.2 Gen 2x2</vif:Host_Speed>
-    <vif:Host_Contains_Captive_Retimer value="true" />
+    <vif:Host_Contains_Captive_Retimer value="false" />
     <vif:Host_Truncates_DP_For_tDHPResponse value="false" />
     <vif:Host_Is_Embedded value="false" />
     <vif:Host_Suspend_Supported value="true" />
@@ -154,14 +152,15 @@
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;PD Source-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
-    <vif:PD_Power_As_Source value="15000">15000 mW</vif:PD_Power_As_Source>
+    <vif:PD_Power_As_Source value="7500">7500 mW</vif:PD_Power_As_Source>
+    <vif:PD_Power_As_Source_Guaranteed value="7500">7500 mW</vif:PD_Power_As_Source_Guaranteed>
     <vif:EPR_Supported_As_Src value="false" />
     <vif:USB_Suspend_May_Be_Cleared value="true" />
     <vif:Sends_Pings value="false" />
-    <vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="3">3A @ 5V</vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
+    <vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="2">1.5A @ 5V</vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
     <vif:Master_Port value="true" />
-    <vif:Has_Invariant_PDOs value="false" />
-    <vif:Port_Managed_Guaranteed_Type value="0">Managed Capability</vif:Port_Managed_Guaranteed_Type>
+    <vif:Has_Invariant_PDOs value="true" />
+    <vif:Port_Managed_Guaranteed_Type value="1">Guaranteed Capability</vif:Port_Managed_Guaranteed_Type>
     <vif:DPS_Supported value="false" />
     <vif:Num_Src_PDOs value="1">1 Src PDO</vif:Num_Src_PDOs>
     <vif:PD_OC_Protection value="true" />
@@ -175,7 +174,7 @@
         <vif:Src_PDO_Voltage value="100">5000 mV (Factor = 50)</vif:Src_PDO_Voltage>
         <vif:Src_PDO_Max_Current value="300">3000 mA (Factor = 10)</vif:Src_PDO_Max_Current>
         <vif:Src_PD_OCP_OC_Debounce value="10">10 msec</vif:Src_PD_OCP_OC_Debounce>
-        <vif:Src_PD_OCP_OC_Threshold value="345">3450 mA (Factor = 10)</vif:Src_PD_OCP_OC_Threshold>
+        <vif:Src_PD_OCP_OC_Threshold value="325">3250 mA (Factor = 10)</vif:Src_PD_OCP_OC_Threshold>
         <vif:Src_PD_OCP_UV_Debounce value="10">10 msec</vif:Src_PD_OCP_UV_Debounce>
         <vif:Src_PD_OCP_UV_Threshold_Type value="1">Percentage</vif:Src_PD_OCP_UV_Threshold_Type>
         <vif:Src_PD_OCP_UV_Threshold value="70">70 %</vif:Src_PD_OCP_UV_Threshold>
@@ -184,12 +183,12 @@
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;PD Sink-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
-    <vif:PD_Power_As_Sink value="100000">100000 mW</vif:PD_Power_As_Sink>
+    <vif:PD_Power_As_Sink value="65000">65000 mW</vif:PD_Power_As_Sink>
     <vif:EPR_Supported_As_Snk value="false" />
     <vif:No_USB_Suspend_May_Be_Set value="true" />
     <vif:GiveBack_May_Be_Set value="false" />
     <vif:Higher_Capability_Set value="true" />
-    <vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source value="3">3A @ 5V</vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source>
+    <vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source value="0">FR_Swap not supported</vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source>
     <vif:Num_Snk_PDOs value="2">2 Snk PDOs</vif:Num_Snk_PDOs>
     <!--Bundle: SnkPdoList-->
     <vif:SnkPdoList>
@@ -226,7 +225,7 @@
     <vif:Modal_Operation_Supported_SOP value="true" />
     <vif:USB_VID_SOP value="6353">18D1</vif:USB_VID_SOP>
     <vif:PID_SOP value="20593">5071</vif:PID_SOP>
-    <vif:bcdDevice_SOP value="4880">1310</vif:bcdDevice_SOP>
+    <vif:bcdDevice_SOP value="4896">1320</vif:bcdDevice_SOP>
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;SOP Modes-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
@@ -284,7 +283,7 @@
     <vif:Port_Label>1</vif:Port_Label>
     <vif:Connector_Type value="2">Type-C®</vif:Connector_Type>
     <vif:USB4_Supported value="true" />
-    <vif:USB4_Router_Index value="0">0</vif:USB4_Router_Index>
+    <vif:USB4_Router_Index value="1">1</vif:USB4_Router_Index>
     <vif:USB_PD_Support value="true" />
     <vif:PD_Port_Type value="4">DRP</vif:PD_Port_Type>
     <vif:Type_C_State_Machine value="2">DRP</vif:Type_C_State_Machine>
@@ -297,7 +296,7 @@
     <vif:PD_Spec_Revision_Major value="3">3</vif:PD_Spec_Revision_Major>
     <vif:PD_Spec_Revision_Minor value="2">2</vif:PD_Spec_Revision_Minor>
     <vif:PD_Spec_Version_Major value="1">1</vif:PD_Spec_Version_Major>
-    <vif:PD_Spec_Version_Minor value="0">0</vif:PD_Spec_Version_Minor>
+    <vif:PD_Spec_Version_Minor value="1">1</vif:PD_Spec_Version_Minor>
     <vif:PD_Specification_Revision value="2">Revision 3</vif:PD_Specification_Revision>
     <vif:SOP_Capable value="true" />
     <vif:SOP_P_Capable value="true" />
@@ -306,7 +305,7 @@
     <vif:SOP_PP_Debug_Capable value="false" />
     <vif:Manufacturer_Info_Supported_Port value="true" />
     <vif:Manufacturer_Info_VID_Port value="6353">18D1</vif:Manufacturer_Info_VID_Port>
-    <vif:Manufacturer_Info_PID_Port value="20581">506C</vif:Manufacturer_Info_PID_Port>
+    <vif:Manufacturer_Info_PID_Port value="20593">5071</vif:Manufacturer_Info_PID_Port>
     <vif:Chunking_Implemented_SOP value="true" />
     <vif:Unchunked_Extended_Messages_Supported value="true" />
     <vif:Security_Msgs_Supported_SOP value="false" />
@@ -333,13 +332,13 @@
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <vif:Type_C_Can_Act_As_Host value="true" />
     <vif:Type_C_Can_Act_As_Device value="false" />
-    <vif:Type_C_Implements_Try_SRC value="true" />
+    <vif:Type_C_Implements_Try_SRC value="false" />
     <vif:Type_C_Implements_Try_SNK value="false" />
-    <vif:Type_C_Supports_Audio_Accessory value="true" />
+    <vif:Type_C_Supports_Audio_Accessory value="false" />
     <vif:Type_C_Is_VCONN_Powered_Accessory value="false" />
-    <vif:Type_C_Is_Debug_Target_SRC value="true" />
-    <vif:Type_C_Is_Debug_Target_SNK value="true" />
-    <vif:RP_Value value="2">3A</vif:RP_Value>
+    <vif:Type_C_Is_Debug_Target_SRC value="false" />
+    <vif:Type_C_Is_Debug_Target_SNK value="false" />
+    <vif:RP_Value value="1">1.5A</vif:RP_Value>
     <vif:Type_C_Port_On_Hub value="false" />
     <vif:Type_C_Power_Source value="2">Both</vif:Type_C_Power_Source>
     <vif:Type_C_Sources_VCONN value="true" />
@@ -348,7 +347,7 @@
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;USB4® Port-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
-    <vif:USB4_Lane_0_Adapter value="1">1</vif:USB4_Lane_0_Adapter>
+    <vif:USB4_Lane_0_Adapter value="2">2</vif:USB4_Lane_0_Adapter>
     <vif:USB4_Max_Speed value="1">Gen 3 (40Gb)</vif:USB4_Max_Speed>
     <vif:USB4_DFP_Supported value="true" />
     <vif:USB4_UFP_Supported value="false" />
@@ -366,16 +365,14 @@
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;Product Power-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
-    <vif:Product_Total_Source_Power_mW value="22500">22500 mW</vif:Product_Total_Source_Power_mW>
-    <vif:Port_Source_Power_Type value="1">Shared</vif:Port_Source_Power_Type>
-    <vif:Port_Source_Power_Gang>1</vif:Port_Source_Power_Gang>
-    <vif:Port_Source_Power_Gang_Max_Power value="22500">22500 mW</vif:Port_Source_Power_Gang_Max_Power>
+    <vif:Product_Total_Source_Power_mW value="15000">15000 mW</vif:Product_Total_Source_Power_mW>
+    <vif:Port_Source_Power_Type value="0">Assured</vif:Port_Source_Power_Type>
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;USB Host-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <vif:Host_Supports_USB_Data value="true" />
     <vif:Host_Speed value="4">USB 3.2 Gen 2x2</vif:Host_Speed>
-    <vif:Host_Contains_Captive_Retimer value="true" />
+    <vif:Host_Contains_Captive_Retimer value="false" />
     <vif:Host_Truncates_DP_For_tDHPResponse value="false" />
     <vif:Host_Is_Embedded value="false" />
     <vif:Host_Suspend_Supported value="true" />
@@ -383,14 +380,15 @@
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;PD Source-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
-    <vif:PD_Power_As_Source value="15000">15000 mW</vif:PD_Power_As_Source>
+    <vif:PD_Power_As_Source value="7500">7500 mW</vif:PD_Power_As_Source>
+    <vif:PD_Power_As_Source_Guaranteed value="7500">7500 mW</vif:PD_Power_As_Source_Guaranteed>
     <vif:EPR_Supported_As_Src value="false" />
     <vif:USB_Suspend_May_Be_Cleared value="true" />
     <vif:Sends_Pings value="false" />
-    <vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="3">3A @ 5V</vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
+    <vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="2">1.5A @ 5V</vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
     <vif:Master_Port value="true" />
-    <vif:Has_Invariant_PDOs value="false" />
-    <vif:Port_Managed_Guaranteed_Type value="0">Managed Capability</vif:Port_Managed_Guaranteed_Type>
+    <vif:Has_Invariant_PDOs value="true" />
+    <vif:Port_Managed_Guaranteed_Type value="1">Guaranteed Capability</vif:Port_Managed_Guaranteed_Type>
     <vif:DPS_Supported value="false" />
     <vif:Num_Src_PDOs value="1">1 Src PDO</vif:Num_Src_PDOs>
     <vif:PD_OC_Protection value="true" />
@@ -404,7 +402,7 @@
         <vif:Src_PDO_Voltage value="100">5000 mV (Factor = 50)</vif:Src_PDO_Voltage>
         <vif:Src_PDO_Max_Current value="300">3000 mA (Factor = 10)</vif:Src_PDO_Max_Current>
         <vif:Src_PD_OCP_OC_Debounce value="10">10 msec</vif:Src_PD_OCP_OC_Debounce>
-        <vif:Src_PD_OCP_OC_Threshold value="345">3450 mA (Factor = 10)</vif:Src_PD_OCP_OC_Threshold>
+        <vif:Src_PD_OCP_OC_Threshold value="325">3250 mA (Factor = 10)</vif:Src_PD_OCP_OC_Threshold>
         <vif:Src_PD_OCP_UV_Debounce value="10">10 msec</vif:Src_PD_OCP_UV_Debounce>
         <vif:Src_PD_OCP_UV_Threshold_Type value="1">Percentage</vif:Src_PD_OCP_UV_Threshold_Type>
         <vif:Src_PD_OCP_UV_Threshold value="70">70 %</vif:Src_PD_OCP_UV_Threshold>
@@ -413,12 +411,12 @@
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;PD Sink-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
-    <vif:PD_Power_As_Sink value="100000">100000 mW</vif:PD_Power_As_Sink>
+    <vif:PD_Power_As_Sink value="65000">65000 mW</vif:PD_Power_As_Sink>
     <vif:EPR_Supported_As_Snk value="false" />
     <vif:No_USB_Suspend_May_Be_Set value="true" />
     <vif:GiveBack_May_Be_Set value="false" />
     <vif:Higher_Capability_Set value="true" />
-    <vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source value="3">3A @ 5V</vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source>
+    <vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source value="1">Default USB Power</vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source>
     <vif:Num_Snk_PDOs value="2">2 Snk PDOs</vif:Num_Snk_PDOs>
     <!--Bundle: SnkPdoList-->
     <vif:SnkPdoList>
@@ -455,7 +453,7 @@
     <vif:Modal_Operation_Supported_SOP value="true" />
     <vif:USB_VID_SOP value="6353">18D1</vif:USB_VID_SOP>
     <vif:PID_SOP value="20593">5071</vif:PID_SOP>
-    <vif:bcdDevice_SOP value="4880">1310</vif:bcdDevice_SOP>
+    <vif:bcdDevice_SOP value="4896">1320</vif:bcdDevice_SOP>
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <!--;SOP Modes-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
