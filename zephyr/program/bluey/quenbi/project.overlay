@@ -22,3 +22,13 @@
 #include "temp_sensors.dtsi"
 
 /* quenbi overrides follow... */
+
+/ {
+	gpio-interrupts {
+		int_ac_present: ac_present {
+			irq-pin = <&gpio_pmic_chg_led>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
+	};
+};

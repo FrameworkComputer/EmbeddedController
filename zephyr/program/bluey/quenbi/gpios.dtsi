@@ -132,6 +132,7 @@
 		};
 		gpio_pmic_chg_led: pmic_chg_led {
 			gpios = <&gpioe 0 (GPIO_INPUT)>;
+			enum-name = "GPIO_AC_PRESENT";
 		};
 		gpio_smbc1_ccd_detect_od: smbc1_ccd_detect_od {
 			gpios = <&gpioa 6 (GPIO_INPUT)>;
@@ -149,7 +150,6 @@
 		};
 		gpio_acok_od_z5: acok_od_z5 {
 			gpios = <&gpio0 1 (GPIO_INPUT)>;
-			enum-name = "GPIO_AC_PRESENT";
 		};
 		gpio_ec_s5_l: ec_s5_l {
 			gpios = <&gpio5 0 (GPIO_INPUT)>;
