@@ -492,6 +492,30 @@ class Renode(Platform):
 
         return False
 
+    def _skip_test_sanok(self, test_name: str) -> bool:
+        if test_name in [
+            "flash_physical",  # TODO(b/468410778)
+            "flash_write_protect",  # TODO(b/406944986)
+            "panic_data",  # TODO(b/468407068)
+            "rollback",  # TODO(b/468406461)
+            "rollback_entropy",  # TODO(b/468406461)
+            "system_is_locked",  # TODO(b/483118063)
+            "unaligned_access",  # TODO(b/483118717)
+            "abort",  # TODO(b/406944986)
+            "exception",  # TODO(b/483118965)
+            "fp_transport",  # TODO(b/483119844)
+            "fpsensor_auth_crypto_stateful",  # TODO(b/483119679)
+            "fpsensor_debug",  # TODO(b/474439863)
+            "ftrapv",  # TODO(b/406944986)
+            "otp_key",  # TODO(b/483121090)
+            "panic",  # TODO(b/483124098)
+            "restricted_console",  # TODO(b/474439863)
+            "tpm_seed_clear",  # TODO(b/406944986)
+            "utils",  # TODO(b/483126917)
+        ]:
+            return True
+        return False
+
     def skip_test(
         self, test_config: TestConfig, board_config: BoardConfig, zephyr: bool
     ) -> bool:
@@ -511,6 +535,9 @@ class Renode(Platform):
 
         if board_config.name in [HELIPILOT, BUCCANEER, GWENDOLIN]:
             return self._skip_test_helipilot(test_config)
+
+        if board_config.name == SANOK and zephyr:
+            return self._skip_test_sanok(test_name)
 
         return False
 
