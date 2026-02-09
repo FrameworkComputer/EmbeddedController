@@ -746,7 +746,11 @@ class AllTests:
             TestConfig(test_name="queue"),
             TestConfig(
                 test_name="ram_lock",
-                exclude_boards=[BLOONCHIPPER, DARTMONKEY],
+                exclude_boards=[
+                    BLOONCHIPPER,
+                    DARTMONKEY,
+                    SANOK,
+                ],
             ),
             TestConfig(test_name="restricted_console"),
             TestConfig(test_name="rng_benchmark"),
