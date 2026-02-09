@@ -142,6 +142,7 @@ if(DEFINED CONFIG_BOARD_MARIGOLD OR DEFINED CONFIG_BOARD_SAKURA)
 		zephyr_library_sources("src/input_module_13.c")
 		zephyr_library_sources("sakura/src/cpu_power.c")
 		zephyr_library_sources("sakura/src/led.c")
+		zephyr_library_sources("sakura/src/battery.c")
 	endif()
 	zephyr_include_directories("include/framework13")
 	zephyr_library_sources(
