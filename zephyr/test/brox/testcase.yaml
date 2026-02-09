@@ -4,92 +4,118 @@
 
 common:
   platform_allow:
-  - native_sim
+    - native_sim
 tests:
   # Baseboard tests
   brox.baseboard:
     extra_configs:
-    - CONFIG_TEST_BOARD_BASEBOARD=y
+      - CONFIG_TEST_BOARD_BASEBOARD=y
     extra_dtc_overlay_files:
-    - boards/baseboard/baseboard.overlay
-
+      - "boards/baseboard/baseboard.overlay"
   brox.baseboard.usbc:
     extra_configs:
-    - CONFIG_TEST_BOARD_BASEBOARD=y
-    - CONFIG_TEST_BOARD_USBC=y
-    - CONFIG_PLATFORM_EC_CBI=n
+      - CONFIG_TEST_BOARD_BASEBOARD=y
+      - CONFIG_TEST_BOARD_USBC=y
+      - CONFIG_PLATFORM_EC_CBI=n
     extra_dtc_overlay_files:
-    - boards/baseboard/baseboard.overlay
-
+      - "boards/baseboard/baseboard.overlay"
   brox.baseboard.hibernate:
     extra_configs:
-    - CONFIG_TEST_BOARD_BASEBOARD=y
-    - CONFIG_TEST_BOARD_HIBERNATE=y
+      - CONFIG_TEST_BOARD_BASEBOARD=y
+      - CONFIG_TEST_BOARD_HIBERNATE=y
     extra_dtc_overlay_files:
-    - boards/baseboard/baseboard.overlay
-
+      - "boards/baseboard/baseboard.overlay"
   brox.baseboard.suspend_resume:
     extra_configs:
-    - CONFIG_TEST_BOARD_BASEBOARD=y
-    - CONFIG_TEST_BOARD_SUSPEND_RESUME=y
+      - CONFIG_TEST_BOARD_BASEBOARD=y
+      - CONFIG_TEST_BOARD_SUSPEND_RESUME=y
     extra_dtc_overlay_files:
-    - boards/baseboard/baseboard.overlay
-
+      - "boards/baseboard/baseboard.overlay"
   brox.lotso.keyboard:
     extra_configs:
-    - CONFIG_TEST_BOARD_LOTSO=y
-    - CONFIG_TEST_BOARD_LOTSO_KEYBOARD=y
-    - CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION=y
-    - CONFIG_PLATFORM_EC_KEYBOARD_DEBUG=y
+      - CONFIG_TEST_BOARD_LOTSO=y
+      - CONFIG_TEST_BOARD_LOTSO_KEYBOARD=y
+      - CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION=y
+      - CONFIG_PLATFORM_EC_KEYBOARD_DEBUG=y
     extra_dtc_overlay_files:
-    - boards/baseboard/baseboard.overlay
-    - boards/lotso/keyboard.dtsi
-
+      - "boards/baseboard/baseboard.overlay"
+      - "boards/lotso/keyboard.dtsi"
   brox.greenbayupoc.keyboard:
     extra_configs:
-    - CONFIG_TEST_BOARD_GREENBAYUPOC=y
-    - CONFIG_TEST_BOARD_GREENBAYUPOC_KEYBOARD=y
-    - CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION=y
-    - CONFIG_PLATFORM_EC_KEYBOARD_DEBUG=y
+      - CONFIG_TEST_BOARD_GREENBAYUPOC=y
+      - CONFIG_TEST_BOARD_GREENBAYUPOC_KEYBOARD=y
+      - CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION=y
+      - CONFIG_PLATFORM_EC_KEYBOARD_DEBUG=y
     extra_dtc_overlay_files:
-    - boards/baseboard/baseboard.overlay
-    - boards/greenbayupoc/keyboard.dtsi
-
+      - "boards/baseboard/baseboard.overlay"
+      - "boards/greenbayupoc/keyboard.dtsi"
   brox.jubilant.keyboard:
     extra_configs:
-    - CONFIG_TEST_BOARD_JUBILANT=y
-    - CONFIG_TEST_BOARD_JUBILANT_KEYBOARD=y
-    - CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION=y
-    - CONFIG_PLATFORM_EC_KEYBOARD_DEBUG=y
-    - CONFIG_POSIX_ARCH_CONSOLE_INIT_PRIORITY=98
-    - CONFIG_PLATFORM_EC_CONSOLE_INIT_PRIORITY=99
-    - CONFIG_LOG=y
-    - CONFIG_LOG_MODE_MINIMAL=y
+      - CONFIG_TEST_BOARD_JUBILANT=y
+      - CONFIG_TEST_BOARD_JUBILANT_KEYBOARD=y
+      - CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION=y
+      - CONFIG_PLATFORM_EC_KEYBOARD_DEBUG=y
+      - CONFIG_POSIX_ARCH_CONSOLE_INIT_PRIORITY=98
+      - CONFIG_PLATFORM_EC_CONSOLE_INIT_PRIORITY=99
+      - CONFIG_LOG=y
+      - CONFIG_LOG_MODE_MINIMAL=y
     extra_dtc_overlay_files:
-    - boards/jubilant/keyboard.dtsi
-
+      - "boards/jubilant/keyboard.dtsi"
   brox.jubilant.fan:
     extra_configs:
-    - CONFIG_TEST_BOARD_JUBILANT=y
-    - CONFIG_TEST_BOARD_JUBILANT_FAN=y
-    - CONFIG_PLATFORM_EC_CUSTOM_FAN_CONTROL=y
-    - CONFIG_POSIX_ARCH_CONSOLE_INIT_PRIORITY=98
-    - CONFIG_PLATFORM_EC_CONSOLE_INIT_PRIORITY=99
+      - CONFIG_TEST_BOARD_JUBILANT=y
+      - CONFIG_TEST_BOARD_JUBILANT_FAN=y
+      - CONFIG_PLATFORM_EC_CUSTOM_FAN_CONTROL=y
+      - CONFIG_POSIX_ARCH_CONSOLE_INIT_PRIORITY=98
+      - CONFIG_PLATFORM_EC_CONSOLE_INIT_PRIORITY=99
     extra_dtc_overlay_files:
-    - boards/jubilant/fan.dtsi
-
+      - "boards/jubilant/fan.dtsi"
   brox.jubilant.touch_panel:
     extra_configs:
-    - CONFIG_TEST_BOARD_JUBILANT=y
-    - CONFIG_TEST_BOARD_JUBILANT_TOUCH_PANEL=y
-    - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
+      - CONFIG_TEST_BOARD_JUBILANT=y
+      - CONFIG_TEST_BOARD_JUBILANT_TOUCH_PANEL=y
+      - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
     extra_dtc_overlay_files:
-    - boards/jubilant/touch.dtsi
-
+      - "boards/jubilant/touch.dtsi"
   brox.lotso.sensor:
     extra_configs:
-    - CONFIG_TEST_BOARD_LOTSO=y
-    - CONFIG_TEST_BOARD_LOTSO_SENSOR=y
+      - CONFIG_TEST_BOARD_LOTSO=y
+      - CONFIG_TEST_BOARD_LOTSO_SENSOR=y
     extra_dtc_overlay_files:
-    - boards/baseboard/baseboard.overlay
-    - boards/lotso/sensor.dtsi
+      - "boards/baseboard/baseboard.overlay"
+      - "boards/lotso/sensor.dtsi"
+  brox.juchi.keyboard:
+    extra_configs:
+      - CONFIG_TEST_BOARD_JUCHI=y
+      - CONFIG_TEST_BOARD_JUCHI_KEYBOARD=y
+      - CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION=y
+      - CONFIG_PLATFORM_EC_KEYBOARD_DEBUG=y
+      - CONFIG_POSIX_ARCH_CONSOLE_INIT_PRIORITY=98
+      - CONFIG_PLATFORM_EC_CONSOLE_INIT_PRIORITY=99
+      - CONFIG_LOG=y
+      - CONFIG_LOG_MODE_MINIMAL=y
+    extra_dtc_overlay_files:
+      - "boards/juchi/keyboard.dtsi"
+  brox.juchi.fan:
+    extra_configs:
+      - CONFIG_TEST_BOARD_JUCHI=y
+      - CONFIG_TEST_BOARD_JUCHI_FAN=y
+      - CONFIG_PLATFORM_EC_CUSTOM_FAN_CONTROL=y
+      - CONFIG_POSIX_ARCH_CONSOLE_INIT_PRIORITY=98
+      - CONFIG_PLATFORM_EC_CONSOLE_INIT_PRIORITY=99
+    extra_dtc_overlay_files:
+      - "boards/juchi/fan.dtsi"
+  brox.juchi.touch_panel:
+    extra_configs:
+      - CONFIG_TEST_BOARD_JUCHI=y
+      - CONFIG_TEST_BOARD_JUCHI_TOUCH_PANEL=y
+      - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
+    extra_dtc_overlay_files:
+      - "boards/juchi/touch.dtsi"
+  brox.juchi.sensor:
+    extra_configs:
+      - CONFIG_TEST_BOARD_JUCHI=y
+      - CONFIG_TEST_BOARD_JUCHI_SENSOR=y
+    extra_dtc_overlay_files:
+      - "boards/baseboard/baseboard.overlay"
+      - "boards/juchi/sensor.dtsi"

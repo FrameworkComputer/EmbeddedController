@@ -130,6 +130,20 @@ greenbayupoc = register_brox_project(
     ],
 )
 
+juchi = register_brox_project(
+    project_name="juchi",
+    kconfig_files=[
+        # Common to all projects.
+        here / "program.conf",
+        # ite's config
+        here / "ite.conf",
+        # Common sensor configs
+        here / "motionsense.conf",
+        # Project-specific config
+        here / "juchi" / "project.conf",
+    ],
+)
+
 jubilant = register_brox_project(
     project_name="jubilant",
     kconfig_files=[
@@ -166,6 +180,7 @@ assert_rw_fwid_DO_NOT_EDIT(project_name="brtk", addr=0x80404)
 assert_rw_fwid_DO_NOT_EDIT(project_name="brox-ish-ec", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="caboc", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="greenbayupoc", addr=0x60098)
+assert_rw_fwid_DO_NOT_EDIT(project_name="juchi", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="jubilant", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="lotso", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="brox-sku4", addr=0x70098)

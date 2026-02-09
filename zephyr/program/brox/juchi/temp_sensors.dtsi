@@ -1,0 +1,61 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include <cros/thermistor/thermistor.dtsi>
+
+/ {
+	temp_memory_thermistor: temp-memory {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+		adc = <&adc_temp_sensor_1>;
+	};
+
+	temp_soc_thermistor: temp-soc {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+		adc = <&adc_temp_sensor_2>;
+	};
+
+	temp_charger_thermistor: temp-charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+		adc = <&adc_temp_sensor_3>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_memory: temp-memory {
+			temp-host-high = <75>;
+			temp-host-halt = <85>;
+			temp-host-release-high = <70>;
+			temp-host-release-halt = <80>;
+			power-good-pin = <&gpio_ec_dsw_pwrok>;
+			sensor = <&temp_memory_thermistor>;
+		};
+
+		temp_soc: temp-soc {
+			temp-fan-off = <34>;
+			temp-fan-max = <85>;
+			temp-host-high = <75>;
+			temp-host-halt = <85>;
+			temp-host-release-high = <70>;
+			temp-host-release-halt = <80>;
+			power-good-pin = <&gpio_ec_dsw_pwrok>;
+			sensor = <&temp_soc_thermistor>;
+		};
+
+		temp_charger: temp-charger {
+			temp-host-high = <75>;
+			temp-host-halt = <85>;
+			temp-host-release-high = <70>;
+			temp-host-release-halt = <80>;
+			power-good-pin = <&gpio_ec_dsw_pwrok>;
+			sensor = <&temp_charger_thermistor>;
+		};
+	};
+};
+
+&thermistor_3V3_30K9_47K_4050B {
+	status = "okay";
+};

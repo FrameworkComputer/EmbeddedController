@@ -35,6 +35,11 @@ choice TEST_BOARD_VARIANT
 		help
 		  Enable Jubilant tests.
 
+	config TEST_BOARD_JUCHI
+		bool "Enable juchi-specific tests"
+		help
+		  Enable Juchi tests.
+
 endchoice # TEST_BOARD_VARIANT
 
 config TEST_BOARD_NAME
@@ -76,6 +81,20 @@ config TEST_BOARD_JUBILANT_TOUCH_PANEL
 
 config TEST_BOARD_LOTSO_SENSOR
 	bool "Enable lotso sensor tests"
+
+config TEST_BOARD_JUCHI_KEYBOARD
+	bool "Enable juchi keyboard tests"
+
+config TEST_BOARD_JUCHI_FAN
+	select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	bool "Enable juchi fan tests"
+
+config TEST_BOARD_JUCHI_TOUCH_PANEL
+	select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	bool "Enable juchi touch panel tests"
+
+config TEST_BOARD_JUCHI_SENSOR
+	bool "Enable juchi sensor tests"
 
 config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	bool "Disable chipset_in_state inline method"
