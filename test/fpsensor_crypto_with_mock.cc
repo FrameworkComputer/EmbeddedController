@@ -558,7 +558,7 @@ static int test_enable_positive_match_secret_once(
 						    dumb_state) == EC_SUCCESS);
 	TEST_ASSERT(dumb_state->template_matched == kIndexToEnable);
 	TEST_ASSERT(dumb_state->readable);
-	TEST_ASSERT(dumb_state->deadline.val == now.val + (5 * SECOND));
+	TEST_ASSERT(dumb_state->deadline.val == now.val + (15 * SECOND));
 
 	return EC_SUCCESS;
 }

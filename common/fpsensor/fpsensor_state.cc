@@ -387,7 +387,7 @@ int fp_enable_positive_match_secret(uint16_t fgr,
 	timestamp_t now = get_time();
 	state->template_matched = fgr;
 	state->readable = true;
-	state->deadline.val = now.val + (5 * SECOND);
+	state->deadline.val = now.val + (15 * SECOND); /* b/478160541 */
 	return EC_SUCCESS;
 }
 

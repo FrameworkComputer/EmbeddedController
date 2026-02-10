@@ -722,8 +722,8 @@ ZTEST_USER(fpsensor_match,
 	/* Make sure that 'match' was called. */
 	zassert_equal(mock_alg_match_fake.call_count, 1);
 
-	/* Wait at least 5 seconds for positive match secret to timeout. */
-	k_msleep(5000);
+	/* Wait at least 15 seconds for positive match secret to timeout. */
+	k_msleep(15000);
 
 	/* Confirm that we can't read positive match secret. */
 	secret_params.fgr = 0;
