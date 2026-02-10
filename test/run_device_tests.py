@@ -448,7 +448,6 @@ class Renode(Platform):
             "flash_physical",
             "fp_transport",  # TODO(b/384094788)
             "fpsensor_debug",  # TODO(b/384110894)
-            "ftrapv",  # TODO(b/384095271)
             "panic_data",  # TODO(b/384095623)
             "zephyr_flash_stm32f4",  # TODO(b/384974228)
             # TODO(b/384975384)
