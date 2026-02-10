@@ -481,6 +481,17 @@ class Renode(Platform):
 
         return False
 
+    def _skip_test_helipilot(self, test_config: TestConfig) -> bool:
+        if test_config.test_name in [
+            "exception",  # TODO(b/384730599)
+            "otp_key",  # TODO(b/385216796)
+            "ram_lock",  # TODO(b/385216805)
+            "rtc_npcx9",  # TODO(b/385217282)
+        ]:
+            return True
+
+        return False
+
     def skip_test(
         self, test_config: TestConfig, board_config: BoardConfig, zephyr: bool
     ) -> bool:
@@ -499,13 +510,7 @@ class Renode(Platform):
             return self._skip_test_bloonchipper(test_config, zephyr)
 
         if board_config.name in [HELIPILOT, BUCCANEER, GWENDOLIN]:
-            if test_name in [
-                "exception",  # TODO(b/384730599)
-                "otp_key",  # TODO(b/385216796)
-                "ram_lock",  # TODO(b/385216805)
-                "rtc_npcx9",  # TODO(b/385217282)
-            ]:
-                return True
+            return self._skip_test_helipilot(test_config)
 
         return False
 
