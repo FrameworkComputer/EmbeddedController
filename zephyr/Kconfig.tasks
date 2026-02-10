@@ -24,6 +24,7 @@ if HAS_TASK_PCHG
 
 config TASK_PCHG_STACK_SIZE
 	int "PCHG task stack size"
+	default 1536 if PLATFORM_EC_CTN730
 	default 1024
 	help
 	  The stack size of the PCHG task.
