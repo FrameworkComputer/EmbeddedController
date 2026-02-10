@@ -448,12 +448,17 @@ class Renode(Platform):
             "flash_physical",
             "fp_transport",  # TODO(b/384094788)
             "fpsensor_debug",  # TODO(b/384110894)
-            "panic_data",  # TODO(b/384095623)
             "zephyr_flash_stm32f4",  # TODO(b/384974228)
             # TODO(b/384975384)
             "zephyr_counter_basic_api_stm32_subsec",
             # TODO(b/390255521)
             "timer",
+        ]:
+            return True
+
+        if zephyr and test_config.config_name in [
+            "panic_data_bloonchipper_v2.0.4277",  # TODO(b/484099558)
+            "panic_data_bloonchipper_v2.0.5938",  # TODO(b/484099558)
         ]:
             return True
 
