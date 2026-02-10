@@ -26,7 +26,7 @@
 
 uint16_t board_fan_max[2];
 uint16_t board_fan_min[2];
-
+uint8_t board_fan_flags[2];
 #define FAN_STOP_DELAY_S (5 * SECOND)
 
 #define TEMP_APU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_apu))
@@ -64,10 +64,13 @@ void fan_configure_gpu(struct gpu_cfg_fan *fan) {
 		board_fan_max[1] = 0;
 		board_fan_min[0] = 0;
 		board_fan_min[1] = 0;
+		board_fan_flags[0] = 0;
+		board_fan_flags[1] = 0;
 	} else {
 		if (fan->idx < 2) {
 			board_fan_max[fan->idx] = fan->max_rpm;
 			board_fan_min[fan->idx] = fan->min_rpm;
+			board_fan_flags[fan->idx] = fan->flags;
 		}
 	}
 }
@@ -110,16 +113,21 @@ int fan_percent_to_rpm(int fan_index, int temp_ratio)
 	int max = fans[fan_index].rpm->rpm_max;
 	int min = fans[fan_index].rpm->rpm_min;
 
+	/* Switch the fan configuration when gpu is present */
+	if (board_fan_max[fan_index]) {
+		max = board_fan_max[fan_index];
+	}
+
+	if (board_fan_min[fan_index]) {
+		min = board_fan_min[fan_index];
+	}
+
 	if (temp_ratio <= 0) {
-		rpm = 0;
+		if (board_fan_flags[fan_index] & GPU_CFG_FAN_FLAG_ALWAYS_ON)
+			rpm = min;
+		else
+			rpm = 0;
 	} else {
-		/* Switch the fan configuration when gpu is present */
-		if (board_fan_max[fan_index]) {
-			max = board_fan_max[fan_index];
-		}
-		if (board_fan_min[fan_index]) {
-			min = board_fan_min[fan_index];
-		}
 		rpm = ((temp_ratio - 1) * max + (100 - temp_ratio) * min) / 99;
 	}
 
