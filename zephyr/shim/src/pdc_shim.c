@@ -3,10 +3,13 @@
  * found in the LICENSE file.
  */
 
+#include <zephyr/logging/log.h>
 #include <zephyr/sys/atomic.h>
 #include <zephyr/toolchain/common.h>
 
 #include <usbc/pdc_power_mgmt.h>
+
+LOG_MODULE_REGISTER(pdc_shim, LOG_LEVEL_INF);
 
 enum tcpc_cc_polarity pd_get_polarity(int port)
 {
@@ -220,6 +223,30 @@ unsigned int pd_get_max_voltage(void)
 void pd_request_source_voltage(int port, int mv)
 {
 	pdc_power_mgmt_request_source_voltage(port, mv);
+}
+
+void pd_set_external_voltage_limit(int port, int mv)
+{
+	int rv;
+
+	/* Set the new max voltage in all cases. If we are not currently a
+	 * PD sink, this will take effect if we become one. */
+	pdc_power_mgmt_set_max_voltage(mv);
+
+	rv = pdc_power_mgmt_set_new_power_request(port);
+
+	switch (rv) {
+	case EC_SUCCESS:
+	case -ENOTCONN:
+		/* Function returns -ENOTCONN if we are not currently a PD sink.
+		 * This is okay; the new voltage will take effect if we become
+		 * one later. Do not proactively switch to the sink role. */
+		return;
+	default:
+		LOG_ERR("PD: %s: Cannot set new power request (%dmV): %d",
+			__func__, mv, rv);
+		break;
+	}
 }
 
 uint32_t pd_get_requested_voltage(int port)

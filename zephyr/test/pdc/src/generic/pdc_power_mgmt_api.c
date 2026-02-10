@@ -98,6 +98,10 @@ static void pdc_power_mgmt_before(void *fixture)
 	emul_pdc_disconnect(emul);
 	emul_pdc_reset_feature_flags(emul);
 
+	/* Ensure the max voltage is reset to the default board limit */
+	pdc_power_mgmt_set_max_voltage(
+		CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV);
+
 	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
 	reset_fakes();
 }
@@ -2252,6 +2256,62 @@ ZTEST_USER(pdc_power_mgmt_api, test_request_source_voltage)
 	/* Restore source voltage */
 	pdc_power_mgmt_request_source_voltage(TEST_PORT, prev_mv);
 	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
+}
+
+ZTEST(pdc_power_mgmt_api, test_pd_set_external_voltage_limit)
+{
+	union connector_status_t connector_status = { 0 };
+	unsigned int mv;
+
+	/* pd_set_external_voltage_limit() behaves similarly to
+	 * pdc_power_mgmt_request_source_voltage(), but does not force a power
+	 * role swap if the PDC is in the source role. If we *are* currently in
+	 * the sink role, re-negotiate the PD contract with the new limit.
+	 */
+
+	const int TEST_EXTERNAL_LIMIT_MV = 12000;
+
+	zassert_true(TEST_EXTERNAL_LIMIT_MV <
+		     CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV);
+
+	/* Start by attaching a sink (PDC is source) */
+
+	emul_pdc_configure_src(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
+
+	/* Apply a voltage limit */
+	pd_set_external_voltage_limit(TEST_PORT, TEST_EXTERNAL_LIMIT_MV);
+	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
+
+	/* No role changes should occur. */
+	mv = pdc_power_mgmt_get_max_voltage();
+	zassert_equal(TEST_EXTERNAL_LIMIT_MV, mv, "Expected %u, got %u",
+		      TEST_EXTERNAL_LIMIT_MV, mv);
+	zassert_equal(PD_ROLE_SOURCE, pdc_power_mgmt_get_power_role(TEST_PORT),
+		      "Role should be source");
+
+	/* Re-connect a source (PDC is now sink) */
+
+	uint32_t partner_src_pdos[] = {
+		PDO_FIXED(5000, 3000, 0),
+		PDO_FIXED(12000, 3000, 0),
+		PDO_FIXED(20000, 5000, 0),
+	};
+
+	emul_pdc_configure_snk(emul, &connector_status);
+	zassert_ok(emul_pdc_set_pdos(emul, SOURCE_PDO, PDO_OFFSET_0,
+				     ARRAY_SIZE(partner_src_pdos), PARTNER_PDO,
+				     partner_src_pdos));
+	emul_pdc_connect_partner(emul, &connector_status);
+	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
+
+	/* Ensure that we chose the 12V PDO */
+	mv = pdc_power_mgmt_get_requested_voltage(TEST_PORT);
+	zassert_equal(
+		TEST_EXTERNAL_LIMIT_MV, mv,
+		"Did not choose the 12V PDO upon switching to sink role. mv=%u",
+		mv);
 }
 
 #endif /* CONFIG_TODO_B_345292002 */
