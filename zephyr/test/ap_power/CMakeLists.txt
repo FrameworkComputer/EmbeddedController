@@ -35,3 +35,7 @@ target_sources_ifdef(CONFIG_X86_NON_DSX_PWRSEQ_CONSOLE app PRIVATE
 # Project specific tests
 target_sources_ifdef(CONFIG_TEST_AP_POWER_BROX app PRIVATE
   ${PLATFORM_EC_PROGRAM_DIR}/brox/src/board_power.c)
+
+target_sources_ifdef(CONFIG_TEST_AP_POWER_ATRIARVP app PRIVATE
+  ${PLATFORM_EC_PROGRAM_DIR}/atria/src/rvp_board_power.c
+  src/boards/atriarvp.c)

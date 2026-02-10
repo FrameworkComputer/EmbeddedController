@@ -8,6 +8,7 @@ find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 
 if(DEFINED CONFIG_BOARD_ATRIARVP_RTK)
   project(atriarvp-rtk)
+  zephyr_library_sources("src/rvp_board_power.c")
 endif()
 
 zephyr_include_directories("include/")

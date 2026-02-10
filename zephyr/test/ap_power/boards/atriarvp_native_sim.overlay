@@ -1,0 +1,271 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_sim.dts>
+#include <dt-bindings/gpio_defines.h>
+#include "../../../program/atria/power_signals.dtsi"
+
+/ {
+	common-pwrseq {
+		s5-inactivity-timeout = <1>;
+		sys-pwrok-delay = <10>;
+		all-sys-pwrgd-timeout = <20>;
+	};
+
+	/* Add label to VW SLP_S5 node so emulators can reference it */
+	slp_s5: pwr-slp-s5 {
+	};
+
+	en_pp3300_emul: en-pp3300-emul {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&pwr_en_pp3300_a>;
+		init-value = <0>;
+		pp3300-rsmrst-emul {
+			output-signal = <&pwr_rsmrst_pwrgd>;
+			assert-delay-ms = <10>;
+			init-value = <0>;
+		};
+	};
+
+	ec_pch_rsmrst_emul: ec-pch-rsmrst-emul {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&pwr_ec_pch_rsmrst>;
+		init-value = <1>;
+		ec-pch-rsmrst-slp-s5-emul {
+			output-signal = <&slp_s5>;
+			deassert-delay-ms = <20>;
+			init-value = <1>;
+		};
+		ec-pch-rsmrst-slp-s4-emul {
+			output-signal = <&pwr_slp_s4>;
+			deassert-delay-ms = <30>;
+			init-value = <1>;
+		};
+		ec-pch-rsmrst-slp-s3-emul {
+			output-signal = <&pwr_slp_s3>;
+			deassert-delay-ms = <40>;
+			init-value = <1>;
+		};
+		ec-pch-rsmrst-slp-s0-emul {
+			output-signal = <&pwr_slp_s0>;
+			deassert-delay-ms = <45>;
+			init-value = <1>;
+		};
+		ec-pch-rsmrst-all-sys-pwrgd {
+			output-signal = <&pwr_all_sys_pwrgd>;
+			deassert-delay-ms = <50>;
+			init-value = <0>;
+			invert-value;
+		};
+	};
+
+	ec_pch_rsmrst_rst_emul: ec-pch-rsmrst-rst-emul {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&pwr_ec_pch_rsmrst>;
+		init-value = <1>;
+		ec-pch-rsmrst-slp-s5-emul {
+			output-signal = <&slp_s5>;
+			deassert-delay-ms = <20>;
+			init-value = <1>;
+		};
+		ec-pch-rsmrst-slp-s4-emul {
+			output-signal = <&pwr_slp_s4>;
+			deassert-delay-ms = <30>;
+			init-value = <1>;
+		};
+		ec-pch-rsmrst-slp-s3-emul {
+			output-signal = <&pwr_slp_s3>;
+			deassert-delay-ms = <40>;
+			init-value = <1>;
+		};
+		ec-pch-rsmrst-all-sys-pwrgd {
+			output-signal = <&pwr_all_sys_pwrgd>;
+			deassert-delay-ms = <50>;
+			init-value = <0>;
+			invert-value;
+		};
+		ec-pch-rsmrst-slp-s0-emul {
+			output-signal = <&pwr_slp_s0>;
+			assert-delay-ms = <150>;
+			init-value = <0>;
+			invert-value;
+		};
+	};
+
+	tp-sys-g3-to-s0 {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&en_pp3300_emul &ec_pch_rsmrst_emul>;
+	};
+
+	pch_pwrok_power_fail_emul: pch-pwrok-power-fail-emul {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&pwr_pch_pwrok>;
+		init-value = <0>;
+		edge = "EDGE_ACTIVE_ON_ASSERT";
+		pch-pwrok-rsmrst-emul {
+			output-signal = <&pwr_rsmrst_pwrgd>;
+			assert-delay-ms = <60>;
+			invert-value;
+		};
+	};
+
+	tp-sys-s0-power-fail {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&pch_pwrok_power_fail_emul>;
+	};
+
+	pch_pwrok_power_down_emul: pch-pwrok-power-down-emul {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&pwr_pch_pwrok>;
+		init-value = <0>;
+		edge = "EDGE_ACTIVE_ON_ASSERT";
+		pch-pwrok-rsmrst-emul {
+			output-signal = <&pwr_rsmrst_pwrgd>;
+			assert-delay-ms = <90>;
+		};
+		pch-pwrok-slp-s5-emul {
+			output-signal = <&slp_s5>;
+			assert-delay-ms = <60>;
+		};
+		pch-pwrok-slp-s4-emul {
+			output-signal = <&pwr_slp_s4>;
+			assert-delay-ms = <40>;
+		};
+		pch-pwrok-slp-s3-emul {
+			output-signal = <&pwr_slp_s3>;
+			assert-delay-ms = <20>;
+		};
+		pch-pwrok-slp-s0-emul {
+			output-signal = <&pwr_slp_s0>;
+			assert-delay-ms = <15>;
+		};
+	};
+
+	tp-sys-g3-to-s0-power-down {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&en_pp3300_emul &ec_pch_rsmrst_emul
+			      &pch_pwrok_power_down_emul>;
+	};
+
+	ec_pch_rsmrst_s3_rsmrst_deassert_emul:
+		ec-pch-rsmrst-s3-rsmrst-deassert-emul {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&pwr_ec_pch_rsmrst>;
+		init-value = <1>;
+		edge = "EDGE_ACTIVE_ON_DEASSERT";
+		ec-pch-rsmrst-slp-s5-emul {
+			output-signal = <&slp_s5>;
+			deassert-delay-ms = <20>;
+			init-value = <1>;
+		};
+		ec-pch-rsmrst-slp-s4-emul {
+			output-signal = <&pwr_slp_s4>;
+			deassert-delay-ms = <30>;
+			init-value = <1>;
+		};
+		ec-pch-rsmrst-slp-s3-emul {
+			output-signal = <&pwr_slp_s3>;
+			deassert-delay-ms = <40>;
+			init-value = <1>;
+		};
+		ec-pch-rsmrst-slp-s3-deassert-emul {
+			output-signal = <&pwr_slp_s3>;
+			deassert-delay-ms = <60>;
+			invert-value;
+		};
+		pch-pch-rsmrst-rsmrst-deassert-emul {
+			output-signal = <&pwr_rsmrst_pwrgd>;
+			deassert-delay-ms = <100>;
+		};
+	};
+
+	tp-sys-s3-rsmrst-fail {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&en_pp3300_emul
+			      &ec_pch_rsmrst_s3_rsmrst_deassert_emul>;
+	};
+
+	sys_rst_slp_s0_emul: sys-rst-slp-s0-emul {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&pwr_sys_rst>;
+		init-value = <0>;
+		edge = "EDGE_ACTIVE_ON_ASSERT";
+		sys-rst-slp-s0-emul {
+			output-signal = <&pwr_slp_s0>;
+			deassert-delay-ms = <1>;
+		};
+		sys-rst-rsmrst-emul {
+			output-signal = <&pwr_rsmrst_pwrgd>;
+			assert-delay-ms = <100>;
+			invert-value;
+		};
+	};
+
+	tp-sys-g3-to-sleep-reset-then-power-fail {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&en_pp3300_emul &ec_pch_rsmrst_rst_emul
+			      &sys_rst_slp_s0_emul>;
+	};
+
+	pch_sleep: pch-sleep {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&pwr_pch_pwrok>;
+		slp-s0-suspend-emul {
+			output-signal = <&pwr_slp_s0>;
+			init-value = <1>;
+		};
+	};
+
+	tp-sys-sleep {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&pch_sleep>;
+	};
+
+	pch_wake: pch-wake {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&pwr_pch_pwrok>;
+		slp-s0-resume-emul {
+			output-signal = <&pwr_slp_s0>;
+			init-value = <0>;
+		};
+	};
+
+	tp-sys-wake {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&pch_wake>;
+	};
+};
+
+/* Assign GPIO pins to all power signals that need them.
+ * Clear GPIO_OPEN_DRAIN on outputs since open drain is not
+ * supported by the GPIO emulator.
+ */
+&pwr_en_pp3300_a {
+	gpios = <&gpio0 6 0>;
+};
+&pwr_rsmrst_pwrgd {
+	gpios = <&gpio0 7 0>;
+};
+&pwr_ec_pch_rsmrst {
+	gpios = <&gpio0 8 GPIO_ACTIVE_LOW>;
+};
+&pwr_slp_s0 {
+	gpios = <&gpio0 9 GPIO_ACTIVE_LOW>;
+};
+&pwr_slp_s3 {
+	gpios = <&gpio0 10 GPIO_ACTIVE_LOW>;
+};
+&pwr_slp_s4 {
+	gpios = <&gpio0 11 GPIO_ACTIVE_LOW>;
+};
+&pwr_all_sys_pwrgd {
+	gpios = <&gpio0 12 0>;
+};
+&pwr_pch_pwrok {
+	gpios = <&gpio0 13 0>;
+};
+&pwr_sys_rst {
+	gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
+};

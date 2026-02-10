@@ -456,7 +456,10 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_3_sleep_reset)
 	k_msleep(20);
 	power_signal_set(PWR_SYS_RST, 0);
 
-	k_msleep(100);
+	/* Allow up to 50 ms for the force-shutdown timeout loop plus the
+	 * 30 ms minimum power-down delay in board_ap_power_force_shutdown.
+	 */
+	k_msleep(150);
 
 	/* Verify power down was detected */
 	zassert_equal(1, power_hard_off_count,
@@ -539,7 +542,10 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_6)
 		"Unable to load test platform `tp_sys_s3_dsw_pwrok_fail`");
 
 	ap_power_exit_hardoff();
-	k_sleep(K_MSEC(S5_INACTIVITY_TIMEOUT_MS * 1.5));
+	/* Add 50 ms buffer to account for the 30 ms minimum power-down delay
+	 * in board_ap_power_force_shutdown during the G3 re-entry.
+	 */
+	k_sleep(K_MSEC(S5_INACTIVITY_TIMEOUT_MS * 1.5 + 50));
 
 #if defined(CONFIG_AP_X86_INTEL_ADL)
 	zassert_equal(1, power_hard_off_count,
