@@ -1453,7 +1453,7 @@ def readlines_until_timeout(
 ) -> list[bytes]:
     """Continuously read lines for timeout_secs."""
     lines: list[bytes] = []
-    end_time = time.time() + timeout_secs
+    end_time = time.monotonic() + timeout_secs
     remaining = timeout_secs
     while True:
         if remaining <= 0:
@@ -1463,7 +1463,7 @@ def readlines_until_timeout(
         if not line:
             return lines
         lines.append(line)
-        remaining = end_time - time.time()
+        remaining = end_time - time.monotonic()
 
 
 def process_console_output_line(line: bytes, test: TestConfig):
@@ -1527,7 +1527,7 @@ def run_test(
     zephyr: bool,
 ) -> bool:
     """Run specified test."""
-    start = time.time()
+    start = time.monotonic()
 
     reboot_timeout = board_config.reboot_timeout
     logging.debug("Calling pre-test callback")
@@ -1558,7 +1558,7 @@ def run_test(
     while True:
         console.flush()
 
-        elapsed_secs = time.time() - start
+        elapsed_secs = time.monotonic() - start
         remaining_secs = int(test.timeout_secs - elapsed_secs)
         if remaining_secs <= 0:
             logging.debug("Test timed out")
