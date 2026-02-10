@@ -2157,6 +2157,26 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_new_power_request)
 	pdc_power_mgmt_set_max_voltage(max_voltage);
 }
 
+ZTEST_USER(pdc_power_mgmt_api, test_set_new_power_request_invalid)
+{
+	unsigned int prev_max_voltage = pdc_power_mgmt_get_max_voltage();
+
+	pdc_power_mgmt_set_max_voltage(PD_MIN_MV - 1);
+
+	/* Max voltage should not have changed since PD_MIN_MV-1 is below the
+	 * minimum supported PD voltage */
+	zassert_equal(prev_max_voltage, pdc_power_mgmt_get_max_voltage(),
+		      "Max voltage changed despite illegal request");
+
+	pdc_power_mgmt_set_max_voltage(
+		CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV + 1);
+
+	/* Max voltage should not have changed since (max+1)mV is above the
+	 * board maximum */
+	zassert_equal(prev_max_voltage, pdc_power_mgmt_get_max_voltage(),
+		      "Max voltage changed despite illegal request");
+}
+
 ZTEST_USER(pdc_power_mgmt_api, test_request_source_voltage)
 {
 	uint32_t partner_src_pdos[] = {

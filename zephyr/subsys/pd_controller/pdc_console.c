@@ -648,8 +648,16 @@ static int cmd_pdc_src_voltage(const struct shell *sh, size_t argc, char **argv)
 		shell_fprintf(sh, SHELL_INFO, "Using max voltage (%dmV)\n", mv);
 	}
 
-	if (mv < 5000) {
-		shell_fprintf(sh, SHELL_ERROR, "Must be >= 5000mV\n");
+	if (mv < PD_MIN_MV) {
+		shell_fprintf(sh, SHELL_ERROR,
+			      "Must be >= %umV (USB-PD minimum)\n", PD_MIN_MV);
+		return EC_ERROR_PARAM2;
+	}
+
+	if (mv > CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV) {
+		shell_fprintf(sh, SHELL_ERROR,
+			      "Must be <= %umV (board limit)\n",
+			      CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV);
 		return EC_ERROR_PARAM2;
 	}
 

@@ -407,7 +407,18 @@ ZTEST_USER(console_cmd_pdc, test_src_voltage)
 		      EC_ERROR_PARAM2, rv);
 
 	/* V must be >= 5V */
+	zassert_true(4 * 1000 < PD_MIN_MV,
+		     "4V should be less than the minimum PD voltage");
+
 	rv = shell_execute_cmd(get_ec_shell(), "pdc src_voltage 0 4");
+	zassert_equal(rv, EC_ERROR_PARAM2, "Expected %d, but got %d",
+		      EC_ERROR_PARAM2, rv);
+
+	/* V must be <= 20V */
+	zassert_equal(20000, CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV,
+		      "This test expects the max board voltage to be 20V");
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc src_voltage 0 21");
 	zassert_equal(rv, EC_ERROR_PARAM2, "Expected %d, but got %d",
 		      EC_ERROR_PARAM2, rv);
 
