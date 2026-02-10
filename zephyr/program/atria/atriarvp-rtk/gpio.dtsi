@@ -12,31 +12,89 @@
 		compatible = "named-gpios";
 
 		/* The legacy system code requires GPIO_ENTERING_RW symbol */
-		gpio_ec_entering_rw: ec_entering_rw {
+		ec_spi_oe_mecc: ec_entering_rw {
 			enum-name = "GPIO_ENTERING_RW";
 		};
-
-		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
-			gpios = <RTS5912_GPIO022 GPIO_OUTPUT_LOW>;
-			enum-name = "GPIO_PACKET_MODE_EN";
+		smc-wake-sci-n-3v3-od {
+			gpios = <RTS5912_GPIO000 (GPIO_OUTPUT | GPIO_ODR_HIGH)>;
 		};
+		std-adpt-cntrl-gpio-3v3-pp {
+			gpios = <RTS5912_GPIO001 GPIO_OUTPUT>;
+		};
+                cse_early_rec_sw: c-mecc-cse-early-sw-1v8-od {
+                        gpios = <RTS5912_GPIO015 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
+                };
+                gpio_voldn: vol-dn-ec-3v3-i {
+                        gpios = <RTS5912_GPIO029 GPIO_INPUT>;
+                        enum-name = "GPIO_VOLUME_DOWN_L";
+                };
 		gpio_ec_wp_odl: ec_wp_odl { /* SPI_WP_H1 */
-			gpios = <RTS5912_GPIO030 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+                        gpios = <RTS5912_GPIO030 (GPIO_INPUT | GPIO_VOLTAGE_1P8 | GPIO_ACTIVE_LOW)>;
+                };
+                cpu-c10-gate-1v8-i {
+                        gpios = <RTS5912_GPIO031 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+                };
+		gpio_en_pp3300: ec-ds3-3v3-pp {
+                        gpios = <RTS5912_GPIO053 GPIO_OUTPUT>;
+			no-auto-init;
+                };
+		gpio_tablet_mode_l: ec-slatemode-hallout-snsr-1v8-i {
+                        gpios = <RTS5912_GPIO078 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+                        enum-name = "GPIO_TABLET_MODE_L";
+                };
+		gpio_volup: volume-up-3v3-i {
+                        gpios = <RTS5912_GPIO083 GPIO_INPUT>;
+                        enum-name = "GPIO_VOLUME_UP_L";
+                };
+		gpio_dc_jack_present: std_adp_prsnt: std-adp-prsnt-3v3-i {
+                        gpios = <RTS5912_GPIO093 GPIO_INPUT>;
+                };
+                c-ec-pdb-ctrl-1v8-od {
+                        gpios = <RTS5912_GPIO096 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+                };
+		all_sys_pwrgd: all-sys-pwrgd-3v3-i {
+			gpios = <RTS5912_GPIO099 GPIO_INPUT>;
+			no-auto-init;
 		};
-		gpio_ec_smc_wake_l: ec_smc_wake_l {
-			gpios = <RTS5912_GPIO086 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
+		gpio_fan_control: ec-fan-pwr-disable-n {
+                        gpios = <RTS5912_GPIO105 GPIO_OUTPUT_LOW>;
+                        no-auto-init;
+                };
+		gpio_soc_ec_int_l: smc-extsmi-n-1v8-od {
+			gpios = <RTS5912_GPIO107 (GPIO_VOLTAGE_1P8 | GPIO_ODR_HIGH)>;
+			enum-name = "GPIO_EC_INT_L";
 		};
-		gpio_ec_en_edp_bl: ec_en_edp_bl { /* EC_BKOFF# */
-			gpios = <RTS5912_GPIO091 GPIO_ODR_HIGH>;
-			enum-name = "GPIO_ENABLE_BACKLIGHT";
-		};
-		gpio_ec_acok_od: ec_acok_od {
-			gpios = <RTS5912_GPIO112 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_AC_PRESENT";
-		};
-		gpio_ec_soc_pwr_btn_odl: ec_soc_pwr_btn_odl {
-			gpios = <RTS5912_GPIO124 GPIO_ODR_HIGH>;
+                sys-pwrok-ec-1v8-od {
+                        gpios = <RTS5912_GPIO109 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
+                };
+		gpio_ec_acok_od: bc-acok-3v3-i {
+                        gpios = <RTS5912_GPIO112 GPIO_INPUT>;
+                        enum-name = "GPIO_AC_PRESENT";
+                };
+		gpio_ec_pwr_btn_odl: pwrbtn-ec-in-n-3v3-i {
+                        gpios = <RTS5912_GPIO115 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+                        enum-name = "GPIO_POWER_BUTTON_L";
+                };
+		gpio_lid_open: smc-lid-3v3-i {
+                        gpios = <RTS5912_GPIO117 GPIO_INPUT>;
+                        enum-name = "GPIO_LID_OPEN";
+                };
+                prochot-ec-n-3v3-od {
+                        gpios = <RTS5912_GPIO122 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
+                };
+		c-en-pp5000-typea-3v3-pp {
+                        gpios = <RTS5912_GPIO123 GPIO_INPUT>;
+                };
+		pm-pwrbtn-n-1v8-od {
+			gpios = <RTS5912_GPIO124 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		bat-det-3v3-i {
+			gpios = <RTS5912_GPIO126 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		gpio_ec_pch_wake_odl: ec-pg3-wake-3v3-pp {
+			gpios = <RTS5912_GPIO131 GPIO_OUTPUT>;
 		};
 	};
 
@@ -49,6 +107,3 @@
 		};
 	};
 };
-
-/* The eSPI shim requires this GPIO nodelabel */
-gpio_ec_pch_wake_odl: &gpio_ec_smc_wake_l {};
