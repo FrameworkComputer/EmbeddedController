@@ -435,6 +435,52 @@ class Renode(Platform):
     def cleanup(self) -> None:
         self.process.kill()
 
+    def _skip_test_bloonchipper(
+        self, test_config: TestConfig, zephyr: bool
+    ) -> bool:
+        test_name = test_config.test_name
+
+        # bloonchipper Zephyr tests to skip on Renode.
+        if zephyr and test_name in [
+            "abort",  # TODO(b/384094781)
+            "benchmark",  # TODO(b/390253975)
+            "exception",  # TODO(b/388327673)
+            # TODO(b/382705460): We have seen this flake in the CQ.
+            # Re-enable when missing character bug is fixed.
+            "flash_physical",
+            "fp_transport",  # TODO(b/384094788)
+            "fpsensor_debug",  # TODO(b/384110894)
+            "ftrapv",  # TODO(b/384095271)
+            "null_pointer",  # TODO(b/436935088)
+            "panic",  # TODO(b/384095226)
+            "panic_data",  # TODO(b/384095623)
+            "zephyr_flash_stm32f4",  # TODO(b/384974228)
+            # TODO(b/384975384)
+            "zephyr_counter_basic_api_stm32_subsec",
+            # TODO(b/390255521)
+            "timer",
+        ]:
+            return True
+
+        # bloonchipper Zephyr test "variants" to skip on Renode.
+        if zephyr and test_config.config_name in [
+            # TODO(b/481786786): The four tests below are all disabled
+            # due to this issue.
+            "unaligned_access_bloonchipper_v2.0.4277",
+            "unaligned_access_bloonchipper_v2.0.5938",
+            "system_is_locked_wp_on_bloonchipper_v2.0.4277",
+            "system_is_locked_wp_on_bloonchipper_v2.0.5938",
+        ]:
+            return True
+
+        # bloonchipper EC tests to skip on Renode.
+        if test_name in [
+            "rtc_stm32f4",  # TODO(b/384991107)
+        ]:
+            return True
+
+        return False
+
     def skip_test(
         self, test_config: TestConfig, board_config: BoardConfig, zephyr: bool
     ) -> bool:
@@ -449,47 +495,10 @@ class Renode(Platform):
         ]:
             return True
 
-        if board_config.name in [BLOONCHIPPER, DARTMONKEY]:
-            if board_config.name == BLOONCHIPPER:
-                # bloonchipper Zephyr tests to skip on Renode.
-                if zephyr and test_name in [
-                    "abort",  # TODO(b/384094781)
-                    "benchmark",  # TODO(b/390253975)
-                    "exception",  # TODO(b/388327673)
-                    # TODO(b/382705460): We have seen this flake in the CQ.
-                    # Re-enable when missing character bug is fixed.
-                    "flash_physical",
-                    "fp_transport",  # TODO(b/384094788)
-                    "fpsensor_debug",  # TODO(b/384110894)
-                    "ftrapv",  # TODO(b/384095271)
-                    "null_pointer",  # TODO(b/436935088)
-                    "panic",  # TODO(b/384095226)
-                    "panic_data",  # TODO(b/384095623)
-                    "zephyr_flash_stm32f4",  # TODO(b/384974228)
-                    # TODO(b/384975384)
-                    "zephyr_counter_basic_api_stm32_subsec",
-                    # TODO(b/390255521)
-                    "timer",
-                ]:
-                    return True
+        if board_config.name == BLOONCHIPPER:
+            return self._skip_test_bloonchipper(test_config, zephyr)
 
-                # bloonchipper Zephyr test "variants" to skip on Renode.
-                if zephyr and test_config.config_name in [
-                    # TODO(b/481786786): The four tests below are all disabled
-                    # due to this issue.
-                    "unaligned_access_bloonchipper_v2.0.4277",
-                    "unaligned_access_bloonchipper_v2.0.5938",
-                    "system_is_locked_wp_on_bloonchipper_v2.0.4277",
-                    "system_is_locked_wp_on_bloonchipper_v2.0.5938",
-                ]:
-                    return True
-
-                # bloonchipper EC tests to skip on Renode.
-                if test_name in [
-                    "rtc_stm32f4",  # TODO(b/384991107)
-                ]:
-                    return True
-        elif board_config.name in [HELIPILOT, BUCCANEER, GWENDOLIN]:
+        if board_config.name in [HELIPILOT, BUCCANEER, GWENDOLIN]:
             if test_name in [
                 "exception",  # TODO(b/384730599)
                 "otp_key",  # TODO(b/385216796)
