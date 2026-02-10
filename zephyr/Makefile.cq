@@ -23,15 +23,16 @@ BUILD=$(PLATFORM_EC)/build
 
 # common/mock is not a generator or system path. However, listing it here
 # removes it from consideration in CQ coverage math, which is the intent.
-GENERATED_AND_SYSTEM_PATTERNS='$(PLATFORM_EC)/build/**' \
-	'$(PLATFORM_EC)/twister-out*/**' \
-	'/usr/include/**' \
-	'/usr/lib/**' \
+GENERATED_AND_SYSTEM_PATTERNS='**/.cache/**' \
+	'**/lib/gcc/**' \
 	'**/picolibc/picolibc/include/**' \
 	'**/third_party/boringssl/crypto/**' \
-	'**/lib/gcc/**' \
-	'**/.cache/**' \
-	'$(PLATFORM_EC)/common/mock/**'
+	'/usr/include/**' \
+	'/usr/lib/**' \
+	'$(PLATFORM_EC)/build/**' \
+	'$(PLATFORM_EC)/common/mock/**' \
+	'$(PLATFORM_EC)/twister-out*/**' \
+	'$(THIRD_PARTY)/zephyrproject/zephyr/arch/x86/**'
 TEST_PATTERNS='**/*_benchmark.cc' \
 	'**/*_emul.c' \
 	'**/*_emul.cc' \
