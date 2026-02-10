@@ -1,0 +1,39 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <usbc-policy.dtsi>
+
+/ {
+	usbc: usbc-ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			chg = <&charger>;
+			pdc = <&pdc_ti_c0>;
+			pd-retimer;
+			policy = <&cros_policy>;
+		};
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			pdc = <&pdc_ti_c1>;
+			pd-retimer;
+			policy = <&cros_policy>;
+		};
+		port2@2 {
+			compatible = "named-usbc-port";
+			reg = <2>;
+			pdc = <&pdc_ti_c2>;
+			pd-retimer;
+			policy = <&cros_policy>;
+		};
+		ppm-driver {
+			compatible = "ucsi-ppm";
+		};
+	};
+};

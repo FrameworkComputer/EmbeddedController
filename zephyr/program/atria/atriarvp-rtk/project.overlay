@@ -36,3 +36,15 @@
 &sha0 {
 	status = "okay";
 };
+
+&pdc_ti_c0 {
+	irq-gpios = <RTS5912_GPIO027 GPIO_ACTIVE_LOW>;
+};
+
+&pdc_ti_c1 {
+	irq-gpios = <RTS5912_GPIO027 GPIO_ACTIVE_LOW>;
+};
+
+&pdc_ti_c2 {
+	irq-gpios = <RTS5912_GPIO027 GPIO_ACTIVE_LOW>;
+};

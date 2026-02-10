@@ -29,6 +29,11 @@
 	label = "I2C_PORT_CHARGER";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 
+	charger: raa489@9 {
+		compatible = "intersil,isl9241";
+		status = "okay";
+		reg = <0x9>;
+	};
 	pca95xx_0: pca95xx@22 {
 		compatible = "nxp,pca95xx";
 		label = "PCA95XX_0";
