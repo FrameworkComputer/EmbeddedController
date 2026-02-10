@@ -319,6 +319,81 @@ ZTEST_USER(fpsensor_template, test_fp_template_v1_busy)
 	global_context.sensor_mode &= ~FP_MODE_ENCRYPT_TEMPLATE;
 }
 
+ZTEST_USER(fpsensor_template, test_fp_template_v0_busy)
+{
+	struct ec_params_fp_template_v1 params_v1 = {
+		.cmd = FP_TEMPLATE_DECRYPT,
+	};
+	struct ec_params_fp_template params_v0 = {
+		.offset = 0,
+		.size = 0,
+	};
+
+	/* Start decryption via v1 command. */
+	zassert_ok(ec_cmd_fp_template_v1(NULL, &params_v1, sizeof(params_v1)));
+
+	/* v0 command should return BUSY. */
+	zassert_equal(EC_RES_BUSY,
+		      ec_cmd_fp_template(NULL, &params_v0, sizeof(params_v0)));
+
+	/* Give opportunity for fpsensor task to finish. */
+	k_msleep(1);
+}
+
+ZTEST_USER(fpsensor_template, test_fp_frame_v0_busy)
+{
+	struct ec_params_fp_frame_v1 params_v1 = {
+		.cmd = FP_FRAME_ENCRYPT_TEMPLATE,
+		.index = 0,
+	};
+	struct ec_params_fp_frame params_v0 = {
+		.offset = FP_FRAME_INDEX_TEMPLATE << FP_FRAME_INDEX_SHIFT,
+		.size = 0,
+	};
+
+	/* We need at least one valid template for FP_FRAME_ENCRYPT_TEMPLATE. */
+	global_context.templ_valid = 1;
+
+	/* Start encryption via v1 command. */
+	zassert_ok(ec_cmd_fp_frame_v1(NULL, &params_v1, NULL));
+
+	/* v0 command should return BUSY. */
+	zassert_equal(EC_RES_BUSY,
+		      ec_cmd_fp_frame(NULL, &params_v0, frame_buffer));
+
+	/* Give opportunity for fpsensor task to finish. */
+	k_msleep(1);
+
+	/* b/114160734: Not more than 1 encrypted message per second. */
+	k_sleep(K_SECONDS(1));
+}
+
+ZTEST_USER(fpsensor_template, test_fp_frame_v0_raw_image_not_busy)
+{
+	struct ec_params_fp_template_v1 params_v1 = {
+		.cmd = FP_TEMPLATE_DECRYPT,
+	};
+	struct ec_params_fp_frame params_v0 = {
+		.offset = FP_FRAME_INDEX_RAW_IMAGE << FP_FRAME_INDEX_SHIFT,
+		.size = 0,
+	};
+
+	/* Start decryption via v1 command. */
+	zassert_ok(ec_cmd_fp_template_v1(NULL, &params_v1, sizeof(params_v1)));
+
+	/*
+	 * Confirm that getting raw image is NOT blocked by crypto operation.
+	 *
+	 * Note: It will return EC_RES_INVALID_PARAM because no image was
+	 * captured, but it must NOT be EC_RES_BUSY.
+	 */
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      ec_cmd_fp_frame(NULL, &params_v0, frame_buffer));
+
+	/* Give opportunity for fpsensor task to finish. */
+	k_msleep(1);
+}
+
 ZTEST_USER(fpsensor_template, test_fp_template_v1_overflow)
 {
 	struct ec_params_fp_template_v1 params = {

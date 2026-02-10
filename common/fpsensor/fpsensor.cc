@@ -615,6 +615,11 @@ static enum ec_status fp_command_frame_v0(struct host_cmd_handler_args *args)
 
 	/* The host requested a template. */
 
+	/* Encryption or decryption is in progress. */
+	if (global_context.sensor_mode & FP_MODES_CRYPTO_IN_PROGRESS) {
+		return EC_RES_BUSY;
+	}
+
 	/* Templates are numbered from 1 in this host request. */
 	uint16_t fgr = idx - FP_FRAME_INDEX_TEMPLATE;
 
@@ -885,6 +890,11 @@ static enum ec_status fp_command_template_v0(struct host_cmd_handler_args *args)
 	/* Can we store one more template ? */
 	if (idx >= FP_MAX_FINGER_COUNT)
 		return EC_RES_OVERFLOW;
+
+	/* Encryption or decryption is in progress. */
+	if (global_context.sensor_mode & FP_MODES_CRYPTO_IN_PROGRESS) {
+		return EC_RES_BUSY;
+	}
 
 	if (args->params_size !=
 	    size + offsetof(struct ec_params_fp_template, data))
