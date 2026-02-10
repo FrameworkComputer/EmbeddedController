@@ -1062,6 +1062,7 @@ static enum ec_status hc_pchg_update(struct host_cmd_handler_args *args)
 #ifdef CONFIG_WPC_HALL_ENABLE
 		hook_call_deferred(&wpc_hall_handler_data, -1);
 		pchg_startup();
+		ctx->bist_cmd = PCHG_BIST_CMD_NONE;
 #endif
 		gpio_disable_interrupt(ctx->cfg->irq_pin);
 		_clear_port(ctx);
