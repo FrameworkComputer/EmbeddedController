@@ -17,25 +17,25 @@
 		};
 
 		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
-			gpios = <&gpiob 6 GPIO_OUTPUT_LOW>;
+			gpios = <RTS5912_GPIO022 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
 		gpio_ec_wp_odl: ec_wp_odl { /* SPI_WP_H1 */
-			gpios = <&gpiob 14 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <RTS5912_GPIO030 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		gpio_ec_smc_wake_l: ec_smc_wake_l {
-			gpios = <&gpiof 6 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
+			gpios = <RTS5912_GPIO086 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
 		};
 		gpio_ec_en_edp_bl: ec_en_edp_bl { /* EC_BKOFF# */
-			gpios = <&gpiof 11 GPIO_ODR_HIGH>;
+			gpios = <RTS5912_GPIO091 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
 		};
 		gpio_ec_acok_od: ec_acok_od {
-			gpios = <&gpioh 0 GPIO_INPUT_PULL_UP>;
+			gpios = <RTS5912_GPIO112 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_AC_PRESENT";
 		};
 		gpio_ec_soc_pwr_btn_odl: ec_soc_pwr_btn_odl {
-			gpios = <&gpioh 12 GPIO_ODR_HIGH>;
+			gpios = <RTS5912_GPIO124 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 	};
