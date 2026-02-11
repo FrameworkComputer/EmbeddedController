@@ -118,6 +118,9 @@ def test(_opts):
 
     os.environ["PATH"] += ":" + str(renode_install_dir.joinpath("bin"))
 
+    print("Renode version:")
+    subprocess.run(["renode", "--version"], check=True)
+
     # Run unit tests with Renode.
     # TODO(b/371633141): Add a parallel option to run_device_tests.py to speed
     # this up. Right now the EC/Zephyr coverage builders take longer than this,
