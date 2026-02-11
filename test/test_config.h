@@ -111,9 +111,9 @@ enum battery_type {
 #define CONFIG_RGBKBD_DEMO_DOT
 #endif
 
-#if defined(TEST_BODY_DETECTION) || defined(TEST_BODY_DETECTION) ||        \
-	defined(TEST_MOTION_ANGLE) || defined(TEST_MOTION_ANGLE_TABLET) || \
-	defined(TEST_MOTION_LID) || defined(TEST_MOTION_SENSE_FIFO)
+#if defined(TEST_BODY_DETECTION) || defined(TEST_MOTION_ANGLE) ||        \
+	defined(TEST_MOTION_ANGLE_TABLET) || defined(TEST_MOTION_LID) || \
+	defined(TEST_MOTION_SENSE_FIFO)
 enum sensor_id {
 	BASE,
 	LID,

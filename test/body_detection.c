@@ -110,5 +110,8 @@ void run_test(int argc, const char **argv)
 
 	RUN_TEST(test_body_detect);
 
+	/* Wait for motion_sense_task to finish doing what ever it does. */
+	crec_sleep(2);
+
 	test_print_result();
 }
