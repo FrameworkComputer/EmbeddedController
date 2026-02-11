@@ -1182,13 +1182,6 @@ def find_section_offset_size(section: str, image: bytes) -> tuple[int, int]:
     return area["offset"], area["size"]
 
 
-def read_section(src: bytes, section: str) -> bytes:
-    """Read FMAP section content into byte array"""
-    (src_start, src_size) = find_section_offset_size(section, src)
-    src_end = src_start + src_size
-    return src[src_start:src_end]
-
-
 def write_section(data: bytes, image: bytearray, section: str):
     """Replace the specified section in image with the contents of data"""
     (section_start, section_size) = find_section_offset_size(section, image)
@@ -1220,17 +1213,13 @@ def copy_section(src: bytes, dst: bytearray, section: str):
     dst[dst_start:dst_end] = src[src_start:src_end] + filling
 
 
-def replace_ro(image: bytearray, ro_section: bytes):
-    """Replace RO in image with provided one"""
-    # Backup RO public key since its private part was used to sign RW.
-    ro_pubkey = read_section(image, "KEY_RO")
+def replace_rw(src_image: bytes, dst_image: bytearray):
+    """Replace RW in destination image with RW from source image"""
+    # Copy RO public key since its private part was used to sign RW.
+    copy_section(src_image, dst_image, "KEY_RO")
 
-    # Copy RO part of the firmware to the image. Please note that RO public key
-    # is copied too since EC_RO area includes KEY_RO area.
-    copy_section(ro_section, image, "EC_RO")
-
-    # Restore RO public key.
-    write_section(ro_pubkey, image, "KEY_RO")
+    # Copy RW firmware.
+    copy_section(src_image, dst_image, "EC_RW")
 
 
 def set_sleep_mode(enter_sleep: bool) -> bool:
@@ -1405,15 +1394,17 @@ def build(
     subprocess.run(cmd, check=False).check_returncode()
 
 
-def patch_image(test: TestConfig, image_path: str):
-    """Replace RO part of the firmware with provided one."""
-    with open(image_path, "rb+") as image_file:
-        image = bytearray(image_file.read())
-        ro_section = read_file_gsutil(test.ro_image)
-        replace_ro(image, ro_section)
-        image_file.seek(0)
-        image_file.write(image)
-        image_file.truncate()
+def _patch_image_with_new_rw(test: TestConfig, image_path: str):
+    """Replace provided image with specified RO + RW from that image."""
+    dst_image = bytearray(read_file_gsutil(test.ro_image))
+    with open(image_path, "rb") as image_file:
+        src_image = bytes(image_file.read())
+
+    # Replace RW part in the destination image using source image
+    replace_rw(src_image, dst_image)
+
+    with open(image_path, "wb") as image_file:
+        image_file.write(dst_image)
 
 
 def erase_rw(image_path: str):
@@ -1691,8 +1682,12 @@ def flash_and_run_test(
     logging.debug("image_path: %s", image_path)
 
     if test.ro_image is not None:
+        # Use the RO specified by the test. Replace KEY_RO and EC_RW (which
+        # encompasses both RW_FW and SIG_RW) in the RO image. This better
+        # reflects the production usecase in which the RW part is changed
+        # and other sections (e.g rollbacks) remain unchanged.
         try:
-            patch_image(test, image_path)
+            _patch_image_with_new_rw(test, image_path)
         except Exception as exception:  # pylint: disable=broad-except
             logging.warning(
                 "An exception occurred while patching image: %s", exception
