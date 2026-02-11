@@ -191,6 +191,15 @@ config HW_TEST_ROLLBACK
 	help
 	  The test verifies rollback regions functionality.
 
+config HW_TEST_ROLLBACK_MINIMAL_VERSION
+	bool "Rollback minimal version test"
+	select ZTEST
+	depends on BOARD_FINGERPRINT
+	depends on PLATFORM_EC_ROLLBACK
+	help
+	  The test verifies that the rollback minimal version matches the
+	  expected value.
+
 config HW_TEST_ROLLBACK_LOCK_PANIC
 	bool "Rollback lock panic test"
 	select ZTEST
