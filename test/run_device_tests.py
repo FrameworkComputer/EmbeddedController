@@ -882,6 +882,17 @@ class AllTests:
             ),
         ]
 
+        # Run rollback_minimal_version tests for all boards and RO versions.
+        for variant_name, variant_info in board_config.variants.items():
+            tests.append(
+                TestConfig(
+                    config_name=f"rollback_minimal_version_{variant_name}",
+                    test_name="rollback_minimal_version",
+                    ro_image=variant_info.get("ro_image_path"),
+                    build_board=variant_info.get("build_board"),
+                )
+            )
+
         # Run unaligned access tests for all boards and RO versions.
         for variant_name, variant_info in board_config.variants.items():
             tests.append(
