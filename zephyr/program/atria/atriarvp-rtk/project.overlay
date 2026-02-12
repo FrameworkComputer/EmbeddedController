@@ -35,6 +35,11 @@
 	irq-gpios = <RTS5912_GPIO085 GPIO_ACTIVE_LOW>;
 };
 
+&cbi_flash {
+	offset = <0x7F000>;
+	size = <0x1000>;
+};
+
 &espi0 {
 	status = "okay";
 };
