@@ -22,7 +22,7 @@
 
 			rw-rbver {
 				size = <4>;
-				type = "section";
+				type = "null";
 				/* points to
 				 * current_image_data.rollback_version
 				 */
