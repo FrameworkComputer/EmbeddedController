@@ -79,21 +79,21 @@ ZTEST(rollback_entropy, test_add_entropy)
 
 	const struct rollback_data expected_empty = {
 		.id = 0,
-		.rollback_min_version = 0,
+		.rollback_min_version = CONFIG_PLATFORM_EC_ROLLBACK_VERSION,
 		.secret = { 0 },
 		.cookie = VALID_ROLLBACK_COOKIE
 	};
 
 	const struct rollback_data expected_secret = {
 		.id = 1,
-		.rollback_min_version = 0,
+		.rollback_min_version = CONFIG_PLATFORM_EC_ROLLBACK_VERSION,
 		.secret = { EXPECTED_SECRET },
 		.cookie = VALID_ROLLBACK_COOKIE
 	};
 
 	const struct rollback_data expected_secret2 = {
 		.id = 2,
-		.rollback_min_version = 0,
+		.rollback_min_version = CONFIG_PLATFORM_EC_ROLLBACK_VERSION,
 		.secret = { EXPECTED_SECRET2 },
 		.cookie = VALID_ROLLBACK_COOKIE
 	};
