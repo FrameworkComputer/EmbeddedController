@@ -373,6 +373,7 @@ static void reset_policy_patterns(enum ec_led_id led_id)
 /* Pointer to runtime-assigned patterns from host commands */
 static struct custom_led_patterns_t *g_custom_patterns;
 static struct k_spinlock led_custom_lock;
+static uint32_t led_auto_flags_cache = 0;
 
 void led_set_custom_patterns(struct custom_led_patterns_t *p)
 {
@@ -418,6 +419,7 @@ update_custom_node(const struct policy_group *grp,
 
 	/* Only process if the LED is managed by this driver */
 	if (!(grp->driver->led_id_mask & (BIT(custom->led_id)))) {
+		led_auto_flags_cache &= ~BIT(custom->led_id);
 		return status;
 	}
 
@@ -481,6 +483,7 @@ update_policy_node(const struct policy_group *grp,
 
 		/* Check if auto control is enabled */
 		if (!led_auto_control_is_enabled(led_id)) {
+			led_auto_flags_cache &= ~BIT(led_id);
 			continue;
 		}
 
@@ -729,6 +732,18 @@ static void led_animation_worker(struct k_work *work)
 static void led_tick(void)
 {
 	led_update_policy_state();
+
+	/* If led auto status was just enabled, reset the LED and immediately
+	 * trigger an update. */
+	for (int i = 0; i < EC_LED_ID_COUNT; i++) {
+		if (!led_auto_control_is_enabled(i)) {
+			led_auto_flags_cache &= ~BIT(i);
+		} else if (!(led_auto_flags_cache & BIT(i))) {
+			led_auto_flags_cache |= BIT(i);
+			reset_policy_patterns(i);
+			k_work_schedule(&led_worker_data, K_NO_WAIT);
+		}
+	}
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
 

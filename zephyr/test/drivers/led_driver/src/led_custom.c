@@ -196,6 +196,13 @@ ZTEST(led_driver_custom, test_custom_unsupported_led)
  */
 ZTEST(led_driver_custom, test_manual_control)
 {
+	/* Initialize the LED to the OFF state. */
+	set_board_led_alt_policy(7);
+	hook_notify(HOOK_TICK);
+	k_sleep(K_MSEC(30));
+
+	zassert_true(is_off(), "LED intially should be in the off state");
+
 	const struct led_pins_node_t *blue_node =
 		led_get_node(LED_BLUE, EC_LED_ID_BATTERY_LED);
 	const struct led_pins_node_t *white_node =
@@ -245,6 +252,15 @@ ZTEST(led_driver_custom, test_manual_control)
 
 	/* Re-enable auto control */
 	led_auto_control(EC_LED_ID_BATTERY_LED, 1);
+	hook_notify(HOOK_TICK);
+	k_sleep(K_MSEC(30));
+
+	/*
+	 * Verify LED pattern reverts to OFF with auto-control back on.
+	 */
+	zassert_true(
+		is_off(),
+		"LED should revert to the off state after auto-control is re-enabled");
 }
 
 /*
