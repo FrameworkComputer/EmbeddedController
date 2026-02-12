@@ -13,6 +13,7 @@
 #include "power.h"
 #include "temp_sensor/temp_sensor.h"
 #include "usb_pd.h"
+#include "usbc/pdc_power_mgmt.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
@@ -100,7 +101,7 @@ static void typec_temperature_policy_deferred(void)
 		CPRINTS("TypeC thermal: suspend=%d temp=%dC", typec_policy,
 			typec_temp_c);
 		pre_typec_policy = typec_policy;
-		pd_set_suspend(0, typec_policy);
+		pdc_power_mgmt_set_comms_state(!typec_policy);
 	}
 	hook_call_deferred(&typec_temperature_policy_deferred_data,
 			   (typec_temp_c >= 100) ? TYPEC_POLICY_SHORT_DELAY :
