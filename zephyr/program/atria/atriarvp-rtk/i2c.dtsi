@@ -8,6 +8,8 @@ i2c_port_charger: &i2c_0 {
 		     &i2c00_data_gpio095>;
 	pinctrl-names = "default";
 	status = "okay";
+	sda-timeout-value = <100>;
+	scl-timeout-value = <100>;
 };
 
 i2c_port_pd: &i2c_3 {
@@ -15,6 +17,8 @@ i2c_port_pd: &i2c_3 {
 		     &i2c03_data_gpio101>;
 	pinctrl-names = "default";
 	status = "okay";
+	sda-timeout-value = <100>;
+	scl-timeout-value = <100>;
 };
 
 &i2c_0_wrapper {
