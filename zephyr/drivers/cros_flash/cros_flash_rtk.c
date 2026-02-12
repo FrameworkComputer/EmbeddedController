@@ -436,7 +436,7 @@ static int cros_flash_rtk_protect_at_boot(const struct device *dev,
 {
 	struct cros_flash_rtk_data *data = DRV_DATA(dev);
 	uint8_t lock_flags = 0;
-	int ret;
+	int ret = 0;
 
 	if ((new_flags & (EC_FLASH_PROTECT_RO_AT_BOOT |
 			  EC_FLASH_PROTECT_ALL_AT_BOOT)) == 0) {
@@ -495,7 +495,7 @@ static int cros_flash_rtk_init(const struct device *dev)
 {
 	struct cros_flash_rtk_data *data = DRV_DATA(dev);
 	uint8_t lock_flags = 0;
-	int ret;
+	int ret = 0;
 
 	if (read_bbram_flags(&lock_flags)) {
 		LOG_ERR("read lock_flags failed");
