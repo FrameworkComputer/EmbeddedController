@@ -60,3 +60,43 @@
 		};
 	};
 };
+
+&i2c_0 {
+	sda-timeout-value = <100>;
+	scl-timeout-value = <100>;
+};
+
+&i2c_1 {
+	sda-timeout-value = <100>;
+	scl-timeout-value = <100>;
+};
+
+&i2c_2 {
+	sda-timeout-value = <100>;
+	scl-timeout-value = <100>;
+};
+
+&i2c_3 {
+	sda-timeout-value = <100>;
+	scl-timeout-value = <100>;
+};
+
+&i2c_4 {
+	sda-timeout-value = <100>;
+	scl-timeout-value = <100>;
+};
+
+&i2c_5 {
+	sda-timeout-value = <100>;
+	scl-timeout-value = <100>;
+};
+
+&i2c_6 {
+	sda-timeout-value = <100>;
+	scl-timeout-value = <100>;
+};
+
+&i2c_7 {
+	sda-timeout-value = <100>;
+	scl-timeout-value = <100>;
+};
