@@ -36,6 +36,7 @@ static void form_factor_init(void)
 			GPIO_DT_FROM_NODELABEL(gpio_lid_accel_int_ec_l),
 			GPIO_INPUT | GPIO_PULL_UP);
 		gmr_tablet_switch_disable();
+		motion_sensor_count = 0;
 		LOG_INF("Board is Clamshell");
 	} else if (ec_fwconfig == CONVERTIBLE) {
 		LOG_INF("Board is Convertible");
