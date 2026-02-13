@@ -501,6 +501,10 @@ class Renode(Platform):
             "restricted_console",  # TODO(b/474439863)
             "tpm_seed_clear",  # TODO(b/406944986)
             "utils",  # TODO(b/483126917)
+            "zephyr_cpp_newlib",  # TODO(b/484366615)
+            "zephyr_cpp_std20",  # TODO(b/484366615)
+            "zephyr_drivers_entropy",  # TODO(b/484366615)
+            "zephyr_kernel_poll",  # TODO(b/484366615)
         ]:
             return True
         return False
