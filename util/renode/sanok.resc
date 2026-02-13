@@ -27,3 +27,7 @@ macro reset
 """
 
 runMacro $reset
+
+# See b/482426716 and b/484348778.
+include $ORIGIN/sanok_crypto_hooks.py
+AddCustomPythonHooks cpu0
