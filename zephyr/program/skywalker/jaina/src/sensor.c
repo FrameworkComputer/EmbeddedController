@@ -35,13 +35,13 @@ static void board_sensor_init(void)
 {
 	uint32_t val;
 
-	if (cros_cbi_get_fw_config(FORM_FACTOR, &val) == 0) {
-		if (val == CLAMSHELL) {
-			ccprints("Board is Clamshell");
-			gmr_tablet_switch_disable();
-		} else if (val == CONVERTIBLE) {
-			ccprints("Board is Convertible");
-		}
+	cros_cbi_get_fw_config(FORM_FACTOR, &val);
+	if (val == CLAMSHELL) {
+		ccprints("Board is Clamshell");
+		motion_sensor_count = 0;
+		gmr_tablet_switch_disable();
+	} else if (val == CONVERTIBLE) {
+		ccprints("Board is Convertible");
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_sensor_init, HOOK_PRIO_DEFAULT);
