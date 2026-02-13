@@ -26,6 +26,7 @@
 		};
 		313_ac_32_a {
 			compatible = "cosmx,313-ac-32-a", "battery-smart";
+			charging_max_c = <46>;
 		};
 		313_2d_32_a {
 			compatible = "dynapack,313-2d-32-a", "battery-smart";
