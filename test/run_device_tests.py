@@ -1579,7 +1579,7 @@ def run_test(
                 # flush read the remaining
                 lines = readlines_until_timeout(executor, console, 1)
                 logging.debug(lines)
-                test.logs.append(lines)
+                test.logs.extend(lines)
 
                 for line in lines:
                     process_console_output_line(line, test)
