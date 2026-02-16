@@ -30,6 +30,10 @@
 	status = "okay";
 };
 
+&stop {
+	min-residency-us = <625>;
+};
+
 &dma1 {
 	status = "okay";
 };
