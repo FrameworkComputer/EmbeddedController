@@ -1,0 +1,116 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	aliases {
+		gpio-wp = &ec_wp_l;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		ec_wp_l: write-protect {
+			gpios = <&gpioa 0 GPIO_INPUT>;
+		};
+		/* unimplemented GPIOs */
+		entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+	};
+};
+
+&i2c_0 {
+        pinctrl-0 = <&i2c00_clk_gpio094
+                     &i2c00_data_gpio095>;
+        pinctrl-names = "default";
+
+        clock-frequency = <I2C_BITRATE_STANDARD>;
+        status = "okay";
+};
+
+&i2c_1 {
+        pinctrl-0 = <&i2c01_clk_gpio118
+                     &i2c01_data_gpio119>;
+        pinctrl-names = "default";
+
+        clock-frequency = <I2C_BITRATE_STANDARD>;
+        status = "okay";
+};
+
+&i2c_2 {
+        pinctrl-0 = <&i2c02_clk_gpio014
+                     &i2c02_data_gpio121>;
+        pinctrl-names = "default";
+
+        clock-frequency = <I2C_BITRATE_STANDARD>;
+        status = "okay";
+};
+
+&i2c_3 {
+        pinctrl-0 = <&i2c03_clk_gpio100
+                     &i2c03_data_gpio101>;
+        pinctrl-names = "default";
+
+        clock-frequency = <I2C_BITRATE_STANDARD>;
+        status = "okay";
+};
+
+&i2c_4 {
+        pinctrl-0 = <&i2c04_clk_gpio017
+                     &i2c04_data_gpio018>;
+        pinctrl-names = "default";
+
+        clock-frequency = <I2C_BITRATE_STANDARD>;
+        status = "okay";
+};
+
+&i2c_5 {
+        pinctrl-0 = <&i2c05_clk_gpio128
+                     &i2c05_data_gpio130>;
+        pinctrl-names = "default";
+
+        clock-frequency = <I2C_BITRATE_STANDARD>;
+        status = "okay";
+};
+
+&i2c_0_wrapper {
+        status = "okay";
+        scl-gpios = <&gpiof 14 GPIO_ACTIVE_HIGH>;
+        sda-gpios = <&gpiof 15 GPIO_ACTIVE_HIGH>;
+};
+
+&i2c_1_wrapper {
+        status = "okay";
+        scl-gpios = <&gpioh 6 GPIO_ACTIVE_HIGH>;
+        sda-gpios = <&gpioh 7 GPIO_ACTIVE_HIGH>;
+};
+
+&i2c_2_wrapper {
+        status = "okay";
+        scl-gpios = <&gpioa 14 GPIO_ACTIVE_HIGH>;
+        sda-gpios = <&gpioh 9 GPIO_ACTIVE_HIGH>;
+};
+
+&i2c_3_wrapper {
+        status = "okay";
+        scl-gpios = <&gpiog 4 GPIO_ACTIVE_HIGH>;
+        sda-gpios = <&gpiog 5 GPIO_ACTIVE_HIGH>;
+};
+
+&i2c_4_wrapper {
+        status = "okay";
+        scl-gpios = <&gpiob 1 GPIO_ACTIVE_HIGH>;
+        sda-gpios = <&gpiob 2 GPIO_ACTIVE_HIGH>;
+};
+
+&i2c_5_wrapper {
+        status = "okay";
+        scl-gpios = <&gpioi 0 GPIO_ACTIVE_HIGH>;
+        sda-gpios = <&gpioi 2 GPIO_ACTIVE_HIGH>;
+};
