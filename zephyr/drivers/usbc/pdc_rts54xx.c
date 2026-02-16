@@ -354,6 +354,8 @@ struct pdc_config_t {
 	bool no_fw_update;
 	/** Whether or not this port supports CCD */
 	bool ccd;
+	/** Whether or not this port supports FRS */
+	bool frs_supported;
 	/** Pointer to the device-specific callback function */
 	gpio_callback_handler_t callback_handler;
 };
@@ -1329,6 +1331,7 @@ static enum smf_state_result st_read_run(void *o)
 		info->driver_name[sizeof(info->driver_name) - 1] = '\0';
 
 		info->no_fw_update = cfg->no_fw_update;
+		info->frs_supported = cfg->frs_supported;
 
 		/* Retain a cached copy of this data */
 		data->info = *info;
@@ -2237,6 +2240,14 @@ static int rts54_get_hw_config(const struct device *dev,
 	return 0;
 }
 
+static bool rts54_get_hw_frs_support(const struct device *dev)
+{
+	const struct pdc_config_t *cfg =
+		(const struct pdc_config_t *)dev->config;
+
+	return cfg->frs_supported;
+}
+
 static int rts54_get_vbus_voltage(const struct device *dev, uint16_t *voltage)
 {
 	struct pdc_data_t *data = dev->data;
@@ -2967,6 +2978,7 @@ static DEVICE_API(pdc, pdc_driver_api) = {
 	.read_power_level = rts54_read_power_level,
 	.get_info = rts54_get_info,
 	.get_hw_config = rts54_get_hw_config,
+	.get_hw_frs_support = rts54_get_hw_frs_support,
 	.set_power_level = rts54_set_power_level,
 	.reconnect = rts54_reconnect,
 	.update_retimer = rts54_set_retimer_update_mode,
@@ -3174,6 +3186,7 @@ BUILD_ASSERT(
 		.create_thread = create_thread_##inst,                        \
 		.no_fw_update = DT_INST_PROP(inst, no_fw_update),             \
 		.ccd = DT_INST_PROP(inst, ccd),                               \
+		.frs_supported = DT_INST_PROP(inst, frs_supported),           \
 		.callback_handler = pdc_interrupt_callback##inst,             \
 	};                                                                    \
                                                                               \

@@ -25,3 +25,8 @@ properties:
       used as connector number in UCSI 4CC tasks. For single-port PDCs, the
       index must be 1. For dual-port PDCs, one of the index should be 1 and the
       other should be 2.
+  frs-supported:
+    type: boolean
+    required: true
+    description: |
+      Whether the PDC supports FRS.

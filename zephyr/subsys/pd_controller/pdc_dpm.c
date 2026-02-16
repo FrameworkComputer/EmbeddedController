@@ -215,7 +215,7 @@ void pdc_dpm_eval_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo)
 	} else {
 		int frs_current = vsafe5v_pdo & PDO_FIXED_FRS_CURR_MASK;
 
-		if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS))
+		if (!pdc_power_mgmt_get_frs_hw_supported(port))
 			return;
 
 		/* If FRS is supported, the power manager will request 3A when
@@ -305,7 +305,7 @@ void pdc_dpm_remove_source(int port)
 	if (pd_get_usb_pd_3a_ports() == 0)
 		return;
 
-	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS))
+	if (!pdc_power_mgmt_get_frs_hw_supported(port))
 		return;
 
 	if (!(BIT(port) & (uint32_t)source_frs_max_requested))

@@ -35,7 +35,6 @@ config PLATFORM_EC_USBC_STUB
 if PLATFORM_EC_USBC
 
 rsource "Kconfig.pd_int_shared"
-rsource "Kconfig.pd_frs"
 rsource "Kconfig.pd_discharge"
 rsource "Kconfig.pd_vbus_detection"
 rsource "Kconfig.pd_console_cmd"
@@ -71,6 +70,7 @@ endchoice
 if PLATFORM_EC_USB_PD_TCPMV2
 rsource "Kconfig.ppc"
 rsource "Kconfig.tcpm"
+rsource "Kconfig.pd_frs"
 endif # PLATFORM_EC_USB_PD_TCPMV2
 
 config PLATFORM_EC_TCPC_INTERRUPT

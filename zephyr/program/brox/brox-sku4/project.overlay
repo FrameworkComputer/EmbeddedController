@@ -46,6 +46,7 @@ i2c3ALT: &i2c3 {
                 reg = <0x20>;
                 irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
                 port-index-on-chip = <0x1>;
+                frs-supported;
         };
 
         pdc_power_p1: tps6699-pdc@24 {
@@ -54,6 +55,7 @@ i2c3ALT: &i2c3 {
                 irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
                 port-index-on-chip = <0x2>;
                 no-fw-update;
+                frs-supported;
         };
 };
 

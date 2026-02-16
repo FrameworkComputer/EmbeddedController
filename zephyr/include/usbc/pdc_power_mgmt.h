@@ -575,6 +575,15 @@ int pdc_power_mgmt_set_current_limit(int port, enum usb_typec_current_t tcc);
 enum usb_typec_current_t pdc_power_mgmt_get_default_current_limit(int port);
 
 /**
+ * @brief Get the FRS hardware support status for a USB-C port
+ *
+ * @param port USB-C port number
+ *
+ * @retval true if FRS is supported, false otherwise
+ */
+bool pdc_power_mgmt_get_frs_hw_supported(int port);
+
+/**
  * @brief Enable/Disable FRS for a given port
  *
  * @param port USB-C port number

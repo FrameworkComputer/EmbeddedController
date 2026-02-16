@@ -1967,7 +1967,7 @@ static void run_snk_policies(struct pdc_port_t *port)
 		return;
 	}
 
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS)) {
+	if (pdc_power_mgmt_get_frs_hw_supported(port_num)) {
 		/* When FRS is supported, the source current limits need
 		 * rebalancing when a DRP source is attached.
 		 */
@@ -2871,7 +2871,8 @@ static enum smf_state_result pdc_snk_attached_run(void *obj)
 
 	switch (port->snk_attached_local_state) {
 	case SNK_ATTACHED_GET_CONNECTOR_CAPABILITY:
-		if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS)) {
+		if (pdc_power_mgmt_get_frs_hw_supported(
+			    config->connector_num)) {
 			port->snk_attached_local_state =
 				SNK_ATTACHED_ADD_PD_SRC;
 		} else {
@@ -3030,7 +3031,8 @@ static enum smf_state_result pdc_snk_attached_run(void *obj)
 	case SNK_ATTACHED_SET_SINK_PATH:
 
 		if (pdc_snk_attached_set_sink_path(port)) {
-			if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS) &&
+			if (pdc_power_mgmt_get_frs_hw_supported(
+				    config->connector_num) &&
 			    port->ccaps.op_mode_drp) {
 				port->snk_attached_local_state =
 					SNK_ATTACHED_GET_SINK_PDO;
@@ -3045,7 +3047,8 @@ static enum smf_state_result pdc_snk_attached_run(void *obj)
 		port->snk_attached_local_state =
 			SNK_ATTACHED_GET_CABLE_PROPERTY;
 
-		if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS)) {
+		if (pdc_power_mgmt_get_frs_hw_supported(
+			    config->connector_num)) {
 			/*
 			 * We only care about the first fixed PDO for FRS, so
 			 * only ask for the first sink PDO from the partner.
@@ -3064,7 +3067,9 @@ static enum smf_state_result pdc_snk_attached_run(void *obj)
 			queue_internal_cmd(port, CMD_PDC_GET_PDOS);
 			return SMF_EVENT_HANDLED;
 		}
-		/* If !CONFIG_PLATFORM_EC_USB_PD_FRS, fallthrough */
+		/* If
+		 * !pdc_power_mgmt_get_frs_hw_supported(config->connector_num),
+		 * fallthrough */
 		__fallthrough;
 	case SNK_ATTACHED_GET_CABLE_PROPERTY:
 		port->snk_attached_local_state = SNK_ATTACHED_READ_POWER_LEVEL;
@@ -5834,6 +5839,15 @@ int pdc_power_mgmt_set_current_limit(int port_num,
 	}
 
 	return EC_SUCCESS;
+}
+
+bool pdc_power_mgmt_get_frs_hw_supported(int port)
+{
+	if (!pdc_power_mgmt_is_pdc_port_valid(port)) {
+		LOG_ERR("get_frs_hw_supported: invalid port %d", port);
+		return false;
+	}
+	return pdc_get_frs_supported(pdc_data[port]->port.pdc);
 }
 
 int pdc_power_mgmt_frs_enable(int port_num, bool enable)

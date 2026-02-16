@@ -192,7 +192,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_is_connected)
 	zassert_true(
 		TEST_WAIT_FOR(pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
 
-	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS)) {
+	if (!pdc_power_mgmt_get_frs_hw_supported(TEST_PORT)) {
 		/* FRS should be disabled after connecting a partner source. */
 		zassert_ok(emul_pdc_get_frs(emul, &frs_enabled));
 	}

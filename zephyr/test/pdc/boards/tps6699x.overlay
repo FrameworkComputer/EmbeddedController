@@ -23,6 +23,7 @@
                 irq-gpios = <&gpiof 5 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
                 port-index-on-chip = <0x1>;
                 ccd;
+                frs-supported;
         };
 
         pdc_emul2: tps6699-pdc@24 {
@@ -30,5 +31,6 @@
                 reg = <0x24>;
                 irq-gpios = <&gpiof 5 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
                 port-index-on-chip = <0x2>;
+                frs-supported;
         };
 };

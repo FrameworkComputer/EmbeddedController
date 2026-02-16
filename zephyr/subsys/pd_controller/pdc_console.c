@@ -248,7 +248,8 @@ static int print_pdc_info(const struct shell *sh, int port, bool live)
 		      "Flash Bank: %u\n"
 		      "Project Name: '%s'\n"
 		      "Driver Name: '%s'\n"
-		      "FW Update: %c\n",
+		      "FW Update: %c\n"
+		      "FRS Supported: %c\n",
 		      live, PDC_FWVER_GET_MAJOR(pdc_info.fw_version),
 		      PDC_FWVER_GET_MINOR(pdc_info.fw_version),
 		      PDC_FWVER_GET_PATCH(pdc_info.fw_version),
@@ -256,7 +257,8 @@ static int print_pdc_info(const struct shell *sh, int port, bool live)
 		      pdc_info.pid, pdc_info.is_running_flash_code ? 'Y' : 'N',
 		      pdc_info.running_in_flash_bank,
 		      has_proj_name ? pdc_info.project_name : "<None>",
-		      pdc_info.driver_name, pdc_info.no_fw_update ? 'N' : 'Y');
+		      pdc_info.driver_name, pdc_info.no_fw_update ? 'N' : 'Y',
+		      pdc_info.frs_supported ? 'Y' : 'N');
 
 	return EC_SUCCESS;
 }

@@ -65,6 +65,7 @@
 		irq-gpios = <&gpioc 1 GPIO_ACTIVE_LOW>;
 		port-index-on-chip = <0x1>;
 		zephyr,deferred-init;
+		frs-supported;
 	};
 	pdc_power_p1_ti: tps6699-pdc@24 {
 		compatible = "ti,tps6699-pdc";
@@ -74,6 +75,7 @@
 		no-fw-update;
 		zephyr,deferred-init;
 		ccd;
+		frs-supported;
 	};
 };
 

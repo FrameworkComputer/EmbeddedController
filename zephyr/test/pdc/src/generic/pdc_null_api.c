@@ -139,6 +139,11 @@ ZTEST(pdc_api_null_check, test_pdc_get_info)
 	EXPECT_ASSERT(pdc_get_info(&fake_pdc, NULL, false));
 }
 
+ZTEST(pdc_api_null_check, test_pdc_get_frs_supported)
+{
+	EXPECT_ASSERT(pdc_get_frs_supported(&fake_pdc));
+}
+
 ZTEST(pdc_api_null_check, test_pdc_get_hw_config)
 {
 	EXPECT_ASSERT(pdc_get_hw_config(&fake_pdc, NULL));

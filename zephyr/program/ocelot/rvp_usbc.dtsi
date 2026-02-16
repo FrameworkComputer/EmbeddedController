@@ -50,6 +50,7 @@
 		compatible = "ti,tps6699-pdc";
 		reg = <0x20>;
 		port-index-on-chip = <0x1>;
+		frs-supported;
 		ccd;
 		zephyr,deferred-init;
 	};
@@ -57,6 +58,7 @@
 		compatible = "ti,tps6699-pdc";
 		reg = <0x24>;
 		port-index-on-chip = <0x2>;
+		frs-supported;
 		zephyr,deferred-init;
 	};
 };

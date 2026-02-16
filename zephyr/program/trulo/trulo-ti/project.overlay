@@ -61,6 +61,7 @@
 		reg = <0x20>;
 		irq-gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
 		port-index-on-chip = <0x1>;
+		frs-supported;
 	};
 };
 

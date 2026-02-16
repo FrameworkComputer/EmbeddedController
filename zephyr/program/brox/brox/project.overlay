@@ -80,6 +80,7 @@ i2c3ALT: &i2c3 {
                 irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
                 port-index-on-chip = <0x1>;
 		zephyr,deferred-init;
+                frs-supported;
         };
 
         pdc_power_p1_ti: tps6699-pdc@24 {
@@ -89,5 +90,6 @@ i2c3ALT: &i2c3 {
                 port-index-on-chip = <0x2>;
                 no-fw-update;
 		zephyr,deferred-init;
+                frs-supported;
         };
 };

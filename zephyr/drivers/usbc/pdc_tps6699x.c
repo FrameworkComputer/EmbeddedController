@@ -219,6 +219,8 @@ struct pdc_config_t {
 	bool no_fw_update;
 	/** Whether or not this port supports CCD */
 	bool ccd;
+	/** Whether or not this port supports FRS */
+	bool frs_supported;
 	/** The index of the port on chip */
 	uint8_t port_index_on_chip;
 };
@@ -1713,6 +1715,7 @@ static int cmd_get_ic_status_sync_internal(const struct pdc_config_t *cfg,
 	info->driver_name[sizeof(info->driver_name) - 1] = '\0';
 
 	info->no_fw_update = cfg->no_fw_update;
+	info->frs_supported = cfg->frs_supported;
 
 	return 0;
 }
@@ -2787,6 +2790,14 @@ static int tps_get_hw_config(const struct device *dev,
 	return 0;
 }
 
+static bool tps_get_hw_frs_support(const struct device *dev)
+{
+	const struct pdc_config_t *cfg =
+		(const struct pdc_config_t *)dev->config;
+
+	return cfg->frs_supported;
+}
+
 static int tps_get_vbus_voltage(const struct device *dev, uint16_t *voltage)
 {
 	if (voltage == NULL) {
@@ -3053,6 +3064,7 @@ static DEVICE_API(pdc, pdc_driver_api) = {
 	.read_power_level = tps_read_power_level,
 	.get_info = tps_get_info,
 	.get_hw_config = tps_get_hw_config,
+	.get_hw_frs_support = tps_get_hw_frs_support,
 	.set_power_level = tps_set_power_level,
 	.reconnect = tps_reconnect,
 	.get_cable_property = tps_get_cable_property,
@@ -3277,6 +3289,7 @@ BUILD_ASSERT(
 		.create_thread = create_thread_##inst,                         \
 		.no_fw_update = DT_INST_PROP(inst, no_fw_update),              \
 		.ccd = DT_INST_PROP(inst, ccd),                                \
+		.frs_supported = DT_INST_PROP(inst, frs_supported),            \
 		.port_index_on_chip = DT_INST_PROP(inst, port_index_on_chip),  \
 	};                                                                     \
                                                                                \
