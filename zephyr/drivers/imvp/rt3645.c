@@ -284,13 +284,11 @@ static void rt3645_initiate_update(const struct device *dev)
 	/* Reasonable delay for voltage to stabilize */
 	k_msleep(30);
 
-	if (gpio_pin_get_dt(&config->enable_gpio) == 1) {
-		/* Start Updation */
-		if (!rt3645_update(rt3645_dev))
-			LOG_INF("IMVP Update Success! ");
-		else
-			LOG_ERR("IMVP update Failed! ");
-	}
+	/* Start Updation */
+	if (!rt3645_update(rt3645_dev))
+		LOG_INF("IMVP Update Success! ");
+	else
+		LOG_ERR("IMVP update Failed! ");
 }
 
 #if defined(CONFIG_IMVP_FACTORY_UPDATE)
