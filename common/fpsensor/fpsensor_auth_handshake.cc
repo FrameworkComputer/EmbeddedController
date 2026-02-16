@@ -155,6 +155,6 @@ enum ec_error_list generate_session_key_with_context(
 	std::span<const uint8_t, FP_CK_SESSION_NONCE_LEN> peer_nonce,
 	std::span<uint8_t, SHA256_DIGEST_LENGTH> session_key)
 {
-	return generate_session_key(fpmcu_nonce, peer_nonce, pairing_key,
+	return generate_session_key(fpmcu_nonce, peer_nonce, pairing_key, {},
 				    session_key);
 }

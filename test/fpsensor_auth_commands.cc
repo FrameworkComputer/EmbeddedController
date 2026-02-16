@@ -376,7 +376,7 @@ static enum ec_error_list generate_valid_establish_session_request(
 	/* Obtain session key on our side */
 	std::array<uint8_t, SHA256_DIGEST_SIZE> session_key;
 	enum ec_error_list ret = generate_session_key(
-		fpmcu_nonce, session_nonce, pairing_key, session_key);
+		fpmcu_nonce, session_nonce, pairing_key, {}, session_key);
 	TEST_EQ(ret, EC_SUCCESS, "%d");
 
 	TEST_EQ(tpm_seed.size(), sizeof(session_params->enc_tpm_seed), "%zu");
@@ -1166,7 +1166,7 @@ establish_session(std::span<uint8_t, SHA256_DIGEST_LENGTH> session_key)
 	};
 
 	TEST_EQ(generate_session_key(nonce_response.nonce, peer_nonce,
-				     pairing_key, session_key),
+				     pairing_key, {}, session_key),
 		EC_SUCCESS, "%d");
 
 	TEST_EQ(generate_valid_establish_session_request(

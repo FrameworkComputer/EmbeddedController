@@ -237,7 +237,7 @@ test_static enum ec_error_list test_fp_generate_session_key(void)
 
 	std::array<uint8_t, 32> gsc_session_key;
 
-	TEST_EQ(generate_session_key(session_nonce, gsc_nonce, pairing_key,
+	TEST_EQ(generate_session_key(session_nonce, gsc_nonce, pairing_key, {},
 				     gsc_session_key),
 		EC_SUCCESS, "%d");
 

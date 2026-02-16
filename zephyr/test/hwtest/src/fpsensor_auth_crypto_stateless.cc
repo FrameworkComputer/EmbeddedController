@@ -217,7 +217,7 @@ ZTEST(fpsensor_auth_crypto_stateless, test_fp_generate_session_key)
 	std::array<uint8_t, 32> gsc_session_key;
 
 	zassert_equal(generate_session_key(session_nonce, gsc_nonce,
-					   pairing_key, gsc_session_key),
+					   pairing_key, {}, gsc_session_key),
 		      EC_SUCCESS);
 
 	std::array<uint8_t, 32> expected_gsc_session_key = {

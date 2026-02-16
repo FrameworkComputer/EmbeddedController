@@ -210,6 +210,7 @@ generate_ecdh_shared_secret_without_kdf(const EC_KEY &private_key,
  * @param[in] fpmcu_nonce the session nonce on FPMCU side
  * @param[in] peer_nonce the session nonce on peer side
  * @param[in] pairing_key the Pairing Key
+ * @param[in] session_context the session context
  * @param[in,out] session_key the output key
  *
  * @return EC_SUCCESS on success
@@ -219,6 +220,7 @@ enum ec_error_list generate_session_key(
 	std::span<const uint8_t, FP_CK_SESSION_NONCE_LEN> fpmcu_nonce,
 	std::span<const uint8_t, FP_CK_SESSION_NONCE_LEN> peer_nonce,
 	std::span<const uint8_t, FP_PAIRING_KEY_LEN> pairing_key,
+	std::span<const uint8_t> session_context,
 	std::span<uint8_t, SHA256_DIGEST_LENGTH> session_key);
 
 /**
