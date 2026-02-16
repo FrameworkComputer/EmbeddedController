@@ -314,7 +314,7 @@ class BinmanPacker(BasePacker):
                     "Missing RW_FWID assertion. Add one to BUILD.py:\n"
                     "assert_rw_fwid_DO_NOT_EDIT(project_name="
                     f'"{self.project.config.project_name}", '
-                    f"addr={actual_rw_fwid_addr:#x})"
+                    f"addr={actual_rw_fwid_addr:#X})"
                 )
             if actual_rw_fwid_addr < 0:
                 raise RuntimeError(
