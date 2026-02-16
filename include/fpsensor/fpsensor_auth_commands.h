@@ -61,4 +61,19 @@ sign_message(std::span<const uint8_t> context,
 	     std::span<const uint8_t, FP_CHALLENGE_SIZE> peer_challenge,
 	     std::span<uint8_t, SHA256_DIGEST_LENGTH> output);
 
+/**
+ * Call generate_session_key with current pairing key and context.
+ *
+ * @param[in] fpmcu_nonce the session nonce on FPMCU side
+ * @param[in] peer_nonce the session nonce on peer side
+ * @param[in,out] session_key the output key
+ *
+ * @return EC_SUCCESS on success
+ * @return EC_ERROR_* on error
+ */
+enum ec_error_list generate_session_key_with_context(
+	std::span<const uint8_t, FP_CK_SESSION_NONCE_LEN> fpmcu_nonce,
+	std::span<const uint8_t, FP_CK_SESSION_NONCE_LEN> peer_nonce,
+	std::span<uint8_t, SHA256_DIGEST_LENGTH> session_key);
+
 #endif /* __CROS_EC_FPSENSOR_FPSENSOR_AUTH_COMMANDS_H */

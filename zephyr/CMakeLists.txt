@@ -383,6 +383,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FINGERPRINT
 						"${PLATFORM_EC}/common/fpsensor/fpsensor_crypto.cc"
 						"${PLATFORM_EC}/common/fpsensor/fpsensor_debug.cc"
 						"${PLATFORM_EC}/common/fpsensor/fpsensor_auth_commands.cc"
+						"${PLATFORM_EC}/common/fpsensor/fpsensor_auth_handshake.cc"
 						"${PLATFORM_EC}/common/fpsensor/fpsensor_auth_crypto_stateful.cc"
 						"${PLATFORM_EC}/common/fpsensor/fpsensor_auth_crypto_stateless.cc"
 						"${PLATFORM_EC}/common/fpsensor/fpsensor_detect_strings.cc"
