@@ -488,6 +488,37 @@ class Renode(Platform):
 
         return False
 
+    def _skip_test_chudow(self, test_config: TestConfig) -> bool:
+        if test_config.test_name in [
+            "flash_physical",  # TODO(b/485314159)
+            "fp_transport",  # TODO(b/485316056)
+            "otp_key",  # TODO(b/485316342)
+            "rollback",  # TODO(b/485315275)
+            "abort",  # TODO(b/485316426)
+            "exception",  # TODO(b/485315449)
+            "flash_write_protect",  # TODO(b/485316223)
+            "ftrapv",  # TODO(b/485315118)
+            "panic",  # TODO(b/485316364)
+            "panic_data",  # TODO(b/485315924)
+            "rollback_entropy",  # TODO(b/485315625)
+            "tpm_seed_clear",  # TODO(b/485316761)
+            "utils",  # TODO(b/485316718)
+            "fpsensor_debug",  # TODO(b/485315321)
+            "restricted_console",  # TODO(b/485315829)
+            "zephyr_cpp_newlib",  # TODO(b/485316816)
+            "zephyr_cpp_std20",  # TODO(b/485316816)
+            "zephyr_drivers_entropy",  # TODO(b/485898244)
+            "zephyr_kernel_poll",  # TODO(b/485316816)
+        ]:
+            return True
+
+        if test_config.config_name in [
+            "system_is_locked_wp_on",  # TODO(b/485316683)
+        ]:
+            return True
+
+        return False
+
     def _skip_test_helipilot(self, test_config: TestConfig) -> bool:
         if test_config.test_name in [
             "exception",  # TODO(b/384730599)
@@ -551,6 +582,9 @@ class Renode(Platform):
 
         if board_config.name == BLOONCHIPPER:
             return self._skip_test_bloonchipper(test_config, zephyr)
+
+        if board_config.name == CHUDOW and zephyr:
+            return self._skip_test_chudow(test_config)
 
         if board_config.name in [HELIPILOT, BUCCANEER, GWENDOLIN]:
             return self._skip_test_helipilot(test_config)
