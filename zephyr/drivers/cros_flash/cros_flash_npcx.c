@@ -143,6 +143,60 @@ static int cros_flash_npcx_set_write_enable(const struct device *dev)
 	return cros_flash_npcx_wait_ready_and_we(dev);
 }
 
+/* Check the BUSY bit is cleared and WE bit is disabled */
+static int
+cros_flash_npcx_wait_ready_and_write_disabled(const struct device *dev)
+{
+	int wait_period_us = 10;
+	int timeout = (10 * USEC_PER_SEC) / wait_period_us;
+
+	do {
+		uint8_t reg;
+
+		int ret = cros_flash_npcx_get_status_reg(dev, SPI_NOR_CMD_RDSR,
+							 &reg);
+		if (ret != 0) {
+			return ret;
+		}
+		if ((reg & SPI_NOR_WIP_BIT) == 0 &&
+		    (reg & SPI_NOR_WEL_BIT) == 0) {
+			break;
+		}
+		k_usleep(wait_period_us);
+	} while (--timeout); /* Wait for busy bit clear */
+
+	if (timeout) {
+		return 0;
+	}
+	return -ETIMEDOUT;
+}
+
+static int __maybe_unused
+cros_flash_npcx_set_write_disable(const struct device *dev)
+{
+	int ret;
+	struct npcx_ex_ops_uma_in write_disable_op = {
+		.opcode = SPI_NOR_CMD_WRDI,
+		.tx_count = 0,
+		.addr_count = 0,
+	};
+	struct cros_flash_npcx_data *data = DRV_DATA(dev);
+
+	/* Wait for any previous operations to finish. */
+	ret = cros_flash_npcx_wait_ready(dev);
+	if (ret != 0) {
+		return ret;
+	}
+
+	ret = flash_ex_op(data->flash_dev, FLASH_NPCX_EX_OP_EXEC_UMA,
+			  (uintptr_t)&write_disable_op, NULL);
+	if (ret != 0) {
+		return ret;
+	}
+
+	return cros_flash_npcx_wait_ready_and_write_disabled(dev);
+}
+
 static int cros_flash_npcx_set_status_reg(const struct device *dev,
 					  uint8_t *reg)
 {
