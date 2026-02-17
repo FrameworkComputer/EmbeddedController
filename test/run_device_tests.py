@@ -53,6 +53,7 @@ from dataclasses import dataclass
 from dataclasses import field
 from enum import Enum
 import io
+import json
 import logging
 import os
 from pathlib import Path
@@ -1769,6 +1770,30 @@ def flash_and_run_test(
         return ret
 
 
+def write_json_results(
+    test_list: list[TestConfig],
+    output_file: str,
+):
+    """Writes test results to a JSON file."""
+    json_output = {"tests": []}
+    for test in test_list:
+        logs = [log_entry.decode(errors="replace") for log_entry in test.logs]
+
+        json_output["tests"].append(
+            {
+                "test_name": test.config_name,
+                "status": test.status.value,
+                "logs": "".join(logs),
+            }
+        )
+
+    try:
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(json_output, f, indent=2)
+    except OSError as e:
+        logging.error("Failed to write JSON results to %s: %s", output_file, e)
+
+
 def parse_remote_arg(remote: str) -> str:
     """Convert the 'remote' input argument to IP address, if available."""
     if not remote:
@@ -1889,6 +1914,11 @@ def main():
         "--renode", help="Run tests with Renode emulator", action="store_true"
     )
 
+    parser.add_argument(
+        "--json",
+        help="Output file for test results in JSON format",
+    )
+
     args = parser.parse_args()
     logging.basicConfig(
         format="%(levelname)s:%(message)s", level=args.log_level
@@ -1937,6 +1967,9 @@ def main():
                 exit_code = 1
 
             print(colorama.Style.RESET_ALL)
+
+        if args.json:
+            write_json_results(test_list, args.json)
 
         if exit_code != 0:
             print(
