@@ -1,0 +1,38 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+using sysbus
+$name?="chudow"
+mach create $name
+
+$repl?=@platforms/cpus/focaltech_ft9001.repl
+machine LoadPlatformDescription $repl
+machine LoadPlatformDescriptionFromString "romfuncs: Memory.MappedMemory @ sysbus 0x04006000 { size: 0x2000 }"
+
+$bin?=$ORIGIN/chudow/ec.bin
+$elf_ro?=$ORIGIN/chudow/ec.RO.elf
+$elf_rw?=$ORIGIN/chudow/ec.RW.elf
+
+showAnalyzer usart2
+
+set mock_rom_func
+"""
+self.Log(LogLevel.Debug, "mocking ROM function")
+cpu.PC = cpu.LR  # Return immediately
+"""
+
+macro reset
+"""
+    # ROM functions
+    cpu0 AddHook 0x4007658 $mock_rom_func  # `xip_sys_clk_switch`
+    cpu0 AddHook 0x400665C $mock_rom_func  # `ssi_close_xip`
+
+    cpu0 FpuEnabled true
+    sysbus LoadBinary $bin 0x10080000
+    sysbus LoadSymbolsFrom $elf_ro
+    sysbus LoadSymbolsFrom $elf_rw
+    cpu0 VectorTableOffset 0x10081000  # Vector table of RO image
+"""
+
+runMacro $reset
