@@ -776,6 +776,7 @@ class AllTests:
                 test_name="pmp_entries",
                 exclude_boards=[
                     BLOONCHIPPER,
+                    CHUDOW,
                     DARTMONKEY,
                     HELIPILOT,
                     BUCCANEER,
@@ -788,6 +789,7 @@ class AllTests:
                 test_name="pmp_entries",
                 exclude_boards=[
                     BLOONCHIPPER,
+                    CHUDOW,
                     DARTMONKEY,
                     HELIPILOT,
                     BUCCANEER,
@@ -800,6 +802,7 @@ class AllTests:
                 test_name="ram_lock",
                 exclude_boards=[
                     BLOONCHIPPER,
+                    CHUDOW,
                     DARTMONKEY,
                     SANOK,
                 ],
@@ -828,12 +831,18 @@ class AllTests:
             # TODO(b/468409316): Add RTC test for ET171.
             TestConfig(
                 test_name="rtc_npcx9",
-                exclude_boards=[BLOONCHIPPER, DARTMONKEY, SANOK],
+                exclude_boards=[
+                    BLOONCHIPPER,
+                    CHUDOW,
+                    DARTMONKEY,
+                    SANOK,
+                ],
             ),
             # Covered by Zephyr drivers.counter.basic_api.stm32_subsec test
             TestConfig(
                 test_name="rtc_stm32f4",
                 exclude_boards=[
+                    CHUDOW,
                     DARTMONKEY,
                     HELIPILOT,
                     BUCCANEER,
@@ -1008,18 +1017,18 @@ class AllTests:
             TestConfig(
                 zephyr_name="drivers.flash.stm32.f4",
                 test_name="zephyr_flash_stm32f4",
-                exclude_boards=[DARTMONKEY, HELIPILOT, SANOK],
+                exclude_boards=[CHUDOW, DARTMONKEY, HELIPILOT, SANOK],
             ),
             TestConfig(
                 zephyr_name="drivers.flash.stm32.f4.block_registers",
                 test_name="zephyr_flash_stm32f4_block_registers",
-                exclude_boards=[DARTMONKEY, HELIPILOT, SANOK],
+                exclude_boards=[CHUDOW, DARTMONKEY, HELIPILOT, SANOK],
             ),
             # TODO(b/468410217): Add Zephyr counter tests for sanok.
             TestConfig(
                 zephyr_name="drivers.counter.basic_api.stm32_subsec",
                 test_name="zephyr_counter_basic_api_stm32_subsec",
-                exclude_boards=[DARTMONKEY, HELIPILOT, SANOK],
+                exclude_boards=[CHUDOW, DARTMONKEY, HELIPILOT, SANOK],
                 timeout_secs=60,
             ),
             TestConfig(
