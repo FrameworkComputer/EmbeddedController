@@ -151,6 +151,7 @@ NEVER_MATCH_REGEX = re.compile(r"(?!)")
 
 BLOONCHIPPER = "bloonchipper"
 BUCCANEER = "buccaneer"
+CHUDOW = "chudow"
 DARTMONKEY = "dartmonkey"
 GWENDOLIN = "gwendolin"
 HELIPILOT = "helipilot"
@@ -1185,9 +1186,34 @@ SANOK_CONFIG = BoardConfig(
     zephyr_board_name="egis_et171",
 )
 
+CHUDOW_CONFIG = BoardConfig(
+    name=CHUDOW,
+    # TODO(b/485658538): support Focaltech sensor.
+    sensor_type=FPSensorType.UNKNOWN,
+    servo_uart_name="raw_fpmcu_console_uart_pty",
+    servo_power_enable="fpmcu_pp3300",
+    reboot_timeout=2.0,
+    # TODO(b/485656019): configure rollback regex.
+    rollback_region0_regex=NEVER_MATCH_REGEX,
+    rollback_region1_regex=NEVER_MATCH_REGEX,
+    # TODO(b/363277530): create Zephyr MPU tests.
+    mpu_regex=NEVER_MATCH_REGEX,
+    fp_power_supply="pp3300_fp_mw",
+    mcu_power_supply="pp3300_mcu_mw",
+    # TODO(b/485657292): configure power utilization.
+    expected_fp_power=INVALID_POWER_UTILIZATION,
+    expected_mcu_power=INVALID_POWER_UTILIZATION,
+    expected_fp_power_zephyr=INVALID_POWER_UTILIZATION,
+    expected_mcu_power_zephyr=INVALID_POWER_UTILIZATION,
+    # TODO(b/485656929): configure variants.
+    variants={},
+    zephyr_board_name="ft9001_eval",
+)
+
 BOARD_CONFIGS = {
     "bloonchipper": BLOONCHIPPER_CONFIG,
     "buccaneer": BUCCANEER_CONFIG,
+    "chudow": CHUDOW_CONFIG,
     "dartmonkey": DARTMONKEY_CONFIG,
     "gwendolin": GWENDOLIN_CONFIG,
     "helipilot": HELIPILOT_CONFIG,
