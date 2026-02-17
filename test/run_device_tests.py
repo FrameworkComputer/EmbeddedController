@@ -215,6 +215,14 @@ class ApplicationType(Enum):
     PRODUCTION = 2
 
 
+class TestStatus(Enum):
+    """Test execution status."""
+
+    PASS = "PASS"
+    FAIL = "FAIL"
+    SKIP = "SKIP"
+
+
 class FPSensorType(Enum):
     """Fingerprint sensor types."""
 
@@ -554,7 +562,7 @@ class TestConfig:
     config_name: Optional[str] = None
     exclude_boards: list = field(default_factory=list)
     logs: list = field(init=False, default_factory=list)
-    passed: bool = field(init=False, default=False)
+    status: TestStatus = field(init=False, default=TestStatus.FAIL)
     num_passes: int = field(init=False, default=0)
     num_fails: int = field(init=False, default=0)
     skip_for_zephyr: bool = False
@@ -1908,26 +1916,25 @@ def main():
             if (test.skip_for_zephyr and args.zephyr) or platform.skip_test(
                 test, board_config, args.zephyr
             ):
+                test.status = TestStatus.SKIP
                 continue
-            test.passed = flash_and_run_test(
-                test, platform, board_config, args, executor
-            )
+            if flash_and_run_test(test, platform, board_config, args, executor):
+                test.status = TestStatus.PASS
+            else:
+                test.status = TestStatus.FAIL
 
         colorama.init()
         exit_code = 0
         for test in test_list:
             # print results
             print('Test "' + test.config_name + '": ', end="")
-            if (test.skip_for_zephyr and args.zephyr) or platform.skip_test(
-                test, board_config, args.zephyr
-            ):
+            if test.status == TestStatus.SKIP:
                 print(colorama.Fore.YELLOW + "SKIPPED")
+            elif test.status == TestStatus.PASS:
+                print(colorama.Fore.GREEN + "PASSED")
             else:
-                if test.passed:
-                    print(colorama.Fore.GREEN + "PASSED")
-                else:
-                    print(colorama.Fore.RED + "FAILED")
-                    exit_code = 1
+                print(colorama.Fore.RED + "FAILED")
+                exit_code = 1
 
             print(colorama.Style.RESET_ALL)
 
