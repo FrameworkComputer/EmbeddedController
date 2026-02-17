@@ -8,11 +8,30 @@
 /delete-node/ &sram;
 
 / {
+	chosen {
+		cros-ec,bbram = &bbram;
+	};
+
 	sdcp: memory@0 {
 		device_type = "memory";
 		compatible = "mmio-sram";
 		reg = <0x00000000 256>;
 	};
+
+	memory@100 {
+		compatible = "zephyr,memory-region", "mmio-sram";
+		reg = <0x100 32>;
+		zephyr,memory-region = "RetainedMem";
+		status = "okay";
+
+		bbram: retained-ram {
+			compatible = "zephyr,retained-ram";
+			status = "okay";
+			#address-cells = <1>;
+			#size-cells = <1>;
+		};
+	};
+
 	sram: memory@400 {
 		device_type = "memory";
 		compatible = "mmio-sram";
