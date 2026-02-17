@@ -36,6 +36,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_ANX7452 anx7452_usb
 zephyr_library_sources_ifdef(CONFIG_NAMED_ADC_CHANNELS      adc.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
                                                             battery.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BBRAM_TYPE_RETAINED_MEM
+                                                            retained_mem_bbram.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BC12_DETECT_RT9490
                                                             bc12_rt9490.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CEC         cec.c)

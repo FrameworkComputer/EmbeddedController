@@ -132,4 +132,29 @@ config PLATFORM_EC_HOST_COMMAND_ENTER_BOOTLOADER
 	  If the config is enabled, the chip_enter_bootloader function
 	  has to be implemented.
 
+DT_CHOSEN_CROS_EC_BBRAM := cros-ec,bbram
+RETAINED_RAM_COMPAT := zephyr,retained-ram
+
+choice PLATFORM_EC_BBRAM_TYPE
+	prompt "Choose a BBRAM support type"
+	depends on !SOC_FAMILY_INTEL_ISH
+	default PLATFORM_EC_BBRAM_TYPE_RETAINED_MEM if $(dt_chosen_has_compat,$(DT_CHOSEN_CROS_EC_BBRAM),$(RETAINED_RAM_COMPAT))
+	default PLATFORM_EC_BBRAM_TYPE_BBRAM
+	help
+	  Select the type of device used for BBRAM support.
+
+config PLATFORM_EC_BBRAM_TYPE_BBRAM
+	bool "BBRAM support based on BBRAM"
+	help
+	  The BBRAM support just uses the hardware BBRAM.
+
+config PLATFORM_EC_BBRAM_TYPE_RETAINED_MEM
+	bool "BBRAM support based on retained memory"
+	help
+	  The BBRAM support uses retained memory device. It can use e.g. SRAM.
+	  Such option is useful for devices that don't have the hardware
+	  BBRAM or Battery-Backed source is not connected.
+
+endchoice # PLATFORM_EC_BBRAM_TYPE
+
 endif # PLATFORM_EC

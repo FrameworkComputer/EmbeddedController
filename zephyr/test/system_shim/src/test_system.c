@@ -12,6 +12,7 @@
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/bbram.h>
+#include <zephyr/drivers/retained_mem.h>
 #include <zephyr/fff.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/pm/policy.h>
@@ -26,6 +27,8 @@ static char mock_data[64] =
 	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@";
 
 int system_preinitialize(const struct device *unused);
+int system_bbram_write(const struct device *dev, size_t offset, size_t size,
+		       const uint8_t *data);
 
 ZTEST(system, test_invalid_bbram_index)
 {
@@ -41,7 +44,7 @@ ZTEST(system, test_bbram_get)
 	int rc;
 
 	/* Write expected data to read back */
-	rc = bbram_write(bbram_dev, 0, ARRAY_SIZE(mock_data), mock_data);
+	rc = system_bbram_write(bbram_dev, 0, ARRAY_SIZE(mock_data), mock_data);
 	zassert_ok(rc);
 
 	rc = system_get_bbram(SYSTEM_BBRAM_IDX_PD0, output);
@@ -85,6 +88,7 @@ ZTEST(system, test_system_set_get_scratchpad)
 	zassert_equal(scratch_read, scratch_set);
 }
 
+#ifdef CONFIG_PLATFORM_EC_BBRAM_TYPE_BBRAM
 ZTEST(system, test_system_get_scratchpad_fail)
 {
 	const struct device *bbram_dev =
@@ -93,6 +97,7 @@ ZTEST(system, test_system_get_scratchpad_fail)
 	zassert_ok(bbram_emul_set_invalid(bbram_dev, true));
 	zassert_equal(-EC_ERROR_INVAL, system_get_scratchpad(NULL));
 }
+#endif /* CONFIG_PLATFORM_EC_BBRAM_TYPE_BBRAM */
 
 static jmp_buf jmp_hibernate;
 
@@ -321,3 +326,43 @@ ZTEST(system, test_lock_all_power_states)
 			cpu_states[i].state, cpu_states[i].substate_id);
 	}
 }
+
+#ifdef CONFIG_PLATFORM_EC_BBRAM_TYPE_RETAINED_MEM
+/* 64 bytes + 2 bytes for CRC. */
+#define BBRAM_SIZE (64 + 2)
+static uint8_t bbram_buf[BBRAM_SIZE];
+
+static ssize_t retained_mem_ram_sim_size(const struct device *dev)
+{
+	return BBRAM_SIZE;
+}
+
+static int retained_mem_ram_sim_read(const struct device *dev, off_t offset,
+				     uint8_t *buffer, size_t size)
+{
+	memcpy(buffer, (bbram_buf + offset), size);
+	return 0;
+}
+
+static int retained_mem_ram_sim_write(const struct device *dev, off_t offset,
+				      const uint8_t *buffer, size_t size)
+{
+	memcpy((bbram_buf + offset), buffer, size);
+	return 0;
+}
+
+static int retained_mem_ram_sim_clear(const struct device *dev)
+{
+	memset(bbram_buf, 0, BBRAM_SIZE);
+	return 0;
+}
+
+static DEVICE_API(retained_mem, retained_mem_ram_sim_api) = {
+	.size = retained_mem_ram_sim_size,
+	.read = retained_mem_ram_sim_read,
+	.write = retained_mem_ram_sim_write,
+	.clear = retained_mem_ram_sim_clear,
+};
+DEVICE_DT_DEFINE(DT_CHOSEN(cros_ec_bbram), NULL, NULL, NULL, NULL, PRE_KERNEL_1,
+		 10, &retained_mem_ram_sim_api)
+#endif /* CONFIG_PLATFORM_EC_BBRAM_TYPE_RETAINED_MEM */

@@ -76,6 +76,10 @@
 		size = <64>;
 	};
 
+	retained: test-retained-mem-ram-dev {
+		compatible = "zephyr,retained-ram";
+	};
+
 	named-bbram-regions {
 		compatible = "named-bbram-regions";
 		pd0 {

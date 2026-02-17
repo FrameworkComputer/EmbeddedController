@@ -29,8 +29,14 @@ DEFINE_FAKE_VOID_FUNC(board_hibernate);
 
 static void system_before_after(void *test_data)
 {
+#ifdef CONFIG_PLATFORM_EC_BBRAM_TYPE_BBRAM
 	const struct device *bbram_dev =
 		DEVICE_DT_GET_OR_NULL(DT_CHOSEN(cros_ec_bbram));
+
+	if (bbram_dev != NULL) {
+		bbram_emul_set_invalid(bbram_dev, false);
+	}
+#endif
 
 	RESET_FAKE(cros_system_native_posix_get_reset_cause);
 	RESET_FAKE(cros_system_native_posix_deep_sleep_ticks);
@@ -41,10 +47,6 @@ static void system_before_after(void *test_data)
 	RESET_FAKE(cros_system_native_posix_soc_reset);
 	RESET_FAKE(watchdog_reload);
 	RESET_FAKE(board_hibernate);
-
-	if (bbram_dev != NULL) {
-		bbram_emul_set_invalid(bbram_dev, false);
-	}
 }
 
 ZTEST_SUITE(system, NULL, NULL, system_before_after, system_before_after, NULL);

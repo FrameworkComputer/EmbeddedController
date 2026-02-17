@@ -19,3 +19,8 @@ tests:
     - CONFIG_PLATFORM_EC_LID_SWITCH=y
     - CONFIG_PLATFORM_EC_POWER_BUTTON=y
     - CONFIG_PLATFORM_EC_POWER_BUTTON_INIT_IDLE=y
+  system_shim.retained_mem_bbram:
+    extra_dtc_overlay_files:
+    - ./retained_mem_bbram.overlay
+    extra_configs:
+    - CONFIG_PLATFORM_EC_BBRAM_TYPE_RETAINED_MEM=y

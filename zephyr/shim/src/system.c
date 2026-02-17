@@ -11,7 +11,6 @@
 #include "watchdog.h"
 
 #include <zephyr/device.h>
-#include <zephyr/drivers/bbram.h>
 #include <zephyr/logging/log.h>
 
 #include <drivers/cros_system.h>
@@ -74,7 +73,7 @@ int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
 	if (rc)
 		return rc;
 
-	rc = bbram_read(bbram_dev, offset, size, value);
+	rc = system_bbram_read(bbram_dev, offset, size, value);
 
 	return rc ? EC_ERROR_INVAL : EC_SUCCESS;
 }
@@ -86,8 +85,9 @@ void chip_save_reset_flags(uint32_t flags)
 		return;
 	}
 
-	bbram_write(bbram_dev, BBRAM_REGION_OFFSET(saved_reset_flags),
-		    BBRAM_REGION_SIZE(saved_reset_flags), (uint8_t *)&flags);
+	system_bbram_write(bbram_dev, BBRAM_REGION_OFFSET(saved_reset_flags),
+			   BBRAM_REGION_SIZE(saved_reset_flags),
+			   (uint8_t *)&flags);
 }
 
 uint32_t chip_read_reset_flags(void)
@@ -99,8 +99,9 @@ uint32_t chip_read_reset_flags(void)
 		return 0;
 	}
 
-	bbram_read(bbram_dev, BBRAM_REGION_OFFSET(saved_reset_flags),
-		   BBRAM_REGION_SIZE(saved_reset_flags), (uint8_t *)&flags);
+	system_bbram_read(bbram_dev, BBRAM_REGION_OFFSET(saved_reset_flags),
+			  BBRAM_REGION_SIZE(saved_reset_flags),
+			  (uint8_t *)&flags);
 
 	return flags;
 }
@@ -112,8 +113,9 @@ int system_set_scratchpad(uint32_t value)
 		return -EC_ERROR_INVAL;
 	}
 
-	return bbram_write(bbram_dev, BBRAM_REGION_OFFSET(scratchpad),
-			   BBRAM_REGION_SIZE(scratchpad), (uint8_t *)&value);
+	return system_bbram_write(bbram_dev, BBRAM_REGION_OFFSET(scratchpad),
+				  BBRAM_REGION_SIZE(scratchpad),
+				  (uint8_t *)&value);
 }
 
 int system_get_scratchpad(uint32_t *value)
@@ -123,8 +125,9 @@ int system_get_scratchpad(uint32_t *value)
 		return -EC_ERROR_INVAL;
 	}
 
-	if (bbram_read(bbram_dev, BBRAM_REGION_OFFSET(scratchpad),
-		       BBRAM_REGION_SIZE(scratchpad), (uint8_t *)value)) {
+	if (system_bbram_read(bbram_dev, BBRAM_REGION_OFFSET(scratchpad),
+			      BBRAM_REGION_SIZE(scratchpad),
+			      (uint8_t *)value)) {
 		return -EC_ERROR_INVAL;
 	}
 
@@ -347,9 +350,16 @@ static int check_reset_cause(void)
 
 test_export_static int system_preinitialize(void)
 {
-	if (bbram_dev && !device_is_ready(bbram_dev)) {
-		LOG_ERR("device %s not ready", bbram_dev->name);
-		return -1;
+	if (bbram_dev) {
+		if (!device_is_ready(bbram_dev)) {
+			LOG_ERR("device %s not ready", bbram_dev->name);
+			return -1;
+		}
+
+		if (system_bbram_init(bbram_dev)) {
+			LOG_ERR("Failed to init BBRAM");
+			return -1;
+		}
 	}
 
 	sys_dev = device_get_binding("CROS_SYSTEM");

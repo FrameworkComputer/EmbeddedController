@@ -6,7 +6,11 @@
 #ifndef __CROS_EC_BBRAM_H
 #define __CROS_EC_BBRAM_H
 
+#include "retained_mem_bbram.h"
+
+#include <zephyr/device.h>
 #include <zephyr/devicetree.h>
+#include <zephyr/drivers/bbram.h>
 #include <zephyr/toolchain.h>
 
 #ifdef __cplusplus
@@ -35,6 +39,45 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(named_bbram_regions) == 1,
  * Get the offset of a specific region.
  */
 #define BBRAM_REGION_OFFSET(name) (DT_PROP(DT_CHILD(BBRAM_NODE, name), offset))
+
+#ifdef CONFIG_PLATFORM_EC_BBRAM_TYPE_BBRAM
+static inline int system_bbram_read(const struct device *dev, size_t offset,
+				    size_t size, uint8_t *data)
+{
+	return bbram_read(dev, offset, size, data);
+}
+
+static inline int system_bbram_write(const struct device *dev, size_t offset,
+				     size_t size, const uint8_t *data)
+{
+	return bbram_write(dev, offset, size, data);
+}
+
+static inline int system_bbram_init(const struct device *dev)
+{
+	return 0;
+}
+
+#elif CONFIG_PLATFORM_EC_BBRAM_TYPE_RETAINED_MEM
+static inline int system_bbram_read(const struct device *dev, size_t offset,
+				    size_t size, uint8_t *data)
+{
+	return retained_mem_bbram_read(dev, offset, size, data);
+}
+
+static inline int system_bbram_write(const struct device *dev, size_t offset,
+				     size_t size, const uint8_t *data)
+{
+	return retained_mem_bbram_write(dev, offset, size, data);
+}
+
+static inline int system_bbram_init(const struct device *dev)
+{
+	return retained_mem_bbram_init(dev);
+}
+#else
+#error "Undefined BBRAM type"
+#endif
 
 #ifdef __cplusplus
 }
