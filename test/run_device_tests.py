@@ -490,8 +490,8 @@ class Renode(Platform):
 
         return False
 
-    def _skip_test_sanok(self, test_name: str) -> bool:
-        if test_name in [
+    def _skip_test_sanok(self, test_config: TestConfig) -> bool:
+        if test_config.test_name in [
             "flash_physical",  # TODO(b/468410778)
             "flash_write_protect",  # TODO(b/406944986)
             "panic_data",  # TODO(b/468407068)
@@ -516,6 +516,12 @@ class Renode(Platform):
             "zephyr_kernel_poll",  # TODO(b/484366615)
         ]:
             return True
+
+        if test_config.config_name in [
+            "pmp_entries_ro",  # TODO(b/485329932)
+        ]:
+            return True
+
         return False
 
     def skip_test(
@@ -539,7 +545,7 @@ class Renode(Platform):
             return self._skip_test_helipilot(test_config)
 
         if board_config.name == SANOK and zephyr:
-            return self._skip_test_sanok(test_name)
+            return self._skip_test_sanok(test_config)
 
         return False
 
