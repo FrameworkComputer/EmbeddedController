@@ -54,14 +54,20 @@
 			sensor = <&temp_cpu>;
 		};
 		charger {
+			temp-fan-off = <35>;
+			temp-fan-max = <60>;
 			power-good-pin = <&gpio_en_pp5000_s5>;
 			sensor = <&temp_charger>;
 		};
 		ambient {
+			temp-fan-off = <35>;
+			temp-fan-max = <60>;
 			power-good-pin = <&gpio_en_pp5000_s5>;
 			sensor = <&temp_ambient>;
 		};
 		memory {
+			temp-fan-off = <35>;
+			temp-fan-max = <60>;
 			power-good-pin = <&gpio_en_pp5000_s5>;
 			sensor = <&temp_memory>;
 		};
