@@ -443,10 +443,10 @@ ZTEST(jump_data, test_init_watchdog_reset)
 	uint8_t exception;
 	panic_get_reason(&reason, &info, &exception);
 	if (IS_ENABLED(SECTION_IS_RW)) {
-		zassert_equal(reason, PANIC_SW_WATCHDOG, "Panic reason: %d",
-			      reason);
+		zassert_equal(reason, PANIC_SW_WATCHDOG_HARD,
+			      "Panic reason: %d", reason);
 	} else {
-		zassert_not_equal(reason, PANIC_SW_WATCHDOG,
+		zassert_not_equal(reason, PANIC_SW_WATCHDOG_HARD,
 				  "Panic reason should not be set in RO");
 	}
 }

@@ -32,5 +32,7 @@ ZTEST(panic_output, test_panic_sw_reason_is_valid)
 	zassert_true(panic_sw_reason_is_valid(PANIC_SW_BASE + 7), NULL);
 	/* PANIC_SW_WATCHDOG_WARN */
 	zassert_true(panic_sw_reason_is_valid(PANIC_SW_BASE + 8), NULL);
-	zassert_false(panic_sw_reason_is_valid(PANIC_SW_BASE + 9), NULL);
+	/* PANIC_SW_WATCHDOG_HARD */
+	zassert_true(panic_sw_reason_is_valid(PANIC_SW_BASE + 9), NULL);
+	zassert_false(panic_sw_reason_is_valid(PANIC_SW_BASE + 10), NULL);
 }

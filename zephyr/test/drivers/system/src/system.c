@@ -109,7 +109,7 @@ ZTEST(system, test_system_common_pre_init__watch_dog_panic)
 	panic_get_reason(&reason, &info, &exception);
 
 	if (IS_ENABLED(SECTION_IS_RW)) {
-		zassert_equal(reason, PANIC_SW_WATCHDOG);
+		zassert_equal(reason, PANIC_SW_WATCHDOG_HARD);
 		zassert_equal(info, 0);
 		zassert_equal(exception, 0);
 	} else {
@@ -165,6 +165,27 @@ ZTEST(system, test_system_common_pre_init__watch_dog_panic_already_initialized)
 	zassert_equal(exception, 0x34);
 }
 
+ZTEST(system,
+      test_system_common_pre_init__watch_dog_hard_panic_already_initialized)
+{
+	uint32_t reason;
+	uint32_t info;
+	uint8_t exception;
+
+	/* Watchdog reset should not overwrite panic info if already filled
+	 * in with watchdog hard panic info that HAS NOT been read by host
+	 */
+	panic_set_reason(PANIC_SW_WATCHDOG_HARD, 0x12, 0x34);
+
+	/* Clear all reset flags and set them arbitrarily */
+	system_set_reset_flags(EC_RESET_FLAG_WATCHDOG);
+	system_common_pre_init();
+	panic_get_reason(&reason, &info, &exception);
+	zassert_equal(reason, PANIC_SW_WATCHDOG_HARD);
+	zassert_equal(info, 0x12);
+	zassert_equal(exception, 0x34);
+}
+
 ZTEST(system, test_system_common_pre_init__watch_dog_panic_already_read)
 {
 	uint32_t reason;
@@ -185,7 +206,7 @@ ZTEST(system, test_system_common_pre_init__watch_dog_panic_already_read)
 	panic_get_reason(&reason, &info, &exception);
 
 	if (IS_ENABLED(SECTION_IS_RW)) {
-		zassert_equal(reason, PANIC_SW_WATCHDOG);
+		zassert_equal(reason, PANIC_SW_WATCHDOG_HARD);
 		zassert_equal(info, 0);
 		zassert_equal(exception, 0);
 	} else {

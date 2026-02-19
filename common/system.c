@@ -944,9 +944,11 @@ static void handle_watchdog_reset(void)
 		 * is not a watchdog or the panic info has already been read,
 		 * i.e. an old watchdog panic.
 		 */
-		else if (reason != PANIC_SW_WATCHDOG || !pdata ||
-			 pdata->flags & PANIC_DATA_FLAG_OLD_HOSTCMD)
-			panic_set_reason(PANIC_SW_WATCHDOG, 0, 0);
+		else if ((reason != PANIC_SW_WATCHDOG &&
+			  reason != PANIC_SW_WATCHDOG_HARD) ||
+			 !pdata || pdata->flags & PANIC_DATA_FLAG_OLD_HOSTCMD) {
+			panic_set_reason(PANIC_SW_WATCHDOG_HARD, 0, 0);
+		}
 	}
 }
 
