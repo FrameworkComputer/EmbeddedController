@@ -34,4 +34,10 @@ if (DEFINED CONFIG_BOARD_EM32F967)
 	project(em32f967)
 endif()
 
+set(EXPECTED_ROLLBACK_VERSION 1)
+
+if(NOT CONFIG_PLATFORM_EC_ROLLBACK_VERSION EQUAL EXPECTED_ROLLBACK_VERSION)
+	message(FATAL_ERROR "Rollback version has changed! Expected ${EXPECTED_ROLLBACK_VERSION}, but ${CONFIG_PLATFORM_EC_ROLLBACK_VERSION} is set.")
+endif()
+
 zephyr_library_sources_ifdef(CONFIG_EC_HOST_CMD "src/fp_transport.c")
