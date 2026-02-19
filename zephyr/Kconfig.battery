@@ -317,7 +317,7 @@ config PLATFORM_EC_CHARGER_MIN_BAT_PCT_IMBALANCED_POWER_ON
 
 config PLATFORM_EC_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV
 	int "Voltage limit in mV when battery is full and AP is off"
-	depends on PLATFORM_EC_USB_PE_SM && PLATFORM_EC_CHARGE_MANAGER
+	depends on (PLATFORM_EC_USB_PE_SM || PLATFORM_EC_USB_PD_CONTROLLER) && PLATFORM_EC_CHARGE_MANAGER
 	default -1
 	help
 	  If set to a non-negative value, input voltage will be reduced to given
