@@ -356,6 +356,7 @@ int uart_console_read_buffer(uint8_t type, char *dest, uint16_t dest_size,
 			     uint16_t *write_count)
 {
 	int *tail;
+	uint16_t local_count = *write_count;
 
 	switch (type) {
 	case CONSOLE_READ_NEXT:
@@ -373,14 +374,14 @@ int uart_console_read_buffer(uint8_t type, char *dest, uint16_t dest_size,
 		return EC_RES_SUCCESS;
 
 	/* Copy data to response */
-	while (*tail != tx_snapshot_head && *write_count < dest_size - 1) {
+	while (*tail != tx_snapshot_head && local_count < dest_size - 1) {
 		/*
 		 * Copy only non-zero bytes, so that we don't copy unused
 		 * bytes if the buffer hasn't completely rolled at boot.
 		 */
 		if (tx_buf[*tail]) {
 			*(dest++) = tx_buf[*tail];
-			(*write_count)++;
+			local_count++;
 		}
 
 		*tail = TX_BUF_NEXT(*tail);
@@ -388,7 +389,9 @@ int uart_console_read_buffer(uint8_t type, char *dest, uint16_t dest_size,
 
 	/* Null-terminate */
 	*(dest++) = '\0';
-	(*write_count)++;
+	local_count++;
+
+	*write_count = local_count;
 
 	return EC_RES_SUCCESS;
 }
