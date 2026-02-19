@@ -187,7 +187,13 @@ static int execute_cmd_with_pdc_power_mgmt(const struct device *device,
 		if (!ucsi_ppm_get_next_connector_status(data->ppm_dev, &conn,
 							&conn_status)) {
 			LOG_ERR("Cx: Found no port with CI to ack.");
-			return -EINVAL;
+
+			/*
+			 * Instead of returning an error, we swallow this
+			 * incorrect CI usage to prevent the OPM getting into
+			 * a bad state.
+			 */
+			return 0;
 		}
 
 		ci.raw_value = conn_status->raw_conn_status_change_bits;

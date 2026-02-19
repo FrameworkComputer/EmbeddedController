@@ -114,6 +114,29 @@ ZTEST_USER(ppm_driver, test_execute_cmd_invalid_connector)
 	zassert_equal(rv, -ERANGE, "rv=%d", rv);
 }
 
+ZTEST_USER(ppm_driver, test_ack_cc_ci_no_next_connector)
+{
+	const struct device *ppm_dev;
+	const struct ucsi_pd_driver *drv;
+	struct ucsi_control_t control;
+	uint8_t out[512];
+	int rv;
+
+	ppm_dev = DT_PPM_DEV;
+	drv = ppm_dev->api;
+
+	/* Send connector ack when there is no connector indicator set. This
+	 * should just no-op.
+	 */
+	ucsi_ppm_get_next_connector_status_fake.return_val = false;
+	control.command = UCSI_ACK_CC_CI;
+	union ack_cc_ci_t *cmd = (union ack_cc_ci_t *)control.command_specific;
+	cmd->connector_change_ack = 1;
+	rv = drv->execute_cmd(ppm_dev, &control, out);
+
+	zassert_equal(rv, 0, "rv=%d", rv);
+}
+
 ZTEST_USER(ppm_driver, test_get_active_port_count)
 {
 	const struct device *ppm_dev;

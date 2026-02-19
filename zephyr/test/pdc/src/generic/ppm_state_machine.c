@@ -936,20 +936,25 @@ ZTEST_USER_F(ppm_test, test_CIACK_ack_immediately)
 }
 
 /* If we get an ACK_CC_CI when there is no active connector indication, we
- * should fail. In this scenario, the starting state needs to be IdleNotify but
+ * should pass. In this scenario, the starting state needs to be IdleNotify but
  * occurs when the OPM sends other commands after receiving Connector Change
  * Indication.
+ *
+ * This was converted from failing to pass because the OPM sometimes gets into
+ * a state where it's out-of-sync with the current CI state and may send a CI
+ * flag even when one isn't needed. By accepting these CI acks, we reduce errors
+ * in the kernel driver.
  */
-ZTEST_USER_F(ppm_test, test_CIACK_fail_if_no_active_connector_indication)
+ZTEST_USER_F(ppm_test, test_CIACK_pass_if_no_active_connector_indication)
 {
 	initialize_fake_to_idle_notify(fixture);
-	int notified_count = fixture->notified_count;
 
+	queue_command_for_fake_driver(fixture, UCSI_ACK_CC_CI,
+				      /*result=*/0, /*lpm_data=*/NULL);
 	zassert_false(write_ack_command(fixture,
 					/*connector_change_ack=*/true,
 					/*command_complete_ack=*/false) < 0);
-	zassert_true(wait_for_notification(fixture, ++notified_count));
-	zassert_true(check_cci_matches(fixture, &cci_error));
+	zassert_true(check_cci_matches(fixture, &cci_ack_command));
 	zassert_true(wait_for_cmd_to_process(fixture));
 	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE_NOTIFY);
 }

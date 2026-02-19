@@ -435,7 +435,7 @@ success:
 	}
 
 	/* Post-success command handling */
-	if (ack_ci) {
+	if (ack_ci && dev->last_connector_changed > 0) {
 		union connector_status_t *port_status =
 			&dev->per_port_status[dev->last_connector_changed - 1];
 		/* Clear port status for acked connector. */
@@ -470,18 +470,16 @@ inline static bool check_ack_has_valid_bits(union ack_cc_ci_t *cmd)
 	return cmd->command_complete_ack || cmd->connector_change_ack;
 }
 
-inline static bool check_ack_has_valid_ci(union ack_cc_ci_t *cmd,
-					  struct ucsi_ppm_device *dev)
-{
-	return cmd->connector_change_ack ? dev->last_connector_changed != 0 : 1;
-}
-
 inline static bool check_ack_has_valid_cc(union ack_cc_ci_t *cmd,
 					  struct ucsi_ppm_device *dev)
 {
-	return cmd->command_complete_ack ?
-		       dev->ppm_state == PPM_STATE_WAITING_CC_ACK :
-		       1;
+	/*
+	 * If we are in waiting cc ack state, the cmd is valid only if ack_cc
+	 * is set. Otherwise it must not be set.
+	 */
+	return dev->ppm_state == PPM_STATE_WAITING_CC_ACK ?
+		       cmd->command_complete_ack :
+		       !cmd->command_complete_ack;
 }
 
 inline static bool is_invalid_ack(struct ucsi_ppm_device *dev)
@@ -489,7 +487,6 @@ inline static bool is_invalid_ack(struct ucsi_ppm_device *dev)
 	union ack_cc_ci_t *cmd =
 		(union ack_cc_ci_t *)dev->ucsi_data.control.command_specific;
 	return (!(check_ack_has_valid_bits(cmd) &&
-		  check_ack_has_valid_ci(cmd, dev) &&
 		  check_ack_has_valid_cc(cmd, dev)));
 }
 
