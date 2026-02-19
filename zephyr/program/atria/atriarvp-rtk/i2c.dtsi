@@ -1,0 +1,30 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+i2c_port_charger: &i2c_0 {
+	pinctrl-0 = <&i2c00_clk_gpio094
+		     &i2c00_data_gpio095>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+i2c_port_pd: &i2c_3 {
+	pinctrl-0 = <&i2c03_clk_gpio100
+		     &i2c03_data_gpio101>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&i2c_0_wrapper {
+	status = "okay";
+	scl-gpios = <RTS5912_GPIO094 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <RTS5912_GPIO095 GPIO_ACTIVE_HIGH>;
+};
+
+&i2c_3_wrapper {
+	status = "okay";
+	scl-gpios = <RTS5912_GPIO100 GPIO_ACTIVE_HIGH>;
+	sda-gpios = <RTS5912_GPIO101 GPIO_ACTIVE_HIGH>;
+};
