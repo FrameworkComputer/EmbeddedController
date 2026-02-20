@@ -37,6 +37,14 @@ def testcase_to_result(testcase):
         "tags": [
             {"key": "platform", "value": "renode"},
         ],
+        "testMetadata": {
+            "bugComponent": {
+                "issueTracker": {
+                    # ChromeOS > Platform > baseOS > Fingerprint
+                    "componentId": 782045,
+                },
+            },
+        },
     }
     return result
 
