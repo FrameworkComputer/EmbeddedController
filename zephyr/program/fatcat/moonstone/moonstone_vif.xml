@@ -416,7 +416,7 @@
     <vif:No_USB_Suspend_May_Be_Set value="true" />
     <vif:GiveBack_May_Be_Set value="false" />
     <vif:Higher_Capability_Set value="true" />
-    <vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source value="1">Default USB Power</vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source>
+    <vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source value="0">FR_Swap not supported</vif:FR_Swap_Reqd_Type_C_Current_As_Initial_Source>
     <vif:Num_Snk_PDOs value="2">2 Snk PDOs</vif:Num_Snk_PDOs>
     <!--Bundle: SnkPdoList-->
     <vif:SnkPdoList>
