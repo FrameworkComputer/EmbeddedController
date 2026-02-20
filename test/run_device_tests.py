@@ -500,7 +500,6 @@ class Renode(Platform):
     def _skip_test_chudow(self, test_config: TestConfig) -> bool:
         if test_config.test_name in [
             "flash_physical",  # TODO(b/485314159)
-            "fp_transport",  # TODO(b/485316056)
             "otp_key",  # TODO(b/485316342)
             "rollback",  # TODO(b/485315275)
             "abort",  # TODO(b/485316426)
@@ -578,7 +577,6 @@ class Renode(Platform):
             "unaligned_access",  # TODO(b/483118717)
             "abort",  # TODO(b/406944986)
             "exception",  # TODO(b/483118965)
-            "fp_transport",  # TODO(b/483119844)
             "fpsensor_auth_crypto_stateful",  # TODO(b/483119679)
             "fpsensor_debug",  # TODO(b/474439863)
             "ftrapv",  # TODO(b/406944986)
