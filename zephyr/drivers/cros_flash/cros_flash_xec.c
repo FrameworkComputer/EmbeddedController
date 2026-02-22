@@ -40,7 +40,7 @@ static struct spi_config spi_cfg = {
 };
 
 #define FLASH_DEV DT_NODELABEL(int_flash)
-#define SPI_CONTROLLER_DEV DT_NODELABEL(spi0)
+#define SPI_CONTROLLER_DEV DT_NODELABEL(qspi0)
 
 /* cros ec flash local functions */
 static int cros_flash_xec_get_status_reg(const struct device *dev,

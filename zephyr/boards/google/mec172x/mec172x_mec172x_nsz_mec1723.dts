@@ -12,12 +12,10 @@
  * Note: If a different flash chip is used by the platform, board file needs
  * to override it.
  */
-&spi0 {
+&qspi0 {
 	status = "okay";
 	compatible = "microchip,xec-qmspi-ldma";
 	clock-frequency = <12000000>;
-	lines = <2>;
-	chip-select = <0>;
 	pinctrl-0 = < &shd_cs0_n_gpio055
 		      &shd_clk_gpio056
 		      &shd_io0_gpio223

@@ -40,7 +40,7 @@ LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 	((struct kscan_regs *)(DT_REG_ADDR(DT_NODELABEL(cros_kb_raw))))
 
 #define STRUCT_QMSPI_REG_BASE_ADDR \
-	((struct qmspi_regs *)(DT_REG_ADDR(DT_NODELABEL(spi0))))
+	((struct qmspi_regs *)(DT_REG_ADDR(DT_NODELABEL(qspi0))))
 
 #define STRUCT_PWM_REG_BASE_ADDR \
 	((struct pwm_regs *)(DT_REG_ADDR(DT_NODELABEL(pwm0))))
