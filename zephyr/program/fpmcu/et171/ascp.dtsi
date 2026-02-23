@@ -1,0 +1,18 @@
+/* Copyright 2026 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	ascp: ascp_node {
+		compatible = "cros-ec,ascp-mem-map";
+		pk-m = <&sdcp_pk_m>;
+		s-goog = <&sdcp_s_goog>;
+		pk-d = <&sdcp_pk_d>;
+		s-m = <&sdcp_s_m>;
+		pk-f = <&sdcp_pk_f>;
+		h-f = <&sdcp_h_f>;
+		s-d = <&sdcp_s_d>;
+		sk-f = <&sdcp_sk_f>;
+	};
+};
