@@ -105,6 +105,8 @@ void fp_reset_context()
 			sizeof(global_context.user_id));
 	fp_disable_positive_match_secret(
 		&global_context.positive_match_secret_state);
+	for (uint16_t idx = 0; idx < FP_MAX_FINGER_COUNT; idx++)
+		fp_clear_finger_context(idx);
 }
 
 /**
@@ -118,8 +120,6 @@ static void _fp_clear_context(void)
 	OPENSSL_cleanse(fp_buffer, sizeof(fp_buffer));
 	/* Reset capture type, as it is correlated with fp_buffer. */
 	global_context.current_capture_type = FP_CAPTURE_TYPE_INVALID;
-	for (uint16_t idx = 0; idx < FP_MAX_FINGER_COUNT; idx++)
-		fp_clear_finger_context(idx);
 }
 
 void fp_reset_and_clear_context(void)
