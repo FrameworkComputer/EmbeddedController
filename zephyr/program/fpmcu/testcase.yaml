@@ -6,6 +6,7 @@ tests:
   abort:
     extra_configs:
     - CONFIG_HW_TEST_ABORT=y
+    - CONFIG_ZTEST_FATAL_HOOK=y
     extra_conf_files:
     - prj_hw_tests.conf
   aes:
