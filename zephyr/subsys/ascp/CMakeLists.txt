@@ -3,3 +3,4 @@
 # found in the LICENSE file.
 
 zephyr_library_sources(claim.c)
+zephyr_library_sources_ifdef(CONFIG_ASCP_MEM_MAP mem_map.c)

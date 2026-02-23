@@ -1,0 +1,42 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: ASCP memory map.
+  It holds information about location of data needed for establishing secure
+  connection between EC and AP using ASCP protocol. Properties are phandles
+  to the memory (mmio-sram compatible nodes) or flash regions (children of fixed-partitions node).
+compatible: "cros-ec,ascp-mem-map"
+properties:
+  pk-m:
+    type: phandle
+    required: true
+    description: Model public key.
+  s-goog:
+    type: phandle
+    required: true
+    description: Model public key signature.
+  pk-d:
+    type: phandle
+    required: true
+    description: Device public key.
+  s-m:
+    type: phandle
+    required: true
+    description: Device public key signature (signed using model key).
+  pk-f:
+    type: phandle
+    required: true
+    description: Ephemeral public key used in ECDH procedure.
+  h-f:
+    type: phandle
+    required: true
+    description: SHA256 hash of the firmware.
+  s-d:
+    type: phandle
+    required: true
+    description: Signature of the SHA256( 0xC001 || h_f || pk_f) using device key.
+  sk-f:
+    type: phandle
+    required: true
+    description: Ephemeral private key used in ECDH procedure.
