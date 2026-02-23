@@ -5,17 +5,17 @@
 #include <cros/thermistor/thermistor.dtsi>
 
  / {
-	temp_memory: memory {
-		compatible = "cros-ec,temp-sensor-thermistor";
-		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
-		adc = <&adc_temp_sensor_1>;
-	};
-	temp_charger: charger {
+	temp_cpu: cpu {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 		adc = <&adc_temp_sensor_2>;
 	};
-	temp_ambient: ambient {
+	temp_charger: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_1>;
+	};
+	temp_5v: 5v {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 		adc = <&adc_temp_sensor_3>;
@@ -27,7 +27,7 @@
 			temp-fan-off = <35>;
 			temp-fan-max = <70>;
 			power-good-pin = <&gpio_pg_pp1250_soc_s5_od>;
-			sensor = <&temp_memory>;
+			sensor = <&temp_cpu>;
 		};
 		charger {
 			power-good-pin = <&gpio_pg_pp1250_soc_s5_od>;
@@ -35,7 +35,7 @@
 		};
 		ambient {
 			power-good-pin = <&gpio_pg_pp1250_soc_s5_od>;
-			sensor = <&temp_ambient>;
+			sensor = <&temp_5v>;
 		};
 	};
 
