@@ -140,8 +140,6 @@ ZTEST(ftrapv, test_ftrapv_negation)
 
 /*
  * trapping absolute value: __absvsi2.
- *
- * TODO(b/258074414): Trapping on absolute value overflow is broken in clang.
  */
 static void ftrapv_abs(void)
 {
