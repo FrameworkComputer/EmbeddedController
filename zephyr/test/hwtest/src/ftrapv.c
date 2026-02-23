@@ -4,34 +4,56 @@
  */
 
 #include "console.h"
-#include "multistep_test.h"
-#include "panic.h"
 
 #include <stdlib.h>
 
+#include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
+#include <zephyr/ztest_error_hook.h>
 
 LOG_MODULE_REGISTER(ftrapv_hw_test, LOG_LEVEL_INF);
 
-static void test_panic_data(void *fn_addr)
-{
-	if (IS_ENABLED(CONFIG_ARM)) {
-		struct panic_data *const pdata = panic_get_data();
-		/* Estimated end of a function. */
-		uint32_t fn_end = (uint32_t)fn_addr + 0x40;
-		uint32_t pc = pdata->cm.frame[CORTEX_PANIC_FRAME_REGISTER_PC];
+static void *expected_fault_addr;
 
-		/* Make sure Program Counter is stored correctly and points at a
-		 * function that causes a crash. */
-		zassert_true(((uint32_t)fn_addr <= pc) && (fn_end >= pc));
-	}
+static void ftrapv_before(void *fixture)
+{
+	ARG_UNUSED(fixture);
+	expected_fault_addr = NULL;
+	ztest_set_fault_valid(true);
+}
+
+ZTEST_SUITE(ftrapv, NULL, NULL, ftrapv_before, NULL, NULL);
+
+void ztest_post_fatal_error_hook(unsigned int reason,
+				 const struct arch_esf *pEsf)
+{
+	zassert_equal(reason, K_ERR_CPU_EXCEPTION);
+	zassert_not_null(expected_fault_addr);
+
+	ztest_set_fault_valid(false);
+
+	/* Estimated end of a function. */
+	uint32_t fn_end = (uint32_t)expected_fault_addr + 0x40;
+#if defined(CONFIG_ARM)
+	uint32_t pc = pEsf->basic.pc;
+#elif defined(CONFIG_RISCV)
+	uint32_t pc = pEsf->mepc;
+#else
+	uint32_t pc = 0;
+	zassert_unreachable("Test not supported on this architecture");
+#endif
+	/* Make sure Program Counter is stored correctly and points at a
+	 * function that causes a crash. */
+	zassert_true(pc >= ((uint32_t)expected_fault_addr) && (pc <= fn_end),
+		     "PC 0x%x not in range [0x%x, 0x%x]", pc,
+		     (uint32_t)expected_fault_addr, fn_end);
 }
 
 /*
  * trapping addition: __addvsi3.
  */
-static void test_trapv_addition(void)
+static void trapv_addition(void)
 {
 	int32_t test_overflow = INT32_MAX;
 	int32_t ret;
@@ -44,15 +66,19 @@ static void test_trapv_addition(void)
 	zassert_unreachable();
 }
 
+ZTEST(ftrapv, test_trapv_addition)
+{
+	expected_fault_addr = trapv_addition;
+	trapv_addition();
+}
+
 /*
  * trapping subtraction: __subvsi3.
  */
-static void test_ftrapv_subtraction(void)
+static void ftrapv_subtraction(void)
 {
 	int32_t test_overflow = INT32_MIN;
 	int32_t ret;
-
-	test_panic_data(test_trapv_addition);
 
 	LOG_INF("Testing signed integer subtraction overflow");
 	cflush();
@@ -62,15 +88,19 @@ static void test_ftrapv_subtraction(void)
 	zassert_unreachable();
 }
 
+ZTEST(ftrapv, test_ftrapv_subtraction)
+{
+	expected_fault_addr = ftrapv_subtraction;
+	ftrapv_subtraction();
+}
+
 /*
  * trapping multiplication: __mulvsi3.
  */
-static void test_ftrapv_multiplication(void)
+static void ftrapv_multiplication(void)
 {
 	int32_t test_overflow = INT32_MAX;
 	int32_t ret;
-
-	test_panic_data(test_ftrapv_subtraction);
 
 	LOG_INF("Testing signed integer multiplication overflow");
 	cflush();
@@ -80,15 +110,19 @@ static void test_ftrapv_multiplication(void)
 	zassert_unreachable();
 }
 
+ZTEST(ftrapv, test_ftrapv_multiplication)
+{
+	expected_fault_addr = ftrapv_multiplication;
+	ftrapv_multiplication();
+}
+
 /*
  * trapping negation: __negvsi2.
  */
-static void test_ftrapv_negation(void)
+static void ftrapv_negation(void)
 {
 	int32_t test_overflow = INT32_MIN;
 	int32_t ret;
-
-	test_panic_data(test_ftrapv_multiplication);
 
 	LOG_INF("Testing signed integer negation overflow");
 	cflush();
@@ -98,17 +132,21 @@ static void test_ftrapv_negation(void)
 	zassert_unreachable();
 }
 
+ZTEST(ftrapv, test_ftrapv_negation)
+{
+	expected_fault_addr = ftrapv_negation;
+	ftrapv_negation();
+}
+
 /*
  * trapping absolute value: __absvsi2.
  *
  * TODO(b/258074414): Trapping on absolute value overflow is broken in clang.
  */
-static void test_ftrapv_abs(void)
+static void ftrapv_abs(void)
 {
 	int32_t test_overflow = INT32_MIN;
 	int32_t ret;
-
-	test_panic_data(test_ftrapv_negation);
 
 	LOG_INF("Testing signed integer absolute value overflow\n");
 	cflush();
@@ -119,16 +157,8 @@ static void test_ftrapv_abs(void)
 	zassert_unreachable();
 }
 
-static void test_abs_panic_data(void)
+ZTEST(ftrapv, test_ftrapv_abs)
 {
-	test_panic_data(test_ftrapv_abs);
+	expected_fault_addr = ftrapv_abs;
+	ftrapv_abs();
 }
-
-static void (*test_steps[])(void) = { test_trapv_addition,
-				      test_ftrapv_subtraction,
-				      test_ftrapv_multiplication,
-				      test_ftrapv_negation,
-				      test_ftrapv_abs,
-				      test_abs_panic_data };
-
-MULTISTEP_TEST(ftrapv, test_steps)
