@@ -121,6 +121,26 @@
 		#address-cells = <1>;
 		#size-cells = <1>;
 
+		sdcp_pk_d: partition@35 {
+			label = "sdcp_pk_d";
+			reg = <0x35 65>;
+		};
+
+		sdcp_s_m: partition@76 {
+			label = "sdcp_s_m";
+			reg = <0x76 64>;
+		};
+
+		sdcp_pk_m: partition@138 {
+			label = "sdcp_pk_m";
+			reg = <0x138 65>;
+		};
+
+		sdcp_s_goog: partition@179 {
+			label = "sdcp_s_goog";
+			reg = <0x179 64>;
+		};
+
 		mt_data: partition@1b9 {
 			label = "mt_data";
 			reg = <0x1b9 128>;

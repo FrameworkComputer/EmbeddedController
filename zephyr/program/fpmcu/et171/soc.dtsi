@@ -40,6 +40,30 @@
 		 */
 		reg = <0x00000400 DT_SIZE_K(383)>;
 	};
+
+	sdcp_h_f: memory@90000000 {
+		device_type = "memory";
+		compatible = "mmio-sram";
+		reg = <0x90000000 32>;
+	};
+
+	sdcp_s_d: memory@90000020 {
+		device_type = "memory";
+		compatible = "mmio-sram";
+		reg = <0x90000020 64>;
+	};
+
+	sdcp_pk_f: memory@90000060 {
+		device_type = "memory";
+		compatible = "mmio-sram";
+		reg = <0x90000060 65>;
+	};
+
+	sdcp_sk_f: memory@900000a1 {
+		device_type = "memory";
+		compatible = "mmio-sram";
+		reg = <0x900000a1 32>;
+	};
 };
 
 &spi0 {
