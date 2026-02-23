@@ -502,7 +502,6 @@ class Renode(Platform):
             "flash_physical",  # TODO(b/485314159)
             "otp_key",  # TODO(b/485316342)
             "rollback",  # TODO(b/485315275)
-            "exception",  # TODO(b/485315449)
             "flash_write_protect",  # TODO(b/485316223)
             "panic",  # TODO(b/485316364)
             "panic_data",  # TODO(b/485315924)
@@ -529,10 +528,14 @@ class Renode(Platform):
         self, test_config: TestConfig, zephyr: bool
     ) -> bool:
         if test_config.test_name in [
-            "exception",  # TODO(b/384730599)
             "otp_key",  # TODO(b/385216796)
             "ram_lock",  # TODO(b/385216805)
             "rtc_npcx9",  # TODO(b/385217282)
+        ]:
+            return True
+
+        if not zephyr and test_config.test_name in [
+            "exception",  # TODO(b/384730599)
         ]:
             return True
 

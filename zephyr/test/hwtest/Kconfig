@@ -40,6 +40,7 @@ config HW_TEST_CRC
 config HW_TEST_EXCEPTION
 	bool "Exception test"
 	select ZTEST
+	select ZTEST_FATAL_HOOK
 
 config HW_TEST_EXIT
 	bool "Exit test"
