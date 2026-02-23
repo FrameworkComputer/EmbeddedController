@@ -129,7 +129,7 @@ static int set_notification_enable(struct rts5453p_emul_pdc_data *data,
 
 	data->notification_data[port] = req->set_notification_enable.data;
 	LOG_INF("SET_NOTIFICATION_ENABLE port=%d, data=0x%X", port,
-		data->notification_data[port]);
+		data->notification_data[port].raw_value);
 
 	memset(&data->response, 0, sizeof(union rts54_response));
 	send_response(data);
