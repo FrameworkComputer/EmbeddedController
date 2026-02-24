@@ -84,11 +84,24 @@ fp_command_establish_session(struct host_cmd_handler_args *args)
 
 	ScopedFastCpu fast_cpu;
 
+	/* Avoid using old TPM Seed if the seed decryption fails. */
+	global_context.fp_encryption_status &= ~FP_ENC_STATUS_SEED_SET;
+	OPENSSL_cleanse(global_context.tpm_seed.data(),
+			global_context.tpm_seed.size());
+
 	if (fingerprint_auth_enabled()) {
 		/* Invalidate the existing context and templates to prevent
 		 * leaking the existing template. */
 		fp_reset_context();
 	}
+
+	/* Reset SESSION_ESTABLISHED bit to avoid situation that the
+	 * Fingerprint Auth is enabled with TPM Seed set using
+	 * EC_CMD_FP_SEED_SET command (which is possible when the TPM Seed is
+	 * not set, e.g. due to seed decryption error).
+	 */
+	global_context.fp_encryption_status &=
+		~FP_CONTEXT_STATUS_SESSION_ESTABLISHED;
 
 	enum ec_error_list ret = generate_session_key_with_context(
 		session_nonce, p->peer_nonce, session_key);
