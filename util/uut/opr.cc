@@ -413,10 +413,36 @@ enum sync_result opr_check_sync(uint32_t baudrate)
 	struct command_node *cur_cmd = cmd_buf;
 	uint32_t bytes_read = 0;
 	uint32_t i;
+	uint8_t drain_buf[256];
+	int drain_count;
 
 	port_cfg.baudrate = baudrate;
 	if (!com_config_uart(port_handle, port_cfg))
 		return SR_ERROR;
+
+	/*
+	 * Drain any pending data in the buffer (e.g., from UART bridge
+	 * banners). Look for the sync byte (0x5A) in the drained data -
+	 * if found, we're already synced.
+	 */
+	drain_count = 0;
+	while (drain_count < 1000) {
+		bytes_read = com_port_read_bin(port_handle, drain_buf,
+					       sizeof(drain_buf));
+		if (bytes_read == 0)
+			break;
+		for (i = 0; i < bytes_read; i++) {
+			if (drain_buf[i] == (uint8_t)(UFPP_D2H_SYNC_CMD)) {
+				DISPLAY_MSG(("Found sync byte in buffer after "
+					     "draining %d bytes\n",
+					     drain_count + i));
+				return SR_OK;
+			}
+		}
+		drain_count += bytes_read;
+	}
+	if (drain_count > 0)
+		DISPLAY_MSG(("Drained %d bytes from buffer\n", drain_count));
 
 	cmd_build_sync(cmd_buf, &cmd_num);
 
