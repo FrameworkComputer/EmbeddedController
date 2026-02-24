@@ -176,6 +176,10 @@ enum panic_arch {
 #define PANIC_DATA_FLAG_OLD_HOSTEVENT BIT(3)
 /* The data was truncated to fit panic info host cmd */
 #define PANIC_DATA_FLAG_TRUNCATED BIT(4)
+/* Panic occurred in RO image */
+#define PANIC_DATA_FLAG_RO_IMAGE BIT(5)
+/* Panic occurred in RW image */
+#define PANIC_DATA_FLAG_RW_IMAGE BIT(6)
 
 #ifdef __cplusplus
 }
