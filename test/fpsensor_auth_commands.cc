@@ -517,7 +517,7 @@ test_static enum ec_error_list test_fp_command_establish_session_deny(void)
 
 	TEST_EQ(initialize_pairing_key(pairing_key), EC_SUCCESS, "%d");
 
-	// Nonce context without generate nonce should fail.
+	// Establish session without generate nonce should fail.
 	rv = test_send_host_command(EC_CMD_FP_ESTABLISH_SESSION, 0,
 				    &session_params, sizeof(session_params),
 				    NULL, 0);
@@ -541,16 +541,6 @@ test_static enum ec_error_list test_fp_command_establish_session_deny(void)
 				    NULL, 0);
 
 	TEST_EQ(rv, EC_RES_SUCCESS, "%d");
-
-	// Generate nonce should clear the existing nonce context user ID.
-	rv = test_send_host_command(EC_CMD_FP_GENERATE_NONCE, 0, NULL, 0,
-				    &nonce_response, sizeof(nonce_response));
-
-	TEST_EQ(rv, EC_RES_SUCCESS, "%d");
-
-	for (auto user_id_partial : global_context.user_id) {
-		TEST_EQ(user_id_partial, 0u, "%d");
-	}
 
 	return EC_SUCCESS;
 }
@@ -2003,6 +1993,96 @@ test_static enum ec_error_list test_fp_reset_does_not_clear_session(void)
 	return EC_SUCCESS;
 }
 
+test_static enum ec_error_list
+test_fp_command_establish_session_clears_context(void)
+{
+	std::array<uint8_t, FP_PAIRING_KEY_LEN> pairing_key;
+	struct ec_response_fp_generate_nonce nonce_response;
+	struct ec_params_fp_establish_session session_params;
+	uint32_t status;
+
+	std::array<uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed_1 = {
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	};
+	std::array<uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed_2 = {
+		2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+		2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+	};
+
+	fp_reset_and_clear_context();
+	reset_session();
+
+	TEST_EQ(initialize_pairing_key(pairing_key), EC_SUCCESS, "%d");
+
+	/* 1. Establish first session with tpm_seed_1 */
+	TEST_EQ(test_send_host_command(EC_CMD_FP_GENERATE_NONCE, 0, NULL, 0,
+				       &nonce_response, sizeof(nonce_response)),
+		EC_RES_SUCCESS, "%d");
+
+	TEST_EQ(generate_valid_establish_session_request(
+			pairing_key, nonce_response.nonce, tpm_seed_1,
+			&session_params),
+		EC_SUCCESS, "%d");
+
+	TEST_EQ(test_send_host_command(EC_CMD_FP_ESTABLISH_SESSION, 0,
+				       &session_params, sizeof(session_params),
+				       NULL, 0),
+		EC_RES_SUCCESS, "%d");
+
+	/* Set UserID and some templates */
+	struct ec_params_fp_context_v1 ctx_params = {
+		.action = FP_CONTEXT_GET_RESULT,
+		.userid = { 1, 2, 3, 4, 5, 6, 7, 8 },
+	};
+	TEST_EQ(test_send_host_command(EC_CMD_FP_CONTEXT, 1, &ctx_params,
+				       sizeof(ctx_params), NULL, 0),
+		EC_RES_SUCCESS, "%d");
+
+	global_context.templ_valid = 1;
+
+	/* Verify current state */
+	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
+	TEST_BITS_SET((int)status, FP_ENC_STATUS_SEED_SET);
+	TEST_BITS_SET((int)status, FP_CONTEXT_USER_ID_SET);
+	TEST_EQ(global_context.templ_valid, 1u, "%u");
+	TEST_ASSERT_ARRAY_EQ(global_context.tpm_seed, tpm_seed_1,
+			     tpm_seed_1.size());
+
+	/* 2. Establish second session with tpm_seed_2 */
+	TEST_EQ(test_send_host_command(EC_CMD_FP_GENERATE_NONCE, 0, NULL, 0,
+				       &nonce_response, sizeof(nonce_response)),
+		EC_RES_SUCCESS, "%d");
+
+	TEST_EQ(generate_valid_establish_session_request(
+			pairing_key, nonce_response.nonce, tpm_seed_2,
+			&session_params),
+		EC_SUCCESS, "%d");
+
+	TEST_EQ(test_send_host_command(EC_CMD_FP_ESTABLISH_SESSION, 0,
+				       &session_params, sizeof(session_params),
+				       NULL, 0),
+		EC_RES_SUCCESS, "%d");
+
+	/* 3. Verify that context was cleared and TPM seed updated */
+	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
+	TEST_BITS_SET((int)status, FP_ENC_STATUS_SEED_SET);
+	/* User ID should be cleared */
+	TEST_BITS_CLEARED((int)status, FP_CONTEXT_USER_ID_SET);
+	for (uint8_t val : global_context.user_id) {
+		TEST_EQ(val, 0, "%d");
+	}
+
+	/* Templates should be cleared */
+	TEST_EQ(global_context.templ_valid, 0u, "%u");
+
+	/* TPM seed should be updated to tpm_seed_2 */
+	TEST_ASSERT_ARRAY_EQ(global_context.tpm_seed, tpm_seed_2,
+			     tpm_seed_2.size());
+
+	return EC_SUCCESS;
+}
+
 } // namespace
 
 void run_test(int argc, const char **argv)
@@ -2024,6 +2104,7 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_fp_command_establish_and_load_pairing_key);
 	RUN_TEST(test_fp_command_load_pairing_key_fail);
 	RUN_TEST(test_fp_command_establish_session);
+	RUN_TEST(test_fp_command_establish_session_clears_context);
 	RUN_TEST(test_fp_command_establish_session_fail_different_pk);
 	RUN_TEST(test_fp_command_establish_session_deny);
 	RUN_TEST(

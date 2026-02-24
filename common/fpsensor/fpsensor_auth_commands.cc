@@ -55,12 +55,6 @@ fp_command_generate_nonce(struct host_cmd_handler_args *args)
 
 	ScopedFastCpu fast_cpu;
 
-	if (fingerprint_auth_enabled()) {
-		/* Invalidate the existing context and templates to prevent
-		 * leaking the existing template. */
-		fp_reset_context();
-	}
-
 	RAND_bytes(session_nonce.data(), session_nonce.size());
 
 	std::ranges::copy(session_nonce, r->nonce);
@@ -89,6 +83,12 @@ fp_command_establish_session(struct host_cmd_handler_args *args)
 	}
 
 	ScopedFastCpu fast_cpu;
+
+	if (fingerprint_auth_enabled()) {
+		/* Invalidate the existing context and templates to prevent
+		 * leaking the existing template. */
+		fp_reset_context();
+	}
 
 	enum ec_error_list ret = generate_session_key_with_context(
 		session_nonce, p->peer_nonce, session_key);
