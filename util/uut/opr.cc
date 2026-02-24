@@ -431,47 +431,86 @@ enum sync_result opr_check_sync(uint32_t baudrate)
 					       sizeof(drain_buf));
 		if (bytes_read == 0)
 			break;
+
+		/* Print drained bytes in hex for debugging */
+		DISPLAY_MSG(("Drain[%d]: ", bytes_read));
+		for (i = 0; i < bytes_read; i++)
+			DISPLAY_MSG(("%02x ", drain_buf[i]));
+		DISPLAY_MSG(("\n"));
+
+		/* Also print as ASCII for readability (printable chars only) */
+		DISPLAY_MSG(("Drain ASCII: \""));
+		for (i = 0; i < bytes_read; i++) {
+			if (drain_buf[i] >= 0x20 && drain_buf[i] < 0x7f) {
+				DISPLAY_MSG(("%c", drain_buf[i]))
+			} else {
+				DISPLAY_MSG(("."))
+			}
+		}
+		DISPLAY_MSG(("\"\n"));
+
 		for (i = 0; i < bytes_read; i++) {
 			if (drain_buf[i] == (uint8_t)(UFPP_D2H_SYNC_CMD)) {
-				DISPLAY_MSG(("Found sync byte in buffer after "
-					     "draining %d bytes\n",
-					     drain_count + i));
+				DISPLAY_MSG(("Found sync byte 0x5A at position "
+					     "%d (total offset %d)\n",
+					     i, drain_count + i));
 				return SR_OK;
 			}
 		}
 		drain_count += bytes_read;
 	}
-	if (drain_count > 0)
-		DISPLAY_MSG(("Drained %d bytes from buffer\n", drain_count));
+	if (drain_count > 0) {
+		DISPLAY_MSG(("Drained %d total bytes, no sync byte found\n",
+			     drain_count))
+	} else {
+		DISPLAY_MSG(("Buffer was empty, nothing to drain\n"))
+	}
 
 	cmd_build_sync(cmd_buf, &cmd_num);
+
+	DISPLAY_MSG(("Sending sync command: 0x%02x\n", cur_cmd->cmd[0]));
 
 	if (!com_port_write_bin(port_handle, cur_cmd->cmd, cur_cmd->cmd_size))
 		return SR_ERROR;
 
 	/* Allow several SYNC trials */
 	for (i = 0; i < MAX_SYNC_TRIALS; i++) {
+		DISPLAY_MSG(("Waiting for sync response (attempt %d/%d)...\n",
+			     i + 1, MAX_SYNC_TRIALS));
 		bytes_read = com_port_read_bin(port_handle, resp_buf, 1);
 
 		/* Quit if succeeded to read a response */
-		if (bytes_read == 1)
+		if (bytes_read == 1) {
+			DISPLAY_MSG(("Received byte: 0x%02x ('%c')\n",
+				     resp_buf[0],
+				     (resp_buf[0] >= 0x20 && resp_buf[0] < 0x7f)
+					     ? resp_buf[0]
+					     : '.'));
 			break;
+		}
+		DISPLAY_MSG(("No response, sleeping 1s...\n"));
 		/* Otherwise give the ROM-Code time to answer */
 		sleep(1);
 	}
 
-	if (bytes_read == 0)
+	if (bytes_read == 0) {
 		/*
 		 * Unable to read a response from ROM-Code in a reasonable
 		 * time
 		 */
+		DISPLAY_MSG(("Timeout: no response received\n"));
 		return SR_TIMEOUT;
+	}
 
-	if (resp_buf[0] != (uint8_t)(UFPP_D2H_SYNC_CMD))
+	if (resp_buf[0] != (uint8_t)(UFPP_D2H_SYNC_CMD)) {
 		/* ROM-Code response is not as expected */
+		DISPLAY_MSG(("Wrong response: expected 0x5A, got 0x%02x\n",
+			     resp_buf[0]));
 		return SR_WRONG_DATA;
+	}
 
 	/* Good response */
+	DISPLAY_MSG(("Sync successful!\n"));
 	return SR_OK;
 }
 
