@@ -14,12 +14,12 @@
 
 LOG_MODULE_REGISTER(ftrapv_hw_test, LOG_LEVEL_INF);
 
-static void *expected_fault_addr;
+static uintptr_t expected_fault_addr;
 
 static void ftrapv_before(void *fixture)
 {
 	ARG_UNUSED(fixture);
-	expected_fault_addr = NULL;
+	expected_fault_addr = 0;
 	ztest_set_fault_valid(true);
 }
 
@@ -29,25 +29,27 @@ void ztest_post_fatal_error_hook(unsigned int reason,
 				 const struct arch_esf *pEsf)
 {
 	zassert_equal(reason, K_ERR_CPU_EXCEPTION);
-	zassert_not_null(expected_fault_addr);
+	zassert_not_equal(expected_fault_addr, 0,
+			  "Expected fault address not set");
 
 	ztest_set_fault_valid(false);
 
 	/* Estimated end of a function. */
-	uint32_t fn_end = (uint32_t)expected_fault_addr + 0x40;
+	uintptr_t fn_end = expected_fault_addr + 0x40;
 #if defined(CONFIG_ARM)
-	uint32_t pc = pEsf->basic.pc;
+	uintptr_t pc = pEsf->basic.pc;
 #elif defined(CONFIG_RISCV)
-	uint32_t pc = pEsf->mepc;
+	uintptr_t pc = pEsf->mepc;
 #else
-	uint32_t pc = 0;
+	uintptr_t pc = 0;
 	zassert_unreachable("Test not supported on this architecture");
 #endif
 	/* Make sure Program Counter is stored correctly and points at a
 	 * function that causes a crash. */
-	zassert_true(pc >= ((uint32_t)expected_fault_addr) && (pc <= fn_end),
-		     "PC 0x%x not in range [0x%x, 0x%x]", pc,
-		     (uint32_t)expected_fault_addr, fn_end);
+	zassert_true(pc >= expected_fault_addr && (pc <= fn_end),
+		     "PC 0x%" PRIxPTR " not in range [0x%" PRIxPTR
+		     ", 0x%" PRIxPTR "]",
+		     pc, expected_fault_addr, fn_end);
 }
 
 /*
@@ -68,7 +70,7 @@ static void trapv_addition(void)
 
 ZTEST(ftrapv, test_trapv_addition)
 {
-	expected_fault_addr = trapv_addition;
+	expected_fault_addr = (uintptr_t)trapv_addition;
 	trapv_addition();
 }
 
@@ -90,7 +92,7 @@ static void ftrapv_subtraction(void)
 
 ZTEST(ftrapv, test_ftrapv_subtraction)
 {
-	expected_fault_addr = ftrapv_subtraction;
+	expected_fault_addr = (uintptr_t)ftrapv_subtraction;
 	ftrapv_subtraction();
 }
 
@@ -112,7 +114,7 @@ static void ftrapv_multiplication(void)
 
 ZTEST(ftrapv, test_ftrapv_multiplication)
 {
-	expected_fault_addr = ftrapv_multiplication;
+	expected_fault_addr = (uintptr_t)ftrapv_multiplication;
 	ftrapv_multiplication();
 }
 
@@ -134,7 +136,7 @@ static void ftrapv_negation(void)
 
 ZTEST(ftrapv, test_ftrapv_negation)
 {
-	expected_fault_addr = ftrapv_negation;
+	expected_fault_addr = (uintptr_t)ftrapv_negation;
 	ftrapv_negation();
 }
 
@@ -157,6 +159,6 @@ static void ftrapv_abs(void)
 
 ZTEST(ftrapv, test_ftrapv_abs)
 {
-	expected_fault_addr = ftrapv_abs;
+	expected_fault_addr = (uintptr_t)ftrapv_abs;
 	ftrapv_abs();
 }
