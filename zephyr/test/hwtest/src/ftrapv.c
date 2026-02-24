@@ -64,7 +64,6 @@ static void trapv_addition(void)
 	cflush();
 	ret = test_overflow + 1;
 
-	/* Should never reach this. */
 	zassert_unreachable();
 }
 
@@ -86,7 +85,6 @@ static void ftrapv_subtraction(void)
 	cflush();
 	ret = test_overflow - 1;
 
-	/* Should never reach this. */
 	zassert_unreachable();
 }
 
@@ -108,7 +106,6 @@ static void ftrapv_multiplication(void)
 	cflush();
 	ret = test_overflow * 2;
 
-	/* Should never reach this. */
 	zassert_unreachable();
 }
 
@@ -130,7 +127,6 @@ static void ftrapv_negation(void)
 	cflush();
 	ret = -test_overflow;
 
-	/* Should never reach this. */
 	zassert_unreachable();
 }
 
@@ -153,7 +149,6 @@ static void ftrapv_abs(void)
 
 	ret = abs(test_overflow);
 
-	/* Should never reach this. */
 	zassert_unreachable();
 }
 

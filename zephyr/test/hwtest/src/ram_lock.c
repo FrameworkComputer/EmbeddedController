@@ -224,14 +224,12 @@ static int test_alias_data_ram_fetch(void)
 static void test_step1_ram_lock(void)
 {
 	test_data_ram_fetch();
-	/* Should never reach this. */
 	zassert_unreachable();
 }
 
 static void test_step2_ram_lock(void)
 {
 	test_alias_data_ram_fetch();
-	/* Should never reach this. */
 	zassert_unreachable();
 }
 

@@ -71,7 +71,6 @@ static void test_panic(void)
 				 /* Undefined instruction. */
 				 "udf #0\n");
 	}
-	/* Should never reach this. */
 	zassert_unreachable();
 }
 

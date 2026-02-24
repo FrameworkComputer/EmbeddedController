@@ -26,7 +26,6 @@ void null_pointer_dereference(void)
 	ztest_set_fault_valid(true);
 	LOG_INF("The value of null_ptr after dereferencing is: %d", *null_ptr);
 
-	/* Should never reach this. */
 	zassert_unreachable();
 }
 
@@ -34,6 +33,5 @@ ZTEST(null_pointer, test_null_pointer_dereference)
 {
 	null_pointer_dereference();
 
-	/* Should never reach this. */
 	zassert_unreachable();
 }

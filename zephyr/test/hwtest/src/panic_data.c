@@ -56,7 +56,6 @@ static void test_crash(void)
 	LOG_INF("Crash the system!");
 	cflush();
 	crash_system();
-	/* Should never reach this. */
 	zassert_unreachable();
 }
 
@@ -66,7 +65,6 @@ static void test_soft_reboot(void)
 	LOG_INF("Perform soft reboot");
 	cflush();
 	system_reset(0);
-	/* Should never reach this. */
 	zassert_unreachable();
 }
 
@@ -76,7 +74,6 @@ static void test_hard_reboot(void)
 	LOG_INF("Perform hard reboot");
 	cflush();
 	system_reset(SYSTEM_RESET_HARD);
-	/* Should never reach this. */
 	zassert_unreachable();
 }
 
