@@ -55,7 +55,7 @@ void ztest_post_fatal_error_hook(unsigned int reason,
 /*
  * trapping addition: __addvsi3.
  */
-static void trapv_addition(void)
+static void __noinline trapv_addition(void)
 {
 	int32_t test_overflow = INT32_MAX;
 	int32_t ret;
@@ -76,7 +76,7 @@ ZTEST(ftrapv, test_trapv_addition)
 /*
  * trapping subtraction: __subvsi3.
  */
-static void ftrapv_subtraction(void)
+static void __noinline ftrapv_subtraction(void)
 {
 	int32_t test_overflow = INT32_MIN;
 	int32_t ret;
@@ -97,7 +97,7 @@ ZTEST(ftrapv, test_ftrapv_subtraction)
 /*
  * trapping multiplication: __mulvsi3.
  */
-static void ftrapv_multiplication(void)
+static void __noinline ftrapv_multiplication(void)
 {
 	int32_t test_overflow = INT32_MAX;
 	int32_t ret;
@@ -118,7 +118,7 @@ ZTEST(ftrapv, test_ftrapv_multiplication)
 /*
  * trapping negation: __negvsi2.
  */
-static void ftrapv_negation(void)
+static void __noinline ftrapv_negation(void)
 {
 	int32_t test_overflow = INT32_MIN;
 	int32_t ret;
@@ -139,7 +139,7 @@ ZTEST(ftrapv, test_ftrapv_negation)
 /*
  * trapping absolute value: __absvsi2.
  */
-static void ftrapv_abs(void)
+static void __noinline ftrapv_abs(void)
 {
 	int32_t test_overflow = INT32_MIN;
 	int32_t ret;
