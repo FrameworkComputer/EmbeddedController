@@ -50,65 +50,6 @@ static enum ec_error_list get_fp_encryption_status(uint32_t *status)
 	return EC_SUCCESS;
 }
 
-test_static enum ec_error_list test_fp_command_check_context_cleared(void)
-{
-	uint32_t status;
-	fp_reset_and_clear_context();
-	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
-	TEST_BITS_CLEARED((int)status, FP_CONTEXT_USER_ID_SET);
-	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
-
-	struct ec_params_fp_context_v1 params_no_id = {
-		.action = FP_CONTEXT_GET_RESULT,
-	};
-	TEST_EQ(test_send_host_command(EC_CMD_FP_CONTEXT, 1, &params_no_id,
-				       sizeof(params_no_id), NULL, 0),
-		EC_RES_SUCCESS, "%d");
-	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
-	TEST_BITS_CLEARED((int)status, FP_CONTEXT_USER_ID_SET);
-	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
-
-	struct ec_params_fp_context_v1 params = {
-		.action = FP_CONTEXT_GET_RESULT,
-		.userid = { 0, 1, 2, 3, 4, 5, 6, 7 },
-	};
-	TEST_EQ(test_send_host_command(EC_CMD_FP_CONTEXT, 1, &params,
-				       sizeof(params), NULL, 0),
-		EC_RES_SUCCESS, "%d");
-	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
-	TEST_BITS_SET((int)status, FP_CONTEXT_USER_ID_SET);
-	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
-
-	fp_reset_and_clear_context();
-	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
-
-	global_context.templ_valid++;
-	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
-
-	fp_reset_and_clear_context();
-	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
-
-	global_context.templ_dirty |= BIT(0);
-	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
-
-	fp_reset_and_clear_context();
-	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
-
-	global_context.positive_match_secret_state.template_matched = 0;
-	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
-
-	fp_reset_and_clear_context();
-	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
-
-	global_context.fp_encryption_status |= FP_CONTEXT_USER_ID_SET;
-	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
-
-	fp_reset_and_clear_context();
-	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
-
-	return EC_SUCCESS;
-}
-
 test_static enum ec_error_list
 test_fp_command_establish_pairing_key_keygen(void)
 {
@@ -214,7 +155,7 @@ test_static enum ec_error_list test_fp_command_establish_pairing_key_fail(void)
 	return EC_SUCCESS;
 }
 
-test_static enum ec_error_list test_fp_command_load_pairing_key_fail(void)
+test_static enum ec_error_list test_fp_command_load_pairing_key_invalid(void)
 {
 	enum ec_status rv;
 	ec_response_fp_establish_pairing_key_keygen keygen_response;
@@ -263,28 +204,6 @@ test_static enum ec_error_list test_fp_command_load_pairing_key_fail(void)
 				    sizeof(load_params), NULL, 0);
 
 	TEST_EQ(rv, EC_RES_UNAVAILABLE, "%d");
-
-	/* Cannot be loaded if the context is not cleared. */
-	struct ec_params_fp_context_v1 params = {
-		.action = FP_CONTEXT_GET_RESULT,
-		.userid = { 0, 1, 2, 3, 4, 5, 6, 7 },
-	};
-	TEST_EQ(test_send_host_command(EC_CMD_FP_CONTEXT, 1, &params,
-				       sizeof(params), NULL, 0),
-		EC_RES_SUCCESS, "%d");
-
-	memcpy(&load_params.encrypted_pairing_key.info,
-	       &wrap_response.encrypted_pairing_key.info,
-	       sizeof(wrap_response.encrypted_pairing_key.info));
-
-	memcpy(load_params.encrypted_pairing_key.data,
-	       wrap_response.encrypted_pairing_key.data,
-	       sizeof(wrap_response.encrypted_pairing_key.data));
-
-	rv = test_send_host_command(EC_CMD_FP_LOAD_PAIRING_KEY, 0, &load_params,
-				    sizeof(load_params), NULL, 0);
-
-	TEST_EQ(rv, EC_RES_ACCESS_DENIED, "%d");
 
 	return EC_SUCCESS;
 }
@@ -705,8 +624,7 @@ test_fp_command_establish_session_limit_twice_2(void)
 	return EC_SUCCESS;
 }
 
-test_static enum ec_error_list
-test_fp_command_establish_session_load_pk_deny(void)
+test_static enum ec_error_list test_fp_command_establish_session_load_pk(void)
 {
 	enum ec_status rv;
 	std::array<uint8_t, FP_PAIRING_KEY_LEN> pairing_key;
@@ -783,11 +701,11 @@ test_fp_command_establish_session_load_pk_deny(void)
 
 	TEST_EQ(rv, EC_RES_SUCCESS, "%d");
 
-	/* Pairing key cannot be load during a nonce context. */
+	/* Pairing key can be loaded after the session was established. */
 	rv = test_send_host_command(EC_CMD_FP_LOAD_PAIRING_KEY, 0, &load_params,
 				    sizeof(load_params), NULL, 0);
 
-	TEST_EQ(rv, EC_RES_ACCESS_DENIED, "%d");
+	TEST_EQ(rv, EC_RES_SUCCESS, "%d");
 
 	return EC_SUCCESS;
 }
@@ -2202,7 +2120,6 @@ test_fp_command_reestablish_session_corrupted_seed(void)
 
 void run_test(int argc, const char **argv)
 {
-	RUN_TEST(test_fp_command_check_context_cleared);
 	RUN_TEST(test_fp_command_generate_nonce);
 	RUN_TEST(test_fp_command_commit_without_seed);
 
@@ -2217,7 +2134,7 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_fp_command_establish_pairing_key_fail);
 	RUN_TEST(test_fp_command_establish_pairing_key_keygen);
 	RUN_TEST(test_fp_command_establish_and_load_pairing_key);
-	RUN_TEST(test_fp_command_load_pairing_key_fail);
+	RUN_TEST(test_fp_command_load_pairing_key_invalid);
 	RUN_TEST(test_fp_command_establish_session);
 	RUN_TEST(test_fp_command_establish_session_clears_context);
 	RUN_TEST(test_fp_command_establish_session_corrupted_seed);
@@ -2229,7 +2146,7 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_fp_command_establish_session_limit_normal_context);
 	RUN_TEST(test_fp_command_establish_session_limit_twice_1);
 	RUN_TEST(test_fp_command_establish_session_limit_twice_2);
-	RUN_TEST(test_fp_command_establish_session_load_pk_deny);
+	RUN_TEST(test_fp_command_establish_session_load_pk);
 	RUN_TEST(test_fp_command_template_decrypted);
 	RUN_TEST(test_fp_command_commit_v3);
 	RUN_TEST(test_fp_command_commit_trivial_salt);

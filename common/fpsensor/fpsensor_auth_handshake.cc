@@ -124,22 +124,9 @@ fp_command_load_pairing_key(struct host_cmd_handler_args *args)
 
 	ScopedFastCpu fast_cpu;
 
-	/* If the context is not cleared, reject this request to prevent leaking
-	 * the existing template. */
-	enum ec_error_list ret = check_context_cleared();
-	if (ret != EC_SUCCESS) {
-		CPRINTS("load_pairing_key: Context is not clean");
-		return EC_RES_ACCESS_DENIED;
-	}
-
-	if (fingerprint_auth_enabled()) {
-		CPRINTS("load_pairing_key: Session already established");
-		return EC_RES_ACCESS_DENIED;
-	}
-
-	ret = decrypt_pairing_key(params->encrypted_pairing_key.info,
-				  params->encrypted_pairing_key.data,
-				  pairing_key);
+	enum ec_error_list ret = decrypt_pairing_key(
+		params->encrypted_pairing_key.info,
+		params->encrypted_pairing_key.data, pairing_key);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("load_pairing_key: Failed to decrypt pairing key");
 		return EC_RES_UNAVAILABLE;
