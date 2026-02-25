@@ -677,6 +677,7 @@ static void pwm_fan_stop(void)
 	 * Thermal control may be already disabled if DPTF is used.
 	 */
 
+#ifdef CONFIG_POWER_S0IX
 	/*
 	 * Allow the fan to run in S0ix as we have unknown user reports
 	 * of systems getting warm in this state. Possibly due to windows
@@ -686,6 +687,7 @@ static void pwm_fan_stop(void)
 	if (power_get_state() == POWER_S0ix ||
 		power_get_state() == POWER_S0S0ix)
 		return;
+#endif
 
 	pwm_fan_control(0); /* crosbug.com/p/8097 */
 }
