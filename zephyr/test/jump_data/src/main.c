@@ -380,4 +380,42 @@ ZTEST(jump_data, test_init_with_panic_data)
 	zassert_equal(system_usable_ram_end(), (uintptr_t)expected_jdata);
 }
 
+ZTEST(jump_data, test_init_corrupted_jump_tag_total)
+{
+	struct jump_data *jdata = GET_JUMP_DATA_PTR(struct jump_data, 0);
+
+	jdata->magic = JUMP_DATA_MAGIC;
+	jdata->version = 3;
+	jdata->struct_size = sizeof(struct jump_data);
+	jdata->jump_tag_total = -100; /* Negative total! */
+	jdata->reset_flags = EC_RESET_FLAG_POWER_ON;
+
+	/* Should be safely caught and cleared */
+	system_common_pre_init();
+
+	zassert_equal(jdata->magic, 0);
+	zassert_equal(system_jumped_to_this_image(), 1);
+	zassert_equal(system_get_reset_flags(),
+		      EC_RESET_FLAG_POWER_ON | EC_RESET_FLAG_SYSJUMP);
+}
+
+ZTEST(jump_data, test_init_corrupted_struct_size)
+{
+	struct jump_data *jdata = GET_JUMP_DATA_PTR(struct jump_data, 0);
+
+	jdata->magic = JUMP_DATA_MAGIC;
+	jdata->version = 3;
+	jdata->struct_size = -1;
+	jdata->jump_tag_total = 8;
+	jdata->reset_flags = EC_RESET_FLAG_POWER_ON;
+
+	/* Should be safely caught and cleared */
+	system_common_pre_init();
+
+	zassert_equal(jdata->magic, 0);
+	zassert_equal(system_jumped_to_this_image(), 1);
+	zassert_equal(system_get_reset_flags(),
+		      EC_RESET_FLAG_POWER_ON | EC_RESET_FLAG_SYSJUMP);
+}
+
 ZTEST_SUITE(jump_data, NULL, NULL, jump_data_before, NULL, NULL);

@@ -378,7 +378,7 @@ int system_add_jump_tag(uint16_t tag, int version, int size, const void *data)
 		return EC_ERROR_UNKNOWN;
 
 	/* Make room for the new tag */
-	if (size > JUMP_TAG_MAX_SIZE)
+	if (size < 0 || size > JUMP_TAG_MAX_SIZE)
 		return EC_ERROR_INVAL;
 
 	new_entry_size = ROUNDUP4(size) + sizeof(struct jump_tag);
@@ -976,15 +976,29 @@ void system_common_pre_init(void)
 			delta = sizeof(struct jump_data) - jdata->struct_size;
 
 		/*
-		 * Check if enough space for jump data.
-		 * Clear jump data and return if not.
+		 * Validate sizes to prevent integer overflow or underflow
+		 * during the tag shift.
 		 */
-		if (system_usable_ram_end() < JUMP_DATA_MIN_ADDRESS) {
+		if (jdata->version >= 3 &&
+		    (jdata->struct_size < 0 ||
+		     jdata->struct_size >= CONFIG_PRESERVED_END_OF_RAM_SIZE)) {
+			goto clear_jump_data;
+		}
+
+		if (jdata->version >= 2 && jdata->jump_tag_total < 0) {
+			goto clear_jump_data;
+		}
+
+		/*
+		 * Check if enough space for jump data and tags, avoiding
+		 * pointer underflow which would bypass the bounds check.
+		 */
+		if ((uintptr_t)jdata - jdata->jump_tag_total <
+		    JUMP_DATA_MIN_ADDRESS) {
 			/* TODO(b/251190975): This failure should be reported
 			 * in the panic data structure for more visibility.
 			 */
-			memset(jdata, 0, sizeof(struct jump_data));
-			return;
+			goto clear_jump_data;
 		}
 
 		if (delta && jdata->jump_tag_total) {
@@ -1009,10 +1023,12 @@ void system_common_pre_init(void)
 		 * disallows use of system_add_jump_tag().
 		 */
 		jdata->magic = 0;
-	} else {
-		/* Clear the whole jump_data struct */
-		memset(jdata, 0, sizeof(struct jump_data));
+		return;
 	}
+
+clear_jump_data:
+	/* Clear the whole jump_data struct */
+	memset(jdata, 0, sizeof(struct jump_data));
 }
 
 void system_enter_manual_recovery(void)
