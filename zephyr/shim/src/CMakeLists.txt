@@ -29,8 +29,8 @@ if (no_libgcc AND CONFIG_INPUT)
   zephyr_library_sources(popcountsi2.c)
 endif()
 
-# TODO: Framework workaround
-# zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_CONTROLLER pdc_shim.c)
+# Use pdc_shim only when PDC power management is enabled (not for Cypress PD builds)
+zephyr_library_sources_ifdef(CONFIG_USB_PDC_POWER_MGMT pdc_shim.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_ANX7452 anx7452_usb_mux.c)
 zephyr_library_sources_ifdef(CONFIG_NAMED_ADC_CHANNELS      adc.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
