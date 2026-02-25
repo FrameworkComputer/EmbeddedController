@@ -114,21 +114,30 @@ static void pchg_policy(void)
 {
 	enum power_state chipset_state = power_get_state();
 	if (chipset_state == POWER_S0) {
-		if (pchg_low_power_mode == true) {
+		if (pchg_low_power_mode) {
 			pchg_low_power_mode = false;
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pen_dis),
 					1);
 			ccprints("pchg: resume from low power (S0)");
 		}
 	} else if (chipset_state == POWER_S3) {
-		if (pchg_get_battery_percent(0) >= 100) {
-			if (pchg_low_power_mode == false) {
-				pchg_low_power_mode = true;
-				gpio_pin_set_dt(
-					GPIO_DT_FROM_NODELABEL(gpio_ec_pen_dis),
+		bool ac = extpower_is_present();
+		bool full = (pchg_get_battery_percent(0) >= 100);
+		bool should_low_power = (full && !ac);
+
+		if (should_low_power && !pchg_low_power_mode) {
+			pchg_low_power_mode = true;
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pen_dis),
 					0);
-				ccprints("pchg: enter low power (S3, full)");
-			}
+			ccprints("pchg: enter low power (S3, full, no AC)");
+		}
+
+		if (!should_low_power && pchg_low_power_mode) {
+			pchg_low_power_mode = false;
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pen_dis),
+					1);
+			ccprints(
+				"pchg: resume from low power (S3 exit condition)");
 		}
 	}
 	hook_call_deferred(&pchg_policy_data, PCHG_POLICY_DELAY);
