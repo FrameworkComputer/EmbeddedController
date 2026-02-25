@@ -20,7 +20,7 @@ host-util-bin-cxx-y += itecomdbgr
 host-util-bin-cxx-y += cbi-util
 host-util-bin-cxx-y += ec_coredump
 
-host-util-bin-y += rtkupdate
+host-util-bin-cxx-y += rtkupdate
 build-util-art-y += util/export_taskinfo.so
 
 build-util-bin-$(CHIP_NPCX) += ecst
@@ -47,8 +47,8 @@ comm-objs+=comm-lpc.o comm-i2c.o misc_util.o comm-usb.o
 
 iteflash-objs = iteflash.o usb_if.o
 $(out)/util/iteflash: HOST_LDFLAGS+=$(LIBFTDIUSB_HOST_LDLIBS)
-itecomdbgr-objs = itecomdbgr.o
-rtkupdate-objs = rtkupdate.o
+itecomdbgr-objs = itecomdbgr.o uart_utils.o
+rtkupdate-objs = rtkupdate.o uart_utils.o
 ectool-objs=ectool.o ectool_keyscan.o ec_flash.o $(comm-objs)
 ectool-objs+=ectool_i2c.o
 ectool-objs+=ectool_pdc_trace.o
