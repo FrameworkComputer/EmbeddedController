@@ -400,7 +400,7 @@ ZTEST_USER(smart_battery, test_battery_mfacc)
 		      NULL);
 
 	/* Set correct length for rest of the test */
-	len = 10;
+	len = sizeof(mf_data) - 1;
 
 	/* Test fail on writing SB_MANUFACTURER_ACCESS register */
 	i2c_common_emul_set_write_fail_reg(common_data, SB_MANUFACTURER_ACCESS);
@@ -418,15 +418,18 @@ ZTEST_USER(smart_battery, test_battery_mfacc)
 		      NULL);
 
 	/* Set arbitrary manufacturer data */
-	for (int i = 1; i < len; i++) {
-		mf_data[i] = i;
+	for (int i = 0; i < len; i++) {
+		mf_data[i + 1] = i + 1;
 	}
-	/* Set first byte of message as length */
+	/*
+	 * Set first byte of message as length.
+	 * The total number of bytes is length + 1.
+	 */
 	mf_data[0] = len;
 
 	/* Setup custom handler */
 	mfacc_conf.reg = SB_ALT_MANUFACTURER_ACCESS;
-	mfacc_conf.len = len;
+	mfacc_conf.len = len + 1;
 	mfacc_conf.buf = mf_data;
 	i2c_common_emul_set_read_func(common_data, mfgacc_read_func,
 				      &mfacc_conf);
