@@ -418,4 +418,28 @@ ZTEST(jump_data, test_init_corrupted_struct_size)
 		      EC_RESET_FLAG_POWER_ON | EC_RESET_FLAG_SYSJUMP);
 }
 
+ZTEST(jump_data, test_init_watchdog_reset)
+{
+	struct jump_data *jdata = GET_JUMP_DATA_PTR(struct jump_data, 0);
+
+	jdata->magic = JUMP_DATA_MAGIC;
+	jdata->version = 3;
+	jdata->reset_flags = EC_RESET_FLAG_WATCHDOG;
+	jdata->struct_size = sizeof(struct jump_data);
+	jdata->jump_tag_total = 0;
+
+	system_common_pre_init();
+
+	/* Verify the watchdog flag was preserved and combined with sysjump */
+	zassert_equal(system_get_reset_flags(),
+		      EC_RESET_FLAG_WATCHDOG | EC_RESET_FLAG_SYSJUMP,
+		      "Reset flags: 0x%x", system_get_reset_flags());
+
+	/* Verify that a watchdog panic was logged because of the flag */
+	uint32_t reason, info;
+	uint8_t exception;
+	panic_get_reason(&reason, &info, &exception);
+	zassert_equal(reason, PANIC_SW_WATCHDOG, "Panic reason: %d", reason);
+}
+
 ZTEST_SUITE(jump_data, NULL, NULL, jump_data_before, NULL, NULL);

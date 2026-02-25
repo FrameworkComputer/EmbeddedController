@@ -906,12 +906,17 @@ system_get_build_info(void)
 	return build_info;
 }
 
-void system_common_pre_init(void)
+static void handle_watchdog_reset(void)
 {
+	if (!IS_ENABLED(CONFIG_COMMON_PANIC_OUTPUT)) {
+		return;
+	}
+
 	/*
 	 * Log panic cause if watchdog caused reset and panic cause
-	 * was not already logged. This must happen before calculating
-	 * jump_data address because it might change panic pointer.
+	 * was not already logged. This must happen after parsing jump_data
+	 * to ensure we have restored the reset flags passed from the previous
+	 * image (e.g. RO passing watchdog reset to RW).
 	 */
 	if (system_get_reset_flags() & EC_RESET_FLAG_WATCHDOG) {
 		uint32_t reason;
@@ -937,7 +942,10 @@ void system_common_pre_init(void)
 			 pdata->flags & PANIC_DATA_FLAG_OLD_HOSTCMD)
 			panic_set_reason(PANIC_SW_WATCHDOG, 0, 0);
 	}
+}
 
+static void init_jump_data(void)
+{
 	/*
 	 * get_jump_data() is only available if one of the following are
 	 * enabled.
@@ -1029,6 +1037,12 @@ void system_common_pre_init(void)
 clear_jump_data:
 	/* Clear the whole jump_data struct */
 	memset(jdata, 0, sizeof(struct jump_data));
+}
+
+void system_common_pre_init(void)
+{
+	init_jump_data();
+	handle_watchdog_reset();
 }
 
 void system_enter_manual_recovery(void)
