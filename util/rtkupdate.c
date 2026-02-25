@@ -161,6 +161,64 @@ int configure_uart(int fd)
 	return 0;
 }
 
+/*
+ * Discards (flushes) any data received via UART, but not yet retrieved through
+ * `read_com()`.
+ */
+static int flush_com(int uart_fd)
+{
+	fd_set read_fds;
+	struct timeval timeout;
+	char buf[256];
+	int cc;
+	int discard_bytes = 0;
+
+	/* First ask the kernel to drop any data. */
+	tcflush(uart_fd, TCIOFLUSH);
+
+	/*
+	 * For devices where the above is not properly implemented, we
+	 * additionally attempt to manually drain any buffered data below, by
+	 * repeatedly reading and discarding, for as long as more data remains
+	 * available.  We could have used a zero timeout, but instead chose a
+	 * very short timeout of 1ms, just to be sure that the kernel actually
+	 * queries the USB device, rather than maybe instantly replying if no
+	 * data is buffered in the kernel driver.
+	 */
+	for (;;) {
+		FD_ZERO(&read_fds);
+		FD_SET(uart_fd, &read_fds);
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 1000;
+		/*
+		 * Ask the operating system to wait up to 1ms for data to become
+		 * available to read from the serial port.
+		 */
+		cc = select(uart_fd + 1, &read_fds, NULL, NULL, &timeout);
+		if (cc < 0)
+			fprintf(stderr, "Error from select(): %s\n",
+				strerror(errno));
+		if (!cc || !FD_ISSET(uart_fd, &read_fds)) {
+			/* No more data immediately available */
+			break;
+		}
+		/*
+		 * Select indicated that data is available to read, get whatever
+		 * we can, discard it, and then go back and ask if there is
+		 * more.
+		 */
+		cc = read(uart_fd, buf, sizeof(buf));
+		if (cc < 0) {
+			fprintf(stderr, "Error reading serial data: %s\n",
+				strerror(errno));
+		} else {
+			discard_bytes += cc;
+		}
+	}
+
+	return discard_bytes;
+}
+
 /* Function: Read file wrapper function for specific bytes */
 int read_exact(int fd, unsigned char *buf, size_t count, int timeout_ms)
 {
@@ -199,7 +257,7 @@ int uart_sync(int uart_fd)
 	int retry = SYNC_RETRY_CNT;
 
 	printf("UART_SYNC operation initiated\n");
-	tcflush(uart_fd, TCIOFLUSH);
+	flush_com(uart_fd);
 
 	while (retry--) {
 		/* Send sync byte */
@@ -217,9 +275,13 @@ int uart_sync(int uart_fd)
 				printf("UART sync successful\n");
 				return 0; /* Sync successful */
 			} else {
-				DBG_PRINT(
-					"Unexpected response: 0x%X (expected 0xA5)\n",
-					sync_receive);
+				/* Note - if you see this debug message, either
+				 * the EC failed to enter bootrom mode, or
+				 * the flush_com() operation failed to drain
+				 * receive channel.
+				 */
+				printf("Unexpected response: 0x%X (expected 0xA5)\n",
+				       sync_receive);
 			}
 		} else {
 			DBG_PRINT("Failed to read sync response");
@@ -426,7 +488,7 @@ int send_pages(int uart_fd, FILE *file, uint32_t sram_address,
 
 	while (1) {
 		retry_count++;
-		tcflush(uart_fd, TCIOFLUSH);
+		flush_com(uart_fd);
 
 		DBG_PRINT("Page %zu, try %d time.\n", *page + 1, retry_count);
 
@@ -653,15 +715,15 @@ int write_protect(int uart_fd, uint32_t protect)
 
 	DBG_PRINT("write_protect step 1\n");
 
+	flush_com(uart_fd);
+
+	DBG_PRINT("write_protect step 2\n");
+
 	/* Send WP command */
 	if (write(uart_fd, packet, 2) != 2) {
 		perror("Failed to send WP command");
 		return -1;
 	}
-
-	DBG_PRINT("write_protect step 2\n");
-	/* Flush the UART input buffer */
-	tcflush(uart_fd, TCIFLUSH);
 
 	DBG_PRINT("write_protect step 3\n");
 	/* Wait for expected response from EC */
