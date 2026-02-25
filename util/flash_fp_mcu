@@ -496,7 +496,7 @@ get_chip() {
     bloonchipper|dartmonkey|nocturne_fp|nami_fp)
       echo "STM32"
       ;;
-    buccaneer|gwendolin|helipilot|rosalia)
+    buccaneer|helipilot|rosalia)
       echo "NPCX"
       ;;
     *)

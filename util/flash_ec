@@ -88,7 +88,6 @@ BOARDS_NPCX_5M5G_JTAG=(
 
 BOARDS_NPCX_SPI=(
 	buccaneer
-	gwendolin
 	helipilot
 	rosalia
 )
@@ -410,7 +409,7 @@ case "${BOARD}" in
 	chocodile_bec ) MCU="usbpd" ;;
 	oak_pd|strago_pd ) MCU="usbpd" ;;
 	chell_pd|glados_pd ) MCU="usbpd" ;;
-	bloonchipper|buccaneer|dartmonkey|gwendolin|hatch_fp|helipilot| \
+	bloonchipper|buccaneer|dartmonkey|hatch_fp|helipilot| \
 				 nami_fp|nocturne_fp|rosalia )
 		MCU="fpmcu"
 		;;
