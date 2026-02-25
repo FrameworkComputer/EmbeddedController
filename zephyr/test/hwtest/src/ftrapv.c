@@ -55,7 +55,7 @@ void ztest_post_fatal_error_hook(unsigned int reason,
 /*
  * trapping addition: __addvsi3.
  */
-static void __noinline trapv_addition(void)
+static void __noinline ftrapv_addition(void)
 {
 	int32_t test_overflow = INT32_MAX;
 	int32_t ret;
@@ -67,10 +67,10 @@ static void __noinline trapv_addition(void)
 	zassert_unreachable();
 }
 
-ZTEST(ftrapv, test_trapv_addition)
+ZTEST(ftrapv, test_ftrapv_addition)
 {
-	expected_fault_addr = (uintptr_t)trapv_addition;
-	trapv_addition();
+	expected_fault_addr = (uintptr_t)ftrapv_addition;
+	ftrapv_addition();
 }
 
 /*
