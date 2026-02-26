@@ -35,6 +35,14 @@
 #define BATTERY_EXTENDER_STAGE1_VOLTAGE(v) (v * 97 / 100)
 #define BATTERY_EXTENDER_STAGE2_VOLTAGE(v) (v * 96 / 100)
 
+
+/*
+ * When in stage_0, will not control the charger
+ * in stage_1 will set charger mode to idle and keeps battery at 90%~95%
+ * in stage_2 will set charger mode to idle and keeps battery at 85%~87%
+ * if user setting value lower than stage_1 or 2 will use the setting value
+ * ex: if user set charging_maximum_level to 70% battery will keeps at 65%~70% (min=max - 5)
+ */
 enum battery_extender_stage_t {
 	BATT_EXTENDER_STAGE_0,
 	BATT_EXTENDER_STAGE_1,
@@ -89,10 +97,15 @@ static void battery_percentage_control(void)
 			charging_maximum_level = charging_maximum_level & 0x64;
 	}
 
-	if (charging_maximum_level & CHG_LIMIT_OVERRIDE ||
-		!charging_maximum_level ||
-		charging_maximum_level == 100) {
+	if (charging_maximum_level & CHG_LIMIT_OVERRIDE) {
 		charger_sustainer_reset();
+		return;
+	}
+
+	if (!charging_maximum_level ||
+		charging_maximum_level == 100) {
+		if (stage == BATT_EXTENDER_STAGE_0)
+			charger_sustainer_reset();
 		return;
 	}
 
