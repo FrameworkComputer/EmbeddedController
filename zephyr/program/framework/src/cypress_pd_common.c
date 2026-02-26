@@ -1928,6 +1928,17 @@ int cypd_get_active_port_voltage(void)
 	return pd_port_states[prev_charge_port].voltage;
 }
 
+int cypd_vsys_to_vbus_transition(int port)
+{
+	int rv;
+
+	rv = cypd_write_reg8_wait_ack(PORT_TO_CONTROLLER(port),
+				CCG_PD_CONTROL_REG(PORT_TO_CONTROLLER_PORT(port)),
+				CCG_PD_CMD_VSYS_TO_VBUS);
+
+	return rv;
+}
+
 /*****************************************************************************/
 /* Interrupt handler */
 

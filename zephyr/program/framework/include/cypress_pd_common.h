@@ -333,6 +333,7 @@ enum ccg_pd_command {
 	CCG_PD_CMD_PORT_DISABLE = 0x11,
 	CCG_PD_CMD_CHANGE_PD_PORT_PARAMS = 0x14,
 	CCG_PD_CMD_READ_SRC_PDO = 0x20,
+	CCG_PD_CMD_VSYS_TO_VBUS = 0x36,
 	CCG_PD_CMD_RW_PD_RESPONSE_DATA = 0x3D,
 	CCG_PD_CMD_INITIATE_EPR_ENTRY = 0x47,
 	CCG_PD_CMD_INITIATE_EPR_EXIT = 0x48,
@@ -1135,5 +1136,16 @@ void cypd_update_safety_table(int safety_level);
  * perform the error recovery.
  */
 __override_proto int board_perform_error_recovery_port(int port);
+
+/*
+ * EC send PD_CONTROL with 0x36 to CCGx to switch over from VSYS switch to VBUS
+ * regulator before turning off VSYS power.
+ * VDDD keeps 3.3V (No Reboot) during VSYS to VBUS transition after applying resolution.
+ *
+ * @param port which type-c port should switch the VSYS to VBUS.
+ * @return EC_SUCCESS, or non-zero if error.
+ */
+int cypd_vsys_to_vbus_transition(int port);
+
 
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

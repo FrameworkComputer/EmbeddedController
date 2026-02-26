@@ -57,8 +57,13 @@ __override int board_cut_off_battery(void)
 		 * Disable all PD ports to prevent non-active ports from
 		 * sourcing power post-cutoff.
 		 */
-		for (int port = 0; port < PD_PORT_COUNT; port++)
+		for (int port = 0; port < PD_PORT_COUNT; port++) {
+
+			/* PD VDD source call to be run once per controller */
+			if ((port & BIT(0)) == 0)
+				cypd_vsys_to_vbus_transition(port);
 			cypd_cfet_vbus_control(port, pd_port_on, ec_control);
+		}
 		timer = CHARGER_RELEASE_BPLUS_VOLATGE_TIMER;
 	}
 
