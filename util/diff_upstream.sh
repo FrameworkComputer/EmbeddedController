@@ -43,14 +43,9 @@ declare -A repos=(
 declare -A expected_diffs=(
   # b/389761200 17452ff89d458b4201bc1ce2debbb30703f45c0d
   #   Revert "drivers: watchdog: stm32 iwdg: explicit single channel"
-  # b/460502081 97b8c4eef6a738f22120cc99448317245151de45
-  #   FROMPULL: kernel: Add Kconfig option to disable LTO for kernel sources
-  # b/460504453 2bf08236a2a731e8a764d3b2265f0b533bf7ec95
-  #   FROMPULL: soc: it8xxx2: Select KERNEL_NO_LTO only when LTO is enabled
   ['zephyrproject/zephyr']="\
     17452ff89d458b4201bc1ce2debbb30703f45c0d \
-    97b8c4eef6a738f22120cc99448317245151de45 \
-    2bf08236a2a731e8a764d3b2265f0b533bf7ec95"
+    "
 )
 
 function die() {
