@@ -78,6 +78,14 @@ config PLATFORM_EC_SMBUS_PEC
 
 	  This option also enables error checking function on smart batteries.
 
+config PLATFORM_EC_I2C_READ_SIZE_BUFFER
+	int "Buffer size for i2c_read_sized_block"
+	default 1
+	default 32 if PLATFORM_EC_SMBUS_PEC
+	help
+	  The buffer size for i2c_read_sized_block. Set this to 256 could ensure
+	  that i2c_read_sized_block only call i2c_xfer_unlocked twice each try.
+
 config PLATFORM_EC_I2C_NACK_RETRY_COUNT
 	int "I2C operation retry count when transaction error"
 	default 0

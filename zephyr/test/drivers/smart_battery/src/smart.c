@@ -387,8 +387,8 @@ ZTEST_USER(smart_battery, test_battery_mfacc)
 	const struct emul *emul = EMUL_DT_GET(BATTERY_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_smart_battery_get_i2c_common_data(emul);
-	uint8_t recv_buf[10];
-	uint8_t mf_data[10];
+	uint8_t recv_buf[MSG_BUF_LEN - 1];
+	uint8_t mf_data[MSG_BUF_LEN - 1];
 	uint16_t cmd;
 	int len;
 
