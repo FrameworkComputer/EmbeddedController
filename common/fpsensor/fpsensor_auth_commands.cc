@@ -82,6 +82,11 @@ fp_command_establish_session(struct host_cmd_handler_args *args)
 		return EC_RES_ACCESS_DENIED;
 	}
 
+	/* Do not establish session if any operation on templates is running */
+	if (global_context.sensor_mode & FP_MODES_TEMPLATE_OPERATION) {
+		return EC_RES_BUSY;
+	}
+
 	ScopedFastCpu fast_cpu;
 
 	/* Avoid using old TPM Seed if the seed decryption fails. */

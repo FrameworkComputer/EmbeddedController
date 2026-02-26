@@ -343,6 +343,7 @@ test_static enum ec_error_list test_fp_command_establish_session(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(initialize_pairing_key(pairing_key), EC_SUCCESS, "%d");
 
@@ -392,6 +393,7 @@ test_fp_command_establish_session_fail_different_pk(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(initialize_pairing_key(pairing_key), EC_SUCCESS, "%d");
 
@@ -433,6 +435,7 @@ test_static enum ec_error_list test_fp_command_establish_session_deny(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(initialize_pairing_key(pairing_key), EC_SUCCESS, "%d");
 
@@ -473,6 +476,7 @@ test_fp_command_establish_session_limit_without_generated_nonce(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(initialize_pairing_key(pairing_key), EC_SUCCESS, "%d");
 
@@ -503,6 +507,7 @@ test_fp_command_establish_session_limit_normal_context(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(initialize_pairing_key(pairing_key), EC_SUCCESS, "%d");
 
@@ -547,6 +552,7 @@ test_fp_command_establish_session_limit_twice_1(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(initialize_pairing_key(pairing_key), EC_SUCCESS, "%d");
 
@@ -590,6 +596,7 @@ test_fp_command_establish_session_limit_twice_2(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(initialize_pairing_key(pairing_key), EC_SUCCESS, "%d");
 
@@ -657,6 +664,7 @@ test_static enum ec_error_list test_fp_command_establish_session_load_pk(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(initialize_pairing_key(pairing_key), EC_SUCCESS, "%d");
 
@@ -720,6 +728,7 @@ test_static enum ec_error_list test_fp_command_template_decrypted(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(initialize_pairing_key(pairing_key), EC_SUCCESS, "%d");
 
@@ -816,6 +825,7 @@ test_static enum ec_error_list test_fp_command_commit_v3(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(initialize_pairing_key(pairing_key), EC_SUCCESS, "%d");
 
@@ -897,6 +907,7 @@ test_static enum ec_error_list test_fp_command_commit_trivial_salt(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(initialize_pairing_key(pairing_key), EC_SUCCESS, "%d");
 
@@ -1098,6 +1109,7 @@ test_static enum ec_error_list test_fp_command_generate_challenge(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1148,6 +1160,7 @@ test_static enum ec_error_list test_fp_validate_request(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1183,6 +1196,7 @@ test_static enum ec_error_list test_fp_validate_request_fail_no_challenge(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1205,6 +1219,7 @@ test_fp_validate_request_fail_invalid_signature(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1235,6 +1250,7 @@ test_static enum ec_error_list test_fp_validate_request_fail_timeout(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1275,6 +1291,7 @@ test_static enum ec_error_list test_fp_sign_message(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1301,6 +1318,7 @@ test_static enum ec_error_list test_fp_sign_message_fail_no_session(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(sign_message(user_id, operation, challenge, mac),
 		EC_ERROR_ACCESS_DENIED, "%d");
@@ -1324,6 +1342,7 @@ test_static enum ec_error_list test_fp_mode_match_correct_signature(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1363,6 +1382,7 @@ test_static enum ec_error_list test_fp_mode_disable_match_no_signature(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1387,6 +1407,7 @@ test_static enum ec_error_list test_fp_mode_match_invalid_signature(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1428,6 +1449,7 @@ test_static enum ec_error_list test_fp_mode_enroll_correct_signature(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1468,6 +1490,7 @@ test_static enum ec_error_list test_fp_mode_disable_enroll_no_signature(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1493,6 +1516,7 @@ test_static enum ec_error_list test_fp_mode_enroll_invalid_signature(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1534,6 +1558,7 @@ test_static enum ec_error_list test_fp_mode_enroll_session_transitions(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1597,6 +1622,7 @@ test_static enum ec_error_list test_fp_mode_match_fail_version_0(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1632,6 +1658,7 @@ test_static enum ec_error_list test_fp_confirm_template_success(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1674,6 +1701,7 @@ test_fp_confirm_template_fail_invalid_signature(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1710,6 +1738,7 @@ test_fp_confirm_template_fail_state_mismatch(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1751,6 +1780,7 @@ test_static enum ec_error_list test_fp_sign_match_success(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1791,6 +1821,7 @@ test_static enum ec_error_list test_fp_sign_match_fail_no_match(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1821,6 +1852,7 @@ test_static enum ec_error_list test_fp_sign_match_fail_deadline_passed(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 
@@ -1879,6 +1911,7 @@ test_static enum ec_error_list test_fp_reset_does_not_clear_session(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(establish_session(session_key), EC_SUCCESS, "%d");
 	TEST_BITS_SET((int)global_context.fp_encryption_status,
@@ -1930,6 +1963,7 @@ test_fp_command_establish_session_clears_context(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(initialize_pairing_key(pairing_key), EC_SUCCESS, "%d");
 
@@ -2016,6 +2050,7 @@ test_fp_command_establish_session_corrupted_seed(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(initialize_pairing_key(pairing_key), EC_SUCCESS, "%d");
 
@@ -2065,6 +2100,7 @@ test_fp_command_reestablish_session_corrupted_seed(void)
 
 	fp_reset_and_clear_context();
 	reset_session();
+	global_context.sensor_mode = 0;
 
 	TEST_EQ(initialize_pairing_key(pairing_key), EC_SUCCESS, "%d");
 
@@ -2116,6 +2152,41 @@ test_fp_command_reestablish_session_corrupted_seed(void)
 	return EC_SUCCESS;
 }
 
+test_static enum ec_error_list test_fp_command_establish_session_busy(void)
+{
+	enum ec_status rv;
+	struct ec_params_fp_establish_session session_params = {};
+	static constexpr uint32_t modes[] = {
+		FP_MODE_ENROLL_SESSION,
+		FP_MODE_ENROLL_IMAGE,
+		FP_MODE_MATCH,
+		FP_MODE_RESET_SENSOR,
+		FP_MODE_ENCRYPT_TEMPLATE,
+		FP_MODE_DECRYPT_TEMPLATE,
+	};
+
+	fp_reset_and_clear_context();
+	reset_session();
+
+	/* Pretend that the session nonce was generated. */
+	global_context.fp_encryption_status |= FP_CONTEXT_SESSION_NONCE_SET;
+
+	for (uint32_t mode : modes) {
+		/* Pretend that an operation on templates is running. */
+		global_context.sensor_mode = mode;
+
+		rv = test_send_host_command(EC_CMD_FP_ESTABLISH_SESSION, 0,
+					    &session_params,
+					    sizeof(session_params), NULL, 0);
+
+		TEST_EQ(rv, EC_RES_BUSY, "mode 0x%x");
+	}
+
+	global_context.sensor_mode = 0;
+
+	return EC_SUCCESS;
+}
+
 } // namespace
 
 void run_test(int argc, const char **argv)
@@ -2136,6 +2207,7 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_fp_command_establish_and_load_pairing_key);
 	RUN_TEST(test_fp_command_load_pairing_key_invalid);
 	RUN_TEST(test_fp_command_establish_session);
+	RUN_TEST(test_fp_command_establish_session_busy);
 	RUN_TEST(test_fp_command_establish_session_clears_context);
 	RUN_TEST(test_fp_command_establish_session_corrupted_seed);
 	RUN_TEST(test_fp_command_reestablish_session_corrupted_seed);
