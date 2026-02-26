@@ -8,4 +8,5 @@ zephyr_library_sources(
 		"src/board.c"
 		"src/fan.c"
 		"src/fp_led.c"
+		"src/thermal_policy.c"
 )
