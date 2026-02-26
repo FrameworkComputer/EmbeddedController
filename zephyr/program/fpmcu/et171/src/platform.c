@@ -6,6 +6,9 @@
 #include "fpsensor/fpsensor.h"
 #include "write_protect.h"
 
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/watchdog.h>
+
 #define MT_DATA_OFF DT_REG_ADDR(DT_NODELABEL(mt_data))
 struct mt_data {
 	uint32_t size;
@@ -29,3 +32,14 @@ bool write_protect_is_asserted_custom(void)
 {
 	return false;
 }
+
+/* TODO: Remove once https://github.com/zephyrproject-rtos/zephyr/issues/104587
+ * is resolved.
+ */
+static int disable_watchdog(void)
+{
+	const struct device *wdt_dev = DEVICE_DT_GET(DT_NODELABEL(wdt));
+
+	return wdt_disable(wdt_dev);
+}
+SYS_INIT(disable_watchdog, POST_KERNEL, 0);
