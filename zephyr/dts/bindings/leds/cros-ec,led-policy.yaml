@@ -80,8 +80,8 @@ child-binding:
   properties:
     charge-state:
       description: |
-        If the LED color depends on charge state, this property is used
-        to describe it.
+        If the LED color depends on charge state, this property is used to
+        store a list of all charge states that use the same policy.
         LED_PWRS_CHARGE - AC is connected, battery is charging.
         LED_PWRS_DISCHARGE - AC is not connected, battery is discharging.
         LED_PWRS_ERROR - Battery is in error state.
@@ -90,7 +90,7 @@ child-binding:
                                 Used during factory testing.
         LED_PWRS_CHARGE_NEAR_FULL - AC is connected, battery is charging
                                      and close to fully charged.
-      type: string
+      type: string-array
       enum:
         - LED_PWRS_CHARGE
         - LED_PWRS_DISCHARGE
@@ -107,8 +107,8 @@ child-binding:
     chipset-state:
       description: |
         If the LED color depends on chipset state, this property is used
-        to describe it.
-      type: string
+        to store a list of all chipset states that use the same policy.
+      type: string-array
       enum:
         - POWER_S0
         - POWER_S3

@@ -112,8 +112,8 @@ DT_INST_FOREACH_STATUS_OKAY(GEN_PATTERN_COLOR_ARRAY_FOR_POLICY)
 DT_INST_FOREACH_STATUS_OKAY(GEN_PATTERN_NODE_ARRAY_FOR_POLICY)
 
 struct node_prop_t {
-	enum led_pwr_state pwr_state;
-	enum power_state chipset_state;
+	uint16_t pwr_state;
+	uint16_t chipset_state;
 	int batt_state_mask;
 	int batt_state;
 	int8_t batt_lvl[2];
@@ -123,6 +123,14 @@ struct node_prop_t {
 	uint8_t num_patterns;
 };
 
+#define MASK_ADD_BIT(node_id, prop, idx) \
+	| BIT(DT_STRING_UPPER_TOKEN_BY_IDX(node_id, prop, idx))
+
+#define GET_TOKEN_MASK(state_id, prop)                                      \
+	COND_CODE_1(DT_NODE_HAS_PROP(state_id, prop),                       \
+		    (0 DT_FOREACH_PROP_ELEM(state_id, prop, MASK_ADD_BIT)), \
+		    (0))
+
 /*
  * Initialize node_array struct with prop listed in dts.
  * Zephyr does not recognize nested FOREACH macros unless they are carried in
@@ -130,8 +138,8 @@ struct node_prop_t {
  */
 #define SET_LED_VALUES(state_id, fn)                                          \
 	{                                                                     \
-		.pwr_state = GET_PROP(state_id, charge_state),                \
-		.chipset_state = GET_PROP(state_id, chipset_state),           \
+		.pwr_state = GET_TOKEN_MASK(state_id, charge_state),          \
+		.chipset_state = GET_TOKEN_MASK(state_id, chipset_state),     \
 		.batt_state_mask = COND_CODE_1(                               \
 			DT_NODE_HAS_PROP(state_id, batt_state_mask),          \
 			(DT_PROP(state_id, batt_state_mask)), (-1)),          \
@@ -513,10 +521,10 @@ static int match_node(const struct policy_group *grp, int node_idx)
 
 #if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER))
 	/* Check if this node depends on power state */
-	if (node->pwr_state != LED_PWRS_UNCHANGE) {
+	if (node->pwr_state != 0) {
 		enum led_pwr_state pwr_state = led_pwr_get_state();
 
-		if (node->pwr_state != pwr_state) {
+		if (!(node->pwr_state & BIT(pwr_state))) {
 			*active = false;
 			return -1;
 		}
@@ -537,7 +545,7 @@ static int match_node(const struct policy_group *grp, int node_idx)
 	if (node->chipset_state != 0) {
 		enum power_state chipset_state = get_chipset_state();
 
-		if (node->chipset_state != chipset_state) {
+		if (!(node->chipset_state & BIT(chipset_state))) {
 			*active = false;
 			return -1;
 		}

@@ -39,7 +39,14 @@ def check_policy(
     for node in policies.children.values():
         # check_policy is a replica of the match_node() function in led.c
         if "charge-state" in node.props:
-            if charge_state != node.props["charge-state"].val:
+            match = False
+
+            for state in node.props["charge-state"].val:
+                if charge_state == state:
+                    match = True
+                    break
+
+            if not match:
                 continue
 
             if "charge-port" in node.props:
@@ -47,7 +54,14 @@ def check_policy(
                     continue
 
         if "chipset-state" in node.props:
-            if chipset_state != node.props["chipset-state"].val:
+            match = False
+
+            for state in node.props["chipset-state"].val:
+                if chipset_state == state:
+                    match = True
+                    break
+
+            if not match:
                 continue
 
         if "board-led-alt-policy-label" in node.props:
