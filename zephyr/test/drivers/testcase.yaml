@@ -1304,6 +1304,15 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_SYSTEM=y
     - CONFIG_POWER_SEQUENCE_MOCK=y
+  drivers.system.rw:
+    tags:
+    - common
+    - system
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_SYSTEM=y
+    - CONFIG_POWER_SEQUENCE_MOCK=y
+    extra_args:
+    - EXTRA_CFLAGS=-DSECTION_IS_RW
   drivers.system.ec_host_cmd:
     tags:
     - common

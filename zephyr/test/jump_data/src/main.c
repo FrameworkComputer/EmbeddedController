@@ -435,11 +435,20 @@ ZTEST(jump_data, test_init_watchdog_reset)
 		      EC_RESET_FLAG_WATCHDOG | EC_RESET_FLAG_SYSJUMP,
 		      "Reset flags: 0x%x", system_get_reset_flags());
 
-	/* Verify that a watchdog panic was logged because of the flag */
+	/*
+	 * Verify that a watchdog panic was logged if in RW, or NOT logged
+	 * if in RO.
+	 */
 	uint32_t reason, info;
 	uint8_t exception;
 	panic_get_reason(&reason, &info, &exception);
-	zassert_equal(reason, PANIC_SW_WATCHDOG, "Panic reason: %d", reason);
+	if (IS_ENABLED(SECTION_IS_RW)) {
+		zassert_equal(reason, PANIC_SW_WATCHDOG, "Panic reason: %d",
+			      reason);
+	} else {
+		zassert_not_equal(reason, PANIC_SW_WATCHDOG,
+				  "Panic reason should not be set in RO");
+	}
 }
 
 ZTEST_SUITE(jump_data, NULL, NULL, jump_data_before, NULL, NULL);
