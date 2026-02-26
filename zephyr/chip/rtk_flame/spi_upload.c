@@ -352,7 +352,7 @@ static void uart_init_pll_115200(void)
 	 */
 	UART->LCR |= UART_LCR_DLAB_Msk;
 	UART->DLH = 0x00000000ul;
-	UART->DLL = 0x00000035ul;
+	UART->DLL = 0x00000036ul;
 	UART->LCR &= ~UART_LCR_DLAB_Msk;
 
 	/* Clear IIR status*/
