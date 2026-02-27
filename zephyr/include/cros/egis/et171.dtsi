@@ -7,7 +7,6 @@
 
 / {
 	chosen {
-		cros-ec,watchdog = &wdt;
 		cros-ec,flash-controller = &flash_controller;
 		cros-ec,sha = &crypto;
 	};
