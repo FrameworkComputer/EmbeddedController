@@ -5,6 +5,7 @@
  * MAX6958/MAX6959 7-Segment LED Display Driver
  */
 
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "display_7seg.h"
@@ -87,6 +88,11 @@ static void max695x_init(void)
 			   [1] = MAX695X_INTENSITY_MEDIUM,
 			   [2] = MAX695X_SCAN_LIMIT_4,
 			   [3] = MAX695X_CONFIG_OPR_NORMAL };
+
+	/* Skip initialization if system is shutting down or in OFF state */
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
+		return;
+
 	max695x_i2c_write(MAX695X_REG_DECODE_MODE, buf, ARRAY_SIZE(buf));
 }
 DECLARE_HOOK(HOOK_INIT, max695x_init, HOOK_PRIO_DEFAULT);
