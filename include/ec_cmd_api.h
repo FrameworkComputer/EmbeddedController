@@ -437,6 +437,7 @@ _CROS_EC_C0_F_PF_RF(EC_CMD_REGULATOR_IS_ENABLED, regulator_is_enabled);
 _CROS_EC_C0_F_PF(EC_CMD_REGULATOR_SET_VOLTAGE, regulator_set_voltage);
 _CROS_EC_C0_F_PF_RF(EC_CMD_RGBKBD, rgbkbd);
 _CROS_EC_C0_F_RF(EC_CMD_ROLLBACK_INFO, rollback_info);
+_CROS_EC_C1_F_RF(EC_CMD_ROLLBACK_INFO, rollback_info);
 _CROS_EC_CV_F_R(EC_CMD_RTC_GET_ALARM, 0, rtc_get_alarm, rtc);
 _CROS_EC_CV_F_R(EC_CMD_RTC_GET_VALUE, 0, rtc_get_value, rtc);
 _CROS_EC_CV_F_P(EC_CMD_RTC_SET_ALARM, 0, rtc_set_alarm, rtc);

@@ -552,6 +552,10 @@ static int command_rollback_info(int argc, const char **argv)
 		ccprintf("rollback %d: %08x %08x %08x", region, data.id,
 			 data.rollback_min_version, data.cookie);
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
+		ccprintf(" %s",
+			 bytes_are_trivial(data.secret, sizeof(data.secret)) ?
+				 "trivial" :
+				 "non-trivial");
 		if (!system_is_locked()) {
 			/* If system is unlocked, show some of the secret. */
 			ccprintf(" [%02x..%02x]", data.secret[0],
@@ -575,7 +579,7 @@ static enum ec_status
 host_command_rollback_info(struct host_cmd_handler_args *args)
 {
 	int ret = EC_RES_UNAVAILABLE;
-	struct ec_response_rollback_info *r = args->response;
+	struct ec_response_rollback_info_v1 *r = args->response;
 	int min_region;
 	struct rollback_data data;
 
@@ -588,7 +592,18 @@ host_command_rollback_info(struct host_cmd_handler_args *args)
 	r->rollback_min_version = data.rollback_min_version;
 	r->rw_rollback_version = system_get_rollback_version(EC_IMAGE_RW);
 
-	args->response_size = sizeof(*r);
+	if (args->version == 1) {
+		args->response_size =
+			sizeof(struct ec_response_rollback_info_v1);
+		r->is_secret_inited = 0;
+#ifdef CONFIG_ROLLBACK_SECRET_SIZE
+		if (!bytes_are_trivial(data.secret, sizeof(data.secret))) {
+			r->is_secret_inited = 1;
+		}
+#endif
+	} else {
+		args->response_size = sizeof(struct ec_response_rollback_info);
+	}
 	ret = EC_RES_SUCCESS;
 
 failed:
@@ -596,4 +611,4 @@ failed:
 	return ret;
 }
 DECLARE_HOST_COMMAND(EC_CMD_ROLLBACK_INFO, host_command_rollback_info,
-		     EC_VER_MASK(0));
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
