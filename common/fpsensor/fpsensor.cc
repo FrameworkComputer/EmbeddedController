@@ -149,6 +149,8 @@ static uint32_t fp_process_match(void)
 	if (global_context.templ_valid) {
 		res = fp_finger_match(fp_template[0],
 				      global_context.templ_valid, fp_buffer,
+				      !(global_context.sensor_mode &
+					FP_MODE_MATCH_NO_TEMPLATE_UPDATE),
 				      &fgr, &updated);
 		CPRINTS("Match =>%d (finger %d)", res, fgr);
 
@@ -229,7 +231,8 @@ static void fp_process_finger(void)
 		evt = fp_process_match();
 
 	global_context.sensor_mode &=
-		~(FP_MODE_ANY_CAPTURE | FP_MODE_CAPTURE_TYPE_MASK);
+		~(FP_MODE_ANY_CAPTURE | FP_MODE_CAPTURE_TYPE_MASK |
+		  FP_MODE_MATCH_NO_TEMPLATE_UPDATE);
 	overall_time_us = time_since32(overall_t0);
 	send_mkbp_event(evt);
 }

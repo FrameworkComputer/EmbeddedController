@@ -236,12 +236,13 @@ int fp_sensor_get_info(struct ec_response_fp_info_v2 *resp, size_t resp_size)
  *   due to finger covering too little area of the sensor
  */
 int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,
-		    int32_t *match_index, uint32_t *update_bitmap)
+		    bool template_update, int32_t *match_index,
+		    uint32_t *update_bitmap)
 {
 	int res;
 	CPRINTF("========%s=======\n", __func__);
 	res = elan_match(templ, templ_count, image, match_index, update_bitmap);
-	if (res == EC_MKBP_FP_ERR_MATCH_YES)
+	if (res == EC_MKBP_FP_ERR_MATCH_YES && template_update)
 		res = elan_template_update(templ, *match_index);
 
 	return res;

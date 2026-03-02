@@ -150,14 +150,16 @@ BUILD_ASSERT(FP_MATCH_RESULT_LOW_COVERAGE == BIO_TEMPLATE_LOW_COVERAGE);
 
 static int egis_bep_match(const struct fingerprint_algorithm *const alg,
 			  void *templ, uint32_t templ_count,
-			  const uint8_t *const image, int32_t *match_index,
-			  uint32_t *update_bitmap)
+			  const uint8_t *const image, bool template_update,
+			  int32_t *match_index, uint32_t *update_bitmap)
 {
 	int rc;
 
 	if (!IS_ENABLED(CONFIG_HAVE_EGIS660_PRIVATE_ALGORITHM)) {
 		return -ENOTSUP;
 	}
+
+	/* TODO(b/479912675): Use template_update parameter. */
 
 	/*
 	 * EGIS BEP library takes image as 'void *', so we are casting away

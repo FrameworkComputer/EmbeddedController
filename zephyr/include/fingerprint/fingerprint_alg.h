@@ -25,7 +25,8 @@ struct fingerprint_algorithm_api {
 			     void *templ);
 	int (*match)(const struct fingerprint_algorithm *const alg, void *templ,
 		     uint32_t templ_count, const uint8_t *const image,
-		     int32_t *match_index, uint32_t *update_bitmap);
+		     bool template_update, int32_t *match_index,
+		     uint32_t *update_bitmap);
 };
 
 /** Fingerprint algorithm structure. */
@@ -222,6 +223,8 @@ fingerprint_enroll_finish(const struct fingerprint_algorithm *const alg,
  * @param templ Pointer to buffer where template will be stored.
  * @param templ_count Number of templates in 'templ' buffer.
  * @param image Pointer to finger image.
+ * @param template_update Whether the template should be updated after
+ * successful match.
  * @param match_index Pointer to variable where index of matched template will
  *                    be stored.
  * @param update_bitmap Pointer to variable where bitmap of update templates
@@ -233,7 +236,8 @@ fingerprint_enroll_finish(const struct fingerprint_algorithm *const alg,
 static inline int
 fingerprint_match(const struct fingerprint_algorithm *const alg, void *templ,
 		  uint32_t templ_count, const uint8_t *const image,
-		  int32_t *match_index, uint32_t *update_bitmap)
+		  bool template_update, int32_t *match_index,
+		  uint32_t *update_bitmap)
 {
 	__ASSERT_NO_MSG(alg != NULL);
 	__ASSERT_NO_MSG(templ != NULL);
@@ -241,8 +245,8 @@ fingerprint_match(const struct fingerprint_algorithm *const alg, void *templ,
 		return -ENOTSUP;
 	}
 
-	return alg->api->match(alg, templ, templ_count, image, match_index,
-			       update_bitmap);
+	return alg->api->match(alg, templ, templ_count, image, template_update,
+			       match_index, update_bitmap);
 }
 
 #endif /* ZEPHYR_INCLUDE_FINGERPRINT_FINGERPRINT_ALG_H_ */

@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_FPSENSOR_FPSENSOR_ALG_H
 #define __CROS_EC_FPSENSOR_FPSENSOR_ALG_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -23,6 +24,8 @@ extern "C" {
  * @param[in,out] templ a pointer to the array of template buffers.
  * @param templ_count the number of buffers in the array of templates.
  * @param[in] image the buffer containing the finger image
+ * @param template_update whether the template should be updated after
+ * successful match.
  * @param match_index index of the matched finger in the template array if any.
  * @param[out] update_bitmap contains one bit per template, the bit is set if
  * the match has updated the given template.
@@ -40,7 +43,8 @@ extern "C" {
  * @return negative value on error
  */
 int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,
-		    int32_t *match_index, uint32_t *update_bitmap);
+		    bool template_update, int32_t *match_index,
+		    uint32_t *update_bitmap);
 
 /**
  * Start a finger enrollment session.

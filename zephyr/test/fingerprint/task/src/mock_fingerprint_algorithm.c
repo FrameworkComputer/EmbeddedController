@@ -22,7 +22,8 @@ DEFINE_FAKE_VALUE_FUNC(int, mock_alg_enroll_finish,
 		       const struct fingerprint_algorithm *const, void *);
 DEFINE_FAKE_VALUE_FUNC(int, mock_alg_match,
 		       const struct fingerprint_algorithm *const, void *,
-		       uint32_t, const uint8_t *const, int32_t *, uint32_t *);
+		       uint32_t, const uint8_t *const, bool, int32_t *,
+		       uint32_t *);
 
 const struct fingerprint_algorithm_api mock_alg_api = {
 	.init = mock_alg_init,

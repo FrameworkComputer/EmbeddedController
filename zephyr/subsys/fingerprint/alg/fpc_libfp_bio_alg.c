@@ -161,14 +161,16 @@ fpc_libfp_enroll_finish(const struct fingerprint_algorithm *const alg,
 
 static int fpc_libfp_match(const struct fingerprint_algorithm *const alg,
 			   void *templ, uint32_t templ_count,
-			   const uint8_t *const image, int32_t *match_index,
-			   uint32_t *update_bitmap)
+			   const uint8_t *const image, bool template_update,
+			   int32_t *match_index, uint32_t *update_bitmap)
 {
 	int rc;
 
 	if (!IS_ENABLED(CONFIG_HAVE_LIBFP_PRIVATE_DRIVER)) {
 		return -ENOTSUP;
 	}
+
+	/* TODO(b/479912675): Use template_update parameter. */
 
 	/*
 	 * FPC LIBFP library takes image as 'void *', so we are casting away

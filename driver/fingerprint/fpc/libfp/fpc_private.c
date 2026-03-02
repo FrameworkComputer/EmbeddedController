@@ -371,9 +371,11 @@ int fp_sensor_get_info(struct ec_response_fp_info_v2 *resp, size_t resp_size)
 }
 
 __overridable int fp_finger_match(void *templ, uint32_t templ_count,
-				  uint8_t *image, int32_t *match_index,
-				  uint32_t *update_bitmap)
+				  uint8_t *image, bool template_update,
+				  int32_t *match_index, uint32_t *update_bitmap)
 {
+	/* TODO(b/479912675): Use template_update parameter. */
+
 	return bio_template_image_match_list(templ, templ_count, image,
 					     match_index, update_bitmap);
 }

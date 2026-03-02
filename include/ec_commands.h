@@ -8437,6 +8437,8 @@ struct ec_params_fp_passthru {
 #define FP_MODE_ENCRYPT_TEMPLATE BIT(9)
 /* Decrypt template. */
 #define FP_MODE_DECRYPT_TEMPLATE BIT(10)
+/* Disable template update. */
+#define FP_MODE_MATCH_NO_TEMPLATE_UPDATE BIT(11)
 /* special value: don't change anything just read back current mode */
 #define FP_MODE_DONT_CHANGE BIT(31)
 
@@ -8445,7 +8447,7 @@ struct ec_params_fp_passthru {
 	 FP_MODE_CAPTURE | FP_MODE_ENROLL_SESSION | FP_MODE_ENROLL_IMAGE |   \
 	 FP_MODE_MATCH | FP_MODE_RESET_SENSOR | FP_MODE_SENSOR_MAINTENANCE | \
 	 FP_MODE_ENCRYPT_TEMPLATE | FP_MODE_DECRYPT_TEMPLATE |               \
-	 FP_MODE_DONT_CHANGE)
+	 FP_MODE_MATCH_NO_TEMPLATE_UPDATE | FP_MODE_DONT_CHANGE)
 
 #define FP_MODES_WITH_AUTHENTICATION (FP_MODE_ENROLL_SESSION | FP_MODE_MATCH)
 #define FP_MODES_CRYPTO_IN_PROGRESS \

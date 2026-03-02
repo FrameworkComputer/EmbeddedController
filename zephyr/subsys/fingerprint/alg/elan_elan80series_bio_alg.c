@@ -64,8 +64,8 @@ elan_elan80series_enroll_finish(const struct fingerprint_algorithm *const alg,
 static int
 elan_elan80series_match(const struct fingerprint_algorithm *const alg,
 			void *templ, uint32_t templ_count,
-			const uint8_t *const image, int32_t *match_index,
-			uint32_t *update_bitmap)
+			const uint8_t *const image, bool template_update,
+			int32_t *match_index, uint32_t *update_bitmap)
 {
 	if (!IS_ENABLED(CONFIG_HAVE_ELAN80SERIES_PRIVATE_ALGORITHM)) {
 		return -ENOTSUP;
@@ -73,7 +73,7 @@ elan_elan80series_match(const struct fingerprint_algorithm *const alg,
 
 	int res = elan_match(templ, templ_count, (uint8_t *)image, match_index,
 			     update_bitmap);
-	if (res == FP_MATCH_RESULT_MATCH)
+	if (res == FP_MATCH_RESULT_MATCH && template_update)
 		res = elan_template_update(templ, *match_index);
 
 	return res;

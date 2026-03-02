@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include <zephyr/fff.h>
@@ -22,6 +23,7 @@ DECLARE_FAKE_VALUE_FUNC(int, mock_alg_enroll_finish,
 			const struct fingerprint_algorithm *const, void *);
 DECLARE_FAKE_VALUE_FUNC(int, mock_alg_match,
 			const struct fingerprint_algorithm *const, void *,
-			uint32_t, const uint8_t *const, int32_t *, uint32_t *);
+			uint32_t, const uint8_t *const, bool, int32_t *,
+			uint32_t *);
 
 FFF_END_EXTERN_C

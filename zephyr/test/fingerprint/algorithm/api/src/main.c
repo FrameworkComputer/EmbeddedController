@@ -23,7 +23,8 @@ FAKE_VALUE_FUNC(int, test_enroll_step,
 FAKE_VALUE_FUNC(int, test_enroll_finish,
 		const struct fingerprint_algorithm *const, void *);
 FAKE_VALUE_FUNC(int, test_match, const struct fingerprint_algorithm *const,
-		void *, uint32_t, const uint8_t *const, int32_t *, uint32_t *);
+		void *, uint32_t, const uint8_t *const, bool, int32_t *,
+		uint32_t *);
 
 const struct fingerprint_algorithm_api test1_api = {
 	.init = test_init,
@@ -157,10 +158,10 @@ ZTEST(fp_alg_api, test_match)
 
 	test_match_fake.return_val = 0;
 	alg = fingerprint_algorithm_get(0);
-	zassert_ok(fingerprint_match(alg, &templ, 0, NULL, NULL, NULL));
+	zassert_ok(fingerprint_match(alg, &templ, 0, NULL, false, NULL, NULL));
 	zassert_equal(1, test_match_fake.call_count);
 
 	alg = fingerprint_algorithm_get(1);
-	zassert_equal(-ENOTSUP,
-		      fingerprint_match(alg, &templ, 0, NULL, NULL, NULL));
+	zassert_equal(-ENOTSUP, fingerprint_match(alg, &templ, 0, NULL, false,
+						  NULL, NULL));
 }

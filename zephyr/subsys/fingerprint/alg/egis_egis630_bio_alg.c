@@ -92,12 +92,14 @@ egis_egis630_enroll_finish(const struct fingerprint_algorithm *const alg,
 
 static int egis_egis630_match(const struct fingerprint_algorithm *const alg,
 			      void *templ, uint32_t templ_count,
-			      const uint8_t *const image, int32_t *match_index,
-			      uint32_t *update_bitmap)
+			      const uint8_t *const image, bool template_update,
+			      int32_t *match_index, uint32_t *update_bitmap)
 {
 	if (!IS_ENABLED(CONFIG_HAVE_EGIS630_PRIVATE_ALGORITHM)) {
 		return -ENOTSUP;
 	}
+
+	/* TODO(b/479912675): Use template_update parameter. */
 
 	egis_api_return_t ret = egis_finger_match(templ, templ_count,
 						  (uint8_t *)image, match_index,
