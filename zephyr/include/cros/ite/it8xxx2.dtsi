@@ -16,6 +16,7 @@
 		cros-ec,raw-kb = &cros_kb_raw;
 		cros-ec,sha = &sha0;
 		cros-ec,watchdog = &twd0;
+		cros,rtc = &cros_rtc;
 	};
 
 	cros_system: cros-system {
@@ -78,6 +79,16 @@
 				   &wuc_wu35   /* KSI[5] */
 				   &wuc_wu36   /* KSI[6] */
 				   &wuc_wu37>; /* KSI[7] */
+			status = "disabled";
+		};
+
+		cros_rtc: cros_rtc@f01200 {
+			compatible = "ite,it8xxx2-cros-rtc";
+			reg = <0x00f01200 6   /* EC2I */
+			       0x00f03e00 1   /* GPIOGCR */
+			       0x00f02000 1>; /* GCTRL */
+			interrupts = <IT8XXX2_IRQ_RTCT_ALARM1 IRQ_TYPE_EDGE_RISING>;
+			interrupt-parent = <&intc>;
 			status = "disabled";
 		};
 	};

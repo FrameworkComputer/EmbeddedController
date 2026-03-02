@@ -10,6 +10,7 @@ choice CROS_RTC_TYPE
 	# higher priority.
 	default CROS_RTC_NPCX if DT_HAS_NUVOTON_NPCX_CROS_MTC_ENABLED
 	default CROS_RTC_XEC if DT_HAS_MICROCHIP_XEC_CROS_RTC_ENABLED
+	default CROS_RTC_IT8XXX2 if DT_HAS_ITE_IT8XXX2_CROS_RTC_ENABLED
 	help
 	  Select the RTC used on the board.
 
@@ -26,6 +27,13 @@ config CROS_RTC_XEC
 	help
 	  This option enables a driver for providing the support of Real-Time
 	  Clock (RTC) on the MCHP XEC chip.
+
+config CROS_RTC_IT8XXX2
+	bool "ITE it8xxx2 Real-Time Clock (RTC) driver for the Zephyr shim"
+	depends on SOC_FAMILY_ITE_EC
+	help
+	  This option enables a driver for providing the support of Real-Time
+	  Clock (RTC) on the ITE it8xxx2 chip.
 
 endchoice # CROS_RTC_TYPE
 

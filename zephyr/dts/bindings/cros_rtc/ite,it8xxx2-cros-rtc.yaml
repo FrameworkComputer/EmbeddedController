@@ -1,0 +1,16 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: ITE, it8xxx2 Real time clock (RTC) node
+
+compatible: "ite,it8xxx2-cros-rtc"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+
+  interrupts:
+    required: true
