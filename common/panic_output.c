@@ -476,6 +476,8 @@ static int command_crash(int argc, const char **argv)
 		volatile uintptr_t null_ptr = 0x0;
 		cflush();
 		ccprintf("%08x\n", *(volatile unsigned int *)null_ptr);
+	} else if (!strcasecmp(argv[1], "oops")) {
+		k_oops();
 	} else {
 		/* Disable nested crash on error */
 		if (IS_ENABLED(CONFIG_CMD_CRASH_NESTED))
