@@ -360,6 +360,7 @@ struct mfgacc_data {
 	int reg;
 	uint8_t *buf;
 	int len;
+	int incorrect_pec_count;
 };
 
 static int mfgacc_read_func(const struct emul *emul, int reg, uint8_t *val,
@@ -368,7 +369,11 @@ static int mfgacc_read_func(const struct emul *emul, int reg, uint8_t *val,
 	struct mfgacc_data *conf = data;
 
 	if (bytes == 0 && conf->reg == reg) {
-		sbat_emul_set_response(emul, reg, conf->buf, conf->len, false);
+		sbat_emul_set_response(emul, reg, conf->buf, conf->len, false,
+				       conf->incorrect_pec_count > 0);
+		if (conf->incorrect_pec_count > 0) {
+			conf->incorrect_pec_count--;
+		}
 	}
 
 	return 1;
@@ -431,6 +436,7 @@ ZTEST_USER(smart_battery, test_battery_mfacc)
 	mfacc_conf.reg = SB_ALT_MANUFACTURER_ACCESS;
 	mfacc_conf.len = len + 1;
 	mfacc_conf.buf = mf_data;
+	mfacc_conf.incorrect_pec_count = 0;
 	i2c_common_emul_set_read_func(common_data, mfgacc_read_func,
 				      &mfacc_conf);
 
@@ -451,6 +457,22 @@ ZTEST_USER(smart_battery, test_battery_mfacc)
 		      NULL);
 	/* Compare received data ignoring length byte */
 	zassert_mem_equal(mf_data + 1, recv_buf, len - 1, NULL);
+
+	if (IS_ENABLED(CONFIG_SMBUS_PEC)) {
+		/* Test pec error */
+		mfacc_conf.incorrect_pec_count = 100;
+		zassert_equal(EC_ERROR_CRC,
+			      sb_read_mfgacc(cmd, SB_ALT_MANUFACTURER_ACCESS,
+					     recv_buf, len),
+			      NULL);
+
+		/* Test pec error retry */
+		mfacc_conf.incorrect_pec_count = 1;
+		zassert_equal(EC_SUCCESS,
+			      sb_read_mfgacc(cmd, SB_ALT_MANUFACTURER_ACCESS,
+					     recv_buf, len),
+			      NULL);
+	}
 
 	/* Disable custom read function */
 	i2c_common_emul_set_read_func(common_data, NULL, NULL);

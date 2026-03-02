@@ -187,9 +187,10 @@ int sbat_emul_get_block_data(const struct emul *emul, int cmd, uint8_t **blk,
  * @param buf Buffer with the response
  * @param len Length of the response
  * @param fail If emulator should fail to send response
+ * @param incorrect_pec If emulator should set an incorrect PEC
  */
 void sbat_emul_set_response(const struct emul *emul, int cmd, uint8_t *buf,
-			    int len, bool fail);
+			    int len, bool fail, bool incorrect_pec);
 
 /**
  * @brief Returns pointer to i2c_common_emul_data for argument emul

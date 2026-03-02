@@ -1830,6 +1830,7 @@ tests:
     - CONFIG_LINK_TEST_SUITE_SMART_BATTERY=y
     - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
     - CONFIG_PLATFORM_EC_SMBUS_PEC=y
+    - CONFIG_PLATFORM_EC_I2C_NACK_RETRY_COUNT=1
     extra_conf_files:
     - prj.conf
     - default/prj.conf
