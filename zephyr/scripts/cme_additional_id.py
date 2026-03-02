@@ -349,5 +349,23 @@ ADDITIONAL_DICTIONARY = {
                 "bytes": 38,
             },
         ),
+        AdditionalInfo(
+            "ti,tusb546",
+            "mux",
+            None,
+            {
+                # the combined command string is 0x3A 0x3 0x0 0x0 0x26
+                "reg": "0x3A",
+                "write_data": "0x03000026",
+                "bytes": 0,
+            },
+            {
+                "reg": "0x80",
+                # the ascii characters "GOOG0X" on the 27-32 bytes
+                "multi_byte_mask": "0x000000000000000000000000000000000000000000000000000000ffffffffffff0000000000",
+                "multi_byte_value": "0x000000000000000000000000000000000000000000000000000000474f4f4730580000000000",
+                "bytes": 38,
+            },
+        ),
     ],
 }
