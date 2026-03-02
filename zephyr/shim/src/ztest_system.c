@@ -11,7 +11,7 @@
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
-char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
+char mock_end_of_ram_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 
 __attribute__((weak)) void system_reset(int flags)
 {

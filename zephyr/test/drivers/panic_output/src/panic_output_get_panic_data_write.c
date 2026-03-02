@@ -18,14 +18,14 @@
 
 /**
  * @brief Returns a pointer to an object (such as a struct jump_data) of type
- *        TYPE at the end of the mock_jump_data memory region, plus an optional,
- *        additional offset of OFFSET bytes. OFFSET can be used to help get the
- *        pointer after jump data has been moved by get_panic_data_write(), or
- *        left as zero to get the pre-move location.
+ *        TYPE at the end of the mock_end_of_ram_data memory region, plus an
+ * optional, additional offset of OFFSET bytes. OFFSET can be used to help get
+ * the pointer after jump data has been moved by get_panic_data_write(), or left
+ * as zero to get the pre-move location.
  */
-#define GET_JUMP_DATA_PTR(TYPE, OFFSET)                                    \
-	((TYPE *)(mock_jump_data + sizeof(mock_jump_data) - sizeof(TYPE) + \
-		  (OFFSET)))
+#define GET_JUMP_DATA_PTR(TYPE, OFFSET)                                 \
+	((TYPE *)(mock_end_of_ram_data + sizeof(mock_end_of_ram_data) - \
+		  sizeof(TYPE) + (OFFSET)))
 
 ZTEST(panic_output_get_panic_data_write, test_existing_panic_data)
 {
@@ -205,7 +205,7 @@ static void reset(void *data)
 	struct panic_data *pdata = test_get_panic_data_pointer();
 
 	memset(pdata, 0, sizeof(struct panic_data));
-	memset(mock_jump_data, 0, sizeof(mock_jump_data));
+	memset(mock_end_of_ram_data, 0, sizeof(mock_end_of_ram_data));
 }
 
 ZTEST_SUITE(panic_output_get_panic_data_write, drivers_predicate_post_main,

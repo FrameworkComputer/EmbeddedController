@@ -608,31 +608,31 @@ extern "C" {
 #error "A zephyr,flash device must be chosen in the device tree"
 #endif
 
+#undef CONFIG_PRESERVED_END_OF_RAM_SIZE
+#ifdef CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE
+#define CONFIG_PRESERVED_END_OF_RAM_SIZE \
+	CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE
+#endif
+
 #if DT_HAS_CHOSEN(zephyr_sram)
 #define CONFIG_RAM_BASE DT_REG_ADDR(DT_CHOSEN(zephyr_sram))
 #define CONFIG_DATA_RAM_SIZE DT_REG_SIZE(DT_CHOSEN(zephyr_sram))
 #elif defined(CONFIG_ARCH_POSIX)
-/* The jump data goes at the end of data ram, so for posix, the end of ram is
- * wherever the jump data ended up.
+/* The jump data and panic data goes at the end of data ram, so for posix,
+ * wherever mock_end_of_ram_data ends up.
  */
-extern char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
+extern char mock_end_of_ram_data[CONFIG_PRESERVED_END_OF_RAM_SIZE];
 #define CONFIG_RAM_BASE 0x0
 /* clang-format off */
 #define CONFIG_DATA_RAM_SIZE            \
-	(((uintptr_t)&mock_jump_data) + \
-	 CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE)
+	(((uintptr_t)&mock_end_of_ram_data) + \
+	 CONFIG_PRESERVED_END_OF_RAM_SIZE)
 /* clang-format on */
 #else
 #error "A zephyr,sram device must be chosen in the device tree"
 #endif
 
 #define CONFIG_RAM_SIZE CONFIG_DATA_RAM_SIZE
-
-#undef CONFIG_PRESERVED_END_OF_RAM_SIZE
-#ifdef CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE
-#define CONFIG_PRESERVED_END_OF_RAM_SIZE \
-	CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE
-#endif
 
 #define CONFIG_RO_MEM_OFF CONFIG_CROS_EC_RO_MEM_OFF
 #define CONFIG_RO_MEM_SIZE CONFIG_CROS_EC_RO_MEM_SIZE

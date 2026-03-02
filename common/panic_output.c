@@ -22,14 +22,14 @@
 #include "util.h"
 
 /*
- * For host tests, use a static area for panic data.
+ * For host tests, use a static area for panic and jump data.
  */
 #if defined(CONFIG_BOARD_NATIVE_POSIX) || defined(CONFIG_BOARD_NATIVE_SIM)
-static struct panic_data zephyr_panic_data;
 #undef PANIC_DATA_PTR
-#undef CONFIG_PANIC_DATA_BASE
-#define PANIC_DATA_PTR (&zephyr_panic_data)
-#define CONFIG_PANIC_DATA_BASE (&zephyr_panic_data)
+#define PANIC_DATA_PTR                                        \
+	((struct panic_data *)(mock_end_of_ram_data +         \
+			       sizeof(mock_end_of_ram_data) - \
+			       sizeof(struct panic_data)))
 #endif
 /* Panic data goes at the end of RAM. */
 static struct panic_data *const pdata_ptr = PANIC_DATA_PTR;
