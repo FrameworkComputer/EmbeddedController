@@ -16,6 +16,13 @@ config HW_TEST_AES
 	help
 	  The test verifies AES functions.
 
+config HW_TEST_BBRAM_RETAINED_MEM
+	bool "BBRAM retained memory test"
+	select ZTEST
+	depends on PLATFORM_EC_BBRAM_TYPE_RETAINED_MEM
+	help
+	  The test verifies "BBRAM" using retained memory.
+
 config HW_TEST_BENCHMARK
 	bool "Benchmark test"
 	select ZTEST

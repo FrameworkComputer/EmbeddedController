@@ -559,6 +559,7 @@ class Renode(Platform):
 
     def _skip_test_sanok(self, test_config: TestConfig) -> bool:
         if test_config.test_name in [
+            "bbram_retained_mem",  # TODO(b/487848806)
             "flash_physical",  # TODO(b/468410778)
             "flash_write_protect",  # TODO(b/406944986)
             "panic_data",  # TODO(b/468407068)
@@ -753,6 +754,10 @@ class AllTests:
                 ],
                 # TODO(b/365628799): Need to port to Zephyr.
                 skip_for_zephyr=True,
+            ),
+            TestConfig(
+                test_name="bbram_retained_mem",
+                architectures=[Architecture.RISCV],
             ),
             TestConfig(
                 test_name="benchmark",
