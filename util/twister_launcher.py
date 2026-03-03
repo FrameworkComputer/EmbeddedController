@@ -48,7 +48,6 @@ ZEPHYR_TEST_PATHS = [
 
 # List of modules to use from the src/third_party/zephyrproject/modules directory
 THIRD_PARTY_MODULES = [
-    "hal/cmsis",
     "hal/cmsis_6",
     "lib/picolibc",
     "hal/stm32",
