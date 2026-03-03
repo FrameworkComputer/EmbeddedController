@@ -1,0 +1,25 @@
+/* Copyright 2024 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_sim.dts>
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+		gpio_on_off_btn_l: on_off_btn_l {
+			gpios = <&gpio0 0 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+		int_powerbtn: powerbtn {
+			irq-pin = <&gpio_on_off_btn_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "board_power_button_interrupt";
+		};
+	};
+};

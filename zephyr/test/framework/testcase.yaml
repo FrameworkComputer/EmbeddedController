@@ -1,0 +1,11 @@
+common:
+  platform_allow:
+  - native_sim
+tests:
+  framework.uefi_app_mode:
+    extra_conf_files:
+    - prj.conf
+    extra_dtc_overlay_files:
+    - boards/native_sim.overlay
+    tags:
+    - framework
