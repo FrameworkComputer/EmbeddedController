@@ -60,5 +60,6 @@
 		port-index-on-chip = <0x2>;
 		frs-supported;
 		zephyr,deferred-init;
+		no-fw-update;
 	};
 };
