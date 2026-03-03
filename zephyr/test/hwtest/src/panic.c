@@ -54,7 +54,7 @@ static void test_panic(void)
 				 "mov r14, r0\n"
 				 /* Undefined instruction. */
 				 "udf #0\n");
-	} else if (CONFIG_CPU_CORTEX_M) {
+	} else if (IS_ENABLED(CONFIG_CPU_CORTEX_M)) {
 		__asm__ volatile("ldr r0, =0xecec0000\n"
 				 "ldr r1, =0xecec0001\n"
 				 "ldr r2, =0xecec0002\n"
