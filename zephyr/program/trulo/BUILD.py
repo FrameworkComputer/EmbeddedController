@@ -27,7 +27,7 @@ def register_trulo_project(
                 here / project_name / "project.overlay",
             ],
             kconfig_files=kconfig_files + [here / "dsp_comms.conf"],
-            modules=["cmsis", "cmsis_6", "picolibc", "ec", "pigweed", "nanopb"],
+            modules=["cmsis_6", "picolibc", "ec", "pigweed", "nanopb"],
             inherited_from=inherited_from,
             **kwargs,
         )
@@ -40,7 +40,7 @@ def register_trulo_project(
             ],
             kconfig_files=kconfig_files + [here / "dsp_comms.conf"],
             inherited_from=inherited_from,
-            modules=["cmsis", "cmsis_6", "picolibc", "ec", "pigweed", "nanopb"],
+            modules=["cmsis_6", "picolibc", "ec", "pigweed", "nanopb"],
             **kwargs,
         )
 

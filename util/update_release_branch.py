@@ -28,10 +28,6 @@ ZEPHYR_MODULES = {
         "path": "src/third_party/zephyr/picolibc",
         "main": "main",
     },
-    "cmsis": {
-        "path": "src/third_party/zephyr/cmsis",
-        "main": "chromeos-main",
-    },
 }
 ZEPHYR_MODULE_LIST = list(ZEPHYR_MODULES.keys())
 

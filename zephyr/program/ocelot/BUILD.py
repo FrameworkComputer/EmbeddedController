@@ -31,7 +31,7 @@ def register_npcx9_project(
             # Additional project-specific KConfig customization.
             *extra_kconfig_proj_files,
         ],
-        modules=["cmsis", "cmsis_6", "ec", "pigweed", "nanopb"],
+        modules=["cmsis_6", "ec", "pigweed", "nanopb"],
         inherited_from=inherited_from,
     )
 
@@ -63,7 +63,7 @@ def register_it8xxx2_project(
             # Additional project-specific KConfig customization.
             *extra_kconfig_proj_files,
         ],
-        modules=["cmsis", "cmsis_6", "ec", "pigweed", "nanopb"],
+        modules=["cmsis_6", "ec", "pigweed", "nanopb"],
         inherited_from=inherited_from,
     )
 
@@ -94,7 +94,7 @@ def register_mec172x_project(
             # Additional project-specific KConfig customization.
             *extra_kconfig_proj_files,
         ],
-        modules=["cmsis", "cmsis_6", "ec"],
+        modules=["cmsis_6", "ec"],
         inherited_from=inherited_from,
     )
 
@@ -121,7 +121,7 @@ def register_rtk59_project(
             # Additional project-specific KConfig customization.
             *extra_kconfig_proj_files,
         ],
-        modules=["cmsis", "cmsis_6", "ec"],
+        modules=["cmsis_6", "ec"],
     )
 
 

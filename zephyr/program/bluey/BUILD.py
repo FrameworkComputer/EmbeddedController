@@ -31,7 +31,7 @@ def register_npcx9_project(
             *extra_kconfig_files,
         ],
         inherited_from=inherited_from,
-        modules=["cmsis", "cmsis_6", "ec", *extra_modules],
+        modules=["cmsis_6", "ec", *extra_modules],
     )
 
 

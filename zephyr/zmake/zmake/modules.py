@@ -92,15 +92,6 @@ known_modules = {
         checkout / "src" / "third_party" / name
     ),
     "chre": chre_module,
-    "cmsis": lambda name, checkout: (
-        checkout
-        / "src"
-        / "third_party"
-        / "zephyrproject"
-        / "modules"
-        / "hal"
-        / "cmsis"
-    ),
     "cmsis_6": lambda name, checkout: (
         checkout
         / "src"
