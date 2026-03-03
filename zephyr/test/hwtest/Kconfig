@@ -177,6 +177,12 @@ config HW_TEST_RESTRICTED_CONSOLE
 	help
 	  The test verifies restricted console.
 
+config HW_TEST_REBOOT
+	bool "Reboot test"
+	select ZTEST
+	help
+	  The test verifies basic reboot functionality.
+
 config HW_TEST_RNG_BENCHMARK
 	bool "RNG benchmark test"
 	select ZTEST

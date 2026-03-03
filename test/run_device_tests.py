@@ -538,6 +538,7 @@ class Renode(Platform):
             "null_pointer",  # TODO(b/485624833)
             "panic",  # TODO(b/485668836)
             "panic_data",  # TODO(b/485667679)
+            "reboot",  # TODO(b/488128262)
             "rollback_entropy",  # TODO(b/485670085)
             "sbrk",  # TODO(b/485669288)
             "tpm_seed_clear",  # TODO(b/485669018)
@@ -561,6 +562,7 @@ class Renode(Platform):
             "flash_physical",  # TODO(b/468410778)
             "flash_write_protect",  # TODO(b/406944986)
             "panic_data",  # TODO(b/468407068)
+            "reboot",  # TODO(b/488132215)
             "rollback",  # TODO(b/468406461)
             "rollback_entropy",  # TODO(b/468406461)
             "system_is_locked",  # TODO(b/483118063)
@@ -884,6 +886,10 @@ class AllTests:
                     DARTMONKEY,
                     SANOK,
                 ],
+            ),
+            TestConfig(
+                test_name="reboot",
+                toggle_power=True,
             ),
             TestConfig(test_name="restricted_console"),
             TestConfig(test_name="rng_benchmark"),

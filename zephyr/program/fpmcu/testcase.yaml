@@ -166,6 +166,11 @@ tests:
     - CONFIG_HW_TEST_RAM_LOCK=y
     extra_conf_files:
     - prj_hw_tests.conf
+  reboot:
+    extra_configs:
+    - CONFIG_HW_TEST_REBOOT=y
+    extra_conf_files:
+    - prj_hw_tests.conf
   restricted_console:
     extra_configs:
     - CONFIG_HW_TEST_RESTRICTED_CONSOLE=y
