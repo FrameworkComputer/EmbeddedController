@@ -19,6 +19,7 @@ properties:
     - ESPI_VWIRE_SIGNAL_SLP_S3
     - ESPI_VWIRE_SIGNAL_SLP_S4
     - ESPI_VWIRE_SIGNAL_SLP_S5
+    - ESPI_VWIRE_SIGNAL_PLTRST
 
   vw-invert:
     type: boolean

@@ -19,7 +19,7 @@ properties:
     required: true
     description: |
       Enumeration values for power signals.
-      Keep in alphebetical order.
+      Keep in alphabetical order.
     enum:
     - PWR_ALL_SYS_PWRGD
     - PWR_DSW_PWROK
@@ -34,6 +34,7 @@ properties:
     # same functionality.
     - PWR_PCH_PWROK
     - PWR_PG_PP1P05
+    - PWR_PLTRST
     - PWR_RSMRST_PWRGD
     - PWR_SLP_S0
     - PWR_SLP_S3
