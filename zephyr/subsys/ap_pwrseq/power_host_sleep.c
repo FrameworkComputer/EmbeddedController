@@ -277,6 +277,7 @@ void ap_power_chipset_handle_host_sleep_event(
 		power_update_wake_mask();
 
 	} else if (state == HOST_SLEEP_EVENT_DEFAULT_RESET) {
+		ap_power_sleep_set_notify(AP_POWER_SLEEP_NONE);
 		power_signal_disable(PWR_SLP_S0);
 	}
 #endif /* CONFIG_AP_PWRSEQ_S0IX */
