@@ -3,11 +3,15 @@
  * found in the LICENSE file.
  */
 
+#include "charge_state.h"
 #include "charger.h"
 #include "cros_board_info.h"
 #include "cros_cbi.h"
+#include "driver/charger/isl9241.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "i2c.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_config.h"
 #include "keyboard_protocol.h"
@@ -37,6 +41,60 @@ static void set_chg_reg_custom(void)
 	charger_set_frequency(808);
 }
 DECLARE_HOOK(HOOK_INIT, set_chg_reg_custom, HOOK_PRIO_POST_BATTERY_INIT + 1);
+
+static void set_chg_control3(void)
+{
+	int reg, rv;
+
+	rv = i2c_read16(chg_chips[0].i2c_port, chg_chips[0].i2c_addr_flags,
+			ISL9241_REG_CONTROL3, &reg);
+
+	if (rv || (reg & ISL9241_CONTROL3_INPUT_CURRENT_LIMIT))
+		return;
+
+	reg |= ISL9241_CONTROL3_INPUT_CURRENT_LIMIT;
+	rv = i2c_write16(chg_chips[0].i2c_port, chg_chips[0].i2c_addr_flags,
+			 ISL9241_REG_CONTROL3, reg);
+
+	if (rv)
+		return;
+
+	LOG_INF("Disable Input Current Limit");
+}
+
+static void restore_chg_control3(void)
+{
+	int reg, rv;
+
+	rv = i2c_read16(chg_chips[0].i2c_port, chg_chips[0].i2c_addr_flags,
+			ISL9241_REG_CONTROL3, &reg);
+	if (rv || (!(reg & ISL9241_CONTROL3_INPUT_CURRENT_LIMIT)))
+		return;
+
+	reg &= ~ISL9241_CONTROL3_INPUT_CURRENT_LIMIT;
+	rv = i2c_write16(chg_chips[0].i2c_port, chg_chips[0].i2c_addr_flags,
+			 ISL9241_REG_CONTROL3, reg);
+
+	if (rv)
+		return;
+
+	LOG_INF("Enable Input Current Limit");
+}
+
+static void detect_aconly(void)
+{
+	const struct batt_params *batt = charger_current_battery_params();
+
+	if (extpower_is_present()) {
+		if (batt->is_present == BP_NO) {
+			set_chg_control3();
+		} else {
+			restore_chg_control3();
+		}
+	}
+}
+DECLARE_HOOK(HOOK_INIT, detect_aconly, HOOK_PRIO_DEFAULT + 1);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, detect_aconly, HOOK_PRIO_DEFAULT + 1);
 
 static void tp_enable(void)
 {
