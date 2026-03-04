@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include "signal_vw.h"
+
 #include <x86_non_dsx_common_pwrseq_sm_handler.h>
 #ifdef CONFIG_AP_PWRSEQ_DRIVER
 #include "ap_power/ap_pwrseq_sm.h"
@@ -171,10 +173,15 @@ static int x86_non_dsx_mtl_s0ix_run(void *data)
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_G3);
 	}
 
-	/* SYSRST assertion leads to CPU warm reset,
-	   leading to AP_POWER_SLEEP_RESUME event skipped from AP.
-	*/
-	if (power_signal_get(PWR_SYS_RST)) {
+	/* System enters S5 if PWR_SYS_RST or PLTRST is de-asserted
+	 * TODO(b/517072313): Remove SYSRST check once all platforms have
+	 * transitioned to defining PLTRST signal
+	 */
+	if (power_signal_get(PWR_SYS_RST)
+#if ANY_INST_HAS_INTEL_AP_PWRSEQ_PLTRST
+	    || power_signal_get(PWR_PLTRST)
+#endif
+	) {
 		ap_power_reset_host_sleep_state();
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S5);
 	}

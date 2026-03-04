@@ -46,4 +46,16 @@ int power_signal_vw_get(enum pwr_sig_vw vw);
  */
 void power_signal_vw_init(void);
 
+/**
+ * @brief Evaluates to 1 if any enabled intel,ap-pwrseq-vw node has
+ *        virtual-wire = "ESPI_VWIRE_SIGNAL_PLTRST", 0 otherwise.
+ *
+ * Usable in #if to conditionally compile PLTRST handling.
+ */
+#define HAS_PLTRST_VWIRE(node_id) \
+	DT_ENUM_HAS_VALUE(node_id, virtual_wire, espi_vwire_signal_pltrst) ||
+
+#define ANY_INST_HAS_INTEL_AP_PWRSEQ_PLTRST \
+	(DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_vw, HAS_PLTRST_VWIRE) 0)
+
 #endif /* __AP_PWRSEQ_SIGNAL_VW_H__ */
