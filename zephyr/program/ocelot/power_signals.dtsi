@@ -94,6 +94,14 @@
 		enum-name = "PWR_SYS_RST";
 		output;
 	};
+	pwr_pltrst: pwr-pltrst {
+		compatible = "intel,ap-pwrseq-vw";
+		dbg-label = "PLTRST virtual wire input from PCH";
+		enum-name = "PWR_PLTRST";
+		virtual-wire = "ESPI_VWIRE_SIGNAL_PLTRST";
+		reset-val = <1>;
+		vw-invert;
+	};
 	ap-power {
 		compatible = "ap-pwrseq-sub-states";
 		chipset = "S0ix";
