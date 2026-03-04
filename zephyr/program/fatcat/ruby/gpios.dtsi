@@ -159,7 +159,7 @@
 			gpios = <&gpio7 4 (GPIO_OUTPUT_LOW | GPIO_OPEN_DRAIN)>;
 		};
 		gpio_ec_ish_int_odl: ec_ish_int_odl {
-			gpios = <&gpioa 2 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
+			gpios = <&gpioa 2 (GPIO_INPUT | GPIO_PULL_UP)>;
 		};
 		gpio_kb_bl_det_5v:kb_bl_dev_5v {
 			gpios = <&gpioe 5 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
