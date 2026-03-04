@@ -245,6 +245,8 @@ SENDACK:
 /* this interrupt is used to monitor if the main SOC is directly communicating with the
  * touchpad outside of the EC. If we detect this condition - then we disable the ec 8042
  * mouse emulation mode
+ *
+ * NOTE: Not hooked up in Zephyr!
  */
 void touchpad_i2c_interrupt(enum gpio_signal signal)
 {
@@ -273,6 +275,18 @@ void tp_int_count_clear(void)
 	unprocessed_tp_int_count = 0;
 }
 
+/* Called automatically on interrupt if hooked up in dts like
+ * / {
+ * 	gpio-interrupts {
+ * 		compatible = "cros-ec,gpio-interrupts";
+ * 		int_soc_tp: soc_tp {
+ * 			irq-pin = <&gpio_soc_tp_int_l>;
+ * 			flags = <GPIO_INT_EDGE_FALLING>;
+ * 			handler = "touchpad_interrupt";
+ * 		};
+ * 	};
+ * };
+ */
 void touchpad_interrupt(enum gpio_signal signal)
 {
 	timestamp_t now = get_time();
