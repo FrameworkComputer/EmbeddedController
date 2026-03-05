@@ -1,0 +1,1 @@
+../../docs/ec_terms.md
