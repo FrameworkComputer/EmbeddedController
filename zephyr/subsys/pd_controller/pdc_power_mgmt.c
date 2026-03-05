@@ -5535,6 +5535,8 @@ test_mockable int pdc_power_mgmt_set_comms_state(bool enable_comms)
 	int status = 0;
 	static bool current_comms_status = true;
 
+	LOG_INF("PDC: set comms state %s", enable_comms ? "RESUME" : "SUSPEND");
+
 	uint8_t port_count = pdc_power_mgmt_get_usb_pd_port_count();
 
 	if (enable_comms) {
