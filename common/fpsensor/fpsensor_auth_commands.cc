@@ -94,11 +94,10 @@ fp_command_establish_session(struct host_cmd_handler_args *args)
 	OPENSSL_cleanse(global_context.tpm_seed.data(),
 			global_context.tpm_seed.size());
 
-	if (fingerprint_auth_enabled()) {
-		/* Invalidate the existing context and templates to prevent
-		 * leaking the existing template. */
-		fp_reset_context();
-	}
+	/* Invalidate the existing context and templates to prevent
+	 * adding new templates unauthorized by TA.
+	 */
+	fp_reset_context();
 
 	/* Reset SESSION_ESTABLISHED bit to avoid situation that the
 	 * Fingerprint Auth is enabled with TPM Seed set using

@@ -374,7 +374,7 @@ test_static enum ec_error_list test_fp_command_establish_session(void)
 	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
 	TEST_BITS_SET((int)status, FP_ENC_STATUS_SEED_SET);
 
-	TEST_EQ(global_context.templ_valid, 1u, "%d");
+	TEST_EQ(global_context.templ_valid, 0u, "%d");
 
 	return EC_SUCCESS;
 }
