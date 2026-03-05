@@ -7,4 +7,5 @@
   * This file is included by the individual RVP overlay files.
   */
 
-  #include "rvp_i2c.dtsi"
+#include "rvp_i2c.dtsi"
+#include "rvp_ioex_gpio.dtsi"

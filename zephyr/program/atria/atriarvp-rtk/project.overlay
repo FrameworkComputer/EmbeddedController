@@ -12,7 +12,14 @@
 #include "i2c.dtsi"
 
 #include "../rvp_consolidated.dtsi"
+
+#include <ite/it8801-common-cfg.dtsi>
+
 /* atriarvp-rtk overrides follow... */
+
+&it8801_mfd {
+	irq-gpios = <RTS5912_GPIO085 GPIO_ACTIVE_LOW>;
+};
 
 &espi0 {
 	status = "okay";
