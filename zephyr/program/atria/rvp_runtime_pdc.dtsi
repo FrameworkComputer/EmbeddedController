@@ -1,0 +1,29 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&usbc_p0 {
+	zephyr,deferred-init;
+};
+
+&usbc_p1 {
+	zephyr,deferred-init;
+};
+
+&usbc_p2 {
+	zephyr,deferred-init;
+};
+
+/* Set deferred-init for all PD controllers to use runtime PD init. */
+&pdc_ti_c0 {
+	zephyr,deferred-init;
+};
+
+&pdc_ti_c1 {
+	zephyr,deferred-init;
+};
+
+&pdc_ti_c2 {
+	zephyr,deferred-init;
+};
