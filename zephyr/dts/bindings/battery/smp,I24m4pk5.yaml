@@ -24,11 +24,11 @@ properties:
   flags:
     default: 0
   fet_reg_addr:
-    default: 0x00
+    default: 0x34
   fet_reg_mask:
-    default: 0x0018
+    default: 0x0100
   fet_disconnect_val:
-    default: 0x0000
+    default: 0x0100
 
   # Battery info
   voltage_max:
@@ -38,7 +38,7 @@ properties:
   voltage_min:
     default: 12000
   precharge_current:
-    default: 452
+    default: 226
   start_charging_min_c:
     default: 0
   start_charging_max_c:
