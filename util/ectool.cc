@@ -6115,7 +6115,7 @@ int cmd_led(int argc, char *argv[])
 	} else if (!strcasecmp(argv[2], "auto")) {
 		p.flags = EC_LED_FLAGS_AUTO;
 	} else if ((i = find_led_color_by_name(argv[2])) != -1) {
-		p.brightness[i] = 0xff;
+		p.brightness[i] = 100;
 	} else {
 		for (i = 2; i < argc; ++i) {
 			ptr = strtok(argv[i], "=");
