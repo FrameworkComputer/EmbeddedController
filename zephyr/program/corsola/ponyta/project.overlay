@@ -197,6 +197,7 @@
 	usbc {
 		port0@0 {
 			/delete-property/ bc12;
+			chg_alt = <&charger_bc12_port1>;
 		};
 
 		port1@1 {
@@ -230,4 +231,14 @@
 
 &i2c2_0 {
 	/delete-node/ rt1718s-bc12@40;
+};
+
+&i2c3_0 {
+	charger_bc12_port1: rt9490@53 {
+		compatible = "richtek,rt9490";
+		status = "okay";
+		reg = <0x53>;
+		mivr = <4000>;
+		eoc-current = <120>;
+	};
 };
