@@ -291,6 +291,13 @@ bool cros::dsp::service::Driver::HandleDecodedRequest() {
       // session.
       while (transport_.ReadNextMessage().status().ok()) {
       }
+      // Following the service reset, call lid_change and table_mode_change
+      // hooks to ensure that the status message has the correct current status
+      // if the ISH requests the current status.
+      dsp_service_hook_lid_change();
+      if (IS_ENABLED(CONFIG_PLATFORM_EC_TABLET_MODE)) {
+        dsp_service_hook_tablet_mode_change();
+      }
       return false;
     default:
       LOG_WRN("Unsupported request type");

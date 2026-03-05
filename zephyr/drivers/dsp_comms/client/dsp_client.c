@@ -425,6 +425,10 @@ static int dsp_client_init(const struct device* dev) {
 
   if (rc != 0) {
     LOG_ERR("Failed to write reset message");
+  } else {
+    // Request status so ISH gets current value of lid_switch and tablet mode
+    // from the EC
+    k_work_submit(&data->read_status_work);
   }
 
   return rc;
