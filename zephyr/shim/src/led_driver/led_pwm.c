@@ -110,7 +110,7 @@ void led_set_color_with_pins(const struct pwm_pin_t *pwm_pins,
 {
 	for (int j = 0; j < pins_count; j++) {
 		pwm_pins[j].pwm->pulse_ns =
-			pwm_pins[j].pulse_ns * brightness / 100;
+			pwm_pins[j].pulse_ns * min(brightness, 100) / 100;
 		pwm_pins[j].pwm->pulse_step_ns = pwm_pins[j].pulse_step_ns;
 	}
 }
