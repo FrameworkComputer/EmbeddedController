@@ -1979,6 +1979,7 @@ function flash_rtk_uart() {
 	for dir in \
 		"$(dirname "${IMG}")" \
 		"build/zephyr/${BOARD}/output" \
+		"build/zephyr/rtk_flame/build-singleimage" \
 		"$(dirname "${LOCAL_BUILD}")" \
 		"$(dirname "${EMERGE_BUILD}")" \
 		"/usr/share/ec-devutils" ;
