@@ -11,6 +11,11 @@ if(DEFINED CONFIG_BOARD_ATRIARVP_RTK)
   zephyr_library_sources("src/rvp_board_power.c")
   zephyr_library_sources_ifdef(
     CONFIG_PDC_RUNTIME_PORT_CONFIG "src/rvp_usbc_runtime.c")
+  zephyr_include_directories_ifdef(CONFIG_PLATFORM_EC_DEDICATED_CHARGE_PORT
+    "../intelrvp/include")
+  zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_DEDICATED_CHARGE_PORT
+    "../intelrvp/src/dc_jack.c")
+
 endif()
 
 zephyr_include_directories("include/")

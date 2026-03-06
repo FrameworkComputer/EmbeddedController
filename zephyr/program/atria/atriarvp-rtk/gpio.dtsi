@@ -102,5 +102,10 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "extpower_interrupt";
 		};
+		int_dc_jack_present: dc_jack_present {
+                        irq-pin = <&gpio_dc_jack_present>;
+                        flags = <GPIO_INT_EDGE_BOTH>;
+                        handler = "board_dc_jack_interrupt";
+                };
 	};
 };
