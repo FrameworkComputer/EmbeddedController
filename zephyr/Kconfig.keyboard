@@ -214,6 +214,11 @@ config PLATFORM_EC_KEYBOARD_REFRESH_ROW3
 	  matrix to row 3. This is used by the boot key detection code to
 	  determine if the refresh key is held down at boot.
 
+config PLATFORM_EC_KEYBOARD_MULTIPLE
+	bool "Allow support multiple keyboard matrix for special key"
+	help
+	  Enable this to support the runtime key at different locations.
+
 config PLATFORM_EC_KEYBOARD_SCAN_ADC
 	bool "Keyboard supports antighost feature"
 	help
