@@ -644,6 +644,7 @@ class TestConfig:
     num_passes: int = field(init=False, default=0)
     num_fails: int = field(init=False, default=0)
     skip_for_zephyr: bool = False
+    skip_for_ec_legacy: bool = False
     zephyr_name: Optional[str] = None
     architectures: Optional[list[Architecture]] = None
     host_interfaces: Optional[set[HostInterface]] = None
@@ -895,6 +896,7 @@ class AllTests:
             TestConfig(
                 test_name="reboot",
                 toggle_power=True,
+                skip_for_ec_legacy=True,
             ),
             TestConfig(test_name="restricted_console"),
             TestConfig(test_name="rng_benchmark"),
@@ -2078,8 +2080,10 @@ def main():
 
     with ThreadPoolExecutor(max_workers=1) as executor:
         for test in test_list:
-            if (test.skip_for_zephyr and args.zephyr) or platform.skip_test(
-                test, board_config, args.zephyr
+            if (
+                (test.skip_for_zephyr and args.zephyr)
+                or (test.skip_for_ec_legacy and not args.zephyr)
+                or platform.skip_test(test, board_config, args.zephyr)
             ):
                 test.status = TestStatus.SKIP
                 continue
