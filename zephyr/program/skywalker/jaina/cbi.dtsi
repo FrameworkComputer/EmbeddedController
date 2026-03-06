@@ -71,6 +71,27 @@
 				value = <1>;
 			};
 		};
+		kb-matrix {
+			enum-name = "KB_MATRIX";
+			start = <5>;
+			size = <2>;
+
+			US {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "US";
+				value = <0>;
+			};
+			JP {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "JP";
+				value = <1>;
+			};
+			UK {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "UK";
+				value = <2>;
+			};
+		};
 		codec {
 			enum-name = "CODEC";
 			start = <22>;
