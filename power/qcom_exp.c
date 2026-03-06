@@ -308,10 +308,6 @@ DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, powerbtn_changed, HOOK_PRIO_DEFAULT);
 
 static void power_ac_changed(void)
 {
-#ifdef CONFIG_PLATFORM_EC_PMIC_PASSTHRU_POWER_SIGNALS
-	if (!chipset_in_state(CHIPSET_STATE_HARD_OFF))
-		passthru_ac_on_to_pmic();
-#endif
 	/* Power task only cares when the external power is connected */
 	if (!extpower_is_present())
 		return;

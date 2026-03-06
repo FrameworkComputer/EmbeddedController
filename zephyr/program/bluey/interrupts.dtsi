@@ -12,6 +12,11 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "extpower_interrupt";
 		};
+		int_acok_passthru: acok_passthru {
+			irq-pin = <&gpio_acok_od_z5>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "chipset_acok_passthru_interrupt";
+		};
 		int_lid_open: lid_open {
 			irq-pin = <&gpio_lid_open>;
 			flags = <GPIO_INT_EDGE_BOTH>;
