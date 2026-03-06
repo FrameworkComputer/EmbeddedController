@@ -868,6 +868,15 @@ tests:
     - ./boards/native_sim.overlay
     - ./led_driver/led_pins.dts
     - ./led_driver/led_policy.dts
+  drivers.led_driver_max695x:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_LED_DRIVER_MAX695X=y
+    extra_conf_files:
+    - prj.conf
+    - led_driver/prj.conf
+    extra_dtc_overlay_files:
+    - ./boards/native_sim.overlay
+    - ./led_driver/max695x_led.overlay
   drivers.led_common:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_LED_COMMON=y

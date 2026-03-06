@@ -105,7 +105,7 @@ static void max695x_shutdown(void)
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, max695x_shutdown, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_CMD_SEVEN_SEG_DISPLAY
-static int console_command_max695x_write(int argc, char **argv)
+static int console_command_max695x_write(int argc, const char **argv)
 {
 	char *e;
 	int val;

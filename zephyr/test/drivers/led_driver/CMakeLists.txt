@@ -4,7 +4,8 @@
 
 # Add include paths
 target_include_directories(app PRIVATE
-    "${PLATFORM_EC}/zephyr/shim/src/led_driver")
+    "${PLATFORM_EC}/zephyr/shim/src/led_driver"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 # Add source files
 zephyr_library_sources_ifdef(CONFIG_LINK_TEST_SUITE_LED_DRIVER
@@ -22,4 +23,9 @@ zephyr_library_sources_ifdef(CONFIG_LINK_TEST_SUITE_LED_DRIVER_CUSTOM
 zephyr_library_sources_ifdef(CONFIG_LINK_TEST_SUITE_LED_DRIVER_SEQUENCE
     src/led_sequence.c
     src/stubs.c
+)
+zephyr_library_sources_ifdef(CONFIG_LINK_TEST_SUITE_LED_DRIVER_MAX695X
+    src/max695x_led_test_simple.c
+    src/stubs.c
+    ${PLATFORM_EC}/driver/led/max695x.c
 )

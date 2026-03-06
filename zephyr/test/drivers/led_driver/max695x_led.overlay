@@ -1,0 +1,27 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Device tree overlay for MAX695x 7-segment LED display tests
+ */
+
+/ {
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+		i2c_port80: port80 {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_PORT80";
+		};
+	};
+};
+
+&i2c0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+
+	max695x_emul: max695x@38 {
+		compatible = "maxim,max695x","cros,i2c-mock";
+		status = "okay";
+		reg = <0x38>;
+	};
+};

@@ -155,6 +155,13 @@ config LINK_TEST_SUITE_LOCATE_CHIP_ALTS
 config LINK_TEST_SUITE_LSM6DSM
 	bool "Link tests for lsm6dsm driver"
 
+config LINK_TEST_SUITE_LED_DRIVER_MAX695X
+	bool "Link and test the MAX695x 7-segment display driver tests"
+	help
+	  Include the MAX695x driver test suite.
+	  Tests the 7-segment LED display driver functionality including
+	  initialization, display operations, and console commands.
+
 config LINK_TEST_SUITE_MKBP
 	bool "Link and test the mkbp tests"
 
