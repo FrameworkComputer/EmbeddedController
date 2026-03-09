@@ -8887,7 +8887,7 @@ static void batt_conf_dump_in_c(const struct board_batt_params *conf,
 	printf("},\n"); /* end of board_batt_params */
 }
 
-static int read_u32_from_json(base::Value::Dict *dict, const char *key,
+static int read_u32_from_json(base::DictValue *dict, const char *key,
 			      uint32_t *value)
 {
 	std::string *str = dict->FindString(key);
@@ -8909,7 +8909,7 @@ static int read_u32_from_json(base::Value::Dict *dict, const char *key,
 	return 0;
 }
 
-static int read_u16_from_json(base::Value::Dict *dict, const char *key,
+static int read_u16_from_json(base::DictValue *dict, const char *key,
 			      uint16_t *value)
 {
 	std::string *str = dict->FindString(key);
@@ -8931,7 +8931,7 @@ static int read_u16_from_json(base::Value::Dict *dict, const char *key,
 	return 0;
 }
 
-static int read_u8_from_json(base::Value::Dict *dict, const char *key,
+static int read_u8_from_json(base::DictValue *dict, const char *key,
 			     uint8_t *value)
 {
 	const std::string *str = dict->FindString(key);
@@ -8953,13 +8953,13 @@ static int read_u8_from_json(base::Value::Dict *dict, const char *key,
 	return 0;
 }
 
-static int read_battery_config_from_json(base::Value::Dict *root_dict,
+static int read_battery_config_from_json(base::DictValue *root_dict,
 					 struct board_batt_params *config)
 {
 	int i;
 	char *e;
 
-	base::Value::Dict *fuel_gauge = root_dict->FindDict("fuel_gauge");
+	base::DictValue *fuel_gauge = root_dict->FindDict("fuel_gauge");
 	if (fuel_gauge == nullptr) {
 		fprintf(stderr, "Error. fuel_gauge not found.\n");
 		return -1;
@@ -8970,14 +8970,14 @@ static int read_battery_config_from_json(base::Value::Dict *root_dict,
 			       &config->fuel_gauge.board_flags))
 		return -1;
 
-	base::Value::Dict *ship_mode = fuel_gauge->FindDict("ship_mode");
+	base::DictValue *ship_mode = fuel_gauge->FindDict("ship_mode");
 	if (ship_mode != nullptr) {
 		struct ship_mode_info *sm = &config->fuel_gauge.ship_mode;
 
 		if (read_u8_from_json(ship_mode, "reg_addr", &sm->reg_addr))
 			return -1;
 
-		base::Value::List *reg_data = ship_mode->FindList("reg_data");
+		base::ListValue *reg_data = ship_mode->FindList("reg_data");
 		for (i = 0; i < reg_data->size() && i < SHIP_MODE_WRITES; ++i) {
 			const std::string *str = (*reg_data)[i].GetIfString();
 			sm->reg_data[i] = strtoul(str->c_str(), &e, 0);
@@ -8990,7 +8990,7 @@ static int read_battery_config_from_json(base::Value::Dict *root_dict,
 		};
 	}
 
-	base::Value::Dict *sleep_mode = fuel_gauge->FindDict("sleep_mode");
+	base::DictValue *sleep_mode = fuel_gauge->FindDict("sleep_mode");
 	if (sleep_mode != nullptr) {
 		struct sleep_mode_info *sm = &config->fuel_gauge.sleep_mode;
 
@@ -9000,7 +9000,7 @@ static int read_battery_config_from_json(base::Value::Dict *root_dict,
 			return -1;
 	}
 
-	base::Value::Dict *fet = fuel_gauge->FindDict("fet");
+	base::DictValue *fet = fuel_gauge->FindDict("fet");
 	if (fet != nullptr) {
 		struct fet_info *fi = &config->fuel_gauge.fet;
 
@@ -9017,7 +9017,7 @@ static int read_battery_config_from_json(base::Value::Dict *root_dict,
 			return -1;
 	}
 
-	base::Value::Dict *batt_info = root_dict->FindDict("batt_info");
+	base::DictValue *batt_info = root_dict->FindDict("batt_info");
 	if (batt_info == nullptr) {
 		fprintf(stderr, "Error. batt_info not found.\n");
 		return -1;
@@ -9275,7 +9275,7 @@ static int cmd_battery_config_set(int argc, char *argv[], bool search_only)
 		free(json);
 		return -1;
 	}
-	base::Value::Dict *dict = root->GetIfDict();
+	base::DictValue *dict = root->GetIfDict();
 	if (dict == nullptr) {
 		fprintf(stderr, "Failed to get dictionary from JSON file.\n");
 		free(json);
@@ -9287,7 +9287,7 @@ static int cmd_battery_config_set(int argc, char *argv[], bool search_only)
 	/* Clear the dst to ensure it'll be null-terminated. */
 	memset(identifier, 0, sizeof(identifier));
 	sprintf(identifier, "%s,%s", manuf_name, device_name);
-	base::Value::Dict *root_dict = nullptr;
+	base::DictValue *root_dict = nullptr;
 	int num_matches = 0;
 
 	for (const auto &identifier_in_json : *dict) {
