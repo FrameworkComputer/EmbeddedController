@@ -17,7 +17,9 @@
 #include "keyboard_scan.h"
 #include "keyboard_backlight.h"
 #include "led.h"
+#include "lid_switch.h"
 #include "pwm.h"
+#include "power.h"
 #include "hooks.h"
 #include "system.h"
 #include "hid_device.h"
@@ -179,18 +181,18 @@ void board_caps_led_control(int data)
 	}
 }
 
-void caps_suspend(void)
+static void keyboard_caps_led_update(void)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cap_led), 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, caps_suspend, HOOK_PRIO_DEFAULT);
+	enum power_state ps = power_get_state();
 
-void caps_resume(void)
-{
-	if (caps_status_check())
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cap_led), 1);
+	if (!lid_is_open() || !(ps == POWER_S0ixS0 || ps == POWER_S0 || ps == POWER_S3S0))
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cap_led), 0);
+	else
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cap_led), caps_led_status);
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, caps_resume, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_LID_CHANGE, keyboard_caps_led_update, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, keyboard_caps_led_update, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, keyboard_caps_led_update, HOOK_PRIO_DEFAULT);
 
 
 #define FN_PRESSED BIT(0)
