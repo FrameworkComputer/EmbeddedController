@@ -25,12 +25,26 @@
 
 /* quartz overrides follow... */
 
+&int_ac_present {
+	status = "disabled";
+};
+
 / {
 	gpio-interrupts {
 		int_s3_power_monitor: s3_power_monitor {
 			irq-pin = <&gpio_pp1800_l1i_s3_ec>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "s3_power_interrupt";
+		};
+		int_extpower_a: extpower_a {
+			irq-pin = <&gpio_smb2360_a_chg_led_pg_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
+		int_extpower_b: extpower_b {
+			irq-pin = <&gpio_smb2360_b_chg_led_pg_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
 		};
 	};
 };
