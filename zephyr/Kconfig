@@ -453,6 +453,16 @@ config PLATFORM_EC_EXTPOWER_GPIO
 	  project should define a GPIO pin named GPIO_AC_PRESENT, with
 	  extpower_interrupt configured as the handler.
 
+config PLATFORM_EC_EXTPOWER_GPIO_CUSTOM
+	bool "Custom GPIO-based external power detection"
+	depends on PLATFORM_EC_EXTPOWER_GPIO
+	help
+	  Enable custom logic for GPIO-based external power presence
+	  detection. When this is enabled, the board must provide
+	  board_extpower_is_present() which returns the current external
+	  power presence status. This is useful if the AC present signal
+	  is split across multiple GPIOs or requires complex logic.
+
 config PLATFORM_EC_EXTPOWER_DEBOUNCE_MS
 	int "Debounce time for external power signal"
 	default 30

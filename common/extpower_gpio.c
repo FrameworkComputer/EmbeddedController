@@ -12,7 +12,47 @@
 #include "host_command.h"
 #include "timer.h"
 
+__overridable int board_extpower_is_present(void)
+{
+	return 0;
+}
+
+__overridable void board_extpower_enable_interrupt(void)
+{
+}
+
+__overridable void board_extpower_disable_interrupt(void)
+{
+}
+
 static int debounced_extpower_presence;
+
+static int get_extpower_presence(void)
+{
+#ifdef CONFIG_EXTPOWER_GPIO_CUSTOM
+	return board_extpower_is_present();
+#else
+	return gpio_get_level(GPIO_AC_PRESENT);
+#endif
+}
+
+void extpower_enable_interrupt(void)
+{
+#ifdef CONFIG_EXTPOWER_GPIO_CUSTOM
+	board_extpower_enable_interrupt();
+#else
+	gpio_enable_interrupt(GPIO_AC_PRESENT);
+#endif
+}
+
+void extpower_disable_interrupt(void)
+{
+#ifdef CONFIG_EXTPOWER_GPIO_CUSTOM
+	board_extpower_disable_interrupt();
+#else
+	gpio_disable_interrupt(GPIO_AC_PRESENT);
+#endif
+}
 
 test_mockable int extpower_is_present(void)
 {
@@ -24,7 +64,7 @@ test_mockable int extpower_is_present(void)
  */
 static void extpower_deferred(void)
 {
-	int extpower_presence = gpio_get_level(GPIO_AC_PRESENT);
+	int extpower_presence = get_extpower_presence();
 
 	if (extpower_presence == debounced_extpower_presence)
 		return;
@@ -43,13 +83,13 @@ void extpower_interrupt(enum gpio_signal signal)
 
 static void extpower_init(void)
 {
-	debounced_extpower_presence = gpio_get_level(GPIO_AC_PRESENT);
+	debounced_extpower_presence = get_extpower_presence();
 
 	if (IS_ENABLED(HAS_TASK_HOSTCMD)) {
 		/* Initialize the memory-mapped AC_PRESENT flag */
 		extpower_update_host_events(debounced_extpower_presence);
 	}
 	/* Enable interrupts, now that we've initialized */
-	gpio_enable_interrupt(GPIO_AC_PRESENT);
+	extpower_enable_interrupt();
 }
 DECLARE_HOOK(HOOK_INIT, extpower_init, HOOK_PRIO_INIT_EXTPOWER);

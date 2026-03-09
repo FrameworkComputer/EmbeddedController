@@ -28,6 +28,40 @@ __override_proto void board_check_extpower(void);
 int extpower_is_present(void);
 
 /**
+ * Return non-zero if external power is present.
+ *
+ * This function is used when CONFIG_EXTPOWER_GPIO_CUSTOM is defined.
+ * It should return the current external power presence status.
+ */
+__override_proto int board_extpower_is_present(void);
+
+/**
+ * Enable external power detection interrupt.
+ */
+void extpower_enable_interrupt(void);
+
+/**
+ * Disable external power detection interrupt.
+ */
+void extpower_disable_interrupt(void);
+
+/**
+ * Board specific implementation to enable external power detection interrupt.
+ */
+__override_proto void board_extpower_enable_interrupt(void);
+
+/**
+ * Board specific implementation to disable external power detection interrupt.
+ */
+__override_proto void board_extpower_disable_interrupt(void);
+
+/**
+ * Stub signal for extpower_interrupt() when the signal is unknown or
+ * irrelevant.
+ */
+#define GPIO_SIGNAL_ANY ((enum gpio_signal)0)
+
+/**
  * Interrupt handler for external power GPIOs.
  *
  * @param signal	Signal which triggered the interrupt.
