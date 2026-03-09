@@ -629,14 +629,14 @@ change_pdo_list_fail:
 
 static int cypd_select_rp(int port, uint8_t profile)
 {
-	int rv;
+	int rv, resp_code;
 
 	if (verbose_msg_logging)
 		CPRINTS("Set typec port %d to profile:%d", port, profile);
 
-	rv = cypd_write_reg8_wait_ack(PORT_TO_CONTROLLER(port),
+	rv = cypd_write_reg_with_respond(PORT_TO_CONTROLLER(port),
 			CCG_PD_CONTROL_REG(PORT_TO_CONTROLLER_PORT(port)),
-			profile);
+			profile, &resp_code);
 	if (rv != EC_SUCCESS)
 		CPRINTS("SET TYPEC RP failed");
 
@@ -645,12 +645,13 @@ static int cypd_select_rp(int port, uint8_t profile)
 
 static int cypd_select_pdo(int controller, int port, uint8_t profile)
 {
-	int rv;
+	int rv, resp_code;
 
 	if (verbose_msg_logging)
 		CPRINTS("Set typec port %d to PDO:%d", PDPORT(controller, port), profile);
 
-	rv = cypd_write_reg8_wait_ack(controller, CCG_SELECT_SOURCE_PDO_REG(port), BIT(profile));
+	rv = cypd_write_reg_with_respond(controller, CCG_SELECT_SOURCE_PDO_REG(port),
+		BIT(profile), &resp_code);
 	if (rv != EC_SUCCESS)
 		CPRINTS("SET CCG_SELECT_REG failed");
 
