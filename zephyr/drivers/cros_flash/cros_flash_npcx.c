@@ -252,6 +252,55 @@ static int cros_flash_npcx_write_protection_is_set(const struct device *dev)
 	return (oper_out.oper & NPCX_EX_OP_INT_FLASH_WP) != 0 ? 1 : 0;
 }
 
+/**
+ * @brief Checks if the flash control register is locked.
+ *
+ * @param[in] dev Pointer to the device structure.
+ *
+ * @return 1 if the flash control register is locked.
+ * @return 0 if the flash control register is unlocked.
+ * @return Negative error code (e.g., -EIO) on failure.
+ *
+ * @note Callers should always check if the return value is negative (error)
+ *       before evaluating the truthiness of the lock state.
+ */
+static int __maybe_unused flash_control_register_locked(const struct device *dev)
+{
+	uint8_t reg;
+	int ret;
+	int wp_set;
+
+	/* Lock physical flash operations */
+	crec_flash_lock_mapped_storage(1);
+
+	ret = cros_flash_npcx_get_status_reg(dev, SPI_NOR_CMD_RDSR, &reg);
+	if (ret != 0) {
+		goto unlock;
+	}
+
+	wp_set = cros_flash_npcx_write_protection_is_set(dev);
+	if (wp_set < 0) {
+		ret = wp_set;
+		goto unlock;
+	}
+
+	/*
+	 * A write-lock is in effect if either:
+	 * * 1. Hardware Write Protection (WP) is physically active, preventing
+	 * register changes.
+	 * * 2. The Write Enable Latch (WEL) is unset, meaning the flash state
+	 * machine will reject any incoming write/erase commands per the SPI NOR
+	 * protocol.
+	 */
+	ret = wp_set || ((reg & SPI_NOR_WEL_BIT) == 0);
+
+unlock:
+	/* Unlock physical flash operations */
+	crec_flash_lock_mapped_storage(0);
+
+	return ret;
+}
+
 static int cros_flash_npcx_uma_lock(const struct device *dev, bool enable)
 {
 	struct npcx_ex_ops_qspi_oper_in oper_in = {
