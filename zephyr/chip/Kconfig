@@ -1,0 +1,22 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config MCHP_SECOND_LOADER_BINARY
+	bool "Build Microchip second loader binary"
+	default y if SOC_FAMILY_MICROCHIP_MEC
+	help
+	  This option enables building the second_loader.bin binary used
+	  by the Microchip EC UART flashing procedure.
+
+config NPCX_MONITOR_BINARY
+	bool "Build Nuvoton monitor binary"
+	help
+	  This option enables building the npcx_monitor.bin binary used
+	  by the Nuvoton EC UART flashing procedure.
+
+config RTK_FLAME_BINARY
+	bool "Build Realtek monitor binary"
+	help
+	  This option enables building the rts5915_flash_upload.bin binary used
+	  by the Realtek EC UART flashing procedure.

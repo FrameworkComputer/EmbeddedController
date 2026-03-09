@@ -20,6 +20,7 @@ choice RTLIB_IMPLEMENTATION
 endchoice
 
 rsource "app/Kconfig"
+rsource "chip/Kconfig"
 rsource "drivers/Kconfig"
 rsource "emul/Kconfig"
 rsource "fake/Kconfig"

@@ -1978,7 +1978,6 @@ function flash_rtk_uart() {
 	local MON=""
 	for dir in \
 		"$(dirname "${IMG}")" \
-		"build/zephyr/${BOARD}/output" \
 		"build/zephyr/rtk_flame/build-singleimage" \
 		"$(dirname "${LOCAL_BUILD}")" \
 		"$(dirname "${EMERGE_BUILD}")" \
@@ -2155,7 +2154,6 @@ function flash_npcx_uut() {
 		"$(dirname "${IMG}")/chip/npcx/spiflashfw" \
 		"$(dirname "${IMG}")" \
 		"${EC_DIR}/build/${BOARD}/chip/npcx/spiflashfw" \
-		"${EC_DIR}/build/zephyr/${BOARD}/output" \
 		"$(dirname "${LOCAL_BUILD}")" \
 		"$(dirname "${EMERGE_BUILD}")" \
 		"/usr/share/ec-devutils" ;
