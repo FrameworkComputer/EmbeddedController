@@ -208,9 +208,11 @@ void update_system_power_state(int controller)
 	switch (ps) {
 	case POWER_G3:
 	case POWER_S5G3:
+#ifdef CONFIG_PD_CCG8_CYPD_POWER_STATE_G3_SUPPORT
 		pd_prev_power_state = POWER_G3;
 		cypd_set_power_state(CCG_POWERSTATE_G3, controller);
 		break;
+#endif
 	case POWER_S5:
 	case POWER_S3S5:
 	case POWER_S4S5:
