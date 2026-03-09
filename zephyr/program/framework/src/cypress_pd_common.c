@@ -304,6 +304,102 @@ int cypd_read_reg8(int controller, int reg, int *data)
 	return rv;
 }
 
+int cypd_read_respond(int controller, int reg, int *data)
+{
+	int intr_status;
+	int cmd_type;
+	int rv = EC_SUCCESS;
+
+	if (reg < 0x1000)
+		cmd_type = CCG_DEV_INTR;
+	else if (reg < 0x2000)
+		cmd_type = CCG_PORT0_INTR;
+	else
+		cmd_type = CCG_PORT1_INTR;
+
+	if (cypd_get_int(controller, &intr_status))
+		return EC_ERROR_INVAL;
+
+	if (intr_status & CCG_DEV_INTR && cmd_type == CCG_DEV_INTR)
+		rv = cypd_read_reg16(controller, CCG_RESPONSE_REG, data);
+	else if (intr_status & CCG_PORT0_INTR && cmd_type == CCG_PORT0_INTR)
+		rv = cypd_read_reg16(controller, CCG_PORT_PD_RESPONSE_REG(0), data);
+	else if (intr_status & CCG_PORT1_INTR && cmd_type == CCG_PORT1_INTR)
+		rv = cypd_read_reg16(controller, CCG_PORT_PD_RESPONSE_REG(1), data);
+	else {
+		if (verbose_msg_logging) {
+			cypd_read_reg16(controller, CCG_RESPONSE_REG, data);
+			CPRINTS("Dev 0x%x", *data);
+			cypd_read_reg16(controller, CCG_PORT_PD_RESPONSE_REG(0), data);
+			CPRINTS("P0 0x%x", *data);
+			cypd_read_reg16(controller, CCG_PORT_PD_RESPONSE_REG(1), data);
+			CPRINTS("P1 0x%x", *data);
+		}
+		rv = EC_ERROR_INVAL;
+	}
+
+	if (rv != EC_SUCCESS)
+		CPRINTS("Fail to read the 0x%04x response", reg);
+
+	cypd_clear_int(controller, cmd_type);
+
+	return rv;
+}
+
+int cypd_write_reg_with_respond(int controller, int reg, int data, int *respond_code)
+{
+	const struct gpio_dt_spec *intr = gpio_get_dt_spec(pd_chip_config[controller].gpio);
+	int intr_status;
+	int rv = EC_ERROR_UNKNOWN;
+	int retry_count;
+
+	if (controller < 0 || controller >= PD_CHIP_COUNT)
+		return EC_ERROR_INVAL;
+
+	/* Clear the current or pending interrupt before issuing a new command */
+	if (gpio_pin_get_dt(intr) == 0) {
+		if (cypd_get_int(controller, &intr_status))
+			return EC_ERROR_INVAL;
+		if (cypd_clear_int(controller, intr_status))
+			return EC_ERROR_INVAL;
+		crec_usleep(50);
+	}
+
+cypd_cmd_retry:
+	if (cypd_write_reg8(controller, reg, data)) {
+		CPRINTS("CYPD writes cmd:0x%04x fail!", reg);
+		return EC_ERROR_INVAL;
+	}
+
+	if (cypd_wait_for_ack(controller, 100) != EC_SUCCESS) {
+		CPRINTS("%s timeout on interrupt", __func__);
+		return EC_ERROR_INVAL;
+	}
+
+	if (cypd_read_respond(controller, reg, respond_code))
+		return EC_ERROR_INVAL;
+
+	/* Process the respond code */
+	switch (*respond_code) {
+	case CCG_RESPONSE_PD_COMMAND_FAILED:
+		crec_msleep(1);
+		if (retry_count++ < 10)
+			goto cypd_cmd_retry;
+		else
+			CPRINTS("CYPD cmd:0x%04x got resp code:0x%04x; Retry 10 times failed.",
+				reg, *respond_code);
+		break;
+	case CCG_RESPONSE_SUCCESS:
+		rv = EC_SUCCESS;
+		break;
+	default:
+		CPRINTS("CYPD cmd:0x%04x respond code: 0x%04x", reg, *respond_code);
+		break;
+	}
+
+	return rv;
+}
+
 static int cypd_reset(int controller)
 {
 	/*

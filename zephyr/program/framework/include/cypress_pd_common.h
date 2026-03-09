@@ -725,6 +725,21 @@ int cypd_get_int(int controller, int *intreg);
 void cypd_usci_ppm_reset(void);
 
 /**
+ * Writes data to a PD controller register and retrieves the hardware response code.
+ * This function sends a write command to a specific register on the target PD (Power Delivery)
+ * controller. It provides a synchronous mechanism to capture the immediate response code
+ * returned by the PD firmware.
+ *
+ * @param controller	The index of the PD chip controller.
+ * @param reg			The specific register address to write to.
+ * @param data			The data value to be written into the register.
+ * @param respond_code	The HPI cmd response code.
+ * @return int Returns 0 on successful communication, or a non-zero error code if the
+ *		   I2C bus transaction fails.
+ */
+int cypd_write_reg_with_respond(int controller, int reg, int data, int *respond_code);
+
+/**
  * Function for wait PD response
  *
  * @param controller	PD chip controller
