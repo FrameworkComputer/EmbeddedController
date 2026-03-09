@@ -68,34 +68,37 @@ enum ap_pwrseq_event {
 	AP_PWRSEQ_EVENT_COUNT,
 };
 
-/** @brief The signature for callback notification from AP power seqeuce driver.
+/** @brief The signature for callback notification from AP power sequence
+ * driver.
  *
- * This function will be invoked by AP power sequence driver as configured by
- * functions `ap_pwrseq_register_state_entry_callback` or
- * `ap_pwrseq_register_state_entry_callback` for power state transitions.
+ * This function will be invoked by AP power sequence driver when a power state
+ * transition occurs, for all callbacks registered via
+ * @ref AP_PWRSEQ_STATE_ENTRY_CALLBACK_DEFINE or
+ * @ref AP_PWRSEQ_STATE_EXIT_CALLBACK_DEFINE.
  *
  * @param dev Pointer of AP power sequence device driver.
- *
  * @param entry Entering state in transition.
- *
  * @param exit Exiting state in transition.
- *
- * @retval None.
  */
 typedef void (*ap_pwrseq_callback)(const struct device *dev,
 				   enum ap_pwrseq_state entry,
 				   enum ap_pwrseq_state exit);
 
-struct ap_pwrseq_state_callback {
-	/* Node used to link notifications. This is for internal use only */
-	sys_snode_t node;
-	/**
-	 * Callback function, this will be invoked when AP power sequence
-	 * enters or exits states selected by `states_bit_mask`.
-	 **/
+/**
+ * @brief AP power sequence state callback entry, placed in iterable section.
+ *
+ * Use @ref AP_PWRSEQ_STATE_ENTRY_CALLBACK_DEFINE_NAMED,
+ * @ref AP_PWRSEQ_STATE_EXIT_CALLBACK_DEFINE_NAMED, or their unnamed variants
+ * to instantiate this struct — do not populate it directly.
+ */
+struct ap_pwrseq_state_cb {
+	/** Callback function invoked on the matching state transition. */
 	ap_pwrseq_callback cb;
-	/* Bitfield of states to invoke callback */
+	/** Bitmask of @ref ap_pwrseq_state values that trigger this callback.
+	 */
 	uint32_t states_bit_mask;
+	/** true = entry callback, false = exit callback. */
+	bool is_entry;
 };
 
 /**
@@ -177,36 +180,80 @@ int ap_pwrseq_state_lock(const struct device *dev);
 int ap_pwrseq_state_unlock(const struct device *dev);
 
 /**
- * @brief Register callback into AP power sequence driver.
+ * @brief Register an AP power sequence state entry callback with a custom name.
  *
- * Callback function will be called by AP power sequence driver when entering
- * into selected states.
+ * Same as @ref AP_PWRSEQ_STATE_ENTRY_CALLBACK_DEFINE but allows specifying a
+ * custom @p name for the callback structure. Useful when multiple callbacks use
+ * the same function pointer.
  *
- * @param dev Pointer of AP power sequence device driver.
- *
- * @param state_cb Pointer of `ap_pwrseq_state_callback` structure.
- *
- * @retval SUCCESS Callback was successfully registered.
- * @retval -EINVAL On error.
- **/
-int ap_pwrseq_register_state_entry_callback(
-	const struct device *dev, struct ap_pwrseq_state_callback *state_cb);
+ * @param name        Unique name for the callback structure variable.
+ * @param cb_fn       Callback function of type @ref ap_pwrseq_callback.
+ * @param ...         One or more @ref ap_pwrseq_state values that trigger the
+ *                    callback on state entry. Each state is converted to a
+ *                    bitmask via BIT() and OR-ed together.
+ */
+#define AP_PWRSEQ_STATE_ENTRY_CALLBACK_DEFINE_NAMED(name, cb_fn, ...)         \
+	static const STRUCT_SECTION_ITERABLE(ap_pwrseq_state_cb,              \
+					     _ap_pwrseq_entry_cb__##name) = { \
+		.cb = (cb_fn),                                                \
+		.states_bit_mask = (FOR_EACH(BIT, (|), __VA_ARGS__)),         \
+		.is_entry = true,                                             \
+	}
 
 /**
- * @brief Register callback into AP power sequence driver.
+ * @brief Register an AP power sequence state exit callback with a custom name.
  *
- * Callback function will be called by AP power sequence driver when exiting
- * from selected states.
+ * Same as @ref AP_PWRSEQ_STATE_EXIT_CALLBACK_DEFINE but allows specifying a
+ * custom @p name for the callback structure. Useful when multiple callbacks use
+ * the same function pointer.
  *
- * @param dev Pointer of AP power sequence device driver.
+ * @param name        Unique name for the callback structure variable.
+ * @param cb_fn       Callback function of type @ref ap_pwrseq_callback.
+ * @param ...         One or more @ref ap_pwrseq_state values that trigger the
+ *                    callback on state exit. Each state is converted to a
+ *                    bitmask via BIT() and OR-ed together.
+ */
+#define AP_PWRSEQ_STATE_EXIT_CALLBACK_DEFINE_NAMED(name, cb_fn, ...)         \
+	static const STRUCT_SECTION_ITERABLE(ap_pwrseq_state_cb,             \
+					     _ap_pwrseq_exit_cb__##name) = { \
+		.cb = (cb_fn),                                               \
+		.states_bit_mask = (FOR_EACH(BIT, (|), __VA_ARGS__)),        \
+		.is_entry = false,                                           \
+	}
+
+/**
+ * @brief Register an AP power sequence state entry callback.
  *
- * @param state_cb Pointer of `ap_pwrseq_state_callback` structure.
+ * Statically registers a callback invoked whenever the AP power sequence
+ * driver enters any of the states in @p states_mask. The callback structure
+ * is placed in a linker iterable section; no runtime registration call is
+ * needed.
  *
- * @retval SUCCESS Callback was successfully registered.
- * @retval -EINVAL On error.
- **/
-int ap_pwrseq_register_state_exit_callback(
-	const struct device *dev, struct ap_pwrseq_state_callback *state_cb);
+ * @param cb_fn       Callback function of type @ref ap_pwrseq_callback.
+ *                    Also used as the unique name for the callback structure.
+ * @param ...         One or more @ref ap_pwrseq_state values that trigger the
+ *                    callback on state entry. Each state is converted to a
+ *                    bitmask via BIT() and OR-ed together.
+ */
+#define AP_PWRSEQ_STATE_ENTRY_CALLBACK_DEFINE(cb_fn, ...) \
+	AP_PWRSEQ_STATE_ENTRY_CALLBACK_DEFINE_NAMED(cb_fn, cb_fn, __VA_ARGS__)
+
+/**
+ * @brief Register an AP power sequence state exit callback.
+ *
+ * Statically registers a callback invoked whenever the AP power sequence
+ * driver exits any of the states in @p states_mask. The callback structure
+ * is placed in a linker iterable section; no runtime registration call is
+ * needed.
+ *
+ * @param cb_fn       Callback function of type @ref ap_pwrseq_callback.
+ *                    Also used as the unique name for the callback structure.
+ * @param ...         One or more @ref ap_pwrseq_state values that trigger the
+ *                    callback on state exit. Each state is converted to a
+ *                    bitmask via BIT() and OR-ed together.
+ */
+#define AP_PWRSEQ_STATE_EXIT_CALLBACK_DEFINE(cb_fn, ...) \
+	AP_PWRSEQ_STATE_EXIT_CALLBACK_DEFINE_NAMED(cb_fn, cb_fn, __VA_ARGS__)
 
 #ifdef __cplusplus
 }

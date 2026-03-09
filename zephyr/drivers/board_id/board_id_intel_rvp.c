@@ -47,7 +47,6 @@ BUILD_ASSERT(DT_INST_PROP_LEN(0, board_gpios) == BOARD_GPIOS_COUNT,
 const struct rvp_board_id_config *rvp_config;
 
 struct rvp_board_id_config {
-	int defer_until_s5;
 	const struct gpio_dt_spec *bom_gpios_config;
 	const struct gpio_dt_spec *fab_gpios_config;
 	const struct gpio_dt_spec *board_gpios_config;
@@ -193,6 +192,10 @@ static void ap_power_state_callback(const struct device *dev,
 	const struct device *gpio_port;
 	int ret;
 
+	if (!DT_INST_NODE_HAS_PROP(0, defer_until_s5)) {
+		return;
+	}
+
 	if (entry > AP_POWER_STATE_S5) {
 		LOG_DBG("RVP_ID: S5 callback triggered. Init GPIO drivers.");
 
@@ -243,21 +246,12 @@ static void ap_power_state_callback(const struct device *dev,
 			rvp_config->handler();
 	}
 }
+AP_PWRSEQ_STATE_EXIT_CALLBACK_DEFINE(ap_power_state_callback,
+				     AP_POWER_STATE_S5);
 
 static int rvp_board_id_init(const struct device *dev)
 {
 	rvp_config = dev->config;
-
-	if (rvp_config->defer_until_s5) {
-		static struct ap_pwrseq_state_callback ap_pwrseq_cb;
-		const struct device *ap_pwrseq_dev = ap_pwrseq_get_instance();
-
-		LOG_INF("RVP_ID: register ap_power_state_callback");
-		ap_pwrseq_cb.cb = ap_power_state_callback;
-		ap_pwrseq_cb.states_bit_mask = BIT(AP_POWER_STATE_S5);
-		ap_pwrseq_register_state_exit_callback(ap_pwrseq_dev,
-						       &ap_pwrseq_cb);
-	}
 	return 0;
 }
 #else
@@ -273,7 +267,6 @@ extern void DT_STRING_TOKEN(DT_DRV_INST(0), handler)(void);
 #endif
 
 static const struct rvp_board_id_config rvp_board_id_cfg = {
-	.defer_until_s5 = DT_NODE_HAS_PROP(DT_DRV_INST(0), defer_until_s5),
 #if DT_NODE_HAS_PROP(DT_DRV_INST(0), bom_gpios)
 	.bom_gpios_config =
 		(const struct gpio_dt_spec[]){

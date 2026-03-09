@@ -25,10 +25,6 @@ struct cse_early_rec_config {
 		GPIO_DT_SPEC_GET(DT_DRV_INST(0), cse_early_rec_gpios),
 };
 
-struct cse_early_rec_data {
-	struct ap_pwrseq_state_callback ap_power_g3_exit_cb;
-} cse_early_rec_data;
-
 static void ap_power_g3_exit_cb(const struct device *dev,
 				const enum ap_pwrseq_state entry,
 				const enum ap_pwrseq_state exit)
@@ -51,6 +47,7 @@ static void ap_power_g3_exit_cb(const struct device *dev,
 		gpio_pin_set_dt(&cse_early_rec_cfg.cse_early_rec_gpio, 0);
 	}
 }
+AP_PWRSEQ_STATE_EXIT_CALLBACK_DEFINE(ap_power_g3_exit_cb, AP_POWER_STATE_G3);
 
 /**
  * @brief Driver initialization function
@@ -61,9 +58,7 @@ static void ap_power_g3_exit_cb(const struct device *dev,
 static int cse_early_rec_driver_init(const struct device *dev)
 {
 	int ret;
-	struct cse_early_rec_data *data = dev->data;
 	const struct cse_early_rec_config *cfg = dev->config;
-	const struct device *ap_pwrseq_dev = ap_pwrseq_get_instance();
 
 	if (!gpio_is_ready_dt(&cfg->cse_early_rec_gpio)) {
 		/* LCOV_EXCL_START */
@@ -81,21 +76,6 @@ static int cse_early_rec_driver_init(const struct device *dev)
 		/* LCOV_EXCL_STOP */
 	}
 
-	data->ap_power_g3_exit_cb = (struct ap_pwrseq_state_callback){
-		.cb = ap_power_g3_exit_cb,
-		.states_bit_mask = BIT(AP_POWER_STATE_G3),
-	};
-
-	ret = ap_pwrseq_register_state_exit_callback(
-		ap_pwrseq_dev, &data->ap_power_g3_exit_cb);
-
-	if (ret) {
-		/* LCOV_EXCL_START */
-		LOG_ERR("Cannot register AP power callback: %d", ret);
-		return ret;
-		/* LCOV_EXCL_STOP */
-	}
-
 	return 0;
 }
 
@@ -103,7 +83,7 @@ static int cse_early_rec_driver_init(const struct device *dev)
 BUILD_ASSERT(CONFIG_CSE_EARLY_RECOVERY_GPIO_DRIVER_INIT_PRIORITY >
 	     CONFIG_GPIO_INIT_PRIORITY);
 
-DEVICE_DT_INST_DEFINE(0, cse_early_rec_driver_init, NULL, &cse_early_rec_data,
+DEVICE_DT_INST_DEFINE(0, cse_early_rec_driver_init, NULL, NULL,
 		      &cse_early_rec_cfg, POST_KERNEL,
 		      CONFIG_CSE_EARLY_RECOVERY_GPIO_DRIVER_INIT_PRIORITY,
 		      NULL);

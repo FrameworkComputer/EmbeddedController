@@ -162,6 +162,13 @@ static void x86_non_dsx_chipset_state_entry_cb(const struct device *dev,
 		break;
 	}
 }
+AP_PWRSEQ_STATE_ENTRY_CALLBACK_DEFINE(x86_non_dsx_chipset_state_entry_cb,
+				      AP_POWER_STATE_G3, AP_POWER_STATE_S3,
+				      AP_POWER_STATE_S0, AP_POWER_STATE_S5,
+#if CONFIG_AP_PWRSEQ_S0IX
+				      AP_POWER_STATE_S0ix
+#endif
+);
 
 static void x86_non_dsx_chipset_state_exit_cb(const struct device *dev,
 					      const enum ap_pwrseq_state entry,
@@ -200,37 +207,16 @@ static void x86_non_dsx_chipset_state_exit_cb(const struct device *dev,
 		break;
 	}
 }
+AP_PWRSEQ_STATE_EXIT_CALLBACK_DEFINE(x86_non_dsx_chipset_state_exit_cb,
+				     AP_POWER_STATE_G3, AP_POWER_STATE_S0,
+#if CONFIG_AP_PWRSEQ_S0IX
+				     AP_POWER_STATE_S0ix
+#endif
+);
 
 static int x86_non_dsx_chipset_init_events(void)
 {
-	static struct ap_pwrseq_state_callback ap_pwrseq_entry_cb;
-	static struct ap_pwrseq_state_callback ap_pwrseq_exit_cb;
-	const struct device *ap_pwrseq_dev = ap_pwrseq_get_instance();
-
 	power_signal_init();
-
-	ap_pwrseq_entry_cb.cb = x86_non_dsx_chipset_state_entry_cb;
-	ap_pwrseq_entry_cb.states_bit_mask =
-		(BIT(AP_POWER_STATE_G3) | BIT(AP_POWER_STATE_S3) |
-		 BIT(AP_POWER_STATE_S0) | BIT(AP_POWER_STATE_S5)
-#if CONFIG_AP_PWRSEQ_S0IX
-		 | BIT(AP_POWER_STATE_S0ix)
-#endif
-		);
-
-	ap_pwrseq_register_state_entry_callback(ap_pwrseq_dev,
-						&ap_pwrseq_entry_cb);
-
-	ap_pwrseq_exit_cb.cb = x86_non_dsx_chipset_state_exit_cb;
-	ap_pwrseq_exit_cb.states_bit_mask =
-		(BIT(AP_POWER_STATE_G3) | BIT(AP_POWER_STATE_S0)
-#if CONFIG_AP_PWRSEQ_S0IX
-		 | BIT(AP_POWER_STATE_S0ix)
-#endif
-		);
-
-	ap_pwrseq_register_state_exit_callback(ap_pwrseq_dev,
-					       &ap_pwrseq_exit_cb);
 
 	ap_power_ev_send_callbacks(AP_POWER_INITIALIZED);
 

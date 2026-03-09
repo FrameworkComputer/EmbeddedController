@@ -23,3 +23,7 @@ ITERABLE_SECTION_ROM(fingerprint_algorithm, 4)
 #ifdef CONFIG_ADSP_COMMS
 ITERABLE_SECTION_ROM(adsp_comms_callback, 4)
 #endif
+
+#ifdef CONFIG_AP_PWRSEQ_DRIVER
+ITERABLE_SECTION_ROM(ap_pwrseq_state_cb, 4)
+#endif

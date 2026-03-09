@@ -52,27 +52,11 @@ static const struct rt3645_config_t config0 = {
 	.enable_gpio = GPIO_DT_SPEC_GET(DT_DRV_INST(0), enable_gpios),
 };
 
-#ifdef CONFIG_IMVP_FACTORY_UPDATE
-static void imvp_init_cb(const struct device *dev,
-			 const enum ap_pwrseq_state entry,
-			 const enum ap_pwrseq_state exit);
-#endif
-
 static int rt3645_update(const struct device *dev);
 
 static int rt3645_init(const struct device *dev)
 {
 	config = dev->config;
-
-#if defined(CONFIG_IMVP_FACTORY_UPDATE)
-	static struct ap_pwrseq_state_callback ap_pwrseq_imvp_cb;
-	const struct device *ap_pwrseq_dev = ap_pwrseq_get_instance();
-
-	ap_pwrseq_imvp_cb.cb = imvp_init_cb;
-	ap_pwrseq_imvp_cb.states_bit_mask = BIT(AP_POWER_STATE_G3);
-	ap_pwrseq_register_state_exit_callback(ap_pwrseq_dev,
-					       &ap_pwrseq_imvp_cb);
-#endif
 
 	return 0;
 }
@@ -300,6 +284,7 @@ static void imvp_init_cb(const struct device *dev,
 		rt3645_initiate_update(rt3645_dev);
 	}
 }
+AP_PWRSEQ_STATE_EXIT_CALLBACK_DEFINE(imvp_init_cb, AP_POWER_STATE_G3);
 #endif
 
 int rt3645_read_reg(const struct device *dev, uint8_t reg, uint8_t *val)

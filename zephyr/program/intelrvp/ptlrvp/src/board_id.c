@@ -34,22 +34,8 @@ static void pca95xx_deferred_init_cb(const struct device *dev,
 		}
 	}
 }
-
-static int setup_pca95xx_init_callback(void)
-{
-	static struct ap_pwrseq_state_callback ap_pwrseq_entry_cb;
-	const struct device *ap_pwrseq_dev = ap_pwrseq_get_instance();
-
-	ap_pwrseq_entry_cb.cb = pca95xx_deferred_init_cb;
-	ap_pwrseq_entry_cb.states_bit_mask = BIT(AP_POWER_STATE_S5);
-
-	ap_pwrseq_register_state_entry_callback(ap_pwrseq_dev,
-						&ap_pwrseq_entry_cb);
-
-	return 0;
-}
-SYS_INIT(setup_pca95xx_init_callback, POST_KERNEL,
-	 CONFIG_APPLICATION_INIT_PRIORITY);
+AP_PWRSEQ_STATE_ENTRY_CALLBACK_DEFINE(pca95xx_deferred_init_cb,
+				      AP_POWER_STATE_S5);
 #endif
 
 /*
