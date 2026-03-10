@@ -1,0 +1,52 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#define EGIS660_COMMON_IMAGE_PROPS \
+	width = <96>; \
+	height = <100>; \
+	bits-per-pixel = <8>; \
+	frame-size = <9980>; \
+	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+
+/ {
+	chosen {
+		cros-fp,fingerprint-sensor = &egis660;
+	};
+};
+
+&spi0 {
+	egis660: egis660@0 {
+		compatible = "egis,egis660";
+		reg = <0>;
+		spi-max-frequency = <4000000>;
+
+		configs {
+			compatible = "fingerprint-image-frame-params";
+			config0 {
+				EGIS660_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_VENDOR_FORMAT";
+			};
+			config1 {
+				EGIS660_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_SIMPLE_IMAGE";
+			};
+			config2 {
+				EGIS660_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN0";
+			};
+			config3 {
+				EGIS660_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_PATTERN1";
+			};
+			config4 {
+				EGIS660_COMMON_IMAGE_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_RESET_TEST";
+			};
+		};
+
+		irq-gpios = <&gpio0 9 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+		reset-gpios = <&gpio0 10 GPIO_ACTIVE_LOW>;
+	};
+};

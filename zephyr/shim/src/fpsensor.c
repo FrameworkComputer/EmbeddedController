@@ -46,7 +46,7 @@ enum fp_sensor_type fpsensor_detect_get_type(void)
 	return FP_SENSOR_TYPE_FPC;
 #elif CROS_FP_HAS_COMPAT(elan_elan80sg) || CROS_FP_HAS_COMPAT(elan_elani80sa)
 	return FP_SENSOR_TYPE_ELAN;
-#elif CROS_FP_HAS_COMPAT(egis_egis630)
+#elif CROS_FP_HAS_COMPAT(egis_egis630) || CROS_FP_HAS_COMPAT(egis_egis660)
 	return FP_SENSOR_TYPE_EGIS;
 #elif CROS_FP_HAS_COMPAT(ft_ft9865)
 	return FP_SENSOR_TYPE_FOCALTECH;

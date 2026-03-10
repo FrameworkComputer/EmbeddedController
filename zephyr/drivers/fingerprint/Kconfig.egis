@@ -38,3 +38,39 @@ config HAVE_EGIS630_PRIVATE_DRIVER
 	  If enabled, it indicates that the private driver is present.
 
 endif # FINGERPRINT_SENSOR_EGIS630
+
+menuconfig FINGERPRINT_SENSOR_EGIS660
+	bool "Fingerprint driver for EGIS660"
+	default y
+	depends on DT_HAS_EGIS_EGIS660_ENABLED
+	help
+	  Driver for EGIS660 fingerprint sensor. It requires EGIS private library
+	  to implement cros_fingerprint API. If the library is not available it
+	  only supports checking sensor hardware ID.
+
+if FINGERPRINT_SENSOR_EGIS660
+
+config FINGERPRINT_SENSOR_EGIS660_HEAP_SIZE
+	int "Size of heap for EGIS660 driver"
+	default 153600
+	help
+	  Size of heap to be used by EGIS private library. The heap must have
+	  enough size to keep finger templates during matching.
+	  150KB is enough to match 3 templates at once.
+
+config FINGERPRINT_SENSOR_EGIS660_PAL
+	bool "Platform Abstraction Layer for EGIS private library"
+	default y if HAVE_EGIS660_PRIVATE_DRIVER
+	help
+	  If enabled, Platform Abstraction Layer for EGIS private library will be
+	  compiled. The PAL is used to interact with the sensor (SPI, GPIO) and
+	  the system (heap allocations, printing messages, time functions).
+
+# Enabled in private driver Kconfig
+config HAVE_EGIS660_PRIVATE_DRIVER
+	bool
+	default n
+	help
+	  If enabled, it indicates that the private driver is present.
+
+endif # FINGERPRINT_SENSOR_EGIS660
