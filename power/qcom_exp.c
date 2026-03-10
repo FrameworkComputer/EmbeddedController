@@ -603,14 +603,14 @@ void chipset_sys_rst_interrupt(enum gpio_signal signal)
 void notify_ac_irq_re_enable_and_check(void)
 {
 	/* Re-enable the AC interrupt */
-	gpio_enable_interrupt(GPIO_AC_PRESENT);
+	extpower_enable_interrupt();
 
 	/*
 	 * Manually invoke the handler to process any genuine AC state
 	 * changes that may have occurred while the interrupt was
 	 * disabled. This synchronizes the system to the settled state.
 	 */
-	extpower_interrupt(GPIO_AC_PRESENT);
+	extpower_interrupt(GPIO_SIGNAL_ANY);
 }
 DECLARE_DEFERRED(notify_ac_irq_re_enable_and_check);
 
@@ -621,7 +621,7 @@ DECLARE_DEFERRED(notify_ac_irq_re_enable_and_check);
 void start_ac_filter_window(void)
 {
 	/* Disable AC_PRESENT interrupt */
-	gpio_disable_interrupt(GPIO_AC_PRESENT);
+	extpower_disable_interrupt();
 	/* Schedule the interrupt to be re-enabled after the event passes */
 	hook_call_deferred(&notify_ac_irq_re_enable_and_check_data,
 			   AC_IRQ_DISABLE_DURATION);
