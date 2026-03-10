@@ -1677,14 +1677,7 @@ int charge_manager_get_power_limit_uw(void)
 
 int charge_manager_set_acokref(int pdo_mv)
 {
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGER_SET_ACOKREF)) {
-		if (pdo_mv <= 0 || pdo_mv > CONFIG_USB_PD_MAX_VOLTAGE_MV) {
-			return EC_ERROR_INVAL;
-		}
-		charger_set_acokref(charge_get_active_chg_chip(), pdo_mv);
-	}
-
-	return 0;
+	return charger_set_acokref(charge_get_active_chg_chip(), pdo_mv);
 }
 
 #if defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) && \

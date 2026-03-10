@@ -507,6 +507,14 @@ test_mockable enum ec_error_list charger_get_minimum_charging_mv(int chgnum,
 
 enum ec_error_list charger_set_acokref(int chgnum, int mv)
 {
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_CHARGER_SET_ACOKREF)) {
+		return EC_SUCCESS;
+	}
+
+	if (mv <= 0 || mv > CONFIG_USB_PD_MAX_VOLTAGE_MV) {
+		return EC_ERROR_INVAL;
+	}
+
 	if (chgnum < 0) {
 		return EC_ERROR_INVAL;
 	}
@@ -516,8 +524,11 @@ enum ec_error_list charger_set_acokref(int chgnum, int mv)
 		return EC_ERROR_INVAL;
 	}
 
-	if (!chg_chips[chgnum].drv->set_acokref)
+	if (!chg_chips[chgnum].drv->set_acokref) {
 		return EC_ERROR_UNIMPLEMENTED;
+	}
+
+	CPRINTS("charger: set ACOKREF %d mv", mv);
 
 	return chg_chips[chgnum].drv->set_acokref(chgnum, mv);
 }
