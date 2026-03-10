@@ -158,8 +158,8 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
  */
 #define AC_IRQ_DISABLE_DURATION (2000 * MSEC)
 
-/* Allowed battery discharge threshold. */
-#define BATTERY_STATE_OF_CHARGE_DISCHARGE_THRESHOLD 1
+/* Heartbeat wake interval (45 minutes) */
+#define HEARTBEAT_WAKE_INTERVAL_SEC (45 * 60)
 
 /* Value to indicate an invalid or uninitialized SoC. */
 #define BATTERY_BAD_STATE_OF_CHARGE -1
@@ -174,6 +174,9 @@ static char lid_opened;
 /* 1 if ac-on event has been detected */
 static char ac_on;
 
+/* 1 if rtc-wake event has been detected */
+static char rtc_wake;
+
 /* 1 if the system is currently in the off-mode charging heartbeat state. */
 static char heartbeat_mode;
 
@@ -186,14 +189,31 @@ static int auto_power_on;
 /* 1 if long warm reset is going on */
 static char long_warm_reset;
 
-/* Cache the battery SoC during shutdown. Init to bad state. */
-static int shutdown_battery_soc = BATTERY_BAD_STATE_OF_CHARGE;
-
 /*
  *  Stores the power_state before performing long warm reset
  *  This variable is initialized to 0 i.e. POWER_G3
  */
 static enum power_state power_state_before_warm_reset;
+
+#ifdef CONFIG_ZEPHYR
+static void qcom_rtc_set_host_event(void)
+{
+	host_set_single_event(EC_HOST_EVENT_RTC);
+}
+DECLARE_DEFERRED(qcom_rtc_set_host_event);
+
+void rtc_callback(const struct device *dev)
+{
+	ARG_UNUSED(dev);
+
+	hook_call_deferred(&qcom_rtc_set_host_event_data, 0);
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		rtc_wake = 1;
+		task_wake(TASK_ID_CHIPSET);
+	}
+}
+#endif
 
 enum power_request_t {
 	POWER_REQ_NONE,
@@ -333,93 +353,30 @@ DECLARE_HOST_COMMAND(EC_CMD_ENABLE_OFFMODE_HEARTBEAT,
 		     host_command_offmode_charing_active, EC_VER_MASK(0));
 #endif
 
-static int get_battery_state_of_charge(void)
-{
-	struct batt_params batt;
-	battery_get_params(&batt);
-
-	if (batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE) {
-		return BATTERY_BAD_STATE_OF_CHARGE;
-	}
-
-	return batt.state_of_charge;
-}
-
 /*
- * On chipset shutdown complete, if we are in heartbeat mode, cache the battery
- * SoC.
- *
- * This will allow us to compare the battery SoC once it discharges by the
- * configured threshold.
+ * On chipset shutdown complete, if we are in heartbeat mode, set an RTC alarm
+ * to wake up the EC for periodic charging checks.
  */
-void board_chipset_cache_soc_on_shutdown(void)
+void board_chipset_set_heartbeat_alarm_on_shutdown(void)
 {
 	if (heartbeat_mode) {
-		shutdown_battery_soc = get_battery_state_of_charge();
-		CPRINTS("Battery SoC cached!");
+		/* Move heart beat to RTC alarm based wake (45min) */
+		system_set_rtc_alarm(HEARTBEAT_WAKE_INTERVAL_SEC, 0);
 		heartbeat_mode = 0;
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN_COMPLETE,
-	     board_chipset_cache_soc_on_shutdown, HOOK_PRIO_DEFAULT);
+	     board_chipset_set_heartbeat_alarm_on_shutdown, HOOK_PRIO_DEFAULT);
 
 /*
- * Clear the cached shutdown SoC on power-on to prevent re-triggering
- * until the next shutdown. This ensures a clean state for battery SoC
- * monitoring upon system initialization.
+ * Clear the heartbeat RTC alarm on power-on to prevent re-triggering.
  */
-void board_chipset_clear_cache_soc_on_poweron(void)
+void board_chipset_clear_heartbeat_alarm_on_poweron(void)
 {
-	CPRINTS("Battery SoC cache cleared!");
-	shutdown_battery_soc = BATTERY_BAD_STATE_OF_CHARGE;
+	system_set_rtc_alarm(EC_RTC_ALARM_CLEAR, 0);
 }
-DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, board_chipset_clear_cache_soc_on_poweron,
-	     HOOK_PRIO_DEFAULT);
-
-/*
- * Monitor battery SoC while on AC to implement the heartbeat wake-up.
- *
- * If discharging while on AC, ensure the chipset boots up once we hit
- * the allowed discharge threshold to continue charging.
- */
-void battery_soc_changed(void)
-{
-	int battery_soc;
-
-	/* Proceed only if AC is connected. */
-	if (!extpower_is_present())
-		return;
-
-	battery_soc = get_battery_state_of_charge();
-
-	if (BATTERY_BAD_STATE_OF_CHARGE == battery_soc)
-		return;
-
-	/* Ensure the cached SoC is valid before comparison. */
-	if (BATTERY_BAD_STATE_OF_CHARGE == shutdown_battery_soc)
-		return;
-
-	/* Check if the battery has discharged by the threshold amount since
-	 * shutdown. */
-	if (shutdown_battery_soc - battery_soc >=
-	    BATTERY_STATE_OF_CHARGE_DISCHARGE_THRESHOLD) {
-		CPRINTS("Battery discharged by %d%% Power-on to resume charging",
-			BATTERY_STATE_OF_CHARGE_DISCHARGE_THRESHOLD);
-
-		/* Reset cached SoC to prevent re-triggering until the next
-		 * shutdown.
-		 */
-		shutdown_battery_soc = BATTERY_BAD_STATE_OF_CHARGE;
-
-		/*
-		 * Explicitly set ac_on to signal the chipset task to boot up
-		 * and continue the charging process.
-		 */
-		ac_on = 1;
-		task_wake(TASK_ID_CHIPSET);
-	}
-}
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, battery_soc_changed, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT,
+	     board_chipset_clear_heartbeat_alarm_on_poweron, HOOK_PRIO_DEFAULT);
 
 /**
  * Wait the switchcap GPIO0 PVC_PG signal asserted.
@@ -724,7 +681,8 @@ static int set_pmic_pwron(int enable, uint8_t event)
 	 * falls back to the next functions, which cuts off the system power.
 	 */
 
-	if (enable && event == POWER_ON_BY_AC_ON) {
+	if (enable &&
+	    (event == POWER_ON_BY_AC_ON || event == POWER_ON_BY_RTC_ALARM)) {
 		passthru_ac_on_to_pmic();
 		ret = wait_pmic_pwron(enable, PMIC_POWER_AP_RESPONSE_TIMEOUT);
 	} else {
@@ -930,6 +888,9 @@ static uint8_t check_for_power_on_event(void)
 	} else if (ac_on) {
 		/* check if external power is connected */
 		ret = POWER_ON_BY_AC_ON;
+	} else if (rtc_wake) {
+		/* check for RTC alarm wake */
+		ret = POWER_ON_BY_RTC_ALARM;
 	} else if (power_button_is_pressed()) {
 		/* check for power button press */
 		ret = POWER_ON_BY_POWER_BUTTON_PRESSED;
@@ -942,6 +903,7 @@ static uint8_t check_for_power_on_event(void)
 	auto_power_on = 0;
 	lid_opened = 0;
 	ac_on = 0;
+	rtc_wake = 0;
 
 	power_on_reason = (enum power_on_event_t)ret;
 	return ret;
