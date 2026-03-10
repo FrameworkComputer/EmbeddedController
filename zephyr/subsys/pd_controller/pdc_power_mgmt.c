@@ -5525,109 +5525,125 @@ uint8_t pdc_power_mgmt_get_product_type(int port)
 /** Allow 3s for the PDC SM to suspend itself. */
 #define SUSPEND_TIMEOUT_USEC (3 * USEC_PER_SEC)
 
-/* TODO(b/323371550): This function should be adjusted to target individual PD
+/* TODO(b/323371550): These functions should be adjusted to target individual PD
  * chips rather than all ports at once. It should take a chip ID as a param and
  * track current comms status by chip.
  */
-test_mockable int pdc_power_mgmt_set_comms_state(bool enable_comms)
+
+/**
+ * @brief Suspend/disable communication to the PDC
+ */
+static int suspend_pdc_comms(void)
 {
 	int ret;
 	int status = 0;
-	static bool current_comms_status = true;
-
-	LOG_INF("PDC: set comms state %s", enable_comms ? "RESUME" : "SUSPEND");
 
 	uint8_t port_count = pdc_power_mgmt_get_usb_pd_port_count();
 
-	if (enable_comms) {
-		if (current_comms_status == true) {
-			/* Comms are already enabled */
-			return -EALREADY;
+	/* Request each port's PDC state machine to enter the suspend
+	 * state.
+	 */
+	for (int p = 0; p < port_count; p++) {
+		atomic_set(&pdc_data[p]->port.suspend, 1);
+	}
+
+	/* Wait for each PDC state machine to enter suspended state */
+	for (int p = 0; p < port_count; p++) {
+		if (get_pdc_state(&pdc_data[p]->port) == PDC_DISABLED) {
+			/* Ignore disabled ports */
+			continue;
 		}
 
-		/* Resume and reset the driver layer */
-		for (int p = 0; p < port_count; p++) {
-			if (get_pdc_state(&pdc_data[p]->port) == PDC_DISABLED) {
-				/* Ignore disabled ports */
-				continue;
-			}
+		ret = WAIT_FOR(
+			get_pdc_state(&pdc_data[p]->port) == PDC_SUSPENDED,
+			SUSPEND_TIMEOUT_USEC, k_sleep(K_MSEC(LOOP_DELAY_MS)));
+		if (!ret) {
+			LOG_ERR("Timed out suspending PDC SM for port "
+				"C%d: %d",
+				p, ret);
+			status = -ETIMEDOUT;
+		}
+	}
 
-			ret = pdc_set_comms_state(pdc_data[p]->port.pdc, true);
-			if (ret) {
-				LOG_ERR("Cannot resume port C%d driver: %d", p,
-					ret);
-				status = ret;
-			}
+	/* Suspend the driver layer */
+	for (int p = 0; p < port_count; p++) {
+		if (get_pdc_state(&pdc_data[p]->port) == PDC_DISABLED) {
+			/* Ignore disabled ports */
+			continue;
 		}
 
-		/* Release each PDC state machine. A reset is performed when
-		 * exiting the suspended state.
-		 */
-		for (int p = 0; p < port_count; p++) {
-			atomic_set(&pdc_data[p]->port.suspend, 0);
-		}
+		ret = pdc_set_comms_state(pdc_data[p]->port.pdc, false);
 
-		if (status == 0) {
-			/* Successfully re-enabled comms */
-			current_comms_status = true;
-		}
-	} else {
-		/* Disable/suspend communications */
-
-		if (current_comms_status == false) {
-			/* Comms are already disabled */
-			return -EALREADY;
-		}
-
-		/* Request each port's PDC state machine to enter the suspend
-		 * state.
-		 */
-		for (int p = 0; p < port_count; p++) {
-			atomic_set(&pdc_data[p]->port.suspend, 1);
-		}
-
-		/* Wait for each PDC state machine to enter suspended state */
-		for (int p = 0; p < port_count; p++) {
-			if (get_pdc_state(&pdc_data[p]->port) == PDC_DISABLED) {
-				/* Ignore disabled ports */
-				continue;
-			}
-
-			ret = WAIT_FOR(get_pdc_state(&pdc_data[p]->port) ==
-					       PDC_SUSPENDED,
-				       SUSPEND_TIMEOUT_USEC,
-				       k_sleep(K_MSEC(LOOP_DELAY_MS)));
-			if (!ret) {
-				LOG_ERR("Timed out suspending PDC SM for port "
-					"C%d: %d",
-					p, ret);
-				status = -ETIMEDOUT;
-			}
-		}
-
-		/* Suspend the driver layer */
-		for (int p = 0; p < port_count; p++) {
-			if (get_pdc_state(&pdc_data[p]->port) == PDC_DISABLED) {
-				/* Ignore disabled ports */
-				continue;
-			}
-
-			ret = pdc_set_comms_state(pdc_data[p]->port.pdc, false);
-
-			if (ret) {
-				LOG_ERR("Cannot suspend port C%d driver: %d", p,
-					ret);
-				status = ret;
-			}
-		}
-
-		if (status == 0) {
-			/* Successfully disabled comms */
-			current_comms_status = false;
+		if (ret) {
+			LOG_ERR("Cannot suspend port C%d driver: %d", p, ret);
+			status = ret;
 		}
 	}
 
 	return status;
+}
+
+/**
+ * @brief Resume/enable communication to the PDC
+ */
+static int resume_pdc_comms(void)
+{
+	int ret;
+	int status = 0;
+
+	uint8_t port_count = pdc_power_mgmt_get_usb_pd_port_count();
+
+	/* Resume and reset the driver layer */
+	for (int p = 0; p < port_count; p++) {
+		if (get_pdc_state(&pdc_data[p]->port) == PDC_DISABLED) {
+			/* Ignore disabled ports */
+			continue;
+		}
+
+		ret = pdc_set_comms_state(pdc_data[p]->port.pdc, true);
+		if (ret) {
+			LOG_ERR("Cannot resume port C%d driver: %d", p, ret);
+			status = ret;
+		}
+	}
+
+	/* Release each PDC state machine. A reset is performed when
+	 * exiting the suspended state.
+	 */
+	for (int p = 0; p < port_count; p++) {
+		atomic_set(&pdc_data[p]->port.suspend, 0);
+	}
+
+	return status;
+}
+
+test_mockable int pdc_power_mgmt_set_comms_state(bool enable_comms)
+{
+	int ret;
+
+	static bool current_comms_status = true;
+
+	if (enable_comms == current_comms_status) {
+		LOG_ERR("PD: Unnecessary suspend or resume. "
+			"Current state already %d",
+			current_comms_status);
+		return -EALREADY;
+	}
+
+	if (enable_comms) {
+		LOG_INF("PD: Resume PDC communication");
+		ret = resume_pdc_comms();
+	} else {
+		LOG_INF("PD: Suspend PDC communication");
+		ret = suspend_pdc_comms();
+	}
+
+	if (ret == 0) {
+		/* Successfully changed comms state */
+		current_comms_status = enable_comms;
+	}
+
+	return ret;
 }
 
 test_mockable int
