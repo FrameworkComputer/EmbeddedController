@@ -121,6 +121,9 @@ config TEST_CHARGER_MULTI_DEF
 config LINK_TEST_SUITE_CHARGE
 	bool "Link and test charge files"
 
+config TEST_CHARGE_ACOKREF
+	bool "Test charge_acokref.c"
+
 config TEST_CHARGE_MANAGER
 	bool "Test charge_manager.c"
 

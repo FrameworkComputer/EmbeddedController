@@ -1173,6 +1173,11 @@ static void process_ac_change(const int chgnum)
 		 * will affect typeC output. This should be ok for all chargers.
 		 */
 		charger_set_current(chgnum, 0);
+
+		/* Reset the ACOKREF voltage back to 5V, if supported by the
+		 * the charger IC.
+		 */
+		charger_set_acokref(chgnum, 5000);
 	}
 }
 
