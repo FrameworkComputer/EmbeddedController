@@ -159,3 +159,7 @@ if (DEFINED CONFIG_TEST_SUITE_PDC_RUNTIME_PORT_CONFIG)
 	target_sources_ifdef(CONFIG_TEST_PDC_RUNTIME_CONFIG_SCENARIO_TWO_PDCS
 		app PRIVATE src/runtime_config/two_pdcs.c)
 endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PDC_COMMS_SUSPEND_RESUME)
+	target_sources(app PRIVATE src/generic/pdc_comms_suspend_resume.c)
+endif()

@@ -556,7 +556,9 @@ static int tps6699x_emul_handle_sbud(struct tps6699x_emul_pdc_data *data,
 	}
 	/* LCOV_EXCL_STOP */
 
-	data->reg_val[REG_STATUS][3] = mode << 2;
+	union reg_status *r = (union reg_status *)data->reg_val[REG_STATUS];
+	r->sbumux_mode = mode;
+
 	data_reg[0] = TASK_COMPLETED_SUCCESSFULLY;
 
 	return 0;
@@ -1550,6 +1552,22 @@ static int emul_tps6699x_set_current_cam(const struct emul *target,
 	return 0;
 }
 
+static int emul_tps6699x_get_sbu_mux_mode(const struct emul *target,
+					  enum pdc_sbu_mux_mode *mode)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	if (mode == NULL) {
+		return -EINVAL;
+	}
+
+	union reg_status *r = (union reg_status *)data->reg_val[REG_STATUS];
+	*mode = r->sbumux_mode;
+
+	return 0;
+}
+
 static DEVICE_API(emul_pdc, emul_tps6699x_api) = {
 	.reset = emul_tps6699x_reset,
 	.set_response_delay = emul_tps6699x_set_response_delay,
@@ -1588,6 +1606,7 @@ static DEVICE_API(emul_pdc, emul_tps6699x_api) = {
 	.set_identity = emul_tps6699x_set_identity,
 	.set_revision = emul_tps6699x_set_revision,
 	.set_current_cam = emul_tps6699x_set_current_cam,
+	.get_sbu_mux_mode = emul_tps6699x_get_sbu_mux_mode,
 };
 
 /* clang-format off */

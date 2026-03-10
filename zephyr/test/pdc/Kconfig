@@ -35,6 +35,9 @@ config TEST_SUITE_PDC_BATTERY_STATUS
 config TEST_SUITE_PDC_POLICY_DEAD_BATTERY
 	bool "Enable PDC Dead Battery policy tests"
 
+config TEST_SUITE_PDC_COMMS_SUSPEND_RESUME
+	bool "Enable PDC communication suspend and resume tests"
+
 config TEST_PDC_POLICY_DEAD_BATTERY_TWO_CHARGERS
 	select TEST_SUITE_PDC_POLICY_DEAD_BATTERY
 	bool "Validate dead battery with two connected chargers"

@@ -1894,6 +1894,21 @@ static int emul_realtek_rts54xx_set_alert(const struct emul *target,
 	return 0;
 }
 
+static int emul_realtek_rts54xx_get_sbu_mux_mode(const struct emul *target,
+						 enum pdc_sbu_mux_mode *mode)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	if (mode == NULL) {
+		return -EINVAL;
+	}
+
+	*mode = data->sbu_mux_mode;
+
+	return 0;
+}
+
 static DEVICE_API(emul_pdc, emul_realtek_rts54xx_api) = {
 	.reset = emul_realtek_rts54xx_reset,
 	.set_response_delay = emul_realtek_rts54xx_set_response_delay,
@@ -1935,6 +1950,7 @@ static DEVICE_API(emul_pdc, emul_realtek_rts54xx_api) = {
 	.get_battery_status = emul_realtek_rts54xx_get_battery_status,
 	.get_sys_power_state = emul_realtek_rts54xx_get_sys_power_state,
 	.set_alert = emul_realtek_rts54xx_set_alert,
+	.get_sbu_mux_mode = emul_realtek_rts54xx_get_sbu_mux_mode,
 };
 
 #define RTS5453P_EMUL_DEFINE(n)                                             \

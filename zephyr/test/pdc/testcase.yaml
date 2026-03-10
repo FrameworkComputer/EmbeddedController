@@ -488,3 +488,15 @@ tests:
     # b/406176587: These tests cause code coverage flakes. Continue running
     # the tests when unit testing, but skip when measuring code coverage.
     filter: not CONFIG_COVERAGE
+
+  pdc.comms_suspend_resume.rts54xx:
+    extra_configs:
+    - CONFIG_TEST_SUITE_PDC_COMMS_SUSPEND_RESUME=y
+    extra_dtc_overlay_files:
+    - "./boards/rts5453p.overlay"
+
+  pdc.comms_suspend_resume.tps6699x:
+    extra_configs:
+    - CONFIG_TEST_SUITE_PDC_COMMS_SUSPEND_RESUME=y
+    extra_dtc_overlay_files:
+    - "./boards/tps6699x.overlay"
