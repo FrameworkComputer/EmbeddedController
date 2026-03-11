@@ -175,11 +175,9 @@ static int x86_non_dsx_mtl_s0ix_run(void *data)
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S5);
 	}
 
-	/* System in S0 if SLP_S0 and Sleep notification is received. */
-	if (ap_power_sleep_get_notify() == AP_POWER_SLEEP_RESUME &&
-	    /* Since this is a substate of S0, S3 signal is checked on S0
-	       handler. */
-	    power_signals_off(IN_PCH_SLP_S0)) {
+	/* System in S0 only if SLP_S0 and SLP_S3 are de-asserted */
+	if (power_signals_off(IN_PCH_SLP_S0) &&
+	    power_signals_off(IN_PCH_SLP_S3)) {
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S0);
 	}
 
