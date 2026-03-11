@@ -139,6 +139,9 @@ config PLATFORM_EC_CHARGER_ISL9241
 	depends on PLATFORM_EC_I2C
 	# Hardware based charge ramp is broken in the ISL9241 (b/169350714)
 	select PLATFORM_EC_CHARGER_CHGRAMP_BROKEN
+	# All new ISL9241 designs should set ACOKREF, but this is only supported
+	# with the PDC subsystem.
+	imply PLATFORM_EC_CHARGER_SET_ACOKREF
 	help
 	  Enables a driver for the ISL9241 VCD Battery Charger. This is a
 	  digitally-configurable, buck-boost battery charger that can support
@@ -1167,10 +1170,14 @@ endif
 config PLATFORM_EC_CHARGER_SET_ACOKREF
 	bool "Set the charger ACOK reference voltage"
 	default n
+	depends on PLATFORM_EC_USB_PD_CONTROLLER
 	help
 	  Instructs the charge manager to set the ACOK reference voltage
 	  in the charging IC prior to enaling the sink path from any
 	  source.
+
+	  This is only supported by the PDC subsystem and not supported by
+	  TCPMv2.
 
 rsource "drivers/sm5803/Kconfig.sm5803"
 
