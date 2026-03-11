@@ -35,6 +35,10 @@
 #define VWIRE_PULSE_TRIGGER_TIME \
 	CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_DEFAULT_VW_WIDTH_US
 
+#define VWIRE_PULSE_TRIGGER_TIME_IN_SUSPEND \
+	CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_DEFAULT_VW_WIDTH_US_IN_SUSPEND
+
+
 LOG_MODULE_REGISTER(espi_shim, CONFIG_ESPI_LOG_LEVEL);
 
 /*
@@ -302,11 +306,23 @@ static void lpc_generate_smi(void)
 static void lpc_generate_sci(void)
 {
 #ifndef CONFIG_PLATFORM_EC_SCI_GPIO
+	int timer;
+
+	/**
+	 * There is an unkonwn reason cause the system can't get the SCI low
+	 * signal when the system is in suspend. However, increase the trigger
+	 * time can solve this issue.
+	 */
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+		timer = VWIRE_PULSE_TRIGGER_TIME_IN_SUSPEND;
+	else
+		timer = VWIRE_PULSE_TRIGGER_TIME;
+
 	/* Enforce signal-high for long enough to debounce high */
 	espi_vw_set_wire(VW_SCI_L, 1);
 	k_busy_wait(VWIRE_PULSE_TRIGGER_TIME);
 	espi_vw_set_wire(VW_SCI_L, 0);
-	k_busy_wait(VWIRE_PULSE_TRIGGER_TIME);
+	k_busy_wait(timer);
 	espi_vw_set_wire(VW_SCI_L, 1);
 #else
 	/* Enforce signal-high for long enough to debounce high */

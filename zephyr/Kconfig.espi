@@ -38,4 +38,11 @@ config PLATFORM_EC_HOST_INTERFACE_ESPI_DEFAULT_VW_WIDTH_US
 	  The minimum pulse width of a eSPI/LPC virtual wire signals to the
 	  host. May vary by host chipset.
 
+config PLATFORM_EC_HOST_INTERFACE_ESPI_DEFAULT_VW_WIDTH_US_IN_SUSPEND
+	int "Virtual wire pulse width (microseconds) in suspend"
+	default 65
+	help
+	  The minimum pulse width of a eSPI/LPC virtual wire signals to the
+	  host when the system is in the suspend.
+
 endif # PLATFORM_EC_HOST_INTERFACE_ESPI
