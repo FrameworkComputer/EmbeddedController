@@ -75,7 +75,11 @@ uint32_t get_stack_ptr(const struct k_thread *thread)
 	/* We are assuming that the SP of interest is SP_EL1 */
 	return thread->callee_saved.sp_elx;
 #elif defined(CONFIG_ARM)
+#ifdef CONFIG_USE_SWITCH
+	return (uintptr_t)thread->switch_handle;
+#else
 	return thread->callee_saved.psp;
+#endif /* CONFIG_USE_SWITCH */
 #elif defined(CONFIG_X86)
 #if defined(CONFIG_X86_64)
 	return thread->callee_saved.rsp;
