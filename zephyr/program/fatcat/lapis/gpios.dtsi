@@ -6,6 +6,7 @@
 / {
 	aliases {
 		gpio-wp = &gpio_ec_wp_odl;
+		gpio-btn-ign-in = &gpio_fp_atc;
 	};
 
 	named-gpios {
