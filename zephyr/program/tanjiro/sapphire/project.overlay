@@ -92,7 +92,7 @@
 
 				rgb-cal-x {
 					offset = <0>;
-					coeff = "0", "0", "0", "1";
+					coeff = "0.464318099", "-0.374639473", "0.059786474", "-0.749608515";
 					als-channel-scale {
 					compatible =
 					"cros-ec,accelgyro-als-channel-scale";
@@ -102,7 +102,7 @@
 				};
 				rgb-cal-y {
 					offset = <0>;
-					coeff = "0", "0", "0", "1";
+					coeff = "0.462807275", "-0.400565821", "-0.100519369", "-0.510790024";
 					als-channel-scale {
 					compatible =
 					"cros-ec,accelgyro-als-channel-scale";
@@ -112,7 +112,7 @@
 				};
 				rgb-cal-z {
 					offset = <0>;
-					coeff = "0", "0", "0", "1";
+					coeff = "-0.062110042", "-0.02692167", "0.359548949", "0.383362422";
 					als-channel-scale {
 					compatible =
 					"cros-ec,accelgyro-als-channel-scale";
