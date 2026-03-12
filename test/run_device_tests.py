@@ -245,6 +245,14 @@ class HostInterface(Enum):
     USB = "usb"
 
 
+class Environment(Enum):
+    """Test execution environment."""
+
+    RENODE = "renode"
+    HARDWARE = "hardware"
+    ALL = "all"
+
+
 @dataclass
 # pylint: disable-next=too-many-instance-attributes
 class BoardConfig:
@@ -268,6 +276,9 @@ class BoardConfig:
     expected_mcu_power_zephyr: Optional[PowerUtilization] = None
     zephyr_board_name: Optional[str] = None
     host_interfaces: set[HostInterface] = field(default_factory=set)
+    zephyr_extra_configs: dict[Environment, list[str]] = field(
+        default_factory=dict
+    )
 
 
 class Platform(ABC):
@@ -1472,7 +1483,9 @@ def build_ec(
     return cmd
 
 
-def build_zephyr_upstream(test_name: str, board_name: str) -> list[str]:
+def build_zephyr_upstream(
+    test_name: str, board_name: str, zephyr_extra_configs: list[str]
+) -> list[str]:
     """Prepare a command to build Zephyr test"""
     # Build only with Zephyr and clobber a previous build
     cmd = [ZEPHYR_TWISTER] + ["-b"] + ["-c"]
@@ -1481,13 +1494,20 @@ def build_zephyr_upstream(test_name: str, board_name: str) -> list[str]:
     cmd = cmd + ["-s"] + [test_name]
     cmd = cmd + ["--no-upload-cros-rdb"]
 
+    for config in zephyr_extra_configs:
+        cmd.extend(["-x", config])
+
     return cmd
 
 
-def build_zephyr(test: TestConfig, board_name: str) -> list[str]:
+def build_zephyr(
+    test: TestConfig, board_name: str, zephyr_extra_configs: list[str]
+) -> list[str]:
     """Prepare a command to build test using Zephyr"""
     if test.zephyr_name is not None:
-        return build_zephyr_upstream(test.zephyr_name, board_name)
+        return build_zephyr_upstream(
+            test.zephyr_name, board_name, zephyr_extra_configs
+        )
 
     test_name = test.test_name
     app_type = test.apptype_to_use
@@ -1533,18 +1553,29 @@ def build_zephyr(test: TestConfig, board_name: str) -> list[str]:
         if img_type == ImageType.RO:
             f_test_config.write("CONFIG_HW_TEST_RW_ONLY=n\n")
 
+        for config in zephyr_extra_configs:
+            f_test_config.write(f"{config}\n")
+
     return cmd
 
 
 def build(
     test: TestConfig,
     board_name: str,
+    board_config: BoardConfig,
     compiler: str,
     zephyr: bool,
+    env: Environment,
 ) -> None:
     """Build specified test for specified board."""
     if zephyr:
-        cmd = build_zephyr(test, board_name)
+        zephyr_extra_configs = []
+        for e in (Environment.ALL, env):
+            zephyr_extra_configs.extend(
+                board_config.zephyr_extra_configs.get(e, [])
+            )
+
+        cmd = build_zephyr(test, board_name, zephyr_extra_configs)
     else:
         cmd = build_ec(
             test.test_name, board_name, compiler, test.apptype_to_use
@@ -1827,11 +1858,14 @@ def flash_and_run_test(
 
     # attempt to build test binary, reporting a test failure on error
     try:
+        env = Environment.RENODE if args.renode else Environment.HARDWARE
         build(
             test,
             build_board,
+            board_config,
             args.compiler,
             args.zephyr,
+            env,
         )
     except Exception as exception:  # pylint: disable=broad-except
         logging.error("failed to build %s: %s", test.test_name, exception)
