@@ -8601,6 +8601,7 @@ BUILD_ASSERT(sizeof(struct fp_template_info) == 16);
 struct fp_image_frame_params {
 	/* Image frame characteristics */
 	uint32_t frame_size;
+	uint32_t image_data_offset_bytes; /**< Byte offset of image buffer */
 	uint32_t pixel_format; /* using V4L2_PIX_FMT_ */
 	uint16_t width;
 	uint16_t height;
@@ -8609,7 +8610,7 @@ struct fp_image_frame_params {
 	uint8_t fp_capture_type;
 	uint8_t reserved; /**< padding for alignment */
 } __ec_align4;
-BUILD_ASSERT(sizeof(struct fp_image_frame_params) == 16);
+BUILD_ASSERT(sizeof(struct fp_image_frame_params) == 20);
 
 struct ec_response_fp_info_v2 {
 	/* Sensor identification */
