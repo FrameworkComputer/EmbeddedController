@@ -32,19 +32,17 @@ static struct fp_sensor_info egis_sensor_info = {
 };
 
 #define EGIS_DEFAULT_IMAGE_PARAMS                                         \
-	.bpp = FP_SENSOR_DEFAULT_BPP_EGIS,                                \
 	.frame_size = FP_SENSOR_RES_X_EGIS * FP_SENSOR_RES_Y_EGIS,        \
 	.image_data_offset_bytes = FP_SENSOR_IMAGE_OFFSET_EGIS,           \
 	.pixel_format = V4L2_PIX_FMT_GREY, .width = FP_SENSOR_RES_X_EGIS, \
-	.height = FP_SENSOR_RES_Y_EGIS
+	.height = FP_SENSOR_RES_Y_EGIS, .bpp = FP_SENSOR_DEFAULT_BPP_EGIS
 
 #define EGIS_TEST_IMAGE_PARAMS                                            \
-	.bpp = FP_SENSOR_TEST_BPP_EGIS,                                   \
 	.frame_size = FP_SENSOR_RES_X_EGIS * FP_SENSOR_RES_Y_EGIS *       \
 		      sizeof(uint16_t),                                   \
 	.image_data_offset_bytes = FP_SENSOR_IMAGE_OFFSET_EGIS,           \
 	.pixel_format = V4L2_PIX_FMT_GREY, .width = FP_SENSOR_RES_X_EGIS, \
-	.height = FP_SENSOR_RES_Y_EGIS
+	.height = FP_SENSOR_RES_Y_EGIS, .bpp = FP_SENSOR_TEST_BPP_EGIS
 
 static const struct fp_image_frame_params egis_image_frame_params[] = {
 	[EGIS_CAPTURE_NORMAL_FORMAT] =
