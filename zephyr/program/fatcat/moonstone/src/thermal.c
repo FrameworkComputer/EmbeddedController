@@ -59,17 +59,19 @@ int fan_table_to_rpm(int fan, int *temp)
 	 *  2. increasing path. (check the trigger point)
 	 *  3. invariant path. (return the current RPM)
 	 */
-	if (temp[TEMP_CPU] < prev_tmp[TEMP_CPU]) {
+	if (temp[TEMP_REGULATOR] < prev_tmp[TEMP_REGULATOR]) {
 		for (i = current_level; i > 0; i--) {
-			if (temp[TEMP_CPU] < fan_table[i].off[TEMP_CPU]) {
+			if (temp[TEMP_REGULATOR] <
+			    fan_table[i].off[TEMP_REGULATOR]) {
 				current_level = i - 1;
 			} else {
 				break;
 			}
 		}
-	} else if (temp[TEMP_CPU] > prev_tmp[TEMP_CPU]) {
+	} else if (temp[TEMP_REGULATOR] > prev_tmp[TEMP_REGULATOR]) {
 		for (i = current_level; i < NUM_FAN_LEVELS; i++) {
-			if (temp[TEMP_CPU] > fan_table[i].on[TEMP_CPU]) {
+			if (temp[TEMP_REGULATOR] >
+			    fan_table[i].on[TEMP_REGULATOR]) {
 				current_level = i + 1;
 			} else {
 				break;
