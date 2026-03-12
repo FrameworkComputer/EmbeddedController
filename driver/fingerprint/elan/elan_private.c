@@ -38,6 +38,7 @@ static struct fp_sensor_info elan_sensor_info = {
 #define ELAN_DEFAULT_IMAGE_PARAMS                                         \
 	.bpp = FP_SENSOR_RES_BPP_ELAN,                                    \
 	.frame_size = FP_SENSOR_RES_X_ELAN * FP_SENSOR_RES_Y_ELAN * 2,    \
+	.image_data_offset_bytes = FP_SENSOR_IMAGE_OFFSET_ELAN,           \
 	.pixel_format = V4L2_PIX_FMT_GREY, .width = FP_SENSOR_RES_X_ELAN, \
 	.height = FP_SENSOR_RES_Y_ELAN
 
