@@ -21,8 +21,7 @@
 
 #define BATTERY_55mW 55000
 #define BATTERY_61mW 61000
-/*75W's PL setting same as 61W*/
-#define BATTERY_75mW BATTERY_61mW
+#define BATTERY_75mW 75000
 
 static int battery_mwatt_type;
 static int battery_current_limit_mA;
@@ -318,14 +317,18 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 static void initial_soc_power_limit(void)
 {
 	const char *curr_model = battery_static[BATT_IDX_MAIN].model_ext;
+	int battery_discharge_current = 0;
 	static int pre_battery_type;
 
 	if (!strncmp(curr_model, "FRANEDA", 7)) {
 		battery_mwatt_type = BATTERY_75mW;
+		battery_discharge_current = -4640;
 	} else if (!strncmp(curr_model, "FRANGWAT01", 10)) {
 		battery_mwatt_type = BATTERY_61mW;
+		battery_discharge_current = -3920;
 	} else {
 		battery_mwatt_type = BATTERY_55mW;
+		battery_discharge_current = -3570;
 	}
 
 	if (pre_battery_type != battery_mwatt_type)
@@ -333,8 +336,8 @@ static void initial_soc_power_limit(void)
 	else
 		return;
 
-	battery_current_limit_mA =
-		((battery_mwatt_type == BATTERY_61mW) ? -3920 : -3570);
+	battery_current_limit_mA = battery_discharge_current;
+	CPRINTS("Battery current limit: %dmA", battery_current_limit_mA);
 
 	/* initial slider table to battery balance as default */
 	power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 28000;
