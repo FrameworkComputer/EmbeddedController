@@ -444,6 +444,7 @@ class Zmake:
         compare_devicetrees=False,
     ):
         """Compare EC builds at two commits."""
+        os.chdir(self.module_paths["ec"])
         temp_dir = tempfile.mkdtemp(prefix="zcompare-")
         if not keep_temps:
             atexit.register(shutil.rmtree, temp_dir)
