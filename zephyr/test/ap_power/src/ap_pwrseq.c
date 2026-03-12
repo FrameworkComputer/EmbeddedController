@@ -5,6 +5,7 @@
 
 #include "ap_power/ap_power.h"
 #include "ap_power/ap_power_interface.h"
+#include "ap_power_host_sleep.h"
 #include "chipset.h"
 #include "ec_commands.h"
 #include "ec_tasks.h"
@@ -36,6 +37,7 @@ static int power_hard_off_count;
 static int power_shutdown_count;
 static int power_shutdown_complete_count;
 static int power_suspend_count;
+static int power_s0ix_reset_tracking_count;
 
 #define S5_INACTIVITY_TIMEOUT_MS                                               \
 	COND_CODE_0(                                                           \
@@ -129,6 +131,11 @@ static void emul_ev_handler(struct ap_power_ev_callback *callback,
 	case AP_POWER_SUSPEND:
 		power_suspend_count++;
 		break;
+
+	case AP_POWER_S0IX_RESET_TRACKING:
+		power_s0ix_reset_tracking_count++;
+		break;
+
 	default:
 		break;
 	};
@@ -142,6 +149,7 @@ static void ap_pwrseq_reset_ev_counters(void)
 	power_shutdown_count = 0;
 	power_shutdown_complete_count = 0;
 	power_suspend_count = 0;
+	power_s0ix_reset_tracking_count = 0;
 }
 
 static void verify_ap_inputs(bool in_s0)
@@ -456,6 +464,12 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_3_sleep_reset)
 	k_msleep(20);
 	power_signal_set(PWR_SYS_RST, 0);
 
+	/* Verify host sleep state was reset after chipset reset */
+	zassert_true(power_s0ix_reset_tracking_count > 0,
+		     "AP_POWER_S0IX_RESET_TRACKING not called");
+	zassert_equal(0, ap_power_sleep_get_notify(),
+		      "Host sleep state not reset after power loss");
+
 	/* Allow up to 50 ms for the force-shutdown timeout loop plus the
 	 * 30 ms minimum power-down delay in board_ap_power_force_shutdown.
 	 */
@@ -623,7 +637,8 @@ void *ap_pwrseq_setup_suite(void)
 				  AP_POWER_RESUME | AP_POWER_STARTUP |
 					  AP_POWER_HARD_OFF | AP_POWER_SUSPEND |
 					  AP_POWER_SHUTDOWN |
-					  AP_POWER_SHUTDOWN_COMPLETE);
+					  AP_POWER_SHUTDOWN_COMPLETE |
+					  AP_POWER_S0IX_RESET_TRACKING);
 
 	ap_power_ev_add_callback(&test_cb);
 

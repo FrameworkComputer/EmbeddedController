@@ -171,7 +171,11 @@ static int x86_non_dsx_mtl_s0ix_run(void *data)
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_G3);
 	}
 
+	/* SYSRST assertion leads to CPU warm reset,
+	   leading to AP_POWER_SLEEP_RESUME event skipped from AP.
+	*/
 	if (power_signal_get(PWR_SYS_RST)) {
+		ap_power_reset_host_sleep_state();
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S5);
 	}
 
