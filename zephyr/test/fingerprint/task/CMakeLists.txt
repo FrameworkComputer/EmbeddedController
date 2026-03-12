@@ -37,3 +37,5 @@ target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_FP_INFO app PRIVATE
 	src/fpsensor_fp_info.cc)
 target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_BTN_IGN_OUT app PRIVATE
 	src/fpsensor_btn_ign_out.cc)
+target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_LED app PRIVATE
+	src/fpsensor_led.cc)

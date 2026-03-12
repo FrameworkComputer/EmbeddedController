@@ -399,6 +399,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FINGERPRINT_AUTH_METHOD_ASCP
 						"${PLATFORM_EC}/common/fpsensor/fpsensor_auth_ascp.cc")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FINGERPRINT_BTN_IGN_OUT
 						"${PLATFORM_EC}/common/fpsensor/fpsensor_btn_ign_out.cc")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FP_LED
+						"${PLATFORM_EC}/common/fpsensor/fpsensor_led.cc")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD
                                                 "${PLATFORM_EC}/common/host_command.c")
 if (NOT DEFINED CONFIG_EC_HOST_CMD)

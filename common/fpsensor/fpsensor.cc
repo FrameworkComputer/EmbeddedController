@@ -17,6 +17,7 @@
 #include "fpsensor/fpsensor_console.h"
 #include "fpsensor/fpsensor_crypto.h"
 #include "fpsensor/fpsensor_detect.h"
+#include "fpsensor/fpsensor_led.h"
 #include "fpsensor/fpsensor_modes.h"
 #include "fpsensor/fpsensor_state.h"
 #include "fpsensor/fpsensor_utils.h"
@@ -189,6 +190,8 @@ static uint32_t fp_process_match(void)
 			res = EC_MKBP_FP_ERR_MATCH_NO_INTERNAL;
 			timestamps_invalid |= FPSTATS_MATCHING_INV;
 		}
+
+		fp_led::update_match(fp_match_success(res));
 
 		if (res == EC_MKBP_FP_ERR_MATCH_YES_UPDATED)
 			global_context.templ_dirty |= updated;
@@ -440,6 +443,7 @@ extern "C" void fp_task(void)
 			}
 		}
 		fp_btn_ign_out::update(global_context.sensor_mode);
+		fp_led::update_mode(global_context.sensor_mode);
 	}
 #else /* !HAVE_FP_PRIVATE_DRIVER */
 	while (1) {

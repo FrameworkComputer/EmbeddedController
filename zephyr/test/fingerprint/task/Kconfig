@@ -86,4 +86,10 @@ config LINK_TEST_SUITE_FINGERPRINT_BTN_IGN_OUT
 	  Link and execute fingerprint subsystem tests that focus
 	  on btn ign out.
 
+config LINK_TEST_SUITE_FINGERPRINT_LED
+	bool "Link fingerprint led tests"
+	help
+	  Link and execute fingerprint subsystem tests that focus
+	  on led.
+
 source "Kconfig.zephyr"

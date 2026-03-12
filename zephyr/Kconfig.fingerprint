@@ -48,3 +48,70 @@ config PLATFORM_EC_FINGERPRINT_AUTH_METHOD_ASCP
 endchoice
 
 endif # PLATFORM_EC_FINGERPRINT
+
+DT_ALIAS_PWM_FP_LED := pwm-fp-led
+
+config PLATFORM_EC_FP_LED
+	bool "Enable fingerprint sensor led"
+	help
+	  Enables controlling of fingerprint led.
+	  If enabled, the pwm-fp-led alias has to be defined in DT.
+	default y
+	depends on $(dt_alias_enabled,$(DT_ALIAS_PWM_FP_LED))
+
+if PLATFORM_EC_FP_LED
+
+config PLATFORM_EC_FP_LED_BRIGHTNESS_ENROLL
+	int "Fingerprint LED perceived brightness during enroll session"
+	default 70
+	range 0 100
+	help
+	  The perceived brightness of the fingerprint LED during enrollment,
+	  in percentage.
+
+config PLATFORM_EC_FP_LED_BRIGHTNESS_MATCH
+	int "Fingerprint LED perceived brightness during match session"
+	default 70
+	range 0 100
+	help
+	  The perceived brightness of the fingerprint LED during matching,
+	  in percentage.
+
+config PLATFORM_EC_FP_LED_BRIGHTNESS_MATCH_OK
+	int "Fingerprint LED perceived brightness after successful match"
+	default 100
+	range 0 100
+	help
+	  The perceived brightness of the fingerprint LED after a successful
+	  match, in percentage.
+
+config PLATFORM_EC_FP_LED_BRIGHTNESS_MATCH_NOK
+	int "Fingerprint LED perceived brightness after failed match"
+	default 40
+	range 0 100
+	help
+	  The perceived brightness of the fingerprint LED after a failed match,
+	  in percentage.
+
+config PLATFORM_EC_FP_LED_DURATION_MATCH_MS
+	int "Fingerprint LED duration during match session (ms)"
+	default 10000
+	help
+	  The duration the fingerprint LED stays on during a match session, in
+	  milliseconds.
+
+config PLATFORM_EC_FP_LED_DURATION_MATCH_OK_MS
+	int "Fingerprint LED duration after successful match (ms)"
+	default 2000
+	help
+	  The duration the fingerprint LED stays on after a successful match, in
+	  milliseconds.
+
+config PLATFORM_EC_FP_LED_DURATION_MATCH_NOK_MS
+	int "Fingerprint LED duration after failed match (ms)"
+	default 1000
+	help
+	  The duration the fingerprint LED stays on after a failed match, in
+	  milliseconds.
+
+endif # PLATFORM_EC_FP_LED

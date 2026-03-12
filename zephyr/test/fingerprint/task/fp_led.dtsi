@@ -1,0 +1,28 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "boards/native_sim.overlay"
+#include <zephyr/dt-bindings/pwm/pwm.h>
+
+/{
+	pwm0: pwm@6 {
+		compatible = "cros,pwm-mock";
+		reg = <6 2>;
+		#pwm-cells = <3>;
+		status = "okay";
+	};
+
+	pwmleds {
+		compatible = "pwm-leds";
+
+		fp_led: fp_led {
+			pwms = <&pwm0 1 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+		};
+	};
+
+	aliases {
+		pwm-fp-led = &fp_led;
+	};
+};
