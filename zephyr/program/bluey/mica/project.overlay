@@ -22,3 +22,11 @@
 #include "temp_sensors.dtsi"
 
 /* mica overrides follow... */
+&cbi_flash {
+	/*
+	 * CBI section size is 0x1000 bytes, the CBI portion lies at the end of
+	 * EC_RO section.
+	 */
+	offset = <0x3e000>;
+	size = <0x1000>;
+};
