@@ -419,6 +419,8 @@ static int egis630_init_driver(const struct device *dev)
 	{                                                                      \
 		.frame_size =                                                  \
 			FINGERPRINT_SENSOR_FRAME_SIZE(idx, DT_DRV_INST(inst)), \
+		.image_data_offset_bytes = FINGERPRINT_SENSOR_IMAGE_OFFSET(    \
+			idx, DT_DRV_INST(inst)),                               \
 		.pixel_format = FINGERPRINT_SENSOR_V4L2_PIXEL_FORMAT(          \
 			idx, DT_DRV_INST(inst)),                               \
 		.width = FINGERPRINT_SENSOR_RES_X(idx, DT_DRV_INST(inst)),     \

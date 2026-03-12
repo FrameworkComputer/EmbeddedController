@@ -30,6 +30,11 @@ child-binding:
       required: true
       description: Frame size (bytes) of captured fingerprint image.
 
+    image-data-offset-bytes:
+      type: int
+      required: true
+      description: Image offset in bytes from the start of the sensor buffer.
+
     v4l2-pixel-format:
       type: string
       required: true

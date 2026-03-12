@@ -10,6 +10,7 @@
 	height = <100>; \
 	bits-per-pixel = <8>; \
 	frame-size = <9980>; \
+	image-data-offset-bytes = <172>; \
 	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
 
 &spi1 {
