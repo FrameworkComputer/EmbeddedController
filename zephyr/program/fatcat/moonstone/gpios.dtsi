@@ -174,14 +174,6 @@
 			gpios = <&gpioe 6 GPIO_OUTPUT>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
-		gpio_ec_volup_btn_odl: ec_volup_btn_odl {
-			gpios = <&gpioa 7 (GPIO_INPUT)>;
-			enum-name = "GPIO_VOLUME_UP_L";
-		};
-		gpio_ec_voldn_btn_odl: ec_voldn_btn_odl {
-			gpios = <&gpioa 0 (GPIO_INPUT)>;
-			enum-name = "GPIO_VOLUME_DOWN_L";
-		};
 		gpio_usb_pd1_int_odl: usb_pd_int_odl {
 			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			no-auto-init;
@@ -212,6 +204,8 @@
 		compatible = "unused-gpios";
 
 		unused-gpios =
+			<&gpioa 0 0>,
+			<&gpioa 7 0>,
 			<&gpioa 6 0>,
 			<&gpiob 2 0>,
 			<&gpiob 3 0>,
