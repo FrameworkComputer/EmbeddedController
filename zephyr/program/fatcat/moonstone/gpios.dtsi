@@ -198,6 +198,12 @@
 		gpio_en_pp5000_led_x: en_pp5000_led_x {
 			gpios = <&gpiog 1 GPIO_OUTPUT_LOW>;
 		};
+		gpio_soc_edp_bl_en: soc_edp_bl_en {
+			gpios = <&gpioh 1 GPIO_INPUT>;
+		};
+		gpio_ec_touch_en: ec_touch_en {
+			gpios = <&gpioa 7 GPIO_OUTPUT_LOW>;
+		};
 	};
 
 	unused-pins {
@@ -205,7 +211,6 @@
 
 		unused-gpios =
 			<&gpioa 0 0>,
-			<&gpioa 7 0>,
 			<&gpioa 6 0>,
 			<&gpiob 2 0>,
 			<&gpiob 3 0>,
@@ -217,7 +222,6 @@
 			<&gpiog 4 0>,
 			<&gpiog 5 0>,
 			<&gpiog 7 0>,
-			<&gpioh 1 GPIO_INPUT>,
 			<&gpioh 2 GPIO_INPUT>,
 			<&gpioj 4 0>;
 	};
