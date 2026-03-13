@@ -1,0 +1,14 @@
+
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "../../../../program/ec-aic/npcx-aic/project.overlay"
+
+&i2c0_0 {
+	dagwood_eeprom: dagwood-eeprom@50 {
+		compatible = "vnd.i2c-device";
+                reg = <0x50>;
+	};
+};

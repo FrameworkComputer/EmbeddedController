@@ -1,0 +1,39 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# twister hardware map template for dagwood
+# Edit and use this map file if you have multiple Dagwood boards
+# connected to your system.
+#
+# You need to lookup the serial ID for each dagwood connected
+# to your system.
+#
+#     $ find /dev/serial/by-id -name "*Dagwood*"
+#    /dev/serial/by-id/usb-Google_Dagwood_3635383134325119001C003A-if04
+#    /dev/serial/by-id/usb-Google_Dagwood_3635383134325119001C003A-if00
+#    /dev/serial/by-id/usb-Google_Dagwood_3635383134325119001C003A-if02
+#
+# Each Dagwood board presents 3 serial devices to the host. twister needs
+# to connect to the serial device that passes through the EC console
+# traffic.
+#     * Interface *_if00: Dagwood serial console
+#     * Interface *_if02: EC serial console
+#     * Interface *_if04: EC programming interface
+#
+# Set the following map attributes:
+#     id: Set to the 24 byte serial number shown under /dev/serial/by-id
+#     platform: Set to the EC AIC type connected to Dagwood.  Should be one
+#               of it8xxx2/it82002aw, npcx9/npcx9m7f, or realtek/rts5912
+#     product: Always set to "Dagwood"
+#     runner: Always set to "unknown"
+#     serial: Set to the full path of the "_if02" interface identified by the
+#             find command shown above.
+#
+# Add additional entries for each Dagwood board
+- connected: true
+  id: 3635383134325119001C003A
+  platform: realtek/rts5912
+  product: Dagwood
+  runner: unknown
+  serial: /dev/serial/by-id/usb-Google_Dagwood_3635383134325119001C003A-if02
