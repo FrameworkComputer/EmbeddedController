@@ -534,7 +534,7 @@ def main(argv):
             # to avoid any conflict with the modified branch file.
             prunelist.append("OWNERS")
         merge_repo(
-            os.path.join(opts.srcbase, "src/third_party/zephyr/main"),
+            os.path.join(opts.srcbase, "src/third_party/zephyrproject"),
             cros_main,
             cmd_checkout,
             strategy,
