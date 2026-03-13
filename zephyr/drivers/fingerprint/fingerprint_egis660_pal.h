@@ -116,6 +116,14 @@ int __unused egis_sensor_wfi(uint16_t timeout_ms, egis_wfi_check_t enter_wfi,
 uint32_t __unused egis_timebase_get_tick(void);
 
 /**
+ * @brief Delay us.
+ *
+ * @param[in] us  Time to delay [us].
+ * 0 => return immediately
+ * 1 => delay at least 1us etc.
+ */
+void __unused egis_timebase_delay_us(uint32_t us);
+/**
  * @brief Delay ms.
  *
  * @param[in] ms  Time to delay [ms].

@@ -247,6 +247,21 @@ ZTEST_F(egis660, test_pal_timebase_get_tick)
 	zassert_equal(egis660_pal_timebase_get_tick(), k_uptime_get_32());
 }
 
+ZTEST_F(egis660, test_pal_timebase_delay_us)
+{
+	uint32_t t1, t2;
+
+	t1 = egis660_pal_timebase_get_tick();
+
+	/* Wait 10000us. */
+	egis660_pal_timebase_delay_us(10000);
+
+	t2 = egis660_pal_timebase_get_tick();
+
+	/* Add some margin of 1ms */
+	zassert_true((t2 - t1) >= 9 && (t2 - t1) <= 11);
+}
+
 ZTEST_F(egis660, test_pal_timebase_delay_ms)
 {
 	uint32_t t1, t2;

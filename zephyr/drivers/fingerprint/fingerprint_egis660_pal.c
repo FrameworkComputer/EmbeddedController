@@ -106,10 +106,14 @@ uint32_t __unused egis_timebase_get_tick(void)
 	return k_uptime_get_32();
 }
 
+void __unused egis_timebase_delay_us(uint32_t us)
+{
+	k_busy_wait(us);
+}
+
 void __unused egis_timebase_delay_ms(uint32_t delay)
 {
-	/* private library needs accurate delay, usually 1ms */
-	k_busy_wait(delay * 1000);
+	k_msleep(delay);
 }
 
 void __unused *egis_malloc(uint32_t size)

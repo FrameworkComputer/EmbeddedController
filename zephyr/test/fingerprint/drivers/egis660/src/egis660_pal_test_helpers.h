@@ -15,6 +15,7 @@ __syscall bool egis660_pal_check_irq(void);
 __syscall bool egis660_pal_read_irq(void);
 __syscall void egis660_pal_reset(bool state);
 __syscall uint32_t egis660_pal_timebase_get_tick(void);
+__syscall void egis660_pal_timebase_delay_us(uint32_t us);
 __syscall void egis660_pal_timebase_delay_ms(uint32_t ms);
 __syscall void *egis660_pal_malloc(uint32_t size);
 __syscall void egis660_pal_free(void *data);

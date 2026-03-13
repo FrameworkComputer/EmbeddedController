@@ -34,6 +34,11 @@ uint32_t z_impl_egis660_pal_timebase_get_tick(void)
 	return egis_timebase_get_tick();
 }
 
+void z_impl_egis660_pal_timebase_delay_us(uint32_t us)
+{
+	return egis_timebase_delay_us(us);
+}
+
 void z_impl_egis660_pal_timebase_delay_ms(uint32_t ms)
 {
 	return egis_timebase_delay_ms(ms);
