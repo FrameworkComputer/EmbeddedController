@@ -8,6 +8,7 @@
 	height = <64>; \
 	bits-per-pixel = <8>; \
 	frame-size = <5120>; \
+	image-data-offset-bytes = <0>; \
 	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
 
 #define EGIG630_TEST_IMAGE_PROPS \
@@ -15,6 +16,7 @@
 	height = <64>; \
 	bits-per-pixel = <16>; \
 	frame-size = <10240>; \
+	image-data-offset-bytes = <0>; \
 	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
 
 / {

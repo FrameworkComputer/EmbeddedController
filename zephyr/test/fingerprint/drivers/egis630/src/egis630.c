@@ -64,6 +64,8 @@ uint16_t convert_egis_sensor_init_error_code(egis_api_return_t code);
 #define EGIS630_IMAGE_FRAME_PARAM_INITIALIZER(idx, node_id)                 \
 	{                                                                   \
 		.frame_size = FINGERPRINT_SENSOR_FRAME_SIZE(idx, node_id),  \
+		.image_data_offset_bytes =                                  \
+			FINGERPRINT_SENSOR_IMAGE_OFFSET(idx, node_id),      \
 		.pixel_format =                                             \
 			FINGERPRINT_SENSOR_V4L2_PIXEL_FORMAT(idx, node_id), \
 		.width = FINGERPRINT_SENSOR_RES_X(idx, node_id),            \

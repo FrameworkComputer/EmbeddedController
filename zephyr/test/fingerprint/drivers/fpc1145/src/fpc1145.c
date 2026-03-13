@@ -46,6 +46,8 @@ int convert_fp_capture_type_to_fpc_capture_type(int mode);
 #define FPC1145_IMAGE_FRAME_PARAM_INITIALIZER(idx, node_id)                 \
 	{                                                                   \
 		.frame_size = FINGERPRINT_SENSOR_FRAME_SIZE(idx, node_id),  \
+		.image_data_offset_bytes =                                  \
+			FINGERPRINT_SENSOR_IMAGE_OFFSET(idx, node_id),      \
 		.pixel_format =                                             \
 			FINGERPRINT_SENSOR_V4L2_PIXEL_FORMAT(idx, node_id), \
 		.width = FINGERPRINT_SENSOR_RES_X(idx, node_id),            \
