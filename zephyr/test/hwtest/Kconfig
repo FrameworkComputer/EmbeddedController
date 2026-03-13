@@ -139,7 +139,7 @@ config HW_TEST_NULL_POINTER
 config HW_TEST_PANIC
 	bool "Panic test"
 	select ZTEST
-	depends on ARM
+	depends on ARM || RISCV
 	help
 	  The test verifies panic data.
 

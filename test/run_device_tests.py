@@ -582,7 +582,6 @@ class Renode(Platform):
             "fpsensor_debug",  # TODO(b/474439863)
             "malloc",  # TODO(b/485454965)
             "otp_key",  # TODO(b/483121090)
-            "panic",  # TODO(b/483124098)
             "restricted_console",  # TODO(b/474439863)
             "sbrk",  # TODO(b/485454965)
             "utils",  # TODO(b/483126917)

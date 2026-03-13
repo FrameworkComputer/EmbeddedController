@@ -20,6 +20,7 @@ struct reg_vals {
 
 /* TODO(b/342504464): add a version for PANIC_STRIP_GPR=y. */
 static const struct reg_vals expected_regs[] = {
+#if defined(CONFIG_ARM)
 	{ .index = CORTEX_PANIC_REGISTER_R4, .val = 0xecec0004 },
 	{ .index = CORTEX_PANIC_REGISTER_R5, .val = 0xecec0005 },
 	{ .index = CORTEX_PANIC_REGISTER_R6, .val = 0xecec0006 },
@@ -28,6 +29,26 @@ static const struct reg_vals expected_regs[] = {
 	{ .index = CORTEX_PANIC_REGISTER_R9, .val = 0xecec0009 },
 	{ .index = CORTEX_PANIC_REGISTER_R10, .val = 0xecec000a },
 	{ .index = CORTEX_PANIC_REGISTER_R11, .val = 0xecec000b },
+#elif defined(CONFIG_RISCV)
+	{ .index = 26, .val = 0xecec0001 }, /* a0 */
+	{ .index = 25, .val = 0xecec0002 }, /* a1 */
+	{ .index = 24, .val = 0xecec0003 }, /* a2 */
+	{ .index = 23, .val = 0xecec0004 }, /* a3 */
+	{ .index = 22, .val = 0xecec0005 }, /* a4 */
+	{ .index = 21, .val = 0xecec0006 }, /* a5 */
+	{ .index = 20, .val = 0xecec0007 }, /* a6 */
+	{ .index = 19, .val = 0xecec0008 }, /* a7 */
+	{ .index = 18, .val = 0xecec0009 }, /* t0 */
+	{ .index = 17, .val = 0xecec000a }, /* t1 */
+	{ .index = 16, .val = 0xecec000b }, /* t2 */
+	{ .index = 15, .val = 0xecec000c }, /* t3 */
+	{ .index = 14, .val = 0xecec000d }, /* t4 */
+	{ .index = 13, .val = 0xecec000e }, /* t5 */
+	{ .index = 12, .val = 0xecec000f }, /* t6 */
+	{ .index = 29, .val = 0xecec0010 }, /* ra */
+#else
+#error "Unsupported architecture."
+#endif
 };
 
 static void test_panic(void)
@@ -70,20 +91,43 @@ static void test_panic(void)
 				 "ldr r14, =0xecec000e\n"
 				 /* Undefined instruction. */
 				 "udf #0\n");
+	} else if (IS_ENABLED(CONFIG_RISCV)) {
+		__asm__ volatile("li a0, 0xecec0001\n"
+				 "li a1, 0xecec0002\n"
+				 "li a2, 0xecec0003\n"
+				 "li a3, 0xecec0004\n"
+				 "li a4, 0xecec0005\n"
+				 "li a5, 0xecec0006\n"
+				 "li a6, 0xecec0007\n"
+				 "li a7, 0xecec0008\n"
+				 "li t0, 0xecec0009\n"
+				 "li t1, 0xecec000a\n"
+				 "li t2, 0xecec000b\n"
+				 "li t3, 0xecec000c\n"
+				 "li t4, 0xecec000d\n"
+				 "li t5, 0xecec000e\n"
+				 "li t6, 0xecec000f\n"
+				 "li ra, 0xecec0010\n"
+				 /* Illegal instruction */
+				 "unimp\n");
 	}
 	zassert_unreachable();
 }
 
 static void test_panic_data(void)
 {
-	if (IS_ENABLED(CONFIG_ARM)) {
-		struct panic_data *const pdata = panic_get_data();
-		int i;
+	struct panic_data *const pdata = panic_get_data();
+	int i;
 
-		LOG_INF("Step 2: Read panic data");
-		for (i = 0; i < ARRAY_SIZE(expected_regs); i++) {
+	LOG_INF("Step 2: Read panic data");
+	for (i = 0; i < ARRAY_SIZE(expected_regs); i++) {
+		if (IS_ENABLED(CONFIG_ARM)) {
 			zassert_equal(expected_regs[i].val,
 				      pdata->cm.regs[expected_regs[i].index]);
+		} else if (IS_ENABLED(CONFIG_RISCV)) {
+			zassert_equal(
+				expected_regs[i].val,
+				pdata->riscv.regs[expected_regs[i].index]);
 		}
 	}
 }
