@@ -18,9 +18,9 @@ properties:
   device_name:
     default: "L26M2PK1"
   ship_mode_reg_addr:
-    default: 0x00
+    default: 0x34
   ship_mode_reg_data:
-    default: [0x0010, 0x0010]
+    default: [0x0000, 0x1000]
   flags:
     default: 0
   fet_reg_addr:
