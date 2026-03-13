@@ -535,3 +535,23 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 
 	return EC_SUCCESS;
 }
+
+void check_bios_crisis_key(void)
+{
+	const uint8_t *state = keyboard_scan_get_state();
+
+	if (state[KEYBOARD_COL_ESC] & BIT(KEYBOARD_ROW_ESC)) {
+		system_enter_manual_recovery();
+		CPRINTS("Detected ESC pressed, trigger BIOS crisis recovery mode");
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, check_bios_crisis_key, HOOK_PRIO_DEFAULT);
+
+void clear_bios_crisis_key(void)
+{
+	if (system_is_manual_recovery()) {
+		system_exit_manual_recovery();
+		CPRINTS("Exit BIOS crisis recovery mode");
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, clear_bios_crisis_key, HOOK_PRIO_DEFAULT);
