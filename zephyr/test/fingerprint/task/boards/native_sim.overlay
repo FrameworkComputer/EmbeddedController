@@ -13,6 +13,7 @@
 	height = <160>; \
 	bits-per-pixel = <8>; \
 	frame-size = <26260>; \
+	image-data-offset-bytes = <0>; \
 	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
 
 /* REAL image is just pixel data (160 * 160) */
@@ -22,6 +23,7 @@
 	bits-per-pixel = <8>; \
 	/* Sensor real image size: (160*160) */ \
 	frame-size = <25600>; \
+	image-data-offset-bytes = <0>; \
 	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
 
 / {
