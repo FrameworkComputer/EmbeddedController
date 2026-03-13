@@ -93,7 +93,7 @@ jobs:
         run: |
           echo "VERSIONINFO=$(date -u +'%Y-%m-%d-%H-%M-%S')_$GITHUB_SHA" >> $GITHUB_ENV
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.platform.name }}.${{ env.VERSIONINFO }}
           path: /${{ matrix.platform.folder }}/ec_home/chromiumos/src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output
@@ -113,7 +113,7 @@ jobs:
       #    cp chroot/usr/lib64/libfmap.so.* src/platform/ec/build/host/util/ || true
       #    cp chroot/usr/lib64/libbrillo-core.so src/platform/ec/build/host/util/ || true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: ${{ matrix.platform.zephyr_ref == 'framework-main' || matrix.platform.zephyr_ref == 'fwk-main' }}
         with:
           name: util_${{ matrix.platform.name }}.${{ env.VERSIONINFO }}
