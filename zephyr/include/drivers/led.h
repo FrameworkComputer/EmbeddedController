@@ -169,24 +169,26 @@ struct led_driver_t {
  * to alter in order to enable the given color.
  */
 struct led_pins_node_t {
-	/*
-	 * Link between color and pins node. Only used to support
-	 * ectool functionality.
-	 */
-	int led_color;
-
-	/*
-	 * Link between color and pins node. Only used to support
-	 * ectool functionality.
-	 */
-	enum ec_led_id led_id;
-
+	/* 4-byte members first */
 	/*
 	 * Pointer to driver-specific pin configuration data used to
 	 * enable a particular color. The underlying driver is responsible
 	 * for casting this to the correct type.
 	 */
 	void *pins;
+
+	/* 1-byte members following */
+	/*
+	 * The color ID this node represents. Only used to support
+	 * ectool functionality.
+	 */
+	uint8_t led_color;
+
+	/*
+	 * The logical LED ID this node belongs to. Only used to support
+	 * ectool functionality.
+	 */
+	enum ec_led_id led_id;
 
 	/* Number of pins per color */
 	uint8_t pins_count;
