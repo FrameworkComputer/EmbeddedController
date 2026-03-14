@@ -467,7 +467,7 @@ int functional_hotkey(uint16_t *key_code, int8_t pressed)
 	return EC_SUCCESS;
 }
 
-enum ec_error_list copiloy_key(uint16_t *key_code, int8_t pressed)
+enum ec_error_list copilot_key(uint16_t *key_code, int8_t pressed)
 {
 	const uint16_t prss_key = *key_code;
 
@@ -511,7 +511,7 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 	if (!*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & ACPI_DRIVER_READY)
 		return EC_SUCCESS;
 
-	r = copiloy_key(make_code, pressed);
+	r = copilot_key(make_code, pressed);
 	if (r != EC_SUCCESS)
 		return r;
 
