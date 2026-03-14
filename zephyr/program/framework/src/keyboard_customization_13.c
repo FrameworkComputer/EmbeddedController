@@ -508,7 +508,7 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 	 * If the system still in preOS then we pass through all events without
 	 * modifying them so that F2/F12 hotkeys can work even with fn-lock
 	 */
-	if (!*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & ACPI_DRIVER_READY)
+	if (!(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & ACPI_DRIVER_READY))
 		return EC_SUCCESS;
 
 	r = copilot_key(make_code, pressed);
