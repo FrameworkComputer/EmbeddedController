@@ -21,7 +21,7 @@
 LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 
 #define GCTRL_IT8XXX2_REG_BASE \
-	((struct gctrl_it8xxx2_regs *)DT_INST_REG_ADDR(0))
+	((struct gctrl_it8xxx2_regs *)DT_REG_ADDR(DT_NODELABEL(gctrl)))
 
 #define WDT_IT8XXX2_REG_BASE \
 	((struct wdt_it8xxx2_regs *)DT_REG_ADDR(DT_NODELABEL(twd0)))
