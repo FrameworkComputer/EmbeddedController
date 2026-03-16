@@ -38,7 +38,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 
 	if ((!extpower_is_present()  || active_power == 0)) {
 		/* DC mode Battery only */
-		pl1_watt = 30;
+		pl1_watt = 35;
 		pl4_watt = 80;
 
 		if (batt_type == FWK_BATT_ATC_75W) {
@@ -54,14 +54,14 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 
 	} else if (batt_status == BP_NO) {
 		/*Standalone mode AC only, ERS does not clearly define ADP wattage*/
-		pl1_watt = 30;
+		pl1_watt = 35;
 		pl2_watt = MAX(40, MIN(60, ((active_power * 60) / 100)));
 		pl4_watt = MIN(80, ((active_power * 95) / 100));
 		psyspl2_watt = ((active_power * 95) / 100);
 
 	} else {
 		/* AC DC mode */
-		pl1_watt = 30;
+		pl1_watt = 35;
 		pl2_watt = 60;
 		pl4_watt = 80;
 
