@@ -59,7 +59,7 @@
 
       build_version = "awawa";
 
-      mkBuild = packages: build:
+      mkBuild = packages: build: version:
         pkgs.stdenv.mkDerivation {
           name = build;
 
@@ -110,7 +110,7 @@
           ZEPHYR_SDK_INSTALL_DIR = "${zephyr-sdk}";
 
           buildPhase = ''
-            ${packages.zmake}/bin/zmake -j8 build --static -t zephyr ${build}
+            ${packages.zmake}/bin/zmake -j8 build --static -t zephyr ${build} -v ${version}
           '';
 
           installPhase = ''
@@ -124,10 +124,10 @@
       formatter = pkgs.alejandra;
 
       packages.default = packages.lotus;
-      packages.lotus = mkBuild packages "lotus";
-      packages.azalea = mkBuild packages "azalea";
-      packages.marigold = mkBuild packages "marigold";
-      packages.lilac = mkBuild packages "lilac";
+      packages.lotus = mkBuild packages "lotus" "0.0.0";
+      packages.azalea = mkBuild packages "azalea" "0.0.0";
+      packages.marigold = mkBuild packages "marigold" "0.0.0";
+      packages.lilac = mkBuild packages "lilac" "0.0.1";
 
       packages.zmake = pythonPkgs.buildPythonPackage {
         name = "zmake";
