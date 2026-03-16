@@ -611,9 +611,9 @@ static int cros_system_xec_hibernate(const struct device *dev, uint32_t seconds,
 static struct cros_system_xec_data cros_system_xec_dev_data;
 
 static const struct cros_system_xec_config cros_system_dev_cfg = {
-	.base_pcr = DT_REG_ADDR_BY_NAME(DT_INST(0, microchip_xec_pcr), pcrr),
-	.base_vbr = DT_REG_ADDR_BY_NAME(DT_INST(0, microchip_xec_pcr), vbatr),
-	.base_wdog = DT_REG_ADDR(DT_INST(0, microchip_xec_watchdog)),
+	.base_pcr = DT_REG_ADDR_BY_NAME(DT_NODELABEL(pcr), pcrr),
+	.base_vbr = DT_REG_ADDR_BY_NAME(DT_NODELABEL(pcr), vbatr),
+	.base_wdog = DT_REG_ADDR(DT_NODELABEL(wdog)),
 };
 
 static DEVICE_API(cros_system, cros_system_driver_xec_api) = {
