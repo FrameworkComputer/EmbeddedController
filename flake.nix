@@ -1,3 +1,10 @@
+# nix run .#uut -- --port /dev/ttyACM0 --opr wr --addr 0x200c3020 --file (nix build .#lilac --print-out-paths)/npcx_monitor.bin
+# nix run .#uut -- --port /dev/ttyACM0 --opr wr --auto --addr 0x0000 --file (nix build .#lilac --print-out-paths)/ec.bin
+
+# Flash RO only (offset 0x0)
+# uut --auto --offset 0 --port /dev/ttyACMx --file ec_ro.bin
+# Flash RW only (offset 0x40000)
+# uut --auto --offset 0x40000 --port /dev/ttyACMx --file ec_rw.bin
 {
   description = "Framework Laptop Embedded Controller (EC) build environment";
 
@@ -133,6 +140,39 @@
       packages.azalea = mkBuild packages "azalea" "0.0.0";
       packages.marigold = mkBuild packages "marigold" "0.0.0";
       packages.lilac = mkBuild packages "lilac" "0.0.1";
+
+      packages.uut = pkgs.stdenv.mkDerivation {
+        pname = "uut";
+        version = "2.0.1";
+        src = "${ec}/util/uut";
+
+        preBuild = ''
+          mkdir -p include
+          cp ${ec}/util/misc_util.h include/misc_util.h
+          cp ${ec}/include/compile_time_macros.h include/compile_time_macros.h
+        '';
+
+        buildPhase = ''
+          runHook preBuild
+          $CXX -std=c++17 -O2 -Wall \
+            -I. -Iinclude \
+            -o uut \
+            main.cc cmd.cc l_com_port.cc lib_crc.cc opr.cc
+          runHook postBuild
+        '';
+
+        installPhase = ''
+          mkdir -p $out/bin
+          cp uut $out/bin/
+        '';
+
+        meta = with pkgs.lib; {
+          description = "UART Update Tool for ChromiumOS EC (NPCX chips)";
+          license = licenses.bsd3;
+          platforms = platforms.linux;
+          mainProgram = "uut";
+        };
+      };
 
       packages.zmake = pythonPkgs.buildPythonPackage {
         name = "zmake";
