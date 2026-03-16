@@ -413,6 +413,13 @@ __override_proto void board_pchg_power_on(int port, bool on);
 __override_proto void board_pchg_full_strategy(void);
 
 /**
+ * setting pchg board charge strategy
+ *
+ * @param port  Port number of the PCHG charger.
+ */
+__override_proto void board_pchg_end_strategy(void);
+
+/**
  * pchg_get_battery_percent - Get the current battery percentage of a PCHG port.
  *
  * @port: The PCHG port index.
