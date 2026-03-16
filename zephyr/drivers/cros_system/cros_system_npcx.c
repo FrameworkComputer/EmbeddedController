@@ -663,10 +663,9 @@ cros_system_npcx_deep_sleep_ticks(const struct device *dev)
 static struct cros_system_npcx_data cros_system_npcx_dev_data;
 
 static const struct cros_system_npcx_config cros_system_dev_cfg = {
-	.base_scfg = DT_REG_ADDR(DT_INST(0, nuvoton_npcx_scfg)),
-	.base_twd = DT_REG_ADDR(DT_INST(0, nuvoton_npcx_watchdog)),
-	.base_mswc =
-		DT_REG_ADDR_BY_NAME(DT_INST(0, nuvoton_npcx_host_sub), mswc),
+	.base_scfg = DT_REG_ADDR(DT_NODELABEL(scfg)),
+	.base_twd = DT_REG_ADDR(DT_NODELABEL(twd0)),
+	.base_mswc = DT_REG_ADDR_BY_NAME(DT_NODELABEL(host_sub), mswc),
 };
 
 static DEVICE_API(cros_system, cros_system_driver_npcx_api) = {
