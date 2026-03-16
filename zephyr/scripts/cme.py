@@ -105,7 +105,12 @@ def parse_args(argv: Optional[List[str]] = None):
     parser.add_argument(
         "-v",
         "--version",
-        help="Base version string to use in build",
+        help="EC version string to use in build",
+    )
+
+    parser.add_argument(
+        "--cme-version",
+        help="CME version string to use in build",
     )
 
     parser.add_argument(
@@ -764,7 +769,7 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
             version=args.version,
             static=args.static_version,
         )
-    manifest = Manifest(args.version, ec_version_string)
+    manifest = Manifest(args.cme_version, ec_version_string)
 
     ret = iterate_usbc_components(edtlib, edt, i2c_portmap, manifest)
     if ret != 0:
