@@ -28,6 +28,7 @@
   }:
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = import nixpkgs {inherit system;};
+      lib = pkgs.lib;
 
       zephyr-sdk = zephyr-nix.packages.${system}.sdk-0_16.override {targets = ["arm-zephyr-eabi"];};
 
@@ -49,7 +50,12 @@
         sed -e 's/dynamic = "license"/dynamic = ["license"]/' -i pyproject.toml
       '';
 
-      ec = ./.;
+      ec = lib.cleanSourceWith {
+        src = ./.;
+        filter = path: type:
+          let name = baseNameOf (toString path);
+          in !(lib.hasSuffix ".nix" name) && name != "flake.lock" && name != "result";
+      };
 
       build_version = "awawa";
 
