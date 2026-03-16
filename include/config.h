@@ -557,6 +557,11 @@
 #define CONFIG_BATTERY_INIT_TYPE_RETRY_COUNT 0
 
 /*
+ * Number of deferred retries when initializing the battery type.
+ */
+#define CONFIG_BATTERY_INIT_TYPE_DEFERRED_RETRY_COUNT 0
+
+/*
  * Critical battery shutdown timeout (seconds)
  *
  * If the battery is at extremely low charge (and discharging) or extremely
