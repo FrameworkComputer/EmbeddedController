@@ -116,6 +116,11 @@
           installPhase = ''
             mkdir $out
             cp src/platform/ec/build/zephyr/${build}/output/* $out/
+            cp src/platform/ec/build/zephyr/${build}/packer/zephyr_ro.bin $out/
+            cp src/platform/ec/build/zephyr/${build}/packer/zephyr_rw.bin $out/
+            # Extract RO and RW sections from ec.bin with FRID/FWID intact
+            dd if=$out/ec.bin of=$out/ec_ro.bin bs=256K count=1
+            dd if=$out/ec.bin of=$out/ec_rw.bin bs=1 skip=$((0x40000)) count=$((0x3F000))
           '';
 
           dontFixup = true;
