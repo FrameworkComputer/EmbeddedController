@@ -5,6 +5,7 @@
 
 #include <zephyr/init.h>
 #include "gpio/gpio_int.h"
+#include "board_host_command.h"
 #include "chipset.h"
 #include "console.h"
 #include "diagnostics.h"
@@ -21,34 +22,49 @@ LOG_MODULE_REGISTER(inputmodule, LOG_LEVEL_INF);
 
 #define INPUT_MODULE_POLL_INTERVAL (10 * MSEC)
 
+static int detect_mode;
+static int touchpad_id;
 enum input_deck_state deck_state;
+
+void set_detect_mode(int mode)
+{
+	detect_mode = mode;
+}
+
+int get_detect_mode(void)
+{
+	return detect_mode;
+}
 
 static void board_input_module_init(void)
 {
-	deck_state = DECK_OFF;
+	if (detect_mode == 0x02)
+		deck_state = DECK_FORCE_ON;
+	else if (detect_mode == 0x04)
+		deck_state = DECK_FORCE_OFF;
+	else
+		deck_state = DECK_OFF;
 }
 DECLARE_HOOK(HOOK_INIT, board_input_module_init, HOOK_PRIO_DEFAULT + 2);
 
 bool input_c_deck_detect(void)
 {
-	int touchpad;
-
 	if (get_standalone_mode())
 		return true;
 
 	if (gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_module_power)) == 0) {
 		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_tp_board_id_detect), 1);
 
-		touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
+		touchpad_id = get_hardware_id(ADC_TOUCHPAD_ID);
 
 		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_tp_board_id_detect), 0);
 
-		if (touchpad > BOARD_VERSION_10)
+		if (touchpad_id > BOARD_VERSION_10)
 			return false;
 	} else {
-		touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
+		touchpad_id = get_hardware_id(ADC_TOUCHPAD_ID);
 
-		if (touchpad < BOARD_VERSION_1)
+		if (touchpad_id < BOARD_VERSION_1)
 			return false;
 	}
 
@@ -116,6 +132,48 @@ void input_c_deck_powerdown(void)
 	hook_call_deferred(&poll_c_deck_data, -1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, input_c_deck_powerdown, HOOK_PRIO_DEFAULT);
+
+int get_deck_state(void)
+{
+	return deck_state;
+}
+
+/* Host command */
+static enum ec_status check_deck_state(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_deck_state *p = args->params;
+	struct ec_response_deck_state *r = args->response;
+
+	if ((get_detect_mode() != p->mode) && (p->mode != 0x00)) {
+		/* set mode */
+		if (p->mode == 0x01) {
+			deck_state = DECK_DISCONNECTED;
+			gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_module_power), 0);
+		} else if (p->mode == 0x02) {
+			deck_state = DECK_FORCE_ON;
+			gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_module_power), 1);
+		} else if (p->mode == 0x04) {
+			deck_state = DECK_FORCE_OFF;
+			gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_module_power), 0);
+		}
+
+		set_detect_mode(p->mode);
+	}
+
+	/* return deck status */
+	memset(r->input_deck_board_id, 0, sizeof(r->input_deck_board_id));
+
+	/* Save touchpad board ID into index 5 - matching lotus/tulip TOUCHPAD mux position */
+	/* Re-use ID from polling loop instead of reading it here */
+	r->input_deck_board_id[5] = (uint8_t)touchpad_id;
+
+	r->deck_state = deck_state;
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CHECK_DECK_STATE, check_deck_state, EC_VER_MASK(0));
 
 /* EC console command */
 static int inputdeck_cmd(int argc, const char **argv)
