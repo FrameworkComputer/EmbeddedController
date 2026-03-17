@@ -10,6 +10,7 @@
 #include "common.h"
 #include "extpower.h"
 #include "gpio.h"
+#include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "power/qcom.h"
 
@@ -21,6 +22,16 @@ void board_chipset_startup(void)
 	extpower_update_host_events(gpio_get_level(GPIO_AC_PRESENT));
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
+
+static void enable_acok_passthru_interrupt(void)
+{
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_acok_passthru));
+
+	/* Initial update of the passthru signal */
+	if (!chipset_in_state(CHIPSET_STATE_HARD_OFF))
+		passthru_ac_on_to_pmic();
+}
+DECLARE_HOOK(HOOK_INIT, enable_acok_passthru_interrupt, HOOK_PRIO_DEFAULT);
 
 void passthru_lid_open_to_pmic(void)
 {
