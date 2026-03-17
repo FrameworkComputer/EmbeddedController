@@ -105,7 +105,7 @@ endif()
 if(DEFINED CONFIG_BOARD_AZALEA)
 	project(azalea)
 	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_AZALEA include)
-	zephyr_include_directories("include/azalea")
+	zephyr_include_directories("include/framework13")
 	zephyr_library_sources(
 			"src/battery_13.c"
 			"src/ucsi_port_13.c"
@@ -143,7 +143,7 @@ if(DEFINED CONFIG_BOARD_MARIGOLD OR DEFINED CONFIG_BOARD_SAKURA)
 		zephyr_library_sources("sakura/src/cpu_power.c")
 		zephyr_library_sources("sakura/src/led.c")
 	endif()
-	zephyr_include_directories("include/marigold")
+	zephyr_include_directories("include/framework13")
 	zephyr_library_sources(
 			"src/battery_13.c"
 			"src/battery_present_adc.c"
