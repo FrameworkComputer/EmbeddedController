@@ -116,9 +116,8 @@ static void pchg_policy(void)
 	if (chipset_state == POWER_S0) {
 		if (pchg_low_power_mode == true) {
 			pchg_low_power_mode = false;
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pen_dis),
-					1);
 			ccprints("pchg: resume from low power (S0)");
+			pchg_startup();
 		}
 	} else if (chipset_state == POWER_S3) {
 		if (pchg_get_battery_percent(0) >= 100) {
