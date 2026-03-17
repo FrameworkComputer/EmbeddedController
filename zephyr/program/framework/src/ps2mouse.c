@@ -421,7 +421,7 @@ void setup_touchpad(void)
 			TOUCHPAD_I2C_HID_EP | I2C_FLAG_ADDR16_LITTLE_ENDIAN, PCT3854_COMMAND,
 			(void *)cmd, ARRAY_SIZE(cmd) * sizeof(uint16_t));
 	if (rv == EC_SUCCESS) {
-		CPRINTS("Touchpad detected!");
+		CPRINTS("Touchpad detected! (Switched from PTP to Mouse mode)");
 	}
 }
 
