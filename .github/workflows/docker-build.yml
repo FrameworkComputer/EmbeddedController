@@ -1,0 +1,40 @@
+name: Build EC firmware with Docker
+
+on:
+  push:
+    branches:
+      - fwk*
+      - pr-*
+      - test-*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/johnazoidberg/ec-builder:fwk-main
+    strategy:
+      matrix:
+        platform: [
+          { name: sakura, ver: "0.0.0" },
+          # { name: tulip, ver: "0.0.0" },
+          # { name: marigold, ver: "0.0.0" },
+          # { name: lotus, ver: "0.0.0" },
+          # { name: azalea, ver: "0.0.0" },
+        ]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build ${{ matrix.platform.name }}
+        run: docker-entrypoint.sh ${{ matrix.platform.name }} ${{ matrix.platform.ver }}
+
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/johnazoidberg/ec-builder:fwk-main
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run twister tests
+        env:
+          ZEPHYR_TOOLCHAIN_VARIANT: host
+        run: docker-entrypoint.sh test -v -T zephyr/test/framework
