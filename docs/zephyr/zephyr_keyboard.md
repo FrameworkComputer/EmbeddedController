@@ -51,7 +51,8 @@ Few extra properties are available to fine tune the keyboard scanning algorithm
 
 Property | Description | Settings
 :------- | :---------- | :-------
-`poll-period-ms` |  Defines the poll period in milliseconds between between matrix scans. | `int` (default 5)
+`poll-period-us` |  Defines the poll period in microseconds between between matrix scans. | `int` (default 5000)
+`stable-poll-period-us` |  Defines the poll period in microseconds between between matrix scans when the matrix is stable. | `int` (default not set)
 `poll-timeout-ms` | How long to wait before going from polling back to idle state. | `int` (default 100)
 `debounce-down-ms` | Debouncing time for a key press event. | `int` (default 10)
 `debounce-up-ms` | Debouncing time for a key release event. | `int` (default 20)
