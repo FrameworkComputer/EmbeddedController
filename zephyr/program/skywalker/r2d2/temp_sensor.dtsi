@@ -1,0 +1,30 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include <cros/thermistor/thermistor.dtsi>
+
+/ {
+	temp_charger: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&adc_temp_sensor1>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		charger {
+			temp-host-warn = <90>;
+			temp-host-high = <95>;
+			temp-host-halt = <105>;
+			temp-host-release-warn = <89>;
+			temp-host-release-high = <90>;
+			temp-host-release-halt = <100>;
+			sensor = <&temp_charger>;
+		};
+	};
+};
+
+&thermistor_3V3_100K_100K_4250B {
+	status = "okay";
+};

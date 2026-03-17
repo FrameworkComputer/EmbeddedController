@@ -1,0 +1,108 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/cbi_flash.dtsi>
+#include <cros/thermistor/thermistor.dtsi>
+#include "../npcx_generated.dtsi"
+#include "../interrupts.dtsi"
+#include "../npcx_common.dtsi"
+#include "../npcx_default_gpio_pinctrl.dtsi"
+#include "../npcx_keyboard.dtsi"
+#include "../npcx_overlay.dtsi"
+#include "../power_signal.dtsi"
+#include "../npcx_usbc.dtsi"
+#include "../usba.dtsi"
+#include "temp_sensor.dtsi"
+//#include "cbi.dtsi"
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
+#include "motionsense.dtsi"
+
+/ {
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+		int_lid_accel: lid-accel {
+			irq-pin = <&gpio_lid_accel_int_ec_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lis2dw12_interrupt";
+		};
+		int_imu: ec-imu {
+			irq-pin = <&gpio_imu_int_ec_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lsm6dso_interrupt";
+		};
+		int_pen_fault: pen_fault {
+			irq-pin = <&pen_fault_od>;
+			flags = <GPIO_INT_EDGE_RISING>;
+			handler = "pen_fault_interrupt";
+		};
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+		/delete-node/ en_usb_c0_dev_mode;
+		/delete-node/ usb_c1_dp_hpd;
+		/delete-node/ dp_aux_path_sel;
+
+		usb_a0_fault_odl: usb_a0_fault_odl {
+			gpios = <&gpiof 2 GPIO_INPUT>;
+		};
+		pen_fault_od: pen_fault_od {
+			gpios = <&gpiof 3 (GPIO_INPUT | GPIO_ACTIVE_HIGH)>;
+		};
+		ec_pen_chg_dis_odl: ec_pen_chg_dis_odl {
+ 			gpios = <&gpioe 4 GPIO_ODR_HIGH>;
+		};
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpioc 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpiob 7 GPIO_INPUT_PULL_DOWN>,
+			<&gpio7 2 GPIO_INPUT_PULL_DOWN>;
+	};
+
+	batteries {
+		default_battery: SIMPLO_CP856931 {
+			compatible = "SIMPLO,CP856931", "battery-smart";
+		};
+		SIMPLO_CP856932 {
+			compatible = "SIMPLO,CP856932", "battery-smart";
+		};
+	};
+
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+		actual-key-mask = <
+			0x08	/* C0 */
+			0xff	/* C1 */
+			0xff	/* C2 */
+			0xff	/* C3 */
+			0xff	/* C4 */
+			0xff	/* C5 */
+			0xff	/* C6 */
+			0xa1	/* C7 */
+			0xff	/* C8 */
+			0xfa	/* C9 */
+			0x01	/* C10 */
+			0xf6	/* C11 */
+			0xca	/* C12 */
+			0x40	/* C13 */
+			0x0a	/* C14 */
+			0x40	/* C15 */
+			0x01	/* C16 */
+			0x44	/* C17 */
+		>;
+	};
+
+	usbc {
+		/delete-node/ port1@1;
+	};
+};
+
+&i2c1_0 {
+	/delete-node/ rts54-pdc@67;
+};

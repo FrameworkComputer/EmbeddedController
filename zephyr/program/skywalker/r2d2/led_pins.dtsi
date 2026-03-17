@@ -1,0 +1,100 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/*
+	 * The hardware design sets:
+	 * - PWM0(GPIO) as the white light for Power LED
+	 * - PWM1 as the amber light for Charge LED (charging with no near full)
+	 * - PWM2 as the white light for Charge LED (charging with near full or no charging)
+	 */
+	pwmleds {
+		compatible = "pwm-leds";
+		led_power_white: ec_led1_odl {
+			pwms = <&pwm0 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
+		led_battery_amber: ec_led2_odl {
+			pwms = <&pwm1 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
+		led_battery_white: ec_led3_odl {
+			pwms = <&pwm2 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
+	};
+
+	led_pins: pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+
+		power_led: power-led {
+			led-id = "EC_LED_ID_POWER_LED";
+			led-pwms = <&led_power_white>;
+
+			power_led_off: color-power-off {
+				led-color = "LED_OFF";
+				led-values = <0>;
+			};
+
+			power_led_white: color-power-white {
+				led-color = "LED_WHITE";
+				led-values = <100>;
+			};
+		};
+
+		battery_led: battery-led {
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pwms = <&led_battery_amber &led_battery_white>;
+
+			battery_led_off: color-battery-off {
+				led-color = "LED_OFF";
+				led-values = <0 0>;
+			};
+
+			battery_led_amber: color-amber {
+				led-color = "LED_AMBER";
+				led-values = <100 0>;
+			};
+
+			battery_led_white: color-white {
+				led-color = "LED_WHITE";
+				led-values = <0 100>;
+			};
+		};
+	};
+};
+
+/* White LED for Power LED */
+&pwm0_gpc3 {
+	drive-open-drain;
+};
+
+&pwm0 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm0_gpc3>;
+	pinctrl-names = "default";
+};
+
+/* Amber LED for Charge LED */
+&pwm1_gpc2 {
+	drive-open-drain;
+};
+
+&pwm1 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm1_gpc2>;
+	pinctrl-names = "default";
+};
+
+/* White LED for Charge LED */
+&pwm2_gpc4 {
+	drive-open-drain;
+};
+
+&pwm2 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm2_gpc4>;
+	pinctrl-names = "default";
+};

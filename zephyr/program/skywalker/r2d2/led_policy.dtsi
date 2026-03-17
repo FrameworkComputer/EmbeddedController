@@ -1,0 +1,146 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/battery.h>
+
+/ {
+
+	led_colors: led-colors {
+		compatible = "cros-ec,led-policy";
+		led-pins = <&led_pins>;
+
+		pwr-power-state-on {
+			chipset-state = "POWER_S0";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				color-0 {
+					led-color = <&power_led_white>;
+				};
+			};
+		};
+
+		pwr-power-state-s3 {
+			chipset-state = "POWER_S3";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				color-0 {
+					led-color = <&power_led_white>;
+					period-ms = <500>;
+				};
+
+				color-1 {
+					led-color = <&power_led_off>;
+					period-ms = <2500>;
+				};
+			};
+		};
+
+		pwr-power-state-off {
+			chipset-state = "POWER_S5";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = <&power_led_off>;
+				};
+			};
+		};
+
+		bat-state1-charge {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery display percent range (>= 0, <= 89%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 89>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_amber>;
+				};
+			};
+		};
+
+		bat-state2-charge {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery display percent range (>= 90, <= 100) */
+			batt-lvl = <90 100>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_white>;
+				};
+			};
+		};
+
+		bat-state-charge-near-full {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_white>;
+				};
+			};
+		};
+
+		bat-state-discharge {
+			charge-state = "LED_PWRS_DISCHARGE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_off>;
+				};
+			};
+		};
+
+		bat-state-error {
+			charge-state = "LED_PWRS_ERROR";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_amber>;
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = <&battery_led_off>;
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		bat-state-idle {
+			charge-state = "LED_PWRS_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_white>;
+				};
+			};
+		};
+
+		bat-state-forced-idle {
+			charge-state = "LED_PWRS_FORCED_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = <&battery_led_amber>;
+					period-ms = <2000>;
+				};
+				color-1 {
+					led-color = <&battery_led_white>;
+					period-ms = <2000>;
+				};
+			};
+		};
+	};
+};
