@@ -1,0 +1,43 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_temp_vr: vr-temp {
+			enum-name = "ADC_TEMP_SENSOR_PP3300_REGULATOR";
+			io-channels = <&adc0 0>;
+		};
+		adc_temp_ambient: ambient-therm-in0 {
+			enum-name = "ADC_TEMP_SENSOR_2_AMBIENT";
+			io-channels = <&adc0 1>;
+		};
+		adc_charger_amon_bmon: c-charger-amon {
+			enum-name = "ADC_AMON_BMON";
+			io-channels = <&adc0 2>;
+		};
+		adc_temp_skin: skin-therm-in {
+			enum-name = "ADC_TEMP_SENSOR_4";
+			io-channels = <&adc0 3>;
+		};
+		adc_temp_ddr_soc: ddr-therm-in {
+			enum-name = "ADC_TEMP_SENSOR_1_DDR_SOC";
+			io-channels = <&adc0 6>;
+		};
+	};
+};
+
+&adc0 {
+	compatible = "realtek,rts5912-adc";
+	status= "okay";
+	pinctrl-0 = <&adc0_gpio074
+		&adc1_gpio075
+		&adc2_gpio076
+		&adc3_gpio077
+		&adc6_gpio080
+	>;
+	pinctrl-names = "default";
+};

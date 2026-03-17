@@ -1,0 +1,26 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* In the board-specific overlay, apply the `tach_fan0` nodelabel to the
+ * appropriate tachometer node, apply the `gpio_fan_control` and
+ * `all_sys_pwr_good` labels to the appropriate named-gpio nodes, and set
+ * the fan node's `pwms` property.
+ */
+
+/ {
+	fans {
+		compatible = "cros-ec,fans";
+		fan_0: fan-0 {
+			/* Provide pwms in board overlay */
+			tach = <&tach_fan0>;
+			rpm-min = <3000>;
+			rpm-start = <3000>;
+			rpm-max = <9000>;
+			rpm-deviation = <1>;
+			pgood-gpio = <&all_sys_pwrgd>;
+			enable-gpio = <&gpio_fan_control>;
+		};
+	};
+};
