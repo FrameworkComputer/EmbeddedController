@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
- #define EGIG630_DEFAULT_IMAGE_PROPS \
+#define EGIG630_DEFAULT_IMAGE_PROPS \
 	width = <80>; \
 	height = <64>; \
 	bits-per-pixel = <8>; \
