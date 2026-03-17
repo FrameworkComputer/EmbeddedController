@@ -65,3 +65,8 @@
 &power_ctrl_psl {
 	enable-gpios = <&gpio8 5 0>;
 };
+
+&kbd {
+	poll-period-us = <3000>;
+	stable-poll-period-us = <9000>;
+};
