@@ -204,6 +204,12 @@ config BOARD_EPIC
 	  Build Google Epic reference board. Epic has Intel TWL SoC
 	  with IT81302 EC.
 
+config BOARD_DIRKSON
+	bool "Google Dirkson Board"
+	help
+	  Build Google Dirkson reference board. Dirkson has Intel TWL SoC
+	  with IT81302 EC.
+
 module = NISSA
 module-str = Nissa board-specific code
 source "subsys/logging/Kconfig.template.log_config"

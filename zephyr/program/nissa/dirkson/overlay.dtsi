@@ -1,0 +1,260 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/usb_pd_tcpm.h>
+
+/ {
+	aliases {
+		gpio-cbi-wp = &gpio_ec_cbi_wp;
+		gpio-wp = &gpio_ec_wp_odl;
+	};
+
+	ec-console {
+		compatible = "ec-console";
+		disabled = "events", "lpc", "hostcmd";
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_power_button: power_button {
+			irq-pin = <&gpio_gsc_ec_pwr_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+		int_usb_c0: usb_c0 {
+			irq-pin = <&gpio_usb_c0_fault_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "syv682x_interrupt";
+		};
+		int_rec_button: rec_button {
+			irq-pin = <&gpio_ec_rec_btn_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
+		int_bj_adp_present: bj_adp_present {
+			irq-pin = <&gpio_bj_adp_present>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "adp_connect_interrupt";
+		};
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios = <&gpioc 3 0>,
+			       <&gpiod 4 0>,
+			       <&gpiod 7 0>,
+			       <&gpioe 6 0>,
+			       <&gpioh 2 0>,
+			       <&gpioh 4 0>,
+			       <&gpioh 6 0>,
+			       <&gpioi 6 0>,
+			       <&gpioj 1 0>,
+			       <&gpioj 7 0>,
+			       <&gpiok 3 0>;
+	};
+
+	temp_memory: memory {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_1>;
+	};
+	temp_charger: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_2>;
+	};
+	temp_ambient: ambient {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_3>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		memory {
+			temp-host-high = <90>;
+			temp-host-halt = <100>;
+			temp-host-release-high = <85>;
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_memory>;
+		};
+		charger {
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_charger>;
+		};
+		ambient {
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_ambient>;
+		};
+	};
+
+	usba {
+		compatible = "cros-ec,usba-port-enable-pins";
+
+		enable-pins = <&gpio_en_usb_a0_vbus
+			       &gpio_en_usb_a1_vbus
+			       &gpio_en_usb_a2_vbus
+			       &gpio_en_usb_a3_vbus
+			       &gpio_en_usb_a4_vbus>;
+		status = "okay";
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			tcpc = <&usbpd0>;
+			ppc = <&ppc_port0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+		};
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+
+	cec {
+		compatible = "cros-ec,cec";
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cec0@0 {
+			compatible = "cros-ec,cec-it83xx";
+			reg = <0>;
+		};
+
+		cec1@1 {
+			compatible = "cros-ec,cec-bitbang";
+			reg = <1>;
+			gpio-out = <&gpio_hdmi2_cec>;
+			gpio-in = <&gpio_hdmi2_cec_in>;
+			gpio-pull-up = <&gpio_hdmi2_cec_pull_up>;
+		};
+	};
+
+	cec-policy {
+		compatible = "cros-ec,cec-policy";
+		cec_policy_1 {
+			command = "CEC_MSG_ACTIVE_SOURCE";
+			action = "CEC_ACTION_POWER_BUTTON";
+		};
+		cec_policy_2 {
+			command = "CEC_MSG_TEXT_VIEW_ON";
+			action = "CEC_ACTION_POWER_BUTTON";
+		};
+		cec_policy_3 {
+			command = "CEC_MSG_IMAGE_VIEW_ON";
+			action = "CEC_ACTION_POWER_BUTTON";
+		};
+		cec_policy_4 {
+			command = "CEC_MSG_SET_STREAM_PATH";
+			action = "CEC_ACTION_POWER_BUTTON";
+		};
+	};
+};
+
+&gpio_vccin_aux_vid0 {
+	gpios = <&gpiod 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+};
+&gpio_vccin_aux_vid1 {
+	gpios = <&gpiok 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+};
+
+&gpio_ec_prochot_odl {
+	gpios = <&gpioi 1 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
+};
+
+&thermistor_3V3_51K1_47K_4050B {
+	status = "okay";
+};
+
+&adc_ec_vsense_pp3300_s5 {
+	/*
+	 * Voltage divider on input has 47k upper and 220k lower legs with 3 V
+	 * full-scale reading on the ADC. Apply the largest possible multiplier
+	 * (without overflowing int32) to get the best possible approximation
+	 * of the actual ratio, but derate by a factor of two to ensure
+	 * unexpectedly high values won't overflow.
+	 */
+	mul = <(715828 / 2)>;
+	div = <(589820 / 2)>;
+};
+
+&adc_vbus {
+	/* 113/1113 voltage divider */
+	mul = <1113>;
+	div = <113>;
+};
+
+&adc0 {
+	pinctrl-0 = <&adc0_ch0_gpi0_default
+		     &adc0_ch2_gpi2_default
+		     &adc0_ch3_gpi3_default
+		     &adc0_ch13_gpl0_default
+		     &adc0_ch14_gpl1_default>;
+	pinctrl-names = "default";
+};
+
+&i2c0 {
+	label = "I2C_EEPROM";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+	pinctrl-0 = <&i2c0_clk_gpb3_default
+		     &i2c0_data_gpb4_default>;
+	pinctrl-names = "default";
+};
+
+&i2c4 {
+	label = "I2C_USB_A4_RT";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+	pinctrl-0 = <&i2c4_clk_gpe0_default
+		     &i2c4_data_gpe7_default>;
+	pinctrl-names = "default";
+};
+
+&i2c5 {
+	label = "I2C_USB_C0_TCPC";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+	pinctrl-0 = <&i2c5_clk_gpa4_default
+		     &i2c5_data_gpa5_default>;
+	pinctrl-names = "default";
+
+	ppc_port0: ppc_syv@40 {
+		compatible = "silergy,syv682x";
+		reg = <0x40>;
+		frs_en_gpio = <&gpio_ec_usb_c0_frs_en>;
+		irq-gpios = <&gpiok 0 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&usbpd0 {
+	status = "okay";
+};
+
+&counter0 {
+	status = "okay";
+};
+
+&cros_cec {
+	status = "okay";
+};

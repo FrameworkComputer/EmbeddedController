@@ -412,3 +412,14 @@ if(CONFIG_SOC_IT8XXX2_KERNEL_IN_RAM AND CONFIG_KERNEL_NO_LTO)
 		COMPILE_FLAGS $<TARGET_PROPERTY:compiler,optimization_lto>
 	)
 endif()
+if(DEFINED CONFIG_BOARD_DIRKSON)
+	project(dirkson)
+	zephyr_include_directories("dirkson/include")
+	zephyr_library_sources(
+			"dirkson/src/barrel_jack.c"
+			"dirkson/src/led.c"
+			"dirkson/src/hdmi.c"
+			"dirkson/src/thermal.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "dirkson/src/usbc.c")
+endif()

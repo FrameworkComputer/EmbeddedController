@@ -1,0 +1,178 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/pwm/pwm.h>
+#include <it8xxx2_emul.dts>
+
+/ {
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_vbus: vbus {
+			enum-name = "ADC_VBUS";
+			io-channels = <&adc0 4>;
+		};
+		adc_ppvar_pwr_in: adc_ppvar_pwr_in {
+			enum-name = "ADC_PSYS";
+			io-channels = <&adc0 16>;
+		};
+		adc_temp_sensor_3: temp_sensor_3 {
+			enum-name = "ADC_TEMP_SENSOR_3";
+			io-channels = <&adc0 13>;
+		};
+	};
+
+	zephyr,user {
+		io-channels = <&adc0 15>;
+		io-channel-names = "PPVAR_PWR_IN_IMON";
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_ec_entering_rw: ec_entering_rw {
+			gpios = <&gpioc 7 GPIO_OUTPUT>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		gpio_usb_c0_fault_l: usb_c0_fault_l {
+			gpios = <&gpiok 0 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_bj_adp_present: bj_adp_present {
+			gpios = <&gpioa 7 GPIO_INPUT>;
+		};
+		gpio_en_ppvar_bj_adp_od: en_ppvar_bj_adp_od {
+			gpios = <&gpioe 3 GPIO_OUTPUT>;
+		};
+		gpio_ec_soc_dsw_pwrok: ec_soc_dsw_pwrok {
+			gpios = <&gpiol 7 GPIO_INPUT>;
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_usb_c0: usb_c0 {
+			irq-pin = <&gpio_usb_c0_fault_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "syv682x_interrupt";
+		};
+		int_bj_adp_present: bj_adp_present {
+			irq-pin = <&gpio_bj_adp_present>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "adp_connect_interrupt";
+		};
+	};
+
+	temp_ambient: ambient {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_3>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		ambient {
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_ambient>;
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_usb_c0: ec_i2c_usb_c0 {
+			i2c-port = <&i2c2>;
+			enum-names = "I2C_PORT_USB_C0";
+		};
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			tcpc = <&tcpci_emul_0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+		};
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+
+	led-pwms {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		pwm1: pwm@1 {
+			compatible = "cros,pwm-mock";
+			reg = <1 1>;
+			#pwm-cells = <3>;
+		};
+		pwm2: pwm@2 {
+			compatible = "cros,pwm-mock";
+			reg = <2 1>;
+			#pwm-cells = <3>;
+		};
+	};
+
+	pwmleds {
+		compatible = "pwm-leds";
+		pwm_pwr_red_led: pwm_pwr_red_led {
+			pwms = <&pwm1 1 PWM_HZ(2000) PWM_POLARITY_INVERTED>;
+		};
+		pwm_pwr_blue_led: pwm_pwr_blue_led {
+			pwms = <&pwm2 2 PWM_HZ(2000) PWM_POLARITY_INVERTED>;
+		};
+	};
+
+	cros-pwmleds {
+		compatible = "cros-ec,pwm-leds";
+
+		leds = <&pwm_pwr_red_led>;
+		leds = <&pwm_pwr_blue_led>;
+	};
+
+	led_pins: pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+
+		power_led: power-led {
+			led-id = "EC_LED_ID_POWER_LED";
+			led-pwms = <&pwm_pwr_red_led &pwm_pwr_blue_led>;
+
+			power_led_off: color-power-off {
+				led-color = "LED_OFF";
+				led-values = <0 0>;
+			};
+
+			power_led_red: color-power-red {
+				led-color = "LED_RED";
+				led-values = <100 0>;
+			};
+
+			power_led_blue: color-power-blue {
+				led-color = "LED_BLUE";
+				led-values = <0 100>;
+			};
+		};
+	};
+};
+
+&i2c4 {
+	tcpci_emul_0: tcpci_emul@82 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x82>;
+	};
+};
+
+&thermistor_3V3_51K1_47K_4050B  {
+	status = "okay";
+};

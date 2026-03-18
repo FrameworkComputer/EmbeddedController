@@ -410,6 +410,19 @@ if(CONFIG_TEST_NISSA_MELIKS)
     )
 endif()
 
+if(CONFIG_TEST_NISSA_DIRKSON)
+    zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/nissa/dirkson/include")
+    target_sources(
+            app PRIVATE
+            src/dirkson.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/dirkson/src/barrel_jack.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/dirkson/src/led.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/dirkson/src/hdmi.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/dirkson/src/thermal.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/dirkson/src/usbc.c
+    )
+endif()
+
 target_sources_ifdef(
         CONFIG_TEST_EPIC_SUB_BOARD
         app PRIVATE
