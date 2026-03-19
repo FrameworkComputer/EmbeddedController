@@ -35,10 +35,8 @@ static void test_check_all_now_in_rw(void)
 	zassert_equal(system_get_image_copy(), EC_IMAGE_RW,
 		      "Not in RW after reboot");
 	LOG_INF("Rebooted to RW");
-#ifndef CONFIG_CROS_FLASH_NPCX
 	zassert_equal(crec_flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW,
 		      EC_FLASH_PROTECT_ALL_NOW, "ALL_NOW not set after reboot");
-#endif
 	LOG_INF("ALL_NOW set in RW, rebooting to RO");
 	cflush();
 	system_reset(SYSTEM_RESET_STAY_IN_RO);

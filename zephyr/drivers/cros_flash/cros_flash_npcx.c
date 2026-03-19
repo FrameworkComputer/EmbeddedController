@@ -7,6 +7,7 @@
 
 #include "../drivers/flash/spi_nor.h"
 #include "flash.h"
+#include "hooks.h"
 #include "spi_flash_reg.h"
 #include "system.h"
 #include "watchdog.h"
@@ -816,3 +817,16 @@ static struct cros_flash_npcx_data cros_flash_data;
 DEVICE_DT_INST_DEFINE(0, flash_npcx_init, NULL, &cros_flash_data, NULL,
 		      POST_KERNEL, CONFIG_CROS_FLASH_INIT_PRIORITY,
 		      &cros_flash_npcx_driver_api);
+
+static void flash_preserve_state(void)
+{
+	struct flash_wp_state state;
+
+	state.all_protected = all_protected;
+	state.saved_sr1 = saved_sr1;
+	state.saved_sr2 = saved_sr2;
+
+	system_add_jump_tag(FLASH_SYSJUMP_TAG, FLASH_HOOK_VERSION,
+			    sizeof(state), &state);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, flash_preserve_state, HOOK_PRIO_DEFAULT);
