@@ -210,11 +210,6 @@ __override uint8_t get_dp_pin_mode(int port)
 }
 #endif
 
-void pd_set_max_voltage(unsigned int mv)
-{
-	pdc_power_mgmt_set_max_voltage(mv);
-}
-
 unsigned int pd_get_max_voltage(void)
 {
 	return pdc_power_mgmt_get_max_voltage();

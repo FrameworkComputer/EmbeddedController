@@ -2161,22 +2161,123 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_new_power_request)
 	pdc_power_mgmt_set_max_voltage(max_voltage);
 }
 
+static void verify_lpm_snk_pdos(uint32_t *snk_pdos, unsigned int max_mv,
+				unsigned int max_ma, unsigned int max_mw)
+{
+	unsigned int mv, ma, mw;
+
+	for (int i = 0; i < PDO_MAX_OBJECTS; i++) {
+		if ((snk_pdos[i] & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
+			mv = PDO_BATT_MAX_VOLTAGE(snk_pdos[i]);
+			mw = PDO_BATT_MAX_POWER(snk_pdos[i]);
+			ma = mw * 1000 / mv;
+		} else if ((snk_pdos[i] & PDO_TYPE_MASK) == PDO_TYPE_VARIABLE) {
+			ma = PDO_VAR_MAX_VOLTAGE(snk_pdos[i]);
+			ma = PDO_VAR_MAX_CURRENT(snk_pdos[i]);
+			mw = mv * ma / 1000;
+		} else {
+			continue;
+		}
+
+		zassert_equal(
+			mv, max_mv,
+			"PDO %d maximum voltage %d mV doesn't match expected %d mV",
+			mv, max_mv);
+		zassert_equal(
+			ma, max_ma,
+			"PDO %d maximum current %d mA doesn't match expected %d mA",
+			ma, max_ma);
+		zassert_equal(
+			mw, max_mw,
+			"PDO %d maximum power %d mW doesn't match expected %d mW",
+			mw, max_mw);
+	}
+}
+
+/* Verify the PDC subsystem updates the sink caps stored in the LPM
+ * for all connection states.
+ */
+ZTEST_USER(pdc_power_mgmt_api, test_set_new_power_all_states)
+{
+	uint32_t lpm_snk_pdos[PDO_MAX_OBJECTS];
+	union connector_status_t connector_status;
+
+	struct {
+		const char *name;
+		void (*configure_emul)(const struct emul *emul,
+				       union connector_status_t *status);
+		enum power_operation_mode_t power_op_mode;
+	} states[] = {
+		{ "disconnected", NULL, 0 },
+		{ "snk_pd", emul_pdc_configure_snk, PD_OPERATION },
+		{ "snk_typec_1.5A", emul_pdc_configure_snk,
+		  USB_TC_CURRENT_1_5A },
+		{ "src_pd", emul_pdc_configure_src, PD_OPERATION },
+		{ "src_typec_1.5A", emul_pdc_configure_src,
+		  USB_TC_CURRENT_1_5A },
+	};
+
+	unsigned int max_voltage = pdc_power_mgmt_get_max_voltage();
+
+	for (int i = 0; i < ARRAY_SIZE(states); i++) {
+		LOG_INF("Testing state: %s", states[i].name);
+
+		emul_pdc_disconnect(emul);
+		zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
+
+		if (states[i].configure_emul != NULL) {
+			memset(&connector_status, 0, sizeof(connector_status));
+			states[i].configure_emul(emul, &connector_status);
+			connector_status.power_operation_mode =
+				states[i].power_op_mode;
+			emul_pdc_connect_partner(emul, &connector_status);
+			zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
+		}
+
+		emul_pdc_get_pdos(emul, SINK_PDO, PDO_OFFSET_0, PDO_MAX_OBJECTS,
+				  LPM_PDO, lpm_snk_pdos);
+
+		/* Default behavior, we should have battery and variable PDOs
+		 * Selecting our max supported power.
+		 */
+		verify_lpm_snk_pdos(lpm_snk_pdos,
+				    CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV,
+				    CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA,
+				    CONFIG_PLATFORM_EC_USB_PD_MAX_POWER_MW);
+
+		pdc_power_mgmt_set_max_voltage(5000);
+
+		zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
+
+		emul_pdc_get_pdos(emul, SINK_PDO, PDO_OFFSET_0, PDO_MAX_OBJECTS,
+				  LPM_PDO, lpm_snk_pdos);
+		verify_lpm_snk_pdos(
+			lpm_snk_pdos, 5000,
+			CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA,
+			5000 * CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA / 1000);
+
+		/* Restore voltage for next iteration */
+		pdc_power_mgmt_set_max_voltage(max_voltage);
+		zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
+	}
+}
+
 ZTEST_USER(pdc_power_mgmt_api, test_set_new_power_request_invalid)
 {
 	unsigned int prev_max_voltage = pdc_power_mgmt_get_max_voltage();
 
 	pdc_power_mgmt_set_max_voltage(PD_MIN_MV - 1);
 
-	/* Max voltage should not have changed since PD_MIN_MV-1 is below the
-	 * minimum supported PD voltage */
+	/* Max voltage should not have changed since PD_MIN_MV-1 is
+	 * below the minimum supported PD voltage */
 	zassert_equal(prev_max_voltage, pdc_power_mgmt_get_max_voltage(),
 		      "Max voltage changed despite illegal request");
 
 	pdc_power_mgmt_set_max_voltage(
 		CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV + 1);
 
-	/* Max voltage should not have changed since (max+1)mV is above the
-	 * board maximum */
+	/* Max voltage should not have changed since (max+1)mV is above
+	 * the board maximum */
 	zassert_equal(prev_max_voltage, pdc_power_mgmt_get_max_voltage(),
 		      "Max voltage changed despite illegal request");
 }
@@ -2264,9 +2365,10 @@ ZTEST(pdc_power_mgmt_api, test_pd_set_external_voltage_limit)
 	unsigned int mv;
 
 	/* pd_set_external_voltage_limit() behaves similarly to
-	 * pdc_power_mgmt_request_source_voltage(), but does not force a power
-	 * role swap if the PDC is in the source role. If we *are* currently in
-	 * the sink role, re-negotiate the PD contract with the new limit.
+	 * pdc_power_mgmt_request_source_voltage(), but does not force a
+	 * power role swap if the PDC is in the source role. If we *are*
+	 * currently in the sink role, re-negotiate the PD contract with
+	 * the new limit.
 	 */
 
 	const int TEST_EXTERNAL_LIMIT_MV = 12000;
@@ -2362,7 +2464,8 @@ ZTEST(pdc_power_mgmt_api, test_pdc_power_mgmt_sbu_mux_mode_not_supported_set)
 {
 	int rv;
 
-	/* Do not enable support for SBU mux override. Commands will fail. */
+	/* Do not enable support for SBU mux override. Commands will
+	 * fail. */
 
 	rv = pdc_power_mgmt_set_sbu_mux_mode(PDC_SBU_MUX_MODE_NORMAL);
 	zassert_equal(-EBUSY, rv, "Expected -EBUSY (%d) but got %d", -EBUSY,
@@ -2374,8 +2477,8 @@ ZTEST(pdc_power_mgmt_api, test_pdc_power_mgmt_sbu_mux_mode_not_supported_get)
 	int rv;
 	enum pdc_sbu_mux_mode mode = PDC_SBU_MUX_MODE_NORMAL;
 
-	/* Do not enable support for SBU mux override. We should get an invalid
-	 * (PDC_SBU_MUX_MODE_INVALID) response.
+	/* Do not enable support for SBU mux override. We should get an
+	 * invalid (PDC_SBU_MUX_MODE_INVALID) response.
 	 */
 
 	rv = pdc_power_mgmt_get_sbu_mux_mode(&mode, NULL);
@@ -2389,8 +2492,8 @@ ZTEST(pdc_power_mgmt_api, test_pdc_power_mgmt_sbu_mux_mode_not_supported_get)
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_requested_voltage_current)
 {
-	/* PLATFORM_EC_USB_PD_MAX_CURRENT_MA defaults to 3000, make sure current
-	 * is less than this so expected value is returned */
+	/* PLATFORM_EC_USB_PD_MAX_CURRENT_MA defaults to 3000, make sure
+	 * current is less than this so expected value is returned */
 	uint32_t partner_src_pdos[] = {
 		PDO_FIXED(5000, 1000, 0),
 		PDO_FIXED(12000, 1500, 0),
@@ -2401,7 +2504,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_requested_voltage_current)
 	union connector_status_t connector_status = { 0 };
 
 	emul_pdc_configure_snk(emul, &connector_status);
-	/* Apply first 3 PDOS only to validate correct current is returned */
+	/* Apply first 3 PDOS only to validate correct current is
+	 * returned */
 	zassert_ok(emul_pdc_set_pdos(emul, SOURCE_PDO, PDO_OFFSET_0,
 				     ARRAY_SIZE(partner_src_pdos) - 1,
 				     PARTNER_PDO, partner_src_pdos));
@@ -2455,7 +2559,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_pdc_power_mgmt_set_active_charge_port)
 
 	zassert_ok(charge_manager_set_override(OVERRIDE_DONT_CHARGE));
 	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
-	/* Sink path should be disabled because it's not active charge port */
+	/* Sink path should be disabled because it's not active charge
+	 * port */
 	zassert_false(is_sink_path_enabled());
 
 	zassert_ok(charge_manager_set_override(TEST_PORT));
@@ -2507,15 +2612,15 @@ ZTEST_USER(pdc_power_mgmt_api, test_hpd_wake)
 	zassert_true(TEST_WAIT_FOR(pdc_power_mgmt_is_connected(TEST_PORT),
 				   PDC_TEST_TIMEOUT));
 
-	/* Configure PDC emulator to respond to GET_ATTENTION_VDO with HPD_LVL
-	 * low.
+	/* Configure PDC emulator to respond to GET_ATTENTION_VDO with
+	 * HPD_LVL low.
 	 */
 	attention_vdo.vdo = 0x01;
 	emul_pdc_set_attention_vdo(emul, attention_vdo);
 	k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
 
-	/* Send an attention IRQ for the PDC power manager to update its DP
-	 * Status.
+	/* Send an attention IRQ for the PDC power manager to update its
+	 * DP Status.
 	 */
 	in_conn_status.raw_conn_status_change_bits = 0x8;
 	emul_pdc_set_connector_status(emul, &in_conn_status);
@@ -2531,14 +2636,15 @@ ZTEST_USER(pdc_power_mgmt_api, test_hpd_wake)
 	host_clear_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_USB_MUX));
 	zassert_false(host_is_event_set(EC_HOST_EVENT_USB_MUX));
 
-	/* Configure PDC emulator to respond to GET_VDO with DP Status VDO with
-	 * HPD_LVL high.
+	/* Configure PDC emulator to respond to GET_VDO with DP Status
+	 * VDO with HPD_LVL high.
 	 */
 	attention_vdo.vdo = 0x81;
 	emul_pdc_set_attention_vdo(emul, attention_vdo);
 	k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
 
-	/* Send an IRQ for the PDC power manager to update its DP Status. */
+	/* Send an IRQ for the PDC power manager to update its DP
+	 * Status. */
 	emul_pdc_set_connector_status(emul, &in_conn_status);
 	emul_pdc_pulse_irq(emul);
 	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT * 2);
@@ -2660,8 +2766,9 @@ ZTEST_USER(pdc_power_mgmt_api, test_board_callback)
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_rdo_errors)
 {
-	/* The normal code path for pdc_power_mgmt_get_rdo() is tested in
-	 * test_request_source_voltage. This test covers its error paths.
+	/* The normal code path for pdc_power_mgmt_get_rdo() is tested
+	 * in test_request_source_voltage. This test covers its error
+	 * paths.
 	 */
 
 	uint32_t rdo;
@@ -2804,7 +2911,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_pd_power_button)
 		0, pdc_power_mgmt_simulate_power_button_press_fake.call_count,
 		"Power button press not simulated.");
 
-	/* Set power button release alert in PDC emulator, then pulse IRQ */
+	/* Set power button release alert in PDC emulator, then pulse
+	 * IRQ */
 	emul_pdc_set_alert(emul, 0x80000003);
 	emul_pdc_pulse_irq(emul);
 	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
@@ -2824,12 +2932,14 @@ ZTEST_USER(pdc_power_mgmt_api, test_pd_power_button)
 		1, pdc_power_mgmt_simulate_power_button_press_fake.call_count,
 		"Unexpected PD power button press.");
 
-	/* Set power button release alert in PDC emulator, then pulse IRQ */
+	/* Set power button release alert in PDC emulator, then pulse
+	 * IRQ */
 	emul_pdc_set_alert(emul, 0x80000003);
 	emul_pdc_pulse_irq(emul);
 	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
 
-	/* Check for simulated press on release ADO without preceding press ADO
+	/* Check for simulated press on release ADO without preceding
+	 * press ADO
 	 */
 	zassert_equal(
 		2, pdc_power_mgmt_simulate_power_button_press_fake.call_count,
@@ -2867,8 +2977,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_swap_to_sink)
 		emul_pdc_set_pdos(emul, SINK_PDO, PDO_OFFSET_0, 1, PARTNER_PDO,
 				  &test[i].pdo);
 
-		/* If the partner is a DRP, set PDO for the opposite role with
-		 * same flags
+		/* If the partner is a DRP, set PDO for the opposite
+		 * role with same flags
 		 */
 		if (test[i].pdo & PDO_FIXED_DUAL_ROLE) {
 			emul_pdc_set_pdos(emul, SOURCE_PDO, PDO_OFFSET_0, 1,
@@ -2880,7 +2990,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_swap_to_sink)
 		zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
 		LOG_INF("[%d] connection settled", i);
 
-		/* Verify swap_to_snk bit is set in SET_PDR when expected */
+		/* Verify swap_to_snk bit is set in SET_PDR when
+		 * expected */
 		if (test[i].expected) {
 			zassert_ok(emul_pdc_get_pdr(emul, &pdr));
 			zassert_equal(pdr.swap_to_snk, 1);
@@ -2921,9 +3032,9 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_snk_caps)
 	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
 
 	/*
-	 * PDC subsystem always requests PDO_MAX_OBJECTS from the partner.
-	 * We only care that the SNK cap count is non-zero after discovery
-	 * of the partner completes.
+	 * PDC subsystem always requests PDO_MAX_OBJECTS from the
+	 * partner. We only care that the SNK cap count is non-zero
+	 * after discovery of the partner completes.
 	 */
 	zassert_not_equal(pdc_power_mgmt_get_snk_cap_cnt(TEST_PORT), 0);
 	partner_snk_pdos = pdc_power_mgmt_get_snk_caps(TEST_PORT);
@@ -2939,8 +3050,9 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_snk_caps)
 }
 
 /*
- * Suspended PDC - These tests take place with the PDC Power Mgmt subsystem
- * in the suspended state, when communication with the PDC is not allowed.
+ * Suspended PDC - These tests take place with the PDC Power Mgmt
+ * subsystem in the suspended state, when communication with the PDC is
+ * not allowed.
  */
 
 static void pdc_power_mgmt_suspend_before(void *fixture)
@@ -2987,22 +3099,23 @@ ZTEST_USER(pdc_power_mgmt_api_suspended, test_get_info)
 #ifndef CONFIG_TODO_B_345292002
 
 /* TI emulator does not support faking error status, so we can't make
- * initialization fail on-demand. Run this test using only the RTK emulator */
+ * initialization fail on-demand. Run this test using only the RTK
+ * emulator */
 ZTEST_USER(pdc_power_mgmt_api_suspended,
 	   test_suspend_during_init_with_pdc_error)
 {
 	union error_status_t error = { .unrecognized_command = 1 };
 
-	/* Set an error status on the PDC so that when we come out of suspend
-	 * below, re-initialization fails. */
+	/* Set an error status on the PDC so that when we come out of
+	 * suspend below, re-initialization fails. */
 	emul_pdc_set_error_status(emul, &error);
 
 	/* Un-suspending sends pdc_power_mgmt back to the init state */
 	zassert_ok(pdc_power_mgmt_set_comms_state(true));
 	zassert_true(wait_state_name(TEST_PORT, PDC_INIT, "PDC Init"));
 
-	/* Because there is an error reported, we should be able to suspend
-	 * again. */
+	/* Because there is an error reported, we should be able to
+	 * suspend again. */
 	zassert_ok(pdc_power_mgmt_set_comms_state(false));
 }
 #endif /* !defined(CONFIG_TODO_B_345292002) */

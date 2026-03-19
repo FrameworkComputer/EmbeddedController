@@ -554,6 +554,13 @@ enum cci_flag_t {
 	CCI_ATTENTION,
 	/** CCI_PPM_EVENT */
 	CCI_PPM_EVENT,
+	/**
+	 * Trigger sending new SINK PDOs for the LPM. This is not part of
+	 * the UCSI connector change flags, but this action is valid
+	 * during UNATTACHED, SNK_ATTACHED, SRC_ATTACHED, SNK_TYPEC_ONLY,
+	 * and SRC_TYPEC_ONLY
+	 */
+	CCI_SET_SINK_PDOS,
 	/** CCI_FLAGS_COUNT */
 	CCI_FLAGS_COUNT
 };
@@ -1073,23 +1080,38 @@ static const uint32_t pdc_src_pdo_max =
 	PDO_FIXED(5000, 3000, pdo_src_fixed_flags);
 
 /* Sink PDO(s) */
-static const uint32_t pdo_snk_fixed_flags =
-	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP | PDO_FIXED_COMM_CAP);
+enum snk_pdo {
+	SNK_PDO_FIXED_POS,
+	SNK_PDO_BATT_POS,
+	SNK_PDO_VAR_POS,
+	SNK_PDO_COUNT,
+};
 
-static const uint32_t pdc_snk_pdos[] = {
-	/* Mandatory fixed 5V PDO */
-	PDO_FIXED(5000,
-		  MIN((CONFIG_PLATFORM_EC_USB_PD_OPERATING_POWER_MW / 5),
-		      CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA),
-		  pdo_snk_fixed_flags),
-	/* Battery PDO covering 5V-5% to the board maximum voltage and current
-	 */
-	PDO_BATT(4750, CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV,
-		 CONFIG_PLATFORM_EC_USB_PD_OPERATING_POWER_MW),
-	/* Variable PDO covering 5V-5% to the board maximum voltage and current
-	 */
-	PDO_VAR(4750, CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV,
-		CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA),
+#define PDO_SINK_FIXED_FLAGS \
+	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP | PDO_FIXED_COMM_CAP)
+
+/* Battery PDO covering 5V-5% to the board maximum voltage and current */
+#define SNK_PDO_BATT_DEFAULT                                     \
+	PDO_BATT(4750, CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV, \
+		 CONFIG_PLATFORM_EC_USB_PD_OPERATING_POWER_MW)
+
+/* Variable PDO covering 5V-5% to the board maximum voltage and current	*/
+#define SNK_PDO_VAR_DEFAULT                                     \
+	PDO_VAR(4750, CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV, \
+		CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA)
+
+struct pdc_pdos_t pdc_snk_pdos = {
+	.pdos = {
+		/* Mandatory fixed 5V PDO */
+		[SNK_PDO_FIXED_POS] = PDO_FIXED(
+			5000,
+			MIN((CONFIG_PLATFORM_EC_USB_PD_OPERATING_POWER_MW / 5),
+			    CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA),
+			PDO_SINK_FIXED_FLAGS),
+		[SNK_PDO_BATT_POS] = SNK_PDO_BATT_DEFAULT,
+		[SNK_PDO_VAR_POS] = SNK_PDO_VAR_DEFAULT,
+	},
+	.pdo_count = SNK_PDO_COUNT,
 };
 
 static const struct smf_state pdc_states[];
@@ -1108,6 +1130,7 @@ static void pd_chipset_shutdown(void);
 
 static void pdc_update_battery_status(struct pdc_port_t *port, bool force);
 static void pdc_update_battery_capability(struct pdc_port_t *port);
+static void pdc_print_pdo_info(int port, struct pdc_pdos_t *pdo);
 
 static bool should_suspend(struct pdc_port_t *port)
 {
@@ -1903,6 +1926,25 @@ static void handle_alert(struct pdc_port_t *port, uint32_t ado)
 	}
 }
 
+static void pdc_send_sink_pdos(struct pdc_port_t *port)
+{
+	const struct pdc_config_t *config = port->dev->config;
+	int port_num = config->connector_num;
+
+	/* Set sink PDO(s) that reflects this board's max voltage and current */
+	port->set_pdos = (struct set_pdos_t){
+		.type = SINK_PDO,
+		.count = pdc_snk_pdos.pdo_count,
+	};
+
+	pdc_print_pdo_info(port_num, &pdc_snk_pdos);
+
+	memcpy(port->set_pdos.pdos, pdc_snk_pdos.pdos,
+	       pdc_snk_pdos.pdo_count * sizeof(uint32_t));
+
+	queue_internal_cmd(port, CMD_PDC_SET_PDOS);
+}
+
 static void run_snk_policies(struct pdc_port_t *port)
 {
 	const struct pdc_config_t *config = port->dev->config;
@@ -2300,6 +2342,14 @@ static enum smf_state_result pdc_unattached_run(void *obj)
 		return SMF_EVENT_HANDLED;
 	}
 
+	if (atomic_test_and_clear_bit(port->cci_flags, CCI_SET_SINK_PDOS)) {
+		const struct pdc_config_t *config = port->dev->config;
+		LOG_INF("C%d: unattached send sink PDOs",
+			config->connector_num);
+		pdc_send_sink_pdos(port);
+		return SMF_EVENT_HANDLED;
+	}
+
 	switch (port->unattached_local_state) {
 	case UNATTACHED_SET_SINK_PATH_OFF:
 		port->sink_path_to_send = false;
@@ -2391,6 +2441,14 @@ static enum smf_state_result pdc_src_attached_run(void *obj)
 
 	if (atomic_test_and_clear_bit(port->cci_flags, CCI_ATTENTION)) {
 		queue_internal_cmd(port, CMD_PDC_GET_ATTENTION_VDO);
+		return SMF_EVENT_HANDLED;
+	}
+
+	if (atomic_test_and_clear_bit(port->cci_flags, CCI_SET_SINK_PDOS)) {
+		const struct pdc_config_t *config = port->dev->config;
+		LOG_INF("C%d: SRC attached send sink PDOs",
+			config->connector_num);
+		pdc_send_sink_pdos(port);
 		return SMF_EVENT_HANDLED;
 	}
 
@@ -2493,6 +2551,12 @@ static void pdc_print_pdo_info(int port, struct pdc_pdos_t *pdo)
 	uint32_t max_ma, max_mv, max_mw, min_mv;
 	const char *type_str = NULL;
 
+	if (pdo->pdo_count == 0 || pdo->pdo_count > PDO_MAX_OBJECTS) {
+		LOG_ERR("C%d: invalid pdo count detected %d", port,
+			pdo->pdo_count);
+		return;
+	}
+
 	/* Prints a table of PDOs with key fields extracted
 	 *
 	 *   C0:       Raw       Type  mV    mA   mW     DRP UP  USB DRD FRS
@@ -2505,7 +2569,7 @@ static void pdc_print_pdo_info(int port, struct pdc_pdos_t *pdo)
 		"DRP UP  USB DRD FRS",
 		port);
 
-	for (int i = 0; i < PDO_MAX_OBJECTS; i++) {
+	for (int i = 0; i < pdo->pdo_count; i++) {
 		uint32_t p = pdo->pdos[i];
 
 		if (p == 0) {
@@ -2866,6 +2930,13 @@ static enum smf_state_result pdc_snk_attached_run(void *obj)
 
 	if (atomic_test_and_clear_bit(port->cci_flags, CCI_ATTENTION)) {
 		queue_internal_cmd(port, CMD_PDC_GET_ATTENTION_VDO);
+		return SMF_EVENT_HANDLED;
+	}
+
+	if (atomic_test_and_clear_bit(port->cci_flags, CCI_SET_SINK_PDOS)) {
+		LOG_INF("C%d: SNK attached send sink PDOs",
+			config->connector_num);
+		pdc_send_sink_pdos(port);
 		return SMF_EVENT_HANDLED;
 	}
 
@@ -3595,6 +3666,13 @@ static enum smf_state_result pdc_src_typec_only_run(void *obj)
 		return SMF_EVENT_HANDLED;
 	}
 
+	if (atomic_test_and_clear_bit(port->cci_flags, CCI_SET_SINK_PDOS)) {
+		LOG_INF("C%d: SRC Type-C send sink PDOs",
+			config->connector_num);
+		pdc_send_sink_pdos(port);
+		return SMF_EVENT_HANDLED;
+	}
+
 	switch (port->src_typec_attached_local_state) {
 	case SRC_TYPEC_ATTACHED_SET_SINK_PATH_OFF:
 		port->src_typec_attached_local_state =
@@ -3681,6 +3759,13 @@ static enum smf_state_result pdc_snk_typec_only_run(void *obj)
 
 	if (atomic_test_and_clear_bit(port->cci_flags, CCI_ACK)) {
 		queue_internal_cmd(port, CMD_PDC_ACK_CC_CI);
+		return SMF_EVENT_HANDLED;
+	}
+
+	if (atomic_test_and_clear_bit(port->cci_flags, CCI_SET_SINK_PDOS)) {
+		LOG_INF("C%d: SNK Type-C send sink PDOs",
+			config->connector_num);
+		pdc_send_sink_pdos(port);
 		return SMF_EVENT_HANDLED;
 	}
 
@@ -3959,16 +4044,7 @@ static enum smf_state_result pdc_init_run(void *obj)
 
 	case INIT_SET_SINK_PDOS:
 		port->init_local_state = INIT_SET_SRC_PDOS;
-
-		/* Set sink PDO(s) that reflects this board's max voltage and
-		 * current */
-		port->set_pdos = (struct set_pdos_t){
-			.type = SINK_PDO,
-			.count = ARRAY_SIZE(pdc_snk_pdos),
-		};
-
-		memcpy(port->set_pdos.pdos, pdc_snk_pdos, sizeof(pdc_snk_pdos));
-
+		pdc_send_sink_pdos(port);
 		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
 		break;
 
@@ -5799,6 +5875,7 @@ mux_state_t pdc_power_mgmt_get_dp_mux_mode(int port)
 
 void pdc_power_mgmt_set_max_voltage(unsigned int mv)
 {
+	unsigned int max_mw;
 	if (mv < PD_MIN_MV || mv > CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV) {
 		LOG_ERR("PD: Ignore invalid voltage request of %umV "
 			"(allowed range %u-%umV)",
@@ -5810,6 +5887,23 @@ void pdc_power_mgmt_set_max_voltage(unsigned int mv)
 	LOG_INF("PD: New maximum voltage: %dmV", mv);
 
 	pdc_max_request_mv = mv;
+
+	/* Adjust our sink PDOs to the new maximum voltage and adjust the max
+	 * power so we don't exceed the board current limit.
+	 */
+	max_mw = pdc_max_request_mv * CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA /
+		 1000;
+
+	pdc_snk_pdos.pdos[SNK_PDO_BATT_POS] =
+		PDO_BATT(4750, pdc_max_request_mv, max_mw);
+	pdc_snk_pdos.pdos[SNK_PDO_VAR_POS] =
+		PDO_VAR(4750, pdc_max_request_mv,
+			CONFIG_PLATFORM_EC_USB_PD_MAX_CURRENT_MA);
+
+	/* All ports need to set new SINK PDOs */
+	for (int i = 0; i < pdc_power_mgmt_get_usb_pd_port_count(); i++) {
+		atomic_set_bit(pdc_data[i]->port.cci_flags, CCI_SET_SINK_PDOS);
+	}
 }
 
 test_mockable unsigned int pdc_power_mgmt_get_max_voltage(void)
@@ -5826,19 +5920,36 @@ test_mockable void pdc_power_mgmt_request_source_voltage(int port, int mv)
 
 	pdc_power_mgmt_set_max_voltage(mv);
 
+	/* pdc_power_mgmt_set_max_voltage() triggers a SET_PDOS command
+	 * to set new SINK PDOs for the LPM.
+	 *
+	 * If we are SNK_ATTACHED, trigger a re-evaluation of the SRC CAPS
+	 * based on the new voltage limit.  This generates a SET_RDO message
+	 * to initiate a new Request message with the partner and set a new
+	 * contract.
+	 *
+	 * TODO: b/494687197 - remove the call to
+	 * pdc_power_mgmt_set_new_power_request() once all PDCs are verified
+	 * to automatically negotiate a new contract when the EC sets new
+	 * SINK PDOs in the LPM.
+	 */
 	if (pdc_power_mgmt_is_sink_connected(port)) {
 		pdc_power_mgmt_set_new_power_request(port);
 	} else if (pdc_power_mgmt_is_source_connected(port)) {
-		/* We are a source, swap to sink */
+		/* We are a source, swap to sink.  The  CCI_SET_SINK_PDOS
+		 * will be handled prior to the check of the source policy
+		 * flags, which ensures the new sink PDOs are in place prior
+		 * the the power swap to sink.
+		 */
 		LOG_INF("C%d: Swapping to sink role to request new "
 			"source voltage",
 			port);
 		pdc_power_mgmt_request_power_swap(port);
-	} else {
-		LOG_ERR("C%d: Port is disconnected. New source voltage "
-			"will take effect on next connection",
-			port);
 	}
+
+	/* For all other states (non-PD and unattached), the next time
+	 * we connect as SNK_ATTACHED, the PDC will use most recent SINK PDOS.
+	 */
 }
 
 test_mockable int
