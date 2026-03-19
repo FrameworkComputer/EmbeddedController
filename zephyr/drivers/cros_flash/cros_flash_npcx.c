@@ -93,27 +93,38 @@ static int cros_flash_npcx_wait_ready(const struct device *dev)
 	return -ETIMEDOUT;
 }
 
-/* Check the BUSY bit is cleared and WE bit is set */
-static int cros_flash_npcx_wait_ready_and_we(const struct device *dev)
+/* Wait for the BUSY bit to clear and the WEL bit to match the expected state */
+static int cros_flash_npcx_wait_write_enable_state(const struct device *dev,
+						   bool enabled)
 {
-	int wait_period = 10; /* 10 us period t0 check status register */
-	int timeout = (10 * USEC_PER_SEC) / wait_period; /* 10 seconds */
+	int wait_period_us = 10;
+	int timeout = (10 * USEC_PER_SEC) / wait_period_us;
 
 	do {
 		uint8_t reg;
 
-		cros_flash_npcx_get_status_reg(dev, SPI_NOR_CMD_RDSR, &reg);
-		if ((reg & SPI_NOR_WIP_BIT) == 0 &&
-		    (reg & SPI_NOR_WEL_BIT) != 0)
-			break;
-		k_usleep(wait_period);
+		int ret = cros_flash_npcx_get_status_reg(dev, SPI_NOR_CMD_RDSR,
+							 &reg);
+		if (ret != 0) {
+			return ret;
+		}
+
+		bool wel_set = (reg & SPI_NOR_WEL_BIT) != 0;
+
+		if ((reg & SPI_NOR_WIP_BIT) == 0 && wel_set == enabled) {
+			return 0;
+		}
+
+		k_usleep(wait_period_us);
 	} while (--timeout); /* Wait for busy bit clear */
 
-	if (timeout) {
-		return 0;
-	} else {
-		return -ETIMEDOUT;
-	}
+	return -ETIMEDOUT;
+}
+
+/* Check the BUSY bit is cleared and WE bit is set */
+static int cros_flash_npcx_wait_ready_and_we(const struct device *dev)
+{
+	return cros_flash_npcx_wait_write_enable_state(dev, true);
 }
 
 static int cros_flash_npcx_set_write_enable(const struct device *dev)
@@ -147,28 +158,7 @@ static int cros_flash_npcx_set_write_enable(const struct device *dev)
 static int
 cros_flash_npcx_wait_ready_and_write_disabled(const struct device *dev)
 {
-	int wait_period_us = 10;
-	int timeout = (10 * USEC_PER_SEC) / wait_period_us;
-
-	do {
-		uint8_t reg;
-
-		int ret = cros_flash_npcx_get_status_reg(dev, SPI_NOR_CMD_RDSR,
-							 &reg);
-		if (ret != 0) {
-			return ret;
-		}
-		if ((reg & SPI_NOR_WIP_BIT) == 0 &&
-		    (reg & SPI_NOR_WEL_BIT) == 0) {
-			break;
-		}
-		k_usleep(wait_period_us);
-	} while (--timeout); /* Wait for busy bit clear */
-
-	if (timeout) {
-		return 0;
-	}
-	return -ETIMEDOUT;
+	return cros_flash_npcx_wait_write_enable_state(dev, false);
 }
 
 static int __maybe_unused
