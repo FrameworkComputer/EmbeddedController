@@ -122,7 +122,7 @@ static int cros_flash_npcx_wait_write_enable_state(const struct device *dev,
 }
 
 /* Check the BUSY bit is cleared and WE bit is set */
-static int cros_flash_npcx_wait_ready_and_we(const struct device *dev)
+static int cros_flash_npcx_wait_write_enabled(const struct device *dev)
 {
 	return cros_flash_npcx_wait_write_enable_state(dev, true);
 }
@@ -150,13 +150,11 @@ static int cros_flash_npcx_set_write_enable(const struct device *dev)
 		return ret;
 	}
 
-	/* Wait for flash is not busy */
-	return cros_flash_npcx_wait_ready_and_we(dev);
+	return cros_flash_npcx_wait_write_enabled(dev);
 }
 
 /* Check the BUSY bit is cleared and WE bit is disabled */
-static int
-cros_flash_npcx_wait_ready_and_write_disabled(const struct device *dev)
+static int cros_flash_npcx_wait_write_disabled(const struct device *dev)
 {
 	return cros_flash_npcx_wait_write_enable_state(dev, false);
 }
@@ -184,7 +182,7 @@ cros_flash_npcx_set_write_disable(const struct device *dev)
 		return ret;
 	}
 
-	return cros_flash_npcx_wait_ready_and_write_disabled(dev);
+	return cros_flash_npcx_wait_write_disabled(dev);
 }
 
 static int cros_flash_npcx_set_status_reg(const struct device *dev,
