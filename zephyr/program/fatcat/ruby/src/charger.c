@@ -21,8 +21,6 @@ static void write_reg(int reg, int val)
 	int chgnum = charge_get_active_chg_chip();
 	int rv = bq257x0_set_option_reg(chgnum, reg, val);
 
-	rv = bq257x0_set_option_reg(chgnum, BQ25710_REG_CHARGE_OPTION_2, val);
-
 	if (rv)
 		LOG_DBG("Failed to set reg 0x%02x (rv=%d)\n", reg, rv);
 	else
