@@ -6,6 +6,15 @@
 #include <dt-bindings/gpio_defines.h>
 
 / {
+
+	chosen {
+		cros-ec,cros-system = &cros_system;
+	};
+
+	cros_system: cros-system {
+		compatible = "cros-ec,cros-system";
+	};
+
 	common-pwrseq {
 		compatible = "intel,ap-pwrseq";
 	};

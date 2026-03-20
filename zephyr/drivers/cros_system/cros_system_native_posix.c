@@ -12,6 +12,8 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
 
+#define DT_DRV_COMPAT cros_ec_cros_system
+
 LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 
 /* Driver config stub */
@@ -88,8 +90,6 @@ cros_system_native_posix_deep_sleep_ticks(const struct device *dev)
 	return 0;
 }
 
-static struct cros_system_native_posix_data cros_system_native_posix_dev_data;
-
 static const struct cros_system_native_posix_config cros_system_dev_cfg = {};
 
 /* clang-format off */
@@ -108,10 +108,16 @@ cros_system_driver_api cros_system_driver_native_posix_api = {
 };
 /* clang-format on */
 
-DEVICE_DEFINE(cros_system_native_posix_0, "CROS_SYSTEM",
-	      cros_system_native_posix_init, NULL,
-	      &cros_system_native_posix_dev_data, &cros_system_dev_cfg,
-	      PRE_KERNEL_1, CONFIG_CROS_SYSTEM_NATIVE_POSIX_INIT_PRIORITY,
-	      &cros_system_driver_native_posix_api);
+#define CROS_SYSTEM_NATIVE_POSIX_INIT(inst)                           \
+	static struct cros_system_native_posix_data                   \
+		cros_system_native_posix_dev_data_##inst;             \
+	DEVICE_DEFINE(cros_system_native_posix_##inst, "CROS_SYSTEM", \
+		      cros_system_native_posix_init, NULL,            \
+		      &cros_system_native_posix_dev_data_##inst,      \
+		      &cros_system_dev_cfg, PRE_KERNEL_1,             \
+		      CONFIG_CROS_SYSTEM_NATIVE_POSIX_INIT_PRIORITY,  \
+		      &cros_system_driver_native_posix_api);
+
+DT_INST_FOREACH_STATUS_OKAY(CROS_SYSTEM_NATIVE_POSIX_INIT)
 
 /* LCOV_EXCL_STOP */

@@ -10,6 +10,8 @@
 #include <zephyr/drivers/hwinfo.h>
 #include <zephyr/drivers/syscon.h>
 
+#define DT_DRV_COMPAT cros_ec_cros_system
+
 /* TODO(b/452878239): Use defines from Egis HAL once it is upstreamed. */
 /* Registers definitions */
 #define AOSMU_SECURE_CON 0xc /* Secure key handling */
@@ -102,8 +104,6 @@ static int cros_system_et171_init(const struct device *dev)
 	return 0;
 }
 
-static struct cros_system_et171_data cros_system_et171_dev_data;
-
 static DEVICE_API(cros_system, cros_system_driver_et171_api) = {
 	.get_reset_cause = cros_system_et171_get_reset_cause,
 	.soc_reset = cros_system_et171_soc_reset,
@@ -115,10 +115,15 @@ static DEVICE_API(cros_system, cros_system_driver_et171_api) = {
 #endif
 };
 
-DEVICE_DEFINE(cros_system_et171_0, "CROS_SYSTEM", cros_system_et171_init, NULL,
-	      &cros_system_et171_dev_data, NULL, PRE_KERNEL_1,
-	      CONFIG_CROS_SYSTEM_ET171_INIT_PRIORITY,
-	      &cros_system_driver_et171_api);
+#define CROS_SYSTEM_ET171_INIT(inst)                                            \
+	static struct cros_system_et171_data cros_system_et171_dev_data_##inst; \
+	DEVICE_DEFINE(cros_system_et171_##inst, "CROS_SYSTEM",                  \
+		      cros_system_et171_init, NULL,                             \
+		      &cros_system_et171_dev_data_##inst, NULL, PRE_KERNEL_1,   \
+		      CONFIG_CROS_SYSTEM_ET171_INIT_PRIORITY,                   \
+		      &cros_system_driver_et171_api);
+
+DT_INST_FOREACH_STATUS_OKAY(CROS_SYSTEM_ET171_INIT)
 
 #if CONFIG_CROS_SYSTEM_ET171_INIT_PRIORITY >= \
 	CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY

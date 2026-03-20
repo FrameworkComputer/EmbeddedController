@@ -23,6 +23,8 @@
 #include <soc.h>
 #include <soc/nuvoton_npcx/reg_def_cros.h>
 
+#define DT_DRV_COMPAT cros_ec_cros_system
+
 LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 
 /* Driver config */
@@ -660,8 +662,6 @@ cros_system_npcx_deep_sleep_ticks(const struct device *dev)
 	return npcx_clock_get_sleep_ticks();
 }
 
-static struct cros_system_npcx_data cros_system_npcx_dev_data;
-
 static const struct cros_system_npcx_config cros_system_dev_cfg = {
 	.base_scfg = DT_REG_ADDR(DT_NODELABEL(scfg)),
 	.base_twd = DT_REG_ADDR(DT_NODELABEL(twd0)),
@@ -683,10 +683,15 @@ static DEVICE_API(cros_system, cros_system_driver_npcx_api) = {
 #endif
 };
 
-DEVICE_DEFINE(cros_system_npcx_0, "CROS_SYSTEM", cros_system_npcx_init, NULL,
-	      &cros_system_npcx_dev_data, &cros_system_dev_cfg, PRE_KERNEL_1,
-	      CONFIG_CROS_SYSTEM_NPCX_INIT_PRIORITY,
-	      &cros_system_driver_npcx_api);
+#define CROS_SYSTEM_NPCX_INIT(inst)                                            \
+	static struct cros_system_npcx_data cros_system_npcx_dev_data_##inst;  \
+	DEVICE_DEFINE(cros_system_npcx_##inst, "CROS_SYSTEM",                  \
+		      cros_system_npcx_init, NULL,                             \
+		      &cros_system_npcx_dev_data_##inst, &cros_system_dev_cfg, \
+		      PRE_KERNEL_1, CONFIG_CROS_SYSTEM_NPCX_INIT_PRIORITY,     \
+		      &cros_system_driver_npcx_api);
+
+DT_INST_FOREACH_STATUS_OKAY(CROS_SYSTEM_NPCX_INIT)
 
 #if DT_NODE_EXISTS(DT_NODELABEL(dbg))
 #define HAL_DBG_REG_BASE_ADDR \
