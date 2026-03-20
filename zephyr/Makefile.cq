@@ -52,6 +52,7 @@ TEST_PATTERNS='**/*_benchmark.cc' \
 	'$(PLATFORM_EC)/zephyr/drivers/**/test_*' \
 	'$(PLATFORM_EC)/zephyr/drivers/fingerprint/*_sim.c' \
 	'$(PLATFORM_EC)/zephyr/emul/**' \
+	'$(PLATFORM_EC)/zephyr/include/emul/**' \
 	'$(PLATFORM_EC)/zephyr/mock/**' \
 	'$(PLATFORM_EC)/zephyr/program/dev/**' \
 	'$(PLATFORM_EC)/zephyr/shim/src/test_util.c' \
