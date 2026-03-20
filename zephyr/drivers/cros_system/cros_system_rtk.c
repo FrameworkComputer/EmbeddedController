@@ -24,7 +24,7 @@ LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 
 #define RTK_SCCON_REG_BASE ((SYSTEM_Type *)(DT_REG_ADDR(DT_NODELABEL(sccon))))
 
-#define WDT_NODE DT_INST(0, realtek_rts5912_watchdog)
+#define WDT_NODE DT_NODELABEL(wdog)
 #define RTK_WDT_REG_BASE ((WDT_Type *)(DT_REG_ADDR(WDT_NODE)))
 
 #define RTK_VIVO_BACKUP0_REG (*((volatile uint32_t *)0x40104ff8))
