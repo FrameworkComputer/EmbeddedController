@@ -775,10 +775,8 @@ struct pdc_snk_attached_policy_t {
 	uint32_t pdo_index;
 	/** PDO count */
 	uint8_t pdo_count;
-	/** PDOs for Sink Caps */
-	struct pdc_pdos_t snk;
 	/** PDOs for Source Caps */
-	struct pdc_pdos_t src;
+	struct pdc_pdos_t partner_src_pdos;
 	/** Sent RDO */
 	uint32_t rdo;
 	/** New RDO to send */
@@ -830,9 +828,7 @@ struct pdc_src_attached_policy_t {
 	/** SRC Attached policy flags */
 	ATOMIC_DEFINE(flags, SRC_POLICY_COUNT);
 	/** PDOs for Sink caps */
-	struct pdc_pdos_t snk;
-	/** PDOs for Source caps */
-	struct pdc_pdos_t src;
+	struct pdc_pdos_t partner_snk_pdos;
 	/** Request RDO from port partner */
 	uint32_t rdo;
 	/** Stores our desired LPM source PDO. This is sent to the PDC when the
@@ -1403,10 +1399,12 @@ static void invalidate_charger_settings(struct pdc_port_t *port,
 
 	/* Invalidate PDOS */
 	port->snk_policy.pdo = 0;
-	memset(port->snk_policy.src.pdos, 0, sizeof(port->snk_policy.src.pdos));
-	port->snk_policy.src.pdo_count = 0;
-	memset(port->src_policy.snk.pdos, 0, sizeof(port->src_policy.snk.pdos));
-	port->src_policy.snk.pdo_count = 0;
+	memset(port->snk_policy.partner_src_pdos.pdos, 0,
+	       sizeof(port->snk_policy.partner_src_pdos.pdos));
+	port->snk_policy.partner_src_pdos.pdo_count = 0;
+	memset(port->src_policy.partner_snk_pdos.pdos, 0,
+	       sizeof(port->src_policy.partner_snk_pdos.pdos));
+	port->src_policy.partner_snk_pdos.pdo_count = 0;
 }
 
 /**
@@ -1715,24 +1713,21 @@ static void discovery_info_init(struct pdc_port_t *port)
 /**
  * @brief This function gets the correct pointer for pdc_pdos_t struct
  *
- * These structs are used to store SRC/SNK CAPs PDOs. The correct struct member
- * is determined by the origin (LPM/port partner) and CAP type (SNK/SRC).
+ * These structs are used to store SRC/SNK CAPs PDOs of the partner device.
+ * The pdo_req must specify PARTNER_PDO and the CAP type.
  */
 static struct pdc_pdos_t *get_pdc_pdos_ptr(struct pdc_port_t *port,
 					   struct get_pdo_t *pdo_req)
 {
 	struct pdc_pdos_t *pdc_pdos;
 
-	if (pdo_req->pdo_source == LPM_PDO && pdo_req->pdo_type == SINK_PDO) {
-		pdc_pdos = &port->snk_policy.snk;
-	} else if (pdo_req->pdo_source == LPM_PDO &&
-		   pdo_req->pdo_type == SOURCE_PDO) {
-		pdc_pdos = &port->src_policy.src;
-	} else if (pdo_req->pdo_source == PARTNER_PDO &&
-		   pdo_req->pdo_type == SINK_PDO) {
-		pdc_pdos = &port->src_policy.snk;
+	__ASSERT(pdo_req->pdo_source == PARTNER_PDO, "Invalid PDO source: %d",
+		 pdo_req->pdo_source);
+
+	if (pdo_req->pdo_type == SINK_PDO) {
+		pdc_pdos = &port->src_policy.partner_snk_pdos;
 	} else {
-		pdc_pdos = &port->snk_policy.src;
+		pdc_pdos = &port->snk_policy.partner_src_pdos;
 	}
 
 	return pdc_pdos;
@@ -1820,14 +1815,14 @@ static bool should_swap_to_source(struct pdc_port_t *port)
 	 *  c) Port isn't the active charging port.
 	 */
 
-	if (port->snk_policy.src.pdo_count == 0) {
+	if (port->snk_policy.partner_src_pdos.pdo_count == 0) {
 		LOG_INF("C%d: %s: Remain sink because partner has no source caps",
 			port_num, __func__);
 		return false;
 	}
 
 	/* Only the fixed 5V PDO at index 0 has the UP and DRP bits set */
-	uint32_t vsafe_5v_pdo = port->snk_policy.src.pdos[0];
+	uint32_t vsafe_5v_pdo = port->snk_policy.partner_src_pdos.pdos[0];
 
 	if (vsafe_5v_pdo & PDO_FIXED_GET_UNCONSTRAINED_PWR ||
 	    !(vsafe_5v_pdo & PDO_FIXED_GET_DRP)) {
@@ -2088,11 +2083,12 @@ static void run_src_policies(struct pdc_port_t *port)
 	} else if (atomic_test_and_clear_bit(port->src_policy.flags,
 					     SRC_POLICY_EVAL_SNK_FIXED_PDO)) {
 		/* Adjust source current limits if necessary */
-		pdc_dpm_eval_sink_fixed_pdo(port_num,
-					    port->src_policy.snk.pdos[0]);
+		pdc_dpm_eval_sink_fixed_pdo(
+			port_num, port->src_policy.partner_snk_pdos.pdos[0]);
 
 		/* If the partner is DRP capable, request source caps */
-		if (port->src_policy.snk.pdos[0] & PDO_FIXED_GET_DRP) {
+		if (port->src_policy.partner_snk_pdos.pdos[0] &
+		    PDO_FIXED_GET_DRP) {
 			atomic_set_bit(port->src_policy.flags,
 				       SRC_POLICY_GET_SRC_CAPS);
 		}
@@ -2167,7 +2163,7 @@ static void run_src_policies(struct pdc_port_t *port)
 					     SRC_POLICY_EVAL_SRC_PDOS)) {
 		/* Request a swap to sink if the partner has unconstained power
 		 */
-		if (port->snk_policy.src.pdos[0] &
+		if (port->snk_policy.partner_src_pdos.pdos[0] &
 		    PDO_FIXED_GET_UNCONSTRAINED_PWR) {
 			atomic_set_bit(port->src_policy.flags,
 				       SRC_POLICY_SWAP_TO_SNK);
@@ -2621,7 +2617,7 @@ static void pdc_snk_seed_charge_manager(struct pdc_port_t *port, uint32_t pdo)
 	max_mw = max_ma * max_mv / 1000;
 
 	/* Only the fixed 5V PDO at index 0 has the UP and DRP bits set */
-	uint32_t vsafe_5v_pdo = port->snk_policy.src.pdos[0];
+	uint32_t vsafe_5v_pdo = port->snk_policy.partner_src_pdos.pdos[0];
 
 	LOG_INF("C%d: Available charging (%sconstrained)",
 		config->connector_num,
@@ -2715,10 +2711,11 @@ pdc_snk_attached_evaluate_pdos(struct pdc_port_t *port)
 	int pdo_index = 0, selected_port;
 	uint32_t selected_pdo;
 
-	pdc_print_pdo_info(config->connector_num, &port->snk_policy.src);
+	pdc_print_pdo_info(config->connector_num,
+			   &port->snk_policy.partner_src_pdos);
 
 	pdo_index = pd_select_best_pdo(PDO_MAX_OBJECTS,
-				       port->snk_policy.src.pdos,
+				       port->snk_policy.partner_src_pdos.pdos,
 				       pdc_max_request_mv, &selected_pdo);
 
 	/* No valid PDOs found, move to next state */
@@ -2765,7 +2762,8 @@ pdc_snk_attached_evaluate_pdos(struct pdc_port_t *port)
 	}
 
 	/* Only one sink path is enabled, safe to update RDO */
-	port->snk_policy.pdo = port->snk_policy.src.pdos[pdo_index];
+	port->snk_policy.pdo =
+		port->snk_policy.partner_src_pdos.pdos[pdo_index];
 	port->snk_policy.pdo_index = pdo_index + 1;
 
 	pdc_snk_attached_send_set_rdo(port, &port->snk_policy);
@@ -3034,7 +3032,8 @@ static enum smf_state_result pdc_snk_attached_run(void *obj)
 			uint32_t pdo_index =
 				RDO_POS(port->connector_status.rdo) - 1;
 			pdc_snk_seed_charge_manager(
-				port, port->snk_policy.src.pdos[pdo_index]);
+				port, port->snk_policy.partner_src_pdos
+					      .pdos[pdo_index]);
 		}
 		port->snk_attached_local_state =
 			(charge_manager_is_seeded() ?
@@ -4550,7 +4549,8 @@ bool pdc_power_mgmt_get_partner_unconstr_power(int port)
 	}
 
 	/* Only the fixed 5V PDO at index 0 has the UP and DRP bits set */
-	uint32_t vsafe_5v_pdo = pdc_data[port]->port.snk_policy.src.pdos[0];
+	uint32_t vsafe_5v_pdo =
+		pdc_data[port]->port.snk_policy.partner_src_pdos.pdos[0];
 
 	return (vsafe_5v_pdo & PDO_FIXED_GET_UNCONSTRAINED_PWR);
 }
@@ -4802,7 +4802,7 @@ test_mockable uint8_t pdc_power_mgmt_get_src_cap_cnt(int port)
 		return 0;
 	}
 
-	return pdc_data[port]->port.snk_policy.src.pdo_count;
+	return pdc_data[port]->port.snk_policy.partner_src_pdos.pdo_count;
 }
 
 test_mockable const uint32_t *const pdc_power_mgmt_get_src_caps(int port)
@@ -4812,7 +4812,8 @@ test_mockable const uint32_t *const pdc_power_mgmt_get_src_caps(int port)
 		return NULL;
 	}
 
-	return (const uint32_t *const)pdc_data[port]->port.snk_policy.src.pdos;
+	return (const uint32_t *const)pdc_data[port]
+		->port.snk_policy.partner_src_pdos.pdos;
 }
 
 test_mockable int pdc_power_mgmt_get_rdo(int port, uint32_t *rdo)
@@ -4840,7 +4841,7 @@ static void pdc_power_mgmt_get_selected_pdo(int port, uint32_t *pdo,
 					    uint32_t *max_ma, uint32_t *max_mv)
 {
 	uint32_t pos = RDO_POS(pdc_data[port]->port.connector_status.rdo) - 1;
-	uint32_t *pdos = pdc_data[port]->port.snk_policy.src.pdos;
+	uint32_t *pdos = pdc_data[port]->port.snk_policy.partner_src_pdos.pdos;
 	uint32_t tmp;
 
 	*pdo = pdos[pos];
@@ -5363,7 +5364,8 @@ const uint32_t *const pdc_power_mgmt_get_snk_caps(int port)
 		return NULL;
 	}
 
-	return (const uint32_t *const)pdc_data[port]->port.src_policy.snk.pdos;
+	return (const uint32_t *const)pdc_data[port]
+		->port.src_policy.partner_snk_pdos.pdos;
 }
 
 uint8_t pdc_power_mgmt_get_snk_cap_cnt(int port)
@@ -5373,7 +5375,7 @@ uint8_t pdc_power_mgmt_get_snk_cap_cnt(int port)
 		return 0;
 	}
 
-	return pdc_data[port]->port.src_policy.snk.pdo_count;
+	return pdc_data[port]->port.src_policy.partner_snk_pdos.pdo_count;
 }
 
 struct rmdo pdc_power_mgmt_get_partner_rmdo(int port)

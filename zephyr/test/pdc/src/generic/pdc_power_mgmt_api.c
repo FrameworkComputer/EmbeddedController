@@ -2897,6 +2897,47 @@ ZTEST_USER(pdc_power_mgmt_api, test_swap_to_sink)
 	}
 }
 
+ZTEST_USER(pdc_power_mgmt_api, test_get_snk_caps)
+{
+	union connector_status_t connector_status = { 0 };
+	const uint32_t emul_partner_snk_pdos[] = {
+		PDO_FIXED(5000, 3000, 0),
+		PDO_BATT(5000, 20000, 100000),
+		PDO_VAR(4750, 20000, 5000),
+	};
+	const uint32_t *partner_snk_pdos;
+
+	emul_pdc_disconnect(emul);
+	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
+
+	zassert_equal(pdc_power_mgmt_get_snk_cap_cnt(TEST_PORT), 0);
+	zassert_is_null(pdc_power_mgmt_get_snk_caps(TEST_PORT));
+
+	emul_pdc_configure_src(emul, &connector_status);
+	emul_pdc_set_pdos(emul, SINK_PDO, PDO_OFFSET_0,
+			  ARRAY_SIZE(emul_partner_snk_pdos), PARTNER_PDO,
+			  emul_partner_snk_pdos);
+	emul_pdc_connect_partner(emul, &connector_status);
+	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
+
+	/*
+	 * PDC subsystem always requests PDO_MAX_OBJECTS from the partner.
+	 * We only care that the SNK cap count is non-zero after discovery
+	 * of the partner completes.
+	 */
+	zassert_not_equal(pdc_power_mgmt_get_snk_cap_cnt(TEST_PORT), 0);
+	partner_snk_pdos = pdc_power_mgmt_get_snk_caps(TEST_PORT);
+
+	zassert_not_null(partner_snk_pdos);
+
+	for (int i = 0; i < ARRAY_SIZE(emul_partner_snk_pdos); i++) {
+		zassert_equal(
+			partner_snk_pdos[i], emul_partner_snk_pdos[i],
+			"Partner SNK PDO mismatch at position %d: expected 0x%08x actual 0x%08x",
+			i, emul_partner_snk_pdos[i], partner_snk_pdos[i]);
+	}
+}
+
 /*
  * Suspended PDC - These tests take place with the PDC Power Mgmt subsystem
  * in the suspended state, when communication with the PDC is not allowed.
