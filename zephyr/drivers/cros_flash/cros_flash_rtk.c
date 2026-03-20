@@ -169,22 +169,17 @@ static int flash_set_status_for_prot(const struct device *dev, int reg1,
 	struct cros_flash_rtk_data *data = DRV_DATA(dev);
 	int rv;
 
-	if (write_protect_is_asserted()) {
-		return EC_ERROR_ACCESS_DENIED;
-	}
-
 	data->all_protected = 0;
-
-	/*
-	 * If WP# is active and ec doesn't protect the status registers of
-	 * internal spi-flash, protect it now before setting them.
-	 */
-	flash_protect_int_flash(dev, write_protect_is_asserted());
 
 	rv = flash_set_status(dev, reg1, reg2);
 	if (rv != EC_SUCCESS) {
 		return rv;
 	}
+	/*
+	 * If WP# is active and ec doesn't protect the status registers of
+	 * internal spi-flash, protect it now.
+	 */
+	flash_protect_int_flash(dev, write_protect_is_asserted());
 
 	spi_flash_reg_to_protect(reg1, reg2, &data->addr_prot_start,
 				 &data->addr_prot_length);
