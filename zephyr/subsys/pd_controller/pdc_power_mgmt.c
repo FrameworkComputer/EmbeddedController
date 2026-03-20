@@ -2576,7 +2576,11 @@ pdc_snk_attached_send_set_rdo(struct pdc_port_t *port,
 	pd_extract_pdo_power_unclamped(snk_policy->pdo, &max_ma, &max_mv,
 				       &unused);
 	max_mw_pdo = max_ma * max_mv / 1000;
-	if (max_mw_pdo < pdc_max_operating_power) {
+
+	if (pdc_max_request_mv < CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV) {
+		LOG_INF("C%d: max voltage (%d mV) limited by policy, don't set cap mismatch",
+			config->connector_num, pdc_max_request_mv);
+	} else if (max_mw_pdo < pdc_max_operating_power) {
 		flags |= RDO_CAP_MISMATCH;
 	}
 
