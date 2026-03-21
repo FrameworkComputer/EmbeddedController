@@ -13,7 +13,7 @@
     width = <160>; \
     height = <160>; \
     bits-per-pixel = <8>; \
-    image-data-offset-bytes = <0>; \
+    image-data-offset-bytes = <400>; \
     v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
 
 #define FPC1025_RAW_IMAGE_PROPS \
