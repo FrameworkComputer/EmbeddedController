@@ -9,6 +9,7 @@
 #include "gpio.dtsi"
 #include "rwsig.dtsi"
 #include "btn_ign.dtsi"
+#include "ascp.dtsi"
 #include <mem.h>
 
 #include <cros/integrated_fwid.dtsi>
