@@ -28,6 +28,11 @@ static const char *p2s_battery_models[] = {
 
 static enum battery_cells pre_battery_cells = BATT_UNKNOWN;
 
+int pd_get_usb_pd_3a_ports(void)
+{
+	return (pre_battery_cells == BATT_2_CELLS) ? 0 : 1;
+}
+
 static enum battery_cells get_battery_cells(const char *model)
 {
 	for (int i = 0; i < ARRAY_SIZE(p2s_battery_models); i++) {
