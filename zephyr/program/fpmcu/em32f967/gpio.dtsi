@@ -9,9 +9,12 @@
 	named-gpios {
 		compatible = "named-gpios";
 
-		/* unimplemented GPIOs */
 		entering-rw {
 			enum-name = "GPIO_ENTERING_RW";
+		};
+
+		gpio_btn_ign_out: gpio_btn_ign_out {
+			gpios = <&gpiob 9 GPIO_OUTPUT_INACTIVE>;
 		};
 	};
 };

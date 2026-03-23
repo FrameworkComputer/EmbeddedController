@@ -8,6 +8,7 @@
 #include "soc.dtsi"
 #include "gpio.dtsi"
 #include "rwsig.dtsi"
+#include "btn_ign.dtsi"
 #include <mem.h>
 
 #include <cros/integrated_fwid.dtsi>
