@@ -777,8 +777,15 @@ class AllTests:
             TestConfig(test_name="exception"),
             TestConfig(test_name="exit"),
             TestConfig(
+                config_name="flash_physical_ro",
                 test_name="flash_physical",
                 imagetype_to_use=ImageType.RO,
+                toggle_power=True,
+            ),
+            TestConfig(
+                config_name="flash_physical_rw",
+                test_name="flash_physical",
+                imagetype_to_use=ImageType.RW,
                 toggle_power=True,
             ),
             TestConfig(
