@@ -7,7 +7,10 @@
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
+
+LOG_MODULE_REGISTER(flash_physical_test, LOG_LEVEL_INF);
 
 ZTEST_SUITE(flash_physical, NULL, NULL, NULL, NULL, NULL);
 
@@ -61,6 +64,7 @@ ZTEST(flash_physical, test_flash_config)
 extern int flash_control_register_locked(const struct device *dev);
 extern int cros_flash_npcx_set_write_enable(const struct device *dev);
 extern int cros_flash_npcx_set_write_disable(const struct device *dev);
+extern void flash_protect_int_flash(const struct device *dev, bool enable);
 
 #define cros_flash_dev DEVICE_DT_GET(DT_CHOSEN(cros_ec_flash_controller))
 
@@ -88,7 +92,7 @@ static void flash_physical_npcx_after(void *data)
 ZTEST_SUITE(flash_physical_npcx, NULL, NULL, flash_physical_npcx_before,
 	    flash_physical_npcx_after, NULL);
 
-ZTEST(flash_physical_npcx, test_lock_flash_control_register)
+static void test_lock_flash_control_register(void)
 {
 	int ret;
 	int lock_status;
@@ -126,6 +130,53 @@ ZTEST(flash_physical_npcx, test_lock_flash_control_register)
 	zassert_equal(
 		lock_status, 0,
 		"Flash control register failed to unlock on second attempt");
+}
+
+static void test_disable_flash_control_register(void)
+{
+	int ret;
+	int lock_status;
+
+	/* Unlock the flash control register */
+	ret = cros_flash_npcx_set_write_enable(cros_flash_dev);
+	zassert_equal(ret, 0, "Failed to enable write: %d", ret);
+	lock_status = flash_control_register_locked(cros_flash_dev);
+	zassert_true(lock_status >= 0, "Failed to read lock status, error: %d",
+		     lock_status);
+	zassert_equal(lock_status, 0,
+		      "Flash control register failed to unlock");
+
+	/* Disable the flash control register */
+	flash_protect_int_flash(cros_flash_dev, /*enable=*/true);
+	lock_status = flash_control_register_locked(cros_flash_dev);
+	zassert_true(lock_status >= 0, "Failed to read lock status, error: %d",
+		     lock_status);
+	zassert_equal(lock_status, 1, "Flash control register failed to lock");
+
+	/*
+	 * Attempt to unlock the flash control register. It should still be
+	 * locked because it has been disabled.
+	 */
+	ret = cros_flash_npcx_set_write_enable(cros_flash_dev);
+	zassert_equal(ret, 0, "Failed to enable write: %d", ret);
+	lock_status = flash_control_register_locked(cros_flash_dev);
+	zassert_true(lock_status >= 0, "Failed to read lock status, error: %d",
+		     lock_status);
+	zassert_equal(lock_status, 1, "Flash control register failed to lock");
+}
+
+/*
+ * This test leaves the flash control register in a locked state that
+ * persists until a hardware reset. To prevent interference with other tests
+ * that require register access, this MUST remain the last test in the suite.
+ */
+ZTEST(flash_physical_npcx, test_flash_control_register)
+{
+	LOG_INF("Step 1: Running lock control register test...");
+	test_lock_flash_control_register();
+
+	LOG_INF("Step 2: Running disable flash control register test...");
+	test_disable_flash_control_register();
 }
 
 #endif /* CONFIG_SOC_FAMILY_NPCX */
