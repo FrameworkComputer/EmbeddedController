@@ -39,7 +39,7 @@ static void test_panic_data(void)
 	panic_get_reason(&reason, &info, &exception);
 
 	/* TODO(b/302354851): Only "reason" is set for watchdog in Zephyr. */
-	zassert_equal(reason, PANIC_SW_WATCHDOG_HARD);
+	zassert_equal(reason, PANIC_SW_WATCHDOG);
 }
 
 static void (*test_steps[])(void) = { test_watchdog, test_panic_data };
