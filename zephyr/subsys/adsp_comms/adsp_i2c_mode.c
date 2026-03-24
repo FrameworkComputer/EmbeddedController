@@ -5,6 +5,7 @@
 
 /* Bluey ADSP I2C port configuration */
 
+#include "adsp_comms.h"
 #include "common.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -17,32 +18,118 @@
 LOG_MODULE_REGISTER(adsp_comms, LOG_LEVEL_INF);
 
 #define ADSP_I2C_TARGET_ADDRESS 0x0C
+#define ADSP_COMMS_I2C_PKT_SIZE 4
 
-static int temp_cb(struct i2c_target_config *config)
+static uint8_t rx_buf[ADSP_COMMS_I2C_PKT_SIZE];
+static uint8_t rx_idx;
+
+struct adsp_comms_msg {
+	uint8_t fid;
+	uint8_t addr;
+	uint16_t data;
+};
+
+K_MSGQ_DEFINE(adsp_comms_msgq, sizeof(struct adsp_comms_msg),
+	      CONFIG_ADSP_COMMS_MSGQ_SIZE, 4);
+
+/* Find and call registered callbacks for a given feature ID and register
+ * address */
+static void process_callbacks(uint8_t fid, uint8_t addr, uint16_t data)
 {
-	LOG_INF("Empty Callback No action");
+	bool handled = false;
+
+	STRUCT_SECTION_FOREACH(adsp_comms_callback, cb_entry)
+	{
+		if (cb_entry->fid == fid && cb_entry->addr == addr) {
+			if (cb_entry->cb) {
+				cb_entry->cb(fid, addr, data);
+				handled = true;
+			}
+		}
+	}
+
+	if (!handled) {
+		LOG_INF("Processed I2C (no cb): Feature 0x%02x, Reg 0x%02x, Data 0x%04x",
+			fid, addr, data);
+	}
+}
+
+static void adsp_comms_task(void *p1, void *p2, void *p3)
+{
+	struct adsp_comms_msg msg;
+
+	LOG_INF("ADSP comms task started");
+
+	while (1) {
+		if (k_msgq_get(&adsp_comms_msgq, &msg, K_FOREVER) == 0) {
+			process_callbacks(msg.fid, msg.addr, msg.data);
+		}
+	}
+}
+
+K_THREAD_DEFINE(adsp_comms_tid, CONFIG_ADSP_COMMS_STACK_SIZE, adsp_comms_task,
+		NULL, NULL, NULL, CONFIG_ADSP_COMMS_PRIORITY, 0, 0);
+
+static int adsp_i2c_write_requested(struct i2c_target_config *config)
+{
+	rx_idx = 0;
 	return 0;
 }
 
-static int temp_cb_val(struct i2c_target_config *config, uint8_t val)
+static int adsp_i2c_write_received(struct i2c_target_config *config,
+				   uint8_t val)
 {
-	LOG_INF("Empty Callback No action");
+	if (rx_idx < sizeof(rx_buf)) {
+		rx_buf[rx_idx++] = val;
+	} else {
+		return -ENOMEM;
+	}
 	return 0;
 }
 
-static int temp_cb_pval(struct i2c_target_config *config, uint8_t *val)
+static int adsp_i2c_read_requested(struct i2c_target_config *config,
+				   uint8_t *val)
 {
-	LOG_INF("Empty Callback No action");
+	/* Default response for read requests */
+	*val = 0xFF;
 	return 0;
 }
 
-/* i2c target mode callback definition, temp for now */
+static int adsp_i2c_read_processed(struct i2c_target_config *config,
+				   uint8_t *val)
+{
+	/* Default response for subsequent read bytes */
+	*val = 0xFF;
+	return 0;
+}
+
+static int adsp_i2c_stop(struct i2c_target_config *config)
+{
+	if (rx_idx == ADSP_COMMS_I2C_PKT_SIZE) {
+		struct adsp_comms_msg msg;
+
+		msg.addr = rx_buf[0];
+		msg.fid = rx_buf[1];
+		msg.data = (rx_buf[3] << 8) | rx_buf[2];
+
+		if (k_msgq_put(&adsp_comms_msgq, &msg, K_NO_WAIT) != 0) {
+			LOG_WRN("ADSP comms queue full");
+		}
+	} else if (rx_idx > 0) {
+		LOG_WRN("Incomplete I2C packet: %d bytes", rx_idx);
+	}
+
+	rx_idx = 0;
+	return 0;
+}
+
+/* i2c target mode callback definition */
 static const struct i2c_target_callbacks target_callbacks = {
-	.write_requested = temp_cb,
-	.write_received = temp_cb_val,
-	.read_requested = temp_cb_pval,
-	.read_processed = temp_cb_pval,
-	.stop = temp_cb,
+	.write_requested = adsp_i2c_write_requested,
+	.write_received = adsp_i2c_write_received,
+	.read_requested = adsp_i2c_read_requested,
+	.read_processed = adsp_i2c_read_processed,
+	.stop = adsp_i2c_stop,
 };
 
 struct i2c_target_config target_cfg = {

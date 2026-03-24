@@ -7,3 +7,26 @@ config ADSP_COMMS
 	help
 	  Enable ADSP communications support, including I2C port switching
 	  between controller and target modes on chipset state transitions.
+
+if ADSP_COMMS
+
+config ADSP_COMMS_STACK_SIZE
+	int "ADSP comms task stack size"
+	default 1024
+	help
+	  The stack size for the ADSP communications task.
+
+config ADSP_COMMS_PRIORITY
+	int "ADSP comms task priority"
+	default 5
+	help
+	  The priority for the ADSP communications task.
+
+config ADSP_COMMS_MSGQ_SIZE
+	int "ADSP comms message queue size"
+	default 16
+	help
+	  The number of messages that can be stored in the ADSP communications
+	  message queue.
+
+endif # ADSP_COMMS

@@ -19,3 +19,7 @@ FOR_EACH(HOOK_TYPE_SECTION, (
 #ifdef CONFIG_FINGERPRINT_SUBSYSTEM
 ITERABLE_SECTION_ROM(fingerprint_algorithm, 4)
 #endif
+
+#ifdef CONFIG_ADSP_COMMS
+ITERABLE_SECTION_ROM(adsp_comms_callback, 4)
+#endif
