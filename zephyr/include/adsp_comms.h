@@ -16,6 +16,25 @@
 extern "C" {
 #endif
 
+enum adsp_feature_id {
+	ADSP_FEATURE_DEFAULT = 0x03,
+	ADSP_FEATURE_OEM_CUSTOM = 0x07,
+};
+
+enum adsp_power_state_reg {
+	ADSP_POWER_STATE_REG_VAL = 0x11,
+	ADSP_POWER_STATE_REG_RESTART = 0x12,
+};
+
+enum adsp_oem_custom_reg {
+	ADSP_OEM_CUSTOM_REG_MAGIC = 0x01,
+	ADSP_OEM_CUSTOM_REG_VERSION = 0x02,
+	ADSP_OEM_CUSTOM_REG_CHARGE_PORT = 0x03,
+	ADSP_OEM_CUSTOM_REG_CHARGE_STATE = 0x04,
+	ADSP_OEM_CUSTOM_REG_BATTERY_STATE = 0x05,
+	ADSP_OEM_CUSTOM_REG_BATTERY_LEVEL = 0x06,
+};
+
 typedef void (*adsp_comms_callback_t)(uint8_t fid, uint8_t addr, uint16_t data);
 
 struct adsp_comms_callback {
