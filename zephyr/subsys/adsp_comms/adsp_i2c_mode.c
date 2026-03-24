@@ -14,7 +14,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
-LOG_MODULE_REGISTER(bluey_adsp_i2c_switch, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(adsp_comms, LOG_LEVEL_INF);
 
 #define ADSP_I2C_TARGET_ADDRESS 0x0C
 

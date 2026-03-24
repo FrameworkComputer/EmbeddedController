@@ -1,0 +1,9 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config ADSP_COMMS
+	bool "ADSP communications support"
+	help
+	  Enable ADSP communications support, including I2C port switching
+	  between controller and target modes on chipset state transitions.
