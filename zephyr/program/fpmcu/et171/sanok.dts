@@ -6,19 +6,19 @@
 #include "common.dtsi"
 #include "btn_ign.dtsi"
 
-#define EGIS630_DEFAULT_IMAGE_PROPS \
-	width = <80>; \
-	height = <64>; \
-	bits-per-pixel = <8>; \
-	frame-size = <5120>; \
-	image-data-offset-bytes = <0>; \
-	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
-
 #define EGIS630_TEST_IMAGE_PROPS \
 	width = <80>; \
 	height = <64>; \
 	bits-per-pixel = <16>; \
 	frame-size = <10240>; \
+	image-data-offset-bytes = <0>; \
+	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+
+#define EGIS630_IMAGE_COLLECTION_PROPS \
+	width = <80>; \
+	height = <64>; \
+	bits-per-pixel = <8>; \
+	frame-size = <26200>; \
 	image-data-offset-bytes = <0>; \
 	v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
 
@@ -31,7 +31,7 @@
 		configs {
 			compatible = "fingerprint-image-frame-params";
 			config0 {
-				EGIS630_DEFAULT_IMAGE_PROPS
+				EGIS630_IMAGE_COLLECTION_PROPS
 				capture-type = "FINGERPRINT_CAPTURE_TYPE_SIMPLE_IMAGE";
 			};
 			config1 {
@@ -57,6 +57,10 @@
 			config6 {
 				EGIS630_TEST_IMAGE_PROPS
 				capture-type = "FINGERPRINT_CAPTURE_TYPE_QUALITY_TEST";
+			};
+			config7 {
+				EGIS630_IMAGE_COLLECTION_PROPS
+				capture-type = "FINGERPRINT_CAPTURE_TYPE_VENDOR_FORMAT";
 			};
 		};
 

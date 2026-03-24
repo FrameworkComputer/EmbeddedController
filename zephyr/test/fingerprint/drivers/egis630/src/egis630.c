@@ -192,7 +192,7 @@ ZTEST_F(egis630, test_convert_fp_capture_type_to_egis_capture_type)
 {
 	zassert_equal(convert_fp_capture_type_to_egis_capture_type(
 			      FINGERPRINT_CAPTURE_TYPE_VENDOR_FORMAT),
-		      EGIS_CAPTURE_NORMAL_FORMAT);
+		      EGIS_CAPTURE_IMAGE_COLLECTION);
 	zassert_equal(convert_fp_capture_type_to_egis_capture_type(
 			      FINGERPRINT_CAPTURE_TYPE_SIMPLE_IMAGE),
 		      EGIS_CAPTURE_NORMAL_FORMAT);
