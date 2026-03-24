@@ -785,11 +785,13 @@ static bool is_dualrole_charging_capable(int port)
 
 static bool is_battery_disconnected(void)
 {
-	return (IS_ENABLED(CONFIG_BATTERY) &&
-		(battery_is_present() == BP_NO ||
-		 battery_is_present() == BP_NOT_SURE ||
-		 (battery_is_present() == BP_YES &&
-		  battery_is_cut_off() != BATTERY_CUTOFF_STATE_NORMAL)));
+	if (!IS_ENABLED(CONFIG_BATTERY)) {
+		return false;
+	}
+	enum battery_present bp = battery_is_present();
+	return (bp == BP_NO || bp == BP_NOT_SURE ||
+		(bp == BP_YES &&
+		 battery_is_cut_off() != BATTERY_CUTOFF_STATE_NORMAL));
 }
 
 static inline bool is_charge_available(const struct charge_port_info *info)
