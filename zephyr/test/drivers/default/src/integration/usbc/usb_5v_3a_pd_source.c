@@ -303,14 +303,16 @@ ZTEST_F(usb_attach_5v_3a_pd_source, test_uvdm_ignored)
 ZTEST_F(usb_attach_5v_3a_pd_source, test_dps_battery_absent)
 {
 	control_battery_present(false);
-	zassert_false(battery_is_present(), "dps battery is present");
+	zassert_not_equal(BP_YES, battery_is_present(),
+			  "dps battery is present");
 	task_wake(TASK_ID_DPS);
 	/* wait dps_config.t_check*/
 	k_sleep(K_MSEC(5000));
 	zassert_true(dps_get_flag() & DPS_FLAG_NO_BATTERY,
 		     "DPS_FLAG_NO_BATTERY is set");
 	control_battery_present(true);
-	zassert_true(battery_is_present(), "dps battery is not present");
+	zassert_equal(BP_YES, battery_is_present(),
+		      "dps battery is not present");
 }
 
 ZTEST_F(usb_attach_5v_3a_pd_source, test_dps_enable)

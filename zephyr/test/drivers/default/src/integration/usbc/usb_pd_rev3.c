@@ -124,7 +124,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, test_batt_cap)
 
 	/* See pe_give_battery_cap_entry() in common/usbc/usb_pe_drp_sm.c */
 
-	zassert_true(battery_is_present(), "Battery must be present");
+	zassert_equal(BP_YES, battery_is_present(), "Battery must be present");
 	zassert_true(IS_ENABLED(HAS_TASK_HOSTCMD) &&
 			     *host_get_memmap(EC_MEMMAP_BATTERY_VERSION) != 0,
 		     "Cannot access battery data");
