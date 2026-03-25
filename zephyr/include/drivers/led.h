@@ -246,6 +246,9 @@ struct custom_led_patterns_t {
  */
 void led_set_custom_patterns(struct custom_led_patterns_t *p);
 
+/* Reset any built-in patterns that match the given led_id */
+void reset_policy_patterns(enum ec_led_id led_id);
+
 #ifdef TEST_BUILD
 const struct led_pins_node_t *led_get_node(enum led_color color,
 					   enum ec_led_id led_id);

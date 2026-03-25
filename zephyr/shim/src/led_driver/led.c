@@ -351,7 +351,7 @@ static void process_pattern_update(const struct policy_group *grp,
 }
 
 /* Reset any built-in patterns that match the given led_id */
-static void reset_policy_patterns(enum ec_led_id led_id)
+void reset_policy_patterns(enum ec_led_id led_id)
 {
 	for (int i = 0; i < ARRAY_SIZE(policy_groups); i++) {
 		const struct policy_group *grp = &policy_groups[i];
