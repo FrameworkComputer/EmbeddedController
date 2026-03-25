@@ -32,6 +32,9 @@ static int addr_prot_length;
 static uint8_t saved_sr1;
 static uint8_t saved_sr2;
 
+#define NPCX_FLASH_TIMEOUT_MS 10000 /* 10 seconds */
+#define NPCX_WAIT_PERIOD_US 10
+
 /* Device data */
 struct cros_flash_npcx_data {
 	const struct device *flash_dev;
@@ -74,8 +77,7 @@ static int cros_flash_npcx_get_status_reg(const struct device *dev,
 
 static int cros_flash_npcx_wait_ready(const struct device *dev)
 {
-	int wait_period_us = 10;
-	int timeout = (10 * USEC_PER_SEC) / wait_period_us; /* 10 seconds */
+	int64_t timeout_time = k_uptime_get() + NPCX_FLASH_TIMEOUT_MS;
 
 	do {
 		uint8_t reg;
@@ -89,8 +91,8 @@ static int cros_flash_npcx_wait_ready(const struct device *dev)
 		if ((reg & SPI_NOR_WIP_BIT) == 0) {
 			return 0;
 		}
-		k_usleep(wait_period_us);
-	} while (--timeout); /* Wait for busy bit clear */
+		k_usleep(NPCX_WAIT_PERIOD_US);
+	} while (k_uptime_get() < timeout_time); /* Wait for busy bit clear */
 
 	return -ETIMEDOUT;
 }
@@ -99,8 +101,7 @@ static int cros_flash_npcx_wait_ready(const struct device *dev)
 static int cros_flash_npcx_wait_write_enable_state(const struct device *dev,
 						   bool enabled)
 {
-	int wait_period_us = 10;
-	int timeout = (10 * USEC_PER_SEC) / wait_period_us;
+	int64_t timeout_time = k_uptime_get() + NPCX_FLASH_TIMEOUT_MS;
 
 	do {
 		uint8_t reg;
@@ -117,8 +118,8 @@ static int cros_flash_npcx_wait_write_enable_state(const struct device *dev,
 			return 0;
 		}
 
-		k_usleep(wait_period_us);
-	} while (--timeout); /* Wait for busy bit clear */
+		k_usleep(NPCX_WAIT_PERIOD_US);
+	} while (k_uptime_get() < timeout_time); /* Wait for busy bit clear */
 
 	return -ETIMEDOUT;
 }
