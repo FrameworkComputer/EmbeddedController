@@ -884,16 +884,15 @@ __overridable int board_get_version(void)
  */
 test_mockable int system_get_board_version(void)
 {
-	int board_id;
-
 	if (IS_ENABLED(CONFIG_BOARD_VERSION_CBI)) {
+		uint32_t board_id;
 		int error;
 
 		error = cbi_get_board_version(&board_id);
 		if (error)
 			return -error;
 
-		return board_id;
+		return (int)board_id;
 	};
 
 	return board_get_version();
