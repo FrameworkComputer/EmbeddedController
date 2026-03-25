@@ -3142,11 +3142,15 @@ static void tc_attached_src_entry(const int port)
 			/* Apply Rp */
 			typec_update_cc(port);
 
+			/* Attached.SRC - enable AutoDischargeDisconnect
+			 * TODO(b:469587422): Remove the logic to enable Auto
+			 * Discharge Disconnect in tc_pr_swap_complete. That's
+			 * too late for a sink-to-source PRS. */
+			tcpm_enable_auto_discharge_disconnect(port, 1);
+
 			/*
 			 * Maintain VCONN supply state, whether ON or OFF, and
-			 * its data role / usb mux connections. Do not
-			 * re-enable AutoDischargeDisconnect until the swap is
-			 * completed and tc_pr_swap_complete is called.
+			 * its data role / usb mux connections.
 			 */
 		} else {
 			/*
