@@ -82,8 +82,15 @@
 		gpio_stylus_sw_r: stylus_sw_r {
 			gpios = <&gpio2 7 GPIO_ODR_HIGH>; /*Touch panel stylus protocol switch */
 		};
+		gpio_en_3v_btn: en_3v_btn {
+			/* Power button board 3V EN */
+			/* Power for MCU on that board */
+			gpios = <&gpio1 1 GPIO_OUTPUT_LOW>;
+		};
 		gpio_en_5v_pb: en_5v_pb {
-			gpios = <&gpio2 2 GPIO_OUTPUT_LOW>; /*Power button board 5V EN*/
+			/* Power button board 5V EN */
+			/* Power button LED power */
+			gpios = <&gpio2 2 GPIO_OUTPUT_LOW>;
 		};
 		gpio_soc_ec_int2_l: soc_ec_int2_l {
 			gpios = <&gpio1 4 GPIO_ODR_HIGH>; /*I2C0 use HID over I2C int#*/
@@ -281,7 +288,6 @@
 			<&gpio0 5 0>,
 			<&gpio0 6 0>,
 			<&gpio1 0 0>,
-			<&gpio1 1 0>,
 			<&gpio1 3 0>,
 			<&gpio1 5 0>,
 			<&gpio2 3 0>,
