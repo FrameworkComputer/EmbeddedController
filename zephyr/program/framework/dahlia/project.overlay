@@ -109,3 +109,16 @@
     /delete-property/ pinctrl-0;
     /delete-property/ pinctrl-names;
 };
+
+&binman {
+	ec-rw {
+		size = <0x3f000>;
+		rw-fw {
+			rw-fwid {
+				offset = <(0x3f000 - 32)>;
+			};
+		};
+	};
+	pad-after = <0x1000>;
+	pad-byte = <0xFF>;
+};
