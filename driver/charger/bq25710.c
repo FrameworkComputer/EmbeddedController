@@ -1030,8 +1030,9 @@ static enum ec_error_list bq25710_set_hw_ramp(int chgnum, int enable)
 		 * cutoff, then enabling ICO mode will lead to VSYS
 		 * dropping out.
 		 */
-		if (!battery_is_present() || (battery_get_disconnect_state() !=
-					      BATTERY_NOT_DISCONNECTED)) {
+		if (battery_is_present() != BP_YES ||
+		    (battery_get_disconnect_state() !=
+		     BATTERY_NOT_DISCONNECTED)) {
 			CPRINTF("bq25710: no battery, skip ICO enable\n");
 			return EC_ERROR_UNKNOWN;
 		}

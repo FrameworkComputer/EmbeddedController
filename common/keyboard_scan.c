@@ -975,7 +975,7 @@ static uint32_t check_boot_key(const uint8_t *state)
 	 * state.
 	 */
 	if ((system_get_reset_flags() & EC_RESET_FLAG_POWER_ON) &&
-	    battery_is_present() == BP_NO)
+	    battery_is_present() != BP_YES)
 		return check_key_list(state);
 #endif
 

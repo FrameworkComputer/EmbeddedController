@@ -4237,7 +4237,7 @@ static void pe_snk_hard_reset_entry(int port)
 	 * customer.  For systems which should have a battery, this condition is
 	 * not expected to be encountered by a customer.
 	 */
-	if (IS_ENABLED(CONFIG_BATTERY) && (battery_is_present() == BP_NO) &&
+	if (IS_ENABLED(CONFIG_BATTERY) && (battery_is_present() != BP_YES) &&
 	    IS_ENABLED(CONFIG_CHARGE_MANAGER) &&
 	    ((port == charge_manager_get_active_charge_port() ||
 	      (charge_manager_get_active_charge_port() == CHARGE_PORT_NONE))) &&
@@ -4632,7 +4632,7 @@ static void pe_give_battery_cap_entry(int port)
 		msg[BCDB_FULL_CAP] = 0;
 		/* Set invalid battery bit in response bit 0, byte 8 */
 		msg[BCDB_BATT_TYPE] = 1;
-	} else if (battery_is_present()) {
+	} else if (battery_is_present() == BP_YES) {
 		/*
 		 * The Battery Design Capacity field shall return the
 		 * Battery’s design capacity in tenths of Wh. If the
@@ -4736,7 +4736,7 @@ static void pe_give_battery_status_entry(int port)
 		return;
 	print_current_state(port);
 
-	if (battery_is_present()) {
+	if (battery_is_present() == BP_YES) {
 		/*
 		 * We only have one fixed battery,
 		 * so make sure batt cap ref is 0.

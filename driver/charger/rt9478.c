@@ -519,7 +519,7 @@ static void rt9478_init(int chgnum)
 	 * reset is only required when running out of RO and not
 	 * following sysjump to RW.
 	 */
-	if (!system_jumped_late() && battery_is_present() &&
+	if (!system_jumped_late() && battery_is_present() == BP_YES &&
 	    (battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED)) {
 		rv = rt9478_set_low_power_mode(chgnum, false);
 		/* Allow enough time for VDDA to be powered */
@@ -844,8 +844,9 @@ static enum ec_error_list rt9478_set_hw_ramp(int chgnum, int enable)
 		 * yet from cutoff, then enabling AICC mode will lead to VSYS
 		 * dropping out.
 		 */
-		if (!battery_is_present() || (battery_get_disconnect_state() !=
-					      BATTERY_NOT_DISCONNECTED)) {
+		if (battery_is_present() != BP_YES ||
+		    (battery_get_disconnect_state() !=
+		     BATTERY_NOT_DISCONNECTED)) {
 			CPRINTF("rt9478: no battery, skip AICC enable\n");
 			return EC_ERROR_UNKNOWN;
 		}
