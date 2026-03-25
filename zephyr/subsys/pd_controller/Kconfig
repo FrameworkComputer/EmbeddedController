@@ -40,7 +40,7 @@ config PDC_POWER_MGMT_THREAD_PRIORTY
 
 config PDC_POWER_MGMT_STACK_SIZE
 	int "USB-C thread stack size"
-	default 1024
+	default 1280
 	help
 	  Stack size of thread created for each instance.
 
