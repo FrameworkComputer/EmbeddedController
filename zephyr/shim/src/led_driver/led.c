@@ -520,7 +520,8 @@ static int match_node(const struct policy_group *grp, int node_idx)
 	const struct node_prop_t *node = &grp->nodes[node_idx];
 	bool *active = &grp->active[node_idx];
 
-#if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER))
+#if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER) || \
+     IS_ENABLED(CONFIG_PLATFORM_EC_ADSP_CHARGE_MANAGER))
 	/* Check if this node depends on power state */
 	if (node->pwr_state != 0) {
 		enum led_pwr_state pwr_state = led_pwr_get_state();
@@ -540,7 +541,9 @@ static int match_node(const struct policy_group *grp, int node_idx)
 			}
 		}
 	}
-#endif /* CONFIG_PLATFORM_EC_CHARGE_MANAGER */
+#endif /* CONFIG_PLATFORM_EC_CHARGE_MANAGER ||   \
+	* CONFIG_PLATFORM_EC_ADSP_CHARGE_MANAGER \
+	*/
 
 	/* Check if this node depends on chipset state */
 	if (node->chipset_state != 0) {
@@ -575,7 +578,8 @@ static int match_node(const struct policy_group *grp, int node_idx)
 	}
 #endif /* CONFIG_PLATFORM_EC_BATTERY */
 
-#if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER))
+#if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER) || \
+     IS_ENABLED(CONFIG_PLATFORM_EC_ADSP_CHARGE_MANAGER))
 	/* Check if this node depends on battery level */
 	if (node->batt_lvl[0] != -1) {
 		int curr_batt_lvl =
@@ -587,7 +591,9 @@ static int match_node(const struct policy_group *grp, int node_idx)
 			return -1;
 		}
 	}
-#endif /* CONFIG_PLATFORM_EC_CHARGE_MANAGER */
+#endif /* CONFIG_PLATFORM_EC_CHARGE_MANAGER ||   \
+	* CONFIG_PLATFORM_EC_ADSP_CHARGE_MANAGER \
+	*/
 
 	/* reset the color counter if pattern just activated */
 	if (!(*active)) {
