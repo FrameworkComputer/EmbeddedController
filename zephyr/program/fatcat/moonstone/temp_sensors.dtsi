@@ -30,6 +30,7 @@
 			temp-host-release-high = <70>;
 			temp-host-release-halt = <80>;
 			sensor = <&temp_ddr_soc_thermistor>;
+			power-good-pin = <&gpio_pg_vccio_od>;
 		};
 		temp_regulator: regulator-thermistor {
 			temp-host-high = <86>;
@@ -37,6 +38,7 @@
 			temp-host-release-high = <81>;
 			temp-host-release-halt = <90>;
 			sensor = <&temp_regulator_thermistor>;
+			power-good-pin = <&gpio_pg_vccio_od>;
 		};
 		temp_charger: charger-thermistor {
 			temp-host-high = <80>;
@@ -44,6 +46,7 @@
 			temp-host-release-high = <75>;
 			temp-host-release-halt = <85>;
 			sensor = <&temp_charger_thermistor>;
+			power-good-pin = <&gpio_pg_vccio_od>;
 		};
 	};
 };
