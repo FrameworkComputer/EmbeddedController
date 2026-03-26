@@ -78,4 +78,4 @@ static void tablet_mode_init(void)
 		LOG_INF("Board is Convertible");
 	}
 }
-DECLARE_HOOK(HOOK_INIT, tablet_mode_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, tablet_mode_init, HOOK_PRIO_INIT_LID);
