@@ -56,14 +56,13 @@ static bool recharging = false;
 static int soc_fail_cnt;
 
 #define SOC_FAIL_MAX 20
-#define SOC_LOW 80
-#define SOC_FULL 97
+#define SOC_LOW 75
 #define CHECK_INTERVAL_MS (20ULL * 60 * USEC_PER_SEC)
 
-static void pchg_full_update(void);
-DECLARE_DEFERRED(pchg_full_update);
+static void pchg_board_update(void);
+DECLARE_DEFERRED(pchg_board_update);
 
-static void pchg_full_update()
+static void pchg_board_update()
 {
 	timestamp_t now = get_time();
 	int soc;
@@ -82,20 +81,20 @@ static void pchg_full_update()
 		recharging = false;
 		next_check_ts.val = 0;
 
-		hook_call_deferred(&pchg_full_update_data, -1);
+		hook_call_deferred(&pchg_board_update_data, -1);
 		CPRINTS("stylus: remove");
 		return;
 	}
 
 	/* wait 20m delay */
 	if (now.val < next_check_ts.val) {
-		CPRINTS("stylus: after 20m check");
-		hook_call_deferred(&pchg_full_update_data, USEC_PER_SEC);
+		hook_call_deferred(&pchg_board_update_data, USEC_PER_SEC);
 		return;
 	}
 
 	/* power on wireless charge */
 	if (!startup_ok) {
+		CPRINTS("stylus: after 20m check battery level");
 		pchg_startup();
 		startup_ok = true;
 	}
@@ -112,20 +111,15 @@ static void pchg_full_update()
 			}
 			soc_fail_cnt = 0;
 		}
-		hook_call_deferred(&pchg_full_update_data, USEC_PER_SEC);
+		hook_call_deferred(&pchg_board_update_data, USEC_PER_SEC);
 		return;
 	}
 	soc_fail_cnt = 0;
 
 	/* recharge begin */
-	if (!recharging && soc <= SOC_LOW) {
+	if (!recharging && soc < SOC_LOW) {
 		recharging = true;
 		CPRINTS("stylus: enter recharge soc=%d", soc);
-	}
-
-	if (recharging && soc >= SOC_FULL) {
-		recharging = false;
-		CPRINTS("stylus: recharge done soc=%d", soc);
 	}
 
 	if (recharging) {
@@ -143,15 +137,15 @@ static void pchg_full_update()
 	}
 
 	next_check_ts.val = now.val + CHECK_INTERVAL_MS;
-	hook_call_deferred(&pchg_full_update_data, USEC_PER_SEC);
+	hook_call_deferred(&pchg_board_update_data, USEC_PER_SEC);
 }
 
-__override void board_pchg_full_strategy()
+__override void board_pchg_end_strategy()
 {
 	next_check_ts.val = get_time().val + CHECK_INTERVAL_MS;
 	pchg_shutdown();
 	startup_ok = false;
 	recharging = false;
-	CPRINTS("stylus: charge full strategy begin");
-	hook_call_deferred(&pchg_full_update_data, USEC_PER_SEC);
+	CPRINTS("stylus: board charge strategy begin");
+	hook_call_deferred(&pchg_board_update_data, USEC_PER_SEC);
 }
