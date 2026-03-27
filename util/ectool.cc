@@ -1877,10 +1877,22 @@ sysinfo_error_usage:
 
 int cmd_rollback_info(int argc, char *argv[])
 {
-	struct ec_response_rollback_info r;
+	struct ec_response_rollback_info_v1 r;
+	int cmdver = 1;
+	int rsize = sizeof(r);
 	int rv;
 
-	rv = ec_command(EC_CMD_ROLLBACK_INFO, 0, NULL, 0, &r, sizeof(r));
+	memset(&r, 0, sizeof(r));
+
+	if (!ec_cmd_version_supported(EC_CMD_ROLLBACK_INFO, cmdver)) {
+		/* Fall back to version 0. Older RO firmware may not support
+		 * version 1.
+		 */
+		cmdver = 0;
+		rsize = sizeof(struct ec_response_rollback_info);
+	}
+
+	rv = ec_command(EC_CMD_ROLLBACK_INFO, cmdver, NULL, 0, &r, rsize);
 	if (rv < 0) {
 		fprintf(stderr, "ERROR: EC_CMD_ROLLBACK_INFO failed: %d\n", rv);
 		return rv;
@@ -1890,6 +1902,10 @@ int cmd_rollback_info(int argc, char *argv[])
 	printf("Rollback block id:    %d\n", r.id);
 	printf("Rollback min version: %d\n", r.rollback_min_version);
 	printf("RW rollback version:  %d\n", r.rw_rollback_version);
+
+	if (cmdver >= 1) {
+		printf("Secret initialized:   %d\n", r.is_secret_inited);
+	}
 
 	return 0;
 }
