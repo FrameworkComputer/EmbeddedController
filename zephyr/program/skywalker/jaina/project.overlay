@@ -13,7 +13,6 @@
 #include "../power_signal.dtsi"
 #include "../usba.dtsi"
 #include "led_pins.dtsi"
-#include "led_policy.dtsi"
 #include "temp_sensor.dtsi"
 #include "cbi.dtsi"
 #include "motionsense.dtsi"

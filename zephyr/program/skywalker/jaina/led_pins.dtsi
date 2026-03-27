@@ -6,35 +6,30 @@
 / {
 	pwm-leds {
 		compatible = "pwm-leds";
-		/* NOTE: &pwm number needs same with channel number */
-		led_white: led-white {
+		pwm_power_led: pwm_power_led {
 			pwms = <&pwm0 PWM_CHANNEL_0 PWM_HZ(324) PWM_POLARITY_INVERTED>;
 		};
-		led_amber: led-amber {
+		pwm_battery_left_amber_led: pwm_battery_left_amber_led {
+			pwms = <&pwm3 PWM_CHANNEL_3 PWM_HZ(324) PWM_POLARITY_INVERTED>;
+		};
+		pwm_battery_left_white_led: pwm_battery_left_white_led {
+			pwms = <&pwm7 PWM_CHANNEL_7 PWM_HZ(324) PWM_POLARITY_INVERTED>;
+		};
+		pwm_battery_right_amber_led: pwm_battery_right_amber_led {
 			pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(324) PWM_POLARITY_INVERTED>;
+		};
+		pwm_battery_right_white_led: pwm_battery_right_white_led {
+			pwms = <&pwm2 PWM_CHANNEL_2 PWM_HZ(324) PWM_POLARITY_INVERTED>;
 		};
 	};
 
-	led_pins: pwm-led-pins {
-		compatible = "cros-ec,pwm-led-pins";
+	cros-pwmleds {
+		compatible = "cros-ec,pwm-leds";
 
-		combo_led: combo-led {
-			led-id = "EC_LED_ID_BATTERY_LED";
-			led-pwms = <&led_white &led_amber>;
-			battery_led_off: color-off {
-				led-color = "LED_OFF";
-				led-values = <0 0>;
-			};
-
-			battery_led_white: color-white {
-				led-color = "LED_WHITE";
-				led-values = <100 0>;
-			};
-
-			battery_led_amber: color-amber {
-				led-color = "LED_AMBER";
-				led-values = <0 100 >;
-			};
-		};
+		leds = <&pwm_power_led>;
+		leds = <&pwm_battery_left_amber_led>;
+		leds = <&pwm_battery_left_white_led>;
+		leds = <&pwm_battery_right_amber_led>;
+		leds = <&pwm_battery_right_white_led>;
 	};
 };
