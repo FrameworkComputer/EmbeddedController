@@ -69,4 +69,45 @@ ZTEST(extpower, test_extpower_gpio_debounce)
 	}
 }
 
+#ifdef HAS_TASK_HOSTCMD
+ZTEST(extpower, test_extpower_ap_startup)
+{
+	hook_notify(HOOK_CHIPSET_SHUTDOWN);
+	host_clear_events(0xFFFFFFFF);
+
+	/* Verify that the EC posts an AC connect/disconnect event
+	 * after booting the AP.
+	 */
+	set_ac(1, true);
+	ac_hook_count = 0;
+	set_ac(0, true);
+
+	/* Ensure the AC hook has completed before powering up the AP. */
+	zassert_equal(ac_hook_count, 1);
+	host_clear_events(0xFFFFFFFF);
+
+	hook_notify(HOOK_CHIPSET_STARTUP);
+
+	zassert_false(host_is_event_set(EC_HOST_EVENT_AC_CONNECTED));
+	zassert_true(host_is_event_set(EC_HOST_EVENT_AC_DISCONNECTED));
+
+	hook_notify(HOOK_CHIPSET_SHUTDOWN);
+
+	/* Verify that the EC posts an AC connect/discoonect event
+	 * after booting the AP.
+	 */
+	ac_hook_count = 0;
+	set_ac(1, true);
+
+	/* Ensure the AC hook has completed before powering up the AP. */
+	zassert_equal(ac_hook_count, 1);
+	host_clear_events(0xFFFFFFFF);
+
+	hook_notify(HOOK_CHIPSET_STARTUP);
+
+	zassert_true(host_is_event_set(EC_HOST_EVENT_AC_CONNECTED));
+	zassert_false(host_is_event_set(EC_HOST_EVENT_AC_DISCONNECTED));
+}
+#endif
+
 ZTEST_SUITE(extpower, NULL, NULL, before_and_after, before_and_after, NULL);
