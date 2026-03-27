@@ -81,3 +81,16 @@ enum battery_access_type battery_check_access_limit(void)
 	return BATTERY_ACCESS_ALLOWED;
 }
 #endif
+
+void board_battery_compensate_params(struct batt_params *batt)
+{
+	/* Update display SOC based on current state_of_charge (multiply by 10)
+	 */
+	if (!(batt->flags & BATT_FLAG_BAD_STATE_OF_CHARGE)) {
+		batt->display_charge = batt->state_of_charge * 10;
+		if (batt->display_charge < 0)
+			batt->display_charge = 0;
+		if (batt->display_charge > 1000)
+			batt->display_charge = 1000;
+	}
+}
