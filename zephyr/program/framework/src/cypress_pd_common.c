@@ -1268,7 +1268,7 @@ static void cypd_update_port_state(int controller, int port)
 
 	/*
 	 * The port can have several states active:
-	 * 1. Type C active (with no PD contract) CC resistor negociation only
+	 * 1. Type C active (with no PD contract) CC resistor negotiation only
 	 * 2. Type C active with PD contract
 	 * 3. Not active
 	 * Each of 1 and 2 can be either source or sink
@@ -1280,7 +1280,7 @@ static void cypd_update_port_state(int controller, int port)
 							type_c_current);
 	} else {
 		typec_set_input_current_limit(port_idx, 0, 0);
-		charge_manager_set_ceil(port,
+		charge_manager_set_ceil(port_idx,
 			CEIL_REQUESTOR_PD,
 			CHARGE_CEIL_NONE);
 	}
