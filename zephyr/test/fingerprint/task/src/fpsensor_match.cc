@@ -724,15 +724,9 @@ ZTEST_USER(fpsensor_match, test_match_no_match_keeps_stats_valid)
 
 	/* Verify timestamps_invalid should not have FPSTATS_MATCHING_INV. */
 	zassert_ok(ec_cmd_fp_stats(NULL, &stats));
-	/*
-	 * TODO: Currently, a NO_MATCH result incorrectly sets the invalid flag.
-	 * We are asserting the WRONG behavior here to ensure the test runs.
-	 * Once https://crrev.com/c/7707105 is merged, this MUST be changed
-	 * to zassert_false.
-	 */
-	zassert_true(
+	zassert_false(
 		stats.timestamps_invalid & FPSTATS_MATCHING_INV,
-		"Pending fix: Stats are (incorrectly) flagged invalid on 'No Match'");
+		"Matching stats should be valid even on a 'No Match' result");
 }
 
 ZTEST_USER(fpsensor_match, test_match_internal_error_sets_invalid_flag)
