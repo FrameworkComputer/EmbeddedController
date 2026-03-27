@@ -38,6 +38,14 @@ void extpower_update_host_events(int is_present)
 	host_clear_events(mask);
 }
 
+#ifdef HAS_TASK_HOSTCMD
+static void extpower_chipset_startup(void)
+{
+	extpower_update_host_events(extpower_is_present());
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, extpower_chipset_startup, HOOK_PRIO_DEFAULT);
+#endif
+
 test_mockable void extpower_handle_update(int is_present)
 {
 	hook_notify(HOOK_AC_CHANGE);

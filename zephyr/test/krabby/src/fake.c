@@ -21,3 +21,8 @@ FAKE_VOID_FUNC(ccd_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(x_ec_interrupt, enum gpio_signal);
 
 /* LCOV_EXCL_STOP */
+
+int extpower_is_present(void)
+{
+	return 1;
+}

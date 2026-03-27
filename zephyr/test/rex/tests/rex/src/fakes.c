@@ -79,3 +79,8 @@ int mock_cros_cbi_get_fw_config_usb3(enum cbi_fw_config_field_id field_id,
 	}
 	return -EINVAL;
 }
+
+int extpower_is_present(void)
+{
+	return 1;
+}

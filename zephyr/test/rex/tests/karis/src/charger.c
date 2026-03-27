@@ -17,6 +17,11 @@ FAKE_VOID_FUNC(pd_power_supply_reset, int);
 FAKE_VALUE_FUNC(int, pd_check_vconn_swap, int);
 FAKE_VALUE_FUNC(int, pd_set_power_supply_ready, int);
 
+int extpower_is_present(void)
+{
+	return 1;
+}
+
 ZTEST_SUITE(karis_charger, NULL, NULL, NULL, NULL, NULL);
 
 ZTEST(karis_charger, test_get_leave_safe_mode_delay_ms)

@@ -20,11 +20,7 @@ BUILD_ASSERT(!IS_ENABLED(CONFIG_PLATFORM_EC_OCPC),
 #define CHARGER_NODE DT_NODELABEL(charger)
 const struct emul *isl9241_emul = EMUL_DT_GET(CHARGER_NODE);
 
-static int extpower_present = 0;
-int extpower_is_present(void)
-{
-	return extpower_present;
-}
+extern int extpower_present;
 
 #define RTS5453P_NODE DT_NODELABEL(pdc_emul1)
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);

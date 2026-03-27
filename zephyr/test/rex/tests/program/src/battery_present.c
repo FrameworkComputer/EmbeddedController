@@ -17,6 +17,11 @@
 
 FAKE_VALUE_FUNC(int, board_set_active_charge_port, int);
 
+int extpower_is_present(void)
+{
+	return 1;
+}
+
 static void battery_after(void *data)
 {
 	const struct device *dev =

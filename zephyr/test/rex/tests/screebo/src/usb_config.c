@@ -32,6 +32,11 @@ FAKE_VALUE_FUNC(int, pd_check_vconn_swap, int);
 FAKE_VALUE_FUNC(int, pd_set_power_supply_ready, int);
 FAKE_VALUE_FUNC(int, cbi_get_board_version, uint32_t *);
 
+int extpower_is_present(void)
+{
+	return 1;
+}
+
 static int board_version;
 static struct bb_usb_control bb_controls_saved[2];
 static struct ppc_config_t ppc_chips_saved[2];

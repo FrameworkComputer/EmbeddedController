@@ -17,6 +17,7 @@ tests:
       - CONFIG_AP_POWER_EVENTS_MOCK=y
       - CONFIG_POWER_SIGNALS_MOCK=y
       - CONFIG_AP_EVENTS=n
+      - CONFIG_STUB_EXTPOWER_IS_PRESENT=y
   nissa.board_power.ap_pwrseq_drv:
     extra_configs:
       - CONFIG_TEST_NISSA_BOARD_POWER=y
@@ -28,6 +29,7 @@ tests:
       - CONFIG_AP_PWRSEQ_DRIVER=y
       - CONFIG_PLATFORM_EC_HOSTCMD=y
       - CONFIG_PLATFORM_EC_BACKLIGHT_LID=n
+      - CONFIG_STUB_EXTPOWER_IS_PRESENT=y
     extra_dtc_overlay_files:
       - "boards/generic_npcx.dts"
       - "boards/ap_pwrseq_drv_power_signals.dts"
@@ -37,6 +39,7 @@ tests:
     extra_configs:
       - CONFIG_TEST_NISSA_SUB_BOARD=y
       - CONFIG_NISSA_BOARD_HAS_HDMI_SUPPORT=y
+      - CONFIG_STUB_EXTPOWER_IS_PRESENT=y
   nissa.common:
     extra_dtc_overlay_files:
       - "boards/generic_npcx.dts"
@@ -46,6 +49,7 @@ tests:
       - "charger.conf"
     extra_configs:
       - CONFIG_TEST_NISSA_COMMON=y
+      - CONFIG_STUB_EXTPOWER_IS_PRESENT=y
   nissa.nivviks:
     extra_dtc_overlay_files:
       - "boards/generic_npcx.dts"
@@ -58,6 +62,7 @@ tests:
       - CONFIG_TEST_NISSA_NIVVIKS=y
       - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSO=y
       - CONFIG_PLATFORM_EC_ACCEL_LIS2DW12=y
+      - CONFIG_STUB_EXTPOWER_IS_PRESENT=y
   nissa.nivviks.charger:
     extra_dtc_overlay_files:
       - "boards/generic_npcx.dts"
@@ -147,6 +152,7 @@ tests:
     extra_configs:
       - CONFIG_TEST_GOTHRAX_SUB_BOARD=y
       - CONFIG_NISSA_BOARD_HAS_HDMI_SUPPORT=y
+      - CONFIG_STUB_EXTPOWER_IS_PRESENT=y
   nissa.pujjo:
     extra_dtc_overlay_files:
       - "boards/generic_npcx.dts"
@@ -167,6 +173,7 @@ tests:
       - CONFIG_PLATFORM_EC_GMR_TABLET_MODE=y
       - CONFIG_PLATFORM_EC_LED_PWM=n
       - CONFIG_PLATFORM_EC_LED_COMMON=y
+      - CONFIG_STUB_EXTPOWER_IS_PRESENT=y
   nissa.joxer:
     extra_configs:
       - CONFIG_TEST_NISSA_JOXER=y
@@ -237,6 +244,7 @@ tests:
       - CONFIG_PLATFORM_EC_TABLET_MODE=y
       - CONFIG_PLATFORM_EC_GMR_TABLET_MODE=y
       - CONFIG_PLATFORM_EC_BATTERY_HW_PRESENT_CUSTOM=y
+      - CONFIG_STUB_EXTPOWER_IS_PRESENT=y
   nissa.craaskov:
     extra_dtc_overlay_files:
       - "boards/craaskov.dts"
@@ -418,6 +426,7 @@ tests:
       - CONFIG_PLATFORM_EC_BATTERY_HW_PRESENT_CUSTOM=y
       - CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION=y
       - CONFIG_PLATFORM_EC_KEYBOARD_DEBUG=y
+      - CONFIG_STUB_EXTPOWER_IS_PRESENT=y
   nissa.dirks:
     extra_configs:
       - CONFIG_TEST_NISSA_DIRKS=y

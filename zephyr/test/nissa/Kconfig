@@ -235,6 +235,12 @@ config PLATFORM_EC_DEDICATED_CHARGE_PORT
 	help
 	  Enable if there is a dedicated charging port on the system.
 
+config STUB_EXTPOWER_IS_PRESENT
+	bool "Provide a stub version of extpower_is_present"
+	help
+	  Enable this for tests that don't include the board code which defines
+	  extpower_is_present().
+
 module = NISSA
 module-str = Nissa board-specific code (unit tests)
 source "subsys/logging/Kconfig.template.log_config"

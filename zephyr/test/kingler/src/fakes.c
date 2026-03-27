@@ -48,3 +48,8 @@ FAKE_VOID_FUNC(motion_interrupt, enum gpio_signal);
 #ifdef CONFIG_VARIANT_CORSOLA_DB_DETECTION
 FAKE_VOID_FUNC(bmi3xx_interrupt, enum gpio_signal);
 #endif
+
+int extpower_is_present(void)
+{
+	return 1;
+}

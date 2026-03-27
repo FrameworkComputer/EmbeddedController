@@ -22,6 +22,11 @@ void lpc_keyboard_resume_irq(void)
 {
 }
 
+int extpower_is_present(void)
+{
+	return 1;
+}
+
 ZTEST_SUITE(kanix_charger, NULL, NULL, NULL, NULL, NULL);
 
 ZTEST(kanix_charger, test_get_leave_safe_mode_delay_ms)

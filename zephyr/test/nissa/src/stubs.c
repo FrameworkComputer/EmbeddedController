@@ -32,3 +32,10 @@ __overridable int pd_check_vconn_swap(int port)
 __overridable void usb_interrupt_c0(enum gpio_signal signal)
 {
 }
+
+#ifdef CONFIG_STUB_EXTPOWER_IS_PRESENT
+int extpower_is_present(void)
+{
+	return 1;
+}
+#endif

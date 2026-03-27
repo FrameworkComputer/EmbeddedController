@@ -39,6 +39,11 @@ void show_critical_error(void)
 	show_critical_error_called++;
 }
 
+int extpower_is_present(void)
+{
+	return 1;
+}
+
 ZTEST(vboot_efs2, test_vboot_main_system_is_in_rw)
 {
 	const struct shell *shell_zephyr = get_ec_shell();
