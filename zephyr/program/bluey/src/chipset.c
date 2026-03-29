@@ -9,7 +9,6 @@
 #include "battery.h"
 #include "chipset.h"
 #include "common.h"
-#include "extpower.h"
 #include "gpio.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
@@ -23,13 +22,6 @@ static void adsp_power_state_cb(uint8_t fid, uint8_t addr, uint16_t data)
 }
 ADSP_COMMS_REGISTER_CB(ADSP_FEATURE_DEFAULT, ADSP_POWER_STATE_REG_VAL,
 		       adsp_power_state_cb);
-
-void board_chipset_startup(void)
-{
-	/* Update the AC event during boot */
-	extpower_update_host_events(gpio_get_level(GPIO_AC_PRESENT));
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
 static void enable_acok_passthru_interrupt(void)
 {
