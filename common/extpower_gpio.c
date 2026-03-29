@@ -85,10 +85,6 @@ static void extpower_init(void)
 {
 	debounced_extpower_presence = get_extpower_presence();
 
-	if (IS_ENABLED(HAS_TASK_HOSTCMD)) {
-		/* Initialize the memory-mapped AC_PRESENT flag */
-		extpower_update_host_events(debounced_extpower_presence);
-	}
 	/* Enable interrupts, now that we've initialized */
 	extpower_enable_interrupt();
 }

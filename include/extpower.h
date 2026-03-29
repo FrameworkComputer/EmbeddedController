@@ -69,13 +69,6 @@ __override_proto void board_extpower_disable_interrupt(void);
 void extpower_interrupt(enum gpio_signal signal);
 
 /**
- * Routine to update the external power host events.
- *
- * @param is_present	State of external power (1 = present, 0 = not present)
- */
-void extpower_update_host_events(int is_present);
-
-/**
  * Routine to trigger actions based on external power state change.
  *
  * @param is_present	State of external power (1 = present, 0 = not present)
