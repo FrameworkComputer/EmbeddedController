@@ -221,6 +221,7 @@ static void chipset_force_g3(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_vccst_pg_r), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_rsmrst_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
@@ -493,6 +494,7 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S3S0:
 
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 1);
 		fp_module_pwr_control_enable(true);
 		k_msleep(15);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_vccst_pg_r), 1);
@@ -601,8 +603,8 @@ enum power_state power_handle_state(enum power_state state)
 #endif
 
 	case POWER_S0S3:
-		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 0);
 		fp_module_pwr_control_enable(false);
 		me_gpio_change(GPIO_OUTPUT_LOW);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwrok), 0);
@@ -673,7 +675,6 @@ static void peripheral_power_startup(void)
 	/* enable the power button led as soon as power on*/
 	pb_module_pwr_control_enable(true);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, peripheral_power_startup, HOOK_PRIO_DEFAULT);
 
@@ -686,7 +687,6 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, peripheral_power_resume, HOOK_PRIO_DEFAULT);
 static void peripheral_power_shutdown(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 0);
 	tp_module_pwr_control_enable(false);
 	pb_module_pwr_control_enable(false);
 }
