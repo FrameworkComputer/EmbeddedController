@@ -92,6 +92,7 @@ enum command_type {
 static struct termios saved_tty;
 static uint8_t tty_changed = TTY_NO_CHANGE;
 static int g_uart_fd;
+static int bootrom_timeouts;
 
 /* Function to calculate Tool-side checksum (sum of all bytes) */
 uint16_t calculate_checksum_tool(const unsigned char *data, size_t length)
@@ -401,12 +402,20 @@ int wait_for_response(int uart_fd, uint8_t expected_response,
 		if (response == expected_response) {
 			DBG_PRINT("Received response: 0x%X\n", response);
 			return 0; /* Success */
+		} else if (response == 0xFF) {
+			/* b/359582898#comment55 - the Realtek bootrom
+			 * can timeout if the host is slow to fill the
+			 * the receiver FIFO.  The backed can be safely retried
+			 * so only log how many times this happens to keep
+			 * the console output cleaner.
+			 */
+			bootrom_timeouts++;
 		} else {
 			ERR_PRINT(
 				"\nUnexpected response: 0x%X (expected: 0x%X)\n",
 				response, expected_response);
-			return -1;
 		}
+		return -1;
 	}
 
 	fprintf(stderr, "waiting for response fail, need data: 0x%X\n",
@@ -472,6 +481,8 @@ int send_pages(int uart_fd, FILE *file, uint32_t sram_address,
 int flash(int uart_fd, uint32_t spi_start, const char *file_name)
 {
 	FILE *file = fopen(file_name, "rb");
+	int chunks, total_chunks;
+	int progress_percent, prev_percent;
 
 	if (!file) {
 		perror("Failed to open binary file");
@@ -489,9 +500,23 @@ int flash(int uart_fd, uint32_t spi_start, const char *file_name)
 	fseek(file, 0, SEEK_SET);
 	DBG_PRINT("Total File Size: %zu bytes\n", total_file_size);
 
+	chunks = 0;
+	total_chunks = total_file_size / (PAGES_PER_ROUND * PAGE_SIZE);
+	if (total_file_size % (PAGES_PER_ROUND * PAGE_SIZE)) {
+		total_chunks++;
+	}
+
+	prev_percent = -1;
+	progress_percent = 0;
+
 	while (total_bytes_sent < total_file_size) {
-		printf(".");
-		fflush(stdout);
+		progress_percent = (++chunks * 100) / total_chunks;
+		if (progress_percent != prev_percent) {
+			printf("\rFlashing: %3d%%", progress_percent);
+			fflush(stdout);
+			prev_percent = progress_percent;
+		}
+
 		size_t remaining_data = total_file_size - total_bytes_sent;
 		size_t data_size_to_write =
 			remaining_data > PAGES_PER_ROUND * PAGE_SIZE ?
@@ -594,7 +619,8 @@ int flash(int uart_fd, uint32_t spi_start, const char *file_name)
 		}
 	}
 
-	printf("\nFlash operation finished.\n");
+	printf("\nFlash operation finished. bootrom timeout retries = %d\n",
+	       bootrom_timeouts);
 	fclose(file);
 	return 0;
 
