@@ -145,243 +145,6 @@ uint8_t address = 0x50;
 struct gpu_cfg_gpio gpu_gpio_cfgs[GPU_GPIO_MAX];
 
 
-struct default_gpu_cfg {
-	struct gpu_cfg_descriptor descriptor;
-
-	struct gpu_block_header hdr0;
-	enum gpu_pcie_cfg pcie_cfg;
-
-	struct gpu_block_header hdr1;
-	struct gpu_cfg_fan fan0_cfg;
-
-	struct gpu_block_header hdr2;
-	struct gpu_cfg_fan fan1_cfg;
-
-	struct gpu_block_header hdr3;
-	enum gpu_vendor vendor;
-
-	struct gpu_block_header hdr4;
-	struct gpu_cfg_gpio     gpio0;
-	struct gpu_cfg_gpio     gpio1;
-	struct gpu_cfg_gpio     gpio2;
-	struct gpu_cfg_gpio     gpio3;
-	struct gpu_cfg_gpio     gpio_vsys;
-	struct gpu_cfg_gpio     gpio_fan;
-	struct gpu_cfg_gpio     gpu_3v_5v_en;
-	struct gpu_cfg_gpio     gpu_vadp_en;
-
-	struct gpu_block_header hdr5;
-	struct gpu_subsys_pd    pd;
-
-	struct gpu_block_header hdr6;
-	struct gpu_cfg_thermal therm;
-
-	struct gpu_block_header hdr7;
-	struct gpu_cfg_custom_temp custom_temp;
-
-	struct gpu_block_header hdr8;
-	struct gpu_subsys_serial pcba_serial;
-
-
-} __packed;
-
-static struct default_gpu_cfg gpu_cfg = {
-	.descriptor = {
-		.magic = {0x32, 0xac, 0x00, 0x00},
-		.length = sizeof(struct gpu_cfg_descriptor),
-		.descriptor_version_major = 0,
-		.descriptor_version_minor = 1,
-		.hardware_version = 0x0008,
-		.hardware_revision = 0,
-		.serial = {'F', 'R', 'A', 'K', 'M', 'B', 'C', 'P', '8', '1',
-					'3', '3', '1', 'A', 'S', 'S', 'Y', '0', '\0', '\0'},
-		.descriptor_length = sizeof(struct default_gpu_cfg) - sizeof(struct gpu_cfg_descriptor),
-		.descriptor_crc32 = 0,
-		.crc32 = 0
-	},
-	.hdr0 = {.block_type = GPUCFG_TYPE_PCIE, .block_length = sizeof(uint8_t)},
-	.pcie_cfg = PCIE_8X1,
-
-	.hdr1 = {.block_type = GPUCFG_TYPE_FAN, .block_length = sizeof(struct gpu_cfg_fan)},
-	.fan0_cfg = {.idx = 0, .flags = 0, .min_rpm = 1000, .start_rpm = 1000, .max_rpm = 4700},
-
-	.hdr2 = {.block_type = GPUCFG_TYPE_FAN, .block_length = sizeof(struct gpu_cfg_fan)},
-	.fan1_cfg = {.idx = 1, .flags = 0, .min_rpm = 1000, .start_rpm = 1000, .max_rpm = 4500},
-
-	.hdr3 = {.block_type = GPUCFG_TYPE_VENDOR, .block_length = sizeof(gpu_vendor)},
-	.vendor = GPU_AMD_R23M,
-
-	.hdr4 = {.block_type = GPUCFG_TYPE_GPIO, .block_length = (sizeof(struct gpu_cfg_gpio) * 8)},
-	/* Critical temperature fault input */
-	.gpio0 = {.gpio = GPU_1G1_GPIO0_EC, .function = GPIO_FUNC_TEMPFAULT, .flags = GPIO_INPUT, .power_domain = POWER_S3},
-	/* DP HPD status from PD */
-	.gpio1 = {.gpio = GPU_1H1_GPIO1_EC, .function = GPIO_FUNC_HPD, .flags = GPIO_INPUT, .power_domain = POWER_S5},
-	/* AC/DC mode setting */
-	.gpio2 = {.gpio = GPU_2A2_GPIO2_EC, .function = GPIO_FUNC_ACDC, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S3},
-	/* UNUSED */
-	.gpio3 = {.gpio = GPU_2L7_GPIO3_EC, .function = GPIO_FUNC_UNUSED, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_G3},
-	/* GPU_VSYS_EN */
-	.gpio_vsys = {.gpio = GPU_VSYS_EN, .function = GPIO_FUNC_GPU_PWR, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S3},
-	/* GPU_VADP_EN */
-	.gpu_vadp_en = {.gpio = GPU_VADP_EN, .function = GPIO_FUNC_UNUSED, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_G3},
-
-	.gpio_fan = {.gpio = GPU_FAN_EN, .function = GPIO_FUNC_HIGH, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S0},
-
-	.gpu_3v_5v_en = {.gpio = GPU_3V_5V_EN, .function = GPIO_FUNC_HIGH, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S5},
-
-	.hdr5 = {.block_type = GPUCFG_TYPE_PD, .block_length = sizeof(struct gpu_subsys_pd)},
-	.pd = {.gpu_pd_type = PD_TYPE_ETRON_EJ889I, .address = 0x60,
-			.flags = 0, .pdo = 0, .rdo = 0, .power_domain = POWER_S5,
-			.gpio_hpd = GPU_1H1_GPIO1_EC, .gpio_interrupt = GPU_1F2_I2C_S5_INT
-	},
-
-	.hdr6 = {.block_type = GPUCFG_TYPE_THERMAL_SENSOR, .block_length = sizeof(struct gpu_cfg_thermal)},
-	.therm = {.thermal_type = GPU_THERM_F75303, .address = 0x4D},
-
-	.hdr7 = {.block_type = GPUCFG_TYPE_CUSTOM_TEMP, .block_length = sizeof(struct gpu_cfg_custom_temp)},
-	.custom_temp = {.idx = 2, .temp_fan_off = C_TO_K(47), .temp_fan_max = C_TO_K(62)},
-
-	.hdr8 = {.block_type = GPUCFG_TYPE_SUBSYS, .block_length = sizeof(struct gpu_subsys_serial)},
-	.pcba_serial = {.gpu_subsys = GPU_PCB, .serial = {'F', 'R', 'A', 'G', 'M', 'A', 'S', 'P', '8', '1',
-					'3', '3', '1', 'P', 'C', 'B', '0', '0', '\0', '\0'},}
-};
-
-
-static struct default_gpu_cfg nv_gpu_cfg = {
-	.descriptor = {
-			.magic = {0x32, 0xac, 0x00, 0x00},
-			.length = sizeof(struct gpu_cfg_descriptor),
-			.descriptor_version_major = 0,
-			.descriptor_version_minor = 2,
-			.hardware_version = 0x0004,
-			.hardware_revision = 0,
-			.serial = {'F', 'R', 'A', 'K', 'M', 'Q', 'C', 'P', '4', '1',
-									'5', '0', '0', 'A', 'S', 'S', 'Y', '0', '\0', '\0'},
-			.descriptor_length = sizeof(struct default_gpu_cfg) - sizeof(struct gpu_cfg_descriptor),
-			.descriptor_crc32 = 0,
-			.crc32 = 0
-	},
-	.hdr0 = {.block_type = GPUCFG_TYPE_PCIE, .block_length = sizeof(uint8_t)},
-	.pcie_cfg = PCIE_8X1,
-
-	.hdr1 = {.block_type = GPUCFG_TYPE_FAN, .block_length = sizeof(struct gpu_cfg_fan)},
-	.fan0_cfg = {.idx = 0, .flags = 0, .min_rpm = 1000, .start_rpm = 1000, .max_rpm = 4700},
-
-	.hdr2 = {.block_type = GPUCFG_TYPE_FAN, .block_length = sizeof(struct gpu_cfg_fan)},
-	.fan1_cfg = {.idx = 1, .flags = 0, .min_rpm = 1000, .start_rpm = 1000, .max_rpm = 4500},
-
-	.hdr3 = {.block_type = GPUCFG_TYPE_VENDOR, .block_length = sizeof(enum gpu_vendor)},
-	.vendor = GPU_NV_GN22,
-
-	.hdr4 = {.block_type = GPUCFG_TYPE_GPIO, .block_length = (sizeof(struct gpu_cfg_gpio) * 8)},
-	/* Critical temperature fault input */
-	.gpio0 = {.gpio = GPU_1G1_GPIO0_EC, .function = GPIO_FUNC_TEMPFAULT, .flags = GPIO_INPUT, .power_domain = POWER_S3},
-	/* DP HPD status from PD */
-	.gpio1 = {.gpio = GPU_1H1_GPIO1_EC, .function = GPIO_FUNC_HPD, .flags = GPIO_INPUT, .power_domain = POWER_S5},
-	/* output to the GPU if AC-to-battery power change event or a system power overdraw event */
-	.gpio2 = {.gpio = GPU_2A2_GPIO2_EC, .function = GPIO_FUNC_GPU_PWR_LEVEL,
-				.flags = GPIO_OUTPUT_HIGH, .power_domain = POWER_G3},
-	/* DDS Mux CTRL  from dGPU */
-	.gpio3 = {.gpio = GPU_2L7_GPIO3_EC, .function = GPIO_FUNC_UNUSED, .flags = GPIO_INPUT, .power_domain = POWER_S0},
-	/* GPU_VSYS_EN */
-	.gpio_vsys = {.gpio = GPU_VSYS_EN, .function = GPIO_FUNC_GPU_PWR, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S3},
-	/* GPU_VADP_EN */
-	.gpu_vadp_en = {.gpio = GPU_VADP_EN, .function = GPIO_FUNC_HIGH, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_G3},
-
-	.gpio_fan = {.gpio = GPU_FAN_EN, .function = GPIO_FUNC_HIGH, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S0},
-
-	.gpu_3v_5v_en = {.gpio = GPU_3V_5V_EN, .function = GPIO_FUNC_HIGH, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_G3},
-
-	.hdr5 = {.block_type = GPUCFG_TYPE_PD, .block_length = sizeof(struct gpu_subsys_pd)},
-	.pd = {.gpu_pd_type = PD_TYPE_CCG8S, .address = 0x42,
-					.flags = 0, .pdo = 0, .rdo = 0, .power_domain = POWER_G3,
-					.gpio_hpd = GPU_1H1_GPIO1_EC, .gpio_interrupt = GPU_1F2_I2C_S5_INT
-	},
-
-	.hdr6 = {.block_type = GPUCFG_TYPE_THERMAL_SENSOR, .block_length = sizeof(struct gpu_cfg_thermal)},
-	.therm = {.thermal_type = GPU_THERM_F75303, .address = 0x4D},
-
-	.hdr7 = {.block_type = GPUCFG_TYPE_CUSTOM_TEMP, .block_length = sizeof(struct gpu_cfg_custom_temp)},
-	.custom_temp = {.idx = 2, .temp_fan_off = C_TO_K(47), .temp_fan_max = C_TO_K(62)},
-
-	.hdr8 = {.block_type = GPUCFG_TYPE_SUBSYS, .block_length = sizeof(struct gpu_subsys_serial)},
-	.pcba_serial = {.gpu_subsys = GPU_PCB, .serial = {'F', 'R', 'A', 'K', 'H', 'Z', 'C', 'P', '4', '1',
-									'5', '0', '0', 'P', 'C', 'B', '0', '0', '\0', '\0'},}
-};
-
-
-struct default_ssd_cfg {
-	struct gpu_cfg_descriptor descriptor;
-
-	struct gpu_block_header hdr0;
-	enum gpu_pcie_cfg pcie_cfg;
-
-	struct gpu_block_header hdr1;
-	struct gpu_cfg_fan fan0_cfg;
-
-	struct gpu_block_header hdr2;
-	struct gpu_cfg_fan fan1_cfg;
-
-	struct gpu_block_header hdr3;
-	enum gpu_vendor vendor;
-
-	struct gpu_block_header hdr4;
-	struct gpu_cfg_gpio     gpio0;
-	struct gpu_cfg_gpio     gpio1;
-	struct gpu_cfg_gpio     gpio2;
-	struct gpu_cfg_gpio     gpio3;
-	struct gpu_cfg_gpio     gpio_edpaux;
-	struct gpu_cfg_gpio     gpio_vsys;
-	struct gpu_cfg_gpio     gpio_fan;
-	struct gpu_cfg_gpio     gpu_3v_5v_en;
-
-} __packed;
-
-static struct default_ssd_cfg ssd_cfg = {
-	.descriptor = {
-		.magic = {0x32, 0xac, 0x00, 0x00},
-		.length = sizeof(struct gpu_cfg_descriptor),
-		.descriptor_version_major = 0,
-		.descriptor_version_minor = 1,
-		.hardware_version = 0x0008,
-		.hardware_revision = 0,
-		.serial = {'F', 'R', 'A', 'G', 'M', 'B', 'S', 'P', '8', '1',
-					'3', '3', '1', 'D', 'U', 'M', 'M', 'Y', '\0', '\0'},
-		.descriptor_length = sizeof(struct default_ssd_cfg) - sizeof(struct gpu_cfg_descriptor),
-		.descriptor_crc32 = 0,
-		.crc32 = 0
-	},
-	.hdr0 = {.block_type = GPUCFG_TYPE_PCIE, .block_length = sizeof(uint8_t)},
-	.pcie_cfg = PCIE_4X2,
-
-	.hdr1 = {.block_type = GPUCFG_TYPE_FAN, .block_length = sizeof(struct gpu_cfg_fan)},
-	.fan0_cfg = {.idx = 0, .flags = 0, .min_rpm = 1000, .start_rpm = 1000, .max_rpm = 3700},
-
-	.hdr2 = {.block_type = GPUCFG_TYPE_FAN, .block_length = sizeof(struct gpu_cfg_fan)},
-	.fan1_cfg = {.idx = 1, .flags = 0, .min_rpm = 1000, .start_rpm = 1000, .max_rpm = 3700},
-
-	.hdr3 = {.block_type = GPUCFG_TYPE_VENDOR, .block_length = sizeof(gpu_vendor)},
-	.vendor = GPU_SSD,
-
-	/* Power enable for SSD1 */
-	.hdr4 = {.block_type = GPUCFG_TYPE_GPIO, .block_length = sizeof(struct gpu_cfg_gpio) * 8},
-	.gpio0 = {.gpio = GPU_1G1_GPIO0_EC, .function = GPIO_FUNC_SSD1_POWER, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S3},
-	/* Power enable for SSD2 */
-	.gpio1 = {.gpio = GPU_1H1_GPIO1_EC, .function = GPIO_FUNC_SSD2_POWER, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S3},
-	/* UNUSED */
-	.gpio2 = {.gpio = GPU_2A2_GPIO2_EC, .function = GPIO_FUNC_UNUSED, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_G3},
-	/* UNUSED */
-	.gpio3 = {.gpio = GPU_2L7_GPIO3_EC, .function = GPIO_FUNC_UNUSED, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_G3},
-	/* set mux configuration on mainboard for SSD */
-	.gpio_edpaux = {.gpio = GPU_PCIE_MUX_SEL, .function = GPIO_FUNC_HIGH, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S3},
-	/* GPU_VSYS_EN */
-	.gpio_vsys = {.gpio = GPU_VSYS_EN, .function = GPIO_FUNC_HIGH, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S3},
-
-	.gpio_fan = {.gpio = GPU_FAN_EN, .function = GPIO_FUNC_HIGH, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S0},
-
-	.gpu_3v_5v_en = {.gpio = GPU_3V_5V_EN, .function = GPIO_FUNC_HIGH, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S5},
-};
-
 const struct gpio_dt_spec * gpu_gpio_to_dt(enum gpu_gpio_idx gpio_idx)
 {
 	switch (gpio_idx) {
@@ -886,57 +649,26 @@ int parse_gpu_header(void)
 
 }
 
-uint8_t load_from;
 int load_configuration_block(uint16_t offset, uint8_t *data, int len)
 {
 	int rv = EC_SUCCESS;
-	if (load_from == 0) {
-		rv = i2c_read_offset16_block(I2C_PORT_GPU0, address,
-									offset, data, len);
-	} else if (load_from == 1) {
-		memcpy(data, ((uint8_t *)&gpu_cfg) + offset, len);
-	} else if (load_from == 2) {
-		memcpy(data, ((uint8_t *)&ssd_cfg) + offset, len);
-	} else {
-		rv = EC_ERROR_INVAL;
-	}
+	rv = i2c_read_offset16_block(I2C_PORT_GPU0, address,
+								offset, data, len);
+
 	return rv;
 }
 int parse_gpu_eeprom(void)
 {
 
 	int rv;
-	uint32_t i;
 	uint8_t * v;
 	int offset = 0;
 	crc_t crc = crc_init();
 	struct gpu_block_header hdr;
-	load_from = 0;
+
 	gpu_cfg_descriptor_valid = false;
 
 	rv = parse_gpu_header();
-
-	if (rv != EC_SUCCESS) {
-		/* run device detection */
-		/* check if GPU PD is present */
-		rv = i2c_read_offset16(I2C_PORT_GPU0, 0x60, 0x800E, &i, 1);
-		if (rv == EC_SUCCESS) {
-			/* assume R23M GPU */
-			CPRINTS("Detected EEPROM and PD: Defaulting to R23M");
-			memcpy(&gpu_descriptor, &gpu_cfg.descriptor, sizeof(struct gpu_cfg_descriptor));
-			load_from = 1;
-			rv = EC_SUCCESS;
-		} else {
-			rv = i2c_read8(I2C_PORT_GPU0, 0x50, 0x00, &i);
-			if (rv == EC_SUCCESS) {
-				CPRINTS("Detected blank EEPROM only: defaulting to dual ssd");
-				memcpy(&gpu_descriptor, &ssd_cfg.descriptor, sizeof(struct gpu_cfg_descriptor));
-
-				load_from = 2;
-				rv = EC_SUCCESS;
-			}
-		}
-	}
 
 	if (rv != EC_SUCCESS) {
 		return rv;
@@ -1061,7 +793,7 @@ int parse_gpu_eeprom(void)
 		offset += hdr.block_length;
 	}
 	crc = crc_finalize(crc);
-	if (crc != gpu_descriptor.descriptor_crc32 && load_from == 0) {
+	if (crc != gpu_descriptor.descriptor_crc32) {
 		CPRINTS("CRC fail!: %X != %X", crc, gpu_descriptor.descriptor_crc32);
 		control_5valw_power(POWER_REQ_INIT, 0);
 		return EC_ERROR_CRC;
@@ -1254,67 +986,6 @@ static enum ec_status ec_response_get_gpu_config(struct host_cmd_handler_args *a
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_GPU_PCIE, ec_response_get_gpu_config, EC_VER_MASK(0));
 
-static int program_eeprom(const char * serial, struct gpu_cfg_descriptor * descriptor, size_t len)
-{
-	int rv;
-	crc_t crc;
-	size_t addr = 0;
-	int d, i;
-	CPRINTS("Programming EEPROM");
-	memset(descriptor->serial, 0x00, GPU_SERIAL_LEN);
-	strncpy(descriptor->serial, serial, GPU_SERIAL_LEN);
-
-	crc = crc_init();
-	crc = crc_update(crc, (uint8_t *)descriptor + sizeof(struct gpu_cfg_descriptor), len - sizeof(struct gpu_cfg_descriptor));
-	descriptor->descriptor_crc32 = crc_finalize(crc);
-
-	crc = crc_init();
-	crc = crc_update(crc, descriptor, sizeof(struct gpu_cfg_descriptor)-sizeof(uint32_t));
-	descriptor->crc32 = crc_finalize(crc);
-
-	for(addr = 0; addr < len; addr += 32) {
-		rv = i2c_write_offset16_block(I2C_PORT_GPU0, 0x50,
-									addr, (uint8_t *)descriptor + addr, MIN(len - addr, 32));
-		i = 0;
-		do {
-			k_msleep(5);
-			rv = i2c_read8(I2C_PORT_GPU0, 0x50, 0x00, &d);   
-		} while(++i < 32 && rv != EC_SUCCESS);
-	}
-	return rv;
-}
-
-static enum ec_status hc_program_gpu_eeprom(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_program_gpu_serial *p = args->params;
-	struct ec_response_program_gpu_serial *r = args->response;
-
-	if (p->magic == 0x0D) {
-		r->valid = 1;
-		/* copy PCBA serial to output struct */
-		if (gpu_cfg_descriptor_valid) {
-			memcpy(gpu_cfg.pcba_serial.serial, gpu_subsys_serials[0], GPU_SERIAL_LEN);
-		}
-		program_eeprom(p->serial, (void *)&gpu_cfg, sizeof(gpu_cfg));
-	} else if (p->magic == 0x55) {
-		r->valid = 1;
-		program_eeprom(p->serial, (void *)&ssd_cfg, sizeof(ssd_cfg));
-	} else if (p->magic == 0x0E) {
-		r->valid = 1;
-		/* copy PCBA serial to output struct */
-		if (gpu_cfg_descriptor_valid) {
-			memcpy(nv_gpu_cfg.pcba_serial.serial, gpu_subsys_serials[0], GPU_SERIAL_LEN);
-		}
-		program_eeprom(p->serial, (void *)&nv_gpu_cfg, sizeof(nv_gpu_cfg));
-	} else {
-		r->valid = 0;
-	}
-	
-	args->response_size = sizeof(*r);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_PROGRAM_GPU_EEPROM, hc_program_gpu_eeprom, EC_VER_MASK(0));
 
 /*******************************************************************************/
 /*                       EC console command debug writing GPU EEPROM           */
@@ -1326,17 +997,6 @@ static int cmd_gpucfg(int argc, const char **argv)
 	if (argc > 1) {
 		if (!strncmp(argv[1], "read", 4)) {
 			parse_gpu_eeprom();
-		} else if (!strncmp(argv[1], "write", 4)) {
-			/* write gpu SERIAL_NUMBER */
-			if (argc > 3) {
-				if (!strncmp(argv[2], "amdgpu", 6)) {
-					program_eeprom(argv[3], (void *)&gpu_cfg, sizeof(gpu_cfg));
-				} else if (!strncmp(argv[2], "ssd", 3)) {
-					program_eeprom(argv[3], (void *)&ssd_cfg, sizeof(ssd_cfg));
-				} else if (!strncmp(argv[2], "nvgpu", 5)) {
-					program_eeprom(argv[3], (void *)&nv_gpu_cfg, sizeof(nv_gpu_cfg));
-				}
-			}
 		} else if (!strncmp(argv[1], "erase", 4)) {
 			memset(&descriptor, 0xFF, sizeof(struct gpu_cfg_descriptor));
 			i2c_write_offset16_block(I2C_PORT_GPU0, 0x50,
@@ -1349,7 +1009,6 @@ static int cmd_gpucfg(int argc, const char **argv)
 
 	} else {
 			CPRINTS("GPU Descriptor %s", gpu_cfg_descriptor_valid ? "Valid": "Invalid");
-			CPRINTS("  From %s", load_from == 0 ? "EEPROM" : load_from == 1 ? "GPUCFG" : "SSDCFG");
 			CPRINTS("  Header: V:%d.%d HW:0x%X SN:%s CRC:0x%X",
 					gpu_descriptor.descriptor_version_major,
 					gpu_descriptor.descriptor_version_minor,
