@@ -309,6 +309,8 @@ help:
 	@echo "  tests [BOARD=]       - Build all on-device unit tests for a specific board"
 	@echo "  test-coverage        - Build and run all host unit tests for code coverage"
 	@echo ""
+	@echo "  BOARD=host utils-host        - Build EC host utilities"
+	@echo ""
 	@echo "  print-tests     [BOARD=]     - Print on-device test targets"
 	@echo "  print-host-tests             - Print all host unit test targets"
 	@echo ""
