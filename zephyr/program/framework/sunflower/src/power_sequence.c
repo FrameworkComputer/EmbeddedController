@@ -256,8 +256,15 @@ static void keyboard_scan_enable_deferred(void)
 	/* enable lock led */
 	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_lock_led), GPIO_OUTPUT);
 	caps_led_keyboard_connect();
-	/* enable gpio_tp_en */
-	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_tp_en), GPIO_OUTPUT);
+
+	/**
+	 * Enable gpio_tp_en.
+	 *
+	 * Clear the cached mask to force the IT8801 driver to update the
+	 * hardware register. This ensures the tp_en pin is correctly
+	 * re-driven high regardless of its previous recorded state.
+	 */
+	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_tp_en), GPIO_OUTPUT_LOW);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_tp_en),
 					!tablet_get_mode() && lid_is_open());
 }
