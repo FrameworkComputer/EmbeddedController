@@ -319,14 +319,14 @@ void check_battery_soc_change(struct batt_params batt)
 
 void battery_poll_dynamic_info(void)
 {
-	struct batt_params batt;
+	const struct batt_params *batt;
 	bool ac_present;
 	bool is_charging;
 	bool charger_idle = false;
 
-	battery_get_params(&batt);
+	batt = charger_current_battery_params();
 	ac_present = extpower_is_present();
-	is_charging = ac_present && (batt.current >= 0);
+	is_charging = ac_present && (batt->current >= 0);
 #ifdef CONFIG_CHARGER
 	charger_idle = charge_get_status()->state == ST_IDLE;
 #else /* !CONFIG_CHARGER */
@@ -334,10 +334,10 @@ void battery_poll_dynamic_info(void)
 	 * If charger task is not available, manually check for changes
 	 * in battery SoC to call appropriate hooks.
 	 */
-	check_battery_soc_change(batt);
+	check_battery_soc_change(*batt);
 #endif
 
-	battery_set_dynamic_info(&batt, ac_present, is_charging, charger_idle);
+	battery_set_dynamic_info(batt, ac_present, is_charging, charger_idle);
 }
 
 int update_static_battery_info(void)
