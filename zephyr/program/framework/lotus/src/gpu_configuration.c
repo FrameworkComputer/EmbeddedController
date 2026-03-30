@@ -37,7 +37,7 @@
 
 
 #define SUPPORTED_DESCRIPTOR_MAJOR 0
-#define SUPPORTED_DESCRIPTOR_MINOR 2
+#define SUPPORTED_DESCRIPTOR_MINOR 3
 
 /**
  * The type of the CRC values.
@@ -995,11 +995,14 @@ int parse_gpu_eeprom(void)
 			}
 			break;
 		case GPUCFG_TYPE_CUSTOM_TEMP:
-			struct gpu_cfg_custom_temp *tc = (struct gpu_cfg_custom_temp *)gpu_read_buff;
-			/* TODO dont hard code index here */
-			if (tc->idx < 8) {
-				thermal_params[tc->idx].temp_fan_max = tc->temp_fan_max;
-				thermal_params[tc->idx].temp_fan_off = tc->temp_fan_off;
+			for(v = gpu_read_buff; v < gpu_read_buff + hdr.block_length; v += sizeof(struct gpu_cfg_custom_temp)) {
+				struct gpu_cfg_custom_temp *tc = (struct gpu_cfg_custom_temp *)v;
+				/* TODO dont hard code index here */
+				if (tc->idx < 8) {
+					thermal_table_set_gpu_override(tc->idx);
+					thermal_params[tc->idx].temp_fan_max = tc->temp_fan_max;
+					thermal_params[tc->idx].temp_fan_off = tc->temp_fan_off;
+				}
 			}
 			break;
 		case GPUCFG_TYPE_FAN:
@@ -1164,6 +1167,7 @@ void deinit_gpu_module(void)
 
 	reset_dds_pwm_mux();
 
+	thermal_table_clear_gpu_override();
 	thermal_table_switch_by_gpu_type();
 
 	hook_call_deferred(&update_ucsi_pd_mapping_data, 500 * MSEC);

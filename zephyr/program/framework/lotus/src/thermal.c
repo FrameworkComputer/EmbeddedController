@@ -27,12 +27,21 @@
 uint16_t board_fan_max[2];
 uint16_t board_fan_min[2];
 uint8_t board_fan_flags[2];
+uint8_t board_custom_temp_flag;
 #define FAN_STOP_DELAY_S (5 * SECOND)
 
 #define TEMP_APU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_apu))
 #define TEMP_GPU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_gpu))
 #define TEMP_GPU_DIE TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_gpu_die))
 #define TEMP_APU_DIE TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_apu_die))
+
+
+#ifdef CONFIG_GPU
+_STATIC_ASSERT(TEMP_APU == 2, "TEMP_APU must be 3 to match with GPU configuration");
+_STATIC_ASSERT(TEMP_APU_DIE == 3, "TEMP_APU_DIE must be 3 to match with GPU configuration");
+_STATIC_ASSERT(TEMP_GPU == 5, "TEMP_GPU must be 3 to match with GPU configuration");
+_STATIC_ASSERT(TEMP_GPU_DIE == 7, "TEMP_GPU_DIE must be 7 to match with GPU configuration");
+#endif
 
 /*coeff in the form b0, b1, b2, A0, a1, a2 note: drop a0*/
 /* 1590,-3130,1590,-31527,15193,14 */
@@ -369,19 +378,40 @@ static const struct ec_thermal_config dsc_nv_temp_gpu_die_table = {
 	.temp_fan_max = C_TO_K(80),
 };
 
+void thermal_table_clear_gpu_override(void)
+{
+	board_custom_temp_flag = 0;
+}
+
+void thermal_table_set_gpu_override(uint8_t idx)
+{
+	board_custom_temp_flag |= (1 << idx);
+}
+
+bool thermal_table_override(uint8_t sensor)
+{
+	return (board_custom_temp_flag & (1 << sensor)) != 0;
+}
+
 void thermal_table_switch_by_gpu_type(void)
 {
 	uint8_t gpu_vendor = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE);
 
 	switch (gpu_vendor) {
 	case GPU_AMD_R23M:
-		thermal_params[TEMP_GPU] = dsc_amd_temp_gpu_table;
-		thermal_params[TEMP_GPU_DIE] = dsc_amd_temp_gpu_die_table;
+		if (!thermal_table_override(TEMP_GPU))
+			thermal_params[TEMP_GPU] = dsc_amd_temp_gpu_table;
+
+		if (!thermal_table_override(TEMP_GPU_DIE))
+			thermal_params[TEMP_GPU_DIE] = dsc_amd_temp_gpu_die_table;
 		break;
 
 	case GPU_NV_GN22:
-		thermal_params[TEMP_GPU] = dsc_nv_temp_gpu_table;
-		thermal_params[TEMP_GPU_DIE] = dsc_nv_temp_gpu_die_table;
+		if (!thermal_table_override(TEMP_GPU))
+			thermal_params[TEMP_GPU] = dsc_nv_temp_gpu_table;
+
+		if (!thermal_table_override(TEMP_GPU_DIE))
+			thermal_params[TEMP_GPU_DIE] = dsc_nv_temp_gpu_die_table;
 		break;
 
 	default:

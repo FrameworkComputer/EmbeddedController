@@ -12,5 +12,7 @@
 
 void fan_configure_gpu(struct gpu_cfg_fan *fan);
 void thermal_table_switch_by_gpu_type(void);
+void thermal_table_clear_gpu_override(void);
+void thermal_table_set_gpu_override(uint8_t idx);
 
 #endif /* __CROS_EC_BOARD_THERMAL_H__ */
