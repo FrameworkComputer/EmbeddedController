@@ -293,17 +293,29 @@ void charger_psys_enable(uint8_t enable)
 	}
 }
 
+static bool psys_enable;
+static void board_charger_psys_control(void)
+{
+	if (psys_enable)
+		charger_psys_enable(1);
+	else
+		charger_psys_enable(0);
+}
+DECLARE_DEFERRED(board_charger_psys_control);
+
 /* Called on AP S5 -> S3 transition */
 static void board_charger_lpm_disable(void)
 {
-	charger_psys_enable(1);
+	psys_enable = true;
+	hook_call_deferred(&board_charger_psys_control_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_charger_lpm_disable, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_charger_lpm_disable, HOOK_PRIO_DEFAULT);
 
 static void board_charger_lpm_enable(void)
 {
-	charger_psys_enable(0);
+	psys_enable = false;
+	hook_call_deferred(&board_charger_psys_control_data, 100);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_charger_lpm_enable, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_charger_lpm_enable, HOOK_PRIO_DEFAULT);
