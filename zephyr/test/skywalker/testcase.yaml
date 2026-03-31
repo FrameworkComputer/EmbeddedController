@@ -1,0 +1,10 @@
+common:
+  platform_allow:
+  - native_sim
+tests:
+  skywalker.skywalker:
+    extra_configs:
+      - CONFIG_TEST_SKYWALKER=y
+      - CONFIG_SHIMMED_TASKS=y
+    extra_dtc_overlay_files:
+      - common.dtsi

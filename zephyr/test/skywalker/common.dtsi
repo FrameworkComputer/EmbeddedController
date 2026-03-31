@@ -1,0 +1,314 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <it8xxx2_emul.dts>
+#include <usbc-policy.dtsi>
+#include "../program/skywalker/power_signal.dtsi"
+
+/ {
+	pinctrl: pinctrl {
+		compatible = "ite,it8xxx2-pinctrl";
+		status = "disabled";
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_acok_od_z5: acok_od_z5 {
+			gpios = <&gpioa 4 (GPIO_INPUT)>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_ap_ec_sysrst_odl: ap_ec_sysrst_odl {
+			gpios = <&gpioj 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8 )>;
+			enum-name = "GPIO_AP_EC_SYSRST_ODL";
+		};
+		gpio_ap_ec_warm_rst_req: ap_ec_warm_rst_req {
+			gpios = <&gpiom 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			enum-name = "GPIO_AP_EC_WARM_RST_REQ";
+		};
+		gpio_ap_ec_wdtrst_l: ap_ec_wdtrst_l {
+			gpios = <&gpioj 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			enum-name = "GPIO_AP_EC_WDTRST_L";
+		};
+		gpio_ap_in_sleep_l: ap_in_sleep_l {
+			gpios = <&gpiom 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			enum-name = "GPIO_AP_IN_SLEEP_L";
+		};
+		gpio_ap_xhci_init_done_r: ap_xhci_init_done_r {
+			gpios = <&gpioj 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_charger_prochot_odl: charger_prochot_odl {
+			gpios = <&gpioc 0 (GPIO_INPUT)>;
+		};
+		gpio_dp_aux_path_sel: dp_aux_path_sel {
+			gpios = <&gpiog 0 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		gpio_ec_ap_dpoc_en_odl: ec_ap_dpoc_en_odl {
+			gpios = <&gpioj 7 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_ec_ap_dp_hpd_l: ec_ap_dp_hpd_l {
+			gpios = <&gpiof 3 (GPIO_OUTPUT | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
+			gpios = <&gpioa 5 (GPIO_INPUT)>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_lid_360_l: lid_360_l {
+			gpios = <&gpioc 7 (GPIO_INPUT)>;
+			enum-name = "GPIO_TABLET_MODE_L";
+		};
+		gpio_lid_open_3v3_z5: lid_open_3v3_z5 {
+			gpios = <&gpioc 6 (GPIO_INPUT)>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		gpio_en_pwr_s3: en_pwr_s3 {
+			gpios = <&gpioh 1 (GPIO_OUTPUT)>;
+		};
+		gpio_en_pwr_s0: en_pwr_s0 {
+			gpios = <&gpioh 2 (GPIO_OUTPUT)>;
+		};
+		gpio_ec_bl_en_od: ec_bl_en_od {
+			gpios = <&gpiod 2 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		gpio_ec_ap_sys_rst_odl: ec_ap_sys_rst_odl {
+			gpios = <&gpioj 5 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+			enum-name = "GPIO_SYS_RST_ODL";
+		};
+		gpio_ec_pmic_en_odl_r: ec_pmic_en_odl_r {
+			gpios = <&gpioj 0 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+			enum-name = "GPIO_EC_PMIC_EN_ODL";
+		};
+		gpio_en_pp5000: en_pp5000 {
+			gpios = <&gpioh 3 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+			enum-name = "GPIO_EN_PP5000";
+		};
+		gpio_usb_c0_discharge: usb_c0_discharge {
+			gpios = <&gpioi 0 (GPIO_OUTPUT)>;
+			enum-name = "GPIO_USB_C0_DISCHARGE";
+		};
+		gpio_usb_c1_discharge: usb_c1_discharge {
+			gpios = <&gpioi 1 (GPIO_OUTPUT)>;
+			enum-name = "GPIO_USB_C1_DISCHARGE";
+		};
+		gpio_lid_accel_int_ec_l: lid_accel_int_ec_l {
+			gpios = <&gpiod 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
+			gpios = <&gpiod 6 (GPIO_INPUT)>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+
+		/* Dummy ones if needed */
+		entering_rw: entering_rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		gpio_pg_pp3700_s5_od: pg_pp3700_s5_od {
+			gpios = <&gpioh 6 (GPIO_INPUT)>;
+			enum-name = "GPIO_PG_PP4200_S5_OD";
+		};
+		gpio_pmic_ec_resetb: pmic_ec_resetb {
+			gpios = <&gpioj 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			enum-name = "GPIO_PMIC_EC_RESETB";
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_ac_present: ac-present {
+			irq-pin = <&gpio_acok_od_z5>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
+
+		int_ap_xhci_init_done: ap-xhci-init-done {
+			irq-pin = <&gpio_ap_xhci_init_done_r>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "xhci_interrupt";
+		};
+
+		int_pwr_btn: pwr-btn {
+			irq-pin = <&gpio_gsc_ec_pwr_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+
+		int_lid_accel: lid-accel {
+			irq-pin = <&gpio_lid_accel_int_ec_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lid_accel_interrupt";
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_port_battery: i2c_port_battery {
+			i2c-port = <&i2c1>;
+			enum-names = "I2C_PORT_BATTERY";
+		};
+		i2c_port_pdc: i2c_port_pdc {
+			i2c-port = <&i2c2>;
+			enum-names = "I2C_PORT_PDC";
+		};
+		i2c_ec_i2c_sensor_scl_1v8: ec_i2c_sensor_scl_1v8 {
+			i2c-port = <&i2c3>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			chg = <&charger>;
+			pdc = <&pdc_emul0>;
+			policy = <&cros_policy>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+		};
+
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			pdc = <&pdc_emul1>;
+			policy = <&cros_policy>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1>;
+			};
+		};
+
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		ppm-driver {
+			compatible = "ucsi-ppm";
+		};
+	};
+
+	motionsense-mutex {
+		compatible = "cros-ec,motionsense-mutex";
+		mutex_lis2dw12_lid: mutex-lis2dw12-lid {
+		};
+		mutex_bma4xx_lid: mutex-bma4xx-lid {
+		};
+	};
+
+	motionsense-sensor-data {
+		lid_data: lis2dw12-drv-lid-data {
+			compatible = "cros-ec,drvdata-lis2dw12";
+			status = "okay";
+		};
+		alt_lid_data: bma422-drv-lid-data {
+			compatible = "cros-ec,drvdata-bma4xx";
+			status = "okay";
+		};
+	};
+
+	motionsense-sensor {
+		lid_accel: lid-accel {
+			compatible = "cros-ec,lis2dw12";
+			status = "okay";
+			mutex = <&mutex_lis2dw12_lid>;
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			port = <&i2c_ec_i2c_sensor_scl_1v8>;
+			drv-data = <&lid_data>;
+		};
+	};
+
+	motionsense-sensor-alt {
+		alt_lid_accel: alt-lid-accel {
+			compatible = "cros-ec,bma4xx";
+			status = "okay";
+			alternate-for = <&lid_accel>;
+			mutex = <&mutex_bma4xx_lid>;
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			port = <&i2c_ec_i2c_sensor_scl_1v8>;
+			drv-data = <&alt_lid_data>;
+		};
+	};
+
+	motionsense-sensor-info {
+		compatible = "cros-ec,motionsense-sensor-info";
+		/*
+		* List of GPIO interrupts that have to be enabled at initial
+		* stage.
+		*/
+		sensor-irqs = <&int_lid_accel>;
+	};
+
+	batteries {
+		default_battery: lgc_ac17a8m {
+			compatible = "lgc,ac17a8m", "battery-smart";
+			/**
+			 * this has to be strictly lower than the desired
+			 * voltage in smart battery emulator (5000mV).
+			 */
+			voltage_min = <4000>;
+		};
+	};
+};
+
+&i2c1 {
+	status = "okay";
+};
+
+&i2c2 {
+	status = "okay";
+	pdc_emul0: rts5453@66 {
+
+		compatible = "realtek,rts54-pdc";
+		status = "okay";
+		reg = <0x66>;
+		irq-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
+		ccd;
+	};
+
+	pdc_emul1: rts5453@67 {
+		compatible = "realtek,rts54-pdc";
+		status = "okay";
+		reg = <0x67>;
+		irq-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
+	};
+
+	charger: isl923x@9 {
+		compatible = "cros,isl923x-emul";
+		status = "okay";
+		reg = <0x09>;
+		battery = <&battery>;
+	};
+
+	battery: sb@b {
+		compatible = "zephyr,smart-battery-emul";
+		reg = <0xb>;
+		cycle-count = <99>;
+		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
+		desired-charg-volt = <5000>;
+		desired-charg-cur = <1000>;
+		mf-name = "LGC";
+		dev-name = "AC17A8M";
+	};
+};
+
+&i2c3 {
+	status = "okay";
+};

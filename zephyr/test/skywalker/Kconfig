@@ -1,0 +1,16 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+choice
+    prompt "Select the test suite"
+
+config TEST_SKYWALKER
+    bool "Run the tests intended for Skywalker"
+    help
+      Enable the Skywalker test suite.
+
+endchoice
+
+# Pull Zephyr test support
+source "Kconfig.zephyr"
