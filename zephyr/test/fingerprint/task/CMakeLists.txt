@@ -31,3 +31,5 @@ target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_ASCP app PRIVATE
 	src/fpsensor_ascp.cc)
 target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_FRAME_SIZE app PRIVATE
 	src/fpsensor_frame_size.cc)
+target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_FP_INFO app PRIVATE
+	src/fpsensor_fp_info.cc)

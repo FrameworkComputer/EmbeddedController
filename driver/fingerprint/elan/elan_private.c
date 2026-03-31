@@ -41,7 +41,7 @@ static struct fp_sensor_info elan_sensor_info = {
 	.pixel_format = V4L2_PIX_FMT_GREY, .width = FP_SENSOR_RES_X_ELAN, \
 	.height = FP_SENSOR_RES_Y_ELAN, .bpp = FP_SENSOR_RES_BPP_ELAN
 
-static const struct fp_image_frame_params elan_image_frame_params[] = {
+static const struct fp_image_frame_params_v2 elan_image_frame_params[] = {
 	[ELAN_CAPTURE_VENDOR_FORMAT] =
 	{
 		ELAN_DEFAULT_IMAGE_PARAMS,
@@ -177,18 +177,18 @@ int fp_sensor_deinit(void)
 }
 
 /**
- * Fill the 'ec_response_fp_info_v2' buffer with the sensor information
+ * Fill the 'ec_response_fp_info_v3' buffer with the sensor information
  *
  * @param[out] resp retrieve the version, sensor and template information
  *
  * @return EC_SUCCESS on success.
  * @return EC_RES_ERROR on error.
  */
-int fp_sensor_get_info(struct ec_response_fp_info_v2 *resp, size_t resp_size)
+int fp_sensor_get_info(struct ec_response_fp_info_v3 *resp, size_t resp_size)
 {
 	CPRINTF("========%s=======\n", __func__);
 
-	if (sizeof(struct ec_response_fp_info_v2) +
+	if (sizeof(struct ec_response_fp_info_v3) +
 		    sizeof(elan_image_frame_params) >
 	    resp_size) {
 		return EC_RES_OVERFLOW;

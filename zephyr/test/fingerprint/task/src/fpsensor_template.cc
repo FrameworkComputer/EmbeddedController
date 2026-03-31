@@ -155,11 +155,11 @@ static int custom_enroll_finish(const struct fingerprint_algorithm *const alg,
 static uint8_t encrypted_template[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE];
 
 static const size_t test_info_buffer_size =
-	sizeof(struct ec_response_fp_info_v2) +
-	sizeof(struct fp_image_frame_params) * FP_MAX_CAPTURE_TYPES;
+	sizeof(struct ec_response_fp_info_v3) +
+	sizeof(struct fp_image_frame_params_v2) * FP_MAX_CAPTURE_TYPES;
 static uint8_t buffer[test_info_buffer_size];
-static struct ec_response_fp_info_v2 *test_info_buffer =
-	(struct ec_response_fp_info_v2 *)buffer;
+static struct ec_response_fp_info_v3 *test_info_buffer =
+	(struct ec_response_fp_info_v3 *)buffer;
 
 /*
  * Size of params buffer for FP_TEMPLATE command. Its size must be big enough
@@ -226,7 +226,7 @@ ZTEST_USER(fpsensor_template, test_fp_template_v1_load_template_success)
 	}
 
 	/* Confirm that there is 1 valid template. */
-	zassert_ok(ec_cmd_fp_info_v2(NULL, test_info_buffer,
+	zassert_ok(ec_cmd_fp_info_v3(NULL, test_info_buffer,
 				     test_info_buffer_size));
 	zassert_equal(test_info_buffer->template_info.template_valid, 1);
 }
@@ -295,7 +295,7 @@ ZTEST_USER(fpsensor_template, test_fp_template_v1_load_template_invalid_tag)
 	zassert_equal(EC_RES_UNAVAILABLE, status);
 
 	/* Confirm that there is no valid template. */
-	zassert_ok(ec_cmd_fp_info_v2(NULL, test_info_buffer,
+	zassert_ok(ec_cmd_fp_info_v3(NULL, test_info_buffer,
 				     test_info_buffer_size));
 	zassert_equal(test_info_buffer->template_info.template_valid, 0);
 }
@@ -1080,7 +1080,7 @@ ZTEST_USER(fpsensor_template, test_fp_template_load_template_success)
 	}
 
 	/* Confirm that there is 1 valid template. */
-	zassert_ok(ec_cmd_fp_info_v2(NULL, test_info_buffer,
+	zassert_ok(ec_cmd_fp_info_v3(NULL, test_info_buffer,
 				     test_info_buffer_size));
 	zassert_equal(test_info_buffer->template_info.template_valid, 1);
 }
@@ -1133,7 +1133,7 @@ ZTEST_USER(fpsensor_template, test_fp_template_load_template_invalid_tag)
 	}
 
 	/* Confirm that there is no valid template. */
-	zassert_ok(ec_cmd_fp_info_v2(NULL, test_info_buffer,
+	zassert_ok(ec_cmd_fp_info_v3(NULL, test_info_buffer,
 				     test_info_buffer_size));
 	zassert_equal(test_info_buffer->template_info.template_valid, 0);
 }

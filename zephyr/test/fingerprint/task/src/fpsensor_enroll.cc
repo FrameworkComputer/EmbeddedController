@@ -35,11 +35,11 @@ FAKE_VALUE_FUNC(int, mkbp_send_event, uint8_t);
 static uint8_t image_buffer[IMAGE_SIZE];
 
 static const size_t test_info_buffer_size =
-	sizeof(struct ec_response_fp_info_v2) +
-	sizeof(struct fp_image_frame_params) * FP_MAX_CAPTURE_TYPES;
+	sizeof(struct ec_response_fp_info_v3) +
+	sizeof(struct fp_image_frame_params_v2) * FP_MAX_CAPTURE_TYPES;
 static uint8_t buffer[test_info_buffer_size];
-static struct ec_response_fp_info_v2 *test_info_buffer =
-	(struct ec_response_fp_info_v2 *)buffer;
+static struct ec_response_fp_info_v3 *test_info_buffer =
+	(struct ec_response_fp_info_v3 *)buffer;
 
 static int enroll_percent;
 static int enroll_step_return_val;
@@ -454,7 +454,7 @@ ZTEST_USER(fpsensor_enroll, test_enroll_step_finish_success)
 	zassert_false(response.mode & FP_MODE_ENROLL_SESSION);
 
 	/* Confirm that there is 1 valid template. */
-	zassert_ok(ec_cmd_fp_info_v2(NULL, test_info_buffer,
+	zassert_ok(ec_cmd_fp_info_v3(NULL, test_info_buffer,
 				     test_info_buffer_size));
 	zassert_equal(test_info_buffer->template_info.template_valid, 1);
 	/* Don't forget that template_dirty is a bitmask. */

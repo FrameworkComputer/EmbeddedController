@@ -144,6 +144,13 @@ static inline int ec_cmd_fp_info_v2(CROS_EC_COMMAND_INFO *h,
 	return CROS_EC_COMMAND(h, EC_CMD_FP_INFO, 2, NULL, 0, r, resp_size);
 }
 
+static inline int ec_cmd_fp_info_v3(CROS_EC_COMMAND_INFO *h,
+				    struct ec_response_fp_info_v3 *r,
+				    size_t resp_size)
+{
+	return CROS_EC_COMMAND(h, EC_CMD_FP_INFO, 3, NULL, 0, r, resp_size);
+}
+
 /*
  * Section 2: EC interface functions that can be generated with the help
  * of template macros.

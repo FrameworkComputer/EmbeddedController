@@ -442,11 +442,11 @@ extern "C" void fp_task(void)
 
 static enum ec_status fp_command_info(struct host_cmd_handler_args *args)
 {
-	struct ec_response_fp_info_v2 *r =
-		static_cast<ec_response_fp_info_v2 *>(args->response);
-	const size_t response_size =
-		sizeof(struct ec_response_fp_info_v2) +
-		FP_MAX_CAPTURE_TYPES * sizeof(struct fp_image_frame_params);
+	struct ec_response_fp_info_v3 *r =
+		static_cast<ec_response_fp_info_v3 *>(args->response);
+	size_t response_size =
+		sizeof(struct ec_response_fp_info_v3) +
+		FP_MAX_CAPTURE_TYPES * sizeof(struct fp_image_frame_params_v2);
 
 	if (response_size > args->response_max) {
 		return EC_RES_OVERFLOW;
@@ -470,11 +470,44 @@ static enum ec_status fp_command_info(struct host_cmd_handler_args *args)
 	r->template_info.template_dirty = global_context.templ_dirty;
 	r->template_info.template_version = FP_TEMPLATE_FORMAT_VERSION;
 
+	if (args->version == 2) {
+		struct ec_response_fp_info_v2 *r_v2 =
+			static_cast<ec_response_fp_info_v2 *>(args->response);
+		/* Convert to v2 format. The formats differ only in the frame
+		 * array, which is located at the end of the structures
+		 *
+		 * SAFETY: 'r->image_frame_params' and r_v2->image_frame_params
+		 * overlap inexactly, but copying data is safe because we copy
+		 * data forward (from the first field of the structure to the
+		 * last).
+		 */
+		for (int i = 0; i < FP_MAX_CAPTURE_TYPES; i++) {
+			r_v2->image_frame_params[i].frame_size =
+				r->image_frame_params[i].frame_size;
+			r_v2->image_frame_params[i].pixel_format =
+				r->image_frame_params[i].pixel_format;
+			r_v2->image_frame_params[i].width =
+				r->image_frame_params[i].width;
+			r_v2->image_frame_params[i].height =
+				r->image_frame_params[i].height;
+			r_v2->image_frame_params[i].bpp =
+				r->image_frame_params[i].bpp;
+			r_v2->image_frame_params[i].fp_capture_type =
+				r->image_frame_params[i].fp_capture_type;
+			r_v2->image_frame_params[i].reserved =
+				r->image_frame_params[i].reserved;
+		}
+		response_size = sizeof(struct ec_response_fp_info_v2) +
+				FP_MAX_CAPTURE_TYPES *
+					sizeof(struct fp_image_frame_params);
+	}
+
 	args->response_size = response_size;
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_FP_INFO, fp_command_info, EC_VER_MASK(2));
+DECLARE_HOST_COMMAND(EC_CMD_FP_INFO, fp_command_info,
+		     EC_VER_MASK(2) | EC_VER_MASK(3));
 
 BUILD_ASSERT(FP_CONTEXT_NONCE_BYTES == 12);
 

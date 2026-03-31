@@ -29,11 +29,11 @@ FAKE_VALUE_FUNC(int, mkbp_send_event, uint8_t);
 #define fp_sim DEVICE_DT_GET(DT_CHOSEN(cros_fp_fingerprint_sensor))
 
 static const size_t test_info_buffer_size =
-	sizeof(struct ec_response_fp_info_v2) +
-	sizeof(struct fp_image_frame_params) * FP_MAX_CAPTURE_TYPES;
+	sizeof(struct ec_response_fp_info_v3) +
+	sizeof(struct fp_image_frame_params_v2) * FP_MAX_CAPTURE_TYPES;
 static uint8_t buffer[test_info_buffer_size];
-static struct ec_response_fp_info_v2 *test_info_buffer =
-	(struct ec_response_fp_info_v2 *)buffer;
+static struct ec_response_fp_info_v3 *test_info_buffer =
+	(struct ec_response_fp_info_v3 *)buffer;
 
 ZTEST_USER(fpsensor_init, test_tpm_seed_init)
 {
@@ -126,7 +126,7 @@ ZTEST_USER(fpsensor_init, test_maintenance_mode_dead_pixel_3)
 	const int dead_pixels = 3;
 
 	/* Confirm that number of dead pixels is unknown. */
-	zassert_ok(ec_cmd_fp_info_v2(NULL, test_info_buffer,
+	zassert_ok(ec_cmd_fp_info_v3(NULL, test_info_buffer,
 				     test_info_buffer_size));
 	zassert_equal(
 		FP_ERROR_DEAD_PIXELS(test_info_buffer->sensor_info.errors),
@@ -148,7 +148,7 @@ ZTEST_USER(fpsensor_init, test_maintenance_mode_dead_pixel_3)
 	zassert_true(state.maintenance_ran);
 
 	/* Confirm that number of dead pixels is correct. */
-	zassert_ok(ec_cmd_fp_info_v2(NULL, test_info_buffer,
+	zassert_ok(ec_cmd_fp_info_v3(NULL, test_info_buffer,
 				     test_info_buffer_size));
 	zassert_equal(
 		FP_ERROR_DEAD_PIXELS(test_info_buffer->sensor_info.errors),
@@ -187,7 +187,7 @@ ZTEST_USER(fpsensor_init, test_maintenance_mode_dead_pixel_max_plus_2)
 	zassert_true(state.maintenance_ran);
 
 	/* Confirm that number of dead pixels is correct. */
-	zassert_ok(ec_cmd_fp_info_v2(NULL, test_info_buffer,
+	zassert_ok(ec_cmd_fp_info_v3(NULL, test_info_buffer,
 				     test_info_buffer_size));
 	zassert_equal(
 		FP_ERROR_DEAD_PIXELS(test_info_buffer->sensor_info.errors),
@@ -226,7 +226,7 @@ ZTEST_USER(fpsensor_init, test_maintenance_mode_dead_pixel_max)
 	zassert_true(state.maintenance_ran);
 
 	/* Confirm that number of dead pixels is correct. */
-	zassert_ok(ec_cmd_fp_info_v2(NULL, test_info_buffer,
+	zassert_ok(ec_cmd_fp_info_v3(NULL, test_info_buffer,
 				     test_info_buffer_size));
 	zassert_equal(
 		FP_ERROR_DEAD_PIXELS(test_info_buffer->sensor_info.errors),
@@ -265,7 +265,7 @@ ZTEST_USER(fpsensor_init, test_maintenance_mode_dead_pixel_max_minus_1)
 	zassert_true(state.maintenance_ran);
 
 	/* Confirm that number of dead pixels is correct. */
-	zassert_ok(ec_cmd_fp_info_v2(NULL, test_info_buffer,
+	zassert_ok(ec_cmd_fp_info_v3(NULL, test_info_buffer,
 				     test_info_buffer_size));
 	zassert_equal(
 		FP_ERROR_DEAD_PIXELS(test_info_buffer->sensor_info.errors),

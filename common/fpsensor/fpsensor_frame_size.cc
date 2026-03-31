@@ -14,11 +14,11 @@
 void FpFrameSizeCache::populate_cache(uint32_t max_frame_size_bytes)
 {
 	const size_t buffer_size =
-		sizeof(struct ec_response_fp_info_v2) +
-		sizeof(struct fp_image_frame_params) * frame_sizes_.size();
+		sizeof(struct ec_response_fp_info_v3) +
+		sizeof(struct fp_image_frame_params_v2) * frame_sizes_.size();
 
 	std::vector<uint8_t> buffer(buffer_size);
-	auto *info = reinterpret_cast<struct ec_response_fp_info_v2 *>(
+	auto *info = reinterpret_cast<struct ec_response_fp_info_v3 *>(
 		buffer.data());
 
 	if (fp_sensor_get_info(info, buffer.size()) < 0) {

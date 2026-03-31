@@ -32,7 +32,7 @@ int fp_sensor_deinit(void)
 	return mock_ctrl_fp_sensor.fp_sensor_deinit_return;
 }
 
-int fp_sensor_get_info(struct ec_response_fp_info_v2 *resp, size_t resp_size)
+int fp_sensor_get_info(struct ec_response_fp_info_v3 *resp, size_t resp_size)
 {
 	memset(resp, 0, sizeof(*resp));
 

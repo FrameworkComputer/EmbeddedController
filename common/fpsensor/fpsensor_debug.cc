@@ -66,7 +66,7 @@
  */
 test_export_static enum ec_error_list
 upload_pgm_image(uint8_t *frame,
-		 const struct fp_image_frame_params &image_frame_params)
+		 const struct fp_image_frame_params_v2 &image_frame_params)
 {
 	uint8_t *ptr = frame;
 	uint8_t bytes_per_pixel = DIV_ROUND_UP(image_frame_params.bpp, 8);
@@ -129,15 +129,15 @@ static enum ec_error_list fp_console_action(uint32_t mode)
 }
 
 test_export_static int
-get_image_frame_params(struct fp_image_frame_params &image_frame_params,
+get_image_frame_params(struct fp_image_frame_params_v2 &image_frame_params,
 		       const enum fp_capture_type capture_type)
 {
 #if defined(HAVE_FP_PRIVATE_DRIVER) || defined(BOARD_HOST)
 	size_t fp_sensor_get_info_v2_size =
-		sizeof(struct ec_response_fp_info_v2) +
-		sizeof(struct fp_image_frame_params) * FP_MAX_CAPTURE_TYPES;
+		sizeof(struct ec_response_fp_info_v3) +
+		sizeof(struct fp_image_frame_params_v2) * FP_MAX_CAPTURE_TYPES;
 	std::vector<uint8_t> buffer(fp_sensor_get_info_v2_size);
-	auto *info = reinterpret_cast<ec_response_fp_info_v2 *>(buffer.data());
+	auto *info = reinterpret_cast<ec_response_fp_info_v3 *>(buffer.data());
 
 	if (fp_sensor_get_info(info, buffer.size()) < 0) {
 		return EC_ERROR_UNKNOWN;
@@ -177,7 +177,7 @@ static int command_fpcapture(int argc, const char **argv)
 
 	const enum ec_error_list rc = fp_console_action(mode);
 	if (rc == EC_SUCCESS) {
-		struct fp_image_frame_params image_frame_params{};
+		struct fp_image_frame_params_v2 image_frame_params{};
 		int ret = get_image_frame_params(
 			image_frame_params,
 			global_context.current_capture_type);
@@ -243,7 +243,7 @@ static int command_fpdownload(int argc, const char **argv)
 	if (system_is_locked())
 		return EC_ERROR_ACCESS_DENIED;
 
-	struct fp_image_frame_params image_frame_params{};
+	struct fp_image_frame_params_v2 image_frame_params{};
 	int ret = get_image_frame_params(image_frame_params,
 					 global_context.current_capture_type);
 	if (ret != EC_RES_SUCCESS) {
@@ -300,10 +300,10 @@ static int command_fpinfo(int argc, const char **argv)
 {
 #if defined(HAVE_FP_PRIVATE_DRIVER) || defined(BOARD_HOST)
 	size_t fp_sensor_get_info_v2_size =
-		sizeof(struct ec_response_fp_info_v2) +
-		sizeof(struct fp_image_frame_params) * FP_MAX_CAPTURE_TYPES;
+		sizeof(struct ec_response_fp_info_v3) +
+		sizeof(struct fp_image_frame_params_v2) * FP_MAX_CAPTURE_TYPES;
 	std::vector<uint8_t> buffer(fp_sensor_get_info_v2_size);
-	auto *info = reinterpret_cast<ec_response_fp_info_v2 *>(buffer.data());
+	auto *info = reinterpret_cast<ec_response_fp_info_v3 *>(buffer.data());
 
 	if (fp_sensor_get_info(info, buffer.size()) < 0) {
 		ccprintf("Failed to get fp_info_v2\n");

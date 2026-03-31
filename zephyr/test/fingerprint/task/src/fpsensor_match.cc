@@ -38,11 +38,11 @@ static uint8_t image_buffer[IMAGE_SIZE];
 static const uint8_t fake_rollback_entropy[] = "some_rollback_entropy";
 
 static const size_t test_info_buffer_size =
-	sizeof(struct ec_response_fp_info_v2) +
-	sizeof(struct fp_image_frame_params) * FP_MAX_CAPTURE_TYPES;
+	sizeof(struct ec_response_fp_info_v3) +
+	sizeof(struct fp_image_frame_params_v2) * FP_MAX_CAPTURE_TYPES;
 static uint8_t buffer[test_info_buffer_size];
-static struct ec_response_fp_info_v2 *test_info_buffer =
-	(struct ec_response_fp_info_v2 *)buffer;
+static struct ec_response_fp_info_v3 *test_info_buffer =
+	(struct ec_response_fp_info_v3 *)buffer;
 
 /* The fake TPM seed is "very_secret_32_bytes_of_tpm_seed" */
 #define FAKE_TPM_SEED                                                       \
@@ -584,7 +584,7 @@ ZTEST_USER(fpsensor_match, test_match_success_template_updated_dirty_template)
 	zassert_equal(mock_alg_match_fake.call_count, 1);
 
 	/* Confirm that dirty templates bitmap is correct. */
-	zassert_ok(ec_cmd_fp_info_v2(NULL, test_info_buffer,
+	zassert_ok(ec_cmd_fp_info_v3(NULL, test_info_buffer,
 				     test_info_buffer_size));
 	zassert_equal(test_info_buffer->template_info.template_dirty, 0x1);
 }
@@ -631,7 +631,7 @@ ZTEST_USER(fpsensor_match,
 	zassert_equal(mock_alg_match_fake.call_count, 1);
 
 	/* Confirm that dirty templates bitmap is correct. */
-	zassert_ok(ec_cmd_fp_info_v2(NULL, test_info_buffer,
+	zassert_ok(ec_cmd_fp_info_v3(NULL, test_info_buffer,
 				     test_info_buffer_size));
 	zassert_equal(test_info_buffer->template_info.template_dirty, 0x0);
 }
@@ -677,7 +677,7 @@ ZTEST_USER(fpsensor_match, test_match_success_no_template_update_dirty_template)
 	zassert_equal(mock_alg_match_fake.call_count, 1);
 
 	/* Confirm that dirty templates bitmap is correct. */
-	zassert_ok(ec_cmd_fp_info_v2(NULL, test_info_buffer,
+	zassert_ok(ec_cmd_fp_info_v3(NULL, test_info_buffer,
 				     test_info_buffer_size));
 	zassert_equal(test_info_buffer->template_info.template_dirty, 0x0);
 }
@@ -723,7 +723,7 @@ ZTEST_USER(fpsensor_match, test_match_no_template_update_dirty_template)
 
 	/* Confirm that dirty templates bitmap is correct (no templates dirty).
 	 */
-	zassert_ok(ec_cmd_fp_info_v2(NULL, test_info_buffer,
+	zassert_ok(ec_cmd_fp_info_v3(NULL, test_info_buffer,
 				     test_info_buffer_size));
 	zassert_equal(test_info_buffer->template_info.template_dirty, 0x0);
 }

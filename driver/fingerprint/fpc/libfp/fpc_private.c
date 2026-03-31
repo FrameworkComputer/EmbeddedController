@@ -72,7 +72,7 @@ static struct fp_sensor_info fpc1145_sensor_info = {
 	.pixel_format = V4L2_PIX_FMT_GREY, .width = FP_SENSOR_RES_X_FPC, \
 	.height = FP_SENSOR_RES_Y_FPC, .bpp = FP_SENSOR_RES_BPP_FPC
 
-static const struct fp_image_frame_params fpc1145_image_frame_params[] = {
+static const struct fp_image_frame_params_v2 fpc1145_image_frame_params[] = {
 	[FPC_CAPTURE_VENDOR_FORMAT] =
 	{
 		FPC1145_DEFAULT_RAW_IMAGE_PARAMS,
@@ -345,9 +345,9 @@ int fp_sensor_deinit(void)
 	return EC_SUCCESS;
 }
 
-int fp_sensor_get_info(struct ec_response_fp_info_v2 *resp, size_t resp_size)
+int fp_sensor_get_info(struct ec_response_fp_info_v3 *resp, size_t resp_size)
 {
-	if (sizeof(struct ec_response_fp_info_v2) +
+	if (sizeof(struct ec_response_fp_info_v3) +
 		    sizeof(fpc1145_image_frame_params) >
 	    resp_size) {
 		return EC_RES_OVERFLOW;

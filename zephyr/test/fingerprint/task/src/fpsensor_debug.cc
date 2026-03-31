@@ -25,11 +25,11 @@
 static const struct device *const fp_sensor_dev =
 	DEVICE_DT_GET(DT_CHOSEN(cros_fp_fingerprint_sensor));
 
-static_assert(sizeof(struct fp_image_frame_params) ==
+static_assert(sizeof(struct fp_image_frame_params_v2) ==
 		      sizeof(struct fingerprint_image_frame_params),
 	      "Frame param structures must be the same size");
 
-int get_image_frame_params(struct fp_image_frame_params &image_frame_params,
+int get_image_frame_params(struct fp_image_frame_params_v2 &image_frame_params,
 			   enum fp_capture_type capture_type);
 
 static int is_locked;
@@ -188,7 +188,7 @@ ZTEST(fpsensor_debug, test_command_fpenroll)
 
 enum ec_error_list
 upload_pgm_image(uint8_t *frame,
-		 const struct fp_image_frame_params &image_frame_params);
+		 const struct fp_image_frame_params_v2 &image_frame_params);
 
 ZTEST(fpsensor_debug, test_upload_pgm_image_wrong_bpp)
 {
@@ -223,7 +223,7 @@ ZTEST(fpsensor_debug, test_get_image_frame_params)
 		  FP_CAPTURE_SIMPLE_IMAGE, FP_CAPTURE_PATTERN0,
 		  FP_CAPTURE_PATTERN1, FP_CAPTURE_QUALITY_TEST,
 		  FP_CAPTURE_RESET_TEST, FP_CAPTURE_TYPE_MAX });
-	constexpr struct fp_image_frame_params zero_params{};
+	constexpr struct fp_image_frame_params_v2 zero_params{};
 
 	for (enum fp_capture_type current_capture_type : kCaptureTypesArray) {
 		const struct fingerprint_image_frame_params *expected_params =
@@ -236,7 +236,7 @@ ZTEST(fpsensor_debug, test_get_image_frame_params)
 			}
 		}
 
-		struct fp_image_frame_params image_frame_params{};
+		struct fp_image_frame_params_v2 image_frame_params{};
 		int rv = get_image_frame_params(image_frame_params,
 						current_capture_type);
 
@@ -247,7 +247,7 @@ ZTEST(fpsensor_debug, test_get_image_frame_params)
 				rv, current_capture_type);
 			zassert_mem_equal(
 				&image_frame_params, expected_params,
-				sizeof(struct fp_image_frame_params),
+				sizeof(struct fp_image_frame_params_v2),
 				"Struct comparison failed for type %d",
 				current_capture_type);
 		} else {
@@ -257,7 +257,7 @@ ZTEST(fpsensor_debug, test_get_image_frame_params)
 				EC_ERROR_INVAL, rv);
 			zassert_mem_equal(
 				&image_frame_params, &zero_params,
-				sizeof(struct fp_image_frame_params),
+				sizeof(struct fp_image_frame_params_v2),
 				"Struct contents should not change on failure");
 		}
 	}

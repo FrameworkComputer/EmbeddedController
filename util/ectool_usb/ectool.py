@@ -176,7 +176,7 @@ def cmd_fp_info(_args, comm) -> int:
         print("Template valid: " + str(fp_info.response.template_valid))
         print("Template dirty: " + hex(fp_info.response.template_dirty))
         print("Template version: " + hex(fp_info.response.template_version))
-    elif fp_info.cmd_version == 2:
+    elif fp_info.cmd_version in (2, 3):
         print("Vendor ID: " + hex(fp_info.response.vendor_id))
         print("Product ID: " + hex(fp_info.response.product_id))
         print("Model ID: " + hex(fp_info.response.model_id))
@@ -196,6 +196,11 @@ def cmd_fp_info(_args, comm) -> int:
         ):
             print("Image frame params nr: " + str(i))
             print("\tFrame size: " + str(image_frame_params.frame_size))
+            if fp_info.cmd_version == 3:
+                print(
+                    "\tImage offset: "
+                    + str(image_frame_params.image_data_offset_bytes)
+                )
             print("\tPixel format: " + hex(image_frame_params.pixel_format))
             print("\tWidth: " + str(image_frame_params.width))
             print("\tHeight: " + str(image_frame_params.height))

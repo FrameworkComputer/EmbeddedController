@@ -351,6 +351,63 @@ class FpInfoCmd2(ECCommand):
         )
 
 
+class FpInfoCmd3(ECCommand):
+    """Gets FP information (version 3)."""
+
+    def __init__(self):
+        # 4 bytes of vendor id
+        # 4 bytes of product id
+        # 4 bytes of model id
+        # 4 bytes of version
+        # 2 bytes of num of capture types
+        # 2 bytes of errors
+        # 4 bytes of template size
+        # 2 bytes of template max
+        # 2 bytes of template valid
+        # 4 bytes of template dirty
+        # 4 bytes of template version
+        # unknown number of image_frame
+        response_msg = [
+            ("vendor_id", "I"),
+            ("product_id", "I"),
+            ("model_id", "I"),
+            ("version", "I"),
+            ("num_capture_types", "H"),
+            ("errors", "H"),
+            ("template_size", "I"),
+            ("template_max", "H"),
+            ("template_valid", "H"),
+            ("template_dirty", "I"),
+            ("template_version", "I"),
+            ("image_frame_params", ""),
+        ]
+        # fp_image_frame_params
+        # 4 bytes of frame_size;
+        # 4 bytes of image offset;
+        # 4 bytes of pixel_format;
+        # 2 bytes of width;
+        # 2 bytes of height;
+        # 2 bytes of bpp;
+        # 1 byte of fp_capture_type;
+        # 1 byte of reserved;
+        image_frame = [
+            ("frame_size", "I"),
+            ("image_data_offset_bytes", "I"),
+            ("pixel_format", "I"),
+            ("width", "H"),
+            ("height", "H"),
+            ("bpp", "H"),
+            ("fp_capture_type", "B"),
+            ("reserved", "B"),
+        ]
+        super().__init__(
+            ECCommandsIds.FP_INFO,
+            3,
+            response_msg=response_msg,
+            variable_payload_msg=image_frame,
+        )
+
+
 class FpFrameCmd0(ECCommand):
     """Gets FP frame (version 0)."""
 
@@ -561,7 +618,7 @@ VERSIONED_COMMANDS = {
     ECCommandsIds.REBOOT_EC: {0: RebootECCmd0},
     ECCommandsIds.ENTER_BOOTLOADER: {0: EnterBootloaderCmd0},
     ECCommandsIds.FP_MODE: {0: FpModeCmd0},
-    ECCommandsIds.FP_INFO: {1: FpInfoCmd1, 2: FpInfoCmd2},
+    ECCommandsIds.FP_INFO: {1: FpInfoCmd1, 2: FpInfoCmd2, 3: FpInfoCmd3},
     ECCommandsIds.FP_FRAME: {0: FpFrameCmd0, 1: FpFrameCmd1},
     ECCommandsIds.FP_VENDOR: {0: FpVendorCmd0},
     ECCommandsIds.RWSIG_ACTION: {0: RwSigActionCmd0},

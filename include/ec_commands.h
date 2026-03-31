@@ -8612,7 +8612,6 @@ BUILD_ASSERT(sizeof(struct fp_template_info) == 16);
 struct fp_image_frame_params {
 	/* Image frame characteristics */
 	uint32_t frame_size;
-	uint32_t image_data_offset_bytes; /**< Byte offset of image buffer */
 	uint32_t pixel_format; /* using V4L2_PIX_FMT_ */
 	uint16_t width;
 	uint16_t height;
@@ -8621,7 +8620,7 @@ struct fp_image_frame_params {
 	uint8_t fp_capture_type;
 	uint8_t reserved; /**< padding for alignment */
 } __ec_align4;
-BUILD_ASSERT(sizeof(struct fp_image_frame_params) == 20);
+BUILD_ASSERT(sizeof(struct fp_image_frame_params) == 16);
 
 struct ec_response_fp_info_v2 {
 	/* Sensor identification */
@@ -8633,6 +8632,31 @@ struct ec_response_fp_info_v2 {
 		image_frame_params[FLEXIBLE_ARRAY_MEMBER_SIZE];
 } __ec_align4;
 BUILD_ASSERT(sizeof(struct ec_response_fp_info_v2) == 36);
+
+struct fp_image_frame_params_v2 {
+	/* Image frame characteristics */
+	uint32_t frame_size;
+	uint32_t image_data_offset_bytes; /**< Byte offset of image buffer */
+	uint32_t pixel_format; /* using V4L2_PIX_FMT_ */
+	uint16_t width;
+	uint16_t height;
+	uint16_t bpp;
+	/** Type of image capture from enum fp_capture_type. */
+	uint8_t fp_capture_type;
+	uint8_t reserved; /**< padding for alignment */
+} __ec_align4;
+BUILD_ASSERT(sizeof(struct fp_image_frame_params_v2) == 20);
+
+struct ec_response_fp_info_v3 {
+	/* Sensor identification */
+	struct fp_sensor_info sensor_info;
+	/* Template/finger current information */
+	struct fp_template_info template_info;
+	/* fingerprint image frame parameters */
+	struct fp_image_frame_params_v2
+		image_frame_params[FLEXIBLE_ARRAY_MEMBER_SIZE];
+} __ec_align4;
+BUILD_ASSERT(sizeof(struct ec_response_fp_info_v3) == 36);
 
 /* Get the last captured finger frame or a template content */
 #define EC_CMD_FP_FRAME 0x0404

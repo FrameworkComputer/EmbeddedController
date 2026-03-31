@@ -110,14 +110,14 @@ int fp_sensor_deinit(void)
 	return 0;
 }
 
-int fp_sensor_get_info(struct ec_response_fp_info_v2 *resp, size_t resp_size)
+int fp_sensor_get_info(struct ec_response_fp_info_v3 *resp, size_t resp_size)
 {
 	if (resp == NULL) {
 		return -EINVAL;
 	}
 
 	const size_t expected_min_size =
-		sizeof(struct ec_response_fp_info_v2) +
+		sizeof(struct ec_response_fp_info_v3) +
 		NUM_IMAGE_CAPTURE_TYPES *
 			sizeof(struct fingerprint_image_frame_params);
 
