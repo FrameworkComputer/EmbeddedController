@@ -15,6 +15,7 @@
 #include <cros/cbi_flash.dtsi>
 #include "gpios.dtsi"
 #include "i2c.dtsi"
+#include "interrupts.dtsi"
 
 /* mensa overrides follow... */
 
