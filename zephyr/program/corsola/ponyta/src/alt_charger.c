@@ -10,22 +10,12 @@
 #include "hooks.h"
 
 #include <zephyr/devicetree.h>
-#include <zephyr/logging/log.h>
-
-LOG_MODULE_DECLARE(ponyta, LOG_LEVEL_ERR);
 
 void alt_charger_init(void)
 {
-	int ret;
-	uint32_t val;
-
-	ret = cros_cbi_get_fw_config(FW_CHARGER, &val);
-	if (ret != 0) {
-		LOG_ERR("Error retrieving CBI FW_CONFIG field %d", FW_CHARGER);
-		return;
-	}
-
-	if (val == FW_CHARGER_RT9490)
+	if (cros_cbi_ssfc_check_match(
+		    CBI_SSFC_VALUE_ID(DT_NODELABEL(charger_1)))) {
 		CHG_ENABLE_ALTERNATE(0);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, alt_charger_init, HOOK_PRIO_POST_FIRST);

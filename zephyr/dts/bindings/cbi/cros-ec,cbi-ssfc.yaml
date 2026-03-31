@@ -26,6 +26,7 @@ child-binding:
       - LIGHTBAR
       - USB_SS_MUX
       - PANEL_TYPE
+      - FW_CHARGER
     size:
       type: int
       required: true

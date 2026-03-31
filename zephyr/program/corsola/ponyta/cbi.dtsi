@@ -50,24 +50,6 @@
 				value = <2>;
 			};
 		};
-
-		charger-option {
-			enum-name = "FW_CHARGER";
-			start = <16>;
-			size = <2>;
-
-			charger-option-isl923x {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_CHARGER_ISL923X";
-				value = <0>;
-				default;
-			};
-			charger-option-rt9490 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_CHARGER_RT9490";
-				value = <1>;
-			};
-		};
 	};
 
 	/* ponyta-specific ssfc fields. */
@@ -107,6 +89,23 @@
 				compatible = "cros-ec,cbi-ssfc-value";
 				status = "okay";
 				value = <2>;
+			};
+		};
+
+		charger-option {
+			enum-name = "FW_CHARGER";
+			size = <3>;
+
+			charger_0: charger-option-isl923x {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <0>;
+				default;
+			};
+			charger_1: charger-option-rt9490 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
 			};
 		};
 	};
