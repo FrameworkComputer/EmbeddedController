@@ -250,7 +250,7 @@ static void control_module_power(void)
 		return;
 
 	if (pre_touchpad != touchpad) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on),
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_en),
 			(touchpad >= BOARD_VERSION_1 && touchpad <= BOARD_VERSION_13) ? 1 : 0);
 
 		pre_touchpad = touchpad;
@@ -264,7 +264,7 @@ static void module_pwr_control_enable(bool state)
 	if (module_pwr_control)
 		control_module_power();
 	else
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_en), 0);
 }
 
 void me_gpio_change(uint32_t flags)

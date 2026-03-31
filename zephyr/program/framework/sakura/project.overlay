@@ -20,7 +20,7 @@
 	aliases {
 		/delete-property/ gpio-mux-uart-flip;
 		gpio-tp-board-id-detect = &gpio_tp_board_id_pug;
-		gpio-module-power = &gpio_module_pwr_on;
+		gpio-module-power = &gpio_module_pwr_en;
 	};
 
 	/delete-node/ unused-pins;
