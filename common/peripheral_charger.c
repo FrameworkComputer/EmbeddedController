@@ -909,19 +909,21 @@ static bool pchg_allowed(void)
 	return false;
 }
 
-static bool pchg_enabled;
+static int pchg_enabled = -1;
 
 static void pchg_update_state(void)
 {
 	bool allow = pchg_allowed();
 
-	if (allow && !pchg_enabled) {
+	if (allow == pchg_enabled)
+		return;
+
+	if (allow)
 		pchg_startup();
-		pchg_enabled = true;
-	} else if (!allow && pchg_enabled) {
+	else
 		pchg_shutdown();
-		pchg_enabled = false;
-	}
+
+	pchg_enabled = allow;
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pchg_update_state, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pchg_update_state, HOOK_PRIO_DEFAULT);
