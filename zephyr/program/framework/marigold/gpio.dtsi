@@ -21,34 +21,43 @@
 		ec_espi_rst_l {
 			gpios = <&gpio5 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
+		/* Monitor All S0 power rail ok */
 		gpio_runpwrok: runpwrok {
-			gpios = <&gpioc 6 GPIO_INPUT>;	/* Monitor All S0 power rail ok */
+			gpios = <&gpioc 6 GPIO_INPUT>;
 		};
+		/* Monitor PCH Prim power ok */
 		gpio_prim_pwr_ok: prim_pwr_ok {
-			gpios = <&gpio7 6 GPIO_INPUT>;	/* Monitor PCH Prim power ok */
+			gpios = <&gpio7 6 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_GOOD_PRIM_PWR";
 		};
 		otg_en {
 			gpios = <&gpioc 5 GPIO_OUTPUT_LOW>;
 		};
+
+		/* EC I2C HID to SOC (ALS, Mediakeys) */
 		ec_i2c0_clk0 {
 			gpios = <&gpiob 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		ec_i2c0_sda0 {
 			gpios = <&gpiob 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
+
+		/* PD1 (Right) I2C */
 		ec_i2c1_clk0 {
 			gpios = <&gpio9 0 GPIO_INPUT>;
 		};
 		ec_i2c1_sda0 {
 			gpios = <&gpio8 7 GPIO_INPUT>;
 		};
+
+		/* PD2 (Left) I2C */
 		ec_i2c2_clk0 {
 			gpios = <&gpio9 2 GPIO_INPUT>;
 		};
 		ec_i2c2_sda0 {
 			gpios = <&gpio9 1 GPIO_INPUT>;
 		};
+
 		ec_smb_ck3 {
 			gpios = <&gpiod 1 GPIO_INPUT>;
 		};
@@ -64,18 +73,24 @@
 		gpio_soc_ec_int2_l: soc_ec_int2_l {
 			gpios = <&gpiof 5 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
 		};
+
+		/* F7539M Thermal sensors on mainboard */
 		ec_i2c6_clk1 {
 			gpios = <&gpioe 4 GPIO_INPUT>;
 		};
 		ec_i2c6_sda1 {
 			gpios = <&gpioe 3 GPIO_INPUT>;
 		};
+
+		/* ALS Sensor (on camera module) */
 		ec_i2c7_clk0 {
 			gpios = <&gpiob 3 GPIO_INPUT>;
 		};
 		ec_i2c7_sda0 {
 			gpios = <&gpiob 2 GPIO_INPUT>;
 		};
+
+		/* Microphone privacy switch state (on camera module) */
 		gpio_mic_sw: mic_sw {
 			gpios = <&gpioc 1 GPIO_INPUT>;
 		};
@@ -85,24 +100,30 @@
 		gpio_cap_led: cap_led {
 			gpios = <&gpiob 1 GPIO_OUTPUT_LOW>;
 		};
+		/* PSL in1 signal, power button */
 		gpio_hw_acav_in: adp_in {
-			gpios = <&gpiod 2 GPIO_INPUT>;		/* PSL in1 signal, power button */
+			gpios = <&gpiod 2 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
 		};
+		/* PSL in2 signal, chassis open */
 		gpio_on_off_btn_l: on_off_btn_l {
-			gpios = <&gpio0 0 GPIO_INPUT>;		/* PSL in2 signal, chassis open */
+			gpios = <&gpio0 0 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
+		/* PSL in3 signal, ac present pin */
 		gpio_chassis_open_l: chassis_open_l {
-			gpios = <&gpio0 1 GPIO_INPUT>;		/* PSL in3 signal, ac present pin */
+			gpios = <&gpio0 1 GPIO_INPUT>;
 		};
+		/* Lid close detection from hall sensor (on audio board) */
 		gpio_lid_sw_l: lid_sw_l {
 			gpios = <&gpio0 2 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
 		};
+		/* Input deck (keyboard, touchpad, fingerprint) power rail enable */
 		gpio_module_pwr_en: module_pwr_en {
 			gpios = <&gpio8 6 GPIO_OUTPUT_LOW>;
 		};
+		/* I2C interrupt from ALS sensor (on camera module) */
 		gpio_ec_als_int_l: ec_als_int_l {
 			gpios = <&gpio7 5 GPIO_INPUT>;
 		};
@@ -120,6 +141,7 @@
 			gpios = <&gpio9 5 GPIO_INPUT>;
 			enum-name = "GPIO_PCH_SLP_S5_L";
 		};
+		/* Camera power rail enable */
 		gpio_cam_en: cam_en {
 			gpios = <&gpio6 7 GPIO_OUTPUT_LOW>;
 		};
@@ -132,11 +154,13 @@
 		gpio_susp_l: susp_l {
 			gpios = <&gpio6 3 GPIO_OUTPUT_LOW>;
 		};
+		/* Left side LED enable */
 		gpio_left_side: left_side {
-			gpios = <&gpio4 0 GPIO_OUTPUT_LOW>;	/* left side LED follow IFGA3 */
+			gpios = <&gpio4 0 GPIO_OUTPUT_LOW>;
 		};
+		/* Right side LED enable */
 		gpio_right_side: right_side {
-			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;	/* right side LED follow IFGA3 */
+			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
 		};
 		gpio_syson: syson {
 			gpios = <&gpioa 6 GPIO_OUTPUT_LOW>;
@@ -144,23 +168,29 @@
 		gpio_power_vr_id: power_vr_id {
 			gpios = <&gpio4 4 GPIO_INPUT>;	/*PWR VR ID pin:0-RENESAS,1-AOS*/
 		};
+		/* Monitor AC present from PD */
 		ac_present_pd_l {
-			gpios = <&gpio4 3 GPIO_INPUT>;		/* Monitor AC present from PD */
+			gpios = <&gpio4 3 GPIO_INPUT>;
 		};
 		ec_beep {
 			gpios = <&gpio4 2 GPIO_OUTPUT_LOW>;	/* reserved */
 		};
+		/* Signal from Fingerprint reader that it's doing a scan, so EC
+		 * should ignore power button press
+		 */
 		gpio_fp_control: fp_ctrl {
-			gpios = <&gpio3 4 GPIO_INPUT>;		/* Finger Printer feature */
+			gpios = <&gpio3 4 GPIO_INPUT>;
 		};
 		gpio_soc_enbkl_ls: soc_enbkl_ls {
 			gpios = <&gpioe 0 GPIO_INPUT>;		/* monitor CPU EDP BKLEN */
 		};
+		/* eDP Backlight Enable */
 		gpio_sm_panel_bken_ec: ec_bkoff_l {
-			gpios = <&gpioc 7 GPIO_OUTPUT_LOW>;	/*eDP BKL Enable*/
+			gpios = <&gpioc 7 GPIO_OUTPUT_LOW>;
 		};
+		/* Signal AC adapter present to CPU */
 		gpio_ac_present_cpu: ac_present_cpu {
-			gpios = <&gpioa 2 GPIO_ODR_LOW>;	/* AC present to CPU */
+			gpios = <&gpioa 2 GPIO_ODR_LOW>;
 		};
 		gpio_slp_s4_l: pm_slp_s4_l {
 			gpios = <&gpioa 0 GPIO_INPUT>;	/*Monitor CPU entry/leave S4 */
@@ -172,6 +202,9 @@
 		gpio_soc_ec_int_l: soc_ec_int_l {
 			gpios = <&gpio9 6 GPIO_ODR_HIGH>;	/* I2C0 use HID over I2C int# */
 		};
+		/* Camera privacy switch state (on camera module) - only
+		 * reliable if camera is actively recording
+		 */
 		gpio_cam_sw: cam_sw {
 			gpios = <&gpio9 3 GPIO_INPUT>;
 		};
@@ -198,8 +231,8 @@
 		gpio_wlan_en: wlan_en {
 			gpios = <&gpio7 2 GPIO_OUTPUT_LOW>;
 		};
+		/* ME unlock (to update it), strap default low before PLT_PWROK */
 		gpio_me_en: me_en {
-			/* ME flash, strap default low before PLT_PWROK*/
 			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>;
 		};
 		gpio_mux_sub_uart_flip: mux_sub_uart_flip {
@@ -213,6 +246,7 @@
 			gpios = <&gpioe 5 GPIO_INPUT>;
 			enum-name = "GPIO_EC_PD_INTA_L";
 		};
+		/* Powerbutton signal to SOC */
 		gpio_pbtn_out: pbtn_out_l {
 			gpios = <&gpio5 0 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
