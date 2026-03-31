@@ -7,12 +7,12 @@
 
 #include <cros/integrated_fwid.dtsi>
 
-#include "../mensa_stub.dtsi"
 #include "../psl.dtsi"
 
 /* mensa project DTS includes */
 
 #include <cros/cbi_flash.dtsi>
+#include "gpios.dtsi"
 
 /* mensa overrides follow... */
 
