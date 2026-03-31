@@ -8,6 +8,7 @@
 #include <cros/integrated_fwid.dtsi>
 
 #include "../mensa_stub.dtsi"
+#include "../psl.dtsi"
 
 /* mensa project DTS includes */
 
