@@ -411,20 +411,6 @@ bool battery_sustainer_enabled(void);
 #include "charge_state.h"
 
 #ifdef CONFIG_CUSTOMIZED_DESIGN
-/**
- * Set the battery sustainer mode.
- *
- * @param lower: lower battery soc charge limit [1-100%] or -1 to disable
- * @param upper: upper battery soc charge limit [1-100%] or -1 to disable
- * 
- * @return EC_SUCCESS or EC_ERROR_INVAL
- */
-int battery_sustainer_set(int8_t lower, int8_t upper);
-
-/* Config Charger */
-#include "charge_state.h"
-
-#ifdef CONFIG_CUSTOMIZED_DESIGN
 void battery_customize(struct charge_state_data *curr_batt);
 #endif
 

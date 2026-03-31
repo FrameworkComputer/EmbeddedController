@@ -39,10 +39,8 @@
 #define VCCIN_AUX_PGOOD POWER_SIGNAL_MASK(X86_VCCIN_AUX_VR_PG)
 
 static int power_s5_up;		/* Chipset is sequencing up or down */
-static int ap_boot_delay = 9;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int force_shoutdown_flags;
-static int stress_test_enable;
 static int me_change;
 static bool tp_module_pwr_control;
 static bool pb_module_pwr_control;
@@ -446,7 +444,7 @@ enum power_state power_handle_state(enum power_state state)
 						/*
 						 * TODO: RTC reset function
 						 */
-						ap_boot_delay = 9;
+						ap_boot_delay = CONFIG_PWRSEQ_AP_BOOT_DELAY;
 						s5_exit_tries = 0;
 						stress_test_enable = 0;
 						clear_rtcwake();

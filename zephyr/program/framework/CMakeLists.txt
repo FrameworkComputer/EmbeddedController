@@ -46,9 +46,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_CHASSIS_OPEN_SWITCH
 	"src/chassis.c")
 
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
-	"src/charge_limit_control.c")
-
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
 	"src/diagnostics_minipc.c")
 zephyr_library_sources_ifndef(CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
@@ -176,6 +173,7 @@ if(DEFINED CONFIG_BOARD_SUNFLOWER)
 			"sunflower/src/touchpad.c"
 			"sunflower/src/board_tablet_mode.c"
 			"sunflower/src/usbc.c"
+			"src/usbc_4port_config.c"
 	)
 
 endif()
