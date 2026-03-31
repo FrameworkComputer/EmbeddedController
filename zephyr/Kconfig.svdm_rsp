@@ -12,7 +12,7 @@ choice SVDM_RSP_CHOICE
 	  Select how USB-PD Structured Vendor Defined Messages (SVDM) will be
 	  handled.
 
-config SVDM_RSP_DFP_ONLY
+config PLATFORM_EC_SVDM_RSP_DFP_ONLY
 	bool "DFP-only"
 	# USB4 and TBT modes require more support
 	depends on !PLATFORM_EC_USB_PD_USB4
