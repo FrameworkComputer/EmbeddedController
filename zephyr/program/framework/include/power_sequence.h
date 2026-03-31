@@ -6,24 +6,6 @@
 #ifndef __CROS_EC_POWERSEQUENCE_H
 #define __CROS_EC_POWERSEQUENCE_H
 
-/* Power signals list */
-enum power_signal {
-	X86_3VALW_PG,
-	X86_SLP_S3_N,
-	X86_SLP_S5_N,
-	X86_VR_PG,
-#ifdef CONFIG_BOARD_MARIGOLD
-	X86_PRIM_PWR,
-	X86_SLP_S4_N,
-#endif
-#ifdef CONFIG_BOARD_SUNFLOWER
-	X86_SLP_S4_N,
-	X86_SLP_SUS,
-	X86_VCCIN_AUX_VR_PG,
-#endif
-	POWER_SIGNAL_COUNT
-};
-
 /* s0ix entry/exit flag state */
 enum s0ix_state {
 	CS_NONE,

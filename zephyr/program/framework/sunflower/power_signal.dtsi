@@ -1,0 +1,35 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	power_signal_list: power-signal-list {
+		compatible = "intel,fwk-rpl-power-signal-list";
+
+		alw_pwrpg {
+			power-enum-name = "X86_3VALW_PG";
+			power-gpio-pin = <&gpio_spok>;
+		};
+		ap_in_s3 {
+			power-enum-name = "X86_SLP_S3_N";
+			power-gpio-pin = <&gpio_slp_s3_l>;
+		};
+		vr_pwrpg {
+			power-enum-name = "X86_VR_PG";
+			power-gpio-pin = <&gpio_vr_pwrgd>;
+		};
+		ap_in_s4 {
+			power-enum-name = "X86_SLP_S4_N";
+			power-gpio-pin = <&gpio_slp_s4_l>;
+		};
+		slp_sus_l {
+			power-enum-name = "X86_SLP_SUS";
+			power-gpio-pin = <&gpio_slp_sus_l>;
+		};
+		vccin_aux_vr_pg {
+			power-enum-name = "X86_VCCIN_AUX_VR_PG";
+			power-gpio-pin = <&gpio_vccin_aux_vr_pg_r>;
+		};
+	};
+};

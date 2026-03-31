@@ -8,6 +8,7 @@
 #include "chipset.h"
 #include "config.h"
 #include "console.h"
+#include "common.h"
 #include "customized_shared_memory.h"
 #include "cypress_pd_common.h"
 #include "diagnostics.h"
@@ -44,41 +45,6 @@ static int force_shoutdown_flags;
 static int me_change;
 static bool tp_module_pwr_control;
 static bool pb_module_pwr_control;
-
-/* Power Signal Input List */
-const struct power_signal_info power_signal_list[] = {
-	[X86_3VALW_PG] = {
-		.gpio = GPIO_POWER_GOOD_3VALW,
-		.flags = POWER_SIGNAL_ACTIVE_HIGH,
-		.name = "3VALW_PG_DEASSERTED",
-	},
-	[X86_SLP_S3_N] = {
-		.gpio = GPIO_PCH_SLP_S3_L,
-		.flags = POWER_SIGNAL_ACTIVE_HIGH,
-		.name = "SLP_S3_DEASSERTED",
-	},
-	[X86_VR_PG] = {
-		.gpio = GPIO_POWER_GOOD_VR,
-		.flags = POWER_SIGNAL_ACTIVE_HIGH,
-		.name = "VR_PG_DEASSERTED",
-	},
-	[X86_SLP_S4_N] = {
-		.gpio = GPIO_PCH_SLP_S4_L,
-		.flags = POWER_SIGNAL_ACTIVE_HIGH,
-		.name = "SLP_S4_DEASSERTED",
-	},
-	[X86_SLP_SUS] = {
-		.gpio = GPIO_SLP_SUS_L,
-		.flags = POWER_SIGNAL_ACTIVE_HIGH,
-		.name = "SLP_SUS_DEASSERTED",
-	},
-	[X86_VCCIN_AUX_VR_PG] = {
-		.gpio = GPIO_POWER_GOOD_VCCIN_AUX_VR,
-		.flags = POWER_SIGNAL_ACTIVE_HIGH,
-		.name = "VCCIN_AUX_VR_DEASSERTED",
-	}
-};
-BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 static int keep_pch_power(void)
 {

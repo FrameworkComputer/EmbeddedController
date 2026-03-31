@@ -1,0 +1,22 @@
+# Copyright 2026 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+description: Intel-RPL, Power Signal List
+compatible: "intel,fwk-rpl-power-signal-list"
+
+include: power-signal-list.yaml
+
+properties:
+  power-signals-required:
+    default: 6
+
+child-binding:
+  properties:
+    power-enum-name:
+      enum:
+        - X86_3VALW_PG
+        - X86_SLP_S3_N
+        - X86_VR_PG
+        - X86_SLP_S4_N
+        - X86_SLP_SUS
+        - X86_VCCIN_AUX_VR_PG
