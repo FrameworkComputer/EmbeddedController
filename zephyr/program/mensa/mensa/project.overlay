@@ -9,6 +9,7 @@
 
 #include "../psl.dtsi"
 #include "../adc.dtsi"
+#include "../common.dtsi"
 
 /* mensa project DTS includes */
 
