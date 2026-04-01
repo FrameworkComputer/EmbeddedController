@@ -11,3 +11,8 @@
 	pinctrl-names = "default", "sleep";
 };
 
+/ {
+chosen {
+		cros,rtc = &mtc;
+	};
+};
