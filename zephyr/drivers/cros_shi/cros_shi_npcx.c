@@ -298,6 +298,7 @@ static void shi_fill_out_status(struct shi_reg *const inst, uint8_t status)
 	volatile uint8_t *fill_ptr;
 	volatile uint8_t *fill_end;
 	volatile uint8_t *obuf_end;
+	uint32_t primask_bit;
 
 	if (IS_ENABLED(CONFIG_CROS_SHI_NPCX_ENHANCED_BUF_MODE)) {
 		/*
@@ -315,6 +316,7 @@ static void shi_fill_out_status(struct shi_reg *const inst, uint8_t status)
 	 * here because irq_lock/irq_unlock leave some system exceptions (like
 	 * SVC, NMI, and faults) still enabled.
 	 */
+	primask_bit = __get_PRIMASK();
 	__disable_irq();
 
 	/*
@@ -336,7 +338,7 @@ static void shi_fill_out_status(struct shi_reg *const inst, uint8_t status)
 	}
 
 	/* End of critical section */
-	__enable_irq();
+	__set_PRIMASK(primask_bit);
 }
 
 /* This routine handles shi received unexpected data */
@@ -416,6 +418,7 @@ static void shi_write_first_pkg_outbuf(struct shi_reg *const inst,
 static void shi_send_response_packet(struct host_packet *pkt)
 {
 	struct shi_reg *const inst = (struct shi_reg *)(cros_shi_cfg.base);
+	uint32_t primask_bit;
 
 	if (!IS_ENABLED(CONFIG_CROS_SHI_NPCX_ENHANCED_BUF_MODE)) {
 		/*
@@ -425,6 +428,7 @@ static void shi_send_response_packet(struct host_packet *pkt)
 		 * be sure our state doesn't unexpectedly change, in case we're
 		 * expected to take RESP_NOT_RDY actions.
 		 */
+		primask_bit = __get_PRIMASK();
 		__disable_irq();
 	}
 
@@ -464,7 +468,7 @@ static void shi_send_response_packet(struct host_packet *pkt)
 		DEBUG_CPRINTS("Unexpected state %d in response handler", state);
 
 	if (!IS_ENABLED(CONFIG_CROS_SHI_NPCX_ENHANCED_BUF_MODE)) {
-		__enable_irq();
+		__set_PRIMASK(primask_bit);
 	}
 }
 
