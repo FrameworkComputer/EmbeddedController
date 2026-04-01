@@ -299,7 +299,9 @@ extern "C" void fp_task(void)
 					global_context.current_capture_type =
 						capture_type;
 				}
-				global_context.sensor_mode &= ~FP_MODE_CAPTURE;
+				global_context.sensor_mode &=
+					~(FP_MODE_CAPTURE |
+					  FP_MODE_CAPTURE_TYPE_MASK);
 				send_mkbp_event(EC_MKBP_FP_IMAGE_READY);
 				continue;
 			} else if (global_context.sensor_mode &
