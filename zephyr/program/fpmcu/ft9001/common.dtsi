@@ -9,6 +9,7 @@
 #include "gpio.dtsi"
 #include "rwsig.dtsi"
 #include "btn_ign.dtsi"
+#include "ascp.dtsi"
 
 #include <cros/integrated_fwid.dtsi>
 
@@ -116,6 +117,27 @@
 			label = "rollback1";
 			reg = <0x101000 DT_SIZE_K(4)>;
 		};
+
+		sdcp_s_goog: partition@1000 {
+			label = "sdcp_s_goog";
+			reg = <0x1000 64>;
+		};
+
+		sdcp_pk_d: partition@1408 {
+			label = "sdcp_pk_d";
+			reg = <0x1408 65>;
+		};
+
+		sdcp_s_m: partition@1454 {
+			label = "sdcp_s_m";
+			reg = <0x1454 64>;
+		};
+
+		sdcp_pk_m: partition@149c {
+			label = "sdcp_pk_m";
+			reg = <0x149c 65>;
+		};
+
 	};
 };
 
