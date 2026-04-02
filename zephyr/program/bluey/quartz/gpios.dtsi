@@ -100,7 +100,7 @@
 			gpios = <&gpioa 2 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
 		};
 		gpio_haptic_en_ec: haptic_en_ec {
-			gpios = <&gpioa 3 (GPIO_OUTPUT)>;
+			gpios = <&gpioa 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
 		};
 		gpio_soc_ps_hold_ls: soc_ps_hold_ls {
 			gpios = <&gpioa 4 (GPIO_INPUT)>;
