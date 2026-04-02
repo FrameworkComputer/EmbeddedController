@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log_core.h>
 #include <zephyr/spinlock.h>
+#include <zephyr/sys/printk.h>
 
 #include <pw_log_tokenized/base64.h>
 #include <pw_log_tokenized/config.h>
@@ -12,10 +12,15 @@
 #include <pw_log_tokenized/metadata.h>
 
 extern "C" {
-#include "console.h"
-#include "panic_log.h"
-#include "zephyr_console_shim.h"
+enum console_channel : int;
+bool console_channel_is_disabled(int channel);
+void panic_log_write_str(const void *data, size_t size);
+void console_buf_notify_chars(const char *data, size_t size);
 }
+
+#ifndef PW_FLAG_TO_EC_CHANNEL
+#define PW_FLAG_TO_EC_CHANNEL(flag) ((enum console_channel)((flag) - 1))
+#endif
 
 namespace pw::log_zephyr
 {
@@ -76,7 +81,7 @@ extern "C" void pw_log_tokenized_HandleLog(uint32_t metadata,
 	// frontend should protect messages from getting corrupted from multiple
 	// threads.
 	key = k_spin_lock(&lock);
-	LOG_PRINTK("%s", base64_string.c_str());
+	printk("%s", base64_string.c_str());
 	k_spin_unlock(&lock, key);
 }
 

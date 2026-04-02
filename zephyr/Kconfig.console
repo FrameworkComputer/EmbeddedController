@@ -127,6 +127,7 @@ config PLATFORM_EC_LOG_TOKENIZED
 	depends on CPP
 	depends on STD_CPP17 || STD_CPP20
 	depends on PICOLIBC
+	select PRINTK
 	help
 	  Enable tokenized logging in EC.  Log format strings are converted to
 	  32 bit tokens reducing image size.  A token database for detokenizing
