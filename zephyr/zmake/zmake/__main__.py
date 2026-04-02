@@ -232,6 +232,12 @@ def get_argparser():
         action="store_true",
         help="Compare devicetrees of build outputs",
     )
+    compare_builds.add_argument(
+        "-D",
+        "--cmake-define",
+        action="append",
+        dest="cmake_defs",
+    )
     add_common_build_args(compare_builds)
 
     list_projects = sub.add_parser(

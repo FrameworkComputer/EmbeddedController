@@ -97,7 +97,7 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake compare-builds
 
-**Usage:** `zmake compare-builds [-h] [--ref1 REF1] [--ref2 REF2] [-k] [-n] [-b] [-d] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name ...)`
+**Usage:** `zmake compare-builds [-h] [--ref1 REF1] [--ref2 REF2] [-k] [-n] [-b] [-d] [-D CMAKE_DEFS] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name ...)`
 
 #### Positional Arguments
 
@@ -116,6 +116,7 @@ Chromium OS's meta-build tool for Zephyr
 | `-n`, `--compare-configs` | Compare configs of build outputs |
 | `-b`, `--compare-binaries-disable` | Don't compare binaries of build outputs |
 | `-d`, `--compare-devicetrees` | Compare devicetrees of build outputs |
+| `-D CMAKE_DEFS`, `--cmake-define CMAKE_DEFS` | None |
 | `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
 | `--extra-cflags EXTRA_CFLAGS` | Additional CFLAGS to use for target builds |
 | `-a`, `--all` | Select all projects |
