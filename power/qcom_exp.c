@@ -186,9 +186,6 @@ static char ac_on;
 /* 1 if rtc-wake event has been detected */
 static char rtc_wake;
 
-/* 1 if the system is currently in the off-mode charging heartbeat state. */
-static char heartbeat_mode;
-
 /* Time where we will power off, if power button still held down */
 static timestamp_t power_off_deadline;
 
@@ -203,26 +200,6 @@ static char long_warm_reset;
  *  This variable is initialized to 0 i.e. POWER_G3
  */
 static enum power_state power_state_before_warm_reset;
-
-#ifdef CONFIG_ZEPHYR
-static void qcom_rtc_set_host_event(void)
-{
-	host_set_single_event(EC_HOST_EVENT_RTC);
-}
-DECLARE_DEFERRED(qcom_rtc_set_host_event);
-
-void rtc_callback(const struct device *dev)
-{
-	ARG_UNUSED(dev);
-
-	hook_call_deferred(&qcom_rtc_set_host_event_data, 0);
-
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		rtc_wake = 1;
-		task_wake(TASK_ID_CHIPSET);
-	}
-}
-#endif
 
 enum power_request_t {
 	POWER_REQ_NONE,
@@ -348,6 +325,30 @@ static void power_ac_changed(void)
 DECLARE_HOOK(HOOK_AC_CHANGE, power_ac_changed, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_PLATFORM_EC_HOSTCMD_ENABLE_OFFMODE_HEARTBEAT
+
+/* 1 if the system is currently in the off-mode charging heartbeat state. */
+static char heartbeat_mode;
+
+#ifdef CONFIG_ZEPHYR
+static void qcom_rtc_set_host_event(void)
+{
+	host_set_single_event(EC_HOST_EVENT_RTC);
+}
+DECLARE_DEFERRED(qcom_rtc_set_host_event);
+
+void rtc_callback(const struct device *dev)
+{
+	ARG_UNUSED(dev);
+
+	hook_call_deferred(&qcom_rtc_set_host_event_data, 0);
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		rtc_wake = 1;
+		task_wake(TASK_ID_CHIPSET);
+	}
+}
+#endif
+
 static enum ec_status
 host_command_offmode_charing_active(struct host_cmd_handler_args *args)
 {
@@ -360,7 +361,6 @@ host_command_offmode_charing_active(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_ENABLE_OFFMODE_HEARTBEAT,
 		     host_command_offmode_charing_active, EC_VER_MASK(0));
-#endif
 
 /*
  * On chipset shutdown complete, determine the next wake-up event.
@@ -398,6 +398,7 @@ void board_chipset_clear_heartbeat_alarm_on_poweron(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT,
 	     board_chipset_clear_heartbeat_alarm_on_poweron, HOOK_PRIO_DEFAULT);
+#endif
 
 /**
  * Wait the switchcap GPIO0 PVC_PG signal asserted.
