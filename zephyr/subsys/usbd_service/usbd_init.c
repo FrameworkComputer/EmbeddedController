@@ -64,6 +64,11 @@ __overridable void set_touchpad_report(struct usb_hid_touchpad_report *report)
 }
 #endif /* defined(CONFIG_CROS_EC_RO) && defined(CONFIG_USBD_HID_TOUCHPAD) */
 
+bool usb_is_suspended(void)
+{
+	return usbd_is_suspended(&usb_device);
+}
+
 int request_usb_wake(void)
 {
 	if (IS_ENABLED(CONFIG_USB_DEVICE_REMOTE_WAKEUP)) {
