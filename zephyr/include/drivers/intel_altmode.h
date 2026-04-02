@@ -254,10 +254,7 @@ __syscall int pd_altmode_read_status(const struct device *dev,
 static inline int z_impl_pd_altmode_read_status(const struct device *dev,
 						union data_status_reg *data)
 {
-	const struct intel_altmode_driver_api *api =
-		(const struct intel_altmode_driver_api *)dev->api;
-
-	return api->read_status(dev, data);
+	return DEVICE_API_GET(intel_altmode, dev)->read_status(dev, data);
 }
 
 /**
@@ -274,10 +271,7 @@ __syscall int pd_altmode_write_control(const struct device *dev,
 static inline int z_impl_pd_altmode_write_control(const struct device *dev,
 						  union data_control_reg *data)
 {
-	const struct intel_altmode_driver_api *api =
-		(const struct intel_altmode_driver_api *)dev->api;
-
-	return api->write_control(dev, data);
+	return DEVICE_API_GET(intel_altmode, dev)->write_control(dev, data);
 }
 
 /**
@@ -294,10 +288,7 @@ __syscall int pd_altmode_is_interrupted(const struct device *dev);
 
 static inline int z_impl_pd_altmode_is_interrupted(const struct device *dev)
 {
-	const struct intel_altmode_driver_api *api =
-		(const struct intel_altmode_driver_api *)dev->api;
-
-	return api->is_interrupted(dev);
+	return DEVICE_API_GET(intel_altmode, dev)->is_interrupted(dev);
 }
 
 /**
@@ -312,10 +303,7 @@ __syscall void pd_altmode_set_result_cb(const struct device *dev,
 static inline void z_impl_pd_altmode_set_result_cb(const struct device *dev,
 						   intel_altmode_callback cb)
 {
-	const struct intel_altmode_driver_api *api =
-		(const struct intel_altmode_driver_api *)dev->api;
-
-	api->set_result_cb(dev, cb);
+	DEVICE_API_GET(intel_altmode, dev)->set_result_cb(dev, cb);
 }
 
 /**

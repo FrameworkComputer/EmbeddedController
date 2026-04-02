@@ -91,14 +91,11 @@ __syscall int cros_kb_raw_init(const struct device *dev);
 
 static inline int z_impl_cros_kb_raw_init(const struct device *dev)
 {
-	const struct cros_kb_raw_driver_api *api =
-		(const struct cros_kb_raw_driver_api *)dev->api;
-
-	if (!api->init) {
+	if (!DEVICE_API_GET(cros_kb_raw, dev)->init) {
 		return -ENOTSUP;
 	}
 
-	return api->init(dev);
+	return DEVICE_API_GET(cros_kb_raw, dev)->init(dev);
 }
 
 /**
@@ -117,14 +114,11 @@ __syscall int cros_kb_raw_drive_column(const struct device *dev, int col);
 static inline int z_impl_cros_kb_raw_drive_column(const struct device *dev,
 						  int col)
 {
-	const struct cros_kb_raw_driver_api *api =
-		(const struct cros_kb_raw_driver_api *)dev->api;
-
-	if (!api->drive_colum) {
+	if (!DEVICE_API_GET(cros_kb_raw, dev)->drive_colum) {
 		return -ENOTSUP;
 	}
 
-	return api->drive_colum(dev, col);
+	return DEVICE_API_GET(cros_kb_raw, dev)->drive_colum(dev, col);
 }
 
 /**
@@ -139,14 +133,11 @@ static inline int z_impl_cros_kb_raw_drive_column(const struct device *dev,
 __syscall int cros_kb_raw_read_rows(const struct device *dev);
 static inline int z_impl_cros_kb_raw_read_rows(const struct device *dev)
 {
-	const struct cros_kb_raw_driver_api *api =
-		(const struct cros_kb_raw_driver_api *)dev->api;
-
-	if (!api->read_rows) {
+	if (!DEVICE_API_GET(cros_kb_raw, dev)->read_rows) {
 		return 0;
 	}
 
-	return api->read_rows(dev);
+	return DEVICE_API_GET(cros_kb_raw, dev)->read_rows(dev);
 }
 
 /**
@@ -169,14 +160,11 @@ __syscall int cros_kb_raw_enable_interrupt(const struct device *dev,
 static inline int z_impl_cros_kb_raw_enable_interrupt(const struct device *dev,
 						      int enable)
 {
-	const struct cros_kb_raw_driver_api *api =
-		(const struct cros_kb_raw_driver_api *)dev->api;
-
-	if (!api->enable_interrupt) {
+	if (!DEVICE_API_GET(cros_kb_raw, dev)->enable_interrupt) {
 		return -ENOTSUP;
 	}
 
-	return api->enable_interrupt(dev, enable);
+	return DEVICE_API_GET(cros_kb_raw, dev)->enable_interrupt(dev, enable);
 }
 
 /**
@@ -198,14 +186,11 @@ __syscall int cros_kb_raw_config_alt(const struct device *dev, bool enable);
 static inline int z_impl_cros_kb_raw_config_alt(const struct device *dev,
 						bool enable)
 {
-	const struct cros_kb_raw_driver_api *api =
-		(const struct cros_kb_raw_driver_api *)dev->api;
-
-	if (!api->config_alt) {
+	if (!DEVICE_API_GET(cros_kb_raw, dev)->config_alt) {
 		return -ENOTSUP;
 	}
 
-	return api->config_alt(dev, enable);
+	return DEVICE_API_GET(cros_kb_raw, dev)->config_alt(dev, enable);
 }
 #endif
 

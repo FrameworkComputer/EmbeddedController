@@ -50,14 +50,11 @@ __syscall int cros_shi_enable(const struct device *dev);
 
 static inline int z_impl_cros_shi_enable(const struct device *dev)
 {
-	const struct cros_shi_driver_api *api =
-		(const struct cros_shi_driver_api *)dev->api;
-
-	if (!api->enable) {
+	if (!DEVICE_API_GET(cros_shi, dev)->enable) {
 		return -ENOTSUP;
 	}
 
-	return api->enable(dev);
+	return DEVICE_API_GET(cros_shi, dev)->enable(dev);
 }
 
 /**
@@ -72,14 +69,11 @@ __syscall int cros_shi_disable(const struct device *dev);
 
 static inline int z_impl_cros_shi_disable(const struct device *dev)
 {
-	const struct cros_shi_driver_api *api =
-		(const struct cros_shi_driver_api *)dev->api;
-
-	if (!api->disable) {
+	if (!DEVICE_API_GET(cros_shi, dev)->disable) {
 		return -ENOTSUP;
 	}
 
-	return api->disable(dev);
+	return DEVICE_API_GET(cros_shi, dev)->disable(dev);
 }
 
 /**

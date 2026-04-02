@@ -85,14 +85,11 @@ __syscall int cros_rtc_configure(const struct device *dev,
 static inline int z_impl_cros_rtc_configure(const struct device *dev,
 					    cros_rtc_alarm_callback_t callback)
 {
-	const struct cros_rtc_driver_api *api =
-		(const struct cros_rtc_driver_api *)dev->api;
-
-	if (!api->configure) {
+	if (!DEVICE_API_GET(cros_rtc, dev)->configure) {
 		return -ENOTSUP;
 	}
 
-	return api->configure(dev, callback);
+	return DEVICE_API_GET(cros_rtc, dev)->configure(dev, callback);
 }
 
 /**
@@ -108,14 +105,11 @@ __syscall int cros_rtc_get_value(const struct device *dev, uint32_t *value);
 static inline int z_impl_cros_rtc_get_value(const struct device *dev,
 					    uint32_t *value)
 {
-	const struct cros_rtc_driver_api *api =
-		(const struct cros_rtc_driver_api *)dev->api;
-
-	if (!api->get_value) {
+	if (!DEVICE_API_GET(cros_rtc, dev)->get_value) {
 		return -ENOTSUP;
 	}
 
-	return api->get_value(dev, value);
+	return DEVICE_API_GET(cros_rtc, dev)->get_value(dev, value);
 }
 
 /**
@@ -131,14 +125,11 @@ __syscall int cros_rtc_set_value(const struct device *dev, uint32_t value);
 static inline int z_impl_cros_rtc_set_value(const struct device *dev,
 					    uint32_t value)
 {
-	const struct cros_rtc_driver_api *api =
-		(const struct cros_rtc_driver_api *)dev->api;
-
-	if (!api->set_value) {
+	if (!DEVICE_API_GET(cros_rtc, dev)->set_value) {
 		return -ENOTSUP;
 	}
 
-	return api->set_value(dev, value);
+	return DEVICE_API_GET(cros_rtc, dev)->set_value(dev, value);
 }
 
 /**
@@ -158,14 +149,12 @@ static inline int z_impl_cros_rtc_get_alarm(const struct device *dev,
 					    uint32_t *seconds,
 					    uint32_t *microseconds)
 {
-	const struct cros_rtc_driver_api *api =
-		(const struct cros_rtc_driver_api *)dev->api;
-
-	if (!api->get_alarm) {
+	if (!DEVICE_API_GET(cros_rtc, dev)->get_alarm) {
 		return 0;
 	}
 
-	return api->get_alarm(dev, seconds, microseconds);
+	return DEVICE_API_GET(cros_rtc, dev)
+		->get_alarm(dev, seconds, microseconds);
 }
 
 /**
@@ -185,14 +174,12 @@ static inline int z_impl_cros_rtc_set_alarm(const struct device *dev,
 					    uint32_t seconds,
 					    uint32_t microseconds)
 {
-	const struct cros_rtc_driver_api *api =
-		(const struct cros_rtc_driver_api *)dev->api;
-
-	if (!api->set_alarm) {
+	if (!DEVICE_API_GET(cros_rtc, dev)->set_alarm) {
 		return 0;
 	}
 
-	return api->set_alarm(dev, seconds, microseconds);
+	return DEVICE_API_GET(cros_rtc, dev)
+		->set_alarm(dev, seconds, microseconds);
 }
 
 /**
@@ -207,14 +194,11 @@ __syscall int cros_rtc_reset_alarm(const struct device *dev);
 
 static inline int z_impl_cros_rtc_reset_alarm(const struct device *dev)
 {
-	const struct cros_rtc_driver_api *api =
-		(const struct cros_rtc_driver_api *)dev->api;
-
-	if (!api->reset_alarm) {
+	if (!DEVICE_API_GET(cros_rtc, dev)->reset_alarm) {
 		return -ENOTSUP;
 	}
 
-	return api->reset_alarm(dev);
+	return DEVICE_API_GET(cros_rtc, dev)->reset_alarm(dev);
 }
 
 /**

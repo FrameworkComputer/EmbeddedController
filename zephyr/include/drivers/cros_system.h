@@ -141,14 +141,11 @@ __syscall int cros_system_get_reset_cause(const struct device *dev);
 
 static inline int z_impl_cros_system_get_reset_cause(const struct device *dev)
 {
-	const struct cros_system_driver_api *api =
-		(const struct cros_system_driver_api *)dev->api;
-
-	if (!api->get_reset_cause) {
+	if (!DEVICE_API_GET(cros_system, dev)->get_reset_cause) {
 		return -ENOTSUP;
 	}
 
-	return api->get_reset_cause(dev);
+	return DEVICE_API_GET(cros_system, dev)->get_reset_cause(dev);
 }
 
 /**
@@ -163,14 +160,11 @@ __syscall int cros_system_soc_reset(const struct device *dev);
 
 static inline int z_impl_cros_system_soc_reset(const struct device *dev)
 {
-	const struct cros_system_driver_api *api =
-		(const struct cros_system_driver_api *)dev->api;
-
-	if (!api->soc_reset) {
+	if (!DEVICE_API_GET(cros_system, dev)->soc_reset) {
 		return -ENOTSUP;
 	}
 
-	return api->soc_reset(dev);
+	return DEVICE_API_GET(cros_system, dev)->soc_reset(dev);
 }
 
 /**
@@ -190,14 +184,12 @@ static inline int z_impl_cros_system_hibernate(const struct device *dev,
 					       uint32_t seconds,
 					       uint32_t microseconds)
 {
-	const struct cros_system_driver_api *api =
-		(const struct cros_system_driver_api *)dev->api;
-
-	if (!api->hibernate) {
+	if (!DEVICE_API_GET(cros_system, dev)->hibernate) {
 		return -ENOTSUP;
 	}
 
-	return api->hibernate(dev, seconds, microseconds);
+	return DEVICE_API_GET(cros_system, dev)
+		->hibernate(dev, seconds, microseconds);
 }
 
 /**
@@ -212,14 +204,11 @@ __syscall const char *cros_system_chip_vendor(const struct device *dev);
 static inline const char *
 z_impl_cros_system_chip_vendor(const struct device *dev)
 {
-	const struct cros_system_driver_api *api =
-		(const struct cros_system_driver_api *)dev->api;
-
-	if (!api->chip_vendor) {
+	if (!DEVICE_API_GET(cros_system, dev)->chip_vendor) {
 		return "";
 	}
 
-	return api->chip_vendor(dev);
+	return DEVICE_API_GET(cros_system, dev)->chip_vendor(dev);
 }
 
 /**
@@ -233,14 +222,11 @@ __syscall const char *cros_system_chip_name(const struct device *dev);
 
 static inline const char *z_impl_cros_system_chip_name(const struct device *dev)
 {
-	const struct cros_system_driver_api *api =
-		(const struct cros_system_driver_api *)dev->api;
-
-	if (!api->chip_name) {
+	if (!DEVICE_API_GET(cros_system, dev)->chip_name) {
 		return "";
 	}
 
-	return api->chip_name(dev);
+	return DEVICE_API_GET(cros_system, dev)->chip_name(dev);
 }
 
 /**
@@ -255,14 +241,11 @@ __syscall const char *cros_system_chip_revision(const struct device *dev);
 static inline const char *
 z_impl_cros_system_chip_revision(const struct device *dev)
 {
-	const struct cros_system_driver_api *api =
-		(const struct cros_system_driver_api *)dev->api;
-
-	if (!api->chip_revision) {
+	if (!DEVICE_API_GET(cros_system, dev)->chip_revision) {
 		return "";
 	}
 
-	return api->chip_revision(dev);
+	return DEVICE_API_GET(cros_system, dev)->chip_revision(dev);
 }
 
 /**
@@ -276,14 +259,11 @@ __syscall uint64_t cros_system_deep_sleep_ticks(const struct device *dev);
 static inline uint64_t
 z_impl_cros_system_deep_sleep_ticks(const struct device *dev)
 {
-	const struct cros_system_driver_api *api =
-		(const struct cros_system_driver_api *)dev->api;
-
-	if (!api->deep_sleep_ticks) {
+	if (!DEVICE_API_GET(cros_system, dev)->deep_sleep_ticks) {
 		return 0;
 	}
 
-	return api->deep_sleep_ticks(dev);
+	return DEVICE_API_GET(cros_system, dev)->deep_sleep_ticks(dev);
 }
 
 /**
@@ -303,14 +283,12 @@ static inline int
 z_impl_cros_system_get_hibernate_wake_source(const struct device *dev,
 					     enum hibernate_wake_source *source)
 {
-	const struct cros_system_driver_api *api =
-		(const struct cros_system_driver_api *)dev->api;
-
-	if (!api->get_hibernate_wake_source) {
+	if (!DEVICE_API_GET(cros_system, dev)->get_hibernate_wake_source) {
 		return -ENOSYS;
 	}
 
-	return api->get_hibernate_wake_source(dev, source);
+	return DEVICE_API_GET(cros_system, dev)
+		->get_hibernate_wake_source(dev, source);
 }
 
 /**

@@ -92,14 +92,11 @@ __syscall int cros_flash_init(const struct device *dev);
 
 static inline int z_impl_cros_flash_init(const struct device *dev)
 {
-	const struct cros_flash_driver_api *api =
-		(const struct cros_flash_driver_api *)dev->api;
-
-	if (!api->init) {
+	if (!DEVICE_API_GET(cros_flash, dev)->init) {
 		return -ENOTSUP;
 	}
 
-	return api->init(dev);
+	return DEVICE_API_GET(cros_flash, dev)->init(dev);
 }
 
 /**
@@ -122,14 +119,12 @@ static inline int z_impl_cros_flash_physical_write(const struct device *dev,
 						   int offset, int size,
 						   const char *data)
 {
-	const struct cros_flash_driver_api *api =
-		(const struct cros_flash_driver_api *)dev->api;
-
-	if (!api->physical_write) {
+	if (!DEVICE_API_GET(cros_flash, dev)->physical_write) {
 		return -ENOTSUP;
 	}
 
-	return api->physical_write(dev, offset, size, data);
+	return DEVICE_API_GET(cros_flash, dev)
+		->physical_write(dev, offset, size, data);
 }
 
 /**
@@ -150,14 +145,12 @@ __syscall int cros_flash_physical_erase(const struct device *dev, int offset,
 static inline int z_impl_cros_flash_physical_erase(const struct device *dev,
 						   int offset, int size)
 {
-	const struct cros_flash_driver_api *api =
-		(const struct cros_flash_driver_api *)dev->api;
-
-	if (!api->physical_erase) {
+	if (!DEVICE_API_GET(cros_flash, dev)->physical_erase) {
 		return -ENOTSUP;
 	}
 
-	return api->physical_erase(dev, offset, size);
+	return DEVICE_API_GET(cros_flash, dev)
+		->physical_erase(dev, offset, size);
 }
 
 /**
@@ -175,14 +168,11 @@ __syscall int cros_flash_physical_get_protect(const struct device *dev,
 static inline int
 z_impl_cros_flash_physical_get_protect(const struct device *dev, int bank)
 {
-	const struct cros_flash_driver_api *api =
-		(const struct cros_flash_driver_api *)dev->api;
-
-	if (!api->physical_get_protect) {
+	if (!DEVICE_API_GET(cros_flash, dev)->physical_get_protect) {
 		return -ENOTSUP;
 	}
 
-	return api->physical_get_protect(dev, bank);
+	return DEVICE_API_GET(cros_flash, dev)->physical_get_protect(dev, bank);
 }
 
 /* clang-format off */
@@ -200,14 +190,11 @@ uint32_t cros_flash_physical_get_protect_flags(const struct device *dev);
 static inline uint32_t
 z_impl_cros_flash_physical_get_protect_flags(const struct device *dev)
 {
-	const struct cros_flash_driver_api *api =
-		(const struct cros_flash_driver_api *)dev->api;
-
-	if (!api->physical_get_protect_flags) {
+	if (!DEVICE_API_GET(cros_flash, dev)->physical_get_protect_flags) {
 		return -ENOTSUP;
 	}
 
-	return api->physical_get_protect_flags(dev);
+	return DEVICE_API_GET(cros_flash, dev)->physical_get_protect_flags(dev);
 }
 
 /**
@@ -227,14 +214,12 @@ static inline int
 z_impl_cros_flash_physical_protect_at_boot(const struct device *dev,
 					   uint32_t new_flags)
 {
-	const struct cros_flash_driver_api *api =
-		(const struct cros_flash_driver_api *)dev->api;
-
-	if (!api->physical_protect_at_boot) {
+	if (!DEVICE_API_GET(cros_flash, dev)->physical_protect_at_boot) {
 		return -ENOTSUP;
 	}
 
-	return api->physical_protect_at_boot(dev, new_flags);
+	return DEVICE_API_GET(cros_flash, dev)
+		->physical_protect_at_boot(dev, new_flags);
 }
 
 /**
@@ -252,14 +237,11 @@ __syscall int cros_flash_physical_protect_now(const struct device *dev,
 static inline int
 z_impl_cros_flash_physical_protect_now(const struct device *dev, bool all)
 {
-	const struct cros_flash_driver_api *api =
-		(const struct cros_flash_driver_api *)dev->api;
-
-	if (!api->physical_protect_now) {
+	if (!DEVICE_API_GET(cros_flash, dev)->physical_protect_now) {
 		return -ENOTSUP;
 	}
 
-	return api->physical_protect_now(dev, all);
+	return DEVICE_API_GET(cros_flash, dev)->physical_protect_now(dev, all);
 }
 
 /**
@@ -280,13 +262,11 @@ static inline int
 z_impl_cros_flash_physical_get_jedec_id(const struct device *dev,
 					uint8_t *manufacturer, uint16_t *device)
 {
-	const struct cros_flash_driver_api *api =
-		(const struct cros_flash_driver_api *)dev->api;
-
-	if (!api->physical_get_jedec_id)
+	if (!DEVICE_API_GET(cros_flash, dev)->physical_get_jedec_id)
 		return -ENOTSUP;
 
-	return api->physical_get_jedec_id(dev, manufacturer, device);
+	return DEVICE_API_GET(cros_flash, dev)
+		->physical_get_jedec_id(dev, manufacturer, device);
 }
 
 /**
@@ -306,13 +286,11 @@ static inline int
 z_impl_cros_flash_physical_get_status(const struct device *dev, uint8_t *sr1,
 				      uint8_t *sr2)
 {
-	const struct cros_flash_driver_api *api =
-		(const struct cros_flash_driver_api *)dev->api;
-
-	if (!api->physical_get_status)
+	if (!DEVICE_API_GET(cros_flash, dev)->physical_get_status)
 		return -ENOTSUP;
 
-	return api->physical_get_status(dev, sr1, sr2);
+	return DEVICE_API_GET(cros_flash, dev)
+		->physical_get_status(dev, sr1, sr2);
 }
 
 /**
