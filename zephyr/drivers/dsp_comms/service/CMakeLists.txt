@@ -24,6 +24,7 @@ pw_add_library(dsp.service STATIC
     pw_status
     pw_transport.service
     cros_ec_interface
+    dsp_comms.proto.nanopb
 )
 if(CONFIG_PLATFORM_EC_DSP_SERVICE)
   zephyr_append_cmake_library(dsp.service)

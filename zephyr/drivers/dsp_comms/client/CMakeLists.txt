@@ -21,6 +21,7 @@ pw_add_library(dsp.client STATIC
     zephyr_interface
     cros_ec_interface
     ec_shim
+    dsp_comms.proto.nanopb
 )
 if(CONFIG_PLATFORM_EC_DSP_CLIENT)
   zephyr_append_cmake_library(dsp.client)
