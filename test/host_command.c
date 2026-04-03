@@ -306,28 +306,6 @@ static int test_hostcmd_clears_unused_data(void)
 	return EC_SUCCESS;
 }
 
-static int test_hostcmd_busy(void)
-{
-	struct host_packet pkt2;
-
-	hostcmd_fill_in_default();
-
-	/* First packet should be accepted */
-	req->checksum = calculate_checksum(req_buf, pkt.request_size);
-	host_packet_receive(&pkt);
-
-	/* Second packet should be rejected with EC_RES_BUSY */
-	pkt2 = pkt;
-	host_packet_receive(&pkt2);
-	TEST_ASSERT(pkt2.driver_result == EC_RES_BUSY);
-
-	/* Wait for the first packet to be processed to clear hc_processing */
-	task_wait_event(-1);
-	TEST_ASSERT(resp->result == EC_RES_SUCCESS);
-
-	return EC_SUCCESS;
-}
-
 void run_test(int argc, const char **argv)
 {
 	wait_for_task_started();
@@ -343,7 +321,6 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_hostcmd_invalid_checksum);
 	RUN_TEST(test_hostcmd_reuse_response_buffer);
 	RUN_TEST(test_hostcmd_clears_unused_data);
-	RUN_TEST(test_hostcmd_busy);
 
 	test_print_result();
 }
