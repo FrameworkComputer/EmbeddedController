@@ -191,6 +191,15 @@ CFLAGS+= -fconserve-stack
 endif
 CXXFLAGS=$(CXXFLAGS_WARN)
 CXXFLAGS+=-DPROTOBUF_INLINE_NOT_IN_HEADERS=0
+# TODO(b/498659924,b/456553702): For some unknown reason we build the tests
+# with x86_64-pc-linux-gnu-gcc++ which is gcc 10. The tests should be migrated
+# to zephyr tests and then this makefile can be deleted, or at least only used
+# for the ec host utils like ectool.
+ifneq ($(CROSS_COMPILE_CC_NAME),clang)
+CXXFLAGS+=-std=gnu++2a
+else
+CXXFLAGS+=-std=gnu++23
+endif
 ifeq ($(USE_BUILTIN_STDLIB), 1)
 CPPFLAGS+=-DUSE_BUILTIN_STDLIB
 endif
@@ -222,6 +231,8 @@ HOST_CFLAGS+=$(LIBFTDIUSB_HOST_CFLAGS)
 HOST_CFLAGS+=-DCHROMIUM_EC=$(EMPTY)
 HOST_CXXFLAGS=$(HOST_CFLAGS) -Wno-c99-designator
 HOST_CXXFLAGS+=$(LIBEC_HOST_CFLAGS)
+HOST_CXXFLAGS+=-std=gnu++23
+
 ifneq (${SYSROOT},)
   LDFLAGS_EXTRA+=--sysroot=${SYSROOT}
 endif

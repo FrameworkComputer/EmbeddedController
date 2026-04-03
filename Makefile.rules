@@ -71,11 +71,11 @@ cmd_c_to_o = $(CC) -std=gnu11 $(C_WARN) $(C_WARN-$(CROSS_COMPILE_CC_NAME)) \
 cmd_c_to_s = $(CC) -S $(C_WARN) $(CFLAGS) $(C_WARN-$(CROSS_COMPILE_CC_NAME)) \
 		-fno-lto -MMD -MP -MF $@.d -c $< \
 		-MT $(@D)/$(@F) -o $(@D)/$(@F)
-cmd_cxx_to_o = $(CXX) -std=gnu++2a $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $@.d \
+cmd_cxx_to_o = $(CXX) $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $@.d \
 		      -c $< -MT $(@D)/$(@F) -o $(@D)/$(@F)
 cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d -MT $@ -o $@ \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $(wildcard $*.c)) $(HOST_LDFLAGS)
-cmd_cxx_to_host = $(HOSTCXX) -std=gnu++2a $(HOST_CXXFLAGS) \
+cmd_cxx_to_host = $(HOSTCXX) $(HOST_CXXFLAGS) \
 		-MMD -MF $@.d -MT $@ -o $@ \
 		$(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.cc)) $(wildcard $*.cc)) $(HOST_LDFLAGS)
 cmd_o_to_a = $(AR) rcs $@ $^
