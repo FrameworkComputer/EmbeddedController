@@ -351,7 +351,7 @@ void host_set_single_event(enum host_event_code event)
 	host_set_events(ev);
 }
 
-int host_is_event_set(enum host_event_code event)
+bool host_is_event_set(enum host_event_code event)
 {
 	host_event_t ev = 0;
 

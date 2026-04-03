@@ -207,7 +207,7 @@ host_event_t host_get_events(void);
  * @param event		Event to check
  * @return true if <event> is set or false otherwise
  */
-int host_is_event_set(enum host_event_code event);
+bool host_is_event_set(enum host_event_code event);
 
 /**
  * Find a command by command number.
