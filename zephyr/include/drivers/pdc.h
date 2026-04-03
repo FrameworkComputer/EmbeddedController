@@ -736,11 +736,10 @@ static inline int pdc_set_uor(const struct device *dev, union uor_t uor)
 static inline int pdc_set_pdr(const struct device *dev,
 			      enum pdc_power_policy policy)
 {
-	const struct pdc_driver_api *api =
-		(const struct pdc_driver_api *)dev->api;
 	union pdr_t pdr = { 0 };
 
-	__ASSERT(api->set_pdr != NULL, "SET_PDR is not optional");
+	__ASSERT(DEVICE_API_GET(pdc, dev)->set_pdr != NULL,
+		 "SET_PDR is not optional");
 
 	switch (policy) {
 	case PDC_POWER_POLICY_SINK_ALLOW_SWAP:
@@ -767,7 +766,7 @@ static inline int pdc_set_pdr(const struct device *dev,
 		return -EINVAL;
 	}
 
-	return api->set_pdr(dev, pdr);
+	return DEVICE_API_GET(pdc, dev)->set_pdr(dev, pdr);
 }
 
 /**
@@ -1540,18 +1539,15 @@ static inline int pdc_get_sbu_mux_mode(const struct device *dev,
 static inline int pdc_set_sbu_mux_mode(const struct device *dev,
 				       enum pdc_sbu_mux_mode mode)
 {
-	const struct pdc_driver_api *api =
-		(const struct pdc_driver_api *)dev->api;
-
 	if (mode < 0 || mode >= PDC_SBU_MUX_MODE_MAX) {
 		return -EINVAL;
 	}
 
-	if (api->set_sbu_mux_mode == NULL) {
+	if (DEVICE_API_GET(pdc, dev)->set_sbu_mux_mode == NULL) {
 		return -ENOSYS;
 	}
 
-	return api->set_sbu_mux_mode(dev, mode);
+	return DEVICE_API_GET(pdc, dev)->set_sbu_mux_mode(dev, mode);
 }
 
 /**
