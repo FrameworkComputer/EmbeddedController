@@ -149,9 +149,20 @@ static int syv682x_is_sourcing_vbus(int port)
 	return !!(flags[port] & SYV682X_FLAGS_SOURCE_ENABLED);
 }
 
+/*
+ * NOTE: Smart discharge support in the SYV682x driver has been removed due to
+ * unreliable behavior (see bug for details b/445132756)
+ *
+ * When SDSG is enabled, the SYV682 sometimes engages smart discharge at
+ * unexpected times, i.e with no fault condition. This leaves BUSY = 1
+ * for 50 - 400 ms, delaying normal operations and inducing compliance test
+ * failures.
+ *
+ * To ensure deterministic and spec-compliant behavior, VBUS discharge
+ * is explicitly controlled using the FDSG (force discharge) bit.
+ */
 static int syv682x_discharge_vbus(int port, int enable)
 {
-#ifndef CONFIG_USBC_PPC_SYV682X_SMART_DISCHARGE
 	int regval;
 	int rv;
 	/* cached force discharge flag to reduce the call to the discharge
@@ -179,12 +190,6 @@ static int syv682x_discharge_vbus(int port, int enable)
 		sd_flags[port] = !!enable;
 
 	return rv;
-#else
-	/*
-	 * Smart discharge mode is enabled, nothing to do
-	 */
-	return EC_SUCCESS;
-#endif
 }
 
 static int syv682x_vbus_source_enable(int port, int enable)
@@ -731,7 +736,6 @@ static int syv682x_set_frs_enable(int port, int enable)
 }
 #endif /*CONFIG_USB_PD_FRS_PPC*/
 
-#ifndef CONFIG_USBC_PPC_SYV682X_SMART_DISCHARGE
 static int syv682x_dev_is_connected(int port, enum ppc_device_role dev)
 {
 	/*
@@ -745,7 +749,6 @@ static int syv682x_dev_is_connected(int port, enum ppc_device_role dev)
 
 	return EC_SUCCESS;
 }
-#endif
 
 static bool syv682x_is_sink(uint8_t control_1)
 {
@@ -849,9 +852,6 @@ static int syv682x_init(int port)
 		 (SYV682X_DSG_RON_200_OHM << SYV682X_DSG_RON_SHIFT) |
 		 (SYV682X_DSG_TIME_50MS << SYV682X_DSG_TIME_SHIFT);
 
-	if (IS_ENABLED(CONFIG_USBC_PPC_SYV682X_SMART_DISCHARGE))
-		regval |= SYV682X_CONTROL_2_SDSG;
-
 	rv = write_reg(port, SYV682X_CONTROL_2_REG, regval);
 	if (rv)
 		return rv;
@@ -886,6 +886,7 @@ const struct ppc_drv syv682x_drv = {
 	.is_sourcing_vbus = &syv682x_is_sourcing_vbus,
 	.vbus_sink_enable = &syv682x_vbus_sink_enable,
 	.vbus_source_enable = &syv682x_vbus_source_enable,
+	.dev_is_connected = &syv682x_dev_is_connected,
 #ifdef CONFIG_CMD_PPC_DUMP
 	.reg_dump = &syv682x_dump,
 #endif /* defined(CONFIG_CMD_PPC_DUMP) */
@@ -897,9 +898,6 @@ const struct ppc_drv syv682x_drv = {
 #endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
 	.set_vbus_source_current_limit = &syv682x_set_vbus_source_current_limit,
 	.discharge_vbus = &syv682x_discharge_vbus,
-#ifndef CONFIG_USBC_PPC_SYV682X_SMART_DISCHARGE
-	.dev_is_connected = &syv682x_dev_is_connected,
-#endif /* defined(CONFIG_USBC_PPC_SYV682X_SMART_DISCHARGE) */
 #ifdef CONFIG_USBC_PPC_POLARITY
 	.set_polarity = &syv682x_set_polarity,
 #endif
