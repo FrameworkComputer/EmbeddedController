@@ -7,3 +7,5 @@ zephyr_library_sources_ifdef(CONFIG_CROS_EC_CBI_UFSC_PARSER cros_cbi_ufsc.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CBI_TRANSFER_EEPROM_FLASH cbi_transfer.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CBI_EEPROM cbi_eeprom.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CBI_FLASH cbi_flash.c)
+
+add_subdirectory_ifdef(CONFIG_CROS_EC_CBI_UFSC_PARSER ufsc)

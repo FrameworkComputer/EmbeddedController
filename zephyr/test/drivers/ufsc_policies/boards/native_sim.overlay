@@ -1,0 +1,33 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/cbi_ufsc_std_schema.dtsi>
+
+/ {
+	ufsc_policies: ufsc-policies {
+		compatible = "cros-ec,cbi-ufsc-policies";
+
+		kb_backlight_policy: kb-backlight {
+			enable-value = <&ufsc_kb_backlight_present>;
+		};
+	};
+};
+
+&ufsc_kb_backlight {
+	status = "okay";
+	ufsc_kb_backlight_present: value-present {
+		compatible = "cros-ec,cbi-ufsc-value";
+		status = "okay";
+		enum-name = "UFSC_KB_BACKLIGHT_PRESENT";
+		value = <1>;
+	};
+	ufsc_kb_backlight_absent: value-absent {
+		compatible = "cros-ec,cbi-ufsc-value";
+		status = "okay";
+		enum-name = "UFSC_KB_BACKLIGHT_ABSENT";
+		value = <0>;
+		default;
+	};
+};

@@ -120,4 +120,17 @@ config PLATFORM_EC_CONSOLE_CMD_CBI
 	  Enable the 'cbi' console command. This command is used to display or
 	  change the CBI information in the persistent storage.
 
+if CROS_EC_CBI_UFSC_PARSER
+
+config CROS_EC_CBI_UFSC_KB_BACKLIGHT
+	bool "Manage Keyboard Backlight via CBI UFSC"
+	default y if $(dt_nodelabel_enabled,kb_backlight_policy)
+	depends on PLATFORM_EC_KEYBOARD_BACKLIGHT
+	help
+	  Enables generic logic to determine keyboard backlight presence
+	  using CBI UFSC data. Auto-enabled if the 'kb_backlight_policy'
+	  node label is present in the Devicetree.
+
+endif
+
 endif # PLATFORM_EC_CBI
