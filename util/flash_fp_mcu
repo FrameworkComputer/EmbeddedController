@@ -922,8 +922,10 @@ flash_fp_mcu_board() {
 
   # Put back cros_fp driver if transport is SPI
   if [[ "${transport}" != "UART" ]]; then
-    # wait for FP MCU to come back up (including RWSIG delay)
-    sleep 2
+    # Wait for FPMCU to boot to RW. This includes RW signature verification
+    # and minimal rollback version update (which involves sector erase and
+    # write).
+    sleep 3
     klog "Binding cros-ec driver"
     echo "" > "/sys/bus/spi/devices/${deviceid}/driver_override"
     echo "${deviceid}" > /sys/bus/spi/drivers/cros-ec-spi/bind
