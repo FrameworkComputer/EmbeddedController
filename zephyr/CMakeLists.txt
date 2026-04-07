@@ -838,14 +838,17 @@ if (DEFINED CONFIG_SOC_INTEL_ISH_5_8_0)
   )
 endif()
 
-# Pigweed's pw_log_zephyr target relies on Zephyr headers that transitively
-# include heap_constants.h. Because pw_log_zephyr is not created using
-# zephyr_library(), it lacks the implicit dependency on zephyr_generated_headers.
-# We defer adding this dependency to the top-level directory scope to ensure
-# the Pigweed module has been fully evaluated and the pw_log_zephyr target exists.
+# Pigweed libraries rely on Zephyr headers that transitively include
+# heap_constants.h. Because pigweed library targets are not created using
+# zephyr_library(), they lacks the implicit dependency on
+# zephyr_generated_headers.  We defer adding this dependency to the top-level
+# directory scope to ensure the Pigweed module has been fully evaluated and the
+# library targets exist.
 function(ec_add_pw_log_zephyr_deps)
-  if(TARGET pw_log_zephyr AND TARGET heap_constants_h)
-    add_dependencies(pw_log_zephyr heap_constants_h)
-  endif()
+  foreach(lib pw_log_zephyr math.smoothing math.iir_filter math.iir_decimator math.smoothing_test math.iir_filter_test math.iir_decimator_test)
+    if(TARGET ${lib} AND TARGET zephyr_generated_headers)
+      add_dependencies(${lib} zephyr_generated_headers)
+    endif()
+  endforeach()
 endfunction()
 cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR} CALL ec_add_pw_log_zephyr_deps)
