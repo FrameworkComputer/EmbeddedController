@@ -54,6 +54,7 @@ add_subdirectory(${BORINGSSL_SOURCES} build EXCLUDE_FROM_ALL)
 
 # Link 'crypto' library into boringssl library.
 zephyr_library_link_libraries(crypto)
+add_dependencies(crypto zephyr_generated_headers)
 
 # Add compile options required by BoringSSL.
 # -D_POSIX_C_SOURCE=200809L is needed because BoringSSL uses strdup() function

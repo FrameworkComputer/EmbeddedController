@@ -844,8 +844,25 @@ endif()
 # zephyr_generated_headers.  We defer adding this dependency to the top-level
 # directory scope to ensure the Pigweed module has been fully evaluated and the
 # library targets exist.
+#
+# Lists all targets defined with pw_add_library() and pw_add_test()
 function(ec_add_pw_log_zephyr_deps)
-  foreach(lib pw_log_zephyr math.smoothing math.iir_filter math.iir_decimator math.smoothing_test math.iir_filter_test math.iir_decimator_test)
+  foreach(lib pw_log_zephyr
+	      cros.dsp.test
+	      dsp.client
+	      dsp.service
+	      math.iir_decimator
+	      math.iir_decimator_test
+	      math.iir_filter
+	      math.iir_filter_test
+	      math.smoothing
+	      math.smoothing_test
+	      pw_fsm.fsm
+	      pw_fsm.fsm_test
+	      pw_transport.service
+	      pw_transport.service_test
+	      vsensor.body_detection
+      )
     if(TARGET ${lib} AND TARGET zephyr_generated_headers)
       add_dependencies(${lib} zephyr_generated_headers)
     endif()
