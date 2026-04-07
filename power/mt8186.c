@@ -395,7 +395,7 @@ enum power_state power_handle_state(enum power_state state)
 
 	switch (state) {
 	case POWER_G3:
-#if CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
+#ifdef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
 		if (is_exiting_off && !power_is_enough()) {
 			is_exiting_off = false;
 		}
@@ -432,7 +432,7 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_G3S5:
-#if CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
+#ifdef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
 		if (!power_is_enough())
 			return POWER_G3;
 #endif
