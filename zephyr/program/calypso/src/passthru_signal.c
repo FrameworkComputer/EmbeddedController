@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Mensa passthru-helper functions */
+/* Calypso passthru-helper functions */
 
 #include "chipset.h"
 #include "common.h"

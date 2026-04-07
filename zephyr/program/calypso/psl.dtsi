@@ -4,7 +4,7 @@
  */
 
 /*
- * Mensa Program with NPCX supports following wake-up sources.
+ * Calypso Program with NPCX supports following wake-up sources.
  * PSL_IN1: Lid open
  * PSL_IN2: Power button
  * PSL_IN3: AC present

@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Define zmake projects for mensa."""
+"""Define zmake projects for Calypso."""
 
 
 def register_npcx9_project(
