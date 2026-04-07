@@ -195,9 +195,9 @@ int cypd_setup(int controller)
 	return EC_SUCCESS;
 }
 
-enum power_state pd_prev_power_state = POWER_G3;
 void update_system_power_state(int controller)
 {
+	static uint8_t pd_prev_power_state[PD_CHIP_COUNT];
 	enum power_state ps = power_get_state();
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
@@ -209,40 +209,53 @@ void update_system_power_state(int controller)
 	case POWER_G3:
 	case POWER_S5G3:
 #ifdef CONFIG_PD_CCG8_CYPD_POWER_STATE_G3_SUPPORT
-		pd_prev_power_state = POWER_G3;
-		cypd_set_power_state(CCG_POWERSTATE_G3, controller);
+		if (pd_prev_power_state[controller] != CCG_POWERSTATE_G3) {
+			cypd_set_power_state(CCG_POWERSTATE_G3, controller);
+			pd_prev_power_state[controller] = CCG_POWERSTATE_G3;
+		}
 		break;
 #endif
 	case POWER_S5:
 	case POWER_S3S5:
 	case POWER_S4S5:
-		pd_prev_power_state = POWER_S5;
-		cypd_set_power_state(CCG_POWERSTATE_S5, controller);
+		if (pd_prev_power_state[controller] != CCG_POWERSTATE_S5) {
+			cypd_set_power_state(CCG_POWERSTATE_S5, controller);
+			pd_prev_power_state[controller] = CCG_POWERSTATE_S5;
+		}
 		break;
 	case POWER_S3:
 	case POWER_S4S3:
 	case POWER_S5S3:
 	case POWER_S0S3:
 	case POWER_S0ixS3: /* S0ix -> S3 */
-		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
-		if (pd_prev_power_state < POWER_S3) {
-			task_set_event(TASK_ID_CYPD, CCG_EVT_PERFORM_ERROR_RECOVERY);
-			pd_prev_power_state = ps;
+		if (pd_prev_power_state[controller] != CCG_POWERSTATE_S3) {
+			cypd_set_power_state(CCG_POWERSTATE_S3, controller);
+			if (pd_prev_power_state[controller] == CCG_POWERSTATE_G3
+			 || pd_prev_power_state[controller] == CCG_POWERSTATE_S5) {
+				task_set_event(TASK_ID_CYPD, CCG_EVT_PERFORM_ERROR_RECOVERY);
+			}
+			pd_prev_power_state[controller] = CCG_POWERSTATE_S3;
 		}
 		break;
 	case POWER_S0:
 	case POWER_S3S0:
 	case POWER_S0ixS0: /* S0ix -> S0 */
-		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
-		if (pd_prev_power_state < POWER_S3) {
-			task_set_event(TASK_ID_CYPD, CCG_EVT_PERFORM_ERROR_RECOVERY);
-			pd_prev_power_state = ps;
+		if (pd_prev_power_state[controller] != CCG_POWERSTATE_S0) {
+			cypd_set_power_state(CCG_POWERSTATE_S0, controller);
+			if (pd_prev_power_state[controller] == CCG_POWERSTATE_G3
+			 || pd_prev_power_state[controller] == CCG_POWERSTATE_S5) {
+				task_set_event(TASK_ID_CYPD, CCG_EVT_PERFORM_ERROR_RECOVERY);
+			}
+			pd_prev_power_state[controller] = CCG_POWERSTATE_S0;
 		}
 		break;
 	case POWER_S0ix:
 	case POWER_S3S0ix: /* S3 -> S0ix */
 	case POWER_S0S0ix: /* S0 -> S0ix */
-		cypd_set_power_state(CCG_POWERSTATE_S0ix, controller);
+		if (pd_prev_power_state[controller] != CCG_POWERSTATE_S0ix) {
+			cypd_set_power_state(CCG_POWERSTATE_S0ix, controller);
+			pd_prev_power_state[controller] = CCG_POWERSTATE_S0ix;
+		}
 		break;
 
 	default:
