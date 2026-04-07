@@ -1,0 +1,32 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+include: base.yaml
+
+description: UFSC-based PDC Driver Selector
+compatible: "cros-ec,cbi-ufsc-pdc-selector"
+
+properties:
+  "#address-cells":
+    const: 1
+  "#size-cells":
+    const: 0
+
+child-binding:
+  description: Configuration for a specific USB-C port slot
+  properties:
+    reg:
+      type: int
+      required: true
+      description: The USB-C port number (0, 1, etc.)
+    selections:
+      type: phandles
+      required: true
+      description: >
+        Alternating list of <&ufsc_value &pdc_driver_node>.
+        If UFSC matches the value, the paired driver is returned.
+
+        To represent an ABSENT port, simply OMIT the UFSC value for
+        the absent state from this list. If no match is found, the
+        selector returns NULL, disabling the port.

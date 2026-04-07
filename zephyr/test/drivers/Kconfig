@@ -265,6 +265,11 @@ config LINK_TEST_SUITE_SYSTEM
 config LINK_TEST_SUITE_TIMER
 	bool "Link and test the timer tests"
 
+config LINK_TEST_SUITE_UFSC_PDC
+	bool "Link and test the UFSC PDC selector"
+	help
+	  Include the test suite exercising the UFSC PDC selector logic.
+
 config LINK_TEST_SUITE_UFSC_POLICIES
 	bool "Link and test the UFSC policies"
 	help

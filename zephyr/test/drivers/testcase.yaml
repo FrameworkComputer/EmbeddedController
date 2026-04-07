@@ -1360,6 +1360,16 @@ tests:
     extra_conf_files:
     - prj.conf
     - ec_host_cmd.conf
+  drivers.ufsc_pdc:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_UFSC_PDC=y
+    extra_conf_files:
+    - prj.conf
+    - ufsc_pdc/prj.conf
+    extra_dtc_overlay_files:
+    - boards/native_sim.overlay
+    - ufsc_pdc/boards/native_sim.overlay
+    - ufsc_pdc/binman.dts
   drivers.ufsc_policies:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_UFSC_POLICIES=y

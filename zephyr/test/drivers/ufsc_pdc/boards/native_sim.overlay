@@ -1,0 +1,57 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/cbi_ufsc_std_schema.dtsi>
+
+/ {
+	test_pdc_0: test-pdc-0 {
+		compatible = "zephyr,fake-pdc";
+		status = "okay";
+	};
+	test_pdc_1: test-pdc-1 {
+		compatible = "zephyr,fake-pdc";
+		status = "okay";
+	};
+	test_pdc_2: test-pdc-2 {
+		compatible = "zephyr,fake-pdc";
+		status = "okay";
+	};
+
+	pdc_selector: pdc-selector {
+		compatible = "cros-ec,cbi-ufsc-pdc-selector";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port0@0 {
+			reg = <0>;
+			selections = <&ufsc_pdc_p0_val_a  &test_pdc_0>,
+				     <&ufsc_pdc_p0_val_b  &test_pdc_1>;
+		};
+		port1@1 {
+			reg = <1>;
+			selections = <&ufsc_pdc_p1_val_a  &test_pdc_2>;
+		};
+	};
+};
+
+&ufsc_pdc_chip_vendor_port_0 {
+	ufsc_pdc_p0_val_a: p0-a {
+		compatible = "cros-ec,cbi-ufsc-value";
+		status = "okay";
+		value = <0x0>;
+	};
+	ufsc_pdc_p0_val_b: p0-b {
+		compatible = "cros-ec,cbi-ufsc-value";
+		status = "okay";
+		value = <0x1>;
+	};
+};
+
+&ufsc_pdc_chip_vendor_port_1 {
+	ufsc_pdc_p1_val_a: p1-a {
+		compatible = "cros-ec,cbi-ufsc-value";
+		status = "okay";
+		value = <0x3>;
+	};
+};

@@ -131,6 +131,15 @@ config CROS_EC_CBI_UFSC_KB_BACKLIGHT
 	  using CBI UFSC data. Auto-enabled if the 'kb_backlight_policy'
 	  node label is present in the Devicetree.
 
+config CROS_EC_CBI_UFSC_PDC
+	bool "Select PDC Driver via CBI UFSC"
+	default y if DT_HAS_CROS_EC_CBI_UFSC_PDC_SELECTOR_ENABLED
+	depends on PDC_RUNTIME_PORT_CONFIG
+	help
+	  Enables generic logic to select the correct PDC driver instance
+	  for a port based on UFSC data defined in a node with the
+	  'cros-ec,cbi-ufsc-pdc-selector' compatible string.
+
 endif
 
 endif # PLATFORM_EC_CBI
