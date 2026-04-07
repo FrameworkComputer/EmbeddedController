@@ -17,9 +17,8 @@ pw_proto_library(dsp_comms.proto
     proto/ec_dsp.options
   DEPS
     pw_third_party.nanopb.proto
+    pw_transport.proto
 )
-
-zephyr_link_libraries(dsp_comms.proto.nanopb pw_transport.proto.nanopb)
 
 add_subdirectory(service)
 add_subdirectory(client)
