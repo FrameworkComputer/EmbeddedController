@@ -95,6 +95,7 @@ target_compile_options(boringssl_compile_options_lib INTERFACE
 # options to 'fipsmodule' separately.
 target_link_libraries(fipsmodule PUBLIC zephyr_interface)
 target_link_libraries(fipsmodule PRIVATE boringssl_compile_options_lib)
+add_dependencies(fipsmodule zephyr_generated_headers)
 
 # Add recommended compile options for 'crypto' library.
 target_link_libraries(crypto zephyr_interface boringssl_compile_options_lib)
