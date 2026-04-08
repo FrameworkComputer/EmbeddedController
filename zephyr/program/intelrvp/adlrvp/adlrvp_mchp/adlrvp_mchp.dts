@@ -49,6 +49,9 @@
 	port-sel = <0>;
 	pinctrl-0 = <&i2c00_scl_gpio004 &i2c00_sda_gpio003>;
 	pinctrl-names = "default";
+	scl-gpios = <MCHP_GPIO_DECODE_004 GPIO_OPEN_DRAIN>;
+	sda-gpios = <MCHP_GPIO_DECODE_003 GPIO_OPEN_DRAIN>;
+
 
 	pca95xx: pca95xx@22 {
 		compatible = "nxp,pca95xx";
@@ -108,6 +111,8 @@
 	port-sel = <6>;
 	pinctrl-0 = <&i2c06_scl_gpio140 &i2c06_sda_gpio132>;
 	pinctrl-names = "default";
+	scl-gpios = <MCHP_GPIO_DECODE_140 GPIO_OPEN_DRAIN>;
+	sda-gpios = <MCHP_GPIO_DECODE_132 GPIO_OPEN_DRAIN>;
 
 	tcpc_port0: fusb302@22 {
 		compatible = "fairchild,fusb302";
@@ -149,6 +154,8 @@
 	port-sel = <3>;
 	pinctrl-0 = <&i2c03_scl_gpio010 &i2c03_sda_gpio007>;
 	pinctrl-names = "default";
+	scl-gpios = <MCHP_GPIO_DECODE_010 GPIO_OPEN_DRAIN>;
+	sda-gpios = <MCHP_GPIO_DECODE_007 GPIO_OPEN_DRAIN>;
 
 	tcpc_port1: fusb302@22 {
 		compatible = "fairchild,fusb302";
@@ -184,6 +191,8 @@
 	port-sel = <7>;
 	pinctrl-0 = <&i2c07_scl_gpio013 &i2c07_sda_gpio012>;
 	pinctrl-names = "default";
+	scl-gpios = <MCHP_GPIO_DECODE_013 GPIO_OPEN_DRAIN>;
+	sda-gpios = <MCHP_GPIO_DECODE_012 GPIO_OPEN_DRAIN>;
 
 	tcpc_port2: fusb302@22 {
 		compatible = "fairchild,fusb302";
@@ -212,6 +221,8 @@
 	port-sel = <2>;
 	pinctrl-0 = <&i2c02_scl_gpio155 &i2c02_sda_gpio154>;
 	pinctrl-names = "default";
+	scl-gpios = <MCHP_GPIO_DECODE_155 GPIO_OPEN_DRAIN>;
+	sda-gpios = <MCHP_GPIO_DECODE_154 GPIO_OPEN_DRAIN>;
 
 	tcpc_port3: fusb302@22 {
 		compatible = "fairchild,fusb302";

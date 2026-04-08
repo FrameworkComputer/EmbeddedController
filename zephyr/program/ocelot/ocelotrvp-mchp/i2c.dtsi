@@ -9,6 +9,9 @@ i2c_port_charger: &i2c_smb_0 {
 	pinctrl-names = "default";
 	port-sel = <0>;
 	status = "okay";
+	scl-gpios = <MCHP_GPIO_DECODE_004 GPIO_OPEN_DRAIN>;
+	sda-gpios = <MCHP_GPIO_DECODE_003 GPIO_OPEN_DRAIN>;
+
 
 	it8801_mfd: it8801@39 {
 		compatible = "ite,it8801-mfd";
@@ -22,6 +25,8 @@ i2c_port_pd1: &i2c_smb_1 {
 	pinctrl-names = "default";
 	port-sel = <6>;
 	status = "okay";
+	scl-gpios = <MCHP_GPIO_DECODE_140 GPIO_OPEN_DRAIN>;
+	sda-gpios = <MCHP_GPIO_DECODE_132 GPIO_OPEN_DRAIN>;
 };
 
 / {

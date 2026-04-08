@@ -168,36 +168,6 @@
 		therm_sen_mecc {
 			gpios = <&gpio_140_176 1 GPIO_OUTPUT_LOW>;
 		}; /* GPIO141 */
-		smb_bs_clk {
-			gpios = <&gpio_000_036 4 GPIO_INPUT>;
-		}; /* GPIO004 */
-		smb_bs_data {
-			gpios = <&gpio_000_036 3 GPIO_INPUT>;
-		}; /* GPIO003 */
-		usbc_tcpc_i2c_clk_p0 {
-			gpios = <&gpio_140_176 0 GPIO_INPUT>;
-		}; /* GPIO140 */
-		usbc_tcpc_i2c_data_p0 {
-			gpios = <&gpio_100_136 26 GPIO_INPUT>;
-		}; /* GPIO132 */
-		usbc_tcpc_i2c_clk_p2 {
-			gpios = <&gpio_000_036 8 GPIO_INPUT>;
-		}; /* GPIO010 */
-		usbc_tcpc_i2c_data_p2 {
-			gpios = <&gpio_000_036 7 GPIO_INPUT>;
-		}; /* GPIO007 */
-		usbc_tcpc_i2c_clk_p1 {
-			gpios = <&gpio_000_036 11 GPIO_INPUT>;
-		}; /* GPIO013 */
-		usbc_tcpc_i2c_data_p1 {
-			gpios = <&gpio_000_036 10 GPIO_INPUT>;
-		}; /* GPIO012 */
-		usbc_tcpc_i2c_clk_p3 {
-			gpios = <&gpio_140_176 13 GPIO_INPUT>;
-		}; /* GPIO155 */
-		usbc_tcpc_i2c_data_p3 {
-			gpios = <&gpio_140_176 12 GPIO_INPUT>;
-		}; /* GPIO154 */
 		sml1_clk_mecc {
 			gpios = <&gpio_100_136 25 GPIO_INPUT>;
 		}; /* GPIO131 */

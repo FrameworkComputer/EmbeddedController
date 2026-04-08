@@ -11,6 +11,8 @@ charger_i2c: &i2c_smb_0 {
 	pinctrl-names = "default";
 	port-sel = <0>;
 	status = "okay";
+	scl-gpios = <MCHP_GPIO_DECODE_004 GPIO_OPEN_DRAIN>;
+	sda-gpios = <MCHP_GPIO_DECODE_003 GPIO_OPEN_DRAIN>;
 
 	gcs_seven_seg_display: max695x-seven-seg-display@71 {
 		compatible = "maxim,max695x";
@@ -23,4 +25,6 @@ pd_pow_i2c: &i2c_smb_1 {
 	pinctrl-0 = <&i2c06_scl_gpio140 &i2c06_sda_gpio132>;
 	pinctrl-names = "default";
 	port-sel = <6>;
+	scl-gpios = <MCHP_GPIO_DECODE_140 GPIO_OPEN_DRAIN>;
+	sda-gpios = <MCHP_GPIO_DECODE_132 GPIO_OPEN_DRAIN>;
 };

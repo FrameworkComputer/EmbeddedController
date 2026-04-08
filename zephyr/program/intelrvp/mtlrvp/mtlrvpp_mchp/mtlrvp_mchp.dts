@@ -66,6 +66,8 @@
 	port-sel = <0>;
 	pinctrl-0 = <&i2c00_scl_gpio004 &i2c00_sda_gpio003>;
 	pinctrl-names = "default";
+	scl-gpios = <MCHP_GPIO_DECODE_004 GPIO_OPEN_DRAIN>;
+	sda-gpios = <MCHP_GPIO_DECODE_003 GPIO_OPEN_DRAIN>;
 
 	pca95xx: pca95xx@22 {
 		compatible = "nxp,pca95xx";
@@ -132,6 +134,8 @@
 	port-sel = <6>;
 	pinctrl-0 = <&i2c06_scl_gpio140 &i2c06_sda_gpio132>;
 	pinctrl-names = "default";
+	scl-gpios = <MCHP_GPIO_DECODE_140 GPIO_OPEN_DRAIN>;
+	sda-gpios = <MCHP_GPIO_DECODE_132 GPIO_OPEN_DRAIN>;
 
 	nct38xx_c0: nct38xx@73 {
 		compatible = "nuvoton,nct38xx";
@@ -238,6 +242,8 @@
 	port-sel = <7>;
 	pinctrl-0 = <&i2c07_scl_gpio013 &i2c07_sda_gpio012>;
 	pinctrl-names = "default";
+	scl-gpios = <MCHP_GPIO_DECODE_013 GPIO_OPEN_DRAIN>;
+	sda-gpios = <MCHP_GPIO_DECODE_012 GPIO_OPEN_DRAIN>;
 
 	tcpc_port2: ccgxxf@b {
 		compatible = "cypress,ccgxxf";
