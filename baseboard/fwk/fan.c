@@ -45,7 +45,7 @@
 #define FAN_PID_I_INV	100
 #define FAN_PID_I_MAX	(10*FAN_PID_I_INV)
 
-#define STABLE_RPM 2200
+#define STABLE_RPM 4500
 
 static int rpm_setting[FAN_CH_COUNT];
 static int duty_setting[FAN_CH_COUNT];
@@ -96,16 +96,16 @@ int fan_rpm_to_percent(int fan, int rpm)
 		if (rpm <= STABLE_RPM) {
 			pct = rpm / 100;
 			return pct;
-		} else if (rpm <= 4000)
-			min = 1040 + (28 * ((rpm - STABLE_RPM) / 100));
-		else if (rpm <= 5200)
-			min = 1040 + (20 * ((rpm - STABLE_RPM) / 100));
-
+		}
+		min = 1718;
+		// min = STABLE_RPM*(10000-FAN_HARDARE_MAX)/(10000-STABLE_RPM)
 		/* make formula More in line with the actual-fan speed - 
 		 * Note that this will limit the fan % to about 94%
 		 * if we want a performance mode we can tweak this
 		 * to get a few more % of fan speed to unlock additional
 		 * cooling TODO FRAMEWORK */
+		// FAN_HARDARE_MAX = 7100
+		// Tested max : 7900 RPM on flat surface, 8800 RPM when intake blocked
 		pct = (rpm - min) / ((FAN_HARDARE_MAX - min) / 100);
 		/*CPRINTS(" Fan max min : %d , %d", max, min);*/
 	}
