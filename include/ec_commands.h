@@ -6974,6 +6974,13 @@ struct ec_params_charger_control {
  */
 #define EC_CMD_CPU_POWER 0x03D5
 
+struct ec_params_cpu_power {
+	uint32_t pl1_mW;  /* PL1 power in milliwatts (0 = query only) */
+	uint32_t pl2_mW;  /* PL2 power in milliwatts (0 = query only) */
+	uint32_t pl4_mW;  /* PL4 power in milliwatts (0 = query only) */
+	uint32_t psys_mW; /* Psys power in milliwatts (0 = query only) */
+} __ec_align4;
+
 struct ec_response_cpu_power {
 	uint32_t pl1_mW;	/* Current PL1 in mW */
 	uint32_t pl2_mW;	/* Current PL2 in mW */

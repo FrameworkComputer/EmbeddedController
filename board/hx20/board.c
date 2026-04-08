@@ -1022,8 +1022,8 @@ static const struct ec_thermal_config thermal_inductor_cpu = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
-	.temp_fan_off = C_TO_K(40),
-	.temp_fan_max = C_TO_K(69),
+	.temp_fan_off = C_TO_K(20),
+	.temp_fan_max = C_TO_K(60),
 };
 static const struct ec_thermal_config thermal_inductor_ddr = {
 	.temp_host = {

@@ -20,7 +20,7 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define POWER_LIMIT_1_W	35
+#define POWER_LIMIT_1_W	50
 
 static int pl1_watt;
 static int pl2_watt;
@@ -148,7 +148,24 @@ static int cmd_cpupower(int argc, char **argv)
 /* Host command handler for CPU power limits */
 static enum ec_status host_command_cpu_power(struct host_cmd_handler_args *args)
 {
+	const struct ec_params_cpu_power *p = args->params;
 	struct ec_response_cpu_power *r = args->response;
+
+	/* If parameters provided, set the values */
+	if (args->params_size > 0 && p) {
+		if (p->pl1_mW != 0)
+			pl1_watt = p->pl1_mW / 1000;
+		if (p->pl2_mW != 0)
+			pl2_watt = p->pl2_mW / 1000;
+		if (p->pl4_mW != 0)
+			pl4_watt = p->pl4_mW / 1000;
+		if (p->psys_mW != 0)
+			psys_watt = p->psys_mW / 1000;
+
+		/* Apply the new limits */
+		manual_ctl = true;
+		set_pl_limits(pl1_watt, pl2_watt, pl4_watt, psys_watt);
+	}
 
 	/* Return current power limits in mW */
 	r->pl1_mW = pl1_watt * 1000;
