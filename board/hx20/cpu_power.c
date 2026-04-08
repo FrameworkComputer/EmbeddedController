@@ -14,6 +14,7 @@
 #include "cypress5525.h"
 #include "math_util.h"
 #include "util.h"
+#include "ec_commands.h"
 
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -143,6 +144,24 @@ static int cmd_cpupower(int argc, char **argv)
 	return EC_SUCCESS;
 
 }
+
+/* Host command handler for CPU power limits */
+static enum ec_status host_command_cpu_power(struct host_cmd_handler_args *args)
+{
+	struct ec_response_cpu_power *r = args->response;
+
+	/* Return current power limits in mW */
+	r->pl1_mW = pl1_watt * 1000;
+	r->pl2_mW = pl2_watt * 1000;
+	r->pl4_mW = pl4_watt * 1000;
+	r->psys_mW = psys_watt * 1000;
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_CPU_POWER, host_command_cpu_power, EC_VER_MASK(0));
+
 DECLARE_CONSOLE_COMMAND(cpupower, cmd_cpupower,
 			"cpupower pl1 pl2 pl4 psys ",
 			"Set/Get the cpupower limit");

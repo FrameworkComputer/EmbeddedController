@@ -21,6 +21,7 @@
 #include "chipset.h"
 #include "compile_time_macros.h"
 #include "cros_ec_dev.h"
+#include "ec_commands.h"
 #include "ec_panicinfo.h"
 #include "ec_flash.h"
 #include "ec_version.h"
@@ -92,6 +93,8 @@ const char help_str[] =
 	"      Overrides charge port selection logic\n"
 	"  chargestate\n"
 	"      Handle commands related to charge state v2 (and later)\n"
+	"  cpupower\n"
+	"      Get CPU power limits (PL1, PL2, PL4, Psys)\n"
 	"  chipinfo\n"
 	"      Prints chip info\n"
 	"  cmdversions <cmd>\n"
@@ -556,6 +559,23 @@ int cmd_hibdelay(int argc, char *argv[])
 	printf("Hibernation delay: %u s\n", r.hibernate_delay);
 	printf("Time G3: %u s\n", r.time_g3);
 	printf("Time left: %u s\n", r.time_remaining);
+	return 0;
+}
+
+static int cmd_cpu_power(int argc, char *argv[])
+{
+	struct ec_response_cpu_power r;
+	int rv;
+
+	rv = ec_command(EC_CMD_CPU_POWER, 0, NULL, 0, &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	printf("CPU Power Limits:\n");
+	printf("  PL1: %u W\n", r.pl1_mW / 1000);
+	printf("  PL2: %u W\n", r.pl2_mW / 1000);
+	printf("  PL4: %u W\n", r.pl4_mW / 1000);
+	printf("  Psys: %u W\n", r.psys_mW / 1000);
 	return 0;
 }
 
@@ -10115,6 +10135,7 @@ const struct command commands[] = {
 	{"button", cmd_button},
 	{"cbi", cmd_cbi},
 	{"chargecurrentlimit", cmd_charge_current_limit},
+	{"cpupower", cmd_cpu_power},
 	{"chargecontrol", cmd_charge_control},
 	{"chargeoverride", cmd_charge_port_override},
 	{"chargestate", cmd_charge_state},
