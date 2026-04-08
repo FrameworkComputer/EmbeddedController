@@ -107,7 +107,7 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_AZALEA include)
 	zephyr_include_directories("include/framework13")
 	zephyr_library_sources(
-			"src/battery_13.c"
+			"src/battery_12_13.c"
 			"src/ucsi_port_13.c"
 			"src/battery_present_adc.c"
 			"azalea/src/charger.c"
@@ -145,7 +145,7 @@ if(DEFINED CONFIG_BOARD_MARIGOLD OR DEFINED CONFIG_BOARD_SAKURA)
 	endif()
 	zephyr_include_directories("include/framework13")
 	zephyr_library_sources(
-			"src/battery_13.c"
+			"src/battery_12_13.c"
 			"src/battery_present_adc.c"
 			"src/keyboard_customization_13.c"
 			"marigold/src/project_diagnostics.c"
@@ -160,7 +160,7 @@ if(DEFINED CONFIG_BOARD_SUNFLOWER)
 	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_SUNFLOWER include)
 	zephyr_include_directories("include/sunflower")
 	zephyr_library_sources(
-			"src/battery_13.c"
+			"src/battery_12_13.c"
 			"src/ucsi_port_12.c"
 			"sunflower/src/battery_present.c"
 			"sunflower/src/charger.c"
