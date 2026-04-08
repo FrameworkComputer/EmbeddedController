@@ -15,3 +15,7 @@ config CORTEX_M_NULL_POINTER_EXCEPTION_PAGE_SIZE
 	# Using 0x20 because NPCX accesses 0x40 for down_from_flash_api.
 	# See b/282983670 for other NPCX ROM accesses.
 	default "0x20"
+
+# Stackwalk on ARM causes build problems on many platforms, disable for now.
+configdefault ARCH_HAS_STACKWALK
+	default n
