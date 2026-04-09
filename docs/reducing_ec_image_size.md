@@ -133,7 +133,7 @@ prj.conf file to disable the console command.
 
 <!-- mdformat off(Don't format table) -->
 
-| Used by FAFT | config.h option | Console commands | Notes |
+| Used by FAFT | config option | Console commands | Notes |
 |:---|:---|:---|:---|
 |  | CONFIG_CMD_ACCELS | `accelrange`<br>`accelres`<br>`accelrate`<br>`accelread`<br>`accelinit`<br>`accelinfo` | |
 |  | CONFIG_CMD_ACCELSPOOF | `accelspoof` | |
@@ -147,7 +147,7 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_BATTFAKE | `battfake` | |
 | | CONFIG_CMD_BATT_MFG_ACCESS | `battmfgacc` | |
 | | CONFIG_CMD_CBI | `cbi` | firmwareECCbiEeprom uses `ectool` on AP to test CBI |
-| x | CONFIG_CMD_CHARGEN | `chargen` | Used by firmware_Cr50CCDUartStress, included in faft_ccd, faft_cr50_prepvt, and faft_cr50_pvt suites |
+| x | CONFIG_PLATFORM_EC_CONSOLE_CMD_CHARGEN | `chargen` | Used by firmware_Cr50CCDUartStress, included in faft_ccd, faft_cr50_prepvt, and faft_cr50_pvt suites |
 | | CONFIG_CMD_CHARGER | `bd9995x`<br>`sy21612` | |
 | | CONFIG_CMD_CHARGER_ADC_AMON_BMON | `amonbmon` | |
 | | CONFIG_CMD_CHARGER_DUMP | `charger_dump` | |
