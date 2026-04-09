@@ -735,13 +735,13 @@ void cypd_evaluate_port_profile(int controller, int port, int ccg_event)
 
 		if (profile_is_changed) {
 			k_msleep(100);
-
+#ifndef CONFIG_CHIPSET_INTEL
 			/* Reduce the typec Rp value and PDO current to 1.5A */
 			if ((pd_to_ucsi_port(shared_pd_port) == UCSI_PORT_1 ||
 				pd_to_ucsi_port(shared_pd_port) == UCSI_PORT_4)) {
 				cypd_select_rp(shared_pd_port,	CCG_PD_CMD_SET_TYPEC_1_5A);
 			}
-
+#endif
 			cypd_select_pdo(controller, (port ? 0 : 1), CCG_PD_CMD_SET_TYPEC_1_5A);
 		}
 	} else if (first_1p5a_port) {
@@ -781,12 +781,13 @@ void cypd_evaluate_port_profile(int controller, int port, int ccg_event)
 			}
 
 			if (profile_is_changed) {
+#ifndef CONFIG_CHIPSET_INTEL
 				/* Restore the typec Rp value and PDO current to 3A */
 				if (pd_to_ucsi_port(port_idx) == UCSI_PORT_1 ||
 					pd_to_ucsi_port(port_idx) == UCSI_PORT_4) {
 					cypd_select_rp(port_idx, CCG_PD_CMD_SET_TYPEC_3A);
 				}
-
+#endif
 				cypd_select_pdo(controller, idx, CCG_PD_CMD_SET_TYPEC_3A);
 			}
 		}
