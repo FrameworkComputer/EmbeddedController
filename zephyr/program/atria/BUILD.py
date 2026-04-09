@@ -36,6 +36,18 @@ register_rtk59_project(
 )
 
 
+register_ish_project(
+    project_name="atriarvp-ish",
+    zephyr_board="intel_ish_5_8_0",
+    dts_overlays=[
+        here / "atriarvp-ish" / "project.overlay",
+    ],
+    kconfig_files=[
+        here / "atriarvp-ish" / "project.conf",
+    ],
+)
+
+
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release.
 assert_rw_fwid_DO_NOT_EDIT(project_name="atriarvp-rtk", addr=0x80404)
