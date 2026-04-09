@@ -1022,8 +1022,8 @@ static const struct ec_thermal_config thermal_inductor_cpu = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
-	.temp_fan_off = C_TO_K(20),
-	.temp_fan_max = C_TO_K(60),
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(75),
 };
 static const struct ec_thermal_config thermal_inductor_ddr = {
 	.temp_host = {
@@ -1073,6 +1073,10 @@ static const struct ec_thermal_config thermal_cpu = {
 
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
+
+/* Forward declaration for fan mode initialization */
+extern void update_thermal_params_for_mode(int mode);
+
 static void setup_fans(void)
 {
 	thermal_params[TEMP_SENSOR_LOCAL] = thermal_inductor_local;
@@ -1082,6 +1086,8 @@ static void setup_fans(void)
 #ifdef CONFIG_PECI
 	thermal_params[TEMP_SENSOR_PECI] = thermal_cpu;
 #endif
+	/* Initialize with normal fan mode */
+	update_thermal_params_for_mode(1);
 }
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 #endif

@@ -562,33 +562,41 @@ int cmd_hibdelay(int argc, char *argv[])
 	return 0;
 }
 
-static int cmd_cpu_power(int argc, char *argv[])
+static int cmd_fan_mode(int argc, char *argv[])
 {
-	struct ec_params_cpu_power p = {};
-	struct ec_response_cpu_power r;
+	struct ec_params_fan_mode p = {};
+	struct ec_response_fan_mode r;
 	int rv;
+	const char *mode_names[] = {"silent", "normal", "extreme"};
 
-	/* If arguments provided, set the values */
-	if (argc >= 5) {
-		p.pl1_mW = strtol(argv[1], NULL, 0) * 1000;
-		p.pl2_mW = strtol(argv[2], NULL, 0) * 1000;
-		p.pl4_mW = strtol(argv[3], NULL, 0) * 1000;
-		p.psys_mW = strtol(argv[4], NULL, 0) * 1000;
+	/* If argument provided, set the mode */
+	if (argc > 1) {
+		char *mode_str = argv[1];
+		if (!strcasecmp(mode_str, "silent"))
+			p.mode = 0;
+		else if (!strcasecmp(mode_str, "normal"))
+			p.mode = 1;
+		else if (!strcasecmp(mode_str, "extreme"))
+			p.mode = 2;
+		else {
+			printf("Invalid mode. Use: silent, normal, or extreme\n");
+			return -1;
+		}
 
-		rv = ec_command(EC_CMD_CPU_POWER, 0, &p, sizeof(p), &r, sizeof(r));
+		rv = ec_command(EC_CMD_FAN_MODE, 0, &p, sizeof(p), &r, sizeof(r));
 	} else {
 		/* Query only */
-		rv = ec_command(EC_CMD_CPU_POWER, 0, NULL, 0, &r, sizeof(r));
+		rv = ec_command(EC_CMD_FAN_MODE, 0, NULL, 0, &r, sizeof(r));
 	}
 
 	if (rv < 0)
 		return rv;
 
-	printf("CPU Power Limits:\n");
-	printf("  PL1: %u W\n", r.pl1_mW / 1000);
-	printf("  PL2: %u W\n", r.pl2_mW / 1000);
-	printf("  PL4: %u W\n", r.pl4_mW / 1000);
-	printf("  Psys: %u W\n", r.psys_mW / 1000);
+	if (r.mode <= 2)
+		printf("Fan mode: %s\n", mode_names[r.mode]);
+	else
+		printf("Unknown fan mode: %d\n", r.mode);
+
 	return 0;
 }
 
@@ -10148,7 +10156,7 @@ const struct command commands[] = {
 	{"button", cmd_button},
 	{"cbi", cmd_cbi},
 	{"chargecurrentlimit", cmd_charge_current_limit},
-	{"cpupower", cmd_cpu_power},
+	{"fanmode", cmd_fan_mode},
 	{"chargecontrol", cmd_charge_control},
 	{"chargeoverride", cmd_charge_port_override},
 	{"chargestate", cmd_charge_state},

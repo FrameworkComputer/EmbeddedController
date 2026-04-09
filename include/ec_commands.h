@@ -6969,24 +6969,18 @@ struct ec_params_charger_control {
 
 /*****************************************************************************/
 /*
- * CPU Power command
- * Get/set CPU power limits
+ * Fan Mode command
+ * Get/set fan operating mode
  */
-#define EC_CMD_CPU_POWER 0x03D5
+#define EC_CMD_FAN_MODE 0x03D5
 
-struct ec_params_cpu_power {
-	uint32_t pl1_mW;  /* PL1 power in milliwatts (0 = query only) */
-	uint32_t pl2_mW;  /* PL2 power in milliwatts (0 = query only) */
-	uint32_t pl4_mW;  /* PL4 power in milliwatts (0 = query only) */
-	uint32_t psys_mW; /* Psys power in milliwatts (0 = query only) */
-} __ec_align4;
+struct ec_params_fan_mode {
+	uint8_t mode;  /* 0=silent, 1=normal, 2=extreme */
+} __ec_align1;
 
-struct ec_response_cpu_power {
-	uint32_t pl1_mW;	/* Current PL1 in mW */
-	uint32_t pl2_mW;	/* Current PL2 in mW */
-	uint32_t pl4_mW;	/* Current PL4 in mW */
-	uint32_t psys_mW;	/* Current Psys in mW */
-} __ec_align4;
+struct ec_response_fan_mode {
+	uint8_t mode;  /* Current fan mode */
+} __ec_align1;
 
 /****************************************************************************/
 /*
