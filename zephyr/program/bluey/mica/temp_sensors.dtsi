@@ -1,4 +1,4 @@
-/* Copyright 2025 The ChromiumOS Authors
+/* Copyright 2026 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,106 +8,61 @@
 / {
 	named-adc-channels {
 
-		adc_temp_backcov: backcov {
+		adc_temp_cpu: cpu {
 			enum-name = "ADC_TEMP_SENSOR_1";
 			io-channels = <&adc0 0>;
 		};
-		adc_temp_keyboard: keyboard {
+		adc_temp_pmc: pmc_otp {
 			enum-name = "ADC_TEMP_SENSOR_2";
 			io-channels = <&adc0 1>;
 		};
-		adc_temp_cpu: cpu {
+		adc_temp_ddr: ddr {
 			enum-name = "ADC_TEMP_SENSOR_3";
 			io-channels = <&adc0 2>;
 		};
-		adc_temp_wlan: wlan {
+		adc_temp_sub_board: sub_board {
 			enum-name = "ADC_TEMP_SENSOR_4";
 			io-channels = <&adc0 3>;
 		};
-		adc_temp_qtm_r: qtm_r {
-			enum-name = "ADC_TEMP_SENSOR_5";
-			io-channels = <&adc0 4>;
-		};
-		adc_temp_charger: charger {
-			enum-name = "ADC_TEMP_SENSOR_6";
-			io-channels = <&adc0 5>;
-		};
-		adc_temp_qtm_l: qtm_l {
-			enum-name = "ADC_TEMP_SENSOR_7";
-			io-channels = <&adc0 6>;
-		};
-		adc_temp_usb: usb {
-			enum-name = "ADC_TEMP_SENSOR_8";
-			io-channels = <&adc0 7>;
-		};
 	};
 
-	temp_sensor_backcov: backcov {
-		compatible = "cros-ec,temp-sensor-thermistor";
-		thermistor = <&thermistor_3V3_100K_100K_4250B>;
-		adc = <&adc_temp_backcov>;
-	};
-	temp_sensor_keyboard: keyboard {
-		compatible = "cros-ec,temp-sensor-thermistor";
-		thermistor = <&thermistor_3V3_100K_100K_4250B>;
-		adc = <&adc_temp_keyboard>;
-	};
 	temp_sensor_cpu: cpu {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_100K_100K_4250B>;
 		adc = <&adc_temp_cpu>;
 	};
-	temp_sensor_wlan: wlan {
+	temp_sensor_pmc: pmc_otp {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_100K_100K_4250B>;
-		adc = <&adc_temp_wlan>;
+		adc = <&adc_temp_pmc>;
 	};
-	temp_sensor_qtm_r: qtm_r {
+	temp_sensor_ddr: ddr {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_100K_100K_4250B>;
-		adc = <&adc_temp_qtm_r>;
+		adc = <&adc_temp_ddr>;
 	};
-	temp_sensor_charger: charger {
+	temp_sensor_sub_board: sub_board {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_100K_100K_4250B>;
-		adc = <&adc_temp_charger>;
-	};
-	temp_sensor_qtm_l: qtm_l {
-		compatible = "cros-ec,temp-sensor-thermistor";
-		thermistor = <&thermistor_3V3_100K_100K_4250B>;
-		adc = <&adc_temp_qtm_l>;
-	};
-	temp_sensor_usb: usb {
-		compatible = "cros-ec,temp-sensor-thermistor";
-		thermistor = <&thermistor_3V3_100K_100K_4250B>;
-		adc = <&adc_temp_usb>;
+		adc = <&adc_temp_sub_board>;
 	};
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		temp_backcov: backcov {
-			sensor = <&temp_sensor_backcov>;
-		};
-		temp_keyboard: keyboard {
-			sensor = <&temp_sensor_keyboard>;
-		};
 		temp_cpu: cpu {
+			temp-host-high = <85>;
+			temp-host-halt = <90>;
+			temp-host-release-high = <80>;
 			sensor = <&temp_sensor_cpu>;
 		};
-		temp_wlan: wlan {
-			sensor = <&temp_sensor_wlan>;
+		temp_pmc: pmc_otp {
+			sensor = <&temp_sensor_pmc>;
 		};
-		temp_qtm_r: qtm_r {
-			sensor = <&temp_sensor_qtm_r>;
+		temp_ddr: ddr {
+			sensor = <&temp_sensor_ddr>;
 		};
-		temp_charger: charger {
-			sensor = <&temp_sensor_charger>;
-		};
-		temp_qtm_l: qtm_l {
-			sensor = <&temp_sensor_qtm_l>;
-		};
-		temp_usb: usb {
-			sensor = <&temp_sensor_usb>;
+		temp_sub_board: sub_board {
+			sensor = <&temp_sensor_sub_board>;
 		};
 	};
 };
@@ -120,10 +75,6 @@
 	pinctrl-0 = <&adc0_chan0_gp45
 		&adc0_chan1_gp44
 		&adc0_chan2_gp43
-		&adc0_chan3_gp42
-		&adc0_chan4_gp41
-		&adc0_chan5_gp37
-		&adc0_chan6_gp34
-		&adc0_chan7_gpe1>;
+		&adc0_chan3_gp42>;
 	pinctrl-names = "default";
 };
