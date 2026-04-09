@@ -1183,13 +1183,15 @@ static void process_ac_change(const int chgnum)
 
 /* Handle a change in the battery-present state */
 static void process_battery_present_change(const struct charger_info *info,
-					   int chgnum)
+					   int chgnum, int prev_bf)
 {
 	prev_bp = curr.batt.is_present;
 
-	if (curr.batt.is_present && IS_ENABLED(CONFIG_BATTERY_FUEL_GAUGE)) {
+	if ((prev_bf & BATT_FLAG_RESPONSIVE) == 0 &&
+	    (curr.batt.flags & BATT_FLAG_RESPONSIVE) &&
+	    IS_ENABLED(CONFIG_BATTERY_FUEL_GAUGE)) {
 		/* Identify the attached battery. */
-		CPRINTS("Battery now present");
+		CPRINTS("Battery now responsive");
 		init_battery_type();
 	}
 
@@ -1518,7 +1520,7 @@ void charger_task(void *u)
 				prev_bp, curr.batt.is_present,
 				prev_bf & BATT_FLAG_RESPONSIVE,
 				curr.batt.flags & BATT_FLAG_RESPONSIVE);
-			process_battery_present_change(info, chgnum);
+			process_battery_present_change(info, chgnum, prev_bf);
 			need_static = (curr.batt.is_present == BP_YES);
 		}
 		prev_bf = curr.batt.flags;
