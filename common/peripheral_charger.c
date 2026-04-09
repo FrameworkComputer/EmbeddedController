@@ -555,7 +555,6 @@ static void pchg_state_charging(struct pchg *ctx)
 		break;
 	case PCHG_EVENT_CHARGE_UPDATE:
 		if (ctx->battery_percent >= ctx->cfg->full_percent) {
-			CPRINTS("full strategy start");
 			board_pchg_full_strategy();
 		}
 		break;
