@@ -93,18 +93,18 @@ class UartSerial:
             ],
             "end_of_input": LF,
         },
-        # EC legacy
+        # EC legacy and EC Zephyr
         {
             "prompt": ">",
-            "device_type": "EC(legacy)",
+            "device_type": "EC",
             "prepare_cmd": ["chan save", "chan 0"],  # Disable console message
-            "cleanup_cmd": ["", "chan restore"],
+            "cleanup_cmd": ["x", "", "chan restore"],
             "end_of_input": CRLF,
         },
-        # EC Zephyr
+        # For a while the zephyr prompt didn't have > in it.
         {
             "prompt": "ec:~$",
-            "device_type": "EC(Zephyr)",
+            "device_type": "EC(Zephyr Old)",
             "prepare_cmd": ["chan save", "chan 0"],  # Disable console message
             "cleanup_cmd": ["x", "", "chan restore"],
             "end_of_input": CRLF,
