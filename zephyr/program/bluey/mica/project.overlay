@@ -23,6 +23,16 @@
 #include "keyboard.dtsi"
 #include "temp_sensors.dtsi"
 
+/ {
+	gpio-interrupts {
+		int_prochot: prochot {
+			irq-pin = <&gpio_ec_sys_throttle_mira>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "throttle_ap_prochot_input_interrupt";
+		};
+	};
+};
+
 /* mica overrides follow... */
 &cbi_flash {
 	/*
