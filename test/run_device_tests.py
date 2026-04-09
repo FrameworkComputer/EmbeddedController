@@ -1883,6 +1883,14 @@ def flash_and_run_test(
 
     logging.debug("image_path: %s", image_path)
 
+    if image_path is None or not os.path.exists(image_path):
+        logging.error(
+            "Failed to locate built image for test %s. "
+            "The test might have been skipped or failed to build.",
+            test.test_name,
+        )
+        return False
+
     if test.ro_image is not None:
         # Use the RO specified by the test. Replace KEY_RO and EC_RW (which
         # encompasses both RW_FW and SIG_RW) in the RO image. This better
