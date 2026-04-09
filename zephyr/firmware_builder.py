@@ -92,7 +92,6 @@ BINARY_SIZE_REGIONS = [
 
 # Unused boards that are expected to be unused, such as dev boards.
 UNUSED_BOARDS = {
-    "dev-posix",
     "it8xxx2_evb",
     "it82002_evb",
     "minimal-posix",
