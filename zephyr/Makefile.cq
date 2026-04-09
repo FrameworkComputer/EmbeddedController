@@ -10,7 +10,7 @@
 # This also assumes that you ran zmake build -a before this in the build stage
 
 TWISTER_COMMAND=cd $(PLATFORM_EC) && ./twister --outdir \
-	twister-out-$(TOOLCHAIN) -v -i --no-upload-cros-rdb --toolchain \
+	twister-out-$(TOOLCHAIN_PATH) -v -i --no-upload-cros-rdb --toolchain \
 	$(TOOLCHAIN)
 ifdef COVERAGE
 TWISTER_COMMAND+=--coverage --coverage-formats=lcov
@@ -96,15 +96,18 @@ endif
 zephyr_check_compliance_unittest:
 	$(PLATFORM_EC)/util/zephyr_check_compliance_unittest.py
 
-twister_host $(PLATFORM_EC)/twister-out-host/coverage.info: TOOLCHAIN=host
+twister_host $(PLATFORM_EC)/twister-out-host/coverage.info: TOOLCHAIN=host/gnu
+twister_host $(PLATFORM_EC)/twister-out-host/coverage.info: TOOLCHAIN_PATH=host
 twister_host $(PLATFORM_EC)/twister-out-host/coverage.info:
 	+$(TWISTER_COMMAND)
 
-twister_llvm $(PLATFORM_EC)/twister-out-llvm/coverage.info: TOOLCHAIN=llvm
+twister_llvm $(PLATFORM_EC)/twister-out-llvm/coverage.info: TOOLCHAIN=host/llvm
+twister_llvm $(PLATFORM_EC)/twister-out-llvm/coverage.info: TOOLCHAIN_PATH=llvm
 twister_llvm $(PLATFORM_EC)/twister-out-llvm/coverage.info:
 	+$(TWISTER_COMMAND)
 
 twister_coreboot_sdk: TOOLCHAIN=coreboot-sdk
+twister_coreboot_sdk: TOOLCHAIN_PATH=coreboot-sdk
 twister_coreboot_sdk:
 	+$(TWISTER_COMMAND) -p it8xxx2/it82002aw -p npcx9/npcx9m7f -p realtek/rts5912
 

@@ -11,3 +11,5 @@ set(LINKER ld)
 endif()
 
 set(TOOLCHAIN_HAS_LIBCXX ON CACHE BOOL "True if toolchain supports libc++")
+
+set(TOOLCHAIN_VARIANT_COMPILER llvm CACHE STRING "Variant compiler being used")

@@ -30,4 +30,4 @@ config NEWLIB_LIBC_SUPPORTED
         select FULL_LIBC_SUPPORTED
 
 # Include LLVM Kconfig from Zephyr
-source "${ZEPHYR_BASE}/cmake/toolchain/llvm/Kconfig"
+source "${ZEPHYR_BASE}/cmake/toolchain/host/llvm/Kconfig"

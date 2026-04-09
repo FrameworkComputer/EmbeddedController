@@ -308,18 +308,18 @@ def main():
         "--toolchain",
         default=os.environ.get(
             "ZEPHYR_TOOLCHAIN_VARIANT",
-            "llvm" if in_cros_sdk() else "host",
+            "host/llvm" if in_cros_sdk() else "host/gnu",
         ),
     )
     parser.add_argument(
-        "--gcc", dest="toolchain", action="store_const", const="host"
+        "--gcc", dest="toolchain", action="store_const", const="host/gnu"
     )
     parser.add_argument(
         "--llvm",
         "--clang",
         dest="toolchain",
         action="store_const",
-        const="llvm",
+        const="host/llvm",
     )
     parser.add_argument(
         "--coreboot",
@@ -428,13 +428,13 @@ def main():
                 protoc_path_obj.parent.parent
             )
         gcov_tool = None
-        if intercepted_args.toolchain == "host":
+        if intercepted_args.toolchain == "host/gnu":
             gcov_tool = "gcov"
             # Inside the chroot, the binutils is still at v2.36 and does not
             # support the -no-pie flag with the linker and generates warnings.
             # Disable warnings as errors for the GCC toolchain only.
             twister_cli.extend(["--disable-warnings-as-errors"])
-        elif intercepted_args.toolchain == "llvm":
+        elif intercepted_args.toolchain == "host/llvm":
             gcov_tool = str(ec_base / "util" / "llvm-gcov.sh")
         else:
             print("Unknown toolchain specified:", intercepted_args.toolchain)
