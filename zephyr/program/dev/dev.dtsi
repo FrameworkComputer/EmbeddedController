@@ -116,11 +116,6 @@
 		dev-name = "AC17A8M";
 	};
 
-	bmi_i2c: bmi@68 {
-		compatible = "bosch,bmi160";
-		reg = <0x68>;
-	};
-
 	isl923x_emul: isl923x@9 {
 		compatible = "cros,isl923x-emul";
 		status = "okay";
