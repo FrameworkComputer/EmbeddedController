@@ -1500,6 +1500,7 @@ def build_zephyr_upstream(
     cmd = cmd + ["-O"] + [ZEPHYR_TWISTER_BUILD_DIR]
     cmd = cmd + ["-s"] + [test_name]
     cmd = cmd + ["--no-upload-cros-rdb"]
+    cmd = cmd + ["--force-toolchain"]
 
     for config in zephyr_extra_configs:
         cmd.extend(["-x", config])
