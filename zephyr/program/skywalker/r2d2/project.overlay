@@ -38,6 +38,11 @@
 			flags = <GPIO_INT_EDGE_RISING>;
 			handler = "pen_fault_interrupt";
 		};
+		int_pmic_ec_resetb: pmic-ec-resetb {
+			irq-pin = <&gpio_pmic_ec_resetb>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "pmic_ec_resetb_interrupt";
+		};
 	};
 
 	named-gpios {
@@ -45,6 +50,7 @@
 		/delete-node/ en_usb_c0_dev_mode;
 		/delete-node/ usb_c1_dp_hpd;
 		/delete-node/ dp_aux_path_sel;
+		/delete-node/ en_pp5000_z1;
 
 		usb_a0_fault_odl: usb_a0_fault_odl {
 			gpios = <&gpiof 2 GPIO_INPUT>;
@@ -55,6 +61,17 @@
 		ec_pen_chg_dis_odl: ec_pen_chg_dis_odl {
  			gpios = <&gpioe 4 GPIO_ODR_HIGH>;
 		};
+		gpio_ec_pmic_en_odl_r: ec_pmic_en_odl_r {
+			gpios = <&gpio7 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+			enum-name = "GPIO_EC_PMIC_EN_ODL";
+		};
+		gpio_en_pwr_s3: en_pwr_s3 {
+			gpios = <&gpioc 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		//CCD_MODE_L
+		gpio_ccd_mode_l: ccd_mode_l {
+			gpios = <&gpioe 5 (GPIO_INPUT)>;
+		};
 	};
 
 	unused-pins {
@@ -62,7 +79,10 @@
 		unused-gpios =
 			<&gpioc 6 GPIO_INPUT_PULL_DOWN>,
 			<&gpiob 7 GPIO_INPUT_PULL_DOWN>,
-			<&gpio7 2 GPIO_INPUT_PULL_DOWN>;
+			<&gpio7 2 GPIO_INPUT_PULL_DOWN>,
+			<&gpio3 4 GPIO_INPUT_PULL_DOWN>,
+			<&gpio8 0 GPIO_INPUT_PULL_DOWN>,
+			<&gpiod 7 GPIO_INPUT_PULL_DOWN>;
 	};
 
 	batteries {
