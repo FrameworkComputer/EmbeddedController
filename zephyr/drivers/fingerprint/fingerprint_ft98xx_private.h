@@ -141,7 +141,7 @@ int ft_sensor_set_mode(int mode);
  */
 int ft_sensor_acquire_image_with_mode(uint8_t *img, int mode);
 
-#define LIBFP_API_VERSION "v5.1.2"
+#define LIBFP_API_VERSION "v5.2.8"
 
 /** @brief Print function callback type */
 typedef void (*PRINT_FUNC)(const char *tag, int level, const char *file,
@@ -398,4 +398,13 @@ int focal_algo_set_buffer(uint16_t *raw_buf, uint8_t *isp_buf,
 int focal_algo_get_finger_detailed_info(int *finger_size, int *sub_tpl_size,
 					int *header_size);
 
+/**
+ * @brief Anti-spoofing. Predict current fingerprint(raw data) is real or not.
+ *
+ * @param[in]     raw_data         fingerprint raw diff data
+ *
+ * @retval 0      real fingerprint
+ * @retval others fake fingerprint
+ */
+int focal_algo_anti_spoofing(uint16_t *raw_data);
 #endif /* ZEPHYR_DRIVERS_FINGERPRINT_FT98XX_PRIVATE_H_ */

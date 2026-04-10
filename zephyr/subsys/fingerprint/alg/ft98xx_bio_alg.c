@@ -36,7 +36,7 @@ static int ft98xx_algorithm_init(const struct fingerprint_algorithm *const alg)
 		.algo_size_limit = FT_ALGO_SIZE,
 		.max_template_num = MAX_SUBTEMPLATE_COUNT_PER_FINGER,
 		.enroll_template_num = SINGLE_FINGER_ENROLL_NUM,
-		.enroll_similarity_enable = 2,
+		.enroll_similarity_enable = 3,
 		.enroll_duplicated_finger_enable = 1,
 		.image_quality_enable = 1,
 		.update_template_enable = 1,
@@ -48,7 +48,7 @@ static int ft98xx_algorithm_init(const struct fingerprint_algorithm *const alg)
 		.verify_quality_thr = 10,
 		.verify_area_thr = 40,
 		.use_desp_speed_up = 1,
-		.enroll_reject_thr = 10,
+		.enroll_reject_thr = 30,
 		.enroll_continue_fail_thr = 3,
 		.far_level = 1,
 		.log_level = 1,
@@ -216,8 +216,14 @@ static int ft98xx_match(const struct fingerprint_algorithm *const alg,
 		LOG_DBG("identify : %d %d", ret, update_flag);
 		if (ret == 0) {
 			/*match*/
-			*match_index = i;
+			ret = focal_algo_anti_spoofing((uint16_t *)image);
+			if (ret != 0) {
+				/*fake fingerprint*/
+				LOG_ERR("got fake fingerprint: %d", ret);
+				return FP_MATCH_RESULT_NO_MATCH;
+			}
 
+			*match_index = i;
 			if (update_flag && template_update) {
 				/*update template*/
 				ret = focal_algo_update_template_by_feature(
