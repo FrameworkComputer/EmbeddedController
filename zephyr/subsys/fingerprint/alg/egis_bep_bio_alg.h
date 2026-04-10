@@ -52,7 +52,8 @@ __staticlib int bio_algorithm_exit(void);
  * The algorithm library can update templates with additional biometric data
  * from the image, if it chooses to do so. The updated template(s) will be
  * indicated by the out parameter 'updated_templates', a bit-field where
- * updated template(s) indicated by the corresponding bit being set
+ * updated template(s) indicated by the corresponding bit being set. If the
+ * parameter `updated_templates` is null, will disable updating template(s).
  * Returns:
  * - negative value on error
  * - BIO_TEMPLATE_NO_MATCH on non-match
