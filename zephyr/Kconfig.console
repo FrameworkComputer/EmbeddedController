@@ -87,6 +87,12 @@ config PLATFORM_EC_SOC_IT8XXX2_CONSOLE_BUF_H2RAM_SHARED
 	  without reducing other task stack sizes, by reusing the available
 	  H2RAM gap space for console-related buffers.
 
+config PLATFORM_EC_HOSTCMD_CONSOLE_EVENT
+	bool "Host event console logs"
+	depends on PLATFORM_EC_HOSTCMD
+	help
+	  Signal new console logs with a host event.
+
 endif # PLATFORM_EC_HOSTCMD_CONSOLE
 
 menuconfig PLATFORM_EC_CONSOLE_DEBUG

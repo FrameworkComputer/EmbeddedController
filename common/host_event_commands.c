@@ -321,7 +321,10 @@ void host_set_events(host_event_t mask)
 	if (!((events & mask) != mask || (events_copy_b & mask) != mask))
 		return;
 
-	HOST_EVENT_CPRINTS("event set", mask);
+	/* Do not print a console event to avoid a printing loop. */
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE_EVENT) ||
+	    (mask != EC_HOST_EVENT_MASK(EC_HOST_EVENT_CONSOLE_LOGS)))
+		HOST_EVENT_CPRINTS("event set", mask);
 
 	if (!IS_ENABLED(CONFIG_ZTEST) &&
 	    (mask & EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_RECOVERY)))
@@ -368,7 +371,10 @@ void host_clear_events(host_event_t mask)
 	if (!(events & mask))
 		return;
 
-	HOST_EVENT_CPRINTS("event clear", mask);
+	/* Do not print a console event to avoid a printing loop. */
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE_EVENT) ||
+	    (mask != EC_HOST_EVENT_MASK(EC_HOST_EVENT_CONSOLE_LOGS)))
+		HOST_EVENT_CPRINTS("event clear", mask);
 
 	host_events_atomic_clear(&events, mask);
 
@@ -414,8 +420,12 @@ DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_HOST_EVENT64, host_get_next_event64);
 void host_clear_events_b(host_event_t mask)
 {
 	/* Only print if something's about to change */
-	if (events_copy_b & mask)
-		HOST_EVENT_CPRINTS("event clear B", mask);
+	if (events_copy_b & mask) {
+		/* Do not print a console event to avoid a printing loop. */
+		if (!IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE_EVENT) ||
+		    (mask != EC_HOST_EVENT_MASK(EC_HOST_EVENT_CONSOLE_LOGS)))
+			HOST_EVENT_CPRINTS("event clear B", mask);
+	}
 
 	host_events_atomic_clear(&events_copy_b, mask);
 }

@@ -6,6 +6,9 @@
 #include "builtin/stdio.h"
 #include "console.h"
 #include "ec_commands.h"
+#include "host_command.h"
+#include "lpc.h"
+#include "power.h"
 #include "test/drivers/test_state.h"
 #include "uart.h"
 
@@ -52,6 +55,51 @@ ZTEST_USER(console, test_buf_notify_null)
 	zassert_equal(0, strncmp(buffer, "abc", 4), "got '%s'", buffer);
 	zassert_equal(write_count, 4, "got %d", write_count);
 }
+
+#ifdef CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE_EVENT
+ZTEST_USER(console, test_buf_notify_event)
+{
+	size_t consumed_count;
+	uint32_t feature1 = get_feature_flags1();
+
+#ifdef CONFIG_HOSTCMD_X86
+	lpc_set_host_event_mask(
+		LPC_HOST_EVENT_ALWAYS_REPORT,
+		lpc_override_always_report_mask() |
+			EC_HOST_EVENT_MASK(EC_HOST_EVENT_CONSOLE_LOGS));
+#endif
+
+#ifdef CONFIG_AP_POWER_CONTROL
+	/* Force power state S0 */
+	power_set_state(POWER_S0);
+	test_power_common_state();
+	zassert_equal(POWER_S0, power_get_state());
+#endif /* CONFIG_AP_POWER_CONTROL */
+
+	/* Make sure the console feature is supported. */
+	zassert_true(feature1 &
+		     EC_FEATURE_MASK_1(EC_FEATURE_CONSOLE_LOG_EVENT));
+
+	/* Flush the console buffer before we start. */
+	zassert_ok(uart_console_read_buffer_init(), NULL);
+
+	/* Make sure console event is cleared. */
+	zassert_false(host_is_event_set(EC_HOST_EVENT_CONSOLE_LOGS));
+
+	/* Write a testing string to the buffer. */
+	consumed_count = console_buf_notify_chars("test\n", 5);
+
+	/* Check if all bytes were consumed by console buffer */
+	zassert_equal(consumed_count, 5, "got %d", consumed_count);
+
+	/* Make sure console event is set. */
+	zassert_true(host_is_event_set(EC_HOST_EVENT_CONSOLE_LOGS));
+	/* Reinit once again. */
+	zassert_ok(uart_console_read_buffer_init(), NULL);
+	/* Make sure console event is cleared. */
+	zassert_false(host_is_event_set(EC_HOST_EVENT_CONSOLE_LOGS));
+}
+#endif /* CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE_EVENT */
 
 ZTEST_USER(console, test_console_read_buffer_invalid_type)
 {

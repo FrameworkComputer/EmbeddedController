@@ -6,8 +6,12 @@
 #include "common.h"
 #include "console.h"
 #include "ec_commands.h"
+#include "host_command.h"
+#include "power.h"
 
 #include <zephyr/kernel.h>
+
+#include <subsys/usbd_service.h>
 
 #ifdef CONFIG_PLATFORM_EC_SOC_IT8XXX2_CONSOLE_BUF_H2RAM_SHARED
 extern uint8_t h2ram_pool[];
@@ -32,6 +36,38 @@ static uint32_t current_snapshot_idx;
 static uint32_t read_next_idx;
 static uint32_t head_idx;
 static uint32_t tail_idx;
+#ifdef CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE_EVENT
+/* Guarded with console_write_lock */
+static bool new_console_log;
+
+void console_log_notify_host(char new_char)
+{
+	/* Inform about every new line, not to send event every char. */
+	if (new_char == '\n') {
+		/* Avoid waking the host from a low-power state for console
+		 * logs.
+		 */
+		bool wake_host = true;
+#ifdef CONFIG_AP_POWER_CONTROL
+		if (power_get_state() != POWER_S0) {
+			wake_host = false;
+		}
+#endif /* CONFIG_AP_POWER_CONTROL */
+#ifdef CONFIG_EC_HOST_CMD_BACKEND_USB
+		if (usb_is_suspended()) {
+			wake_host = false;
+		}
+#endif /* CONFIG_EC_HOST_CMD_BACKEND_USB */
+		if (!new_console_log && wake_host) {
+			/* Set the host event once since last snapshot not to
+			 * spam events e.g. in case host doesn't read the logs.
+			 */
+			new_console_log = true;
+			host_set_single_event(EC_HOST_EVENT_CONSOLE_LOGS);
+		}
+	}
+}
+#endif
 
 static inline uint32_t next_idx(uint32_t cur_idx)
 {
@@ -73,6 +109,11 @@ size_t console_buf_notify_chars(const char *s, size_t len)
 			read_next_idx = next_idx(read_next_idx);
 
 		console_buf[tail_idx] = *s++;
+
+#ifdef CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE_EVENT
+		console_log_notify_host(console_buf[tail_idx]);
+#endif /* CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE_EVENT */
+
 		tail_idx = new_tail;
 	}
 	k_mutex_unlock(&console_write_lock);
@@ -97,6 +138,11 @@ enum ec_status uart_console_read_buffer_init(void)
 	 * snapshot
 	 */
 	current_snapshot_idx = tail_idx;
+
+#ifdef CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE_EVENT
+	new_console_log = false;
+	host_clear_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_CONSOLE_LOGS));
+#endif /* CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE_EVENT */
 
 	k_mutex_unlock(&console_write_lock);
 
