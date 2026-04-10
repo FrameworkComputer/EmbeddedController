@@ -7,6 +7,13 @@
 
 
 / {
+	aliases {
+		/*
+		 * Interrupt bindings for sensor devices.
+		 */
+		lis2dw12-int = &alt_base_accel;
+	};
+
 	/*
 	 * Declare mutexes used by sensor drivers.
 	 * A mutex node is used to create an instance of mutex_t.
@@ -55,6 +62,14 @@
 			compatible = "cros-ec,drvdata-lis2de";
 			status = "okay";
 		};
+		lis2dw12_base_data: lis2dw12-base-drv-data {
+			compatible = "cros-ec,drvdata-lis2dw12";
+			status = "okay";
+		};
+		lis2dh_lid_data: lis2dh-lid-drv-data {
+			compatible = "cros-ec,drvdata-lis2de";
+			status = "okay";
+		};
 	};
 
 	/*
@@ -98,6 +113,54 @@
 			default-range = <2>;
 			drv-data = <&lis2de12_base_data>;
 			i2c-spi-addr-flags = "LIS2DH_ADDR1_FLAGS";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+	};
+
+	motionsense-sensor-alt {
+		alt_lid_accel: alt-lid-accel {
+			compatible = "cros-ec,lis2de";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex>;
+			port = <&i2c_ec_i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref>;
+			default-range = <2>;
+			drv-data = <&lis2dh_lid_data>;
+			i2c-spi-addr-flags = "LIS2DH_ADDR0_FLAGS";
+			alternate-for = <&lid_accel>;
+			alternate-ufsc-indicator = <&ufsc_lid_lis2dh12>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
+		alt_base_accel: alt-base-accel {
+			compatible = "cros-ec,lis2dw12";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex>;
+			port = <&i2c_ec_i2c_sensor>;
+			rot-standard-ref = <&base_rot_ref>;
+			default-range = <2>;
+			drv-data = <&lis2dw12_base_data>;
+			i2c-spi-addr-flags = "LIS2DWL_ADDR1_FLAGS";
+			alternate-for = <&base_accel>;
+			alternate-ufsc-indicator = <&ufsc_base_lis2dw12>;
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";

@@ -8,8 +8,8 @@
 	named-gpios {
 		compatible = "named-gpios";
 
-		gpio_acc_int_l: acc_int_l {
-			gpios = <&gpio0 5 GPIO_INPUT>;
+		gpio_acc_mb_int_l: acc_mb_int_l {
+			gpios = <&gpio0 6 GPIO_INPUT>;
 		};
 
 		ec_entering_rw {
