@@ -101,11 +101,11 @@ if(CONFIG_PICOLIBC AND NOT CONFIG_PICOLIBC_USE_MODULE)
   ##########################################################################################################
 
   # Add picolibc
-  message(INFO "Setting TOOLCHAIN_HAS_PICOLIBC to support full build.")
+  message(INFO " Setting TOOLCHAIN_HAS_PICOLIBC to support full build.")
   set(TOOLCHAIN_HAS_PICOLIBC ON CACHE BOOL "True if toolchain supports picolibc")
 
   # Add newlib
-  message(INFO "Setting TOOLCHAIN_HAS_NEWLIB to support full build.")
+  message(INFO " Setting TOOLCHAIN_HAS_NEWLIB to support full build.")
   set(TOOLCHAIN_HAS_NEWLIB ON CACHE BOOL "True if toolchain supports newlib")
 endif()
 
