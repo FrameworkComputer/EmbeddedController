@@ -116,5 +116,9 @@ config BOARD_EM32F967
 	help
 	  Build the FPMCU board based on EM32F967 chip.
 
+# Make NUM_IRQS configurable, bloonchipper needs to override it.
+config NUM_IRQS
+	int "Maximun number of IRQs"
+
 rsource "et171/Kconfig"
 source "Kconfig.zephyr"
