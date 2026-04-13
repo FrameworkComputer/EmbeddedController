@@ -34,7 +34,7 @@ ZTEST(logging, test_ec_timestamp)
 	zassert_true(err > 0);
 
 	log_output_process(&log_output, 42 * USEC_PER_SEC + 123456, NULL, NULL,
-			   NULL, LOG_LEVEL_INF, package, NULL, 0,
+			   NULL, 0, LOG_LEVEL_INF, package, NULL, 0,
 			   LOG_OUTPUT_FLAG_TIMESTAMP);
 
 	mock_output_buffer[mock_output_len] = '\0';
