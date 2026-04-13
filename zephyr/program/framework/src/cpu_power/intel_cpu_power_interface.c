@@ -511,9 +511,9 @@ void update_soc_power_limit_boot(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, update_soc_power_limit_boot, HOOK_PRIO_DEFAULT);
 
-void update_chipset_ready(int status)
+void update_chipset_ready(bool ready)
 {
-	chipset_ready = status;
+	chipset_ready = ready;
 }
 
 static void clear_chipset_ready(void)

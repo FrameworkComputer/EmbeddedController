@@ -75,9 +75,9 @@ static int update_peak_package_power_limit(uint32_t mwatt)
 	return sb_rmi_mailbox_xfer(SB_RMI_WRITE_P3T_LIMIT_CMD, msgIn, &msgOut);
 }
 
-void update_chipset_ready(int status)
+void update_chipset_ready(bool ready)
 {
-	chipset_ready = status;
+	chipset_ready = ready;
 }
 
 int get_chipset_ready(void)
