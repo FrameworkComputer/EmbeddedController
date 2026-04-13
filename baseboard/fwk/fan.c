@@ -104,9 +104,9 @@ int fan_rpm_to_percent(int fan, int rpm)
 		 * if we want a performance mode we can tweak this
 		 * to get a few more % of fan speed to unlock additional
 		 * cooling TODO FRAMEWORK */
-		// FAN_HARDARE_MAX = 7100
-		// Tested max : 7900 RPM on flat surface, 8800 RPM when intake blocked
-		pct = (rpm - min) / ((FAN_HARDARE_MAX - min) / 100);
+		// original FAN_HARDARE_MAX = 7100
+		// Tested max : 7400 RPM on flat surface, 8500 RPM when intake blocked
+		pct = (rpm - min) / ((max - min) / 100);
 		/*CPRINTS(" Fan max min : %d , %d", max, min);*/
 	}
 	/*CPRINTS(" Fan PCT = %d ", pct);*/
@@ -185,7 +185,7 @@ void fan_set_rpm_target(int ch, int rpm)
 	rpm_setting[ch] = rpm;
 	if (chipset_in_state(CHIPSET_STATE_ON) && rpm == 0 &&
 		!timestamp_expired(fan_spindown_time, NULL)) {
-		rpm = 1200;
+		rpm = fans[0].rpm->rpm_min;
 	}
 
 	pct = fan_rpm_to_percent(ch, rpm);

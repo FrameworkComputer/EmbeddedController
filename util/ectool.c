@@ -94,7 +94,7 @@ const char help_str[] =
 	"  chargestate\n"
 	"      Handle commands related to charge state v2 (and later)\n"
 	"  cpupower\n"
-	"      Get CPU power limits (PL1, PL2, PL4, Psys)\n"
+	"      Get or set CPU power limits (PL1, PL2, PL4, default)\n"
 	"  chipinfo\n"
 	"      Prints chip info\n"
 	"  cmdversions <cmd>\n"
@@ -129,6 +129,8 @@ const char help_str[] =
 	"      Set the maximum external power limit\n"
 	"  fanduty <percent>\n"
 	"      Forces the fan PWM to a constant duty cycle\n"
+	"  fanmode [mode]\n"
+	"      Prints or sets fan curve profile\n"
 	"  flasherase <offset> <size>\n"
 	"      Erases EC flash\n"
 	"  flasheraseasync <offset> <size>\n"
@@ -597,6 +599,36 @@ static int cmd_fan_mode(int argc, char *argv[])
 	else
 		printf("Unknown fan mode: %d\n", r.mode);
 
+	return 0;
+}
+
+static int cmd_cpu_power(int argc, char *argv[])
+{
+	struct ec_params_cpu_power p = {};
+	struct ec_response_cpu_power r;
+	int rv;
+
+	/* A default reset is encoded as an all-zero payload. */
+	if (argc == 2 && !strcasecmp(argv[1], "default")) {
+		rv = ec_command(EC_CMD_CPU_POWER, 0, &p, sizeof(p), &r, sizeof(r));
+	} else if (argc >= 4) {
+		p.pl1_mW = strtol(argv[1], NULL, 0) * 1000;
+		p.pl2_mW = strtol(argv[2], NULL, 0) * 1000;
+		p.pl4_mW = strtol(argv[3], NULL, 0) * 1000;
+		rv = ec_command(EC_CMD_CPU_POWER, 0, &p, sizeof(p), &r, sizeof(r));
+	} else {
+		/* Query only */
+		rv = ec_command(EC_CMD_CPU_POWER, 0, NULL, 0, &r, sizeof(r));
+	}
+
+	if (rv < 0)
+		return rv;
+
+	printf("CPU Power Limits:\n");
+	printf("  PL1: %u W\n", r.pl1_mW / 1000);
+	printf("  PL2: %u W\n", r.pl2_mW / 1000);
+	printf("  PL4: %u W\n", r.pl4_mW / 1000);
+	printf("  Psys: %u W\n", r.psys_mW / 1000);
 	return 0;
 }
 
@@ -10163,6 +10195,7 @@ const struct command commands[] = {
 	{"chipinfo", cmd_chipinfo},
 	{"cmdversions", cmd_cmdversions},
 	{"console", cmd_console},
+	{"cpupower", cmd_cpu_power},
 	{"cec", cmd_cec},
 	{"echash", cmd_ec_hash},
 	{"eventclear", cmd_host_event_clear},

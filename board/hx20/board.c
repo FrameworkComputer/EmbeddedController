@@ -973,9 +973,9 @@ const struct fan_conf fan_conf_0 = {
 
 /* Default */
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 1800,
-	.rpm_start = 1800,
-	.rpm_max = 6800, /* Todo: Derate by -7% so all units have same performance */
+	.rpm_min = 1200,
+	.rpm_start = 1200,
+	.rpm_max = 7400,
 };
 
 const struct fan_t fans[FAN_CH_COUNT] = {

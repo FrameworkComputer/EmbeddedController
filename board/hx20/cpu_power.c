@@ -21,11 +21,23 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define POWER_LIMIT_1_W	50
+// Loaded on EC reset
+#define POWER_LIMIT_1_W_DEFAULT	40
+#define POWER_LIMIT_2_W_DEFAULT	64
+#define POWER_LIMIT_4_W_DEFAULT	121
 
-static int pl1_watt;
-static int pl2_watt;
-static int pl4_watt;
+// Loaded by ectool command "cpupower default"
+#define POWER_LIMIT_1_W_USER_DEFAULT	28
+#define POWER_LIMIT_2_W_USER_DEFAULT	64
+#define POWER_LIMIT_4_W_USER_DEFAULT	121
+
+static int POWER_LIMIT_1_W = POWER_LIMIT_1_W_DEFAULT;
+static int POWER_LIMIT_2_W = POWER_LIMIT_2_W_DEFAULT;
+static int POWER_LIMIT_4_W = POWER_LIMIT_4_W_DEFAULT;
+
+static int pl1_watt = POWER_LIMIT_1_W_DEFAULT;
+static int pl2_watt = POWER_LIMIT_2_W_DEFAULT;
+static int pl4_watt = POWER_LIMIT_4_W_DEFAULT;
 static int psys_watt;
 bool manual_ctl;
 
@@ -47,6 +59,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	int pps_power_budget;
 	int battery_percent;
 
+	static int old_pl1_watt = -1;
 	static int old_pl2_watt = -1;
 	static int old_pl4_watt = -1;
 	static int old_psys_watt = -1;
@@ -72,23 +85,23 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		psys_watt = ((active_power * 95) / 100) - pps_power_budget;
 	} else {
 		/* ADP > 55W and Battery percentage >= 30% */
-		pl2_watt = 64;
-		pl4_watt = 121;
+		pl1_watt = POWER_LIMIT_1_W;
+		pl2_watt = POWER_LIMIT_2_W;
+		pl4_watt = POWER_LIMIT_4_W;
 		/* psys watt = adp watt * 0.95 + battery watt(55 W) * 0.7 - pps power budget */
 		psys_watt = ((active_power * 95) / 100) + 39 - pps_power_budget;
 	}
 	if (pl2_watt != old_pl2_watt || pl4_watt != old_pl4_watt ||
-			psys_watt != old_psys_watt || force_update) {
+			psys_watt != old_psys_watt || force_update || 
+			pl1_watt != old_pl1_watt) {
+		old_pl1_watt = pl1_watt;
 		old_psys_watt = psys_watt;
 		old_pl4_watt = pl4_watt;
 		old_pl2_watt = pl2_watt;
 
-		pl1_watt = POWER_LIMIT_1_W;
-		if (manual_ctl == false) {
-			CPRINTS("Updating SOC Power Limits: PL2 %d, PL4 %d, Psys %d, Adapter %d",
-				pl2_watt, pl4_watt, psys_watt, active_power);
-			set_pl_limits(pl1_watt, pl2_watt, pl4_watt, psys_watt);
-		}
+		CPRINTS("Updating SOC Power Limits: PL1 %d, PL2 %d, PL4 %d, Psys %d, Adapter %d",
+			pl1_watt, pl2_watt, pl4_watt, psys_watt, active_power);
+		set_pl_limits(pl1_watt, pl2_watt, pl4_watt, psys_watt);
 	}
 }
 
@@ -179,3 +192,41 @@ static int cmd_fan_mode(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(fanmode, cmd_fan_mode,
 			"[silent|normal|extreme]",
 			"Set/Get fan mode");
+
+/* Host command handler for CPU power limits */
+static enum ec_status host_command_cpu_power(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_cpu_power *p = args->params;
+	struct ec_response_cpu_power *r = args->response;
+
+	/* If parameters provided, set the values */
+	if (args->params_size > 0 && p) {
+		/*
+		 * "default" from ectool is encoded as an all-zero payload.
+		 */
+		if (p->pl1_mW == 0 && p->pl2_mW == 0 && p->pl4_mW == 0) {
+			POWER_LIMIT_1_W = POWER_LIMIT_1_W_USER_DEFAULT;
+			POWER_LIMIT_2_W = POWER_LIMIT_2_W_USER_DEFAULT;
+			POWER_LIMIT_4_W = POWER_LIMIT_4_W_USER_DEFAULT;
+		} else {
+			if (p->pl1_mW != 0)
+				POWER_LIMIT_1_W = p->pl1_mW / 1000;
+			if (p->pl2_mW != 0)
+				POWER_LIMIT_2_W = p->pl2_mW / 1000;
+			if (p->pl4_mW != 0)
+				POWER_LIMIT_4_W = p->pl4_mW / 1000;
+		}
+		update_soc_power_limit(true, false);
+	}
+
+	/* Return current power limits in mW */
+	r->pl1_mW = pl1_watt * 1000;
+	r->pl2_mW = pl2_watt * 1000;
+	r->pl4_mW = pl4_watt * 1000;
+	r->psys_mW = psys_watt * 1000;
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_CPU_POWER, host_command_cpu_power, EC_VER_MASK(0));
