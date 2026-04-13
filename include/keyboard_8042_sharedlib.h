@@ -174,6 +174,7 @@ enum scancode_values {
 	SCANCODE_HOME = 0xe012, /* e02a in codeset 1 */
 	SCANCODE_INSERT = 0xe070, /* e052 in codeset 1 */
 	SCANCODE_SCREENLOCK = 0xe05d, /* e02b in codeset 1 */
+	SCANCODE_CONTEXTUAL_INSERT = 0xe01a, /* e02c in codeset 1 */
 
 	SCANCODE_UP = 0xe075,
 	SCANCODE_DOWN = 0xe072,
