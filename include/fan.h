@@ -124,6 +124,8 @@ int fan_get_count(void);
 
 void fan_set_count(int count);
 
+void fan_set_thermal_control_enabled(int fan, int enable);
+
 int is_thermal_control_enabled(int idx);
 
 #endif  /* __CROS_EC_FAN_H */

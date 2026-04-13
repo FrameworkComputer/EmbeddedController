@@ -15,6 +15,7 @@
 #include "math_util.h"
 #include "util.h"
 #include "ec_commands.h"
+#include "fan.h"
 #include "temp_sensor.h"
 
 
@@ -141,6 +142,7 @@ void update_thermal_params_for_mode(enum fan_mode mode)
 		thermal_params[TEMP_SENSOR_CPU].temp_fan_max = C_TO_K(69);
 	}
 	current_fan_mode = mode;
+	fan_set_thermal_control_enabled(0, 1); /* Re-enable thermal control to apply new settings */
 }
 
 /* Fan mode host command handler */
