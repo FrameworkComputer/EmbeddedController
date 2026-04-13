@@ -26,7 +26,7 @@
 #define FORCE_CLEAR_PROCHOT_MAGIC_NUMBER 255
 
 struct power_limit_details power_limit[FUNCTION_COUNT];
-static int apu_ready;
+static int chipset_ready;
 int target_func[TYPE_COUNT];
 bool manual_ctl;
 bool safety_pwr_logging;
@@ -77,24 +77,24 @@ static int update_peak_package_power_limit(uint32_t mwatt)
 
 void update_chipset_ready(int status)
 {
-	apu_ready = status;
+	chipset_ready = status;
 }
 
-int get_apu_ready(void)
+int get_chipset_ready(void)
 {
-	return apu_ready;
+	return chipset_ready;
 }
 
-static void clear_apu_ready(void)
+static void clear_chipset_ready(void)
 {
 	update_chipset_ready(0);
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, clear_apu_ready, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, clear_chipset_ready, HOOK_PRIO_DEFAULT);
 
 static void warmboot_clear_api_ready(void)
 {
 	if (chipset_in_state(CHIPSET_STATE_ON))
-		clear_apu_ready();
+		clear_chipset_ready();
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, warmboot_clear_api_ready, HOOK_PRIO_DEFAULT);
 
@@ -177,7 +177,7 @@ void update_cpu_power_limit_events(uint8_t event, int enable)
 		cpu_is_power = false;
 	}
 
-	if (!cpu_is_power || !apu_ready || (enable == FORCE_CLEAR_PROCHOT_MAGIC_NUMBER)) {
+	if (!cpu_is_power || !chipset_ready || (enable == FORCE_CLEAR_PROCHOT_MAGIC_NUMBER)) {
 		pre_power_limit_update_events = 0;
 		event = 0;
 		power_limit_update_events = 0;

@@ -83,7 +83,7 @@ static void amd_stt_handler(void)
 	/* STT interface is only active in S0 */
 	if (!chipset_in_state(CHIPSET_STATE_ON)
 #ifdef CONFIG_CUSTOMIZED_DESIGN
-	|| !get_apu_ready()
+	|| !get_chipset_ready()
 #endif
 	)
 		return;

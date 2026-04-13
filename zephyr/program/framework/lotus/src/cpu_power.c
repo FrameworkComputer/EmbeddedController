@@ -379,7 +379,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	if ((*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER)) == 0)
 		old_stt_table = 0;
 
-	if (!chipset_in_state(CHIPSET_STATE_ON) || !get_apu_ready()) {
+	if (!chipset_in_state(CHIPSET_STATE_ON) || !get_chipset_ready()) {
 		power_limit_clear_prochot(PROCHOT_CLEAR_REASON_NOT_POWER);
 		return;
 	}
