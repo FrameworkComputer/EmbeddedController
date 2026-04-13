@@ -30,7 +30,7 @@
 
 #define PECI_INDEX_POWER_LIMITS_PL1             0x1A
 #define PECI_PARAMS_POWER_LIMITS_PL1            0x0000
-#define PECI_PL1_CONTROL_TIME_WINDOWS           (0xDC << 16) /* 28 seconds */
+#define PECI_PL1_CONTROL_TIME_WINDOWS           (0xFF << 16) /* 28 seconds */
 #define PECI_PL1_POWER_LIMIT_ENABLE             (0x01 << 15)
 #define PECI_PL1_POWER_LIMIT(x)                 (x << 3)
 
@@ -42,7 +42,7 @@
 
 #define PECI_INDEX_POWER_LIMITS_PSYS_PL2        0x3B
 #define PECI_PARAMS_POWER_LIMITS_PSYS_PL2       0x0000
-#define PECI_PSYS_PL2_CONTROL_TIME_WINDOWS      (0xDC << 16) /* 28 seconds */
+#define PECI_PSYS_PL2_CONTROL_TIME_WINDOWS      (0xFF << 16) /* 28 seconds */
 #define PECI_PSYS_PL2_POWER_LIMIT_ENABLE        (0x01 << 15)
 #define PECI_PSYS_PL2_POWER_LIMIT(x)            (x << 3)
 

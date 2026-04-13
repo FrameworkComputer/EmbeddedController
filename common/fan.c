@@ -121,6 +121,11 @@ test_export_static void set_thermal_control_enabled(int fan, int enable)
 		fan_set_rpm_mode(FAN_CH(fan), 1);
 }
 
+void fan_set_thermal_control_enabled(int fan, int enable)
+{
+	set_thermal_control_enabled(fan, enable);
+}
+
 static void set_duty_cycle(int fan, int percent)
 {
 	/* Move the fan to manual control */

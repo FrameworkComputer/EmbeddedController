@@ -21,6 +21,7 @@
 #include "chipset.h"
 #include "compile_time_macros.h"
 #include "cros_ec_dev.h"
+#include "ec_commands.h"
 #include "ec_panicinfo.h"
 #include "ec_flash.h"
 #include "ec_version.h"
@@ -92,6 +93,8 @@ const char help_str[] =
 	"      Overrides charge port selection logic\n"
 	"  chargestate\n"
 	"      Handle commands related to charge state v2 (and later)\n"
+	"  cpupower\n"
+	"      Get or set CPU power limits (PL1, PL2, PL4, default)\n"
 	"  chipinfo\n"
 	"      Prints chip info\n"
 	"  cmdversions <cmd>\n"
@@ -126,6 +129,8 @@ const char help_str[] =
 	"      Set the maximum external power limit\n"
 	"  fanduty <percent>\n"
 	"      Forces the fan PWM to a constant duty cycle\n"
+	"  fanmode [mode]\n"
+	"      Prints or sets fan curve profile\n"
 	"  flasherase <offset> <size>\n"
 	"      Erases EC flash\n"
 	"  flasheraseasync <offset> <size>\n"
@@ -556,6 +561,74 @@ int cmd_hibdelay(int argc, char *argv[])
 	printf("Hibernation delay: %u s\n", r.hibernate_delay);
 	printf("Time G3: %u s\n", r.time_g3);
 	printf("Time left: %u s\n", r.time_remaining);
+	return 0;
+}
+
+static int cmd_fan_mode(int argc, char *argv[])
+{
+	struct ec_params_fan_mode p = {};
+	struct ec_response_fan_mode r;
+	int rv;
+	const char *mode_names[] = {"silent", "normal", "extreme"};
+
+	/* If argument provided, set the mode */
+	if (argc > 1) {
+		char *mode_str = argv[1];
+		if (!strcasecmp(mode_str, "silent"))
+			p.mode = 0;
+		else if (!strcasecmp(mode_str, "normal"))
+			p.mode = 1;
+		else if (!strcasecmp(mode_str, "extreme"))
+			p.mode = 2;
+		else {
+			printf("Invalid mode. Use: silent, normal, or extreme\n");
+			return -1;
+		}
+
+		rv = ec_command(EC_CMD_FAN_MODE, 0, &p, sizeof(p), &r, sizeof(r));
+	} else {
+		/* Query only */
+		rv = ec_command(EC_CMD_FAN_MODE, 0, NULL, 0, &r, sizeof(r));
+	}
+
+	if (rv < 0)
+		return rv;
+
+	if (r.mode <= 2)
+		printf("Fan mode: %s\n", mode_names[r.mode]);
+	else
+		printf("Unknown fan mode: %d\n", r.mode);
+
+	return 0;
+}
+
+static int cmd_cpu_power(int argc, char *argv[])
+{
+	struct ec_params_cpu_power p = {};
+	struct ec_response_cpu_power r;
+	int rv;
+
+	/* A default reset is encoded as an all-zero payload. */
+	if (argc == 2 && !strcasecmp(argv[1], "default")) {
+		rv = ec_command(EC_CMD_CPU_POWER, 0, &p, sizeof(p), &r, sizeof(r));
+	} else if (argc >= 4) {
+		p.pl1_mW = strtol(argv[1], NULL, 0) * 1000;
+		p.pl2_mW = strtol(argv[2], NULL, 0) * 1000;
+		p.pl4_mW = strtol(argv[3], NULL, 0) * 1000;
+		rv = ec_command(EC_CMD_CPU_POWER, 0, &p, sizeof(p), &r, sizeof(r));
+	} else {
+		/* Query only */
+		rv = ec_command(EC_CMD_CPU_POWER, 0, NULL, 0, &r, sizeof(r));
+	}
+
+	if (rv < 0)
+		return rv;
+
+	printf("CPU Power Limits:\n");
+	printf("  PL1: %u W\n", r.pl1_mW / 1000);
+	printf("  PL2: %u W\n", r.pl2_mW / 1000);
+	printf("  PL4: %u W\n", r.pl4_mW / 1000);
+	printf("  Psys: %u W\n", r.psys_mW / 1000);
 	return 0;
 }
 
@@ -10115,12 +10188,14 @@ const struct command commands[] = {
 	{"button", cmd_button},
 	{"cbi", cmd_cbi},
 	{"chargecurrentlimit", cmd_charge_current_limit},
+	{"fanmode", cmd_fan_mode},
 	{"chargecontrol", cmd_charge_control},
 	{"chargeoverride", cmd_charge_port_override},
 	{"chargestate", cmd_charge_state},
 	{"chipinfo", cmd_chipinfo},
 	{"cmdversions", cmd_cmdversions},
 	{"console", cmd_console},
+	{"cpupower", cmd_cpu_power},
 	{"cec", cmd_cec},
 	{"echash", cmd_ec_hash},
 	{"eventclear", cmd_host_event_clear},
