@@ -36,6 +36,7 @@
 
 static const struct device *const espi_dev = DEVICE_DT_GET(DT_NODELABEL(espi0));
 
+static bool chipset_ready;
 static bool espi_verbose;
 static int temps;
 
@@ -510,6 +511,24 @@ void update_soc_power_limit_boot(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, update_soc_power_limit_boot, HOOK_PRIO_DEFAULT);
 
+void update_chipset_ready(int status)
+{
+	chipset_ready = status;
+}
+
+static void clear_chipset_ready(void)
+{
+	update_chipset_ready(0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, clear_chipset_ready, HOOK_PRIO_DEFAULT);
+
+static void warmboot_clear_chipset_ready(void)
+{
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		clear_chipset_ready();
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, warmboot_clear_chipset_ready, HOOK_PRIO_DEFAULT);
+
 #ifdef CONFIG_PD_CCG8_EPR
 static uint8_t power_limit_update_events;
 
@@ -555,7 +574,7 @@ void update_cpu_power_limit_events(uint8_t event, int enable)
 		cpu_is_power = false;
 	}
 
-	if (!cpu_is_power || (enable == FORCE_CLEAR_PROCHOT_MAGIC_NUMBER)) {
+	if (!cpu_is_power || !chipset_ready || (enable == FORCE_CLEAR_PROCHOT_MAGIC_NUMBER)) {
 		pre_power_limit_update_events = 0;
 		event = 0;
 		power_limit_update_events = 0;

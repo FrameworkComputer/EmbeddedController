@@ -200,8 +200,9 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 
 	board_enter_non_acpi_mode();
 
+	update_chipset_ready(1);
+
 #ifdef CONFIG_CHIPSET_AMD
-	update_apu_ready(1);
 
 	/**
 	 * Even though the protocol returns EC_SUCCESS,

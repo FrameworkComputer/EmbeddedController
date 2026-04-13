@@ -22,6 +22,8 @@ enum clear_reasons {
 
 void update_soc_power_limit(bool force_update, bool force_no_adapter);
 
+void update_chipset_ready(int status);
+
 #ifdef CONFIG_PD_CCG8_EPR
 void update_cpu_power_limit_events(uint8_t pd_event, int enable);
 

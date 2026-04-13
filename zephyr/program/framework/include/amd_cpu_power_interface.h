@@ -57,8 +57,6 @@ extern int my_test_current;
 
 int set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p3t);
 
-void update_apu_ready(int status);
-
 int get_apu_ready(void);
 
 int update_apu_only_sppt_limit(uint32_t mwatt);

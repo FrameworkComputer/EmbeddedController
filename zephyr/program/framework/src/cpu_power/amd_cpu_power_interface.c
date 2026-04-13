@@ -75,7 +75,7 @@ static int update_peak_package_power_limit(uint32_t mwatt)
 	return sb_rmi_mailbox_xfer(SB_RMI_WRITE_P3T_LIMIT_CMD, msgIn, &msgOut);
 }
 
-void update_apu_ready(int status)
+void update_chipset_ready(int status)
 {
 	apu_ready = status;
 }
@@ -87,7 +87,7 @@ int get_apu_ready(void)
 
 static void clear_apu_ready(void)
 {
-	update_apu_ready(0);
+	update_chipset_ready(0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, clear_apu_ready, HOOK_PRIO_DEFAULT);
 
@@ -177,7 +177,7 @@ void update_cpu_power_limit_events(uint8_t event, int enable)
 		cpu_is_power = false;
 	}
 
-	if (!cpu_is_power || (enable == FORCE_CLEAR_PROCHOT_MAGIC_NUMBER)) {
+	if (!cpu_is_power || !apu_ready || (enable == FORCE_CLEAR_PROCHOT_MAGIC_NUMBER)) {
 		pre_power_limit_update_events = 0;
 		event = 0;
 		power_limit_update_events = 0;
