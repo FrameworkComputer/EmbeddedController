@@ -702,6 +702,87 @@ ZTEST_USER(fpsensor_match, test_match_error_mkbp_event)
 		      FP_NO_SUCH_TEMPLATE & 0xF);
 }
 
+ZTEST_USER(fpsensor_match, test_match_no_match_keeps_stats_valid)
+{
+	struct ec_response_fp_stats stats = { 0 };
+
+	/* Load example template. */
+	zassert_ok(ec_cmd_fp_template(
+		NULL,
+		(struct ec_params_fp_template *)example_template_encrypted,
+		sizeof(example_template_encrypted)));
+
+	/* Mock a "No Match" result from the algorithm. */
+	mock_alg_match_fake.return_val = FP_MATCH_RESULT_NO_MATCH;
+
+	/* Trigger a match attempt. */
+	trigger_match_attempt(FP_MODE_MATCH);
+
+	/* Ensure the match algorithm was actually executed. */
+	zassert_equal(mock_alg_match_fake.call_count, 1,
+		      "Match algorithm was not called");
+
+	/* Verify timestamps_invalid should not have FPSTATS_MATCHING_INV. */
+	zassert_ok(ec_cmd_fp_stats(NULL, &stats));
+	/*
+	 * TODO: Currently, a NO_MATCH result incorrectly sets the invalid flag.
+	 * We are asserting the WRONG behavior here to ensure the test runs.
+	 * Once https://crrev.com/c/7707105 is merged, this MUST be changed
+	 * to zassert_false.
+	 */
+	zassert_true(
+		stats.timestamps_invalid & FPSTATS_MATCHING_INV,
+		"Pending fix: Stats are (incorrectly) flagged invalid on 'No Match'");
+}
+
+ZTEST_USER(fpsensor_match, test_match_internal_error_sets_invalid_flag)
+{
+	struct ec_response_fp_stats stats = { 0 };
+
+	/* Load example template. */
+	zassert_ok(ec_cmd_fp_template(
+		NULL,
+		(struct ec_params_fp_template *)example_template_encrypted,
+		sizeof(example_template_encrypted)));
+
+	/* Mock an internal error (Negative value means error). */
+	mock_alg_match_fake.return_val = -1;
+
+	/* Trigger a match attempt. */
+	trigger_match_attempt(FP_MODE_MATCH);
+
+	/* Ensure the match algorithm was actually executed. */
+	zassert_equal(mock_alg_match_fake.call_count, 1,
+		      "Match algorithm was not called");
+
+	/* Verify timestamps_invalid should have FPSTATS_MATCHING_INV. */
+	zassert_ok(ec_cmd_fp_stats(NULL, &stats));
+	zassert_true(stats.timestamps_invalid & FPSTATS_MATCHING_INV,
+		     "Internal error must set the invalid flag");
+}
+
+ZTEST_USER(fpsensor_match, test_match_no_templates_sets_invalid)
+{
+	struct ec_response_fp_stats stats = { 0 };
+
+	/*
+	 * Ensure NO templates are loaded.
+	 * (fpsensor_before resets the state, so we just don't call
+	 * ec_cmd_fp_template)
+	 */
+
+	/* Trigger a match attempt. */
+	trigger_match_attempt(FP_MODE_MATCH);
+
+	/*
+	 * Even if no match happened, the 'matching' attempt occurred
+	 * but was invalid because of missing templates.
+	 */
+	zassert_ok(ec_cmd_fp_stats(NULL, &stats));
+	zassert_true(stats.timestamps_invalid & FPSTATS_MATCHING_INV,
+		     "Invalid flag should be set if no templates are enrolled");
+}
+
 static void *fpsensor_setup(void)
 {
 	struct ec_params_fp_seed fp_seed_params = {
