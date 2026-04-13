@@ -524,8 +524,10 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, clear_chipset_ready, HOOK_PRIO_DEFAULT);
 
 static void warmboot_clear_chipset_ready(void)
 {
-	if (chipset_in_state(CHIPSET_STATE_ON))
+	if (chipset_in_state(CHIPSET_STATE_ON)) {
 		clear_chipset_ready();
+		update_soc_power_limit_boot();
+	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, warmboot_clear_chipset_ready, HOOK_PRIO_DEFAULT);
 
