@@ -135,8 +135,8 @@ def compress_expect_2(expect):
     if "reg" in expect and "write_data" in expect:
         expect["write_data"] = (
             "0x"
-            + expect["reg"].lstrip("0x")
-            + expect["write_data"].lstrip("0x")
+            + expect["reg"].removeprefix("0x")
+            + expect["write_data"].removeprefix("0x")
         )
         del expect["reg"]
 
