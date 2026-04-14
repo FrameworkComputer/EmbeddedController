@@ -1,0 +1,159 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&vivaldi_kbd {
+	vivaldi-keys = <VIVALDI_KEYS_STRAUSS_T14>;
+
+	kbd_config_0: kbd-config-0 {
+		vivaldi-codes = <
+			VIVALDI_TK_BACK               /* T1 */
+			VIVALDI_TK_REFRESH            /* T2 */
+			VIVALDI_TK_FULLSCREEN         /* T3 */
+			VIVALDI_TK_OVERVIEW           /* T4 */
+			VIVALDI_TK_SNAPSHOT           /* T5 */
+			VIVALDI_TK_BRIGHTNESS_DOWN    /* T6 */
+			VIVALDI_TK_BRIGHTNESS_UP      /* T7 */
+			VIVALDI_TK_KBD_BKLIGHT_TOGGLE /* T8 */
+			VIVALDI_TK_DICTATE            /* T9 */
+			VIVALDI_TK_ACCESSIBILITY      /* T10 */
+			VIVALDI_TK_MICMUTE            /* T11 */
+			VIVALDI_TK_VOL_MUTE           /* T12 */
+			VIVALDI_TK_VOL_DOWN           /* T13 */
+			VIVALDI_TK_VOL_UP             /* T14 */
+		>;
+		capabilities = <(VIVALDI_KEYBD_CAP_FUNCTION_KEYS |
+				VIVALDI_KEYBD_CAP_NUMERIC_KEYPAD |
+				VIVALDI_KEYBD_CAP_SCRNLOCK_KEY |
+				VIVALDI_KEYBD_CAP_ASSISTANT_KEY)>;
+	};
+};
+
+&kbd {
+	status = "okay";
+	pinctrl-0 = <
+		&ksi0_gpio064
+		&ksi1_gpio065
+		&ksi2_gpio066
+		&ksi3_gpio067
+		&ksi4_gpio068
+		&ksi5_gpio069
+		&ksi6_gpio070
+		&ksi7_gpio071
+		&kso0_gpio041
+		&kso1_gpio042
+		&kso2_gpio043
+		&kso3_gpio044
+		&kso4_gpio045
+		&kso5_gpio046
+		&kso6_gpio047
+		&kso7_gpio048
+		&kso8_gpio049
+		&kso9_gpio050
+		&kso10_gpio051
+		&kso11_gpio055
+		&kso12_gpio056
+		&kso13_gpio057
+		&kso14_gpio058
+		&kso15_gpio059
+		&kso16_gpio060
+		&kso17_gpio061
+	>;
+	row-size = <8>;
+	col-size = <18>;
+	settle-time-us = <80>;
+	pinctrl-1 = <
+		&kso0_sleep_gpio041
+		&kso1_sleep_gpio042
+		&kso2_sleep_gpio043
+		&kso3_sleep_gpio044
+		&kso4_sleep_gpio045
+		&kso5_sleep_gpio046
+		&kso6_sleep_gpio047
+		&kso7_sleep_gpio048
+		&kso8_sleep_gpio049
+		&kso9_sleep_gpio050
+		&kso10_sleep_gpio051
+		&kso11_sleep_gpio055
+		&kso12_sleep_gpio056
+		&kso13_sleep_gpio057
+		&kso14_sleep_gpio058
+		&kso15_sleep_gpio059
+		&kso16_sleep_gpio060
+		&kso17_sleep_gpio061
+		&ksi0_gpio064
+		&ksi1_gpio065
+		&ksi2_gpio066
+		&ksi3_gpio067
+		&ksi4_gpio068
+		&ksi5_gpio069
+		&ksi6_gpio070
+		&ksi7_gpio071
+	>;
+	pinctrl-names = "default", "sleep";
+
+	debounce-down-ms = <15>;
+	debounce-up-ms = <15>;
+	actual-key-mask = <
+		0x08  /* C0 */
+		0xff  /* C1 */
+		0xff  /* C2 */
+		0xff  /* C3 */
+		0xff  /* C4 */
+		0xff  /* C5 */
+		0xff  /* C6 */
+		0xa5  /* C7 */
+		0xff  /* C8 */
+		0xff  /* C9 */
+		0x55  /* C10 */
+		0xff  /* C11 */
+		0xff  /* C12 */
+		0x40  /* C13 */
+		0x0a  /* C14 */
+		0x40  /* C15 */
+		0xff  /* C16 */
+		0xff  /* C17 */
+	>;
+
+	boot-keys {
+		compatible = "cros-ec,boot-keys";
+		down-arrow-rc = <KBD_RC(6, 11)>;
+		esc-rc = <KBD_RC(1, 1)>;
+		left-shift-rc = <KBD_RC(5, 7)>;
+		refresh-rc = <KBD_RC(3, 2)>;
+	};
+
+	runtime-keys {
+		compatible = "cros-ec,runtime-keys";
+		left-alt-rc = <KBD_RC(6, 13)>;
+		right-alt-rc = <KBD_RC(0, 10)>;
+		h-rc = <KBD_RC(1, 6)>;
+		r-rc = <KBD_RC(7, 9)>;
+	};
+
+	scancode-set2 {
+		compatible = "cros-ec,scancode-set2";
+
+		default {
+			col0-codes  = <0x0000 0x0000 0x0000 0xe01f 0x0000 0x0000 0x0000 0x0000>;
+			col1-codes  = <0x0078 0x0076 0x000d 0x000e 0x001c 0x0016 0x001a 0x003c>;
+			col2-codes  = <0x0005 0x000c 0x0004 0x0006 0x0023 0x0041 0x0026 0x0043>;
+			col3-codes  = <0x0032 0x0034 0x002c 0x002e 0x002b 0x0049 0x0025 0x0044>;
+			col4-codes  = <0x0009 0x0083 0x000b 0x001b 0x0003 0x004a 0x001e 0x004d>;
+			col5-codes  = <0x0031 0x0007 0x005b 0x000f 0x0042 0x0021 0x003e 0x0015>;
+			col6-codes  = <0x0051 0x0033 0x0035 0x004e 0x003b 0x0029 0x0045 0x001d>;
+			col7-codes  = <0x0000 0x0000 0x0061 0x0000 0x0000 0x0012 0x0000 0x0059>;
+			col8-codes  = <0x0055 0x0052 0x0054 0x0036 0x004c 0x0022 0x003d 0x0024>;
+			col9-codes  = <0xe06c 0x0001 0xe071 0x002f 0x004b 0x002a 0x0046 0x002d>;
+			col10-codes = <0xe011 0x0000 0x006a 0x0000 0x0037 0x0000 0x005d 0x0000>;
+			col11-codes = <0x0017 0x0066 0x000a 0x005d 0x005a 0x003a 0xe072 0xe075>;
+			col12-codes = <0x001f 0x0064 0xe07d 0x0067 0xe069 0xe07a 0xe074 0xe06b>;
+			col13-codes = <0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0011 0x0000>;
+			col14-codes = <0x0000 0x0014 0x0000 0xe014 0x0000 0x0000 0x0000 0x0000>;
+			col15-codes = <0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0027 0x0000>;
+			col16-codes = <0xe04a 0x007c 0x007b 0x0074 0x0071 0x0073 0x006b 0x0070>;
+			col17-codes = <0x006c 0x0075 0x007d 0x0079 0x007a 0x0072 0x0069 0xe05a>;
+		};
+	};
+};
