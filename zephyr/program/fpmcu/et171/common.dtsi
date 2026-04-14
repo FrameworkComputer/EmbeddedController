@@ -111,7 +111,7 @@
 &spi0 {
 	p25q16: qspi-nor-flash {
 		compatible = "andestech,qspi-nor-xip", "jedec,spi-nor";
-		size = <DT_SIZE_K(1024)>;
+		size = <DT_SIZE_K(2048)>;
 		status = "okay";
 	};
 };
