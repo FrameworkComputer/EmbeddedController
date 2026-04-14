@@ -158,6 +158,16 @@ static void boot_keys_timeout_handler(struct k_work *work)
 {
 	boot_keys_release_only = true;
 
+	/* Don't check when jumping from RO to RW. */
+	if (system_jumped_late()) {
+		return;
+	}
+
+	/* Only check if reset is from GSC through the reset pin. */
+	if ((system_get_reset_flags() & EC_RESET_FLAG_RESET_PIN) == 0) {
+		return;
+	}
+
 	if (boot_keys_counter > POPCOUNT(boot_keys_value)) {
 		LOG_WRN("boot_keys: stray keys, skipping");
 		return;
@@ -183,16 +193,6 @@ static void boot_keys_timeout_handler(struct k_work *work)
 
 static void boot_keys_init(void)
 {
-	/* Don't check when jumping from RO to RW. */
-	if (system_jumped_late()) {
-		return;
-	}
-
-	/* Only check if reset is from GSC through the reset pin. */
-	if ((system_get_reset_flags() & EC_RESET_FLAG_RESET_PIN) == 0) {
-		return;
-	}
-
 	k_work_init_delayable(&boot_keys_timeout_dwork,
 			      boot_keys_timeout_handler);
 	k_work_reschedule(&boot_keys_timeout_dwork,
