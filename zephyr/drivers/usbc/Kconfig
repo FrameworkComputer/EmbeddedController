@@ -100,6 +100,14 @@ config USBC_PDC_DRIVEN_CCD
 	  Enables the `pdc sbumux` console command for forcing the PDC's SBU mux
 	  into the debug path. Requires support in PDC firmware to take effect.
 
+config USBC_PDC_DISABLE_AP_MODE_ENTRY
+	bool "Disable AP-Driven mode selection"
+	default n
+	help
+	  Clears the AltMode override bit in the PDC GET_CAPABILITY response.
+	  This will prevent the operating system on UCSI-based platforms from
+	  attempting to exit or enter alternate modes wit SET_NEW_CAM.
+
 rsource "Kconfig.pdc_trace"
 
 endif # PLATFORM_EC_USBC

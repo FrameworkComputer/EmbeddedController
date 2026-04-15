@@ -1433,6 +1433,23 @@ static enum smf_state_result st_read_run(void *o)
 		}
 		break;
 	}
+#ifdef CONFIG_USBC_PDC_DISABLE_AP_MODE_ENTRY
+	/*
+	 * TODO(b/503426083): Remove change to GET_CAPABILITY response once
+	 * AP Mode switching is ready. Clearing this bit will prevent the
+	 * kernel from exiting and entering alternate modes.
+	 */
+	case CMD_RAW_UCSI: {
+		memcpy(data->user_buf, data->rd_buf + offset, len);
+		if (data->wr_buf[0] == REALTEK_PD_COMMAND &&
+		    data->wr_buf[2] == UCSI_GET_CAPABILITY) {
+			struct capability_t *caps =
+				(struct capability_t *)data->user_buf;
+			caps->bmOptionalFeatures.alt_mode_override = 0;
+		}
+		break;
+	}
+#endif
 #ifdef CONFIG_USBC_PDC_DRIVEN_CCD
 	case CMD_GET_SBU_MUX_MODE: {
 		/* This is parsing a partial GET_IC_STATUS response (offset of

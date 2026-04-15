@@ -594,3 +594,32 @@ ZTEST_USER(tps6699x, test_ppm_set_uor)
 	zassert_equal(out.swap_to_dfp, 1);
 	zassert_equal(out.accept_dr_swap, 1);
 }
+
+ZTEST_USER(tps6699x, test_ap_mode_override_off)
+{
+	struct capability_t caps_in, caps_out;
+	struct ucsi_memory_region ucsi_data;
+	struct ucsi_control_t *control = &ucsi_data.control;
+
+	access = ACCESS_OK;
+	RESET_FAKE(tps_rw_port_control);
+	tps_rw_port_control_fake.custom_fake = custom_fake_tps_rw_port_control;
+
+	/* Set alt mode override to 1 in emulator */
+	caps_in.bmOptionalFeatures.alt_mode_override = 1;
+	emul_pdc_set_capability(emul, &caps_in);
+	k_sleep(K_MSEC(SLEEP_MS));
+
+	/* Use UCSI command to get capabilities */
+	zassert_ok(pdc_execute_ucsi_cmd(
+		dev, UCSI_GET_CAPABILITY, sizeof(struct capability_t),
+		control->command_specific, ucsi_data.message_in, NULL));
+	k_sleep(K_MSEC(SLEEP_MS));
+
+	/* Verify alt mode override is cleared when AP mode entry is disabled */
+	memcpy(&caps_out, &ucsi_data.message_in, sizeof(struct capability_t));
+	if (IS_ENABLED(CONFIG_USBC_PDC_DISABLE_AP_MODE_ENTRY))
+		zassert_false(caps_out.bmOptionalFeatures.alt_mode_override);
+	else
+		zassert_true(caps_out.bmOptionalFeatures.alt_mode_override);
+}

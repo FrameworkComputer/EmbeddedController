@@ -2364,6 +2364,14 @@ static enum smf_state_result st_task_wait_run(void *o)
 		 * information.
 		 */
 		cp->bmOptionalFeatures.get_pd_message = 1;
+#ifdef CONFIG_USBC_PDC_DISABLE_AP_MODE_ENTRY
+		/*
+		 * TODO(b/503426083): Remove change to GET_CAPABILITY response
+		 * once AP Mode switching is ready. Clearing this bit will
+		 * prevent the kernel from exiting and entering alternate modes.
+		 */
+		cp->bmOptionalFeatures.alt_mode_override = 0;
+#endif
 		len = sizeof(struct capability_t);
 		break;
 	case UCSI_GET_CONNECTOR_CAPABILITY:

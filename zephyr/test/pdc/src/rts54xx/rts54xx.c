@@ -287,7 +287,28 @@ ZTEST_USER(rts54xx, test_alert_received)
 }
 
 /* UCSI command callback handler. */
-void ucsi_cc_callback(const struct device *port, struct pdc_callback *cb,
+void ucsi_cc_callback(const struct device *port, const struct pdc_callback *cb,
 		      union cci_event_t cci_event)
 {
+}
+
+ZTEST_USER(rts54xx, test_ap_mode_override_off)
+{
+	struct capability_t caps_in, caps_out;
+
+	/* Set alt mode override to 1 in emulator */
+	caps_in.bmOptionalFeatures.alt_mode_override = 1;
+	emul_pdc_set_capability(emul, &caps_in);
+
+	/* Use UCSI command to get capabilities */
+	zassert_ok(pdc_execute_ucsi_cmd(dev, UCSI_GET_CAPABILITY,
+					/*command specific=*/0, NULL,
+					(uint8_t *)&caps_out, NULL));
+	k_sleep(K_MSEC(TEST_WAIT_FOR_INTERVAL_MS));
+
+	/* Verify alt mode override is cleared when AP mode entry is disabled */
+	if (IS_ENABLED(CONFIG_USBC_PDC_DISABLE_AP_MODE_ENTRY))
+		zassert_false(caps_out.bmOptionalFeatures.alt_mode_override);
+	else
+		zassert_true(caps_out.bmOptionalFeatures.alt_mode_override);
 }
