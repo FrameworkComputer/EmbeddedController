@@ -2775,20 +2775,19 @@ void perform_error_recovery(int controller)
 	 * battery percentage less than 1%.
 	 */
 	for (port = 0; port < pd_chip_config[controller].support_max_port; port++) {
-		int pd_port, pd_chip;
+		int pd_port;
 
 		pd_port = board_perform_error_recovery_port(port);
-		pd_chip  = PORT_TO_CONTROLLER(pd_port);
 
 #ifdef CONFIG_PLATFORM_EC_BATTERY
-		if (cypd_controller_port_to_charge_port(pd_chip, pd_port) ==
+		if (cypd_controller_port_to_charge_port(controller, pd_port) ==
 			get_active_charge_pd_port() &&
 		    (battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED ||
 		    (charge_get_percent() < 1)))
 			continue;
 #endif
-		data[0] = PORT_TO_CONTROLLER_PORT(pd_port);
-		cypd_write_reg_block(pd_chip, CCG_DPM_CMD_REG, data, 2);
+		data[0] = pd_port;
+		cypd_write_reg_block(controller, CCG_DPM_CMD_REG, data, 2);
 	}
 }
 
