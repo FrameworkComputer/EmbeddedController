@@ -305,6 +305,7 @@ class Zmake:
         coverage=False,
         cmake_defs=None,
         cmake_trace=None,
+        cmake_graph=None,
         allow_warnings=False,
         all_projects=False,
         extra_cflags=None,
@@ -345,6 +346,7 @@ class Zmake:
                     coverage=coverage,
                     cmake_defs=cmake_defs,
                     cmake_trace=cmake_trace,
+                    cmake_graph=cmake_graph,
                     allow_warnings=allow_warnings,
                     extra_cflags=extra_cflags,
                     delete_intermediates=delete_intermediates,
@@ -401,6 +403,7 @@ class Zmake:
         coverage=False,
         cmake_defs=None,
         cmake_trace=None,
+        cmake_graph=None,
         allow_warnings=False,
         all_projects=False,
         extra_cflags=None,
@@ -419,6 +422,7 @@ class Zmake:
             coverage=coverage,
             cmake_defs=cmake_defs,
             cmake_trace=cmake_trace,
+            cmake_graph=cmake_graph,
             allow_warnings=allow_warnings,
             all_projects=all_projects,
             extra_cflags=extra_cflags,
@@ -547,6 +551,7 @@ class Zmake:
         coverage=False,
         cmake_defs=None,
         cmake_trace=None,
+        cmake_graph=None,
         allow_warnings=False,
         extra_cflags=None,
         delete_intermediates=False,
@@ -682,6 +687,7 @@ class Zmake:
                             build_name=build_name,
                             project=project,
                             cmake_trace=cmake_trace,
+                            cmake_graph=cmake_graph,
                         )
                     )
                     wait_funcs.append(wait_func)
@@ -715,6 +721,7 @@ class Zmake:
         build_name,
         project,
         cmake_trace,
+        cmake_graph,
     ):
         """Run cmake and maybe ninja on one build dir."""
         with self.jobserver.get_job():
@@ -757,6 +764,7 @@ class Zmake:
                 output_dir,
                 kconfig_file,
                 cmake_trace,
+                cmake_graph,
                 stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
