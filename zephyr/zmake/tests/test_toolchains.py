@@ -90,8 +90,8 @@ def fake_project(tmp_path, monkeypatch):
             project_name="foo",
             zephyr_board="foo",
             supported_toolchains=[
-                "host",
-                "llvm",
+                "host/gnu",
+                "host/llvm",
                 "zephyr",
                 "coreboot-sdk",
             ],
@@ -121,11 +121,11 @@ def test_coreboot_sdk(fake_project: project.Project, no_environ):
 def test_llvm(fake_project, llvm_exists):
     """Test that llvm can be found."""
     chain = fake_project.get_toolchain(module_paths)
-    assert isinstance(chain, toolchains.LlvmToolchain)
+    assert isinstance(chain, toolchains.HostLlvmToolchain)
 
     config = chain.get_build_config()
     assert config.cmake_defs == {
-        "ZEPHYR_TOOLCHAIN_VARIANT": "llvm",
+        "ZEPHYR_TOOLCHAIN_VARIANT": "host/llvm",
         "TOOLCHAIN_ROOT": "/mnt/host/source/src/platform/ec/zephyr",
     }
 
@@ -163,11 +163,11 @@ def test_zephyr_from_env(mockfs, monkeypatch, fake_project):
 def test_host_toolchain(fake_project, host_toolchain_exists):
     """Test that the host toolchain can be found."""
     chain = fake_project.get_toolchain(module_paths)
-    assert isinstance(chain, toolchains.HostToolchain)
+    assert isinstance(chain, toolchains.HostGNUToolchain)
 
     config = chain.get_build_config()
     assert config.cmake_defs == {
-        "ZEPHYR_TOOLCHAIN_VARIANT": "host",
+        "ZEPHYR_TOOLCHAIN_VARIANT": "host/gnu",
     }
 
 

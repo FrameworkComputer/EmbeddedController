@@ -22,7 +22,7 @@ def register_fpmcu_variant(
         zephyr_board=zephyr_board,
         modules=["ec", *variant_modules],
         optional_modules=[*variant_optional_modules],
-        supported_toolchains=["llvm", "zephyr"],
+        supported_toolchains=["host/llvm", "zephyr"],
         dts_overlays=[*variant_dts_overlays],
         kconfig_files=[here / "prj.conf", *variant_kconfig_files],
         signer=signer,

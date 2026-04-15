@@ -64,7 +64,7 @@ def test_find_dts_overlays(modules):
                     project_name=board,
                     zephyr_board=board,
                     output_packer=zmake.output_packers.ElfPacker,
-                    supported_toolchains=["llvm"],
+                    supported_toolchains=["host/llvm"],
                     project_dir=pathlib.Path("/fakebuild"),
                 )
             )

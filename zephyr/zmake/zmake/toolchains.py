@@ -129,7 +129,7 @@ class ZephyrToolchain(GenericToolchain):
         )
 
 
-class LlvmToolchain(GenericToolchain):
+class HostLlvmToolchain(GenericToolchain):
     """LLVM toolchain as used in the chroot."""
 
     def probe(self):
@@ -150,18 +150,17 @@ class LlvmToolchain(GenericToolchain):
         )
 
 
-class HostToolchain(GenericToolchain):
+class HostGNUToolchain(GenericToolchain):
     """GCC toolchain found in the PATH."""
 
     def probe(self):
-        # "host" toolchain for Zephyr means GCC.
         return bool(shutil.which("gcc"))
 
 
 # Mapping of toolchain names -> support class
 support_classes = {
     "coreboot-sdk": CorebootSdkToolchain,
-    "host": HostToolchain,
-    "llvm": LlvmToolchain,
+    "host/gnu": HostGNUToolchain,
+    "host/llvm": HostLlvmToolchain,
     "zephyr": ZephyrToolchain,
 }

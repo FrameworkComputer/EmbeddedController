@@ -37,7 +37,7 @@ class FakeProject:
         self.config = zmake.project.ProjectConfig(
             project_name="fakeproject",
             zephyr_board="fakeboard",
-            supported_toolchains=["llvm"],
+            supported_toolchains=["host/llvm"],
             output_packer=zmake.output_packers.ElfPacker,
             project_dir=pathlib.Path("FakeProjectDir"),
             signer=zmake.signers.NullSigner(),
