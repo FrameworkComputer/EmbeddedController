@@ -14,12 +14,18 @@ zephyr_compile_options(-ftrapv)
 # not necessary.
 zephyr_include_directories(${ZEPHYR_BASE}/include/zephyr/posix)
 
+set(EXPECTED_ROLLBACK_VERSION 1)
+
 if (DEFINED CONFIG_BOARD_BLOONCHIPPER)
+	# Expected rollback version is 0 on bloonchipper.
+	set(EXPECTED_ROLLBACK_VERSION 0)
 	add_subdirectory(bloonchipper)
 	project(bloonchipper)
 endif()
 
 if (DEFINED CONFIG_BASEBOARD_HELIPILOT)
+	# Expected rollback version is 0 on helipilot.
+	set(EXPECTED_ROLLBACK_VERSION 0)
 	add_subdirectory(helipilot)
 	project(helipilot)
 endif()
@@ -33,8 +39,6 @@ if (DEFINED CONFIG_BOARD_EM32F967)
 	add_subdirectory(em32f967)
 	project(em32f967)
 endif()
-
-set(EXPECTED_ROLLBACK_VERSION 1)
 
 if(NOT CONFIG_PLATFORM_EC_ROLLBACK_VERSION EQUAL EXPECTED_ROLLBACK_VERSION)
 	message(FATAL_ERROR "Rollback version has changed! Expected ${EXPECTED_ROLLBACK_VERSION}, but ${CONFIG_PLATFORM_EC_ROLLBACK_VERSION} is set.")
