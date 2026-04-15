@@ -2689,7 +2689,7 @@ int active_charge_pd_chip(void)
 	if (prev_charge_port == -1)
 		return 0xff;
 
-	return (prev_charge_port < 2) ? 0 : 1;
+	return PORT_TO_CONTROLLER(prev_charge_port);
 }
 
 int get_active_charge_pd_port(void)
