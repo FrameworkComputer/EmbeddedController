@@ -11,8 +11,11 @@
 #include <string.h>
 
 #include <zephyr/device.h>
+#include <zephyr/logging/log.h>
 
 #include <drivers/pdc.h>
+
+LOG_MODULE_REGISTER(pdc_host_cmd, LOG_LEVEL_INF);
 
 #ifdef CONFIG_PLATFORM_EC_HOSTCMD_PD_CHIP_INFO
 /* EC_CMD_PD_CHIP_INFO implementation when a PDC is used. */
@@ -84,6 +87,17 @@ static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 	}
 
 	memcpy(args->response, &resp, args->response_size);
+
+	LOG_INF("PD_CHIP_INFO (C%d): live: %d, ver: %u.%u.%u (%s), "
+		"%04x:%04x, driver: %s, flags: %#04x %s",
+		p->port, p->live, resp.fw_version_string[2],
+		resp.fw_version_string[1], resp.fw_version_string[0],
+		*resp.fw_name_str ? resp.fw_name_str : "N/A", resp.vendor_id,
+		resp.product_id, *resp.driver_name ? resp.driver_name : "Unk",
+		resp.fw_update_flags,
+		(resp.fw_update_flags & USB_PD_CHIP_INFO_FWUP_FLAG_NO_UPDATE) ?
+			"no-update" :
+			"");
 
 	return EC_RES_SUCCESS;
 }
