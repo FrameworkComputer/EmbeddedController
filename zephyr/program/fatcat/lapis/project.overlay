@@ -38,6 +38,13 @@
  */
 gpio_ec_pch_wake_odl: &gpio_soc_wake_odl {};
 
+/ {
+	cse_early_recovery: cse-early-recovery {
+		compatible = "cros-ec,cse-early-rec";
+		cse-early-rec-gpios = <&gpioh 8 (GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH)>;
+	};
+};
+
 /* AP interface */
 &espi0 {
 	status = "okay";
