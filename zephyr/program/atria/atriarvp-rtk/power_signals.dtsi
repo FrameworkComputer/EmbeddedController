@@ -39,7 +39,7 @@
 };
 &pwr_sys_rst {
 	/* RST_PUSH_N net */
-        gpios = <RTS5912_GPIO103 (GPIO_ACTIVE_LOW|GPIO_OPEN_DRAIN)>;
+        gpios = <RTS5912_GPIO102 (GPIO_ACTIVE_LOW|GPIO_OPEN_DRAIN)>;
 };
 
 &pwr_slp_s4 {
