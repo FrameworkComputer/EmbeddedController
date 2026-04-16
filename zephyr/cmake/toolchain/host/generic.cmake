@@ -30,7 +30,7 @@ if(TOOLCHAIN_VARIANT_COMPILER STREQUAL "gnu" OR
   message(STATUS "Found toolchain: host ${ARCH} (gcc/ld)")
 elseif(TOOLCHAIN_VARIANT_COMPILER STREQUAL "llvm")
   set(TOOLCHAIN_KCONFIG_DIR ${TOOLCHAIN_ROOT}/cmake/toolchain/host/llvm)
-  include("${TOOLCHAIN_ROOT}/cmake/toolchain/llvm/generic.cmake")
+  include("${TOOLCHAIN_ROOT}/cmake/toolchain/host/llvm/generic.cmake")
 else()
   message(FATAL_ERROR "Unsupported TOOLCHAIN_VARIANT_COMPILER: ${TOOLCHAIN_VARIANT_COMPILER}")
 endif()

@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# Use the content from llvm from now, move over here once we migrate to
-# host/llvm.
+config NEWLIB_LIBC_USE_POSIX_LIMITS_H
+        bool
+        default n
 
-rsource "../../llvm/Kconfig.defconfig"
