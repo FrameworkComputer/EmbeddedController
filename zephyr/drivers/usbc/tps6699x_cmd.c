@@ -289,6 +289,22 @@ int tps_rd_status_reg(const struct i2c_dt_spec *i2c, union reg_status *status)
 			    I2C_MSG_READ);
 }
 
+int tps_rw_source_cap_ext_data_block(const struct i2c_dt_spec *i2c,
+				     union reg_source_cap_ext_data_block *buf,
+				     int flag)
+{
+	return tps_xfer_reg(i2c, REG_TX_SOURCE_CAPABILITIES_EXTENDED_DATA_BLOCK,
+			    buf->raw_value,
+			    sizeof(union reg_source_cap_ext_data_block), flag);
+}
+
+int tps_rw_source_info(const struct i2c_dt_spec *i2c,
+		       union reg_source_info *buf, int flag)
+{
+	return tps_xfer_reg(i2c, REG_TX_SOURCE_INFO, buf->raw_value,
+			    sizeof(union reg_source_info), flag);
+}
+
 #ifdef CONFIG_USBC_PDC_TPS6699X_CONSOLE_FW_UPDATER
 /* LCOV_EXCL_START */
 

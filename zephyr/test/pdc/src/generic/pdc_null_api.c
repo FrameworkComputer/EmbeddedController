@@ -393,6 +393,15 @@ ZTEST(pdc_api_null_check, test_pdc_get_alert)
 		      -ENOSYS);
 }
 
+ZTEST(pdc_api_null_check, test_pdc_set_max_pdp)
+{
+	enum max_pdp_t max_pdp = 0;
+	int rv = pdc_set_max_pdp(&fake_pdc, max_pdp);
+
+	zassert_equal(-ENOSYS, rv, "Got %d, expected -ENOSYS (%d)", rv,
+		      -ENOSYS);
+}
+
 ZTEST(pdc_api_null_check, test_completeness)
 {
 	/* Count the number of PDC API methods supported */

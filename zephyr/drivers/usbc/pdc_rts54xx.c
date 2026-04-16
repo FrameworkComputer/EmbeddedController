@@ -197,6 +197,7 @@ __maybe_unused static const struct smbus_cmd_t RTS_SET_SBU_MUX_MODE = { 0x30,
 									0x01 };
 static const struct smbus_cmd_t SET_BBR_CTS = { 0x08, 0x03, 0x27 };
 static const struct smbus_cmd_t GET_ALERT = { 0x08, 0x02, 0xB5 };
+static const struct smbus_cmd_t SET_MAX_PDP = { 0x08, 0x03, 0xE2 };
 
 /**
  * @brief States of the main state machine
@@ -339,6 +340,8 @@ enum cmd_t {
 	CMD_GET_VENDOR_STATUS,
 	/** CMD_GET_ALERT */
 	CMD_GET_ALERT,
+	/** CMD_SET_MAX_PDP */
+	CMD_SET_MAX_PDP,
 };
 
 /**
@@ -490,6 +493,7 @@ static const char *const cmd_names[] = {
 	[CMD_SET_SYS_PWR_STATE] = "CMD_SET_SYS_PWR_STATE",
 	[CMD_GET_VENDOR_STATUS] = "CMD_GET_VENDOR_STATUS",
 	[CMD_GET_ALERT] = "CMD_GET_ALERT",
+	[CMD_SET_MAX_PDP] = "CMD_SET_MAX_PDP",
 };
 
 /**
@@ -3059,6 +3063,31 @@ static int rts54_get_alert(const struct device *dev, uint32_t *ado)
 				  ARRAY_SIZE(payload), (uint8_t *)ado);
 }
 
+static int rts54_set_max_pdp(const struct device *dev, enum max_pdp_t max_pdp)
+{
+	struct pdc_data_t *data = dev->data;
+	int max_pdp_num;
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	if (max_pdp == MAX_PDP_7_5W)
+		max_pdp_num = 7;
+	else if (max_pdp == MAX_PDP_15W)
+		max_pdp_num = 15;
+	else
+		return -EINVAL;
+
+	uint8_t payload[] = {
+		SET_MAX_PDP.cmd,    SET_MAX_PDP.len, SET_MAX_PDP.sub, 0x00,
+		BYTE0(max_pdp_num),
+	};
+
+	return rts54_post_command(dev, CMD_SET_MAX_PDP, payload,
+				  ARRAY_SIZE(payload), NULL);
+}
+
 static DEVICE_API(pdc, pdc_driver_api) = {
 	.start_thread = rts54_start_thread,
 	.is_init_done = rts54_is_init_done,
@@ -3111,6 +3140,7 @@ static DEVICE_API(pdc, pdc_driver_api) = {
 	.set_ap_power_state = rts54_set_ap_power_state,
 	.get_vendor_status = rts54_get_vendor_status,
 	.get_alert = rts54_get_alert,
+	.set_max_pdp = rts54_set_max_pdp,
 };
 
 static int pdc_init(const struct device *dev)

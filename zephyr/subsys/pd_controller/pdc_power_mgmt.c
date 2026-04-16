@@ -248,6 +248,8 @@ enum pdc_cmd_t {
 	CMD_PDC_GET_VENDOR_STATUS,
 	/** CMD_PDC_GET_ALERT */
 	CMD_PDC_GET_ALERT,
+	/** CMD_PDC_SET_MAX_PDP */
+	CMD_PDC_SET_MAX_PDP,
 	/** CMD_PDC_COUNT */
 	CMD_PDC_COUNT
 };
@@ -510,6 +512,11 @@ enum init_local_state_t {
 	 *  initialization.
 	 */
 	INIT_SET_SRC_PDOS,
+	/**
+	 * INIT_SET_MAX_PDP - Set the device's max PDP during init based on
+	 * number of 3A ports.
+	 */
+	INIT_SET_MAX_PDP,
 	/** INIT_GET_CONNECTOR_STATUS - Get current status. This state does not
 	 *  return; the state machine will transition to the unattached or one
 	 *  of the attached run states after handling the response.
@@ -525,6 +532,7 @@ const static char *init_local_state_names[] = {
 	[INIT_WAIT_FOR_READY] = "WAIT_FOR_READY",
 	[INIT_SET_SINK_PDOS] = "SET_SINK_PDOS",
 	[INIT_SET_SRC_PDOS] = "SET_SRC_PDOS",
+	[INIT_SET_MAX_PDP] = "SET_MAX_PDP",
 	[INIT_GET_CONNECTOR_STATUS] = "GET_CONN_STATUS",
 };
 
@@ -606,6 +614,7 @@ test_export_static const char *const pdc_cmd_names[] = {
 	[CMD_PDC_SET_BATTERY_CAPABILITY] = "PDC_SET_BATTERY_CAPABILITY",
 	[CMD_PDC_GET_VENDOR_STATUS] = "PDC_GET_VENDOR_STATUS",
 	[CMD_PDC_GET_ALERT] = "PDC_GET_ALERT",
+	[CMD_PDC_SET_MAX_PDP] = "PDC_SET_MAX_PDP",
 };
 const int pdc_cmd_types = CMD_PDC_COUNT;
 
@@ -3389,6 +3398,12 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 	case CMD_PDC_GET_ALERT:
 		rv = pdc_get_alert(port->pdc, &port->ado);
 		break;
+	case CMD_PDC_SET_MAX_PDP:
+		if (pd_get_usb_pd_3a_ports() != 0)
+			rv = pdc_set_max_pdp(port->pdc, MAX_PDP_15W);
+		else
+			rv = pdc_set_max_pdp(port->pdc, MAX_PDP_7_5W);
+		break;
 	default:
 		LOG_ERR("C%d: Invalid command: %d", config->connector_num,
 			port->cmd->cmd);
@@ -4055,7 +4070,7 @@ static enum smf_state_result pdc_init_run(void *obj)
 		break;
 
 	case INIT_SET_SRC_PDOS:
-		port->init_local_state = INIT_GET_CONNECTOR_STATUS;
+		port->init_local_state = INIT_SET_MAX_PDP;
 		port->attached_state = INIT_STATE;
 
 		pdc_power_mgmt_set_current_limit(
@@ -4071,6 +4086,10 @@ static enum smf_state_result pdc_init_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
 		break;
 
+	case INIT_SET_MAX_PDP:
+		port->init_local_state = INIT_GET_CONNECTOR_STATUS;
+		queue_internal_cmd(port, CMD_PDC_SET_MAX_PDP);
+		break;
 	case INIT_GET_CONNECTOR_STATUS:
 		/* Send the connector status command to determine which state to
 		 * enter

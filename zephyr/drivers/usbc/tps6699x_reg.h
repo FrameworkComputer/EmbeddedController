@@ -92,6 +92,7 @@ enum tps6699x_reg {
 	REG_RECEIVED_ALERT_DATA_OBJECT = 0x74,
 	REG_TX_ALERT_DATA_OBJECT = 0x75,
 	REG_TX_SOURCE_CAPABILITIES_EXTENDED_DATA_BLOCK = 0x77,
+	REG_TX_SOURCE_INFO = 0x78,
 	REG_TRANSMITTED_STATUS_DATA_BLOCK = 0x79,
 	REG_TRANSMITTED_PPS_STATUS_DATA_BLOCK = 0x7a,
 	REG_TRANSMITTED_BATTERY_STATUS_DATA_OBJECT = 0x7b,
@@ -1526,6 +1527,48 @@ union reg_adc_results {
 		uint16_t reserved3 : 16;
 	} __packed;
 	uint8_t raw_value[62];
+};
+
+/**
+ * @brief 4.76 Tx Source Capabilities Extended Data Block Register
+ * (Offset = 0x77)
+ */
+union reg_source_cap_ext_data_block {
+	struct {
+		uint32_t voltage_regulation : 8;
+		uint32_t hold_up_time : 8;
+		uint32_t compliance : 8;
+		uint32_t touch_current : 8;
+		uint32_t peak_current_1 : 16;
+		uint32_t peak_current_2 : 16;
+		uint32_t peak_current_3 : 16;
+		uint32_t touch_temperature : 8;
+		uint32_t source_input : 8;
+		uint32_t num_fixed_batt : 4;
+		uint32_t num_swap_batt : 4;
+		uint32_t source_pdp : 8;
+		uint32_t sourec_pdp_epr : 8;
+	} __packed;
+	uint8_t raw_value[15];
+};
+
+/**
+ * @brief 4.77 Tx Source Info (Offset = 0x78)
+ */
+union reg_source_info {
+	struct {
+		uint32_t reported_pdp : 8;
+		uint32_t present_pdp : 8;
+		uint32_t maximum_pdp : 8;
+		uint32_t reserved : 7;
+		uint32_t port_managed_garunteed : 1;
+		uint32_t guaranteed_pdp : 9;
+		uint32_t maximum_pdp_2 : 9;
+		uint32_t reserved_2 : 12;
+		uint32_t dps_port : 1;
+		uint32_t port_type : 1;
+	} __packed;
+	uint8_t raw_value[8];
 };
 
 /**

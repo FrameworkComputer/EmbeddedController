@@ -107,3 +107,14 @@ ZTEST_USER_F(src_policy, test_src_policy_no_3a)
 		"actual current %d mA",
 		TEST_USBC_PORT0, 1500, response.meas.current_max);
 }
+
+/* Verify PDC reports 7.5W Max PDP on boards without 3A ports. */
+ZTEST_USER_F(src_policy, test_src_max_pdp)
+{
+	enum max_pdp_t max_pdp;
+
+	zassert_ok(emul_pdc_get_max_pdp(fixture->emul_pdc[TEST_USBC_PORT0],
+					&max_pdp));
+	zassert_equal(MAX_PDP_7_5W, max_pdp,
+		      "Expected max PDP to be 7.5W, got %d", max_pdp);
+}

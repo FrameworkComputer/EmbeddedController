@@ -1568,6 +1568,31 @@ static int emul_tps6699x_get_sbu_mux_mode(const struct emul *target,
 	return 0;
 }
 
+static int emul_tps6699x_get_max_pdp(const struct emul *target,
+				     enum max_pdp_t *max_pdp)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+	union reg_source_cap_ext_data_block *source_cap_ext =
+		(union reg_source_cap_ext_data_block *)data
+			->reg_val[REG_TX_SOURCE_CAPABILITIES_EXTENDED_DATA_BLOCK];
+	union reg_source_info *source_info =
+		(union reg_source_info *)data->reg_val[REG_TX_SOURCE_INFO];
+
+	if (source_cap_ext->source_pdp == 7 && source_info->maximum_pdp == 7) {
+		*max_pdp = MAX_PDP_7_5W;
+	} else if (source_cap_ext->source_pdp == 15 &&
+		   source_info->maximum_pdp == 15) {
+		*max_pdp = MAX_PDP_15W;
+	} else {
+		LOG_ERR("Invalid max PDP in emulator: source_pdp=%d, maximum_pdp=%d",
+			source_cap_ext->source_pdp, source_info->maximum_pdp);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 static DEVICE_API(emul_pdc, emul_tps6699x_api) = {
 	.reset = emul_tps6699x_reset,
 	.set_response_delay = emul_tps6699x_set_response_delay,
@@ -1607,6 +1632,7 @@ static DEVICE_API(emul_pdc, emul_tps6699x_api) = {
 	.set_revision = emul_tps6699x_set_revision,
 	.set_current_cam = emul_tps6699x_set_current_cam,
 	.get_sbu_mux_mode = emul_tps6699x_get_sbu_mux_mode,
+	.get_max_pdp = emul_tps6699x_get_max_pdp,
 };
 
 /* clang-format off */
