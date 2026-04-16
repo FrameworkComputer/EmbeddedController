@@ -62,7 +62,7 @@ config HW_TEST_FLASH_PHYSICAL
 	depends on FLASH
 
 config HW_TEST_FLASH_PROTECTION_RW
-	bool "Flash protecion RW test"
+	bool "Flash protection RW test"
 	select ZTEST
 	depends on PLATFORM_EC_FLASH_CROS
 
