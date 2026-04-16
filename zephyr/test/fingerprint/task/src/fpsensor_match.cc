@@ -111,32 +111,40 @@ static int match_result;
 static int32_t finger_index;
 static uint32_t finger_updated_bitmap;
 
-ZTEST_USER(fpsensor_match, test_match_no_templates_mkbp_event)
+/**
+ * @brief Helper to set the FP mode and simulate a finger touch to trigger a
+ * match.
+ */
+static void trigger_match_attempt(uint32_t mode)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
-	uint32_t fp_events;
+	struct ec_params_fp_mode mode_params = { .mode = mode };
+	struct ec_response_fp_mode mode_resp;
+	struct fingerprint_sensor_state sensor_state;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
+	/* Switch mode to match and wait for task to switch. */
+	zassert_ok(ec_cmd_fp_mode(NULL, &mode_params, &mode_resp));
+	zassert_equal(mode_resp.mode & mode, mode,
+		      "Failed to set all requested FP modes");
 
 	/* Give opportunity for fpsensor task to change mode. */
 	k_msleep(1);
 
 	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
+	fingerprint_get_state(fp_sim, &sensor_state);
+	sensor_state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
+	fingerprint_set_state(fp_sim, &sensor_state);
 
-	/* Ping fpsensor task. */
+	/* Trigger the sensor callback and wait for processing. */
 	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task to process event. */
 	k_msleep(1);
+}
+
+ZTEST_USER(fpsensor_match, test_match_no_templates_mkbp_event)
+{
+	uint32_t fp_events;
+
+	/* Trigger match with no templates loaded. */
+	trigger_match_attempt(FP_MODE_MATCH);
 
 	/* Confirm MKBP event was sent. */
 	zassert_equal(mkbp_send_event_fake.call_count, 1);
@@ -158,29 +166,11 @@ ZTEST_USER(fpsensor_match, test_match_no_templates_mkbp_event)
 
 ZTEST_USER(fpsensor_match, test_match_no_templates_mode_cleared)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH,
-	};
+	struct ec_params_fp_mode params = { 0 };
 	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task to process event. */
-	k_msleep(1);
+	/* Trigger match with no templates. */
+	trigger_match_attempt(FP_MODE_MATCH);
 
 	/* Confirm that capture mode is not enabled. */
 	params.mode = FP_MODE_DONT_CHANGE;
@@ -204,12 +194,6 @@ static int match_compare(const struct fingerprint_algorithm *const alg,
 
 ZTEST_USER(fpsensor_match, test_match_correct_template_and_image)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
-
 	/* Load example template. */
 	zassert_ok(ec_cmd_fp_template(
 		NULL,
@@ -222,29 +206,14 @@ ZTEST_USER(fpsensor_match, test_match_correct_template_and_image)
 	 */
 	mock_alg_match_fake.custom_fake = match_compare;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
 	/* Prepare image. */
 	memset(image_buffer, 1, IMAGE_SIZE);
 
 	/* Load image to simulator. */
 	fingerprint_load_image(fp_sim, image_buffer, IMAGE_SIZE);
 
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task process event. */
-	k_msleep(1);
+	/* Trigger match. */
+	trigger_match_attempt(FP_MODE_MATCH);
 
 	/* Make sure that 'match' was called. */
 	zassert_equal(mock_alg_match_fake.call_count, 1);
@@ -252,11 +221,6 @@ ZTEST_USER(fpsensor_match, test_match_correct_template_and_image)
 
 ZTEST_USER(fpsensor_match, test_match_no_match_mkbp_event)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
 	uint32_t fp_events;
 
 	/* Load example template. */
@@ -267,23 +231,8 @@ ZTEST_USER(fpsensor_match, test_match_no_match_mkbp_event)
 
 	mock_alg_match_fake.return_val = FP_MATCH_RESULT_NO_MATCH;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task process event. */
-	k_msleep(1);
+	/* Trigger match. */
+	trigger_match_attempt(FP_MODE_MATCH);
 
 	/* Make sure that 'match' was called. */
 	zassert_equal(mock_alg_match_fake.call_count, 1);
@@ -329,12 +278,6 @@ static int match_no_update(const struct fingerprint_algorithm *const alg,
 
 ZTEST_USER(fpsensor_match, test_match_no_template_update)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH | FP_MODE_MATCH_NO_TEMPLATE_UPDATE,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
-
 	/* Load example template. */
 	zassert_ok(ec_cmd_fp_template(
 		NULL,
@@ -347,24 +290,8 @@ ZTEST_USER(fpsensor_match, test_match_no_template_update)
 	 */
 	mock_alg_match_fake.custom_fake = match_no_update;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-	zassert_true(response.mode & FP_MODE_MATCH_NO_TEMPLATE_UPDATE);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task process event. */
-	k_msleep(1);
+	/* Trigger match without template update. */
+	trigger_match_attempt(FP_MODE_MATCH | FP_MODE_MATCH_NO_TEMPLATE_UPDATE);
 
 	/* Make sure that 'match' was called. */
 	zassert_equal(mock_alg_match_fake.call_count, 1);
@@ -372,11 +299,6 @@ ZTEST_USER(fpsensor_match, test_match_no_template_update)
 
 ZTEST_USER(fpsensor_match, test_match_success_mkbp_event)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
 	uint32_t fp_events;
 
 	/* Load example template. */
@@ -390,23 +312,8 @@ ZTEST_USER(fpsensor_match, test_match_success_mkbp_event)
 	finger_updated_bitmap = 0;
 	mock_alg_match_fake.custom_fake = custom_match;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task process event. */
-	k_msleep(1);
+	/* Trigger match. */
+	trigger_match_attempt(FP_MODE_MATCH);
 
 	/* Make sure that 'match' was called. */
 	zassert_equal(mock_alg_match_fake.call_count, 1);
@@ -429,11 +336,6 @@ ZTEST_USER(fpsensor_match, test_match_success_mkbp_event)
 
 ZTEST_USER(fpsensor_match, test_match_success_template_updated_mkbp_event)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
 	uint32_t fp_events;
 
 	/* Load example template. */
@@ -447,23 +349,8 @@ ZTEST_USER(fpsensor_match, test_match_success_template_updated_mkbp_event)
 	finger_updated_bitmap = 0x1;
 	mock_alg_match_fake.custom_fake = custom_match;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task process event. */
-	k_msleep(1);
+	/* Trigger match. */
+	trigger_match_attempt(FP_MODE_MATCH);
 
 	/* Make sure that 'match' was called. */
 	zassert_equal(mock_alg_match_fake.call_count, 1);
@@ -487,11 +374,6 @@ ZTEST_USER(fpsensor_match, test_match_success_template_updated_mkbp_event)
 
 ZTEST_USER(fpsensor_match, test_match_success_template_update_failed_mkbp_event)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
 	uint32_t fp_events;
 
 	/* Load example template. */
@@ -505,23 +387,8 @@ ZTEST_USER(fpsensor_match, test_match_success_template_update_failed_mkbp_event)
 	finger_updated_bitmap = 0;
 	mock_alg_match_fake.custom_fake = custom_match;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task process event. */
-	k_msleep(1);
+	/* Trigger match. */
+	trigger_match_attempt(FP_MODE_MATCH);
 
 	/* Make sure that 'match' was called. */
 	zassert_equal(mock_alg_match_fake.call_count, 1);
@@ -545,12 +412,6 @@ ZTEST_USER(fpsensor_match, test_match_success_template_update_failed_mkbp_event)
 
 ZTEST_USER(fpsensor_match, test_match_success_template_updated_dirty_template)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
-
 	/* Load example template. */
 	zassert_ok(ec_cmd_fp_template(
 		NULL,
@@ -562,23 +423,8 @@ ZTEST_USER(fpsensor_match, test_match_success_template_updated_dirty_template)
 	finger_updated_bitmap = 0x1;
 	mock_alg_match_fake.custom_fake = custom_match;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task process event. */
-	k_msleep(1);
+	/* Trigger match. */
+	trigger_match_attempt(FP_MODE_MATCH);
 
 	/* Make sure that 'match' was called. */
 	zassert_equal(mock_alg_match_fake.call_count, 1);
@@ -592,12 +438,6 @@ ZTEST_USER(fpsensor_match, test_match_success_template_updated_dirty_template)
 ZTEST_USER(fpsensor_match,
 	   test_match_success_template_update_failed_dirty_template)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
-
 	/* Load example template. */
 	zassert_ok(ec_cmd_fp_template(
 		NULL,
@@ -609,23 +449,8 @@ ZTEST_USER(fpsensor_match,
 	finger_updated_bitmap = 0x1;
 	mock_alg_match_fake.custom_fake = custom_match;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task process event. */
-	k_msleep(1);
+	/* Trigger match. */
+	trigger_match_attempt(FP_MODE_MATCH);
 
 	/* Make sure that 'match' was called. */
 	zassert_equal(mock_alg_match_fake.call_count, 1);
@@ -638,12 +463,6 @@ ZTEST_USER(fpsensor_match,
 
 ZTEST_USER(fpsensor_match, test_match_success_no_template_update_dirty_template)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
-
 	/* Load example template. */
 	zassert_ok(ec_cmd_fp_template(
 		NULL,
@@ -655,23 +474,8 @@ ZTEST_USER(fpsensor_match, test_match_success_no_template_update_dirty_template)
 	finger_updated_bitmap = 0x1;
 	mock_alg_match_fake.custom_fake = custom_match;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task process event. */
-	k_msleep(1);
+	/* Trigger match. */
+	trigger_match_attempt(FP_MODE_MATCH);
 
 	/* Make sure that 'match' was called. */
 	zassert_equal(mock_alg_match_fake.call_count, 1);
@@ -684,12 +488,6 @@ ZTEST_USER(fpsensor_match, test_match_success_no_template_update_dirty_template)
 
 ZTEST_USER(fpsensor_match, test_match_no_template_update_dirty_template)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH | FP_MODE_MATCH_NO_TEMPLATE_UPDATE,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
-
 	/* Load example template. */
 	zassert_ok(ec_cmd_fp_template(
 		NULL,
@@ -702,24 +500,8 @@ ZTEST_USER(fpsensor_match, test_match_no_template_update_dirty_template)
 	finger_updated_bitmap = 0x1;
 	mock_alg_match_fake.custom_fake = custom_match;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-	zassert_true(response.mode & FP_MODE_MATCH_NO_TEMPLATE_UPDATE);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task process event. */
-	k_msleep(1);
+	/* Trigger match without update. */
+	trigger_match_attempt(FP_MODE_MATCH | FP_MODE_MATCH_NO_TEMPLATE_UPDATE);
 
 	/* Confirm that dirty templates bitmap is correct (no templates dirty).
 	 */
@@ -731,11 +513,6 @@ ZTEST_USER(fpsensor_match, test_match_no_template_update_dirty_template)
 ZTEST_USER(fpsensor_match,
 	   test_match_success_read_positive_match_secret_allowed)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
 	struct ec_params_fp_read_match_secret secret_params;
 	struct ec_response_fp_read_match_secret secret_response;
 
@@ -750,23 +527,8 @@ ZTEST_USER(fpsensor_match,
 	finger_updated_bitmap = 0x1;
 	mock_alg_match_fake.custom_fake = custom_match;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task process event. */
-	k_msleep(1);
+	/* Trigger match. */
+	trigger_match_attempt(FP_MODE_MATCH);
 
 	/* Make sure that 'match' was called. */
 	zassert_equal(mock_alg_match_fake.call_count, 1);
@@ -783,11 +545,6 @@ ZTEST_USER(fpsensor_match,
 ZTEST_USER(fpsensor_match,
 	   test_match_success_read_positive_match_secret_timeout)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
 	struct ec_params_fp_read_match_secret secret_params;
 	struct ec_response_fp_read_match_secret secret_response;
 
@@ -802,23 +559,8 @@ ZTEST_USER(fpsensor_match,
 	finger_updated_bitmap = 0x1;
 	mock_alg_match_fake.custom_fake = custom_match;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task process event. */
-	k_msleep(1);
+	/* Trigger match. */
+	trigger_match_attempt(FP_MODE_MATCH);
 
 	/* Make sure that 'match' was called. */
 	zassert_equal(mock_alg_match_fake.call_count, 1);
@@ -835,11 +577,6 @@ ZTEST_USER(fpsensor_match,
 
 ZTEST_USER(fpsensor_match, test_match_success_read_positive_match_secret_twice)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
 	struct ec_params_fp_read_match_secret secret_params;
 	struct ec_response_fp_read_match_secret secret_response;
 
@@ -854,23 +591,8 @@ ZTEST_USER(fpsensor_match, test_match_success_read_positive_match_secret_twice)
 	finger_updated_bitmap = 0x1;
 	mock_alg_match_fake.custom_fake = custom_match;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task process event. */
-	k_msleep(1);
+	/* Trigger match. */
+	trigger_match_attempt(FP_MODE_MATCH);
 
 	/* Make sure that 'match' was called. */
 	zassert_equal(mock_alg_match_fake.call_count, 1);
@@ -892,11 +614,6 @@ ZTEST_USER(fpsensor_match, test_match_success_read_positive_match_secret_twice)
 ZTEST_USER(fpsensor_match,
 	   test_match_read_positive_match_secret_without_match_fails)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
 	struct ec_params_fp_read_match_secret secret_params;
 	struct ec_response_fp_read_match_secret secret_response;
 
@@ -908,23 +625,8 @@ ZTEST_USER(fpsensor_match,
 
 	mock_alg_match_fake.return_val = FP_MATCH_RESULT_NO_MATCH;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task process event. */
-	k_msleep(1);
+	/* Trigger match. */
+	trigger_match_attempt(FP_MODE_MATCH);
 
 	/* Make sure that 'match' was called. */
 	zassert_equal(mock_alg_match_fake.call_count, 1);
@@ -938,11 +640,6 @@ ZTEST_USER(fpsensor_match,
 
 ZTEST_USER(fpsensor_match, test_match_error_no_positive_match_secret)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
 	struct ec_params_fp_read_match_secret secret_params;
 	struct ec_response_fp_read_match_secret secret_response;
 
@@ -955,23 +652,8 @@ ZTEST_USER(fpsensor_match, test_match_error_no_positive_match_secret)
 	/* Negative value means error. */
 	mock_alg_match_fake.return_val = -1;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task process event. */
-	k_msleep(1);
+	/* Trigger match. */
+	trigger_match_attempt(FP_MODE_MATCH);
 
 	/* Make sure that 'match' was called. */
 	zassert_equal(mock_alg_match_fake.call_count, 1);
@@ -985,11 +667,6 @@ ZTEST_USER(fpsensor_match, test_match_error_no_positive_match_secret)
 
 ZTEST_USER(fpsensor_match, test_match_error_mkbp_event)
 {
-	struct ec_params_fp_mode params = {
-		.mode = FP_MODE_MATCH,
-	};
-	struct ec_response_fp_mode response;
-	struct fingerprint_sensor_state state;
 	uint32_t fp_events;
 
 	/* Load example template. */
@@ -1001,23 +678,8 @@ ZTEST_USER(fpsensor_match, test_match_error_mkbp_event)
 	/* Negative value means error. */
 	mock_alg_match_fake.return_val = -1;
 
-	/* Switch mode to match. */
-	zassert_ok(ec_cmd_fp_mode(NULL, &params, &response));
-	zassert_true(response.mode & FP_MODE_MATCH);
-
-	/* Give opportunity for fpsensor task to change mode. */
-	k_msleep(1);
-
-	/* Put finger on the sensor. */
-	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = FINGERPRINT_FINGER_STATE_PRESENT;
-	fingerprint_set_state(fp_sim, &state);
-
-	/* Ping fpsensor task. */
-	fingerprint_run_callback(fp_sim);
-
-	/* Give opportunity for fpsensor task process event. */
-	k_msleep(1);
+	/* Trigger match. */
+	trigger_match_attempt(FP_MODE_MATCH);
 
 	/* Make sure that 'match' was called. */
 	zassert_equal(mock_alg_match_fake.call_count, 1);
