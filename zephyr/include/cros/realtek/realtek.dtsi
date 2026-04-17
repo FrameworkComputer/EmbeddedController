@@ -37,11 +37,11 @@
 		compatible = "named-bbram-regions";
 
 		scratchpad {
-			offset = <0x08>;
+			offset = <0x00>;
 			size = <0x04>;
 		};
 		saved-reset-flags {
-			offset = <0x00>;
+			offset = <0x04>;
 			size = <0x04>;
 		};
 		wake {
@@ -49,11 +49,11 @@
 			size = <0x04>;
 		};
 		pd0 {
-			offset = <0x04>;
+			offset = <0x0c>;
 			size = <0x01>;
 		};
 		pd1 {
-			offset = <0x05>;
+			offset = <0x0d>;
 			size = <0x01>;
 		};
 		try_slot {
@@ -61,11 +61,11 @@
 			size = <0x01>;
 		};
 		pd2 {
-			offset = <0x06>;
+			offset = <0x0f>;
 			size = <0x01>;
 		};
 		wp-at-boot {
-			offset = <0x07>;
+			offset = <0x10>;
 			size = <0x01>;
 		};
 		key {
