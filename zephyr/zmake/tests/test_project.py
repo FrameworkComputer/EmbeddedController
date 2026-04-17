@@ -335,3 +335,34 @@ def test_kconfig_files(tmp_path, actual_files, config_files, expected_files):
     assert sorted(f.name for f in config.kconfig_files) == sorted(
         expected_files
     )
+
+
+@pytest.mark.parametrize(
+    ("snippets", "expected_snippet_def"),
+    [
+        ([], None),
+        (["foo"], "foo"),
+        (["foo", "bar"], "foo;bar"),
+    ],
+)
+def test_snippets(tmp_path, snippets, expected_snippet_def):
+    """Test for setting snippets property."""
+    project = zmake.project.Project(
+        zmake.project.ProjectConfig(
+            project_name="test_snippets",
+            zephyr_board="lm4",
+            output_packer=zmake.output_packers.RawBinPacker,
+            supported_toolchains=["coreboot-sdk"],
+            project_dir=tmp_path,
+            snippets=snippets,
+        ),
+    )
+
+    builds = list(project.iter_builds())
+    assert len(builds) == 1
+
+    _, config = builds[0]
+    if expected_snippet_def is None:
+        assert "SNIPPET" not in config.cmake_defs
+    else:
+        assert config.cmake_defs["SNIPPET"] == expected_snippet_def

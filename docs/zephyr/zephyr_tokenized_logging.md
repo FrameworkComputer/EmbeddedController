@@ -16,17 +16,14 @@ Detokenizing occurs before the log is outputted to console or saved to
 
 ## Enabling Tokenization in EC
 
-Enable Kconfig `CONFIG_PLATFORM_EC_LOG_TOKENIZED` and its dependencies for the
-board you want to enable tokenized logging.  Additionally, make sure `picolibc`
-and `pigweed` modules are added to your board.
+Add the Zephyr snippet [`pw-tokenize`] to your project's configuration.
+Additionally, make sure `picolibc`, `pigweed` modules are added to your project.
 
-*Note: Tokenized logging is only supported for Zephyr EC*
-
-Example: https://crrev.com/c/5182026.
-```
+```python
 register_brox_project(
     project_name="brox",
     modules=["picolibc", "ec", "pigweed"],
+    snippets=["pw-tokenize"],
 )
 ```
 
@@ -265,3 +262,6 @@ to fetch, merge, and upload the database to GCS.
 TODO(b/287267896)
 Upon CQ submission, LUCI will identify when collisions occur and notify the
 developer to alter their log statement.
+
+
+[`pw-tokenize`]: ../../zephyr/snippets/pw-tokenize/snippet.yml

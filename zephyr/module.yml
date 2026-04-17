@@ -7,3 +7,4 @@ build:
   kconfig: Kconfig
   settings:
     board_root: zephyr/
+    snippet_root: zephyr/

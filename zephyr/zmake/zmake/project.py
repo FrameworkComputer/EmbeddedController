@@ -50,6 +50,7 @@ class ProjectConfig:
     kconfig_files: "list[pathlib.Path]" = dataclasses.field(
         default_factory=list
     )
+    snippets: "list[str]" = dataclasses.field(default_factory=list)
     project_dir: pathlib.Path = dataclasses.field(default_factory=pathlib.Path)
     inherited_from: typing.Iterable[str] = dataclasses.field(
         default_factory=list
@@ -85,9 +86,10 @@ class Project:
         Yields:
             2-tuples of a build configuration name and a BuildConfig.
         """
-        conf = build_config.BuildConfig(
-            cmake_defs={"BOARD": self.config.zephyr_board}
-        )
+        cmake_defs = {"BOARD": self.config.zephyr_board}
+        if self.config.snippets:
+            cmake_defs["SNIPPET"] = ";".join(self.config.snippets)
+        conf = build_config.BuildConfig(cmake_defs=cmake_defs)
 
         kconfig_files = []
         prj_conf = self.config.project_dir / "prj.conf"
