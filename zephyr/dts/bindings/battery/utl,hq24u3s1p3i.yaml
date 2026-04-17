@@ -42,11 +42,11 @@ properties:
   voltage_min:
     default: 9000
   precharge_current:
-    default: 178
+    default: 355
   start_charging_min_c:
     default: 0
   start_charging_max_c:
-    default: 60
+    default: 45
   charging_min_c:
     default: 0
   charging_max_c:
