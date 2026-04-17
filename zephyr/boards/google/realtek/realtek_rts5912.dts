@@ -10,6 +10,10 @@
 
 #include <cros/cbi_flash.dtsi>
 
+&flash0 {
+    reg = <0x20000400 0x4f900>;
+};
+
 &binman {
 	pad-byte = <0xff>;
 	pad-after = <0x30000>;
@@ -22,7 +26,6 @@
 		 */
 		offset = <0x0>;
 		/*
-		 * TODO: b/416020794, make the EC image size as big as the available code RAM.
 		 * The total flash size is 1 MiB.
 		 * Set the write protected region to the lower half of flash.
 		 */
@@ -43,9 +46,6 @@
 	};
 	ec-rw {
 		offset = <0x80000>;
-		/*
-		 * TODO: b/416020794, make the EC image size as big as the available code RAM.
-		 */
 		size = <0x50000>;
 		rw-fw {
 			rw-fwid {

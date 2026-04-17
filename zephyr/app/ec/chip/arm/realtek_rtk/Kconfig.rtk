@@ -18,18 +18,16 @@ endchoice
 #
 # RTS5915:
 #	384 kb total SRAM:
-#		0x2000_0000 - 0x2000_6fff: chrome-loader (28 kb)
-#		0x2000_7000 - 0x2000_b3df: customer use (16 kb)
-#		0x2000_b3e0 - 0x2004_b3ff: code (256 kb + 20 byte header)
-#		0x2004_b400 - 0x2004_ffff: customer use (19 kb)
+#		0x2000_0000 - 0x2000_03df: vender use
+#		0x2000_03e0 - 0x2004_fbff: code (320 kb + 20 byte header)
+#		0x2004_fd00 - 0x2004_ffff: lfw (300 byte)
 #		0x2005_0000 - 0x2005_ffff: data use (64 kb)
 #	1MB internal SPI flash (reg mapped)
 #		0x6000_0000 - 0x6007_FFFF: RO
 #		0x6008_0000 - 0x600F_FFFF: RW
 
-# TODO: b/416020794, make the EC image size as big as the available code RAM.
 config CROS_EC_PROGRAM_MEMORY_BASE
-	default 0x2000b400
+	default 0x20000400
 
 config CROS_EC_RAM_BASE
 	default 0x20050000
@@ -44,13 +42,11 @@ config CROS_EC_RAM_SIZE
 config CROS_EC_RO_MEM_OFF
 	default 0
 
-# Image size should be limited by sram code size
-# TODO: b/416020794, make the EC image size as big as the available code RAM.
 config CROS_EC_RO_SIZE
-	default 0x40000
+	default 0x4f900
 
 config CROS_EC_RW_SIZE
-	default 0x40000
+	default 0x4f900
 
 config CROS_EC_RW_MEM_OFF
 	default 0

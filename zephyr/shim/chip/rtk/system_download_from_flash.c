@@ -44,8 +44,7 @@ __start_lfw(uint32_t srcAddr, uint32_t dstAddr, uint32_t size, uint32_t exeAddr)
 		;
 }
 
-/* TODO: follow b/416020794 to rearrange RAM */
-uintptr_t __lfw_sram_start = 0x20007000u;
+uintptr_t __lfw_sram_start = 0x2004fd00u;
 
 void system_download_from_flash(uint32_t srcAddr, uint32_t dstAddr,
 				uint32_t size, uint32_t exeAddr)
