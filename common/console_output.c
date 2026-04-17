@@ -67,7 +67,7 @@ void console_channel_disable(const char *name)
 		channel_mask &= ~CC_MASK(index);
 }
 
-bool console_channel_is_disabled(enum console_channel channel)
+bool console_channel_is_disabled(int channel)
 {
 	if (!(CC_MASK(channel) & channel_mask))
 		return true;

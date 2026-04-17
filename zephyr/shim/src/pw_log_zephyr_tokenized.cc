@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include "console_channel.h"
+
 #include <zephyr/spinlock.h>
 #include <zephyr/sys/printk.h>
 
@@ -12,7 +14,6 @@
 #include <pw_log_tokenized/metadata.h>
 
 extern "C" {
-enum console_channel : int;
 bool console_channel_is_disabled(int channel);
 void panic_log_write_str(const void *data, size_t size);
 void console_buf_notify_chars(const char *data, size_t size);

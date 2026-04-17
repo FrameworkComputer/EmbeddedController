@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "config.h"
+#include "console_channel.h"
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -109,16 +110,6 @@ static inline int console_is_restricted(void)
 }
 #endif
 
-/* Console channels */
-enum console_channel {
-#define CONSOLE_CHANNEL(enumeration, string) enumeration,
-#include "console_channel.inc"
-#undef CONSOLE_CHANNEL
-
-	/* Channel count; not itself a channel */
-	CC_CHANNEL_COUNT
-};
-
 /* Mask in channel_mask for a particular channel */
 #define CC_MASK(channel) (1U << (channel))
 
@@ -146,7 +137,7 @@ void console_channel_disable(const char *name);
  *
  * @return true if channel is disabled, false if not.
  */
-bool console_channel_is_disabled(enum console_channel channel);
+bool console_channel_is_disabled(int channel);
 
 #ifdef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
 const char *get_timestamp_now(void);
