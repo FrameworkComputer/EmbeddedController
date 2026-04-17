@@ -56,6 +56,8 @@ static bool firmware_update;
 static bool alert_press;
 static int pre_safety_level = TYPEC_SAFETY_LEVEL_0;
 
+#define max_stable_time MAX((CONFIG_PD_WAIT_STABLE_TIMER * MSEC), CCG_MAX_TBOOTWAIT_VALUE)
+static uint64_t wait_stable_time[PD_CHIP_COUNT] = {[0 ... PD_CHIP_COUNT-1] = max_stable_time};
 /**
  * Delay 500 ms to start updating the battery information
  */
@@ -1716,16 +1718,20 @@ static void cypd_handle_state(int controller)
 	case CCG_STATE_WAIT_STABLE:
 		uint64_t timer = get_time().val;
 
-		if (timer > CONFIG_PD_WAIT_STABLE_TIMER * MSEC)
+		if (timer > wait_stable_time[controller]) {
 			pd_chip_config[controller].state = CCG_STATE_POWER_ON;
+			wait_stable_time[controller] = max_stable_time;
+			timer = 0;
+		} else {
+			timer = wait_stable_time[controller] - timer;
+		}
 
 		if (controller == 0) {
-			hook_call_deferred(&pd0_update_state_deferred_data,
-				CONFIG_PD_WAIT_STABLE_TIMER * MSEC);
+			hook_call_deferred(&pd0_update_state_deferred_data, timer);
 		} else {
-			hook_call_deferred(&pd1_update_state_deferred_data,
-				CONFIG_PD_WAIT_STABLE_TIMER * MSEC);
+			hook_call_deferred(&pd1_update_state_deferred_data, timer);
 		}
+
 		break;
 	case CCG_STATE_BOOTLOADER:
 	case CCG_STATE_POWER_ON:
@@ -1739,7 +1745,6 @@ static void cypd_handle_state(int controller)
 						== EC_SUCCESS) {
 					CPRINTS("CYPD bootloader reason 0x%02x", data);
 				}
-
 			} else
 				pd_chip_config[controller].state = CCG_STATE_APP_SETUP;
 		} else {
@@ -1956,22 +1961,28 @@ int cypd_vsys_to_vbus_transition(int port)
 
 int cypd_device_int(int controller)
 {
-	int data;
-
+	int data, dev, rv;
+	uint64_t t;
 	if (cypd_read_reg16(controller, CCG_RESPONSE_REG, &data) == EC_SUCCESS) {
 
 		print_pd_response_code(controller, -1, data & 0xff, data>>8);
 
 		switch (data & 0xFF) {
 		case CCG_RESPONSE_RESET_COMPLETE:
-			CPRINTS("PD%d Reset Complete", controller);
-#ifdef CONFIG_PD_CHIP_CCG6
-			if (pd_chip_config[controller].state != CCG_STATE_WAIT_STABLE)
-#endif
-				pd_chip_config[controller].state = CCG_STATE_POWER_ON;
+			/* clear interrupt */
+			cypd_clear_int(controller, CCG_DEV_INTR);
+			rv = cypd_read_reg8(controller, CCG_DEVICE_MODE, &dev);
+			CPRINTS("PD%d Reset Complete; dev mode:0x%02x", controller, dev);
 
-			/* Run state handler to set up controller */
-			task_set_event(TASK_ID_CYPD, CCG_EVT_STATE_CTRL_0 << controller);
+			if (rv == EC_SUCCESS && (dev & 0x03) != 0) {
+				pd_chip_config[controller].state = CCG_STATE_POWER_ON;
+				task_set_event(TASK_ID_CYPD, CCG_EVT_STATE_CTRL_0 << controller);
+			} else {
+				/* update target time */
+				t = get_time().val;
+				wait_stable_time[controller] = t + max_stable_time;
+			}
+
 			break;
 		case CCG_RESPONSE_MESSAGE_QUEUE_OVERFLOW:
 			CPRINTS("PD%d Message Overflow", controller);
@@ -2460,10 +2471,8 @@ void cypd_interrupt_handler_task(void *p)
 	task_set_event(TASK_ID_CYPD, (CCG_EVT_STATE_CTRL_0 |
 		CCG_EVT_STATE_CTRL_1 | CCG_EVT_STATE_CTRL_GPU));
 
-	for (i = 0; i < PD_CHIP_COUNT; i++) {
+	for (i = 0; i < PD_CHIP_COUNT; i++)
 		cypd_enable_interrupt(i, true);
-		task_set_event(TASK_ID_CYPD, CCG_EVT_STATE_CTRL_0<<i);
-	}
 
 	ready_battery_update = sys_timepoint_calc(K_MSEC(READY_BATTERY_UPDATE));
 
@@ -2631,15 +2640,6 @@ void cypd_interrupt_handler_task(void *p)
 		}
 		if (!ucsi_tunnel_disabled)
 			check_ucsi_event_from_host();
-
-		for (i = 0; i < PD_CHIP_COUNT; i++) {
-			const struct gpio_dt_spec *intr = gpio_get_dt_spec(pd_chip_config[i].gpio);
-
-			/* Don't no read the interrupt until the PD chips power on */
-			if (cypd_contoller_is_powered(i) && (gpio_pin_get_dt(intr) == 0)) {
-				task_set_event(TASK_ID_CYPD, 1<<i);
-			}
-		}
 	}
 }
 
