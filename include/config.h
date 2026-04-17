@@ -1976,18 +1976,6 @@
 /*****************************************************************************/
 
 /*
- * Make it possible for console to be output to different channels that can be
- * turned on and off.
- *
- * This is useful as a developer convenience when the console is crowded with
- * messages, to make it easier to use the interactive console.
- * FAFT and servod also use this feature.
- *
- * Boards may #undef this to reduce image size.
- */
-#define CONFIG_CONSOLE_CHANNEL
-
-/*
  * Provide additional help on console commands, such as the supported
  * options/usage.
  *

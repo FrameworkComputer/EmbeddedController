@@ -14,7 +14,6 @@
 
 #include <stdarg.h>
 
-#ifdef CONFIG_CONSOLE_CHANNEL
 /* Default to all channels active */
 #ifndef CC_DEFAULT
 #define CC_DEFAULT CC_ALL
@@ -74,7 +73,6 @@ bool console_channel_is_disabled(enum console_channel channel)
 		return true;
 	return false;
 }
-#endif /* CONFIG_CONSOLE_CHANNEL */
 
 #ifndef CONFIG_ZEPHYR
 /*****************************************************************************/
@@ -166,7 +164,6 @@ void cflush(void)
 /*****************************************************************************/
 /* Console commands */
 
-#ifdef CONFIG_CONSOLE_CHANNEL
 /* Set active channels */
 static int command_ch(int argc, const char **argv)
 {
@@ -220,7 +217,6 @@ static int command_ch(int argc, const char **argv)
 DECLARE_SAFE_CONSOLE_COMMAND(chan, command_ch,
 			     "[ save | restore | <mask> | <name> ]",
 			     "Save, restore, get or set console channel mask");
-#endif /* CONFIG_CONSOLE_CHANNEL */
 
 #ifdef CONFIG_HOSTCMD_CONSOLE_PRINT
 static enum ec_status

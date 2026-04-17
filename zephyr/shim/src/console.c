@@ -314,7 +314,7 @@ static int init_ec_console(void)
 }
 SYS_INIT(init_ec_console, PRE_KERNEL_1,
 	 CONFIG_PLATFORM_EC_CONSOLE_INIT_PRIORITY);
-#endif /* CONFIG_PLATFORM_EC_CONSOLE_CHANNEL */
+#endif /* DT_NODE_EXISTS(EC_CONSOLE_NODE) */
 
 #if defined(CONFIG_LOG_MODE_MINIMAL) && \
 	!defined(CONFIG_PIGWEED_LOG_TOKENIZED_LIB)

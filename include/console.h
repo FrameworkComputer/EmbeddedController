@@ -146,14 +146,7 @@ void console_channel_disable(const char *name);
  *
  * @return true if channel is disabled, false if not.
  */
-#ifdef CONFIG_CONSOLE_CHANNEL
 bool console_channel_is_disabled(enum console_channel channel);
-#else
-static inline bool console_channel_is_disabled(enum console_channel channel)
-{
-	return false;
-}
-#endif
 
 #ifdef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
 const char *get_timestamp_now(void);
