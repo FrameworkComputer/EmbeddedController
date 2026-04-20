@@ -311,6 +311,16 @@ ZTEST(rwsig, test_rwsig_console_command_jump_rw)
 		      EC_ERROR_ACCESS_DENIED);
 }
 
+int system_run_image_copy_with_flags(enum ec_image copy,
+				     uint32_t add_reset_flags);
+ZTEST(rwsig, test_rwsig_sysjump_when_locked)
+{
+	system_is_locked_fake.return_val = 1;
+	/* RWSIG task is not started. Make sure it's not allowed to jump. */
+	zassert_equal(system_run_image_copy_with_flags(EC_IMAGE_RW, 0),
+		      EC_ERROR_ACCESS_DENIED);
+}
+
 static void rwsig_before(void *f)
 {
 	const struct rollback_data initial_rollback = {

@@ -690,6 +690,12 @@ system_run_image_copy_with_flags(enum ec_image copy, uint32_t add_reset_flags)
 		/* Jumping must still be enabled */
 		if (disable_jump)
 			return EC_ERROR_ACCESS_DENIED;
+
+#ifdef HAS_TASK_RWSIG
+		/* Double-check RWSIG status */
+		if (rwsig_get_status() != RWSIG_VALID)
+			return EC_ERROR_ACCESS_DENIED;
+#endif /* HAS_TASK_RWSIG */
 	}
 
 	/* Load the appropriate reset vector */
