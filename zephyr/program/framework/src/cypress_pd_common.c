@@ -2805,6 +2805,29 @@ int cypd_get_active_pd_chip_count(void)
 	return active_pd_chip_count;
 }
 
+static void cypd_reset_pd_chip(int chip)
+{
+	cypd_write_reg8(chip, CCG_PDPORT_ENABLE_REG, 0);
+
+	/*can take up to 650ms to discharge port for disable*/
+	cypd_wait_for_ack(chip, 650);
+
+	cypd_clear_int(chip,
+		CCG_DEV_INTR + CCG_PORT0_INTR + CCG_PORT1_INTR + CCG_UCSI_INTR);
+
+	crec_msleep(1000);
+
+	/*
+	 * see if we can talk to the PD chip yet - issue a reset command
+	 * Note that we cannot issue a full reset command if the PD controller
+	 * has a device attached - as it will return with an invalid command
+	 * due to needing to disable all ports first.
+	 */
+	if (cypd_reset(chip) == EC_SUCCESS)
+		CPRINTS("Full reset PD controller %d", chip);
+
+}
+
 /*****************************************************************************/
 /* Host command */
 
@@ -2954,24 +2977,7 @@ static int cmd_cypd_control(int argc, const char **argv)
 			else
 				cypd_enable_interrupt(i, false);
 		} else if (!strncmp(argv[1], "reset", 5)) {
-			cypd_write_reg8(i, CCG_PDPORT_ENABLE_REG, 0);
-			/*can take up to 650ms to discharge port for disable*/
-			cypd_wait_for_ack(i, 65);
-			cypd_clear_int(i, CCG_DEV_INTR +
-					  CCG_PORT0_INTR +
-					  CCG_PORT1_INTR +
-					  CCG_UCSI_INTR);
-			crec_usleep(50);
-			CPRINTS("Full reset PD controller %d", i);
-			/*
-			 * see if we can talk to the PD chip yet - issue a reset command
-			 * Note that we cannot issue a full reset command if the PD controller
-			 * has a device attached - as it will return with an invalid command
-			 * due to needing to disable all ports first.
-			 */
-			if (cypd_reset(i) == EC_SUCCESS) {
-				CPRINTS("reset ok %d", i);
-			}
+			cypd_reset_pd_chip(i);
 		} else if (!strncmp(argv[1], "clearint", 8)) {
 			cypd_clear_int(i, CCG_DEV_INTR +
 					  CCG_PORT0_INTR +
