@@ -175,7 +175,7 @@ const static unsigned char signature[] = {
 ZTEST(rwsig, test_invalid_key)
 {
 	/* fail if key incorrect */
-	crec_flash_write(CONFIG_RO_PUBKEY_STORAGE_OFF, 1, "\xff");
+	crec_flash_physical_write(CONFIG_RO_PUBKEY_STORAGE_OFF, 1, "\xff");
 	zassert_false(rwsig_check_signature());
 	zassert_equal(system_disable_jump_fake.call_count, 1);
 }
@@ -183,7 +183,8 @@ ZTEST(rwsig, test_invalid_key)
 ZTEST(rwsig, test_invalid_signature)
 {
 	/* erase the first byte of signature */
-	crec_flash_write(SIG_OFFSET + sig_header.sig_offset, 1, "\xff");
+	crec_flash_physical_write(SIG_OFFSET + sig_header.sig_offset, 1,
+				  "\xff");
 	zassert_false(rwsig_check_signature());
 	zassert_equal(system_disable_jump_fake.call_count, 1);
 }
@@ -191,8 +192,8 @@ ZTEST(rwsig, test_invalid_signature)
 ZTEST(rwsig, test_invalid_signature_header)
 {
 	/* fail if signature incorrect */
-	crec_flash_write(CONFIG_EC_WRITABLE_STORAGE_OFF + RW_SIG_OFFSET, 1,
-			 "\xff");
+	crec_flash_physical_write(
+		CONFIG_EC_WRITABLE_STORAGE_OFF + RW_SIG_OFFSET, 1, "\xff");
 	zassert_false(rwsig_check_signature());
 	zassert_equal(system_disable_jump_fake.call_count, 1);
 }
@@ -200,7 +201,8 @@ ZTEST(rwsig, test_invalid_signature_header)
 ZTEST(rwsig, test_bad_padding)
 {
 	/* fail if unused area is not filled with 0xFF */
-	crec_flash_write(CONFIG_EC_WRITABLE_STORAGE_OFF + 4096, 1, "\x00");
+	crec_flash_physical_write(CONFIG_EC_WRITABLE_STORAGE_OFF + 4096, 1,
+				  "\x00");
 	zassert_false(rwsig_check_signature());
 	zassert_equal(system_disable_jump_fake.call_count, 1);
 }
@@ -321,6 +323,29 @@ ZTEST(rwsig, test_rwsig_sysjump_when_locked)
 		      EC_ERROR_ACCESS_DENIED);
 }
 
+ZTEST(rwsig, test_rwsig_denied_flash)
+{
+	int ret;
+	uint8_t tmp[CONFIG_FLASH_WRITE_SIZE] = { 0 };
+
+	system_is_locked_fake.return_val = 1;
+	/* RWSIG task is not started. Flash operations are not allowed. */
+	ret = crec_flash_erase(CONFIG_EC_WRITABLE_STORAGE_OFF,
+			       CONFIG_FLASH_ERASE_SIZE);
+	zassert_equal(ret, EC_RES_BUSY);
+	ret = crec_flash_erase(CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_SIZE -
+				       CONFIG_FLASH_ERASE_SIZE,
+			       CONFIG_FLASH_ERASE_SIZE);
+	zassert_equal(ret, EC_RES_BUSY);
+	ret = crec_flash_write(CONFIG_EC_WRITABLE_STORAGE_OFF,
+			       CONFIG_FLASH_WRITE_SIZE, tmp);
+	zassert_equal(ret, EC_RES_BUSY);
+	ret = crec_flash_write(CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_SIZE -
+				       CONFIG_FLASH_WRITE_SIZE,
+			       CONFIG_FLASH_WRITE_SIZE, tmp);
+	zassert_equal(ret, EC_RES_BUSY);
+}
+
 static void rwsig_before(void *f)
 {
 	const struct rollback_data initial_rollback = {
@@ -332,26 +357,29 @@ static void rwsig_before(void *f)
 	/* fake rw firmware, 4kB of zeroes */
 	const static char fake_rw[4096] = {};
 
-	crec_flash_erase(CONFIG_EC_WRITABLE_STORAGE_OFF, CONFIG_RW_SIZE);
+	/* Use crec_flash_physical_* instead of crec_flash_* to avoid RWSIG
+	 * check. */
+	crec_flash_physical_erase(CONFIG_EC_WRITABLE_STORAGE_OFF,
+				  CONFIG_RW_SIZE);
 
-	crec_flash_write(CONFIG_EC_WRITABLE_STORAGE_OFF, sizeof(fake_rw),
-			 fake_rw);
-	crec_flash_write(CONFIG_ROLLBACK_OFF, sizeof(initial_rollback),
-			 (const char *)&initial_rollback);
-	crec_flash_write(CONFIG_ROLLBACK_OFF + CONFIG_FLASH_ERASE_SIZE,
-			 sizeof(initial_rollback),
-			 (const char *)&initial_rollback);
+	crec_flash_physical_write(CONFIG_EC_WRITABLE_STORAGE_OFF,
+				  sizeof(fake_rw), fake_rw);
+	crec_flash_physical_write(CONFIG_ROLLBACK_OFF, sizeof(initial_rollback),
+				  (const char *)&initial_rollback);
+	crec_flash_physical_write(CONFIG_ROLLBACK_OFF + CONFIG_FLASH_ERASE_SIZE,
+				  sizeof(initial_rollback),
+				  (const char *)&initial_rollback);
 
-	crec_flash_write(CONFIG_RO_PUBKEY_STORAGE_OFF,
-			 sizeof(public_key_header),
-			 (const char *)&public_key_header);
-	crec_flash_write(CONFIG_RO_PUBKEY_STORAGE_OFF +
-				 public_key_header.key_offset,
-			 sizeof(public_key), public_key);
-	crec_flash_write(SIG_OFFSET, sizeof(sig_header),
-			 (const char *)&sig_header);
-	crec_flash_write(SIG_OFFSET + sig_header.sig_offset, sizeof(signature),
-			 signature);
+	crec_flash_physical_write(CONFIG_RO_PUBKEY_STORAGE_OFF,
+				  sizeof(public_key_header),
+				  (const char *)&public_key_header);
+	crec_flash_physical_write(CONFIG_RO_PUBKEY_STORAGE_OFF +
+					  public_key_header.key_offset,
+				  sizeof(public_key), public_key);
+	crec_flash_physical_write(SIG_OFFSET, sizeof(sig_header),
+				  (const char *)&sig_header);
+	crec_flash_physical_write(SIG_OFFSET + sig_header.sig_offset,
+				  sizeof(signature), signature);
 
 	FFF_FAKES_LIST(RESET_FAKE);
 	FFF_RESET_HISTORY();

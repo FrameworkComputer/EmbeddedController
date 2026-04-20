@@ -32,6 +32,9 @@
 #define CONFIG_FLASH_ERASED_VALUE32 (-1U)
 #endif
 
+#define RWSIG_ABORT_TIMEOUT_US 50000
+#define RWSIG_ABORT_POLL_MS 5
+
 #ifdef CONFIG_FLASH_PSTATE
 
 /*
@@ -790,13 +793,13 @@ int crec_flash_read(int offset, int size, char *data)
 	return EC_SUCCESS;
 }
 
-static void flash_abort_or_invalidate_hash(int offset, int size)
+static int flash_abort_or_invalidate_hash(int offset, int size)
 {
 #ifdef CONFIG_VBOOT_HASH
 	if (vboot_hash_in_progress()) {
 		/* Abort hash calculation when flash update is in progress. */
 		vboot_hash_abort();
-		return;
+		return EC_SUCCESS;
 	}
 
 #ifdef CONFIG_EXTERNAL_STORAGE
@@ -806,7 +809,7 @@ static void flash_abort_or_invalidate_hash(int offset, int size)
 	 * flash copy and the RAM copy, then take necessary actions.
 	 */
 	if (system_is_in_rw())
-		return;
+		return EC_SUCCESS;
 #endif
 
 	/* If EC executes in place, we need to invalidate the cached hash. */
@@ -825,17 +828,44 @@ static void flash_abort_or_invalidate_hash(int offset, int size)
 		     (CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_SIZE)) ||
 	    (offset < CONFIG_EC_WRITABLE_STORAGE_OFF &&
 	     (offset + size) >
-		     (CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_SIZE)))
+		     (CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_SIZE))) {
+		enum rwsig_status rwsig_status = rwsig_get_status();
+		/* Make sure to modify flash only when the RWSIG is already
+		 * finished.
+		 */
+		if ((rwsig_status == RWSIG_ABORTED) ||
+		    (rwsig_status == RWSIG_INVALID)) {
+			return EC_SUCCESS;
+		}
 		rwsig_abort();
+		/* Sleep within host command is an unusual approach, but this is
+		 * the only way to let the RWSIG task update the status in
+		 * current architecture.
+		 */
+		if (WAIT_FOR((rwsig_get_status() == RWSIG_ABORTED) ||
+				     (rwsig_get_status() == RWSIG_INVALID),
+			     RWSIG_ABORT_TIMEOUT_US,
+			     k_msleep(RWSIG_ABORT_POLL_MS))) {
+			return EC_SUCCESS;
+		} else {
+			return EC_RES_BUSY;
+		}
+	}
 #endif
+	return EC_SUCCESS;
 }
 
 int crec_flash_write(int offset, int size, const char *data)
 {
+	int ret;
+
 	if (!flash_range_ok(offset, size, CONFIG_FLASH_WRITE_SIZE))
 		return EC_ERROR_INVAL; /* Invalid range */
 
-	flash_abort_or_invalidate_hash(offset, size);
+	ret = flash_abort_or_invalidate_hash(offset, size);
+	if (ret) {
+		return ret;
+	}
 
 #if defined(CONFIG_ZEPHYR) && defined(CONFIG_PLATFORM_EC_CBI_FLASH)
 	if (check_cbi_section_overlap(offset, size)) {
@@ -859,12 +889,17 @@ int crec_flash_write(int offset, int size, const char *data)
 
 int crec_flash_erase(int offset, int size)
 {
+	int ret;
+
 #ifndef CONFIG_FLASH_MULTIPLE_REGION
 	if (!flash_range_ok(offset, size, CONFIG_FLASH_ERASE_SIZE))
 		return EC_ERROR_INVAL; /* Invalid range */
 #endif
 
-	flash_abort_or_invalidate_hash(offset, size);
+	ret = flash_abort_or_invalidate_hash(offset, size);
+	if (ret) {
+		return ret;
+	}
 
 #if defined(CONFIG_ZEPHYR) && defined(CONFIG_PLATFORM_EC_CBI_FLASH)
 	if (check_cbi_section_overlap(offset, size)) {
