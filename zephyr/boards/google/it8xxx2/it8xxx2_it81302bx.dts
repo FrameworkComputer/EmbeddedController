@@ -7,3 +7,5 @@
 
 #include <ite/it81xx2.dtsi>
 #include "it8xxx2.dtsi"
+#include "it8xxx2_1m_rom.dtsi"
+#include "it8xxx2_60k_ram.dtsi"

@@ -19,6 +19,21 @@
 		cros,rtc = &cros_rtc;
 	};
 
+	/*
+	 * The 'reg' property for these unpadded tracking regions is intentionally omitted.
+	 * Board definitions must include the appropriate ROM and RAM override files
+	 * (e.g., #include "it8xxx2_1m_rom.dtsi" and #include "it8xxx2_60k_ram.dtsi")
+	 * to explicitly declare the physical sizes of the chip variant.
+	 */
+	rom_unpadded: rom-unpadded@0 {
+		compatible = "zephyr,memory-region";
+		zephyr,memory-region = "ROM_UNPADDED";
+	};
+	ram_unpadded: ram-unpadded@0 {
+		compatible = "zephyr,memory-region";
+		zephyr,memory-region = "RAM_UNPADDED";
+	};
+
 	cros_system: cros-system {
 		compatible = "cros-ec,cros-system";
 	};

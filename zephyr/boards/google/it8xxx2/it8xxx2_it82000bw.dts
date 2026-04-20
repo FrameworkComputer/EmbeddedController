@@ -8,6 +8,8 @@
 #include <ite/it82000.dtsi>
 #include <ite/it82000-pinctrl-map.dts>
 #include "it8xxx2.dtsi"
+#include "it8xxx2_1m_rom.dtsi"
+#include "it8xxx2_256k_ram.dtsi"
 
 &i2c0 {
 	pinctrl-0 = <&i2c0_clk_gpf2_default &i2c0_data_gpf3_default>;

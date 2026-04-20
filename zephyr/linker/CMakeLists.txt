@@ -34,3 +34,7 @@ if(DEFINED CONFIG_PLATFORM_EC_NOINIT_END_OF_RAM_SECTION)
     zephyr_linker_sources(NOINIT SORT_KEY zzz noinit-end-of-ram.ld)
   endif()
 endif()
+
+if(CONFIG_SOC_IT8XXX2)
+  zephyr_linker_sources(SECTIONS ite_unpadded.ld)
+endif()

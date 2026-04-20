@@ -8,6 +8,8 @@
 #include <ite/it82xx2.dtsi>
 #include <ite/it82202ax-512.dtsi>
 #include "it8xxx2.dtsi"
+#include "it8xxx2_512k_rom.dtsi"
+#include "it8xxx2_256k_ram.dtsi"
 
 /* it82xx2/512 has 512KB of flash. */
 &binman {
