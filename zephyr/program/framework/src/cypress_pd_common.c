@@ -2828,6 +2828,26 @@ static void cypd_reset_pd_chip(int chip)
 
 }
 
+void board_reset_pd_mcu(void)
+{
+
+#ifndef CONFIG_PLATFORM_EC_PD_RESET_BEFORE_EC_REBOOT
+	return;
+#endif
+
+	for (int controller = 0; controller < PD_CHIP_COUNT; controller++) {
+
+		if (active_charge_pd_chip() == controller &&
+		    (battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED ||
+		    (charge_get_percent() < 1)))
+			continue;
+
+		cypd_reset_pd_chip(controller);
+	}
+
+	crec_msleep(500);
+}
+
 /*****************************************************************************/
 /* Host command */
 

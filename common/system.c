@@ -1101,7 +1101,8 @@ static int handle_pending_reboot(struct ec_params_reboot_ec *p)
 
 		/* Reset external PD chips. */
 		if (IS_ENABLED(HAS_TASK_PDCMD) ||
-		    IS_ENABLED(CONFIG_HAS_TASK_PD_INT))
+		    IS_ENABLED(CONFIG_HAS_TASK_PD_INT) ||
+		    IS_ENABLED(CONFIG_CUSTOMIZED_DESIGN))
 			board_reset_pd_mcu();
 
 		cflush();
