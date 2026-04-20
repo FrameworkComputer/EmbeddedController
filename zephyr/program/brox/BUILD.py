@@ -100,6 +100,7 @@ register_ish_project(
     kconfig_files=[
         here / "brox-ish" / "prj.conf",
         here / "motionsense.conf",
+        here / ".." / ".." / "ish.conf",
     ],
     inherited_from=["brox"],
 )

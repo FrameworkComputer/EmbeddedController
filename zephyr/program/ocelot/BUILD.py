@@ -161,6 +161,7 @@ register_ish_project(
         here / "ocelot-ish" / "prj.conf",
         here / "ocelot-ish" / "motionsense.conf",
         here / "dsp_comms.conf",
+        here / ".." / ".." / "ish.conf",
     ],
 )
 
@@ -195,6 +196,7 @@ register_ish_project(
     kconfig_files=[
         here / "matsu-ish" / "prj.conf",
         here / "matsu-ish" / "motionsense.conf",
+        here / ".." / ".." / "ish.conf",
     ],
 )
 
@@ -216,6 +218,7 @@ register_ish_project(
         here / "ocicat-ish" / "prj.conf",
         here / "ocicat-ish" / "motionsense.conf",
         here / "dsp_comms.conf",
+        here / ".." / ".." / "ish.conf",
     ],
 )
 

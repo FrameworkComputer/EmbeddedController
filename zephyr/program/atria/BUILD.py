@@ -44,6 +44,7 @@ register_ish_project(
     ],
     kconfig_files=[
         here / "atriarvp-ish" / "project.conf",
+        here / ".." / ".." / "ish.conf",
     ],
 )
 

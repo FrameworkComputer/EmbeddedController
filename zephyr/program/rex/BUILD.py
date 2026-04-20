@@ -61,7 +61,10 @@ register_ish_project(
     dts_overlays=[
         here / "rex-ish" / "project.overlay",
     ],
-    kconfig_files=[here / "rex-ish" / "prj.conf"],
+    kconfig_files=[
+        here / "rex-ish" / "prj.conf",
+        here / ".." / ".." / "ish.conf",
+    ],
     inherited_from=["rex"],
 )
 

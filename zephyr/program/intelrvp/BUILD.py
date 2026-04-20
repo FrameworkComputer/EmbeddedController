@@ -214,6 +214,7 @@ register_ish_project(
     kconfig_files=[
         here / "ish" / "prj.conf",
         here / "ish" / "motionsense.conf",
+        here / ".." / ".." / "ish.conf",
     ],
     inherited_from=["fatcat"],
 )

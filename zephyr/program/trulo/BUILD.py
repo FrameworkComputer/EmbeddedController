@@ -143,6 +143,7 @@ register_ish_project(
         # Uncomment the following line for UART support
         # here / "trulo-ish" / "debug.conf",
         here / "dsp_comms.conf",
+        here / ".." / ".." / "ish.conf",
     ],
     inherited_from=["nissa"],
 )
@@ -158,6 +159,7 @@ register_ish_project(
         # Uncomment the following line for UART support
         # here / "trulo-ish" / "debug.conf",
         here / "dsp_comms.conf",
+        here / ".." / ".." / "ish.conf",
     ],
     inherited_from=["nissa"],
 )
@@ -173,6 +175,7 @@ register_ish_project(
         # Uncomment the following line for UART support
         # here / "pujjolo-ish" / "debug.conf",
         here / "dsp_comms.conf",
+        here / ".." / ".." / "ish.conf",
     ],
     inherited_from=["nissa"],
 )
@@ -186,6 +189,7 @@ register_ish_project(
     kconfig_files=[
         here / "kaladin-ish" / "project.conf",
         here / "dsp_comms.conf",
+        here / ".." / ".." / "ish.conf",
     ],
     inherited_from=["nissa"],
 )
@@ -198,6 +202,7 @@ register_ish_project(
     ],
     kconfig_files=[
         here / "lite-ish" / "project.conf",
+        here / ".." / ".." / "ish.conf",
     ],
 )
 # Note for reviews, do not let anyone edit these assertions, the addresses

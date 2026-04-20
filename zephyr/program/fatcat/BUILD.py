@@ -163,6 +163,7 @@ register_ish_project(
     kconfig_files=[
         here / "dsp_comms.conf",
         here / "kinmen-ish" / "project.conf",
+        here / ".." / ".." / "ish.conf",
     ],
     inherited_from=["fatcat"],
 )
@@ -176,6 +177,7 @@ register_ish_project(
     kconfig_files=[
         here / "dsp_comms.conf",
         here / "ruby-ish" / "project.conf",
+        here / ".." / ".." / "ish.conf",
     ],
     inherited_from=["fatcat"],
 )
@@ -189,6 +191,7 @@ register_ish_project(
     kconfig_files=[
         here / "dsp_comms.conf",
         here / "moonstone-ish" / "project.conf",
+        here / ".." / ".." / "ish.conf",
     ],
     inherited_from=["fatcat"],
 )
@@ -201,6 +204,7 @@ register_ish_project(
     ],
     kconfig_files=[
         here / "fatcat-ish-idle" / "project.conf",
+        here / ".." / ".." / "ish.conf",
     ],
 )
 
