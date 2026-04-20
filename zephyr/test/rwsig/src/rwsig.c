@@ -287,6 +287,30 @@ ZTEST(rwsig, test_hostcmd_rwsig_action)
 	zassert_equal(host_command_process(&args), EC_RES_INVALID_PARAM);
 }
 
+ZTEST(rwsig, test_rwsig_host_command_jump_rw)
+{
+	struct ec_params_reboot_ec reboot_params = {
+		.cmd = EC_REBOOT_JUMP_RW,
+	};
+	struct host_cmd_handler_args reboot_args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_REBOOT_EC, 0, reboot_params);
+
+	RESET_FAKE(system_run_image_copy)
+	system_is_locked_fake.return_val = 1;
+	/* Make sure sysjump is not allowed if system is locked. */
+	zassert_equal(host_command_process(&reboot_args), EC_RES_ACCESS_DENIED);
+}
+
+ZTEST(rwsig, test_rwsig_console_command_jump_rw)
+{
+	const struct shell *shell_zephyr = get_ec_shell();
+
+	RESET_FAKE(system_run_image_copy)
+	system_is_locked_fake.return_val = 1;
+	zassert_equal(shell_execute_cmd(shell_zephyr, "sysjump RW"),
+		      EC_ERROR_ACCESS_DENIED);
+}
+
 static void rwsig_before(void *f)
 {
 	const struct rollback_data initial_rollback = {
