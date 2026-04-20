@@ -169,6 +169,13 @@ config PD_COMMON_VBUS_CONTROL
 		Enable Cypress CCG common vbus control, if not enable please modify
 		board_set_active_charge_port at board for customize vbus control.
 
+config PLATFORM_EC_PD_RESET_BEFORE_EC_REBOOT
+	bool "Enable PD reset before rebooting the EC"
+	default n
+	help
+		Enable this as a workaround to reset the PD before a firmware update.
+		This ensures the PD status is reset to normal mode.
+
 # CCG vendor-specific register
 config CCG_DPM_CMD_REG
 	hex "CCG DPM Command Register"
