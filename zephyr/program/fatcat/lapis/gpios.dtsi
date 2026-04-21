@@ -27,7 +27,7 @@
 		};
 		/* EC_WP_ODL */
 		gpio_ec_wp_odl: ec_wp_odl {
-			gpios = <&gpiof 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpiof 4 (GPIO_INPUT | GPIO_ACTIVE_LOW | GPIO_VOLTAGE_1P8)>;
 		};
 		/* EC_GSC_PACKET_MODE */
 		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
