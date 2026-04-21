@@ -58,6 +58,26 @@ config BOARD_RUBY
 	  Build Google Ruby board. Ruby has Intel PTL SoC
 	  with NPCX997FB0BX EC.
 
+config BOARD_MOONSTONE_ISH
+	bool "Google moonstone ISH"
+	help
+	  Build Google Moonstone ISH firmware.
+
+config BOARD_KINMEN_ISH
+	bool "Google kinmen ISH"
+	help
+	  Build Google Kinmen ISH firmware.
+
+config BOARD_RUBY_ISH
+	bool "Google ruby ISH"
+	help
+	  Build Google Ruby ISH firmware.
+
+config BOARD_FATCAT_ISH_IDLE
+	bool "Google fatcat-ish-idle"
+	help
+	  Build Google fatcat-ish-idle firmware.
+
 module = Fatcat
 module-str = Fatcat board-specific code
 source "subsys/logging/Kconfig.template.log_config"
