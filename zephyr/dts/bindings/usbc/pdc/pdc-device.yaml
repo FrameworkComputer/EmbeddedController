@@ -25,3 +25,7 @@ properties:
     type: boolean
     description: |
       If present, this USB-C port supports Fast Role Swap (FRS).
+  usb-comm-capable-as-device:
+    type: boolean
+    description: |
+      If present, this USB-C port is capable of USB communication as a device.

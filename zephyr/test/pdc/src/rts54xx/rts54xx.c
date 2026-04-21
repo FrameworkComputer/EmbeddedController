@@ -51,11 +51,13 @@ static void rts54xx_before_test(void *data)
 	emul_pdc_reset(emul);
 	emul_pdc_reset(emul2);
 	emul_pdc_set_response_delay(emul, 0);
+	emul_pdc_set_response_delay(emul2, 0);
 	if (IS_ENABLED(CONFIG_TEST_PDC_MESSAGE_TRACING)) {
 		set_pdc_trace_msg_mocks();
 	}
 
 	zassert_ok(emul_pdc_idle_wait(emul));
+	zassert_ok(emul_pdc_idle_wait(emul2));
 }
 
 static int emul_get_src_pdos(enum pdo_offset_t pdo_offset, uint8_t pdo_count,
@@ -256,14 +258,14 @@ ZTEST_USER(rts54xx, test_irq)
 
 ZTEST_USER(rts54xx, test_emul_vdo_set_bounds)
 {
-	uint8_t types[5] = { 0 };
-	uint32_t vdos[5] = { 0 };
+	uint8_t types[6] = { 0 };
+	uint32_t vdos[6] = { 0 };
 
-	// Test Max Bound: num_vdos = 4 is valid, 5 is invalid
-	zassert_ok(emul_pdc_set_vdo(emul, 4, types, vdos),
-		   "Failed to set 4 valid VDOs");
-	zassert_equal(emul_pdc_set_vdo(emul, 5, types, vdos), -EINVAL,
-		      "Accepted 5 VDOs (limit is 4)");
+	// Test Max Bound: num_vdos = 5 is valid, 6 is invalid
+	zassert_ok(emul_pdc_set_vdo(emul, 5, types, vdos),
+		   "Failed to set 5 valid VDOs");
+	zassert_equal(emul_pdc_set_vdo(emul, 6, types, vdos), -EINVAL,
+		      "Accepted 6 VDOs (limit is 5)");
 
 	// Test Type Bound: type 31 is valid, 32 is invalid
 	types[0] = 31;
@@ -365,6 +367,43 @@ ZTEST_USER(rts54xx, test_vdo_integrity_roundtrip)
 	// to prevent the driver from calling a dangling stack pointer in later
 	// tests.
 	pdc_set_cc_callback(dev, NULL);
+}
+
+ZTEST_USER(rts54xx, test_usb_comm_capable_as_device)
+{
+	uint32_t idh;
+	union get_vdo_t vdo_req;
+	uint8_t vdo_types[] = { VDO_INDEX_IDH };
+
+	vdo_req.raw_value = 0;
+	vdo_req.num_vdos = 1;
+	vdo_req.vdo_origin = 0; /* PDC origin */
+
+	/* Trigger re-init of the driver because it was already initialized at
+	 * boot, but emulator state was wiped by rts54xx_before_test.
+	 */
+	zassert_ok(pdc_reset(dev));
+	zassert_ok(pdc_reset(dev2));
+
+	/* Wait for driver to finish initialization */
+	zassert_ok(emul_pdc_idle_wait(emul));
+	zassert_ok(emul_pdc_idle_wait(emul2));
+
+	/* Verify port 0 (pdc_emul1) has USB Device bit set (bit 30) */
+	zassert_ok(pdc_get_vdo(dev, vdo_req, vdo_types, &idh));
+	/* Wait for command to complete */
+	zassert_ok(emul_pdc_idle_wait(emul));
+	zassert_true(idh & BIT(30),
+		     "IDH VDO should have USB Device bit set (0x%08x)", idh);
+
+	/* Verify port 1 (pdc_emul2) does not have USB Device bit set (bit 30)
+	 */
+	zassert_ok(pdc_get_vdo(dev2, vdo_req, vdo_types, &idh));
+	/* Wait for command to complete */
+	zassert_ok(emul_pdc_idle_wait(emul));
+	zassert_false(idh & BIT(30),
+		      "IDH VDO should not have USB Device bit set (0x%08x)",
+		      idh);
 }
 
 ZTEST_USER(rts54xx, test_alert_received)

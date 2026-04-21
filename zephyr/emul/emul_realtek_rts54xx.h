@@ -77,6 +77,28 @@ union csd_op_mode_t {
 	};
 };
 
+struct vdo_entry {
+	uint8_t type;
+	uint32_t vdo;
+} __packed;
+
+union set_vdo_t {
+	struct {
+		/**
+		 * Number of VDOs to set, max 5
+		 */
+		uint8_t num_vdos : 3;
+		/**
+		 * Used to specify if VDOs requested are from the PDC
+		 * or port parter.
+		 */
+		uint8_t vdo_origin : 1;
+		/** Reserved, set to 0. */
+		uint8_t reserved : 4;
+	};
+	uint8_t raw_value;
+};
+
 union rts54_request {
 	uint8_t raw_data[0];
 	struct rts54_command {
@@ -216,6 +238,7 @@ union rts54_request {
 	} get_tpc_csd_operartion_mode;
 	struct set_ccom_req {
 		struct rts54_subcommand_header header;
+		uint8_t port_num;
 		union port_and_ccom_t {
 			uint16_t raw_value;
 			struct {
@@ -266,6 +289,13 @@ union rts54_request {
 		union get_vdo_t vdo_req;
 		uint8_t vdo_type[7];
 	} get_vdo;
+
+	struct set_vdo_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+		union set_vdo_t vdo_req;
+		struct vdo_entry vdos[5];
+	} __packed set_vdo;
 
 	struct get_ic_status_req {
 		uint8_t command_code;

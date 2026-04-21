@@ -115,6 +115,14 @@ BUILD_ASSERT(RTS54XX_GET_IC_STATUS_PROG_NAME_STR_LEN <=
 #define RTS54XX_GET_IC_STATUS_SBU_MUX_MODE_NORMAL 0
 #define RTS54XX_GET_IC_STATUS_SBU_MUX_MODE_FORCE_DBG 1
 
+// Used for SET_VDO command
+#define RTS54XX_PDC_ORIGIN 0
+#define RTS54XX_SET_VDO_MAX_VDOS 5
+#define RTS54XX_VDO_TYPE_AND_VALUE_SIZE 5
+#define RTS54XX_SET_VDO_HEADER_SIZE 5
+#define RTS54XX_SET_VDO_MSG_SIZE(x) \
+	RTS54XX_SET_VDO_HEADER_SIZE + (x * RTS54XX_VDO_TYPE_AND_VALUE_SIZE)
+
 /**
  * @brief PDC Command states
  */
@@ -141,6 +149,21 @@ union ping_status_t {
 	};
 	uint8_t raw_value;
 };
+
+/**
+ * @brief VDO configuration
+ *
+ * This union is used to configure the VDO
+ */
+typedef union {
+	struct {
+		uint8_t num_vdos : 3; // Bits [2:0]
+		uint8_t origin : 1; // Bit  [3]
+		uint8_t reserved : 4; // Bits [7:4]
+	} __attribute__((packed)) fields;
+
+	uint8_t raw;
+} vdo_config_t;
 
 /**
  * @brief Sx sleep state values
