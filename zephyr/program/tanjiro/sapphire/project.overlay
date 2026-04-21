@@ -471,3 +471,7 @@
 &i2c_ap_i2c_ec_scl_1v8 {
 	status = "disabled";
 };
+
+&pdc_power_p0 {
+       usb-comm-capable-as-device;
+};
