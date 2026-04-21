@@ -59,6 +59,10 @@ DT_INST_FOREACH_STATUS_OKAY(DECLARE_PINS_NODE_FOR_POLICY)
 		"The led-color node (" #id                                    \
 		") must belong to the same led-id defined in the policy.");
 
+#define ASSERT_PERIOD_MS_BOUNDS(id)                              \
+	BUILD_ASSERT(DT_PROP_OR(id, period_ms, 0) <= UINT16_MAX, \
+		     "period-ms in " #id " exceeds 16-bit (65535)");
+
 /* Generates the step-level pattern array for each rule */
 #define SET_PATTERN_COLOR_ARRAY(id)                                      \
 	{                                                                \
@@ -68,10 +72,11 @@ DT_INST_FOREACH_STATUS_OKAY(DECLARE_PINS_NODE_FOR_POLICY)
 
 #define PATTERN_COLOR_ARRAY(id) DT_CAT(PATTERN_COLOR_, id)
 
-#define GEN_PATTERN_COLOR_ARRAY(id, fn)                        \
-	const struct pattern_color_node_t PATTERN_COLOR_ARRAY( \
-		id)[] = { fn(id, SET_PATTERN_COLOR_ARRAY) };   \
-	fn(id, ASSERT_LEDS_HW_MATCH) fn(id, ASSERT_LEDS_ID_MATCH)
+#define GEN_PATTERN_COLOR_ARRAY(id, fn)                           \
+	const struct pattern_color_node_t PATTERN_COLOR_ARRAY(    \
+		id)[] = { fn(id, SET_PATTERN_COLOR_ARRAY) };      \
+	fn(id, ASSERT_LEDS_HW_MATCH) fn(id, ASSERT_LEDS_ID_MATCH) \
+		fn(id, ASSERT_PERIOD_MS_BOUNDS)
 
 #define GEN_PATTERN_COLOR_ARRAY_FOR_POLICY(inst)                              \
 	DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(inst, DT_FOREACH_CHILD_VARGS, \

@@ -196,12 +196,12 @@ struct led_pins_node_t {
 
 struct pattern_color_node_t {
 	const struct led_pins_node_t *led_color_node;
-	int32_t duration_ms;
-};
+	uint16_t duration_ms;
+} __packed;
 
 struct led_pattern_node_t {
 	/* 4-byte members first */
-	int32_t elapsed_ms;
+	uint32_t elapsed_ms;
 	const struct pattern_color_node_t *pattern_color;
 
 	/* 1-byte members following */
@@ -213,8 +213,8 @@ struct led_pattern_node_t {
 	bool needs_update;
 };
 
-static inline int32_t get_step_duration(const struct led_pattern_node_t *cfg,
-					uint8_t step_idx)
+static inline uint32_t get_step_duration(const struct led_pattern_node_t *cfg,
+					 uint8_t step_idx)
 {
 	return cfg->pattern_color[step_idx].duration_ms;
 }
