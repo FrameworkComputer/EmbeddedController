@@ -2778,7 +2778,7 @@ static int cypd_controller_port_to_charge_port(int controller, int port)
 
 void perform_error_recovery(int controller)
 {
-	int port;
+	int port, typec_status_reg;
 	uint8_t data[2] = {0x00, CCG_PD_USER_CMD_TYPEC_ERR_RECOVERY};
 
 	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
@@ -2795,6 +2795,11 @@ void perform_error_recovery(int controller)
 		int pd_port;
 
 		pd_port = board_perform_error_recovery_port(port);
+
+		/* Skip recovery if typec debug card(Debug Accessory) is attached */
+		cypd_read_reg8(controller, CCG_TYPE_C_STATUS_REG(port), &typec_status_reg);
+		if (((typec_status_reg >> 2) & 0x7) == CCG_STATUS_DEBUG)
+			return;
 
 #ifdef CONFIG_PLATFORM_EC_BATTERY
 		if (cypd_controller_port_to_charge_port(controller, pd_port) ==
