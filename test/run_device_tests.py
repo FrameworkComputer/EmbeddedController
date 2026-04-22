@@ -542,6 +542,7 @@ class Renode(Platform):
 
         if zephyr and test_config.test_name in [
             "flash_protection",  # TODO(b/485668014)
+            "flash_protection_rw",  # TODO(b/485668014)
             "flash_write_protect",  # TODO(b/485668014)
             "fp_transport",  # TODO(b/485668240)
             "malloc",  # TODO(b/485669070)
@@ -572,6 +573,7 @@ class Renode(Platform):
         if test_config.test_name in [
             "flash_physical",  # TODO(b/468410778)
             "flash_protection",  # TODO(b/487848806)
+            "flash_protection_rw",  # TODO(b/487848806)
             "flash_write_protect",  # TODO(b/406944986)
             "panic_data",  # TODO(b/468407068)
             "rollback",  # TODO(b/468406461)
@@ -790,6 +792,11 @@ class AllTests:
             TestConfig(
                 test_name="flash_protection",
                 imagetype_to_use=ImageType.RO,
+                enable_hw_write_protect=True,
+                skip_for_ec_legacy=True,
+            ),
+            TestConfig(
+                test_name="flash_protection_rw",
                 enable_hw_write_protect=True,
                 skip_for_ec_legacy=True,
             ),
@@ -1067,6 +1074,19 @@ class AllTests:
                     test_args=["wp_on"],
                     toggle_power=True,
                     enable_hw_write_protect=True,
+                    ro_image=variant_info.get("ro_image_path"),
+                    build_board=variant_info.get("build_board"),
+                )
+            )
+
+        # Run flash_protection_rw test for all boards and RO versions.
+        for variant_name, variant_info in board_config.variants.items():
+            tests.append(
+                TestConfig(
+                    config_name=f"flash_protection_rw_{variant_name}",
+                    test_name="flash_protection_rw",
+                    enable_hw_write_protect=True,
+                    skip_for_ec_legacy=True,
                     ro_image=variant_info.get("ro_image_path"),
                     build_board=variant_info.get("build_board"),
                 )

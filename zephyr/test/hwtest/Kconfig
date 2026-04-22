@@ -66,6 +66,11 @@ config HW_TEST_FLASH_PROTECTION
 	select ZTEST
 	depends on PLATFORM_EC_FLASH_CROS
 
+config HW_TEST_FLASH_PROTECTION_RW
+	bool "Flash protection RW test"
+	select ZTEST
+	depends on PLATFORM_EC_FLASH_CROS
+
 config HW_TEST_FLASH_WRITE_PROTECT
 	bool "Flash write protect test"
 	select ZTEST
