@@ -160,21 +160,22 @@ if(DEFINED CONFIG_BOARD_SUNFLOWER)
 	project(sunflower)
 	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_SUNFLOWER include)
 	zephyr_include_directories("include/sunflower")
+	zephyr_library_sources("sunflower/src/power_sequence.c")
+	zephyr_library_sources("sunflower/src/cpu_power.c")
+	zephyr_library_sources("sunflower/src/usbc.c")
+	zephyr_library_sources("sunflower/src/charger.c")
+	zephyr_library_sources("sunflower/src/project_diagnostics.c")
+	zephyr_library_sources("sunflower/src/keyboard_customization.c")
+	# Shared laptop12 sources
 	zephyr_library_sources(
 			"src/battery_12_13.c"
 			"src/ucsi_port_12.c"
-			"sunflower/src/battery_present.c"
-			"sunflower/src/charger.c"
-			"sunflower/src/cpu_power.c"
-			"sunflower/src/power_sequence.c"
-			"sunflower/src/project_diagnostics.c"
-			"sunflower/src/keyboard_customization.c"
-			"sunflower/src/motionsense.c"
-			"sunflower/src/temperature.c"
-			"sunflower/src/touchpad.c"
-			"sunflower/src/board_tablet_mode.c"
-			"sunflower/src/usbc.c"
 			"src/usbc_4port_config.c"
+			"laptop12/src/battery_present.c"
+			"laptop12/src/motionsense.c"
+			"laptop12/src/temperature.c"
+			"laptop12/src/touchpad.c"
+			"laptop12/src/board_tablet_mode.c"
 	)
 
 endif()
