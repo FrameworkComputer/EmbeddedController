@@ -16,3 +16,16 @@
 #include "../laptop12/keyboard.dtsi"
 #include "../laptop12/motionsense.dtsi"
 #include "power_signal.dtsi"
+
+/ {
+    aliases {
+		/delete-property/ peci-0;
+	};
+};
+
+/* Removed PECI Bus*/
+&peci0 {
+	status = "disabled";
+    /delete-property/ pinctrl-0;
+    /delete-property/ pinctrl-names;
+};
