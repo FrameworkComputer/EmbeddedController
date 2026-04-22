@@ -198,7 +198,7 @@ struct led_pins_node_t {
 
 	/* Number of pins per color */
 	uint8_t pins_count;
-};
+} __packed;
 
 struct pattern_color_node_t {
 	uint16_t duration_ms;
@@ -218,7 +218,7 @@ struct led_pattern_node_t {
 	uint8_t cycle_curr;
 	enum led_transition transition;
 	bool needs_update;
-};
+} __packed;
 
 static inline uint32_t get_step_duration(const struct led_pattern_node_t *cfg,
 					 uint8_t step_idx)
