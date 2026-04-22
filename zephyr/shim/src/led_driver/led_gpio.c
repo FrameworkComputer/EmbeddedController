@@ -60,6 +60,7 @@ const struct led_driver_t PINS_NODE(DT_DRV_INST(0)) = {
 	{                                                       \
 		.led_color = GET_PROP(node_id, led_color),      \
 		.led_id = GET_PROP(DT_PARENT(node_id), led_id), \
+		.color_idx = DT_NODE_CHILD_IDX(node_id),        \
 		.pins = PINS_ARRAY(node_id),                    \
 		.pins_count = DT_PROP_LEN(node_id, led_values), \
 	}
@@ -112,12 +113,35 @@ static void gpio_set_color(enum led_color color, enum ec_led_id led_id,
 	}
 }
 
+/*
+ * The pins_node array flattens all color nodes across all LEDs. Since color_idx
+ * (DT_NODE_CHILD_IDX) is only unique within a specific LED parent, should match
+ * both led_id and color_idx to find the correct hardware pins. This run-time
+ * lookup is for optimizing flash usage instead of storing 32-bit pointers.
+ */
+static const struct led_pins_node_t *gpio_find_pins_node(enum ec_led_id led_id,
+							 uint8_t color_idx)
+{
+	for (int i = 0; i < ARRAY_SIZE(pins_node); i++) {
+		if (pins_node[i]->led_id == led_id &&
+		    pins_node[i]->color_idx == color_idx) {
+			return pins_node[i];
+		}
+	}
+	return NULL;
+}
+
 static void gpio_set_color_with_pattern(void *p)
 {
 	const struct led_pattern_node_t *led = (struct led_pattern_node_t *)p;
-	const struct led_pins_node_t *pins_node =
-		led->pattern_color[led->cur_color].led_color_node;
-	led_set_color_with_node(pins_node);
+	uint8_t color_idx = led->pattern_color[led->cur_color].color_idx;
+
+	const struct led_pins_node_t *pins_node_ptr =
+		gpio_find_pins_node(led->led_id, color_idx);
+
+	if (pins_node_ptr) {
+		led_set_color_with_node(pins_node_ptr);
+	}
 }
 
 static void gpio_get_brightness_range(enum ec_led_id led_id,

@@ -64,10 +64,10 @@ DT_INST_FOREACH_STATUS_OKAY(DECLARE_PINS_NODE_FOR_POLICY)
 		     "period-ms in " #id " exceeds 16-bit (65535)");
 
 /* Generates the step-level pattern array for each rule */
-#define SET_PATTERN_COLOR_ARRAY(id)                                      \
-	{                                                                \
-		.led_color_node = &PINS_NODE(DT_PHANDLE(id, led_color)), \
-		.duration_ms = DT_PROP_OR(id, period_ms, 0),             \
+#define SET_PATTERN_COLOR_ARRAY(id)                                        \
+	{                                                                  \
+		.color_idx = DT_NODE_CHILD_IDX(DT_PHANDLE(id, led_color)), \
+		.duration_ms = DT_PROP_OR(id, period_ms, 0),               \
 	},
 
 #define PATTERN_COLOR_ARRAY(id) DT_CAT(PATTERN_COLOR_, id)
@@ -89,6 +89,7 @@ DT_INST_FOREACH_STATUS_OKAY(GEN_PATTERN_COLOR_ARRAY_FOR_POLICY)
 
 #define LED_PATTERN_INIT(node_id, fn)                               \
 	{                                                           \
+		.led_id = DT_STRING_TOKEN(node_id, led_id),         \
 		.cur_color = 0,                                     \
 		.elapsed_ms = 0,                                    \
 		.transition = GET_PROP(node_id, transition),        \
@@ -371,9 +372,7 @@ void reset_policy_patterns(enum ec_led_id led_id)
 			for (int k = 0; k < node->num_patterns; k++) {
 				struct led_pattern_node_t *pat =
 					&node->led_patterns[k];
-				enum ec_led_id id =
-					pat->pattern_color[0]
-						.led_color_node->led_id;
+				enum ec_led_id id = pat->led_id;
 
 				if (id == led_id) {
 					led_init_pattern_state(pat);
@@ -459,9 +458,7 @@ static void cancel_custom_if_conflict(const struct node_prop_t *node)
 	key = k_spin_lock(&led_custom_lock);
 	if (g_custom_patterns) {
 		for (i = 0; i < node->num_patterns; i++) {
-			enum ec_led_id id = node->led_patterns[i]
-						    .pattern_color[0]
-						    .led_color_node->led_id;
+			enum ec_led_id id = node->led_patterns[i].led_id;
 
 			if (g_custom_patterns->led_id == id) {
 				conflict = true;
@@ -486,8 +483,7 @@ update_policy_node(const struct policy_group *grp,
 
 	for (int i = 0; i < node->num_patterns; i++) {
 		struct led_pattern_node_t *pattern = &patterns[i];
-		enum ec_led_id led_id =
-			pattern->pattern_color[0].led_color_node->led_id;
+		enum ec_led_id led_id = pattern->led_id;
 
 		/* If a custom pattern is active, skip default policy. */
 		if (is_custom_pattern_active(custom, led_id)) {

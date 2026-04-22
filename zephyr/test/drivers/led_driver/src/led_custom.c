@@ -67,11 +67,12 @@ ZTEST(led_driver_custom, test_custom_override)
 	zassert_not_null(blue_node, "Could not find Blue node for Battery LED");
 
 	struct pattern_color_node_t color_step = {
-		.led_color_node = blue_node,
+		.color_idx = blue_node->color_idx,
 		.duration_ms = 1000,
 	};
 
 	struct led_pattern_node_t pattern = {
+		.led_id = EC_LED_ID_BATTERY_LED,
 		.pattern_color = &color_step,
 		.pattern_len = 1,
 		.cycle_limit = 0, /* Infinite */
@@ -115,11 +116,12 @@ ZTEST(led_driver_custom, test_custom_auto_revert)
 		led_get_node(LED_OFF, EC_LED_ID_BATTERY_LED);
 
 	struct pattern_color_node_t steps[] = {
-		{ .led_color_node = blue_node, .duration_ms = 100 },
-		{ .led_color_node = off_node, .duration_ms = 100 },
+		{ .color_idx = blue_node->color_idx, .duration_ms = 100 },
+		{ .color_idx = off_node->color_idx, .duration_ms = 100 },
 	};
 
 	struct led_pattern_node_t pattern = {
+		.led_id = EC_LED_ID_BATTERY_LED,
 		.pattern_color = steps,
 		.pattern_len = 2,
 		.cycle_limit = 1, /* Run once then stop */
@@ -158,7 +160,7 @@ ZTEST(led_driver_custom, test_custom_unsupported_led)
 		led_get_node(LED_BLUE, EC_LED_ID_BATTERY_LED);
 
 	struct pattern_color_node_t color_step = {
-		.led_color_node = blue_node,
+		.color_idx = blue_node->color_idx,
 		.duration_ms = 1000,
 	};
 
@@ -170,6 +172,7 @@ ZTEST(led_driver_custom, test_custom_unsupported_led)
 	};
 
 	struct custom_led_patterns_t custom = {
+		.led_id = EC_LED_ID_POWER_LED,
 		.led_patterns = &pattern,
 		.num_patterns = 1,
 		.led_id = EC_LED_ID_POWER_LED, /* Unsupported LED */
@@ -210,8 +213,8 @@ ZTEST(led_driver_custom, test_manual_control)
 
 	/* Define custom pattern: Blue (500ms) -> White (500ms) */
 	struct pattern_color_node_t steps[] = {
-		{ .led_color_node = blue_node, .duration_ms = 500 },
-		{ .led_color_node = white_node, .duration_ms = 500 },
+		{ .color_idx = blue_node->color_idx, .duration_ms = 500 },
+		{ .color_idx = white_node->color_idx, .duration_ms = 500 },
 	};
 	struct led_pattern_node_t pattern = {
 		.pattern_color = steps,
@@ -220,6 +223,7 @@ ZTEST(led_driver_custom, test_manual_control)
 		.transition = LED_TRANSITION_STEP,
 	};
 	struct custom_led_patterns_t custom = {
+		.led_id = EC_LED_ID_BATTERY_LED,
 		.led_patterns = &pattern,
 		.num_patterns = 1,
 		.led_id = EC_LED_ID_BATTERY_LED,
@@ -272,11 +276,12 @@ ZTEST(led_driver_custom, test_system_state_preemption)
 		led_get_node(LED_BLUE, EC_LED_ID_BATTERY_LED);
 
 	struct pattern_color_node_t color_step = {
-		.led_color_node = blue_node,
+		.color_idx = blue_node->color_idx,
 		.duration_ms = 5000,
 	};
 
 	struct led_pattern_node_t pattern = {
+		.led_id = EC_LED_ID_BATTERY_LED,
 		.pattern_color = &color_step,
 		.pattern_len = 1,
 		.cycle_limit = 0, /* Infinite */
@@ -333,10 +338,11 @@ ZTEST(led_driver_custom, test_resume_resets_policy)
 	const struct led_pins_node_t *off_node =
 		led_get_node(LED_OFF, EC_LED_ID_BATTERY_LED);
 	struct pattern_color_node_t color_step = {
-		.led_color_node = off_node,
+		.color_idx = off_node->color_idx,
 		.duration_ms = 1000,
 	};
 	struct led_pattern_node_t pattern = {
+		.led_id = EC_LED_ID_BATTERY_LED,
 		.pattern_color = &color_step,
 		.pattern_len = 1,
 		.cycle_limit = 0,
@@ -369,11 +375,12 @@ ZTEST(led_driver_custom, test_steady_state_persistence)
 		led_get_node(LED_BLUE, EC_LED_ID_BATTERY_LED);
 
 	struct pattern_color_node_t color_step = {
-		.led_color_node = blue_node,
+		.color_idx = blue_node->color_idx,
 		.duration_ms = 5000,
 	};
 
 	struct led_pattern_node_t pattern = {
+		.led_id = EC_LED_ID_BATTERY_LED,
 		.pattern_color = &color_step,
 		.pattern_len = 1,
 		.cycle_limit = 0,
@@ -422,10 +429,11 @@ ZTEST(led_driver_custom, test_custom_replace_custom)
 
 	/* Define Pattern 1: Solid Blue */
 	struct pattern_color_node_t color_step_1 = {
-		.led_color_node = blue_node,
+		.color_idx = blue_node->color_idx,
 		.duration_ms = 1000,
 	};
 	struct led_pattern_node_t pattern_1 = {
+		.led_id = EC_LED_ID_BATTERY_LED,
 		.pattern_color = &color_step_1,
 		.pattern_len = 1,
 		.cycle_limit = 0,
@@ -439,10 +447,11 @@ ZTEST(led_driver_custom, test_custom_replace_custom)
 
 	/* Define Pattern 2: Solid White */
 	struct pattern_color_node_t color_step_2 = {
-		.led_color_node = white_node,
+		.color_idx = white_node->color_idx,
 		.duration_ms = 1000,
 	};
 	struct led_pattern_node_t pattern_2 = {
+		.led_id = EC_LED_ID_BATTERY_LED,
 		.pattern_color = &color_step_2,
 		.pattern_len = 1,
 		.cycle_limit = 0,

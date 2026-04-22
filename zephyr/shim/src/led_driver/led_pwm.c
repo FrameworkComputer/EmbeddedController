@@ -78,6 +78,7 @@ const struct led_driver_t PINS_NODE(DT_DRV_INST(0)) = {
 	{                                                       \
 		.led_color = GET_PROP(node_id, led_color),      \
 		.led_id = GET_PROP(DT_PARENT(node_id), led_id), \
+		.color_idx = DT_NODE_CHILD_IDX(node_id),        \
 		.pins = PINS_ARRAY(node_id),                    \
 		.pins_count = DT_PROP_LEN(node_id, led_values), \
 	}
@@ -154,6 +155,24 @@ static void pwm_set_color(enum led_color color, enum ec_led_id led_id,
 	DT_FOREACH_PROP_ELEM(id, led_pwms, PIN_PROGRESS_PULSE)
 
 /*
+ * The pins_node array flattens all color nodes across all LEDs. Since color_idx
+ * (DT_NODE_CHILD_IDX) is only unique within a specific LED parent, should match
+ * both led_id and color_idx to find the correct hardware pins. This run-time
+ * lookup is for optimizing flash usage instead of storing 32-bit pointers.
+ */
+static const struct led_pins_node_t *pwm_find_pins_node(enum ec_led_id led_id,
+							uint8_t color_idx)
+{
+	for (int i = 0; i < ARRAY_SIZE(pins_node); i++) {
+		if (pins_node[i]->led_id == led_id &&
+		    pins_node[i]->color_idx == color_idx) {
+			return pins_node[i];
+		}
+	}
+	return NULL;
+}
+
+/*
  * For every HOOK_TICK_INTERVAL_MS interval, we calculate the beginning and end
  * color based on the desired pattern, then linearly interpolate smoother
  * transition based on LED_STEP_TIME_MS.
@@ -166,19 +185,31 @@ static void pwm_set_color(enum led_color color, enum ec_led_id led_id,
 static void pwm_set_color_with_pattern(void *p)
 {
 	struct led_pattern_node_t *pattern = (struct led_pattern_node_t *)p;
-	uint8_t pins_count = pattern->pattern_color[pattern->cur_color]
-				     .led_color_node->pins_count;
-	int32_t duration_ms =
-		pattern->pattern_color[pattern->cur_color].duration_ms;
-	struct pwm_pin_t *next_color =
-		(struct pwm_pin_t *)pattern->pattern_color[pattern->cur_color]
-			.led_color_node->pins;
+
+	uint8_t next_idx = pattern->pattern_color[pattern->cur_color].color_idx;
+	const struct led_pins_node_t *next_color_node =
+		pwm_find_pins_node(pattern->led_id, next_idx);
+
 	uint8_t prev_color_idx =
 		(pattern->cur_color + pattern->pattern_len - 1) %
 		pattern->pattern_len;
+	uint8_t prev_idx = pattern->pattern_color[prev_color_idx].color_idx;
+	const struct led_pins_node_t *prev_color_node =
+		pwm_find_pins_node(pattern->led_id, prev_idx);
+
+	if (!next_color_node || !prev_color_node) {
+		return;
+	}
+
+	uint8_t pins_count = next_color_node->pins_count;
+	int32_t duration_ms =
+		pattern->pattern_color[pattern->cur_color].duration_ms;
+
+	struct pwm_pin_t *next_color =
+		(struct pwm_pin_t *)next_color_node->pins;
 	struct pwm_pin_t *prev_color =
-		(struct pwm_pin_t *)pattern->pattern_color[prev_color_idx]
-			.led_color_node->pins;
+		(struct pwm_pin_t *)prev_color_node->pins;
+
 	struct pwm_pin_t cur_color[pins_count];
 
 	for (int i = 0; i < pins_count; i++) {

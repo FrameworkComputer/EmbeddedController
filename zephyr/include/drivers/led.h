@@ -190,13 +190,19 @@ struct led_pins_node_t {
 	 */
 	enum ec_led_id led_id;
 
+	/*
+	 * 0-based devicetree child index of the color.
+	 * Must be matched with led_id to resolve the actual pins_node.
+	 */
+	uint8_t color_idx;
+
 	/* Number of pins per color */
 	uint8_t pins_count;
 };
 
 struct pattern_color_node_t {
-	const struct led_pins_node_t *led_color_node;
 	uint16_t duration_ms;
+	uint8_t color_idx;
 } __packed;
 
 struct led_pattern_node_t {
@@ -205,6 +211,7 @@ struct led_pattern_node_t {
 	const struct pattern_color_node_t *pattern_color;
 
 	/* 1-byte members following */
+	enum ec_led_id led_id;
 	uint8_t cur_color;
 	uint8_t pattern_len;
 	uint8_t cycle_limit;
