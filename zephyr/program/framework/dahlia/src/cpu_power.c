@@ -1,4 +1,4 @@
-/* Copyright 2024 The ChromiumOS Authors
+/* Copyright 2026 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -103,20 +103,20 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	} else if (!battery_is_present() && active_power >= 60) {
 		/*Standalone mode AC only and AC >= 60W*/
 		pl1_watt = 20;
-		pl2_watt = 40;
+		pl2_watt = 35;
 		pl4_watt = ((active_power * 95) / 100);
 		psyspl2_watt = ((active_power * 95) / 100);
 	} else if (battery_percent >= 30 && active_power >= 55) {
 		/* Battery percentage >= 30% and ADP >= 55W */
 		pl1_watt = 20;
-		pl2_watt = 40;
-		pl4_watt = 87;
+		pl2_watt = 35;
+		pl4_watt = 93;
 		psyspl2_watt = ((active_power * 95) / 100) + ((batt_rating * 70) / 100);
 	} else if (battery_percent < 30 && active_power >= 55) {
 		/* Battery percentage < 30% and ADP >= 55W */
 		pl1_watt = 20;
-		pl2_watt = MIN(((active_power * 90) / 100) - ROP, 40);
-		pl4_watt = MIN(((active_power * 90) / 100) + ((batt_rating * 13) / 10), 87);
+		pl2_watt = MIN(((active_power * 90) / 100) - ROP, 35);
+		pl4_watt = MIN(((active_power * 90) / 100) + ((batt_rating * 13) / 10), 93);
 		psyspl2_watt = ((active_power * 95) / 100);
 	} else {
 		/* AC+DC and AC < 55W */
