@@ -455,10 +455,13 @@ config PLATFORM_EC_USB_PD_RESET_PRESERVE_RECOVERY_FLAGS
 
 config PLATFORM_EC_USB_PD_INT_STORM_MAX
 	int "Interrupt limit per second"
-	default 1800
+	default 500
 	help
 	  Maximum rate of interrupts from PD stack (per second) that EC
 	  can support without causing a watchdog.
+
+	  The default of 500 (one every 2ms) is chosen to cover normal PD
+	  behavior while mitigating interrupt storms.
 
 config PLATFORM_EC_USB_PD_EVENT_DRIVEN_CC_STATE
 	bool "Interrupt event driven CC state change detection"

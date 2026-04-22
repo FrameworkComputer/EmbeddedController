@@ -5754,9 +5754,12 @@
 /*
  * Maximum number of interrupts in a second. Exceeding this limit
  * will cause the TCPM to break the PD connection to avoid a
- * watchdog timeout crash
+ * watchdog timeout crash.
+ *
+ * The default of 500 (one every 2ms) is chosen to cover normal PD
+ * behavior while mitigating interrupt storms.
  */
-#define CONFIG_USB_PD_INT_STORM_MAX 1800
+#define CONFIG_USB_PD_INT_STORM_MAX 500
 
 /******************************************************************************/
 /* stm32f4 dwc usb configs. */
