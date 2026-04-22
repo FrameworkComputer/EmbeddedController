@@ -38,6 +38,12 @@ config BOARD_SUNFLOWER
 	  Build Framework Sunflower board. Sunflower has Intel SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_DAHLIA
+	bool "Framework Dahlia Board"
+	help
+	  Build Framework Dahlia board. Dahlia has Intel SoC
+	  with NPCX993FA0BX EC.
+
 choice PLATFORM_EC_FRAMEWORK_FAMILY
 	prompt "Select the family design in the makefile"
 
