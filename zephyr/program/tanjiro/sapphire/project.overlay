@@ -357,6 +357,7 @@
 		compatible = "unused-gpios";
 
 		unused-gpios =
+			<&gpioa 0 GPIO_INPUT_PULL_DOWN>,
 			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
 			<&gpiod 1 GPIO_INPUT_PULL_DOWN>,
 			<&gpiof 0 GPIO_INPUT_PULL_DOWN>,
