@@ -1937,13 +1937,15 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_identity_vid)
 		/* USB host */ false, /* USB device */ true, IDH_PTYPE_HUB,
 		/* modal operation */ true, USB_VID_GOOGLE);
 	uint32_t product = VDO_PRODUCT(0xBEAD, 0x1001);
+	uint8_t vdo_types[] = { VDO_INDEX_IDH, VDO_INDEX_PRODUCT };
 	uint32_t vdo[] = { vid, product };
+
 	union connector_status_t conn_status = {};
 
 	zassert_equal(0, pdc_power_mgmt_get_identity_vid(
 				 CONFIG_USB_PD_PORT_MAX_COUNT));
 
-	if (-ENOSYS == emul_pdc_set_vdo(emul, 2, vdo)) {
+	if (-ENOSYS == emul_pdc_set_vdo(emul, 2, vdo_types, vdo)) {
 		ztest_test_skip();
 	}
 
@@ -1961,13 +1963,14 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_identity_pid)
 		/* USB host */ false, /* USB device */ true, IDH_PTYPE_HUB,
 		/* modal operation */ true, USB_VID_GOOGLE);
 	uint32_t product = VDO_PRODUCT(0xBEAD, 0x1001);
+	uint8_t vdo_types[] = { VDO_INDEX_IDH, VDO_INDEX_PRODUCT };
 	uint32_t vdo[] = { vid, product };
 	union connector_status_t conn_status = { 0 };
 
 	zassert_equal(0, pdc_power_mgmt_get_identity_pid(
 				 CONFIG_USB_PD_PORT_MAX_COUNT));
 
-	if (-ENOSYS == emul_pdc_set_vdo(emul, 2, vdo)) {
+	if (-ENOSYS == emul_pdc_set_vdo(emul, 2, vdo_types, vdo)) {
 		ztest_test_skip();
 	}
 
@@ -1986,13 +1989,14 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_product_type)
 		/* USB host */ false, /* USB device */ true, IDH_PTYPE_HUB,
 		/* modal operation */ true, USB_VID_GOOGLE);
 	uint32_t product = VDO_PRODUCT(0xBEAD, 0x1001);
+	uint8_t vdo_types[] = { VDO_INDEX_IDH, VDO_INDEX_PRODUCT };
 	uint32_t vdo[] = { vid, product };
 	union connector_status_t conn_status = {};
 
 	zassert_equal(0, pdc_power_mgmt_get_product_type(
 				 CONFIG_USB_PD_PORT_MAX_COUNT));
 
-	if (-ENOSYS == emul_pdc_set_vdo(emul, 2, vdo)) {
+	if (-ENOSYS == emul_pdc_set_vdo(emul, 2, vdo_types, vdo)) {
 		ztest_test_skip();
 	}
 
@@ -2662,6 +2666,8 @@ static void test_dp_mode_helper(enum pd_power_role role)
 	union get_attention_vdo_t attention_vdo;
 	union connector_status_t in_conn_status = {};
 	union conn_status_change_bits_t in_conn_status_change_bits = { 0 };
+	uint8_t attention_vdo_type = 15;
+	uint8_t vdo_types[] = { attention_vdo_type };
 	uint32_t vdo[] = { 0x05 | (MODE_DP_PIN_D << 8) };
 
 	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_PORT, -1));
@@ -2675,7 +2681,7 @@ static void test_dp_mode_helper(enum pd_power_role role)
 	in_conn_status.power_operation_mode = PD_OPERATION;
 	in_conn_status.conn_partner_flags =
 		CONNECTOR_PARTNER_FLAG_ALTERNATE_MODE;
-	zassert_ok(emul_pdc_set_vdo(emul, 1, vdo));
+	zassert_ok(emul_pdc_set_vdo(emul, 1, vdo_types, vdo));
 
 	attention_vdo.vdo = VDO_DP_STATUS(0, 0, 0, 0, 1 /* mf */, 1, 0, 1);
 	emul_pdc_set_attention_vdo(emul, attention_vdo);
@@ -2704,7 +2710,7 @@ static void test_dp_mode_helper(enum pd_power_role role)
 
 	/* PIN_C and mux should be in DP only mode */
 	vdo[0] = 0x05 | (MODE_DP_PIN_C << 8);
-	zassert_ok(emul_pdc_set_vdo(emul, 1, vdo));
+	zassert_ok(emul_pdc_set_vdo(emul, 1, vdo_types, vdo));
 
 	/* PDC may have consumed the status, set status again. */
 	emul_pdc_set_connector_status(emul, &in_conn_status);

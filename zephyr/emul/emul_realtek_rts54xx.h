@@ -27,6 +27,9 @@
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/sys/atomic.h>
 
+#define RTS54XX_VDO_MAX_NUM 32
+#define RTS54XX_SET_VDO_MAX_NUM 5
+
 union pd_status_t {
 	uint32_t raw_value;
 	struct {
@@ -566,7 +569,7 @@ struct rts5453p_emul_pdc_data {
 
 	struct emul_pdc_pdo_t pdo;
 
-	uint32_t vdos[PDC_DISC_IDENTITY_VDO_COUNT];
+	uint32_t vdos[RTS54XX_VDO_MAX_NUM];
 	bool frs_configured;
 	bool frs_enabled;
 	bool vconn_sourcing;

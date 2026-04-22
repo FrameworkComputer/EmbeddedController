@@ -98,7 +98,13 @@ typedef int (*emul_pdc_get_cable_property_t)(const struct emul *target,
 typedef int (*emul_pdc_set_cable_property_t)(
 	const struct emul *target, const union cable_property_t property);
 
+/*
+ * TODO(b/507299650)
+ * This interface may need adjustments to work well with few PDCs.
+ * For now we assume num_vdos, vdo_types and vdos are passed here.
+ */
 typedef int (*emul_pdc_set_vdo_t)(const struct emul *target, uint8_t num_vdos,
+				  const uint8_t *vdo_types,
 				  const uint32_t *vdos);
 
 typedef int (*emul_pdc_get_frs_t)(const struct emul *target, bool *enabled);
@@ -662,6 +668,7 @@ emul_pdc_set_cable_property(const struct emul *target,
 }
 
 static inline int emul_pdc_set_vdo(const struct emul *target, uint8_t num_vdos,
+				   const uint8_t *vdo_types,
 				   const uint32_t *vdos)
 {
 	if (!target || !target->backend_api) {
@@ -671,7 +678,7 @@ static inline int emul_pdc_set_vdo(const struct emul *target, uint8_t num_vdos,
 	const struct emul_pdc_driver_api *api = target->backend_api;
 
 	if (api->set_vdo) {
-		return api->set_vdo(target, num_vdos, vdos);
+		return api->set_vdo(target, num_vdos, vdo_types, vdos);
 	}
 	return -ENOSYS;
 }
