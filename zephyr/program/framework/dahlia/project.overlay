@@ -1,4 +1,4 @@
-/* Copyright 2024 The ChromiumOS Authors
+/* Copyright 2026 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -18,9 +18,84 @@
 #include "power_signal.dtsi"
 
 / {
-    aliases {
+	aliases {
 		/delete-property/ peci-0;
+		/delete-property/ gpio-mux-uart-flip;
 	};
+
+	/delete-node/ unused-pins;
+
+	named-gpios {
+		compatible = "named-gpios";
+		/delete-node/ runpwrok;
+		/delete-node/ slp_sus_l;
+		/delete-node/ pch_dpwrok_ec;
+		/delete-node/ vccin_aux_vr_pg_r;
+		/delete-node/ mux_sub_uart_flip;
+		/delete-node/ tablet_mode_l;
+
+		/* GPIO31, reserved for USB MUX IC pin mode/I2C mode switch */
+		gpio_ec_mux_i2c_en: ec_mux_i2c_en {
+			gpios = <&gpio3 1 GPIO_INPUT>;
+		};
+
+		/* GPIO31, reserved for SSD power control */
+		gpio_ec_ssd_pwr_en: ec_ssd_pwr_en {
+			gpios = <&gpio0 6 GPIO_OUTPUT_LOW>;
+		};
+
+		/* GPIO24, control retimer low power mode */
+		gpio_rt_gpio6_ctrl: rt_gpio6_ctrl {
+			gpios = <&gpio2 4 GPIO_ODR_HIGH>;
+		};
+
+		/* GPIO23, control wlan power */
+		gpio_wlan_en: wlan_en {
+			gpios = <&gpio2 3 GPIO_OUTPUT_LOW>;
+		};
+
+		/* GPIO81, tablet mode detect pin. VPECI is 1.8V */
+		gpio_tablet_mode_l: tablet_mode_l {
+			gpios = <&gpio8 1 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
+		};
+
+		/* Power Signal Lists */
+		gpio_slp_s5_l: pm_slp_s5_l {
+			gpios = <&gpio0 5 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S5_L";
+		};
+
+		gpio_1p25v_prim_pg: 1p25v_prim_pg {
+			gpios = <&gpio2 6 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_PRIM_PWROK";
+		};
+
+		gpio_dram_pwrgd: dram_pwrgd {
+			gpios = <&gpioc 6 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_GOOD_DRAM";
+		};
+    };
+
+    gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+		/delete-node/ run_pwr_ok;
+		/delete-node/ slp_sus;
+		/delete-node/ aux_vr_pg;
+
+		int_pch_prim_pg: pch_prim_pg {
+			irq-pin = <&gpio_1p25v_prim_pg>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+
+		int_dram_pwr_pg: dram_pwr_pg {
+			irq-pin = <&gpio_dram_pwrgd>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+
+    };
 };
 
 /* Removed PECI Bus*/

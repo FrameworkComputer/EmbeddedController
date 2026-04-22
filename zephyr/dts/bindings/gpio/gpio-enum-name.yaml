@@ -62,6 +62,7 @@ properties:
       - GPIO_PCH_DSW_PWROK
       - GPIO_PCH_PWRBTN_L
       - GPIO_PCH_PWROK
+      - GPIO_PCH_PRIM_PWROK
       - GPIO_PCH_RSMRST_L
       - GPIO_PCH_RTCRST
       - GPIO_PCH_SLP_S0_L
@@ -84,6 +85,7 @@ properties:
       - GPIO_POWER_GOOD_PRIM_PWR
       - GPIO_POWER_GOOD_VCCIN_AUX_VR
       - GPIO_POWER_GOOD_VR
+      - GPIO_POWER_GOOD_DRAM
       - GPIO_PS_HOLD
       - GPIO_RECOVERY_L
       - GPIO_S0_PGOOD

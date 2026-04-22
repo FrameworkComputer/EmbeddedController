@@ -1,4 +1,4 @@
-/* Copyright 2024 The ChromiumOS Authors
+/* Copyright 2026 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,7 +8,6 @@
 #include "chipset.h"
 #include "config.h"
 #include "console.h"
-#include "common.h"
 #include "customized_shared_memory.h"
 #include "cypress_pd_common.h"
 #include "diagnostics.h"
@@ -36,8 +35,9 @@
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ##args)
 
+#define IN_PCH_PRIM_PGOOD POWER_SIGNAL_MASK(X86_1P25V_PRIM_PG)
+#define IN_DRAM_PGOOD POWER_SIGNAL_MASK(X86_DRAM_PG)
 #define IN_VR_PGOOD POWER_SIGNAL_MASK(X86_VR_PG)
-#define VCCIN_AUX_PGOOD POWER_SIGNAL_MASK(X86_VCCIN_AUX_VR_PG)
 
 static int power_s5_up;		/* Chipset is sequencing up or down */
 static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
@@ -45,7 +45,7 @@ static int force_shoutdown_flags;
 static int me_change;
 static bool tp_module_pwr_control;
 static bool pb_module_pwr_control;
-static bool fp_module_pwr_control;
+
 
 static int keep_pch_power(void)
 {
@@ -219,9 +219,7 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 static void chipset_force_g3(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_vccst_pg_r), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_rsmrst_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
@@ -258,15 +256,8 @@ static void keyboard_scan_enable_deferred(void)
 	/* enable lock led */
 	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_lock_led), GPIO_OUTPUT);
 	caps_led_keyboard_connect();
-
-	/**
-	 * Enable gpio_tp_en.
-	 *
-	 * Clear the cached mask to force the IT8801 driver to update the
-	 * hardware register. This ensures the tp_en pin is correctly
-	 * re-driven high regardless of its previous recorded state.
-	 */
-	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_tp_en), GPIO_OUTPUT_LOW);
+	/* enable gpio_tp_en */
+	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_tp_en), GPIO_OUTPUT);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_tp_en),
 					!tablet_get_mode() && lid_is_open());
 }
@@ -326,29 +317,10 @@ static void power_button_module_power_control(void)
 	}
 }
 
-static void finger_print_module_power_control(void)
-{
-	static int pre_fingerprint;
-	int fingerprint = get_hardware_id(ADC_POWER_BUTTON_BOARD_ID);
-	bool fp_enable = (fingerprint >= BOARD_VERSION_1 && fingerprint <= BOARD_VERSION_13);
-
-	if (!fp_module_pwr_control) {
-		/* reset pre_fingerprint when the system shutdown */
-		pre_fingerprint = 0;
-		return;
-	}
-
-	if (pre_fingerprint != fingerprint) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_3v_btn), fp_enable);
-		pre_fingerprint = fingerprint;
-	}
-}
-
 /* detect module hot plug */
 static void control_module_power(void)
 {
 	power_button_module_power_control();
-	finger_print_module_power_control();
 	touchpad_module_power_control();
 }
 DECLARE_HOOK(HOOK_TICK, control_module_power, HOOK_PRIO_DEFAULT);
@@ -379,18 +351,6 @@ static void pb_module_pwr_control_enable(bool state)
 	}
 }
 
-static void fp_module_pwr_control_enable(bool state)
-{
-	fp_module_pwr_control = state;
-
-	/* enable module power control to check the module is present */
-	if (fp_module_pwr_control)
-		finger_print_module_power_control();
-	else {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_3v_btn), 0);
-	}
-}
-
 void me_gpio_change(uint32_t flags)
 {
 	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_me_en), flags);
@@ -405,30 +365,30 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_G3S5:
 
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 1);
-		pb_module_pwr_control_enable(true);
-		k_msleep(15);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 1);
 		k_msleep(20);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_dpwrok_ec), 1);
 
-		if (power_wait_signals(VCCIN_AUX_PGOOD)) {
+		if (power_wait_signals(IN_PCH_PRIM_PGOOD)) {
 			set_diagnostic(DIAGNOSTICS_VCCIN_AUX_VR, true);
-			if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_sus_l)) == 0)
-				CPRINTS("SLP_SUS# and VCCIN_AUX_VR_PG_R keep low, back to G3");
 			return POWER_G3;
 		}
 
-		k_msleep(25);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 1);
+
+		k_msleep(15);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_rsmrst_l), 1);
+
 		me_gpio_change(me_change & ME_UNLOCK ? GPIO_OUTPUT_HIGH : GPIO_OUTPUT_LOW);
 
 		if (extpower_is_present())
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ac_present_cpu), 1);
 
-		k_msleep(25);
+		k_msleep(95);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
-		k_msleep(50);
+		k_msleep(20);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 1);
+
+		/* enable the power button led as soon as power on*/
+		pb_module_pwr_control_enable(true);
 
 		power_s5_up_control(1);
 		return POWER_S5;
@@ -494,11 +454,15 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S3S0:
 
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 1);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 1);
-		fp_module_pwr_control_enable(true);
+
+		/* wait DRAM power good */
+		if (power_wait_signals(IN_DRAM_PGOOD)) {
+			/* something wrong, turn off power and force to g3 */
+			force_shoutdown_flags = 1;
+			return POWER_S3;
+		}
+
 		k_msleep(15);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_vccst_pg_r), 1);
-		k_msleep(35);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 1);
 
 		/* wait VR power good */
@@ -539,7 +503,6 @@ enum power_state power_handle_state(enum power_state state)
 				force_shoutdown_flags) {
 			/* Power down to next state */
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_vccst_pg_r), 0);
 			return POWER_S0S3;
 		}
 
@@ -603,9 +566,8 @@ enum power_state power_handle_state(enum power_state state)
 #endif
 
 	case POWER_S0S3:
+		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 0);
-		fp_module_pwr_control_enable(false);
 		me_gpio_change(GPIO_OUTPUT_LOW);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwrok), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrok), 0);
@@ -647,14 +609,13 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* Don't need to keep pch power, turn off the pch power and power down to G3*/
 		k_msleep(5);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_dpwrok_ec), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_rsmrst_l), 0);
 		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
-		pb_module_pwr_control_enable(false);
 
 		/* Call hooks after we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
+		pb_module_pwr_control_enable(false);
 
 		cypd_set_power_active();
 		return POWER_G3;
@@ -675,6 +636,8 @@ static void peripheral_power_startup(void)
 	/* enable the power button led as soon as power on*/
 	pb_module_pwr_control_enable(true);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wlan_en), 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, peripheral_power_startup, HOOK_PRIO_DEFAULT);
 
@@ -687,6 +650,8 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, peripheral_power_resume, HOOK_PRIO_DEFAULT);
 static void peripheral_power_shutdown(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wlan_en), 0);
 	tp_module_pwr_control_enable(false);
 	pb_module_pwr_control_enable(false);
 }

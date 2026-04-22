@@ -1,0 +1,23 @@
+# Copyright 2026 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+description: Intel-wildcat-lake-u, Power Signal List
+compatible: "intel,fwk-wildcat-lake-u-power-signal-list"
+
+include: power-signal-list.yaml
+
+properties:
+  power-signals-required:
+    default: 7
+
+child-binding:
+  properties:
+    power-enum-name:
+      enum:
+        - X86_3VALW_PG
+        - X86_1P25V_PRIM_PG
+        - X86_SLP_S5_N
+        - X86_SLP_S4_N
+        - X86_SLP_S3_N
+        - X86_DRAM_PG
+        - X86_VR_PG
