@@ -541,7 +541,7 @@ class Renode(Platform):
             return True
 
         if zephyr and test_config.test_name in [
-            "flash_protection_rw",  # TODO(b/485668014)
+            "flash_protection",  # TODO(b/485668014)
             "flash_write_protect",  # TODO(b/485668014)
             "fp_transport",  # TODO(b/485668240)
             "malloc",  # TODO(b/485669070)
@@ -571,7 +571,7 @@ class Renode(Platform):
     def _skip_test_sanok(self, test_config: TestConfig) -> bool:
         if test_config.test_name in [
             "flash_physical",  # TODO(b/468410778)
-            "flash_protection_rw",  # TODO(b/487848806)
+            "flash_protection",  # TODO(b/487848806)
             "flash_write_protect",  # TODO(b/406944986)
             "panic_data",  # TODO(b/468407068)
             "rollback",  # TODO(b/468406461)
@@ -788,7 +788,7 @@ class AllTests:
                 toggle_power=True,
             ),
             TestConfig(
-                test_name="flash_protection_rw",
+                test_name="flash_protection",
                 imagetype_to_use=ImageType.RO,
                 enable_hw_write_protect=True,
                 skip_for_ec_legacy=True,

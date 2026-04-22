@@ -64,9 +64,9 @@ tests:
     - CONFIG_PM=n
     extra_conf_files:
     - prj_hw_tests.conf
-  flash_protection_rw:
+  flash_protection:
     extra_configs:
-    - CONFIG_HW_TEST_FLASH_PROTECTION_RW=y
+    - CONFIG_HW_TEST_FLASH_PROTECTION=y
     # Added to reduce RO flash usage
     - CONFIG_PM=n
     extra_conf_files:

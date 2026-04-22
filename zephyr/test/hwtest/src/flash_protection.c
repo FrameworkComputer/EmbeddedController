@@ -13,7 +13,7 @@
 #include <zephyr/ztest.h>
 #include <zephyr/ztest_test.h>
 
-LOG_MODULE_REGISTER(test_flash_protection_rw);
+LOG_MODULE_REGISTER(test_flash_protection);
 
 static void test_set_ro_at_boot(void)
 {
@@ -79,7 +79,7 @@ static void multistep_test_handler(struct k_work *work)
 		    (test_steps[TEST_STEP(step)] != test_check_all_now_in_ro)) {
 			return;
 		}
-		ztest_run_test_suite(flash_protection_rw, false, 1, 1, NULL);
+		ztest_run_test_suite(flash_protection, false, 1, 1, NULL);
 	}
 }
 
@@ -94,7 +94,7 @@ static int multistep_test_init(void)
 }
 SYS_INIT(multistep_test_init, POST_KERNEL, CONFIG_APPLICATION_INIT_PRIORITY);
 
-static void *flash_protection_rw_setup(void)
+static void *flash_protection_setup(void)
 {
 	uint32_t step = 0;
 	int ret = 0;
@@ -109,12 +109,12 @@ static void *flash_protection_rw_setup(void)
 	return NULL;
 }
 
-static void flash_protection_rw_teardown(void *fixture)
+static void flash_protection_teardown(void *fixture)
 {
 	system_set_scratchpad(0);
 }
 
-ZTEST(flash_protection_rw, test_flash_protection_rw)
+ZTEST(flash_protection, test_flash_protection_logic)
 {
 	uint32_t step = 0;
 	int ret = 0;
@@ -125,5 +125,5 @@ ZTEST(flash_protection_rw, test_flash_protection_rw)
 
 	test_steps[TEST_STEP(step)]();
 }
-ZTEST_SUITE(flash_protection_rw, NULL, flash_protection_rw_setup, NULL, NULL,
-	    flash_protection_rw_teardown);
+ZTEST_SUITE(flash_protection, NULL, flash_protection_setup, NULL, NULL,
+	    flash_protection_teardown);
