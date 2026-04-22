@@ -314,6 +314,7 @@ static void power_button_module_power_control(void)
 
 	if (pre_powerbtn != powerbtn) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_pb), pb_enable);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_3v_btn), pb_enable);
 		pre_powerbtn = powerbtn;
 	}
 }
@@ -349,6 +350,7 @@ static void pb_module_pwr_control_enable(bool state)
 		power_button_module_power_control();
 	else {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_pb), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_3v_btn), 0);
 	}
 }
 

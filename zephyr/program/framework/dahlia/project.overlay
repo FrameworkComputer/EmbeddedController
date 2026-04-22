@@ -44,6 +44,11 @@
 			gpios = <&gpio0 6 GPIO_OUTPUT_LOW>;
 		};
 
+		/*GPIO11, control finger print*/
+		gpio_en_3v_btn: en_3v_btn {
+			gpios = <&gpio1 1 GPIO_OUTPUT_LOW>;
+		};
+
 		/* GPIO24, control retimer low power mode */
 		gpio_rt_gpio6_ctrl: rt_gpio6_ctrl {
 			gpios = <&gpio2 4 GPIO_ODR_HIGH>;
