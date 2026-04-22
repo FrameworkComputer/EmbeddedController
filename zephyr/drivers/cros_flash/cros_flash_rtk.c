@@ -267,13 +267,13 @@ static int flash_check_prot_range(const struct device *dev, unsigned int offset,
 	return EC_SUCCESS;
 }
 
-static int read_bbram_flags(uint8_t *data)
+static int read_bbram_flags(uint32_t *data)
 {
 	const struct device *bbram_dev = DEVICE_DT_GET(DT_NODELABEL(bbram));
 	int ret;
 
 	ret = bbram_read(bbram_dev, BBRAM_REGION_OFFSET(wp_at_boot),
-			 BBRAM_REGION_SIZE(wp_at_boot), data);
+			 BBRAM_REGION_SIZE(wp_at_boot), (uint8_t *)data);
 
 	if ((*data) == BBRAM_WP_FLAG_INVALID) {
 		ret = EC_ERROR_INVAL;
@@ -430,7 +430,7 @@ static int cros_flash_rtk_protect_at_boot(const struct device *dev,
 					  uint32_t new_flags)
 {
 	struct cros_flash_rtk_data *data = DRV_DATA(dev);
-	uint8_t lock_flags = 0;
+	uint32_t lock_flags = 0;
 	int ret = 0;
 
 	if ((new_flags & (EC_FLASH_PROTECT_RO_AT_BOOT |
@@ -489,7 +489,7 @@ static int cros_flash_rtk_get_status(const struct device *dev, uint8_t *sr1,
 static int cros_flash_rtk_init(const struct device *dev)
 {
 	struct cros_flash_rtk_data *data = DRV_DATA(dev);
-	uint8_t lock_flags = 0;
+	uint32_t lock_flags = 0;
 	int ret = 0;
 
 	if (read_bbram_flags(&lock_flags)) {
@@ -497,7 +497,7 @@ static int cros_flash_rtk_init(const struct device *dev)
 		lock_flags = BBRAM_WP_FLAG_INVALID;
 	}
 
-	LOG_DBG("got AT_BOOT = %x", lock_flags);
+	LOG_DBG("got AT_INIT = %x", lock_flags);
 
 	if (write_protect_is_asserted()) {
 		/*

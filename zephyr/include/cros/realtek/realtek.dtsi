@@ -66,11 +66,15 @@
 		};
 		wp-at-boot {
 			offset = <0x10>;
-			size = <0x01>;
+			size = <0x04>;
 		};
 		key {
 			offset = <0x80>;
-			size = <0x01>;
+			size = <0x04>;
+		};
+		key-rev {
+			offset = <0x84>;
+			size = <0x04>;
 		};
 	};
 };
