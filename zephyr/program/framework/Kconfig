@@ -176,6 +176,13 @@ config PLATFORM_EC_PD_RESET_BEFORE_EC_REBOOT
 		Enable this as a workaround to reset the PD before a firmware update.
 		This ensures the PD status is reset to normal mode.
 
+config PLATFORM_EC_PD_IGNORE_EXIT_RT_MODE
+    bool "Ignore exit retimer update mode"
+    help
+        The new CYPD SDK performs error recovery once the PD chip receives the
+        exit retimer update mode signal. This can cause a system power drop
+        when the user updates the retimer in standalone mode.
+
 # CCG vendor-specific register
 config CCG_DPM_CMD_REG
 	hex "CCG DPM Command Register"

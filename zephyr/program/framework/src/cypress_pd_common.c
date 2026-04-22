@@ -16,6 +16,7 @@
 #include "common_cpu_power.h"
 #include "driver/charger/isl9241.h"
 #include "extpower.h"
+#include "flash_storage.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -35,6 +36,10 @@
 #ifdef CONFIG_PLATFORM_EC_FRAMEWORK_LAPTOP_16
 #include "gpu.h"
 #include "cpu_power.h"
+#endif
+
+#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
+#include "diagnostics_laptop.h"
 #endif
 
 #include <zephyr/sys_clock.h>
@@ -2849,10 +2854,17 @@ void board_reset_pd_mcu(void)
 
 	for (int controller = 0; controller < PD_CHIP_COUNT; controller++) {
 
-		if (active_charge_pd_chip() == controller &&
-		    (battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED ||
-		    (charge_get_percent() < 1)))
-			continue;
+		/**
+		 * When the EC recevies the reboot command from the host, EC will
+		 * auto power on the system via hard reset flag. However, if resetting
+		 * the PD chip without battery, the reset flag will be power-on.
+		 * Therefore, we should update the ac power on flag to auto power on
+		 * the system.
+		 */
+#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
+		flash_storage_update(FLASH_FLAGS_ACPOWERON, get_standalone_mode());
+		flash_storage_commit();
+#endif
 
 		cypd_reset_pd_chip(controller);
 	}

@@ -28,8 +28,14 @@
 #include "throttle_ap.h"
 #include "zephyr_console_shim.h"
 
+#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
+#include "diagnostics_laptop.h"
+#endif
+
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
+
+static bool cypd_in_rt_update_mode;
 
 /*****************************************************************
  * Intel Retimer Functions
@@ -113,6 +119,13 @@ void exit_tbt_mode(int controller)
 	if (!cypd_contoller_is_powered(controller))
 		return;
 
+#ifdef CONFIG_PLATFORM_EC_PD_IGNORE_EXIT_RT_MODE
+#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC
+	if (get_standalone_mode() && cypd_in_rt_update_mode)
+		return;
+#endif /* CONFIG_PLATFORM_EC_FRAMEWORK_MINI_PC */
+#endif /* CONFIG_PLATFORM_EC_PD_IGNORE_EXIT_RT_MODE */
+
 	/* Write 0x00 to address 0x0040 */
 	rv = cypd_write_reg8(controller, CCG_ICL_CTRL_REG, force_tbt_mode);
 	if (rv != EC_SUCCESS)
@@ -150,6 +163,7 @@ static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
 	switch (p->modes) {
 	case BB_ENTRY_FW_UPDATE_MODE:
 		entry_tbt_mode(p->controller);
+		cypd_in_rt_update_mode = true;
 		break;
 	case BB_EXIT_FW_UPDATE_MODE:
 		exit_tbt_mode(p->controller);
