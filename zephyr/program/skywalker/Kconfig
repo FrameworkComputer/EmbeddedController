@@ -79,6 +79,12 @@ config BOARD_R2D2
 	  Build Google R2D2 board. R2D2 has MediaTek SoC
 	  with Nuvoton NPCX997FB EC.
 
+config BOARD_SHEEV
+	bool "Google Sheev Board"
+	help
+	  Build Google Sheev board. Sheev has MediaTek SoC
+	  with ITE IT82002 EC.
+
 config BOARD_SKYWALKER_SINGLE_USB_TYPEC
 	bool "Boards have only one USB-C port"
 	default n

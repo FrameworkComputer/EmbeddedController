@@ -1,0 +1,75 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <usbc-policy.dtsi>
+
+/ {
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		usbc_port0: port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			chg = <&charger_bq25720>;
+			pdc = <&pdc_power_p0>;
+			policy = <&cros_policy>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&it5205_mux_0>;
+			};
+		};
+
+		usbc_port1: port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			pdc = <&pdc_power_p1>;
+			policy = <&cros_policy>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&it5205_mux_1>;
+			};
+		};
+
+		ppm-driver {
+			compatible = "ucsi-ppm";
+		};
+	};
+};
+
+&i2c2 {
+	pdc_power_p0: rts54-pdc@66 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x66>;
+		irq-gpios = <&gpiod 3 GPIO_ACTIVE_LOW>;
+		ccd;
+	};
+	pdc_power_p1: rts54-pdc@67 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x67>;
+		irq-gpios = <&gpioa 3 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&i2c4 {
+	it5205_mux_0: it5205-mux-0@48 {
+		compatible = "ite,it5205";
+		reg = <0x48>;
+	};
+
+	it5205_mux_1: it5205-mux-1@58 {
+		compatible = "ite,it5205";
+		reg = <0x48>;
+	};
+};
+
+&i2c0 {
+	charger_bq25720: bq25720@9 {
+		compatible = "ti,bq25710";
+		status = "okay";
+		reg = <0x9>;
+	};
+};
+

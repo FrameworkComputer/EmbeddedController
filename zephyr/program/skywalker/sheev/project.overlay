@@ -1,0 +1,215 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/cbi_flash.dtsi>
+#include "../ite_generated.dtsi"
+#include "../interrupts.dtsi"
+#include "../ite_common.dtsi"
+#include "../ite_keyboard.dtsi"
+#include "../ite_overlay.dtsi"
+#include "../power_signal.dtsi"
+#include "../usba.dtsi"
+#include "cbi.dtsi"
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
+#include "temp_sensor.dtsi"
+#include "usbc.dtsi"
+
+/ {
+	aliases {
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
+	};
+
+	batteries {
+		default_battery: getac_pg01jh3353 {
+			compatible = "getac,pg01jh3353", "battery-smart";
+		};
+		smp_pg01nl3353 {
+			compatible = "smp,pg01nl3353", "battery-smart";
+		};
+		getac_ca31a53 {
+			compatible = "getac,ca31a53", "battery-smart";
+		};
+	};
+
+	gpio-interrupts {
+                /delete-node/ lid-accel;
+                /delete-node/ ec-imu;
+                /delete-node/ tablet_mode;
+                /delete-node/ volume-up;
+                /delete-node/ volume-down;
+
+		int_pmic_ec_resetb: pmic-ec-resetb {
+			irq-pin = <&gpio_pmic_ec_resetb>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "pmic_ec_resetb_interrupt";
+		};
+
+		int_tchscr_rst: tchscr-rst {
+			irq-pin = <&gpio_ec_tchscr_rst_3v3_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "touch_screen_rst_interrupt";
+		};
+	};
+
+	named-gpios {
+		/delete-node/ ec_i2c_pdc1_sm_int_odl;
+		/delete-node/ ec_i2c_pdc1_s_int_odl;
+                /delete-node/ ec_voldn_btn_odl;
+                /delete-node/ ec_volup_btn_odl;
+                /delete-node/ lid_360_l;
+                /delete-node/ imu_int_ec_l;
+                /delete-node/ lid_accel_int_ec_l;
+
+		gpio_en_pwr_s3: en_pwr_s3 {
+			gpios = <&gpiob 6 (GPIO_OUTPUT_LOW)>;
+		};
+
+		gpio_ec_tchscr_en_3v3: ec_tchscr_en_3v3 {
+			gpios = <&gpiof 0 (GPIO_ODR_LOW)>;
+		};
+
+		gpio_ec_tchscr_rst_3v3_odl: ec_tchscr_rst_3v3_odl {
+			gpios = <&gpiof 1 (GPIO_INPUT)>;
+		};
+	};
+
+        named-i2c-ports {
+                /delete-node/ ec_i2c_sensor_scl_1v8;
+        };
+
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpioa 0 GPIO_INPUT_PULL_DOWN>,
+			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
+			<&gpiob 2 GPIO_INPUT_PULL_DOWN>,
+			<&gpiob 5 GPIO_INPUT_PULL_DOWN>,
+			<&gpioc 7 GPIO_INPUT_PULL_DOWN>,
+			<&gpiod 0 GPIO_INPUT_PULL_DOWN>,
+			<&gpiod 1 GPIO_INPUT_PULL_DOWN>,
+			<&gpioe 3 GPIO_INPUT_PULL_DOWN>,
+			<&gpioe 4 GPIO_INPUT_PULL_DOWN>;
+	};
+
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+
+		actual-key-mask = <
+			0x08	/* C0 */
+			0xff	/* C1 */
+			0xff	/* C2 */
+			0xff	/* C3 */
+			0xff	/* C4 */
+			0xff	/* C5 */
+			0xff	/* C6 */
+			0xa0	/* C7 */
+			0xff	/* C8 */
+			0xff	/* C9 */
+			0x01	/* C10 */
+			0xff	/* C11 */
+			0xff	/* C12 */
+			0x40	/* C13 */
+			0x0a	/* C14 */
+			0x40	/* C15 */
+			0x01	/* C16 */
+			0xc4	/* C17 */
+		>;
+	};
+};
+
+&cros_kb_raw {
+	pinctrl-0 = <&ksi0_default
+		     &ksi1_default
+		     &ksi2_default
+		     &ksi3_default
+		     &ksi4_default
+		     &ksi5_default
+		     &ksi6_default
+		     &ksi7_default
+		     &kso0_default
+		     &kso1_default
+		     &kso3_default
+		     &kso4_default
+		     &kso5_default
+		     &kso6_default
+		     &kso7_default
+		     &kso8_default
+		     &kso9_default
+		     &kso10_default
+		     &kso11_default
+		     &kso12_default
+		     &kso13_default
+		     &kso14_default
+		     &kso15_default
+		     &kso16_default
+		     &kso17_default>;
+};
+
+&pwm0 {
+	status = "disabled";
+};
+
+&pwm3 {
+	prescaler-cx = <PWM_PRESCALER_C4>;
+};
+
+&sha0 {
+	status = "okay";
+};
+
+&usbc_port0 {
+        zephyr,deferred-init;
+};
+
+&usbc_port1 {
+        zephyr,deferred-init;
+};
+
+&pdc_power_p0 {
+        zephyr,deferred-init;
+};
+
+&pdc_power_p1 {
+        zephyr,deferred-init;
+};
+
+/*
+ * When CBI in flash is enabled, setup RO flash layout as follows:
+ *   RO binary:    0x00000:0x5DFFF
+ *   FMAP:         0x5DC00:0x5DFFF
+ *   CBI flash:    0x5E000:0x5EFFF
+ *   PSTATE block: 0x5F000:0x5FFFF
+ */
+&binman {
+	wp-ro {
+		/*
+		 * Delete the pstate node so that we can force it to be the
+		 * last sub-section. binman doesn't handle sub-sections with
+		 * out of order offsets.
+		 */
+		 /delete-node/ pstate;
+
+		 ec-ro {
+			fmap {
+				offset =  <(0x60000 - (0x1000 * 2) - 0x400)>;
+				/*
+				* don't specify 'size = <0x400>' here so
+				* it is auto-assigned to the fmap size.
+				*/
+			};
+		};
+		cbi {
+			offset = <(0x60000 - (0x1000 * 2))>;
+			size = <0x1000>;
+		};
+		pstate {
+			type = "section";
+			offset = <(0x60000 - (0x1000 * 1))>;
+			size = <0x1000>;
+		};
+	};
+};
