@@ -39,3 +39,7 @@ target_sources_ifdef(CONFIG_TEST_AP_POWER_BROX app PRIVATE
 target_sources_ifdef(CONFIG_TEST_AP_POWER_ATRIARVP app PRIVATE
   ${PLATFORM_EC_PROGRAM_DIR}/atria/src/rvp_board_power.c
   src/boards/atriarvp.c)
+
+target_sources_ifdef(CONFIG_TEST_AP_POWER_OCELOTRVP app PRIVATE
+  ${PLATFORM_EC_PROGRAM_DIR}/ocelot/src/rvp_board_power.c
+  src/boards/ocelotrvp.c)

@@ -28,6 +28,12 @@ config TEST_AP_POWER_BROX
 	  Run the AP power sequence tests using the Brox devicetree
 	  configuration and the Brox project specific source files.
 
+config TEST_AP_POWER_OCELOTRVP
+	bool "AP Power sequence tests for Ocelot RVP project"
+	help
+	  Run the AP power sequence tests using the Ocelot RVP devicetree
+	  configuration and the Ocelot RVP project specific source files.
+
 config TEST_AP_POWER_RECOVERY_MODE
 	bool "AP power sequencing tests for recovery boot"
 	help
