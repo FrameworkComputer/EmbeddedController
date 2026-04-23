@@ -339,6 +339,41 @@ int battery_time_at_rate(int rate, int *minutes);
 int battery_status(int *status);
 
 /**
+ * Set the fake state of charge.
+ *
+ * @param soc		Percentage (0-100) or -1 to use real level.
+ */
+void battery_set_fake_soc(int soc);
+
+/**
+ * Get the current fake state of charge.
+ *
+ * @return percentage or -1 if not faking.
+ */
+int battery_get_fake_soc(void);
+
+/**
+ * Set the fake battery temperature.
+ *
+ * @param temp		Temperature in 0.1 K or -1 to use real temperature.
+ */
+void battery_set_fake_temp(int temp);
+
+/**
+ * Get the current fake battery temperature.
+ *
+ * @return temperature or -1 if not faking.
+ */
+int battery_get_fake_temp(void);
+
+/**
+ * Apply faked parameters if faking is enabled.
+ *
+ * @param batt		Battery parameters to modify
+ */
+void battery_apply_fake_params(struct batt_params *batt);
+
+/**
  * Read battery charge cycle count.
  *
  * @param count		Destination for count.

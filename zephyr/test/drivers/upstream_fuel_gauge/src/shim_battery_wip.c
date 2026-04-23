@@ -38,6 +38,8 @@ void battery_get_params(struct batt_params *batt)
 	batt->voltage = raw_voltage.voltage / 1000;
 	batt->current = raw_current.current / 1000;
 
+	battery_apply_fake_params(batt);
+
 	/*
 	 * TODO(b/271889974): Percolate failed properties to client.
 	 */

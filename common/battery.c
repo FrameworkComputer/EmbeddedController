@@ -882,6 +882,100 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, reduce_input_voltage_when_full,
 	     HOOK_PRIO_DEFAULT);
 #endif
 
+static int fake_state_of_charge = -1;
+static int fake_temperature = -1;
+
+void battery_set_fake_soc(int soc)
+{
+	fake_state_of_charge = soc;
+}
+
+int battery_get_fake_soc(void)
+{
+	return fake_state_of_charge;
+}
+
+void battery_set_fake_temp(int temp)
+{
+	fake_temperature = temp;
+}
+
+int battery_get_fake_temp(void)
+{
+	return fake_temperature;
+}
+
+void battery_apply_fake_params(struct batt_params *batt)
+{
+	if (fake_temperature >= 0) {
+		batt->temperature = fake_temperature;
+		batt->flags &= ~BATT_FLAG_BAD_TEMPERATURE;
+	}
+
+	if (fake_state_of_charge >= 0) {
+		int full;
+
+		if (batt->flags & BATT_FLAG_BAD_FULL_CAPACITY)
+			battery_design_capacity(&full);
+		else
+			full = batt->full_capacity;
+
+		batt->state_of_charge = fake_state_of_charge;
+		batt->remaining_capacity = full * fake_state_of_charge / 100;
+		battery_compensate_params(batt);
+		batt->flags &= ~BATT_FLAG_BAD_STATE_OF_CHARGE;
+		batt->flags &= ~BATT_FLAG_BAD_REMAINING_CAPACITY;
+	}
+}
+
+#if defined(CONFIG_CMD_BATTFAKE)
+static int command_battfake(int argc, const char **argv)
+{
+	char *e;
+	int v;
+
+	if (argc == 2) {
+		v = strtoi(argv[1], &e, 0);
+		if (*e || v < -1 || v > 100)
+			return EC_ERROR_PARAM1;
+
+		fake_state_of_charge = v;
+	}
+
+	if (fake_state_of_charge >= 0)
+		ccprintf("Fake batt %d%%\n", fake_state_of_charge);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(battfake, command_battfake,
+			"percent (-1 = use real level)",
+			"Set fake battery level");
+
+static int command_batttempfake(int argc, const char **argv)
+{
+	char *e;
+	int t;
+
+	if (argc == 2) {
+		t = strtoi(argv[1], &e, 0);
+		if (*e || t < -1 || t > 5000)
+			return EC_ERROR_PARAM1;
+
+		fake_temperature = t;
+	}
+
+	if (fake_temperature >= 0)
+		ccprintf("Fake batt temperature %d.%d K\n",
+			 fake_temperature / 10, fake_temperature % 10);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(
+	batttempfake, command_batttempfake,
+	"temperature (-1 = use real temperature)",
+	"Set fake battery temperature in deciKelvin (2731 = 273.1 K = 0 deg C)");
+#endif
+
 void battery_validate_params(struct batt_params *batt)
 {
 	/*

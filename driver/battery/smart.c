@@ -20,9 +20,6 @@
 
 #define BATTERY_NO_RESPONSE_TIMEOUT (1000 * MSEC)
 
-static int fake_state_of_charge = -1;
-static int fake_temperature = -1;
-
 #ifdef CONFIG_SMBUS_PEC
 static void addr_flags_for_pec(uint16_t *addr_flags)
 {
@@ -459,27 +456,7 @@ int battery_get_avg_voltage(void)
 }
 #endif /* CONFIG_CMD_PWR_AVG */
 
-/* TODO(b/266713897): Remove #ifndef */
 #ifndef CONFIG_FUEL_GAUGE
-static void apply_fake_state_of_charge(struct batt_params *batt)
-{
-	int full;
-
-	if (fake_state_of_charge < 0)
-		return;
-
-	if (batt->flags & BATT_FLAG_BAD_FULL_CAPACITY)
-		battery_design_capacity(&full);
-	else
-		full = batt->full_capacity;
-
-	batt->state_of_charge = fake_state_of_charge;
-	batt->remaining_capacity = full * fake_state_of_charge / 100;
-	battery_compensate_params(batt);
-	batt->flags &= ~BATT_FLAG_BAD_STATE_OF_CHARGE;
-	batt->flags &= ~BATT_FLAG_BAD_REMAINING_CAPACITY;
-}
-
 static bool battery_want_charge(struct batt_params *batt)
 {
 	if (batt->flags &
@@ -531,16 +508,10 @@ void battery_get_params(struct batt_params *batt)
 		return;
 	}
 #endif
-	if (sb_read(SB_TEMPERATURE, &batt_new.temperature) &&
-	    fake_temperature < 0)
+	if (sb_read(SB_TEMPERATURE, &batt_new.temperature))
 		batt_new.flags |= BATT_FLAG_BAD_TEMPERATURE;
 
-	/* If temperature is faked, override with faked data */
-	if (fake_temperature >= 0)
-		batt_new.temperature = fake_temperature;
-
-	if (sb_read(SB_RELATIVE_STATE_OF_CHARGE, &batt_new.state_of_charge) &&
-	    fake_state_of_charge < 0)
+	if (sb_read(SB_RELATIVE_STATE_OF_CHARGE, &batt_new.state_of_charge))
 		batt_new.flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
 
 	if (sb_read(SB_VOLTAGE, &batt_new.voltage))
@@ -600,8 +571,7 @@ void battery_get_params(struct batt_params *batt)
 	board_battery_compensate_params(&batt_new);
 #endif
 
-	if (IS_ENABLED(CONFIG_CMD_BATTFAKE))
-		apply_fake_state_of_charge(&batt_new);
+	battery_apply_fake_params(&batt_new);
 
 	/* Update visible battery parameters */
 	memcpy(batt, &batt_new, sizeof(*batt));
@@ -641,54 +611,6 @@ int battery_wait_for_stable(void)
 	CPRINTS("battery not responding with status %x", status);
 	return EC_ERROR_NOT_POWERED;
 }
-
-#if defined(CONFIG_CMD_BATTFAKE)
-static int command_battfake(int argc, const char **argv)
-{
-	char *e;
-	int v;
-
-	if (argc == 2) {
-		v = strtoi(argv[1], &e, 0);
-		if (*e || v < -1 || v > 100)
-			return EC_ERROR_PARAM1;
-
-		fake_state_of_charge = v;
-	}
-
-	if (fake_state_of_charge >= 0)
-		ccprintf("Fake batt %d%%\n", fake_state_of_charge);
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(battfake, command_battfake,
-			"percent (-1 = use real level)",
-			"Set fake battery level");
-
-static int command_batttempfake(int argc, const char **argv)
-{
-	char *e;
-	int t;
-
-	if (argc == 2) {
-		t = strtoi(argv[1], &e, 0);
-		if (*e || t < -1 || t > 5000)
-			return EC_ERROR_PARAM1;
-
-		fake_temperature = t;
-	}
-
-	if (fake_temperature >= 0)
-		ccprintf("Fake batt temperature %d.%d K\n",
-			 fake_temperature / 10, fake_temperature % 10);
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(
-	batttempfake, command_batttempfake,
-	"temperature (-1 = use real temperature)",
-	"Set fake battery temperature in deciKelvin (2731 = 273.1 K = 0 deg C)");
-#endif
 
 #ifdef CONFIG_CMD_BATT_MFG_ACCESS
 static int command_batt_mfg_access_read(int argc, const char **argv)
