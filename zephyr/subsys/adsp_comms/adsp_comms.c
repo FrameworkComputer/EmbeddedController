@@ -11,6 +11,7 @@
 #include "common.h"
 #include "console.h"
 #include "extpower.h"
+#include "hooks.h"
 
 #include <zephyr/logging/log.h>
 
@@ -136,3 +137,24 @@ static void adsp_oem_battery_state_cb(uint8_t fid, uint8_t addr, uint16_t data)
 ADSP_COMMS_REGISTER_CB(ADSP_FEATURE_OEM_CUSTOM,
 		       ADSP_OEM_CUSTOM_REG_BATTERY_STATE,
 		       adsp_oem_battery_state_cb);
+
+static void adsp_oem_battery_level_cb(uint8_t fid, uint8_t addr, uint16_t data)
+{
+	if (data > 100) {
+		LOG_ERR("ADSP: Invalid battery level: %d", data);
+		return;
+	}
+
+	battery_set_fake_soc((int)data);
+	LOG_INF("ADSP: Battery Level: %d%%", data);
+}
+ADSP_COMMS_REGISTER_CB(ADSP_FEATURE_OEM_CUSTOM,
+		       ADSP_OEM_CUSTOM_REG_BATTERY_LEVEL,
+		       adsp_oem_battery_level_cb);
+
+static void adsp_comms_shutdown_reset(void)
+{
+	battery_set_fake_soc(-1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN_COMPLETE, adsp_comms_shutdown_reset,
+	     HOOK_PRIO_DEFAULT);
