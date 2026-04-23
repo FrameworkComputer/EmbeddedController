@@ -45,7 +45,7 @@
 			gpios = <&gpio6 7 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
 		};
 		gpio_ec_flash_wp_odl: ec_flash_wp_odl {
-			gpios = <&gpio7 0 (GPIO_INPUT)>;
+			gpios = <&gpio7 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_ec_fan_tach_od: ec_fan_tach_od {
 			gpios = <&gpio7 3 (GPIO_INPUT | GPIO_PULL_UP)>;

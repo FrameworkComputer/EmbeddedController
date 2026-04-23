@@ -13,7 +13,7 @@
 
 		/* Write protect signal for the EC. */
 		gpio_ec_wp_l: write-protect {
-			gpios = <&gpio7 0 GPIO_INPUT>;
+			gpios = <&gpio7 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
 			gpios = <&gpiod 4 GPIO_OUTPUT>;

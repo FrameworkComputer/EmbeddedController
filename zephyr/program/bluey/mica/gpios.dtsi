@@ -66,7 +66,7 @@
 		};
 		/* Write protect signal for the EC. */
 		gpio_ec_wp_l: write-protect {
-			gpios = <&gpio7 0 GPIO_INPUT>;
+			gpios = <&gpio7 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		/*
 		gpio_ec_fan_tach_od: ec_fan_tach_od {
