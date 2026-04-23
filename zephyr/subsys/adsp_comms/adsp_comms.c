@@ -27,3 +27,15 @@ static void adsp_oem_magic_cb(uint8_t fid, uint8_t addr, uint16_t data)
 }
 ADSP_COMMS_REGISTER_CB(ADSP_FEATURE_OEM_CUSTOM, ADSP_OEM_CUSTOM_REG_MAGIC,
 		       adsp_oem_magic_cb);
+
+static void adsp_oem_version_cb(uint8_t fid, uint8_t addr, uint16_t data)
+{
+	if (data == ADSP_OEM_CUSTOM_VERSION_1) {
+		LOG_INF("ADSP: Version 1 identified");
+	} else {
+		LOG_ERR("ADSP: Incorrect version received: %d (expected %d)",
+			data, ADSP_OEM_CUSTOM_VERSION_1);
+	}
+}
+ADSP_COMMS_REGISTER_CB(ADSP_FEATURE_OEM_CUSTOM, ADSP_OEM_CUSTOM_REG_VERSION,
+		       adsp_oem_version_cb);
