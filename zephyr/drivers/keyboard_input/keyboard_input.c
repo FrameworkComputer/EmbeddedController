@@ -141,8 +141,14 @@ static void keyboard_input_cb(struct input_event *evt, void *user_data)
 }
 INPUT_CALLBACK_DEFINE(kbd_dev, keyboard_input_cb, NULL);
 
+#if DT_NODE_HAS_COMPAT(CROS_EC_KEYBOARD_NODE, gpio_kbd_matrix)
+#define KEYBOARD_COLS_DT DT_PROP_LEN(CROS_EC_KEYBOARD_NODE, col_gpios);
+#else
+#define KEYBOARD_COLS_DT DT_PROP(CROS_EC_KEYBOARD_NODE, col_size);
+#endif
+
 /* referenced in common/keyboard_8042.c */
-uint8_t keyboard_cols = DT_PROP(CROS_EC_KEYBOARD_NODE, col_size);
+uint8_t keyboard_cols = KEYBOARD_COLS_DT;
 
 static int cmd_ksstate(const struct shell *sh, size_t argc, char **argv)
 {
