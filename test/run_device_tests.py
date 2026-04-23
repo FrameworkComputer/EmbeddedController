@@ -542,7 +542,7 @@ class Renode(Platform):
 
         if zephyr and test_config.test_name in [
             "flash_protection",  # TODO(b/485668014)
-            "flash_protection_rw",  # TODO(b/485668014)
+            "flash_protection_rw",  # TODO(b/485668836)
             "flash_write_protect",  # TODO(b/485668014)
             "fp_transport",  # TODO(b/485668240)
             "malloc",  # TODO(b/485669070)
