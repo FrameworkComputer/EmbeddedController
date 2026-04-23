@@ -110,6 +110,14 @@ config PLATFORM_EC_BATTERY_PRESENT_NONE
 
 endchoice # PLATFORM_EC_BATTERY_PRESENT_MODE
 
+config PLATFORM_EC_BATTERY_STATUS_CUSTOM
+	bool "Call a custom battery_status function"
+	help
+	  Use this method to provide a custom battery_status() function.
+	  This can be used to intercept or override the battery status
+	  reading from the fuel gauge, for example to provide status
+	  from an external processor.
+
 config PLATFORM_EC_USE_BATTERY_DEVICE_CHEMISTRY
 	bool "Provide information about battery chemistry"
 	help

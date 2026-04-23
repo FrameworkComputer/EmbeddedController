@@ -304,10 +304,12 @@ int battery_time_to_full(int *minutes)
 }
 
 /* Read battery status */
+#ifndef CONFIG_BATTERY_STATUS_CUSTOM
 test_mockable int battery_status(int *status)
 {
 	return sb_read(SB_BATTERY_STATUS, status);
 }
+#endif
 
 /* Battery charge cycle count */
 int battery_cycle_count(int *count)

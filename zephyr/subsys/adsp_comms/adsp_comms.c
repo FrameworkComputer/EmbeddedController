@@ -4,8 +4,10 @@
  */
 
 #include "adsp_comms.h"
+#include "battery_smart.h"
 #include "charge_manager.h"
 #include "charge_state.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "extpower.h"
@@ -16,6 +18,7 @@ LOG_MODULE_DECLARE(adsp_comms, LOG_LEVEL_INF);
 
 static int active_charge_port = CHARGE_PORT_NONE;
 static enum led_pwr_state active_charge_state = LED_PWRS_IDLE;
+static int active_battery_status;
 
 int charge_manager_get_active_charge_port(void)
 {
@@ -35,6 +38,18 @@ static int command_chgstate(int argc, const char **argv)
 }
 DECLARE_CONSOLE_COMMAND(chgstate, command_chgstate, NULL,
 			"Get charge state machine status");
+
+#ifdef CONFIG_BATTERY_STATUS_CUSTOM
+test_mockable int battery_status(int *status)
+{
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		return sb_read(SB_BATTERY_STATUS, status);
+	}
+
+	*status = active_battery_status;
+	return EC_SUCCESS;
+}
+#endif
 
 static void adsp_power_state_cb(uint8_t fid, uint8_t addr, uint16_t data)
 {
@@ -112,3 +127,12 @@ static void adsp_oem_charge_state_cb(uint8_t fid, uint8_t addr, uint16_t data)
 ADSP_COMMS_REGISTER_CB(ADSP_FEATURE_OEM_CUSTOM,
 		       ADSP_OEM_CUSTOM_REG_CHARGE_STATE,
 		       adsp_oem_charge_state_cb);
+
+static void adsp_oem_battery_state_cb(uint8_t fid, uint8_t addr, uint16_t data)
+{
+	active_battery_status = (int)data;
+	LOG_INF("ADSP: Battery State: 0x%04x", data);
+}
+ADSP_COMMS_REGISTER_CB(ADSP_FEATURE_OEM_CUSTOM,
+		       ADSP_OEM_CUSTOM_REG_BATTERY_STATE,
+		       adsp_oem_battery_state_cb);

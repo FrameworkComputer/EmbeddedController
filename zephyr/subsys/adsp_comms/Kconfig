@@ -4,6 +4,7 @@
 
 config ADSP_COMMS
 	bool "ADSP communications support"
+	select PLATFORM_EC_BATTERY_STATUS_CUSTOM
 	help
 	  Enable ADSP communications support, including I2C port switching
 	  between controller and target modes on chipset state transitions.
