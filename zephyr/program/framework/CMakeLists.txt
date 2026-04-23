@@ -114,6 +114,7 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 			"src/usbc_4port_config.c"
 			"src/keyboard_customization_13.c"
 			"azalea/src/led.c"
+			"azalea/src/pmf.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
 	"azalea/src/stt.c")
