@@ -35,6 +35,8 @@ enum adsp_oem_custom_reg {
 	ADSP_OEM_CUSTOM_REG_BATTERY_LEVEL = 0x06,
 };
 
+#define ADSP_OEM_CUSTOM_MAGIC_VAL 0xec
+
 typedef void (*adsp_comms_callback_t)(uint8_t fid, uint8_t addr, uint16_t data);
 
 struct adsp_comms_callback {

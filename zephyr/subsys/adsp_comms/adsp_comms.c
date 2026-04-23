@@ -16,3 +16,14 @@ static void adsp_power_state_cb(uint8_t fid, uint8_t addr, uint16_t data)
 }
 ADSP_COMMS_REGISTER_CB(ADSP_FEATURE_DEFAULT, ADSP_POWER_STATE_REG_VAL,
 		       adsp_power_state_cb);
+
+static void adsp_oem_magic_cb(uint8_t fid, uint8_t addr, uint16_t data)
+{
+	if (data == ADSP_OEM_CUSTOM_MAGIC_VAL) {
+		LOG_INF("ADSP: Comms established");
+	} else {
+		LOG_INF("ADSP: Incorrect magic packet received (0x%04x)", data);
+	}
+}
+ADSP_COMMS_REGISTER_CB(ADSP_FEATURE_OEM_CUSTOM, ADSP_OEM_CUSTOM_REG_MAGIC,
+		       adsp_oem_magic_cb);
