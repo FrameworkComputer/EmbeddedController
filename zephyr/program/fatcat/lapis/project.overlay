@@ -34,6 +34,15 @@
 #include <lapis/overlay.dtsi>
 
 /*
+ * Lapis specific: increase the available code size without changing
+ * the entry point to maintain compatibility with older EC RO images.
+ */
+&flash0 {
+    reg = <0x2000B400 0x44900>;
+};
+
+
+/*
  * Aliases to common names
  */
 gpio_ec_pch_wake_odl: &gpio_soc_wake_odl {};
