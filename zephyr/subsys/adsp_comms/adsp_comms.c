@@ -13,10 +13,16 @@
 LOG_MODULE_DECLARE(adsp_comms, LOG_LEVEL_INF);
 
 static int active_charge_port = CHARGE_PORT_NONE;
+static enum led_pwr_state active_charge_state = LED_PWRS_IDLE;
 
 int charge_manager_get_active_charge_port(void)
 {
 	return active_charge_port;
+}
+
+enum led_pwr_state led_pwr_get_state(void)
+{
+	return active_charge_state;
 }
 
 static void adsp_power_state_cb(uint8_t fid, uint8_t addr, uint16_t data)
@@ -64,3 +70,34 @@ static void adsp_oem_charge_port_cb(uint8_t fid, uint8_t addr, uint16_t data)
 }
 ADSP_COMMS_REGISTER_CB(ADSP_FEATURE_OEM_CUSTOM, ADSP_OEM_CUSTOM_REG_CHARGE_PORT,
 		       adsp_oem_charge_port_cb);
+
+static void adsp_oem_charge_state_cb(uint8_t fid, uint8_t addr, uint16_t data)
+{
+	switch (data) {
+	case ADSP_OEM_CUSTOM_CHARGE_STATE_CHARGE:
+		active_charge_state = LED_PWRS_CHARGE;
+		break;
+	case ADSP_OEM_CUSTOM_CHARGE_STATE_DISCHARGE:
+		active_charge_state = LED_PWRS_DISCHARGE;
+		break;
+	case ADSP_OEM_CUSTOM_CHARGE_STATE_ERROR:
+		active_charge_state = LED_PWRS_ERROR;
+		break;
+	case ADSP_OEM_CUSTOM_CHARGE_STATE_IDLE:
+		active_charge_state = LED_PWRS_IDLE;
+		break;
+	case ADSP_OEM_CUSTOM_CHARGE_STATE_FORCED_IDLE:
+		active_charge_state = LED_PWRS_FORCED_IDLE;
+		break;
+	case ADSP_OEM_CUSTOM_CHARGE_STATE_NEAR_FULL:
+		active_charge_state = LED_PWRS_CHARGE_NEAR_FULL;
+		break;
+	default:
+		LOG_ERR("ADSP: Invalid charge state: %d", data);
+		return;
+	}
+	LOG_INF("ADSP: Charge State - %d", data);
+}
+ADSP_COMMS_REGISTER_CB(ADSP_FEATURE_OEM_CUSTOM,
+		       ADSP_OEM_CUSTOM_REG_CHARGE_STATE,
+		       adsp_oem_charge_state_cb);
