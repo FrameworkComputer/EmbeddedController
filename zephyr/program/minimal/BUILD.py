@@ -7,6 +7,7 @@
 register_host_project(
     project_name="minimal-posix",
     zephyr_board="native_sim",
+    supported_toolchains=["host/gnu"],
 )
 
 register_npcx_project(
