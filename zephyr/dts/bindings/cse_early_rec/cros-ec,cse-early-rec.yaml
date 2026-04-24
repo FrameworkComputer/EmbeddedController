@@ -15,5 +15,6 @@ properties:
     type: phandle-array
     required: true
     description: |
-      GPIO pin connected to the EC_SOC_REC_SWITCH_ODL (aka CSE_EARLY_REC_SW)
-      signal on the platform.
+      GPIO pin connected to the EC_SOC_REC_SWITCH_OD (aka CSE_EARLY_REC_SW)
+      signal on the platform. Board should configure the active level such that
+      logically asserting the GPIO indicates recovery mode.

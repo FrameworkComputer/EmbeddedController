@@ -40,10 +40,10 @@ static void ap_power_g3_exit_cb(const struct device *dev,
 	 * host event is sent.
 	 */
 	if (system_is_manual_recovery()) {
-		LOG_INF("CSE early recovery signal asserted");
+		LOG_INF("CSE early recovery signal asserted (recovery mode)");
 		gpio_pin_set_dt(&cse_early_rec_cfg.cse_early_rec_gpio, 1);
 	} else {
-		LOG_INF("CSE early recovery signal de-asserted");
+		LOG_INF("CSE early recovery signal de-asserted (normal mode)");
 		gpio_pin_set_dt(&cse_early_rec_cfg.cse_early_rec_gpio, 0);
 	}
 }
