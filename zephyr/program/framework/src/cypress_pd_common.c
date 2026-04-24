@@ -2304,8 +2304,12 @@ void cypd_port_int(int controller, int port)
 	case CCG_RESPONSE_ACCEPT_MSG_RX:
 		CPRINTS("CCG_RESPONSE_ACCEPT_MSG_RX %d", port_idx);
 		if (snk_transition_flags) {
-			if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER))
-				charge_manager_force_ceil(port_idx, 500);
+			/* 500mA is not always enough keep the system powered in standalone mode */
+			if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER)) {
+				if (battery_get_disconnect_state() ==
+				    BATTERY_NOT_DISCONNECTED && (charge_get_percent() > 1))
+					charge_manager_force_ceil(port_idx, 500);
+			}
 			snk_transition_flags = 0;
 		}
 		break;
