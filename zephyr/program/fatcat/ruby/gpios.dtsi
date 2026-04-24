@@ -162,7 +162,7 @@
 			gpios = <&gpioa 2 (GPIO_INPUT | GPIO_PULL_UP)>;
 		};
 		gpio_kb_bl_det_5v:kb_bl_dev_5v {
-			gpios = <&gpioe 5 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
+			gpios = <&gpioe 5 GPIO_INPUT>;
 		};
 		gpio_ec_kb_bl_pwm: ec_kb_bl_pwm {
 			gpios = <&gpio8 0 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
