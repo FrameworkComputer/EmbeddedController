@@ -17,6 +17,7 @@
 #include <ap_power/ap_pwrseq.h>
 #include <ap_power_override_functions.h>
 #include <power_signals.h>
+#include <system.h>
 #include <x86_power_signals.h>
 
 LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_INF);
@@ -36,6 +37,15 @@ void board_ap_power_action_g3_s5(void)
 {
 	LOG_DBG("Turning on PWR_EN_PP5000_A and PWR_EN_PP3300_A");
 	power_signal_set(PWR_EN_PP5000_A, 1);
+
+	/* Indication to soc on recovery boot */
+	if (system_is_manual_recovery()) {
+		gpio_pin_set_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rec_switch_odl), 1);
+	} else {
+		gpio_pin_set_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rec_switch_odl), 0);
+	}
 
 	update_ap_boot_time(ARAIL);
 	power_wait_signals_on_timeout(IN_PGOOD_ALL_CORE,
