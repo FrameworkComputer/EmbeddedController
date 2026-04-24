@@ -20,6 +20,8 @@
 #include "timer.h"
 #include "util.h"
 
+#include <string.h>
+
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_HOSTCMD, outstr)
 #define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ##args)
@@ -260,6 +262,10 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_S0IX_COUNTER, host_command_get_s0ix_cnt,
 		     EC_VER_MASK(0));
 #endif
 
+#ifdef CONFIG_PLATFORM_EC_AP_FW_STATE
+
+static uint32_t last_ap_fw_state = 0;
+
 static enum ec_status
 host_command_ap_fw_state(struct host_cmd_handler_args *args)
 {
@@ -268,7 +274,28 @@ host_command_ap_fw_state(struct host_cmd_handler_args *args)
 	ccprintf("AP_FW %x\n", p->state);
 	args->response_size = 0;
 
+	last_ap_fw_state = p->state;
+
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_AP_FW_STATE, host_command_ap_fw_state,
 		     EC_VER_MASK(0));
+
+static int command_ap_fw_states(int argc, const char **argv)
+{
+	if (argc > 1 && !strcasecmp(argv[1], "clear")) {
+		last_ap_fw_state = 0;
+		return EC_SUCCESS;
+	}
+
+	if (last_ap_fw_state != 0) {
+		ccprintf("AP_FW %x\n", last_ap_fw_state);
+	} else {
+		ccprintf("No AP fw state\n");
+	}
+	return EC_SUCCESS;
+}
+DECLARE_SAFE_CONSOLE_COMMAND(apfwscreens, command_ap_fw_states, "[clear]",
+			     "Print/clear last AP FW state");
+
+#endif /* CONFIG_PLATFORM_EC_AP_FW_STATE */

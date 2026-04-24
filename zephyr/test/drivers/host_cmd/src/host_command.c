@@ -157,14 +157,46 @@ ZTEST(host_cmd_host_commands, test_ap_fw_state)
 	/* Flush the console buffer before we start. */
 	shell_backend_dummy_clear_output(shell_zephyr);
 
+	/* Test 0: Verify console command shows no state initially */
+	zassert_ok(shell_execute_cmd(shell_zephyr, "apfwscreens"));
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+	zassert_true(strstr(outbuffer, "No AP fw state") != NULL,
+		     "Initial state not empty: %s", outbuffer);
+
+	/* Test 1: Save first state */
 	params.state = 0x12345678;
 	rv = host_command_process(&args);
 	zassert_ok(rv, "Got %d", rv);
 
 	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
-
 	zassert_true(strstr(outbuffer, "AP_FW 12345678") != NULL,
 		     "Invalid console output %s", outbuffer);
+
+	/* Test 2: Verify console command shows it */
+	zassert_ok(shell_execute_cmd(shell_zephyr, "apfwscreens"));
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+	zassert_true(strstr(outbuffer, "AP_FW 12345678") != NULL,
+		     "Console command output missing state: %s", outbuffer);
+
+	/* Test 3: Save second state (should overwrite) */
+	params.state = 0x87654321;
+	rv = host_command_process(&args);
+	zassert_ok(rv, "Got %d", rv);
+
+	/* Test 4: Verify console command shows new state */
+	zassert_ok(shell_execute_cmd(shell_zephyr, "apfwscreens"));
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+	zassert_true(strstr(outbuffer, "AP_FW 87654321") != NULL,
+		     "Console command output missing new state: %s", outbuffer);
+
+	/* Test 5: Clear buffer (silent) */
+	zassert_ok(shell_execute_cmd(shell_zephyr, "apfwscreens clear"));
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+	/* Verify it's empty now */
+	zassert_ok(shell_execute_cmd(shell_zephyr, "apfwscreens"));
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+	zassert_true(strstr(outbuffer, "No AP fw state") != NULL,
+		     "Buffer not empty after clear! Output: %s", outbuffer);
 }
 
 ZTEST_SUITE(host_cmd_host_commands, drivers_predicate_post_main, NULL, NULL,

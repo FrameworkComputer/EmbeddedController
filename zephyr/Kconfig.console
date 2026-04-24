@@ -162,3 +162,11 @@ config PLATFORM_EC_CONSOLE_START_SHELL_TASK
 
 	  This option is helpful for applications that use LOG_PRINTK, because
 	  using printk is not available when shell is not started.
+
+config PLATFORM_EC_AP_FW_STATE
+	bool "AP FW state tracking"
+	depends on PLATFORM_EC_HOSTCMD
+	default y
+	help
+	  Enable storing the last seen AP FW state.
+	  Provides a console command `apfwscreens` to view or clear it.
