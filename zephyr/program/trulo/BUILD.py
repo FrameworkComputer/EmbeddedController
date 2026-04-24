@@ -11,6 +11,7 @@ def register_trulo_project(
     zephyr_board=None,
     kconfig_files=None,
     inherited_from=None,
+    snippets=None,
     **kwargs,
 ):
     """Register a variant of Trulo."""
@@ -29,6 +30,7 @@ def register_trulo_project(
             kconfig_files=kconfig_files + [here / "dsp_comms.conf"],
             modules=["cmsis_6", "picolibc", "ec", "pigweed", "nanopb"],
             inherited_from=inherited_from,
+            snippets=snippets,
             **kwargs,
         )
     else:
@@ -41,6 +43,7 @@ def register_trulo_project(
             kconfig_files=kconfig_files + [here / "dsp_comms.conf"],
             inherited_from=inherited_from,
             modules=["cmsis_6", "picolibc", "ec", "pigweed", "nanopb"],
+            snippets=snippets,
             **kwargs,
         )
 
@@ -48,6 +51,7 @@ def register_trulo_project(
 def register_trulo_binman_project(
     project_name,
     kconfig_files=None,
+    snippets=None,
 ):
     """Register a variant of trulo."""
     if kconfig_files is None:
@@ -61,6 +65,7 @@ def register_trulo_binman_project(
         project_name=project_name,
         zephyr_board="it8xxx2/it82002aw",
         kconfig_files=kconfig_files,
+        snippets=snippets,
     )
 
 
@@ -75,6 +80,7 @@ register_trulo_project(
         # Parent project's config
         here / "kaladin" / "project.conf",
     ],
+    snippets=["pw-tokenize"],
 )
 
 register_trulo_project(
@@ -85,6 +91,7 @@ register_trulo_project(
         # Parent project's config
         here / "trulo" / "project.conf",
     ],
+    snippets=["pw-tokenize"],
 )
 
 register_trulo_project(
@@ -96,6 +103,7 @@ register_trulo_project(
         # Parent project's config
         here / "pujjocento" / "project.conf",
     ],
+    snippets=["pw-tokenize"],
 )
 
 register_trulo_project(
@@ -107,6 +115,7 @@ register_trulo_project(
         # Parent project's config
         here / "pujjolo" / "project.conf",
     ],
+    snippets=["pw-tokenize"],
 )
 
 register_trulo_project(
@@ -119,6 +128,7 @@ register_trulo_project(
         # Project-specific KConfig customization.
         here / "trulo-ti" / "project.conf",
     ],
+    snippets=["pw-tokenize"],
 )
 
 register_trulo_project(
@@ -130,6 +140,7 @@ register_trulo_project(
         # Parent project's config
         here / "uldrenite" / "project.conf",
     ],
+    snippets=["pw-tokenize"],
 )
 
 register_ish_project(
