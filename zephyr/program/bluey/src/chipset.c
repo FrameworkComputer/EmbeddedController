@@ -9,6 +9,7 @@
 #include "battery.h"
 #include "chipset.h"
 #include "common.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
@@ -41,9 +42,8 @@ void passthru_lid_open_to_pmic(void)
 
 void passthru_ac_on_to_pmic(void)
 {
-	gpio_pin_set_dt(
-		GPIO_DT_FROM_NODELABEL(gpio_ec_pmic_acok),
-		gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_acok_od_z5)));
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pmic_acok),
+			extpower_is_present());
 }
 
 void chipset_acok_passthru_interrupt(enum gpio_signal signal)
