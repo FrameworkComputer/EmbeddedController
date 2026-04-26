@@ -1313,6 +1313,29 @@ config_fatcat() {
   esac
 }
 
+config_ocelot() {
+  readonly USE_LEGACY_GPIO_API=0
+
+  readonly TRANSPORT="SPI"
+  readonly DEVICE="/dev/spidev0.0"
+
+  readonly GPIO_CHIP="gpiochip0"
+
+  local model
+  model=$(cros_config / name)
+
+  case "${model}" in
+    *)
+      # FPMCU FPS_RST_N(RST_ODL) is on GPP_C15 = Base 24 + Pin 15 = 39
+      readonly GPIO_NRST=39
+      # FPMCU FPMCU_FW_UPDATE(BOOT0) is on GPP_E20 = Base 26 + Pin 20 = 46
+      readonly GPIO_BOOT0=46
+      # FPMCU_PWREN(FP_PWR_EN) is on GPP_E5 = Base 26 + Pin 5 = 31
+      readonly GPIO_PWREN=31
+      ;;
+  esac
+}
+
 config_nissa() {
   readonly USE_LEGACY_GPIO_API=0
 
