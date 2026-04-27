@@ -51,6 +51,11 @@ tach_fan0: &tach0 {};
 	chosen {
 		cros-ec,keyboard = &kbd;
 	};
+
+	cse_early_recovery: cse-early-recovery {
+		compatible = "cros-ec,cse-early-rec";
+		cse-early-rec-gpios = <&gpioj 3 (GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH)>;
+	};
 };
 
 &espi0 {

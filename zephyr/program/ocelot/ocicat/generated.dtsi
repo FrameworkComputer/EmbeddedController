@@ -177,10 +177,6 @@
 			gpios = <&gpioj 1 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 			no-auto-init;
 		};
-        /* GPJ2: XXXXXXXXX              */
-		gpio_cse_early_rec_sw: cse_early_rec_sw {
-			gpios = <&gpioj 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
-		};
         /* GPJ4: EC_AC_PRESENT_OD_R     */
 		gpio_sys_slp_s0ix_l: sys_slp_s0ix_l {
 			gpios = <&gpioj 5 (GPIO_INPUT)>;
