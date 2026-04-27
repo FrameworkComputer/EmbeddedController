@@ -9,6 +9,20 @@
 
 #include <ascp/ascp.h>
 
+#ifdef CONFIG_ASCP_REPLACE_S_GOOG
+static const uint8_t s_goog_match[] = {
+#include "s_goog_match.inc"
+};
+static const uint8_t s_goog_replace[] = {
+#include "s_goog_replace.inc"
+};
+
+BUILD_ASSERT(sizeof(s_goog_match) == FP_ASCP_SIGNATURE_SIZE,
+	     "s_goog_match size must be 64 bytes");
+BUILD_ASSERT(sizeof(s_goog_replace) == FP_ASCP_SIGNATURE_SIZE,
+	     "s_goog_replace size must be 64 bytes");
+#endif
+
 #define DT_ASCP_MEM_MAP_COMPAT cros_ec_ascp_mem_map
 
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_ASCP_MEM_MAP_COMPAT) == 1,
@@ -52,6 +66,13 @@ int ascp_get_claim(struct ec_response_fp_ascp_claim *res)
 
 	memcpy(res->pk_m, (uint8_t *)PK_M_ADDR, sizeof(res->pk_m));
 	memcpy(res->s_goog, (uint8_t *)S_GOOG_ADDR, sizeof(res->s_goog));
+
+#ifdef CONFIG_ASCP_REPLACE_S_GOOG
+	if (memcmp(res->s_goog, s_goog_match, sizeof(res->s_goog)) == 0) {
+		memcpy(res->s_goog, s_goog_replace, sizeof(res->s_goog));
+	}
+#endif
+
 	memcpy(res->pk_d, (uint8_t *)PK_D_ADDR, sizeof(res->pk_d));
 	memcpy(res->s_m, (uint8_t *)S_M_ADDR, sizeof(res->s_m));
 	memcpy(res->pk_f, (uint8_t *)PK_F_ADDR, sizeof(res->pk_f));

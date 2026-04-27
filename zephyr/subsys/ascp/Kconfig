@@ -14,3 +14,23 @@ config ASCP_MEM_MAP
 	default y
 	depends on DT_HAS_CROS_EC_ASCP_MEM_MAP_ENABLED
 	select ASCP
+
+config ASCP_REPLACE_S_GOOG
+	bool "Replace s_goog if it matches a certain value"
+	depends on ASCP_MEM_MAP
+	default y if ASCP_S_GOOG_MATCH_FILE != "" && ASCP_S_GOOG_REPLACE_FILE != ""
+	help
+	  Enable this option to replace s_goog in the claim response if it
+	  matches a predefined value. The values are provided via binary files.
+
+config ASCP_S_GOOG_MATCH_FILE
+	string "Path to the binary file containing the s_goog value to match"
+	depends on ASCP_MEM_MAP
+	help
+	  Path to a 64-byte binary file containing the s_goog value to match.
+
+config ASCP_S_GOOG_REPLACE_FILE
+	string "Path to the binary file containing the s_goog value to replace with"
+	depends on ASCP_MEM_MAP
+	help
+	  Path to a 64-byte binary file containing the value to replace s_goog with.
