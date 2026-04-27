@@ -644,3 +644,33 @@ static int timestamp_init(void)
 }
 SYS_INIT(timestamp_init, POST_KERNEL, CONFIG_LOG_CORE_INIT_PRIORITY);
 #endif /* CONFIG_PLATFORM_EC_LOG_CUSTOM_TIMESTAMP */
+
+#ifdef CONFIG_PLATFORM_EC_CONSOLE_START_SHELL_TASK
+/* Use POST_KERNEL to make sure to start the shell before the main function is
+ * called and the shimmed threads are started, so all booting logs are handled.
+ * Do not perform this action in the main function not to miss the Zephyr boot
+ * banner.
+ */
+static int start_shell_task(void)
+{
+	if (!shell_is_active()) {
+		k_tid_t shell_tid = get_shell_thread();
+		int shell_thread_prio;
+
+		if (shell_tid == NULL) {
+			return 0;
+		}
+
+		shell_thread_prio = k_thread_priority_get(shell_tid);
+		/* Increase the shell thread priority to start the shell. The
+		 * k_thread_priority_set causes rescheduling. Use a cooperative
+		 * priority to preempt SYS_INIT.
+		 */
+		k_thread_priority_set(shell_tid, -1);
+		/* Restore original priority. */
+		k_thread_priority_set(shell_tid, shell_thread_prio);
+	}
+	return 0;
+}
+SYS_INIT(start_shell_task, POST_KERNEL, 99);
+#endif /* CONFIG_PLATFORM_EC_CONSOLE_START_SHELL_TASK */

@@ -51,3 +51,14 @@ tests:
     extra_configs:
     - CONFIG_TEST_CONSOLE_RESTRICTED=y
     - CONFIG_BOARD_FINGERPRINT=y
+  console.output.start_shell_task:
+    extra_conf_files:
+    - console_output.conf
+    extra_dtc_overlay_files:
+    - boards/native_sim.overlay
+    - console_output.dts
+    extra_configs:
+    - CONFIG_TEST_CONSOLE_OUTPUT=y
+    - CONFIG_SHELL_BACKEND_SERIAL_API_INTERRUPT_DRIVEN=y
+    - CONFIG_SHELL_BACKEND_SERIAL_API_POLLING=n
+    - CONFIG_PLATFORM_EC_CONSOLE_START_SHELL_TASK=y

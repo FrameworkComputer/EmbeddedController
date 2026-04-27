@@ -152,3 +152,13 @@ config PLATFORM_EC_HOSTCMD_CONSOLE_PRINT
 	help
 	  Enable the EC_CMD_CONSOLE_PRINT host command. This allows the host
 	  to print messages directly to the EC console.
+
+config PLATFORM_EC_CONSOLE_START_SHELL_TASK
+	bool "Start shell task before main"
+	depends on !PIGWEED_LOG_TOKENIZED_LIB
+	help
+	  Make sure to start shell task during system initialization. This ensures
+	  logs are handled correctly after calling the main function.
+
+	  This option is helpful for applications that use LOG_PRINTK, because
+	  using printk is not available when shell is not started.
