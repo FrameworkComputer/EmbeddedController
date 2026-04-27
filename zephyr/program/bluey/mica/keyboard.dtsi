@@ -14,6 +14,11 @@
 		/delete-property/ cros-ec,raw-kb;
 		cros-ec,keyboard = &kbd;
 	};
+
+	kblight {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm2 0 PWM_HZ(100) PWM_POLARITY_NORMAL>;
+	};
 };
 
 &kbd {
@@ -116,4 +121,11 @@
 		r-rc = <KBD_RC(2, 0)>;
 		vol-up-rc = <KBD_RC(3, 9)>;
 	};
+};
+
+&pwm2 {
+	status = "okay";
+	pinctrl-0 = <&pwm2_gpc4>;
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-names = "default";
 };
