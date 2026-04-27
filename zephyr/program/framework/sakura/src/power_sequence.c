@@ -259,6 +259,9 @@ enum power_state power_handle_state(enum power_state state)
 		k_msleep(50);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 1);
 
+		/* set the PD chip system power state "S0" */
+		cypd_set_power_active();
+
 		power_s5_up_control(1);
 		return POWER_S5;
 

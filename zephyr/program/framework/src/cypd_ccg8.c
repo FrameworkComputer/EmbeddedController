@@ -215,7 +215,6 @@ void update_system_power_state(int controller)
 		}
 		break;
 #endif
-	case POWER_S5:
 	case POWER_S3S5:
 	case POWER_S4S5:
 		if (pd_prev_power_state[controller] != CCG_POWERSTATE_S5) {
@@ -223,9 +222,6 @@ void update_system_power_state(int controller)
 			pd_prev_power_state[controller] = CCG_POWERSTATE_S5;
 		}
 		break;
-	case POWER_S3:
-	case POWER_S4S3:
-	case POWER_S5S3:
 	case POWER_S0S3:
 	case POWER_S0ixS3: /* S0ix -> S3 */
 		if (pd_prev_power_state[controller] != CCG_POWERSTATE_S3) {
@@ -238,6 +234,9 @@ void update_system_power_state(int controller)
 		}
 		break;
 	case POWER_S0:
+	case POWER_G3S5:
+	case POWER_S4S3:
+	case POWER_S5S3:
 	case POWER_S3S0:
 	case POWER_S0ixS0: /* S0ix -> S0 */
 		if (pd_prev_power_state[controller] != CCG_POWERSTATE_S0) {
