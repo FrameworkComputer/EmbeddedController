@@ -24,6 +24,7 @@
 
 #define DC_PROCHOT_7P168A 0x1C00 /* 7.168A for 55W */
 #define DC_PROCHOT_7P680A 0x1E00 /* 7.680A for 61W */
+#define DC_PROCHOT_8P000A 0x1F00 /* 8.000A for 74W */
 
 static bool charger_psys_enable_flag;
 
@@ -165,12 +166,15 @@ void charger_update(void)
 		const struct battery_info *bi = battery_get_info();
 		int rv = 0;
 
-		if (bi->voltage_max == 17600) {
+		if (bi->voltage_max == 18040) {
 			rv |= i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_DC_PROCHOT, DC_PROCHOT_7P168A);
-		} else {
+			ISL9241_REG_DC_PROCHOT, DC_PROCHOT_8P000A);
+		} else if (bi->voltage_max == 17800) {
 			rv |= i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 			ISL9241_REG_DC_PROCHOT, DC_PROCHOT_7P680A);
+		} else {
+			rv |= i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_DC_PROCHOT, DC_PROCHOT_7P168A);
 		}
 		if (rv)
 			CPRINTS("Update DC prochot fail");
