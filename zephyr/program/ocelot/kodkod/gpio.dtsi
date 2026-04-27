@@ -22,9 +22,6 @@
 		gpio_pwr_1p25v_pg: pwr_1p25v_pg {
 			gpios = <&gpioa 13 GPIO_INPUT>;
 		};
-		gpio_ec_soc_rec_switch_odl: ec_soc_rec_switch_odl {
-			gpios = <&gpioa 15 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
-		};
 		gpio_ec_fan_fr: ec_fan_fr {
 			gpios = <&gpiob 0 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_LOW)>;
 		};
@@ -157,4 +154,3 @@
  * Aliases to common names
  */
 gpio_ec_pch_wake_odl: &gpio_ec_smc_wake_l {};
-gpio_cse_early_rec_sw: &gpio_ec_soc_rec_switch_odl {};

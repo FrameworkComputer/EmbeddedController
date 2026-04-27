@@ -21,6 +21,13 @@
 #include "fan.dtsi"
 #include "rtk_ulpm.dtsi"
 
+/ {
+	cse_early_recovery: cse-early-recovery {
+		compatible = "cros-ec,cse-early-rec";
+		cse-early-rec-gpios = <&gpioa 15 (GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH)>;
+	};
+};
+
 /* kodkod overrides follow... */
 
 &espi0 {
