@@ -167,9 +167,6 @@
 			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			no-auto-init;
 		};
-		gpio_cse_early_rec_sw: cse_early_rec_sw {
-			gpios = <&gpioj 3 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
-		};
 		gpio_led_1_l: led_1_l {
 			gpios = <&gpioa 2 GPIO_OUTPUT_HIGH>;
 		};
