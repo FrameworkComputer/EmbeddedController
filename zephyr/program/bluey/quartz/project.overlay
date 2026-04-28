@@ -30,6 +30,15 @@
 };
 
 / {
+	named-usbc-port {
+		usbc_port0: port0 {
+			compatible = "named-usbc-port";
+		};
+		usbc_port1: port1 {
+			compatible = "named-usbc-port";
+		};
+	};
+
 	gpio-interrupts {
 		int_s3_power_monitor: s3_power_monitor {
 			irq-pin = <&gpio_pp1800_l1i_s3_ec>;

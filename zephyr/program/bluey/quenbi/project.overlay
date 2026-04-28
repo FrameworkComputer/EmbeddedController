@@ -24,6 +24,15 @@
 /* quenbi overrides follow... */
 
 / {
+	named-usbc-port {
+		usbc_port0: port0 {
+			compatible = "named-usbc-port";
+		};
+		usbc_port1: port1 {
+			compatible = "named-usbc-port";
+		};
+	};
+
 	gpio-interrupts {
 		int_ac_present: ac_present {
 			irq-pin = <&gpio_pmic_chg_led>;
