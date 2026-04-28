@@ -20,6 +20,7 @@
 		cros-fp,fingerprint-memory-template = &psram;
 		/* Reference the flash header not to omit it. */
 		flash-header = &flash_header;
+		cros-ec,watchdog = &wdt0;
 	};
 
 	named-bbram-regions {
