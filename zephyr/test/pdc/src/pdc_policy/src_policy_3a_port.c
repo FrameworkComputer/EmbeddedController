@@ -64,6 +64,10 @@ static void src_policy_before(void *f)
 	chipset_in_state_fake.custom_fake = custom_fake_chipset_in_state;
 
 	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		/* Reset emulator to clear FRS configured. */
+		zassert_ok(emul_pdc_reset(fixture->emul_pdc[i]));
+		zassert_ok(pdc_power_mgmt_wait_for_sync(i, -1));
+
 		/* Start with both ports disconnected. */
 		zassert_ok(emul_pdc_disconnect(fixture->emul_pdc[i]));
 
@@ -853,4 +857,51 @@ ZTEST_USER_F(src_policy, test_src_policy_early_frs_disable)
 	zassert_ok(emul_pdc_get_frs(fixture->emul_pdc[TEST_USBC_PORT1],
 				    &frs_enabled));
 	zassert_true(frs_enabled);
+}
+
+/* Verify FRS is initially enabled by the PDC power manager when 3A is
+ * available, then disabled if the partner is Src Only.
+ */
+ZTEST_USER_F(src_policy, test_src_policy_early_frs_enable_src_only)
+{
+	union connector_status_t partner_connector_status = { 0 };
+	uint32_t partner_src_pdo =
+		PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
+	union connector_capability_t partner_ccaps = {
+		.op_mode_drp = 0,
+		.partner_pd_revision = PD_REV30,
+	};
+	bool frs_enabled;
+
+	if (!pdc_power_mgmt_get_frs_hw_supported(TEST_USBC_PORT0)) {
+		ztest_test_skip();
+	}
+
+	/* Connect a Src only partner to port 0 */
+	zassert_ok(emul_pdc_set_connector_capability(
+		fixture->emul_pdc[TEST_USBC_PORT0], &partner_ccaps));
+	emul_pdc_configure_snk(fixture->emul_pdc[TEST_USBC_PORT0],
+			       &partner_connector_status);
+	zassert_ok(emul_pdc_set_pdos(fixture->emul_pdc[TEST_USBC_PORT0],
+				     SOURCE_PDO, PDO_OFFSET_0, 1, PARTNER_PDO,
+				     &partner_src_pdo));
+	zassert_ok(emul_pdc_connect_partner(fixture->emul_pdc[TEST_USBC_PORT0],
+					    &partner_connector_status));
+
+	/* Wait for FRS to be set by the PDC power manager */
+	zassert_true(TEST_WAIT_FOR(
+		emul_pdc_get_frs(fixture->emul_pdc[TEST_USBC_PORT0],
+				 &frs_enabled) == 0,
+		1000));
+
+	/* FRS is initially enabled */
+	zassert_true(frs_enabled);
+
+	/* After the PDC power manager confirms the partner is Src only, it
+	 * disables FRS.
+	 */
+	zassert_ok(pdc_power_mgmt_wait_for_sync(TEST_USBC_PORT0, -1));
+	zassert_ok(emul_pdc_get_frs(fixture->emul_pdc[TEST_USBC_PORT0],
+				    &frs_enabled));
+	zassert_false(frs_enabled);
 }

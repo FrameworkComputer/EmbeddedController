@@ -3119,10 +3119,16 @@ static enum smf_state_result pdc_snk_attached_run(void *obj)
 
 		if (pdc_snk_attached_set_sink_path(port)) {
 			if (pdc_power_mgmt_get_frs_hw_supported(
-				    config->connector_num) &&
-			    port->ccaps.op_mode_drp) {
-				port->snk_attached_local_state =
-					SNK_ATTACHED_GET_SINK_PDO;
+				    config->connector_num)) {
+				if (port->ccaps.op_mode_drp) {
+					port->snk_attached_local_state =
+						SNK_ATTACHED_GET_SINK_PDO;
+				} else {
+					pdc_dpm_remove_source(
+						config->connector_num);
+					port->snk_attached_local_state =
+						SNK_ATTACHED_GET_CABLE_PROPERTY;
+				}
 			} else {
 				port->snk_attached_local_state =
 					SNK_ATTACHED_GET_CABLE_PROPERTY;
