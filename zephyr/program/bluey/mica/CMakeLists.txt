@@ -4,3 +4,4 @@
 
 zephyr_library_sources("src/chipset.c")
 zephyr_library_sources("src/fan.c")
+zephyr_library_sources("src/keyboard_customization.c")
