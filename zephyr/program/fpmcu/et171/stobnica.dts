@@ -47,3 +47,12 @@
 		reset-gpios = <&gpio0 10 GPIO_ACTIVE_LOW>;
 	};
 };
+
+&p25q16 {
+	partitions {
+		egis660_apns_data: partition@100000 {
+			label = "egis660_apns_data";
+			reg = <0x100000 DT_SIZE_K(52)>;
+		};
+	};
+};
