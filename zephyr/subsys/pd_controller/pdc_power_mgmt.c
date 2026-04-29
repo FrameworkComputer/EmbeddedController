@@ -4813,6 +4813,9 @@ test_mockable bool pdc_power_mgmt_get_partner_data_swap_capable(int port)
 
 	pdc_port = &pdc_data[port]->port;
 
+	if (pdc_port->get_pdo.pdo_source != PARTNER_PDO) {
+		return false;
+	}
 	fixed_vsafe5v_pdo =
 		get_pdc_pdos_ptr(pdc_port, &pdc_port->get_pdo)->pdos[0];
 
