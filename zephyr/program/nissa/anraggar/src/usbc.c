@@ -24,6 +24,8 @@
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
+static bool sourcing_vbus[CONFIG_USB_PD_PORT_MAX_COUNT];
+
 /* Vconn control for integrated ITE TCPC */
 void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 {
@@ -94,6 +96,8 @@ int board_set_active_charge_port(int port)
 		return EC_ERROR_UNKNOWN;
 	}
 
+	sourcing_vbus[port] = false;
+
 	return EC_SUCCESS;
 }
 
@@ -106,8 +110,12 @@ DECLARE_DEFERRED(notify_power_change);
 
 void pd_power_supply_reset(int port)
 {
+	if (!sourcing_vbus[port])
+		return;
+
 	/* Disable VBUS. */
 	ppc_vbus_source_enable(port, 0);
+	sourcing_vbus[port] = false;
 
 	/* Enable discharge if we were previously sourcing 5V */
 	if (IS_ENABLED(CONFIG_USB_PD_DISCHARGE))
@@ -141,6 +149,7 @@ int pd_set_power_supply_ready(int port)
 		LOG_WRN("C%d failed to enable VBUS sourcing: %d", port, rv);
 		return rv;
 	}
+	sourcing_vbus[port] = true;
 
 	/* Defer pd_send_host_event to save ~2ms for PD compliance */
 	hook_call_deferred(&notify_power_change_data, 0);
