@@ -1133,6 +1133,14 @@ void update_ucsi_pd_mapping(void)
 }
 DECLARE_DEFERRED(update_ucsi_pd_mapping);
 
+void deinit_gpu_module_peripheral(void)
+{
+	gpu_f75303_init(NULL);
+	ej889i_init(NULL);
+	ccg8s_init(0, 0);
+}
+DECLARE_DEFERRED(deinit_gpu_module_peripheral);
+
 void deinit_gpu_module(void)
 {
 	gpu_cfg_descriptor_valid = 0;
@@ -1150,12 +1158,6 @@ void deinit_gpu_module(void)
 
 	reset_mux_status();
 
-	gpu_f75303_init(NULL);
-
-	ej889i_init(NULL);
-
-	ccg8s_init(0, 0);
-
 	gpu_module_gpio_safe();
 
 	fan_configure_gpu(NULL);
@@ -1166,6 +1168,11 @@ void deinit_gpu_module(void)
 
 	thermal_table_switch_by_gpu_type();
 
+	/*
+	 * Deinit peripherals outside of interrupt context to avoid mutex
+	 * locks and I2C communication.
+	 */
+	hook_call_deferred(&deinit_gpu_module_peripheral_data, 0);
 	hook_call_deferred(&update_ucsi_pd_mapping_data, 500 * MSEC);
 }
 
