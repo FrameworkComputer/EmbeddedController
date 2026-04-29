@@ -137,7 +137,7 @@ const char *fp_sensor_get_version(void);
 /* Get EGIS library build info.*/
 const char *fp_sensor_get_build_info(void);
 
-struct fp_sensor_info {
+struct egis660_fp_sensor_info {
 	uint32_t num_defective_pixels;
 };
 
@@ -160,7 +160,7 @@ struct fp_sensor_info {
  * - negative value on error
  */
 int fp_sensor_maintenance(uint8_t *image_data,
-			  struct fp_sensor_info *fp_sensor_info);
+			  struct egis660_fp_sensor_info *fp_sensor_info);
 
 /** Image captured. */
 #define EGIS_SENSOR_GOOD_IMAGE_QUALITY 0

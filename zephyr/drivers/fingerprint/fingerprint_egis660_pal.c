@@ -3,10 +3,13 @@
  * found in the LICENSE file.
  */
 
+#include "config_chip.h"
+#include "drivers/cros_flash.h"
 #include "fingerprint_egis660.h"
 #include "fingerprint_egis660_pal.h"
 #include "fingerprint_egis660_private.h"
 
+#include <zephyr/drivers/flash.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/spi.h>
 #include <zephyr/kernel.h>
@@ -161,4 +164,136 @@ int __unused egis_sensor_wfi(uint16_t timeout_ms, egis_wfi_check_t enter_wfi,
 	return EGIS_BEP_RESULT_OK;
 }
 
+#ifdef CONFIG_FINGERPRINT_SENSOR_EGIS660_APNS
+
+#define flash_ctrl_dev DEVICE_DT_GET(DT_CHOSEN(zephyr_flash_controller))
+#define cros_flash_dev DEVICE_DT_GET(DT_CHOSEN(cros_ec_flash_controller))
+
+#define APNS_STORAGE_ADDR DT_REG_ADDR(DT_NODELABEL(egis660_apns_data))
+#define APNS_STORAGE_SIZE DT_REG_SIZE(DT_NODELABEL(egis660_apns_data))
+
+#ifndef CONFIG_FLASH_WRITE_IDEAL_SIZE
+#error "CONFIG_FLASH_WRITE_IDEAL_SIZE is not defined"
+#endif
+
+#ifndef CONFIG_FLASH_ERASE_SIZE
+#error "CONFIG_FLASH_ERASE_SIZE is not defined"
+#endif
+
+static const egis_storage_info_t storage_info = {
+	.read_align = sizeof(uint8_t),
+	.write_align = CONFIG_FLASH_WRITE_IDEAL_SIZE,
+	.erase_align = CONFIG_FLASH_ERASE_SIZE,
+	.is_memory_mapped = false,
+};
+
+__unused const egis_storage_info_t *egis_apns_storage_get_info(void)
+{
+	return &storage_info;
+}
+
+int __unused egis_apns_data_erase(uint32_t offset, size_t size)
+{
+	int rc;
+	uint32_t abs_offset;
+
+	if ((size > APNS_STORAGE_SIZE) || (offset > APNS_STORAGE_SIZE - size)) {
+		LOG_ERR("egis_apns_data_erase: invalid offset=%u, size=%zu",
+			offset, size);
+		return -EINVAL;
+	}
+
+	if (!IS_ALIGNED(offset, storage_info.erase_align) ||
+	    !IS_ALIGNED(size, storage_info.erase_align)) {
+		LOG_ERR("egis_apns_data_erase: non-aligned offset=%u, size=%zu",
+			offset, size);
+		return -EINVAL;
+	}
+
+	abs_offset = APNS_STORAGE_ADDR + offset;
+
+	LOG_DBG("egis_apns_data_erase: offset=%u, size=%zu", offset, size);
+
+	rc = cros_flash_physical_erase(cros_flash_dev, abs_offset, size);
+	if (rc != 0) {
+		LOG_ERR("egis_apns_data_erase: flash erase failed, rc=%d", rc);
+		return -EIO;
+	}
+
+	return 0;
+}
+
+int __unused egis_apns_data_read(uint32_t offset, size_t size, void *data)
+{
+	int rc;
+	uint32_t abs_offset;
+
+	if ((size > APNS_STORAGE_SIZE) || (offset > APNS_STORAGE_SIZE - size)) {
+		LOG_ERR("egis_apns_data_read: invalid offset=%u, size=%zu",
+			offset, size);
+		return -EINVAL;
+	}
+
+	if (data == NULL) {
+		return -EINVAL;
+	}
+
+	if (!IS_ALIGNED(offset, storage_info.read_align) ||
+	    !IS_ALIGNED(size, storage_info.read_align)) {
+		LOG_ERR("egis_apns_data_read: non-aligned offset=%u, size=%zu",
+			offset, size);
+		return -EINVAL;
+	}
+
+	abs_offset = APNS_STORAGE_ADDR + offset;
+
+	LOG_DBG("egis_apns_data_read: offset=%u, size=%zu", offset, size);
+
+	rc = flash_read(flash_ctrl_dev, abs_offset, data, size);
+	if (rc != 0) {
+		LOG_ERR("egis_apns_data_read: flash read failed, rc=%d", rc);
+		return -EIO;
+	}
+
+	return 0;
+}
+
+int __unused egis_apns_data_write(uint32_t offset, const void *data,
+				  size_t size)
+{
+	int rc;
+	uint32_t abs_offset;
+
+	if ((size > APNS_STORAGE_SIZE) || (offset > APNS_STORAGE_SIZE - size)) {
+		LOG_ERR("egis_apns_data_write: invalid offset=%u, size=%zu",
+			offset, size);
+		return -EINVAL;
+	}
+
+	if (!IS_ALIGNED(offset, storage_info.write_align) ||
+	    !IS_ALIGNED(size, storage_info.write_align)) {
+		LOG_ERR("egis_apns_data_write: non-aligned offset=%u, size=%zu",
+			offset, size);
+		return -EINVAL;
+	}
+
+	if (data == NULL) {
+		return -EINVAL;
+	}
+
+	abs_offset = APNS_STORAGE_ADDR + offset;
+
+	LOG_DBG("egis_apns_data_write: offset=%u, size=%zu", offset, size);
+
+	rc = cros_flash_physical_write(cros_flash_dev, abs_offset, size,
+				       (const char *)data);
+	if (rc != 0) {
+		LOG_ERR("egis_apns_data_write: flash write failed, rc=%d", rc);
+		return -EIO;
+	}
+
+	return 0;
+}
+
+#endif /* CONFIG_FINGERPRINT_SENSOR_EGIS660_APNS */
 /* LCOV_EXCL_STOP */

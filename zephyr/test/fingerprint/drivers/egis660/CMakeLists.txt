@@ -11,3 +11,6 @@ target_sources(app PRIVATE ${app_sources})
 
 # Add fingerprint drivers directory to include fingerprint_egis660_pal.h
 target_include_directories(app PUBLIC ${PLATFORM_EC}/zephyr/drivers/fingerprint)
+
+# Include local config_chip.h
+zephyr_include_directories(include)

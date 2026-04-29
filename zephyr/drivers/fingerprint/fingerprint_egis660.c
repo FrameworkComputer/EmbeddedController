@@ -255,7 +255,7 @@ static int egis660_maintenance(const struct device *dev, uint8_t *buf,
 			       size_t size)
 {
 	struct egis660_data *data = dev->data;
-	struct fp_sensor_info sensor_info;
+	struct egis660_fp_sensor_info sensor_info;
 	uint64_t start;
 	int rc = 0;
 

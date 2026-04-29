@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+#include <board-overlays/native_sim.dts>
+#include <cros/binman.dtsi>
+
 #define EGIS660_COMMON_IMAGE_PROPS \
 	width = <96>; \
 	height = <100>; \
@@ -14,7 +17,37 @@
 / {
 	chosen {
 		cros-fp,fingerprint-sensor = &egis660;
+		cros-ec,flash-controller = &cros_flash;
 	};
+
+	aliases {
+		gpio-wp = &gpio_wp_l;
+	};
+
+	named-gpios {
+		gpio_wp_l: wp_l {
+			gpios = <&gpio0 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+	};
+
+	soc {
+		egis660_apns_data: egis660-apns-data@100000 {
+			compatible = "cros-ec,apns-storage";
+			reg = <0 0x100000 DT_SIZE_K(64)>;
+		};
+	};
+
+	cros_flash: cros-flash@0 {
+		compatible = "cros-ec,flash-emul";
+		reg = <0x00000000 DT_SIZE_M(2)>;
+	};
+};
+
+/* Configure existing simulated flash from native_sim.dts */
+&flash0 {
+	erase-block-size = <0x1000>;
+	write-block-size = <256>;
+	reg = <0x00000000 DT_SIZE_K(2048)>;
 };
 
 &spi0 {

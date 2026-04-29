@@ -5,6 +5,8 @@
 
 #include "egis660_pal_test_helpers.h"
 
+#include <zephyr/drivers/flash.h>
+
 #include <fingerprint_egis660_pal.h>
 
 int z_impl_egis660_pal_spi_write_read(uint8_t *data, size_t write_size,
@@ -52,4 +54,20 @@ void *z_impl_egis660_pal_malloc(uint32_t size)
 void z_impl_egis660_pal_free(void *data)
 {
 	return egis_free(data);
+}
+
+int z_impl_egis660_pal_flash_erase(uint32_t offset, size_t size)
+{
+	return egis_apns_data_erase(offset, size);
+}
+
+int z_impl_egis660_pal_flash_read(uint32_t offset, size_t size, void *data)
+{
+	return egis_apns_data_read(offset, size, data);
+}
+
+int z_impl_egis660_pal_flash_write(uint32_t offset, const void *data,
+				   size_t size)
+{
+	return egis_apns_data_write(offset, data, size);
 }

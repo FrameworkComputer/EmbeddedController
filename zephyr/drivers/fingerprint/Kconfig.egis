@@ -66,6 +66,14 @@ config FINGERPRINT_SENSOR_EGIS660_PAL
 	  compiled. The PAL is used to interact with the sensor (SPI, GPIO) and
 	  the system (heap allocations, printing messages, time functions).
 
+config FINGERPRINT_SENSOR_EGIS660_APNS
+	bool "EGIS660 APNS storage"
+	default y
+	depends on $(dt_nodelabel_enabled,egis660_apns_data)
+	help
+	  If enabled, the APNS(Adaptive Pixel Noise Suppression) data generated
+	  during the enroll and match can be stored on APNS storage.
+
 # Enabled in private driver Kconfig
 config HAVE_EGIS660_PRIVATE_DRIVER
 	bool

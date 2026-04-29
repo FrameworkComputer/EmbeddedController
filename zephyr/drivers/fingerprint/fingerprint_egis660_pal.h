@@ -15,6 +15,22 @@
 typedef bool (*egis_wfi_check_t)(void);
 
 /**
+ * @brief Storage information.
+ *
+ * The alignment requirements are specified in number of bytes.
+ */
+typedef struct {
+	/** Required address and size alignment for read operations. */
+	uint32_t read_align;
+	/** Required address and size alignment for write operations. */
+	uint32_t write_align;
+	/** Required address and size alignment for erase operations. */
+	uint32_t erase_align;
+	/** True if flash can be read using memcpy. */
+	bool is_memory_mapped;
+} egis_storage_info_t;
+
+/**
  * @brief Writes and reads SPI data.
  *
  * Writes data to SPI interface and reads data from SPI interface, with chip
@@ -145,5 +161,42 @@ void *__unused egis_malloc(uint32_t size);
  * @param data Pointer to buffer that should be freed
  */
 void __unused egis_free(void *data);
+
+/**
+ * @brief Get APNS flash storage information.
+ *
+ * @return Pointer to egis_storage_info_t with alignment requirements.
+ */
+const egis_storage_info_t __unused *egis_apns_storage_get_info(void);
+
+/**
+ * @brief Erase a region of APNS data storage.
+ *
+ * @param[in] offset  Offset within the APNS partition.
+ * @param[in] size    Number of bytes to erase.
+ * @return 0 on success, negative errno on failure.
+ */
+int __unused egis_apns_data_erase(uint32_t offset, size_t size);
+
+/**
+ * @brief Read data from APNS storage.
+ *
+ * @param[in]  offset  Offset within the APNS partition.
+ * @param[in]  size    Number of bytes to read.
+ * @param[out] data    Buffer to store read data.
+ * @return 0 on success, negative errno on failure.
+ */
+int __unused egis_apns_data_read(uint32_t offset, size_t size, void *data);
+
+/**
+ * @brief Write data to APNS storage.
+ *
+ * @param[in] offset  Offset within the APNS partition.
+ * @param[in] data    Data to write.
+ * @param[in] size    Number of bytes to write.
+ * @return 0 on success, negative errno on failure.
+ */
+int __unused egis_apns_data_write(uint32_t offset, const void *data,
+				  size_t size);
 
 #endif /* ZEPHYR_DRIVERS_FINGERPRINT_EGIS660_PAL_SENSOR_H_ */

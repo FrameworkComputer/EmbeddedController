@@ -346,3 +346,125 @@ ZTEST_F(egis660, test_acquire_image_wrong_capture_type)
 						buffer, sizeof(buffer)),
 		      -EINVAL);
 }
+
+/* Flash test helpers — simulate APNS flash operations */
+
+ZTEST_F(egis660, test_flash_erase)
+{
+	int rc;
+
+	rc = egis660_pal_flash_erase(0, CONFIG_FLASH_ERASE_SIZE);
+	zassert_ok(rc, "flash_erase failed: %d", rc);
+
+	/* Verify erased content */
+	uint8_t buf[4];
+
+	rc = egis660_pal_flash_read(0, sizeof(buf), buf);
+	zassert_ok(rc, "flash_read after erase failed: %d", rc);
+	zassert_equal(buf[0], 0xff, "flash should be erased to 0xff");
+	zassert_equal(buf[1], 0xff, "flash should be erased to 0xff");
+	zassert_equal(buf[2], 0xff, "flash should be erased to 0xff");
+	zassert_equal(buf[3], 0xff, "flash should be erased to 0xff");
+}
+
+ZTEST_F(egis660, test_flash_write_and_read)
+{
+	int rc;
+
+	/* Erase first */
+	rc = egis660_pal_flash_erase(0, CONFIG_FLASH_ERASE_SIZE);
+	zassert_ok(rc, "flash_erase failed: %d", rc);
+
+	/* Write test data - must be aligned to CONFIG_FLASH_WRITE_IDEAL_SIZE */
+	const uint8_t test_data[CONFIG_FLASH_WRITE_IDEAL_SIZE] = {
+		0x12, 0x34, 0x56, 0x78, 0xAB, 0xCD, 0xEF, 0x01
+	};
+
+	rc = egis660_pal_flash_write(0, test_data, sizeof(test_data));
+	zassert_ok(rc, "flash_write failed: %d", rc);
+
+	/* Read back and verify */
+	uint8_t read_buf[sizeof(test_data)] = { 0 };
+
+	rc = egis660_pal_flash_read(0, sizeof(read_buf), read_buf);
+	zassert_ok(rc, "flash_read failed: %d", rc);
+	zassert_mem_equal(read_buf, test_data, sizeof(test_data),
+			  "read data mismatch");
+}
+
+ZTEST_F(egis660, test_flash_write_offset)
+{
+	int rc;
+
+	rc = egis660_pal_flash_erase(0, CONFIG_FLASH_ERASE_SIZE);
+	zassert_ok(rc, "flash_erase failed: %d", rc);
+
+	/* Write at a non-zero offset - aligned to CONFIG_FLASH_WRITE_IDEAL_SIZE
+	 */
+	const uint8_t test_data[CONFIG_FLASH_WRITE_IDEAL_SIZE] = { 0xDE, 0xAD,
+								   0xBE, 0xEF };
+	const uint32_t offset = CONFIG_FLASH_WRITE_IDEAL_SIZE;
+
+	rc = egis660_pal_flash_write(offset, test_data, sizeof(test_data));
+	zassert_ok(rc, "flash_write at offset failed: %d", rc);
+
+	/* Read back */
+	uint8_t read_buf[sizeof(test_data)] = { 0 };
+
+	rc = egis660_pal_flash_read(offset, sizeof(read_buf), read_buf);
+	zassert_ok(rc, "flash_read at offset failed: %d", rc);
+	zassert_mem_equal(read_buf, test_data, sizeof(test_data),
+			  "value at offset 0x%x mismatch", offset);
+}
+
+ZTEST_F(egis660, test_flash_out_of_bounds)
+{
+	uint8_t buf[4];
+
+	/* Read/write/erase beyond partition size should fail */
+	zassert_not_ok(egis660_pal_flash_read(APNS_TEST_SIZE, 4, buf));
+	zassert_not_ok(egis660_pal_flash_write(APNS_TEST_SIZE, buf, 4));
+	zassert_not_ok(egis660_pal_flash_erase(APNS_TEST_SIZE,
+					       CONFIG_FLASH_ERASE_SIZE));
+
+	/* Write spanning beyond partition boundary */
+	zassert_not_ok(egis660_pal_flash_write(APNS_TEST_SIZE - 2, buf, 4));
+}
+
+ZTEST_F(egis660, test_flash_null_buffer)
+{
+	zassert_not_ok(egis660_pal_flash_read(0, 4, NULL));
+	zassert_not_ok(egis660_pal_flash_write(0, NULL, 4));
+}
+
+ZTEST_F(egis660, test_flash_overwrite)
+{
+	int rc;
+
+	/* Erase and write initial data - aligned to
+	 * CONFIG_FLASH_WRITE_IDEAL_SIZE */
+	rc = egis660_pal_flash_erase(0, CONFIG_FLASH_ERASE_SIZE);
+	zassert_ok(rc, "flash_erase failed: %d", rc);
+
+	const uint8_t data1[CONFIG_FLASH_WRITE_IDEAL_SIZE] = { 0xAA };
+
+	rc = egis660_pal_flash_write(0, data1, sizeof(data1));
+	zassert_ok(rc, "flash_write data1 failed: %d", rc);
+
+	/* Erase and write different data at same location */
+	rc = egis660_pal_flash_erase(0, CONFIG_FLASH_ERASE_SIZE);
+	zassert_ok(rc, "flash_erase second failed: %d", rc);
+
+	const uint8_t data2[CONFIG_FLASH_WRITE_IDEAL_SIZE] = { 0x55 };
+
+	rc = egis660_pal_flash_write(0, data2, sizeof(data2));
+	zassert_ok(rc, "flash_write data2 failed: %d", rc);
+
+	/* Verify data2 overwrote data1 */
+	uint8_t read_buf[sizeof(data2)] = { 0 };
+
+	rc = egis660_pal_flash_read(0, sizeof(read_buf), read_buf);
+	zassert_ok(rc, "flash_read after overwrite failed: %d", rc);
+	zassert_mem_equal(read_buf, data2, sizeof(data2),
+			  "overwrite verification failed");
+}
