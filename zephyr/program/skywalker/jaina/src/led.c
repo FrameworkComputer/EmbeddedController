@@ -131,9 +131,12 @@ static void led_auto_set_battery_color(enum led_color color, int duty)
 	if (port == 1) {
 		led_set_right_battery_duty(color, duty);
 		led_set_left_battery_duty(LED_OFF, 0);
-	} else {
+	} else if (port == 0) {
 		led_set_left_battery_duty(color, duty);
 		led_set_right_battery_duty(LED_OFF, 0);
+	} else {
+		led_set_left_battery_duty(color, duty);
+		led_set_right_battery_duty(color, duty);
 	}
 }
 
