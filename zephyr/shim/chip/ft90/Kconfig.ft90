@@ -12,4 +12,13 @@ config PLATFORM_EC_FT90_ENTER_BOOTLOADER
 	  Add implementation of chip_enter_bootloader for the Focaltech FT90
 	  chip series needed for the EC_CMD_ENTER_BOOTLOADER host command.
 
+config FOCALTECH_OTP_KEY
+	bool "Enable Focaltech OTP Key functionality"
+	depends on BORINGSSL_CRYPTO
+	select OTP
+	select OTP_PROGRAM
+	help
+	  Enable support for reading and provisioning the OTP KEY for
+	  Focaltech SOCs.
+
 endif # PLATFORM_EC
