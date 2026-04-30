@@ -234,3 +234,7 @@ bool pd_alt_mode_capable(int port)
 {
 	return false;
 }
+
+void tc_set_msg_header_data_role(int port, enum pd_data_role data_role)
+{
+}

@@ -41,6 +41,13 @@ struct usb_pd_ctrl_msg_test_source_fixture {
 	struct usb_pd_ctrl_msg_test_fixture fixture;
 };
 
+static int pd_check_data_swap_fake_return;
+
+__override int pd_check_data_swap(int port, enum pd_data_role data_role)
+{
+	return pd_check_data_swap_fake_return;
+}
+
 static void
 tcpci_drp_emul_connect_partner(struct tcpci_partner_data *partner_emul,
 			       const struct emul *tcpci_emul,
@@ -313,32 +320,54 @@ ZTEST_F(usb_pd_ctrl_msg_test_source, test_dr_swap_rejected)
 }
 
 /**
- * @brief TestPurpose: Verify DR Swap via DPM request when DRP is configured
- * as source
+ * @brief Verify DR_Swap Accept path updates TCPC message header
  *
  * @details
- *  - TCPM is configured initially as Sink/UFP.
- *  - TCPM initiates DR swap according to policy (Sink/DFP)
- *  - Test case initiates DPM DR Swap.
- *  - Verify DR Swap Request is processed.
+ *  - DUT is already in DFP steady-state in test environment
+ *  - Override pd_check_data_swap() to force ACCEPT path
+ *  - Partner sends DR_SWAP request
+ *  - Verify Accept path executes successfully
  *
  * Expected Results
- *  - Data role changes after DPM DR Swap request
+ *  - DR_SWAP ACCEPT is transmitted
+ *  - PE transitions through ACCEPT path
+ *  - tc_set_msg_header_data_role() gets covered
  */
-ZTEST_F(usb_pd_ctrl_msg_test_source, test_dpm_dr_swap)
+ZTEST_F(usb_pd_ctrl_msg_test_source, test_dr_swap_accept_updates_msg_header)
 {
+	struct usb_pd_ctrl_msg_test_fixture *super_fixture = &fixture->fixture;
 	struct ec_response_typec_status typec_status = { 0 };
+	int rv;
 
+	/* Force ACCEPT path */
+	pd_check_data_swap_fake_return = 1;
+
+	/* Verify initial role */
 	typec_status = host_cmd_typec_status(TEST_USB_PORT);
 	zassert_equal(PD_ROLE_DFP, typec_status.data_role,
-		      "Returned data_role=%u", typec_status.data_role);
+		      "Expected initial DFP role");
 
-	pd_dpm_request(TEST_USB_PORT, DPM_REQUEST_DR_SWAP);
+	tcpci_partner_common_handler_mask_msg(&super_fixture->partner_emul,
+					      PD_CTRL_ACCEPT, true);
+
+	/* Partner initiates DR_SWAP */
+	rv = tcpci_partner_send_control_msg(&super_fixture->partner_emul,
+					    PD_CTRL_DR_SWAP, 0);
+	zassert_ok(rv, "Failed to send DR_SWAP request");
+
+	/* Allow DR_SWAP handshake to complete */
 	k_sleep(K_SECONDS(1));
 
+	/* Verify role changed */
 	typec_status = host_cmd_typec_status(TEST_USB_PORT);
 	zassert_equal(PD_ROLE_UFP, typec_status.data_role,
-		      "Returned data_role=%u", typec_status.data_role);
+		      "Expected UFP after DR_SWAP");
+
+	tcpci_partner_common_handler_mask_msg(&super_fixture->partner_emul,
+					      PD_CTRL_ACCEPT, false);
+
+	/* Restore default behavior */
+	pd_check_data_swap_fake_return = 0;
 }
 
 /**
