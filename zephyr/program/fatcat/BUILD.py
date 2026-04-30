@@ -67,9 +67,13 @@ def register_it8xxx2_project(
 def register_realtek_project(
     project_name,
     extra_kconfig_files=(),
+    inherited_from=None,
     extra_modules=(),
 ):
     """Register an realtek_ec based variant of fatcat."""
+    if inherited_from is None:
+        inherited_from = ["fatcat"]
+
     register_rtk_project(
         project_name=project_name,
         zephyr_board="realtek/rts5912",
@@ -85,6 +89,7 @@ def register_realtek_project(
             *extra_kconfig_files,
         ],
         modules=["cmsis_6", "ec", *extra_modules],
+        inherited_from=inherited_from,
     )
 
 
