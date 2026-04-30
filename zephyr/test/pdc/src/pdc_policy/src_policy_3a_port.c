@@ -328,7 +328,7 @@ ZTEST_USER_F(src_policy, test_src_policy_frs_1a5)
 	};
 	bool frs_enabled;
 
-	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS)) {
+	if (!pdc_power_mgmt_get_frs_hw_supported(TEST_USBC_PORT0)) {
 		ztest_test_skip();
 	}
 
@@ -394,7 +394,7 @@ ZTEST_USER_F(src_policy, test_src_policy_frs_3a)
 	};
 	bool frs_enabled;
 
-	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS)) {
+	if (!pdc_power_mgmt_get_frs_hw_supported(TEST_USBC_PORT0)) {
 		ztest_test_skip();
 	}
 
@@ -464,7 +464,7 @@ ZTEST_USER_F(src_policy, test_src_policy_fsr_downgrade_for_pd)
 	};
 	bool frs_enabled;
 
-	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS)) {
+	if (!pdc_power_mgmt_get_frs_hw_supported(TEST_USBC_PORT0)) {
 		ztest_test_skip();
 	}
 
@@ -568,7 +568,7 @@ ZTEST_USER_F(src_policy, test_src_policy_non_pd_downgrade_for_frs)
 	bool frs_enabled;
 	enum usb_typec_current_t typec_current;
 
-	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS)) {
+	if (!pdc_power_mgmt_get_frs_hw_supported(TEST_USBC_PORT0)) {
 		ztest_test_skip();
 	}
 
@@ -657,7 +657,7 @@ ZTEST_USER_F(src_policy, test_src_policy_frs_sink_pdo_errors)
 	bool frs_enabled;
 
 	/* Following code paths require FRS support. */
-	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS)) {
+	if (!pdc_power_mgmt_get_frs_hw_supported(TEST_USBC_PORT0)) {
 		ztest_test_skip();
 	}
 
@@ -752,7 +752,7 @@ ZTEST_USER_F(src_policy, test_src_policy_early_frs_enable)
 	};
 	bool frs_enabled;
 
-	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS)) {
+	if (!pdc_power_mgmt_get_frs_hw_supported(TEST_USBC_PORT0)) {
 		ztest_test_skip();
 	}
 
@@ -807,7 +807,7 @@ ZTEST_USER_F(src_policy, test_src_policy_early_frs_disable)
 	};
 	bool frs_enabled;
 
-	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_FRS)) {
+	if (!pdc_power_mgmt_get_frs_hw_supported(TEST_USBC_PORT0)) {
 		ztest_test_skip();
 	}
 

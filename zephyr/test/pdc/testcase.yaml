@@ -157,7 +157,6 @@ tests:
     - CONFIG_USBC_PDC_TRACE_MSG=y
     - CONFIG_USB_PDC_LOG_LEVEL_DBG=y
     - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
-    - CONFIG_PLATFORM_EC_USB_PD_FRS=y
     extra_dtc_overlay_files:
     - "./boards/rts5453p.overlay"
 
@@ -168,7 +167,6 @@ tests:
     - CONFIG_USBC_PDC_TRACE_MSG=y
     - CONFIG_USB_PDC_LOG_LEVEL_DBG=y
     - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
-    - CONFIG_PLATFORM_EC_USB_PD_FRS=n
     - CONFIG_PLATFORM_EC_USB_PD_3A_PORTS=0
     extra_dtc_overlay_files:
     - "./boards/rts5453p.overlay"
@@ -180,7 +178,6 @@ tests:
     - CONFIG_USBC_PDC_TRACE_MSG=y
     - CONFIG_USB_PDC_LOG_LEVEL_DBG=y
     - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
-    - CONFIG_PLATFORM_EC_USB_PD_FRS=y
     - CONFIG_TEST_SNIFF_POWER_MGMT_PDC_APIS=y
     extra_dtc_overlay_files:
     - "./boards/rts5453p.overlay"
@@ -192,7 +189,6 @@ tests:
     - CONFIG_USBC_PDC_TRACE_MSG=y
     - CONFIG_USB_PDC_LOG_LEVEL_DBG=y
     - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
-    - CONFIG_PLATFORM_EC_USB_PD_FRS=y
     - CONFIG_TEST_SNIFF_POWER_MGMT_PDC_APIS=y
     # Max wattage is lower than max voltage x max current
     - CONFIG_PLATFORM_EC_USB_PD_MAX_VOLTAGE_MV=20000
@@ -219,7 +215,6 @@ tests:
     - CONFIG_USBC_PDC_TRACE_MSG=y
     - CONFIG_USB_PDC_LOG_LEVEL_DBG=y
     - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
-    - CONFIG_PLATFORM_EC_USB_PD_FRS=y
     - CONFIG_TEST_SNIFF_POWER_MGMT_PDC_APIS=y
     - CONFIG_TEST_NO_PDC_INIT=y
     extra_dtc_overlay_files:
@@ -234,7 +229,6 @@ tests:
     - CONFIG_USBC_PDC_TRACE_MSG=y
     - CONFIG_USB_PDC_LOG_LEVEL_DBG=y
     - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
-    - CONFIG_PLATFORM_EC_USB_PD_FRS=y
     - CONFIG_TEST_SNIFF_POWER_MGMT_PDC_APIS=y
     - CONFIG_PLATFORM_EC_CONSOLE_DEBUG=y
     - CONFIG_TEST_NO_PDC_INIT=y
@@ -250,7 +244,6 @@ tests:
     - CONFIG_USBC_PDC_TRACE_MSG=y
     - CONFIG_USB_PDC_LOG_LEVEL_DBG=y
     - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
-    - CONFIG_PLATFORM_EC_USB_PD_FRS=y
     - CONFIG_TEST_SNIFF_POWER_MGMT_PDC_APIS=y
     - CONFIG_PLATFORM_EC_CONSOLE_DEBUG=y
     - CONFIG_TEST_NO_PDC_INIT=y
@@ -259,16 +252,15 @@ tests:
     - "./boards/pdc_deferred.overlay"
     - "./boards/pdc_power_mgmt_deferred.overlay"
 
-  pdc.policy.no_frs:
+  pdc.policy.frs:
     timeout: 300
     extra_configs:
     - CONFIG_TEST_SUITE_PDC_POLICY=y
     - CONFIG_USBC_PDC_TRACE_MSG=y
     - CONFIG_USB_PDC_LOG_LEVEL_DBG=y
     - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
-    - CONFIG_PLATFORM_EC_USB_PD_FRS=n
     extra_dtc_overlay_files:
-    - "./boards/rts5453p.overlay"
+    - "./boards/rts5453p_frs.overlay"
 
   pdc.policy.only_fixed_pdos:
     timeout: 500
