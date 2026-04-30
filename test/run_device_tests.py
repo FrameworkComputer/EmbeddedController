@@ -501,6 +501,8 @@ class Renode(Platform):
     def _skip_test_chudow(self, test_config: TestConfig) -> bool:
         if test_config.test_name in [
             "flash_physical",  # TODO(b/485314159)
+            "flash_protection",  # TODO(b/508240888)
+            "flash_protection_rw",  # TODO(b/508240888)
             "otp_key",  # TODO(b/485316342)
             "rollback",  # TODO(b/485315275)
             "flash_write_protect",  # TODO(b/485316223)
