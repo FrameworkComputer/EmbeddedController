@@ -54,6 +54,7 @@ module_name_overrides = {
     "hal_stm32": "stm32",
     "hal_intel_public": "intel",
     "hal_egis": "egis",
+    "focaltech_module": "focaltech_module" + os.sep + "focaltech",
 }
 
 
