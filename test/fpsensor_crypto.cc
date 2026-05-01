@@ -9,6 +9,7 @@
 #include "test_util.h"
 
 #include <array>
+#include <span>
 #include <vector>
 
 struct HmacSha256TestVector {

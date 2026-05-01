@@ -10,6 +10,7 @@
 #include <zephyr/ztest.h>
 
 #include <array>
+#include <span>
 #include <vector>
 
 ZTEST_SUITE(fpsensor_crypto, NULL, NULL, NULL, NULL, NULL);

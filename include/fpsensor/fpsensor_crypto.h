@@ -13,6 +13,7 @@
 #include "ec_commands.h"
 #include "openssl/sha.h"
 
+#include <array>
 #include <cstdint>
 #include <span>
 
