@@ -664,7 +664,7 @@ int spi_nor_read(const struct spi_nor_device_t *spi_nor_device,
  * @param spi_nor_device The Serial NOR Flash device to use.
  * @param offset Flash offset to erase, must be aligned to the minimum physical
  *               erase size.
- * @param size Number of Bytes to erase, must be a multiple of the the minimum
+ * @param size Number of Bytes to erase, must be a multiple of the minimum
  *             physical erase size.
  * @return ec_error_list (non-zero on error and timeout).
  */

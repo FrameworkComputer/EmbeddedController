@@ -1587,7 +1587,7 @@ static int st_tp_read_frame(void)
 	};
 
 	/*
-	 * Since usb_packet.frame is already ane uint8_t byte array, we can just
+	 * Since usb_packet.frame is already a uint8_t byte array, we can just
 	 * make it the RX buffer for SPI transaction.
 	 *
 	 * When there is a extra byte, since we know that flags is a one byte

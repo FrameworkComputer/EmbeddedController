@@ -49,7 +49,7 @@ static int lid_angle_is_reliable;
 /* Smoothed vectors to increase accurency. */
 static intv3_t smoothed_base, smoothed_lid;
 
-/* 8.7 m/s^2 is the the maximum acceleration parallel to the hinge */
+/* 8.7 m/s^2 is the maximum acceleration parallel to the hinge */
 #define SCALED_HINGE_VERTICAL_MAXIMUM  \
 	((int)((8.7f * MOTION_SCALING_FACTOR) / MOTION_ONE_G))
 

@@ -11,7 +11,7 @@
 /* The thermal configuration for a single temp sensor is defined here. */
 #include "ec_commands.h"
 
-/* We need to to hold a config for each board's sensors. Not const, so we can
+/* We need to hold a config for each board's sensors. Not const, so we can
  * tweak it at run-time if we have to.
  */
 extern struct ec_thermal_config thermal_params[];

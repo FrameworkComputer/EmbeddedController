@@ -257,7 +257,7 @@ __override int stop_read_peci_temp(void)
 			return EC_ERROR_NOT_POWERED;
 		else {
 			/**
-			 * PECI read tempurature three times per second
+			 * PECI read temperature three times per second
 			 * dptf.c thermal.c temp_sensor.c
 			 */
 			if (++read_count > 3) {

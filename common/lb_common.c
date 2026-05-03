@@ -137,7 +137,7 @@ static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
 }
 
 /******************************************************************************/
-/* Controller details. We have an ADP8861 and and ADP8863, but we can treat
+/* Controller details. We have an ADP8861 and ADP8863, but we can treat
  * them identically for our purposes */
 /******************************************************************************/
 

@@ -1075,7 +1075,7 @@
  * OCPC - One Charger IC Per Type-C
  *
  * Define this if the board may have multiple charger ICs in the system.  The
- * assumption is that that primary charger is index 0 and is the charger IC
+ * assumption is that the primary charger is index 0 and is the charger IC
  * connected to the battery FET.  Additionally, `chgnum` is assumed to be the
  * same as the charge port index.
  */
@@ -3149,7 +3149,7 @@
 
 /*
  * Detect power signal interrupt storms, defined as more than
- * CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD occurences of a single
+ * CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD occurrences of a single
  * power signal interrupt within one second.
  */
 #undef CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD

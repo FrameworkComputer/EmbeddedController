@@ -102,7 +102,7 @@ static int fpc_check_hwid(void)
 	uint16_t id;
 	int rc;
 
-	/* Clear previous occurences of relevant |errors| flags. */
+	/* Clear previous occurrences of relevant |errors| flags. */
 	errors &= (~FP_ERROR_SPI_COMM & ~FP_ERROR_BAD_HWID);
 
 	spi_buf[0] = FPC_CMD_HW_ID;
