@@ -86,7 +86,7 @@ enum fpc_error_code_internal {
 	FPC_ERROR_INTERNAL_41 = 41, /* The oscillator calibration resulted in a too high or low value   */
 	FPC_ERROR_INTERNAL_42 = 42, /* Sensor driver was opened with NULL configuration                 */
 	FPC_ERROR_INTERNAL_43 = 43, /* Sensor driver as opened with NULL hw descriptor                  */
-	FPC_ERROR_INTERNAL_44 = 44, /* Error occured during image drive test                            */
+	FPC_ERROR_INTERNAL_44 = 44, /* Error occurred during image drive test                           */
 };
 
 /* FPC specific initialization function to fill their context */

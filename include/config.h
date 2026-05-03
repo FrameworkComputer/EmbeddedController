@@ -3149,7 +3149,7 @@
 
 /*
  * Detect power signal interrupt storms, defined as more than
- * CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD occurences of a single
+ * CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD occurrences of a single
  * power signal interrupt within one second.
  */
 #undef CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD

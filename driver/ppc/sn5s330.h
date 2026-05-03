@@ -130,7 +130,7 @@ enum sn5s330_pp_idx {
  *
  * The ILIM_PP1 bit indicates an overcurrent condition when sourcing on power
  * path 1.  For rising edge registers, this indicates an overcurrent has
- * occured; similarly for falling edge, it means the overcurrent condition is no
+ * occurred; similarly for falling edge, it means the overcurrent condition is no
  * longer present.
  */
 #define SN5S330_ILIM_PP1_MASK BIT(4)

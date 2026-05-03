@@ -1821,7 +1821,7 @@ static void handle_ctrl_request(int port, uint32_t head,
 			/*
 			 * Since Enter USB sets the mux state to SAFE mode,
 			 * resetting the mux state back to USB mode on
-			 * recieveing a NACK.
+			 * receiving a NACK.
 			 */
 			usb_mux_set(port, USB_PD_MUX_USB_ENABLED,
 				USB_SWITCH_CONNECT, pd[port].polarity);
