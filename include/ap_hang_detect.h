@@ -12,7 +12,7 @@
 
 /**
  * If the hang detect timers were started and can be stopped by any host
- * command, stop them.  This is intended to be called by the the host command
+ * command, stop them.  This is intended to be called by the host command
  * module.
  */
 void hang_detect_stop_on_host_command(void);

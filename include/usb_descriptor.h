@@ -55,7 +55,7 @@ struct bos_context {
 struct usb_bos_hdr_descriptor {
 	uint8_t bLength;
 	uint8_t bDescriptorType; /* USB_DT_BOS */
-	uint16_t wTotalLength;   /* Total length of of hdr + all dev caps */
+	uint16_t wTotalLength;   /* Total length of hdr + all dev caps */
 	uint8_t bNumDeviceCaps;  /* Container ID Descriptor + others */
 } __packed;
 #define USB_DT_BOS_SIZE 5

@@ -1075,7 +1075,7 @@
  * OCPC - One Charger IC Per Type-C
  *
  * Define this if the board may have multiple charger ICs in the system.  The
- * assumption is that that primary charger is index 0 and is the charger IC
+ * assumption is that the primary charger is index 0 and is the charger IC
  * connected to the battery FET.  Additionally, `chgnum` is assumed to be the
  * same as the charge port index.
  */
