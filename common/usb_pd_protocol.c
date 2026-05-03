@@ -3579,7 +3579,7 @@ void pd_task(void *u)
 				 * some jitter of up to ~192ms, to prevent
 				 * multiple collisions. This delay also allows
 				 * the sink device to request power role swap
-				 * and allow the the accept message to be sent
+				 * and allow the accept message to be sent
 				 * prior to CMD_DISCOVER_IDENT being sent in the
 				 * SRC_READY state.
 				 */
