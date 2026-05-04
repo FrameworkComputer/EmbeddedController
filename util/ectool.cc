@@ -12898,6 +12898,99 @@ static int cmd_s0ix_counter(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_thread_info(int argc, char *argv[])
+{
+	struct ec_response_thread_info_list list;
+	int rv;
+
+	rv = ec_command(EC_CMD_THREAD_INFO_LIST, 0, NULL, 0, &list,
+			sizeof(list));
+	if (rv < 0) {
+		return rv;
+	}
+
+	printf("Found %u threads:\n", list.thread_count);
+
+	for (uint32_t i = 0; i < list.thread_count; i++) {
+		struct ec_params_thread_info_detail p;
+		struct ec_response_thread_info_detail r;
+
+		p.thread_id = list.thread_ids[i];
+		rv = ec_command(EC_CMD_THREAD_INFO_DETAIL, 0, &p, sizeof(p), &r,
+				sizeof(r));
+		if (rv < 0) {
+			fprintf(stderr,
+				"Failed to get thread detail for ID 0x%08x: %d\n",
+				p.thread_id, rv);
+			continue;
+		}
+
+		printf("\nThread ID 0x%08x (@ %" PRIu64 " us):\n", p.thread_id,
+		       r.timestamp_us);
+
+		/* Name */
+		if (r.valid_flags & EC_THREAD_INFO_DETAIL_NAME_VALID) {
+			printf("  %-15s%s\n", "Name:", r.name);
+		} else {
+			printf("  %-15s(unknown)\n", "Name:");
+		}
+
+		/* Basic information */
+		printf("  %-15s0x%08x\n", "Entry Point:", r.entry_point);
+		if (r.timeout_us == 0xffffffff) {
+			printf("  %-15sNone\n", "Timeout:");
+		} else {
+			printf("  %-15s%u us\n", "Timeout:", r.timeout_us);
+		}
+
+		printf("  %-15s0x%04x\n", "User Options:", r.user_options);
+		printf("  %-15s%d\n", "Priority:", r.prio);
+		printf("  %-15s0x%02x\n", "Thread State:", r.thread_state);
+		printf("  %-15s%s\n", "Is Idle:", r.is_idle ? "Yes" : "No");
+		printf("  %-15s%s\n",
+		       "Is Current:", r.is_current ? "Yes" : "No");
+
+		/* Stack usage */
+		if (r.valid_flags & EC_THREAD_INFO_DETAIL_STACK_VALID) {
+			printf("  %-15s%u bytes\n", "Stack Cur:", r.stack_cur);
+			printf("  %-15s%u bytes\n", "Stack Max:", r.stack_max);
+			printf("  %-15s%u bytes\n",
+			       "Stack Size:", r.stack_size);
+		}
+
+		/* Timing */
+		if (r.valid_flags & EC_THREAD_INFO_DETAIL_RUNTIME_USAGE_VALID) {
+			printf("  %-15s%u us\n",
+			       "Execution:", r.execution_time_us);
+		}
+
+		/* Analysis */
+		if (r.valid_flags &
+		    EC_THREAD_INFO_DETAIL_USAGE_ANALYSIS_VALID) {
+			printf("  %-15s%u us\n",
+			       "Window Peak:", r.window_peak_us);
+			printf("  %-15s%u us\n",
+			       "Window Avg:", r.window_avg_us);
+		}
+
+		/* Scheduling */
+		printf("  %-15s0x%08x\n", "Pending On:", r.pending_on);
+
+		/* CPU registers */
+		if (r.valid_flags & EC_THREAD_INFO_DETAIL_PC_VALID) {
+			printf("  %-15s0x%08x\n", "PC:", r.pc);
+		}
+		if (r.valid_flags & EC_THREAD_INFO_DETAIL_LR_VALID) {
+			printf("  %-15s0x%08x\n", "LR:", r.lr);
+		}
+		if (r.valid_flags & EC_THREAD_INFO_DETAIL_SP_VALID) {
+			printf("  %-15s0x%08x\n", "SP:", r.sp);
+		}
+	}
+
+	return 0;
+}
+
 /* NULL-terminated list of commands. Please keep sorted. */
 const struct command commands[] = {
 	{ "adcread", cmd_adc_read, "<channel>\n\tRead an ADC channel." },
@@ -13213,6 +13306,8 @@ const struct command commands[] = {
 	{ "test", cmd_test,
 	  "result length [version]\n"
 	  "\tFake a variety of responses, purely for testing purposes." },
+	{ "threadinfo", cmd_thread_info,
+	  "\n\tDumps Zephyr thread tracking and info." },
 	{ "thermalget", cmd_thermal_get_threshold,
 	  "<platform-specific args>\n"
 	  "\tGet the threshold temperature values from the thermal engine." },
