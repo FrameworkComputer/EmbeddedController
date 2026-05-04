@@ -147,6 +147,67 @@ ZTEST(update_fw, test_bad_command_size)
 	zassert_equal(*error_code, UPDATE_GEN_ERROR);
 }
 
+ZTEST(update_fw, test_rwsig_busy_start)
+{
+	size_t response_size;
+
+	rwsig_get_status_fake.return_val = RWSIG_IN_PROGRESS;
+	system_get_image_copy_fake.return_val = EC_IMAGE_RO;
+
+	/* Send connection establishment PDU.
+	 * fw_update_command_handler writes the response into the same buffer.
+	 */
+	uint8_t buffer[sizeof(struct first_response_pdu) +
+		       sizeof(struct update_command)];
+	struct update_command *cmd = (struct update_command *)buffer;
+
+	cmd->block_base = 0;
+	fw_update_command_handler(buffer, sizeof(struct update_command),
+				  &response_size);
+
+	struct first_response_pdu *resp = (struct first_response_pdu *)buffer;
+
+	zassert_equal(sys_be32_to_cpu(resp->return_value), UPDATE_RWSIG_BUSY);
+}
+
+ZTEST(update_fw, test_rwsig_busy_erase)
+{
+	size_t response_size;
+	uint8_t error_code;
+
+	system_get_image_copy_fake.return_val = EC_IMAGE_RO;
+	/* Initialize update_section */
+	send_update_command(0, NULL, 0, &response_size);
+
+	rwsig_get_status_fake.return_val = RWSIG_IN_PROGRESS;
+
+	/* First chunk of RW section should trigger erase check */
+	error_code = send_update_command(CONFIG_RW_MEM_OFF, NULL,
+					 CONFIG_UPDATE_PDU_SIZE,
+					 &response_size);
+	zassert_equal(response_size, 1);
+	zassert_equal(error_code, UPDATE_RWSIG_BUSY);
+}
+
+ZTEST(update_fw, test_rwsig_busy_write)
+{
+	size_t response_size;
+	uint8_t error_code;
+
+	system_get_image_copy_fake.return_val = EC_IMAGE_RO;
+	/* Initialize update_section */
+	send_update_command(0, NULL, 0, &response_size);
+
+	rwsig_get_status_fake.return_val = RWSIG_IN_PROGRESS;
+
+	/* Non-first chunk to pass erase check */
+	error_code = send_update_command(
+		CONFIG_RW_MEM_OFF + CONFIG_UPDATE_PDU_SIZE, NULL,
+		CONFIG_UPDATE_PDU_SIZE, &response_size);
+	zassert_equal(response_size, 1);
+	zassert_equal(error_code, UPDATE_RWSIG_BUSY);
+}
+
 static void *update_fw_setup(void)
 {
 	/* sha256("touchpad" + "\x00" * 1016) */
@@ -167,6 +228,7 @@ static void update_fw_before(void *f)
 {
 	FFF_FAKES_LIST(RESET_FAKE);
 	FFF_RESET_HISTORY();
+	rwsig_get_status_fake.return_val = RWSIG_ABORTED;
 }
 
 ZTEST_SUITE(update_fw, NULL, update_fw_setup, update_fw_before, NULL, NULL);

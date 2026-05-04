@@ -70,6 +70,21 @@ static int is_touchpad_block(uint32_t block_offset, size_t body_size)
 }
 #endif
 
+#ifdef HAS_TASK_RWSIG
+static uint8_t check_rwsig_busy(void)
+{
+	/* Do not allow the erase/write if RWSIG is still running. */
+	enum rwsig_status status = rwsig_get_status();
+
+	if (status != RWSIG_INVALID && status != RWSIG_ABORTED) {
+		CPRINTF("RWSIG not aborted or invalid (%d)\n", status);
+		return UPDATE_RWSIG_BUSY;
+	}
+
+	return UPDATE_SUCCESS;
+}
+#endif
+
 /*
  * Verify that the passed in block fits into the valid area. If it does, and
  * is destined to the base address of the area - erase the area contents.
@@ -300,6 +315,12 @@ void fw_update_command_handler(void *body, size_t cmd_size,
 		*error_code = UPDATE_ROLLBACK_ERROR;
 		return;
 	}
+
+#ifdef HAS_TASK_RWSIG
+	*error_code = check_rwsig_busy();
+	if (*error_code != UPDATE_SUCCESS)
+		return;
+#endif
 
 	/* Check if the block will fit into the valid area. */
 	*error_code = check_update_chunk(block_offset, body_size);

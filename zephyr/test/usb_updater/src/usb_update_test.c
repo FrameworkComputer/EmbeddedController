@@ -219,6 +219,7 @@ static void usb_update_before(void *f)
 	FFF_FAKES_LIST(RESET_FAKE);
 	FFF_RESET_HISTORY();
 	system_get_image_copy_fake.return_val = EC_IMAGE_RO;
+	rwsig_get_status_fake.return_val = RWSIG_ABORTED;
 }
 
 ZTEST_SUITE(usb_update, NULL, NULL, usb_update_before, NULL, NULL);
