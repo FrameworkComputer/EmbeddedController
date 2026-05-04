@@ -199,5 +199,122 @@ ZTEST(host_cmd_host_commands, test_ap_fw_state)
 		     "Buffer not empty after clear! Output: %s", outbuffer);
 }
 
+#define TEST_STACK_SIZE 1024
+K_THREAD_STACK_DEFINE(extra_test_stack, TEST_STACK_SIZE);
+struct k_thread extra_test_thread;
+K_SEM_DEFINE(test_sem, 0, 1);
+
+static void extra_test_thread_entry(void *p1, void *p2, void *p3)
+{
+	while (1) {
+		k_sem_take(&test_sem, K_MSEC(100));
+	}
+}
+
+ZTEST(host_cmd_host_commands, test_thread_info)
+{
+	k_tid_t tid;
+	struct ec_response_thread_info_list list;
+	struct host_cmd_handler_args list_args =
+		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_THREAD_INFO_LIST, 0, list);
+	bool found_idle = false;
+	bool found_current = false;
+	bool found_test_thread = false;
+
+	/* Create an extra thread */
+	tid = k_thread_create(&extra_test_thread, extra_test_stack,
+			      TEST_STACK_SIZE, extra_test_thread_entry, NULL,
+			      NULL, NULL, 1, K_INHERIT_PERMS, K_NO_WAIT);
+	k_thread_name_set(tid, "extra_thread");
+
+	/* Wait for thread to start and sleep */
+	k_sleep(K_MSEC(10));
+
+	/* Call list command */
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&list_args));
+	zassert_true(list.thread_count > 0);
+
+	/* Verify threads */
+	for (uint32_t i = 0; i < list.thread_count; i++) {
+		struct ec_params_thread_info_detail p;
+		struct ec_response_thread_info_detail r;
+		struct host_cmd_handler_args detail_args =
+			BUILD_HOST_COMMAND(EC_CMD_THREAD_INFO_DETAIL, 0, r, p);
+
+		p.thread_id = list.thread_ids[i];
+		zassert_equal(EC_RES_SUCCESS,
+			      host_command_process(&detail_args));
+		zassert_true(r.timestamp_us > 0, "Timestamp is 0");
+
+		if (r.is_idle) {
+			found_idle = true;
+		}
+		if (r.is_current) {
+			found_current = true;
+		}
+
+		/* Check that flags are valid and value is != 0 for unchecked
+		 * fields */
+		if (r.valid_flags & EC_THREAD_INFO_DETAIL_RUNTIME_USAGE_VALID) {
+			zassert_true(r.execution_time_us != 0,
+				     "Execution time is 0");
+		}
+		if (r.valid_flags &
+		    EC_THREAD_INFO_DETAIL_USAGE_ANALYSIS_VALID) {
+			zassert_true(r.window_peak_us != 0, "Window peak is 0");
+			zassert_true(r.window_avg_us != 0, "Window avg is 0");
+		}
+		if (r.valid_flags & EC_THREAD_INFO_DETAIL_PC_VALID) {
+			zassert_true(r.pc != 0, "PC is 0");
+		}
+		if (r.valid_flags & EC_THREAD_INFO_DETAIL_LR_VALID) {
+			zassert_true(r.lr != 0, "LR is 0");
+		}
+		if (r.valid_flags & EC_THREAD_INFO_DETAIL_SP_VALID) {
+			zassert_true(r.sp != 0, "SP is 0");
+		}
+
+		/* New checks for all threads */
+		zassert_true(r.entry_point > 0, "Entry point is 0");
+		/* pending_on might be 0 if not blocked, so do not assert it
+		 * here */
+		/* Check thread_state is not dead */
+		zassert_true(!(r.thread_state & 8), "Thread is dead");
+
+		if (p.thread_id == (uint32_t)(uintptr_t)tid) {
+			found_test_thread = true;
+			/* Verify details of our test thread */
+			zassert_true(r.valid_flags &
+				     EC_THREAD_INFO_DETAIL_NAME_VALID);
+			zassert_str_equal(r.name, "extra_thread");
+			zassert_equal(r.prio, 1);
+			zassert_equal(r.stack_size, TEST_STACK_SIZE);
+			zassert_true(r.valid_flags &
+				     EC_THREAD_INFO_DETAIL_STACK_VALID);
+			zassert_true(r.stack_max <= r.stack_size);
+			zassert_true(r.stack_cur <= r.stack_size);
+
+			zassert_true(r.user_options & K_INHERIT_PERMS,
+				     "K_INHERIT_PERMS option not set");
+			zassert_true(r.timeout_us > 0, "Timeout is 0");
+			zassert_true(r.timeout_us != 0xffffffff,
+				     "Timeout is forever");
+			zassert_equal(r.pending_on,
+				      (uint32_t)(uintptr_t)&test_sem,
+				      "Pending on wrong object");
+
+			/* Additional checks for test thread */
+			zassert_true(r.thread_state & 2,
+				     "Thread is not pending");
+		}
+	}
+	zassert_true(found_idle, "No idle thread found");
+	zassert_true(found_current, "No current thread found");
+	zassert_true(found_test_thread, "Extra test thread not found in list");
+
+	/* Clean up thread */
+	k_thread_abort(tid);
+}
+
 ZTEST_SUITE(host_cmd_host_commands, drivers_predicate_post_main, NULL, NULL,
 	    NULL, NULL);

@@ -130,6 +130,15 @@ config TASK_HOSTCMD_STACK_SIZE
 
 endif # HAS_TASK_HOSTCMD
 
+config PLATFORM_EC_HOSTCMD_THREAD_INFO
+	bool "Host command: EC_CMD_THREAD_INFO"
+	depends on THREAD_MONITOR
+	depends on PLATFORM_EC_HOSTCMD
+	default y
+	help
+	  Enable host commands for retrieving thread information.
+	  This includes EC_CMD_THREAD_INFO_LIST and EC_CMD_THREAD_INFO_DETAIL.
+
 config HAS_TASK_KEYPROTO
 	bool
 	depends on PLATFORM_EC_KEYBOARD_PROTOCOL_8042
