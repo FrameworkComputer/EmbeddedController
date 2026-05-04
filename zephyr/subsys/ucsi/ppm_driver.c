@@ -357,6 +357,9 @@ done:
 				(struct capability_t *)lpm_data_out;
 			caps->bNumConnectors =
 				ucsi_get_active_port_count(device);
+#if DT_INST_NODE_HAS_PROP(0, b_num_alt_modes)
+			caps->bNumAltModes = DT_INST_PROP(0, b_num_alt_modes);
+#endif
 			break;
 		}
 		default:

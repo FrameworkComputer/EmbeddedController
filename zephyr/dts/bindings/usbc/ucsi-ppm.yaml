@@ -8,3 +8,9 @@ description: |
 compatible: "ucsi-ppm"
 
 include: base.yaml
+
+properties:
+  b-num-alt-modes:
+    type: int
+    description: |
+      Override the number of Alternate Modes supported by the LPM.

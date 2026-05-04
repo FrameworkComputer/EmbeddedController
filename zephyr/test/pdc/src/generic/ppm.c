@@ -235,10 +235,11 @@ ZTEST(ucsi_ppm, test_get_capability)
 	zassert_true(reset_to_idle_notify());
 
 	/*
-	 * Set numConns to a wrong number. PPM should ignore it and get the
-	 * right value from the device tree.
+	 * Set numConns and bNumAltModes to a wrong number. PPM should ignore it
+	 * and get the right value from the device tree.
 	 */
 	ecaps.bNumConnectors = NUM_PORTS + 1;
+	ecaps.bNumAltModes = 5;
 	emul_pdc_set_capability(emul, &ecaps);
 
 	LOG_INF("Sending GET_CAPABILITY");
@@ -259,6 +260,12 @@ ZTEST(ucsi_ppm, test_get_capability)
 	zassert_equal(caps.bNumConnectors, NUM_PORTS,
 		      "%d (#ports from PPM) != %d (#ports from DT)",
 		      caps.bNumConnectors, NUM_PORTS);
+
+#if DT_NODE_HAS_PROP(DT_PPM_DRV, b_num_alt_modes)
+	zassert_equal(caps.bNumAltModes, DT_PROP(DT_PPM_DRV, b_num_alt_modes),
+		      "%d (#alt modes from PPM) != %d (from DT)",
+		      caps.bNumAltModes, DT_PROP(DT_PPM_DRV, b_num_alt_modes));
+#endif
 }
 
 ZTEST(ucsi_ppm, test_get_connector_status)
