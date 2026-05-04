@@ -14,7 +14,7 @@ config option depends on having `CONFIG_PLATFORM_EC_MOTIONSENSE=y`.
 
 Kconfig Option                                   | Default | Documentation
 :----------------------------------------------- | :-----: | :------------
-`CONFIG_PLATFORM_EC_MOTIONSENSE`                 | n       | [MOTIONSENSE]
+`CONFIG_PLATFORM_EC_MOTIONSENSE`                 | y       | [MOTIONSENSE]
 `CONFIG_PLATFORM_EC_ACCEL_FIFO`                  | n       | [ACCEL FIFO]
 `CONFIG_PLATFORM_EC_SENSOR_TIGHT_TIMESTAMPS`     | n       | [TIGHT TIMESTAMPS]
 `CONFIG_PLATFORM_EC_ALS`                         | n       | [ALS]
@@ -273,9 +273,9 @@ lid_accel: lid-accel {
 [ACCEL FIFO THRES]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_ACCEL_FIFO_THRES"&ss=chromiumos
 [ALS COUNT]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_ALS_COUNT"&ss=chromiumos
 [LID ANGLE UPDATE]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_LID_ANGLE_UPDATE"&ss=chromiumos
-[TABLET MODE]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_TABLET_MODE"&ss=chromiumos
-[TABLET MODE SWITCH]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_TABLET_MODE_SWITCH"&ss=chromiumos
-[GMR TABLET MODE]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_GMR_TABLET_MODE"&ss=chromiumos
+[TABLET MODE]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.tabletmode;?q="config%20PLATFORM_EC_TABLET_MODE"&ss=chromiumos
+[TABLET MODE SWITCH]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.tabletmode;?q="config%20PLATFORM_EC_TABLET_MODE_SWITCH"&ss=chromiumos
+[GMR TABLET MODE]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.tabletmode;?q="config%20PLATFORM_EC_GMR_TABLET_MODE"&ss=chromiumos
 [ACCEL INFO CMD]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_CONSOLE_CMD_ACCEL_INFO"&ss=chromiumos
 [ACCEL SPOOF CMD]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_CONSOLE_CMD_ACCEL_SPOOF"&ss=chromiumos
 [MAX SENSOR FREQUENCY ]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_MAX_SENSOR_FREQ_MILLIHZ"&ss=chromiumos

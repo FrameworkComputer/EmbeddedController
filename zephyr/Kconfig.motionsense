@@ -120,8 +120,8 @@ config PLATFORM_EC_LID_ANGLE
       Enable this to detect lid angle with two accelerometers. The andgle
       calculation requires the information about which sensor is on the lid
       and which one is on the base. The measured lid angle can be used for
-      tablet mode detection(refer "Tablet Mode below") and enabling/disabling
-      peripheral devices(refer "Lid Angle Update" below).
+      tablet mode detection (refer "Tablet Mode" in Kconfig.tabletmode) and
+      enabling/disabling peripheral devices (refer "Lid Angle Update" below).
       # TODO(b/173507858): add more detail after .dts change
 
 config PLATFORM_EC_LID_ANGLE_UPDATE
