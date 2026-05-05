@@ -46,7 +46,7 @@ static int8_t config_command(struct spic_command *command, uint8_t cmd,
 			     uint8_t dumm_count);
 static int32_t flash_write_enable(void);
 static int32_t flash_write_disable(void);
-static int32_t flash_read_sr(void);
+static uint8_t flash_read_sr(void);
 static int32_t flash_wait_till_ready(void);
 
 /**********************
@@ -336,19 +336,15 @@ static int32_t flash_write_disable(void)
 	return 0;
 }
 
-static int32_t flash_read_sr(void)
+static uint8_t flash_read_sr(void)
 {
 	struct spic_command *command = &command_default;
-	enum spic_status status;
 
 	uint32_t len = 1;
 	uint8_t sr;
 
 	config_command(command, FLASH_CMD_RDSR, 0, 0, 0);
-	status = spic_read(command, &sr, &len);
-	if (status != SPIC_STATUS_OKAY) {
-		return (int32_t)status;
-	}
+	spic_read(command, &sr, &len);
 
 	return sr;
 }
@@ -356,15 +352,13 @@ static int32_t flash_read_sr(void)
 extern void slowtmr_dealy_us(uint32_t us);
 static int32_t flash_wait_till_ready(void)
 {
-	int8_t sr;
+	uint8_t sr;
 	int32_t timeout_retry;
 
 	timeout_retry = 0;
 	slowtmr_dealy_us(100);
 	do {
-		sr = (int8_t)flash_read_sr();
-		if (sr < 0)
-			return sr;
+		sr = flash_read_sr();
 		if (SLWTMR_CNT_HIT_CHECK) {
 			timeout_retry++;
 			slowtmr_dealy_us(100);

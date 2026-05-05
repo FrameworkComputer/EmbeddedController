@@ -26,6 +26,10 @@
 #define RTS_CMD_SEL_ADDR 0x2005F000ul
 #define RTS_SPI_PROGRAMMING_FLAG 0x20018000ul
 
+#define WRITE_TO_FLASH_COMPLETE (1ul << 0)
+#define WRITE_TO_FLASH_VERIFIED (1ul << 1)
+#define WRITE_TO_FLASH_WRITE_ERROR (1ul << 7)
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -56,7 +60,7 @@ struct monitor_header_tag {
  **********************/
 
 static void eflash_erase(int offset, int size);
-static void eflash_write(int offset, int size, const char *data);
+static int32_t eflash_write(int offset, int size, const char *data);
 static int eflash_verify(int offset, int size, const char *data);
 static void eflash_read(int offset, int size, const char *data);
 static void uart_init_pll_115200(void);
@@ -87,6 +91,7 @@ int spic_flash_upload(void)
 	uint32_t *flag_upload;
 	flag_upload = (uint32_t *)(RTS_SPI_PROGRAMMING_FLAG);
 	*flag_upload = 0;
+	int32_t ret;
 
 	SYSTEM->PERICLKPWR1 |= SYSTEM_PERICLKPWR1_SLWTMR0CLKPWR_Msk;
 	slowtmr_dealy_us(1000);
@@ -171,16 +176,20 @@ int spic_flash_upload(void)
 		eflash_erase(spi_offset, sz_image);
 		/* Start to write */
 		if (image_base != NULL) {
-			eflash_write(spi_offset, sz_image, image_base);
-		}
+			ret = eflash_write(spi_offset, sz_image, image_base);
+			if (ret != 0) {
+				*flag_upload |= WRITE_TO_FLASH_WRITE_ERROR;
+			}
 
-		/* Verify data */
-		if (eflash_verify(spi_offset, sz_image, image_base) == 0) {
-			*flag_upload |= 0x02;
+			/* Verify data */
+			if (eflash_verify(spi_offset, sz_image, image_base) ==
+			    0) {
+				*flag_upload |= WRITE_TO_FLASH_VERIFIED;
+			}
 		}
 	}
 	/* Mark we have finished upload work */
-	*flag_upload |= 0x01;
+	*flag_upload |= WRITE_TO_FLASH_COMPLETE;
 
 	/* Return the status back to ROM code is required for UUT */
 	if (uut_tag == RTS_MONITOR_UUT_TAG) {
@@ -219,15 +228,20 @@ static void eflash_erase(int offset, int size)
 	}
 }
 
-static void eflash_write(int offset, int size, const char *data)
+static int32_t eflash_write(int offset, int size, const char *data)
 {
 	int dest_addr = offset;
+	int32_t ret = 0;
 	const int sz_page = FLASH_PAGE_PROGRAM_SIZE;
 
 	/* Write the data per FLASH_PAGE_PROGRAM_SIZE bytes */
 	for (; size >= sz_page; size -= sz_page) {
-		flash_program_page(dest_addr, (uint8_t *)data, sz_page,
-				   FLASH_ADDRESSING_3BYTE);
+		ret = flash_program_page(dest_addr, (uint8_t *)data, sz_page,
+					 FLASH_ADDRESSING_3BYTE);
+
+		if (ret) {
+			return ret;
+		}
 
 		data += sz_page;
 		dest_addr += sz_page;
@@ -235,9 +249,11 @@ static void eflash_write(int offset, int size, const char *data)
 
 	/* Handle final partial page, if any */
 	if (size != 0) {
-		flash_program_page(dest_addr, (uint8_t *)data, size,
-				   FLASH_ADDRESSING_3BYTE);
+		ret = flash_program_page(dest_addr, (uint8_t *)data, size,
+					 FLASH_ADDRESSING_3BYTE);
 	}
+
+	return ret;
 }
 
 static void serial_polling_send(const char *buf, uint32_t len)
