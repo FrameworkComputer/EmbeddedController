@@ -136,3 +136,5 @@ tach_fan0: &tach0 {};
 &imvp_rt3645 {
 	enable-gpios = <&gpioi 7 GPIO_ACTIVE_HIGH>;
 };
+
+/delete-node/ &rvp_board_id;
