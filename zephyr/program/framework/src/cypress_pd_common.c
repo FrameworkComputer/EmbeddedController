@@ -356,7 +356,7 @@ int cypd_write_reg_with_respond(int controller, int reg, int data, int *respond_
 	const struct gpio_dt_spec *intr = gpio_get_dt_spec(pd_chip_config[controller].gpio);
 	int intr_status;
 	int rv = EC_ERROR_UNKNOWN;
-	int retry_count;
+	int retry_count = 0;
 
 	if (controller < 0 || controller >= PD_CHIP_COUNT)
 		return EC_ERROR_INVAL;
