@@ -13,6 +13,19 @@
 	};
 };
 
+&ufsc_keyboard_layout {
+	ufsc_kb_unknown: kb-unknown {
+		compatible = "cros-ec,cbi-ufsc-value";
+		status = "okay";
+		value = <0>;
+	};
+	ufsc_kb_canada: kb-canada {
+		compatible = "cros-ec,cbi-ufsc-value";
+		status = "okay";
+		value = <1>;
+	};
+};
+
 &ufsc_sensor_hub {
 	ufsc_ish_absent: ish-absent {
 		compatible = "cros-ec,cbi-ufsc-value";
