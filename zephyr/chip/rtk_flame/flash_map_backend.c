@@ -129,6 +129,31 @@ err_exit:
 	return rc;
 }
 
+int32_t flash_write_status_reg(uint8_t sr1, uint8_t sr2)
+{
+	struct spic_command *command = &command_default;
+	uint32_t len = 1;
+	int32_t rc = 0;
+
+	flash_write_enable();
+	config_command(command, FLASH_CMD_WRSR, 0, 0, 0);
+	spic_write(command, &sr1, &len);
+	rc = flash_wait_till_ready();
+	flash_write_disable();
+
+	if (rc != 0) {
+		return rc;
+	}
+
+	flash_write_enable();
+	config_command(command, FLASH_CMD_WRSR2, 0, 0, 0);
+	spic_write(command, &sr2, &len);
+	rc = flash_wait_till_ready();
+	flash_write_disable();
+
+	return rc;
+}
+
 int32_t flash_read(uint8_t rdcmd, uint32_t address, uint8_t *data,
 		   uint32_t size, enum flash_addressing_mode mode)
 {
@@ -246,6 +271,7 @@ static int8_t config_command(struct spic_command *command, uint8_t cmd,
 	case FLASH_CMD_WREN:
 	case FLASH_CMD_WRDI:
 	case FLASH_CMD_WRSR:
+	case FLASH_CMD_WRSR2:
 	case FLASH_CMD_RDID:
 	case FLASH_CMD_RDSR:
 	case FLASH_CMD_RDSR2:

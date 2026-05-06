@@ -32,6 +32,7 @@
 #define WRITE_TO_FLASH_ERASE_ERROR (0x10)
 #define WRITE_TO_FLASH_WRITE_ERROR (0x20)
 #define WRITE_TO_FLASH_NOT_ERASED_ERROR (0x30)
+#define WRITE_TO_FLASH_STATUS_REG_ERROR (0x40)
 
 /**********************
  *      TYPEDEFS
@@ -215,6 +216,14 @@ static int32_t write_to_flash(uint32_t *flag_upload, int spi_offset,
 			      uint32_t sz_image, const uint8_t *image_base)
 {
 	int32_t ret = 0;
+
+	/* Clear both status registers to ensure write protect is disabled */
+	ret = flash_write_status_reg(0, 0);
+	if (ret != 0) {
+		*flag_upload |= WRITE_TO_FLASH_STATUS_REG_ERROR;
+		return ret;
+	}
+
 	/* Start to erase */
 	ret = eflash_erase(spi_offset, sz_image);
 	if (ret != 0) {

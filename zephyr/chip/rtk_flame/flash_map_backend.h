@@ -31,6 +31,7 @@
 #define FLASH_CMD_WREN 0x06 // write enable
 #define FLASH_CMD_WRDI 0x04 // write disable
 #define FLASH_CMD_WRSR 0x01 // write status register
+#define FLASH_CMD_WRSR2 0x31 // write status register 2
 #define FLASH_CMD_RDID 0x9F // read identification
 #define FLASH_CMD_RDSR 0x05 // read status register
 #define FLASH_CMD_RDSR2 0x35 // read status register-2
@@ -92,5 +93,6 @@ int32_t flash_read(uint8_t rdcmd, uint32_t address, uint8_t *data,
 int32_t flash_program_page(uint32_t address, const uint8_t *data, uint32_t size,
 			   enum flash_addressing_mode mode);
 void slowtmr_dealy_us(uint32_t us);
+int32_t flash_write_status_reg(uint8_t sr1, uint8_t sr2);
 
 #endif /* __FLASH_MAP_BACKEND_H__ */
