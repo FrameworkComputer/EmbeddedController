@@ -59,7 +59,7 @@ buccaneer = register_fpmcu_variant(
     zephyr_board="google_quincy",
     register_func=register_npcx_project,
     variant_modules=["cmsis_6"],
-    variant_optional_modules=["elan"],
+    variant_optional_modules=["elan_fp"],
     variant_dts_overlays=[
         here / "helipilot" / "buccaneer.dts",
     ],
@@ -120,7 +120,7 @@ def register_et171_project(
         zephyr_board="egis_et171",
         register_func=register_binman_project,
         variant_modules=["hal_egis", "egis_module"],
-        variant_optional_modules=["egis"],
+        variant_optional_modules=["egis_fp"],
         variant_dts_overlays=[here / "et171" / dts_path],
         variant_kconfig_files=[
             here / "et171" / "prj.conf",
@@ -146,7 +146,7 @@ niedzica = register_fpmcu_variant(
     zephyr_board="32f967_dv",
     register_func=register_binman_project,
     variant_modules=["cmsis_6", "elan_module"],
-    variant_optional_modules=["elan"],
+    variant_optional_modules=["elan_fp"],
     variant_dts_overlays=[
         here / "em32f967" / "niedzica.dts",
     ],
