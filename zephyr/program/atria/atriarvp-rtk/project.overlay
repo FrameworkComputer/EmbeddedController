@@ -9,6 +9,7 @@
 
 /* atriarvp-rtk project DTS includes */
 #include "adc.dtsi"
+#include "atria_ec_ufsc.dtsi"
 #include "gpio.dtsi"
 #include "i2c.dtsi"
 #include "keyboard.dtsi"
