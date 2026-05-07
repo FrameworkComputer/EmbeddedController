@@ -9056,6 +9056,13 @@ struct ec_response_fp_sign_match {
 	uint8_t signature[FP_MAC_LENGTH];
 } __ec_align4;
 
+/* Unlock developer options via FingerGuard HMAC */
+#define EC_CMD_FP_UNLOCK_DEV_OPTIONS 0x0418
+
+struct ec_params_fp_unlock_dev_options {
+	uint8_t hmac[FP_MAC_LENGTH];
+} __ec_align4;
+
 /*
  * Fingerprint ASCP claim command.
  *

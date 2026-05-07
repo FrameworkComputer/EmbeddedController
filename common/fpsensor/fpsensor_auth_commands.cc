@@ -21,6 +21,9 @@
 #include <array>
 #include <cstdint>
 #include <span>
+#ifdef CONFIG_PLATFORM_EC_WP_EXTERNAL
+#include <wp_external.h>
+#endif
 
 /* The session nonce for session key. */
 static std::array<uint8_t, FP_CK_SESSION_NONCE_LEN> session_nonce;
@@ -227,3 +230,32 @@ sign_message(std::span<const uint8_t> context,
 
 	return EC_SUCCESS;
 }
+
+#ifdef CONFIG_PLATFORM_EC_WP_EXTERNAL
+static enum ec_status
+fp_command_unlock_dev_options(struct host_cmd_handler_args *args)
+{
+	const auto *p = static_cast<const ec_params_fp_unlock_dev_options *>(
+		args->params);
+
+	/* Define the empty context (no user_id) */
+	static constexpr std::span<const uint8_t> context;
+
+	static constexpr uint8_t operation_str[] = { 'e', 'n', 'a', 'b', 'l',
+						     'e', '_', 'd', 'e', 'v',
+						     '_', 'o', 'p', 't', 'i',
+						     'o', 'n', 's' };
+	static constexpr std::span operation = operation_str;
+
+	if (validate_request(context, operation, p->hmac) != EC_SUCCESS) {
+		return EC_RES_ACCESS_DENIED;
+	}
+
+	/* Unlock the system */
+	disable_write_protect_external();
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FP_UNLOCK_DEV_OPTIONS,
+		     fp_command_unlock_dev_options, EC_VER_MASK(0));
+#endif
