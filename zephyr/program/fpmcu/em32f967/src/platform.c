@@ -7,10 +7,13 @@
 #include "write_protect.h"
 
 /* TODO(b/446109143): Change based on the final solution of WP state. */
-bool write_protect_is_asserted_custom(void)
+static int disable_write_protect(void)
 {
-	return false;
+	disable_write_protect_external();
+
+	return 0;
 }
+SYS_INIT(disable_write_protect, POST_KERNEL, 0);
 
 /* Actual implementation is placed in the private repository. */
 __weak void chip_enter_bootloader(uint8_t mode)

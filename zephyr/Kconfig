@@ -1156,13 +1156,13 @@ config PLATFORM_EC_SHARED_MEM_LIBC
 	  that use libc with malloc. Malloc uses the same memory as
 	  shared_mem which can cause collisions if it is not synchronized.
 
-config PLATFORM_EC_WP_CUSTOM
-	bool "Custom Write Protection status"
+config PLATFORM_EC_WP_EXTERNAL
+	bool "External Write Protection status policy"
 	help
-	  Use custom method to get the write protection status via the
-	  write_protect_is_asserted function. If enabled, the
-	  write_protect_is_asserted_custom function has to be provided, which
-	  returns current status of write protection.
+	  External write protection policy allows projects to decide whether
+	  write protection is enabled or not depending on project-related factors.
+	  The protection is enabled by default. It can be disabled by calling
+	  disable_write_protect_external() function.
 
 	  This is needed for EC based projects that don't have the WP pin
 	  connected via GPIO, e.g. USB FPMCU modules with limited number of

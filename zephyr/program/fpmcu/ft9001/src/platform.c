@@ -4,9 +4,13 @@
  */
 
 #include "system.h"
+#include "wp_external.h"
 
 /* TODO(b/434894113): Change based on the final solution of WP state. */
-int write_protect_is_asserted_custom(void)
+static int disable_write_protect(void)
 {
+	disable_write_protect_external();
+
 	return 0;
 }
+SYS_INIT(disable_write_protect, POST_KERNEL, 0);

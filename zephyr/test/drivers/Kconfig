@@ -443,10 +443,10 @@ config LINK_TEST_SUITE_TABLETMODE_INTERRUPT
 	  Verifies a singleton driver which handles an external interrupt
 	  signaling to the EC when to switch in or out of tablet mode.
 
-config LINK_TEST_SUITE_WRITE_PROTECTION_CUSTOM
+config LINK_TEST_SUITE_WRITE_PROTECTION_EXTERNAL
 	bool "Link and test the write protection tests"
 	help
-	  Verifies functionality of custom write protection
+	  Verifies functionality of external write protection
 
 config LINK_TEST_SUITE_RT3645
 	bool "Link and test rt3645 tests"

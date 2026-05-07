@@ -11,14 +11,11 @@
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
-FAKE_VALUE_FUNC(bool, write_protect_is_asserted_custom);
-
-ZTEST(write_protection, test_write_protection_custom)
+ZTEST(write_protection, test_write_protection_external)
 {
-	write_protect_is_asserted_custom_fake.return_val = true;
 	zassert_true(write_protect_is_asserted());
 
-	write_protect_is_asserted_custom_fake.return_val = false;
+	disable_write_protect_external();
 	zassert_false(write_protect_is_asserted());
 }
 

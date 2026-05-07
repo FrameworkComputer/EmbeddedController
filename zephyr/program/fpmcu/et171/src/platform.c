@@ -28,10 +28,13 @@ int fp_vendor_command(uint32_t param, uint8_t *buf, size_t buf_size)
 }
 
 /* TODO(b/432682921): Change based on the final solution of WP state. */
-bool write_protect_is_asserted_custom(void)
+static int disable_write_protect(void)
 {
-	return false;
+	disable_write_protect_external();
+
+	return 0;
 }
+SYS_INIT(disable_write_protect, POST_KERNEL, 0);
 
 /* TODO: Remove once https://github.com/zephyrproject-rtos/zephyr/issues/104587
  * is resolved.
