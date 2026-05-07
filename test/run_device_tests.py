@@ -510,15 +510,11 @@ class Renode(Platform):
             "rollback_entropy",  # TODO(b/485315625)
             "fpsensor_debug",  # TODO(b/485315321)
             "restricted_console",  # TODO(b/485315829)
+            "system_is_locked",  # TODO(b/485316683)
             "zephyr_cpp_newlib",  # TODO(b/485316816)
             "zephyr_cpp_std20",  # TODO(b/485316816)
             "zephyr_drivers_entropy",  # TODO(b/485898244)
             "zephyr_kernel_poll",  # TODO(b/485316816)
-        ]:
-            return True
-
-        if test_config.config_name in [
-            "system_is_locked_wp_on",  # TODO(b/485316683)
         ]:
             return True
 

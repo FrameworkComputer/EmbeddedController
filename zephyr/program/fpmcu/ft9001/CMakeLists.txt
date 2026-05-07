@@ -2,8 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-zephyr_library_sources("src/platform.c")
-
 if(DEFINED CONFIG_CROS_EC_RO)
 
 add_library(config_page OBJECT src/config_page.c)
