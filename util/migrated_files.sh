@@ -35,7 +35,7 @@ for file in "$@"; do
 
   case "${ec_file}" in
     baseboard/*|board/*|chip/*|driver/fingerprint/*|*fpsensor*|test/*|\
-    util/*|zephyr/*|extra/*) ;;
+    util/*|zephyr/*|extra/*|common/mock/*) ;;
     **.c)
       if ! grep -q -F "\${PLATFORM_EC}/${ec_file}" "${cmakes[@]}" ; then
         echo -n "WARNING: ${ec_file} is not used in Zephyr EC. There is "
