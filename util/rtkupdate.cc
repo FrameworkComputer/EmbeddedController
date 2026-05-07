@@ -553,10 +553,12 @@ int flash(int uart_fd, uint32_t spi_start, const char *file_name)
 			}
 		}
 
-		for (uint8_t retry_round = 0; retry_round < FLASH_RETRY_CNT;
-		     retry_round++) {
+		bool success = false;
+		uint8_t retry_round = 0;
+		while (!success) {
 			/* Send Packet B to request EC to move data, even if
 			 * this round is not full 16 pages */
+			retry_round++;
 			DBG_PRINT(
 				"Round %zu complete, sending function pointer to EC.\n",
 				page / PAGES_PER_ROUND);
@@ -573,12 +575,11 @@ int flash(int uart_fd, uint32_t spi_start, const char *file_name)
 				ERR_PRINT(
 					"\nFailed to receive expected response (first 0x06)\n");
 
-				if (retry_round < FLASH_RETRY_CNT) {
-					continue;
-				} else {
+				if (retry_round > FLASH_RETRY_CNT) {
 					printf("\nFailed to retry request EC to execute frame.\n");
 					goto flash_err;
 				}
+				continue;
 			}
 			usleep(100 * 1000);
 
@@ -590,25 +591,27 @@ int flash(int uart_fd, uint32_t spi_start, const char *file_name)
 			if (ret != 0) {
 				ERR_PRINT(
 					"\nexpected 0x06 0x03 response, received: no data\n");
-				if (retry_round < FLASH_RETRY_CNT) {
-					continue;
-				} else {
+				if (retry_round > FLASH_RETRY_CNT) {
 					goto flash_err;
 				}
+				continue;
 			}
 			if ((response[0] != START_FRAME_TO_WRITE_TO_FLASH) ||
 			    (response[1] != SUCCESS_PROGRAM_TO_FLASH)) {
 				ERR_PRINT(
-					"\nexpected 0x06 0x03 response, received: 0x%X 0x%X\n",
-					response[0], response[1]);
-				if (retry_round < FLASH_RETRY_CNT) {
-					continue;
-				} else {
+					"\nOffset 0x%0x: expected 0x06 0x03 response, received: 0x%X 0x%X\n",
+					upload_header_spi_address, response[0],
+					response[1]);
+				if (retry_round > FLASH_RETRY_CNT) {
 					fprintf(stderr,
 						"\n Failed to retry receive frame result.\n");
 					goto flash_err;
 				}
+				continue;
 			}
+			/* Flash write was successful, continue to next chunk.
+			 */
+			success = true;
 		}
 		/* Update SPI address for next round */
 		upload_header_spi_address += SPI_INCREMENT;
