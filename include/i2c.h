@@ -416,28 +416,6 @@ board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc);
 int board_is_i2c_port_powered(int port);
 
 /**
- * Function to allow board to take any action before starting a new i2c
- * transaction on a given port. Board must implement this if it defines
- * CONFIG_I2C_XFER_BOARD_CALLBACK.
- *
- * @param port: I2C port number
- * @param addr_flags: Peripheral device address
- *
- */
-void i2c_start_xfer_notify(const int port, const uint16_t addr_flags);
-
-/**
- * Function to allow board to take any action after an i2c transaction on a
- * given port has completed. Board must implement this if it defines
- * CONFIG_I2C_XFER_BOARD_CALLBACK.
- *
- * @param port: I2C port number
- * @param addr_flags: Peripheral device address
- *
- */
-void i2c_end_xfer_notify(const int port, const uint16_t addr_flags);
-
-/**
  * Defined in common/i2c_trace.c, used by i2c controller to notify tracing
  * functionality of transactions.
  *
