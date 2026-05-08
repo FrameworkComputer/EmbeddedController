@@ -21,7 +21,7 @@ $elf_rw?=$ORIGIN/chudow/ec.RW.elf
 # https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/zephyrproject/zephyr/dts/arm/focaltech/ft9001/ft9001.dtsi;l=95-102;drc=07db2d60da7db0c0f568842bec3aaf221d727281.
 machine LoadPlatformDescriptionFromString "usart3: UART.FT9001_USART @ sysbus 0x4001d000 { IRQ -> nvic0@61 }"
 
-showAnalyzer usart2
+showAnalyzer usart3
 
 set mock_rom_func
 """

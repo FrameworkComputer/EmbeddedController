@@ -24,7 +24,7 @@ DARTMONKEY_CONSOLE = "sysbus.usart1"
 CONSOLE_MAP: dict[str, str] = {
     "bloonchipper": "sysbus.usart2",
     "buccaneer": "sysbus.cr_uart1",
-    "chudow": "sysbus.usart2",
+    "chudow": "sysbus.usart3",
     "dartmonkey": DARTMONKEY_CONSOLE,
     "helipilot": "sysbus.cr_uart1",
     "nami_fp": DARTMONKEY_CONSOLE,
