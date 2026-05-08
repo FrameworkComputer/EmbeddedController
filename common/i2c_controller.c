@@ -126,51 +126,6 @@ __maybe_unused static int chip_i2c_xfer_with_notify(const int port,
 	return ret;
 }
 
-#ifdef CONFIG_I2C_XFER_LARGE_TRANSFER
-/*
- * Internal function that splits transfer into multiple chip_i2c_xfer() calls
- * if in_size or out_size exceeds CONFIG_I2C_CHIP_MAX_TRANSFER_SIZE.
- */
-static int i2c_xfer_no_retry(const int port, const uint16_t addr_flags,
-			     const uint8_t *out, int out_size, uint8_t *in,
-			     int in_size, int flags)
-{
-	int offset;
-
-	for (offset = 0; offset < out_size;) {
-		int chunk_size = min(out_size - offset,
-				     CONFIG_I2C_CHIP_MAX_TRANSFER_SIZE);
-		int out_flags = 0;
-
-		if (offset == 0)
-			out_flags |= flags & I2C_XFER_START;
-		if (in_size == 0 && offset + chunk_size == out_size)
-			out_flags |= flags & I2C_XFER_STOP;
-
-		RETURN_ERROR(chip_i2c_xfer_with_notify(port, addr_flags,
-						       out + offset, chunk_size,
-						       NULL, 0, out_flags));
-		offset += chunk_size;
-	}
-	for (offset = 0; offset < in_size;) {
-		int chunk_size = min(in_size - offset,
-				     CONFIG_I2C_CHIP_MAX_TRANSFER_SIZE);
-		int in_flags = 0;
-
-		if (offset == 0)
-			in_flags |= flags & I2C_XFER_START;
-		if (offset + chunk_size == in_size)
-			in_flags |= flags & I2C_XFER_STOP;
-
-		RETURN_ERROR(chip_i2c_xfer_with_notify(port, addr_flags, NULL,
-						       0, in + offset,
-						       chunk_size, in_flags));
-		offset += chunk_size;
-	}
-	return EC_SUCCESS;
-}
-#endif /* CONFIG_I2C_XFER_LARGE_TRANSFER */
-
 int i2c_xfer_unlocked(const int port, const uint16_t addr_flags,
 		      const uint8_t *out, int out_size, uint8_t *in,
 		      int in_size, int flags)
@@ -245,13 +200,10 @@ int i2c_xfer_unlocked(const int port, const uint16_t addr_flags,
 		default:
 			return EC_ERROR_UNKNOWN;
 		}
-#elif defined(CONFIG_I2C_XFER_LARGE_TRANSFER)
-		ret = i2c_xfer_no_retry(port, no_pec_af, out, out_size, in,
-					in_size, flags);
 #else
 		ret = chip_i2c_xfer_with_notify(port, no_pec_af, out, out_size,
 						in, in_size, flags);
-#endif /* CONFIG_I2C_XFER_LARGE_TRANSFER */
+#endif /* !CONFIG_ZEPHYR */
 		if (ret != EC_ERROR_BUSY)
 			break;
 	}

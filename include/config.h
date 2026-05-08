@@ -2895,12 +2895,6 @@
 #define CONFIG_I2C_CHIP_MAX_TRANSFER_SIZE 255
 
 /*
- * Enable i2c_xfer() for receiving request larger than
- * CONFIG_I2C_CHIP_MAX_TRANSFER_SIZE.
- */
-#undef CONFIG_I2C_XFER_LARGE_TRANSFER
-
-/*
  * If defined, makes i2c_xfer callback into board-provided functions before the
  * start and after the end of every I2C transaction. This can be used by boards
  * to implement any I2C device specific quirks e.g. requiring minimum bus-free
