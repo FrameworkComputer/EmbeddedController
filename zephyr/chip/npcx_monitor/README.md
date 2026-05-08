@@ -21,12 +21,12 @@ version installed into the servo dockerfile.
 1. Add the current date to the new `npcx_monitor.bin` filename. For example
   `npcx_monitor-2025.02.07.bin`.
 1. Upload the renamed monitor file to Google Cloud Storage (GCS).
-    * Use the `gsutil` command to upload the file.
+    * Use the `gcloud storage` command to upload the file.
     * Note that the name of the file must be unique.  The `-n` option prevents
       overwriting an existing file.
-    * The `-a public-read` option makes the file publicly readable.
+    * The `-a publicRead` option makes the file publicly readable.
 ```bash
-    gsutil cp -n -a public-read npcx_monitor-2025.02.07.bin \
+    gcloud storage cp -n -a publicRead npcx_monitor-2025.02.07.bin \
         gs://chromeos-localmirror/distfiles/cros_ec/npcx_monitor/
 ```
 
@@ -127,6 +127,6 @@ the NPCX monitor in several locations, but gives priority to the
 `npcx_monitor.bin` found in the board's output build directory.
 
 
-[servo dockerfile]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/hdctools/servo/dockerfiles/Dockerfile
+[servo dockerfile]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/hdctools/dockerfiles/Dockerfile.base
 [`flash_ec`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/util/flash_ec
 [`check_hash.cmake`]: ./check_hash.cmake
