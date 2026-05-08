@@ -10,7 +10,7 @@
 #
 # After running "zmake build rtk_flame" the Realtek monitor binary is
 # created at:
-#     build/zephyr/rtk_flame/build-singleimage/rts5912_flash_upload.bin
+#     build/zephyr/rtk_flame/build-singleimage/rts5915_flash_upload.bin
 #
 # Use the above artifact with the "rktupdate" utility when using the
 # "--method=frame" option.
