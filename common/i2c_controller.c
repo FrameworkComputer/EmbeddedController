@@ -10,7 +10,6 @@
 #include "crc8.h"
 #include "host_command.h"
 #include "i2c.h"
-#include "i2c_bitbang.h"
 #include "i2c_private.h"
 #include "printf.h"
 #include "system.h"
@@ -32,7 +31,7 @@
 #define I2C_CONTROLLER_COUNT I2C_PORT_COUNT
 #endif
 
-static mutex_t port_mutex[I2C_CONTROLLER_COUNT + I2C_BITBANG_PORT_COUNT];
+static mutex_t port_mutex[I2C_CONTROLLER_COUNT];
 
 /* A bitmap of the controllers which are currently servicing a request. */
 static volatile uint32_t i2c_port_active_list;
@@ -88,14 +87,6 @@ const struct i2c_port_t *get_i2c_port(const int port)
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_I2C_BITBANG_CROS_EC)) {
-		/* Find the matching port in i2c_bitbang_ports[] table. */
-		for (i = 0; i < i2c_bitbang_ports_used; i++) {
-			if (i2c_bitbang_ports[i].port == port)
-				return &i2c_bitbang_ports[i];
-		}
-	}
-
 	return NULL;
 }
 
@@ -122,12 +113,7 @@ __maybe_unused static int chip_i2c_xfer_with_notify(const int port,
 		 */
 		no_pec_af &= ~I2C_FLAG_PEC;
 
-	if (i2c_port->drv)
-		ret = i2c_port->drv->xfer(i2c_port, no_pec_af, out, out_size,
-					  in, in_size, flags);
-	else
-		ret = chip_i2c_xfer(port, no_pec_af, out, out_size, in, in_size,
-				    flags);
+	ret = chip_i2c_xfer(port, no_pec_af, out, out_size, in, in_size, flags);
 
 	if (IS_ENABLED(CONFIG_I2C_XFER_BOARD_CALLBACK))
 		i2c_end_xfer_notify(port, addr_flags);

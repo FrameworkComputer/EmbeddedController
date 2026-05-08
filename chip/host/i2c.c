@@ -98,32 +98,7 @@ int chip_i2c_set_freq(int port, enum i2c_freq freq)
 
 enum i2c_freq chip_i2c_get_freq(int port)
 {
-	switch (i2c_ports[port].kbps) {
-	case 1000:
-		return I2C_FREQ_1000KHZ;
-	case 400:
-		return I2C_FREQ_400KHZ;
-	case 100:
-		return I2C_FREQ_100KHZ;
-	}
-
-	/* fallback to 100k */
-	return I2C_FREQ_100KHZ;
-}
-
-int i2c_raw_get_scl(int port)
-{
-	return 1;
-}
-
-int i2c_raw_get_sda(int port)
-{
-	return 1;
-}
-
-int i2c_get_line_levels(int port)
-{
-	return 0;
+	return EC_ERROR_UNIMPLEMENTED;
 }
 
 void i2c_init(void)

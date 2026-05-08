@@ -73,10 +73,6 @@ extern "C" {
 /* This port allows changing speed at runtime */
 #define I2C_PORT_FLAG_DYNAMIC_SPEED BIT(0)
 
-#ifndef CONFIG_I2C_BITBANG_CROS_EC
-#define I2C_BITBANG_PORT_COUNT 0
-#endif
-
 /*
  * Supported I2C CLK frequencies.
  * TODO(crbug.com/549286): Use this enum in i2c_port_t.
@@ -100,28 +96,13 @@ struct i2c_info_t {
 	uint16_t addr_flags;
 };
 
-struct i2c_port_t; /* forward declaration */
-
-struct i2c_drv {
-	int (*xfer)(const struct i2c_port_t *i2c_port,
-		    const uint16_t addr_flags, const uint8_t *out, int out_size,
-		    uint8_t *in, int in_size, int flags);
-};
-
 /* Data structure to define I2C port configuration. */
 struct i2c_port_t {
 	int port; /* Port */
-#ifndef CONFIG_ZEPHYR
-	const char *name; /* Port name */
-	int kbps; /* Speed in kbps */
-	enum gpio_signal scl; /* Port SCL GPIO line */
-	enum gpio_signal sda; /* Port SDA GPIO line */
-#endif /* CONFIG_ZEPHYR */
 	/* When bus is protected, returns true if passthru allowed for address.
 	 * If the function is not defined, the default value is true. */
 	int (*passthru_allowed)(const struct i2c_port_t *port,
 				uint16_t addr_flags);
-	const struct i2c_drv *drv;
 	uint16_t flags; /* I2C_PORT_FLAG_* flags */
 };
 
@@ -207,77 +188,6 @@ int i2c_xfer(const int port, const uint16_t addr_flags, const uint8_t *out,
 int i2c_xfer_unlocked(const int port, const uint16_t addr_flags,
 		      const uint8_t *out, int out_size, uint8_t *in,
 		      int in_size, int flags);
-
-#define I2C_LINE_SCL_HIGH BIT(0)
-#define I2C_LINE_SDA_HIGH BIT(1)
-#define I2C_LINE_IDLE (I2C_LINE_SCL_HIGH | I2C_LINE_SDA_HIGH)
-
-/**
- * Return raw I/O line levels (I2C_LINE_*) for a port when port is in alternate
- * function mode.
- *
- * @param port		Port to check
- */
-int i2c_get_line_levels(int port);
-
-/**
- * Get GPIO pin for I2C SCL from the i2c port number
- *
- * @param port I2C port number
- * @param sda  Pointer to gpio signal to store the SCL gpio at
- * @return EC_SUCCESS if a valid GPIO point is found, EC_ERROR_INVAL if not
- */
-int get_scl_from_i2c_port(int port, enum gpio_signal *scl);
-
-/**
- * Get GPIO pin for I2C SDA from the i2c port number
- *
- * @param port I2C port number
- * @param sda  Pointer to gpio signal to store the SDA gpio at
- * @return EC_SUCCESS if a valid GPIO point is found, EC_ERROR_INVAL if not
- */
-int get_sda_from_i2c_port(int port, enum gpio_signal *sda);
-
-/**
- * Get the state of the SCL pin when port is not in alternate function mode.
- *
- * @param port		I2C port of interest
- * @return		State of SCL pin
- */
-int i2c_raw_get_scl(int port);
-
-/**
- * Get the state of the SDA pin when port is not in alternate function mode.
- *
- * @param port		I2C port of interest
- * @return		State of SDA pin
- */
-int i2c_raw_get_sda(int port);
-
-/**
- * Set the state of the SCL pin.
- *
- * @param port		I2C port of interest
- * @param level		State to set SCL pin to
- */
-void i2c_raw_set_scl(int port, int level);
-
-/**
- * Set the state of the SDA pin.
- *
- * @param port		I2C port of interest
- * @param level		State to set SDA pin to
- */
-void i2c_raw_set_sda(int port, int level);
-
-/**
- * Toggle the I2C pins into or out of raw / big-bang mode.
- *
- * @param port		I2C port of interest
- * @param enable	Flag to enable raw mode or disable it
- * @return		EC_SUCCESS if successful
- */
-int i2c_raw_mode(int port, int enable);
 
 /**
  * Lock / unlock an I2C port.

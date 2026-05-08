@@ -73,31 +73,25 @@ test_mockable void gmr_tablet_switch_isr(enum gpio_signal signal)
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
 #ifdef I2C_PORT_BATTERY
-	{ .name = "battery",
-	  .port = I2C_PORT_BATTERY,
-	  .kbps = 100,
-	  .scl = 0,
-	  .sda = 0 },
+	{
+		.port = I2C_PORT_BATTERY,
+	},
 #elif defined I2C_PORT_LIGHTBAR
-	{ .name = "lightbar",
-	  .port = I2C_PORT_LIGHTBAR,
-	  .kbps = 100,
-	  .scl = 0,
-	  .sda = 0 },
+	{
+		.port = I2C_PORT_LIGHTBAR,
+	},
 #elif defined I2C_PORT_HOST_TCPC
-	{ .name = "tcpc",
-	  .port = I2C_PORT_HOST_TCPC,
-	  .kbps = 100,
-	  .scl = 0,
-	  .sda = 0 },
+	{
+		.port = I2C_PORT_HOST_TCPC,
+	},
 #elif defined I2C_PORT_EEPROM
-	{ .name = "eeprom",
-	  .port = I2C_PORT_EEPROM,
-	  .kbps = 100,
-	  .scl = 0,
-	  .sda = 0 },
+	{
+		.port = I2C_PORT_EEPROM,
+	},
 #elif defined I2C_PORT_WLC
-	{ .name = "wlc", .port = I2C_PORT_WLC, .kbps = 100, .scl = 0, .sda = 0 },
+	{
+		.port = I2C_PORT_WLC,
+	},
 #endif
 };
 

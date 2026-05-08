@@ -32,7 +32,7 @@
 #define PTHRUPRINTF(format, args...)
 #endif
 
-static uint8_t port_protected[I2C_PORT_COUNT + I2C_BITBANG_PORT_COUNT];
+static uint8_t port_protected[I2C_PORT_COUNT];
 
 /**
  * Perform the voluminous checking required for this message
