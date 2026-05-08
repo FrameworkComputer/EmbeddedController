@@ -28,8 +28,7 @@ from chromite.api.gen_sdk.chromite.api import firmware_pb2
 
 ZEPHYR_BOARDS = [
     "bloonchipper",
-    # TODO(b/511026312): re-enable chudow once fixed
-    # "chudow",
+    "chudow",
     "helipilot",
     "sanok",
 ]
