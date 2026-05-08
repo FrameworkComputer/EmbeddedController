@@ -25,7 +25,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/spinlock.h>
 #include <zephyr/sys/util.h>
-LOG_MODULE_REGISTER(led, LOG_LEVEL_ERR);
+LOG_MODULE_REGISTER(led, LOG_LEVEL_INF);
 
 /* Extern the driver handles linked by 'led-pins' in the policies */
 #define DECLARE_DRIVER(inst)                        \
@@ -592,6 +592,11 @@ static int match_node(const struct policy_group *grp, int node_idx)
 	/* reset the color counter if pattern just activated */
 	if (!(*active)) {
 		*active = true;
+
+		if (node->num_patterns > 0) {
+			LOG_INF("Policy %d -> led %d", node_idx,
+				node->led_patterns[0].led_id);
+		}
 
 		/*
 		 * If a system state transition activates a policy for an LED
