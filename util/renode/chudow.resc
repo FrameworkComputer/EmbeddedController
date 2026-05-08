@@ -14,6 +14,13 @@ $bin?=$ORIGIN/chudow/ec.bin
 $elf_ro?=$ORIGIN/chudow/ec.RO.elf
 $elf_rw?=$ORIGIN/chudow/ec.RW.elf
 
+# USART3 is not included in upstream Renode
+# (https://github.com/renode/renode/blob/master/platforms/cpus/focaltech_ft9001.repl),
+# so we add it here.
+# Address and IRQ come from
+# https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/zephyrproject/zephyr/dts/arm/focaltech/ft9001/ft9001.dtsi;l=95-102;drc=07db2d60da7db0c0f568842bec3aaf221d727281.
+machine LoadPlatformDescriptionFromString "usart3: UART.FT9001_USART @ sysbus 0x4001d000 { IRQ -> nvic0@61 }"
+
 showAnalyzer usart2
 
 set mock_rom_func
