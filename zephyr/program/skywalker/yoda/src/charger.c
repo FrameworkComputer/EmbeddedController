@@ -97,4 +97,22 @@ void battery_policy(void)
 			pre_battery_cells);
 	}
 }
+DECLARE_DEFERRED(battery_policy);
 DECLARE_HOOK(HOOK_INIT, battery_policy, HOOK_PRIO_POST_BATTERY_INIT + 1);
+
+static void battery_policy_check(void)
+{
+	/*
+	 * A new/shutdown battery requires more wake-up time than a normal
+	 * battery. This may cause pre_battery_cells to remain BATT_UNKNOWN.
+	 *
+	 * In factory test with new battery, SBS data become available
+	 * around 1.7–1.9s after power-on. We schedule a deferred retry with
+	 * 2105ms as a conservative upper bound to ensure SBS data is readable
+	 * before policy execution.
+	 */
+	if (pre_battery_cells == BATT_UNKNOWN) {
+		hook_call_deferred(&battery_policy_data, 2105 * USEC_PER_MSEC);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, battery_policy_check, HOOK_PRIO_LAST);
