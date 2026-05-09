@@ -5,6 +5,7 @@
 
 #include "charge_state.h"
 #include "charger.h"
+#include "chipset.h"
 #include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "driver/charger/isl9241.h"
@@ -96,15 +97,18 @@ static void detect_aconly(void)
 DECLARE_HOOK(HOOK_INIT, detect_aconly, HOOK_PRIO_DEFAULT + 1);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, detect_aconly, HOOK_PRIO_DEFAULT + 1);
 
-static void tp_enable(void)
+static void tp_bl_enable(void)
 {
-	if (lid_is_open()) {
+	if (lid_is_open() && !chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_tp_disable), true);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_lcd_backoff), true);
 	} else {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_tp_disable), false);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_lcd_backoff),
+				false);
 	}
 }
-DECLARE_HOOK(HOOK_LID_CHANGE, tp_enable, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_LID_CHANGE, tp_bl_enable, HOOK_PRIO_DEFAULT);
 
 static void disable_sleep_bid(void)
 {
