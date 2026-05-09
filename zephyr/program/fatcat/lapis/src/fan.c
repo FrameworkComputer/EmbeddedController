@@ -14,7 +14,10 @@
 #define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
 
 #define TEMP_VR TEMP_SENSOR_ID(DT_NODELABEL(temp_vr))
+#define TEMP_DDR TEMP_SENSOR_ID(DT_NODELABEL(temp_ddr))
+#define TEMP_TOP TEMP_SENSOR_ID(DT_NODELABEL(temp_top))
 #define TEMP_SSD TEMP_SENSOR_ID(DT_NODELABEL(temp_ssd))
+#define TEMP_CHG TEMP_SENSOR_ID(DT_NODELABEL(temp_charger))
 
 struct fan_step {
 	int on[TEMP_SENSOR_COUNT];
@@ -53,18 +56,36 @@ int fan_table_to_rpm(int fan, int *temp)
 	 *  3. invariant path. (return the current RPM)
 	 */
 	if ((temp[TEMP_VR] > prev_tmp[TEMP_VR]) ||
-	    (temp[TEMP_SSD] > prev_tmp[TEMP_SSD])) {
+	    (temp[TEMP_DDR] > prev_tmp[TEMP_DDR]) ||
+	    (temp[TEMP_TOP] > prev_tmp[TEMP_TOP]) ||
+	    (temp[TEMP_SSD] > prev_tmp[TEMP_SSD]) ||
+	    (temp[TEMP_CHG] > prev_tmp[TEMP_CHG])) {
 		if ((temp[TEMP_VR] >=
 		     fan_step_table[current_level].on[TEMP_VR]) ||
+		    (temp[TEMP_DDR] >=
+		     fan_step_table[current_level].on[TEMP_DDR]) ||
+		    (temp[TEMP_TOP] >=
+		     fan_step_table[current_level].on[TEMP_TOP]) ||
 		    (temp[TEMP_SSD] >=
-		     fan_step_table[current_level].on[TEMP_SSD]))
+		     fan_step_table[current_level].on[TEMP_SSD]) ||
+		    (temp[TEMP_CHG] >=
+		     fan_step_table[current_level].on[TEMP_CHG]))
 			current_level++;
 	} else if ((temp[TEMP_VR] < prev_tmp[TEMP_VR]) ||
-		   (temp[TEMP_SSD] < prev_tmp[TEMP_SSD])) {
+		   (temp[TEMP_DDR] < prev_tmp[TEMP_DDR]) ||
+		   (temp[TEMP_TOP] < prev_tmp[TEMP_TOP]) ||
+		   (temp[TEMP_SSD] < prev_tmp[TEMP_SSD]) ||
+		   (temp[TEMP_CHG] < prev_tmp[TEMP_CHG])) {
 		if ((temp[TEMP_VR] <=
 		     fan_step_table[current_level].off[TEMP_VR]) &&
+		    (temp[TEMP_DDR] <=
+		     fan_step_table[current_level].off[TEMP_DDR]) &&
+		    (temp[TEMP_TOP] <=
+		     fan_step_table[current_level].off[TEMP_TOP]) &&
 		    (temp[TEMP_SSD] <=
-		     fan_step_table[current_level].off[TEMP_SSD]))
+		     fan_step_table[current_level].off[TEMP_SSD]) &&
+		    (temp[TEMP_CHG] <=
+		     fan_step_table[current_level].off[TEMP_CHG]))
 			current_level--;
 	}
 
@@ -73,11 +94,7 @@ int fan_table_to_rpm(int fan, int *temp)
 		current_level = CLAMP(current_level, 0, (NUM_FAN_LEVELS - 1));
 
 	if (current_level != prev_level) {
-		CPRINTS("temp_vr: %d, prev_temp: %d", temp[TEMP_VR],
-			prev_tmp[TEMP_VR]);
-		CPRINTS("temp_ssd: %d, prev_temp: %d", temp[TEMP_SSD],
-			prev_tmp[TEMP_SSD]);
-		CPRINTS("current_level: %d", current_level);
+		CPRINTS("fan_level: %d", current_level);
 	}
 	prev_level = current_level;
 
