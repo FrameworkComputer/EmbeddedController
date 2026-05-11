@@ -48,6 +48,8 @@ def main() -> int:
                             "clock_control/clock_control_mchp_xec.c"
                             in active_name
                         )
+                        and not "src/third_party/zephyrproject/zephyr/include/"
+                        "zephyr/sys/byteorder.h" in active_name
                         and not "src/third_party/zephyrproject/zephyr/lib/libc/minimal/include/"
                         in active_name
                         and not "src/third_party/zephyrproject/zephyr/subsys/testsuite/ztest/"
