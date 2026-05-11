@@ -238,27 +238,34 @@ static int print_pdc_info(const struct shell *sh, int port, bool live)
 	bool has_proj_name = pdc_info.project_name[0] != '\0' &&
 			     (uint8_t)pdc_info.project_name[0] != 0xFF;
 
+	/* Call 1: Basic and Version Info (7 arguments) */
 	shell_fprintf(sh, SHELL_INFO,
 		      "Live: %d\n"
 		      "FW Ver: %u.%u.%u\n"
 		      "PD Rev: %u\n"
 		      "PD Ver: %u\n"
-		      "VID/PID: %04x:%04x\n"
+		      "VID/PID: %04x:%04x\n",
+		      live, PDC_FWVER_GET_MAJOR(pdc_info.fw_version),
+		      PDC_FWVER_GET_MINOR(pdc_info.fw_version),
+		      PDC_FWVER_GET_PATCH(pdc_info.fw_version),
+		      pdc_info.pd_revision, pdc_info.pd_version, pdc_info.vid,
+		      pdc_info.pid);
+
+	/* Call 2: Flash and Capabilities Info (8 arguments) */
+	shell_fprintf(sh, SHELL_INFO,
 		      "Running Flash Code: %c\n"
 		      "Flash Bank: %u\n"
 		      "Project Name: '%s'\n"
 		      "Driver Name: '%s'\n"
 		      "FW Update: %c\n"
-		      "FRS Supported: %c\n",
-		      live, PDC_FWVER_GET_MAJOR(pdc_info.fw_version),
-		      PDC_FWVER_GET_MINOR(pdc_info.fw_version),
-		      PDC_FWVER_GET_PATCH(pdc_info.fw_version),
-		      pdc_info.pd_revision, pdc_info.pd_version, pdc_info.vid,
-		      pdc_info.pid, pdc_info.is_running_flash_code ? 'Y' : 'N',
+		      "FRS Supported: %c\n"
+		      "USB Device Capable: %c\n",
+		      pdc_info.is_running_flash_code ? 'Y' : 'N',
 		      pdc_info.running_in_flash_bank,
 		      has_proj_name ? pdc_info.project_name : "<None>",
 		      pdc_info.driver_name, pdc_info.no_fw_update ? 'N' : 'Y',
-		      pdc_info.frs_supported ? 'Y' : 'N');
+		      pdc_info.frs_supported ? 'Y' : 'N',
+		      pdc_info.usb_comm_capable_as_device ? 'Y' : 'N');
 
 	return EC_SUCCESS;
 }

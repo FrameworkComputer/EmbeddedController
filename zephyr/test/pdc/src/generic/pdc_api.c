@@ -631,6 +631,7 @@ static const struct pdc_info_t info_in1 = {
 	.vid = 0x1234,
 	.pid = 0x5678,
 	.project_name = "ProjectName",
+	.usb_comm_capable_as_device = true,
 };
 
 static const struct pdc_info_t info_in2 = {
@@ -639,7 +640,8 @@ static const struct pdc_info_t info_in2 = {
 	.pd_revision = 0x5678,
 	.vid = 0x9abc,
 	.pid = 0xdef0,
-	.project_name = "MyProj",
+	.project_name = "ProjectName",
+	.usb_comm_capable_as_device = false,
 };
 #endif /* DT_NODE_EXISTS(ZEPHYR_USER_NODE) */
 

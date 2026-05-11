@@ -1732,6 +1732,7 @@ static int cmd_get_ic_status_sync_internal(const struct pdc_config_t *cfg,
 
 	info->no_fw_update = cfg->no_fw_update;
 	info->frs_supported = cfg->frs_supported;
+	info->usb_comm_capable_as_device = false;
 
 	return 0;
 }
@@ -3430,6 +3431,10 @@ BUILD_ASSERT(
 		.frs_supported = DT_INST_PROP(inst, frs_supported),            \
 		.port_index_on_chip = DT_INST_PROP(inst, port_index_on_chip),  \
 	};                                                                     \
+                                                                               \
+	BUILD_ASSERT(                                                          \
+		!DT_INST_PROP(inst, usb_comm_capable_as_device),               \
+		"usb-comm-capable-as-device is not supported by tps6699x");    \
                                                                                \
 	DEVICE_DT_INST_DEFINE(inst, pdc_init, NULL,                            \
 			      &PDC_DATA_STRUCT_NAME(inst), &pdc_config##inst,  \

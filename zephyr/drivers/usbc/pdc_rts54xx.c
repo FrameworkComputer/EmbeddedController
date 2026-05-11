@@ -1355,6 +1355,8 @@ static enum smf_state_result st_read_run(void *o)
 
 		info->no_fw_update = cfg->no_fw_update;
 		info->frs_supported = cfg->frs_supported;
+		info->usb_comm_capable_as_device =
+			cfg->usb_comm_capable_as_device;
 
 		/* Retain a cached copy of this data */
 		data->info = *info;

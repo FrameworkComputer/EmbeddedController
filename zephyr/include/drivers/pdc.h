@@ -116,6 +116,9 @@ struct pdc_info_t {
 	bool no_fw_update;
 	/** True if the PDC hardware supports FRS */
 	bool frs_supported;
+	/** True if the USB-C port is capable of USB communication as a device
+	 */
+	bool usb_comm_capable_as_device;
 	/** Extra information (optional) */
 	uint16_t extra;
 };
