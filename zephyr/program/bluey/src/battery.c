@@ -6,7 +6,6 @@
 /* Bluey battery-specific configuration */
 
 #include "battery.h"
-#include "battery_fuel_gauge.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
@@ -67,11 +66,6 @@ void board_chipset_pre_init(void)
 	if (battery_is_present() == BP_YES) {
 		battery_poll_dynamic_info();
 		LOG_INF("battery dynamic information cached");
-
-		if (battery_is_charge_fet_disabled() == 1) {
-			LOG_ERR("Battery C-FET is disabled, issuing cutoff!");
-			battery_cutoff_start();
-		}
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, board_chipset_pre_init, HOOK_PRIO_DEFAULT);

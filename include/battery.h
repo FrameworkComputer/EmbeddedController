@@ -454,13 +454,6 @@ int battery_bq4050_imbalance_mv(void);
 int board_cut_off_battery(void);
 
 /**
- * Start battery cut-off sequence.
- *
- * @return EC_RES_SUCCESS if the cutoff was started.
- */
-int battery_cutoff_start(void);
-
-/**
  * Return if the battery start cut off.
  */
 int battery_cutoff_in_progress(void);
