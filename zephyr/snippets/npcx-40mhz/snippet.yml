@@ -1,0 +1,8 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+name: npcx-40mhz
+append:
+  EXTRA_CONF_FILE: npcx-40mhz.conf
+  EXTRA_DTC_OVERLAY_FILE: npcx-40mhz.overlay
