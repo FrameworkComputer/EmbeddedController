@@ -609,7 +609,9 @@ void battery_get_params(struct batt_params *batt)
 /* Wait until battery is totally stable */
 int battery_wait_for_stable(void)
 {
-	int status;
+	/* timeout without a successful battery_status causes reading this
+	 * initial value. Reading uninitialized value is UB so set it 0 here. */
+	int status = 0;
 	uint64_t wait_timeout = get_time().val + BATTERY_NO_RESPONSE_TIMEOUT;
 
 	CPRINTS("Wait for battery stabilized during %d",

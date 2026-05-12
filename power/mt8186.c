@@ -362,14 +362,6 @@ enum power_state power_chipset_init(void)
 		is_s5g3_passed = true;
 	}
 
-	if (battery_is_present() == BP_YES)
-		/*
-		 * (crosbug.com/p/28289): Wait battery stable.
-		 * Some batteries use clock stretching feature, which requires
-		 * more time to be stable.
-		 */
-		battery_wait_for_stable();
-
 	if (exit_hard_off && init_state == POWER_G3) {
 		/* Auto-power on */
 #if CONFIG_PLATFORM_EC_PP3700_DISCHARGE_TIME_MS

@@ -715,6 +715,17 @@ void chipset_task(void *u)
 	uint32_t this_in_signals;
 	static uint32_t last_in_signals;
 
+#ifdef CONFIG_BATTERY
+	/*
+	 * (crosbug.com/p/28289): Wait battery stable.
+	 * Some batteries use clock stretching feature, which requires
+	 * more time to be stable. We should not wait in HOOK_INIT tasks
+	 * because charger_task runs after HOOK_INIT.
+	 */
+	if (battery_is_present() != BP_NO)
+		battery_wait_for_stable();
+#endif /* CONFIG_BATTERY */
+
 	while (1) {
 		/*
 		 * In order to prevent repeated console spam, only print the

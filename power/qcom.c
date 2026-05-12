@@ -593,15 +593,6 @@ enum power_state power_chipset_init(void)
 		 (reset_flags & EC_RESET_FLAG_SYSJUMP))
 		auto_power_on = 0;
 
-	if (battery_is_present() == BP_YES) {
-		/*
-		 * (crosbug.com/p/28289): Wait battery stable.
-		 * Some batteries use clock stretching feature, which requires
-		 * more time to be stable.
-		 */
-		battery_wait_for_stable();
-	}
-
 	if (auto_power_on)
 		CPRINTS("auto_power_on set due to reset flags");
 

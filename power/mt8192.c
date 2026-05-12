@@ -233,14 +233,6 @@ enum power_state power_chipset_init(void)
 		exit_hard_off = 0;
 	}
 
-	if (battery_is_present() == BP_YES)
-		/*
-		 * (crosbug.com/p/28289): Wait battery stable.
-		 * Some batteries use clock stretching feature, which requires
-		 * more time to be stable.
-		 */
-		battery_wait_for_stable();
-
 	if (exit_hard_off)
 		/* Auto-power on */
 		chipset_exit_hard_off();
