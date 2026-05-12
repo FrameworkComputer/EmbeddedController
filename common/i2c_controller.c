@@ -57,10 +57,6 @@ SYS_INIT(init_port_mutex, POST_KERNEL, 50);
 STATIC_IF_NOT(CONFIG_ZTEST)
 int i2c_port_is_locked(int port)
 {
-#ifdef CONFIG_I2C_MULTI_PORT_CONTROLLER
-	/* Test the controller, not the port */
-	port = i2c_port_to_controller(port);
-#endif
 	/* can't lock a non-existing port */
 	if (port < 0)
 		return 0;
@@ -225,10 +221,6 @@ int i2c_xfer(const int port, const uint16_t addr_flags, const uint8_t *out,
 
 void i2c_lock(int port, int lock)
 {
-#ifdef CONFIG_I2C_MULTI_PORT_CONTROLLER
-	/* Lock the controller, not the port */
-	port = i2c_port_to_controller(port);
-#endif
 	if (port < 0 || port >= ARRAY_SIZE(port_mutex))
 		return;
 

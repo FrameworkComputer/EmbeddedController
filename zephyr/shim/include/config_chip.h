@@ -75,7 +75,6 @@ extern "C" {
  */
 #undef CONFIG_BC12_SINGLE_DRIVER /* Obsolete due to BC1.2 shim driver */
 #undef CONFIG_CONSOLE_UART /* Only used by the Chromium EC chip drivers */
-#undef CONFIG_I2C_MULTI_PORT_CONTROLLER /* Not required by I2C shim */
 #undef CONFIG_IRQ_COUNT /* Only used by Chromium EC core drivers */
 #undef CONFIG_KEYBOARD_KSO_HIGH_DRIVE /* Used by the Chromium EC chip drivers \
 				       */

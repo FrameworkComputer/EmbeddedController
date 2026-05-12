@@ -371,17 +371,6 @@ int i2c_write_block(const int port, const uint16_t addr_flags, int offset,
 		    const uint8_t *data, int len);
 
 /**
- * Convert port number to controller number, for multi-port controllers.
- * This function will only be called if CONFIG_I2C_MULTI_PORT_CONTROLLER is
- * defined.
- *
- * @parm port I2C port
- *
- * @return controller number, or -1 on invalid parameter
- */
-int i2c_port_to_controller(int port);
-
-/**
  * Callbacks processing received data and response
  *
  * i2c_data_received will be called when a peripheral finishes receiving data

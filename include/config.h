@@ -2934,16 +2934,6 @@
 #define CONFIG_I2C_EXTRA_PACKET_SIZE 0
 
 /*
- * I2C multi-port controller.
- *
- * If CONFIG_I2C_MULTI_PORT_CONTROLLER is defined, a single on-chip I2C
- * controller may have multiple I2C ports attached. Therefore, I2c operations
- * must lock the controller (not just the port) to prevent hardware access
- * conflicts.
- */
-#undef CONFIG_I2C_MULTI_PORT_CONTROLLER
-
-/*
  * If defined, reduce I2C traffic from update functions (i2c_update8/16
  * and i2c_field_update8/16) by skipping the write if the new value is
  * unchanged from the old value. This assumes no side effects from writing an
