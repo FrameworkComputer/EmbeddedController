@@ -14,6 +14,7 @@ def register_nissa_project(
     chip="it8xxx2/it81302bx",
     kconfig_files=None,
     modules=None,
+    snippets=None,
 ):
     """Register a variant of nissa."""
     kwargs = {}
@@ -42,6 +43,7 @@ def register_nissa_project(
         kconfig_files=kconfig_files,
         inherited_from=["nissa"],
         supported_toolchains=["coreboot-sdk", "zephyr"],
+        snippets=snippets,
         **kwargs,
     )
 
@@ -94,6 +96,7 @@ pujjo = register_nissa_project(
 pujjoga = register_nissa_project(
     project_name="pujjoga",
     chip="npcx9/npcx9m3f",
+    snippets=["npcx-40mhz"],
 )
 
 pujjogatwin = register_nissa_project(
