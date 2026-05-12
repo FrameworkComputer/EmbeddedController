@@ -112,6 +112,7 @@ def parse_args(argv: Optional[List[str]] = None):
     parser.add_argument(
         "--cme-version",
         help="CME version string to use in build",
+        type=int,
     )
 
     parser.add_argument(
@@ -171,7 +172,7 @@ def insert_expect(prop, version, comp, expect):
     if "expect" not in comp[prop]:
         comp[prop].update({"expect": []})
 
-    if version == "2":
+    if version == 2:
         compress_expect_2(expect)
 
     for preexisting_expect in comp[prop]["expect"]:
