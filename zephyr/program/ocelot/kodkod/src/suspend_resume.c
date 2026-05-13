@@ -51,12 +51,12 @@ static int init_suspend_resume(void)
 		GPIO_DT_FROM_NODELABEL(gpio_ec_amp_mute_l);
 
 	if (!gpio_is_ready_dt(lan_pwr_en)) {
-		LOG_ERR("device %s not ready", lan_pwr_en->port->name);
+		LOG_ERR_DEVICE_NOT_READY(lan_pwr_en->port);
 		return -EINVAL;
 	}
 
 	if (!gpio_is_ready_dt(amp_mute_l)) {
-		LOG_ERR("device %s not ready", amp_mute_l->port->name);
+		LOG_ERR_DEVICE_NOT_READY(amp_mute_l->port);
 		return -EINVAL;
 	}
 

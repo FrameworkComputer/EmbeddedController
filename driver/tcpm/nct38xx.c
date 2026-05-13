@@ -172,7 +172,7 @@ int nct38xx_init(int port)
 			nct38xx_get_gpio_device_from_port(port);
 
 		if (!device_is_ready(dev)) {
-			CPRINTS("device %s not ready", dev->name);
+			LOG_ERR_DEVICE_NOT_READY(dev);
 			return EC_ERROR_BUSY;
 		}
 #endif /* CONFIG_ZEPHYR */
@@ -279,9 +279,8 @@ static inline void nct38xx_tcpc_vendor_defined_alert(int port)
 #ifdef CONFIG_ZEPHYR
 	const struct device *dev = nct38xx_get_gpio_device_from_port(port);
 
-	if (!dev || !device_is_ready(dev)) {
-		if (dev)
-			CPRINTS("device %s not ready", dev->name);
+	if (!device_is_ready(dev)) {
+		LOG_ERR_DEVICE_NOT_READY(dev);
 		return;
 	}
 

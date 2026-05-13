@@ -62,7 +62,7 @@ static int cse_early_rec_driver_init(const struct device *dev)
 
 	if (!gpio_is_ready_dt(&cfg->cse_early_rec_gpio)) {
 		/* LCOV_EXCL_START */
-		LOG_ERR("CSE early recovery GPIO is not ready");
+		LOG_ERR_DEVICE_NOT_READY(cfg->cse_early_rec_gpio.port);
 		return -ENODEV;
 		/* LCOV_EXCL_STOP */
 	}

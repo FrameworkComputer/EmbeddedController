@@ -35,7 +35,7 @@ int eppm_init(void)
 
 	pdc_dev = DEVICE_DT_GET(DT_INST(0, ucsi_ppm));
 	if (!device_is_ready(pdc_dev)) {
-		LOG_ERR("device %s not ready", pdc_dev->name);
+		LOG_ERR_DEVICE_NOT_READY(pdc_dev);
 		return -ENODEV;
 	}
 

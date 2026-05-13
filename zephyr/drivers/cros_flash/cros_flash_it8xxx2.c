@@ -455,7 +455,7 @@ static int flash_it8xxx2_init(const struct device *dev)
 	ARG_UNUSED(dev);
 
 	if (!device_is_ready(flash_controller)) {
-		LOG_ERR("device %s not ready", flash_controller->name);
+		LOG_ERR_DEVICE_NOT_READY(flash_controller);
 		return -ENODEV;
 	}
 

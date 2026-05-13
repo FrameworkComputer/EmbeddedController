@@ -141,7 +141,7 @@ void ppc_enable_interrupt(void)
 		 * Check whether the gpio pin is ready
 		 */
 		if (!gpio_is_ready_dt(&ppc_chips[i].irq_gpio)) {
-			LOG_ERR("tcpc port #%i interrupt not ready.", i);
+			LOG_ERR_DEVICE_NOT_READY(ppc_chips[i].irq_gpio.port);
 			return;
 		}
 		/*

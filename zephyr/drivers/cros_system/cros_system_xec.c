@@ -89,7 +89,7 @@ static int system_xec_watchdog_stop(void)
 		const struct device *wdt_dev =
 			DEVICE_DT_GET(DT_NODELABEL(wdog));
 		if (!device_is_ready(wdt_dev)) {
-			LOG_ERR("device %s not ready", wdt_dev->name);
+			LOG_ERR_DEVICE_NOT_READY(wdt_dev);
 			return -ENODEV;
 		}
 

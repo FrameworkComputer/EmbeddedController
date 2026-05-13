@@ -4288,7 +4288,7 @@ static int pdc_subsys_init(const struct device *dev)
 	/* Static PDC configuration. Make sure the assigned PDC is ready. */
 
 	if (!device_is_ready(pdc)) {
-		LOG_ERR("C%d: PDC is not ready", config->connector_num);
+		LOG_ERR_DEVICE_NOT_READY(pdc);
 		goto disable_port;
 	}
 #endif /* !defined(CONFIG_PDC_RUNTIME_PORT_CONFIG) */

@@ -546,7 +546,7 @@ static int flash_rtk_init(const struct device *dev)
 	data->addr_prot_length = 0;
 
 	if (!device_is_ready(cfg->flash_dev)) {
-		LOG_ERR("device %s not ready", cfg->flash_dev->name);
+		LOG_ERR_DEVICE_NOT_READY(cfg->flash_dev);
 		return -ENODEV;
 	}
 

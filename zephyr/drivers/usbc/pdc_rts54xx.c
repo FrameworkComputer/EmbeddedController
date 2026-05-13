@@ -3152,15 +3152,13 @@ static int pdc_init(const struct device *dev)
 
 	rv = i2c_is_ready_dt(&cfg->i2c);
 	if (rv < 0) {
-		LOG_ERR("RTK%d: device %s not ready", cfg->connector_number,
-			cfg->i2c.bus->name);
+		LOG_ERR_DEVICE_NOT_READY(cfg->i2c.bus);
 		return -ENODEV;
 	}
 
 	rv = gpio_is_ready_dt(&cfg->irq_gpios);
 	if (rv < 0) {
-		LOG_ERR("RTK%d: device %s not ready", cfg->connector_number,
-			cfg->irq_gpios.port->name);
+		LOG_ERR_DEVICE_NOT_READY(cfg->irq_gpios.port);
 		return -ENODEV;
 	}
 

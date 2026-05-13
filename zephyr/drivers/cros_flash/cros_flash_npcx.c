@@ -898,7 +898,7 @@ static int flash_npcx_init(const struct device *dev)
 
 	data->flash_dev = DEVICE_DT_GET(FLASH_DEV);
 	if (!device_is_ready(data->flash_dev)) {
-		LOG_ERR("device %s not ready", data->flash_dev->name);
+		LOG_ERR_DEVICE_NOT_READY(data->flash_dev);
 		return -ENODEV;
 	}
 

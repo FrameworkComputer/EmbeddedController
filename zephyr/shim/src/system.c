@@ -352,7 +352,7 @@ test_export_static int system_preinitialize(void)
 {
 	if (bbram_dev) {
 		if (!device_is_ready(bbram_dev)) {
-			LOG_ERR("device %s not ready", bbram_dev->name);
+			LOG_ERR_DEVICE_NOT_READY(bbram_dev);
 			return -1;
 		}
 

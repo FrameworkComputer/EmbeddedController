@@ -46,7 +46,7 @@ static int hibernate_z5_init(const struct device *dev)
 	const struct hibernate_z5_config *cfg = dev->config;
 
 	if (!gpio_is_ready_dt(&cfg->en_slp_z_gpio)) {
-		LOG_ERR("GPIO is not ready");
+		LOG_ERR_DEVICE_NOT_READY(cfg->en_slp_z_gpio.port);
 		return -ENODEV;
 	}
 

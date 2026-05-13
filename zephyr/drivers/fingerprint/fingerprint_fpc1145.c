@@ -538,12 +538,12 @@ static int fpc1145_init_driver(const struct device *dev)
 	int ret;
 
 	if (!spi_is_ready_dt(&cfg->spi)) {
-		LOG_ERR("SPI bus is not ready");
+		LOG_ERR_DEVICE_NOT_READY(cfg->spi.bus);
 		return -EINVAL;
 	}
 
 	if (!gpio_is_ready_dt(&cfg->reset_pin)) {
-		LOG_ERR("Port for sensor reset GPIO is not ready");
+		LOG_ERR_DEVICE_NOT_READY(cfg->reset_pin.port);
 		return -EINVAL;
 	}
 
@@ -554,7 +554,7 @@ static int fpc1145_init_driver(const struct device *dev)
 	}
 
 	if (!gpio_is_ready_dt(&cfg->interrupt)) {
-		LOG_ERR("Port for interrupt GPIO is not ready");
+		LOG_ERR_DEVICE_NOT_READY(cfg->interrupt.port);
 		return -EINVAL;
 	}
 

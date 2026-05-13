@@ -52,7 +52,7 @@ static int system_rtk_watchdog_stop(void)
 {
 #ifdef CONFIG_WATCHDOG
 	if (!device_is_ready(watchdog)) {
-		LOG_ERR("device %s not ready", watchdog->name);
+		LOG_ERR_DEVICE_NOT_READY(watchdog);
 		return -ENODEV;
 	}
 

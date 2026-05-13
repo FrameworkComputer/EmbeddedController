@@ -63,7 +63,7 @@ int get_rvp_id_config(enum rvp_id_type id_type)
 
 	gpio_port = rvp_config->board_gpios_config[0].port;
 	if (!device_is_ready(gpio_port)) {
-		LOG_ERR("RVP_ID: gpio controller port is not initialized, cannot access it");
+		LOG_ERR_DEVICE_NOT_READY(gpio_port);
 		return -ENODEV;
 	}
 

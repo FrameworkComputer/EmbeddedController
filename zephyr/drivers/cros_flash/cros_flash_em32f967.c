@@ -142,7 +142,7 @@ static int flash_em32f967_init(const struct device *dev)
 	LOG_DBG("flash_em32f967_init.");
 
 	if (!device_is_ready(cfg->flash_dev)) {
-		LOG_ERR("Flash device %s not ready", cfg->flash_dev->name);
+		LOG_ERR_DEVICE_NOT_READY(cfg->flash_dev);
 		return -ENODEV;
 	}
 

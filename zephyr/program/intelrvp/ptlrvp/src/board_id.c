@@ -62,8 +62,9 @@ __override int board_get_version(void)
 		return ptl_board_id;
 
 #if DT_NODE_EXISTS(DT_NODELABEL(pca95xx_0))
-	if (!device_is_ready(DEVICE_DT_GET(DT_NODELABEL(pca95xx_0)))) {
-		LOG_ERR("PCA95XX ioexpander not initialized cannot access it");
+	const struct device *dev = (DEVICE_DT_GET(DT_NODELABEL(pca95xx_0)));
+	if (!device_is_ready(dev)) {
+		LOG_ERR_DEVICE_NOT_READY(dev);
 		return -1;
 	}
 #endif

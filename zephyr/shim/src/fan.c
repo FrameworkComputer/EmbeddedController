@@ -80,7 +80,7 @@ static void fan_pwm_update(int ch)
 	int ret;
 
 	if (!device_is_ready(pwm_dev)) {
-		LOG_ERR("device %s not ready", pwm_dev->name);
+		LOG_ERR_DEVICE_NOT_READY(pwm_dev);
 		return;
 	}
 
@@ -112,7 +112,7 @@ static int fan_rpm(int ch)
 	struct sensor_value val = { 0 };
 
 	if (!device_is_ready(dev)) {
-		LOG_ERR("device %s not ready", dev->name);
+		LOG_ERR_DEVICE_NOT_READY(dev);
 		return 0;
 	}
 

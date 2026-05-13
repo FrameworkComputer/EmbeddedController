@@ -53,12 +53,12 @@ static int init_suspend_resume(void)
 		GPIO_DT_FROM_NODELABEL(gpio_amp_mute_l);
 
 	if (!gpio_is_ready_dt(en_pp3300_wlan)) {
-		LOG_ERR("device %s not ready", en_pp3300_wlan->port->name);
+		LOG_ERR_DEVICE_NOT_READY(en_pp3300_wlan->port);
 		return -EINVAL;
 	}
 
 	if (!gpio_is_ready_dt(amp_mute_l)) {
-		LOG_ERR("device %s not ready", amp_mute_l->port->name);
+		LOG_ERR_DEVICE_NOT_READY(amp_mute_l->port);
 		return -EINVAL;
 	}
 

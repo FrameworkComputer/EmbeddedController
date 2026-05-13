@@ -149,12 +149,12 @@ static int intel_altmode_init(const struct device *dev)
 	int rv;
 
 	if (!i2c_is_ready_dt(&cfg->i2c)) {
-		LOG_ERR("I2C is not ready");
+		LOG_ERR_DEVICE_NOT_READY(cfg->i2c.bus);
 		return -ENODEV;
 	}
 
 	if (!gpio_is_ready_dt(&cfg->int_gpio)) {
-		LOG_ERR("GPIO is not ready");
+		LOG_ERR_DEVICE_NOT_READY(cfg->int_gpio.port);
 		return -ENODEV;
 	}
 

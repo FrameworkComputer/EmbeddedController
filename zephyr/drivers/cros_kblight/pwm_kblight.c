@@ -30,7 +30,7 @@ static void kblight_pwm_set_duty(int percent)
 	int rv;
 
 	if (!device_is_ready(pwm_dev)) {
-		LOG_ERR("device %s not ready", pwm_dev->name);
+		LOG_ERR_DEVICE_NOT_READY(pwm_dev);
 		return;
 	}
 

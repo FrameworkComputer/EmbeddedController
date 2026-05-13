@@ -284,7 +284,7 @@ test_export_static int init_gpios(const struct device *dev)
 			continue;
 
 		if (!device_is_ready(configs[i].spec.port)) {
-			LOG_ERR("device %s not ready", configs[i].name);
+			LOG_ERR_DEVICE_NOT_READY(configs[i].spec.port);
 			continue;
 		}
 
