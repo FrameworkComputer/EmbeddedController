@@ -1775,10 +1775,16 @@ static void cypd_handle_state(int controller)
 
 		gpio_enable_interrupt(pd_chip_config[controller].gpio);
 
+		for (int i = 0; i < pd_chip_config[controller].support_max_port; i++) {
+			int port = PORT_TO_CONTROLLER_PORT(i);
+
+			if (cypd_contoller_is_powered(controller))
+				cypd_update_port_state(controller, port);
+		}
+
 		/* After all PD chips initialize completely, and then update the state */
 		if (cypd_controllers_are_ready()) {
 
-			task_set_event(TASK_ID_CYPD, CCG_EVT_UPDATE_PORTSTATE);
 #if defined(CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE) || defined(CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE)
 			hook_call_deferred(&pd_batt_init_deferred_data, 100 * MSEC);
 #endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE || CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE */
@@ -2488,16 +2494,6 @@ void cypd_interrupt_handler_task(void *p)
 			for (i = 0; i < PD_CHIP_COUNT; i++) {
 				if (cypd_contoller_is_powered(i))
 					cypd_update_power_status(i);
-			}
-		}
-
-		if (evt & CCG_EVT_UPDATE_PORTSTATE) {
-			for (i = 0; i < PD_PORT_COUNT; i++) {
-				int controller = PORT_TO_CONTROLLER(i);
-				int port = PORT_TO_CONTROLLER_PORT(i);
-
-				if (cypd_contoller_is_powered(controller))
-					cypd_update_port_state(controller, port);
 			}
 		}
 
