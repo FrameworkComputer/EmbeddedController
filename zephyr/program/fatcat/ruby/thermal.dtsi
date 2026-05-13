@@ -24,8 +24,8 @@
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
 		memory {
-			temp-fan-off = <35>;
-			temp-fan-max = <70>;
+			temp-fan-off = <34>;
+			temp-fan-max = <52>;
 			power-good-pin = <&gpio_pg_pp1250_soc_s5_od>;
 			sensor = <&temp_cpu>;
 		};
@@ -44,9 +44,9 @@
 
 		fan_0 {
 			pwms = <&pwm5 5 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
-			rpm-min = <2200>;
-			rpm-start = <2200>;
-			rpm-max = <6900>;
+			rpm-min = <2500>;
+			rpm-start = <2500>;
+			rpm-max = <4600>;
 			tach = <&tach1>;
 			enable-gpio = <&gpio_en_pp5000_fan>;
 		};
