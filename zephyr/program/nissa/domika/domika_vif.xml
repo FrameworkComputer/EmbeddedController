@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vif:VIF xmlns:opt="http://usb.org/VendorInfoFileOptionalContent.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:vif="http://usb.org/VendorInfoFile.xsd">
-  <vif:VIF_Specification>3.33</vif:VIF_Specification>
+  <vif:VIF_Specification>3.36</vif:VIF_Specification>
   <vif:VIF_App>
     <vif:Vendor>USB-IF</vif:Vendor>
     <vif:Name>VIF Editor</vif:Name>
-    <vif:Version>3.11.0.0</vif:Version>
+    <vif:Version>3.14.0.0</vif:Version>
   </vif:VIF_App>
   <vif:Vendor_Name>Google</vif:Vendor_Name>
   <vif:Model_Part_Number>Domika</vif:Model_Part_Number>
@@ -102,6 +102,7 @@
     <!--;PD Source-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <vif:PD_Power_As_Source value="15000">15000 mW</vif:PD_Power_As_Source>
+    <vif:PD_Power_As_Source_Guaranteed value="7500">7500 mW</vif:PD_Power_As_Source_Guaranteed>
     <vif:EPR_Supported_As_Src value="false" />
     <vif:USB_Suspend_May_Be_Cleared value="true" />
     <vif:Sends_Pings value="false" />
@@ -109,6 +110,7 @@
     <vif:Master_Port value="false" />
     <vif:Has_Invariant_PDOs value="false" />
     <vif:Port_Managed_Guaranteed_Type value="0">Managed Capability</vif:Port_Managed_Guaranteed_Type>
+    <vif:DPS_Supported value="false" />
     <vif:Num_Src_PDOs value="1">1 Src PDO</vif:Num_Src_PDOs>
     <vif:PD_OC_Protection value="true" />
     <vif:PD_OCP_Method value="0">Over-Current Response</vif:PD_OCP_Method>
@@ -237,8 +239,8 @@
     <vif:Type_C_Implements_Try_SNK value="false" />
     <vif:Type_C_Supports_Audio_Accessory value="false" />
     <vif:Type_C_Is_VCONN_Powered_Accessory value="false" />
-    <vif:Type_C_Is_Debug_Target_SRC value="true" />
-    <vif:Type_C_Is_Debug_Target_SNK value="true" />
+    <vif:Type_C_Is_Debug_Target_SRC value="false" />
+    <vif:Type_C_Is_Debug_Target_SNK value="false" />
     <vif:RP_Value value="1">1.5A</vif:RP_Value>
     <vif:Type_C_Port_On_Hub value="false" />
     <vif:Type_C_Power_Source value="2">Both</vif:Type_C_Power_Source>
@@ -266,6 +268,7 @@
     <!--;PD Source-->
     <!--;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-->
     <vif:PD_Power_As_Source value="15000">15000 mW</vif:PD_Power_As_Source>
+    <vif:PD_Power_As_Source_Guaranteed value="7500">7500 mW</vif:PD_Power_As_Source_Guaranteed>
     <vif:EPR_Supported_As_Src value="false" />
     <vif:USB_Suspend_May_Be_Cleared value="true" />
     <vif:Sends_Pings value="false" />
@@ -273,6 +276,7 @@
     <vif:Master_Port value="false" />
     <vif:Has_Invariant_PDOs value="false" />
     <vif:Port_Managed_Guaranteed_Type value="0">Managed Capability</vif:Port_Managed_Guaranteed_Type>
+    <vif:DPS_Supported value="false" />
     <vif:Num_Src_PDOs value="1">1 Src PDO</vif:Num_Src_PDOs>
     <vif:PD_OC_Protection value="true" />
     <vif:PD_OCP_Method value="0">Over-Current Response</vif:PD_OCP_Method>
