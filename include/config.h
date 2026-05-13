@@ -5478,17 +5478,6 @@
 /* SYV682 does not pass through CC, instead it bypasses to the TCPC */
 #undef CONFIG_USBC_PPC_SYV682X_NO_CC
 
-/*
- * TODO(b/445132756): This config is now a no-op.
- *
- * Smart discharge support in the SYV682x driver has been removed due to
- * unreliable behavior (see bug for details). This config is kept temporarily
- * to avoid breaking builds for boards that may still define it.
- *
- */
-/* Define to enable SYV682X VBUS smart discharge. */
-#undef CONFIG_USBC_PPC_SYV682X_SMART_DISCHARGE
-
 /* PPC is capable of gating the SBU lines. */
 #undef CONFIG_USBC_PPC_SBU
 
