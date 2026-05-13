@@ -24,3 +24,8 @@ add_custom_target(config_page_binary ALL
 )
 
 endif()
+
+# TODO(b/502744651): Remove OTP initialization once all boards are initialized
+if(DEFINED CONFIG_CROS_EC_RW AND DEFINED CONFIG_FOCALTECH_OTP_KEY)
+  zephyr_library_sources("src/otp_init.c")
+endif()
