@@ -37,6 +37,7 @@
 		};
 		ppm-driver {
 			compatible = "ucsi-ppm";
+			b-num-alt-modes = <2>;
 		};
 	};
 };
