@@ -29,6 +29,9 @@ properties:
     description: |
       Delay from PG_EC_ALL_SYS_PWRGD high to set EC_PCH_SYS_PWROK high,
       in milliseconds.
+      NVL does not specify SYS_PWROK. MTL power sequencing uses the same delay
+      for PCH_PWROK/PLT_PWROK and SYS_PWROK, so on NVL, this delay is
+      effectively the delay for PLT_PWROK.
 
   pm-pwrbtn-delay:
     type: int

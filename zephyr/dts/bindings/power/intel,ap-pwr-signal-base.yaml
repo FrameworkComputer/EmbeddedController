@@ -24,11 +24,14 @@ properties:
     - PWR_ALL_SYS_PWRGD
     - PWR_DSW_PWROK
     - PWR_EC_PCH_RSMRST
+    # NVL does not specify SYS_PWROK.
     - PWR_EC_PCH_SYS_PWROK
     - PWR_EC_SOC_DSW_PWROK
     - PWR_EN_PP3300_A
     - PWR_EN_PP5000_A
     - PWR_IMVP9_VRRDY
+    # In PTL and later platforms, PCH_PWROK is renamed to PLT_PWROK with the
+    # same functionality.
     - PWR_PCH_PWROK
     - PWR_PG_PP1P05
     - PWR_RSMRST_PWRGD
