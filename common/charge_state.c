@@ -977,6 +977,7 @@ static int get_desired_input_current(const struct charger_info *const info)
 
 static void wakeup_battery(int *need_static)
 {
+	timestamp_t timestamp;
 #ifndef CONFIG_PRECHARGE_DELAY_MS
 	const int precharge_delay = 0;
 #else
@@ -988,9 +989,12 @@ static void wakeup_battery(int *need_static)
 		set_charge_state(ST_IDLE);
 		curr.requested_voltage = 0;
 		curr.requested_current = 0;
-	} else if (curr.state == ST_PRECHARGE &&
-		   (get_time().val >
-		    precharge_start_time.val + PRECHARGE_TIMEOUT_US)) {
+		return;
+	}
+
+	timestamp = get_time();
+	if (curr.state == ST_PRECHARGE &&
+	    (timestamp.val > precharge_start_time.val + PRECHARGE_TIMEOUT_US)) {
 		/* We've tried long enough, give up */
 		CPRINTS("battery seems to be dead");
 		battery_seems_dead = 1;
@@ -1002,12 +1006,12 @@ static void wakeup_battery(int *need_static)
 		if (curr.state != ST_PRECHARGE) {
 			CPRINTS("try to wake battery in %d ms",
 				precharge_delay / MSEC);
-			precharge_start_time = get_time();
+			precharge_start_time = timestamp;
 			*need_static = 1;
 			set_charge_state(ST_PRECHARGE);
 		}
 
-		if (get_time().val >
+		if (timestamp.val >=
 		    precharge_start_time.val + precharge_delay) {
 			curr.requested_voltage = batt_info->voltage_max;
 			curr.requested_current = batt_info->precharge_current;
