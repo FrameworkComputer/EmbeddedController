@@ -119,7 +119,7 @@
 		right-alt-rc = <KBD_RC(0, 10)>;
 		h-rc = <KBD_RC(1, 6)>;
 		r-rc = <KBD_RC(7, 9)>;
-		vol-up-rc = <KBD_RC(3, 5)>;
+		vol-up-rc = <KBD_RC(1, 5)>;
 	};
 };
 
