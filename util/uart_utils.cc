@@ -48,9 +48,11 @@ int uart_flush(int fd)
 		 * available to read from the serial port.
 		 */
 		cc = select(fd + 1, &read_fds, NULL, NULL, &timeout);
-		if (cc < 0)
+		if (cc < 0) {
 			fprintf(stderr, "Error from select(): %s\n",
 				strerror(errno));
+			break;
+		}
 		if (!cc || !FD_ISSET(fd, &read_fds)) {
 			/* No more data immediately available */
 			break;
@@ -64,6 +66,14 @@ int uart_flush(int fd)
 		if (cc < 0) {
 			fprintf(stderr, "Error reading serial data: %s\n",
 				strerror(errno));
+			break;
+		} else if (cc == 0) {
+			/* We already checked above that there is data in the
+			 * serial port. If we don't get any bytes from read(),
+			 * then EOF has been reached indicating the device
+			 * disconnected.
+			 */
+			break;
 		} else {
 			discard_bytes += cc;
 		}
