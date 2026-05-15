@@ -372,6 +372,11 @@ config PLATFORM_EC_HOSTCMD_BATTERY_INFO
 	  ec_response_battery_static/dynamic_info structures, only make sense
 	  when PLATFORM_EC_BATTERY_INFO is enabled.
 
+config PLATFORM_EC_HOSTCMD_BATTERY_GET_MISC_INFO
+	bool "Host command: battery misc info"
+	depends on PLATFORM_EC_BATTERY_FUEL_GAUGE
+	help
+	  Include host command to fetch battery misc info.
 endif # PLATFORM_EC_BATTERY_INFO
 
 if PLATFORM_EC_I2C_VIRTUAL_BATTERY
