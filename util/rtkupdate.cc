@@ -66,8 +66,10 @@
 #define RETRY_COUNT_FOR_SEND_PAGES 10
 
 #define RTS_CMD_FLASH_READ 0xA5A5A5A5ul
+#define RTS_CMD_ERASE_ONLY 0x5A5A5A5Aul
 #define RTS_CMD_PROBE_CAP_OFFSET 0x50524F42ul
 #define RTS_CMD_PROBE_CAP_SIZE 0x00000000ul
+#define RTK_FLAME_FEATURE_ERASE_ONLY (1ul << 0)
 #define RTK_FLAME_METADATA_MAGIC 0x464C414Dul
 
 /* Command type opcode */
@@ -451,6 +453,53 @@ int set_cmd_sel(int uart_fd, uint32_t val)
 	return 0;
 }
 
+int send_page_from_buf(int uart_fd, const unsigned char *data_buffer,
+		       size_t bytes_to_send, uint32_t sram_address,
+		       size_t *total_bytes_sent, size_t *page)
+{
+	int retry_count = 0;
+
+	if (bytes_to_send == 0) {
+		return 0;
+	}
+
+	while (1) {
+		retry_count++;
+		uart_flush(uart_fd);
+
+		DBG_PRINT("Page %zu, try %d time.\n", *page + 1, retry_count);
+
+		/* Send this page's data */
+		if (send_packet_a(uart_fd, WRITE_DATA_TO_SRAM, bytes_to_send,
+				  sram_address, data_buffer) != 0) {
+			return -1;
+		}
+
+		/* Wait for EC to respond with 0x09
+		 * (acknowledgment for this page) */
+		if (wait_for_response(uart_fd, WRITE_DATA_TO_SRAM,
+				      RESPONSE_TIMEOUT) == 0) {
+			break;
+		}
+
+		if (retry_count > RETRY_COUNT_FOR_SEND_PAGES) {
+			ERR_PRINT(
+				"Failed to receive expected response for data page %zu\n",
+				*page + 1);
+			return -1;
+		}
+
+		sleep(1);
+	}
+
+	*total_bytes_sent += bytes_to_send;
+	DBG_PRINT("Page %zu sent successfully. Total bytes sent: %zu\n",
+		  *page + 1, *total_bytes_sent);
+	(*page)++;
+
+	return 0;
+}
+
 /* Function: Send a block of pages */
 int send_pages(int uart_fd, FILE *file, uint32_t sram_address,
 	       size_t *total_bytes_sent, size_t *page)
@@ -669,6 +718,7 @@ int flash(int uart_fd, uint32_t spi_start, const char *file_name)
 	printf("Flash operation initiated\n");
 	char monitor_version[32] = "";
 	uint32_t monitor_features = 0;
+	bool monitor_supports_erase_only = false;
 
 	if (!probe_monitor(uart_fd, monitor_version, sizeof(monitor_version),
 			   &monitor_features)) {
@@ -679,6 +729,14 @@ int flash(int uart_fd, uint32_t spi_start, const char *file_name)
 
 	printf("Monitor version: %s\n", monitor_version);
 	printf("Monitor features: 0x%08X\n", monitor_features);
+
+	monitor_supports_erase_only =
+		(monitor_features & RTK_FLAME_FEATURE_ERASE_ONLY) != 0;
+	if (monitor_supports_erase_only) {
+		printf("Erase-only mode for blank sectors enabled\n");
+	} else {
+		printf("Erase-only mode for blank sectors disabled (legacy monitor)\n");
+	}
 
 	size_t total_bytes_sent = 0;
 	size_t page = 0;
@@ -713,6 +771,22 @@ int flash(int uart_fd, uint32_t spi_start, const char *file_name)
 				PAGES_PER_ROUND * PAGE_SIZE :
 				remaining_data;
 
+		uint8_t round_buffer[PAGES_PER_ROUND * PAGE_SIZE];
+		size_t bytes_read =
+			fread(round_buffer, 1, data_size_to_write, file);
+		if (bytes_read != data_size_to_write) {
+			perror("Failed to read from file");
+			goto flash_err;
+		}
+
+		bool all_ff = true;
+		for (size_t j = 0; j < bytes_read; j++) {
+			if (round_buffer[j] != 0xFF) {
+				all_ff = false;
+				break;
+			}
+		}
+
 		/* Send upload header packet to inform EC of the remaining data
 		 * size */
 		DBG_PRINT("Sending upload header for new round\n");
@@ -730,16 +804,38 @@ int flash(int uart_fd, uint32_t spi_start, const char *file_name)
 			goto flash_err;
 		}
 
-		for (size_t i = 0;
-		     i < PAGES_PER_ROUND && total_bytes_sent < total_file_size;
-		     i++) {
-			uint32_t sram_address =
-				SRAM_BASE_ADDRESS + (i * PAGE_SIZE);
-
-			/* Just send pages to EC's ram */
-			if (send_pages(uart_fd, file, sram_address,
-				       &total_bytes_sent, &page) != 0) {
+		if (all_ff && monitor_supports_erase_only) {
+			DBG_PRINT(
+				"Block all 0xFF, sending erase only command\n");
+			if (set_cmd_sel(uart_fd, RTS_CMD_ERASE_ONLY) != 0) {
 				goto flash_err;
+			}
+		} else {
+			if (set_cmd_sel(uart_fd, 0x00000000) != 0) {
+				goto flash_err;
+			}
+			size_t round_bytes_sent = 0;
+			for (size_t i = 0; i < PAGES_PER_ROUND &&
+					   round_bytes_sent < bytes_read;
+			     i++) {
+				uint32_t sram_address =
+					SRAM_BASE_ADDRESS + (i * PAGE_SIZE);
+
+				size_t page_bytes =
+					bytes_read - round_bytes_sent >
+							PAGE_SIZE ?
+						PAGE_SIZE :
+						bytes_read - round_bytes_sent;
+
+				/* Just send pages to EC's ram from buffer */
+				if (send_page_from_buf(
+					    uart_fd,
+					    &round_buffer[round_bytes_sent],
+					    page_bytes, sram_address,
+					    &total_bytes_sent, &page) != 0) {
+					goto flash_err;
+				}
+				round_bytes_sent += page_bytes;
 			}
 		}
 
@@ -802,6 +898,12 @@ int flash(int uart_fd, uint32_t spi_start, const char *file_name)
 			/* Flash write was successful, continue to next chunk.
 			 */
 			success = true;
+		}
+		if (all_ff && monitor_supports_erase_only) {
+			// Restore CMD_SEL to default 0
+			set_cmd_sel(uart_fd, 0x00000000);
+			total_bytes_sent += bytes_read;
+			page += (bytes_read + PAGE_SIZE - 1) / PAGE_SIZE;
 		}
 		/* Update SPI address for next round */
 		upload_header_spi_address += SPI_INCREMENT;
@@ -971,26 +1073,10 @@ int read_bin(int uart_fd, uint32_t spi_start, const char *file_name,
 				"Failed to receive expected response for upload header\n");
 			goto read_bin_err1;
 		}
-		/* Calculate SRAM address, incremented per page */
 
-		data_buffer[0] = 0xA5;
-		data_buffer[1] = 0xA5;
-		data_buffer[2] = 0xA5;
-		data_buffer[3] = 0xA5;
-
-		/* Send this page's data */
-		if (send_packet_a(uart_fd, WRITE_DATA_TO_SRAM, 4, sram_address,
-				  data_buffer) != 0) {
+		/* Initiate the flash read */
+		if (set_cmd_sel(uart_fd, RTS_CMD_FLASH_READ)) {
 			goto read_bin_err2;
-		}
-
-		/* Wait for EC to respond with 0x09 (acknowledgment for
-		 * this page) */
-		if (wait_for_response(uart_fd, WRITE_DATA_TO_SRAM,
-				      RESPONSE_TIMEOUT) != 0) {
-			DBG_PRINT(
-				"Failed to receive expected response for data page %u\n",
-				page_read + 1);
 		}
 
 		if (send_packet_b(uart_fd, START_FRAME_TO_WRITE_TO_FLASH,

@@ -25,6 +25,7 @@
 #define RTS_TEMP_DATA_ADDR 0x20020000ul
 #define RTS_CMD_SEL_ADDR 0x2005F000ul
 #define RTS_CMD_FLASH_READ 0xA5A5A5A5ul
+#define RTS_CMD_ERASE_ONLY 0x5A5A5A5Aul
 #define RTS_CMD_PROBE_CAP_OFFSET 0x50524F42ul
 #define RTS_CMD_PROBE_CAP_SIZE 0x00000000ul
 #define RTS_SPI_PROGRAMMING_FLAG 0x20018000ul
@@ -49,6 +50,7 @@ const struct rtk_flame_metadata monitor_metadata
 	__attribute__((section(".rodata.metadata"))) = {
 		.magic = RTK_FLAME_METADATA_MAGIC,
 		.version = RTK_FLAME_VERSION_STR,
+		.features = RTK_FLAME_FEATURE_ERASE_ONLY,
 	};
 
 #define WRITE_TO_FLASH_ERASE_ERROR (0x10)
@@ -203,6 +205,8 @@ int spic_flash_upload(void)
 		uint8_t *read_buf = (uint8_t *)image_base;
 		eflash_read(spi_offset, sz_image, read_buf);
 		*flag_upload |= FLASH_READ_COMPLETE;
+	} else if (*temp_to_load == RTS_CMD_ERASE_ONLY) {
+		ret = write_to_flash(flag_upload, spi_offset, sz_image, NULL);
 	} else {
 		ret = write_to_flash(flag_upload, spi_offset, sz_image,
 				     image_base);
@@ -276,6 +280,10 @@ static int32_t write_to_flash(uint32_t *flag_upload, int spi_offset,
 			*flag_upload |= WRITE_TO_FLASH_VERIFIED;
 			return ret;
 		}
+	} else {
+		/* Erase only complete and verified */
+		*flag_upload |= WRITE_TO_FLASH_VERIFIED;
+		return ret;
 	}
 
 	return ret;
