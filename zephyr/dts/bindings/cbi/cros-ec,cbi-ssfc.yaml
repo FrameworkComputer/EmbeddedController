@@ -27,6 +27,7 @@ child-binding:
       - USB_SS_MUX
       - PANEL_TYPE
       - FW_CHARGER
+      - PDC_TYPE
     size:
       type: int
       required: true
