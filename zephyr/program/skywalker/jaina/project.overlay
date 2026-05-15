@@ -58,7 +58,12 @@
 		int_pmic_ec_resetb: pmic-ec-resetb {
 			irq-pin = <&gpio_pmic_ec_resetb>;
 			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "pmic_ec_resetb_interrupt";
+			handler = "pmic_ec_resetb_interrupt_jaina";
+		};
+		int_edp_bl_en: edp_bl_int {
+			irq-pin = <&gpio_edp_bl_en_1v8>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "edp_bl_interrupt";
 		};
 	};
 
@@ -77,6 +82,15 @@
 		//CCD_MODE_L
 		gpio_ccd_mode_l: ccd_mode_l {
 			gpios = <&gpioe 5 (GPIO_INPUT)>;
+		};
+		gpio_edp_bl_en_1v8: edp_bl_en_1v8 {
+			gpios = <&gpioi 5 (GPIO_INPUT)>;
+		};
+		gpio_tch_pwr_en: tch_pwr_en {
+			gpios = <&gpioh 2 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		gpio_tchscr_report_ec: tchscr_report_ec {
+			gpios = <&gpiof 4 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
 		};
 	};
 
