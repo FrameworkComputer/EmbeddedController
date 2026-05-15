@@ -637,7 +637,6 @@ bool probe_monitor(int uart_fd, char *version_str, size_t version_len,
 
 	unsigned char response[2];
 	int ret = read_exact(uart_fd, response, 2, 1000);
-	usleep(10 * 1000);
 	if (ret != 0) {
 		ERR_PRINT("Failed to read final probe response\n");
 		return false;
@@ -865,21 +864,21 @@ int flash(int uart_fd, uint32_t spi_start, const char *file_name)
 					printf("\nFailed to retry request EC to execute frame.\n");
 					goto flash_err;
 				}
+				usleep(100 * 1000);
 				continue;
 			}
-			usleep(100 * 1000);
 
 			/* Wait for EC to respond with 0x06 0x03 (execution
 			 * success) */
 			unsigned char response[2];
 			int ret = read_exact(uart_fd, response, 2, 1000);
-			usleep(200 * 1000);
 			if (ret != 0) {
 				ERR_PRINT(
 					"\nexpected 0x06 0x03 response, received: no data\n");
 				if (retry_round > FLASH_RETRY_CNT) {
 					goto flash_err;
 				}
+				usleep(100 * 1000);
 				continue;
 			}
 			if ((response[0] != START_FRAME_TO_WRITE_TO_FLASH) ||
@@ -893,6 +892,7 @@ int flash(int uart_fd, uint32_t spi_start, const char *file_name)
 						"\n Failed to retry receive frame result.\n");
 					goto flash_err;
 				}
+				usleep(100 * 1000);
 				continue;
 			}
 			/* Flash write was successful, continue to next chunk.
