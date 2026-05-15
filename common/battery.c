@@ -298,6 +298,13 @@ static void print_battery_info(void)
 		value = !value;
 	print_item_name("C-FET:");
 	ccprintf("%d\n", value);
+
+	value = battery_get_disconnect_state();
+	print_item_name("D-FET:");
+	if (value == BATTERY_DISCONNECT_ERROR)
+		ccprintf("ERR\n");
+	else
+		ccprintf("%d\n", value);
 #endif
 }
 
