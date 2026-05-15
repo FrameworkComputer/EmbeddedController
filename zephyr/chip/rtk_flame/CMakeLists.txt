@@ -39,13 +39,40 @@ target_compile_options(rtk_flame PRIVATE "${zephyr_compile_options};$<TARGET_PRO
   -imacros ${AUTOCONF_H}
 )
 
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${PLATFORM_EC}/zephyr/zmake/
+          ${PYTHON_EXECUTABLE}
+          "${PLATFORM_EC}/zephyr/zmake/zephyr_build_tools/generate_ec_version.py"
+          "-"
+          "--name" "rtk_flame"
+          ${EXTRA_EC_VERSION_FLAGS_LIST}
+  OUTPUT_VARIABLE RTK_FLAME_VERSION_RAW
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET
+)
+
+message(STATUS "rtk-flame version ${RTK_FLAME_VERSION_RAW}")
+
+if(NOT RTK_FLAME_VERSION_RAW)
+  set(RTK_FLAME_VERSION_RAW "rtk_flame-unknown")
+endif()
+
+string(LENGTH "${RTK_FLAME_VERSION_RAW}" RTK_FLAME_VERSION_LEN)
+if(RTK_FLAME_VERSION_LEN GREATER 31)
+  message(FATAL_ERROR "RTK_FLAME_VERSION_STR '${RTK_FLAME_VERSION_RAW}' is ${RTK_FLAME_VERSION_LEN} bytes, which exceeds the 31-byte limit (32 bytes including null terminator).")
+endif()
+
+set(RTK_FLAME_VERSION_STR "\"${RTK_FLAME_VERSION_RAW}\"")
+
 target_compile_definitions(rtk_flame PRIVATE
   __NO_SYSTEM_INIT=1
   __STACK_SIZE=0x000007FC
   __START=spic_flash_upload
+  RTK_FLAME_VERSION_STR=${RTK_FLAME_VERSION_STR}
 )
 
 target_link_libraries(rtk_flame INTERFACE -lc)
+
 target_link_options(rtk_flame BEFORE PRIVATE
   -nostartfiles
   -nostdlib

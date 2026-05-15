@@ -65,6 +65,11 @@
 #define MAX_PACKET_A_SIZE (PACKET_HEADER_LENGTH + PAGE_SIZE + CHECKSUM_LENGTH)
 #define RETRY_COUNT_FOR_SEND_PAGES 10
 
+#define RTS_CMD_FLASH_READ 0xA5A5A5A5ul
+#define RTS_CMD_PROBE_CAP_OFFSET 0x50524F42ul
+#define RTS_CMD_PROBE_CAP_SIZE 0x00000000ul
+#define RTK_FLAME_METADATA_MAGIC 0x464C414Dul
+
 /* Command type opcode */
 enum command_type {
 	SUCCESS_PROGRAM_TO_FLASH = 0x03,
@@ -424,6 +429,28 @@ int wait_for_response(int uart_fd, uint8_t expected_response,
 	return -1;
 }
 
+/* Function: Set command selection address value */
+int set_cmd_sel(int uart_fd, uint32_t val)
+{
+	uint32_t sram_address = SRAM_CMD_BASE_ADDRESS;
+	uint8_t data_buffer[4];
+	data_buffer[0] = val & 0xFF;
+	data_buffer[1] = (val >> 8) & 0xFF;
+	data_buffer[2] = (val >> 16) & 0xFF;
+	data_buffer[3] = (val >> 24) & 0xFF;
+
+	if (send_packet_a(uart_fd, WRITE_DATA_TO_SRAM, 4, sram_address,
+			  data_buffer) != 0) {
+		return -1;
+	}
+
+	if (wait_for_response(uart_fd, WRITE_DATA_TO_SRAM, RESPONSE_TIMEOUT) !=
+	    0) {
+		return -1;
+	}
+	return 0;
+}
+
 /* Function: Send a block of pages */
 int send_pages(int uart_fd, FILE *file, uint32_t sram_address,
 	       size_t *total_bytes_sent, size_t *page)
@@ -477,6 +504,156 @@ int send_pages(int uart_fd, FILE *file, uint32_t sram_address,
 	return 0;
 }
 
+bool probe_monitor(int uart_fd, char *version_str, size_t version_len,
+		   uint32_t *features)
+{
+	DBG_PRINT("Probing monitor capabilities...\n");
+
+	/* Overload the WRITE_TO_FLASH command to probe whether the currently
+	 * running monitor code supports the metadata structure.
+	 * Set the SPI address to the magic value RTS_CMD_PROBE_CAP_OFFSET
+	 * and set the size to write to 0.
+	 * Legacy monitors skip the erase and write operation if the size
+	 * is zero, but still return the response bytes 0x06 0x03.
+	 */
+	if (send_upload_header(uart_fd, UPLOAD_HEADER_SRAM_ADDRESS,
+			       RTS_CMD_PROBE_CAP_OFFSET,
+			       RTS_CMD_PROBE_CAP_SIZE) != 0) {
+		return false;
+	}
+
+	if (wait_for_response(uart_fd, WRITE_DATA_TO_SRAM, RESPONSE_TIMEOUT) !=
+	    0) {
+		ERR_PRINT(
+			"\nFailed to receive expected response for probe upload header\n");
+		return false;
+	}
+
+	if (send_packet_b(uart_fd, START_FRAME_TO_WRITE_TO_FLASH,
+			  UPLOAD_FUNCTION_POINTER) != 0) {
+		return false;
+	}
+
+	if (wait_for_response(uart_fd, 0x06, RESPONSE_TIMEOUT) != 0) {
+		ERR_PRINT(
+			"\nFailed to receive expected response (first 0x06 for probe)\n");
+		return false;
+	}
+
+	/* Read first 2 bytes to distinguish between legacy and new monitor */
+	unsigned char header[2];
+	if (read_exact(uart_fd, header, 2, 1000) != 0) {
+		ERR_PRINT("Failed to read probe response header\n");
+		return false;
+	}
+
+	if (header[0] == 0x06 && header[1] == 0x03) {
+		DBG_PRINT("Legacy monitor detected (no metadata)\n");
+		if (version_str) {
+			strncpy(version_str, "legacy", version_len - 1);
+			version_str[version_len - 1] = '\0';
+		}
+		if (features) {
+			*features = 0;
+		}
+		return true;
+	}
+
+	/* Assume it is metadata, read the remaining 38 bytes */
+	unsigned char meta_rest[38];
+	if (read_exact(uart_fd, meta_rest, 38, 1000) != 0) {
+		ERR_PRINT("Failed to read remaining monitor metadata\n");
+		return false;
+	}
+
+	uint32_t magic;
+	unsigned char *m = (unsigned char *)&magic;
+	m[0] = header[0];
+	m[1] = header[1];
+	m[2] = meta_rest[0];
+	m[3] = meta_rest[1];
+
+	if (magic != RTK_FLAME_METADATA_MAGIC) {
+		ERR_PRINT("Invalid monitor magic: 0x%08X\n", magic);
+		return false;
+	}
+
+	if (version_str) {
+		strncpy(version_str, (char *)&meta_rest[2], version_len - 1);
+		version_str[version_len - 1] = '\0';
+	}
+	if (features) {
+		*features = *(uint32_t *)&meta_rest[34];
+	}
+
+	unsigned char response[2];
+	int ret = read_exact(uart_fd, response, 2, 1000);
+	usleep(10 * 1000);
+	if (ret != 0) {
+		ERR_PRINT("Failed to read final probe response\n");
+		return false;
+	}
+
+	if ((response[0] != START_FRAME_TO_WRITE_TO_FLASH) ||
+	    (response[1] != SUCCESS_PROGRAM_TO_FLASH)) {
+		ERR_PRINT("Expected 0x06 0x03 response, received: 0x%X 0x%X\n",
+			  response[0], response[1]);
+		return false;
+	}
+
+	return true;
+}
+
+bool get_monitor_metadata(const char *monitor_file, char *version_str,
+			  size_t version_len, uint32_t *features)
+{
+	FILE *f = fopen(monitor_file, "rb");
+	if (!f) {
+		perror("Unable to open monitor file");
+		return false;
+	}
+
+	fseek(f, 0, SEEK_END);
+	long size = ftell(f);
+	fseek(f, 0, SEEK_SET);
+
+	if (size <= 0 || size > 65536) {
+		fclose(f);
+		return false;
+	}
+
+	unsigned char *buf = (unsigned char *)malloc(size);
+	if (!buf) {
+		fclose(f);
+		return false;
+	}
+
+	if (fread(buf, 1, size, f) != size) {
+		free(buf);
+		fclose(f);
+		return false;
+	}
+	fclose(f);
+
+	bool found = false;
+	for (long i = 0; i <= size - 40; i += 4) {
+		uint32_t *p = (uint32_t *)&buf[i];
+		if (*p == RTK_FLAME_METADATA_MAGIC) {
+			if (version_str) {
+				strncpy(version_str, (char *)&buf[i + 4],
+					version_len - 1);
+				version_str[version_len - 1] = '\0';
+			}
+			if (features)
+				*features = *(uint32_t *)&buf[i + 36];
+			found = true;
+			break;
+		}
+	}
+	free(buf);
+	return found;
+}
+
 /* Function: Flash process to send data using Packet A */
 int flash(int uart_fd, uint32_t spi_start, const char *file_name)
 {
@@ -490,6 +667,19 @@ int flash(int uart_fd, uint32_t spi_start, const char *file_name)
 	}
 
 	printf("Flash operation initiated\n");
+	char monitor_version[32] = "";
+	uint32_t monitor_features = 0;
+
+	if (!probe_monitor(uart_fd, monitor_version, sizeof(monitor_version),
+			   &monitor_features)) {
+		fprintf(stderr, "Monitor liveness probe failed.\n");
+		fclose(file);
+		return -1;
+	}
+
+	printf("Monitor version: %s\n", monitor_version);
+	printf("Monitor features: 0x%08X\n", monitor_features);
+
 	size_t total_bytes_sent = 0;
 	size_t page = 0;
 	uint32_t upload_header_spi_address = spi_start;
@@ -636,6 +826,18 @@ flash_err:
 int frame(int uart_fd, const char *file_name)
 {
 	printf("Frame operation initiated\n");
+	char monitor_version[32] = "";
+	uint32_t monitor_features = 0;
+
+	if (get_monitor_metadata(file_name, monitor_version,
+				 sizeof(monitor_version), &monitor_features)) {
+		printf("Monitor version: %s\n", monitor_version);
+		printf("Monitor features: 0x%08X\n", monitor_features);
+	} else {
+		fprintf(stderr, "Failed to parse monitor metadata from %s\n",
+			file_name);
+	}
+
 	FILE *file = fopen(file_name, "rb");
 	if (!file) {
 		perror("Failed to open binary file");

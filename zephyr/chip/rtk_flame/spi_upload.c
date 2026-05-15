@@ -24,11 +24,33 @@
 #define RTS_MONITOR_HEADER_ADDR 0x20010000ul
 #define RTS_TEMP_DATA_ADDR 0x20020000ul
 #define RTS_CMD_SEL_ADDR 0x2005F000ul
+#define RTS_CMD_FLASH_READ 0xA5A5A5A5ul
+#define RTS_CMD_PROBE_CAP_OFFSET 0x50524F42ul
+#define RTS_CMD_PROBE_CAP_SIZE 0x00000000ul
 #define RTS_SPI_PROGRAMMING_FLAG 0x20018000ul
 
 #define WRITE_TO_FLASH_COMPLETE (1ul << 0)
 #define WRITE_TO_FLASH_VERIFIED (1ul << 1)
 #define FLASH_READ_COMPLETE (1ul << 2)
+
+#define RTK_FLAME_FEATURE_ERASE_ONLY (1ul << 0)
+#ifndef RTK_FLAME_VERSION_STR
+#define RTK_FLAME_VERSION_STR "unknown"
+#endif
+#define RTK_FLAME_METADATA_MAGIC 0x464C414Dul
+
+struct rtk_flame_metadata {
+	uint32_t magic;
+	char version[32];
+	uint32_t features;
+};
+
+const struct rtk_flame_metadata monitor_metadata
+	__attribute__((section(".rodata.metadata"))) = {
+		.magic = RTK_FLAME_METADATA_MAGIC,
+		.version = RTK_FLAME_VERSION_STR,
+	};
+
 #define WRITE_TO_FLASH_ERASE_ERROR (0x10)
 #define WRITE_TO_FLASH_WRITE_ERROR (0x20)
 #define WRITE_TO_FLASH_NOT_ERASED_ERROR (0x30)
@@ -172,11 +194,15 @@ int spic_flash_upload(void)
 
 	uint32_t *temp_to_load;
 	temp_to_load = (uint32_t *)RTS_CMD_SEL_ADDR;
-	if (*temp_to_load == 0xA5A5A5A5) {
+	if (spi_offset == RTS_CMD_PROBE_CAP_OFFSET &&
+	    sz_image == RTS_CMD_PROBE_CAP_SIZE) {
+		*flag_upload |= WRITE_TO_FLASH_VERIFIED;
+		serial_polling_send((const char *)&monitor_metadata,
+				    sizeof(monitor_metadata));
+	} else if (*temp_to_load == RTS_CMD_FLASH_READ) {
 		uint8_t *read_buf = (uint8_t *)image_base;
 		eflash_read(spi_offset, sz_image, read_buf);
 		*flag_upload |= FLASH_READ_COMPLETE;
-
 	} else {
 		ret = write_to_flash(flag_upload, spi_offset, sz_image,
 				     image_base);
