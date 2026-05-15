@@ -24,5 +24,22 @@
 				value = <2>;
 			};
 		};
+		/* SSFC field to identify PDC type.*/
+		pdc-type {
+			enum-name = "PDC_TYPE";
+			size = <3>;
+
+			rts54: rts54 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+				default;
+			};
+			tps6699: tps6699 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <2>;
+			};
+		};
 	};
 };

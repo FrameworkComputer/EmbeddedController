@@ -176,7 +176,8 @@
 			compatible = "named-usbc-port";
 			reg = <0>;
 			chg = <&charger_rt9490>;
-			pdc = <&pdc_power_p0>;
+			pdc = <&pdc_power_p0 &pdc_power_p0_ti>;
+			zephyr,deferred-init;
 			policy = <&cros_policy>;
 		};
 
@@ -266,6 +267,19 @@
 
 &i2c2 {
 	/delete-node/ rts54-pdc@67;
+
+	pdc_power_p0: rts54-pdc@66 {
+		zephyr,deferred-init;
+	};
+	pdc_power_p0_ti: tps6699-pdc@20 {
+		compatible = "ti,tps6699-pdc";
+		reg = <0x20>;
+		irq-gpios = <&gpiod 3 GPIO_ACTIVE_LOW>;
+		port-index-on-chip = <0x1>;
+		zephyr,deferred-init;
+		frs-supported;
+		ccd;
+	};
 };
 
 &i2c4 {
