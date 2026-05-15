@@ -1,4 +1,4 @@
-/* Copyright 2025 The ChromiumOS Authors
+/* Copyright 2026 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -53,7 +53,7 @@
 			gpios = <&gpio7 0 (GPIO_INPUT)>;
 		};
 		gpio_ec_fan_tach: ec_fan_tach {
-			gpios = <&gpio7 3 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio7 3 (GPIO_INPUT)>;
 		};
 		gpio_acpi_int: ec_acpi_int {
 			gpios = <&gpio7 6 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
@@ -61,6 +61,9 @@
 		};
 		gpio_ec_bkoff_odl: ec_bkoff_odl {
 			gpios = <&gpio8 0 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
+		};
+		gpio_en_pp3300_z1: en_pp3300_z1 {
+			gpios = <&gpio8 5 (GPIO_OUTPUT)>;
 		};
 		gpio_sys_rst_odl: sys_rst_odl {
 			gpios = <&gpio9 3 (GPIO_INPUT)>;
@@ -135,14 +138,8 @@
 			gpios = <&gpiod 4 (GPIO_OUTPUT)>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
-		gpio_en_hdmi_pwr: en_hdmi_pwr {
-			gpios = <&gpiod 5 (GPIO_OUTPUT)>;
-		};
 		gpio_ec_pmic_lid_open_od: ec_pmic_lid_open_od {
 			gpios = <&gpiod 7 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
-		};
-		gpio_kbl_pwr_en_odl: kbl_pwr_en_odl {
-			gpios = <&gpioe 2 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
 		};
 		gpio_ec_en_usba: ec_en_usba {
 			gpios = <&gpioe 3 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
@@ -182,10 +179,6 @@
 			<&gpio3 4 0>,
 			<&gpio3 7 0>,
 			<&gpio4 1 0>,
-			<&gpio4 2 0>,
-			<&gpio4 3 0>,
-			<&gpio4 4 0>,
-			<&gpio4 5 0>,
 			<&gpio5 1 0>,
 			<&gpio5 6 0>,
 			<&gpio6 1 0>,
@@ -198,8 +191,10 @@
 			<&gpioa 3 0>,
 			<&gpioa 6 0>,
 			<&gpioc 5 0>,
+			<&gpiod 5 0>,
 			<&gpioe 0 0>,
 			<&gpioe 1 0>,
+			<&gpioe 2 0>,
 			<&gpiof 1 0>,
 			<&gpio3 2 0>;
 	};
