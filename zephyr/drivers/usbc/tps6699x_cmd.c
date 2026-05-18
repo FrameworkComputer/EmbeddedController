@@ -19,6 +19,7 @@
 #include <zephyr/drivers/smbus.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/minmax.h>
 LOG_MODULE_DECLARE(tps6699x, CONFIG_USBC_LOG_LEVEL);
 #include <zephyr/smf.h>
 

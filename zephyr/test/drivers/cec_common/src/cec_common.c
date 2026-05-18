@@ -11,6 +11,7 @@
 #include "test/drivers/utils.h"
 
 #include <zephyr/fff.h>
+#include <zephyr/sys/minmax.h>
 #include <zephyr/ztest.h>
 
 #define TEST_PORT 0

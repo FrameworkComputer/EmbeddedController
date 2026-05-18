@@ -9,6 +9,7 @@
 #include "thermal.h"
 
 #include <zephyr/kernel.h>
+#include <zephyr/sys/minmax.h>
 
 #define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_THERMAL, format, ##args)

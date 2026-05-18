@@ -7,6 +7,7 @@
 #include <zephyr/drivers/retained_mem.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/crc.h>
+#include <zephyr/sys/minmax.h>
 
 #ifndef CONFIG_ZTEST
 BUILD_ASSERT(CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY >

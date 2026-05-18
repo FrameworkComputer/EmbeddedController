@@ -14,6 +14,7 @@
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/minmax.h>
 
 #ifdef CONFIG_ZTEST
 #include <zephyr/ztest.h>

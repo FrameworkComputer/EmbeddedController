@@ -15,6 +15,7 @@
 #include <zephyr/dt-bindings/clock/npcx_clock.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/minmax.h>
 
 #include <cmsis_core.h>
 #include <drivers/cros_shi.h>

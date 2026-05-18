@@ -8,6 +8,7 @@
 #include "fingerprint_sensor_sim.h"
 
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/minmax.h>
 
 #include <drivers/fingerprint.h>
 #include <fingerprint/v4l2_types.h>

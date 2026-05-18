@@ -5,6 +5,7 @@
 #include <zephyr/fff.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/minmax.h>
 #include <zephyr/ztest.h>
 
 #include <cros_board_info.h>

@@ -14,6 +14,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/pm/device.h>
 #include <zephyr/sys/byteorder.h>
+#include <zephyr/sys/minmax.h>
 #include <zephyr/sys/util.h>
 
 #include <drivers/fingerprint.h>

@@ -17,6 +17,7 @@
 #include <zephyr/fff.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/minmax.h>
 #include <zephyr/ztest.h>
 
 LOG_MODULE_REGISTER(test_tps6699x, LOG_LEVEL_DBG);

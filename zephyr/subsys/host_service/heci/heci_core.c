@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/minmax.h>
 #include <zephyr/sys/util.h>
 
 LOG_MODULE_REGISTER(heci, CONFIG_HECI_LOG_LEVEL);

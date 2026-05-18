@@ -19,6 +19,7 @@
 #include <zephyr/drivers/spi.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/minmax.h>
 #include <zephyr/sys/util.h>
 
 #include <drivers/cros_flash.h>

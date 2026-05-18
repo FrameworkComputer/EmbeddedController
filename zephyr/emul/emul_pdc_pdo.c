@@ -15,6 +15,7 @@
 #include "include/usb_pd.h"
 
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/minmax.h>
 
 #define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
 LOG_MODULE_REGISTER(emul_pdc_pdo);

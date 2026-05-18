@@ -12,6 +12,7 @@
 
 #include <zephyr/devicetree.h>
 #include <zephyr/shell/shell.h>
+#include <zephyr/sys/minmax.h>
 
 #include <drivers/ucsi_v3.h>
 

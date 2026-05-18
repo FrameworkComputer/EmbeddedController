@@ -10,6 +10,8 @@
 #include "temp_sensor/temp_sensor.h"
 #include "usb_pd.h"
 
+#include <zephyr/sys/minmax.h>
+
 #define POLL_COUNT 5
 #define CHARGER_LIMIT_LEVELS 4
 #define TEMP_MAX 120

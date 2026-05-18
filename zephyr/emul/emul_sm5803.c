@@ -9,6 +9,7 @@
 #include <zephyr/drivers/emul_stub_device.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/minmax.h>
 #include <zephyr/ztest.h>
 
 #define DT_DRV_COMPAT cros_sm5803_emul

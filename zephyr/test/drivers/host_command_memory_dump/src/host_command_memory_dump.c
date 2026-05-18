@@ -13,6 +13,7 @@
 #include <stdlib.h>
 
 #include <zephyr/kernel.h>
+#include <zephyr/sys/minmax.h>
 #include <zephyr/ztest.h>
 #include <zephyr/ztest_assert.h>
 

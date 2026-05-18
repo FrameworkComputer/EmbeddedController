@@ -19,6 +19,7 @@
 
 #include <strings.h>
 #ifdef CONFIG_ZEPHYR
+#include <zephyr/sys/minmax.h>
 #include <zephyr/sys/util.h>
 /**
  * TODO(b/237712836): Remove once Zephyr's libc has strcasecmp.

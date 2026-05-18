@@ -12,6 +12,7 @@
 
 #include <zephyr/fff.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/minmax.h>
 
 #include <drivers/pdc.h>
 

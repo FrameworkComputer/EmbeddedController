@@ -22,6 +22,7 @@
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/minmax.h>
 #include <zephyr/ztest.h>
 
 #define DT_DRV_COMPAT ti_tps6699_pdc

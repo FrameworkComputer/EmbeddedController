@@ -12,6 +12,7 @@
 #include <zephyr/drivers/flash.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/__assert.h>
+#include <zephyr/sys/minmax.h>
 
 #define DT_DRV_COMPAT cros_ec_flash_emul
 
