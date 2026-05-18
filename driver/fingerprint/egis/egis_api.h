@@ -25,7 +25,7 @@ extern "C" {
  * largest possible image size, which is the 16-bpp test image.
  */
 #define FP_SENSOR_IMAGE_SIZE_EGIS 26200
-#define FP_ALGORITHM_TEMPLATE_SIZE_EGIS (16 * 1024)
+#define FP_ALGORITHM_TEMPLATE_SIZE_EGIS (20 * 1024)
 #define FP_MAX_FINGER_COUNT_EGIS 3
 #define FP_ALGORITHM_MAX_ENROLL_COUNT_EGIS 15
 
