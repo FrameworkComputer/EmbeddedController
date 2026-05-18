@@ -55,7 +55,7 @@
 		gpio_ec_fan_tach: ec_fan_tach {
 			gpios = <&gpio7 3 (GPIO_INPUT)>;
 		};
-		gpio_acpi_int: ec_acpi_int {
+		gpio_soc_int: ec_soc_int {
 			gpios = <&gpio7 6 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
 			enum-name = "GPIO_EC_INT_L";
 		};
