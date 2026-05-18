@@ -3,6 +3,12 @@
  * found in the LICENSE file.
  */
 
+/* This file fundamentally describes the power sequencing signals for the NVL
+ * platform and should be included by all atria projects. Each individual
+ * project should have its own .dtsi file to assign EC I/O pins to these
+ * signals.
+ */
+
 / {
 	chosen {
 		intel-ap-pwrseq,espi = &espi0;

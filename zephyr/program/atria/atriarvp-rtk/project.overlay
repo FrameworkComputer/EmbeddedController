@@ -7,7 +7,10 @@
 #include <cros/integrated_fwid.dtsi>
 
 
-/* atriarvp-rtk project DTS includes */
+/* atriarvp-rtk project DTS includes. These files generally describe hardware
+ * physically located on the RTS5915 MECC and therefore specific to
+ * atriarvp-rtk.
+ */
 #include "adc.dtsi"
 #include "atria_ec_ufsc.dtsi"
 #include "gpio.dtsi"
@@ -15,7 +18,18 @@
 #include "keyboard.dtsi"
 #include "power_signals.dtsi"
 
-#include "../rvp_consolidated.dtsi"
+/* These files generally describe hardware physically located on the atria RVP
+ * or AICs other than the MECC and therefore specific to NVL RVP builds.
+ * (atriarvp-rtk is currently the only such build.)
+ */
+#include "rvp_battery.dtsi"
+#include "rvp_fan.dtsi"
+#include "rvp_i2c.dtsi"
+#include "rvp_ioex_gpio.dtsi"
+#include "rvp_pd.dtsi"
+#include "rvp_usbc.dtsi"
+#include "rvp_runtime_pdc.dtsi"
+#include "rvp_temp_sensors.dtsi"
 
 #include <ite/it8801-common-cfg.dtsi>
 
