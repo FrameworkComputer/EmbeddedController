@@ -52,7 +52,7 @@ config PLATFORM_EC_PANIC_STRIP_GPR
 
 config PLATFORM_EC_PANIC_LOG
 	bool "Enable EC panic log"
-	default n
+	default y
 	select PLATFORM_EC_PRESERVED_RING_BUF
 	depends on !CROS_EC_RO || ZTEST
 	help
