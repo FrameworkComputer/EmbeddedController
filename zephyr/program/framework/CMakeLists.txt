@@ -188,6 +188,7 @@ if(DEFINED CONFIG_BOARD_SUNFLOWER OR DEFINED CONFIG_BOARD_DAHLIA)
 			"laptop12/src/temperature.c"
 			"laptop12/src/touchpad.c"
 			"laptop12/src/board_tablet_mode.c"
+			"laptop12/src/usbc.c"
 	)
 
 endif()
