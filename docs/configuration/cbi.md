@@ -34,6 +34,8 @@ None required by this feature.
 Refer to the [I2C debugging information] to verify communication with the CBI
 EEPROM.
 
+For details on how to use the EC console command to inspect or modify CBI, see [CBI Console Command](../cbi_console_command.md).
+
 [CBI]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md
 [I2C buses]: ./i2c.md
 [I2C debugging information]: ./i2c.md#

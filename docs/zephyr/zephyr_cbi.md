@@ -60,12 +60,13 @@ typically enabled automatically based on the devicetree configuration.
 ## Testing and Debugging
 
 The [`ectool cbi`] command can be run from the kernel to get/set [`FW_CONFIG`]
-and [`SSFC`] values.  The console has a "cbi" command that can be used to do
-the same thing from the EC console.
+and [`SSFC`] values.  The EC console has a [`cbi` console command] that can be
+used to inspect or modify CBI data directly.
 
 
 [`CBI`]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md
 [`ectool cbi`]: ./zephyr_cbi.md#testing-and-debugging
+[`cbi` console command]: ../cbi_console_command.md
 [`EEPROM`]: ./zephyr_eeprom.md
 [`CBI In Flash`]: ./zephyr_cbi_flash.md
 [`FW_CONFIG`]: ./zephyr_fw_config.md
