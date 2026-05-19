@@ -257,11 +257,13 @@ config PLATFORM_EC_HID
 	  to the host via hid over i2c protocaol.
 
 config SELECT_3A_TYPEC_OUTPUT_CURRENT
-	bool "EC will select one type-c port to output 3A current"
+	bool "Select one USB-C port for 3A output current"
 	default y
 	help
-		Default set all type-c port to output 1.5A current. And select
-		the first PD device to provide 3A current.
+		When enabled, the EC will allow one USB-C port to output 3A current.
+		By default, all ports are set to 3A, but once a 3A device is detected,
+		the EC will re-negotiate the PDOs of other USB-C ports down to 1.5A
+		to manage power distribution.
 
 config PD_ERROR_RECOVERY
 	bool "enable to send the error recovery command to PD"

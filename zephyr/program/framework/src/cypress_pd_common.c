@@ -650,7 +650,7 @@ static int cypd_select_rp(int port, uint8_t profile)
 	return rv;
 }
 
-static int cypd_select_pdo(int controller, int port, uint8_t profile)
+int cypd_select_pdo(int controller, int port, uint8_t profile)
 {
 	int rv, resp_code;
 
@@ -665,7 +665,7 @@ static int cypd_select_pdo(int controller, int port, uint8_t profile)
 	return rv;
 }
 
-void cypd_evaluate_port_profile(int controller, int port, int ccg_event)
+__overridable void cypd_evaluate_port_profile(int controller, int port, int ccg_event)
 {
 	int pd_port = PDPORT(controller, port);
 	int shared_pd_port = PDPORT(controller, (port ? 0 : 1));
@@ -2876,6 +2876,11 @@ void board_reset_pd_mcu(void)
 	}
 
 	crec_msleep(500);
+}
+
+int cypd_get_safety_level(void)
+{
+	return pre_safety_level;
 }
 
 /*****************************************************************************/

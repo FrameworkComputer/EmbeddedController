@@ -1146,5 +1146,30 @@ __override_proto int board_perform_error_recovery_port(int port);
  */
 int cypd_vsys_to_vbus_transition(int port);
 
+/**
+ * Get the current system safety level for PD power budgeting.
+ *
+ * @return int The current safety level value.
+ */
+int cypd_get_safety_level(void);
+
+/**
+ * Select and apply a specific Type-C current/PDO profile for the specified port.
+ *
+ * @param controller The index of the target CCG PD controller chip.
+ * @param port       The hardware port index controlled by the chip.
+ * @param profile    The target current profile to apply (e.g., CCG_PD_CMD_SET_TYPEC_3A,
+ * CCG_PD_CMD_SET_TYPEC_1_5A).
+ */
+int cypd_select_pdo(int controller, int port, uint8_t profile);
+
+/**
+ * Dynamic Multi-Port Type-C 3A/1.5A Power Allocation Management.
+ *
+ * @param controller  PD controller chip index.
+ * @param port        Relative port index under the current controller.
+ * @param ccg_event   Triggered PD event.
+ */
+__override_proto void cypd_evaluate_port_profile(int controller, int port, int ccg_event);
 
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */
