@@ -1,0 +1,33 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&binman {
+	wp-ro {
+		ec-ro {
+			/* Remove the node to re-create it again as a last node
+			 * in ec-ro. This is needed, because if the fmap node is
+			 * placed after an overlap node, it becomes overlap as
+			 * well. This is not expected, so a default node order
+			 * has to be modified.
+			 */
+			/delete-node/ ro-frid;
+
+			ro-frid {
+				compatible = "cros-ec,flash-layout";
+				type = "blob";
+
+				/* Point the version string to
+				 * current_image_data.version[32].
+				 * The offset of version is 4.
+				 */
+				offset-from-elf = <&zephyr_ro>,
+					"current_image_data", <4>;
+				size = <32>;
+				filename = "version.txt";
+				overlap;
+			};
+		};
+	};
+};
