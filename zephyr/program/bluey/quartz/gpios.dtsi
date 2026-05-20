@@ -38,6 +38,9 @@
 		gpio_pp1800_l1i_s3_ec: pp1800_l1i_s3_ec {
 			gpios = <&gpio5 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
+		gpio_sys_throttle_mira: sys_throttle_mira {
+			gpios = <&gpio5 1 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
+		};
 		gpio_dock_vdm_pwr_on: dock_vdm_pwr_on {
 			gpios = <&gpio5 4 (GPIO_INPUT)>;
 		};
@@ -190,7 +193,6 @@
 			<&gpio3 4 0>,
 			<&gpio3 7 0>,
 			<&gpio4 1 0>,
-			<&gpio5 1 0>,
 			<&gpio5 2 0>,
 			<&gpio5 6 0>,
 			<&gpio6 1 0>,
