@@ -147,10 +147,6 @@
 		gpio_tablet_mode_l: tablet_mode_l {
 			gpios = <&gpioe 4 (GPIO_INPUT)>;
 		};
-		gpio_ccd_mode_odl: ccd_mode_odl {
-			gpios = <&gpioe 5 (GPIO_INPUT)>;
-			enum-name = "GPIO_CCD_MODE_ODL";
-		};
 		gpio_ec_ac_present_odl: ec_ac_present_odl {
 			gpios = <&gpiof 0 (GPIO_INPUT)>;
 			enum-name = "GPIO_AC_PRESENT";
@@ -195,6 +191,7 @@
 			<&gpioe 0 0>,
 			<&gpioe 1 0>,
 			<&gpioe 2 0>,
+			<&gpioe 5 0>,
 			<&gpiof 1 0>,
 			<&gpio3 2 0>;
 	};
