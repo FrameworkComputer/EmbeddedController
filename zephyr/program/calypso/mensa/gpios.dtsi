@@ -87,7 +87,7 @@
 		gpio_en_i2c_ec_adsp_batt: en_i2c_ec_adsp_batt {
 			gpios = <&gpioa 1 (GPIO_OUTPUT)>;
 		};
-		gpio_ec_soc_qsh_int_odl: ec_soc_qsh_int_odl {
+		gpio_ec_acpi_int: ec_acpi_int {
 			gpios = <&gpioa 2 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
 		};
 		gpio_soc_ps_hold_ls: soc_ps_hold_ls {
