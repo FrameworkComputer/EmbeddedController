@@ -8,6 +8,7 @@
 #include "buccaneer/rwsig.dtsi"
 
 #include <cros/integrated_fwid.dtsi>
+#include <cros/integrated_ro_frid.dtsi>
 
 #define ELAN80SG_COMMON_IMAGE_PROPS \
 	width = <80>; \
@@ -38,6 +39,17 @@
 			size = <0x20000>;
 			ec-ro {
 				pad-byte = <0xff>;
+				ro-fw {
+					/*
+					 * Clang doesn't emit STT_SECTION symbols (also
+					 * called 'section symbols'), so 'rom_start'
+					 * symbol is not available. Fortunately, Zephyr
+					 * linker scripts provide '__rom_start_address'
+					 * symbol which points to the beginning of
+					 * 'rom_start' section.
+					 */
+					elf-base-sym = "__rom_start_address";
+				};
 			};
 		};
 
