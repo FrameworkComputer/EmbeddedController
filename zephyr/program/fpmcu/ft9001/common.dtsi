@@ -8,7 +8,6 @@
 #include "soc.dtsi"
 #include "gpio.dtsi"
 #include "rwsig.dtsi"
-#include "btn_ign.dtsi"
 #include "ascp.dtsi"
 
 #include <cros/integrated_fwid.dtsi>
