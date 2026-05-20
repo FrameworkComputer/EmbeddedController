@@ -32,9 +32,11 @@
 				compatible = "cros-ec,flash-layout";
 				type = "section";
 				pad-byte = <0xff>;
-				ro-fw {
+				zephyr_ro: ro-fw {
 					type = "blob";
 					filename = "zephyr_ro.bin";
+					elf-filename = "zephyr_ro.elf";
+					elf-base-sym = "rom_start";
 				};
 				ro-frid {
 					type = "blob";
