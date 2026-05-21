@@ -153,6 +153,26 @@
 	data-hold-time = <10>;
 };
 
+&i2c2 {
+	pdc_power_p0_ti: tps6699-pdc@20 {
+		compatible = "ti,tps6699-pdc";
+		reg = <0x20>;
+		irq-gpios = <&gpiod 3 GPIO_ACTIVE_LOW>;
+		port-index-on-chip = <0x1>;
+		zephyr,deferred-init;
+		frs-supported;
+		ccd;
+	};
+	pdc_power_p1_ti: tps6699-pdc@21 {
+		compatible = "ti,tps6699-pdc";
+		reg = <0x21>;
+		irq-gpios = <&gpioa 6 GPIO_ACTIVE_LOW>;
+		port-index-on-chip = <0x1>;
+		zephyr,deferred-init;
+		frs-supported;
+	};
+};
+
 &i2c4 {
 	/delete-node/ ps8747-mux-1@10;
 	/delete-node/ tusb546-mux-0@44;
@@ -165,10 +185,12 @@
 };
 
 &usbc_port0 {
+	pdc = <&pdc_power_p0 &pdc_power_p0_ti>;
 	zephyr,deferred-init;
 };
 
 &usbc_port1 {
+	pdc = <&pdc_power_p1 &pdc_power_p1_ti>;
 	zephyr,deferred-init;
 };
 

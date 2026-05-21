@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 
+#include <zephyr/devicetree.h>
 #include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(uldrenite_usbc, LOG_LEVEL_INF);
@@ -41,9 +42,21 @@ int board_get_pdc_for_port(int port, const struct device **dev)
 		/* Two type-c ports */
 		switch (port) {
 		case 0:
+			if (cros_cbi_ssfc_check_match(
+				    CBI_SSFC_VALUE_ID(DT_NODELABEL(tps6699)))) {
+				*dev = DEVICE_DT_GET(
+					DT_NODELABEL(pdc_power_p0_ti));
+				return 0;
+			}
 			*dev = DEVICE_DT_GET(DT_NODELABEL(pdc_power_p0));
 			return 0;
 		case 1:
+			if (cros_cbi_ssfc_check_match(
+				    CBI_SSFC_VALUE_ID(DT_NODELABEL(tps6699)))) {
+				*dev = DEVICE_DT_GET(
+					DT_NODELABEL(pdc_power_p1_ti));
+				return 0;
+			}
 			*dev = DEVICE_DT_GET(DT_NODELABEL(pdc_power_p1));
 			return 0;
 		}
@@ -52,6 +65,12 @@ int board_get_pdc_for_port(int port, const struct device **dev)
 		/* One type-c port */
 		switch (port) {
 		case 0:
+			if (cros_cbi_ssfc_check_match(
+				    CBI_SSFC_VALUE_ID(DT_NODELABEL(tps6699)))) {
+				*dev = DEVICE_DT_GET(
+					DT_NODELABEL(pdc_power_p0_ti));
+				return 0;
+			}
 			*dev = DEVICE_DT_GET(DT_NODELABEL(pdc_power_p0));
 			return 0;
 		case 1:
