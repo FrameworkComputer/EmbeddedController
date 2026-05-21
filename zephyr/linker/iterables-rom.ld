@@ -20,7 +20,7 @@ FOR_EACH(HOOK_TYPE_SECTION, (
 ITERABLE_SECTION_ROM(fingerprint_algorithm, 4)
 #endif
 
-#ifdef CONFIG_ADSP_COMMS
+#ifdef CONFIG_PLATFORM_EC_ADSP_CHARGE_MANAGER
 ITERABLE_SECTION_ROM(adsp_comms_callback, 4)
 #endif
 

@@ -2,14 +2,16 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-config ADSP_COMMS
-	bool "ADSP communications support"
+config PLATFORM_EC_ADSP_CHARGE_MANAGER
+	bool "ADSP charge manager support"
 	select PLATFORM_EC_BATTERY_STATUS_CUSTOM
 	help
-	  Enable ADSP communications support, including I2C port switching
+	  Enable ADSP charge manager support, including I2C port switching
 	  between controller and target modes on chipset state transitions.
+	  Note: This charge manager functionality is achieved via ADSP
+	  communications.
 
-if ADSP_COMMS
+if PLATFORM_EC_ADSP_CHARGE_MANAGER
 
 config ADSP_COMMS_STACK_SIZE
 	int "ADSP comms task stack size"
@@ -30,4 +32,4 @@ config ADSP_COMMS_MSGQ_SIZE
 	  The number of messages that can be stored in the ADSP communications
 	  message queue.
 
-endif # ADSP_COMMS
+endif # PLATFORM_EC_ADSP_CHARGE_MANAGER
