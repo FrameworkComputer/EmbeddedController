@@ -115,7 +115,7 @@ cros_system_driver_api cros_system_driver_native_posix_api = {
 		      cros_system_native_posix_init, NULL,            \
 		      &cros_system_native_posix_dev_data_##inst,      \
 		      &cros_system_dev_cfg, PRE_KERNEL_1,             \
-		      CONFIG_CROS_SYSTEM_NATIVE_POSIX_INIT_PRIORITY,  \
+		      CONFIG_CROS_SYSTEM_INIT_PRIORITY,               \
 		      &cros_system_driver_native_posix_api);
 
 DT_INST_FOREACH_STATUS_OKAY(CROS_SYSTEM_NATIVE_POSIX_INIT)

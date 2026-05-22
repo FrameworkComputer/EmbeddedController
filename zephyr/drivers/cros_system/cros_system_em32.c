@@ -245,7 +245,7 @@ static DEVICE_API(cros_system, cros_system_driver_em32_api) = {
 	.chip_revision = cros_system_em32_get_chip_revision,
 };
 
-#if CONFIG_CROS_SYSTEM_EM32_INIT_PRIORITY >= \
+#if CONFIG_CROS_SYSTEM_INIT_PRIORITY >= \
 	CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY
 #error "CROS_SYSTEM must initialize before the SYSTEM_PRE initialization"
 #endif
@@ -255,7 +255,7 @@ static DEVICE_API(cros_system, cros_system_driver_em32_api) = {
 	DEVICE_DEFINE(cros_system_em32_##inst, "CROS_SYSTEM",                 \
 		      cros_system_em32_init, NULL,                            \
 		      &cros_system_em32_dev_data_##inst, NULL, PRE_KERNEL_1,  \
-		      CONFIG_CROS_SYSTEM_EM32_INIT_PRIORITY,                  \
+		      CONFIG_CROS_SYSTEM_INIT_PRIORITY,                       \
 		      &cros_system_driver_em32_api);
 
 DT_INST_FOREACH_STATUS_OKAY(CROS_SYSTEM_EM32_INIT)

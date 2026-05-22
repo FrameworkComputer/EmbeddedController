@@ -15,19 +15,6 @@ menuconfig CROS_SYSTEM_NPCX
 	  The cros system driver provides the low-level driver related to
 	  chromium ec system functionality.
 
-if CROS_SYSTEM_NPCX
-
-config CROS_SYSTEM_NPCX_INIT_PRIORITY
-	int "cros_system npcx initialization priority"
-	default 10
-	range 10 19
-	help
-	  This sets the npcx cros_system driver initialization priority. The
-	  cros_system driver provides access to the NPCX reset cause and must be
-	  higher priority than CONFIG_SYSTEM_PRE_INIT_PRIORITY.
-
-endif # CROS_SYSTEM_NPCX
-
 config CROS_SYSTEM_IT8XXX2
 	bool "ITE IT8XXX2 cros system driver"
 	depends on SOC_FAMILY_ITE_EC
@@ -35,19 +22,6 @@ config CROS_SYSTEM_IT8XXX2
 	help
 	  This option enables the cros system driver for the it8xxx2 family of
 	  processors.
-
-if CROS_SYSTEM_IT8XXX2
-
-config CROS_SYSTEM_IT8XXX2_INIT_PRIORITY
-	int "cros_system it8xxx2 initialization priority"
-	default 10
-	help
-	  This sets the it8xxx2 cros_system driver initialization priority.
-	  The cros_system driver provides access to the it8xxx2 reset cause
-	  and must be higher priority than
-	  CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY.
-
-endif # CROS_SYSTEM_IT8XXX2
 
 menuconfig CROS_SYSTEM_XEC
 	bool "Microchip XEC cros system driver"
@@ -59,19 +33,6 @@ menuconfig CROS_SYSTEM_XEC
 	  The cros system driver provides the low-level driver related to
 	  chromium ec system functionality.
 
-if CROS_SYSTEM_XEC
-
-config CROS_SYSTEM_XEC_INIT_PRIORITY
-	int "cros_system MEC initialization priority"
-	default 10
-	help
-	  This sets the MEC cros_system driver initialization priority.
-	  The cros_system driver provides access to the MEC reset cause
-	  and must be higher priority than
-	  CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY.
-
-endif # CONFIG_CROS_SYSTEM_XEC
-
 menuconfig CROS_SYSTEM_NATIVE_POSIX
 	bool "Native POSIX cros system driver (test only)"
 	depends on (SOC_POSIX || SOC_NSIM) && CROS_EC
@@ -81,20 +42,6 @@ menuconfig CROS_SYSTEM_NATIVE_POSIX
 	  testing board. Currently, Zephyr doesn't provide the system related
 	  API.  The cros system driver provides fakable stubs for the low-level
 	  driver related to chromium ec system functionality.
-
-if CROS_SYSTEM_NATIVE_POSIX
-
-config CROS_SYSTEM_NATIVE_POSIX_INIT_PRIORITY
-	int "cros_system native POSIX initialization priority (test only)"
-	default 10
-	range 10 19
-	help
-	  This sets the native POSIX cros_system driver initialization
-	  priority. The cros_system driver provides access to mockable cros
-	  system functions to facillitate testing and must be higher priority
-	  than CONFIG_SYSTEM_PRE_INIT_PRIORITY.
-
-endif # CROS_SYSTEM_NATIVE_POSIX
 
 menuconfig CROS_SYSTEM_STM32
 	bool "ST STM32 cros system driver"
@@ -107,19 +54,6 @@ menuconfig CROS_SYSTEM_STM32
 	  processors. The cros system driver provides the low-level driver
 	  related to chromium ec system functionality.
 
-if CROS_SYSTEM_STM32
-
-config CROS_SYSTEM_STM32_INIT_PRIORITY
-	int "cros_system STM32 initialization priority"
-	default 10
-	help
-	  This sets the STM32 cros_system driver initialization priority.
-	  The cros_system driver provides access to the STM32 reset cause
-	  and must be higher priority than
-	  CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY.
-
-endif # CONFIG_CROS_SYSTEM_STM32
-
 config CROS_SYSTEM_REALTEK
 	bool "REALTEK RTS5915 cros system driver"
 	depends on SOC_FAMILY_REALTEK_EC
@@ -127,19 +61,6 @@ config CROS_SYSTEM_REALTEK
 	help
 	  This option enables the cros system driver for the realtek family of
 	  processors.
-
-if CROS_SYSTEM_REALTEK
-
-config CROS_SYSTEM_REALTEK_INIT_PRIORITY
-	int "cros_system realtek initialization priority"
-	default 10
-	help
-	  This sets the realtek cros_system driver initialization priority.
-	  The cros_system driver provides access to the realtek reset cause
-	  and must be higher priority than
-	  CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY.
-
-endif # CROS_SYSTEM_REALTEK
 
 menuconfig CROS_SYSTEM_ET171
 	bool "Egis ET171 cros system driver"
@@ -151,17 +72,6 @@ menuconfig CROS_SYSTEM_ET171
 	  This option enables the cros system driver for the Egis ET171 SOC.
 	  It uses AOSMU(Always On System Management Unit) custom Egis module.
 
-if CROS_SYSTEM_ET171
-
-config CROS_SYSTEM_ET171_INIT_PRIORITY
-	int "cros_system Egis ET171 SOC initialization priority"
-	default 10
-	help
-	  This sets the Egis ET171 SOC cros_system driver initialization
-	  priority.
-
-endif
-
 config CROS_SYSTEM_ELAN_EM32
 	bool "ELAN EM32 cros system driver"
 	depends on SOC_EM32F967
@@ -171,19 +81,6 @@ config CROS_SYSTEM_ELAN_EM32
 	  This option enables the cros system driver for the elan em32 family of
 	  processors.
 
-if CROS_SYSTEM_ELAN_EM32
-
-config CROS_SYSTEM_EM32_INIT_PRIORITY
-	int "cros_system Elan EM32 initialization priority"
-	default 10
-	help
-	  This sets the elan em32 cros_system driver initialization priority.
-	  The cros_system driver provides access to the elan em32 reset cause
-	  and must be higher priority than
-	  CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY.
-
-endif # CROS_SYSTEM_ELAN_EM32
-
 config CROS_SYSTEM_FT90
 	bool "FT cros system driver"
 	depends on SOC_SERIES_FT90
@@ -192,17 +89,12 @@ config CROS_SYSTEM_FT90
 	  This option enables the cros system driver for the Focaltech ft90 family of
 	  processors.
 
-if CROS_SYSTEM_FT90
-
-config CROS_SYSTEM_FT90_INIT_PRIORITY
-	int "cros_system FT initialization priority"
+config CROS_SYSTEM_INIT_PRIORITY
+	int "cros_system initialization priority"
 	default 10
 	help
-	  This sets the Focaltech ft90 cros_system driver initialization priority.
-	  The cros_system driver provides access to the Focaltech ft90 reset cause
-	  and must be higher priority than
-	  CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY.
-
-endif # CROS_SYSTEM_FT90
+	  This sets the initialization priority for the cros_system driver.
+	  The cros_system driver provides access to the chip reset cause and
+	  must be initialized before the SYSTEM_PRE initialization.
 
 endif # PLATFORM_EC

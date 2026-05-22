@@ -391,15 +391,15 @@ static DEVICE_API(cros_system, cros_system_driver_it8xxx2_api) = {
 	.chip_revision = cros_system_it8xxx2_get_chip_revision,
 };
 
-#if CONFIG_CROS_SYSTEM_IT8XXX2_INIT_PRIORITY >= \
+#if CONFIG_CROS_SYSTEM_INIT_PRIORITY >= \
 	CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY
 #error "CROS_SYSTEM must initialize before the SYSTEM_PRE initialization"
 #endif
 
-#define CROS_SYSTEM_IT8XXX2_INIT(inst)                                        \
-	DEVICE_DEFINE(cros_system_it8xxx2_##inst, "CROS_SYSTEM",              \
-		      cros_system_it8xxx2_init, NULL, NULL, NULL,             \
-		      PRE_KERNEL_1, CONFIG_CROS_SYSTEM_IT8XXX2_INIT_PRIORITY, \
+#define CROS_SYSTEM_IT8XXX2_INIT(inst)                                \
+	DEVICE_DEFINE(cros_system_it8xxx2_##inst, "CROS_SYSTEM",      \
+		      cros_system_it8xxx2_init, NULL, NULL, NULL,     \
+		      PRE_KERNEL_1, CONFIG_CROS_SYSTEM_INIT_PRIORITY, \
 		      &cros_system_driver_it8xxx2_api);
 
 DT_INST_FOREACH_STATUS_OKAY(CROS_SYSTEM_IT8XXX2_INIT)

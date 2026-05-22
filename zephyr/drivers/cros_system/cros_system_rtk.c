@@ -301,7 +301,7 @@ static const struct cros_system_driver_api cros_system_driver_rtk_api = {
 	.chip_name = cros_system_rtk_get_chip_name,
 	.chip_revision = cros_system_rtk_get_chip_revision,
 };
-#if CONFIG_CROS_SYSTEM_REALTEK_INIT_PRIORITY >= \
+#if CONFIG_CROS_SYSTEM_INIT_PRIORITY >= \
 	CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY
 #error "CROS_SYSTEM must initialize before the SYSTEM_PRE initialization"
 #endif
@@ -311,7 +311,7 @@ static const struct cros_system_driver_api cros_system_driver_rtk_api = {
 	DEVICE_DEFINE(cros_system_rtk_##inst, "CROS_SYSTEM",                \
 		      cros_system_rtk_init, NULL,                           \
 		      &cros_system_rtk_dev_data_##inst, NULL, PRE_KERNEL_1, \
-		      CONFIG_CROS_SYSTEM_REALTEK_INIT_PRIORITY,             \
+		      CONFIG_CROS_SYSTEM_INIT_PRIORITY,                     \
 		      &cros_system_driver_rtk_api);
 
 DT_INST_FOREACH_STATUS_OKAY(CROS_SYSTEM_RTK_INIT)
