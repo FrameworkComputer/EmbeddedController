@@ -4,10 +4,25 @@
 
 if PLATFORM_EC
 
-menuconfig CROS_SYSTEM_NPCX
+choice CROS_SYSTEM_CHIP_SELECTION
+	prompt "cros_system Chip Driver Selection"
+	default CROS_SYSTEM_NPCX if SOC_FAMILY_NPCX
+	default CROS_SYSTEM_IT8XXX2 if SOC_FAMILY_ITE_EC
+	default CROS_SYSTEM_XEC if SOC_FAMILY_MICROCHIP_MEC
+	default CROS_SYSTEM_NATIVE_POSIX if (SOC_POSIX || SOC_NSIM)
+	default CROS_SYSTEM_STM32 if SOC_FAMILY_STM32
+	default CROS_SYSTEM_REALTEK if SOC_FAMILY_REALTEK_EC
+	default CROS_SYSTEM_ET171 if SOC_EGIS_ET171
+	default CROS_SYSTEM_ELAN_EM32 if SOC_EM32F967
+	default CROS_SYSTEM_FT90 if SOC_SERIES_FT90
+	default CROS_SYSTEM_NONE
+	help
+	  Select the chip-specific cros_system driver. Only one driver can be
+	  enabled at a time to prevent duplicate symbol errors.
+
+config CROS_SYSTEM_NPCX
 	bool "Nuvoton NPCX cros system driver"
 	depends on SOC_FAMILY_NPCX
-	default y
 	select PINCTRL if DT_HAS_NUVOTON_NPCX_POWER_PSL_ENABLED
 	help
 	  This option enables the cros system driver for the NPCX family of
@@ -18,37 +33,33 @@ menuconfig CROS_SYSTEM_NPCX
 config CROS_SYSTEM_IT8XXX2
 	bool "ITE IT8XXX2 cros system driver"
 	depends on SOC_FAMILY_ITE_EC
-	default y
 	help
 	  This option enables the cros system driver for the it8xxx2 family of
 	  processors.
 
-menuconfig CROS_SYSTEM_XEC
+config CROS_SYSTEM_XEC
 	bool "Microchip XEC cros system driver"
 	depends on SOC_FAMILY_MICROCHIP_MEC
-	default y
 	help
 	  This option enables the cros system driver for the MCHP XEC family of
 	  processors. Currently, Zephyr doesn't provide the system related API.
 	  The cros system driver provides the low-level driver related to
 	  chromium ec system functionality.
 
-menuconfig CROS_SYSTEM_NATIVE_POSIX
+config CROS_SYSTEM_NATIVE_POSIX
 	bool "Native POSIX cros system driver (test only)"
 	depends on (SOC_POSIX || SOC_NSIM) && CROS_EC
-	default y
 	help
 	  This option enables the cros system driver for the native POSIX
 	  testing board. Currently, Zephyr doesn't provide the system related
 	  API.  The cros system driver provides fakable stubs for the low-level
 	  driver related to chromium ec system functionality.
 
-menuconfig CROS_SYSTEM_STM32
+config CROS_SYSTEM_STM32
 	bool "ST STM32 cros system driver"
 	depends on SOC_FAMILY_STM32 && IWDG_STM32
 	select HWINFO
 	select REBOOT
-	default y
 	help
 	  This option enables the cros system driver for the STM32 family of
 	  processors. The cros system driver provides the low-level driver
@@ -57,17 +68,15 @@ menuconfig CROS_SYSTEM_STM32
 config CROS_SYSTEM_REALTEK
 	bool "REALTEK RTS5915 cros system driver"
 	depends on SOC_FAMILY_REALTEK_EC
-	default y
 	help
 	  This option enables the cros system driver for the realtek family of
 	  processors.
 
-menuconfig CROS_SYSTEM_ET171
+config CROS_SYSTEM_ET171
 	bool "Egis ET171 cros system driver"
 	depends on SOC_EGIS_ET171
 	select SYSCON
 	select HWINFO
-	default y
 	help
 	  This option enables the cros system driver for the Egis ET171 SOC.
 	  It uses AOSMU(Always On System Management Unit) custom Egis module.
@@ -76,7 +85,6 @@ config CROS_SYSTEM_ELAN_EM32
 	bool "ELAN EM32 cros system driver"
 	depends on SOC_EM32F967
 	select HWINFO
-	default y
 	help
 	  This option enables the cros system driver for the elan em32 family of
 	  processors.
@@ -84,10 +92,17 @@ config CROS_SYSTEM_ELAN_EM32
 config CROS_SYSTEM_FT90
 	bool "FT cros system driver"
 	depends on SOC_SERIES_FT90
-	default y
 	help
 	  This option enables the cros system driver for the Focaltech ft90 family of
 	  processors.
+
+config CROS_SYSTEM_NONE
+	bool "No cros_system driver"
+	help
+	  Select this if your board does not use any of the supported
+	  cros_system drivers (e.g. Intel ISH boards).
+
+endchoice
 
 config CROS_SYSTEM_INIT_PRIORITY
 	int "cros_system initialization priority"
