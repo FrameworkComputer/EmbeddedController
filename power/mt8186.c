@@ -80,7 +80,7 @@
 #endif
 
 /* The timeout of the check if the system can boot AP */
-#define CAN_BOOT_AP_CHECK_TIMEOUT (1600 * MSEC)
+#define CAN_BOOT_AP_CHECK_TIMEOUT (2200 * MSEC)
 
 /* Wait for polling if the system can boot AP */
 #define CAN_BOOT_AP_CHECK_WAIT (200 * MSEC)
