@@ -2673,7 +2673,7 @@ void cypd_interrupt_handler_task(void *p)
 			else
 				ready = true;
 
-			if (ready) {
+			if (ready && cypd_controllers_are_ready()) {
 				cypd_customize_battery_cap();
 				cypd_customize_battery_status();
 			}
@@ -2947,15 +2947,19 @@ int cypd_get_active_pd_chip_count(void)
 
 static void cypd_reset_pd_chip(int chip)
 {
+	cypd_enable_interrupt(chip, false);
+
+	pd_chip_config[chip].state = CCG_STATE_WAIT_STABLE;
+
 	cypd_write_reg8(chip, CCG_PDPORT_ENABLE_REG, 0);
 
-	/*can take up to 650ms to discharge port for disable*/
-	cypd_wait_for_ack(chip, 650);
+	/*can take up to 1000 ms to discharge port for disable*/
+	cypd_wait_for_ack(chip, 1000);
 
 	cypd_clear_int(chip,
 		CCG_DEV_INTR + CCG_PORT0_INTR + CCG_PORT1_INTR + CCG_UCSI_INTR);
 
-	crec_msleep(1000);
+	cypd_enable_interrupt(chip, true);
 
 	/*
 	 * see if we can talk to the PD chip yet - issue a reset command
@@ -2965,7 +2969,8 @@ static void cypd_reset_pd_chip(int chip)
 	 */
 	if (cypd_reset(chip) == EC_SUCCESS)
 		CPRINTS("Full reset PD controller %d", chip);
-
+	else
+		pd_chip_config[chip].state = CCG_STATE_ERROR;
 }
 
 void board_reset_pd_mcu(void)
