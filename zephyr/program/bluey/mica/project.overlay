@@ -12,7 +12,6 @@
 #include "../adc.dtsi"
 #include "../i2c.dtsi"
 #include "../common.dtsi"
-#include "../battery.dtsi"
 #include "../psl.dtsi"
 #include <mica/overlay.dtsi>
 
@@ -22,6 +21,7 @@
 #include "fan.dtsi"
 #include "keyboard.dtsi"
 #include "temp_sensors.dtsi"
+#include "battery.dtsi"
 
 /* mica overrides follow... */
 

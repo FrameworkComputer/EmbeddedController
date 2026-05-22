@@ -168,6 +168,7 @@ properties:
       - "smp,si03054xl"
       - "smp,smp-atl-4-106"
       - "smp,smp-atl-4-106-1"
+      - "smp,smp-atl-4-550"
       - "smp,smp-cos-4-122"
       - "smp,smp-hpt-4-122"
       - "smp,pg01nl3353"

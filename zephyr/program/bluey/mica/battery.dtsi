@@ -1,0 +1,13 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	batteries {
+		default_battery:smp-atl-4-550 {
+			compatible = "smp,smp-atl-4-550", "battery-smart";
+			has_manuf_info;
+		};
+	};
+};
