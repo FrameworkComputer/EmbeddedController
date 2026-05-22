@@ -1,0 +1,31 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* c1nv program common DTS includes */
+
+#include <cros/integrated_fwid.dtsi>
+
+#include "../psl.dtsi"
+#include "../adc.dtsi"
+#include "../common.dtsi"
+
+/* c1nv project DTS includes */
+
+#include <cros/cbi_flash.dtsi>
+#include "gpios.dtsi"
+#include "i2c.dtsi"
+#include "interrupts.dtsi"
+#include "temp_sensors.dtsi"
+
+/* c1nv overrides follow... */
+
+&cbi_flash {
+	/*
+	 * CBI section size is 0x1000 bytes, the CBI portion lies at the end of
+	 * EC_RO section.
+	 */
+	offset = <0x3e000>;
+	size = <0x1000>;
+};

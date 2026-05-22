@@ -1,0 +1,51 @@
+/* Copyright 2025 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_ac_present: ac_present {
+			irq-pin = <&gpio_ec_ac_present_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
+		int_lid_open: lid_open {
+			irq-pin = <&gpio_lid_open_r>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+		int_power_button: power_button {
+			irq-pin = <&gpio_mech_pwr_btn_u_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+		int_power_good: power_good {
+			irq-pin = <&gpio_ec_s9f0_pwr_detect>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_ap_rst: ap_rst {
+			irq-pin = <&gpio_plt_rst_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "chipset_ap_rst_interrupt";
+		};
+		int_ap_suspend: ap_suspend {
+			irq-pin = <&gpio_ec_s3>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_ps_hold: ps_hold {
+			irq-pin = <&gpio_soc_ps_hold_ls>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_sys_rst: sys_rst {
+			irq-pin = <&gpio_sys_rst_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "chipset_sys_rst_interrupt";
+		};
+	};
+};

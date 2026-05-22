@@ -31,6 +31,11 @@ register_npcx9_project(
     project_name="mensa",
 )
 
+register_npcx9_project(
+    project_name="c1nv",
+)
+
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release.
 assert_rw_fwid_DO_NOT_EDIT(project_name="mensa", addr=0x40144)
+assert_rw_fwid_DO_NOT_EDIT(project_name="c1nv", addr=0x40144)
