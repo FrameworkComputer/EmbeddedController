@@ -7,15 +7,9 @@
 
 / {
 	chosen {
-		cros-ec,cros-system = &cros_system;
 		cros-ec,flash = &flash0;
 		cros-ec,flash-controller = &flash_controller;
 	};
-
-	cros_system: cros-system {
-		compatible = "cros-ec,cros-system";
-	};
-
 	soc {
 		flash_controller: cros-ec-flash {
 			compatible = "ft,ft9001-cros-flash";

@@ -10,14 +10,6 @@
 #include <dt-bindings/gpio_defines.h>
 
 / {
-	chosen {
-		cros-ec,cros-system = &cros_system;
-	};
-
-	cros_system: cros-system {
-		compatible = "cros-ec,cros-system";
-	};
-
 	gpio_000_036: gpio@00 {
 	        status = "okay";
 		compatible = "zephyr,gpio-emul";

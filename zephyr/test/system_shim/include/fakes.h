@@ -10,21 +10,13 @@
 
 #include <zephyr/fff.h>
 
-DECLARE_FAKE_VALUE_FUNC(int, cros_system_native_posix_get_reset_cause,
-			const struct device *);
-DECLARE_FAKE_VALUE_FUNC(uint64_t, cros_system_native_posix_deep_sleep_ticks,
-			const struct device *);
-DECLARE_FAKE_VALUE_FUNC(int, cros_system_native_posix_hibernate,
-			const struct device *, uint32_t, uint32_t);
-DECLARE_FAKE_VALUE_FUNC(const char *, cros_system_native_posix_get_chip_vendor,
-			const struct device *);
-DECLARE_FAKE_VALUE_FUNC(const char *, cros_system_native_posix_get_chip_name,
-			const struct device *);
-DECLARE_FAKE_VALUE_FUNC(const char *,
-			cros_system_native_posix_get_chip_revision,
-			const struct device *);
-DECLARE_FAKE_VALUE_FUNC(int, cros_system_native_posix_soc_reset,
-			const struct device *);
+DECLARE_FAKE_VALUE_FUNC(int, cros_system_get_reset_cause);
+DECLARE_FAKE_VALUE_FUNC(uint64_t, cros_system_deep_sleep_ticks);
+DECLARE_FAKE_VALUE_FUNC(int, cros_system_hibernate, uint32_t, uint32_t);
+DECLARE_FAKE_VALUE_FUNC(const char *, cros_system_chip_vendor);
+DECLARE_FAKE_VALUE_FUNC(const char *, cros_system_chip_name);
+DECLARE_FAKE_VALUE_FUNC(const char *, cros_system_chip_revision);
+DECLARE_FAKE_VALUE_FUNC(int, cros_system_soc_reset);
 DECLARE_FAKE_VOID_FUNC(watchdog_reload);
 DECLARE_FAKE_VOID_FUNC(board_hibernate);
 

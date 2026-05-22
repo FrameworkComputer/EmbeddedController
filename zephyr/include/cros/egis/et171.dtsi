@@ -7,15 +7,9 @@
 
 / {
 	chosen {
-		cros-ec,cros-system = &cros_system;
 		cros-ec,flash-controller = &flash_controller;
 		cros-ec,sha = &crypto;
 	};
-
-	cros_system: cros-system {
-		compatible = "cros-ec,cros-system";
-	};
-
 	soc {
 		flash_controller: cros-ec-flash {
 			compatible = "andestech,qspi-nor-xip-cros-flash";

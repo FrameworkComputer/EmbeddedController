@@ -7,7 +7,6 @@
 
 / {
 	chosen {
-		cros-ec,cros-system = &cros_system;
 		cros-ec,bbram = &bbram;
 		cros-ec,cec-counter = &counter0;
 		cros-ec,espi = &espi0;
@@ -33,11 +32,6 @@
 		compatible = "zephyr,memory-region";
 		zephyr,memory-region = "RAM_UNPADDED";
 	};
-
-	cros_system: cros-system {
-		compatible = "cros-ec,cros-system";
-	};
-
 	named-bbram-regions {
 		compatible = "named-bbram-regions";
 

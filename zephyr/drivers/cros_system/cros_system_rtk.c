@@ -20,8 +20,6 @@
 #include <zephyr/sys/reboot.h>
 #include <zephyr/sys/util.h>
 
-#define DT_DRV_COMPAT cros_ec_cros_system
-
 LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 
 #define RTK_SCCON_REG_BASE ((SYSTEM_Type *)(DT_REG_ADDR(DT_NODELABEL(sccon))))
@@ -36,9 +34,7 @@ LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 #define BBRAM_KEY_REV_VALUE ~BBRAM_KEY_VALUE
 
 /* Driver data */
-struct cros_system_rtk_data {
-	int reset; /* reset cause */
-};
+static int reset_cause = UNKNOWN_RST;
 
 static const struct device *const watchdog =
 	DEVICE_DT_GET(DT_CHOSEN(cros_ec_watchdog));
@@ -62,10 +58,8 @@ static int system_rtk_watchdog_stop(void)
 	return 0;
 }
 
-static const char *cros_system_rtk_get_chip_vendor(const struct device *dev)
+const char *cros_system_chip_vendor(void)
 {
-	ARG_UNUSED(dev);
-
 	return "rtk";
 }
 
@@ -124,10 +118,8 @@ static uint8_t system_get_chip_version(void)
 	return sub_id;
 }
 
-static const char *cros_system_rtk_get_chip_name(const struct device *dev)
+const char *cros_system_chip_name(void)
 {
-	ARG_UNUSED(dev);
-
 	static char buf[8] = { 'r', 't', 's' };
 	uint32_t chip_id = system_get_chip_id();
 
@@ -136,10 +128,8 @@ static const char *cros_system_rtk_get_chip_name(const struct device *dev)
 	return buf;
 }
 
-static const char *cros_system_rtk_get_chip_revision(const struct device *dev)
+const char *cros_system_chip_revision(void)
 {
-	ARG_UNUSED(dev);
-
 	static char buf[5];
 	uint8_t rev = system_get_chip_version();
 
@@ -148,16 +138,13 @@ static const char *cros_system_rtk_get_chip_revision(const struct device *dev)
 	return buf;
 }
 
-static int cros_system_rtk_get_reset_cause(const struct device *dev)
+int cros_system_get_reset_cause(void)
 {
-	struct cros_system_rtk_data *data = dev->data;
-
-	return data->reset;
+	return reset_cause;
 }
 
-static int cros_system_rtk_init(const struct device *dev)
+static int cros_system_rtk_init(void)
 {
-	struct cros_system_rtk_data *data = dev->data;
 	WDT_Type *wdt_reg = RTK_WDT_REG_BASE;
 	uint32_t vivo_reg0 = RTK_VIVO_BACKUP0_REG;
 	uint32_t vivo_reg1 = RTK_VIVO_BACKUP1_REG;
@@ -167,11 +154,11 @@ static int cros_system_rtk_init(const struct device *dev)
 	/* In order to determine if reset from watchdog */
 	uint32_t flag = 0;
 	/* check reset cause */
-	data->reset = UNKNOWN_RST;
+	reset_cause = UNKNOWN_RST;
 
 	/* is the WDT reset */
 	if (wdt_reg->STS & WDT_STS_RSTFLAG) {
-		data->reset = WATCHDOG_RST;
+		reset_cause = WATCHDOG_RST;
 		/* Clear watchdog reset status initially */
 		wdt_reg->CTRL |= WDT_CTRL_CLRRSTFLAG;
 		/* Setup flag if reset from watchdog */
@@ -179,7 +166,7 @@ static int cros_system_rtk_init(const struct device *dev)
 	} else if ((vivo_reg0 ^ vivo_reg1) == UINT32_MAX) {
 		/* VIN3 (GPIO115) connect to power button */
 		if (vivo_reg1 & BIT(SYSTEM_VIVOCTRL_VIN3STS_Pos)) {
-			data->reset = POWERUP;
+			reset_cause = POWERUP;
 		}
 	}
 
@@ -232,10 +219,8 @@ static int cros_system_rtk_init(const struct device *dev)
 	return 0;
 }
 
-static int cros_system_rtk_soc_reset(const struct device *dev)
+int cros_system_soc_reset(void)
 {
-	ARG_UNUSED(dev);
-
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable_all();
 
@@ -268,8 +253,7 @@ void wake_isr(enum gpio_signal signal)
 {
 }
 
-static int cros_system_rtk_hibernate(const struct device *dev, uint32_t seconds,
-				     uint32_t microseconds)
+int cros_system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	/* Disable interrupt first */
 	interrupt_disable_all();
@@ -293,25 +277,9 @@ static int cros_system_rtk_hibernate(const struct device *dev, uint32_t seconds,
 	return 0;
 }
 
-static const struct cros_system_driver_api cros_system_driver_rtk_api = {
-	.get_reset_cause = cros_system_rtk_get_reset_cause,
-	.soc_reset = cros_system_rtk_soc_reset,
-	.hibernate = cros_system_rtk_hibernate,
-	.chip_vendor = cros_system_rtk_get_chip_vendor,
-	.chip_name = cros_system_rtk_get_chip_name,
-	.chip_revision = cros_system_rtk_get_chip_revision,
-};
+SYS_INIT(cros_system_rtk_init, PRE_KERNEL_1, CONFIG_CROS_SYSTEM_INIT_PRIORITY);
+
 #if CONFIG_CROS_SYSTEM_INIT_PRIORITY >= \
 	CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY
 #error "CROS_SYSTEM must initialize before the SYSTEM_PRE initialization"
 #endif
-
-#define CROS_SYSTEM_RTK_INIT(inst)                                          \
-	static struct cros_system_rtk_data cros_system_rtk_dev_data_##inst; \
-	DEVICE_DEFINE(cros_system_rtk_##inst, "CROS_SYSTEM",                \
-		      cros_system_rtk_init, NULL,                           \
-		      &cros_system_rtk_dev_data_##inst, NULL, PRE_KERNEL_1, \
-		      CONFIG_CROS_SYSTEM_INIT_PRIORITY,                     \
-		      &cros_system_driver_rtk_api);
-
-DT_INST_FOREACH_STATUS_OKAY(CROS_SYSTEM_RTK_INIT)

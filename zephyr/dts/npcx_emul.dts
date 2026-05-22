@@ -249,14 +249,6 @@
 		#size-cells = <0>;
 		reg = <0x40019000 0x1000>;
 	};
-	chosen {
-		cros-ec,cros-system = &cros_system;
-	};
-
-	cros_system: cros-system {
-		compatible = "cros-ec,cros-system";
-	};
-
 	scfg: scfg@400c3000 {
 		compatible = "nuvoton,npcx-scfg";
 		/* First reg region is System Configuration Device */

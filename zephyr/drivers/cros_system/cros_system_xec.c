@@ -69,13 +69,22 @@ struct cros_system_xec_data {
 	int reset; /* reset cause */
 };
 
-/* Driver convenience defines */
-#define DRV_CONFIG(dev) ((const struct cros_system_xec_config *)(dev)->config)
-#define DRV_DATA(dev) ((struct cros_system_xec_data *)(dev)->data)
+static const struct cros_system_xec_config cros_system_dev_cfg = {
+	.base_pcr = DT_REG_ADDR_BY_NAME(DT_NODELABEL(pcr), pcrr),
+	.base_vbr = DT_REG_ADDR_BY_NAME(DT_NODELABEL(pcr), vbatr),
+	.base_wdog = DT_REG_ADDR(DT_NODELABEL(wdog)),
+};
 
-#define HAL_PCR_INST(dev) (struct pcr_regs *)(DRV_CONFIG(dev)->base_pcr)
-#define HAL_VBATR_INST(dev) (struct vbatr_regs *)(DRV_CONFIG(dev)->base_vbr)
-#define HAL_WDOG_INST(dev) (struct wdt_regs *)(DRV_CONFIG(dev)->base_wdog)
+static struct cros_system_xec_data cros_system_dev_data;
+
+/* Driver convenience defines */
+#define DRV_CONFIG() \
+	((const struct cros_system_xec_config *)&cros_system_dev_cfg)
+#define DRV_DATA() ((struct cros_system_xec_data *)&cros_system_dev_data)
+
+#define HAL_PCR_INST() (struct pcr_regs *)(DRV_CONFIG()->base_pcr)
+#define HAL_VBATR_INST() (struct vbatr_regs *)(DRV_CONFIG()->base_vbr)
+#define HAL_WDOG_INST() (struct wdt_regs *)(DRV_CONFIG()->base_wdog)
 
 /* Get saved reset flag address in battery-backed ram */
 #define BBRAM_SAVED_RESET_FLAG_ADDR                     \
@@ -99,32 +108,26 @@ static int system_xec_watchdog_stop(void)
 	return 0;
 }
 
-static const char *cros_system_xec_get_chip_vendor(const struct device *dev)
+const char *cros_system_chip_vendor(void)
 {
-	ARG_UNUSED(dev);
-
 	return "MCHP";
 }
 
 /* TODO - return specific chip name such as MEC1727 or MEC1723 */
-static const char *cros_system_xec_get_chip_name(const struct device *dev)
+const char *cros_system_chip_name(void)
 {
-	ARG_UNUSED(dev);
-
 	return "MEC172X";
 }
 
 /* TODO return chip revision from HW as an ASCII string */
-static const char *cros_system_xec_get_chip_revision(const struct device *dev)
+const char *cros_system_chip_revision(void)
 {
-	ARG_UNUSED(dev);
-
 	return "B0";
 }
 
-static int cros_system_xec_get_reset_cause(const struct device *dev)
+int cros_system_get_reset_cause(void)
 {
-	struct cros_system_xec_data *data = DRV_DATA(dev);
+	struct cros_system_xec_data *data = DRV_DATA();
 
 	return data->reset;
 }
@@ -171,10 +174,10 @@ static void cros_system_xec_vci_init(void);
  * Someone doing ARM Vector Reset insead of SYSRESETREQ or HW reset.
  * Does NRESETIN# status get set also on power on from no power state?
  */
-static int cros_system_xec_init(const struct device *dev)
+static int cros_system_xec_init(void)
 {
-	struct vbatr_regs *vbr = HAL_VBATR_INST(dev);
-	struct cros_system_xec_data *data = DRV_DATA(dev);
+	struct vbatr_regs *vbr = HAL_VBATR_INST();
+	struct cros_system_xec_data *data = DRV_DATA();
 	uint32_t pfsr = vbr->PFRS;
 
 	if (IS_BIT_SET(pfsr, MCHP_VBATR_PFRS_WDT_POS)) {
@@ -197,9 +200,9 @@ static int cros_system_xec_init(const struct device *dev)
 	return 0;
 }
 
-FUNC_NORETURN static int cros_system_xec_soc_reset(const struct device *dev)
+int cros_system_soc_reset(void)
 {
-	struct pcr_regs *const pcr = HAL_PCR_INST(dev);
+	struct pcr_regs *const pcr = HAL_PCR_INST();
 
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable_all();
@@ -423,10 +426,8 @@ static void cros_system_xec_configure_vci_in(void)
 }
 
 /* Arm MCHP VCI logic and drive VCI_OUT low to turn off EC VTR power rail */
-static void system_xec_hibernate_by_vci(const struct device *dev,
-					uint32_t seconds, uint32_t microseconds)
+static void system_xec_hibernate_by_vci(uint32_t seconds, uint32_t microseconds)
 {
-	ARG_UNUSED(dev);
 	ARG_UNUSED(seconds);
 	ARG_UNUSED(microseconds);
 
@@ -457,11 +458,10 @@ static void system_xec_hibernate_by_vci(const struct device *dev,
 #else
 
 /* Put the EC in hibernate (lowest EC power state). */
-static void system_xec_hibernate_by_dsleep(const struct device *dev,
-					   uint32_t seconds,
+static void system_xec_hibernate_by_dsleep(uint32_t seconds,
 					   uint32_t microseconds)
 {
-	struct pcr_regs *const pcr = HAL_PCR_INST(dev);
+	struct pcr_regs *const pcr = HAL_PCR_INST();
 #ifdef CONFIG_ADC_XEC_V2
 	struct adc_regs *adc0 = STRUCT_ADC_REG_BASE_ADDR;
 #endif
@@ -589,8 +589,7 @@ static void system_xec_hibernate_by_dsleep(const struct device *dev,
 #endif
 
 /* Put the EC in hibernate (lowest EC power state or VCI mechanism). */
-static int cros_system_xec_hibernate(const struct device *dev, uint32_t seconds,
-				     uint32_t microseconds)
+int cros_system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	/* Disable interrupt first */
 	interrupt_disable_all();
@@ -602,35 +601,12 @@ static int cros_system_xec_hibernate(const struct device *dev, uint32_t seconds,
 	 * otherwise, enter deepest sleep mode
 	 */
 #ifdef CONFIG_PLATFORM_EC_HIBERNATE_VCI
-	system_xec_hibernate_by_vci(dev, seconds, microseconds);
+	system_xec_hibernate_by_vci(seconds, microseconds);
 #else
-	system_xec_hibernate_by_dsleep(dev, seconds, microseconds);
+	system_xec_hibernate_by_dsleep(seconds, microseconds);
 #endif
 
 	return 0;
 }
 
-static const struct cros_system_xec_config cros_system_dev_cfg = {
-	.base_pcr = DT_REG_ADDR_BY_NAME(DT_NODELABEL(pcr), pcrr),
-	.base_vbr = DT_REG_ADDR_BY_NAME(DT_NODELABEL(pcr), vbatr),
-	.base_wdog = DT_REG_ADDR(DT_NODELABEL(wdog)),
-};
-
-static DEVICE_API(cros_system, cros_system_driver_xec_api) = {
-	.get_reset_cause = cros_system_xec_get_reset_cause,
-	.soc_reset = cros_system_xec_soc_reset,
-	.hibernate = cros_system_xec_hibernate,
-	.chip_vendor = cros_system_xec_get_chip_vendor,
-	.chip_name = cros_system_xec_get_chip_name,
-	.chip_revision = cros_system_xec_get_chip_revision,
-};
-
-#define CROS_SYSTEM_XEC_INIT(inst)                                            \
-	static struct cros_system_xec_data cros_system_xec_dev_data_##inst;   \
-	DEVICE_DEFINE(cros_system_xec_##inst, "CROS_SYSTEM",                  \
-		      cros_system_xec_init, NULL,                             \
-		      &cros_system_xec_dev_data_##inst, &cros_system_dev_cfg, \
-		      PRE_KERNEL_1, CONFIG_CROS_SYSTEM_INIT_PRIORITY,         \
-		      &cros_system_driver_xec_api);
-
-DT_INST_FOREACH_STATUS_OKAY(CROS_SYSTEM_XEC_INIT)
+SYS_INIT(cros_system_xec_init, PRE_KERNEL_1, CONFIG_CROS_SYSTEM_INIT_PRIORITY);

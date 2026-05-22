@@ -25,7 +25,6 @@ LOG_MODULE_REGISTER(shim_system, LOG_LEVEL_ERR);
 static const struct device *const bbram_dev =
 	COND_CODE_1(DT_HAS_CHOSEN(cros_ec_bbram),
 		    DEVICE_DT_GET(DT_CHOSEN(cros_ec_bbram)), NULL);
-static const struct device *sys_dev;
 
 /* Map idx to a bbram offset/size, or return -1 on invalid idx */
 static int bbram_lookup(enum system_bbram_idx idx, int *offset_out,
@@ -136,7 +135,6 @@ int system_get_scratchpad(uint32_t *value)
 
 test_mockable void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
-	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
 	int err;
 
 	/* Flush console before hibernating */
@@ -149,7 +147,7 @@ test_mockable void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	chip_save_reset_flags(chip_read_reset_flags() |
 			      EC_RESET_FLAG_HIBERNATE);
 
-	err = cros_system_hibernate(sys_dev, seconds, microseconds);
+	err = cros_system_hibernate(seconds, microseconds);
 	if (err < 0) {
 		LOG_ERR("hibernate failed %d", err);
 		return;
@@ -172,10 +170,8 @@ test_mockable void system_hibernate(uint32_t seconds, uint32_t microseconds)
  */
 static int command_idle_stats(int argc, const char **argv)
 {
-	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
-
 	timestamp_t ts = get_time();
-	uint64_t deep_sleep_ticks = cros_system_deep_sleep_ticks(sys_dev);
+	uint64_t deep_sleep_ticks = cros_system_deep_sleep_ticks();
 
 	ccprintf("Time spent in deep-sleep:            %.6llds\n",
 		 k_ticks_to_us_near64(deep_sleep_ticks));
@@ -188,39 +184,45 @@ DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats, "",
 
 const char *system_get_chip_vendor(void)
 {
-	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
-
-	return cros_system_chip_vendor(sys_dev);
+	return cros_system_chip_vendor();
 }
 
 const char *system_get_chip_name(void)
 {
-	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
-
-	return cros_system_chip_name(sys_dev);
+	return cros_system_chip_name();
 }
 
 const char *system_get_chip_revision(void)
 {
-	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
-
-	return cros_system_chip_revision(sys_dev);
+	return cros_system_chip_revision();
 }
 
 int system_get_hibernate_wake_source(enum hibernate_wake_source *source)
 {
-	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
+	return cros_system_get_hibernate_wake_source(source);
+}
 
-	return cros_system_get_hibernate_wake_source(sys_dev, source);
+__attribute__((weak)) uint64_t cros_system_deep_sleep_ticks(void)
+{
+	return 0;
+}
+
+__attribute__((weak)) int
+cros_system_get_hibernate_wake_source(enum hibernate_wake_source *source)
+{
+	return -ENOSYS;
+}
+
+__attribute__((weak)) int cros_system_hibernate(uint32_t seconds,
+						uint32_t microseconds)
+{
+	return -ENOSYS;
 }
 
 test_mockable void system_reset(int flags)
 {
 	int err;
 	uint32_t save_flags;
-
-	if (!sys_dev)
-		LOG_ERR("sys_dev get binding failed");
 
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable_all();
@@ -242,7 +244,7 @@ test_mockable void system_reset(int flags)
 		}
 	}
 
-	err = cros_system_soc_reset(sys_dev);
+	err = cros_system_soc_reset();
 
 	if (err < 0)
 		LOG_ERR("soc reset failed");
@@ -264,7 +266,7 @@ static int check_reset_cause(void)
 	uint32_t chip_flags = 0; /* used to write back to the BBRAM */
 	int chip_reset_cause = 0; /* chip-level reset cause */
 
-	chip_reset_cause = cros_system_get_reset_cause(sys_dev);
+	chip_reset_cause = cros_system_get_reset_cause();
 	if (chip_reset_cause < 0)
 		return -1;
 
@@ -360,17 +362,6 @@ test_export_static int system_preinitialize(void)
 			LOG_ERR("Failed to init BBRAM");
 			return -1;
 		}
-	}
-
-	sys_dev = device_get_binding("CROS_SYSTEM");
-	if (!sys_dev) {
-		/*
-		 * TODO(b/183022804): This should not happen in normal
-		 * operation. Check whether the error check can be change to
-		 * build-time error, or at least a fatal run-time error.
-		 */
-		LOG_ERR("sys_dev gets binding failed");
-		return -1;
 	}
 
 	/* check the reset cause */

@@ -26,10 +26,8 @@ LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 #define WDT_IT8XXX2_REG_BASE \
 	((struct wdt_it8xxx2_regs *)DT_REG_ADDR(DT_NODELABEL(twd0)))
 
-static const char *cros_system_it8xxx2_get_chip_vendor(const struct device *dev)
+const char *cros_system_chip_vendor(void)
 {
-	ARG_UNUSED(dev);
-
 	return "ite";
 }
 
@@ -49,10 +47,8 @@ static uint8_t system_get_chip_version(void)
 	return gctrl_base->GCTRL_ECHIPVER & 0x0F;
 }
 
-static const char *cros_system_it8xxx2_get_chip_name(const struct device *dev)
+const char *cros_system_chip_name(void)
 {
-	ARG_UNUSED(dev);
-
 	static char buf[8] = { 'i', 't' };
 	uint32_t chip_id = system_get_chip_id();
 	int num = 4;
@@ -64,11 +60,8 @@ static const char *cros_system_it8xxx2_get_chip_name(const struct device *dev)
 	return buf;
 }
 
-static const char *
-cros_system_it8xxx2_get_chip_revision(const struct device *dev)
+const char *cros_system_chip_revision(void)
 {
-	ARG_UNUSED(dev);
-
 	static char buf[3];
 	uint8_t rev = system_get_chip_version();
 
@@ -77,9 +70,8 @@ cros_system_it8xxx2_get_chip_revision(const struct device *dev)
 	return buf;
 }
 
-static int cros_system_it8xxx2_get_reset_cause(const struct device *dev)
+int cros_system_get_reset_cause(void)
 {
-	ARG_UNUSED(dev);
 	struct gctrl_it8xxx2_regs *const gctrl_base = GCTRL_IT8XXX2_REG_BASE;
 	uint8_t last_reset_source = gctrl_base->GCTRL_RSTS & IT8XXX2_GCTRL_LRS;
 	uint8_t raw_reset_cause2 =
@@ -116,7 +108,7 @@ static int cros_system_it8xxx2_get_reset_cause(const struct device *dev)
 	return UNKNOWN_RST;
 }
 
-static int cros_system_it8xxx2_init(const struct device *dev)
+static int cros_system_it8xxx2_init(void)
 {
 	struct gctrl_it8xxx2_regs *const gctrl_base = GCTRL_IT8XXX2_REG_BASE;
 
@@ -126,7 +118,7 @@ static int cros_system_it8xxx2_init(const struct device *dev)
 	return 0;
 }
 
-static int cros_system_it8xxx2_soc_reset(const struct device *dev)
+int cros_system_soc_reset(void)
 {
 	struct gctrl_it8xxx2_regs *const gctrl_base = GCTRL_IT8XXX2_REG_BASE;
 	struct wdt_it8xxx2_regs *const wdt_base = WDT_IT8XXX2_REG_BASE;
@@ -160,8 +152,7 @@ void wake_isr(enum gpio_signal signal)
 {
 }
 
-static int system_it8xxx2_hibernate_by_deep_doze(const struct device *dev,
-						 uint32_t seconds,
+static int system_it8xxx2_hibernate_by_deep_doze(uint32_t seconds,
 						 uint32_t microseconds)
 {
 	if (seconds || microseconds) {
@@ -338,9 +329,7 @@ static int system_it8xxx2_hibernate_by_elpm(void)
 }
 #endif /* CONFIG_PLATFORM_EC_HIBERNATE_ELPM */
 
-static int cros_system_it8xxx2_hibernate(const struct device *dev,
-					 uint32_t seconds,
-					 uint32_t microseconds)
+int cros_system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	struct wdt_it8xxx2_regs *const wdt_base = WDT_IT8XXX2_REG_BASE;
 
@@ -378,28 +367,13 @@ static int cros_system_it8xxx2_hibernate(const struct device *dev,
 	return system_it8xxx2_hibernate_by_elpm();
 #endif
 
-	return system_it8xxx2_hibernate_by_deep_doze(dev, seconds,
-						     microseconds);
+	return system_it8xxx2_hibernate_by_deep_doze(seconds, microseconds);
 }
 
-static DEVICE_API(cros_system, cros_system_driver_it8xxx2_api) = {
-	.get_reset_cause = cros_system_it8xxx2_get_reset_cause,
-	.soc_reset = cros_system_it8xxx2_soc_reset,
-	.hibernate = cros_system_it8xxx2_hibernate,
-	.chip_vendor = cros_system_it8xxx2_get_chip_vendor,
-	.chip_name = cros_system_it8xxx2_get_chip_name,
-	.chip_revision = cros_system_it8xxx2_get_chip_revision,
-};
+SYS_INIT(cros_system_it8xxx2_init, PRE_KERNEL_1,
+	 CONFIG_CROS_SYSTEM_INIT_PRIORITY);
 
 #if CONFIG_CROS_SYSTEM_INIT_PRIORITY >= \
 	CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY
 #error "CROS_SYSTEM must initialize before the SYSTEM_PRE initialization"
 #endif
-
-#define CROS_SYSTEM_IT8XXX2_INIT(inst)                                \
-	DEVICE_DEFINE(cros_system_it8xxx2_##inst, "CROS_SYSTEM",      \
-		      cros_system_it8xxx2_init, NULL, NULL, NULL,     \
-		      PRE_KERNEL_1, CONFIG_CROS_SYSTEM_INIT_PRIORITY, \
-		      &cros_system_driver_it8xxx2_api);
-
-DT_INST_FOREACH_STATUS_OKAY(CROS_SYSTEM_IT8XXX2_INIT)

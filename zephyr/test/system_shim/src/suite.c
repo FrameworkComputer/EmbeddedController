@@ -10,20 +10,13 @@
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
 
-DEFINE_FAKE_VALUE_FUNC(int, cros_system_native_posix_get_reset_cause,
-		       const struct device *);
-DEFINE_FAKE_VALUE_FUNC(uint64_t, cros_system_native_posix_deep_sleep_ticks,
-		       const struct device *);
-DEFINE_FAKE_VALUE_FUNC(int, cros_system_native_posix_hibernate,
-		       const struct device *, uint32_t, uint32_t);
-DEFINE_FAKE_VALUE_FUNC(const char *, cros_system_native_posix_get_chip_vendor,
-		       const struct device *);
-DEFINE_FAKE_VALUE_FUNC(const char *, cros_system_native_posix_get_chip_name,
-		       const struct device *);
-DEFINE_FAKE_VALUE_FUNC(const char *, cros_system_native_posix_get_chip_revision,
-		       const struct device *);
-DEFINE_FAKE_VALUE_FUNC(int, cros_system_native_posix_soc_reset,
-		       const struct device *);
+DEFINE_FAKE_VALUE_FUNC(int, cros_system_get_reset_cause);
+DEFINE_FAKE_VALUE_FUNC(uint64_t, cros_system_deep_sleep_ticks);
+DEFINE_FAKE_VALUE_FUNC(int, cros_system_hibernate, uint32_t, uint32_t);
+DEFINE_FAKE_VALUE_FUNC(const char *, cros_system_chip_vendor);
+DEFINE_FAKE_VALUE_FUNC(const char *, cros_system_chip_name);
+DEFINE_FAKE_VALUE_FUNC(const char *, cros_system_chip_revision);
+DEFINE_FAKE_VALUE_FUNC(int, cros_system_soc_reset);
 DEFINE_FAKE_VOID_FUNC(watchdog_reload);
 DEFINE_FAKE_VOID_FUNC(board_hibernate);
 
@@ -38,13 +31,13 @@ static void system_before_after(void *test_data)
 	}
 #endif
 
-	RESET_FAKE(cros_system_native_posix_get_reset_cause);
-	RESET_FAKE(cros_system_native_posix_deep_sleep_ticks);
-	RESET_FAKE(cros_system_native_posix_hibernate);
-	RESET_FAKE(cros_system_native_posix_get_chip_vendor);
-	RESET_FAKE(cros_system_native_posix_get_chip_name);
-	RESET_FAKE(cros_system_native_posix_get_chip_revision);
-	RESET_FAKE(cros_system_native_posix_soc_reset);
+	RESET_FAKE(cros_system_get_reset_cause);
+	RESET_FAKE(cros_system_deep_sleep_ticks);
+	RESET_FAKE(cros_system_hibernate);
+	RESET_FAKE(cros_system_chip_vendor);
+	RESET_FAKE(cros_system_chip_name);
+	RESET_FAKE(cros_system_chip_revision);
+	RESET_FAKE(cros_system_soc_reset);
 	RESET_FAKE(watchdog_reload);
 	RESET_FAKE(board_hibernate);
 }

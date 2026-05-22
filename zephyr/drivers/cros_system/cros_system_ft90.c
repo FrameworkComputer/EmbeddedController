@@ -6,18 +6,15 @@
 #include "drivers/cros_system.h"
 #include "system.h"
 
+#include <errno.h>
+
 #include <zephyr/device.h>
 #include <zephyr/drivers/hwinfo.h>
+#include <zephyr/init.h>
 #include <zephyr/sys/reboot.h>
 
-#define DT_DRV_COMPAT cros_ec_cros_system
-
-/* Driver data */
-struct cros_system_ft_data {
-	int reset; /* reset cause */
-};
-
-#define DRV_DATA(dev) ((struct cros_system_ft_data *)(dev)->data)
+/* Static driver data */
+static int reset_cause_val = UNKNOWN_RST;
 
 #if !DT_NODE_EXISTS(DT_NODELABEL(rst))
 #error "rst node must be exists"
@@ -28,37 +25,28 @@ struct cros_system_ft_data {
 #define RCR_OFFSET 0
 #define RESET_RCR_SOFTRST BIT(31)
 
-static const char *cros_system_ft_get_chip_vendor(const struct device *dev)
+const char *cros_system_chip_vendor(void)
 {
-	ARG_UNUSED(dev);
-
 	return "ft";
 }
 
-static const char *cros_system_ft_get_chip_name(const struct device *dev)
+const char *cros_system_chip_name(void)
 {
-	ARG_UNUSED(dev);
-
 	return CONFIG_SOC;
 }
 
-static const char *cros_system_ft_get_chip_revision(const struct device *dev)
+const char *cros_system_chip_revision(void)
 {
-	ARG_UNUSED(dev);
-
 	return "";
 }
 
-static int cros_system_ft_get_reset_cause(const struct device *dev)
+int cros_system_get_reset_cause(void)
 {
-	struct cros_system_ft_data *data = DRV_DATA(dev);
-
-	return data->reset;
+	return reset_cause_val;
 }
 
-static int cros_system_ft_soc_reset(const struct device *dev)
+int cros_system_soc_reset(void)
 {
-	ARG_UNUSED(dev);
 	uint32_t value;
 
 	value = sys_read32(RESET_BASE_ADDR + RCR_OFFSET);
@@ -67,45 +55,46 @@ static int cros_system_ft_soc_reset(const struct device *dev)
 	return 0;
 }
 
-static int cros_system_ft_init(const struct device *dev)
+uint64_t cros_system_deep_sleep_ticks(void)
 {
-	struct cros_system_ft_data *data = DRV_DATA(dev);
-	uint32_t reset_cause;
+	return 0;
+}
 
-	data->reset = UNKNOWN_RST;
-	hwinfo_get_reset_cause(&reset_cause);
+int cros_system_hibernate(uint32_t seconds, uint32_t microseconds)
+{
+	ARG_UNUSED(seconds);
+	ARG_UNUSED(microseconds);
+	return -ENOSYS;
+}
 
-	if (reset_cause & RESET_WATCHDOG) {
-		data->reset = WATCHDOG_RST;
-	} else if (reset_cause & RESET_SOFTWARE) {
+int cros_system_get_hibernate_wake_source(enum hibernate_wake_source *source)
+{
+	ARG_UNUSED(source);
+	return -ENOSYS;
+}
+
+static int cros_system_ft_init(void)
+{
+	uint32_t hwinfo_reset_cause;
+
+	reset_cause_val = UNKNOWN_RST;
+	hwinfo_get_reset_cause(&hwinfo_reset_cause);
+
+	if (hwinfo_reset_cause & RESET_WATCHDOG) {
+		reset_cause_val = WATCHDOG_RST;
+	} else if (hwinfo_reset_cause & RESET_SOFTWARE) {
 		/* Use DEBUG_RST because it maps to EC_RESET_FLAG_SOFT. */
-		data->reset = DEBUG_RST;
-	} else if (reset_cause & RESET_POR) {
-		data->reset = POWERUP;
-	} else if (reset_cause & RESET_PIN) {
-		data->reset = VCC1_RST_PIN;
+		reset_cause_val = DEBUG_RST;
+	} else if (hwinfo_reset_cause & RESET_POR) {
+		reset_cause_val = POWERUP;
+	} else if (hwinfo_reset_cause & RESET_PIN) {
+		reset_cause_val = VCC1_RST_PIN;
 	}
 
 	return 0;
 }
 
-static DEVICE_API(cros_system, cros_system_driver_ft_api) = {
-	.get_reset_cause = cros_system_ft_get_reset_cause,
-	.soc_reset = cros_system_ft_soc_reset,
-	.chip_vendor = cros_system_ft_get_chip_vendor,
-	.chip_name = cros_system_ft_get_chip_name,
-	.chip_revision = cros_system_ft_get_chip_revision,
-};
-
-#define CROS_SYSTEM_FT_INIT(inst)                                          \
-	static struct cros_system_ft_data cros_system_ft_dev_data_##inst;  \
-	DEVICE_DEFINE(cros_system_ft_##inst, "CROS_SYSTEM",                \
-		      cros_system_ft_init, NULL,                           \
-		      &cros_system_ft_dev_data_##inst, NULL, PRE_KERNEL_1, \
-		      CONFIG_CROS_SYSTEM_INIT_PRIORITY,                    \
-		      &cros_system_driver_ft_api);
-
-DT_INST_FOREACH_STATUS_OKAY(CROS_SYSTEM_FT_INIT)
+SYS_INIT(cros_system_ft_init, PRE_KERNEL_1, CONFIG_CROS_SYSTEM_INIT_PRIORITY);
 
 #if CONFIG_CROS_SYSTEM_INIT_PRIORITY >= \
 	CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY

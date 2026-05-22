@@ -26,13 +26,7 @@
 / {
 	chosen {
 		cros-fp,fingerprint-sensor = &fp_sensor;
-		cros-ec,cros-system = &cros_system;
 	};
-
-	cros_system: cros-system {
-		compatible = "cros-ec,cros-system";
-	};
-
 	named-bbram-regions {
 		compatible = "named-bbram-regions";
 

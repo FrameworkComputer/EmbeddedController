@@ -5,7 +5,10 @@
 
 /**
  * @file
- * @brief Public API for cros system drivers
+ * @brief Public API for cros system
+ *
+ * Each EC chip type implements the functions prototyped below
+ * directly.
  */
 
 #ifndef ZEPHYR_INCLUDE_DRIVERS_CROS_SYSTEM_H_
@@ -18,7 +21,6 @@
  * @{
  */
 
-#include <zephyr/device.h>
 #include <zephyr/kernel.h>
 
 /**
@@ -39,7 +41,6 @@ enum system_reset_cause {
 };
 
 enum hibernate_wake_source {
-
 	/* The wake source is AC */
 	WAKE_SOURCE_ACOK = 0,
 	/* The wake source is Lid open */
@@ -59,240 +60,74 @@ enum hibernate_wake_source {
 #define SYSTEM_DT_NODE_HIBERNATE_CONFIG DT_INST(0, cros_ec_hibernate_wake_pins)
 
 /**
- * @typedef cros_system_get_reset_cause_api
- * @brief Callback API for getting reset cause instance.
- * See cros_system_get_reset_cause() for argument descriptions
- */
-typedef int (*cros_system_get_reset_cause_api)(const struct device *dev);
-
-/**
- * @typedef cros_system_soc_reset_api
- * @brief Callback API for soc-reset instance.
- * See cros_system_soc_reset() for argument descriptions
- */
-typedef int (*cros_system_soc_reset_api)(const struct device *dev);
-
-/**
- * @typedef cros_system_hibernate_api
- * @brief Callback API for entering hibernate state (lowest EC power state).
- * See cros_system_hibernate() for argument descriptions
- */
-typedef int (*cros_system_hibernate_api)(const struct device *dev,
-					 uint32_t seconds,
-					 uint32_t microseconds);
-
-/**
- * @typedef cros_system_chip_vendor_api
- * @brief Callback API for getting the chip vendor.
- * See cros_system_chip_vendor() for argument descriptions
- */
-typedef const char *(*cros_system_chip_vendor_api)(const struct device *dev);
-
-/**
- * @typedef cros_system_chip_name_api
- * @brief Callback API for getting the chip name.
- * See cros_system_chip_name() for argument descriptions
- */
-typedef const char *(*cros_system_chip_name_api)(const struct device *dev);
-
-/**
- * @typedef cros_system_chip_revision_api
- * @brief Callback API for getting the chip revision.
- * See cros_system_chip_revision() for argument descriptions
- */
-typedef const char *(*cros_system_chip_revision_api)(const struct device *dev);
-
-/**
- * @typedef cros_system_get_deep_sleep_ticks_api
- * @brief Callback API for getting number of ticks spent in deep sleep.
- * See cros_system_deep_sleep_ticks() for argument descriptions
- */
-typedef uint64_t (*cros_system_deep_sleep_ticks_api)(const struct device *dev);
-
-/**
- * @typedef cros_system_get_hibernate_wake_source_api
- * @brief Callback API for getting the hibernate wake source on hibernate exit.
- * See cros_system_get_hibernate_wake_source for argument description
- */
-typedef int (*cros_system_get_hibernate_wake_source_api)(
-	const struct device *dev, enum hibernate_wake_source *source);
-
-/** @brief Driver API structure. */
-__subsystem struct cros_system_driver_api {
-	cros_system_get_reset_cause_api get_reset_cause;
-	cros_system_soc_reset_api soc_reset;
-	cros_system_hibernate_api hibernate;
-	cros_system_chip_vendor_api chip_vendor;
-	cros_system_chip_name_api chip_name;
-	cros_system_chip_revision_api chip_revision;
-	cros_system_deep_sleep_ticks_api deep_sleep_ticks;
-	cros_system_get_hibernate_wake_source_api get_hibernate_wake_source;
-};
-
-/**
  * @brief Get the chip-reset cause
- *
- * @param dev Pointer to the device structure for the driver instance.
  *
  * @retval non-negative if successful.
  * @retval Negative errno code if failure.
  */
-__syscall int cros_system_get_reset_cause(const struct device *dev);
-
-static inline int z_impl_cros_system_get_reset_cause(const struct device *dev)
-{
-	if (!DEVICE_API_GET(cros_system, dev)->get_reset_cause) {
-		return -ENOTSUP;
-	}
-
-	return DEVICE_API_GET(cros_system, dev)->get_reset_cause(dev);
-}
+int cros_system_get_reset_cause(void);
 
 /**
  * @brief reset the soc
  *
- * @param dev Pointer to the device structure for the driver instance.
- *
  * @retval no return if successful.
  * @retval Negative errno code if failure.
  */
-__syscall int cros_system_soc_reset(const struct device *dev);
-
-static inline int z_impl_cros_system_soc_reset(const struct device *dev)
-{
-	if (!DEVICE_API_GET(cros_system, dev)->soc_reset) {
-		return -ENOTSUP;
-	}
-
-	return DEVICE_API_GET(cros_system, dev)->soc_reset(dev);
-}
+int cros_system_soc_reset(void);
 
 /**
  * @brief put the EC in hibernate (lowest EC power state).
  *
- * @param dev Pointer to the device structure for the driver instance.
  * @param seconds Number of seconds before EC enters hibernate state.
  * @param microseconds Number of micro-secs before EC enters hibernate state.
-
+ *
  * @retval no return if successful.
  * @retval Negative errno code if failure.
  */
-__syscall int cros_system_hibernate(const struct device *dev, uint32_t seconds,
-				    uint32_t microseconds);
-
-static inline int z_impl_cros_system_hibernate(const struct device *dev,
-					       uint32_t seconds,
-					       uint32_t microseconds)
-{
-	if (!DEVICE_API_GET(cros_system, dev)->hibernate) {
-		return -ENOTSUP;
-	}
-
-	return DEVICE_API_GET(cros_system, dev)
-		->hibernate(dev, seconds, microseconds);
-}
+int cros_system_hibernate(uint32_t seconds, uint32_t microseconds);
 
 /**
  * @brief Get the chip vendor.
  *
- * @param dev Pointer to the device structure for the driver instance.
  * @retval Chip vendor string if successful.
  * @retval Null string if failure.
  */
-__syscall const char *cros_system_chip_vendor(const struct device *dev);
-
-static inline const char *
-z_impl_cros_system_chip_vendor(const struct device *dev)
-{
-	if (!DEVICE_API_GET(cros_system, dev)->chip_vendor) {
-		return "";
-	}
-
-	return DEVICE_API_GET(cros_system, dev)->chip_vendor(dev);
-}
+const char *cros_system_chip_vendor(void);
 
 /**
  * @brief Get the chip name.
  *
- * @param dev Pointer to the device structure for the driver instance.
  * @retval Chip name string if successful.
  * @retval Null string if failure.
  */
-__syscall const char *cros_system_chip_name(const struct device *dev);
-
-static inline const char *z_impl_cros_system_chip_name(const struct device *dev)
-{
-	if (!DEVICE_API_GET(cros_system, dev)->chip_name) {
-		return "";
-	}
-
-	return DEVICE_API_GET(cros_system, dev)->chip_name(dev);
-}
+const char *cros_system_chip_name(void);
 
 /**
  * @brief Get the chip revision.
  *
- * @param dev Pointer to the device structure for the driver instance.
  * @retval Chip revision string if successful.
  * @retval Null string if failure.
  */
-__syscall const char *cros_system_chip_revision(const struct device *dev);
-
-static inline const char *
-z_impl_cros_system_chip_revision(const struct device *dev)
-{
-	if (!DEVICE_API_GET(cros_system, dev)->chip_revision) {
-		return "";
-	}
-
-	return DEVICE_API_GET(cros_system, dev)->chip_revision(dev);
-}
+const char *cros_system_chip_revision(void);
 
 /**
  * @brief Get total number of ticks spent in deep sleep.
  *
- * @param dev Pointer to the device structure for the driver instance.
  * @retval Number of ticks spent in deep sleep.
  */
-__syscall uint64_t cros_system_deep_sleep_ticks(const struct device *dev);
-
-static inline uint64_t
-z_impl_cros_system_deep_sleep_ticks(const struct device *dev)
-{
-	if (!DEVICE_API_GET(cros_system, dev)->deep_sleep_ticks) {
-		return 0;
-	}
-
-	return DEVICE_API_GET(cros_system, dev)->deep_sleep_ticks(dev);
-}
+uint64_t cros_system_deep_sleep_ticks(void);
 
 /**
  * @brief Get hibernate wake source.
  *
- * @param dev Pointer to the device structure for the driver instance.
  * @param source Pointer to the variable where the hibernate wake source will be
  * stored.
  * @retval 0 if successful.
  * @retval Negative errno code if failure.
  */
-__syscall int
-cros_system_get_hibernate_wake_source(const struct device *dev,
-				      enum hibernate_wake_source *source);
-
-static inline int
-z_impl_cros_system_get_hibernate_wake_source(const struct device *dev,
-					     enum hibernate_wake_source *source)
-{
-	if (!DEVICE_API_GET(cros_system, dev)->get_hibernate_wake_source) {
-		return -ENOSYS;
-	}
-
-	return DEVICE_API_GET(cros_system, dev)
-		->get_hibernate_wake_source(dev, source);
-}
+int cros_system_get_hibernate_wake_source(enum hibernate_wake_source *source);
 
 /**
  * @}
  */
-#include <zephyr/syscalls/cros_system.h>
 #endif /* ZEPHYR_INCLUDE_DRIVERS_CROS_SYSTEM_H_ */

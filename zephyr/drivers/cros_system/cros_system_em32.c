@@ -9,10 +9,9 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/hwinfo.h>
 #include <zephyr/drivers/watchdog.h>
+#include <zephyr/init.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/reboot.h>
-
-#define DT_DRV_COMPAT cros_ec_cros_system
 
 /* Make sure the watchdog config is enabled. */
 BUILD_ASSERT(IS_ENABLED(CONFIG_WATCHDOG),
@@ -20,12 +19,13 @@ BUILD_ASSERT(IS_ENABLED(CONFIG_WATCHDOG),
 
 LOG_MODULE_REGISTER(cros_system);
 
-#define DRV_DATA(dev) ((struct cros_system_em32_data *)(dev)->data)
-
 /* Driver data */
 struct cros_system_em32_data {
 	int reset; /* reset cause */
 };
+
+static struct cros_system_em32_data cros_system_em32_data;
+#define DRV_DATA() (&cros_system_em32_data)
 
 /* Data structure of hwinfo_em32 driver */
 /*
@@ -108,17 +108,13 @@ static int system_em32_get_chip_version(uint8_t *chip_version)
 	return 0;
 }
 
-static const char *cros_system_em32_get_chip_vendor(const struct device *dev)
+const char *cros_system_chip_vendor(void)
 {
-	ARG_UNUSED(dev);
-
 	return "elan";
 }
 
-static const char *cros_system_em32_get_chip_name(const struct device *dev)
+const char *cros_system_chip_name(void)
 {
-	ARG_UNUSED(dev);
-
 	static char buf[9] = { 'e', 'm', '3', '2', 'f' };
 	int ret = 0;
 	uint32_t chip_id = 0;
@@ -137,10 +133,8 @@ static const char *cros_system_em32_get_chip_name(const struct device *dev)
 	return buf;
 }
 
-static const char *cros_system_em32_get_chip_revision(const struct device *dev)
+const char *cros_system_chip_revision(void)
 {
-	ARG_UNUSED(dev);
-
 	static char buf[3] = { 0 };
 	int ret = 0;
 	uint8_t chip_version = 0;
@@ -159,18 +153,16 @@ static const char *cros_system_em32_get_chip_revision(const struct device *dev)
 	return buf;
 }
 
-static int cros_system_em32_get_reset_cause(const struct device *dev)
+int cros_system_get_reset_cause(void)
 {
-	struct cros_system_em32_data *data = DRV_DATA(dev);
+	struct cros_system_em32_data *data = DRV_DATA();
 
 	LOG_DBG("cros_system_em32_get_reset_cause reset 0x%x", data->reset);
 	return data->reset;
 }
 
-static int cros_system_em32_soc_reset(const struct device *dev)
+int cros_system_soc_reset(void)
 {
-	ARG_UNUSED(dev);
-
 	/*
 	 * Set minimal watchdog timeout - 1 millisecond.
 	 * Elan EM32 WDT can be set for lower value, but we are limited by
@@ -212,9 +204,9 @@ static int cros_system_em32_soc_reset(const struct device *dev)
 	return 0;
 }
 
-static int cros_system_em32_init(const struct device *dev)
+static int cros_system_em32_init(void)
 {
-	struct cros_system_em32_data *data = DRV_DATA(dev);
+	struct cros_system_em32_data *data = DRV_DATA();
 	uint32_t reset_cause;
 
 	data->reset = UNKNOWN_RST;
@@ -237,25 +229,9 @@ static int cros_system_em32_init(const struct device *dev)
 	return 0;
 }
 
-static DEVICE_API(cros_system, cros_system_driver_em32_api) = {
-	.get_reset_cause = cros_system_em32_get_reset_cause,
-	.soc_reset = cros_system_em32_soc_reset,
-	.chip_vendor = cros_system_em32_get_chip_vendor,
-	.chip_name = cros_system_em32_get_chip_name,
-	.chip_revision = cros_system_em32_get_chip_revision,
-};
+SYS_INIT(cros_system_em32_init, PRE_KERNEL_1, CONFIG_CROS_SYSTEM_INIT_PRIORITY);
 
 #if CONFIG_CROS_SYSTEM_INIT_PRIORITY >= \
 	CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY
 #error "CROS_SYSTEM must initialize before the SYSTEM_PRE initialization"
 #endif
-
-#define CROS_SYSTEM_EM32_INIT(inst)                                           \
-	static struct cros_system_em32_data cros_system_em32_dev_data_##inst; \
-	DEVICE_DEFINE(cros_system_em32_##inst, "CROS_SYSTEM",                 \
-		      cros_system_em32_init, NULL,                            \
-		      &cros_system_em32_dev_data_##inst, NULL, PRE_KERNEL_1,  \
-		      CONFIG_CROS_SYSTEM_INIT_PRIORITY,                       \
-		      &cros_system_driver_em32_api);
-
-DT_INST_FOREACH_STATUS_OKAY(CROS_SYSTEM_EM32_INIT)

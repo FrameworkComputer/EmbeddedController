@@ -40,14 +40,17 @@ struct cros_system_npcx_data {
 	int reset; /* reset cause */
 };
 
+static struct cros_system_npcx_data npcx_data;
+static const struct cros_system_npcx_config cros_system_dev_cfg;
+
 /* Driver convenience defines */
-#define DRV_CONFIG(dev) ((const struct cros_system_npcx_config *)(dev)->config)
+#define DRV_CONFIG() (&cros_system_dev_cfg)
 
-#define HAL_SCFG_INST(dev) (struct scfg_reg *)(DRV_CONFIG(dev)->base_scfg)
-#define HAL_TWD_INST(dev) (struct twd_reg *)(DRV_CONFIG(dev)->base_twd)
-#define HAL_MSWC_INST(dev) (struct mswc_reg *)(DRV_CONFIG(dev)->base_mswc)
+#define HAL_SCFG_INST() (struct scfg_reg *)(cros_system_dev_cfg.base_scfg)
+#define HAL_TWD_INST() (struct twd_reg *)(cros_system_dev_cfg.base_twd)
+#define HAL_MSWC_INST() (struct mswc_reg *)(cros_system_dev_cfg.base_mswc)
 
-#define DRV_DATA(dev) ((struct cros_system_npcx_data *)(dev)->data)
+#define DRV_DATA() (&npcx_data)
 
 #define SYSTEM_DT_NODE_SOC_ID_CONFIG DT_INST(0, nuvoton_npcx_soc_id)
 
@@ -109,16 +112,16 @@ static int system_npcx_watchdog_stop(void)
 	return 0;
 }
 
-static void system_npcx_set_flash_pins_tri_state(const struct device *dev)
+static void system_npcx_set_flash_pins_tri_state(void)
 {
-	struct scfg_reg *const inst_scfg = HAL_SCFG_INST(dev);
+	struct scfg_reg *const inst_scfg = HAL_SCFG_INST();
 
 	inst_scfg->DEVCNT |= BIT(NPCX_DEVCNT_F_SPI_TRIS);
 }
 
-static void system_npcx_init_watchdog_reset(const struct device *dev)
+static void system_npcx_init_watchdog_reset(void)
 {
-	struct twd_reg *const inst_twd = HAL_TWD_INST(dev);
+	struct twd_reg *const inst_twd = HAL_TWD_INST();
 
 	/* Enable early touch */
 	inst_twd->T0CSR &= ~BIT(NPCX_T0CSR_TESDIS);
@@ -228,11 +231,10 @@ static void system_npcx_set_wakeup_gpios_before_hibernate(void)
  * the other ram blocks.
  */
 FUNC_NORETURN void __keep __attribute__((section(".lfw.hiber")))
-system_npcx_hibernate_by_lfw_in_last_ram(const struct device *dev,
-					 uint32_t pd_ram_mask)
+system_npcx_hibernate_by_lfw_in_last_ram(uint32_t pd_ram_mask)
 {
 	/* Modules used for hibernating */
-	struct twd_reg *const inst_twd = HAL_TWD_INST(dev);
+	struct twd_reg *const inst_twd = HAL_TWD_INST();
 	struct mtc_reg *const inst_mtc = (struct mtc_reg *)(DT_REG_ADDR(
 		DT_INST(0, nuvoton_npcx_cros_mtc)));
 	struct pmc_reg *const inst_pmc = (struct pmc_reg *)(DT_REG_ADDR_BY_NAME(
@@ -289,8 +291,7 @@ static inline int system_npcx_get_ram_blk_by_lfw_addr(char *address)
 			    NPCX_RAM_BLOCK_SIZE);
 }
 
-static void system_npcx_hibernate_by_disable_ram(const struct device *dev,
-						 uint32_t seconds,
+static void system_npcx_hibernate_by_disable_ram(uint32_t seconds,
 						 uint32_t microseconds)
 {
 	/* Get 32kb ram block order of lfw function */
@@ -307,10 +308,10 @@ static void system_npcx_hibernate_by_disable_ram(const struct device *dev,
 	 * Set status of pins which connect to flash to tri-state in case
 	 * the leakage current.
 	 */
-	system_npcx_set_flash_pins_tri_state(dev);
+	system_npcx_set_flash_pins_tri_state();
 
 	/* Initialize watchdog for reset after wake-up from hibernating */
-	system_npcx_init_watchdog_reset(dev);
+	system_npcx_init_watchdog_reset();
 
 	/* Disable ADC and wait for 1000 us to make sure conversion is done */
 	if (IS_ENABLED(CONFIG_ADC))
@@ -349,12 +350,12 @@ static void system_npcx_hibernate_by_disable_ram(const struct device *dev,
 	}
 
 	/* Execute hibernate by lfw which locates in last 32K block ram */
-	system_npcx_hibernate_by_lfw_in_last_ram(dev, pd_ram_mask);
+	system_npcx_hibernate_by_lfw_in_last_ram(pd_ram_mask);
 }
 
-static const char *cros_system_npcx_get_chip_vendor(const struct device *dev)
+const char *cros_system_chip_vendor(void)
 {
-	struct mswc_reg *const inst_mswc = HAL_MSWC_INST(dev);
+	struct mswc_reg *const inst_mswc = HAL_MSWC_INST();
 	static char str[11] = "Unknown-XX";
 	char *p = str + 8;
 	uint8_t fam_id = inst_mswc->SID_CR;
@@ -370,9 +371,9 @@ static const char *cros_system_npcx_get_chip_vendor(const struct device *dev)
 	return str;
 }
 
-static const char *cros_system_npcx_get_chip_name(const struct device *dev)
+const char *cros_system_chip_name(void)
 {
-	struct mswc_reg *const inst_mswc = HAL_MSWC_INST(dev);
+	struct mswc_reg *const inst_mswc = HAL_MSWC_INST();
 	static char str[13] = "Unknown-XXXX";
 	char *p = str + 8;
 	uint8_t chip_id = inst_mswc->SRID_CR;
@@ -397,9 +398,8 @@ static const char *cros_system_npcx_get_chip_name(const struct device *dev)
 	return str;
 }
 
-static const char *cros_system_npcx_get_chip_revision(const struct device *dev)
+const char *cros_system_chip_revision(void)
 {
-	ARG_UNUSED(dev);
 #if DT_NODE_EXISTS(SYSTEM_DT_NODE_SOC_ID_CONFIG)
 	static char rev[NPCX_REVISION_LEN * 2 + 1];
 #else
@@ -453,11 +453,9 @@ static void cros_system_npcx_psl_out_inactive(void)
 }
 #endif
 
-static void system_npcx_hibernate_by_psl(const struct device *dev,
-					 uint32_t seconds,
+static void system_npcx_hibernate_by_psl(uint32_t seconds,
 					 uint32_t microseconds)
 {
-	ARG_UNUSED(dev);
 	int ret;
 
 	/*
@@ -491,9 +489,9 @@ static void system_npcx_hibernate_by_psl(const struct device *dev,
 	cros_system_npcx_psl_out_inactive();
 }
 
-static int cros_system_npcx_get_reset_cause(const struct device *dev)
+int cros_system_get_reset_cause(void)
 {
-	struct cros_system_npcx_data *data = DRV_DATA(dev);
+	struct cros_system_npcx_data *data = DRV_DATA();
 
 	return data->reset;
 }
@@ -532,9 +530,7 @@ static int cros_system_npcx_get_reset_cause(const struct device *dev)
  * It reads the PSL_CTS register to find which PSL_IN pin triggered the wake
  * and then maps it to a wake source using devicetree node labels.
  */
-static int
-cros_system_npcx_get_hibernate_wake_source(const struct device *dev,
-					   enum hibernate_wake_source *source)
+int cros_system_get_hibernate_wake_source(enum hibernate_wake_source *source)
 {
 	enum hibernate_wake_source wake_source = WAKE_SOURCE_UNKNOWN;
 	struct glue_reg *inst_glue = (struct glue_reg *)(NPCX_GLUE_REG_ADDR);
@@ -555,11 +551,11 @@ cros_system_npcx_get_hibernate_wake_source(const struct device *dev,
 }
 #endif
 
-static int cros_system_npcx_init(const struct device *dev)
+static int cros_system_npcx_init(void)
 {
-	struct scfg_reg *const inst_scfg = HAL_SCFG_INST(dev);
-	struct twd_reg *const inst_twd = HAL_TWD_INST(dev);
-	struct cros_system_npcx_data *data = DRV_DATA(dev);
+	struct scfg_reg *const inst_scfg = HAL_SCFG_INST();
+	struct twd_reg *const inst_twd = HAL_TWD_INST();
+	struct cros_system_npcx_data *data = DRV_DATA();
 
 	/* check reset cause */
 	data->reset = UNKNOWN_RST;
@@ -591,9 +587,9 @@ static int cros_system_npcx_init(const struct device *dev)
 	return 0;
 }
 
-static int cros_system_npcx_soc_reset(const struct device *dev)
+int cros_system_soc_reset(void)
 {
-	struct twd_reg *const inst_twd = HAL_TWD_INST(dev);
+	struct twd_reg *const inst_twd = HAL_TWD_INST();
 
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable_all();
@@ -607,7 +603,7 @@ static int cros_system_npcx_soc_reset(const struct device *dev)
 	system_npcx_watchdog_stop();
 
 	/* Initialize watchdog for reset */
-	system_npcx_init_watchdog_reset(dev);
+	system_npcx_init_watchdog_reset();
 
 	/*
 	 * The trigger of a watchdog event by a "too early service" condition.
@@ -636,8 +632,7 @@ static int cros_system_npcx_soc_reset(const struct device *dev)
 #endif
 #endif
 
-static int cros_system_npcx_hibernate(const struct device *dev,
-				      uint32_t seconds, uint32_t microseconds)
+int cros_system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	/* Disable interrupt first */
 	interrupt_disable_all();
@@ -647,20 +642,20 @@ static int cros_system_npcx_hibernate(const struct device *dev,
 
 	/* Enter hibernate mode */
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_HIBERNATE_PSL)) {
-		system_npcx_hibernate_by_psl(dev, seconds, microseconds);
+		system_npcx_hibernate_by_psl(seconds, microseconds);
 	} else {
-		system_npcx_hibernate_by_disable_ram(dev, seconds,
-						     microseconds);
+		system_npcx_hibernate_by_disable_ram(seconds, microseconds);
 	}
 
 	return 0;
 }
 
-__maybe_unused static uint64_t
-cros_system_npcx_deep_sleep_ticks(const struct device *dev)
+#ifdef CONFIG_PM
+uint64_t cros_system_deep_sleep_ticks(void)
 {
 	return npcx_clock_get_sleep_ticks();
 }
+#endif
 
 static const struct cros_system_npcx_config cros_system_dev_cfg = {
 	.base_scfg = DT_REG_ADDR(DT_NODELABEL(scfg)),
@@ -668,30 +663,7 @@ static const struct cros_system_npcx_config cros_system_dev_cfg = {
 	.base_mswc = DT_REG_ADDR_BY_NAME(DT_NODELABEL(host_sub), mswc),
 };
 
-static DEVICE_API(cros_system, cros_system_driver_npcx_api) = {
-	.get_reset_cause = cros_system_npcx_get_reset_cause,
-	.soc_reset = cros_system_npcx_soc_reset,
-	.hibernate = cros_system_npcx_hibernate,
-	.chip_vendor = cros_system_npcx_get_chip_vendor,
-	.chip_name = cros_system_npcx_get_chip_name,
-	.chip_revision = cros_system_npcx_get_chip_revision,
-#if DT_NODE_HAS_STATUS(PSL_NODE, okay)
-	.get_hibernate_wake_source = cros_system_npcx_get_hibernate_wake_source,
-#endif
-#ifdef CONFIG_PM
-	.deep_sleep_ticks = cros_system_npcx_deep_sleep_ticks,
-#endif
-};
-
-#define CROS_SYSTEM_NPCX_INIT(inst)                                            \
-	static struct cros_system_npcx_data cros_system_npcx_dev_data_##inst;  \
-	DEVICE_DEFINE(cros_system_npcx_##inst, "CROS_SYSTEM",                  \
-		      cros_system_npcx_init, NULL,                             \
-		      &cros_system_npcx_dev_data_##inst, &cros_system_dev_cfg, \
-		      PRE_KERNEL_1, CONFIG_CROS_SYSTEM_INIT_PRIORITY,          \
-		      &cros_system_driver_npcx_api);
-
-DT_INST_FOREACH_STATUS_OKAY(CROS_SYSTEM_NPCX_INIT)
+SYS_INIT(cros_system_npcx_init, PRE_KERNEL_1, CONFIG_CROS_SYSTEM_INIT_PRIORITY);
 
 #if DT_NODE_EXISTS(DT_NODELABEL(dbg))
 #define HAL_DBG_REG_BASE_ADDR \

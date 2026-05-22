@@ -9,52 +9,36 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/hwinfo.h>
 #include <zephyr/drivers/watchdog.h>
+#include <zephyr/init.h>
 #include <zephyr/sys/reboot.h>
 
-#define DT_DRV_COMPAT cros_ec_cros_system
-
-/* Driver data */
-struct cros_system_stm32_data {
-	int reset; /* reset cause */
-};
-
-#define DRV_DATA(dev) ((struct cros_system_stm32_data *)(dev)->data)
+static int reset_cause = UNKNOWN_RST;
 
 static const struct device *const watchdog =
 	DEVICE_DT_GET(DT_CHOSEN(cros_ec_watchdog));
 
-static const char *cros_system_stm32_get_chip_vendor(const struct device *dev)
+const char *cros_system_chip_vendor(void)
 {
-	ARG_UNUSED(dev);
-
 	return "st";
 }
 
-static const char *cros_system_stm32_get_chip_name(const struct device *dev)
+const char *cros_system_chip_name(void)
 {
-	ARG_UNUSED(dev);
-
 	return CONFIG_SOC;
 }
 
-static const char *cros_system_stm32_get_chip_revision(const struct device *dev)
+const char *cros_system_chip_revision(void)
 {
-	ARG_UNUSED(dev);
-
 	return "";
 }
 
-static int cros_system_stm32_get_reset_cause(const struct device *dev)
+int cros_system_get_reset_cause(void)
 {
-	struct cros_system_stm32_data *data = DRV_DATA(dev);
-
-	return data->reset;
+	return reset_cause;
 }
 
-static int cros_system_stm32_soc_reset(const struct device *dev)
+int cros_system_soc_reset(void)
 {
-	ARG_UNUSED(dev);
-
 	uint32_t chip_reset_flags = chip_read_reset_flags();
 
 	/*
@@ -95,58 +79,40 @@ static int cros_system_stm32_soc_reset(const struct device *dev)
 	return 0;
 }
 
-__maybe_unused static uint64_t
-cros_system_stm32_deep_sleep_ticks(const struct device *dev)
+#ifdef CONFIG_PM
+uint64_t cros_system_deep_sleep_ticks(void)
 {
 	/* Deep sleep is not supported for now */
 	return 0;
 }
+#endif
 
-static int cros_system_stm32_init(const struct device *dev)
+static int cros_system_stm32_init(void)
 {
-	struct cros_system_stm32_data *data = DRV_DATA(dev);
-	uint32_t reset_cause;
+	uint32_t hw_reset_cause;
 
-	data->reset = UNKNOWN_RST;
-	hwinfo_get_reset_cause(&reset_cause);
+	reset_cause = UNKNOWN_RST;
+	hwinfo_get_reset_cause(&hw_reset_cause);
 
 	/* Clear the hardware reset cause. */
 	hwinfo_clear_reset_cause();
 
-	if (reset_cause & RESET_WATCHDOG) {
-		data->reset = WATCHDOG_RST;
-	} else if (reset_cause & RESET_SOFTWARE) {
+	if (hw_reset_cause & RESET_WATCHDOG) {
+		reset_cause = WATCHDOG_RST;
+	} else if (hw_reset_cause & RESET_SOFTWARE) {
 		/* Use DEBUG_RST because it maps to EC_RESET_FLAG_SOFT. */
-		data->reset = DEBUG_RST;
-	} else if (reset_cause & RESET_POR) {
-		data->reset = POWERUP;
-	} else if (reset_cause & RESET_PIN) {
-		data->reset = VCC1_RST_PIN;
+		reset_cause = DEBUG_RST;
+	} else if (hw_reset_cause & RESET_POR) {
+		reset_cause = POWERUP;
+	} else if (hw_reset_cause & RESET_PIN) {
+		reset_cause = VCC1_RST_PIN;
 	}
 
 	return 0;
 }
 
-static DEVICE_API(cros_system, cros_system_driver_stm32_api) = {
-	.get_reset_cause = cros_system_stm32_get_reset_cause,
-	.soc_reset = cros_system_stm32_soc_reset,
-	.chip_vendor = cros_system_stm32_get_chip_vendor,
-	.chip_name = cros_system_stm32_get_chip_name,
-	.chip_revision = cros_system_stm32_get_chip_revision,
-#ifdef CONFIG_PM
-	.deep_sleep_ticks = cros_system_stm32_deep_sleep_ticks,
-#endif
-};
-
-#define CROS_SYSTEM_STM32_INIT(inst)                                            \
-	static struct cros_system_stm32_data cros_system_stm32_dev_data_##inst; \
-	DEVICE_DEFINE(cros_system_stm32_##inst, "CROS_SYSTEM",                  \
-		      cros_system_stm32_init, NULL,                             \
-		      &cros_system_stm32_dev_data_##inst, NULL, PRE_KERNEL_1,   \
-		      CONFIG_CROS_SYSTEM_INIT_PRIORITY,                         \
-		      &cros_system_driver_stm32_api);
-
-DT_INST_FOREACH_STATUS_OKAY(CROS_SYSTEM_STM32_INIT)
+SYS_INIT(cros_system_stm32_init, PRE_KERNEL_1,
+	 CONFIG_CROS_SYSTEM_INIT_PRIORITY);
 
 #if CONFIG_CROS_SYSTEM_INIT_PRIORITY >= \
 	CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY

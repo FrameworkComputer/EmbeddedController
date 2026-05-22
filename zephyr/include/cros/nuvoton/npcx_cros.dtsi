@@ -8,7 +8,6 @@
 
 / {
 	chosen {
-		cros-ec,cros-system = &cros_system;
 		cros-ec,bbram = &bbram;
 		cros-ec,espi = &espi0;
 		cros-ec,flash = &flash1;
@@ -16,11 +15,6 @@
 		cros-ec,raw-kb = &cros_kb_raw;
 		cros-ec,watchdog = &twd0;
 	};
-
-	cros_system: cros-system {
-		compatible = "cros-ec,cros-system";
-	};
-
 	named-bbram-regions {
 		compatible = "named-bbram-regions";
 

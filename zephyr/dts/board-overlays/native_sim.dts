@@ -9,14 +9,6 @@
 #define GPIO_VOLTAGE_1P8 NATIVE_POSIX_GPIO_VOLTAGE_1P8
 
 / {
-	chosen {
-		cros-ec,cros-system = &cros_system;
-	};
-
-	cros_system: cros-system {
-		compatible = "cros-ec,cros-system";
-	};
-
 	named-gpios {
 		compatible = "named-gpios";
 
