@@ -64,6 +64,9 @@ ZTEST_USER(flash, test_hostcmd_flash_protect_wp_asserted)
 	params.mask = EC_FLASH_PROTECT_ALL_NOW;
 	params.flags = EC_FLASH_PROTECT_ALL_NOW;
 	expected_flags |= EC_FLASH_PROTECT_ALL_NOW;
+#ifdef CONFIG_ROLLBACK
+	expected_flags |= EC_FLASH_PROTECT_ROLLBACK_NOW;
+#endif
 	zassert_ok(ec_cmd_flash_protect_v1(NULL, &params, &response), NULL);
 	zassert_equal(response.flags, expected_flags, "response.flags = %d",
 		      response.flags);
@@ -888,8 +891,13 @@ ZTEST_USER(flash, test_console_cmd_flash_write__bad_args)
 
 ZTEST_USER(flash, test_console_cmd_flash_write__too_big)
 {
-	CHECK_CONSOLE_CMD("flashwrite 0x10000 " STRINGIFY(INT_MAX), NULL,
-			  EC_ERROR_INVAL);
+	CHECK_CONSOLE_CMD("flashwrite 0x72000 0x1000000", NULL, EC_ERROR_INVAL);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_write__overflow)
+{
+	CHECK_CONSOLE_CMD("flashwrite 0x72000 " STRINGIFY(INT_MAX), NULL,
+			  EC_ERROR_OVERFLOW);
 }
 
 ZTEST_USER(flash, test_console_cmd_flash_write__happy)
@@ -923,8 +931,13 @@ ZTEST_USER(flash, test_console_cmd_flash_read__bad_args)
 
 ZTEST_USER(flash, test_console_cmd_flash_read__too_big)
 {
-	CHECK_CONSOLE_CMD("flashread 0x10000 " STRINGIFY(INT_MAX), NULL,
-			  EC_ERROR_INVAL);
+	CHECK_CONSOLE_CMD("flashread 0x72000 0x1000000", NULL, EC_ERROR_INVAL);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_read__overflow)
+{
+	CHECK_CONSOLE_CMD("flashread 0x72000 " STRINGIFY(INT_MAX), NULL,
+			  EC_ERROR_OVERFLOW);
 }
 
 ZTEST_USER(flash, test_console_cmd_flash_read__happy_4_bytes)
@@ -1013,6 +1026,102 @@ ZTEST_USER(flash, test_crec_flash_is_erased__not_erased)
 	zassert_true(!crec_flash_is_erased(offset, CONFIG_FLASH_ERASE_SIZE),
 		     NULL);
 }
+
+#ifdef CONFIG_ROLLBACK
+ZTEST_USER(flash, test_console_cmd_flash_erase__rollback)
+{
+	CHECK_CONSOLE_CMD("flasherase 0x70000 0x1000", NULL,
+			  EC_ERROR_ACCESS_DENIED);
+	CHECK_CONSOLE_CMD("flasherase 0x71000 0x1000", NULL,
+			  EC_ERROR_ACCESS_DENIED);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_write__rollback)
+{
+	CHECK_CONSOLE_CMD("flashwrite 0x70000 4", NULL, EC_ERROR_ACCESS_DENIED);
+	CHECK_CONSOLE_CMD("flashwrite 0x71000 4", NULL, EC_ERROR_ACCESS_DENIED);
+}
+
+ZTEST_USER(flash, test_console_cmd_flash_read__rollback)
+{
+	CHECK_CONSOLE_CMD("flashread 0x70000 4", NULL, EC_ERROR_ACCESS_DENIED);
+	CHECK_CONSOLE_CMD("flashread 0x71000 4", NULL, EC_ERROR_ACCESS_DENIED);
+}
+
+ZTEST_USER(flash, test_hostcmd_flash_erase__rollback)
+{
+	struct ec_params_flash_erase erase_params_0 = {
+		.offset = 0x70000,
+		.size = 0x1000,
+	};
+	struct host_cmd_handler_args erase_args_0 = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_FLASH_ERASE, 0, erase_params_0);
+
+	zassert_equal(host_command_process(&erase_args_0), EC_RES_ACCESS_DENIED,
+		      NULL);
+
+	struct ec_params_flash_erase erase_params_1 = {
+		.offset = 0x71000,
+		.size = 0x1000,
+	};
+	struct host_cmd_handler_args erase_args_1 = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_FLASH_ERASE, 0, erase_params_1);
+
+	zassert_equal(host_command_process(&erase_args_1), EC_RES_ACCESS_DENIED,
+		      NULL);
+}
+
+ZTEST_USER(flash, test_hostcmd_flash_write__rollback)
+{
+	uint8_t out_buf[sizeof(struct ec_params_flash_write) + 4];
+	struct ec_params_flash_write *write_params =
+		(struct ec_params_flash_write *)out_buf;
+	struct host_cmd_handler_args write_args =
+		BUILD_HOST_COMMAND_SIMPLE(EC_CMD_FLASH_WRITE, 0);
+
+	write_params->offset = 0x70000;
+	write_params->size = 4;
+	write_args.params = write_params;
+	write_args.params_size = sizeof(*write_params) + 4;
+	memset(write_params + 1, 0xec, 4);
+
+	zassert_equal(host_command_process(&write_args), EC_RES_ACCESS_DENIED,
+		      NULL);
+
+	write_params->offset = 0x71000;
+	write_params->size = 4;
+	write_args.params = write_params;
+	write_args.params_size = sizeof(*write_params) + 4;
+	memset(write_params + 1, 0xec, 4);
+
+	zassert_equal(host_command_process(&write_args), EC_RES_ACCESS_DENIED,
+		      NULL);
+}
+
+ZTEST_USER(flash, test_hostcmd_flash_read__rollback)
+{
+	uint32_t output;
+	struct ec_params_flash_read read_params_0 = {
+		.offset = 0x70000,
+		.size = 4,
+	};
+	struct host_cmd_handler_args read_args_0 =
+		BUILD_HOST_COMMAND(EC_CMD_FLASH_READ, 0, output, read_params_0);
+
+	zassert_equal(host_command_process(&read_args_0), EC_RES_ACCESS_DENIED,
+		      NULL);
+
+	struct ec_params_flash_read read_params_1 = {
+		.offset = 0x71000,
+		.size = 4,
+	};
+	struct host_cmd_handler_args read_args_1 =
+		BUILD_HOST_COMMAND(EC_CMD_FLASH_READ, 0, output, read_params_1);
+
+	zassert_equal(host_command_process(&read_args_1), EC_RES_ACCESS_DENIED,
+		      NULL);
+}
+#endif
 
 static void flash_reset(void *data)
 {

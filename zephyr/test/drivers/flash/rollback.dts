@@ -1,0 +1,22 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		rollback0: partition@70000 {
+			label = "rollback0";
+			reg = <0x70000 0x1000>;
+		};
+
+		rollback1: partition@71000 {
+			label = "rollback1";
+			reg = <0x71000 0x1000>;
+		};
+	};
+};
