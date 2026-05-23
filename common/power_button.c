@@ -29,6 +29,16 @@
 #define CONFIG_POWER_BUTTON_FLAGS 0
 #endif
 
+#define POWER_BUTTON_SHORTPRESS 200
+
+/* Structure for storing power button double press parameters. */
+static volatile struct press_config {
+	/* Delay from the the first press to start of second press. */
+	uint32_t second_press_delay_ms;
+	uint16_t first_press_duration_ms;
+	uint16_t second_press_duration_ms;
+} pbtn_press;
+
 /* Debounced power button state */
 test_export_static int debounced_power_pressed;
 static int simulate_power_pressed;
@@ -294,7 +304,7 @@ void power_button_simulate_press(unsigned int duration)
 
 static int command_powerbtn(int argc, const char **argv)
 {
-	int ms = 200; /* Press duration in ms */
+	int ms = POWER_BUTTON_SHORTPRESS; /* Press duration in ms */
 	char *e;
 
 	if (argc > 1) {
@@ -308,3 +318,70 @@ static int command_powerbtn(int argc, const char **argv)
 }
 DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn, "[msec]",
 			"Simulate power button press");
+
+/*****************************************************************************/
+/* Host commands */
+
+static void power_button_press_deferred(void);
+DECLARE_DEFERRED(power_button_press_deferred);
+static void power_button_press_deferred(void)
+{
+	unsigned int press_duration =
+		pbtn_press.second_press_delay_ms > 0 ?
+			pbtn_press.first_press_duration_ms :
+			pbtn_press.second_press_duration_ms;
+	/* Trigger button press. */
+	power_button_simulate_press(press_duration);
+	/* And if needed, defer the second press. */
+	if (pbtn_press.second_press_delay_ms > 0) {
+		hook_call_deferred(&power_button_press_deferred_data,
+				   pbtn_press.second_press_delay_ms * MSEC);
+		pbtn_press.second_press_delay_ms = 0;
+	}
+}
+
+/**
+ * Host command to schedule 2 delayed power button short presses.
+ */
+static enum ec_status hc_power_button_press(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_power_button_press *p = args->params;
+
+	/* Arm the (double) press defaults */
+	pbtn_press.second_press_delay_ms = p->second_press_delay_ms;
+	pbtn_press.first_press_duration_ms = p->first_press_duration_ms;
+	pbtn_press.second_press_duration_ms = p->second_press_duration_ms;
+
+	/* Fixup parameters to match the deferred flow. */
+	if (pbtn_press.second_press_delay_ms > 0) {
+		pbtn_press.second_press_delay_ms =
+			p->second_press_delay_ms - p->first_press_delay_ms;
+	} else {
+		/* First press becomes the last. */
+		pbtn_press.second_press_duration_ms =
+			p->first_press_duration_ms;
+	}
+	/* Fixup default durations. */
+	if (pbtn_press.first_press_duration_ms == 0)
+		pbtn_press.first_press_duration_ms = POWER_BUTTON_SHORTPRESS;
+	if (pbtn_press.second_press_duration_ms == 0)
+		pbtn_press.second_press_duration_ms = POWER_BUTTON_SHORTPRESS;
+
+	/* Command is invalid if 2 presses are requested but:
+	 * - Second press is requested before first one.
+	 * - Duration of the first press overlaps with the second press.
+	 */
+	if (p->second_press_delay_ms != 0 &&
+	    (p->second_press_delay_ms <= p->first_press_delay_ms ||
+	     (p->first_press_delay_ms + pbtn_press.first_press_duration_ms >=
+	      p->second_press_delay_ms)))
+		return EC_RES_INVALID_PARAM;
+
+	/* Schedule first press */
+	hook_call_deferred(&power_button_press_deferred_data,
+			   p->first_press_delay_ms * MSEC);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_POWER_BUTTON_PRESS, hc_power_button_press,
+		     EC_VER_MASK(0));

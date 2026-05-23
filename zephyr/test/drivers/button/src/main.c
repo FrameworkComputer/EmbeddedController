@@ -7,6 +7,8 @@
 #include "button.h"
 #include "console.h"
 #include "hooks.h"
+#include "host_command.h"
+#include "include/power_button.h"
 #include "mkbp_fifo.h"
 #include "power.h"
 #include "test/drivers/test_state.h"
@@ -385,4 +387,202 @@ ZTEST(button, test_activate_warm_reset_exec)
 	zassert_equal(1, chipset_reset_fake.call_count);
 	zassert_equal(CHIPSET_RESET_DBG_WARM_REBOOT,
 		      chipset_reset_fake.arg0_val);
+}
+
+ZTEST(button, test_hc_power_button_press_single)
+{
+	struct ec_params_power_button_press hc_params = {
+		.first_press_delay_ms = 1000,
+	};
+	struct host_cmd_handler_args hc_press = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_POWER_BUTTON_PRESS, 0, hc_params);
+
+	/* PBTN up on start. */
+	zassert_equal(power_button_is_pressed(), 0);
+
+	/* Issue single press. */
+	zassert_ok(host_command_process(&hc_press));
+	zassert_equal(power_button_is_pressed(), 0);
+
+	/* PBTN up before the 1000ms mark. */
+	pass_time(800); /* T + 900ms */
+	zassert_equal(power_button_is_pressed(), 0);
+
+	/* PBTN down between 1000-1200ms mark. */
+	pass_time(0); /* T + 1000ms */
+	zassert_equal(power_button_is_pressed(), 1);
+	pass_time(0); /* T + 1100ms */
+	zassert_equal(power_button_is_pressed(), 1);
+
+	/* PBTN up afterwards. */
+	pass_time(0); /* T + 1200ms */
+	zassert_equal(power_button_is_pressed(), 0);
+	pass_time(0); /* T + 1300ms */
+	zassert_equal(power_button_is_pressed(), 0);
+}
+
+ZTEST(button, test_hc_power_button_press_single_custom_duration)
+{
+	struct ec_params_power_button_press hc_params = {
+		.first_press_delay_ms = 1000,
+		.first_press_duration_ms = 500,
+		.second_press_duration_ms = 300, /* shouldn't be used. */
+	};
+	struct host_cmd_handler_args hc_press = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_POWER_BUTTON_PRESS, 0, hc_params);
+
+	/* PBTN up on start. */
+	zassert_equal(power_button_is_pressed(), 0);
+
+	/* Issue single press. */
+	zassert_ok(host_command_process(&hc_press));
+	zassert_equal(power_button_is_pressed(), 0);
+
+	/* PBTN up before the 1000ms mark. */
+	pass_time(800); /* T + 900ms */
+	zassert_equal(power_button_is_pressed(), 0);
+
+	/* PBTN down between 1000-1500ms mark. */
+	pass_time(0); /* T + 1000ms */
+	zassert_equal(power_button_is_pressed(), 1);
+	pass_time(300); /* T + 1400ms */
+	zassert_equal(power_button_is_pressed(), 1);
+
+	/* PBTN up afterwards. */
+	pass_time(0); /* T + 1500ms */
+	zassert_equal(power_button_is_pressed(), 0);
+	pass_time(0); /* T + 1600ms */
+	zassert_equal(power_button_is_pressed(), 0);
+}
+
+ZTEST(button, test_hc_power_button_press_double)
+{
+	struct ec_params_power_button_press hc_params = {
+		.first_press_delay_ms = 1000,
+		.second_press_delay_ms = 5000,
+	};
+	struct host_cmd_handler_args hc_press = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_POWER_BUTTON_PRESS, 0, hc_params);
+
+	/* PBTN up on start. */
+	zassert_equal(power_button_is_pressed(), 0);
+
+	/* Issue double press. */
+	zassert_ok(host_command_process(&hc_press));
+	zassert_equal(power_button_is_pressed(), 0);
+
+	/* PBTN up before the 1000ms mark. */
+	pass_time(800); /* T + 900ms */
+	zassert_equal(power_button_is_pressed(), 0);
+
+	/* PBTN down between 1000-1200ms mark. */
+	pass_time(0); /* T + 1000ms */
+	zassert_equal(power_button_is_pressed(), 1);
+	pass_time(0); /* T + 1100ms */
+	zassert_equal(power_button_is_pressed(), 1);
+
+	/* PBTN up between 1200-5000ms marks. */
+	pass_time(0); /* T + 1200ms */
+	zassert_equal(power_button_is_pressed(), 0);
+	pass_time(3600); /* T + 4900ms */
+	zassert_equal(power_button_is_pressed(), 0);
+
+	/* PBTN down between 5000-5200ms marks. */
+	pass_time(0); /* T + 5000ms */
+	zassert_equal(power_button_is_pressed(), 1);
+	pass_time(0); /* T + 5100ms */
+	zassert_equal(power_button_is_pressed(), 1);
+
+	/* PBTN up after the 5200ms mark. */
+	pass_time(0); /* T + 5200ms */
+	zassert_equal(power_button_is_pressed(), 0);
+}
+
+ZTEST(button, test_hc_power_button_press_double_custom_duration)
+{
+	struct ec_params_power_button_press hc_params = {
+		.first_press_delay_ms = 1000,
+		.second_press_delay_ms = 5000,
+		.first_press_duration_ms = 500,
+		.second_press_duration_ms = 300,
+	};
+	struct host_cmd_handler_args hc_press = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_POWER_BUTTON_PRESS, 0, hc_params);
+
+	/* PBTN up on start. */
+	zassert_equal(power_button_is_pressed(), 0);
+
+	/* Issue double press. */
+	zassert_ok(host_command_process(&hc_press));
+	zassert_equal(power_button_is_pressed(), 0);
+
+	/* PBTN up before the 1000ms mark. */
+	pass_time(800); /* T + 900ms */
+	zassert_equal(power_button_is_pressed(), 0);
+
+	/* PBTN down between 1000-1500ms mark. */
+	pass_time(0); /* T + 1000ms */
+	zassert_equal(power_button_is_pressed(), 1);
+	pass_time(300); /* T + 1400ms */
+	zassert_equal(power_button_is_pressed(), 1);
+
+	/* PBTN up between 1500-5000ms marks. */
+	pass_time(0); /* T + 1500ms */
+	zassert_equal(power_button_is_pressed(), 0);
+	pass_time(3300); /* T + 4900ms */
+	zassert_equal(power_button_is_pressed(), 0);
+
+	/* PBTN down between 5000-5300ms marks. */
+	pass_time(0); /* T + 5000ms */
+	zassert_equal(power_button_is_pressed(), 1);
+	pass_time(100); /* T + 5200ms */
+	zassert_equal(power_button_is_pressed(), 1);
+
+	/* PBTN up after the 5300ms mark. */
+	pass_time(0); /* T + 5300ms */
+	zassert_equal(power_button_is_pressed(), 0);
+}
+
+ZTEST(button, test_hc_power_button_press_invalid_params)
+{
+	/* First + first duration == second. */
+	struct ec_params_power_button_press hc_params = {
+		.first_press_delay_ms = 1000,
+		.second_press_delay_ms = 2000,
+		.first_press_duration_ms = 1000,
+	};
+	struct host_cmd_handler_args hc_press = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_POWER_BUTTON_PRESS, 0, hc_params);
+
+	zassert_equal(host_command_process(&hc_press), EC_RES_INVALID_PARAM);
+
+	/* First + first duration > second. */
+	struct ec_params_power_button_press hc_params_2 = {
+		.first_press_delay_ms = 1000,
+		.second_press_delay_ms = 1500,
+		.first_press_duration_ms = 1000,
+	};
+	struct host_cmd_handler_args hc_press_2 = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_POWER_BUTTON_PRESS, 0, hc_params_2);
+
+	zassert_equal(host_command_process(&hc_press_2), EC_RES_INVALID_PARAM);
+
+	struct ec_params_power_button_press hc_params_3 = {
+		.first_press_delay_ms = 1000,
+		.second_press_delay_ms = 1100,
+	};
+	struct host_cmd_handler_args hc_press_3 = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_POWER_BUTTON_PRESS, 0, hc_params_3);
+
+	zassert_equal(host_command_process(&hc_press_3), EC_RES_INVALID_PARAM);
+
+	/* Second < First. */
+	struct ec_params_power_button_press hc_params_4 = {
+		.first_press_delay_ms = 2000,
+		.second_press_delay_ms = 1000,
+	};
+	struct host_cmd_handler_args hc_press_4 = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_POWER_BUTTON_PRESS, 0, hc_params_4);
+
+	zassert_equal(host_command_process(&hc_press_4), EC_RES_INVALID_PARAM);
 }
