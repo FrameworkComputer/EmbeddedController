@@ -93,6 +93,20 @@ ZTEST(rollback, test_rollback_version)
 	zassert_equal(rollback.rollback_min_version, 2);
 }
 
+ZTEST(rollback, test_erased_flash)
+{
+	/* Erase both rollback regions to simulate an empty flash */
+	zassert_ok(crec_flash_erase(ROLLBACK0_ADDR, ROLLBACK0_SIZE));
+	zassert_ok(crec_flash_erase(ROLLBACK1_ADDR, ROLLBACK1_SIZE));
+
+	/* Minimum version should be < 0 when no valid regions exist */
+	zassert_equal(rollback_get_minimum_version(), -1);
+
+	/* Update rollback version should fail when no valid regions exist */
+	zassert_equal(rollback_update_version(0), EC_ERROR_UNKNOWN);
+	zassert_equal(rollback_get_minimum_version(), -1);
+}
+
 ZTEST(rollback, test_entropy_trivial)
 {
 	uint8_t secret[CONFIG_PLATFORM_EC_ROLLBACK_SECRET_SIZE];

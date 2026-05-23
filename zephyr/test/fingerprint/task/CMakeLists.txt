@@ -6,6 +6,8 @@ cmake_minimum_required(VERSION 3.13.1)
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 project(fpsensor_task_test)
 
+target_include_directories(app PUBLIC ${PLATFORM_EC}/common)
+
 target_sources(app PRIVATE src/mock_fingerprint_algorithm.c)
 target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_CAPTURE app PRIVATE
 	src/fpsensor_capture.cc)

@@ -20,9 +20,17 @@
 #include <ec_commands.h>
 #include <ec_tasks.h>
 #include <fingerprint/fingerprint_alg.h>
+#include <flash.h>
 #include <fpsensor/fpsensor_state.h>
 #include <host_command.h>
 #include <rollback.h>
+#include <rollback_private.h>
+
+#define ROLLBACK0_ADDR DT_REG_ADDR(DT_NODELABEL(rollback0))
+#define ROLLBACK0_SIZE DT_REG_SIZE(DT_NODELABEL(rollback0))
+
+#define ROLLBACK1_ADDR DT_REG_ADDR(DT_NODELABEL(rollback1))
+#define ROLLBACK1_SIZE DT_REG_SIZE(DT_NODELABEL(rollback1))
 
 DEFINE_FFF_GLOBALS;
 
@@ -784,6 +792,22 @@ static void *fpsensor_setup(void)
 		.reserved = 0,
 		.seed = FAKE_TPM_SEED,
 	};
+	const struct rollback_data data = {
+		.id = 0,
+		.rollback_min_version = 0,
+#ifdef CONFIG_PLATFORM_EC_ROLLBACK_SECRET_SIZE
+		.secret = { 0 },
+#endif
+		.cookie = CROS_EC_ROLLBACK_COOKIE,
+	};
+
+	zassert_ok(crec_flash_erase(ROLLBACK0_ADDR, ROLLBACK0_SIZE));
+	zassert_ok(crec_flash_write(ROLLBACK0_ADDR, sizeof(data),
+				    (const char *)&data));
+
+	zassert_ok(crec_flash_erase(ROLLBACK1_ADDR, ROLLBACK1_SIZE));
+	zassert_ok(crec_flash_write(ROLLBACK1_ADDR, sizeof(data),
+				    (const char *)&data));
 
 	/* Start shimmed tasks. */
 	start_ec_tasks();

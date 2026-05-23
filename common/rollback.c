@@ -168,20 +168,12 @@ test_mockable_static int get_latest_rollback(struct rollback_data *data)
 		}
 	}
 
-	if (min_region >= 0) {
-		if (read_rollback(min_region, data))
-			goto failed;
-	} else {
-		/*
-		 * No valid rollback region was found. Initialize 'data'
-		 * with reasonable defaults.
-		 */
-		clear_rollback(data);
-		data->id = 0;
-		data->rollback_min_version = 0;
-		data->cookie = CROS_EC_ROLLBACK_COOKIE;
-		min_region = 0;
-	}
+	if (min_region < 0)
+		goto failed;
+
+	if (read_rollback(min_region, data))
+		goto failed;
+
 	ret = min_region;
 
 failed:
@@ -536,8 +528,10 @@ static int command_rollback_info(int argc, const char **argv)
 
 	min_region = get_latest_rollback(&data);
 
-	if (min_region < 0)
+	if (min_region < 0) {
+		ccprintf("no rollback region is available\n");
 		goto failed;
+	}
 
 	rw_rollback_version = system_get_rollback_version(EC_IMAGE_RW);
 
