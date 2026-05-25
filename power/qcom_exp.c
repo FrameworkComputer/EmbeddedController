@@ -168,7 +168,7 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
  * to avoid race conditions during the power-off/power-on transition.
  * This differs from the 45-minute heartbeat-offmode shutdown window.
  */
-#define EXTPOWER_WAKE_INTERVAL_SEC 30
+#define EXTPOWER_WAKE_INTERVAL_SEC 5
 
 /* Value to indicate an invalid or uninitialized SoC. */
 #define BATTERY_BAD_STATE_OF_CHARGE -1
