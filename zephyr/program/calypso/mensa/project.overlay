@@ -17,6 +17,7 @@
 #include "gpios.dtsi"
 #include "i2c.dtsi"
 #include "interrupts.dtsi"
+#include "keyboard.dtsi"
 #include "temp_sensors.dtsi"
 
 /* mensa overrides follow... */
