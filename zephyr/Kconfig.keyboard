@@ -2,13 +2,23 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-CHOSEN_CROS_EC_RAW_KB := cros-ec,raw-kb
 CHOSEN_CROS_EC_KEYBOARD := cros-ec,keyboard
+
+config HAS_CROS_KB_RAW
+	bool
+	help
+	  Helper symbol that indicates the platform provides a legacy
+	  raw keyboard driver implementation.
 
 menuconfig PLATFORM_EC_KEYBOARD
 	bool "Keyboard support"
 	default y
-	depends on ($(dt_chosen_enabled,$(CHOSEN_CROS_EC_RAW_KB)) || $(dt_chosen_enabled,$(CHOSEN_CROS_EC_KEYBOARD)) || $(dt_nodelabel_enabled,kb_discrete))
+	depends on (DT_HAS_NUVOTON_NPCX_CROS_KB_RAW_ENABLED || \
+		    DT_HAS_ITE_IT8XXX2_CROS_KB_RAW_ENABLED || \
+		    DT_HAS_MICROCHIP_XEC_CROS_KB_RAW_ENABLED || \
+		    DT_HAS_CROS_EC_KB_RAW_EMUL_ENABLED || \
+		    $(dt_chosen_enabled,$(CHOSEN_CROS_EC_KEYBOARD)) || \
+		    $(dt_nodelabel_enabled,kb_discrete))
 	help
 	  Enable keyboard support.
 
@@ -23,7 +33,7 @@ choice PLATFORM_EC_KEYBOARD_DRIVER
 config PLATFORM_EC_KEYBOARD_CROS_EC_RAW_KB
 	prompt "Shimmed raw keyboard driver"
 	select HAS_TASK_KEYSCAN
-	depends on $(dt_chosen_enabled,$(CHOSEN_CROS_EC_RAW_KB))
+	depends on HAS_CROS_KB_RAW
 	help
 	  Enable compilation of support for scanning a keyboard and providing
 	  the resulting input to the AP over the host interface. This consists

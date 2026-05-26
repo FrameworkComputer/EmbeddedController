@@ -12,7 +12,6 @@
 		cros-ec,espi = &espi0;
 		cros-ec,flash = &flash1;
 		cros-ec,flash-controller = &fiu0;
-		cros-ec,raw-kb = &cros_kb_raw;
 		cros-ec,watchdog = &twd0;
 	};
 	named-bbram-regions {

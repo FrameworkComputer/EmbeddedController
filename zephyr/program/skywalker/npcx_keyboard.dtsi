@@ -4,10 +4,6 @@
  */
 
 / {
-	chosen {
-		cros-ec,raw-kb = &cros_kb_raw;
-	};
-
 	soc {
 		/* delete this because zmake complains that cros_kb_raw and kbd
 		 * has same address */

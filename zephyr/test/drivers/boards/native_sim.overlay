@@ -16,7 +16,6 @@
 	chosen {
 		cros-ec,espi = &espi0;
 		cros-ec,watchdog = &wdt_counter;
-		cros-ec,raw-kb = &cros_kb_raw;
 		cros-ec,flash = &flash0;
 		cros-ec,flash-controller = &cros_flash;
 		cros,rtc = &cros_rtc;

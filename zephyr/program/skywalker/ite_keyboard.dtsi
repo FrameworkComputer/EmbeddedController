@@ -3,11 +3,7 @@
  * found in the LICENSE file.
  */
 
-/ {
-	chosen {
-		cros-ec,raw-kb = &cros_kb_raw;
-	};
-};
+
 
 &cros_kb_raw {
 	status = "okay";

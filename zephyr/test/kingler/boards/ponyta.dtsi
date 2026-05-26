@@ -4,9 +4,6 @@
  */
 
 / {
-	chosen {
-		cros-ec,raw-kb = &cros_kb_raw;
-	};
 
 	cros_kb_raw: kb-raw-emul {
 		compatible = "cros-ec,kb-raw-emul";

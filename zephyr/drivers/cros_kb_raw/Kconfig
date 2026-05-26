@@ -2,13 +2,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_KEYBOARD_CROS_EC_RAW_KB
+if PLATFORM_EC_KEYBOARD
 
 menuconfig CROS_KB_RAW_NPCX
 	bool "Nuvoton NPCX raw-keyboard-scan driver for the Zephyr shim"
 	default y
 	depends on DT_HAS_NUVOTON_NPCX_CROS_KB_RAW_ENABLED
 	select PINCTRL
+	select HAS_CROS_KB_RAW
 	help
 	  This option enables a driver for providing raw access to the
 	  keyboard-scan peripheral in the chip. This is used instead of the
@@ -31,6 +32,7 @@ config CROS_KB_RAW_ITE
 	default y
 	depends on DT_HAS_ITE_IT8XXX2_CROS_KB_RAW_ENABLED
 	select PINCTRL
+	select HAS_CROS_KB_RAW
 	help
 	  This option enables a driver for providing raw access to the
 	  keyboard-scan peripheral in the chip. This is used instead of the
@@ -41,6 +43,7 @@ menuconfig CROS_KB_RAW_XEC
 	bool "Microchip raw-keyboard-scan driver for the Zephyr shim"
 	default y
 	depends on DT_HAS_MICROCHIP_XEC_CROS_KB_RAW_ENABLED
+	select HAS_CROS_KB_RAW
 	help
 	  This option enables a driver for providing raw access to the
 	  keyboard-scan peripheral in the chip. This is used instead of the
