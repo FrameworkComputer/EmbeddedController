@@ -30,8 +30,10 @@ struct kb_raw_emul_cfg {
 	int cols;
 };
 
+static const struct device *emul_dev;
+
 /**
- * @brief Set up a new kn_raw emulator
+ * @brief Set up a new kb_raw emulator
  *
  * @param device Device node.
  *
@@ -43,13 +45,7 @@ static int kb_raw_emul_init(const struct device *dev)
 	struct kb_raw_emul_data *data = dev->data;
 
 	memset(data->matrix, 0, sizeof(int) * cfg->cols);
-	return 0;
-}
-
-static int emul_kb_raw_init(const struct device *dev)
-{
-	ARG_UNUSED(dev);
-
+	emul_dev = dev;
 	return 0;
 }
 
@@ -108,12 +104,38 @@ void emul_kb_raw_reset(const struct device *dev)
 	}
 }
 
-static DEVICE_API(cros_kb_raw, emul_kb_raw_driver_api) = {
-	.init = emul_kb_raw_init,
-	.drive_colum = emul_kb_raw_drive_column,
-	.read_rows = emul_kb_raw_read_rows,
-	.enable_interrupt = emul_kb_raw_enable_interrupt,
-};
+/* Global keyboard raw API implementations */
+void keyboard_raw_init(void)
+{
+	/* Do nothing. kb_raw_emul_init is called at boot time. */
+}
+
+void keyboard_raw_drive_column(int col)
+{
+	if (emul_dev) {
+		emul_kb_raw_drive_column(emul_dev, col);
+	}
+}
+
+int keyboard_raw_read_rows(void)
+{
+	if (emul_dev) {
+		return emul_kb_raw_read_rows(emul_dev);
+	}
+	return 0;
+}
+
+void keyboard_raw_enable_interrupt(int enable)
+{
+	if (emul_dev) {
+		emul_kb_raw_enable_interrupt(emul_dev, enable);
+	}
+}
+
+void keyboard_raw_task_start(void)
+{
+	keyboard_raw_enable_interrupt(1);
+}
 
 #define KB_RAW_EMUL(n)                                                     \
 	static int kb_raw_emul_matrix_##n[DT_INST_PROP(n, cols)];          \
@@ -130,6 +152,5 @@ static DEVICE_API(cros_kb_raw, emul_kb_raw_driver_api) = {
 	DEVICE_DT_INST_DEFINE(n, kb_raw_emul_init, NULL,                   \
 			      &kb_raw_emul_data_##n, &kb_raw_emul_cfg_##n, \
 			      PRE_KERNEL_1,                                \
-			      CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,         \
-			      &emul_kb_raw_driver_api)
+			      CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, NULL)
 DT_INST_FOREACH_STATUS_OKAY(KB_RAW_EMUL);

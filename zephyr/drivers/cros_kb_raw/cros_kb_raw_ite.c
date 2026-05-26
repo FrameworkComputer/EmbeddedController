@@ -6,6 +6,7 @@
 #define DT_DRV_COMPAT ite_it8xxx2_cros_kb_raw
 
 #include "ec_tasks.h"
+#include "gpio_it8xxx2.h"
 #include "keyboard_raw.h"
 #include "task.h"
 
@@ -60,20 +61,28 @@ struct cros_kb_raw_ite_data {
 	uint8_t ksi_pin_mask;
 };
 
-static int kb_raw_ite_init(const struct device *dev)
-{
-	ARG_UNUSED(dev);
+static const struct cros_kb_raw_wuc_map_cfg
+	cros_kb_raw_wuc_0[IT8XXX2_DT_INST_WUCCTRL_LEN(0)] =
+		IT8XXX2_DT_WUC_ITEMS_LIST(0);
 
-	/* Clock default is on */
-	return 0;
-}
+PINCTRL_DT_INST_DEFINE(0);
 
-/* Cros ec keyboard raw api functions */
-static int cros_kb_raw_ite_enable_interrupt(const struct device *dev,
-					    int enable)
+static const struct cros_kb_raw_ite_config cros_kb_raw_cfg = {
+	.base = (struct kscan_it8xxx2_regs *)DT_INST_REG_ADDR(0),
+	.irq = DT_INST_IRQN(0),
+	.wuc_map_list = cros_kb_raw_wuc_0,
+	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(0),
+};
+
+static struct cros_kb_raw_ite_data cros_kb_raw_data;
+
+#define DRV_CONFIG() (&cros_kb_raw_cfg)
+#define DRV_DATA() (&cros_kb_raw_data)
+
+void keyboard_raw_enable_interrupt(int enable)
 {
-	const struct cros_kb_raw_ite_config *config = dev->config;
-	struct cros_kb_raw_ite_data *data = dev->data;
+	const struct cros_kb_raw_ite_config *config = DRV_CONFIG();
+	struct cros_kb_raw_ite_data *data = DRV_DATA();
 
 	if (enable) {
 		/*
@@ -89,13 +98,11 @@ static int cros_kb_raw_ite_enable_interrupt(const struct device *dev,
 	} else {
 		irq_disable(config->irq);
 	}
-
-	return 0;
 }
 
-static int cros_kb_raw_ite_read_row(const struct device *dev)
+int keyboard_raw_read_rows(void)
 {
-	const struct cros_kb_raw_ite_config *config = dev->config;
+	const struct cros_kb_raw_ite_config *config = DRV_CONFIG();
 	struct kscan_it8xxx2_regs *const inst = config->base;
 
 	/* Bits are active-low, so invert returned levels */
@@ -103,9 +110,9 @@ static int cros_kb_raw_ite_read_row(const struct device *dev)
 }
 
 #ifdef CONFIG_SOC_IT8XXX2_REG_SET_V1
-static void kb_raw_ite_drive_column_reg_set_v1(const struct device *dev)
+static void kb_raw_ite_drive_column_reg_set_v1(void)
 {
-	const struct cros_kb_raw_ite_config *config = dev->config;
+	const struct cros_kb_raw_ite_config *config = DRV_CONFIG();
 	struct kscan_it8xxx2_regs *const inst = config->base;
 	unsigned int key;
 
@@ -135,11 +142,11 @@ static void kb_raw_ite_drive_column_reg_set_v1(const struct device *dev)
 }
 #endif
 
-static int cros_kb_raw_ite_drive_column(const struct device *dev, int col)
+void keyboard_raw_drive_column(int col)
 {
 	int mask;
 	unsigned int key;
-	const struct cros_kb_raw_ite_config *config = dev->config;
+	const struct cros_kb_raw_ite_config *config = DRV_CONFIG();
 	struct kscan_it8xxx2_regs *const inst = config->base;
 
 	/* Tri-state all outputs */
@@ -171,14 +178,12 @@ static int cros_kb_raw_ite_drive_column(const struct device *dev, int col)
 	/* Set KSO[17:16] output data */
 	inst->KBS_KSOH2 = ((inst->KBS_KSOH2) & ~KSOH2_PIN_MASK) |
 			  ((mask >> 16) & KSOH2_PIN_MASK);
-
-	return 0;
 }
 
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD_FACTORY_TEST
-static int cros_kb_raw_ite_config_alt(const struct device *dev, bool enable)
+void keybaord_raw_config_alt(bool enable)
 {
-	const struct cros_kb_raw_ite_config *config = dev->config;
+	const struct cros_kb_raw_ite_config *config = DRV_CONFIG();
 	int status = 0;
 
 	if (enable) {
@@ -187,25 +192,23 @@ static int cros_kb_raw_ite_config_alt(const struct device *dev, bool enable)
 					     PINCTRL_STATE_DEFAULT);
 		if (status < 0) {
 			LOG_ERR("Failed to enable KSI and KSO kbs mode");
-			return status;
+			return;
 		}
 	} else {
 		/* Set KSI/KSO pins of cros_kb_raw node to gpio mode */
 		status = pinctrl_apply_state(config->pcfg, PINCTRL_STATE_SLEEP);
 		if (status < 0) {
 			LOG_ERR("Failed to enable KSI and KSO gpio mode");
-			return status;
+			return;
 		}
 	}
-
-	return 0;
 }
 #endif
 
-static void cros_kb_raw_ite_ksi_isr(const struct device *dev)
+static void cros_kb_raw_ite_ksi_isr(void)
 {
-	const struct cros_kb_raw_ite_config *config = dev->config;
-	struct cros_kb_raw_ite_data *data = dev->data;
+	const struct cros_kb_raw_ite_config *config = DRV_CONFIG();
+	struct cros_kb_raw_ite_data *data = DRV_DATA();
 
 	/*
 	 * We clear IT8XXX2_IRQ_WKINTC irq status in
@@ -224,14 +227,14 @@ static void cros_kb_raw_ite_ksi_isr(const struct device *dev)
 	task_wake(TASK_ID_KEYSCAN);
 }
 
-static int cros_kb_raw_ite_init(const struct device *dev)
+void keyboard_raw_init(void)
 {
-	const struct cros_kb_raw_ite_config *config = dev->config;
-	struct cros_kb_raw_ite_data *data = dev->data;
+	const struct cros_kb_raw_ite_config *config = DRV_CONFIG();
+	struct cros_kb_raw_ite_data *data = DRV_DATA();
 	int status;
 
 	/* Ensure top-level interrupt is disabled */
-	cros_kb_raw_ite_enable_interrupt(dev, 0);
+	keyboard_raw_enable_interrupt(0);
 
 	/*
 	 * Enable the internal pull-up and kbs mode of the KSI[7:0] pins.
@@ -241,13 +244,13 @@ static int cros_kb_raw_ite_init(const struct device *dev)
 	status = pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
 	if (status < 0) {
 		LOG_ERR("Failed to configure KSI[7:0] and KSO[15:0] pins");
-		return status;
+		return;
 	}
 
 #ifdef CONFIG_SOC_IT8XXX2_REG_SET_V1
-	kb_raw_ite_drive_column_reg_set_v1(dev);
+	kb_raw_ite_drive_column_reg_set_v1();
 #else
-	cros_kb_raw_ite_drive_column(dev, KEYBOARD_COLUMN_ALL);
+	keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
 #endif
 
 	for (int i = 0; i < KEYBOARD_KSI_PIN_COUNT; i++) {
@@ -280,36 +283,32 @@ static int cros_kb_raw_ite_init(const struct device *dev)
 
 	irq_connect_dynamic(config->irq, 0,
 			    (void (*)(const void *))cros_kb_raw_ite_ksi_isr,
-			    (const void *)dev, 0);
-
-	return 0;
+			    NULL, 0);
 }
 
-static DEVICE_API(cros_kb_raw, cros_kb_raw_ite_driver_api) = {
-	.init = cros_kb_raw_ite_init,
-	.drive_colum = cros_kb_raw_ite_drive_column,
-	.read_rows = cros_kb_raw_ite_read_row,
-	.enable_interrupt = cros_kb_raw_ite_enable_interrupt,
-#ifdef CONFIG_PLATFORM_EC_KEYBOARD_FACTORY_TEST
-	.config_alt = cros_kb_raw_ite_config_alt,
-#endif
-};
-static const struct cros_kb_raw_wuc_map_cfg
-	cros_kb_raw_wuc_0[IT8XXX2_DT_INST_WUCCTRL_LEN(0)] =
-		IT8XXX2_DT_WUC_ITEMS_LIST(0);
+void keyboard_raw_task_start(void)
+{
+	keyboard_raw_enable_interrupt(1);
+}
 
-PINCTRL_DT_INST_DEFINE(0);
+int keyboard_raw_is_input_low(int port, int id)
+{
+	const struct device *dev;
 
-static const struct cros_kb_raw_ite_config cros_kb_raw_cfg = {
-	.base = (struct kscan_it8xxx2_regs *)DT_INST_REG_ADDR(0),
-	.irq = DT_INST_IRQN(0),
-	.wuc_map_list = cros_kb_raw_wuc_0,
-	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(0),
-};
+	switch ((enum gpio_port_to_node)port) {
+	case GPIO_KSI:
+		dev = DEVICE_DT_GET(DT_NODELABEL(gpioksi));
+		break;
+	case GPIO_KSOH:
+		dev = DEVICE_DT_GET(DT_NODELABEL(gpioksoh));
+		break;
+	case GPIO_KSOL:
+		dev = DEVICE_DT_GET(DT_NODELABEL(gpioksol));
+		break;
+	default:
+		printk("Error port number %d, return 0\n", port);
+		return 0;
+	}
 
-static struct cros_kb_raw_ite_data cros_kb_raw_data;
-
-DEVICE_DT_INST_DEFINE(0, kb_raw_ite_init, NULL, &cros_kb_raw_data,
-		      &cros_kb_raw_cfg, PRE_KERNEL_1,
-		      CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
-		      &cros_kb_raw_ite_driver_api);
+	return (gpio_pin_get_raw(dev, id) == 0);
+}

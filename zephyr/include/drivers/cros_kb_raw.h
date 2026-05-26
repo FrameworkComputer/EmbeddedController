@@ -46,35 +46,6 @@
 
 /**
  * @cond INTERNAL_HIDDEN
- *
- * cros keyboard raw driver API definition and system call entry points
- *
- * (Internal use only.)
- */
-typedef int (*cros_kb_raw_api_init)(const struct device *dev);
-
-typedef int (*cros_kb_raw_api_drive_column)(const struct device *dev, int col);
-
-typedef int (*cros_kb_raw_api_read_rows)(const struct device *dev);
-
-typedef int (*cros_kb_raw_api_enable_interrupt)(const struct device *dev,
-						int enable);
-
-typedef int (*cros_kb_raw_api_config_alt)(const struct device *dev,
-					  bool enable);
-
-__subsystem struct cros_kb_raw_driver_api {
-	cros_kb_raw_api_init init;
-	cros_kb_raw_api_drive_column drive_colum;
-	cros_kb_raw_api_read_rows read_rows;
-	cros_kb_raw_api_enable_interrupt enable_interrupt;
-#ifdef CONFIG_PLATFORM_EC_KEYBOARD_FACTORY_TEST
-	cros_kb_raw_api_config_alt config_alt;
-#endif
-};
-
-/**
- * @endcond
  */
 
 /**
@@ -87,16 +58,7 @@ __subsystem struct cros_kb_raw_driver_api {
  * @return 0 If successful.
  * @retval -ENOTSUP Not supported api function.
  */
-__syscall int cros_kb_raw_init(const struct device *dev);
-
-static inline int z_impl_cros_kb_raw_init(const struct device *dev)
-{
-	if (!DEVICE_API_GET(cros_kb_raw, dev)->init) {
-		return -ENOTSUP;
-	}
-
-	return DEVICE_API_GET(cros_kb_raw, dev)->init(dev);
-}
+int cros_kb_raw_init(void);
 
 /**
  * @brief Drive the specified column low.
@@ -110,16 +72,7 @@ static inline int z_impl_cros_kb_raw_init(const struct device *dev)
  * @return 0 If successful.
  * @retval -ENOTSUP Not supported api function.
  */
-__syscall int cros_kb_raw_drive_column(const struct device *dev, int col);
-static inline int z_impl_cros_kb_raw_drive_column(const struct device *dev,
-						  int col)
-{
-	if (!DEVICE_API_GET(cros_kb_raw, dev)->drive_colum) {
-		return -ENOTSUP;
-	}
-
-	return DEVICE_API_GET(cros_kb_raw, dev)->drive_colum(dev, col);
-}
+int cros_kb_raw_drive_column(int col);
 
 /**
  * @brief Read raw row state.
@@ -130,15 +83,7 @@ static inline int z_impl_cros_kb_raw_drive_column(const struct device *dev,
  *
  * @return current raw row state value.
  */
-__syscall int cros_kb_raw_read_rows(const struct device *dev);
-static inline int z_impl_cros_kb_raw_read_rows(const struct device *dev)
-{
-	if (!DEVICE_API_GET(cros_kb_raw, dev)->read_rows) {
-		return 0;
-	}
-
-	return DEVICE_API_GET(cros_kb_raw, dev)->read_rows(dev);
-}
+int cros_kb_raw_read_rows(void);
 
 /**
  * @brief Enable or disable keyboard interrupts.
@@ -154,18 +99,7 @@ static inline int z_impl_cros_kb_raw_read_rows(const struct device *dev)
  * @return 0 If successful.
  * @retval -ENOTSUP Not supported api function.
  */
-__syscall int cros_kb_raw_enable_interrupt(const struct device *dev,
-					   int enable);
-
-static inline int z_impl_cros_kb_raw_enable_interrupt(const struct device *dev,
-						      int enable)
-{
-	if (!DEVICE_API_GET(cros_kb_raw, dev)->enable_interrupt) {
-		return -ENOTSUP;
-	}
-
-	return DEVICE_API_GET(cros_kb_raw, dev)->enable_interrupt(dev, enable);
-}
+int cros_kb_raw_enable_interrupt(int enable);
 
 /**
  * @brief Enable or disable keyboard alternative function.
@@ -179,20 +113,11 @@ static inline int z_impl_cros_kb_raw_enable_interrupt(const struct device *dev,
  * @return 0 If successful.
  * @retval -ENOTSUP Not supported api function.
  */
+int cros_kb_raw_config_alt(bool enable);
 
-#ifdef CONFIG_PLATFORM_EC_KEYBOARD_FACTORY_TEST
-__syscall int cros_kb_raw_config_alt(const struct device *dev, bool enable);
-
-static inline int z_impl_cros_kb_raw_config_alt(const struct device *dev,
-						bool enable)
-{
-	if (!DEVICE_API_GET(cros_kb_raw, dev)->config_alt) {
-		return -ENOTSUP;
-	}
-
-	return DEVICE_API_GET(cros_kb_raw, dev)->config_alt(dev, enable);
-}
-#endif
+/**
+ * @endcond
+ */
 
 /**
  * @brief Set the logical level of the keyboard column 2 output.
@@ -219,5 +144,4 @@ static inline void cros_kb_raw_set_col2(int level)
 /**
  * @}
  */
-#include <zephyr/syscalls/cros_kb_raw.h>
 #endif /* ZEPHYR_INCLUDE_DRIVERS_CROS_KB_RAW_H_ */

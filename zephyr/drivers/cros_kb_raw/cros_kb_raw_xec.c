@@ -40,47 +40,45 @@ struct cros_kb_raw_xec_config {
 	const struct pinctrl_dev_config *pcfg;
 };
 
-static int kb_raw_xec_init(const struct device *dev)
-{
-	ARG_UNUSED(dev);
+PINCTRL_DT_INST_DEFINE(0);
 
-	/* Clock default is on */
-	return 0;
-}
+static const struct cros_kb_raw_xec_config cros_kb_raw_cfg = {
+	.base = DT_INST_REG_ADDR(0),
+	.irq = DT_INST_IRQN(0),
+	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(0),
+};
+
+#define DRV_CONFIG() (&cros_kb_raw_cfg)
+#define HAL_INSTANCE() (struct kscan_regs *)(DRV_CONFIG()->base)
 
 /* Clear keyboard source bits: hw status, block source and NVIC pending */
-static void kb_raw_xec_clr_src(const struct device *dev)
+static void kb_raw_xec_clr_src(void)
 {
-	struct cros_kb_raw_xec_config const *cfg = dev->config;
-	struct kscan_regs *const inst = (struct kscan_regs *)cfg->base;
+	struct cros_kb_raw_xec_config const *cfg = DRV_CONFIG();
+	struct kscan_regs *const inst = HAL_INSTANCE();
 
 	inst->KSI_STS = 0xff;
 	mchp_soc_ecia_girq_src_clr(MCHP_GIRQ21_ID, MCHP_KEYSCAN_GIRQ_POS);
 	mchp_xec_ecia_nvic_clr_pend(MCHP_KEYSCAN_GIRQ_NVIC_DIRECT);
 }
 
-/* Cros ec keyboard raw api functions */
-static int cros_kb_raw_xec_enable_interrupt(const struct device *dev,
-					    int enable)
+void keyboard_raw_enable_interrupt(int enable)
 {
-	struct cros_kb_raw_xec_config const *cfg = dev->config;
+	struct cros_kb_raw_xec_config const *cfg = DRV_CONFIG();
 
 	if (enable) {
-		kb_raw_xec_clr_src(dev);
+		kb_raw_xec_clr_src();
 		/* Enable Kscan NVIC interrupt */
 		irq_enable(cfg->irq);
 	} else {
 		/* Disable Kscan NVIC interrupt */
 		irq_disable(cfg->irq);
 	}
-
-	return 0;
 }
 
-static int cros_kb_raw_xec_read_row(const struct device *dev)
+int keyboard_raw_read_rows(void)
 {
-	struct cros_kb_raw_xec_config const *cfg = dev->config;
-	struct kscan_regs *const inst = (struct kscan_regs *)cfg->base;
+	struct kscan_regs *const inst = HAL_INSTANCE();
 	int val;
 
 	val = inst->KSI_IN;
@@ -90,10 +88,9 @@ static int cros_kb_raw_xec_read_row(const struct device *dev)
 	return (~val & 0xFF);
 }
 
-static int cros_kb_raw_xec_drive_column(const struct device *dev, int col)
+void keyboard_raw_drive_column(int col)
 {
-	struct cros_kb_raw_xec_config const *cfg = dev->config;
-	struct kscan_regs *const inst = (struct kscan_regs *)cfg->base;
+	struct kscan_regs *const inst = HAL_INSTANCE();
 
 	/*
 	 * Selected lines are driven low, not selected one are set to high
@@ -120,7 +117,7 @@ static int cros_kb_raw_xec_drive_column(const struct device *dev, int col)
 		 * this faulty interrupt is harmless.
 		 */
 		if (inst->KSI_IN != 0xff) {
-			kb_raw_xec_clr_src(dev);
+			kb_raw_xec_clr_src();
 		}
 		mchp_soc_ecia_girq_src_en(MCHP_GIRQ21_ID,
 					  MCHP_KEYSCAN_GIRQ_POS);
@@ -135,62 +132,52 @@ static int cros_kb_raw_xec_drive_column(const struct device *dev, int col)
 	} else {
 		inst->KSO_SEL = col + CONFIG_KEYBOARD_KSO_BASE;
 	}
-
-	return 0;
 }
 
-static void cros_kb_raw_xec_ksi_isr(const struct device *dev)
+static void cros_kb_raw_xec_ksi_isr(const void *arg)
 {
-	kb_raw_xec_clr_src(dev);
+	ARG_UNUSED(arg);
+	kb_raw_xec_clr_src();
 	/* Wake-up keyboard scan task */
 	task_wake(TASK_ID_KEYSCAN);
 }
 
-static int cros_kb_raw_xec_init(const struct device *dev)
+void keyboard_raw_init(void)
 {
-	struct cros_kb_raw_xec_config const *cfg = dev->config;
-	struct kscan_regs *const inst = (struct kscan_regs *)cfg->base;
+	struct cros_kb_raw_xec_config const *cfg = DRV_CONFIG();
+	struct kscan_regs *const inst = HAL_INSTANCE();
 
 	/* Use zephyr pinctrl to initialize pins */
 	int ret = pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
 
 	if (ret)
-		return ret;
+		return;
 
 	/* Set up Kscan IRQ and ISR */
 	IRQ_CONNECT(DT_INST_IRQN(0), DT_INST_IRQ(0, priority),
-		    cros_kb_raw_xec_ksi_isr, DEVICE_DT_INST_GET(0), 0);
+		    cros_kb_raw_xec_ksi_isr, NULL, 0);
 
 	/* Disable Kscan NVIC and source interrupts */
 	irq_disable(cfg->irq);
 	mchp_soc_ecia_girq_src_dis(MCHP_GIRQ21_ID, MCHP_KEYSCAN_GIRQ_POS);
-	kb_raw_xec_clr_src(dev);
+	kb_raw_xec_clr_src();
 	/* Enable all Kscan KSIs interrupt */
 	inst->KSI_IEN = 0xff;
 	/* Enable Kscan source interrupt */
 	mchp_soc_ecia_girq_src_en(MCHP_GIRQ21_ID, MCHP_KEYSCAN_GIRQ_POS);
-
-	return 0;
 }
 
-static DEVICE_API(cros_kb_raw, cros_kb_raw_xec_driver_api) = {
-	.init = cros_kb_raw_xec_init,
-	.drive_colum = cros_kb_raw_xec_drive_column,
-	.read_rows = cros_kb_raw_xec_read_row,
-	.enable_interrupt = cros_kb_raw_xec_enable_interrupt,
-};
+void keyboard_raw_task_start(void)
+{
+	keyboard_raw_enable_interrupt(1);
+}
 
-/* instantiate zephyr pinctrl constant info */
-PINCTRL_DT_INST_DEFINE(0);
+int keyboard_raw_is_input_low(int port, int id)
+{
+	const struct device *io_dev = mchp_xec_get_gpio_dev(port);
 
-static const struct cros_kb_raw_xec_config cros_kb_raw_cfg = {
-	.base = DT_INST_REG_ADDR(0),
-	.irq = DT_INST_IRQN(0),
-	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(0),
-};
+	return gpio_pin_get_raw(io_dev, id) == 0;
+}
 
 /* Verify there's exactly one enabled cros,kb-raw-xec node. */
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1);
-DEVICE_DT_INST_DEFINE(0, kb_raw_xec_init, NULL, NULL, &cros_kb_raw_cfg,
-		      PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
-		      &cros_kb_raw_xec_driver_api);

@@ -21,6 +21,7 @@
 #include <drivers/cros_kb_raw.h>
 #include <soc.h>
 #include <soc/nuvoton_npcx/reg_def_cros.h>
+#include <soc_gpio.h>
 
 LOG_MODULE_REGISTER(cros_kb_raw, LOG_LEVEL_ERR);
 
@@ -50,23 +51,35 @@ struct cros_kb_raw_npcx_config {
 	struct npcx_wui wui_maps[];
 };
 
-/* Driver convenience defines */
-#define DRV_CONFIG(dev) ((const struct cros_kb_raw_npcx_config *)(dev)->config)
-#define HAL_INSTANCE(dev) (struct kbs_reg *)(DRV_CONFIG(dev)->base)
-
 /* Keyboard Scan local functions */
 static struct miwu_callback ksi_callback[NPCX_MAX_KEY_ROWS];
 
-static void kb_raw_npcx_init_ksi_wui_callback(
-	const struct device *dev, struct miwu_callback *callback,
-	const struct npcx_wui *wui, miwu_dev_callback_handler_t handler)
+PINCTRL_DT_INST_DEFINE(0);
+
+static const struct cros_kb_raw_npcx_config cros_kb_raw_cfg = {
+	.base = DT_INST_REG_ADDR(0),
+	.clk_cfg = NPCX_DT_CLK_CFG_ITEM(0),
+	.irq = DT_INST_IRQN(0),
+	.wui_size = NPCX_DT_WUI_ITEMS_LEN(0),
+	.wui_maps = NPCX_DT_WUI_ITEMS_LIST(0),
+	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(0),
+};
+
+/* Driver convenience defines */
+#define DRV_CONFIG() (&cros_kb_raw_cfg)
+#define HAL_INSTANCE() (struct kbs_reg *)(DRV_CONFIG()->base)
+
+static void
+kb_raw_npcx_init_ksi_wui_callback(struct miwu_callback *callback,
+				  const struct npcx_wui *wui,
+				  miwu_dev_callback_handler_t handler)
 {
 	/* KSI signal which has no wake-up input source */
 	if (wui->table == NPCX_MIWU_TABLE_NONE)
 		return;
 
 	/* Install callback function */
-	npcx_miwu_init_dev_callback(callback, wui, handler, dev);
+	npcx_miwu_init_dev_callback(callback, wui, handler, NULL);
 	npcx_miwu_manage_callback(callback, 1);
 
 	/* Configure MIWU setting and enable its interrupt */
@@ -75,40 +88,20 @@ static void kb_raw_npcx_init_ksi_wui_callback(
 	npcx_miwu_irq_enable(wui);
 }
 
-static int kb_raw_npcx_init(const struct device *dev)
-{
-	const struct cros_kb_raw_npcx_config *const config = DRV_CONFIG(dev);
-	const struct device *clk_dev = DEVICE_DT_GET(NPCX_CLK_CTRL_NODE);
-	int ret;
-
-	/* Turn on device clock first and get source clock freq. */
-	ret = clock_control_on(clk_dev,
-			       (clock_control_subsys_t *)&config->clk_cfg);
-	if (ret < 0) {
-		LOG_ERR("Turn on KSCAN clock fail %d", ret);
-		return ret;
-	}
-
-	return 0;
-}
-
 /* Cros ec keyboard raw api functions */
-static int cros_kb_raw_npcx_enable_interrupt(const struct device *dev,
-					     int enable)
+void keyboard_raw_enable_interrupt(int enable)
 {
-	const struct cros_kb_raw_npcx_config *const config = DRV_CONFIG(dev);
+	const struct cros_kb_raw_npcx_config *const config = DRV_CONFIG();
 
 	if (enable)
 		irq_enable(config->irq);
 	else
 		irq_disable(config->irq);
-
-	return 0;
 }
 
-static int cros_kb_raw_npcx_read_row(const struct device *dev)
+int keyboard_raw_read_rows(void)
 {
-	struct kbs_reg *const inst = HAL_INSTANCE(dev);
+	struct kbs_reg *const inst = HAL_INSTANCE();
 	int val;
 
 	val = inst->KBSIN;
@@ -118,9 +111,9 @@ static int cros_kb_raw_npcx_read_row(const struct device *dev)
 	return (~val & NPCX_KB_ROW_MASK);
 }
 
-static int cros_kb_raw_npcx_drive_column(const struct device *dev, int col)
+void keyboard_raw_drive_column(int col)
 {
-	struct kbs_reg *const inst = HAL_INSTANCE(dev);
+	struct kbs_reg *const inst = HAL_INSTANCE();
 
 	/* Nuvoton 'Keyboard Scan' module supports 18x8 matrix. */
 	uint32_t mask, col_out;
@@ -150,8 +143,6 @@ static int cros_kb_raw_npcx_drive_column(const struct device *dev, int col)
 
 	inst->KBSOUT0 = (mask & 0xFFFF);
 	inst->KBSOUT1 = ((mask >> 16) & 0x03);
-
-	return 0;
 }
 
 static void cros_kb_raw_npcx_ksi_isr(const struct device *dev,
@@ -165,11 +156,20 @@ static void cros_kb_raw_npcx_ksi_isr(const struct device *dev,
 	task_wake(TASK_ID_KEYSCAN);
 }
 
-static int cros_kb_raw_npcx_init(const struct device *dev)
+void keyboard_raw_init(void)
 {
-	const struct cros_kb_raw_npcx_config *const config = DRV_CONFIG(dev);
-	struct kbs_reg *const inst = HAL_INSTANCE(dev);
+	const struct cros_kb_raw_npcx_config *const config = DRV_CONFIG();
+	const struct device *clk_dev = DEVICE_DT_GET(NPCX_CLK_CTRL_NODE);
+	struct kbs_reg *const inst = HAL_INSTANCE();
 	int ret;
+
+	/* Turn on device clock first and get source clock freq. */
+	ret = clock_control_on(clk_dev,
+			       (clock_control_subsys_t *)&config->clk_cfg);
+	if (ret < 0) {
+		LOG_ERR("Turn on KSCAN clock fail %d", ret);
+		return;
+	}
 
 	/* Pull-up KBSIN0-7 internally */
 	inst->KBSINPU = 0xFF;
@@ -197,57 +197,43 @@ static int cros_kb_raw_npcx_init(const struct device *dev)
 	ret = pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
 	if (ret < 0) {
 		LOG_ERR("KB Raw pinctrl setup failed (%d)", ret);
-		return ret;
+		return;
 	}
 
 	/* Drive all column lines to low for detection any key press */
-	cros_kb_raw_npcx_drive_column(dev, KEYBOARD_COLUMN_ALL);
+	keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
 
 	/* Configure wake-up input and callback for keyboard input signal */
 	for (int i = 0; i < ARRAY_SIZE(ksi_callback); i++)
-		kb_raw_npcx_init_ksi_wui_callback(dev, &ksi_callback[i],
+		kb_raw_npcx_init_ksi_wui_callback(&ksi_callback[i],
 						  &config->wui_maps[i],
 						  cros_kb_raw_npcx_ksi_isr);
-
-	return 0;
 }
 
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD_FACTORY_TEST
-static int cros_kb_raw_npcx_config_alt(const struct device *dev, bool enable)
+void keybaord_raw_config_alt(bool enable)
 {
-	const struct cros_kb_raw_npcx_config *const config = DRV_CONFIG(dev);
+	const struct cros_kb_raw_npcx_config *const config = DRV_CONFIG();
 	uint8_t id = enable ? PINCTRL_STATE_DEFAULT : PINCTRL_STATE_SLEEP;
 
-	return pinctrl_apply_state(config->pcfg, id);
+	pinctrl_apply_state(config->pcfg, id);
 }
 #endif
 
-static DEVICE_API(cros_kb_raw, cros_kb_raw_npcx_driver_api) = {
-	.init = cros_kb_raw_npcx_init,
-	.drive_colum = cros_kb_raw_npcx_drive_column,
-	.read_rows = cros_kb_raw_npcx_read_row,
-	.enable_interrupt = cros_kb_raw_npcx_enable_interrupt,
-#ifdef CONFIG_PLATFORM_EC_KEYBOARD_FACTORY_TEST
-	.config_alt = cros_kb_raw_npcx_config_alt,
-#endif
-};
+void keyboard_raw_task_start(void)
+{
+	keyboard_raw_enable_interrupt(1);
+}
 
-PINCTRL_DT_INST_DEFINE(0);
+int keyboard_raw_is_input_low(int port, int id)
+{
+	const struct device *io_dev = npcx_get_gpio_dev(port);
 
-static const struct cros_kb_raw_npcx_config cros_kb_raw_cfg = {
-	.base = DT_INST_REG_ADDR(0),
-	.clk_cfg = NPCX_DT_CLK_CFG_ITEM(0),
-	.irq = DT_INST_IRQN(0),
-	.wui_size = NPCX_DT_WUI_ITEMS_LEN(0),
-	.wui_maps = NPCX_DT_WUI_ITEMS_LIST(0),
-	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(0),
-};
+	return gpio_pin_get_raw(io_dev, id) == 0;
+}
 
 /* Verify there's exactly 1 enabled cros,kb-raw-npcx node. */
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1);
-DEVICE_DT_INST_DEFINE(0, kb_raw_npcx_init, NULL, NULL, &cros_kb_raw_cfg,
-		      PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
-		      &cros_kb_raw_npcx_driver_api);
 
 BUILD_ASSERT(
 	!IS_ENABLED(CONFIG_INPUT_NPCX_KBD),
