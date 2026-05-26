@@ -239,6 +239,10 @@ void battery_policy(void)
 
 	struct battery_static_info *bs = &battery_static[BATT_IDX_MAIN];
 
+	if (!bs->model_ext[0]) {
+		update_static_battery_info();
+	}
+
 	if (!is_2s_battery(bs->model_ext)) {
 		/* 3-cell*/
 		if (pre_battery_cells != BATT_3_CELL) {
