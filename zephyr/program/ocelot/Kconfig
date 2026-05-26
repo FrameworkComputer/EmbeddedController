@@ -58,4 +58,7 @@ module = Oceolot
 module-str = Ocelot board-specific code
 source "subsys/logging/Kconfig.template.log_config"
 
+config PLATFORM_EC_DEBUG_ASSERT
+	default n if CROS_EC_RO
+
 source "Kconfig.zephyr"
