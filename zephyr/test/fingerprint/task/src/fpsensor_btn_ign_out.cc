@@ -18,17 +18,17 @@ DEFINE_FFF_GLOBALS;
 
 FAKE_VALUE_FUNC(int, mkbp_send_event, uint8_t);
 
-static const struct gpio_dt_spec *btn_ign_gpio =
-	GPIO_DT_FROM_ALIAS(gpio_btn_ign_out);
+static const struct gpio_dt_spec btn_ign_gpio =
+	GPIO_DT_SPEC_GET(DT_ALIAS(gpio_btn_ign_out), gpios);
 
 static void test_btn_ign_init(void *data)
 {
-	gpio_emul_input_set_dt(btn_ign_gpio, 0);
+	gpio_emul_input_set_dt(&btn_ign_gpio, 0);
 }
 
 static int btn_ign_get()
 {
-	return gpio_emul_output_get_dt(btn_ign_gpio);
+	return gpio_emul_output_get_dt(&btn_ign_gpio);
 }
 
 ZTEST_SUITE(fpsensor_btn_ign, NULL, NULL, test_btn_ign_init, NULL, NULL);

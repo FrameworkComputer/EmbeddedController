@@ -9,4 +9,12 @@
 	aliases {
 		gpio-btn-ign-out = &gpio_btn_ign_out;
 	};
+
+	gpio-leds {
+		compatible = "gpio-leds";
+
+		gpio_btn_ign_out: gpio_btn_ign_out {
+			gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
+		};
+	};
 };

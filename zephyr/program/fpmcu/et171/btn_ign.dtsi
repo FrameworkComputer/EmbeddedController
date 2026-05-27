@@ -8,11 +8,12 @@
 		gpio-btn-ign-out = &gpio_btn_ign_out;
 	};
 
-	named-gpios {
-		compatible = "named-gpios";
+	gpio-leds {
+		/* Common pattern in Zephyr for GPIO outputs */
+		compatible = "gpio-leds";
 
 		gpio_btn_ign_out: gpio_btn_ign_out {
-			gpios = <&gpio0 2 GPIO_OUTPUT_INACTIVE>;
+			gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
 		};
 	};
 };
