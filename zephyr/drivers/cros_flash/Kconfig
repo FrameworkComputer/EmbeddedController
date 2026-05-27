@@ -156,7 +156,7 @@ config CROS_FLASH_EM32F967
 
 config CROS_FLASH_ANDES_XIP
 	bool "Cros-flash driver using Andes flash xip driver"
-	depends on DT_HAS_ANDESTECH_QSPI_NOR_XIP_CROS_FLASH_ENABLED
+	depends on FLASH_ANDES_QSPI_XIP
 	select PLATFORM_EC_FLASH_CROS
 	select PLATFORM_EC_SPI_FLASH_REGS
 	select FLASH_EX_OP_ENABLED
