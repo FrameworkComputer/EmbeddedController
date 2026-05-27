@@ -2801,10 +2801,10 @@ void perform_error_recovery(int controller)
 
 		pd_port = board_perform_error_recovery_port(port);
 
-		/* Skip recovery if typec debug card(Debug Accessory) is attached */
+		/* Skip recovery on this port, if Type-C debug card(Debug Accessory) is attached */
 		cypd_read_reg8(controller, CCG_TYPE_C_STATUS_REG(port), &typec_status_reg);
 		if (((typec_status_reg >> 2) & 0x7) == CCG_STATUS_DEBUG)
-			return;
+			continue;
 
 #ifdef CONFIG_PLATFORM_EC_BATTERY
 		if (cypd_controller_port_to_charge_port(controller, pd_port) ==
