@@ -89,3 +89,17 @@ FpFrameSizeCache::get_frame_size(enum fp_capture_type capture_type) const
 
 	return frame_sizes_[capture_type];
 }
+
+#ifdef CONFIG_ZTEST
+void FpFrameSizeCache::set_frame_size(enum fp_capture_type capture_type,
+				      uint32_t size)
+{
+	if (capture_type < 0 ||
+	    static_cast<size_t>(capture_type) >= frame_sizes_.size()) {
+		CPRINTF("Error: Invalid capture type %d\n", capture_type);
+		return;
+	}
+
+	frame_sizes_[static_cast<size_t>(capture_type)] = size;
+}
+#endif
