@@ -122,3 +122,18 @@
 	pad-after = <0x1000>;
 	pad-byte = <0xFF>;
 };
+
+&fan0 {
+	rpm_max = <5400>;
+};
+
+&temp_sensor_cpu {
+	temp_host_release_high = <70>;
+	temp_fan_off = <40>;
+	temp_fan_max = <52>;
+};
+
+&temp_sensor_top_skin {
+	temp_fan_off = <42>;
+	temp_fan_max = <52>;
+};
