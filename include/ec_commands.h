@@ -6147,24 +6147,6 @@ struct ec_response_thread_info_detail {
 	uint32_t sp;
 } __ec_align4;
 
-/**
- * Simulate up to 2 consecutive delayed power button presses.
- */
-#define EC_CMD_POWER_BUTTON_PRESS 0x00E6
-
-struct ec_params_power_button_press {
-	/* Delay before the first press. Can be 0. */
-	uint32_t first_press_delay_ms;
-	/* Optional delay before the second press.
-	 * If 0, second press is not scheduled.
-	 */
-	uint32_t second_press_delay_ms;
-	/* Duration of the first press. If 0, default 200ms is used. */
-	uint16_t first_press_duration_ms;
-	/* Duration of the second press. If 0, default 200ms is used. */
-	uint16_t second_press_duration_ms;
-} __ec_align4;
-
 /*****************************************************************************/
 /*
  * PD commands
