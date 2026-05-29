@@ -42,7 +42,7 @@
 			gpios = <&gpio6 0 (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)>;
 		};
 		gpio_en_pac_odl: en_pac_odl {
-			gpios = <&gpio6 2 (GPIO_OUTPUT)>;
+			gpios = <&gpio6 2 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_OUTPUT_INIT_HIGH)>;
 		};
 		gpio_pg_pp5000_s5_od: pg_pp5000_s5_od {
 			gpios = <&gpio6 3 (GPIO_INPUT)>;
