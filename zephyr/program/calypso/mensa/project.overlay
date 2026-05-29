@@ -10,6 +10,7 @@
 #include "../psl.dtsi"
 #include "../adc.dtsi"
 #include "../common.dtsi"
+#include "battery.dtsi"
 
 /* mensa project DTS includes */
 
