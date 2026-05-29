@@ -86,7 +86,7 @@
 			enum-name = "GPIO_AP_SUSPEND";
 		};
 		gpio_en_i2c_ec_adsp_batt: en_i2c_ec_adsp_batt {
-			gpios = <&gpioa 1 (GPIO_OUTPUT)>;
+			gpios = <&gpioa 1 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
 		};
 		gpio_ec_acpi_int: ec_acpi_int {
 			gpios = <&gpioa 2 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
