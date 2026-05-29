@@ -79,6 +79,7 @@
 		};
 		gpio_ec_soc_int_odl: ec_soc_int_odl {
 			gpios = <&gpio7 6 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
+			enum-name = "GPIO_EC_INT_L";
 		};
 		gpio_ec_rst_odl: ec_rst_odl {
 			gpios = <&gpio7 7 (GPIO_INPUT)>;
@@ -110,7 +111,6 @@
 		};
 		gpio_ec_soc_qsh_int_odl: ec_soc_qsh_int_odl {
 			gpios = <&gpioa 2 (GPIO_OUTPUT | GPIO_OPEN_DRAIN)>;
-			enum-name = "GPIO_EC_INT_L";
 		};
 		gpio_soc_ps_hold_ls: soc_ps_hold_ls {
 			gpios = <&gpioa 4 (GPIO_INPUT)>;
