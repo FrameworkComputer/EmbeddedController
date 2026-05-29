@@ -85,6 +85,7 @@ properties:
       - "dynapack,333-2d-38-a"
       - "dynapack,333-2c-32-a"
       - "ganfeng,7c01"
+      - "ganfeng,gfl"
       - "ganfeng,sg20"
       - "pow-tech,sg20"
       - "pow-tech,sg20qt1c"
