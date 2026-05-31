@@ -485,7 +485,7 @@ static enum ec_status cmd_get_pd_port_state(struct host_cmd_handler_args *args)
 	const struct ec_params_get_pd_port_state *p = args->params;
 	struct ec_response_get_pd_port_state *r = args->response;
 
-	if (p->port > PD_PORT_COUNT || p->port < 0)
+	if (p->port >= PD_PORT_COUNT || p->port < 0)
 		return EC_RES_INVALID_PARAM;
 
 	struct pd_port_current_state_t *pd = get_pd_port_states_array();
