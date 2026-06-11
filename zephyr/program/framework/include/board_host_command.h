@@ -742,4 +742,54 @@ struct ec_params_led_pwm_control {
 	uint8_t pwm_b;
 } __ec_align1;
 
+#ifdef CONFIG_PLATFORM_EC_STM32_KEYBOARD
+/*****************************************************************************/
+/*
+ * Flash an STM32-based keyboard controller over EC host command. Generic
+ * for any STM32 connected behind the EC.
+ * ENTER must be called before ERASE/WRITE/READ.
+ * EXIT power-cycles back to application mode.
+ */
+#define EC_CMD_KBD_FLASH_STM32 0x3E2C
+
+enum kbd_flash_stm32_subcmd {
+	KBD_FLASH_STM32_ENTER = 0,
+	KBD_FLASH_STM32_ERASE = 1,
+	KBD_FLASH_STM32_WRITE = 2,
+	KBD_FLASH_STM32_READ  = 3,
+	KBD_FLASH_STM32_EXIT  = 4,
+};
+
+/* Max data bytes per WRITE/READ. Leaves room in the for the request header.
+ */
+#define KBD_FLASH_STM32_MAX_CHUNK 240
+
+struct ec_params_kbd_flash_stm32_enter {
+	uint8_t subcmd;	/* KBD_FLASH_STM32_ENTER */
+} __ec_align1;
+
+struct ec_response_kbd_flash_stm32_enter {
+	uint16_t pid;		/* STM32 product ID (GID) */
+	uint8_t  bl_version;	/* Bootloader version (BCD) */
+	uint16_t max_chunk;	/* Max WRITE/READ payload bytes */
+} __ec_align1;
+
+struct ec_params_kbd_flash_stm32_simple {
+	uint8_t subcmd;	/* ERASE or EXIT */
+} __ec_align1;
+
+struct ec_params_kbd_flash_stm32_write {
+	uint8_t  subcmd;	/* KBD_FLASH_STM32_WRITE */
+	uint32_t addr;
+	uint16_t len;
+	/* uint8_t data[len] follows */
+} __ec_align1;
+
+struct ec_params_kbd_flash_stm32_read {
+	uint8_t  subcmd;	/* KBD_FLASH_STM32_READ */
+	uint32_t addr;
+	uint16_t len;
+} __ec_align1;
+#endif /* CONFIG_PLATFORM_EC_STM32_KEYBOARD */
+
 #endif /* __BOARD_HOST_COMMAND_H */

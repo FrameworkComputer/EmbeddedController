@@ -309,6 +309,13 @@ config PLATFORM_KEYBOARD_SCANCODE_CALLBACK
 	help
 	  Enable callback support, board-specific 8042 keyboard callback
 	  when a key state is changed.
+
+config PLATFORM_EC_STM32_KEYBOARD
+	bool "STM32 based keyboard support"
+	help
+	  This enables EC commands kbreset, kbboot and kbreset.
+	  It also enables flashing of STM32 based MCUs over the debug UART
+
 endif # PLATFORM_EC_KEYBOARD
 
 config PLATFORM_EC_KEYBOARD_STRAUSS
