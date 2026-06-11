@@ -873,10 +873,16 @@ static void input_deck_dahlia_power_off(void)
 static void input_deck_dahlia_resume(void)
 {
 	/* Configure deck pins as outputs and apply initial state.
-	 * The (emulated) IT8801 gpios should be available
+	 * The (emulated) IT8801 gpios should be available.
 	 */
-	gpio_pin_configure_dt(&input_deck_dahlia_tp_en, GPIO_OUTPUT_LOW);
-	gpio_pin_configure_dt(&input_deck_dahlia_kbd_en, GPIO_OUTPUT_LOW);
+
+	/* Note that the it8801 driver keeps cached values of pin states,
+	 * and updates physical pins only when it deems necessary.
+	 * Muxing them with default high aligns the default cached values (0)
+	 * with default physical pins (1).
+	 */
+	gpio_pin_configure_dt(&input_deck_dahlia_tp_en, GPIO_OUTPUT_HIGH);
+	gpio_pin_configure_dt(&input_deck_dahlia_kbd_en, GPIO_OUTPUT_HIGH);
 
 	input_deck_dahlia_enable_by_mode();
 
