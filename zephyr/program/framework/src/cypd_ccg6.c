@@ -342,63 +342,6 @@ int board_set_active_charge_port(int charge_port)
 }
 #endif /* CONFIG_PD_COMMON_VBUS_CONTROL */
 
-void update_system_power_state(int controller)
-{
-	enum power_state ps = power_get_state();
-	static uint8_t pre_state[PD_CHIP_COUNT];
-
-	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
-
-	if (!cypd_contoller_is_powered(controller))
-		return;
-
-	switch (ps) {
-	case POWER_G3:
-	case POWER_S5G3:
-	case POWER_S5:
-	case POWER_S3S5:
-	case POWER_S4S5:
-		/* Do not update the same state again */
-		if (pre_state[controller] != CCG_POWERSTATE_S5) {
-			cypd_set_power_state(CCG_POWERSTATE_S5, controller);
-			pre_state[controller] = CCG_POWERSTATE_S5;
-		}
-		break;
-	case POWER_S3:
-	case POWER_S4S3:
-	case POWER_S5S3:
-	case POWER_S0S3:
-		/* Do not update the same state again */
-		if (pre_state[controller] != CCG_POWERSTATE_S3) {
-			cypd_set_power_state(CCG_POWERSTATE_S3, controller);
-			pre_state[controller] = CCG_POWERSTATE_S3;
-		}
-		break;
-	case POWER_S0:
-	case POWER_S3S0:
-	case POWER_S0ixS0: /* S0ix -> S0 */
-		if (pre_state[controller] != CCG_POWERSTATE_S0) {
-			cypd_set_power_state(CCG_POWERSTATE_S0, controller);
-			/* only execute the error recovery when the system power on */
-			if (pre_state[controller] != CCG_POWERSTATE_S0ix)
-				task_set_event(TASK_ID_CYPD, CCG_EVT_PERFORM_ERROR_RECOVERY);
-
-			pre_state[controller] = CCG_POWERSTATE_S0;
-		}
-		break;
-	case POWER_S0ix:
-	case POWER_S0S0ix: /* S0 -> S0ix */
-		/* Do not update the same state again */
-		if (pre_state[controller] != CCG_POWERSTATE_S0ix) {
-			cypd_set_power_state(CCG_POWERSTATE_S3, controller);
-			pre_state[controller] = CCG_POWERSTATE_S0ix;
-		}
-		break;
-	default:
-		break;
-	}
-}
-
 #ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
 /*****************************************************************
  * Customize response battery status

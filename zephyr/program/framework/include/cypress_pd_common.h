@@ -843,13 +843,6 @@ __override_proto void cypd_customize_app_setup(int controller);
 int cypd_setup(int controller);
 
 /**
- * Project can set the PD action when system change.
- *
- * @param controller	PD chip controller
- */
-void update_system_power_state(int controller);
-
-/**
  * If PD chip is doing the firmware update, we should disable the PD task
  *
  * @param is_update	Firmware update flag.

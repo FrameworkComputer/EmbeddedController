@@ -1703,6 +1703,78 @@ DECLARE_DEFERRED(pd_batt_init_deferred);
 DECLARE_HOOK(HOOK_AC_CHANGE, pd_batt_init_deferred, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, pd_batt_init_deferred, HOOK_PRIO_DEFAULT);
 
+static void update_system_power_state(int controller, int pwr_state)
+{
+	static uint8_t pre_state[PD_CHIP_COUNT];
+	bool cypd_ready_error_recovery = true;
+	bool system_is_powering_on = false;
+
+	__ASSERT(controller < PD_CHIP_COUNT, "Invalid PD chip controller id in %s.", __func__);
+
+	if (!cypd_contoller_is_powered(controller))
+		return;
+
+	if (pre_state[controller] != pwr_state) {
+		cypd_set_power_state(pwr_state, controller);
+
+		/* Only execute the error recovery when the system power on */
+		if (pre_state[controller] != CCG_POWERSTATE_S0ix && pwr_state == CCG_POWERSTATE_S0)
+			system_is_powering_on = true;
+
+		pre_state[controller] = pwr_state;
+
+		/* Check if all PD chips are in the S0 state, and then performs error recovery */
+		for (int p = 0; p < PD_CHIP_COUNT; p++) {
+			if (pre_state[p] == CCG_POWERSTATE_S0)
+				continue;
+			cypd_ready_error_recovery = false;
+		}
+
+		if (cypd_ready_error_recovery && system_is_powering_on)
+			task_set_event(TASK_ID_CYPD, CCG_EVT_PERFORM_ERROR_RECOVERY);
+	}
+}
+
+static int cypd_check_chipset_state(void)
+{
+	enum power_state ps = power_get_state();
+	int pd_system_power_state = CCG_POWERSTATE_G3;
+
+	switch (ps) {
+	case POWER_G3:
+	case POWER_S5G3:
+#ifdef CONFIG_PD_CCG8_CYPD_POWER_STATE_G3_SUPPORT
+		pd_system_power_state = CCG_POWERSTATE_G3;
+		break;
+#endif
+	case POWER_S5:
+	case POWER_S3S5:
+	case POWER_S4S5:
+		pd_system_power_state = CCG_POWERSTATE_S5;
+		break;
+	case POWER_S3:
+	case POWER_S4S3:
+	case POWER_S5S3:
+	case POWER_S0S3:
+	case POWER_S0ixS3: /* S0ix -> S3 */
+		pd_system_power_state = CCG_POWERSTATE_S3;
+		break;
+	case POWER_S0:
+	case POWER_S3S0:
+	case POWER_S0ixS0: /* S0ix -> S0 */
+		pd_system_power_state = CCG_POWERSTATE_S0;
+		break;
+	case POWER_S0ix:
+	case POWER_S3S0ix: /* S3 -> S0ix */
+	case POWER_S0S0ix: /* S0 -> S0ix */
+		pd_system_power_state = CCG_POWERSTATE_S0ix;
+		break;
+	default:
+		break;
+	}
+
+	return pd_system_power_state;
+}
 
 static void cypd_handle_state(int controller)
 {
@@ -1768,7 +1840,7 @@ static void cypd_handle_state(int controller)
 		cypd_get_version(controller);
 		cypd_update_power_status(controller);
 
-		update_system_power_state(controller);
+		update_system_power_state(controller, CCG_POWERSTATE_G3);
 		cypd_setup(controller);
 
 		cypd_customize_app_setup(controller);
@@ -2493,9 +2565,11 @@ void cypd_interrupt_handler_task(void *p)
 			cypd_port_current_setting();
 
 		if (evt & CCG_EVT_S_CHANGE) {
+			int ps = cypd_check_chipset_state();
+
 			for (i = 0; i < PD_CHIP_COUNT; i++) {
 				if (cypd_contoller_is_powered(i))
-					update_system_power_state(i);
+					update_system_power_state(i, ps);
 			}
 		}
 
