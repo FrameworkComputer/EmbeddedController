@@ -166,7 +166,7 @@ if(DEFINED CONFIG_BOARD_SUNFLOWER OR DEFINED CONFIG_BOARD_DAHLIA)
 		zephyr_library_sources("sunflower/src/usbc.c")
 		zephyr_library_sources("sunflower/src/charger.c")
 		zephyr_library_sources("sunflower/src/project_diagnostics.c")
-		zephyr_library_sources("sunflower/src/keyboard_customization.c")
+		zephyr_library_sources("laptop12/src/input_deck_sunflower.c")
 	elseif(DEFINED CONFIG_BOARD_DAHLIA)
 		project(dahlia)
 		cros_ec_library_include_directories_ifdef(CONFIG_BOARD_DAHLIA include)
@@ -184,10 +184,9 @@ if(DEFINED CONFIG_BOARD_SUNFLOWER OR DEFINED CONFIG_BOARD_DAHLIA)
 			"src/ucsi_port_12.c"
 			"src/usbc_4port_config.c"
 			"laptop12/src/battery_present.c"
+			"laptop12/src/input_deck.c"
 			"laptop12/src/motionsense.c"
 			"laptop12/src/temperature.c"
-			"laptop12/src/touchpad.c"
-			"laptop12/src/board_tablet_mode.c"
 			"laptop12/src/usbc.c"
 	)
 

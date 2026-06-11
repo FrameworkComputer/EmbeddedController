@@ -9,11 +9,15 @@
 #include "board_adc.h"
 #include "common.h"
 #include "console.h"
+#include "gpio/gpio_int.h"
 #include "gpio_signal.h"
 #include "hooks.h"
 #include "input_deck.h"
+#include "keyboard_scan.h"
+#include "tablet_mode.h"
 
 #include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
 
 #define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ##args)
 
@@ -51,6 +55,10 @@ static void input_deck_detect(void)
 	default:
 			active_ops = NULL;
 	}
+
+	/* cros-ec always enables ec keyscan, disable it and let decks turn it back on */
+	keyboard_scan_enable(0, KB_SCAN_DISABLE_DISCONNECT);
+
 	CPRINTS("Input deck : board id %d -> %s", input_deck_board_id, name);
 }
 DECLARE_HOOK(HOOK_INIT, input_deck_detect, HOOK_PRIO_DEFAULT);
@@ -92,10 +100,13 @@ void input_deck_power_off(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, input_deck_power_off, HOOK_PRIO_DEFAULT);
 
-/* ---- Tablet / lid mode ---- ------------------------------------------- */
+/* ----------------------------------------------------------------------- */
 
 void input_deck_lid_change(void)
 {
+	/* Let the OS know if we're in tablet mode. */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pad_mode), tablet_get_mode());
+
 	if (active_ops && active_ops->lid_change)
 		active_ops->lid_change();
 }

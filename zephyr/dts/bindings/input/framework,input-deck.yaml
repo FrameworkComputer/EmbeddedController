@@ -1,0 +1,51 @@
+description: |
+  Framework Laptop 12 input deck.
+
+  Describes the GPIO signals and capabilities that a particular input deck
+  exposes. One of these nodes is selected at runtime by deck-detection (board-ID).
+  Each mainboard's project.overlay includes the decks possible .dtsi files.
+
+compatible: "framework,input-deck"
+
+properties:
+  deck-type:
+    type: string
+    required: true
+    enum:
+      - unknown
+      - sunflower
+      - dahlia
+    description: |
+      Symbolic deck identity. The index in this enum is exposed via
+      enum input_deck_type in board_adc.h and selects per-deck branches
+      in C code. Order MUST match that enum.
+
+  board-id:
+    type: int
+    required: true
+    description: |
+      Touchpad-ID ADC value (BOARD_VERSION_*) that identifies this deck runtime.
+
+  tp-en-gpios:
+    type: phandle-array
+    description: GPIO that powers/enables the touchpad on this deck.
+
+  kbd-en-gpios:
+    type: phandle-array
+    description: GPIO that enables the keyboard input on this deck.
+
+  lock-led-gpios:
+    type: phandle-array
+    description: GPIO that drives a Caps Lock indicator LED on this deck.
+
+  matrix-scan:
+    type: boolean
+    description: Deck uses IT8801 KSI/KSO matrix-scan for keyboard input.
+
+  hid-keyboard:
+    type: boolean
+    description: Deck delivers keyboard input via I2C HID.
+
+  backlight:
+    type: boolean
+    description: Deck has a PWM keyboard backlight.

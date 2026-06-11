@@ -1,0 +1,22 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Sunflower Gen 1 input deck (IT8801 matrix keyboard controller).
+ *
+ * This deck has a IT8801 gpio expander chip and the EC acts as keyboard
+ * controller and scans the key matrix
+ *
+ * Any mainboard (laptop12) that should be able to include this.
+ */
+
+/ {
+	sunflower_deck: sunflower-deck {
+		compatible = "framework,input-deck";
+		deck-type = "sunflower";
+		board-id = <10>;	/* BOARD_VERSION_10 */
+		/* Direction is configured at runtime by input_deck_sunflower_startup(); */
+		tp-en-gpios    = <&ioex_it8801_port1 0 0>;
+		lock-led-gpios = <&ioex_it8801_port1 2 0>;
+	};
+};
