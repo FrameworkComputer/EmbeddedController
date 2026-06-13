@@ -90,7 +90,7 @@
 		int_ioex_kbd_intr_n: ioex_kbd_intr_n {
 			irq-pin = <&gpio_ec_mcu_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "io_expander_it8801_interrupt";
+			handler = "input_deck_keyboard_interrupt";
 		};
 		int_lid_sensor: int-lid-sensor {
 			irq-pin = <&gpio_ec_acc_mu_int_l>;

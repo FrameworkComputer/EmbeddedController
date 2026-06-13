@@ -1,0 +1,27 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Dahlia input deck (STM32 keyboard controller also emulating IT8801).
+ *
+ * The STM32 fakes the IT8801 so the standard IT8801 driver can be used.
+ * The reason to fake IT8801 is to keep only one IOEX driver in the EC.
+ *
+ * Both mainboards (dahlia, sunflower) can include this so the dahlia
+ * deck can be plugged into either.
+ */
+
+/ {
+	dahlia_deck: dahlia-deck {
+		compatible = "framework,input-deck";
+		deck-type = "dahlia";
+		board-id = <11>;	/* BOARD_VERSION_11 */
+		/* Direction set at runtime by input_deck_startup(); the IT8801
+		 * (real or emulated) isn't reachable at EC boot.
+		 */
+		tp-en-gpios  = <&ioex_it8801_port2 0 0>; /* Enable keyboard/scan */
+		kbd-en-gpios = <&ioex_it8801_port2 2 0>; /* Enable touchpad */
+		hid-keyboard;
+		backlight;
+	};
+};

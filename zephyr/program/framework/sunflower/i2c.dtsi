@@ -168,6 +168,11 @@
 		compatible = "ite,it8801";
 		reg = <0x38>;
 	};
+
+	kb_hid: i2c-hid-kbd@15 {
+		compatible = "generic";
+		reg = <0x15>;
+	};
 };
 
 &i2c_ctrl5 {

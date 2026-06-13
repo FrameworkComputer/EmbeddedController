@@ -7,6 +7,7 @@
 #include "../laptop12/battery.dtsi"
 #include "../laptop12/fan.dtsi"
 #include "../laptop12/input_deck_sunflower.dtsi"
+#include "../laptop12/input_deck_dahlia.dtsi"
 #include "../laptop12/keyboard.dtsi"
 #include "../laptop12/led_pins.dtsi"
 #include "../laptop12/overlay.dtsi"
@@ -17,3 +18,18 @@
 #include "ioex.dtsi"
 #include "led_policy.dtsi"
 #include "power_signal.dtsi"
+
+/* Keyboard backlight on PWM7 / GPIO60 — only the dahlia deck uses it. */
+/ {
+	kblight {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm7 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
+	};
+};
+
+&pwm7 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm7_gp60>;
+	pinctrl-names = "default";
+};
