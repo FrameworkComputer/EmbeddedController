@@ -224,6 +224,12 @@
 #define CCG_EC_VBUS_CTRL_ON BIT(1)
 
 /************************************************/
+/*  SELECT SINK PDO MASK                        */
+/************************************************/
+#define SELECT_SINK_RDO_5V	0x01
+#define SELECT_SINK_RDO_HIGHEST	0x3F
+
+/************************************************/
 /*  HELPER FUNCTIONS                            */
 /************************************************/
 #define PORT_TO_CONTROLLER(x) ((x) >> 1)
@@ -285,6 +291,7 @@ enum pd_task_evt {
 	CCG_EVT_STATE_CTRL_1 = BIT(4),
 	CCG_EVT_STATE_CTRL_GPU = BIT(5),
 	CCG_EVT_S_CHANGE = BIT(7),
+	CCG_EVT_UPDATE_RDO = BIT(8),
 	CCG_EVT_UPDATE_PWRSTAT = BIT(13),
 	CCG_EVT_UCSI_PPM_RESET = BIT(16),
 	CCG_EVT_DPALT_DISABLE = BIT(19),
@@ -566,6 +573,8 @@ struct pd_port_current_state_t {
 	enum pd_power_role power_role;
 	enum pd_data_role data_role;
 	enum pd_vconn_role vconn;
+
+	uint8_t rdo_mask;
 };
 
 struct pd_chip_ucsi_info_t {
@@ -1155,5 +1164,13 @@ int cypd_select_pdo(int controller, int port, uint8_t profile);
  * @param ccg_event   Triggered PD event.
  */
 __override_proto void cypd_evaluate_port_profile(int controller, int port, int ccg_event);
+
+/**
+ * Allow board to update the RDO.
+ *
+ * @param port        USB-C port index (0..PD_PORT_COUNT-1) across all controllers
+ * @param rdo_mask    The mask to select the RDO.
+ */
+void cypd_board_set_port_rdo(int port, uint8_t rdo_mask);
 
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

@@ -1862,6 +1862,7 @@ static void cypd_handle_state(int controller)
 		/* After all PD chips initialize completely, and then update the state */
 		if (cypd_controllers_are_ready()) {
 
+			task_set_event(TASK_ID_CYPD, CCG_EVT_UPDATE_RDO);
 #if defined(CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE) || defined(CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE)
 			hook_call_deferred(&pd_batt_init_deferred_data, 100 * MSEC);
 #endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE || CONFIG_PD_CCG8_CUSTOMIZE_BATT_MESSAGE */
@@ -1990,8 +1991,46 @@ static void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id,
 	}
 }
 
+static void cypd_set_port_rdo(int ports, uint8_t rdo_mask)
+{
+	int controller = PORT_TO_CONTROLLER(ports);
+	int port = PORT_TO_CONTROLLER_PORT(ports);
+	int respond_code, rv;
 
+	if (!cypd_contoller_is_powered(controller))
+		return;
 
+	rv = cypd_write_reg_with_respond(controller,
+		CCG_SELECT_SINK_PDO_REG(port), rdo_mask, &respond_code);
+
+	if ((respond_code != CCG_RESPONSE_SUCCESS || rv != EC_SUCCESS) && verbose_msg_logging)
+		CPRINTS("cypd failed to set P%d rdo_mask=0x%02x", ports, rdo_mask);
+}
+
+static void cypd_update_rdo(void)
+{
+	for (int port = 0; port < PD_PORT_COUNT; port++) {
+		uint8_t mask = pd_port_states[port].rdo_mask ?
+			pd_port_states[port].rdo_mask : SELECT_SINK_RDO_HIGHEST;
+
+		cypd_set_port_rdo(port, mask);
+	}
+}
+
+void cypd_board_set_port_rdo(int port, uint8_t rdo_mask)
+{
+	if (port < 0 || port >= PD_PORT_COUNT)
+		return;
+
+	if (rdo_mask == 0)
+		rdo_mask = SELECT_SINK_RDO_HIGHEST;
+
+	if (pd_port_states[port].rdo_mask == rdo_mask)
+		return;
+
+	pd_port_states[port].rdo_mask = rdo_mask;
+	task_set_event(TASK_ID_CYPD, CCG_EVT_UPDATE_RDO);
+}
 
 /*****************************************************************************/
 /* Project */
@@ -2702,6 +2741,10 @@ void cypd_interrupt_handler_task(void *p)
 
 			}
 		}
+
+		if (evt & CCG_EVT_UPDATE_RDO)
+			cypd_update_rdo();
+
 
 		if (evt & (CCG_EVT_INT_CTRL_0 | CCG_EVT_INT_CTRL_1 | CCG_EVT_INT_CTRL_GPU |
 			CCG_EVT_STATE_CTRL_0 | CCG_EVT_STATE_CTRL_1 | CCG_EVT_STATE_CTRL_GPU)) {

@@ -42,6 +42,7 @@ struct pd_port_current_state_t pd_port_states[] = {
 			CCG_PD_CMD_SET_TYPEC_3A,
 			CCG_PD_CMD_SET_TYPEC_3A,
 			CCG_PD_CMD_SET_TYPEC_3A},
+		.rdo_mask = SELECT_SINK_RDO_HIGHEST,
 	},
 	[PD_PORT_1] = {
 		.safety_table = {
@@ -49,6 +50,7 @@ struct pd_port_current_state_t pd_port_states[] = {
 			CCG_PD_CMD_SET_TYPEC_3A,
 			CCG_PD_CMD_SET_TYPEC_3A,
 			CCG_PD_CMD_SET_TYPEC_3A},
+		.rdo_mask = SELECT_SINK_RDO_HIGHEST,
 	},
 	[PD_PORT_2] = {
 		.safety_table = {
@@ -56,6 +58,7 @@ struct pd_port_current_state_t pd_port_states[] = {
 			CCG_PD_CMD_SET_TYPEC_3A,
 			CCG_PD_CMD_SET_TYPEC_3A,
 			CCG_PD_CMD_SET_TYPEC_3A},
+		.rdo_mask = SELECT_SINK_RDO_HIGHEST,
 	},
 	[PD_PORT_3] = {
 		.safety_table = {
@@ -63,6 +66,7 @@ struct pd_port_current_state_t pd_port_states[] = {
 			CCG_PD_CMD_SET_TYPEC_3A,
 			CCG_PD_CMD_SET_TYPEC_3A,
 			CCG_PD_CMD_SET_TYPEC_3A},
+		.rdo_mask = SELECT_SINK_RDO_HIGHEST,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pd_port_states) == CONFIG_USB_PD_PORT_MAX_COUNT);
