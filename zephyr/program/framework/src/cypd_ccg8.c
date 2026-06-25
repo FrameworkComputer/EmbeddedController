@@ -481,16 +481,28 @@ static void epr_flow_pending_deferred(void)
 	for (port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
 		if (pd_epr_in_progress & BIT(port_idx)) {
 			if (pd_port_states[port_idx].epr_retry_count > 4) {
+#ifdef CONFIG_PLATFORM_EC_CHARGER_RAA489300
+				if (pd_epr_in_progress & EXIT_EPR) {
+					board_set_buck_mode(LEVEL_BUCK_EPR);
+					CPRINTS("PD exit epr failed, 3Level-Buck:EPR mode");
+				} else if (pd_epr_in_progress & ENTER_EPR) {
+					board_set_buck_mode(LEVEL_BUCK_SPR);
+					CPRINTS("PD enter epr failed, 3Level-Buck:SPR mode");
+				}
+#endif
 				/* restore the input current limit if we retry 4 times */
 				pd_port_states[port_idx].epr_retry_count = 0;
 				pd_port_states[port_idx].epr_support = 0;
+				pd_port_states[port_idx].epr_status = EPR_DISABLED;
 				pd_epr_in_progress &= EPR_PROCESS_MASK;
+				CPRINTS("C%d EPR stop retry, give up", port_idx);
 				if (charge_port != -1) {
 					int controller = PORT_TO_CONTROLLER(charge_port);
 					int port = PORT_TO_CONTROLLER_PORT(charge_port);
 
 					cypd_update_port_state(controller, port);
 				}
+				continue;
 			}
 			/**
 			 * There is a low risk situation.
