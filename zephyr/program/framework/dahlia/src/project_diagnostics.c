@@ -10,7 +10,6 @@
 #include "diagnostics.h"
 #include "dptf.h"
 #include "driver/accel_bma422.h"
-#include "driver/ioexpander/it8801.h"
 #include "fan.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -41,6 +40,7 @@ void check_device_deferred(void)
 	int audio = get_hardware_id(ADC_AUDIO_ID);
 	int powerbtn = get_hardware_id(ADC_POWER_BUTTON_BOARD_ID);
 	bool pb_enable = (powerbtn >= BOARD_VERSION_1 && powerbtn <= BOARD_VERSION_13);
+	uint8_t dummy[2];
 	int bma4_id = 0;
 
 	/* Clear the DIAGNOSTICS_HW_NO_BATTERY flag if battery is present */
@@ -52,11 +52,14 @@ void check_device_deferred(void)
 		set_diagnostic(DIAGNOSTICS_INPUT_COVER, true);
 
 	/* Check whether the keyboard controller responds.
-	 * Board ID pin might be connected, but there are 20 pogo pins, which might
-	 * not make proper contact. So it's best to also check if I2C communication
-	 * is working
+	 * Board ID pin might be connected, but the controller might be in boot mode.
+	 * Check if I2C communication is working
 	 */
-	if (it8801_check_vendor_id() != EC_SUCCESS && !get_standalone_mode())
+	int ret = i2c_xfer(I2C_PORT_KB_DISCRETE,
+			   DT_REG_ADDR(DT_NODELABEL(kb_hid)),
+			   (uint8_t[]){0x01, 0x00}, 2, dummy, 2);
+
+	if (ret != EC_SUCCESS && !get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_INPUT_COVER, true);
 
 	if ((audio <= BOARD_VERSION_1 || audio >= BOARD_VERSION_14) &&

@@ -166,9 +166,6 @@ if(DEFINED CONFIG_BOARD_SUNFLOWER OR DEFINED CONFIG_BOARD_DAHLIA)
 		zephyr_library_sources("sunflower/src/usbc.c")
 		zephyr_library_sources("sunflower/src/charger.c")
 		zephyr_library_sources("sunflower/src/project_diagnostics.c")
-		zephyr_library_sources("laptop12/src/input_deck_sunflower.c")
-		zephyr_library_sources("laptop12/src/input_deck_dahlia.c")
-		zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_STM32_KEYBOARD "src/stm32_bl.c")
 	elseif(DEFINED CONFIG_BOARD_DAHLIA)
 		project(dahlia)
 		cros_ec_library_include_directories_ifdef(CONFIG_BOARD_DAHLIA include)
@@ -177,9 +174,7 @@ if(DEFINED CONFIG_BOARD_SUNFLOWER OR DEFINED CONFIG_BOARD_DAHLIA)
 		zephyr_library_sources("dahlia/src/usbc.c")
 		zephyr_library_sources("dahlia/src/charger.c")
 		zephyr_library_sources("dahlia/src/project_diagnostics.c")
-		zephyr_library_sources("dahlia/src/keyboard_customization.c")
 	endif()
-	zephyr_include_directories("include/sunflower")
 	# Shared laptop12 sources
 	zephyr_library_sources(
 			"src/battery_12_13.c"
@@ -191,5 +186,8 @@ if(DEFINED CONFIG_BOARD_SUNFLOWER OR DEFINED CONFIG_BOARD_DAHLIA)
 			"laptop12/src/temperature.c"
 			"laptop12/src/usbc.c"
 	)
-
+	zephyr_library_sources("laptop12/src/input_deck_sunflower.c")
+	zephyr_library_sources("laptop12/src/input_deck_dahlia.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_STM32_KEYBOARD "src/stm32_bl.c")
+	zephyr_include_directories("include/sunflower")
 endif()

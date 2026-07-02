@@ -17,11 +17,6 @@
 #include "gpio_signal.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
-#include "keyboard_8042_sharedlib.h"
-#include "keyboard_scan.h"
-#include "keyboard_protocol.h"
-#include "keyboard_raw.h"
-#include "keyboard_customization.h"
 #include "lid_switch.h"
 #include "lpc.h"
 #include "power.h"
@@ -43,7 +38,9 @@ static int power_s5_up;		/* Chipset is sequencing up or down */
 static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int force_shoutdown_flags;
 static int me_change;
-static bool tp_module_pwr_control;
+/* tp_module_pwr_control state, touchpad_module_power_control() and
+ * tp_module_pwr_control_enable() live in laptop12/src/input_deck.c.
+ */
 static bool pb_module_pwr_control;
 static bool fp_module_pwr_control;
 
@@ -64,7 +61,6 @@ static int keep_pch_power(void)
 		return false;
 
 }
-
 
 /*
  * Backup copies of SCI mask to preserve across S0ix suspend/resume
@@ -248,66 +244,10 @@ enum power_state power_chipset_init(void)
 	return POWER_G3;
 }
 
-static void keyboard_scan_enable_deferred(void)
-{
-	keyboard_scan_enable(1, KB_SCAN_DISABLE_DISCONNECT);
-	keyboard_scan_init();
-
-	/* After init, we need to enable the interrupt */
-	keyboard_raw_enable_interrupt(1);
-	keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
-	/* enable lock led */
-	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_lock_led), GPIO_OUTPUT);
-	caps_led_keyboard_connect();
-
-	/**
-	 * Enable gpio_tp_en.
-	 *
-	 * Clear the cached mask to force the IT8801 driver to update the
-	 * hardware register. This ensures the tp_en pin is correctly
-	 * re-driven high regardless of its previous recorded state.
-	 */
-	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_tp_en), GPIO_OUTPUT_LOW);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_tp_en),
-					!tablet_get_mode() && lid_is_open());
-}
-DECLARE_DEFERRED(keyboard_scan_enable_deferred);
-
-static void keyboard_scan_disable(void)
-{
-	/* Disable keyscan when the module power is off */
-	hook_call_deferred(&keyboard_scan_enable_deferred_data, -1);
-	keyboard_scan_enable(0, KB_SCAN_DISABLE_DISCONNECT);
-	caps_led_keyboard_disconnect();
-}
-
-static void touchpad_module_power_control(void)
-{
-	static int pre_touchpad;
-	int touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
-	bool tp_enable = (touchpad >= BOARD_VERSION_1 && touchpad <= BOARD_VERSION_13);
-
-	if (!tp_module_pwr_control) {
-		/* reset pre_touchpad when the system shutdown */
-		pre_touchpad = 0;
-		return;
-	}
-
-	if (pre_touchpad != touchpad) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_3v_tp), tp_enable);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_tp), tp_enable);
-		pre_touchpad = touchpad;
-
-		if (tp_enable)
-			/**
-			 * Add the delay to wait module to stable and then enable the keyboard scan
-			 * and re-init the keyboard scan.
-			 */
-			hook_call_deferred(&keyboard_scan_enable_deferred_data, 300 * MSEC);
-		else
-			keyboard_scan_disable();
-	}
-}
+/* keyboard_scan_enable_deferred / keyboard_scan_disable / touchpad_module_
+ * power_control all live in laptop12/src/input_deck.c — shared between
+ * mainboards, deck-power dance done via input_deck_ops.
+ */
 
 static void power_button_module_power_control(void)
 {
@@ -350,23 +290,9 @@ static void control_module_power(void)
 {
 	power_button_module_power_control();
 	finger_print_module_power_control();
-	touchpad_module_power_control();
 }
-DECLARE_HOOK(HOOK_TICK, control_module_power, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, control_module_power, HOOK_PRIO_DEFAULT);
 
-static void tp_module_pwr_control_enable(bool state)
-{
-	tp_module_pwr_control = state;
-
-	/* enable module power control to check the module is present */
-	if (tp_module_pwr_control)
-		touchpad_module_power_control();
-	else {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_3v_tp), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_tp), 0);
-		keyboard_scan_disable();
-	}
-}
 
 static void pb_module_pwr_control_enable(bool state)
 {
@@ -535,8 +461,6 @@ enum power_state power_handle_state(enum power_state state)
 
 		clear_rtcwake();
 
-		tp_module_pwr_control_enable(true);
-
 		return POWER_S0;
 
 	case POWER_S0:
@@ -692,7 +616,6 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, peripheral_power_resume, HOOK_PRIO_DEFAULT);
 static void peripheral_power_shutdown(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 0);
-	tp_module_pwr_control_enable(false);
 	pb_module_pwr_control_enable(false);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, peripheral_power_shutdown, HOOK_PRIO_DEFAULT);

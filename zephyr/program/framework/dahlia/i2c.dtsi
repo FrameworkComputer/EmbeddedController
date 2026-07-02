@@ -160,10 +160,22 @@
 &i2c5_0 {
 	status = "okay";
 	label = "I2C_PORT5";
-	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+	/* Keep speed to 400MHz until DVT2 input decks (DVT1 FW uses 400MHz only) */
+	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
 	pinctrl-names = "default";
 
+	/* STM32 keyboard controller (dahlia deck) speaking HID-over-I2C. */
+	kb_hid: i2c-hid-kbd@15 {
+		compatible = "generic";
+		reg = <0x15>;
+	};
+
+	/* IT8801 IOEX — physically on the sunflower deck, emulated by the
+	 * dahlia deck's STM32 at the same address. The label MUST be
+	 * kb_discrete: cros-ec's IT8801 driver hardcodes
+	 * KB_DISCRETE_I2C_ADDR_FLAGS = DT_REG_ADDR(DT_NODELABEL(kb_discrete)).
+	 */
 	kb_discrete: ite-it8801@38 {
 		compatible = "ite,it8801";
 		reg = <0x38>;
