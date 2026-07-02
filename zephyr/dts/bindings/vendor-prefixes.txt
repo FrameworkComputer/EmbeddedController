@@ -18,6 +18,7 @@ dynapack	Battery vendor
 egis	Egis Technology Inc.
 fairchild	Fairchild Semiconductor
 fpc	Fingerprint Cards AB
+framework	Framework Computer
 ganfeng	Battery vendor
 getac	Battery vendor
 gfl	Battery vendor
