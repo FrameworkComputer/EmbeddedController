@@ -495,7 +495,7 @@ static enum ec_status cmd_get_pd_port_state(struct host_cmd_handler_args *args)
 	r->power_role = pd[p->port].power_role;
 	r->data_role = pd[p->port].data_role;
 	r->vconn = pd[p->port].vconn;
-	r->epr_active = pd[p->port].epr_active;
+	r->epr_active = pd[p->port].epr_status == EPR_ACTIVE;
 	r->epr_support = pd[p->port].epr_support;
 	r->cc_polarity = pd[p->port].cc;
 	r->voltage = pd[p->port].voltage;

@@ -1372,7 +1372,7 @@ static void clear_port_state(int controller, int port)
 	pd_port_states[port_idx].power_role = PD_ROLE_SINK;
 	pd_port_states[port_idx].data_role = PD_ROLE_UFP;
 	pd_port_states[port_idx].vconn = PD_ROLE_VCONN_OFF;
-	pd_port_states[port_idx].epr_active = 0;
+	pd_port_states[port_idx].epr_status = EPR_INACTIVE;
 	pd_port_states[port_idx].epr_support = 0;
 	pd_port_states[port_idx].epr_retry_count = 0;
 	pd_port_states[port_idx].cc = POLARITY_CC1;
@@ -1430,8 +1430,9 @@ void cypd_update_port_state(int controller, int port)
 		pd_status_reg[0] & BIT(6) ? PD_ROLE_DFP : PD_ROLE_UFP;
 	pd_port_states[port_idx].vconn =
 		pd_status_reg[1] & BIT(5) ? PD_ROLE_VCONN_SRC : PD_ROLE_VCONN_OFF;
-	if (pd_port_states[port_idx].epr_active != 0xff)
-		pd_port_states[port_idx].epr_active = pd_status_reg[2] & BIT(7) ? 1 : 0;
+	if (pd_port_states[port_idx].epr_status != EPR_DISABLED)
+		pd_port_states[port_idx].epr_status = pd_status_reg[2] & BIT(7) ?
+			EPR_ACTIVE : EPR_INACTIVE;
 
 	rv = cypd_read_reg8(controller, CCG_TYPE_C_STATUS_REG(port), &typec_status_reg);
 	if (rv != EC_SUCCESS)

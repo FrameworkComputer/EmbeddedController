@@ -644,7 +644,7 @@ void enter_epr_mode(void)
 	for (port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
 		if ((pd_port_states[port_idx].pd_state) &&
 			(pd_port_states[port_idx].power_role == PD_ROLE_SINK) &&
-			(pd_port_states[port_idx].epr_active == 0) &&
+			(pd_port_states[port_idx].epr_status == EPR_INACTIVE) &&
 			(pd_port_states[port_idx].epr_support == 1)) {
 
 			/* BIT(6),BIT(7): epr in progress, BIT(0) - BIT(5) which port */
@@ -701,7 +701,7 @@ void exit_epr_mode(void)
 			"PD port bits must not exceed EXIT_EPR bit in %s.", __func__);
 
 	for (port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
-		if (pd_port_states[port_idx].epr_active == 1) {
+		if (pd_port_states[port_idx].epr_status == EPR_ACTIVE) {
 
 			/* BIT(6),BIT(7): epr in progress, BIT(0) - BIT(5) which port */
 			pd_epr_in_progress |= (BIT(port_idx) + EXIT_EPR);
@@ -774,7 +774,7 @@ void cypd_update_epr_state(int controller, int port, int response_len)
 			board_set_buck_mode(LEVEL_BUCK_SPR);
 #endif
 			/* EPR fail, do not retry */
-			pd_port_states[port_idx].epr_active = 0xff;
+			pd_port_states[port_idx].epr_status = EPR_DISABLED;
 		}
 	}
 

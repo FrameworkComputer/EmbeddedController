@@ -494,6 +494,13 @@ enum ccg_port_state {
 	CCG_DEVICE_COUNT,
 };
 
+enum pd_epr_status {
+	EPR_INACTIVE,
+	EPR_ACTIVE,
+	/* Tried to enable, but was unable to */
+	EPR_DISABLED,
+};
+
 /*TYPE_C_STATUS_DEVICE*/
 enum ccg_c_state {
 	CCG_STATUS_NOTHING,
@@ -566,7 +573,7 @@ struct pd_port_current_state_t {
 	enum ccg_c_state c_state; /* What device is attached on the other side */
 	uint8_t pd_state;
 	uint8_t cc;
-	uint8_t epr_active;
+	enum pd_epr_status epr_status;
 	uint8_t epr_support;
 	uint8_t epr_retry_count;
 	int safety_table[TYPEC_SAFETY_LEVEL_COUNT];
