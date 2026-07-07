@@ -552,7 +552,7 @@ void soc_signal_interrupt(enum gpio_signal signal)
 
 void chipset_throttle_cpu(int throttle)
 {
-	if (chipset_in_state(CHIPSET_STATE_ON))
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), !throttle);
 }
 
