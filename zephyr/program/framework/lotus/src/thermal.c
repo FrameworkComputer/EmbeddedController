@@ -37,9 +37,9 @@ uint8_t board_custom_temp_flag;
 
 
 #ifdef CONFIG_GPU
-_STATIC_ASSERT(TEMP_APU == 2, "TEMP_APU must be 3 to match with GPU configuration");
+_STATIC_ASSERT(TEMP_APU == 2, "TEMP_APU must be 2 to match with GPU configuration");
 _STATIC_ASSERT(TEMP_APU_DIE == 3, "TEMP_APU_DIE must be 3 to match with GPU configuration");
-_STATIC_ASSERT(TEMP_GPU == 5, "TEMP_GPU must be 3 to match with GPU configuration");
+_STATIC_ASSERT(TEMP_GPU == 5, "TEMP_GPU must be 5 to match with GPU configuration");
 _STATIC_ASSERT(TEMP_GPU_DIE == 7, "TEMP_GPU_DIE must be 7 to match with GPU configuration");
 #endif
 
@@ -57,6 +57,16 @@ struct biquad gpu_filtered = {
 };
 struct biquad apu_filtered = {
 	.coeff = apu_coeff,
+};
+
+
+static const uint8_t temp_sensor_id_to_f75303_sensor_id[TEMP_SENSOR_COUNT] = {
+	[TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_ambient))] = F75303_SENSOR_ID(DT_NODELABEL(ambient_f75303)),
+	[TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_charger))] = F75303_SENSOR_ID(DT_NODELABEL(charger_f75303)),
+	[TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_apu))] = F75303_SENSOR_ID(DT_NODELABEL(apu_f75303)),
+	[TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_gpu_amb))] = F75303_SENSOR_ID(DT_NODELABEL(gpu_amb_f75303)),
+	[TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_gpu))] = F75303_SENSOR_ID(DT_NODELABEL(gpu_vr_f75303)),
+	[TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_gpu_vram))] = F75303_SENSOR_ID(DT_NODELABEL(gpu_vram_f75303))
 };
 
 static void board_temperature_reset(void)
@@ -144,26 +154,15 @@ int fan_percent_to_rpm(int fan_index, int temp_ratio)
 }
 
 bool log_thermal;
+bool log_thermal_oneshot;
 void board_override_fan_control(int fan, int *temp)
 {
-	int actual_rpm, new_rpm;
-	int apu_temp_mk = 0;
-	int gpu_temp_mk = 0;
+	int actual_rpm, new_rpm, i;
+	int max_idx = -1;
+	static int prev_max_idx = -1;
+	int max_pct = 0;
 
-#ifdef CONFIG_GPU
-	int gpu_pct = 0;
-	int gpu_selected_pct = 0;
-	int gpu_filtered_temp = 0;
-	int gpu_filtered_pct = 0;
-
-#endif
-	int apu_pct = 0;
-	int apu_selected_pct = 0;
-	int pct = 0;
-	int current_max_temp_idx = TEMP_APU;
-	int apu_filtered_temp = 0;
-	int apu_filtered_pct = 0;
-	int temps_mk[5];
+	static int temps_mk[TEMP_SENSOR_COUNT];
 
 	static timestamp_t deadline;
 	timestamp_t now = get_time();
@@ -175,83 +174,84 @@ void board_override_fan_control(int fan, int *temp)
 	 * In common/fan.c pwm_fan_stop() will turn off fan
 	 * when chipset suspend or shutdown.
 	 */
-	if (chipset_in_state(CHIPSET_STATE_ON)) {
+	if (chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND)) {
 
-#ifdef CONFIG_GPU
 
-		board_get_gpu_temp_mk(&gpu_temp_mk);
-		if (thermal_params[TEMP_GPU].temp_fan_off &&
-			thermal_params[TEMP_GPU].temp_fan_max) {
-			gpu_pct = thermal_fan_percent(thermal_params[TEMP_GPU].temp_fan_off * 1000,
-						thermal_params[TEMP_GPU].temp_fan_max * 1000,
-						gpu_temp_mk);
-		}
-
-		board_get_soc_temp_mk(&apu_temp_mk);
-		if (thermal_params[TEMP_APU].temp_fan_off &&
-			thermal_params[TEMP_APU].temp_fan_max) {
-			apu_pct = thermal_fan_percent(thermal_params[TEMP_APU].temp_fan_off * 1000,
-						thermal_params[TEMP_APU].temp_fan_max * 1000,
-						apu_temp_mk);
-		}
-
+		/* if we have more than one fan only update on the first loop */
 		if (fan == 0) {
+#ifdef CONFIG_GPU
 			thermal_filter_update(&gpu_filtered, temp[TEMP_GPU_DIE]);
+#endif /* CONFIG_GPU */
 			thermal_filter_update(&apu_filtered, temp[TEMP_APU_DIE]);
 		}
 
-		apu_filtered_temp = thermal_filter_get(&apu_filtered);
-		if (thermal_params[TEMP_APU_DIE].temp_fan_off &&
-			thermal_params[TEMP_APU_DIE].temp_fan_max) {
-			apu_filtered_pct = thermal_fan_percent(thermal_params[TEMP_APU_DIE].temp_fan_off*1000,
-						thermal_params[TEMP_APU_DIE].temp_fan_max*1000,
-						C_TO_K(apu_filtered_temp)*1000);
+
+
+		for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
+			int temperature_mk = 0;
+			int sensor_pct = -1;
+			/* Select the sensor source and read the value in millikelvin */
+			switch(i) {
+
+				case TEMP_APU_DIE:
+					temperature_mk = thermal_filter_get(&apu_filtered);
+					temperature_mk = C_TO_K(temperature_mk)*1000;
+				break;
+
+#ifdef CONFIG_GPU
+				case TEMP_GPU_DIE:
+					temperature_mk = thermal_filter_get(&gpu_filtered);
+					temperature_mk = C_TO_K(temperature_mk)*1000;
+				break;
+
+				case TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_gpu_amb)):
+				case TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_gpu)):
+				case TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_gpu_vram)):
+
+#endif /* CONFIG_GPU */
+				case TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_ambient)):
+				case TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_charger)):
+				case TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_apu)):
+					/* use a lookup to map TEMP_SENSOR_ID to f75303_SENSOR_ID */
+					f75303_get_val_mk(
+						temp_sensor_id_to_f75303_sensor_id[i],
+						&temperature_mk);
+				break;
+
+				default:
+					/* todo we should get this in millikelvin instead if possible */
+					temperature_mk = C_TO_K(temp[i])*1000;
+				break;
+
+			}
+
+			temps_mk[i] = temperature_mk;
+
+			if (thermal_params[i].temp_fan_off &&
+				thermal_params[i].temp_fan_max) {
+				sensor_pct = thermal_fan_percent(thermal_params[i].temp_fan_off * 1000,
+							thermal_params[i].temp_fan_max * 1000,
+							temperature_mk);
+
+				if ((sensor_pct > max_pct)) {
+					if (gpu_present()) {
+						/* skip sensors if we are a GPU and GPU is unpowered */
+						if ((i == TEMP_GPU_DIE || i == TEMP_GPU) &&
+							!gpu_is_working()) {
+							continue;
+						}
+					}
+					max_pct = sensor_pct;
+					max_idx = i;
+				}
+			}
 		}
 
-		gpu_filtered_temp = thermal_filter_get(&gpu_filtered);
-		if (thermal_params[TEMP_GPU_DIE].temp_fan_off &&
-			thermal_params[TEMP_GPU_DIE].temp_fan_max) {
-			gpu_filtered_pct = thermal_fan_percent(thermal_params[TEMP_GPU_DIE].temp_fan_off*1000,
-						thermal_params[TEMP_GPU_DIE].temp_fan_max*1000,
-						C_TO_K(gpu_filtered_temp)*1000);
+		if (max_idx != -1) {
+			prev_max_idx = max_idx;
 		}
 
-		gpu_selected_pct = gpu_filtered_pct;
-		/* Remove this for now, because during a transition from
-		 * high to mid loading on the GPU, we will oscillate between
-		 * two fan speeds during the cooldown period
-		 */
-
-		/*if (gpu_temp_mk > C_TO_K(gpu_filtered_temp)*1000 + 5000) {*/
-			/*GPU Cooldown, there is a lot of thermal restance between VR
-			 *and GPU die/heatpipe. So run the fan at a low value to keep
-			 *cooling the gpu after a workload has finished.
-			 *this reduces the long fan rampdown time when GPU stops a workload.
-			 *where the fans are running at a high speed.
-			 */
-		/*	gpu_selected_pct = MIN(15, gpu_pct);*/
-		/*}*/
-
-		apu_selected_pct = MAX(apu_pct, apu_filtered_pct);
-
-		if (apu_selected_pct > gpu_selected_pct || !gpu_power_enable())
-			pct = apu_selected_pct;
-		else {
-			current_max_temp_idx = TEMP_GPU;
-			pct = gpu_selected_pct;
-		}
-#else
-		board_get_soc_temp_mk(&temp_mk);
-
-		if (thermal_params[TEMP_APU].temp_fan_off &&
-			thermal_params[TEMP_APU].temp_fan_max) {
-			pct = thermal_fan_percent(thermal_params[TEMP_APU].temp_fan_off * 1000,
-						thermal_params[TEMP_APU].temp_fan_max * 1000,
-						temp_mk);
-		}
-#endif
-
-		new_rpm = fan_percent_to_rpm(fan, pct);
+		new_rpm = fan_percent_to_rpm(fan, max_pct);
 		actual_rpm = fan_get_rpm_actual(FAN_CH(fan));
 
 		/*
@@ -263,15 +263,17 @@ void board_override_fan_control(int fan, int *temp)
 			new_rpm < fans[fan].rpm->rpm_start)
 			new_rpm = fans[fan].rpm->rpm_start;
 
-		if (!new_rpm) {
-			/* add temperature histeresis so the fan does not turn off
+		if (!new_rpm && prev_max_idx != -1) {
+			/* add temperature hysteresis so the fan does not turn off
 			 * unless the system has cooled 0.5C below the fan turn on temperature
 			 */
-			if (thermal_params[TEMP_APU].temp_fan_off &&
-				apu_temp_mk > (thermal_params[TEMP_APU].temp_fan_off
+			if (thermal_params[prev_max_idx].temp_fan_off &&
+				temps_mk[prev_max_idx] > (thermal_params[prev_max_idx].temp_fan_off
 					* 1000 - 500)) {
 				deadline.val = get_time().val + FAN_STOP_DELAY_S;
 			}
+
+			/* dont change the fan duty during the timeout - exit early */
 			if (!timestamp_expired(deadline, &now))
 				return;
 		} else {
@@ -279,23 +281,51 @@ void board_override_fan_control(int fan, int *temp)
 		}
 
 		if (log_thermal && fan == 0) {
-			f75303_get_val_mk(
-				F75303_SENSOR_ID(DT_NODELABEL(gpu_vr_f75303)),
-				&temps_mk[0]);
-			f75303_get_val_mk(
-				F75303_SENSOR_ID(DT_NODELABEL(gpu_vram_f75303)),
-				&temps_mk[1]);
-			f75303_get_val_mk(
-				F75303_SENSOR_ID(DT_NODELABEL(apu_f75303)),
-				&temps_mk[2]);
-			CPRINTS("\tThrm\t%d\t%d\t%d\t\t%d\t%d\t\t%d\t%d\t\t%d\t%d\t%d\t%d\t%d\t%d\t%d",
-				temps_mk[0], temps_mk[1], temps_mk[2],
-				temp[TEMP_GPU_DIE], temp[TEMP_APU_DIE],
-				thermal_filter_get(&gpu_filtered),
-				thermal_filter_get(&apu_filtered),
-				pct, gpu_pct, gpu_filtered_pct, apu_pct, apu_filtered_pct,
+			ccprintf("\tThrm\t");
+			for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
+				/* highlight the current max pct sensor temp with a * */
+				ccprintf("%s%d\t",max_idx == i ? "*" : " ", K_TO_C(temps_mk[i]/1000));
+			}
+
+			ccprintf("%d\t%d\t%d\t%d\n",
+				max_pct, max_idx,
 				new_rpm, actual_rpm);
 		}
+
+		if (log_thermal_oneshot && fan == 0) {
+			for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
+
+				int sensor_pct = -1;
+
+				if (thermal_params[i].temp_fan_off &&
+					thermal_params[i].temp_fan_max) {
+					sensor_pct = thermal_fan_percent(thermal_params[i].temp_fan_off * 1000,
+								thermal_params[i].temp_fan_max * 1000,
+								temps_mk[i]);
+				}
+
+				ccprintf("  %-20s  ", temp_sensors[i].name);
+				ccprintf("%d C (= %d C raw)", K_TO_C(temps_mk[i]/1000), temp[i]);
+
+				if (sensor_pct != -1) {
+					ccprintf("  %11d%% (%d C and %d C) %s",
+						sensor_pct,
+						K_TO_C(thermal_params[i].temp_fan_off),
+						K_TO_C(thermal_params[i].temp_fan_max),
+						max_idx == i ? "<" : " "
+					);
+				}
+				ccprintf("\n");
+			}
+			ccprintf("  Fan %d%% by %-20s = (Target RPM=%d, Actual RPM=%d)\n",
+				max_pct,
+				max_idx == -1 ? "None" : temp_sensors[max_idx].name,
+				new_rpm,
+				actual_rpm);
+			log_thermal_oneshot = false;
+		}
+
+
 		fan_set_rpm_mode(fan, 1);
 		fan_set_rpm_target(FAN_CH(fan), new_rpm);
 	}
@@ -306,19 +336,29 @@ void board_override_fan_control(int fan, int *temp)
 /* EC console command */
 static int thermallog_cmd(int argc, const char **argv)
 {
+	int i;
 	if (argc >= 2) {
 		if (!strncmp(argv[1], "en", 2)) {
 			log_thermal = true;
-			CPRINTS("\tThrm\tG_VR\tG_RM\tAPU\t\tG_D\tA_D\t\tG_f\tA_f\t\tPCT\tGpct\tGfilt\tApct\tAfilt\tRPM\tFAN");
+			ccprintf("\tThrm\t");
+
+			for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
+				ccprintf("%-10s\t", temp_sensors[i].name);
+
+			}
+			ccprintf("max_pct\tmax_idx\tRPM_tgt\tFAN_actual\n");
+
 		} else if (!strncmp(argv[1], "dis", 3)) {
 			log_thermal = false;
+		} else if (!strncmp(argv[1], "print", 5))  {
+			log_thermal_oneshot = true;
 		} else {
 			return EC_ERROR_PARAM1;
 		}
 	}
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(thermallog, thermallog_cmd, "[en/dis]",
+DECLARE_CONSOLE_COMMAND(thermallog, thermallog_cmd, "[en/dis/print]",
 			"Enable or disable thermal logging");
 
 

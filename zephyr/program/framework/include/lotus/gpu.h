@@ -61,4 +61,13 @@ void gpu_update_pd_vdm(int controller, int port, uint8_t *data, int len);
  */
 void set_nv_gpu_throttle(enum throttle_level level, int delay);
 
+/**
+ * @brief returns true if the thermal sensor is powered
+ *
+ * @return true thermal sensor is present and enabled
+ * @return false thermal sensor is not present or powered off
+ */
+bool gpu_thermal_sensor_power_enable(void);
+
+
 #endif /* __BOARD_GPU_H__ */

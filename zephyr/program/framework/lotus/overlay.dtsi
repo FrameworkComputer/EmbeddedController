@@ -10,7 +10,7 @@
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		ambient-f75303 {
+		temp_sensor_ambient: ambient-f75303 {
 			temp_host_warn = <87>;
 			temp_host_high = <87>;
 			temp_host_halt = <105>;
@@ -19,7 +19,7 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&ambient_f75303>;
 		};
-		charger-f75303 {
+		temp_sensor_charger: charger-f75303 {
 			temp_host_warn = <87>;
 			temp_host_high = <87>;
 			temp_host_halt = <105>;
@@ -50,7 +50,7 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&temp_cpu>;
 		};
-		gpu-amb-f75303 {
+		temp_sensor_gpu_amb: gpu-amb-f75303 {
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&gpu_amb_f75303>;
 		};
@@ -65,7 +65,7 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&gpu_vr_f75303>;
 		};
-		gpu-vram-f75303 {
+		temp_sensor_gpu_vram: gpu-vram-f75303 {
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&gpu_vram_f75303>;
 		};

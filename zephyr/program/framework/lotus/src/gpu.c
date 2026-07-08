@@ -32,6 +32,7 @@
 #include "thermal.h"
 #include "gpu_configuration.h"
 #include "usb_pd.h"
+#include "gpu_f75303.h"
 
 LOG_MODULE_REGISTER(gpu, LOG_LEVEL_DBG);
 
@@ -52,6 +53,19 @@ bool gpu_power_enable(void)
 		return 0;
 	else
 		return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_dgpu_pwr_en));
+}
+
+bool gpu_thermal_sensor_power_enable(void)
+{
+	if (gpu_present()) {
+		/* on the GPU board, the thermal sensor is power gated behind the GPU power enable signal */
+		return gpu_power_enable();
+	} else if (gpu_f75303_present() && chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND)) {
+		/* on non GPU boards, the thermal sensor should always be powered in S0-S0ix-S3 */
+		return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en));
+	} else {
+		return false;
+	}
 }
 
 bool gpu_is_working(void)
