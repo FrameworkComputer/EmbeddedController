@@ -131,6 +131,7 @@
         ln -s ${packages.lotus} $out/lotus
         ln -s ${packages.azalea} $out/azalea
         ln -s ${packages.marigold} $out/marigold
+        ln -s ${packages.sunflower} $out/sunflower
         ln -s ${packages.tulip} $out/tulip
         ln -s ${packages.sakura} $out/sakura
         ln -s ${packages.dahlia} $out/dahlia
@@ -138,6 +139,7 @@
       packages.lotus = mkBuild packages "lotus";
       packages.azalea = mkBuild packages "azalea";
       packages.marigold = mkBuild packages "marigold";
+      packages.sunflower = mkBuild packages "sunflower";
       packages.tulip = mkBuild packages "tulip";
       packages.sakura = mkBuild packages "sakura";
       packages.dahlia = mkBuild packages "dahlia";
