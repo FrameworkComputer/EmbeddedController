@@ -373,7 +373,7 @@ static const struct ec_thermal_config dsc_amd_temp_gpu_table = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
 	},
 	.temp_fan_off = C_TO_K(50),
-	.temp_fan_max = C_TO_K(74),
+	.temp_fan_max = C_TO_K(82),
 };
 
 static const struct ec_thermal_config dsc_amd_temp_gpu_die_table = {
@@ -401,7 +401,7 @@ static const struct ec_thermal_config dsc_nv_temp_gpu_table = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(60),
 	},
 	.temp_fan_off = C_TO_K(50),
-	.temp_fan_max = C_TO_K(74),
+	.temp_fan_max = C_TO_K(82),
 };
 
 static const struct ec_thermal_config dsc_nv_temp_gpu_die_table = {

@@ -61,7 +61,7 @@
 			temp_host_release_warn = <60>;
 			temp_host_release_high = <60>;
 			temp_fan_off = <50>;
-			temp_fan_max = <74>;
+			temp_fan_max = <82>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&gpu_vr_f75303>;
 		};
