@@ -13,6 +13,7 @@
 #include "fan.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "input_deck.h"
 #include "port80.h"
 #include "timer.h"
 
@@ -32,35 +33,19 @@ DECLARE_HOOK(HOOK_CHIPSET_RESET, start_fan_deferred, HOOK_PRIO_DEFAULT);
 
 void check_device_deferred(void)
 {
-#ifdef CONFIG_PLATFORM_IGNORED_TOUCHPAD_ID
-	int touchpad = BOARD_VERSION_10;
-#else
-	int touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
-#endif /* CONFIG_PLATFORM_IGNORED_TOUCHPAD_ID */
 	int audio = get_hardware_id(ADC_AUDIO_ID);
 	int powerbtn = get_hardware_id(ADC_POWER_BUTTON_BOARD_ID);
 	bool pb_enable = (powerbtn >= BOARD_VERSION_1 && powerbtn <= BOARD_VERSION_13);
-	uint8_t dummy[2];
 	int bma4_id = 0;
 
 	/* Clear the DIAGNOSTICS_HW_NO_BATTERY flag if battery is present */
 	if (battery_is_present() == BP_YES || get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_HW_NO_BATTERY, false);
 
-	if ((touchpad < BOARD_VERSION_1 || touchpad >= BOARD_VERSION_14) &&
-		!get_standalone_mode())
+#ifndef CONFIG_PLATFORM_IGNORED_TOUCHPAD_ID
+	if (!input_deck_is_present() && !get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_INPUT_COVER, true);
-
-	/* Check whether the keyboard controller responds.
-	 * Board ID pin might be connected, but the controller might be in boot mode.
-	 * Check if I2C communication is working
-	 */
-	int ret = i2c_xfer(I2C_PORT_KB_DISCRETE,
-			   DT_REG_ADDR(DT_NODELABEL(kb_hid)),
-			   (uint8_t[]){0x01, 0x00}, 2, dummy, 2);
-
-	if (ret != EC_SUCCESS && !get_standalone_mode())
-		set_diagnostic(DIAGNOSTICS_INPUT_COVER, true);
+#endif
 
 	if ((audio <= BOARD_VERSION_1 || audio >= BOARD_VERSION_14) &&
 		!get_standalone_mode())
