@@ -569,6 +569,17 @@ static void process_keyboard_report(uint8_t *const data, size_t len)
 
 /* ------------------------------------------------------------------------- */
 
+/* HID Consumer page 0x0C usage IDs */
+#define HID_USAGEID_MUTE 0x00E2u
+#define HID_USAGEID_VOLUME_DECREASE 0x00EAu
+#define HID_USAGEID_VOLUME_INCREASE 0x00E9u
+#define HID_USAGEID_SCAN_TRACK_FORWARD 0x00B5u
+#define HID_USAGEID_SCAN_TRACK_BACKWARD 0x00B6u
+#define HID_USAGEID_PAUSE_PLAY 0x00CDu
+/* Brightness (0x006F/0x0070) are consumer reports for Win11 */
+#define HID_USAGEID_BRIGHTNESS_DECREASE 0x006fu
+#define HID_USAGEID_BRIGHTNESS_INCREASE 0x0070u
+
 /*
  * Translate HID Consumer Page usage codes to PS/2 scancodes.
  * Returns 0 if no PS/2 equivalent — fall back to hid_consumer().
@@ -578,29 +589,27 @@ static uint16_t consumer_usage_to_scancode(uint16_t usage)
 	/* note: this uses PS2 scancodes, not HID */
 	if (!is_bios_mode()) {
 		switch (usage) {
-		case 0x00E2: return SCANCODE_VOLUME_MUTE;
-		case 0x00EA: return SCANCODE_VOLUME_DOWN;
-		case 0x00E9: return SCANCODE_VOLUME_UP;
-		case 0x00B5: return SCANCODE_NEXT_TRACK;
-		case 0x00B6: return SCANCODE_PREV_TRACK;
-		case 0x00CD: return 0xe034; /* Play/Pause */
-		/* Brightness (0x006F/0x0070) are consumer reports for Win11 */
+		case HID_USAGEID_MUTE:                return SCANCODE_VOLUME_MUTE;
+		case HID_USAGEID_VOLUME_DECREASE:     return SCANCODE_VOLUME_DOWN;
+		case HID_USAGEID_VOLUME_INCREASE:     return SCANCODE_VOLUME_UP;
+		case HID_USAGEID_SCAN_TRACK_FORWARD:  return SCANCODE_NEXT_TRACK;
+		case HID_USAGEID_SCAN_TRACK_BACKWARD: return SCANCODE_PREV_TRACK;
+		case HID_USAGEID_PAUSE_PLAY:          return 0xe034; /* Play/Pause */
 		default: return 0;
 		}
 	} else {
 		/* map media keys pre OS to their function key equivalents */
 		switch (usage) {
-		case 0x00E2: return SCANCODE_F1;
-		case 0x00EA: return SCANCODE_F2;
-		case 0x00E9: return SCANCODE_F3;
-		case 0x00B6: return SCANCODE_F4;
-		case 0x00CD: return SCANCODE_F5;
-		case 0x00B5: return SCANCODE_F6;
-		case 0x0070: return SCANCODE_F7;
-		case 0x006F: return SCANCODE_F8;
+		case HID_USAGEID_MUTE:                return SCANCODE_F1;
+		case HID_USAGEID_VOLUME_DECREASE:     return SCANCODE_F2;
+		case HID_USAGEID_VOLUME_INCREASE:     return SCANCODE_F3;
+		case HID_USAGEID_SCAN_TRACK_BACKWARD: return SCANCODE_F4;
+		case HID_USAGEID_PAUSE_PLAY:          return SCANCODE_F5;
+		case HID_USAGEID_SCAN_TRACK_FORWARD:  return SCANCODE_F6;
+		case HID_USAGEID_BRIGHTNESS_DECREASE: return SCANCODE_F7;
+		case HID_USAGEID_BRIGHTNESS_INCREASE: return SCANCODE_F8;
 		default: return 0;
 		}
-
 	}
 }
 
