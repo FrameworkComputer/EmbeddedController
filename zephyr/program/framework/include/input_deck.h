@@ -33,6 +33,7 @@ void input_deck_power_off(void);
 void input_deck_resume(void);
 void input_deck_suspend(void);
 void input_deck_lid_change(void);
+bool input_deck_is_present(void);
 
 /* called from the 8042 input layer */
 void board_caps_led_control(int data);

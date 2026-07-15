@@ -33,6 +33,15 @@ static int input_deck_board_id = BOARD_VERSION_UNKNOWN;
 
 /* ------------------------------------------------------------------------ */
 
+/* is there a deck attached? */
+bool input_deck_is_present(void)
+{
+	/* TODO: add specialized detection for different keyboard controllers */
+	return get_hardware_id(ADC_TOUCHPAD_ID) != BOARD_VERSION_NOT_INSTALLED;
+}
+
+/* ------------------------------------------------------------------------ */
+
 /* detects the connected input deck, and enables keyscan if appropriate */
 static void input_deck_detect(void)
 {

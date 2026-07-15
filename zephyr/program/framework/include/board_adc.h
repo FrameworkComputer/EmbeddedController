@@ -29,6 +29,9 @@ enum board_version_t {
 	BOARD_VERSION_COUNT,
 };
 
+/* Per comment in zephyr/program/framework/src/adc.c */
+#define BOARD_VERSION_NOT_INSTALLED BOARD_VERSION_15
+
 enum board_version_t get_hardware_id(enum adc_channel channel);
 
 #endif /* __BOARD_LED_H__ */
