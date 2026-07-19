@@ -226,7 +226,7 @@ static int hid_i2c_write_output(uint8_t report_id, const uint8_t *data, int len)
 
 /* ------------------------------------------------------------------------- */
 
-static void caps_led_control(void)
+static void input_deck_dahlia_led_control(void)
 {
 	uint8_t hid_leds = 0;
 
@@ -248,7 +248,7 @@ static void input_deck_dahlia_caps_set_led(unsigned int data)
 	else
 		caps_led_off |= CAPS_KEY_DISABLE;
 
-	caps_led_control();
+	input_deck_dahlia_led_control();
 }
 
 /*****************************************************************************
@@ -260,34 +260,41 @@ static void input_deck_dahlia_caps_set_led(unsigned int data)
  *
  *****************************************************************************/
 
+#ifdef CONFIG_PLATFORM_EC_PWM_KBLIGHT
+
 /* TODO check the brightness of these values in darkness/sunlight */
-static const uint8_t keyboard_backlight_intensity[] = { 0, 10, 40, 70, 100 };
-#define KEYBOARD_BACKLIGHT_NOF_STEPS ARRAY_SIZE(keyboard_backlight_intensity)
+static const uint8_t input_deck_dahlia_keyboard_backlight_intensity[] = { 0, 10, 40, 70, 100 };
+#define KEYBOARD_BACKLIGHT_NOF_STEPS ARRAY_SIZE(input_deck_dahlia_keyboard_backlight_intensity)
 
 /* Index into keyboard_backlight_intensity_val[]; saved/restored via BBRAM. */
-static uint8_t keyboard_backlight_intensity_index;
+static uint8_t input_deck_dahlia_keyboard_backlight_intensity_index;
+
+
 /* if keyboard backlight is forced off - "normal" off is set by intensity 0 */
 
-/* ------------------------------------------------------------------------- */
-
-static void keyboard_backlight_set_brightness(bool on)
+static void input_deck_dahlia_keyboard_backlight_set_brightness(bool on)
 {
-#ifdef CONFIG_PLATFORM_EC_PWM_KBLIGHT
-	uint8_t val = on ? keyboard_backlight_intensity[keyboard_backlight_intensity_index] : 0;
+	uint8_t val = on ? input_deck_dahlia_keyboard_backlight_intensity[
+		input_deck_dahlia_keyboard_backlight_intensity_index]:0;
 
 	kblight_set(val);
-#endif
 }
 
 /* ------------------------------------------------------------------------- */
 
-static void keyboard_backlight_cycle(void)
+static void input_deck_dahlia_keyboard_backlight_cycle(void)
 {
-	keyboard_backlight_intensity_index =
-		(keyboard_backlight_intensity_index + 1u) % KEYBOARD_BACKLIGHT_NOF_STEPS;
+	input_deck_dahlia_keyboard_backlight_intensity_index =
+		(input_deck_dahlia_keyboard_backlight_intensity_index + 1u)
+		% KEYBOARD_BACKLIGHT_NOF_STEPS;
 	/* is there any condition when the backlight can be cycled while off? */
-	keyboard_backlight_set_brightness(true);
+	input_deck_dahlia_keyboard_backlight_set_brightness(true);
 }
+#else
+#warning keyboard backlight disabled
+static void input_deck_dahlia_keyboard_backlight_set_brightness(bool on) { }
+static void input_deck_dahlia_keyboard_backlight_cycle(void) { }
+#endif /* CONFIG_PLATFORM_EC_PWM_KBLIGHT */
 
 /* ------------------------------------------------------------------------ */
 
@@ -300,7 +307,8 @@ static void input_deck_dahlia_enable_by_mode(void)
 	gpio_pin_set_dt(&input_deck_dahlia_kbd_en, enable);
 
 	/* turn off backlight if tablet or closed or suspended */
-	keyboard_backlight_set_brightness(enable && !chipset_in_state(CHIPSET_STATE_ANY_SUSPEND));
+	input_deck_dahlia_keyboard_backlight_set_brightness(
+		enable && !chipset_in_state(CHIPSET_STATE_ANY_SUSPEND));
 }
 
 /* ------------------------------------------------------------------------- */
@@ -321,7 +329,7 @@ static void input_deck_dahlia_tablet_or_lid_change(void)
 	else
 		caps_led_off &= ~CAPS_TABLET_MODE;
 
-	caps_led_control();
+	input_deck_dahlia_led_control();
 }
 
 /* ------------------------------------------------------------------------- */
@@ -342,7 +350,7 @@ static void input_deck_dahlia_save_settings(void)
 	if (copilot_mode)
 		current_kb |= BBRAM_COPILOT_MODE;
 
-	current_kb |= (keyboard_backlight_intensity_index & BBRAM_KBL_MASK);
+	current_kb |= (input_deck_dahlia_keyboard_backlight_intensity_index & BBRAM_KBL_MASK);
 	system_set_bbram(SYSTEM_BBRAM_IDX_KBSTATE, current_kb);
 }
 
@@ -357,12 +365,13 @@ static void input_deck_dahlia_load_settings(void)
 
 	copilot_mode = (bool)(current_kb & BBRAM_COPILOT_MODE);
 
-	keyboard_backlight_intensity_index = current_kb & BBRAM_KBL_MASK;
-	if (keyboard_backlight_intensity_index >= KEYBOARD_BACKLIGHT_NOF_STEPS)
-		keyboard_backlight_intensity_index = KEYBOARD_BACKLIGHT_NOF_STEPS - 1;
+	input_deck_dahlia_keyboard_backlight_intensity_index = current_kb & BBRAM_KBL_MASK;
+	if (input_deck_dahlia_keyboard_backlight_intensity_index >= KEYBOARD_BACKLIGHT_NOF_STEPS)
+		input_deck_dahlia_keyboard_backlight_intensity_index
+			= KEYBOARD_BACKLIGHT_NOF_STEPS - 1;
 
 	CPRINTS("KB: copilot mode %s, backlight step %d",
-		copilot_mode ? "on" : "off", keyboard_backlight_intensity_index);
+		copilot_mode ? "on" : "off", input_deck_dahlia_keyboard_backlight_intensity_index);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -396,7 +405,7 @@ static int hid_i2c_write_output(uint8_t report_id, const uint8_t *data, int len)
 /*
  * Inject a HID usage code via simulate_keyboard(). No real or virtual key matrix.
  */
-static void inject_key(uint8_t hid_usage, int pressed)
+static void input_deck_dahlia_inject_key(uint8_t hid_usage, int pressed)
 {
 	if (hid_usage > HID_USAGE_MAX)
 		return;
@@ -492,7 +501,7 @@ static void copilot_release(void)
  * Diffs against the previous report and injects press/release events
  * directly into the 8042 scancode path.
  */
-static void process_keyboard_report(uint8_t *const data, size_t len)
+static void input_deck_dahlia_process_keyboard_report(uint8_t *const data, size_t len)
 {
 	uint8_t mods = data[0];
 	/* data[1] is reserved */
@@ -521,7 +530,7 @@ static void process_keyboard_report(uint8_t *const data, size_t len)
 			return; /* consume entire report */
 		}
 		if (keys[i] == HID_USAGE_FN_SPACE) {
-			keyboard_backlight_cycle();
+			input_deck_dahlia_keyboard_backlight_cycle();
 			return; /* consume entire report */
 		}
 	}
@@ -543,13 +552,13 @@ static void process_keyboard_report(uint8_t *const data, size_t len)
 	/* Release keys no longer present (before releasing modifiers) */
 	for (unsigned int i = 0; i < HID_KBD_MAX_KEYS; i++) {
 		if (prev_keys[i] && !is_key_in_array(prev_keys[i], keys, num_keys))
-			inject_key(prev_keys[i], 0);
+			input_deck_dahlia_inject_key(prev_keys[i], 0);
 	}
 
 	/* Inject 1 for freshly pressed modifiers, a 0 for released */
 	for (unsigned int i = 0; i < 8; i++) {
 		if (mod_diff & BIT(i))
-			inject_key(0xE0 + i, (bool)(mods & BIT(i)));
+			input_deck_dahlia_inject_key(0xE0 + i, (bool)(mods & BIT(i)));
 	}
 
 	/* Press newly present keys (skip EC-internal usage codes) */
@@ -558,7 +567,7 @@ static void process_keyboard_report(uint8_t *const data, size_t len)
 				keys[i] != HID_USAGE_FN_SPACE &&
 				keys[i] != HID_USAGE_AIRPLANE &&
 				!is_key_in_array(keys[i], prev_keys, HID_KBD_MAX_KEYS))
-			inject_key(keys[i], 1);
+			input_deck_dahlia_inject_key(keys[i], 1);
 	}
 
 	/* Save state for next diff */
@@ -584,7 +593,7 @@ static void process_keyboard_report(uint8_t *const data, size_t len)
  * Translate HID Consumer Page usage codes to PS/2 scancodes.
  * Returns 0 if no PS/2 equivalent — fall back to hid_consumer().
  */
-static uint16_t consumer_usage_to_scancode(uint16_t usage)
+static uint16_t input_deck_dahlia_consumer_usage_to_scancode(uint16_t usage)
 {
 	/* note: this uses PS2 scancodes, not HID */
 	if (!is_bios_mode()) {
@@ -619,7 +628,7 @@ static uint16_t consumer_usage_to_scancode(uint16_t usage)
  * Process a consumer HID report (Report ID 0x02).
  * Format: [usage_lo, usage_hi] -- 16-bit LE consumer usage code.
  */
-static void process_consumer_report(const uint8_t *data, int len)
+static void input_deck_dahlia_process_consumer_report(const uint8_t *data, int len)
 {
 	static uint16_t last_consumer_scancode;
 
@@ -629,7 +638,7 @@ static void process_consumer_report(const uint8_t *data, int len)
 	uint16_t usage = (uint16_t)data[0] | ((uint16_t)data[1] << 8);
 
 	if (usage != 0) {
-		uint16_t sc = consumer_usage_to_scancode(usage);
+		uint16_t sc = input_deck_dahlia_consumer_usage_to_scancode(usage);
 
 		if (sc) {
 			simulate_keyboard(sc, 1);
@@ -686,13 +695,13 @@ static void i2c_hid_process_input_report(uint8_t *buf, unsigned int max_len)
 
 			CPRINTS("HID kbd: key rpt mods=0x%02X keys=[%s]", report_data[0], dbg);
 		}
-		process_keyboard_report(report_data, report_len);
+		input_deck_dahlia_process_keyboard_report(report_data, report_len);
 		break;
 	case REPORT_ID_CONSUMER:
 		CPRINTS("HID kbd: consumer rpt usage=0x%04X",
 			report_len >= 2 ?
 			((uint16_t)report_data[0] | ((uint16_t)report_data[1] << 8)) : 0);
-		process_consumer_report(report_data, report_len);
+		input_deck_dahlia_process_consumer_report(report_data, report_len);
 		break;
 	default:
 		CPRINTS("HID kbd: unknown report ID 0x%02X len=%d", report_id, report_len);
@@ -800,7 +809,7 @@ static void i2c_hid_kbd_init_deferred(void)
 	hid_initialized = true;
 
 	/* HID is up now — caps_led_control() can finally drive the LED. */
-	caps_led_control();
+	input_deck_dahlia_led_control();
 
 	CPRINTS("HID kbd: init complete");
 }
@@ -894,7 +903,7 @@ static void input_deck_dahlia_resume(void)
 	 * caps LED can actually be driven.
 	 */
 	caps_led_off &= ~(CAPS_SUSPEND | CAPS_KEYBOARD_DISCONNECT);
-	caps_led_control();
+	input_deck_dahlia_led_control();
 }
 
 /* ------------------------------------------------------------------------- */
@@ -902,10 +911,10 @@ static void input_deck_dahlia_resume(void)
 static void input_deck_dahlia_suspend(void)
 {
 	caps_led_off |= CAPS_SUSPEND | CAPS_KEYBOARD_DISCONNECT;
-	caps_led_control();
+	input_deck_dahlia_led_control();
 
 	input_deck_dahlia_enable_by_mode();
-	keyboard_backlight_set_brightness(false);
+	input_deck_dahlia_keyboard_backlight_set_brightness(false);
 	input_deck_dahlia_save_settings();
 }
 
