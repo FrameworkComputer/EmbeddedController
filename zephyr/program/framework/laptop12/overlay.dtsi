@@ -17,7 +17,7 @@
 		temp_sensor_cpu: cpu-f75303 {
 			temp_host_high = <75>;
 			temp_host_halt = <85>;
-			temp_host_release_high = <81>;
+			temp_host_release_high = <70>;
 			temp_fan_off = <45>;
 			temp_fan_max = <55>;
 			power-good-pin = <&gpio_slp_s3_l>;
