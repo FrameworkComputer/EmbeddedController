@@ -15,8 +15,11 @@ jobs:
     strategy:
       matrix:
         platform: [
-          { name: sakura, ver: "0.0.0" },
+          # { name: dahlia, ver: "0.0.0" },
+          # { name: sakura, ver: "0.0.0" },
           # { name: tulip, ver: "0.0.0" },
+          # { name: lilac, ver: "0.0.0" },
+          { name: sunflower, ver: "0.0.0" },
           # { name: marigold, ver: "0.0.0" },
           # { name: lotus, ver: "0.0.0" },
           # { name: azalea, ver: "0.0.0" },
