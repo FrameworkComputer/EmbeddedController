@@ -515,8 +515,11 @@ static void input_deck_dahlia_process_keyboard_report(uint8_t *const data, size_
 			if (keys[i] == 0x13 && (mods & HID_MOD_LGUI)) {
 				keys[i] = 0x42;
 				mods &= ~HID_MOD_LGUI;
-			} else if (keys[i] == 0x6c)
+			} else if (keys[i] == 0x6c) {
 				keys[i] = 0x43;
+			} else if (keys[i] == 0x46) {
+				keys[i] = 0x44;
+			}
 		}
 	}
 
@@ -588,6 +591,7 @@ static void input_deck_dahlia_process_keyboard_report(uint8_t *const data, size_
 /* Brightness (0x006F/0x0070) are consumer reports for Win11 */
 #define HID_USAGEID_BRIGHTNESS_DECREASE 0x006fu
 #define HID_USAGEID_BRIGHTNESS_INCREASE 0x0070u
+#define HID_USAGEID_AL_CCC 0x0183u
 
 /*
  * Translate HID Consumer Page usage codes to PS/2 scancodes.
@@ -617,6 +621,8 @@ static uint16_t input_deck_dahlia_consumer_usage_to_scancode(uint16_t usage)
 		case HID_USAGEID_SCAN_TRACK_FORWARD:  return SCANCODE_F6;
 		case HID_USAGEID_BRIGHTNESS_DECREASE: return SCANCODE_F7;
 		case HID_USAGEID_BRIGHTNESS_INCREASE: return SCANCODE_F8;
+		/* F9,F10,F11 are HID keycodes and not consumer reports */
+		case HID_USAGEID_AL_CCC:              return SCANCODE_F12;
 		default: return 0;
 		}
 	}
