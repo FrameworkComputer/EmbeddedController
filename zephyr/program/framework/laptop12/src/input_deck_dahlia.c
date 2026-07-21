@@ -58,12 +58,14 @@
 /* Highest HID usage code handled (RGUI) */
 #define HID_USAGE_MAX		0xE7
 
+#define HID_USAGE_BREAK     0x48
 /* Fake keycodes: F15 backlight, F16 copilot, F17 airplane mode */
 #define HID_USAGE_FN_SPACE	0x6A
 #define HID_USAGE_FN_RCTRL	0x6B
 #define HID_USAGE_AIRPLANE	0x6C
 
 /* HID modifier bits */
+#define HID_MOD_LCTRL		BIT(0)
 #define HID_MOD_LSHIFT		BIT(1)
 #define HID_MOD_LGUI		BIT(3)
 #define HID_MOD_RCTRL		BIT(4)
@@ -405,10 +407,25 @@ static int hid_i2c_write_output(uint8_t report_id, const uint8_t *data, int len)
 /*
  * Inject a HID usage code via simulate_keyboard(). No real or virtual key matrix.
  */
-static void input_deck_dahlia_inject_key(uint8_t hid_usage, int pressed)
+static void input_deck_dahlia_inject_key(uint8_t hid_usage, uint8_t modifiers, bool pressed)
 {
 	if (hid_usage > HID_USAGE_MAX)
 		return;
+
+	if (pressed && hid_usage == HID_USAGE_BREAK) {
+		if (modifiers & (HID_MOD_LCTRL|HID_MOD_RCTRL)) {
+			simulate_keyboard(0xe114, 1);
+			simulate_keyboard(0x77, 1);
+			simulate_keyboard(0xe1, 1);
+			simulate_keyboard(0x14, 0);
+			simulate_keyboard(0x77, 0);
+		} else {
+			simulate_keyboard(0xe07e, 1);
+			simulate_keyboard(0xe0, 1);
+			simulate_keyboard(0x7e, 0);
+		}
+		return;
+	}
 
 	uint16_t ps2 = hid_to_ps2[hid_usage];
 
@@ -555,13 +572,13 @@ static void input_deck_dahlia_process_keyboard_report(uint8_t *const data, size_
 	/* Release keys no longer present (before releasing modifiers) */
 	for (unsigned int i = 0; i < HID_KBD_MAX_KEYS; i++) {
 		if (prev_keys[i] && !is_key_in_array(prev_keys[i], keys, num_keys))
-			input_deck_dahlia_inject_key(prev_keys[i], 0);
+			input_deck_dahlia_inject_key(prev_keys[i], mods, false);
 	}
 
 	/* Inject 1 for freshly pressed modifiers, a 0 for released */
 	for (unsigned int i = 0; i < 8; i++) {
 		if (mod_diff & BIT(i))
-			input_deck_dahlia_inject_key(0xE0 + i, (bool)(mods & BIT(i)));
+			input_deck_dahlia_inject_key(0xE0 + i, mods, (bool)(mods & BIT(i)));
 	}
 
 	/* Press newly present keys (skip EC-internal usage codes) */
@@ -570,7 +587,7 @@ static void input_deck_dahlia_process_keyboard_report(uint8_t *const data, size_
 				keys[i] != HID_USAGE_FN_SPACE &&
 				keys[i] != HID_USAGE_AIRPLANE &&
 				!is_key_in_array(keys[i], prev_keys, HID_KBD_MAX_KEYS))
-			input_deck_dahlia_inject_key(keys[i], 1);
+			input_deck_dahlia_inject_key(keys[i], mods, true);
 	}
 
 	/* Save state for next diff */
