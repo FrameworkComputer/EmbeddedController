@@ -524,7 +524,6 @@ static void input_deck_dahlia_process_keyboard_report(uint8_t *const data, size_
 	/* data[1] is reserved */
 	uint8_t *keys = data + 2;
 	unsigned int num_keys = len > HID_KBD_MAX_KEYS+2u ? len-2u : HID_KBD_MAX_KEYS;
-	bool rctrl_held = (bool)(mods & HID_MOD_RCTRL);
 
 	if (is_bios_mode()) {
 		/* map display/airplane mode to F9/F10 for BIOS */
@@ -557,23 +556,22 @@ static void input_deck_dahlia_process_keyboard_report(uint8_t *const data, size_
 
 	/* Handle Copilot combo for Right Ctrl */
 	if (copilot_mode) {
-		if (rctrl_held)
+		if (mods & HID_MOD_RCTRL) {
+			/* Remove Right Ctrl from modifiers before injection */
+			mods &= ~HID_MOD_RCTRL;
 			copilot_press(mods);
-		else
+		} else
 			copilot_release();
-
-		/* Remove Right Ctrl from modifiers before injection */
-		mods &= ~HID_MOD_RCTRL;
 	}
-
-	/* bits of new and old bits*/
-	uint8_t mod_diff = prev_mods ^ mods;
 
 	/* Release keys no longer present (before releasing modifiers) */
 	for (unsigned int i = 0; i < HID_KBD_MAX_KEYS; i++) {
 		if (prev_keys[i] && !is_key_in_array(prev_keys[i], keys, num_keys))
 			input_deck_dahlia_inject_key(prev_keys[i], mods, false);
 	}
+
+	/* bits of new and old bits */
+	uint8_t mod_diff = prev_mods ^ mods;
 
 	/* Inject 1 for freshly pressed modifiers, a 0 for released */
 	for (unsigned int i = 0; i < 8; i++) {
