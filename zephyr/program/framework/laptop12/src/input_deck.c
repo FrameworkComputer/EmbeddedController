@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "board_adc.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "gpio/gpio_int.h"
@@ -46,29 +47,41 @@ bool input_deck_is_present(void)
 static void input_deck_detect(void)
 {
 	input_deck_board_id = get_hardware_id(ADC_TOUCHPAD_ID);
+	static int pre_input_deck_board_id;
 	const char *name = "unknown";
+	const struct input_deck *target_input_deck;
 
 	switch (input_deck_board_id) {
 #if DT_NODE_EXISTS(DT_NODELABEL(sunflower_deck))
 	case BOARD_VERSION_10:
-			active_ops = &input_deck_sunflower;
+			target_input_deck = &input_deck_sunflower;
 			name = "sunflower";
 			break;
 #endif
 #if DT_NODE_EXISTS(DT_NODELABEL(dahlia_deck))
 	case BOARD_VERSION_11:
-			active_ops = &input_deck_dahlia;
+			target_input_deck = &input_deck_dahlia;
 			name = "dahlia";
 			break;
 #endif
 	default:
-			active_ops = NULL;
+			target_input_deck = NULL;
 	}
 
-	/* cros-ec always enables ec keyscan, disable it and let decks turn it back on */
-	keyboard_scan_enable(0, KB_SCAN_DISABLE_DISCONNECT);
+	if (pre_input_deck_board_id != input_deck_board_id) {
 
-	CPRINTS("Input deck : board id %d -> %s", input_deck_board_id, name);
+		/* We should turn off the input deck power before switch the input deck driver */
+		input_deck_suspend();
+		input_deck_power_off();
+
+		/* cros-ec always enables ec keyscan, disable it and let decks turn it back on */
+		keyboard_scan_enable(0, KB_SCAN_DISABLE_DISCONNECT);
+
+		active_ops = target_input_deck;
+		pre_input_deck_board_id = input_deck_board_id;
+
+		CPRINTS("Input deck : board id %d -> %s", input_deck_board_id, name);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, input_deck_detect, HOOK_PRIO_DEFAULT);
 
@@ -143,3 +156,30 @@ void board_caps_led_control(int data)
 		active_ops->set_kb_leds(data);
 }
 #endif
+
+/* We allow the user to install the input deck even if the system is on */
+static void input_deck_status_monitor(void)
+{
+	static bool pre_input_deck_status; /* false for disconnect */
+	bool input_deck_status = false; /* false for disconnect */
+
+	/* Check the input deck */
+	input_deck_detect();
+
+	if (active_ops)
+		input_deck_status = true;
+
+	if (input_deck_status != pre_input_deck_status) {
+
+		pre_input_deck_status = input_deck_status;
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+			return;
+
+		if (input_deck_status) {
+			input_deck_power_on();
+			k_msleep(500);
+			input_deck_resume();
+		}
+	}
+}
+DECLARE_HOOK(HOOK_TICK, input_deck_status_monitor, HOOK_PRIO_DEFAULT);
