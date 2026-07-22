@@ -873,6 +873,8 @@ static void input_deck_dahlia_power_on(void)
 
 static void input_deck_dahlia_power_off(void)
 {
+	/* Cancel the HID keyboard init retry */
+	hook_call_deferred(&i2c_hid_kbd_init_deferred_data, -1);
 	input_deck_dahlia_power(false);
 }
 
