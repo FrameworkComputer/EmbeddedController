@@ -791,8 +791,10 @@ static void i2c_hid_kbd_init_deferred(void)
 		hid_desc.wMaxInputLength, hid_desc.wReportDescLength);
 
 	if (hid_desc.wVendorID == 0x32AC && hid_desc.wProductID == 0x0038) {
-		CPRINTS("HID kbd: detected Dahlia input module, fw version %u.%02u",
-			hid_desc.wVersionID / 100, hid_desc.wVersionID % 100);
+		/* wVersionID is nibble-encoded: 0x1234 = 12.3.4 */
+		CPRINTS("HID kbd: detected Dahlia input module, fw version %x.%x.%x",
+			hid_desc.wVersionID >> 8, (hid_desc.wVersionID >> 4) & 0xf,
+			hid_desc.wVersionID & 0xf);
 	} else {
 		CPRINTS("HID kbd: unknown VID=0x%04X PID=0x%04X ver=0x%04X",
 			hid_desc.wVendorID, hid_desc.wProductID,
