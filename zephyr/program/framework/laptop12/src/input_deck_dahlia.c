@@ -404,6 +404,69 @@ static int hid_i2c_write_output(uint8_t report_id, const uint8_t *data, int len)
 }
 
 /* ------------------------------------------------------------------------- */
+
+/* HACK! Read BIOS setting for Fn/Ctrl swap from the sunflower matrix */
+/* Use vendor extension to send swap command */
+
+#define HID_VENDOR_REPORT_ID		0x20
+#define HID_VENDOR_PAYLOAD_SIZE		31
+#define HID_VENDOR_OP_SET_SWAP_FN_LCTRL	0x10
+/* HID command byte: Feature report, ID >= 15 follows as its own byte */
+#define HID_VENDOR_CMD_FEATURE		0x3F
+
+/* Send a vendor command: a HID SET_REPORT (host writes a report to the
+ * device), as two writes — command frame, then the report payload.
+ */
+static int hid_vendor_set(const uint8_t *req, int req_len)
+{
+	uint8_t buf[2 + 2 + 1 + HID_VENDOR_PAYLOAD_SIZE];
+	uint16_t length = 2 + 1 + HID_VENDOR_PAYLOAD_SIZE;
+	int ret;
+
+	buf[0] = hid_desc.wCommandRegister & 0xFF;
+	buf[1] = (hid_desc.wCommandRegister >> 8) & 0xFF;
+	buf[2] = HID_VENDOR_CMD_FEATURE;
+	buf[3] = I2C_HID_CMD_SET_REPORT;
+	buf[4] = HID_VENDOR_REPORT_ID;
+	buf[5] = hid_desc.wDataRegister & 0xFF;
+	buf[6] = (hid_desc.wDataRegister >> 8) & 0xFF;
+
+	ret = i2c_xfer(HID_KBD_I2C_PORT, HID_KBD_I2C_ADDR_FLAGS, buf, 7, NULL, 0);
+	if (ret)
+		return ret;
+
+	crec_msleep(2);
+
+	if (req_len > HID_VENDOR_PAYLOAD_SIZE)
+		req_len = HID_VENDOR_PAYLOAD_SIZE;
+
+	buf[0] = hid_desc.wDataRegister & 0xFF;
+	buf[1] = (hid_desc.wDataRegister >> 8) & 0xFF;
+	buf[2] = length & 0xFF;
+	buf[3] = (length >> 8) & 0xFF;
+	buf[4] = HID_VENDOR_REPORT_ID;
+	memcpy(buf + 5, req, req_len);
+	memset(buf + 5 + req_len, 0, HID_VENDOR_PAYLOAD_SIZE - req_len);
+
+	return i2c_xfer(HID_KBD_I2C_PORT, HID_KBD_I2C_ADDR_FLAGS, buf, sizeof(buf), NULL, 0);
+}
+
+/* ------------------------------------------------------------------------- */
+
+static void input_deck_dahlia_sync_fn_ctrl_swap(void)
+{
+	/* Swapped if BIOS put Fn in LCtrl's matrix cell. */
+	uint8_t req[2] = {HID_VENDOR_OP_SET_SWAP_FN_LCTRL, get_scancode_set2(1, 14) == SCANCODE_FN};
+
+	CPRINTS("HID kbd: fn/ctrl %s (cell(1,14)=0x%04x cell(0,16)=0x%04x)",
+		req[1] ? "swapped" : "not swapped",
+		get_scancode_set2(1, 14), get_scancode_set2(0, 16));
+
+	if (hid_vendor_set(req, sizeof(req)) != EC_SUCCESS)
+		CPRINTS("HID kbd: fn/ctrl swap sync failed");
+}
+
+/* ------------------------------------------------------------------------- */
 /*
  * Inject a HID usage code via simulate_keyboard(). No real or virtual key matrix.
  */
@@ -841,6 +904,8 @@ static void i2c_hid_kbd_init_deferred(void)
 
 	/* HID is up now — caps_led_control() can finally drive the LED. */
 	input_deck_dahlia_led_control();
+
+	input_deck_dahlia_sync_fn_ctrl_swap();
 
 	CPRINTS("HID kbd: init complete");
 }
