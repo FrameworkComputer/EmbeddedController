@@ -56,13 +56,13 @@
 #define HID_KBD_MAX_KEYS	6
 
 /* Highest HID usage code handled (RGUI) */
-#define HID_USAGE_MAX		0xE7
+#define HID_USAGEID_MAX	0xE7
 
-#define HID_USAGE_BREAK     0x48
+#define HID_USAGEID_BREAK	0x48
 /* Fake keycodes: F15 backlight, F16 copilot, F17 airplane mode */
-#define HID_USAGE_FN_SPACE	0x6A
-#define HID_USAGE_FN_RCTRL	0x6B
-#define HID_USAGE_AIRPLANE	0x6C
+#define HID_USAGEID_FN_SPACE	0x6A
+#define HID_USAGEID_FN_RCTRL	0x6B
+#define HID_USAGEID_AIRPLANE	0x6C
 
 /* HID modifier bits */
 #define HID_MOD_LCTRL		BIT(0)
@@ -97,7 +97,7 @@ static bool sim_lgui;       /* we simulated Left GUI */
 /*
  * HID usage -> PS/2 Set 2 scancode lookup, indexed by HID usage code.
  */
-static const uint16_t hid_to_ps2[HID_USAGE_MAX + 1] = {
+static const uint16_t hid_to_ps2[HID_USAGEID_MAX + 1] = {
 	/* Letters */
 	[0x04] = 0x001C, /* A */
 	[0x05] = 0x0032, /* B */
@@ -409,20 +409,21 @@ static int hid_i2c_write_output(uint8_t report_id, const uint8_t *data, int len)
  */
 static void input_deck_dahlia_inject_key(uint8_t hid_usage, uint8_t modifiers, bool pressed)
 {
-	if (hid_usage > HID_USAGE_MAX)
+	if (hid_usage > HID_USAGEID_MAX)
 		return;
 
-	if (pressed && hid_usage == HID_USAGE_BREAK) {
+	if (pressed && hid_usage == HID_USAGEID_BREAK) {
+		/* BREAK is sent as Ctrl-PAUSE */
 		if (modifiers & (HID_MOD_LCTRL|HID_MOD_RCTRL)) {
+			simulate_keyboard(0xe07e, 1);
+			simulate_keyboard(0xe0, 1);
+			simulate_keyboard(0x7e, 0);
+		} else {
 			simulate_keyboard(0xe114, 1);
 			simulate_keyboard(0x77, 1);
 			simulate_keyboard(0xe1, 1);
 			simulate_keyboard(0x14, 0);
 			simulate_keyboard(0x77, 0);
-		} else {
-			simulate_keyboard(0xe07e, 1);
-			simulate_keyboard(0xe0, 1);
-			simulate_keyboard(0x7e, 0);
 		}
 		return;
 	}
@@ -518,6 +519,12 @@ static void copilot_release(void)
  * Diffs against the previous report and injects press/release events
  * directly into the 8042 scancode path.
  */
+#define HID_USAGEID_P 0x13u
+#define HID_USAGEID_F9 0x42u
+#define HID_USAGEID_F10 0x43u
+#define HID_USAGEID_F11 0x44u
+#define HID_USAGEID_PRTSCR 0x46u
+
 static void input_deck_dahlia_process_keyboard_report(uint8_t *const data, size_t len)
 {
 	uint8_t mods = data[0];
@@ -526,15 +533,15 @@ static void input_deck_dahlia_process_keyboard_report(uint8_t *const data, size_
 	unsigned int num_keys = len > HID_KBD_MAX_KEYS+2u ? len-2u : HID_KBD_MAX_KEYS;
 
 	if (is_bios_mode()) {
-		/* map display/airplane mode to F9/F10 for BIOS */
+		/* map display/airplane mode to F9/F10/F11 for BIOS */
 		for (int i = 0; i < num_keys; i++) {
-			if (keys[i] == 0x13 && (mods & HID_MOD_LGUI)) {
-				keys[i] = 0x42;
+			if (keys[i] == HID_USAGEID_P && (mods & HID_MOD_LGUI)) {
+				keys[i] = HID_USAGEID_F9;
 				mods &= ~HID_MOD_LGUI;
-			} else if (keys[i] == 0x6c) {
-				keys[i] = 0x43;
-			} else if (keys[i] == 0x46) {
-				keys[i] = 0x44;
+			} else if (keys[i] == HID_USAGEID_AIRPLANE) {
+				keys[i] = HID_USAGEID_F10;
+			} else if (keys[i] == HID_USAGEID_PRTSCR) {
+				keys[i] = HID_USAGEID_F11;
 			}
 		}
 	}
@@ -544,11 +551,11 @@ static void input_deck_dahlia_process_keyboard_report(uint8_t *const data, size_
 
 	/* Check for EC-handled Fn-layer keys */
 	for (unsigned int i = 0; i < num_keys; i++) {
-		if (keys[i] == HID_USAGE_AIRPLANE) {
+		if (keys[i] == HID_USAGEID_AIRPLANE) {
 			hid_airplane(true);
 			return; /* consume entire report */
 		}
-		if (keys[i] == HID_USAGE_FN_SPACE) {
+		if (keys[i] == HID_USAGEID_FN_SPACE) {
 			input_deck_dahlia_keyboard_backlight_cycle();
 			return; /* consume entire report */
 		}
@@ -582,8 +589,8 @@ static void input_deck_dahlia_process_keyboard_report(uint8_t *const data, size_
 	/* Press newly present keys (skip EC-internal usage codes) */
 	for (int i = 0; i < num_keys; i++) {
 		if (keys[i] &&
-				keys[i] != HID_USAGE_FN_SPACE &&
-				keys[i] != HID_USAGE_AIRPLANE &&
+				keys[i] != HID_USAGEID_FN_SPACE &&
+				keys[i] != HID_USAGEID_AIRPLANE &&
 				!is_key_in_array(keys[i], prev_keys, HID_KBD_MAX_KEYS))
 			input_deck_dahlia_inject_key(keys[i], mods, true);
 	}
@@ -606,6 +613,7 @@ static void input_deck_dahlia_process_keyboard_report(uint8_t *const data, size_
 /* Brightness (0x006F/0x0070) are consumer reports for Win11 */
 #define HID_USAGEID_BRIGHTNESS_DECREASE 0x006fu
 #define HID_USAGEID_BRIGHTNESS_INCREASE 0x0070u
+/* consumer control configuration, mapped to non-fn F12 */
 #define HID_USAGEID_AL_CCC 0x0183u
 
 /*
@@ -636,7 +644,7 @@ static uint16_t input_deck_dahlia_consumer_usage_to_scancode(uint16_t usage)
 		case HID_USAGEID_SCAN_TRACK_FORWARD:  return SCANCODE_F6;
 		case HID_USAGEID_BRIGHTNESS_DECREASE: return SCANCODE_F7;
 		case HID_USAGEID_BRIGHTNESS_INCREASE: return SCANCODE_F8;
-		/* F9,F10,F11 are HID keycodes and not consumer reports */
+		/* F9, F10, F11 are HID keycodes and processed elsewhere */
 		case HID_USAGEID_AL_CCC:              return SCANCODE_F12;
 		default: return 0;
 		}
