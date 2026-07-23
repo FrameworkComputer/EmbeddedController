@@ -31,6 +31,7 @@ extern const struct input_deck input_deck_sunflower;
 
 static const struct input_deck *active_ops;
 static int input_deck_board_id = BOARD_VERSION_UNKNOWN;
+static bool bios_crisis_check_pending;
 
 /* ------------------------------------------------------------------------ */
 
@@ -183,3 +184,30 @@ static void input_deck_status_monitor(void)
 	}
 }
 DECLARE_HOOK(HOOK_TICK, input_deck_status_monitor, HOOK_PRIO_DEFAULT);
+
+static void arm_bios_crisis_check(void)
+{
+	bios_crisis_check_pending = true;
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, arm_bios_crisis_check, HOOK_PRIO_DEFAULT);
+
+static void clear_bios_crisis_key(void)
+{
+	if (system_is_manual_recovery()) {
+		system_exit_manual_recovery();
+		CPRINTS("Exit BIOS crisis recovery mode");
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, clear_bios_crisis_key, HOOK_PRIO_DEFAULT);
+
+void check_bios_crisis_key(bool esc_key_press)
+{
+	if (!bios_crisis_check_pending)
+		return;
+	bios_crisis_check_pending = false;
+
+	if (esc_key_press) {
+		system_enter_manual_recovery();
+		CPRINTS("Detected ESC pressed, trigger BIOS crisis recovery mode");
+	}
+}

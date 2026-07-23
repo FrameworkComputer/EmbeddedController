@@ -563,12 +563,24 @@ static void input_deck_sunflower_enable_by_mode(void)
 }
 
 /* ------------------------------------------------------------------------ */
-
 static void input_deck_sunflower_resume(void)
 {
 	/* initialize keyscan, preferrably one */
 	if (!input_deck_sunflower_keyscan_initialized) {
+		int state;
+
 		keyboard_scan_init();
+
+		/*
+		 * Now the keyboard init sequence will enable the key scan
+		 * after crisis detection; it can't detect the Esc key press
+		 * so let's detect Esc earlier.
+		 */
+		keyboard_raw_drive_column(KEYBOARD_COL_ESC);
+		state = keyboard_raw_read_rows();
+		keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
+		check_bios_crisis_key(state & BIT(KEYBOARD_ROW_ESC));
+
 		keyboard_raw_enable_interrupt(1);
 		keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
 		input_deck_sunflower_keyscan_initialized = true;

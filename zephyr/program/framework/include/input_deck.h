@@ -41,4 +41,9 @@ void board_caps_led_control(int data);
 /* referenced from device trees */
 void input_deck_keyboard_interrupt(enum gpio_signal signal);
 
+/**
+ * If ESC key is detected, set flag SYSTEM_IN_MANUAL_RECOVERY.
+ */
+void check_bios_crisis_key(bool esc_key_press);
+
 #endif /* __CROS_EC_INPUT_DECK_H */
