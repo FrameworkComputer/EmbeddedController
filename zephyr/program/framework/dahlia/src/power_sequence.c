@@ -291,7 +291,7 @@ static void control_module_power(void)
 	power_button_module_power_control();
 	finger_print_module_power_control();
 }
-DECLARE_HOOK(HOOK_INIT, control_module_power, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_TICK, control_module_power, HOOK_PRIO_DEFAULT);
 
 
 static void pb_module_pwr_control_enable(bool state)
