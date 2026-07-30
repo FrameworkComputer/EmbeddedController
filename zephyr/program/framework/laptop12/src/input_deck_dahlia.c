@@ -919,6 +919,20 @@ static void i2c_hid_kbd_init_deferred(void)
 
 	input_deck_dahlia_sync_fn_ctrl_swap();
 
+	/**
+	 * It is hard to check the bios crisis key with interrupt event,
+	 * force to read the input report data after initializing.
+	 */
+	if (hid_desc.wMaxInputLength <= sizeof(buf)) {
+		ret = hid_i2c_read_input(buf, hid_desc.wMaxInputLength);
+		if (ret == 0) {
+			uint16_t length = (uint16_t)buf[0] | ((uint16_t)buf[1] << 8);
+
+			if (length >= 6 && buf[2] == REPORT_ID_KEYBOARD)
+				check_bios_crisis_key(buf[5] == 0x29);
+		}
+	}
+
 	CPRINTS("HID kbd: init complete");
 }
 
