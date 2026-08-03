@@ -14,6 +14,7 @@
 #include "common.h"
 #include "console.h"
 #include "customized_shared_memory.h"
+#include "driver/ioexpander/it8801.h"
 #include "gpio.h"
 #include "hid_device.h"
 #include "hooks.h"
@@ -82,10 +83,10 @@ static bool hid_init_suppressed;  /* true during STM32 flash */
 /* Deck GPIO specs, read from the dahlia_deck DT node's tp-en/kbd-en
  * properties. Configured as outputs by dahlia_startup.
  */
-static const struct gpio_dt_spec input_deck_dahlia_tp_en =
-	GPIO_DT_SPEC_GET(DT_NODELABEL(dahlia_deck), tp_en_gpios);
-static const struct gpio_dt_spec input_deck_dahlia_kbd_en =
-	GPIO_DT_SPEC_GET(DT_NODELABEL(dahlia_deck), kbd_en_gpios);
+#define TP_EN_PIN   DT_GPIO_PIN(DT_NODELABEL(dahlia_deck), tp_en_gpios)
+#define KBD_EN_PIN  DT_GPIO_PIN(DT_NODELABEL(dahlia_deck), kbd_en_gpios)
+/* Bitmask to enable both Touchpad and Keyboard*/
+#define TP_KBD_EN_MASK  (BIT(TP_EN_PIN) | BIT(KBD_EN_PIN))
 
 static bool copilot_mode;
 static bool copilot_active;	/* combo currently being sent */
@@ -299,14 +300,18 @@ static void input_deck_dahlia_keyboard_backlight_cycle(void) { }
 #endif /* CONFIG_PLATFORM_EC_PWM_KBLIGHT */
 
 /* ------------------------------------------------------------------------ */
+static void input_deck_dahlia_tp_kbd_enable(bool enable)
+{
+	i2c_write8(I2C_PORT_KB_DISCRETE, KB_DISCRETE_I2C_ADDR_FLAGS, IT8801_REG_GPIO_SOVR(2),
+		enable ? TP_KBD_EN_MASK : 0x00);
+}
 
 /* disable keyboard/tp when closed or tablet mode */
 static void input_deck_dahlia_enable_by_mode(void)
 {
 	bool enable = !tablet_get_mode() && lid_is_open();
 
-	gpio_pin_set_dt(&input_deck_dahlia_tp_en,  enable);
-	gpio_pin_set_dt(&input_deck_dahlia_kbd_en, enable);
+	input_deck_dahlia_tp_kbd_enable(enable);
 
 	/* turn off backlight if tablet or closed or suspended */
 	input_deck_dahlia_keyboard_backlight_set_brightness(
@@ -982,15 +987,6 @@ static void input_deck_dahlia_resume(void)
 	/* Configure deck pins as outputs and apply initial state.
 	 * The (emulated) IT8801 gpios should be available.
 	 */
-
-	/* Note that the it8801 driver keeps cached values of pin states,
-	 * and updates physical pins only when it deems necessary.
-	 * Muxing them with default high aligns the default cached values (0)
-	 * with default physical pins (1).
-	 */
-	gpio_pin_configure_dt(&input_deck_dahlia_tp_en, GPIO_OUTPUT_HIGH);
-	gpio_pin_configure_dt(&input_deck_dahlia_kbd_en, GPIO_OUTPUT_HIGH);
-
 	input_deck_dahlia_enable_by_mode();
 
 	/* HID side: kick off descriptor read; enable IRQ on the deck pin. */
