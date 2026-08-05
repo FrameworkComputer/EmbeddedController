@@ -355,6 +355,15 @@ static int it8801_ioex_set_level(int ioex, int port, int mask, int value)
 	return rv;
 }
 
+/* A byte store needs no ioex_mutex; a read-modify-write would */
+void it8801_ioex_set_sov_cache(int port, uint8_t val)
+{
+	if (port >= ARRAY_SIZE(it8801_valid_gpio_group))
+		return;
+
+	it8801_gpio_sov[port] = val;
+}
+
 static int it8801_ioex_get_flags_by_mask(int ioex, int port, int mask,
 					 int *flags)
 {

@@ -63,6 +63,9 @@
 extern __override_proto const uint8_t it8801_kso_mapping[];
 extern const struct ioexpander_drv it8801_ioexpander_drv;
 
+/* Update the driver's cached SOVR value, for board code writing SOVR raw */
+void it8801_ioex_set_sov_cache(int port, uint8_t val);
+
 /* GPIO Register map */
 /* Input pin status register */
 #define IT8801_REG_GPIO_IPSR(port) (0x00 + (port))
