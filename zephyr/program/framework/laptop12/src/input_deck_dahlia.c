@@ -87,6 +87,8 @@ static bool hid_init_suppressed;  /* true during STM32 flash */
 #define KBD_EN_PIN  DT_GPIO_PIN(DT_NODELABEL(dahlia_deck), kbd_en_gpios)
 /* Bitmask to enable both Touchpad and Keyboard*/
 #define TP_KBD_EN_MASK  (BIT(TP_EN_PIN) | BIT(KBD_EN_PIN))
+/* IT8801 GPIO port both pins live on */
+#define TP_KBD_EN_PORT  2
 
 static bool copilot_mode;
 static bool copilot_active;	/* combo currently being sent */
@@ -302,8 +304,13 @@ static void input_deck_dahlia_keyboard_backlight_cycle(void) { }
 /* ------------------------------------------------------------------------ */
 static void input_deck_dahlia_tp_kbd_enable(bool enable)
 {
-	i2c_write8(I2C_PORT_KB_DISCRETE, KB_DISCRETE_I2C_ADDR_FLAGS, IT8801_REG_GPIO_SOVR(2),
-		enable ? TP_KBD_EN_MASK : 0x00);
+	uint8_t val = enable ? TP_KBD_EN_MASK : 0x00;
+
+	i2c_write8(I2C_PORT_KB_DISCRETE, KB_DISCRETE_I2C_ADDR_FLAGS,
+		IT8801_REG_GPIO_SOVR(TP_KBD_EN_PORT), val);
+
+	/* keep the it8801 driver's cache in step with the raw write */
+	it8801_ioex_set_sov_cache(TP_KBD_EN_PORT, val);
 }
 
 /* disable keyboard/tp when closed or tablet mode */
