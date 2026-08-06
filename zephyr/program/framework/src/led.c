@@ -677,25 +677,15 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 			return EC_RES_SUCCESS;
 		} else if (args->version == 1) {
 			system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &r_v1->percentage);
-			/* Map from percentage to level */
+			/* Map from percentage back to level */
 			/* Yes, it could also have been set manually to this level */
 			/* But I don't it's worth adding additional state to track that */
-			switch (r_v1->percentage) {
-			case FP_LED_HIGH:
-				r_v1->level = FP_LED_BRIGHTNESS_HIGH;
-				break;
-			case FP_LED_MEDIUM:
-				r_v1->level = FP_LED_BRIGHTNESS_MEDIUM;
-				break;
-			case FP_LED_LOW:
-				r_v1->level = FP_LED_BRIGHTNESS_LOW;
-				break;
-			case FP_LED_ULTRA_LOW:
-				r_v1->level = FP_LED_BRIGHTNESS_ULTRA_LOW;
-				break;
-			default:
-				r_v1->level = FP_LED_BRIGHTNESS_CUSTOM;
-				break;
+			r_v1->level = FP_LED_BRIGHTNESS_CUSTOM;
+			for (int level = 0; level < FP_LED_BRIGHTNESS_COUNT; level++) {
+				if (r_v1->percentage == fp_brightness_levels[level]) {
+					r_v1->level = level;
+					break;
+				}
 			}
 
 			/* If auto mode, overwrite deduced level */
