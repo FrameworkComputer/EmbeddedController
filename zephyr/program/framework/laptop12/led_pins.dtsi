@@ -72,6 +72,12 @@
 		power_led: power-led {
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pwms = <&pwm_power_w>;
+			/**
+			 * We declare led-brightness to enable changing the FP LED duty cycle
+			 * based on the LED level set in the BIOS setup menu. However, the EC
+			 * overrides the LED duty cycle in laptop12/src/led.c.
+			 * Please update the duty cycle in that file if necessary.
+			 */
 			led-brightness = <55 40 15 8>;
 
 			color_power_off: color-power-off {
