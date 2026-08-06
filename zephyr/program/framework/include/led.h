@@ -233,6 +233,13 @@ int led_get_current_tick_time(void);
  */
 void led_change_color(enum led_color color, enum ec_led_id led_id, int pins_count, uint8_t *duty);
 
+/**
+ * Allow the project to change the FP LED duty for different levels.
+ *
+ * @param duty target duty
+ */
+void fp_led_brightness_change(int *duty);
+
 #ifdef TEST_BUILD
 const struct led_pins_node_t *led_get_node(enum led_color color,
 					   enum ec_led_id led_id);

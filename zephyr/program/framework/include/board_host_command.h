@@ -284,6 +284,7 @@ enum fp_led_brightness_level {
 	FP_LED_BRIGHTNESS_MEDIUM = 1,
 	FP_LED_BRIGHTNESS_LOW = 2,
 	FP_LED_BRIGHTNESS_ULTRA_LOW = 3,
+	FP_LED_BRIGHTNESS_COUNT,
 	/* Not allowed to set; only ever returned when getting the level */
 	FP_LED_BRIGHTNESS_CUSTOM = 0xfe,
 	FP_LED_BRIGHTNESS_AUTO = 0xff,

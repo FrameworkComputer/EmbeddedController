@@ -76,6 +76,21 @@ DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD_VARGS,
 		.pattern_color = PATTERN_COLOR_ARRAY(node_id), \
 	},
 
+#define FP_LED_NODE DT_NODELABEL(power_led)
+BUILD_ASSERT(DT_NODE_EXISTS(FP_LED_NODE),
+		"DTS ERROR: Node label 'power_led' is mandatory but missing in Device Tree!");
+
+#if DT_NODE_HAS_PROP(FP_LED_NODE, led_brightness)
+static uint8_t fp_brightness_levels[FP_LED_BRIGHTNESS_COUNT] = {
+	DT_PROP_BY_IDX(FP_LED_NODE, led_brightness, 0),
+	DT_PROP_BY_IDX(FP_LED_NODE, led_brightness, 1),
+	DT_PROP_BY_IDX(FP_LED_NODE, led_brightness, 2),
+	DT_PROP_BY_IDX(FP_LED_NODE, led_brightness, 3),
+};
+#else
+static uint8_t fp_brightness_levels[FP_LED_BRIGHTNESS_COUNT] = {0};
+#endif
+
 struct node_prop_t {
 	enum led_pwr_state pwr_state;
 	enum power_state chipset_state;
@@ -169,7 +184,8 @@ static int als_lux_get(void)
 			real_illuminance = KB_BL_THRESHOLD + 1;
 			/* clear als data and set default level for next time bootup */
 			*(uint16_t *)host_get_memmap(EC_MEMMAP_ALS) = 0;
-			system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, FP_LED_HIGH);
+			system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL,
+				fp_brightness_levels[FP_LED_BRIGHTNESS_HIGH]);
 			update_pwr_led_level();
 		}
 	}
@@ -180,6 +196,14 @@ static int als_lux_get(void)
 int led_get_current_tick_time(void)
 {
 	return led_tick_time;
+}
+
+void fp_led_brightness_change(int *duty)
+{
+	for (int level = 0; level < FP_LED_BRIGHTNESS_COUNT; level++)
+		fp_brightness_levels[level] = duty[level];
+
+	update_pwr_led_level();
 }
 
 /*
@@ -241,13 +265,13 @@ void auto_als_led_brightness(void)
 	if (fp_led_auto_is_enable() &&
 		chipset_in_state(CHIPSET_STATE_ON)) {
 		if (als_lux > FP_LED_HIGH_ALS_THRESH)
-			led_brightness = FP_LED_HIGH;
+			led_brightness = fp_brightness_levels[FP_LED_BRIGHTNESS_HIGH];
 		else if (als_lux > FP_LED_MED_ALS_THRESH)
-			led_brightness = FP_LED_MEDIUM;
+			led_brightness = fp_brightness_levels[FP_LED_BRIGHTNESS_MEDIUM];
 		else if (als_lux > FP_LED_LOW_ALS_THRESH)
-			led_brightness = FP_LED_LOW;
+			led_brightness = fp_brightness_levels[FP_LED_BRIGHTNESS_LOW];
 		else
-			led_brightness = FP_LED_ULTRA_LOW;
+			led_brightness = fp_brightness_levels[FP_LED_BRIGHTNESS_ULTRA_LOW];
 
 		if (last_fp_led_brightness != led_brightness) {
 			last_fp_led_brightness = led_brightness;
@@ -291,6 +315,11 @@ test_export_static enum power_state get_chipset_state(void)
 
 static void change_pwm_led_maximum_duty(void)
 {
+/*
+ * If the project does not support to change the LED brightness (e.g. Mini-PC),
+ * we should not execute this function.
+ */
+#if DT_NODE_HAS_PROP(FP_LED_NODE, led_brightness)
 	int node_idx, pattern_idx, color_idx, num_patterns;
 	enum ec_led_id id;
 	struct led_pattern_node_t *patt;
@@ -301,7 +330,7 @@ static void change_pwm_led_maximum_duty(void)
 	system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &fingerpint_led_level);
 
 	if (fingerpint_led_level == 0)
-		fingerpint_led_level = FP_LED_HIGH;
+		fingerpint_led_level = fp_brightness_levels[FP_LED_BRIGHTNESS_HIGH];
 
 	pulse_ns = DIV_ROUND_NEAREST(BOARD_LED_PWM_PERIOD_NS * fingerpint_led_level, 100);
 
@@ -327,6 +356,9 @@ static void change_pwm_led_maximum_duty(void)
 			}
 		}
 	}
+#else
+	return;
+#endif
 }
 DECLARE_DEFERRED(change_pwm_led_maximum_duty);
 DECLARE_HOOK(HOOK_INIT, change_pwm_led_maximum_duty, HOOK_PRIO_DEFAULT + 1);
@@ -585,7 +617,8 @@ static void led_hook_init(void)
 		 * if enable auto als fp, set the default level to high
 		 * and call the update level to update pwm duty
 		 **/
-		system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, FP_LED_HIGH);
+		system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL,
+			fp_brightness_levels[FP_LED_BRIGHTNESS_HIGH]);
 		update_pwr_led_level();
 		fp_als_auto_brightness = true;
 	}
@@ -632,7 +665,7 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 	const struct ec_params_fp_led_control_v1 *p_v1 = args->params;
 	struct ec_response_fp_led_level_v0 *r_v0 = args->response;
 	struct ec_response_fp_led_level_v1 *r_v1 = args->response;
-	uint8_t led_level = FP_LED_HIGH;
+	uint8_t led_level = fp_brightness_levels[FP_LED_BRIGHTNESS_HIGH];
 	uint8_t als_auto;
 
 	system_get_bbram(SYSTEM_BBRAM_IDX_BIOS_FUNCTION, &als_auto);
@@ -679,16 +712,10 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 		/* HC v0 only allows setting 3 discrete levels */
 		switch (p_v0->set_led_level) {
 		case FP_LED_BRIGHTNESS_HIGH:
-			led_level = FP_LED_HIGH;
-			break;
 		case FP_LED_BRIGHTNESS_MEDIUM:
-			led_level = FP_LED_MEDIUM;
-			break;
 		case FP_LED_BRIGHTNESS_LOW:
-			led_level = FP_LED_LOW;
-			break;
 		case FP_LED_BRIGHTNESS_ULTRA_LOW:
-			led_level = FP_LED_ULTRA_LOW;
+			led_level = fp_brightness_levels[p_v0->set_led_level];
 			break;
 		/* Not used, use v1 to set custom, is only ever returned when getting */
 		case FP_LED_BRIGHTNESS_CUSTOM:

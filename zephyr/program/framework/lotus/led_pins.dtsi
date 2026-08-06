@@ -72,6 +72,7 @@
 		power_led: power-led {
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pwms = <&pwm_power_w>;
+			led-brightness = <55 40 15 8>;
 
 			color_power_off: color-power-off {
 				led-color = "LED_OFF";
