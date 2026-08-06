@@ -244,8 +244,6 @@ void auto_als_led_brightness(void)
 			led_brightness = FP_LED_HIGH;
 		else if (als_lux > FP_LED_MED_ALS_THRESH)
 			led_brightness = FP_LED_MEDIUM;
-		else if (als_lux > FP_LED_MED_LOW_ALS_THRESH)
-			led_brightness = FP_LED_MEDIUM_LOW;
 		else if (als_lux > FP_LED_LOW_ALS_THRESH)
 			led_brightness = FP_LED_LOW;
 		else
