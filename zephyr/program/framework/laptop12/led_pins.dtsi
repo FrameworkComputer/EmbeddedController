@@ -25,7 +25,7 @@
 	};
 
 	pwm-led-pins {
-		compatible = "cros-ec,pwm-led-pins";
+		compatible = "cros-ec,fwk-pwm-led-pins";
 
 		battery_led: battery-led {
 			led-id = "EC_LED_ID_BATTERY_LED";

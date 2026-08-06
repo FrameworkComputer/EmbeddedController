@@ -5,7 +5,7 @@
  * PWM LED control.
  */
 
-#define DT_DRV_COMPAT cros_ec_pwm_led_pins
+#define DT_DRV_COMPAT cros_ec_fwk_pwm_led_pins
 
 #include "ec_commands.h"
 #include "hooks.h"

@@ -1,0 +1,76 @@
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: PWM LED pins parent node
+
+compatible: "cros-ec,fwk-pwm-led-pins"
+
+child-binding:
+  description: |
+    Each child node describes all the PWM pins that need to be altered to set
+    the color of a specific LED.
+    e.g. For a battery LED, a node looks like this.
+    battery_led: battery-led {
+                 led-id = "EC_LED_ID_BATTERY_LED";
+                 led-pwms = <&pwm_led_y &pwm_led_b>;
+                };
+  properties:
+    led-id:
+      type: string
+      required: true
+      description: |
+        This property is required by the EC_CMD_LED_CONTROL host command.
+        It must match the enum names defined in ec_commands.h.
+      enum:
+        - EC_LED_ID_BATTERY_LED
+        - EC_LED_ID_POWER_LED
+        - EC_LED_ID_ADAPTER_LED
+        - EC_LED_ID_LEFT_LED
+        - EC_LED_ID_RIGHT_LED
+        - EC_LED_ID_RECOVERY_HW_REINIT_LED
+        - EC_LED_ID_SYSRQ_DEBUG_LED
+        - EC_LED_ID_SECOND_POWER_LED
+    led-pwms:
+      type: phandles
+      required: true
+      description: |
+        This property is used to specify an array of pwms to set a
+        particular color.
+    led-brightness:
+        type: array
+        description: |
+          Array of 4 LED brightness levels (0-100) corresponding to
+          different BIOS setup menu selections for FP LED. The LED levels
+          follows the enum fp_led_brightness_level
+
+  child-binding:
+    description: |
+      Each grandchild node describes all the colors supported by the child LED.
+      e.g. For blue and amber PWM channels, in order to set color amber, a node
+      looks like this where 100 is PWM duty cycle in percentage.
+      color-amber {
+                   led-color = <LED_AMBER>;
+                   led-values = <100 0>;
+                  };
+    properties:
+      led-color:
+        type: string
+        required: true
+        description: |
+          This property is used to identify pin nodes based on color enum.
+          It is required by the EC_CMD_LED_CONTROL host command.
+        enum:
+          - LED_OFF
+          - LED_RED
+          - LED_GREEN
+          - LED_BLUE
+          - LED_YELLOW
+          - LED_WHITE
+          - LED_AMBER
+      led-values:
+        type: array
+        required: true
+        description: |
+          This property is used to specify an array of values to set on the
+          corresponding pwm-pins to set a particular color.
