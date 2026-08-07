@@ -470,8 +470,15 @@ int charge_request(bool use_curr, bool is_full)
 		 */
 		voltage = charger_closest_voltage(
 			curr.batt.voltage + charger_get_info()->voltage_step);
-		/* If the battery is full, request the max voltage. */
-		if (is_full)
+		/*
+		 * If the battery is full, request the max voltage.
+		 *
+		 * Do the same when the sustainer is deliberately holding the
+		 * battery at a charge limit. The intent in
+		 * IDLE is the same as when full: hold, don't charge, and don't
+		 * let the battery back-feed the system.
+		 */
+		if (is_full || get_chg_ctrl_mode() == CHARGE_CONTROL_IDLE)
 			voltage = battery_get_info()->voltage_max;
 		/* And handle dead battery case */
 		voltage = MAX(voltage, battery_get_info()->voltage_normal);
