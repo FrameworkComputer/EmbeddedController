@@ -46,3 +46,7 @@ flash.bin
 # Random binaries that don't build in the build dir
 util/cq-excludes/cq-excludes
 extra/touchpad_updater/touchpad_updater
+
+# Nix
+result
+result-*
