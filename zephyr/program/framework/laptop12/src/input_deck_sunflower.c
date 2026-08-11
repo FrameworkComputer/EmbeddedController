@@ -290,6 +290,11 @@ static bool is_bios_mode(void)
 	return !(*(host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS)) & BIT(0));
 }
 
+/* ------------------------------------------------------------------------ */
+
+/* consumer control configuration, mapped to non-fn F12 (matches dahlia deck) */
+#define HID_USAGEID_AL_CCC 0x0183u
+
 /* media keys */
 static int input_deck_sunflower_hotkey_F1_F12(uint16_t *key_code, uint16_t fn, int8_t pressed)
 {
@@ -363,8 +368,10 @@ static int input_deck_sunflower_hotkey_F1_F12(uint16_t *key_code, uint16_t fn, i
 			*key_code = 0xE07C;
 		break;
 	case SCANCODE_F12:  /* Framework logo key */
-		if (fn_table_media_set(pressed, KB_FN_F12))
-			*key_code = 0xE050;
+		if (fn_table_media_set(pressed, KB_FN_F12)) {
+			hid_consumer(HID_USAGEID_AL_CCC, pressed);
+			return EC_ERROR_UNIMPLEMENTED;
+		}
 		break;
 	default:
 		return EC_SUCCESS;
