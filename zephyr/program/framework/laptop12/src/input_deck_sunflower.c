@@ -284,6 +284,12 @@ static void input_deck_sunflower_load_settings(void)
 
 /* ------------------------------------------------------------------------ */
 
+/* common hack to check if we are pre-OS */
+static bool is_bios_mode(void)
+{
+	return !(*(host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS)) & BIT(0));
+}
+
 /* media keys */
 static int input_deck_sunflower_hotkey_F1_F12(uint16_t *key_code, uint16_t fn, int8_t pressed)
 {
@@ -495,7 +501,7 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code, int8_t presse
 	}
 
 	/* If still in preOS, pass through everything unmodified. */
-	if (!*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & BIT(0))
+	if (is_bios_mode())
 		return EC_SUCCESS;
 
 	r = copilot_key(make_code, pressed);
