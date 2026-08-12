@@ -688,8 +688,6 @@ static void input_deck_dahlia_process_keyboard_report(uint8_t *const data, size_
 /* Brightness (0x006F/0x0070) are consumer reports for Win11 */
 #define HID_USAGEID_BRIGHTNESS_DECREASE 0x006fu
 #define HID_USAGEID_BRIGHTNESS_INCREASE 0x0070u
-/* consumer control configuration, mapped to non-fn F12 */
-#define HID_USAGEID_AL_CCC 0x0183u
 
 /*
  * Translate HID Consumer Page usage codes to PS/2 scancodes.

@@ -292,9 +292,6 @@ static bool is_bios_mode(void)
 
 /* ------------------------------------------------------------------------ */
 
-/* consumer control configuration, mapped to non-fn F12 (matches dahlia deck) */
-#define HID_USAGEID_AL_CCC 0x0183u
-
 /* media keys */
 static int input_deck_sunflower_hotkey_F1_F12(uint16_t *key_code, uint16_t fn, int8_t pressed)
 {

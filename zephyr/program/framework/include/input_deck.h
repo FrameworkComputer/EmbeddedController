@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include "gpio_signal.h"
 
+/* Consumer Control Configuration, mapped to non-fn F12 */
+#define HID_USAGEID_AL_CCC 0x0183u
+
 struct input_deck {
 	/* Enable power (S5 -> S3) */
 	void (*power_on)(void);
