@@ -162,3 +162,8 @@ enum framework_battery_type board_get_battery_type(void)
 
 	return FWK_BATT_UNKNOWN;
 }
+
+bool is_acpi_driver_ready(void)
+{
+	return *(host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS)) & ACPI_DRIVER_READY;
+}

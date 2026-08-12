@@ -53,4 +53,10 @@ enum framework_battery_type board_get_battery_type(void);
  */
 void chassis_disable_enter_hibernate(void);
 
+/**
+ * Check if ACPI has started executing and notified us via the memmap.
+ * This means we have exited BIOS and entered the OS.
+ */
+bool is_acpi_driver_ready(void);
+
 #endif	/* __CROS_EC_BOARD_FUNCTION_H */

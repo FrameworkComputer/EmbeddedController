@@ -9,6 +9,7 @@
  * and STM32 bootloader / firmware-flash console commands.
  */
 
+#include "board_function.h"
 #include "board_host_command.h"
 #include "chipset.h"
 #include "common.h"
@@ -519,14 +520,6 @@ static void input_deck_dahlia_inject_key(uint8_t hid_usage, uint8_t modifiers, b
 
 /* ------------------------------------------------------------------------- */
 
-/* common hack to check if we are pre-OS */
-static bool is_bios_mode(void)
-{
-	return !(*(host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS)) & BIT(0));
-}
-
-/* ------------------------------------------------------------------------- */
-
 /* helper to be able to find differences of pressed keys between events */
 static bool is_key_in_array(uint8_t usage, const uint8_t *arr, size_t len)
 {
@@ -607,7 +600,7 @@ static void input_deck_dahlia_process_keyboard_report(uint8_t *const data, size_
 	uint8_t *keys = data + 2;
 	unsigned int num_keys = len > HID_KBD_MAX_KEYS+2u ? len-2u : HID_KBD_MAX_KEYS;
 
-	if (is_bios_mode()) {
+	if (!is_acpi_driver_ready()) {
 		/* map display/airplane mode to F9/F10/F11 for BIOS */
 		for (int i = 0; i < num_keys; i++) {
 			if (keys[i] == HID_USAGEID_P && (mods & HID_MOD_LGUI)) {
@@ -696,7 +689,7 @@ static void input_deck_dahlia_process_keyboard_report(uint8_t *const data, size_
 static uint16_t input_deck_dahlia_consumer_usage_to_scancode(uint16_t usage)
 {
 	/* note: this uses PS2 scancodes, not HID */
-	if (!is_bios_mode()) {
+	if (is_acpi_driver_ready()) {
 		switch (usage) {
 		case HID_USAGEID_MUTE:                return SCANCODE_VOLUME_MUTE;
 		case HID_USAGEID_VOLUME_DECREASE:     return SCANCODE_VOLUME_DOWN;
