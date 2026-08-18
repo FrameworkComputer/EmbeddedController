@@ -28,7 +28,7 @@ jobs:
           # Just for reference, not releasing from this branch
           { name: sakura, folder: lotus, ver: "0.0.0", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           { name: tulip, folder: lotus, ver: "0.0.0", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
-          { name: sunflower, folder: lotus, ver: "3.0.8", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
+          { name: sunflower, folder: lotus, ver: "3.0.9", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           { name: marigold, folder: lotus, ver: "0.0.0", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           { name: lotus, folder: lotus, ver: "0.0.0", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
           { name: azalea, folder: lotus, ver: "0.0.0", sha_len: 7, zephyr_ref: "fwk-main", cmsis_ref: "cros/chromeos-main", remote: "fwk" },
