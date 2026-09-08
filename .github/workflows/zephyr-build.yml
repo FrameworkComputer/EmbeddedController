@@ -48,10 +48,10 @@ jobs:
       - name: Manual checkout
         run: |
           pushd src/platform/ec
-          git fetch ${{ matrix.platform.remote }}
+          # Fetch and build the exact commit that triggered this run.
+          git fetch ${{ matrix.platform.remote }} "$GITHUB_SHA" || git fetch ${{ matrix.platform.remote }}
           git clean -ffdx
-          # TODO: Doesn't work with on PR, only push
-          git reset --hard ${{ matrix.platform.remote }}/$GITHUB_REF_NAME
+          git reset --hard "$GITHUB_SHA"
           popd
 
           pushd src/third_party/zephyr/main
