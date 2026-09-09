@@ -6,6 +6,13 @@
 #ifndef __CROS_EC_INTEL_CPU_POWER_INTERFACE_H
 #define __CROS_EC_INTEL_CPU_POWER_INTERFACE_H
 
+
+/*
+ * Tau formula: Time Window (ms) ≈ (1 + F / 4) * (2 ^ Y) * 0.9765625 ms.
+ *   - F (Mantissa) : Bits [23:22] (2-bit, range 0~3)
+ *   - Y (Exponent) : Bits [21:17] (5-bit, range 0~31)
+ */
+
 /******************** Tau Value (TimeWindow)*************************************
  * 0.5sec: 0x1; 0.6sec : 0x52, 0.7sec: 0x92; 0.8sec : 0xD2
  * 1sec: 0x14;  1.25sec: 0x54; 1.5sec: 0x94; 1.75sec: 0xD4
@@ -16,7 +23,7 @@
  * 32sec: 0x1E; 40sec  : 0x5E; 48sec : 0x9E; 56sec  : 0xDE
  *******************************************************************************/
 #define TIME_WINDOW_PL1		0xDC
-#define TIME_WINDOW_PL2		0xDC
+#define TIME_WINDOW_PL2		0x00        /* 1ms */
 #define TIME_WINDOW_PSYSPL2		0xDC
 
 /******************** PL3 TimeWindow *******************************************
