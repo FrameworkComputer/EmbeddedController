@@ -159,8 +159,14 @@ void board_kblight_init(void)
 	uint8_t current_kblight = 0;
 
 	if (system_get_bbram(SYSTEM_BBRAM_IDX_KBSTATE, &current_kblight) == EC_SUCCESS) {
-		kblight_set(current_kblight & 0x7F);
-		if (current_kblight == KEYBOARD_BL_BRIGHTNESS_AUTO)
+		kblight_set(current_kblight & KB_BRIGHTNESS_MASK);
+		/*
+		 * Mask off KB_FN_LOCKED before comparing: fnkey_shutdown()
+		 * packs the Fn-lock flag into bit 7 of this same byte, so an
+		 * unmasked compare never matches once Fn lock has been used.
+		 */
+		if ((current_kblight & KB_BRIGHTNESS_MASK) ==
+		    KEYBOARD_BL_BRIGHTNESS_AUTO)
 			kb_als_auto_brightness = true;
 	}
 }
