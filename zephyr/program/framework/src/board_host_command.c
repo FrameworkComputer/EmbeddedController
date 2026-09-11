@@ -333,33 +333,6 @@ static enum ec_status standalone_mode(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_STANDALONE_MODE, standalone_mode, EC_VER_MASK(0));
 #endif
 
-static enum ec_status  host_command_get_simple_version(struct host_cmd_handler_args *args)
-{
-	struct ec_response_get_custom_version *r = args->response;
-	char temp_version[32] = {0};
-	int idx;
-	int shift = CONFIG_PLATFORM_SIMPLE_VERSION_SHIFT_IDX;
-	enum ec_image active_slot;
-
-	if (system_get_image_copy() == EC_IMAGE_RO)
-		active_slot = EC_IMAGE_RO;
-	else
-		active_slot = system_get_active_copy();
-
-	strzcpy(temp_version, system_get_version(active_slot),
-		sizeof(temp_version));
-
-	memset(r->simple_version, '\0', sizeof(r->simple_version));
-	for (idx = 0; idx < MIN(sizeof(r->simple_version), sizeof(temp_version) - shift); idx++) {
-		r->simple_version[idx] = temp_version[idx + shift];
-	}
-
-	args->response_size = sizeof(*r);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_GET_SIMPLE_VERSION, host_command_get_simple_version, EC_VER_MASK(0));
-
 static enum ec_status get_active_charge_pd_chip(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_active_charge_pd_chip *r = args->response;

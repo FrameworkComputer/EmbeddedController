@@ -205,13 +205,6 @@ config CCG_DEINIT_PORT_REG
 	default 0x0042 if CHIPSET_AMD
 	default 0x004E if CHIPSET_INTEL
 
-config PLATFORM_SIMPLE_VERSION_SHIFT_IDX
-	int "Shift idx for return commit id to BIOS"
-	default 18
-	help
-		The simple version will take commit from EC_IMAGE_RO, than we should shift
-		idx for retrieve commit id from, for example "marigold-1.00-7f2d422" (15 shift)
-
 config PLATFORM_MULTI_LED_FREQ
 	int "set the framework multifunction led flash frequency"
 	default 1000

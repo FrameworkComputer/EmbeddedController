@@ -22,7 +22,7 @@ Framework specific host commands:
 | EC_CMD_PRIVACY_SWITCHES_CHECK_MODE | 0x3E14 | Yes   | Yes    | Yes              |
 | EC_CMD_CHASSIS_COUNTER             | 0x3E15 |       |        | Yes              |
 | EC_CMD_CHECK_DECK_STATE            | 0x3E16 | Yes   | No     | Yes              |
-| EC_CMD_GET_SIMPLE_VERSION          | 0x3E17 | Yes   | Yes    | No               |
+| EC_CMD_GET_SIMPLE_VERSION          | 0x3E17 | No    | No     | no               |
 | EC_CMD_GET_ACTIVE_CHARGE_PD_CHIP   | 0x3E18 |       |        | Yes              |
 | EC_CMD_UEFI_APP_MODE               | 0x3E19 |       |        | Yes              |
 | EC_CMD_UEFI_APP_BTN_STATUS         | 0x3E1A |       |        | Yes              |
@@ -61,9 +61,6 @@ Camera:     Disconnected
 $ sudo ./build/host/util/ectool privswitches
 Microphone: Connected
 Camera:     Disconnected
-
-$ sudo ./build/host/util/ectool simpleversion
-e9662c
 
 $ sudo ./build/host/util/ectool pdversion
 PD 1 Version

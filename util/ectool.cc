@@ -6413,24 +6413,6 @@ int cmd_chassis_open_check(int argc, char *argv[])
 	return rv;
 }
 
-int cmd_simpleversion(int argc, char *argv[])
-{
-	struct ec_response_get_custom_version r;
-
-	int rv = ec_command(EC_CMD_GET_SIMPLE_VERSION, 0, NULL, 0, &r,
-			sizeof(r));
-
-	if (rv > 0) {
-		/* Make sure that we print from a NULL-terminated string */
-		char ver[sizeof(r.simple_version) + 1] = { '\0' };
-		strncpy(ver, r.simple_version, sizeof(r.simple_version));
-
-		printf("%s\n", ver);
-	}
-
-	return rv;
-}
-
 int cmd_privswitches(int argc, char *argv[])
 {
 	struct ec_response_privacy_switches_check r;
@@ -13186,7 +13168,6 @@ const struct command commands[] = {
 	  "[enable | disable]\n"
 	  "\tEnable or disable PS2 mouse emulation." },
 	{ "chassisopen", cmd_chassis_open_check, "\n\tPrints whether or not the chassis is currently open." },
-	{ "simpleversion", cmd_simpleversion, "\n\tPrints a simple version string of the EC firmware." },
 	{ "privswitches", cmd_privswitches, "\n\tPrints the status of the camera/microphone privacy switches." },
 	{ "intrusion", cmd_intrusion, "\n\tPrints the status and history of the intrusion switch." },
 	{ "apthrottle", cmd_apthrottle, "\n\tPrints the AP throttle status." },

@@ -393,12 +393,12 @@ struct ec_response_deck_state {
 /*****************************************************************************/
 /*
  * This command returns the simple ec version.
+ *
+ * This command is not implemented anymore.
+ * It was previously used on hx20/hx30/lotus/azalea.
+ * Use EC_CMD_GET_VERSION instead.
  */
-#define EC_CMD_GET_SIMPLE_VERSION	0x3E17
-
-struct ec_response_get_custom_version {
-	char simple_version[9];
-} __ec_align4;
+#define EC_CMD_GET_SIMPLE_VERSION      0x3E17
 
 /*****************************************************************************/
 /*
