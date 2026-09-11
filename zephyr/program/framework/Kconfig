@@ -318,3 +318,15 @@ module-str = FRAMEWORK board-specific code
 source "subsys/logging/Kconfig.template.log_config"
 
 source "Kconfig.zephyr"
+
+config PLATFORM_EC_FRAMEWORK_FNLOCK_CAPS_LED
+	bool "Show Fn lock on the Caps Lock key LED"
+	depends on PLATFORM_EC_FRAMEWORK_LAPTOP_13
+	help
+	  Drive the Caps Lock key's LED from the Fn-lock state (toggled with
+	  Fn+Esc) instead of from Caps Lock. The EC does not expose Fn-lock
+	  state to the host, so this is the only way to see it without
+	  guessing. Caps Lock has no indicator when this is enabled.
+
+	  The LED keeps the stock blanking rules: dark with the lid closed
+	  and outside S0.
