@@ -159,11 +159,21 @@ void board_kblight_init(void)
 	uint8_t current_kblight = 0;
 
 	if (system_get_bbram(SYSTEM_BBRAM_IDX_KBSTATE, &current_kblight) == EC_SUCCESS) {
-		kblight_set(current_kblight & 0x7F);
-		if (current_kblight == KEYBOARD_BL_BRIGHTNESS_AUTO)
+		kblight_set(current_kblight & KB_BRIGHTNESS_MASK);
+		/*
+		 * Mask off KB_FN_LOCKED before comparing: fnkey_shutdown()
+		 * packs the Fn-lock flag into bit 7 of this same byte, so an
+		 * unmasked compare never matches once Fn lock has been used.
+		 */
+		if ((current_kblight & KB_BRIGHTNESS_MASK) ==
+		    KEYBOARD_BL_BRIGHTNESS_AUTO)
 			kb_als_auto_brightness = true;
 	}
 }
+
+#define FN_PRESSED BIT(0)
+#define FN_LOCKED BIT(1)
+static uint8_t Fn_key;
 
 int caps_status_check(void)
 {
@@ -172,32 +182,43 @@ int caps_status_check(void)
 
 void board_caps_led_control(int data)
 {
-	if (data & CAPS_LED) {
-		caps_led_status = 1;
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cap_led), 1);
-	} else {
-		caps_led_status = 0;
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cap_led), 0);
-	}
+	/* Host 8042 LED command; see common/keyboard_8042.c. */
+	caps_led_status = (data & CAPS_LED) ? 1 : 0;
+
+#ifndef CONFIG_PLATFORM_EC_FRAMEWORK_FNLOCK_CAPS_LED
+	/* Boards keeping stock behaviour drive the LED straight from here. */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cap_led), caps_led_status);
+#endif
 }
 
+/*
+ * With CONFIG_PLATFORM_EC_FRAMEWORK_FNLOCK_CAPS_LED, lit means the F1-F12 row emits F1-F12 directly.
+ *
+ * Note this is also what restores the LED on boot: HOOK_CHIPSET_STARTUP runs
+ * while power_get_state() is still POWER_S5S3, which the gating below rejects,
+ * so the Fn-lock state recovered from BBRAM only becomes visible when
+ * HOOK_CHIPSET_RESUME fires at POWER_S3S0. Do not narrow that state set
+ * without revisiting boot-time restore.
+ */
 static void keyboard_caps_led_update(void)
 {
 	enum power_state ps = power_get_state();
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_FNLOCK_CAPS_LED
+	int on = !!(Fn_key & FN_LOCKED);
+#else
+	int on = caps_led_status;
+#endif
 
 	if (!lid_is_open() || !(ps == POWER_S0ixS0 || ps == POWER_S0 || ps == POWER_S3S0))
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cap_led), 0);
-	else
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cap_led), caps_led_status);
+		on = 0;
+
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cap_led), on);
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, keyboard_caps_led_update, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, keyboard_caps_led_update, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, keyboard_caps_led_update, HOOK_PRIO_DEFAULT);
 
 
-#define FN_PRESSED BIT(0)
-#define FN_LOCKED BIT(1)
-static uint8_t Fn_key;
 static uint32_t fn_key_table_media;
 static uint32_t fn_key_table;
 
@@ -227,7 +248,13 @@ int fn_table_set(int8_t pressed, uint32_t fn_bit)
 	return false;
 }
 
-void fnkey_shutdown(void)
+/*
+ * Persist backlight brightness plus the Fn-lock flag into one BBRAM byte.
+ * Called at shutdown and on every Fn-lock toggle, so the state survives an
+ * unclean power loss instead of reverting to whatever the last clean shutdown
+ * stored -- which would leave the indicator confidently wrong.
+ */
+static void fnkey_save_kbstate(void)
 {
 	uint8_t current_kb = 0;
 
@@ -236,10 +263,15 @@ void fnkey_shutdown(void)
 	else
 		current_kb |= kblight_get() & KB_BRIGHTNESS_MASK;
 
-	if (Fn_key & FN_LOCKED) {
+	if (Fn_key & FN_LOCKED)
 		current_kb |= KB_FN_LOCKED;
-	}
+
 	system_set_bbram(SYSTEM_BBRAM_IDX_KBSTATE, current_kb);
+}
+
+void fnkey_shutdown(void)
+{
+	fnkey_save_kbstate();
 
 	Fn_key &= ~FN_LOCKED;
 	Fn_key &= ~FN_PRESSED;
@@ -399,6 +431,10 @@ int functional_hotkey(uint16_t *key_code, int8_t pressed)
 					Fn_key &= ~FN_LOCKED;
 				else
 					Fn_key |= FN_LOCKED;
+				fnkey_save_kbstate();
+#ifdef CONFIG_PLATFORM_EC_FRAMEWORK_FNLOCK_CAPS_LED
+				keyboard_caps_led_update();
+#endif
 			}
 			return EC_ERROR_UNIMPLEMENTED;
 		}
