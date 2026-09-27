@@ -7,6 +7,7 @@ It is a downstream fork of the Chrome EC firmware used by Chromebooks: https://c
 | System    | CPU                       | EC codename | Branch                 | Zephyr |
 |-----------|---------------------------|-------------|------------------------|--------|
 | Laptop 12 | 13th Gen Intel Core       | sunflower   | fwk-sunflower-26784    | Yes    |
+| Laptop 12 | Intel Core Series 3       | dahlia      | TBD                    | Yes    |
 | Laptop 13 | 11th Gen Intel Core       | hx20        | fwk-hx20-hx30-4410     | No     |
 | Laptop 13 | 12th Gen Intel Core       | hx30        | fwk-hx20-hx30-4410     | No     |
 | Laptop 13 | 13th Gen Intel Core       | hx30        | fwk-hx20-hx30-4410     | No     |
