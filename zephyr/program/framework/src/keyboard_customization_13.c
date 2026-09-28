@@ -504,20 +504,19 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 		return EC_ERROR_UNIMPLEMENTED;
 	}
 
-	/*
-	 * If the system still in preOS then we pass through all events without
-	 * modifying them so that F2/F12 hotkeys can work even with fn-lock
-	 */
-	if (!(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & ACPI_DRIVER_READY))
-		return EC_SUCCESS;
-
 	r = copilot_key(make_code, pressed);
 	if (r != EC_SUCCESS)
 		return r;
 
-	r = hotkey_F1_F12(make_code, Fn_key, pressed);
-	if (r != EC_SUCCESS)
-		return r;
+	/*
+	 * In preOS F1-F12 are never media keys, so that F2/F12 BIOS hotkeys
+	 * work even with fn-lock
+	 */
+	if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & ACPI_DRIVER_READY) {
+		r = hotkey_F1_F12(make_code, Fn_key, pressed);
+		if (r != EC_SUCCESS)
+			return r;
+	}
 	/*
 	 * If the function key is not held then
 	 * we pass through all events without modifying them
