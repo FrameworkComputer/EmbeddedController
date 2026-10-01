@@ -1399,9 +1399,9 @@ void cypd_update_port_state(int controller, int port)
 {
 	int rv;
 	uint8_t pd_status_reg[4];
-	uint32_t pdo_reg;
+	uint32_t pdo_reg = 0;
 	uint8_t rdo_reg[4];
-	int typec_status_reg;
+	int typec_status_reg = 0;
 	int pd_current = 0;
 	int pd_voltage = 0;
 	int rdo_operating_current = 0;
@@ -1456,14 +1456,21 @@ void cypd_update_port_state(int controller, int port)
 #endif
 
 	rv = cypd_read_reg_block(controller, CCG_CURRENT_PDO_REG(port), &pdo_reg, 4);
+	if (rv != EC_SUCCESS) {
+		CPRINTS("CCG_CURRENT_PDO_REG failed");
+		pdo_reg = 0;
+	}
 	switch (pdo_reg & PDO_TYPE_MASK) {
 		case PDO_TYPE_FIXED:
 			pd_current = PDO_FIXED_CURRENT(pdo_reg);
 			pd_voltage = PDO_FIXED_VOLTAGE(pdo_reg);
 			break;
 		case PDO_TYPE_BATTERY:
-			pd_current = PDO_BATT_MAX_POWER(pdo_reg)/PDO_BATT_MAX_VOLTAGE(pdo_reg);
 			pd_voltage = PDO_BATT_MIN_VOLTAGE(pdo_reg);
+			/* A malformed PDO must not divide by zero */
+			if (PDO_BATT_MAX_VOLTAGE(pdo_reg) != 0)
+				pd_current = PDO_BATT_MAX_POWER(pdo_reg) /
+					PDO_BATT_MAX_VOLTAGE(pdo_reg);
 		break;
 		case PDO_TYPE_VARIABLE:
 			pd_current = PDO_VAR_MAX_CURRENT(pdo_reg);
