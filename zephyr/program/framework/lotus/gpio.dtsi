@@ -6,6 +6,7 @@
 / {
 	aliases {
 		gpio-check-fp-control = &gpio_fp_control;
+		gpio-throttle-ap = &gpio_h_prochot_l;
 	};
 
 	named-gpios {
