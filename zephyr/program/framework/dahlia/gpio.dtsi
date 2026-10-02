@@ -7,6 +7,7 @@
 
 	aliases {
 		gpio-mux-uart-flip = &gpio_mux_sub_uart_flip;
+		gpio-throttle-ap = &gpio_h_prochot_l;
 
 		/* Enable peci interface */
 		peci-0 = &peci0;
