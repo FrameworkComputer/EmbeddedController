@@ -8,6 +8,7 @@
 	aliases {
 		gpio-check-fp-control = &gpio_fp_control;
 		gpio-mux-uart-flip = &gpio_mux_sub_uart_flip;
+		gpio-throttle-ap = &gpio_h_prochot_l;
 
 		/* enable peci interface */
 		peci-0 = &peci0;
