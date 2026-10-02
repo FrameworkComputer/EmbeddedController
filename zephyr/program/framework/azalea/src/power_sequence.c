@@ -609,9 +609,3 @@ static void peripheral_power_suspend(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sm_panel_bken_ec), 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, peripheral_power_suspend, HOOK_PRIO_DEFAULT);
-
-void chipset_throttle_cpu(int throttle)
-{
-	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), !throttle);
-}
