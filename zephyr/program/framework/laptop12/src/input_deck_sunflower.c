@@ -140,7 +140,8 @@ static const struct gpio_dt_spec sunflower_input_deck_lock_led =
 #define CAPS_KEY_DISABLE	BIT(3)
 #define CAPS_KEYBOARD_DISCONNECT BIT(4)
 
-static uint8_t caps_led_off; /* can be treated as bool */
+/* caps lock is off until the host sets it with an 8042 SETLEDS command */
+static uint8_t caps_led_off = CAPS_KEY_DISABLE; /* can be treated as bool */
 
 /* updates led status (blinks the led) */
 static void caps_led_refresh(void)
@@ -530,6 +531,9 @@ static bool input_deck_sunflower_keyscan_initialized;
 
 static void input_deck_sunflower_power_on(void)
 {
+	/* don't carry the caps lock state of the previous boot into the BIOS */
+	caps_led_off |= CAPS_KEY_DISABLE;
+
 	input_deck_sunflower_load_settings();
 
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_3v_tp), 1);
