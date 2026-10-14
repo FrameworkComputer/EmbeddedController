@@ -27,10 +27,11 @@
 #include "temperature_filter.h"
 
 
-
+/* initialize to 30C, for example when powering on or resuming */
 void thermal_filter_reset(struct biquad *filter)
 {
-	memset(&filter->state, 30 << IN_SCALE, sizeof(filter->state));
+	for (size_t i = 0; i < ARRAY_SIZE(filter->state); i++)
+		filter->state[i] = 30 << IN_SCALE;
 }
 
 int thermal_filter_update(struct biquad *filter, int value)
