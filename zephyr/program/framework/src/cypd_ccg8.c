@@ -583,6 +583,8 @@ static void buck_ready_for_epr(void)
 
 	/* Retry mechanism */
 	if (++epr_buck_ctx.retry_count > 4) {
+		int charge_port = get_active_charge_pd_port();
+
 		if (is_enter_epr) {
 			CPRINTS("3Level-Buck enter epr failed, reverting to SPR mode");
 			board_set_buck_mode(LEVEL_BUCK_SPR);
@@ -592,6 +594,16 @@ static void buck_ready_for_epr(void)
 		}
 		epr_buck_ctx.retry_count = 0;
 		epr_buck_ctx.phase = BUCK_PHASE_IDLE;
+		/* the transition ended, restore the standing contract state */
+		pd_epr_in_progress &= EPR_PROCESS_MASK;
+		update_pmf_events(BIT(PD_PROGRESS_ENTER_EPR_MODE), 0);
+		update_pmf_events(BIT(PD_PROGRESS_EXIT_EPR_MODE), 0);
+		if (charge_port != -1) {
+			int controller = PORT_TO_CONTROLLER(charge_port);
+			int port = PORT_TO_CONTROLLER_PORT(charge_port);
+
+			cypd_update_port_state(controller, port);
+		}
 		return;
 	}
 
