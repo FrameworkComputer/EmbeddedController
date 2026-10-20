@@ -2054,6 +2054,11 @@ void cypd_port_int(int controller, int port)
 	case CCG_RESPONSE_PORT_CONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_CONNECT %d", port_idx);
 		record_ucsi_connector_change_event(controller, port);
+#ifdef CONFIG_PD_CCG8_EPR
+		/* the EPR fail latch applies to the failed connection only */
+		if (pd_port_states[port_idx].epr_active == 0xff)
+			pd_port_states[port_idx].epr_active = 0;
+#endif
 		cypd_update_port_state(controller, port);
 		cypd_evaluate_port_profile(controller, port, data2[0]);
 		break;
