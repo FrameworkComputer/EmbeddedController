@@ -471,6 +471,9 @@ static void epr_flow_pending_deferred(void)
 				pd_port_states[port_idx].epr_retry_count = 0;
 				pd_port_states[port_idx].epr_support = 0;
 				pd_epr_in_progress &= EPR_PROCESS_MASK;
+				/* the transition ended, release the transition throttle */
+				update_pmf_events(BIT(PD_PROGRESS_ENTER_EPR_MODE), 0);
+				update_pmf_events(BIT(PD_PROGRESS_EXIT_EPR_MODE), 0);
 				if (charge_port != -1) {
 					int controller = PORT_TO_CONTROLLER(charge_port);
 					int port = PORT_TO_CONTROLLER_PORT(charge_port);
@@ -761,6 +764,9 @@ void cypd_update_epr_state(int controller, int port, int response_len)
 #endif
 			/* EPR fail, do not retry */
 			pd_port_states[port_idx].epr_active = 0xff;
+			/* the transition ended, release the transition throttle */
+			update_pmf_events(BIT(PD_PROGRESS_ENTER_EPR_MODE), 0);
+			update_pmf_events(BIT(PD_PROGRESS_EXIT_EPR_MODE), 0);
 		}
 	}
 
