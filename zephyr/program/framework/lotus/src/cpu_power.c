@@ -250,12 +250,21 @@ static int update_safety_power_limit(int active_mpower)
 		}
 		break;
 	case LEVEL_TYPEC_1_5A:
+		/*
+		 * typec_safety_level indexes safety_table[TYPEC_SAFETY_LEVEL_COUNT]
+		 * in cypd_update_safety_table(), so keep it in [LEVEL_0, LEVEL_3].
+		 * Unclamped, a decrease right after entering this level drove it
+		 * negative: the ladder never stepped back to LEVEL_PROCHOT, so
+		 * THROTTLE_SRC_BAT_DISCHG_CURRENT was never released.
+		 */
 		if (level_increase) {
-			typec_safety_level++;
+			if (typec_safety_level < TYPEC_SAFETY_LEVEL_3)
+				typec_safety_level++;
 			if (typec_safety_level == TYPEC_SAFETY_LEVEL_3)
 				safety_level++;
 		} else {
-			typec_safety_level--;
+			if (typec_safety_level > TYPEC_SAFETY_LEVEL_0)
+				typec_safety_level--;
 			if (typec_safety_level == TYPEC_SAFETY_LEVEL_0)
 				safety_level--;
 		}
