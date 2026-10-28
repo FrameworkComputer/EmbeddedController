@@ -41,6 +41,19 @@
       python = pkgs.python312;
       pythonPkgs = pkgs.python312Packages;
 
+      # On macOS, _libfdt.so links libfdt via @rpath but has no LC_RPATH,
+      # so importing libfdt fails with "no LC_RPATH's found"
+      libfdt = pythonPkgs.libfdt.overrideAttrs (old:
+        pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+          postFixup =
+            (old.postFixup or "")
+            + ''
+              for so in $out/lib/python*/site-packages/_libfdt*.so; do
+                install_name_tool -add_rpath $out/lib "$so"
+              done
+            '';
+        });
+
       # Bundled Python with all required packages for the build
       buildPython = python.withPackages (ps: [
         ps.pyyaml
@@ -162,12 +175,6 @@
         ];
 
         postPatch = ''
-          sed -e 's#"/bin:/usr/bin"#"/bin:/usr/bin:${pkgs.gcc}/bin:${pkgs.dtc}/bin:${pkgs.ninja}/bin"${
-            if pkgs.stdenv.hostPlatform.isDarwin
-            then '',"DYLD_LIBRARY_PATH":"${pkgs.dtc}/lib"''
-            else ""
-          }#' -i zmake/jobserver.py
-
           # Replace sys.executable with the bundled Python that has all required packages
           sed -e 's#"Python3_EXECUTABLE": sys.executable#"Python3_EXECUTABLE": "${buildPython}/bin/python3"#' -i zmake/zmake.py
         '';
@@ -187,7 +194,7 @@
         dependencies = [
           pythonPkgs.setuptools
           packages.u_boot_pylib
-          pythonPkgs.libfdt
+          libfdt
           packages.dtoc
         ];
 
@@ -216,7 +223,7 @@
 
         dependencies = [
           packages.u_boot_pylib
-          pythonPkgs.libfdt
+          libfdt
         ];
 
         # Remove libfdt from pyproject.toml dependencies since we provide it via nix
