@@ -160,16 +160,16 @@
       "locked": {
         "lastModified": 1775618330,
         "narHash": "sha256-y4MtXkvCehXKIH1mNIRSYLKU8cG3bCQkhRwY7h/CfZY=",
-        "ref": "fwk-main",
+        "ref": "fwk-sunflower-dahlia-2026-09-30",
         "rev": "8bdbcbbbe6bfecf4067379e9eae146c6d01c7f64",
         "revCount": 110860,
         "type": "git",
-        "url": "ssh://git@github.com/FrameworkComputer/zephyr-ec"
+        "url": "https://github.com/FrameworkComputer/zephyr"
       },
       "original": {
-        "ref": "fwk-main",
+        "ref": "fwk-sunflower-dahlia-2026-09-30",
         "type": "git",
-        "url": "ssh://git@github.com/FrameworkComputer/zephyr-ec"
+        "url": "https://github.com/FrameworkComputer/zephyr"
       }
     },
     "zephyr-nix": {

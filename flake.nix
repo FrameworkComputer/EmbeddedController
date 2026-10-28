@@ -15,7 +15,7 @@
     cmsis.url = git+https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis?ref=chromeos-main;
     cmsis.flake = false;
 
-    zephyr.url = git+ssh://git@github.com/FrameworkComputer/zephyr-ec?ref=fwk-main;
+    zephyr.url = git+https://github.com/FrameworkComputer/zephyr?ref=fwk-sunflower-dahlia-2026-09-30;
     zephyr.flake = false;
 
     u-boot.url = git+https://chromium.googlesource.com/chromiumos/third_party/u-boot?rev=923f25080339770806369e41767f8d0464f2b451;
