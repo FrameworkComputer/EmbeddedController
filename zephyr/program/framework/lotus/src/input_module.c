@@ -28,6 +28,7 @@ LOG_MODULE_REGISTER(inputmodule, LOG_LEVEL_INF);
 #define INPUT_MODULE_POLL_INTERVAL 10*MSEC
 #define INPUT_MODULE_POWER_ON_DELAY (300*MSEC)
 #define INPUT_MODULE_MUX_DELAY_US 2
+#define INPUT_MODULE_DISCON_DEBOUNCE (240*MSEC)
 
 int oc_count;
 int force_on;
@@ -195,6 +196,7 @@ static void poll_c_deck(void)
 {
 	static int turning_on_count;
 	static int current_adc_ch = 0;
+	static int disconnect_counter = 0;
 
 	hub_board_id[current_adc_ch] = get_hardware_id(ADC_HUB_BOARD_ID);
 	current_adc_ch = (current_adc_ch + 1) % 8;
@@ -224,6 +226,7 @@ static void poll_c_deck(void)
 			turning_on_count > (INPUT_MODULE_POWER_ON_DELAY / (INPUT_MODULE_POLL_INTERVAL*8))) {
 			enable_touchpad_emulate(0);
 			inputdeck_set_power(true);
+			disconnect_counter = 0;
 			deck_state = DECK_ON;
 			LOG_INF("Input modules on");
 		} else if (hub_board_id[TOUCHPAD] != INPUT_MODULE_TOUCHPAD) {
@@ -236,6 +239,15 @@ static void poll_c_deck(void)
 		 * if lid is closed input modules cannot be removed
 		 */
 		if (!input_deck_is_fully_populated()) {
+			++disconnect_counter;
+			LOG_DBG("Deck not populated. Debounce counter at %d",
+				disconnect_counter);
+		} else {
+			disconnect_counter = 0;
+		}
+
+		if (disconnect_counter > (INPUT_MODULE_DISCON_DEBOUNCE /
+					  (INPUT_MODULE_POLL_INTERVAL*8))) {
 			inputdeck_set_power(false);
 			/* enable TP emulation */
 			enable_touchpad_emulate(1);
