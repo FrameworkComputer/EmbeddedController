@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_DRIVER_CHARGER_ISL9241_PUBLIC_H
 #define __CROS_EC_DRIVER_CHARGER_ISL9241_PUBLIC_H
 
+#include <stdbool.h>
+
 #define ISL9241_ADDR_FLAGS 0x09
 
 /* Default minimum VIN voltage controlled by ISL9241_REG_VIN_VOLTAGE */
