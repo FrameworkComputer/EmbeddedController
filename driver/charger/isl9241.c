@@ -911,15 +911,27 @@ static enum ec_error_list isl9241_nvdc_to_bypass(int chgnum)
 		if (_get_vsys_voltage(chgnum, 0, &vsys)) {
 			CPRINTS("Aborting bypass mode. Vsys is unknown.");
 			rv = EC_ERROR_UNKNOWN;
-			goto unlock_control3;
+			break;
 		}
 		if (timestamp_expired(deadline, NULL)) {
 			CPRINTS("Aborting bypass mode. Vsys too low (%d < %d)",
 				vsys, vsys_target);
 			rv = EC_ERROR_TIMEOUT;
-			goto unlock_control3;
+			break;
 		}
 	} while (vsys < vsys_target - 256);
+
+	if (rv) {
+		/*
+		 * Undo step 7. The caller's rollback to NVDC does not touch
+		 * BGATE, so the battery would stay disconnected and never
+		 * charge until the charger is re-initialized or a later
+		 * bypass entry succeeds.
+		 */
+		isl9241_update(chgnum, ISL9241_REG_CONTROL1,
+			       ISL9241_CONTROL1_BGATE_OFF, MASK_CLR);
+		goto unlock_control3;
+	}
 
 	/* 10*: Turn on Bypass gate */
 	isl9241_update(chgnum, ISL9241_REG_CONTROL0,
