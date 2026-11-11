@@ -15,7 +15,7 @@
     cmsis.url = git+https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis?rev=b45330c9efcf435003113ea14ba2c0fae407b0fa;
     cmsis.flake = false;
 
-    zephyr.url = github:FrameworkComputer/zephyr?ref=fwk-lilac-27116&name=zephyr;
+    zephyr.url = github:FrameworkComputer/zephyr/e414f3a266c2c83ef7fbde738cbe1990c12e11d6;
     zephyr.flake = false;
 
     u-boot.url = git+https://chromium.googlesource.com/chromiumos/third_party/u-boot?ref=chromeos-v2023.10-next;

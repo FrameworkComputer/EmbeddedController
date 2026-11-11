@@ -137,17 +137,17 @@
     "zephyr": {
       "flake": false,
       "locked": {
-        "lastModified": 1738719745,
-        "narHash": "sha256-WaCqpAU2jBMExLCQBuPhigCvsbwqYDxu3KEmGApph4M=",
+        "lastModified": 1753413996,
+        "narHash": "sha256-B7cuFCpxHpoIeFp4LuHiPJ+d7GBbiBRz7415N12trG0=",
         "owner": "FrameworkComputer",
         "repo": "zephyr",
-        "rev": "2c68912bd13ebf12d4a6af55c8252aaf6756dec3",
+        "rev": "e414f3a266c2c83ef7fbde738cbe1990c12e11d6",
         "type": "github"
       },
       "original": {
         "owner": "FrameworkComputer",
-        "ref": "fwk-lilac-27116",
         "repo": "zephyr",
+        "rev": "e414f3a266c2c83ef7fbde738cbe1990c12e11d6",
         "type": "github"
       }
     },
