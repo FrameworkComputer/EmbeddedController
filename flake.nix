@@ -1,3 +1,8 @@
+# Build a single platform: nix build .#lilac
+# Build multiple platforms: nix build .#lilac .#lotus
+# Build all platforms: nix build
+# Enter dev shell: nix develop
+# Incremental build: nix develop -c bash -c 'zmake build lilac'
 {
   description = "Framework Laptop Embedded Controller (EC) build environment";
 
@@ -29,10 +34,22 @@
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = import nixpkgs {inherit system;};
 
-      zephyr-sdk = zephyr-nix.packages.${system}.sdk-0_16.override {targets = ["arm-zephyr-eabi"];};
+      zephyr-sdk = zephyr-nix.packages.${system}.sdk-0_16.override {
+        targets = ["arm-zephyr-eabi"];
+      };
 
       python = pkgs.python312;
       pythonPkgs = pkgs.python312Packages;
+
+      # Bundled Python with all required packages for the build
+      buildPython = python.withPackages (ps: [
+        ps.pyyaml
+        ps.pykwalify
+        ps.packaging
+        ps.pyelftools
+        ps.colorama
+        ps.setuptools
+      ]);
 
       setProjectDynamicToLicense = ''
         ${pkgs.toml-cli}/bin/toml set pyproject.toml project.dynamic license | ${pkgs.moreutils}/bin/sponge pyproject.toml
@@ -41,7 +58,8 @@
 
       ec = ./.;
 
-      build_version = "awawa";
+      # Get version from self.shortRev (git commit) or use "dirty" for uncommitted changes
+      ecVersion = "0.0.0-${self.shortRev or "dirty"}";
 
       mkBuild = packages: build:
         pkgs.stdenv.mkDerivation {
@@ -84,18 +102,17 @@
             pkgs.cmake
             pkgs.git
             pkgs.ninja
-            pythonPkgs.pyyaml
-            pythonPkgs.pykwalify
-            pythonPkgs.packaging
-            pythonPkgs.pyelftools
-            pythonPkgs.colorama
+            buildPython
             packages.binman
           ];
 
           dontUseCmakeConfigure = true;
 
+          # Ensure the zephyr SDK is found by zmake toolchain probing
+          ZEPHYR_SDK_INSTALL_DIR = "${zephyr-sdk}";
+
           buildPhase = ''
-            ${packages.zmake}/bin/zmake -j8 build ${build}
+            ${packages.zmake}/bin/zmake -j8 build --static -v "${ecVersion}" -t zephyr ${build}
           '';
 
           installPhase = ''
@@ -108,7 +125,14 @@
     in rec {
       formatter = pkgs.alejandra;
 
-      packages.default = packages.lotus;
+      packages.default = packages.all;
+      packages.all = pkgs.runCommand "ec-all" {} ''
+        mkdir -p $out
+        ln -s ${packages.lotus} $out/lotus
+        ln -s ${packages.azalea} $out/azalea
+        ln -s ${packages.marigold} $out/marigold
+        ln -s ${packages.lilac} $out/lilac
+      '';
       packages.lotus = mkBuild packages "lotus";
       packages.azalea = mkBuild packages "azalea";
       packages.marigold = mkBuild packages "marigold";
@@ -121,12 +145,25 @@
         pyproject = true;
         build-system = [pythonPkgs.setuptools];
 
+        # These dependencies are needed by zmake's Python (sys.executable)
+        # which gets passed to CMake as Python3_EXECUTABLE
+        dependencies = [
+          pythonPkgs.pyyaml
+          pythonPkgs.pykwalify
+          pythonPkgs.packaging
+          pythonPkgs.pyelftools
+          pythonPkgs.colorama
+        ];
+
         postPatch = ''
           sed -e 's#"/bin:/usr/bin"#"/bin:/usr/bin:${pkgs.gcc}/bin:${pkgs.dtc}/bin:${pkgs.ninja}/bin"${
             if pkgs.stdenv.hostPlatform.isDarwin
             then '',"DYLD_LIBRARY_PATH":"${pkgs.dtc}/lib"''
             else ""
           }#' -i zmake/jobserver.py
+
+          # Replace sys.executable with the bundled Python that has all required packages
+          sed -e 's#"Python3_EXECUTABLE": sys.executable#"Python3_EXECUTABLE": "${buildPython}/bin/python3"#' -i zmake/zmake.py
         '';
       };
 
@@ -148,18 +185,16 @@
           packages.dtoc
         ];
 
+        # Remove libfdt from pyproject.toml dependencies since we provide it via nix
         postPatch = ''
           sed -e 's/"pylibfdt"/"libfdt"/' -i pyproject.toml
+          sed -e '/"libfdt"/d' -i pyproject.toml
           ${setProjectDynamicToLicense}
         '';
 
         # zmake calls (sys.executable, path-to-binman, ...) on purpose, so we
         # can't wrap it. This makes it unsuitable for calling directly, however.
         dontWrapPythonPrograms = true;
-
-        # No wrapper => no need for args. I'd like to be able to still do this
-        # to have a nicer binman derivation.
-        # makeWrapperArgs = ["--set DYLD_LIBRARY_PATH ${pkgs.dtc}/lib"];
       };
 
       packages.dtoc = pythonPkgs.buildPythonPackage {
@@ -178,8 +213,11 @@
           pythonPkgs.libfdt
         ];
 
+        # Remove libfdt from pyproject.toml dependencies since we provide it via nix
+        # pip would otherwise fail to find it as a pip package
         postPatch = ''
           sed -e 's/"pylibfdt"/"libfdt"/' -i pyproject.toml
+          sed -e '/"libfdt"/d' -i pyproject.toml
           ${setProjectDynamicToLicense}
         '';
 
@@ -206,25 +244,40 @@
           pkgs.cmake
           pkgs.git
           pkgs.ninja
-          pythonPkgs.pyyaml
-          pythonPkgs.pykwalify
-          pythonPkgs.packaging
-          pythonPkgs.pyelftools
-          pythonPkgs.colorama
-          pythonPkgs.setuptools
+          buildPython
           packages.zmake
           packages.binman
         ];
-        
+
         shellHook = ''
           mkdir -p .repo
-          
+
+          # Set up source tree with symlinks
           rm -rf src
           mkdir -p src/platform
           ln -fs ../.. src/platform/ec
+
           mkdir -p src/third_party/zephyr
           ln -fs ${cmsis} src/third_party/zephyr/cmsis
           ln -fs ${zephyr} src/third_party/zephyr/main
+
+          # Set environment variables for zmake
+          export ZEPHYR_SDK_INSTALL_DIR="${zephyr-sdk}"
+
+          # Create zmake wrapper that forces zephyr toolchain
+          zmake() {
+            if [[ "$1" == "build" ]]; then
+              command zmake build -t zephyr "''${@:2}"
+            elif [[ "$1" == "configure" ]]; then
+              command zmake configure -t zephyr "''${@:2}"
+            else
+              command zmake "$@"
+            fi
+          }
+          export -f zmake
+
+          echo "EC development shell ready."
+          echo "  - Run 'zmake build <target>' to build firmware"
         '';
       };
     });
