@@ -73,6 +73,12 @@ uint16_t isl9241_emul_peek(const struct emul *emul, int reg)
 	return data->regs[reg];
 }
 
+struct i2c_common_emul_data *
+isl9241_emul_get_i2c_common_data(const struct emul *emul)
+{
+	return emul->data;
+}
+
 void isl9241_emul_set_vbus(const struct emul *emul, int vbus_mv)
 {
 	struct isl9241_emul_data *data = (struct isl9241_emul_data *)emul->data;

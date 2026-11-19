@@ -4,6 +4,7 @@
  */
 
 #include "battery_smart.h"
+#include "charge_manager.h"
 #include "charger.h"
 #include "console.h"
 #include "driver/charger/isl9241.h"
@@ -250,6 +251,73 @@ ZTEST_F(isl9241_driver, test_dump_registers)
 		zassert_true(strstr(output, dump_marker) != NULL,
 			     "Expected: \"%s\" in \"%s\"", dump_marker, output);
 	}
+}
+
+/*
+ * An NVDC -> bypass entry that aborted while waiting for VSYS left
+ * CONTROL1.BGATE_OFF set, so the battery stayed disconnected on AC.
+ */
+ZTEST_F(isl9241_driver, test_bypass_abort_releases_bgate)
+{
+	struct i2c_common_emul_data *common_data =
+		isl9241_emul_get_i2c_common_data(fixture->isl9241_emul);
+	uint16_t control1;
+
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_CHARGER_BYPASS_MODE))
+		ztest_test_skip();
+
+	/* Make NVDC -> bypass abort while it waits for VSYS. */
+	i2c_common_emul_set_read_fail_reg(common_data,
+					  ISL9241_REG_VSYS_ADC_RESULTS);
+	charger_enable_bypass_mode(CHARGER_SOLO, true);
+	i2c_common_emul_set_read_fail_reg(common_data,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	control1 = isl9241_emul_peek(fixture->isl9241_emul,
+				     ISL9241_REG_CONTROL1);
+	zassert_false(control1 & ISL9241_CONTROL1_BGATE_OFF,
+		      "BGATE still forced off after aborted entry: 0x%04x",
+		      control1);
+}
+
+/* Same as above, but the entry aborted because VSYS never reached target. */
+ZTEST_F(isl9241_driver, test_bypass_timeout_releases_bgate)
+{
+	struct charge_port_info charge = { .current = 3000, .voltage = 20000 };
+	struct charge_port_info none = { 0 };
+	uint16_t control0, control1;
+
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_CHARGER_BYPASS_MODE))
+		ztest_test_skip();
+
+	/* VSYS stays at 0 while the target follows the 20 V supply. */
+	k_msleep(1000);
+	charge_manager_update_charge(CHARGE_SUPPLIER_TYPEC, USBC_PORT_C0,
+				     &charge);
+	/* Port 0 is dual-role, so it charges only as the override port. */
+	zassert_ok(charge_manager_set_override(USBC_PORT_C0));
+	k_msleep(500);
+	zassert_equal(charge_manager_get_charger_voltage(), charge.voltage,
+		      "port %d supplier %d",
+		      charge_manager_get_active_charge_port(),
+		      charge_manager_get_supplier());
+	isl9241_emul_set_vsys(fixture->isl9241_emul, 0);
+
+	charger_enable_bypass_mode(CHARGER_SOLO, true);
+	charge_manager_set_override(OVERRIDE_OFF);
+	charge_manager_update_charge(CHARGE_SUPPLIER_TYPEC, USBC_PORT_C0,
+				     &none);
+	k_msleep(500);
+
+	control0 = isl9241_emul_peek(fixture->isl9241_emul,
+				     ISL9241_REG_CONTROL0);
+	control1 = isl9241_emul_peek(fixture->isl9241_emul,
+				     ISL9241_REG_CONTROL1);
+	zassert_false(control0 & ISL9241_CONTROL0_EN_BYPASS_GATE,
+		      "Bypass entry did not abort: 0x%04x", control0);
+	zassert_false(control1 & ISL9241_CONTROL1_BGATE_OFF,
+		      "BGATE still forced off after aborted entry: 0x%04x",
+		      control1);
 }
 
 ZTEST(isl9241_driver, test_prochot_dump)

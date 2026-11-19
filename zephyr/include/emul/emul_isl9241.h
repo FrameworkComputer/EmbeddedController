@@ -6,7 +6,18 @@
 #ifndef EMUL_ISL9241_H
 #define EMUL_ISL9241_H
 
+#include "emul/emul_common_i2c.h"
+
 #include <zephyr/drivers/emul.h>
+
+/**
+ * Get the I2C common data, e.g. to inject register read failures
+ *
+ * @param emul - ISL9241 emulator data
+ * @return I2C common emulator data
+ */
+struct i2c_common_emul_data *
+isl9241_emul_get_i2c_common_data(const struct emul *emul);
 
 /**
  * Peek an internal register value
