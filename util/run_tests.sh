@@ -17,6 +17,7 @@ cd "$(dirname "$(realpath -e "${BASH_SOURCE[0]}")")"/..
 
 # Run shell tests
 cd util
+python3 test_framework_battery_extender.py
 ./test-inject-keys.sh
 
 # Run the Zephyr config tests
